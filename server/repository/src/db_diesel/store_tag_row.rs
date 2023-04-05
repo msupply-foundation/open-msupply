@@ -102,18 +102,18 @@ impl<'a> StoreTagRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_tags_for_store(&self, store_tags: &StoreTags) -> Result<(), RepositoryError> {
-        // Find all existing tags for store
-        let existing_tags = self.find_all_by_store_id(&store_tags.store_id)?;
+    pub fn upsert_tags_for_store(&self, new_tags: &StoreTags) -> Result<(), RepositoryError> {
+        // Find current tags for store
+        let current_tags = self.find_all_by_store_id(&new_tags.store_id)?;
 
         // Find all tags that need to be deleted
-        let tag_ids_to_delete: Vec<String> = existing_tags
+        let tag_ids_to_delete: Vec<String> = current_tags
             .iter()
             .filter(|existing_tag| {
-                !store_tags
+                !new_tags
                     .tags
                     .iter()
-                    .any(|tag| existing_tag.tag_name == *tag)
+                    .any(|new_tag| existing_tag.tag_name == *new_tag)
             })
             .map(|existing_tag| existing_tag.id.clone())
             .collect();
@@ -121,24 +121,21 @@ impl<'a> StoreTagRowRepository<'a> {
         // Delete old tags
         self.delete_many_by_id(tag_ids_to_delete)?;
 
-        // Find all tags that need to be added
-        let tags_to_add: Vec<String> = store_tags
-            .tags
-            .iter()
-            .filter(|tag| {
-                !existing_tags
-                    .iter()
-                    .any(|existing_tag| existing_tag.tag_name == **tag)
-            })
-            .cloned()
-            .collect();
-
         // Add any new tags
-        for tag_name in tags_to_add {
+        let store_id = new_tags.store_id.clone();
+        for tag_name in new_tags.tags.iter() {
+            if current_tags
+                .iter()
+                .any(|existing_tag| existing_tag.tag_name == *tag_name)
+            {
+                // Tag already exists, nothing to add to db
+                continue;
+            }
+
             let store_tag_row = StoreTagRow {
-                id: format!("{}_{}", store_tags.store_id.clone(), tag_name),
-                store_id: store_tags.store_id.clone(),
-                tag_name,
+                id: format!("{}_{}", store_id.clone(), tag_name),
+                store_id: store_id.clone(),
+                tag_name: tag_name.to_string(),
             };
             self.insert_one(&store_tag_row)?;
         }
@@ -147,4 +144,105 @@ impl<'a> StoreTagRowRepository<'a> {
 }
 
 #[cfg(test)]
-mod test_store_tag_row {}
+mod test_store_tag_row {
+    use crate::{
+        test_db, NameRow, NameRowRepository, StoreRow, StoreRowRepository, StoreTagRow,
+        StoreTagRowRepository, StoreTags,
+    };
+
+    fn tags_match(expected: Vec<String>, actual: Vec<StoreTagRow>) -> Result<bool, String> {
+        let tag_names: Vec<String> = actual.iter().map(|tag| tag.tag_name.clone()).collect();
+        if expected != tag_names {
+            return Err(format!(
+                "Expected tags: {:?}, Actual tags: {:?}",
+                expected, tag_names
+            ));
+        }
+        Ok(true)
+    }
+
+    #[actix_rt::test]
+    async fn test_store_tag_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-test_store_tag_repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        NameRowRepository::new(&connection)
+            .insert_one(&NameRow {
+                id: "name1".to_string(),
+                name: "name1".to_string(),
+                code: "name1".to_string(),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        StoreRowRepository::new(&connection)
+            .insert_one(&StoreRow {
+                id: "store1".to_string(),
+                name_id: "name1".to_string(),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+
+        /* TESTS */
+
+        let repo = StoreTagRowRepository::new(&connection);
+
+        // Check we can insert a store tag
+        let store_tag_row = StoreTagRow {
+            id: "store1_tag1".to_string(),
+            store_id: "store1".to_string(),
+            tag_name: "tag1".to_string(),
+        };
+
+        repo.insert_one(&store_tag_row).unwrap();
+
+        // Check we can find a store tag by id
+        let found_store_tag = StoreTagRowRepository::new(&connection)
+            .find_one_by_id(&store_tag_row.id)
+            .unwrap();
+        assert_eq!(found_store_tag, Some(store_tag_row));
+
+        // Check that the store tag list is upserted correctly with the same list of tags
+        let store_tags = StoreTags {
+            store_id: "store1".to_string(),
+            tags: vec!["tag1".to_string()],
+        };
+        repo.upsert_tags_for_store(&store_tags).unwrap();
+
+        let current_tags = repo.find_all_by_store_id(&store_tags.store_id).unwrap();
+        assert!(tags_match(store_tags.tags, current_tags).unwrap());
+
+        // Check that the store tag list is upserted correctly when we add 1 tag
+        let store_tags = StoreTags {
+            store_id: "store1".to_string(),
+            tags: vec!["tag1".to_string(), "tag2".to_string()],
+        };
+        repo.upsert_tags_for_store(&store_tags).unwrap();
+        let current_tags = repo.find_all_by_store_id(&store_tags.store_id).unwrap();
+        assert!(tags_match(store_tags.tags, current_tags).unwrap());
+
+        // Check that the store tag list is upserted correctly when we remove 1 tag
+        let store_tags = StoreTags {
+            store_id: "store1".to_string(),
+            tags: vec!["tag2".to_string()],
+        };
+        repo.upsert_tags_for_store(&store_tags).unwrap();
+
+        let current_tags = repo.find_all_by_store_id(&store_tags.store_id).unwrap();
+        assert!(tags_match(store_tags.tags, current_tags).unwrap());
+
+        // Check that the store tag list is upserted correctly when we remove all tags
+        let store_tags = StoreTags {
+            store_id: "store1".to_string(),
+            tags: vec![],
+        };
+        repo.upsert_tags_for_store(&store_tags).unwrap();
+
+        let current_tags = repo.find_all_by_store_id(&store_tags.store_id).unwrap();
+        assert!(tags_match(store_tags.tags, current_tags).unwrap());
+    }
+}
