@@ -72,6 +72,10 @@ impl RequisitionLineNode {
         &self.row().suggested_quantity
     }
 
+    pub async fn approved_quantity(&self) -> &i32 {
+        &self.row().approved_quantity
+    }
+
     /// OutboundShipment lines linked to requisitions line
     pub async fn outbound_shipment_lines(&self, ctx: &Context<'_>) -> Result<InvoiceLineConnector> {
         // Outbound shipments link to response requisition, so for request requisition

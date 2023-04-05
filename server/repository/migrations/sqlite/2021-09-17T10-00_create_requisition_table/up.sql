@@ -18,5 +18,8 @@ CREATE TABLE requisition (
     their_reference TEXT,
     max_months_of_stock  DOUBLE PRECISION NOT NULL,
     min_months_of_stock DOUBLE PRECISION NOT NULL,
-    linked_requisition_id TEXT
+    linked_requisition_id TEXT,
+    authorisation_status TEXT,
+    program_id TEXT,
+    is_sync_update BOOLEAN NOT NULL DEFAULT FALSE
 )

@@ -1,15 +1,15 @@
 CREATE TRIGGER requisition_line_insert_trigger
   AFTER INSERT ON requisition_line
   BEGIN
-    INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
-      SELECT "requisition_line", NEW.id, "UPSERT", name_id, store_id FROM requisition WHERE id = NEW.requisition_id;
+    INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id, is_sync_update)
+      SELECT "requisition_line", NEW.id, "UPSERT", name_id, store_id, NEW.is_sync_update FROM requisition WHERE id = NEW.requisition_id;
   END;
 
 CREATE TRIGGER requisition_line_update_trigger
   AFTER UPDATE ON requisition_line
   BEGIN
-    INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
-      SELECT "requisition_line", NEW.id, "UPSERT", name_id, store_id FROM requisition WHERE id = NEW.requisition_id;
+    INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id, is_sync_update)
+      SELECT "requisition_line", NEW.id, "UPSERT", name_id, store_id, NEW.is_sync_update FROM requisition WHERE id = NEW.requisition_id;
   END;
 
 CREATE TRIGGER requisition_line_delete_trigger

@@ -30,7 +30,11 @@ table! {
         their_reference -> Nullable<Text>,
         max_months_of_stock -> Double,
         min_months_of_stock -> Double,
+        // Needs to be enum not Text
+        authorisation_status -> Nullable<Text>,
+        program_id -> Nullable<Text>,
         linked_requisition_id -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -75,7 +79,10 @@ pub struct RequisitionRow {
     pub their_reference: Option<String>,
     pub max_months_of_stock: f64,
     pub min_months_of_stock: f64,
+    pub authorisation_status: Option<String>,
+    pub program_id: Option<String>,
     pub linked_requisition_id: Option<String>,
+    pub is_sync_update: bool,
 }
 
 impl Default for RequisitionRow {
@@ -98,7 +105,10 @@ impl Default for RequisitionRow {
             their_reference: Default::default(),
             max_months_of_stock: Default::default(),
             min_months_of_stock: Default::default(),
+            authorisation_status: Default::default(),
+            program_id: Default::default(),
             linked_requisition_id: Default::default(),
+            is_sync_update: Default::default(),
         }
     }
 }

@@ -1,6 +1,6 @@
 use crate::sync::{
     api::SyncActionV5,
-    get_active_records_on_site_filter,
+    get_sync_push_changelogs_filter,
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
@@ -65,7 +65,7 @@ async fn test_sync_pull_and_push() {
 
     // PUSH UPSERT
     let mut test_records = get_all_push_test_records();
-    let change_log_filter = get_active_records_on_site_filter(&connection).unwrap();
+    let change_log_filter = get_sync_push_changelogs_filter(&connection).unwrap();
     // Records would have been inserted in test Pull Upsert and trigger should have inserted changelogs
     let changelogs = ChangelogRepository::new(&connection)
         .changelogs(push_cursor, 100000, change_log_filter)

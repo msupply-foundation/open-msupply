@@ -79,6 +79,9 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
+            authorisation_status: None,
+            program_id: None,
+            is_sync_update: false,
         }),
     )
 }
@@ -118,6 +121,8 @@ fn requisition_request_push_record() -> TestSyncPushRecord {
             om_status: Some(RequisitionRowStatus::Sent),
             om_colour: None,
             expected_delivery_date: None,
+            authorisation_status: None,
+            program_id: None,
         }),
     }
 }
@@ -184,6 +189,9 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
+            authorisation_status: None,
+            program_id: None,
+            is_sync_update: false,
         }),
     )
 }
@@ -223,6 +231,8 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
             om_status: Some(RequisitionRowStatus::Finalised),
             om_colour: None,
             expected_delivery_date: None,
+            authorisation_status: None,
+            program_id: None,
         }),
     }
 }
@@ -301,6 +311,9 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
             max_months_of_stock: 10.0,
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
+            authorisation_status: None,
+            program_id: None,
+            is_sync_update: false,
         }),
     )
 }
@@ -345,6 +358,8 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
             max_months_of_stock: Some(10.0),
             om_status: Some(RequisitionRowStatus::New),
             om_colour: Some("Colour".to_string()),
+            authorisation_status: None,
+            program_id: None
         }),
     }
 }

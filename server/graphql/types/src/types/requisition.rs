@@ -72,6 +72,10 @@ impl RequisitionNode {
         &self.row().expected_delivery_date
     }
 
+    pub async fn authorisation_status(&self) -> &Option<String> {
+        &self.row().authorisation_status
+    }
+
     /// User that last edited requisition, if user is not found in system default unknown user is returned
     /// Null is returned for transfers, where response requisition has not been edited yet
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {

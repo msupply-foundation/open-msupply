@@ -18,7 +18,9 @@ table! {
         available_stock_on_hand -> Integer ,
         average_monthly_consumption -> Integer,
         snapshot_datetime -> Nullable<Timestamp>,
+        approved_quantity -> Integer,
         comment -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -37,7 +39,9 @@ pub struct RequisitionLineRow {
     pub available_stock_on_hand: i32,
     pub average_monthly_consumption: i32,
     pub snapshot_datetime: Option<NaiveDateTime>,
+    pub approved_quantity: i32,
     pub comment: Option<String>,
+    pub is_sync_update: bool,
 }
 
 pub struct RequisitionLineRowRepository<'a> {

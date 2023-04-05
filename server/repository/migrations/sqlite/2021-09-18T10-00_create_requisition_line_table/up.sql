@@ -11,5 +11,7 @@ CREATE TABLE requisition_line (
     average_monthly_consumption INTEGER NOT NULL,
     -- Calculation of stock on hand and average monthly consumption
     snapshot_datetime TEXT,
+    approved_quantity INTEGER NOT NULL,
+    is_sync_update BOOLEAN NOT NULL DEFAULT FALSE,
     comment TEXT
 )

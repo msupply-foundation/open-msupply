@@ -6,9 +6,10 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RequisitionRowStatus,
-    RequisitionRowType, StorageConnection,
+    ActivityLogType, MasterListFilter, MasterListRepository, NumberRowType, RepositoryError,
+    Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType, SimpleStringFilter,
+    StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -54,8 +55,20 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         }
 
         // Execute
-        let new_response_requisition =
-            generate_response_requisition(connection, &request_requisition, record_for_processing)?;
+        let Auth {
+            program_id,
+            authorisation_status,
+        } = get_auth(connection, &request_requisition);
+
+        let new_response_requisition = RequisitionRow {
+            program_id,
+            authorisation_status,
+            ..generate_response_requisition(
+                connection,
+                &request_requisition,
+                record_for_processing,
+            )?
+        };
 
         let new_requisition_lines = generate_response_requisition_lines(
             connection,
@@ -86,6 +99,30 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         );
 
         Ok(Some(result))
+    }
+}
+
+#[derive(Default)]
+struct Auth {
+    program_id: Option<String>,
+    authorisation_status: Option<String>,
+}
+
+fn get_auth(connection: &StorageConnection, request_requisition: &Requisition) -> Auth {
+    // if not "shouldAuthoriseResponseRequisition" preference  return Auth::default();
+
+    // this would only work with a datafile where master list name matches supplier name
+    let program_id = MasterListRepository::new(connection)
+        .query_by_filter(MasterListFilter::new().name(SimpleStringFilter::equal_to(
+            &request_requisition.name_row.name,
+        )))
+        .unwrap()[0]
+        .id
+        .clone();
+
+    Auth {
+        authorisation_status: Some("pending".to_string()),
+        program_id: Some(program_id),
     }
 }
 
@@ -143,9 +180,12 @@ fn generate_response_requisition(
         expected_delivery_date: request_requisition_row.expected_delivery_date,
         // Default
         user_id: None,
+        authorisation_status: None,
+        program_id: None,
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,
+        is_sync_update: false,
     };
 
     Ok(result)
@@ -165,6 +205,7 @@ fn generate_response_requisition_lines(
             |RequisitionLineRow {
                  id: _,
                  requisition_id: _,
+                 approved_quantity: _,
                  item_id,
                  requested_quantity,
                  suggested_quantity,
@@ -173,6 +214,7 @@ fn generate_response_requisition_lines(
                  average_monthly_consumption,
                  snapshot_datetime,
                  comment,
+                 is_sync_update: _,
              }| RequisitionLineRow {
                 id: uuid(),
                 requisition_id: response_requisition_id.to_string(),
@@ -185,6 +227,8 @@ fn generate_response_requisition_lines(
                 comment: comment.clone(),
                 // Default
                 supply_quantity: 0,
+                approved_quantity: 0,
+                is_sync_update: false,
             },
         )
         .collect();

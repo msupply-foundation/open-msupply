@@ -194,6 +194,7 @@ async fn test_changelog_filter() {
         row_action: ChangelogAction::Upsert,
         name_id: Some("name1".to_string()),
         store_id: Some("store1".to_string()),
+        is_sync_update: false,
     };
 
     let log2 = ChangelogRow {
@@ -203,6 +204,7 @@ async fn test_changelog_filter() {
         row_action: ChangelogAction::Upsert,
         name_id: Some("name2".to_string()),
         store_id: Some("store2".to_string()),
+        is_sync_update: false,
     };
 
     let log3 = ChangelogRow {
@@ -212,6 +214,7 @@ async fn test_changelog_filter() {
         row_action: ChangelogAction::Upsert,
         name_id: Some("name3".to_string()),
         store_id: Some("store3".to_string()),
+        is_sync_update: false,
     };
 
     let log4 = ChangelogRow {
@@ -221,6 +224,7 @@ async fn test_changelog_filter() {
         row_action: ChangelogAction::Upsert,
         name_id: None,
         store_id: None,
+        is_sync_update: false,
     };
 
     for log in vec![&log1, &log2, &log3, &log4] {

@@ -55,6 +55,12 @@ export const ResponseRequisitionListView: FC = () => {
             getRequisitionTranslator(t)(status as RequisitionNodeStatus),
         },
       ],
+      // Would ideally be a status (combination of requisition.status and requisition.authorisatoinStatus) ?
+      {
+        key: 'authorisationStatus',
+        label: 'label.auth-status',
+        width: 50,
+      },
       ['comment', { minWidth: 400 }],
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
