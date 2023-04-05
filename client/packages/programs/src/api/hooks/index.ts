@@ -52,6 +52,7 @@ export const useEncounter = {
     list: Document.useEncounters,
     byId: Document.useEncounterById,
     byIdPromise: Document.useEncounterByIdPromise,
+    byDocName: Document.useEncounterByDocName,
     previous: Document.useEncounterPrevious,
     upsert: Document.useUpsertEncounter,
   },

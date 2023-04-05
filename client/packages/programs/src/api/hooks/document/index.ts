@@ -27,6 +27,7 @@ import { useProgramEvents } from './useProgramEvents';
 import { useFormSchemaByType } from './useFormSchemaByType';
 import { useDocumentRegistryByType } from './useDocumentRegistriesByType';
 import { useDocumentRegistries } from './useDocumentRegistries';
+import { useEncounterByDocName } from './useEncounterByDocName';
 
 export const Document = {
   useDocumentByName,
@@ -49,6 +50,7 @@ export const Document = {
   useEncounters,
   useEncounterById,
   useEncounterByIdPromise,
+  useEncounterByDocName,
   useEncounterFields,
   useEncounterPrevious,
   useUpsertEncounter,
