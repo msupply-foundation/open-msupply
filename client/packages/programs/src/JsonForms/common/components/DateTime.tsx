@@ -8,11 +8,11 @@ import {
   DetailInputWithLabelRow,
   DateTimePicker,
   DateTimePickerProps,
+  BaseDatePickerInput,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
-import { BaseDatePickerInput as DatePickerInput } from './Date';
 
 const Options = z
   .object({
@@ -106,7 +106,7 @@ const UIComponent = (props: ControlProps) => {
             {...sharedComponentProps}
           />
         ) : (
-          <DatePickerInput {...sharedComponentProps} />
+          <BaseDatePickerInput {...sharedComponentProps} />
         )
       }
     />

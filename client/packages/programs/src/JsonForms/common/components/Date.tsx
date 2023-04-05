@@ -1,13 +1,10 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { rankWith, ControlProps, isDateControl } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
-  TextFieldProps,
-  BasicTextInput,
   DetailInputWithLabelRow,
   useFormatDateTime,
-  DatePicker,
-  DatePickerProps,
+  BaseDatePickerInput,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -21,29 +18,6 @@ const Options = z
   .optional();
 
 type Options = z.infer<typeof Options>;
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const DatePickerTextInput = ({ variant, ...props }: TextFieldProps) => (
-  <BasicTextInput
-    error={!!props.error}
-    helperText={props.error}
-    FormHelperTextProps={
-      !!props.error ? { sx: { color: 'error.main' } } : undefined
-    }
-    {...props}
-    variant="standard"
-  />
-);
-
-export const BaseDatePickerInput: FC<
-  Omit<DatePickerProps<Date, Date>, 'renderInput'> & { error: string }
-> = props => (
-  <DatePicker
-    disabled={props.disabled}
-    renderInput={DatePickerTextInput}
-    {...props}
-  />
-);
 
 export const dateTester = rankWith(5, isDateControl);
 
