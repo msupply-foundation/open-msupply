@@ -235,6 +235,21 @@ query encounterById($storeId: String!, $encounterId: String!) {
   }
 }
 
+query encounterByDocName($storeId: String!, $documentName: String!) {
+  encounters(
+    storeId: $storeId
+    filter: { documentName: { equalTo: $documentName } }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...Encounter
+      }
+      totalCount
+    }
+  }
+}
+
 fragment EncounterRow on EncounterNode {
   id
   document {

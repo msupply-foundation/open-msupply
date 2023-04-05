@@ -121,6 +121,19 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Could not find encounter');
     }
   },
+  byDocName: async (documentName: string): Promise<EncounterFragment> => {
+    const result = await sdk.encounterByDocName({ documentName, storeId });
+    const encounters = result?.encounters;
+
+    if (
+      encounters?.__typename === 'EncounterConnector' &&
+      !!encounters.nodes[0]
+    ) {
+      return encounters.nodes[0];
+    } else {
+      throw new Error('Could not find encounter');
+    }
+  },
   previousEncounters: async (
     patientId: string,
     current: Date
