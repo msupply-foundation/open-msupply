@@ -76,7 +76,6 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
                     )?,
                     ..inbound_shipment.invoice_row.clone()
                 };
-                // inbound_shipment.invoice_row.invoice_number = updated_invoice_row.invoice_number;
 
                 InvoiceRowRepository::new(connection).upsert_one(&updated_invoice_row)?;
                 system_activity_log_entry(
@@ -85,6 +84,26 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
                     &inbound_shipment.store_row.id,
                     &inbound_shipment.invoice_row.id,
                 )?;
+            }
+
+            // generate lines for the inbound shipment
+            let new_inbound_lines = generate_inbound_shipment_lines(
+                connection,
+                &inbound_shipment.invoice_row.id,
+                &outbound_shipment,
+            )?;
+            let store_preferences =
+                get_store_preferences(connection, &inbound_shipment.store_row.id)?;
+
+            let new_inbound_lines = match store_preferences.pack_to_one {
+                true => convert_invoice_line_to_single_pack(new_inbound_lines),
+                false => new_inbound_lines,
+            };
+
+            let invoice_line_repository = InvoiceLineRowRepository::new(connection);
+
+            for line in new_inbound_lines.iter() {
+                invoice_line_repository.upsert_one(line)?;
             }
 
             return Ok(None);
