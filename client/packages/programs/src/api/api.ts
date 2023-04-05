@@ -25,6 +25,7 @@ import {
   EncounterFragment,
   EncounterRowFragment,
   FormSchemaFragment,
+  ProgramEnrolmentFragment,
   ProgramEnrolmentRowFragment,
   Sdk,
 } from './operations.generated';
@@ -304,6 +305,24 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
     });
 
     return result?.programEnrolments;
+  },
+
+  byDocName: async (
+    documentName: string
+  ): Promise<ProgramEnrolmentFragment> => {
+    const result = await sdk.programEnrolmentByDocName({
+      storeId,
+      documentName,
+    });
+    const programEnrolment = result?.programEnrolments;
+
+    if (
+      programEnrolment?.__typename === 'ProgramEnrolmentConnector' &&
+      !!programEnrolment.nodes[0]
+    ) {
+      return programEnrolment.nodes[0];
+    }
+    throw new Error('Error querying program enrolment by document name');
   },
 
   insertProgramEnrolment: async (

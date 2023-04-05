@@ -386,6 +386,21 @@ query programEnrolmentById($storeId: String!, $programId: String!) {
   }
 }
 
+query programEnrolmentByDocName($storeId: String!, $documentName: String!) {
+  programEnrolments(
+    storeId: $storeId
+    filter: { documentName: { equalTo: $documentName } }
+  ) {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        ...ProgramEnrolment
+      }
+      totalCount
+    }
+  }
+}
+
 mutation insertProgramEnrolment(
   $storeId: String!
   $input: InsertProgramEnrolmentInput!

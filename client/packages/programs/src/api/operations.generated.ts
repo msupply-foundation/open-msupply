@@ -157,6 +157,14 @@ export type ProgramEnrolmentByIdQueryVariables = Types.Exact<{
 
 export type ProgramEnrolmentByIdQuery = { __typename: 'Queries', programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', program: string, programEnrolmentId?: string | null, patientId: string, name: string, enrolmentDatetime: string, status: Types.ProgramEnrolmentNodeStatus, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, timestamp: string, type: string, data: any, user: { __typename: 'UserNode', userId: string, username: string, email?: string | null }, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } }> } };
 
+export type ProgramEnrolmentByDocNameQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  documentName: Types.Scalars['String'];
+}>;
+
+
+export type ProgramEnrolmentByDocNameQuery = { __typename: 'Queries', programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', program: string, programEnrolmentId?: string | null, patientId: string, name: string, enrolmentDatetime: string, status: Types.ProgramEnrolmentNodeStatus, document: { __typename: 'DocumentNode', id: string, name: string, parents: Array<string>, timestamp: string, type: string, data: any, user: { __typename: 'UserNode', userId: string, username: string, email?: string | null }, documentRegistry?: { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any } | null } }> } };
+
 export type InsertProgramEnrolmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.InsertProgramEnrolmentInput;
@@ -599,6 +607,22 @@ export const ProgramEnrolmentByIdDocument = gql`
   }
 }
     ${ProgramEnrolmentFragmentDoc}`;
+export const ProgramEnrolmentByDocNameDocument = gql`
+    query programEnrolmentByDocName($storeId: String!, $documentName: String!) {
+  programEnrolments(
+    storeId: $storeId
+    filter: {documentName: {equalTo: $documentName}}
+  ) {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        ...ProgramEnrolment
+      }
+      totalCount
+    }
+  }
+}
+    ${ProgramEnrolmentFragmentDoc}`;
 export const InsertProgramEnrolmentDocument = gql`
     mutation insertProgramEnrolment($storeId: String!, $input: InsertProgramEnrolmentInput!) {
   insertProgramEnrolment(storeId: $storeId, input: $input) {
@@ -719,6 +743,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     programEnrolmentById(variables: ProgramEnrolmentByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramEnrolmentByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProgramEnrolmentByIdQuery>(ProgramEnrolmentByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programEnrolmentById', 'query');
+    },
+    programEnrolmentByDocName(variables: ProgramEnrolmentByDocNameQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramEnrolmentByDocNameQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramEnrolmentByDocNameQuery>(ProgramEnrolmentByDocNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programEnrolmentByDocName', 'query');
     },
     insertProgramEnrolment(variables: InsertProgramEnrolmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertProgramEnrolmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramEnrolmentMutation>(InsertProgramEnrolmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramEnrolment', 'mutation');
@@ -991,6 +1018,23 @@ export const mockProgramEnrolmentsQuery = (resolver: ResponseResolver<GraphQLReq
 export const mockProgramEnrolmentByIdQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramEnrolmentByIdQueryVariables>, GraphQLContext<ProgramEnrolmentByIdQuery>, any>) =>
   graphql.query<ProgramEnrolmentByIdQuery, ProgramEnrolmentByIdQueryVariables>(
     'programEnrolmentById',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockProgramEnrolmentByDocNameQuery((req, res, ctx) => {
+ *   const { storeId, documentName } = req.variables;
+ *   return res(
+ *     ctx.data({ programEnrolments })
+ *   )
+ * })
+ */
+export const mockProgramEnrolmentByDocNameQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramEnrolmentByDocNameQueryVariables>, GraphQLContext<ProgramEnrolmentByDocNameQuery>, any>) =>
+  graphql.query<ProgramEnrolmentByDocNameQuery, ProgramEnrolmentByDocNameQueryVariables>(
+    'programEnrolmentByDocName',
     resolver
   )
 
