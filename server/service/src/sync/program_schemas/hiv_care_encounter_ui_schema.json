@@ -673,6 +673,10 @@
             "documentType": "HIVCareEncounter",
             "display": {
               "type": "number"
+            },
+            "at": {
+              "type": "encounter",
+              "encounterStartDatetime": "before"
             }
           }
         },
