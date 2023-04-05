@@ -322,7 +322,7 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
     ) {
       return programEnrolment.nodes[0];
     }
-    throw new Error('Error querying program enrolment by document name');
+    throw new Error('Could not find program enrolment');
   },
 
   insertProgramEnrolment: async (
