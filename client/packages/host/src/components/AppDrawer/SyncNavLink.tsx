@@ -18,10 +18,13 @@ export const SyncNavLink = () => {
     POLLING_INTERVAL_IN_MILLISECONDS
   );
 
+  // the Badge does not show if the content is 0
+  // somehow though the numberOfRecordsInPushQueue can be '0' which does show
   const badgeContent = (
     !numberOfRecordsInPushQueue
       ? 0
-      : Number.parseFloat(`${numberOfRecordsInPushQueue}`)
+      : // parse, after casting to string to satisfy ts
+        Number.parseFloat(`${numberOfRecordsInPushQueue}`)
   ) as React.ReactNode;
 
   const badgeProps = {
