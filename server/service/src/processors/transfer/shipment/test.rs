@@ -427,7 +427,7 @@ impl ShipmentTransferTester {
                         .invoice_id(EqualFilter::equal_to(&inbound_shipment.id))
                 ))
                 .unwrap(),
-            2
+            4
         );
 
         check_line(
