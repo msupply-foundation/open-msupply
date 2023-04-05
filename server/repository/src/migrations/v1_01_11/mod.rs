@@ -20,70 +20,71 @@ impl Migration for V1_01_11 {
             "#
         )?;
 
-        // Period Schedule
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE period_schedule (
-                id TEXT NOT NULL PRIMARY KEY,
-                name TEXT NOT NULL
-            );
-            "#
-        )?;
+        // Commented for this PR as not used yet...
+        // // Period Schedule
+        // sql!(
+        //     connection,
+        //     r#"
+        //     CREATE TABLE period_schedule (
+        //         id TEXT NOT NULL PRIMARY KEY,
+        //         name TEXT NOT NULL
+        //     );
+        //     "#
+        // )?;
 
-        // Period
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE period (
-                id TEXT NOT NULL PRIMARY KEY,
-                period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id),
-                name TEXT NOT NULL,
-                start_date {DATE} NOT NULL, -- `to` is a reserved word in postgres and sqlite
-                end_date {DATE} NOT NULL -- `from` is a reserved word in postgres and sqlite
-            );
-            "#
-        )?;
+        // // Period
+        // sql!(
+        //     connection,
+        //     r#"
+        //     CREATE TABLE period (
+        //         id TEXT NOT NULL PRIMARY KEY,
+        //         period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id),
+        //         name TEXT NOT NULL,
+        //         start_date {DATE} NOT NULL, -- `to` is a reserved word in postgres and sqlite
+        //         end_date {DATE} NOT NULL -- `from` is a reserved word in postgres and sqlite
+        //     );
+        //     "#
+        // )?;
 
-        // Program
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE program (
-                id TEXT NOT NULL PRIMARY KEY,
-                name TEXT NOT NULL,
-                master_list_id TEXT NOT NULL REFERENCES master_list(id)
-            );
-            "#
-        )?;
+        // // Program
+        // sql!(
+        //     connection,
+        //     r#"
+        //     CREATE TABLE program (
+        //         id TEXT NOT NULL PRIMARY KEY,
+        //         name TEXT NOT NULL,
+        //         master_list_id TEXT NOT NULL REFERENCES master_list(id)
+        //     );
+        //     "#
+        // )?;
 
-        // Program Settings
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE program_settings (
-                id TEXT NOT NULL PRIMARY KEY,
-                tag_name TEXT NOT NULL,
-                program_id TEXT NOT NULL REFERENCES program(id),
-                period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id)
-            );
-            "#
-        )?;
+        // // Program Settings
+        // sql!(
+        //     connection,
+        //     r#"
+        //     CREATE TABLE program_settings (
+        //         id TEXT NOT NULL PRIMARY KEY,
+        //         tag_name TEXT NOT NULL,
+        //         program_id TEXT NOT NULL REFERENCES program(id),
+        //         period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id)
+        //     );
+        //     "#
+        // )?;
 
-        // Program Order Type
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE program_order_type (
-                id TEXT NOT NULL PRIMARY KEY,
-                program_settings_id TEXT NOT NULL REFERENCES program_settings(id),
-                name TEXT NOT NULL,
-                threshold_mos {DOUBLE} NOT NULL,
-                max_mos {DOUBLE} NOT NULL,
-                max_order_per_period {DOUBLE} NOT NULL
-            );
-            "#
-        )?;
+        // // Program Order Type
+        // sql!(
+        //     connection,
+        //     r#"
+        //     CREATE TABLE program_order_type (
+        //         id TEXT NOT NULL PRIMARY KEY,
+        //         program_settings_id TEXT NOT NULL REFERENCES program_settings(id),
+        //         name TEXT NOT NULL,
+        //         threshold_mos {DOUBLE} NOT NULL,
+        //         max_mos {DOUBLE} NOT NULL,
+        //         max_order_per_period {DOUBLE} NOT NULL
+        //     );
+        //     "#
+        // )?;
 
         Ok(())
     }
