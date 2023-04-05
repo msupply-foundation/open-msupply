@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -11,32 +11,41 @@ import {
   FORM_LABEL_WIDTH,
   useZodOptionsValidation,
 } from '../common';
-import { EncounterFragment, useEncounter, useProgramEvents } from '../../api';
+import {
+  useEncounter,
+  useProgramEnrolments,
+  useProgramEvents,
+} from '../../api';
 
 import { z } from 'zod';
 
 export const programEventTester = rankWith(10, uiTypeIs('ProgramEvent'));
 
 /**
- * Program events work with specific encounters, or generically
- * (by providing both a documentType and eventType). Encounters still
- * need to be fetched from the api since some encounters
- * require events to be filtered out by the encounter start datetime.
+ * This control displays program events based on the program type and event.
  */
 const Options = z
   .object({
     /**
-     * This option should only be configured for encounters.
-     * Time of the encounter event:
+     * The time when the event should be triggered.
+     * Time of the event:
      * `before`: just before the current encounter
-     * `at`: at the start of the current encounter
+     * `after`: at and after the start of the current encounter
      * Default: `before`
      */
-    encounterStartDatetime: z.enum(['before', 'at']).optional(),
-    /**
-     * Doesn't need to be specified for encounters.
-     */
-    documentType: z.string().optional(),
+    at: z
+      .discriminatedUnion('type', [
+        z.object({
+          type: z.literal('encounter'),
+          encounterStartDatetime: z.enum(['before', 'after']).optional(),
+        }),
+        z.object({
+          type: z.literal('programEnrolment'),
+          programEnrolmentDatetime: z.enum(['before', 'after']).optional(),
+        }),
+      ])
+      .optional(),
+    documentType: z.string(),
     eventType: z.string(),
     /**
      * Display option based on type.
@@ -60,26 +69,37 @@ const Options = z
   .strict();
 type Options = z.infer<typeof Options>;
 
-const extractAt = (encounter?: EncounterFragment, options?: Options): Date => {
-  if (!encounter) {
+const extractAt = (datetime?: string, options?: Options): Date => {
+  if (!datetime) {
     return new Date();
   }
-  const beforeDate = new Date(new Date(encounter.startDatetime).getTime() - 1);
-  if (!options || !options.encounterStartDatetime) {
+  const beforeDate = new Date(new Date(datetime).getTime() - 1);
+  if (!options || !options.at) {
     return beforeDate;
   }
 
-  switch (options.encounterStartDatetime) {
-    case 'before': {
-      return beforeDate;
+  if (options.at.type === 'encounter') {
+    switch (options.at.encounterStartDatetime) {
+      case 'before':
+        return beforeDate;
+      case 'after':
+        return new Date(datetime);
+      default:
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ((_: never) => {})(options.at.encounterStartDatetime as never);
     }
-    case 'at': {
-      return new Date(encounter.startDatetime);
+  } else if (options.at.type === 'programEnrolment') {
+    switch (options.at.programEnrolmentDatetime) {
+      case 'before':
+        return beforeDate;
+      case 'after':
+        return new Date(datetime);
+      default:
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ((_: never) => {})(options.at.programEnrolmentDatetime as never);
     }
-    default:
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ((_: never) => {})(options.encounterStartDatetime);
   }
+
   return new Date();
 };
 
@@ -100,33 +120,55 @@ const getDisplayOptions = (
 
 const UIComponent = (props: ControlProps) => {
   const { label, uischema, config } = props;
+  const [datetime, setDatetime] = React.useState<string | undefined>();
+  const patientId = config?.patientId;
+  const encounterDocName = config?.documentName.includes('Encounter');
+  const enrolmentDocName = config?.documentName.includes('Program');
+
+  const { data: currentEncounter } = useEncounter.document.byDocName(
+    encounterDocName ? config.documentName : undefined
+  );
+  const { data: programEnrolment } = useProgramEnrolments.document.byDocName(
+    enrolmentDocName ? config.documentName : undefined
+  );
 
   const { errors, options } = useZodOptionsValidation(
     Options,
     uischema.options
   );
 
-  const encounterId = useEncounter.utils.idFromUrl();
-  const { data: currentEncounter } = useEncounter.document.byId(encounterId);
-  const patientId = config?.patientId;
+  useEffect(() => {
+    if (
+      options?.at?.type === 'encounter' &&
+      options?.at?.encounterStartDatetime
+    ) {
+      setDatetime(currentEncounter?.startDatetime);
+    }
+
+    if (
+      options?.at?.type === 'programEnrolment' &&
+      options?.at?.programEnrolmentDatetime
+    ) {
+      setDatetime(programEnrolment?.enrolmentDatetime);
+    }
+  }, [currentEncounter, programEnrolment]);
 
   const { data: events } = useProgramEvents.document.list({
-    at: currentEncounter ? extractAt(currentEncounter, options) : undefined,
+    at: options?.at ? extractAt(datetime, options) : undefined,
     patientId: patientId ?? '',
     filter: {
       type: {
         equalTo: options?.eventType,
       },
       documentType: {
-        equalTo: options?.documentType
-          ? options?.documentType
-          : currentEncounter?.type,
+        equalTo: options?.documentType,
       },
     },
     page: {
       first: 1,
     },
   });
+
   const event = events?.nodes[0];
 
   const multiline =
@@ -183,7 +225,4 @@ const UIComponent = (props: ControlProps) => {
   );
 };
 
-/**
- * Shows a value from the program events
- */
 export const ProgramEvent = withJsonFormsControlProps(UIComponent);
