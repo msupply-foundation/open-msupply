@@ -5,8 +5,10 @@ export const useEncounterByDocName = (documentName: string | undefined) => {
   const api = useEncounterApi();
 
   return {
-    ...useQuery(api.keys.byDocName(documentName ?? ''), () =>
-      api.byDocName(documentName ?? '')
+    ...useQuery(
+      api.keys.byDocName(documentName ?? ''),
+      () => api.byDocName(documentName ?? ''),
+      { enabled: !!documentName }
     ),
   };
 };
