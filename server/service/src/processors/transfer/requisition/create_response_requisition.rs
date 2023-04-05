@@ -49,7 +49,27 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
             return Ok(None);
         }
         // 4.
-        if response_requisition.is_some() {
+        if let Some(response_requisition) = response_requisition {
+            // If the requisition number has not been allocated by the generating store allocate it now
+            if response_requisition.requisition_row.requisition_number == -1 {
+                let updated_requisition_row = RequisitionRow {
+                    requisition_number: next_number(
+                        connection,
+                        &NumberRowType::ResponseRequisition,
+                        &response_requisition.store_row.id,
+                    )?,
+                    ..response_requisition.requisition_row.clone()
+                };
+
+                RequisitionRowRepository::new(connection).upsert_one(&updated_requisition_row)?;
+                system_activity_log_entry(
+                    connection,
+                    ActivityLogType::RequisitionNumberAllocated,
+                    &response_requisition.store_row.id,
+                    &response_requisition.requisition_row.id,
+                )?;
+            }
+
             return Ok(None);
         }
 

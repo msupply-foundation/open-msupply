@@ -37,6 +37,7 @@ pub enum ActivityLogNodeType {
     StocktakeStatusFinalised,
     RequisitionCreated,
     RequisitionDeleted,
+    RequisitionNumberAllocated,
     RequisitionStatusSent,
     RequisitionStatusFinalised,
     StockLocationChange,
@@ -143,6 +144,7 @@ impl ActivityLogNodeType {
             from::StockOnHold => to::StockOnHold,
             from::StockOffHold => to::StockOffHold,
             from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
+            from::RequisitionNumberAllocated => to::RequisitionNumberAllocated,
         }
     }
 
@@ -174,6 +176,7 @@ impl ActivityLogNodeType {
             from::StockOnHold => to::StockOnHold,
             from::StockOffHold => to::StockOffHold,
             from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
+            from::RequisitionNumberAllocated => to::RequisitionNumberAllocated,
         }
     }
 }

@@ -214,6 +214,7 @@
   "log.stocktake-status-finalised": "Stocktake finalised",
   "log.requisition-created": "Requisition created",
   "log.requisition-deleted": "Requisition deleted",
+  "log.requisition-number-allocated": "Requisition number allocated",
   "log.requisition-status-sent": "Requisition sent",
   "log.requisition-status-finalised": "Requisition finalised",
   "log.stock-batch-change": "Batch changed",

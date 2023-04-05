@@ -39,6 +39,7 @@ pub enum ActivityLogType {
     StocktakeStatusFinalised,
     RequisitionCreated,
     RequisitionDeleted,
+    RequisitionNumberAllocated,
     RequisitionStatusSent,
     RequisitionStatusFinalised,
     StockLocationChange,
