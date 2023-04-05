@@ -18,6 +18,7 @@ pub struct ProgramEnrolmentFilter {
     pub enrolment_datetime: Option<DatetimeFilter>,
     pub program_enrolment_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<ProgramEnrolmentStatus>>,
+    pub document_name: Option<EqualFilter<String>>,
 }
 
 impl ProgramEnrolmentFilter {
@@ -28,6 +29,7 @@ impl ProgramEnrolmentFilter {
             enrolment_datetime: None,
             program_enrolment_id: None,
             status: None,
+            document_name: None,
         }
     }
 
@@ -53,6 +55,11 @@ impl ProgramEnrolmentFilter {
 
     pub fn status(mut self, filter: EqualFilter<ProgramEnrolmentStatus>) -> Self {
         self.status = Some(filter);
+        self
+    }
+
+    pub fn document_name(mut self, filter: EqualFilter<String>) -> Self {
+        self.document_name = Some(filter);
         self
     }
 }
@@ -84,6 +91,7 @@ fn create_filtered_query<'a>(filter: Option<ProgramEnrolmentFilter>) -> BoxedPro
             program_dsl::program_enrolment_id
         );
         apply_equal_filter!(query, f.status, program_dsl::status);
+        apply_equal_filter!(query, f.document_name, program_dsl::document_name);
     }
     query
 }

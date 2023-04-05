@@ -9,6 +9,11 @@ export const useProgramEnrolmentApi = () => {
   const { storeId } = useAuthContext();
   const keys = {
     base: () => ['program-enrolment'] as const,
+    byDocName: (documentName: string) => [
+      ...keys.base(),
+      storeId,
+      documentName,
+    ],
     list: (params: ProgramEnrolmentListParams) =>
       [...keys.base(), storeId, 'list', params] as const,
   };

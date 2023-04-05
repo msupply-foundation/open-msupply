@@ -2810,6 +2810,7 @@ export type ProgramEnrolmentConnector = {
 };
 
 export type ProgramEnrolmentFilterInput = {
+  documentName?: InputMaybe<EqualFilterStringInput>;
   enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   program?: InputMaybe<EqualFilterStringInput>;
