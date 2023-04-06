@@ -15,6 +15,7 @@ impl Default for SchemaProgramEnrolment {
             enrolment_datetime: Default::default(),
             program_enrolment_id: Default::default(),
             status: SchemaProgramEnrolmentStatus::Active,
+            notes: Default::default(),
         }
     }
 }
