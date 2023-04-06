@@ -162,7 +162,7 @@ export const PatientView: FC = () => {
           onClose={reset}
           onChange={async documentRegistry => {
             const createDocument = {
-              data: { enrolmentDatetime: new Date().toISOString() },
+              data: { enrolmentDatetime: new Date().toISOString(), status: 'ACTIVE' },
               documentRegistry,
             };
             setCreationModal(
