@@ -92,7 +92,7 @@ impl Migration for V1_01_11 {
 
 #[cfg(test)]
 #[actix_rt::test]
-async fn migration_1_10_11() {
+async fn migration_1_01_11() {
     use crate::migrations::*;
     use crate::test_db::*;
 
