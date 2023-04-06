@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import { DocumentRegistryFragment } from '@openmsupply-client/programs';
 
 // Copied from the schema definition
