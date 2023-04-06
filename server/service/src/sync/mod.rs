@@ -3,7 +3,7 @@ pub(crate) mod test;
 
 pub mod api;
 pub(crate) mod central_data_synchroniser;
-mod init_programs_data;
+mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
 pub mod site_info;
@@ -13,8 +13,6 @@ mod sync_serde;
 pub mod sync_status;
 pub mod synchroniser;
 pub mod synchroniser_driver;
-pub use init_programs_data::insert_programs_permissions;
-mod integrate_document;
 pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
 
