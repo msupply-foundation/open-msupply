@@ -122,14 +122,12 @@ const UIComponent = (props: ControlProps) => {
   const { label, uischema, config } = props;
   const [datetime, setDatetime] = React.useState<string | undefined>();
   const patientId = config?.patientId;
-  const encounterDocName = config?.documentName.includes('Encounter');
-  const enrolmentDocName = config?.documentName.includes('Program');
 
   const { data: currentEncounter } = useEncounter.document.byDocName(
-    encounterDocName ? config.documentName : undefined
+    config.documentName
   );
   const { data: programEnrolment } = useProgramEnrolments.document.byDocName(
-    enrolmentDocName ? config.documentName : undefined
+    config.documentName
   );
 
   const { errors, options } = useZodOptionsValidation(
