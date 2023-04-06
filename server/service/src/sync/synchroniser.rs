@@ -11,7 +11,6 @@ use util::format_error;
 use super::{
     api::SyncApiV5,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
-    init_programs_data::init_program_data,
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForIntegrationError,
@@ -194,14 +193,6 @@ impl Synchroniser {
 
         if !is_initialised {
             self.remote.advance_push_cursor(&ctx.connection)?;
-            // TODO remove the program init data call
-            let site_id = self
-                .service_provider
-                .site_info_service
-                .get_site_id(&ctx)
-                .unwrap_or(None)
-                .unwrap_or(2);
-            init_program_data(&self.service_provider, site_id as u32, &ctx)?;
             self.service_provider.site_is_initialised_trigger.trigger();
         }
 
