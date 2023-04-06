@@ -122,18 +122,16 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
       throw new Error('Could not find encounter');
     }
   },
-  byDocName: async (documentName: string): Promise<EncounterFragment> => {
+  byDocName: async (
+    documentName: string
+  ): Promise<EncounterFragment | undefined> => {
     const result = await sdk.encounterByDocName({ documentName, storeId });
     const encounters = result?.encounters;
 
-    if (
-      encounters?.__typename === 'EncounterConnector' &&
-      !!encounters.nodes[0]
-    ) {
+    if (encounters?.__typename === 'EncounterConnector') {
       return encounters.nodes[0];
-    } else {
-      throw new Error('Could not find encounter');
     }
+    return undefined;
   },
   previousEncounters: async (
     patientId: string,
@@ -309,20 +307,17 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
 
   byDocName: async (
     documentName: string
-  ): Promise<ProgramEnrolmentFragment> => {
+  ): Promise<ProgramEnrolmentFragment | undefined> => {
     const result = await sdk.programEnrolmentByDocName({
       storeId,
       documentName,
     });
     const programEnrolment = result?.programEnrolments;
 
-    if (
-      programEnrolment?.__typename === 'ProgramEnrolmentConnector' &&
-      !!programEnrolment.nodes[0]
-    ) {
+    if (programEnrolment?.__typename === 'ProgramEnrolmentConnector') {
       return programEnrolment.nodes[0];
     }
-    throw new Error('Could not find program enrolment');
+    return undefined;
   },
 
   insertProgramEnrolment: async (
