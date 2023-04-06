@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
@@ -12,12 +12,14 @@ import {
   useZodOptionsValidation,
 } from '../common';
 import {
+  EncounterFragment,
   useEncounter,
   useProgramEnrolments,
   useProgramEvents,
 } from '../../api';
 
 import { z } from 'zod';
+import { ProgramEnrolmentFragment } from '../../api/operations.generated';
 
 export const programEventTester = rankWith(10, uiTypeIs('ProgramEvent'));
 
@@ -69,38 +71,42 @@ const Options = z
   .strict();
 type Options = z.infer<typeof Options>;
 
-const extractAt = (datetime?: string, options?: Options): Date => {
-  if (!datetime) {
-    return new Date();
-  }
-  const beforeDate = new Date(new Date(datetime).getTime() - 1);
-  if (!options || !options.at) {
-    return beforeDate;
-  }
+const extractAt = (
+  encounter?: EncounterFragment,
+  program?: ProgramEnrolmentFragment,
+  options?: Options
+): Date => {
+  const date = new Date();
 
-  if (options.at.type === 'encounter') {
+  if (options?.at?.type === 'encounter') {
     switch (options.at.encounterStartDatetime) {
       case 'before':
-        return beforeDate;
+        const before = new Date(
+          new Date(encounter?.startDatetime ?? date).getTime() - 1
+        );
+        return before;
       case 'after':
-        return new Date(datetime);
+        return new Date(encounter?.startDatetime ?? date);
       default:
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ((_: never) => {})(options.at.encounterStartDatetime as never);
     }
-  } else if (options.at.type === 'programEnrolment') {
+  } else if (options?.at?.type === 'programEnrolment') {
     switch (options.at.programEnrolmentDatetime) {
       case 'before':
-        return beforeDate;
+        const before = new Date(
+          new Date(program?.enrolmentDatetime ?? date).getTime() - 1
+        );
+        return before;
       case 'after':
-        return new Date(datetime);
+        return new Date(program?.enrolmentDatetime ?? date);
       default:
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ((_: never) => {})(options.at.programEnrolmentDatetime as never);
     }
   }
 
-  return new Date();
+  return date;
 };
 
 const getDisplayOptions = (
@@ -120,13 +126,13 @@ const getDisplayOptions = (
 
 const UIComponent = (props: ControlProps) => {
   const { label, uischema, config } = props;
-  const [datetime, setDatetime] = React.useState<string | undefined>();
   const patientId = config?.patientId;
+  const [datetime, setDatetime] = useState<Date | undefined>();
 
-  const { data: currentEncounter } = useEncounter.document.byDocName(
+  const { data: encounter } = useEncounter.document.byDocName(
     config.documentName
   );
-  const { data: programEnrolment } = useProgramEnrolments.document.byDocName(
+  const { data: program } = useProgramEnrolments.document.byDocName(
     config.documentName
   );
 
@@ -136,23 +142,11 @@ const UIComponent = (props: ControlProps) => {
   );
 
   useEffect(() => {
-    if (
-      options?.at?.type === 'encounter' &&
-      options?.at?.encounterStartDatetime
-    ) {
-      setDatetime(currentEncounter?.startDatetime);
-    }
-
-    if (
-      options?.at?.type === 'programEnrolment' &&
-      options?.at?.programEnrolmentDatetime
-    ) {
-      setDatetime(programEnrolment?.enrolmentDatetime);
-    }
-  }, [currentEncounter, programEnrolment]);
+    setDatetime(extractAt(encounter, program, options));
+  }, [options?.at, encounter, program]);
 
   const { data: events } = useProgramEvents.document.list({
-    at: options?.at ? extractAt(datetime, options) : undefined,
+    at: datetime ?? undefined,
     patientId: patientId ?? '',
     filter: {
       type: {
