@@ -4,7 +4,6 @@ import {
   ColumnAlign,
   useColumns,
   GenericColumnKey,
-  QuantityUtils,
   getCommentPopoverColumn,
   useFormatNumber,
   useUrlQueryParams,
@@ -87,18 +86,8 @@ export const useRequestColumns = () => {
         description: 'description.forecast-quantity',
         align: ColumnAlign.Right,
         width: 200,
-        accessor: ({ rowData }) =>
-          QuantityUtils.suggestedQuantity(
-            rowData.itemStats.averageMonthlyConsumption,
-            rowData.itemStats.availableStockOnHand,
-            maxMonthsOfStock
-          ),
-        getSortValue: rowData =>
-          QuantityUtils.suggestedQuantity(
-            rowData.itemStats.averageMonthlyConsumption,
-            rowData.itemStats.availableStockOnHand,
-            maxMonthsOfStock
-          ),
+        accessor: ({ rowData }) => rowData.suggestedQuantity,
+        getSortValue: rowData => rowData.suggestedQuantity,
       },
       {
         key: 'requestedQuantity',
