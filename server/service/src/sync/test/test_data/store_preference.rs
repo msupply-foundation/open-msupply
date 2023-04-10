@@ -144,7 +144,6 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 r#type: StorePreferenceType::StorePreferences,
                 pack_to_one: true,
                 requisitions_require_supplier_authorisation: true,
-                use_authorisation_for_customer_requisitions: true,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -155,7 +154,6 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 r#type: StorePreferenceType::StorePreferences,
                 pack_to_one: false,
                 requisitions_require_supplier_authorisation: false,
-                use_authorisation_for_customer_requisitions: false,
             }),
         ),
     ]
