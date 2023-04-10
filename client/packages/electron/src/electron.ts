@@ -142,6 +142,9 @@ const start = (): void => {
     return { servers };
   });
 
+  // not currently implemented in the desktop implementation
+  ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
+
   discovery.on('serviceUp', function ({ type, port, addresses, txt }) {
     if (type?.name !== SERVICE_TYPE) return;
     if (typeof txt != 'object') return;
@@ -213,7 +216,7 @@ app.addListener(
   'certificate-error',
   (event, _webContents, url, error, certificate, callback) => {
     // We are only handling self signed certificate errors
-    if (error != "net::ERR_CERT_INVALID") {
+    if (error != 'net::ERR_CERT_INVALID') {
       return callback(false);
     }
 
@@ -234,7 +237,7 @@ app.addListener(
     // Match SSL fingerprint for server stored in app data
 
     // Match by hardware id and port
-    let identifier = `${connectedServer.hardwareId}-${connectedServer.port}`;
+    const identifier = `${connectedServer.hardwareId}-${connectedServer.port}`;
     let storedFingerprint = store.get(identifier, null);
 
     // If fingerprint does not exists for server add it

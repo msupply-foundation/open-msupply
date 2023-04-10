@@ -6,6 +6,7 @@ import {
   Stack,
   useNativeClient,
   ErrorWithDetails,
+  frontEndHostDisplay,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
 import { Theme } from '@common/styles';
@@ -37,6 +38,7 @@ export const ServerDiscovery = () => {
     startDiscovery,
     stopDiscovery,
     connectToPreviousTimedOut,
+    previousServer,
   } = useNativeClient({
     discovery: true,
     autoconnect: isAutoconnect(),
@@ -46,6 +48,8 @@ export const ServerDiscovery = () => {
     stopDiscovery();
     startDiscovery();
   };
+
+  const server = previousServer ? frontEndHostDisplay(previousServer) : '';
 
   return (
     <Stack
@@ -109,7 +113,7 @@ export const ServerDiscovery = () => {
           </Typography>
         </Box>
       </Box>
-      <Box display="flex" flexDirection="column" flex={1} padding={4}>
+      <Box display="flex" flexDirection="column" flex={1} padding={1}>
         <Typography
           component="div"
           display="flex"
@@ -126,14 +130,17 @@ export const ServerDiscovery = () => {
             color: 'gray.main',
             fontWeight: 600,
             whiteSpace: 'pre-line',
-            paddingBottom: '10%',
+            paddingBottom: '5%',
           }}
         >
           {t('discovery.body')}
         </Typography>
         {(connectToPreviousTimedOut || isTimedOut()) && (
           <Box padding={2}>
-            <ErrorWithDetails error={t('error.unable-to-connect')} details="" />
+            <ErrorWithDetails
+              error={t('error.unable-to-connect', { server })}
+              details=""
+            />
           </Box>
         )}
         <Box display="flex" flex={1} justifyContent="center">

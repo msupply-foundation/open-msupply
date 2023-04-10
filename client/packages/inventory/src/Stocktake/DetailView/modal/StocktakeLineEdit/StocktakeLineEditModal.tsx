@@ -20,7 +20,11 @@ interface StocktakeLineEditModalProps {
 export const StocktakeLineEditModal: FC<
   PropsWithChildren<StocktakeLineEditModalProps>
 > = ({ isOpen, isValid, children, mode, onCancel, onOk, onNext, hasNext }) => {
-  const { Modal } = useDialog({ onClose: onCancel, isOpen });
+  const { Modal } = useDialog({
+    onClose: onCancel,
+    isOpen,
+    disableBackdrop: true,
+  });
   const t = useTranslation('inventory');
   const height = useKeyboardHeightAdjustment(600);
 

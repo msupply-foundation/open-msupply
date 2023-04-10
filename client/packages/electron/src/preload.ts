@@ -12,6 +12,7 @@ const electronNativeAPI: NativeAPI = {
   stopBarcodeScan: () => ipcRenderer.send(IPC_MESSAGES.STOP_BARCODE_SCAN),
   discoveredServers: () => ipcRenderer.invoke(IPC_MESSAGES.DISCOVERED_SERVERS),
   goBackToDiscovery: () => ipcRenderer.send(IPC_MESSAGES.GO_BACK_TO_DISCOVERY),
+  readLog: () => ipcRenderer.invoke(IPC_MESSAGES.READ_LOG),
 };
 
 contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);

@@ -5,7 +5,6 @@ import {
   BasicSpinner,
   useBufferState,
   ModalTabs,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { ResponseLineEditForm } from './ResponseLineEditForm';
 import { useResponse, ResponseLineFragment } from '../../api';
@@ -24,7 +23,6 @@ export const ResponseLineEdit = ({
   onClose,
   line,
 }: ResponseLineEditProps) => {
-  const t = useTranslation('distribution');
   const [currentLine, setCurrentLine] = useBufferState(line);
   const isDisabled = useResponse.utils.isDisabled();
   const { Modal } = useDialog({ onClose, isOpen });
@@ -46,7 +44,7 @@ export const ResponseLineEdit = ({
           }
         />
       ),
-      value: t('label.my-store'),
+      value: 'label.my-store',
     },
     {
       Component: (
@@ -59,7 +57,7 @@ export const ResponseLineEdit = ({
           }
         />
       ),
-      value: t('label.customer'),
+      value: 'label.customer',
     },
   ];
 
