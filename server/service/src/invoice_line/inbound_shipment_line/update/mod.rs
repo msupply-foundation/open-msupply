@@ -295,7 +295,6 @@ mod test {
             r#type: StorePreferenceType::StorePreferences,
             pack_to_one: true,
             requisitions_require_supplier_authorisation: false,
-            use_authorisation_for_customer_requisitions: false,
         };
         StorePreferenceRowRepository::new(&connection)
             .upsert_one(&pack_to_one)
