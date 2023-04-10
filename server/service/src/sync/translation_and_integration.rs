@@ -192,7 +192,6 @@ impl PullUpsertRecord {
                 InventoryAdjustmentReasonRowRepository::new(con).upsert_one(record)
             }
             StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
-            Authoriser(record) => AuthoriserRowRepository::new(con).upsert_one(record),
         }
     }
 }

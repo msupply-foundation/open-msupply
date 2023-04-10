@@ -1,5 +1,4 @@
 pub(crate) mod activity_log;
-pub(crate) mod authoriser;
 pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
@@ -41,7 +40,6 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(report::ReportTranslation {}),
         Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
         Box::new(store_preference::StorePreferenceTranslation {}),
-        Box::new(authoriser::AuthoriserTranslation {}),
         // Remote
         Box::new(location::LocationTranslation {}),
         Box::new(stock_line::StockLineTranslation {}),
@@ -72,7 +70,6 @@ pub(crate) mod LegacyTableName {
     pub(crate) const REPORT: &str = "report";
     pub(crate) const INVENTORY_ADJUSTMENT_REASON: &str = "options";
     pub(crate) const STORE_PREFERENCE: &str = "pref";
-    pub(crate) const AUTHORISER: &str = "authoriser";
     // Remote
     pub(crate) const LOCATION: &str = "Location";
     pub(crate) const ITEM_LINE: &str = "item_line";
@@ -109,7 +106,6 @@ pub(crate) enum PullUpsertRecord {
     ActivityLog(ActivityLogRow),
     InventoryAdjustmentReason(InventoryAdjustmentReasonRow),
     StorePreference(StorePreferenceRow),
-    Authoriser(AuthoriserRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]

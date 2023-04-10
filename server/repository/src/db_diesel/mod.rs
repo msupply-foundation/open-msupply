@@ -2,7 +2,6 @@ use crate::repository_error::RepositoryError;
 
 mod activity_log;
 mod activity_log_row;
-mod authoriser_row;
 mod changelog;
 mod consumption;
 pub mod diesel_schema;
@@ -57,7 +56,6 @@ mod user_store_join_row;
 
 pub use activity_log::*;
 pub use activity_log_row::*;
-pub use authoriser_row::*;
 pub use changelog::*;
 pub use consumption::*;
 pub use filter_sort_pagination::*;

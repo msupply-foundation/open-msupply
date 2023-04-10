@@ -217,10 +217,6 @@ pub(crate) async fn check_records_against_database(
             StorePreference(record) => {
                 check_record_by_id!(StorePreferenceRowRepository, con, record, "StorePreference")
             }
-
-            Authoriser(record) => {
-                check_record_by_id!(AuthoriserRowRepository, con, record, "Authoriser")
-            }
         }
     }
 
