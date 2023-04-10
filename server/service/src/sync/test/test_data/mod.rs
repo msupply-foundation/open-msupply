@@ -1,7 +1,6 @@
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 
 pub(crate) mod activity_log;
-pub(crate) mod authoriser;
 pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
@@ -35,7 +34,6 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullReco
     test_records.append(&mut unit::test_pull_upsert_records());
     test_records.append(&mut inventory_adjustment_reason::test_pull_upsert_records());
     test_records.append(&mut store_preference::test_pull_upsert_records());
-    test_records.append(&mut authoriser::test_pull_upsert_records());
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());

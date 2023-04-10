@@ -67,7 +67,7 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    ActivityLogRow, ActivityLogRowRepository, AuthoriserRow, InventoryAdjustmentReasonRow,
+    ActivityLogRow, ActivityLogRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
     NumberRow, NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
@@ -112,7 +112,6 @@ pub struct MockData {
     pub activity_logs: Vec<ActivityLogRow>,
     pub sync_logs: Vec<SyncLogRow>,
     pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
-    pub authorisers: Vec<AuthoriserRow>,
 }
 
 impl MockData {
@@ -154,7 +153,6 @@ pub struct MockDataInserts {
     pub activity_logs: bool,
     pub sync_logs: bool,
     pub inventory_adjustment_reasons: bool,
-    pub authorisers: bool,
 }
 
 impl MockDataInserts {
@@ -185,7 +183,6 @@ impl MockDataInserts {
             activity_logs: true,
             sync_logs: true,
             inventory_adjustment_reasons: true,
-            authorisers: true,
         }
     }
 
@@ -302,11 +299,6 @@ impl MockDataInserts {
         self.inventory_adjustment_reasons = true;
         self
     }
-
-    pub fn authorisers(mut self) -> Self {
-        self.authorisers = true;
-        self
-    }
 }
 
 #[derive(Default)]
@@ -369,7 +361,6 @@ fn all_mock_data() -> MockDataCollection {
             activity_logs: mock_activity_logs(),
             sync_logs: vec![],
             inventory_adjustment_reasons: vec![],
-            authorisers: vec![],
         },
     );
     data.insert(
@@ -638,7 +629,6 @@ impl MockData {
             mut activity_logs,
             mut sync_logs,
             mut inventory_adjustment_reasons,
-            mut authorisers,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -664,7 +654,6 @@ impl MockData {
         self.sync_logs.append(&mut sync_logs);
         self.inventory_adjustment_reasons
             .append(&mut inventory_adjustment_reasons);
-        self.authorisers.append(&mut authorisers);
 
         self
     }
