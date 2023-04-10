@@ -47,7 +47,12 @@ const Options = z
         }),
       ])
       .optional(),
-    documentType: z.string(),
+    /** Show a program events that target documents of a certain type.
+     * Note, this only includes events that are not targeting a specific document name.
+     * If not specified the program events for the current document are displayed
+     * (using the document name of the current JSONForms document)
+     */
+    documentType: z.string().optional(),
     eventType: z.string(),
     /**
      * Display option based on type.
@@ -153,7 +158,9 @@ const UIComponent = (props: ControlProps) => {
         equalTo: options?.eventType,
       },
       documentType: {
-        equalTo: options?.documentType,
+        equalTo: options?.documentType
+          ? options.documentType
+          : encounter?.document?.documentRegistry?.documentType,
       },
     },
     page: {
