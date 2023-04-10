@@ -160,6 +160,7 @@ pub(crate) struct ShipmentTransferTester {
     request_requisition: RequisitionRow,
     outbound_shipment_line1: InvoiceLineRow,
     outbound_shipment_line2: InvoiceLineRow,
+    outbound_shipment_unallocated_line: InvoiceLineRow,
     outbound_shipment: InvoiceRow,
     inbound_shipment: Option<InvoiceRow>,
     response_requisition: Option<RequisitionRow>,
@@ -259,12 +260,24 @@ impl ShipmentTransferTester {
             // Location todo
         });
 
+        let outbound_shipment_unallocated_line = inline_init(|r: &mut InvoiceLineRow| {
+            r.id = uuid();
+            r.invoice_id = outbound_shipment.id.clone();
+            r.r#type = InvoiceLineRowType::UnallocatedStock;
+            r.pack_size = 1;
+            r.number_of_packs = 10.0;
+            r.item_id = item2.id.clone();
+            r.item_name = item2.name.clone();
+            r.item_code = item2.code.clone();
+        });
+
         ShipmentTransferTester {
             outbound_store: outbound_store.clone(),
             inbound_store: inbound_store.clone(),
             request_requisition,
             outbound_shipment_line1,
             outbound_shipment_line2,
+            outbound_shipment_unallocated_line,
             outbound_shipment,
             inbound_shipment: None,
             response_requisition: None,
@@ -357,6 +370,12 @@ impl ShipmentTransferTester {
             )
             .unwrap()
             .invoice_row;
+
+        // This should not be possible, omSupply service does not allow placeholder/unallocated lines in `picked` invoices
+        // but mSupply does so we want to replicate it (make sure they don't travel through)
+        InvoiceLineRowRepository::new(&ctx.connection)
+            .upsert_one(&self.outbound_shipment_unallocated_line)
+            .unwrap();
     }
 
     pub(crate) fn check_inbound_shipment_created(&mut self, connection: &StorageConnection) {

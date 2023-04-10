@@ -99,9 +99,9 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   if (!rows) return null;
 
   return (
-    <Box flexDirection="column" style={{ width: '100%' }}>
+    <Box flexDirection="column" style={{ width: '100%' }} display="flex">
       {rows.length !== 0 && (
-        <Box style={{ padding: 5, marginInlineStart: 15 }}>
+        <Box style={{ padding: 5, marginInlineStart: 15 }} flex={0}>
           <Switch
             label={t('label.group-by-item')}
             onChange={toggleIsGrouped}
@@ -112,22 +112,24 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
           />
         </Box>
       )}
-      <DataTable
-        id="outbound-detail"
-        onRowClick={onRowClick}
-        ExpandContent={Expand}
-        columns={columns}
-        data={rows}
-        enableColumnSelection
-        noDataElement={
-          <NothingHere
-            body={t('error.no-outbound-items')}
-            onCreate={isDisabled ? undefined : () => onAddItem()}
-            buttonText={t('button.add-item')}
-          />
-        }
-        isRowAnimated={true}
-      />
+      <Box flex={1} style={{ overflowY: 'auto' }}>
+        <DataTable
+          id="outbound-detail"
+          onRowClick={onRowClick}
+          ExpandContent={Expand}
+          columns={columns}
+          data={rows}
+          enableColumnSelection
+          noDataElement={
+            <NothingHere
+              body={t('error.no-outbound-items')}
+              onCreate={isDisabled ? undefined : () => onAddItem()}
+              buttonText={t('button.add-item')}
+            />
+          }
+          isRowAnimated={true}
+        />
+      </Box>
     </Box>
   );
 };

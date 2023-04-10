@@ -1,65 +1,26 @@
 import { uniqWith } from '@common/utils';
 import { useState, useEffect } from 'react';
-import { registerPlugin, Capacitor } from '@capacitor/core';
-import { useLocalStorage } from '../../localStorage';
-
-const DISCOVERY_TIMEOUT = 7000;
-const DISCOVERED_SERVER_POLL = 2000;
-export const PREVIOUS_SERVER_KEY = '/discovery/previous-server';
-export const NATIVE_MODE_KEY = '/native/mode';
-
-export enum NativeMode {
-  Client,
-  Server,
-}
-export type Protocol = 'http' | 'https';
-export const isProtocol = (value: any): value is Protocol =>
-  value === 'http' || value === 'https';
-// Should match server/server/src/discovery.rs (FrontEndHost)
-export type FrontEndHost = {
-  protocol: Protocol;
-  port: number;
-  ip: string;
-  // Below come from TXT record
-  clientVersion: string;
-  hardwareId: string;
-  // This one is set by NativeClient
-  isLocal: boolean;
-};
-
-export interface NativeAPI {
-  // Method used in polling for found servers
-  discoveredServers: () => Promise<{ servers: FrontEndHost[] }>;
-  // Starts server discovery (connectToServer stops server discovery)
-  startServerDiscovery: () => void;
-  // Asks client to connect to server (causing window to navigate to server url and stops discovery)
-  connectToServer: (server: FrontEndHost) => void;
-  // Will return currently connected client (to display in UI)
-  connectedServer: () => Promise<FrontEndHost | null>;
-  goBackToDiscovery: () => void;
-  advertiseService?: () => void;
-  startBarcodeScan: () => Promise<number[]>;
-  stopBarcodeScan: () => void;
-  readLog: () => Promise<{ log: string; error: string }>;
-}
+import { KeepAwake } from '@capacitor-community/keep-awake';
+import {
+  getNativeAPI,
+  getPreference,
+  matchUniqueServer,
+  setPreference,
+} from './helpers';
+import {
+  DISCOVERED_SERVER_POLL,
+  DISCOVERY_TIMEOUT,
+  FrontEndHost,
+  NativeAPI,
+  NativeMode,
+} from './types';
+import { Capacitor } from '@capacitor/core';
 
 declare global {
   interface Window {
     electronNativeAPI: NativeAPI;
   }
 }
-
-const androidNativeAPI = registerPlugin<NativeAPI>('NativeApi');
-
-export const getNativeAPI = (): NativeAPI | null => {
-  // Android
-  if (Capacitor.isNativePlatform()) return androidNativeAPI;
-
-  // Electron
-  if (!!window.electronNativeAPI) return window.electronNativeAPI;
-
-  return null;
-};
 
 type NativeClientState = {
   // A previous server is set in local storage, but was not returned in the list of available servers
@@ -68,7 +29,6 @@ type NativeClientState = {
   // Indicate that server discovery has taken too long without finding server
   discoveryTimedOut: boolean;
   isDiscovering: boolean;
-  mode: NativeMode | null;
   previousServer: FrontEndHost | null;
   servers: FrontEndHost[];
 };
@@ -78,27 +38,23 @@ export const useNativeClient = ({
   discovery,
 }: { discovery?: boolean; autoconnect?: boolean } = {}) => {
   const nativeAPI = getNativeAPI();
-  const [nativeMode, setNativeMode] = useLocalStorage(NATIVE_MODE_KEY);
-  // the desktop app only supports running in client mode
-  const mode = !!window.electronNativeAPI ? NativeMode.Client : nativeMode;
-  const previousServerJson = localStorage.getItem(PREVIOUS_SERVER_KEY);
 
-  const setMode = (mode: NativeMode) => {
-    setNativeMode(mode);
-    setState(state => ({ ...state, mode }));
-  };
+  const setMode = (mode: NativeMode) =>
+    setPreference('mode', mode).then(() =>
+      setState(state => ({ ...state, mode }))
+    );
+
   const [state, setState] = useState<NativeClientState>({
     connectToPreviousTimedOut: false,
     connectedServer: null,
     discoveryTimedOut: false,
     isDiscovering: false,
-    mode,
-    previousServer: previousServerJson ? JSON.parse(previousServerJson) : null,
+    previousServer: null,
     servers: [],
   });
 
   const connectToServer = (server: FrontEndHost) => {
-    localStorage.setItem(PREVIOUS_SERVER_KEY, JSON.stringify(server));
+    setPreference('previousServer', server);
     nativeAPI?.connectToServer(server);
   };
 
@@ -134,12 +90,28 @@ export const useNativeClient = ({
     return result.log || noResult;
   };
 
+  const allowSleep = async () => {
+    // Currently only supported on native platforms via capacitor
+    if (!Capacitor.isNativePlatform) return;
+
+    const result = await KeepAwake.isSupported();
+    if (result.isSupported) await KeepAwake.allowSleep();
+  };
+
+  const keepAwake = async () => {
+    // Currently only supported on native platforms via capacitor
+    if (!Capacitor.isNativePlatform) return;
+
+    const result = await KeepAwake.isSupported();
+    if (result.isSupported) await KeepAwake.keepAwake();
+  };
+
   useEffect(() => {
     if (!state.isDiscovering) return;
 
     let connectToPreviousTimer: NodeJS.Timer | undefined = undefined;
 
-    if (autoconnect) {
+    if (autoconnect && !!state.previousServer) {
       connectToPreviousTimer = setTimeout(
         () =>
           setState(state => ({ ...state, connectToPreviousTimedOut: true })),
@@ -177,6 +149,9 @@ export const useNativeClient = ({
 
   useEffect(() => {
     startDiscovery();
+    getPreference('previousServer', '').then(server => {
+      if (!!server) setState(state => ({ ...state, previousServer: server }));
+    });
   }, []);
 
   // Auto connect if autoconnect=true and server found matching previousConnectedServer
@@ -203,28 +178,7 @@ export const useNativeClient = ({
     stopDiscovery,
     setMode,
     readLog,
+    keepAwake,
+    allowSleep,
   };
-};
-
-const matchUniqueServer = (a: FrontEndHost, b: FrontEndHost) =>
-  // Allow port to run multiple instances on one machine (at least for dev)
-  a.hardwareId === b.hardwareId && a.port === b.port;
-
-export const frontEndHostUrl = ({ protocol, ip, port }: FrontEndHost) =>
-  `${protocol}://${ip}:${port}`;
-
-export const frontEndHostDiscoveryGraphql = (server: FrontEndHost) =>
-  `${frontEndHostUrl({
-    ...server,
-    port: server.port + 1,
-    protocol: 'http',
-  })}/graphql`;
-
-export const frontEndHostDisplay = ({ protocol, ip, port }: FrontEndHost) => {
-  switch (protocol) {
-    case 'https':
-      return port === 443 ? `https://${ip}` : `https://${ip}:${port}`;
-    default:
-      return port === 80 ? `http://${ip}` : `http://${ip}:${port}`;
-  }
 };

@@ -11,6 +11,7 @@ lerna-debug.log*
 **/build/*
 # **/dist/* this is ignored from within dist folder, see comment in dist./.gitingore
 **/storybook-static/*
+**/assets/public/*
 
 # Dependency directories
 node_modules/

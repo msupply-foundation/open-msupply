@@ -13,6 +13,12 @@ import {
   InventoryAdjustmentReasonRowFragment,
 } from '../api';
 
+export enum Adjustment {
+  Reduction,
+  Addition,
+  None,
+}
+
 interface InventoryAdjustmentReasonSearchInputProps {
   value: InventoryAdjustmentReasonRowFragment | null;
   width?: number | string;
@@ -20,27 +26,20 @@ interface InventoryAdjustmentReasonSearchInputProps {
     inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
   ) => void;
   autoFocus?: boolean;
-  stockReduction: number;
+  adjustment: Adjustment;
   isError?: boolean;
 }
 
 export const InventoryAdjustmentReasonSearchInput: FC<
   InventoryAdjustmentReasonSearchInputProps
-> = ({
-  value,
-  width,
-  onChange,
-  autoFocus = false,
-  stockReduction,
-  isError,
-}) => {
+> = ({ value, width, onChange, autoFocus = false, adjustment, isError }) => {
   const { data, isLoading } =
     useInventoryAdjustmentReason.document.listAllActive();
-  const disabled = data?.totalCount === 0 || stockReduction === 0;
-  const isRequired = !disabled && stockReduction !== 0;
+  const isRequired = data?.totalCount !== 0;
+  const isDisabled = adjustment === Adjustment.None || !isRequired;
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
-    if (stockReduction === 0) return false;
-    if (stockReduction < 0)
+    if (adjustment === Adjustment.None) return false;
+    if (adjustment === Adjustment.Addition)
       return reason.type === InventoryAdjustmentReasonNodeType.Positive;
     return reason.type === InventoryAdjustmentReasonNodeType.Negative;
   };
@@ -50,7 +49,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
     <Box display="flex" flexDirection="row" width={120}>
       <Autocomplete
         autoFocus={autoFocus}
-        disabled={disabled}
+        disabled={isDisabled}
         width={`${width}px`}
         clearable={false}
         value={

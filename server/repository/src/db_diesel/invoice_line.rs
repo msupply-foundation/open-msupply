@@ -9,7 +9,7 @@ use super::{
 
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter,
-    InvoiceRowStatus, InvoiceRowType, Pagination, StockLineRow,
+    InvoiceRowStatus, InvoiceRowType, StockLineRow,
 };
 
 use diesel::{
@@ -166,7 +166,7 @@ impl<'a> InvoiceLineRepository<'a> {
         &self,
         filter: InvoiceLineFilter,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter))
+        self.query(Some(filter))
     }
 
     pub fn query_one(
@@ -178,16 +178,12 @@ impl<'a> InvoiceLineRepository<'a> {
 
     pub fn query(
         &self,
-        pagination: Pagination,
         filter: Option<InvoiceLineFilter>,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
-        let result = query
-            .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<InvoiceLineJoin>(&self.connection.connection)?;
+        let result = query.load::<InvoiceLineJoin>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -288,5 +284,8 @@ impl InvoiceLine {
 impl InvoiceLineRowType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+    }
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
     }
 }
