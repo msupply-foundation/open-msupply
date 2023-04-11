@@ -75,6 +75,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const INVENTORY_ADJUSTMENT_REASON: &str = "options";
     pub(crate) const STORE_PREFERENCE: &str = "pref";
     pub(crate) const PERIOD_SCHEDULE: &str = "periodSchedule";
+    pub(crate) const PERIOD: &str = "period";
     // Remote
     pub(crate) const LOCATION: &str = "Location";
     pub(crate) const ITEM_LINE: &str = "item_line";
@@ -100,6 +101,7 @@ pub(crate) enum PullUpsertRecord {
     MasterListLine(MasterListLineRow),
     MasterListNameJoin(MasterListNameJoinRow),
     PeriodSchedule(PeriodScheduleRow),
+    Period(PeriodRow),
     Report(ReportRow),
     Location(LocationRow),
     StockLine(StockLineRow),
@@ -132,6 +134,7 @@ pub(crate) enum PullDeleteRecordTable {
     MasterListLine,
     MasterListNameJoin,
     PeriodSchedule,
+    Period,
     Report,
     Name,
     InventoryAdjustmentReason,
