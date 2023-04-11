@@ -25,7 +25,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
     /// 1. Source requisition name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source requisition is Request requisition
     /// 3. Source requisition is Status is Sent
-    /// 4. Response requisition does not exists (no link is found for source requisition)
+    /// 4. Response requisition does not exist (no link is found for source requisition)
     ///
     /// Only runs once:
     /// 5. Because new response requisition is linked to source requisition when it's created and `4.` will never be true again
@@ -49,27 +49,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
             return Ok(None);
         }
         // 4.
-        if let Some(response_requisition) = response_requisition {
-            // If the requisition number has not been allocated by the generating store allocate it now
-            if response_requisition.requisition_row.requisition_number == -1 {
-                let updated_requisition_row = RequisitionRow {
-                    requisition_number: next_number(
-                        connection,
-                        &NumberRowType::ResponseRequisition,
-                        &response_requisition.store_row.id,
-                    )?,
-                    ..response_requisition.requisition_row.clone()
-                };
-
-                RequisitionRowRepository::new(connection).upsert_one(&updated_requisition_row)?;
-                system_activity_log_entry(
-                    connection,
-                    ActivityLogType::RequisitionNumberAllocated,
-                    &response_requisition.store_row.id,
-                    &response_requisition.requisition_row.id,
-                )?;
-            }
-
+        if response_requisition.is_some() {
             return Ok(None);
         }
 
