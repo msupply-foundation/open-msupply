@@ -25,6 +25,7 @@ import {
   EncounterFragment,
   EncounterRowFragment,
   FormSchemaFragment,
+  ProgramEnrolmentFragment,
   ProgramEnrolmentRowFragment,
   Sdk,
 } from './operations.generated';
@@ -120,6 +121,17 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
     } else {
       throw new Error('Could not find encounter');
     }
+  },
+  byDocName: async (
+    documentName: string
+  ): Promise<EncounterFragment | undefined> => {
+    const result = await sdk.encounterByDocName({ documentName, storeId });
+    const encounters = result?.encounters;
+
+    if (encounters?.__typename === 'EncounterConnector') {
+      return encounters.nodes[0];
+    }
+    return undefined;
   },
   previousEncounters: async (
     patientId: string,
@@ -291,6 +303,21 @@ export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
     });
 
     return result?.programEnrolments;
+  },
+
+  byDocName: async (
+    documentName: string
+  ): Promise<ProgramEnrolmentFragment | undefined> => {
+    const result = await sdk.programEnrolmentByDocName({
+      storeId,
+      documentName,
+    });
+    const programEnrolment = result?.programEnrolments;
+
+    if (programEnrolment?.__typename === 'ProgramEnrolmentConnector') {
+      return programEnrolment.nodes[0];
+    }
+    return undefined;
   },
 
   insertProgramEnrolment: async (

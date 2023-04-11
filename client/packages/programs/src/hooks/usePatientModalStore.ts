@@ -3,6 +3,7 @@ import { CreateDocument } from '@openmsupply-client/programs';
 
 interface PatientModalDocument {
   name?: string;
+  patientId?: string;
   type?: string;
   createDocument?: CreateDocument;
 }
