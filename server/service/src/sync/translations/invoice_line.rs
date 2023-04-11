@@ -5,7 +5,7 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
-    ItemRowRepository, StorageConnection, SyncBufferRow,
+    ItemRowRepository, StockLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -153,14 +153,25 @@ impl SyncTranslation for InvoiceLineTranslation {
                 (item.code, None, total, total)
             }
         };
-        // When invoice lines are coming from another site, we don't get stock line and location
-        // so foreign key constraint is violated, thus we want to set them to None if it's foreign site record.
-        let (stock_line_id, location_id) = if is_active_record_on_site(
+
+        let is_record_active_on_site = is_active_record_on_site(
             &connection,
             ActiveRecordCheck::InvoiceLine {
                 invoice_id: invoice_id.clone(),
             },
-        )? {
+        )?;
+
+        let is_stock_line_valid = match stock_line_id {
+            Some(ref stock_line_id) => StockLineRowRepository::new(connection)
+                .find_one_by_id(&stock_line_id)
+                .is_ok(),
+            None => false,
+        };
+
+        // When invoice lines are coming from another site, we don't get stock line and location
+        // so foreign key constraint is violated, thus we want to set them to None if it's foreign site record.
+        // If the invoice is an auto generated inbound shipment, then the stock_lines are not valid either.
+        let (stock_line_id, location_id) = if is_record_active_on_site && is_stock_line_valid {
             (stock_line_id, location_id)
         } else {
             (None, None)
