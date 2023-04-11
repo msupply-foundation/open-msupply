@@ -7,7 +7,6 @@ impl Migration for V1_01_11 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Store Tag
         sql!(
             connection,
             r#"
@@ -20,32 +19,30 @@ impl Migration for V1_01_11 {
             "#
         )?;
 
+        sql!(
+            connection,
+            r#"
+            CREATE TABLE period_schedule (
+                id TEXT NOT NULL PRIMARY KEY,
+                name TEXT NOT NULL
+            );
+            "#
+        )?;
+
+        sql!(
+            connection,
+            r#"
+            CREATE TABLE period (
+                id TEXT NOT NULL PRIMARY KEY,
+                period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id),
+                name TEXT NOT NULL,
+                start_date {DATE} NOT NULL,
+                end_date {DATE} NOT NULL
+            );
+            "#
+        )?;
+
         // Commented for this PR as not used yet...
-        // // Period Schedule
-        // sql!(
-        //     connection,
-        //     r#"
-        //     CREATE TABLE period_schedule (
-        //         id TEXT NOT NULL PRIMARY KEY,
-        //         name TEXT NOT NULL
-        //     );
-        //     "#
-        // )?;
-
-        // // Period
-        // sql!(
-        //     connection,
-        //     r#"
-        //     CREATE TABLE period (
-        //         id TEXT NOT NULL PRIMARY KEY,
-        //         period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id),
-        //         name TEXT NOT NULL,
-        //         start_date {DATE} NOT NULL, -- `to` is a reserved word in postgres and sqlite
-        //         end_date {DATE} NOT NULL -- `from` is a reserved word in postgres and sqlite
-        //     );
-        //     "#
-        // )?;
-
         // // Program
         // sql!(
         //     connection,
