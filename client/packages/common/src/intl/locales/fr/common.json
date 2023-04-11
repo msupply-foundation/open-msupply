@@ -71,6 +71,7 @@
   "label.app-version": "Version:",
   "label.available-packs": "Disponible (packs)",
   "label.batch": "Lot",
+  "label.cant-delete-disabled-requisition": "Vous ne pouvez supprimer des lignes lorsque le statut de la réquisition est 'Brouillon'",
   "label.chargeCode": "Code facturation",
   "label.clear-filter": "Effacer le filtre",
   "label.click-to-sort": "Cliquez pour trier par colonne",

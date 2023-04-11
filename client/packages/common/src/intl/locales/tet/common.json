@@ -1,5 +1,6 @@
 {
   "button.language": "Lingua",
+  "label.cant-delete-disabled-requisition": "Bele deit hamos linas wainhira requizisaun iha hela Draf",
   "label.rows-per-page": "Linas por pájina:",
   "label.toggle-password-visibility": "Toggle palavra passe nia vizibilidade",
   "log.invoice-status-allocated": "Remessa aloka ona",

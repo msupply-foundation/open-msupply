@@ -59,7 +59,6 @@
   "label.select-rows-to-allocate-them": "Sélectionner les lignes pour les allouer",
   "messages.create-outbound-from-requisition": "Êtes-vous sûr(e) de vouloir créer une livraison sortante pour cette réquisition client ?",
   "label.add-charges": "Ajouter frais",
-  "label.cant-delete-disabled-requisition": "Vous ne pouvez supprimer des lignes lorsque le statut de la réquisition est 'Brouillon'",
   "label.supply-quantity": "Quantité à fournir",
   "label.unit_one": "{{unit}}",
   "label.unit_other": "{{unit}}s",
