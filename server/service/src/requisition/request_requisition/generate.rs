@@ -25,7 +25,7 @@ pub fn generate_suggested_quantity(
     }
     let months_of_stock = available_stock_on_hand as f64 / average_monthly_consumption as f64;
 
-    if months_of_stock == min_months_of_stock || months_of_stock > max_months_of_stock {
+    if months_of_stock > min_months_of_stock || months_of_stock > max_months_of_stock {
         return 0;
     }
 

@@ -239,7 +239,7 @@ mod test_update {
             .find_one_by_id(&calculation_requisition.lines[2].id)
             .unwrap()
             .unwrap();
-        assert_eq!(line.suggested_quantity, 14);
+        assert_eq!(line.suggested_quantity, 0);
 
         // Above max MOS
         let line = requisition_line_row_repo
