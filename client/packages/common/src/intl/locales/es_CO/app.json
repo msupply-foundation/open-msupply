@@ -63,7 +63,7 @@
     "error.site-mismatch": "Incompatibilidad de sitio\"",
     "error.site-name-not-found": "No se encontró el nombre del sitio",
     "error.unable-to-initialise": "No se puede inicializar",
-    "error.unable-to-connect": "No se puede conectar al servidor",
+    "error.unable-to-connect": "No se puede conectar al servidor {{server}}",
     "error.unable-to-save-settings": "No se pueden guardar los ajustes",
     "error.unknown-sync-error": "Error de sincronización desconocido",
     "heading.password": "Contraseña",
@@ -86,5 +86,6 @@
     "reports": "Reportes",
     "saving": "Guardando...",
     "searching": "Buscando...",
-    "select-store": "Seleccionar Almacén"
+    "select-store": "Seleccionar Almacén",
+    "error.sync-api-incompatible": "La versión de API de sincronización no es compatible"
 }
