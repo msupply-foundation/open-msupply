@@ -241,14 +241,17 @@
     "button.retry": "Reintentar",
     "button.save": "Guardar",
     "button.select-a-color": "Seleccionar color",
-    "button.try-again": "Intente de nuevo",
+    "button.try-again": "Intentar Nuevamente",
     "description.average-monthly-consumption": "Consumo Mensual Promedio",
     "description.customer-reference": "Referencia de Cliente",
     "description.customer-soh": "Existencias Disponibles del Cliente",
     "description.entered": "Fecha de creación",
-    "description.forecast-quantity": "Cantidad Pronosticada Para Alcanzar el Objetivo\"",
+    "description.forecast-quantity": "Cantidad Pronosticada Para Alcanzar el Objetivo",
     "description.invoice-number": "Número de envío",
     "description.our-soh": "Nuestras Existencias en Almacén",
     "label.client": "Cliente",
-    "label.requested-quantity": "Solicitado"
+    "label.requested-quantity": "Solicitado",
+    "error.no-service-charges": "No se han asignado cargos de servicio a este almacén",
+    "error.no-permission": "No tienes permiso para ver estos datos",
+    "label.my-store": "Mi almacén"
 }
