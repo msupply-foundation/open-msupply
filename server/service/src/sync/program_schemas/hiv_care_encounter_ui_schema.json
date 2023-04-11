@@ -169,14 +169,18 @@
       },
       "elements": [
         {
-          "type": "EncounterProgramEvent",
+          "type": "ProgramEvent",
           "label": "Current ARV Regimen",
           "options": {
             "eventType": "arvMedicationRegimen",
-            "multiline": true,
-            "rows": 2,
+            "at": {
+              "type": "encounter",
+              "encounterStartDatetime": "before"
+            },
             "display": {
               "type": "string",
+              "multiline": true,
+              "rows": 2,
               "show": [
                 ["1a-New", "1a-New TDF + 3TC + DTG"],
                 ["1a-Old", "1a-Old TDF + 3TC + EFV"],
@@ -216,11 +220,15 @@
           }
         },
         {
-          "type": "EncounterProgramEvent",
+          "type": "ProgramEvent",
           "scope": "#/properties/arvMedication/properties/regimenType",
           "label": "Current Regiment Type",
           "options": {
-            "eventType": "arvMedicationRegimenType"
+            "eventType": "arvMedicationRegimenType",
+            "at": {
+              "type": "encounter",
+              "encounterStartDatetime": "before"
+            }
           }
         },
         {
@@ -663,13 +671,17 @@
           "type": "Spacer"
         },
         {
-          "type": "EncounterProgramEvent",
+          "type": "ProgramEvent",
           "scope": "#/properties/arvMedication/properties/quantityPrescribed",
           "label": "Pill Count (at last visit end)",
           "options": {
             "eventType": "arvMedicationQuantityPrescribed",
             "display": {
               "type": "number"
+            },
+            "at": {
+              "type": "encounter",
+              "encounterStartDatetime": "before"
             }
           }
         },

@@ -60,6 +60,7 @@ pub struct ProgramEnrolmentFilterInput {
     pub enrolment_datetime: Option<DatetimeFilterInput>,
     pub program_enrolment_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterProgramEnrolmentStatusInput>,
+    pub document_name: Option<EqualFilterStringInput>,
 }
 impl ProgramEnrolmentFilterInput {
     pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
@@ -71,6 +72,7 @@ impl ProgramEnrolmentFilterInput {
             status: self
                 .status
                 .map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
+            document_name: self.document_name.map(EqualFilter::from),
         }
     }
 }

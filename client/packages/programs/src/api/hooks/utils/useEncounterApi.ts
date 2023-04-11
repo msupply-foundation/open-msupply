@@ -21,6 +21,11 @@ export const useEncounterApi = () => {
   const keys = {
     base: () => ['encounter'] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
+    byDocName: (documentName: string) => [
+      ...keys.base(),
+      storeId,
+      documentName,
+    ],
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: EncounterListParams) =>
       [...keys.base(), storeId, ...keys.list(), params] as const,
