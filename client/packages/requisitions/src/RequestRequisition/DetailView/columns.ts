@@ -86,7 +86,6 @@ export const useRequestColumns = () => {
         description: 'description.forecast-quantity',
         align: ColumnAlign.Right,
         width: 200,
-        accessor: ({ rowData }) => rowData.suggestedQuantity,
         getSortValue: rowData => rowData.suggestedQuantity,
       },
       {
