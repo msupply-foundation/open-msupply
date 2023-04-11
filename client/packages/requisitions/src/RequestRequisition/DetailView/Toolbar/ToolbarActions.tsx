@@ -54,6 +54,9 @@ export const ToolbarActions = () => {
                   onConfirm: () => update({ minMonthsOfStock: option.value }),
                 })
               }
+              getOptionDisabled={(option) => {
+                return option.value > maxMonthsOfStock;
+              }}              
             />
           }
         />
