@@ -161,12 +161,23 @@ impl SyncTranslation for InvoiceLineTranslation {
             },
         )?;
 
+        // TODO: remove the stock_line_is_valid check once central server does not generate the inbound shipment
+        // omSupply should be generating the inbound, with valid stock lines.
+        // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
         let is_stock_line_valid = match stock_line_id {
             Some(ref stock_line_id) => StockLineRowRepository::new(connection)
                 .find_one_by_id(&stock_line_id)
                 .is_ok(),
             None => false,
         };
+
+        if !is_stock_line_valid {
+            log::warn!(
+                "Stock line is not valid, invoice_line_id: {}, stock_line_id: {:?}",
+                id,
+                stock_line_id
+            );
+        }
 
         // When invoice lines are coming from another site, we don't get stock line and location
         // so foreign key constraint is violated, thus we want to set them to None if it's foreign site record.
