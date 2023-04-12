@@ -61,7 +61,7 @@ export const useResponseColumns = () => {
         'requestedQuantity',
         { getSortValue: rowData => rowData.requestedQuantity },
       ],
-      // TODO: Should only be visible if requisition has authorisationStatus (also authorisation comment)
+      // TODO: Should only be visible if linked requisition has approvalStatus != None)
       {
         key: 'approvedQuantity',
         label: 'label.approved-quantity',
