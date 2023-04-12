@@ -7,8 +7,7 @@ CREATE TABLE changelog (
     row_action TEXT NOT NULL,
     -- Below fields are extracted from associated record where it's deemed necessary (see changelog/README.md)
     name_id TEXT,
-    store_id TEXT,
-    is_sync_update BOOLEAN NOT NULL DEFAULT FALSE
+    store_id TEXT
 );
 
 CREATE VIEW changelog_deduped AS
@@ -17,8 +16,7 @@ CREATE VIEW changelog_deduped AS
         t1.record_id,
         t1.row_action,
         t1.name_id,
-        t1.store_id,
-        t1.is_sync_update
+        t1.store_id
     FROM changelog t1
     WHERE t1.cursor = (SELECT max(t2.cursor) 
                     from changelog t2
