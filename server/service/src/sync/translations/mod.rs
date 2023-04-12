@@ -9,6 +9,7 @@ pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
 pub(crate) mod name_store_join;
+pub(crate) mod name_tag;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod report;
@@ -33,6 +34,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
     vec![
         // Central
         Box::new(name::NameTranslation {}),
+        Box::new(name_tag::NameTagTranslation {}),
         Box::new(unit::UnitTranslation {}),
         Box::new(item::ItemTranslation {}),
         Box::new(store::StoreTranslation {}),
