@@ -42,18 +42,16 @@ impl Migration for V1_01_11 {
             "#
         )?;
 
-        // Commented for this PR as not used yet...
-        // // Program
-        // sql!(
-        //     connection,
-        //     r#"
-        //     CREATE TABLE program (
-        //         id TEXT NOT NULL PRIMARY KEY,
-        //         name TEXT NOT NULL,
-        //         master_list_id TEXT NOT NULL REFERENCES master_list(id)
-        //     );
-        //     "#
-        // )?;
+        sql!(
+            connection,
+            r#"
+            CREATE TABLE program (
+                id TEXT NOT NULL PRIMARY KEY,
+                name TEXT NOT NULL,
+                master_list_id TEXT NOT NULL REFERENCES master_list(id)
+            );
+            "#
+        )?;
 
         // // Program Settings
         // sql!(
