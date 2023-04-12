@@ -127,11 +127,9 @@ The graph control needs to fetch data from multiple encounters.
 This is done through a fairly generic `encounterFields` endpoint which allows users to extract fields from an encounter document.
 For example, the `data.physicalExamination.weight` field can be fetched from all patient encounters (note, that the weight is a custom field).
 
-# Document access permissions [Draft]
+# Document access permissions
 
-Permissions are currently not implemented but here is the plan:
+To access patient documents, e.g. for patients, program enrolments or encounters, a user requires the following permissions:
 
-Document access is restricted as follows:
-
-1. User needs access to the patient associated with a document
-2. User needs access to QUERY and/or MUTATE access to a document type, e.g. to restrict access to a certain program
+1. Access to the store a patient is associated with (`name_store_join`)
+2. Permissions for the program the document belongs to
