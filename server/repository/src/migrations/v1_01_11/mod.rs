@@ -55,9 +55,8 @@ impl Migration for V1_01_11 {
             connection,
             r#"
             CREATE TABLE program (
-                id TEXT NOT NULL PRIMARY KEY,
-                name TEXT NOT NULL,
-                master_list_id TEXT NOT NULL REFERENCES master_list(id)
+                id TEXT NOT NULL REFERENCES master_list(id) PRIMARY KEY,
+                name TEXT NOT NULL
             );
             "#
         )?;
