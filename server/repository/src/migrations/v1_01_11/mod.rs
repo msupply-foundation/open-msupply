@@ -14,6 +14,13 @@ impl Migration for V1_01_11 {
         remote_authorisation::migrate(connection)?;
         is_sync_updated_for_requisition::migrate(connection)?;
 
+        sql!(
+            connection,
+            r#"
+            ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
+        "#
+        )?;
+
         Ok(())
     }
 }
