@@ -63,9 +63,7 @@ impl<'a> PeriodScheduleRepository<'a> {
                     apply_sort_no_case!(query, sort, period_schedule_dsl::name)
                 }
             }
-        } else {
-            query = query.order(period_schedule_dsl::name.asc())
-        }
+        };
 
         let result = query.load::<PeriodScheduleRow>(&self.connection.connection)?;
 
@@ -73,9 +71,9 @@ impl<'a> PeriodScheduleRepository<'a> {
     }
 }
 
-type BoxedLogQuery = period_schedule::BoxedQuery<'static, DBType>;
+type BoxedPeriodScheduleQuery = period_schedule::BoxedQuery<'static, DBType>;
 
-fn create_filtered_query(filter: Option<PeriodScheduleFilter>) -> BoxedLogQuery {
+fn create_filtered_query(filter: Option<PeriodScheduleFilter>) -> BoxedPeriodScheduleQuery {
     let mut query = period_schedule::table.into_boxed();
 
     if let Some(filter) = filter {
