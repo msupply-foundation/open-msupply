@@ -3,7 +3,7 @@ mod integration;
 mod pull_and_push;
 pub(crate) mod test_data;
 
-use super::translations::{IntegrationRecords, PullDeleteRecordTable};
+use super::translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable};
 use crate::sync::translations::PullUpsertRecord;
 use repository::{mock::MockData, *};
 use util::inline_init;
@@ -25,16 +25,7 @@ impl TestSyncPullRecord {
         id_and_data: (&str, &str),
         result: PullUpsertRecord,
     ) -> TestSyncPullRecord {
-        TestSyncPullRecord {
-            translated_record: Some(IntegrationRecords::from_upsert(result)),
-            sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = table_name.to_owned();
-                r.record_id = id_and_data.0.to_owned();
-                r.data = id_and_data.1.to_owned();
-                r.action = SyncBufferAction::Upsert;
-            }),
-            extra_data: None,
-        }
+        Self::new_pull_upserts(table_name, id_and_data, vec![result])
     }
     fn new_pull_upserts(
         table_name: &str,
@@ -59,16 +50,17 @@ impl TestSyncPullRecord {
         id: &str,
         result_table: PullDeleteRecordTable,
     ) -> TestSyncPullRecord {
-        TestSyncPullRecord {
-            translated_record: Some(IntegrationRecords::from_delete(id, result_table)),
-            sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = table_name.to_owned();
-                r.record_id = id.to_string();
-                r.data = "{}".to_string();
-                r.action = SyncBufferAction::Delete;
-            }),
-            extra_data: None,
-        }
+        Self::new_pull_deletes(
+            table_name,
+            id,
+            IntegrationRecords {
+                upserts: vec![],
+                deletes: vec![PullDeleteRecord {
+                    table: result_table,
+                    id: id.to_string(),
+                }],
+            },
+        )
     }
     fn new_pull_deletes(
         table_name: &str,
