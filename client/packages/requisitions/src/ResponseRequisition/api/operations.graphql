@@ -132,7 +132,7 @@ fragment ResponseRow on RequisitionNode {
   theirReference
   type
   otherPartyId
-  authorisationStatus
+  approvalStatus
 }
 
 query responses(
