@@ -132,7 +132,7 @@ fn generate(
         min_months_of_stock,
         // Default
         sent_datetime: None,
-        authorisation_status: None,
+        approval_status: None,
         program_id: None,
         finalised_datetime: None,
         linked_requisition_id: None,

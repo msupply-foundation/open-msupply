@@ -1,6 +1,6 @@
 use crate::{
     activity_log::system_activity_log_entry, number::next_number,
-    requisition::common::get_lines_for_requisition,
+    requisition::common::get_lines_for_requisition, store_preference::get_store_preferences,
 };
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
@@ -8,8 +8,8 @@ use chrono::Utc;
 use repository::{
     ActivityLogType, MasterListFilter, MasterListRepository, NumberRowType, RepositoryError,
     Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType, SimpleStringFilter,
-    StorageConnection,
+    RequisitionRowApprovalStatus, RequisitionRowRepository, RequisitionRowStatus,
+    RequisitionRowType, SimpleStringFilter, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -55,14 +55,18 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         }
 
         // Execute
-        let Auth {
+        let AuthorisationFields {
             program_id,
-            authorisation_status,
-        } = get_auth(connection, &request_requisition);
+            approval_status,
+        } = AuthorisationFields::populate(
+            connection,
+            &request_requisition,
+            &record_for_processing,
+        )?;
 
         let new_response_requisition = RequisitionRow {
             program_id,
-            authorisation_status,
+            approval_status,
             ..generate_response_requisition(
                 connection,
                 &request_requisition,
@@ -103,26 +107,39 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 }
 
 #[derive(Default)]
-struct Auth {
+struct AuthorisationFields {
     program_id: Option<String>,
-    authorisation_status: Option<String>,
+    approval_status: Option<RequisitionRowApprovalStatus>,
 }
 
-fn get_auth(connection: &StorageConnection, request_requisition: &Requisition) -> Auth {
-    // if not "shouldAuthoriseResponseRequisition" preference  return Auth::default();
+impl AuthorisationFields {
+    fn populate(
+        connection: &StorageConnection,
+        request_requisition: &Requisition,
+        record_for_processing: &RequisitionTransferProcessorRecord,
+    ) -> Result<AuthorisationFields, RepositoryError> {
+        let store_id = record_for_processing.other_party_store_id.clone();
+        let preferences = get_store_preferences(connection, &store_id)?;
 
-    // this would only work with a datafile where master list name matches supplier name
-    let program_id = MasterListRepository::new(connection)
-        .query_by_filter(MasterListFilter::new().name(SimpleStringFilter::equal_to(
-            &request_requisition.name_row.name,
-        )))
-        .unwrap()[0]
-        .id
-        .clone();
+        if !preferences.pack_to_one {
+            return Ok(AuthorisationFields::default());
+        }
+        // if not "shouldAuthoriseResponseRequisition" preference  return Auth::default();
 
-    Auth {
-        authorisation_status: Some("pending".to_string()),
-        program_id: Some(program_id),
+        // TODO this would only work with a datafile where master list name matches supplier name
+        // program_id would ideally transfer from request requisition, program_id, this is a hacky fix for now
+        let program_id = MasterListRepository::new(connection)
+            .query_by_filter(MasterListFilter::new().name(SimpleStringFilter::equal_to(
+                &request_requisition.name_row.name,
+            )))
+            .unwrap()[0]
+            .id
+            .clone();
+
+        Ok(AuthorisationFields {
+            approval_status: Some(RequisitionRowApprovalStatus::Pending),
+            program_id: Some(program_id),
+        })
     }
 }
 
@@ -180,7 +197,7 @@ fn generate_response_requisition(
         expected_delivery_date: request_requisition_row.expected_delivery_date,
         // Default
         user_id: None,
-        authorisation_status: None,
+        approval_status: None,
         program_id: None,
         sent_datetime: None,
         finalised_datetime: None,
@@ -206,6 +223,7 @@ fn generate_response_requisition_lines(
                  id: _,
                  requisition_id: _,
                  approved_quantity: _,
+                 approval_comment: _,
                  item_id,
                  requested_quantity,
                  suggested_quantity,
@@ -228,6 +246,7 @@ fn generate_response_requisition_lines(
                 // Default
                 supply_quantity: 0,
                 approved_quantity: 0,
+                approval_comment: None,
                 is_sync_update: false,
             },
         )
