@@ -42,13 +42,13 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         record_for_processing: &ShipmentTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (outbound_shipment, linked_shipment, request_requistion) =
+        let (outbound_shipment, linked_shipment, request_requisition) =
             match &record_for_processing.operation {
                 Operation::Upsert {
                     shipment: outbound_shipment,
                     linked_shipment,
-                    linked_shipment_requisition: request_requistion,
-                } => (outbound_shipment, linked_shipment, request_requistion),
+                    linked_shipment_requisition: request_requisition,
+                } => (outbound_shipment, linked_shipment, request_requisition),
                 _ => return Ok(None),
             };
         // 2.
@@ -72,7 +72,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             connection,
             &outbound_shipment,
             record_for_processing,
-            request_requistion,
+            request_requisition,
         )?;
         let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
@@ -119,7 +119,7 @@ fn generate_inbound_shipment(
     connection: &StorageConnection,
     outbound_shipment: &Invoice,
     record_for_processing: &ShipmentTransferProcessorRecord,
-    request_requistion: &Option<Requisition>,
+    request_requisition: &Option<Requisition>,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let name_id = outbound_shipment.store_row.name_id.clone();
@@ -132,7 +132,7 @@ fn generate_inbound_shipment(
         _ => InvoiceRowStatus::New,
     };
 
-    let request_requisition_id = request_requistion
+    let request_requisition_id = request_requisition
         .as_ref()
         .map(|r| r.requisition_row.id.clone());
 
