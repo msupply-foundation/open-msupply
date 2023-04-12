@@ -1,6 +1,5 @@
-use crate::StorageConnection;
-
 use super::{version::Version, Migration};
+use crate::StorageConnection;
 
 pub(crate) struct V1_01_11;
 
@@ -21,11 +20,26 @@ impl Migration for V1_01_11 {
             connection,
             r#"ALTER TYPE activity_log_type ADD VALUE 'REQUISITION_NUMBER_ALLOCATED';"#
         )?;
+        sql!(
+            connection,
+            r#"
+            ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
+        "#
+        )?;
 
         Ok(())
     }
+
     #[cfg(not(feature = "postgres"))]
-    fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &crate::StorageConnection) -> anyhow::Result<()> {
+        use crate::migrations::sql;
+        sql!(
+            connection,
+            r#"
+            ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
+        "#
+        )?;
+
         Ok(())
     }
 }
