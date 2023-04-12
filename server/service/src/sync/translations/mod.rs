@@ -10,6 +10,7 @@ pub(crate) mod master_list_name_join;
 pub(crate) mod name;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
+pub(crate) mod name_tag_join;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
@@ -33,6 +34,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         // Central
         Box::new(name::NameTranslation {}),
         Box::new(name_tag::NameTagTranslation {}),
+        Box::new(name_tag_join::NameTagJoinTranslation {}),
         Box::new(unit::UnitTranslation {}),
         Box::new(item::ItemTranslation {}),
         Box::new(store::StoreTranslation {}),
@@ -85,6 +87,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const OM_ACTIVITY_LOG: &str = "om_activity_log";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
+    pub(crate) const NAME_TAG_JOIN: &str = "name_tag_join";
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -92,6 +95,7 @@ pub(crate) enum PullUpsertRecord {
     Unit(UnitRow),
     Name(NameRow),
     NameTag(NameTagRow),
+    NameTagJoin(NameTagJoinRow),
     Item(ItemRow),
     Store(StoreRow),
     MasterList(MasterListRow),
@@ -133,6 +137,7 @@ pub(crate) enum PullDeleteRecordTable {
     InventoryAdjustmentReason,
     // Remote-Central (site specific)
     NameStoreJoin,
+    NameTagJoin,
     // Remote (for other party of transfers)
     Invoice,
     InvoiceLine,
