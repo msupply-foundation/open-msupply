@@ -1,6 +1,5 @@
 use crate::sync::{
     api::SyncActionV5,
-    get_sync_push_changelogs_filter,
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
@@ -40,7 +39,7 @@ async fn test_sync_pull_and_push() {
     )
     .await;
 
-    // Get push cursor before inserting pull data (so that we can test push)
+    // Get push cursor before inserting pull data (so that we can test push, excluding inserted mock data)
     let push_cursor = ChangelogRepository::new(&connection)
         .latest_cursor()
         .unwrap()
@@ -65,10 +64,14 @@ async fn test_sync_pull_and_push() {
 
     // PUSH UPSERT
     let mut test_records = get_all_push_test_records();
-    let change_log_filter = get_sync_push_changelogs_filter(&connection).unwrap();
+
+    // Not using get_sync_push_changelogs_filter, since this test uses record integrated via sync as push records
+    // which are usually filtered out via is_sync_updated flag
+    // let change_log_filter = get_sync_push_changelogs_filter(&connection).unwrap();
+
     // Records would have been inserted in test Pull Upsert and trigger should have inserted changelogs
     let changelogs = ChangelogRepository::new(&connection)
-        .changelogs(push_cursor, 100000, change_log_filter)
+        .changelogs(push_cursor, 100000, None /*change_log_filter*/)
         .unwrap();
     // Translate and sort
     let mut translated =
