@@ -3,7 +3,7 @@ mod integration;
 mod pull_and_push;
 pub(crate) mod test_data;
 
-use super::translations::{IntegrationRecords, PullDeleteRecordTable};
+use super::translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable};
 use crate::sync::translations::PullUpsertRecord;
 use repository::{mock::MockData, *};
 use util::inline_init;
@@ -25,16 +25,7 @@ impl TestSyncPullRecord {
         id_and_data: (&str, &str),
         result: PullUpsertRecord,
     ) -> TestSyncPullRecord {
-        TestSyncPullRecord {
-            translated_record: Some(IntegrationRecords::from_upsert(result)),
-            sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = table_name.to_owned();
-                r.record_id = id_and_data.0.to_owned();
-                r.data = id_and_data.1.to_owned();
-                r.action = SyncBufferAction::Upsert;
-            }),
-            extra_data: None,
-        }
+        Self::new_pull_upserts(table_name, id_and_data, vec![result])
     }
     fn new_pull_upserts(
         table_name: &str,
@@ -59,16 +50,17 @@ impl TestSyncPullRecord {
         id: &str,
         result_table: PullDeleteRecordTable,
     ) -> TestSyncPullRecord {
-        TestSyncPullRecord {
-            translated_record: Some(IntegrationRecords::from_delete(id, result_table)),
-            sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-                r.table_name = table_name.to_owned();
-                r.record_id = id.to_string();
-                r.data = "{}".to_string();
-                r.action = SyncBufferAction::Delete;
-            }),
-            extra_data: None,
-        }
+        Self::new_pull_deletes(
+            table_name,
+            id,
+            IntegrationRecords {
+                upserts: vec![],
+                deletes: vec![PullDeleteRecord {
+                    table: result_table,
+                    id: id.to_string(),
+                }],
+            },
+        )
     }
     fn new_pull_deletes(
         table_name: &str,
@@ -188,6 +180,9 @@ pub(crate) async fn check_records_against_database(
             Name(record) => {
                 check_record_by_id!(NameRowRepository, con, record, "Name");
             }
+            NameTag(record) => {
+                check_record_by_id!(NameTagRowRepository, con, record, "NameTag");
+            }
             NameStoreJoin(record) => {
                 check_record_by_id!(NameStoreJoinRepository, con, record, "NameStoreJoin");
             }
@@ -214,12 +209,6 @@ pub(crate) async fn check_records_against_database(
             }
             Item(record) => check_record_by_id!(ItemRowRepository, con, record, "Item"),
             Store(record) => check_record_by_id!(StoreRowRepository, con, record, "Store"),
-            StoreTags(record) => {
-                let tags = StoreTagRowRepository::new(con)
-                    .find_all_by_store_id(&record.store_id)
-                    .unwrap();
-                assert_eq!(tags.len(), record.tags.len());
-            }
             MasterList(record) => {
                 check_record_by_option_id!(MasterListRowRepository, con, record, "Masterlist")
             }
@@ -272,17 +261,14 @@ pub(crate) async fn check_records_against_database(
             Name => {
                 check_delete_record_by_id!(NameRowRepository, con, id)
             }
+            NameTag => {
+                check_delete_record_by_id!(NameTagRowRepository, con, id)
+            }
             Unit => {
                 check_delete_record_by_id_option!(UnitRowRepository, con, id)
             }
             Item => check_delete_record_by_id!(ItemRowRepository, con, id),
             Store => check_delete_record_by_id!(StoreRowRepository, con, id),
-            StoreTags => {
-                let tags = StoreTagRowRepository::new(con)
-                    .find_all_by_store_id(&id)
-                    .unwrap();
-                assert_eq!(tags.len(), 0);
-            }
             MasterList => check_delete_record_by_id_option!(MasterListRowRepository, con, id),
             MasterListLine => {
                 check_delete_record_by_id_option!(MasterListLineRowRepository, con, id)

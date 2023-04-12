@@ -91,9 +91,11 @@ impl<'a> InventoryAdjustmentReasonRepository<'a> {
     }
 }
 
-type BoxedLogQuery = inventory_adjustment_reason::BoxedQuery<'static, DBType>;
+type BoxedInventoryAdjustmentQuery = inventory_adjustment_reason::BoxedQuery<'static, DBType>;
 
-fn create_filtered_query(filter: Option<InventoryAdjustmentReasonFilter>) -> BoxedLogQuery {
+fn create_filtered_query(
+    filter: Option<InventoryAdjustmentReasonFilter>,
+) -> BoxedInventoryAdjustmentQuery {
     let mut query = inventory_adjustment_reason::table.into_boxed();
 
     if let Some(filter) = filter {
