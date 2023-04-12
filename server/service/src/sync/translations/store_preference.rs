@@ -27,6 +27,8 @@ pub struct LegacyPrefRow {
 pub struct LegacyPrefData {
     #[serde(rename = "default_item_packsize_to_one")]
     pub pack_to_one: bool,
+    #[serde(rename = "includeRequisitionsInSuppliersRemoteAuthorisationProcesses")]
+    pub requisitions_require_supplier_authorisation: bool,
 }
 
 pub(crate) struct StorePreferenceTranslation {}
@@ -42,14 +44,22 @@ impl SyncTranslation for StorePreferenceTranslation {
 
         let data = serde_json::from_str::<LegacyPrefRow>(&sync_record.data)?;
 
-        let r#type = match data.r#type {
+        let LegacyPrefRow { id, r#type, data } = data;
+
+        let r#type = match r#type {
             LegacyOptionsType::StorePreferences => StorePreferenceType::StorePreferences,
         };
 
+        let LegacyPrefData {
+            pack_to_one,
+            requisitions_require_supplier_authorisation,
+        } = data;
+
         let result = StorePreferenceRow {
-            id: data.id,
+            id,
             r#type,
-            pack_to_one: data.data.pack_to_one,
+            pack_to_one,
+            requisitions_require_supplier_authorisation,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
