@@ -12,6 +12,7 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
+  ColumnDescription,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -41,26 +42,38 @@ export const RequestRequisitionListView: FC = () => {
   const { data, isError, isLoading } = useRequest.document.list();
   const pagination = { page, first, offset };
   useDisableRequestRows(data?.nodes);
+  const { requireSupplierAuthorisation } = useRequest.utils.preferences();
+
+  const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
+    [getNameAndColorColumn(), { setter: onUpdate }],
+    {
+      key: 'requisitionNumber',
+      label: 'label.number',
+      width: 100,
+    },
+    'createdDatetime',
+    [
+      'status',
+      {
+        formatter: currentStatus =>
+          getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
+      },
+    ],
+    ['comment', { width: '100%' }],
+  ];
+
+  if (requireSupplierAuthorisation) {
+    columnDefinitions.push({
+      key: 'authorisationStatus',
+      label: 'label.auth-status',
+      width: 50,
+    });
+  }
+
+  columnDefinitions.push('selection');
 
   const columns = useColumns<RequestRowFragment>(
-    [
-      [getNameAndColorColumn(), { setter: onUpdate }],
-      {
-        key: 'requisitionNumber',
-        label: 'label.number',
-        width: 100,
-      },
-      'createdDatetime',
-      [
-        'status',
-        {
-          formatter: currentStatus =>
-            getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
-        },
-      ],
-      ['comment', { width: '100%' }],
-      'selection',
-    ],
+    columnDefinitions,
     { sortBy, onChangeSortBy: updateSortQuery },
     [sortBy, updateSortQuery]
   );

@@ -16,6 +16,7 @@ table! {
         #[sql_name = "type"] type_ -> crate::db_diesel::store_preference_row::StorePreferenceTypeMapping,
         pack_to_one -> Bool,
         requisitions_require_supplier_authorisation -> Bool,
+        use_authorisation_for_customer_requisitions -> Bool,
     }
 }
 
@@ -39,6 +40,7 @@ pub struct StorePreferenceRow {
     pub r#type: StorePreferenceType,
     pub pack_to_one: bool,
     pub requisitions_require_supplier_authorisation: bool,
+    pub use_authorisation_for_customer_requisitions: bool,
 }
 
 impl Default for StorePreferenceRow {
@@ -48,6 +50,7 @@ impl Default for StorePreferenceRow {
             r#type: StorePreferenceType::StorePreferences,
             pack_to_one: Default::default(),
             requisitions_require_supplier_authorisation: Default::default(),
+            use_authorisation_for_customer_requisitions: Default::default(),
         }
     }
 }

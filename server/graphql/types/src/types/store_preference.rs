@@ -21,6 +21,11 @@ impl StorePreferenceNode {
             .store_preference
             .requisitions_require_supplier_authorisation
     }
+    pub async fn use_authorisation_for_customer_requisitions(&self) -> &bool {
+        &self
+            .store_preference
+            .use_authorisation_for_customer_requisitions
+    }
 }
 
 impl From<StorePreferenceRow> for StorePreferenceNode {

@@ -12,7 +12,8 @@ impl Migration for V1_01_11 {
             connection,
             r#"
             ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
-        "#
+            ALTER TABLE store_preference ADD COLUMN use_authorisation_for_customer_requisitions bool NOT NULL DEFAULT false;
+            "#
         )?;
 
         Ok(())

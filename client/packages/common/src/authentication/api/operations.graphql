@@ -5,6 +5,7 @@ fragment UserStoreNode on UserStoreNode {
   preferences {
     id
     requisitionsRequireSupplierAuthorisation
+    useAuthorisationForCustomerRequisitions
     packToOne
   }
 }

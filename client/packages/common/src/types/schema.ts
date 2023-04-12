@@ -3015,6 +3015,7 @@ export type StorePreferenceNode = {
   id: Scalars['String'];
   packToOne: Scalars['Boolean'];
   requisitionsRequireSupplierAuthorisation: Scalars['Boolean'];
+  useAuthorisationForCustomerRequisitions: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;
