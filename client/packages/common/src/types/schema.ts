@@ -3012,6 +3012,7 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String'];
   packToOne: Scalars['Boolean'];
+  requisitionsRequireSupplierAuthorisation: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;
