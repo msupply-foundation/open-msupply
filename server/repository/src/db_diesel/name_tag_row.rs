@@ -63,24 +63,27 @@ impl<'a> NameTagRowRepository<'a> {
 
 #[cfg(test)]
 mod test_name_tag_row {
-    use crate::{test_db, NameRow, NameRowRepository, NameTagRow, NameTagRowRepository};
+    use crate::{
+        mock::{MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        NameRow, NameTagRow, NameTagRowRepository,
+    };
 
     #[actix_rt::test]
     async fn test_name_tag_repository() {
-        let settings = test_db::get_test_db_settings("omsupply-database-test_name_tag_repository");
-        let connection_manager = test_db::setup(&settings).await;
-        let connection = connection_manager.connection().unwrap();
+        let (_, connection, _, _) = setup_all_with_data(
+            "omsupply-database-test_store_tag_repository",
+            MockDataInserts::none(),
+            MockData {
+                names: vec![NameRow {
+                    id: "name1".to_string(),
+                    ..Default::default()
+                }],
 
-        // setup
-        NameRowRepository::new(&connection)
-            .insert_one(&NameRow {
-                id: "name1".to_string(),
-                name: "name1".to_string(),
-                code: "name1".to_string(),
                 ..Default::default()
-            })
-            .await
-            .unwrap();
+            },
+        )
+        .await;
 
         /* TESTS */
 
