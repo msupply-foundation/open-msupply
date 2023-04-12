@@ -12,7 +12,7 @@ use graphql_core::{
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    unknown_user, NameRow, Requisition,
+    unknown_user, NameRow, Requisition, RequisitionRowApprovalStatus,
 };
 use service::ListResult;
 
@@ -24,6 +24,19 @@ pub enum RequisitionNodeType {
     Request,
     /// Supplying store requisition in response to request requisition
     Response,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+/// Approval status is applicable to response requisition only
+pub enum RequisitionNodeApprovalStatus {
+    // Requisition is editable, no approval required
+    None,
+    /// Pending authorisation, requisition should not be editable
+    Pending,
+    /// Approved
+    Approved,
+    /// Approval was denied, requisition is not editable
+    Dennied,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -72,8 +85,12 @@ impl RequisitionNode {
         &self.row().expected_delivery_date
     }
 
-    pub async fn authorisation_status(&self) -> &Option<String> {
-        &self.row().authorisation_status
+    pub async fn approval_status(&self) -> RequisitionNodeApprovalStatus {
+        self.row()
+            .approval_status
+            .as_ref()
+            .map(RequisitionNodeApprovalStatus::from_domain)
+            .unwrap_or(RequisitionNodeApprovalStatus::None)
     }
 
     /// User that last edited requisition, if user is not found in system default unknown user is returned
@@ -261,6 +278,21 @@ impl RequisitionNodeType {
         match r#type {
             Request => RequisitionNodeType::Request,
             Response => RequisitionNodeType::Response,
+        }
+    }
+}
+
+impl RequisitionNodeApprovalStatus {
+    fn from_domain(status: &RequisitionRowApprovalStatus) -> Self {
+        use RequisitionRowApprovalStatus::*;
+        match status {
+            None => Self::None,
+            Approved => Self::Approved,
+            Pending => Self::Pending,
+            Denied => Self::Dennied,
+            AutoApproved => Self::Approved,
+            ApprovedByAnother => Self::Approved,
+            DeniedByAnother => Self::Dennied,
         }
     }
 }
