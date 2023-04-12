@@ -137,7 +137,7 @@ With `Option 2` we can always specify default value in the schema and in the `St
     "log_editing_transacts": false,
     "default_item_packsize_to_one": true,
     "shouldAuthoriseResponseRequisition": false,
-    "shouldAuthoriseResponseRequisition": false,
+    "includeRequisitionsInSuppliersRemoteAuthorisationProcesses": false,
     "canLinkRequistionToSupplierInvoice": false,
     "responseRequisitionAutoFillSupplyQuantity": false,
     "useExtraFieldsForRequisitions": false,
