@@ -11,6 +11,7 @@ pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
 pub(crate) mod name_store_join;
+pub(crate) mod name_tag;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
