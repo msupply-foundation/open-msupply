@@ -65,7 +65,7 @@ impl Migration for V1_01_11 {
         sql!(
             connection,
             r#"
-            CREATE TABLE program_settings (
+            CREATE TABLE program_requisition_settings (
                 id TEXT NOT NULL PRIMARY KEY,
                 name_tag_id NOT NULL REFERENCES name_tag(id),
                 program_id TEXT NOT NULL REFERENCES program(id),
@@ -74,20 +74,19 @@ impl Migration for V1_01_11 {
             "#
         )?;
 
-        // // Program Order Type
-        // sql!(
-        //     connection,
-        //     r#"
-        //     CREATE TABLE program_order_type (
-        //         id TEXT NOT NULL PRIMARY KEY,
-        //         program_settings_id TEXT NOT NULL REFERENCES program_settings(id),
-        //         name TEXT NOT NULL,
-        //         threshold_mos {DOUBLE} NOT NULL,
-        //         max_mos {DOUBLE} NOT NULL,
-        //         max_order_per_period {DOUBLE} NOT NULL
-        //     );
-        //     "#
-        // )?;
+        sql!(
+            connection,
+            r#"
+            CREATE TABLE program_requisition_order_type (
+                id TEXT NOT NULL PRIMARY KEY,
+                program_requisition_settings_id TEXT NOT NULL REFERENCES program_requisition_settings(id),
+                name TEXT NOT NULL,
+                threshold_mos {DOUBLE} NOT NULL,
+                max_mos {DOUBLE} NOT NULL,
+                max_order_per_period {DOUBLE} NOT NULL
+            );
+            "#
+        )?;
 
         Ok(())
     }
