@@ -1,11 +1,10 @@
-use repository::{StorageConnection, StoreRow, StoreTags, SyncBufferRow};
+use repository::{StorageConnection, StoreRow, SyncBufferRow};
 
+use serde::{Deserialize};
 use crate::sync::sync_serde::empty_str_as_option_string;
-use serde::Deserialize;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord,
-    SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -19,9 +18,7 @@ pub struct LegacyStoreRow {
     #[serde(rename = "sync_id_remote_site")]
     site_id: i32,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    logo: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    tags: Option<String>,
+    logo: Option<String>
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -55,8 +52,7 @@ impl SyncTranslation for StoreTranslation {
             return Ok(None);
         }
 
-        // Store
-        let store = StoreRow {
+        let result = StoreRow {
             id: data.id,
             name_id: data.name_id,
             code: data.code,
@@ -64,22 +60,9 @@ impl SyncTranslation for StoreTranslation {
             logo: data.logo,
         };
 
-        // Store Tags
-        let tags = match data.tags {
-            Some(tags) => tags,
-            None => return Ok(None),
-        };
-
-        let tags: Vec<String> = tags.split(' ').map(|s| s.to_string()).collect();
-        let store_tags = StoreTags {
-            store_id: store.id.clone(),
-            tags: tags,
-        };
-
-        Ok(Some(IntegrationRecords::from_upserts(vec![
-            PullUpsertRecord::Store(store),
-            PullUpsertRecord::StoreTags(store_tags),
-        ])))
+        Ok(Some(IntegrationRecords::from_upsert(
+            PullUpsertRecord::Store(result),
+        )))
     }
 
     fn try_translate_pull_delete(
@@ -87,18 +70,8 @@ impl SyncTranslation for StoreTranslation {
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| IntegrationRecords {
-            upserts: Vec::new(),
-            deletes: vec![
-                PullDeleteRecord {
-                    id: sync_record.record_id.clone(),
-                    table: PullDeleteRecordTable::StoreTags,
-                },
-                PullDeleteRecord {
-                    id: sync_record.record_id.clone(),
-                    table: PullDeleteRecordTable::Store,
-                },
-            ],
+        let result = match_pull_table(sync_record).then(|| {
+            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Store)
         });
 
         Ok(result)
