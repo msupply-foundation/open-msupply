@@ -3014,6 +3014,7 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String'];
   packToOne: Scalars['Boolean'];
+  requisitionsRequireSupplierAuthorisation: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;
@@ -3639,6 +3640,7 @@ export type UserStoreNode = {
   code: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
+  preferences: StorePreferenceNode;
 };
 
 export type UserStorePermissionConnector = {
