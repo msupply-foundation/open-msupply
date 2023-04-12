@@ -94,7 +94,7 @@ mod test_name_tag_row {
         // Check we can insert a name tag
         let name_tag_row = NameTagRow {
             id: "tag_name_id".to_string(),
-            tag_name: "tag1".to_string(),
+            name: "tag1".to_string(),
         };
 
         name_tag_repo.upsert_one(&name_tag_row).unwrap();

@@ -32,7 +32,7 @@ impl SyncTranslation for NameTagTranslation {
 
         let result = NameTagRow {
             id: data.ID,
-            tag_name: data.description,
+            name: data.description,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
