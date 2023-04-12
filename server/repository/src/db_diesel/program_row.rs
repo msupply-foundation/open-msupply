@@ -8,18 +8,16 @@ table! {
     program (id) {
         id -> Text,
         name -> Text,
-        master_list_id -> Text,
     }
 }
 
-joinable!(program -> master_list (master_list_id));
+joinable!(program -> master_list (id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[table_name = "program"]
 pub struct ProgramRow {
-    pub id: String,
+    pub id: String, // Master list id
     pub name: String,
-    pub master_list_id: String,
 }
 
 pub struct ProgramRowRepository<'a> {
