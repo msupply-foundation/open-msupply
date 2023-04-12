@@ -88,12 +88,12 @@ impl SyncRecordTester for PeriodScheduleAndPeriodTester {
             central_delete: json!({ "periodSchedule": [period_schedule_1.id], "period": [period_1.id] }),
             integration_records: IntegrationRecords::from_deletes(vec![
                 PullDeleteRecord {
-                    id: period_schedule_1.id,
-                    table: PullDeleteRecordTable::PeriodSchedule,
-                },
-                PullDeleteRecord {
                     id: period_1.id,
                     table: PullDeleteRecordTable::Period,
+                },
+                PullDeleteRecord {
+                    id: period_schedule_1.id,
+                    table: PullDeleteRecordTable::PeriodSchedule,
                 },
             ]),
         });
