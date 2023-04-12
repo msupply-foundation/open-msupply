@@ -214,12 +214,12 @@ pub(crate) async fn check_records_against_database(
             }
             Item(record) => check_record_by_id!(ItemRowRepository, con, record, "Item"),
             Store(record) => check_record_by_id!(StoreRowRepository, con, record, "Store"),
-            StoreTags(record) => {
-                let tags = StoreTagRowRepository::new(con)
-                    .find_all_by_store_id(&record.store_id)
-                    .unwrap();
-                assert_eq!(tags.len(), record.tags.len());
-            }
+            // StoreTags(record) => {
+            //     let tags = StoreTagRowRepository::new(con)
+            //         .find_all_by_store_id(&record.store_id)
+            //         .unwrap();
+            //     assert_eq!(tags.len(), record.tags.len());
+            // }
             MasterList(record) => {
                 check_record_by_option_id!(MasterListRowRepository, con, record, "Masterlist")
             }
@@ -271,12 +271,12 @@ pub(crate) async fn check_records_against_database(
             }
             Item => check_delete_record_by_id!(ItemRowRepository, con, id),
             Store => check_delete_record_by_id!(StoreRowRepository, con, id),
-            StoreTags => {
-                let tags = StoreTagRowRepository::new(con)
-                    .find_all_by_store_id(&id)
-                    .unwrap();
-                assert_eq!(tags.len(), 0);
-            }
+            // StoreTags => {
+            //     let tags = StoreTagRowRepository::new(con)
+            //         .find_all_by_store_id(&id)
+            //         .unwrap();
+            //     assert_eq!(tags.len(), 0);
+            // }
             MasterList => check_delete_record_by_id_option!(MasterListRowRepository, con, id),
             MasterListLine => {
                 check_delete_record_by_id_option!(MasterListLineRowRepository, con, id)

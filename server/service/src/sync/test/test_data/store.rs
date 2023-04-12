@@ -5,7 +5,7 @@ use crate::sync::{
         PullUpsertRecord,
     },
 };
-use repository::{StoreRow, StoreTags, SyncBufferRow};
+use repository::{StoreRow, SyncBufferRow};
 use util::inline_init;
 
 const STORE_1: (&'static str, &'static str) = (
@@ -57,19 +57,13 @@ fn store_1() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upserts(
         LegacyTableName::STORE,
         STORE_1,
-        vec![
-            PullUpsertRecord::Store(inline_init(|s: &mut StoreRow| {
-                s.id = STORE_1.0.to_owned();
-                s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
-                s.code = "GEN".to_string();
-                s.site_id = 1;
-                s.logo = Some("No logo".to_string());
-            })),
-            PullUpsertRecord::StoreTags(StoreTags {
-                store_id: STORE_1.0.to_owned(),
-                tags: vec!["testtag1".to_string(), "tagwithweirdchars`$".to_string()],
-            }),
-        ],
+        vec![PullUpsertRecord::Store(inline_init(|s: &mut StoreRow| {
+            s.id = STORE_1.0.to_owned();
+            s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
+            s.code = "GEN".to_string();
+            s.site_id = 1;
+            s.logo = Some("No logo".to_string());
+        }))],
     )
 }
 
@@ -254,16 +248,10 @@ pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
         STORE_4.0,
         IntegrationRecords {
             upserts: Vec::new(),
-            deletes: vec![
-                PullDeleteRecord {
-                    id: STORE_4.0.to_owned(),
-                    table: PullDeleteRecordTable::StoreTags,
-                },
-                PullDeleteRecord {
-                    id: STORE_4.0.to_owned(),
-                    table: PullDeleteRecordTable::Store,
-                },
-            ],
+            deletes: vec![PullDeleteRecord {
+                id: STORE_4.0.to_owned(),
+                table: PullDeleteRecordTable::Store,
+            }],
         },
     )]
 }
