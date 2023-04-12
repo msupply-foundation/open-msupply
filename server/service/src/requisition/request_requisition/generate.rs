@@ -70,6 +70,7 @@ pub fn generate_requisition_lines(
                 supply_quantity: 0,
                 requested_quantity: 0,
                 approved_quantity: 0,
+                approval_comment: None,
                 is_sync_update: false,
             }
         })
