@@ -4,17 +4,16 @@ import {
   ColumnAlign,
   getCommentPopoverColumn,
   useUrlQueryParams,
-  useAuthContext,
   ColumnDescription,
 } from '@openmsupply-client/common';
-import { ResponseLineFragment } from './../api';
+import { ResponseLineFragment, useResponse } from './../api';
 
 export const useResponseColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const { store } = useAuthContext();
+  const { authoriseCustomerRequisitions } = useResponse.utils.preferences();
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     getCommentPopoverColumn(),
     [
@@ -65,7 +64,7 @@ export const useResponseColumns = () => {
     ],
   ];
 
-  if (!!store?.preferences?.requisitionsRequireSupplierAuthorisation) {
+  if (authoriseCustomerRequisitions) {
     columnDefinitions.push({
       key: 'approvedQuantity',
       label: 'label.approved-quantity',

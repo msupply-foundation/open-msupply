@@ -8,7 +8,6 @@ import {
   getCommentPopoverColumn,
   useFormatNumber,
   useUrlQueryParams,
-  useAuthContext,
   ColumnDescription,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
@@ -21,7 +20,7 @@ export const useRequestColumns = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams();
   const formatNumber = useFormatNumber();
-  const { store } = useAuthContext();
+  const { requireSupplierAuthorisation } = useRequest.utils.preferences();
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
     getCommentPopoverColumn(),
     [
@@ -110,13 +109,19 @@ export const useRequestColumns = () => {
     },
   ];
 
-  if (!!store?.preferences?.requisitionsRequireSupplierAuthorisation) {
+  // TODO add a comment popover column for linkedRequisitionLine comment?
+  if (requireSupplierAuthorisation) {
     columnDefinitions.push({
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) =>
         rowData.linkedRequisitionLine?.approvedQuantity,
+    });
+    columnDefinitions.push({
+      key: 'approverComment',
+      label: 'label.approver-comment',
+      accessor: ({ rowData }) => rowData.linkedRequisitionLine?.comment,
     });
   }
   columnDefinitions.push(GenericColumnKey.Selection);

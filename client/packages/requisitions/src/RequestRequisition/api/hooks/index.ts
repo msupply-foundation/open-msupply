@@ -36,5 +36,6 @@ export const useRequest = {
     addFromMasterList: Utils.useAddFromMasterList,
     isDisabled: Utils.useIsRequestDisabled,
     suggestedQuantity: Utils.useSuggestedQuantity,
+    preferences: Utils.useRequisitionPreferences,
   },
 };

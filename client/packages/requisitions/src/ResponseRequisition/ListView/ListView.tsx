@@ -55,7 +55,7 @@ export const ResponseRequisitionListView: FC = () => {
             getRequisitionTranslator(t)(status as RequisitionNodeStatus),
         },
       ],
-      // Would ideally be a status (combination of requisition.status and requisition.authorisatoinStatus) ?
+      // Would ideally be a status (combination of requisition.status and requisition.authorisationStatus) ?
       {
         key: 'authorisationStatus',
         label: 'label.auth-status',
