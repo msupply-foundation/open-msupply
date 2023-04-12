@@ -1,31 +1,10 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use repository::StorePreferenceRow;
+use graphql_types::types::StorePreferenceNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     store_preference::get_store_preferences,
 };
-
-#[derive(PartialEq, Debug)]
-pub struct StorePreferenceNode {
-    store_preference: StorePreferenceRow,
-}
-
-#[Object]
-impl StorePreferenceNode {
-    pub async fn id(&self) -> &str {
-        &self.store_preference.id
-    }
-
-    pub async fn pack_to_one(&self) -> &bool {
-        &self.store_preference.pack_to_one
-    }
-    pub async fn requisitions_require_supplier_authorisation(&self) -> &bool {
-        &self
-            .store_preference
-            .requisitions_require_supplier_authorisation
-    }
-}
 
 pub(crate) fn store_preferences(ctx: &Context<'_>, store_id: &str) -> Result<StorePreferenceNode> {
     validate_auth(
@@ -38,5 +17,6 @@ pub(crate) fn store_preferences(ctx: &Context<'_>, store_id: &str) -> Result<Sto
 
     let connection = ctx.get_connection_manager().connection()?;
     let store_preference = get_store_preferences(&connection, store_id)?;
-    Ok(StorePreferenceNode { store_preference })
+
+    Ok(store_preference.into())
 }

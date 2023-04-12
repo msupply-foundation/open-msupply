@@ -2,6 +2,11 @@ fragment UserStoreNode on UserStoreNode {
   code
   id
   name
+  preferences {
+    id
+    requisitionsRequireSupplierAuthorisation
+    packToOne
+  }
 }
 
 query authToken($username: String!, $password: String!) {
@@ -99,5 +104,13 @@ query permissions($storeId: String!) {
         totalCount
       }
     }
+  }
+}
+
+query storePreferences($storeId: String!) {
+  storePreferences(storeId: $storeId) {
+    requisitionsRequireSupplierAuthorisation
+    packToOne
+    id
   }
 }

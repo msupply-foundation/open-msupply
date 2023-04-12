@@ -1,3 +1,4 @@
+use super::{StorePreferenceNode, UserStorePermissionConnector};
 use async_graphql::{
     dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result, SimpleObject,
 };
@@ -5,9 +6,7 @@ use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use repository::{Language, User, UserStore};
-use service::permission::permissions;
-
-use super::UserStorePermissionConnector;
+use service::{permission::permissions, store_preference::get_store_preferences};
 
 pub struct UserStoreNode {
     user_store: UserStore,
@@ -38,6 +37,13 @@ impl UserStoreNode {
             )?;
 
         Ok(name_row.name)
+    }
+
+    pub async fn preferences(&self, ctx: &Context<'_>) -> Result<StorePreferenceNode> {
+        let connection = ctx.get_connection_manager().connection()?;
+        let store_preferences = get_store_preferences(&connection, &self.user_store.store_row.id)?;
+
+        Ok(store_preferences.into())
     }
 }
 
