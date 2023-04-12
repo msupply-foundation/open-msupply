@@ -2699,7 +2699,7 @@ export type RequisitionNodeOtherPartyArgs = {
 /** Approval status is applicable to response requisition only */
 export enum RequisitionNodeApprovalStatus {
   Approved = 'APPROVED',
-  Dennied = 'DENNIED',
+  Denied = 'DENIED',
   None = 'NONE',
   Pending = 'PENDING'
 }
@@ -3023,7 +3023,7 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String'];
   packToOne: Scalars['Boolean'];
-  requisitionsRequireSupplierAuthorisation: Scalars['Boolean'];
+  responseRequisitionRequiresAuthorisation: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;

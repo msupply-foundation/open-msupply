@@ -36,7 +36,7 @@ pub enum RequisitionNodeApprovalStatus {
     /// Approved
     Approved,
     /// Approval was denied, requisition is not editable
-    Dennied,
+    Denied,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -289,10 +289,10 @@ impl RequisitionNodeApprovalStatus {
             None => Self::None,
             Approved => Self::Approved,
             Pending => Self::Pending,
-            Denied => Self::Dennied,
+            Denied => Self::Denied,
             AutoApproved => Self::Approved,
             ApprovedByAnother => Self::Approved,
-            DeniedByAnother => Self::Dennied,
+            DeniedByAnother => Self::Denied,
         }
     }
 }
