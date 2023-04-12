@@ -8,6 +8,8 @@ import {
   FileUtils,
   SortBy,
   LoadingButton,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import { ResponseRowFragment, useResponse } from '../api';
 import { responsesToCsv } from '../../utils';
@@ -39,6 +41,7 @@ export const AppBarButtons: FC<{
           isLoading={isLoading}
           onClick={csvExport}
           variant="outlined"
+          disabled={EnvUtils.platform === Platform.Android}
         >
           {t('button.export')}
         </LoadingButton>

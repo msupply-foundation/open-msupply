@@ -1,3 +1,4 @@
+use super::{version::Version, Migration};
 use crate::{migrations::*, StorageConnection};
 pub(crate) struct V1_01_11;
 
@@ -7,6 +8,13 @@ impl Migration for V1_01_11 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+            ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
+        "#
+        )?;
+
         // Name Tag
         sql!(
             connection,

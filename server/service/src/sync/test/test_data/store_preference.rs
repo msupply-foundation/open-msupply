@@ -34,8 +34,8 @@ const STORE_PREFERENCE_1: (&'static str, &'static str) = (
         "show_item_unit_column_while_issuing": false,
         "log_editing_transacts": false,
         "default_item_packsize_to_one": true,
-        "shouldAuthoriseResponseRequisition": false,
-        "includeRequisitionsInSuppliersRemoteAuthorisationProcesses": false,
+        "shouldAuthoriseResponseRequisition": true,
+        "includeRequisitionsInSuppliersRemoteAuthorisationProcesses": true,
         "canLinkRequistionToSupplierInvoice": false,
         "responseRequisitionAutoFillSupplyQuantity": false,
         "useExtraFieldsForRequisitions": false,
@@ -143,6 +143,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 id: "store_a".to_string(),
                 r#type: StorePreferenceType::StorePreferences,
                 pack_to_one: true,
+                requisitions_require_supplier_authorisation: true,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -152,6 +153,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 id: "store_b".to_string(),
                 r#type: StorePreferenceType::StorePreferences,
                 pack_to_one: false,
+                requisitions_require_supplier_authorisation: false,
             }),
         ),
     ]
