@@ -109,7 +109,6 @@ export const useRequestColumns = () => {
     },
   ];
 
-  // TODO add a comment popover column for linkedRequisitionLine comment?
   if (requireSupplierAuthorisation) {
     columnDefinitions.push({
       key: 'approvedQuantity',
