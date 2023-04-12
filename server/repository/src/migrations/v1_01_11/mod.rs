@@ -13,7 +13,7 @@ impl Migration for V1_01_11 {
             r#"
             CREATE TABLE name_tag (
                 id TEXT NOT NULL PRIMARY KEY,
-                tag_name TEXT NOT NULL
+                name TEXT NOT NULL
             );
             "#
         )?;

@@ -19,7 +19,7 @@ fn name_tag_1() -> TestSyncPullRecord {
         NAME_TAG_1,
         PullUpsertRecord::NameTag(NameTagRow {
             id: NAME_TAG_1.0.to_owned(),
-            tag_name: "a1".to_owned(),
+            name: "a1".to_owned(),
         }),
     )
 }
@@ -38,7 +38,7 @@ fn name_tag_2() -> TestSyncPullRecord {
         NAME_TAG_2,
         PullUpsertRecord::NameTag(NameTagRow {
             id: NAME_TAG_2.0.to_owned(),
-            tag_name: "b2".to_owned(),
+            name: "b2".to_owned(),
         }),
     )
 }
