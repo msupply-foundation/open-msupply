@@ -6,10 +6,11 @@ use repository::{
 };
 use util::inline_edit;
 
-// Ordered by referencial constraints
+// Ordered by referential constraints
 const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
     LegacyTableName::NAME,
+    LegacyTableName::NAME_TAG,
     LegacyTableName::UNIT,
     LegacyTableName::ITEM,
     LegacyTableName::STORE,

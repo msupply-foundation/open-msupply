@@ -11,6 +11,7 @@ pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
 pub(crate) mod name;
 pub(crate) mod name_store_join;
+pub(crate) mod name_tag;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod report;
@@ -33,6 +34,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullReco
     test_records.append(&mut period_schedule::test_pull_upsert_records());
     test_records.append(&mut period::test_pull_upsert_records());
     test_records.append(&mut name::test_pull_upsert_records());
+    test_records.append(&mut name_tag::test_pull_upsert_records());
     test_records.append(&mut report::test_pull_upsert_records());
     test_records.append(&mut store::test_pull_upsert_records());
     test_records.append(&mut unit::test_pull_upsert_records());
@@ -68,6 +70,7 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncPullReco
     test_records.append(&mut period_schedule::test_pull_delete_records());
     test_records.append(&mut period::test_pull_delete_records());
     test_records.append(&mut name::test_pull_delete_records());
+    test_records.append(&mut name_tag::test_pull_delete_records());
     test_records.append(&mut report::test_pull_delete_records());
     test_records.append(&mut store::test_pull_delete_records());
     test_records.append(&mut unit::test_pull_delete_records());

@@ -171,10 +171,10 @@ impl PullUpsertRecord {
         use PullUpsertRecord::*;
         match self {
             Name(record) => NameRowRepository::new(con).upsert_one(record),
+            NameTag(record) => NameTagRowRepository::new(con).upsert_one(record),
             Unit(record) => UnitRowRepository::new(con).upsert_one(record),
             Item(record) => ItemRowRepository::new(con).upsert_one(record),
             Store(record) => StoreRowRepository::new(con).upsert_one(record),
-            StoreTags(record) => StoreTagRowRepository::new(con).upsert_tags_for_store(record),
             MasterList(record) => MasterListRowRepository::new(con).upsert_one(record),
             MasterListLine(record) => MasterListLineRowRepository::new(con).upsert_one(record),
             MasterListNameJoin(record) => MasterListNameJoinRepository::new(con).upsert_one(record),
@@ -205,10 +205,10 @@ impl PullDeleteRecord {
         let id = &self.id;
         match self.table {
             Name => NameRowRepository::new(con).delete(id),
+            NameTag => NameTagRowRepository::new(con).delete(id),
             Unit => UnitRowRepository::new(con).delete(id),
             Item => ItemRowRepository::new(con).delete(id),
             Store => StoreRowRepository::new(con).delete(id),
-            StoreTags => StoreTagRowRepository::new(con).delete_all_for_store(id),
             MasterList => MasterListRowRepository::new(con).delete(id),
             MasterListLine => MasterListLineRowRepository::new(con).delete(id),
             MasterListNameJoin => MasterListNameJoinRepository::new(con).delete(id),
