@@ -129,7 +129,7 @@ For example, the `data.physicalExamination.weight` field can be fetched from all
 
 # Document access permissions
 
-To access patient documents, e.g. for patients, program enrolments or encounters, a user requires the following permissions:
+To access a patient's documents, e.g. for patient data, program enrolments or encounters, a user requires the following permissions:
 
-1. Access to the store a patient is associated with (`name_store_join`)
+1. Access to the store the patient is associated with (`name_store_join`)
 2. Permissions for the program the document belongs to
