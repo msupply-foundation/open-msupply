@@ -62,18 +62,17 @@ impl Migration for V1_01_11 {
             "#
         )?;
 
-        // // Program Settings
-        // sql!(
-        //     connection,
-        //     r#"
-        //     CREATE TABLE program_settings (
-        //         id TEXT NOT NULL PRIMARY KEY,
-        //         tag_name TEXT NOT NULL,
-        //         program_id TEXT NOT NULL REFERENCES program(id),
-        //         period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id)
-        //     );
-        //     "#
-        // )?;
+        sql!(
+            connection,
+            r#"
+            CREATE TABLE program_settings (
+                id TEXT NOT NULL PRIMARY KEY,
+                name_tag_id NOT NULL REFERENCES name_tag(id),
+                program_id TEXT NOT NULL REFERENCES program(id),
+                period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id)
+            );
+            "#
+        )?;
 
         // // Program Order Type
         // sql!(
