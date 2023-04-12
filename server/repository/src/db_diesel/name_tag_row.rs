@@ -27,16 +27,21 @@ impl<'a> NameTagRowRepository<'a> {
         NameTagRowRepository { connection }
     }
 
-    pub fn insert_one(&self, name_tag_row: &NameTagRow) -> Result<(), RepositoryError> {
+    #[cfg(feature = "postgres")]
+    pub fn upsert_one(&self, row: &NameTagRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_tag_dsl::name_tag)
-            .values(name_tag_row)
+            .values(row)
+            .on_conflict(name_tag_dsl::id)
+            .do_update()
+            .set(row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
-    pub fn update_one(&self, name_tag_row: &NameTagRow) -> Result<(), RepositoryError> {
-        diesel::update(name_tag_dsl::name_tag.filter(name_tag_dsl::id.eq(&name_tag_row.id)))
-            .set(name_tag_row)
+    #[cfg(not(feature = "postgres"))]
+    pub fn upsert_one(&self, row: &NameTagRow) -> Result<(), RepositoryError> {
+        diesel::replace_into(name_tag_dsl::name_tag)
+            .values(row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
@@ -83,16 +88,35 @@ mod test_name_tag_row {
 
         // Check we can insert a name tag
         let name_tag_row = NameTagRow {
-            id: "tag1".to_string(),
+            id: "tag_name_id".to_string(),
             tag_name: "tag1".to_string(),
         };
 
-        repo.insert_one(&name_tag_row).unwrap();
+        repo.upsert_one(&name_tag_row).unwrap();
 
-        // Check we can find a store tag by id
+        // Check we can find the name tag by id
         let found_name_tag = NameTagRowRepository::new(&connection)
             .find_one_by_id(&name_tag_row.id)
+            .unwrap()
             .unwrap();
-        assert_eq!(found_name_tag, Some(name_tag_row));
+
+        assert_eq!(found_name_tag.id, name_tag_row.id);
+        assert_eq!(found_name_tag.tag_name, name_tag_row.tag_name);
+
+        // Check we can update a name tag
+        let name_tag_row = NameTagRow {
+            id: "tag_name_id".to_string(),
+            tag_name: "tag1-b".to_string(),
+        };
+        repo.upsert_one(&name_tag_row).unwrap();
+
+        // Check the name tag has been updated
+
+        let found_name_tag = NameTagRowRepository::new(&connection)
+            .find_one_by_id(&name_tag_row.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(found_name_tag.id, name_tag_row.id);
+        assert_eq!(found_name_tag.tag_name, name_tag_row.tag_name);
     }
 }

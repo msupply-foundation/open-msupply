@@ -61,6 +61,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
 pub(crate) mod LegacyTableName {
     // Central
     pub(crate) const NAME: &str = "name";
+    pub(crate) const NAME_TAG: &str = "name_tag";
     pub(crate) const UNIT: &str = "unit";
     pub(crate) const ITEM: &str = "item";
     pub(crate) const STORE: &str = "store";
@@ -88,9 +89,9 @@ pub(crate) mod LegacyTableName {
 pub(crate) enum PullUpsertRecord {
     Unit(UnitRow),
     Name(NameRow),
+    NameTag(NameTagRow),
     Item(ItemRow),
     Store(StoreRow),
-    // StoreTags(StoreTags),
     MasterList(MasterListRow),
     MasterListLine(MasterListLineRow),
     MasterListNameJoin(MasterListNameJoinRow),
@@ -121,7 +122,7 @@ pub(crate) enum PullDeleteRecordTable {
     Unit,
     Item,
     Store,
-    // StoreTags,
+    NameTag,
     MasterList,
     MasterListLine,
     MasterListNameJoin,
