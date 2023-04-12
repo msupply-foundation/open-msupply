@@ -19,6 +19,7 @@ table! {
         average_monthly_consumption -> Integer,
         snapshot_datetime -> Nullable<Timestamp>,
         approved_quantity -> Integer,
+        approval_comment -> Nullable<Text>,
         comment -> Nullable<Text>,
         is_sync_update -> Bool,
     }
@@ -40,6 +41,7 @@ pub struct RequisitionLineRow {
     pub average_monthly_consumption: i32,
     pub snapshot_datetime: Option<NaiveDateTime>,
     pub approved_quantity: i32,
+    pub approval_comment: Option<String>,
     pub comment: Option<String>,
     pub is_sync_update: bool,
 }

@@ -43,6 +43,10 @@ pub struct LegacyRequisitionLineRow {
     pub approved_quantity: i32,
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "authoriser_comment")]
+    pub approval_comment: Option<String>,
+
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
 
     #[serde(rename = "om_snapshot_datetime")]
@@ -76,6 +80,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             comment: data.comment,
             snapshot_datetime: data.snapshot_datetime,
             approved_quantity: data.approved_quantity,
+            approval_comment: data.approval_comment,
             is_sync_update: true,
         };
 
@@ -121,6 +126,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             comment,
             snapshot_datetime,
             approved_quantity,
+            approval_comment,
             is_sync_update: _,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
@@ -141,6 +147,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             comment,
             snapshot_datetime,
             approved_quantity,
+            approval_comment,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
