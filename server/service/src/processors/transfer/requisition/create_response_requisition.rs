@@ -121,7 +121,7 @@ impl AuthorisationFields {
         let store_id = record_for_processing.other_party_store_id.clone();
         let preferences = get_store_preferences(connection, &store_id)?;
 
-        if !preferences.pack_to_one {
+        if !preferences.requisitions_require_supplier_authorisation {
             return Ok(AuthorisationFields::default());
         }
         // if not "shouldAuthoriseResponseRequisition" preference  return Auth::default();
