@@ -306,7 +306,7 @@ mod test {
             id: mock_store_a().id.clone(),
             r#type: StorePreferenceType::StorePreferences,
             pack_to_one: true,
-            requisitions_require_supplier_authorisation: false,
+            response_requisition_requires_authorisation: false,
         };
         StorePreferenceRowRepository::new(&connection)
             .upsert_one(&pack_to_one)

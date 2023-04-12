@@ -55,9 +55,10 @@ export const ResponseRequisitionListView: FC = () => {
             getRequisitionTranslator(t)(status as RequisitionNodeStatus),
         },
       ],
-      // Would ideally be a status (combination of requisition.status and requisition.authorisatoinStatus) ?
+      // TODO Would ideally be a status (combination of requisition.status and requisition.approvalStatus) ?
+      // Should only be shown if there is store preference ? (response_requisition_requires_authorisation)
       {
-        key: 'authorisationStatus',
+        key: 'approvalStatus',
         label: 'label.auth-status',
         width: 50,
       },

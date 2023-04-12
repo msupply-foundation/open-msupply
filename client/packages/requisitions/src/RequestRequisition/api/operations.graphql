@@ -42,6 +42,7 @@ fragment RequestLine on RequisitionLineNode {
   }
   linkedRequisitionLine {
     approvedQuantity
+    approvalComment
   }
   item {
     ...ItemWithStats
