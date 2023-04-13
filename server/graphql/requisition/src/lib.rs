@@ -51,9 +51,18 @@ impl RequisitionMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: request_requisition::InsertInput,
-    ) -> Result<request_requisition::InsertResponse> {
-        request_requisition::insert(ctx, &store_id, input)
+        input: request_requisition::insert::InsertInput,
+    ) -> Result<request_requisition::insert::InsertResponse> {
+        request_requisition::insert::insert(ctx, &store_id, input)
+    }
+
+    async fn insert_program_request_requisition(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: request_requisition::insert_program::InsertInput,
+    ) -> Result<request_requisition::insert_program::InsertResponse> {
+        request_requisition::insert_program::insert(ctx, &store_id, input)
     }
 
     async fn update_request_requisition(
