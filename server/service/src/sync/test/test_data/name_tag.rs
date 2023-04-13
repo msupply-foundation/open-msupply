@@ -1,6 +1,6 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
+    translations::{LegacyTableName, PullUpsertRecord},
 };
 
 use repository::NameTagRow;
@@ -45,12 +45,4 @@ fn name_tag_2() -> TestSyncPullRecord {
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![name_tag_1(), name_tag_2()]
-}
-
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::NAME_TAG,
-        NAME_TAG_2.0,
-        PullDeleteRecordTable::NameTag,
-    )]
 }

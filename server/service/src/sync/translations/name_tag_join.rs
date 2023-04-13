@@ -29,15 +29,19 @@ impl SyncTranslation for NameTagJoinTranslation {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyNameTagJoinRow>(&sync_record.data)?;
-        if data.name_ID == "" {
+        let LegacyNameTagJoinRow {
+            ID,
+            name_ID,
+            name_tag_ID,
+        } = serde_json::from_str::<LegacyNameTagJoinRow>(&sync_record.data)?;
+        if name_ID == "" {
             return Ok(None);
         }
 
         let result = NameTagJoinRow {
-            id: data.ID,
-            name_id: data.name_ID,
-            name_tag_id: data.name_tag_ID,
+            id: ID,
+            name_id: name_ID,
+            name_tag_id: name_tag_ID,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(

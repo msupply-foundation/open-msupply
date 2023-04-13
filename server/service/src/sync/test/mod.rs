@@ -184,7 +184,6 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_id!(NameTagRowRepository, con, record, "NameTag");
             }
             NameTagJoin(record) => {
-                println!("NameTagJoin: {:?}", record,);
                 check_record_by_id!(NameTagJoinRepository, con, record, "NameTagJoin");
             }
             NameStoreJoin(record) => {
@@ -264,9 +263,6 @@ pub(crate) async fn check_records_against_database(
         match delete.table {
             Name => {
                 check_delete_record_by_id!(NameRowRepository, con, id)
-            }
-            NameTag => {
-                check_delete_record_by_id!(NameTagRowRepository, con, id)
             }
             NameTagJoin => {
                 check_delete_record_by_id!(NameTagJoinRepository, con, id)
