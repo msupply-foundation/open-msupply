@@ -206,7 +206,6 @@ impl PullDeleteRecord {
         let id = &self.id;
         match self.table {
             Name => NameRowRepository::new(con).delete(id),
-            NameTag => NameTagRowRepository::new(con).delete(id),
             NameTagJoin => NameTagJoinRepository::new(con).delete(id),
             Unit => UnitRowRepository::new(con).delete(id),
             Item => ItemRowRepository::new(con).delete(id),
