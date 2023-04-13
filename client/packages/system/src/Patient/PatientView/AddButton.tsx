@@ -23,7 +23,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     {
       value: PatientModal.Prescription,
       label: t('button.add-prescription'),
-      isDisabled: false,
+      isDisabled: true,
     },
     {
       value: PatientModal.ProgramSearch,
