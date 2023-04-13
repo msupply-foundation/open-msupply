@@ -3,6 +3,7 @@ use crate::{migrations::sql, StorageConnection};
 mod name_tags;
 mod period_and_period_schedule;
 mod program_requisition;
+
 pub(crate) struct V1_01_11;
 
 impl Migration for V1_01_11 {
