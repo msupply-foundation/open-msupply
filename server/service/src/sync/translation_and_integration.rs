@@ -172,6 +172,7 @@ impl PullUpsertRecord {
         match self {
             Name(record) => NameRowRepository::new(con).upsert_one(record),
             NameTag(record) => NameTagRowRepository::new(con).upsert_one(record),
+            NameTagJoin(record) => NameTagJoinRepository::new(con).upsert_one(record),
             Unit(record) => UnitRowRepository::new(con).upsert_one(record),
             Item(record) => ItemRowRepository::new(con).upsert_one(record),
             Store(record) => StoreRowRepository::new(con).upsert_one(record),
@@ -207,14 +208,13 @@ impl PullDeleteRecord {
         match self.table {
             Name => NameRowRepository::new(con).delete(id),
             NameTag => NameTagRowRepository::new(con).delete(id),
+            NameTagJoin => NameTagJoinRepository::new(con).delete(id),
             Unit => UnitRowRepository::new(con).delete(id),
             Item => ItemRowRepository::new(con).delete(id),
             Store => StoreRowRepository::new(con).delete(id),
             MasterList => MasterListRowRepository::new(con).delete(id),
             MasterListLine => MasterListLineRowRepository::new(con).delete(id),
             MasterListNameJoin => MasterListNameJoinRepository::new(con).delete(id),
-            PeriodSchedule => PeriodScheduleRowRepository::new(con).delete(id),
-            Period => PeriodRowRepository::new(con).delete(id),
             Report => ReportRowRepository::new(con).delete(id),
             NameStoreJoin => NameStoreJoinRepository::new(con).delete(id),
             Invoice => InvoiceRowRepository::new(con).delete(id),

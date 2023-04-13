@@ -7,7 +7,7 @@ use diesel::prelude::*;
 table! {
     name_tag (id) {
         id -> Text,
-        tag_name -> Text,
+        name -> Text,
     }
 }
 
@@ -15,7 +15,7 @@ table! {
 #[table_name = "name_tag"]
 pub struct NameTagRow {
     pub id: String,
-    pub tag_name: String,
+    pub name: String,
 }
 
 pub struct NameTagRowRepository<'a> {
@@ -92,7 +92,7 @@ mod test_name_tag_row {
         // Check we can insert a name tag
         let name_tag_row = NameTagRow {
             id: "tag_name_id".to_string(),
-            tag_name: "tag1".to_string(),
+            name: "tag1".to_string(),
         };
 
         repo.upsert_one(&name_tag_row).unwrap();
@@ -104,12 +104,12 @@ mod test_name_tag_row {
             .unwrap();
 
         assert_eq!(found_name_tag.id, name_tag_row.id);
-        assert_eq!(found_name_tag.tag_name, name_tag_row.tag_name);
+        assert_eq!(found_name_tag.name, name_tag_row.name);
 
         // Check we can update a name tag
         let name_tag_row = NameTagRow {
             id: "tag_name_id".to_string(),
-            tag_name: "tag1-b".to_string(),
+            name: "tag1-b".to_string(),
         };
         repo.upsert_one(&name_tag_row).unwrap();
 
@@ -120,6 +120,6 @@ mod test_name_tag_row {
             .unwrap()
             .unwrap();
         assert_eq!(found_name_tag.id, name_tag_row.id);
-        assert_eq!(found_name_tag.tag_name, name_tag_row.tag_name);
+        assert_eq!(found_name_tag.name, name_tag_row.name);
     }
 }

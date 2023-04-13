@@ -3,7 +3,7 @@ use repository::PeriodRow;
 
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
+    translations::{LegacyTableName, PullUpsertRecord},
 };
 
 const PERIOD_1: (&'static str, &'static str) = (
@@ -53,12 +53,4 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             }),
         ),
     ]
-}
-
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::PERIOD,
-        PERIOD_1.0,
-        PullDeleteRecordTable::Period,
-    )]
 }

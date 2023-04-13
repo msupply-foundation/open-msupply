@@ -2,9 +2,7 @@ use chrono::NaiveDate;
 use repository::{PeriodRow, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
-};
+use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::PERIOD;
 
@@ -37,31 +35,25 @@ impl SyncTranslation for PeriodTranslation {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyPeriodRow>(&sync_record.data)?;
+        let LegacyPeriodRow {
+            id,
+            period_schedule_id,
+            start_date,
+            end_date,
+            name,
+        } = serde_json::from_str::<LegacyPeriodRow>(&sync_record.data)?;
 
         let result = PeriodRow {
-            id: data.id.to_string(),
-            period_schedule_id: data.period_schedule_id.to_string(),
-            start_date: data.start_date,
-            end_date: data.end_date,
-            name: data.name.to_string(),
+            id,
+            period_schedule_id,
+            start_date,
+            end_date,
+            name,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::Period(result),
         )))
-    }
-
-    fn try_translate_pull_delete(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Period)
-        });
-
-        Ok(result)
     }
 }
 
@@ -81,14 +73,6 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
