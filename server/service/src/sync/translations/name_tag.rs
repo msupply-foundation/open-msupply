@@ -26,11 +26,12 @@ impl SyncTranslation for NameTagTranslation {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyNameTagRow>(&sync_record.data)?;
+        let LegacyNameTagRow { ID, description } =
+            serde_json::from_str::<LegacyNameTagRow>(&sync_record.data)?;
 
         let result = NameTagRow {
-            id: data.ID,
-            name: data.description,
+            id: ID,
+            name: description,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
