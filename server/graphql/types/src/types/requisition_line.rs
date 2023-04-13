@@ -73,7 +73,11 @@ impl RequisitionLineNode {
     }
 
     pub async fn approved_quantity(&self) -> &i32 {
-        &self.row().approved_quantity
+        &self.row().approved_quantity 
+    }
+
+    pub async fn approval_comment(&self) -> &Option<String> {
+        &self.row().approval_comment
     }
 
     /// OutboundShipment lines linked to requisitions line

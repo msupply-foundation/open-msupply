@@ -27,8 +27,8 @@ pub struct LegacyPrefRow {
 pub struct LegacyPrefData {
     #[serde(rename = "default_item_packsize_to_one")]
     pub pack_to_one: bool,
-    #[serde(rename = "includeRequisitionsInSuppliersRemoteAuthorisationProcesses")]
-    pub requisitions_require_supplier_authorisation: bool,
+    #[serde(rename = "shouldAuthoriseResponseRequisition")]
+    pub response_requisition_requires_authorisation: bool,
     #[serde(rename = "shouldAuthoriseResponseRequisition")]
     pub use_authorisation_for_customer_requisitions: bool,
 }
@@ -54,7 +54,7 @@ impl SyncTranslation for StorePreferenceTranslation {
 
         let LegacyPrefData {
             pack_to_one,
-            requisitions_require_supplier_authorisation,
+            response_requisition_requires_authorisation,
             use_authorisation_for_customer_requisitions,
         } = data;
 
@@ -62,7 +62,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             id,
             r#type,
             pack_to_one,
-            requisitions_require_supplier_authorisation,
+            response_requisition_requires_authorisation,
             use_authorisation_for_customer_requisitions,
         };
 
