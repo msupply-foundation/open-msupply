@@ -294,7 +294,7 @@ mod test {
             id: mock_store_a().id.clone(),
             r#type: StorePreferenceType::StorePreferences,
             pack_to_one: true,
-            requisitions_require_supplier_authorisation: false,
+            response_requisition_requires_authorisation: false,
             use_authorisation_for_customer_requisitions: false,
         };
         StorePreferenceRowRepository::new(&connection)

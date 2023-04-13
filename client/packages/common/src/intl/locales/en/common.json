@@ -152,7 +152,7 @@
   "label.number": "Number",
   "label.auth-status": "Approval",
   "label.approved-quantity": "Approved Quantity",
-  "label.approver-comment": "Approver Comment",
+  "label.approval-comment": "Approval Comment",
   "label.on-hold": "On Hold",
   "label.order-history": "Order History",
   "label.our-soh": "Our SOH",

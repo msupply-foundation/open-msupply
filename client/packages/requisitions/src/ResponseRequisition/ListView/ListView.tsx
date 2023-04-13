@@ -55,9 +55,9 @@ export const ResponseRequisitionListView: FC = () => {
             getRequisitionTranslator(t)(status as RequisitionNodeStatus),
         },
       ],
-      // Would ideally be a status (combination of requisition.status and requisition.authorisationStatus) ?
+      // TODO Would ideally be a status (combination of requisition.status and requisition.approvalStatus) ?
       {
-        key: 'authorisationStatus',
+        key: 'approvalStatus',
         label: 'label.auth-status',
         width: 50,
       },

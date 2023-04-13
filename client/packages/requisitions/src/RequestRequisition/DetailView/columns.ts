@@ -4,7 +4,6 @@ import {
   ColumnAlign,
   useColumns,
   GenericColumnKey,
-  QuantityUtils,
   getCommentPopoverColumn,
   useFormatNumber,
   useUrlQueryParams,
@@ -87,18 +86,7 @@ export const useRequestColumns = () => {
       description: 'description.forecast-quantity',
       align: ColumnAlign.Right,
       width: 200,
-      accessor: ({ rowData }) =>
-        QuantityUtils.suggestedQuantity(
-          rowData.itemStats.averageMonthlyConsumption,
-          rowData.itemStats.availableStockOnHand,
-          maxMonthsOfStock
-        ),
-      getSortValue: rowData =>
-        QuantityUtils.suggestedQuantity(
-          rowData.itemStats.averageMonthlyConsumption,
-          rowData.itemStats.availableStockOnHand,
-          maxMonthsOfStock
-        ),
+      getSortValue: rowData => rowData.suggestedQuantity,
     },
     {
       key: 'requestedQuantity',
@@ -118,9 +106,9 @@ export const useRequestColumns = () => {
         rowData.linkedRequisitionLine?.approvedQuantity,
     });
     columnDefinitions.push({
-      key: 'approverComment',
-      label: 'label.approver-comment',
-      accessor: ({ rowData }) => rowData.linkedRequisitionLine?.comment,
+      key: 'approvalComment',
+      label: 'label.approval-comment',
+      accessor: ({ rowData }) => rowData.linkedRequisitionLine?.approvalComment,
     });
   }
   columnDefinitions.push(GenericColumnKey.Selection);
