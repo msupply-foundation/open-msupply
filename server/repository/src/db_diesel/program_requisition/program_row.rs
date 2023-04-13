@@ -15,7 +15,7 @@ table! {
 
 joinable!(program -> master_list (id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "program"]
 pub struct ProgramRow {
     pub id: String, // Master list id

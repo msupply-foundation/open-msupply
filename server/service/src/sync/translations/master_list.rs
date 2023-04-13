@@ -1,4 +1,4 @@
-use repository::{MasterListRow, StorageConnection, SyncBufferRow};
+use repository::{MasterListRow, ProgramRow, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -11,6 +11,8 @@ use super::{
 pub struct LegacyListMasterRow {
     ID: String,
     description: String,
+    #[serde(rename = "isProgram")]
+    is_program: bool,
     code: String,
     note: String,
 }
@@ -31,16 +33,28 @@ impl SyncTranslation for MasterListTranslation {
 
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        let result = MasterListRow {
-            id: data.ID,
-            name: data.description,
+        let master_list = MasterListRow {
+            id: data.ID.clone(),
+            name: data.description.clone(),
             code: data.code,
             description: data.note,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::MasterList(result),
-        )))
+        let program = if data.is_program == true {
+            ProgramRow {
+                id: data.ID,
+                name: data.description,
+            }
+        } else {
+            return Ok(Some(IntegrationRecords::from_upsert(
+                PullUpsertRecord::MasterList(master_list),
+            )));
+        };
+
+        Ok(Some(IntegrationRecords::from_upserts(vec![
+            PullUpsertRecord::MasterList(master_list),
+            PullUpsertRecord::Program(program),
+        ])))
     }
 
     fn try_translate_pull_delete(
