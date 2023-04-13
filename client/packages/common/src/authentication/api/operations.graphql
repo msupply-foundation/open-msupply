@@ -4,7 +4,7 @@ fragment UserStoreNode on UserStoreNode {
   name
   preferences {
     id
-    requisitionsRequireSupplierAuthorisation
+    responseRequisitionRequiresAuthorisation
     useAuthorisationForCustomerRequisitions
     packToOne
   }
@@ -110,7 +110,8 @@ query permissions($storeId: String!) {
 
 query storePreferences($storeId: String!) {
   storePreferences(storeId: $storeId) {
-    requisitionsRequireSupplierAuthorisation
+    responseRequisitionRequiresAuthorisation
+    useAuthorisationForCustomerRequisitions
     packToOne
     id
   }
