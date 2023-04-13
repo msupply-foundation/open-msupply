@@ -1,7 +1,7 @@
 use super::{version::Version, Migration};
-use crate::migrations::DATE;
 use crate::{migrations::sql, StorageConnection};
 mod name_tags;
+mod period_and_period_schedule;
 
 pub(crate) struct V1_01_11;
 
@@ -29,6 +29,7 @@ impl Migration for V1_01_11 {
 
         // TODO move store_preference to it's own migration, before PR merge? I'm doing this duplication temporarily to avoid more merge conflicts from develop changes...
         name_tags::migrate(connection)?;
+        period_and_period_schedule::migrate(connection)?;
 
         Ok(())
     }
@@ -40,29 +41,6 @@ impl Migration for V1_01_11 {
             r#"
             ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
         "#
-        )?;
-
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE period_schedule (
-                id TEXT NOT NULL PRIMARY KEY,
-                name TEXT NOT NULL
-            );
-            "#
-        )?;
-
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE period (
-                id TEXT NOT NULL PRIMARY KEY,
-                period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id),
-                name TEXT NOT NULL,
-                start_date {DATE} NOT NULL,
-                end_date {DATE} NOT NULL
-            );
-            "#
         )?;
 
         // Commented for this PR as not used yet...
@@ -106,6 +84,7 @@ impl Migration for V1_01_11 {
         //     "#
         // )?;
         name_tags::migrate(connection)?;
+        period_and_period_schedule::migrate(connection)?;
 
         Ok(())
     }
