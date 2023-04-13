@@ -2,6 +2,7 @@ use crate::{
     processors::transfer::{
         get_requisition_and_linked_requisition,
         shipment::{
+            assign_invoice_number::AssignInvoiceNumberProcessor,
             create_inbound_shipment::CreateInboundShipmentProcessor,
             delete_inbound_shipment::DeleteInboundShipmentProcessor,
             link_outbound_shipment::LinkOutboundShipmentProcessor,
@@ -21,6 +22,7 @@ use thiserror::Error;
 
 use super::GetRequisitionAndLinkedRequisitionError;
 
+pub(crate) mod assign_invoice_number;
 pub(crate) mod common;
 pub(crate) mod create_inbound_shipment;
 pub(crate) mod delete_inbound_shipment;
@@ -89,6 +91,7 @@ pub(crate) fn process_shipment_transfers(
         Box::new(UpdateInboundShipmentProcessor),
         Box::new(UpdateOutboundShipmentStatusProcessor),
         Box::new(DeleteInboundShipmentProcessor),
+        Box::new(AssignInvoiceNumberProcessor),
     ];
 
     let ctx = service_provider

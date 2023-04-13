@@ -409,7 +409,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
         call.resolve(response);
     }
-   
+
     public class omSupplyServer {
         JSObject data;
         

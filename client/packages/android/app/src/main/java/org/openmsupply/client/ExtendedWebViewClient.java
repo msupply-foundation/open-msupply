@@ -33,8 +33,14 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
         // TODO make sure this is only injected for pages in native bundle
         // There is no way to get the full list of plugins from bridge, use 'debug' and
         // see what plugins to add
-        List<PluginHandle> pluginList = Arrays.asList(bridge.getPlugin("NativeApi"), bridge.getPlugin("Keyboard"),
-                bridge.getPlugin("WebView"), bridge.getPlugin("BarcodeScanner"), bridge.getPlugin("Preferences"));
+        List<PluginHandle> pluginList = Arrays.asList(
+            bridge.getPlugin("NativeApi"),
+            bridge.getPlugin("Keyboard"),
+            bridge.getPlugin("WebView"),
+            bridge.getPlugin("BarcodeScanner"),
+            bridge.getPlugin("Preferences"),
+            bridge.getPlugin("KeepAwake")
+        );
 
         try {
             // From Bridge.getJSInjector()

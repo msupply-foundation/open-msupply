@@ -1,4 +1,8 @@
-use crate::{migrations::*, StorageConnection};
+use super::{version::Version, Migration};
+use crate::migrations::DATE;
+use crate::{migrations::sql, StorageConnection};
+mod name_tags;
+
 pub(crate) struct V1_01_11;
 
 impl Migration for V1_01_11 {
@@ -6,26 +10,36 @@ impl Migration for V1_01_11 {
         Version::from_str("1.1.11")
     }
 
+    #[cfg(feature = "postgres")]
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"ALTER TYPE activity_log_type ADD VALUE 'INVOICE_NUMBER_ALLOCATED';"#
+        )?;
+        sql!(
+            connection,
+            r#"ALTER TYPE activity_log_type ADD VALUE 'REQUISITION_NUMBER_ALLOCATED';"#
+        )?;
+        sql!(
+            connection,
+            r#"
+            ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
+        "#
+        )?;
+
+        // TODO move store_preference to it's own migration, before PR merge? I'm doing this duplication temporarily to avoid more merge conflicts from develop changes...
+        name_tags::migrate(connection)?;
+
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-            CREATE TABLE name_tag (
-                id TEXT NOT NULL PRIMARY KEY,
-                tag_name TEXT NOT NULL
-            );
-            "#
-        )?;
-
-        sql!(
-            connection,
-            r#"
-            CREATE TABLE name_tag_join (
-                id TEXT NOT NULL PRIMARY KEY,
-                name_id TEXT NOT NULL REFERENCES name(id),
-                name_tag_id TEXT NOT NULL REFERENCES name_tag(id)
-            );
-            "#
+            ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
+        "#
         )?;
 
         sql!(
@@ -91,6 +105,7 @@ impl Migration for V1_01_11 {
         //     );
         //     "#
         // )?;
+        name_tags::migrate(connection)?;
 
         Ok(())
     }
@@ -104,7 +119,6 @@ async fn migration_1_01_11() {
 
     let version = V1_01_11.version();
 
-    // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),

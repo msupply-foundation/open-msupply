@@ -6,6 +6,7 @@ import {
   ErrorWithDetailsProps,
   InitialisationStatusType,
   useInitialisationStatus,
+  useNativeClient,
 } from '@openmsupply-client/common';
 import { useHost } from '../../api/hooks';
 import { mapSyncError } from '../../api/api';
@@ -98,6 +99,7 @@ export const useInitialiseForm = () => {
   const { data: initStatus } = useInitialisationStatus(refetchInterval);
   const { data: syncStatus } = useHost.utils.syncStatus(refetchInterval);
   const { data: syncSettings } = useHost.settings.syncSettings();
+  const { allowSleep, keepAwake } = useNativeClient();
 
   const onInitialise = async () => {
     setSiteCredentialsError(null);
@@ -138,11 +140,16 @@ export const useInitialiseForm = () => {
 
     switch (initStatus.status) {
       case InitialisationStatusType.Initialised:
-        return navigate(`/${AppRoute.Login}`, { replace: true });
+        allowSleep().then(() =>
+          navigate(`/${AppRoute.Login}`, { replace: true })
+        );
+        break;
       case InitialisationStatusType.Initialising:
-        return setIsInitialising(true);
+        keepAwake().then(() => setIsInitialising(true));
+        break;
       case InitialisationStatusType.PreInitialisation:
-        return setIsInitialising(false);
+        allowSleep().then(() => setIsInitialising(false));
+        break;
     }
   }, [initStatus]);
 
