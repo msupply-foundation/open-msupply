@@ -19,7 +19,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
             CREATE TABLE program_requisition_settings (
                 id TEXT NOT NULL PRIMARY KEY,
-                name_tag_id NOT NULL REFERENCES name_tag(id),
+                name_tag_id TEXT NOT NULL REFERENCES name_tag(id),
                 program_id TEXT NOT NULL REFERENCES program(id),
                 period_schedule_id TEXT NOT NULL REFERENCES period_schedule(id)
             );

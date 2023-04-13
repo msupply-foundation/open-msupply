@@ -44,7 +44,7 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
 
     #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, row: &ProgramRequisitionSettingsRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(program_requisition_settings_dsl::program_settings)
+        diesel::insert_into(program_requisition_settings_dsl::program_requisition_settings)
             .values(row)
             .on_conflict(program_requisition_settings_dsl::id)
             .do_update()
