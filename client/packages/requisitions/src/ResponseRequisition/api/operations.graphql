@@ -55,6 +55,7 @@ fragment Response on RequisitionNode {
   otherPartyId
   maxMonthsOfStock
   minMonthsOfStock
+  approvalStatus
 
   user {
     __typename

@@ -11,6 +11,8 @@ import {
   useTranslation,
   NothingHere,
   useUrlQueryParams,
+  LocaleKey,
+  ColumnDescription,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -37,32 +39,47 @@ export const ResponseRequisitionListView: FC = () => {
   } = useUrlQueryParams({ filterKey: 'comment' });
   const { data, isError, isLoading } = useResponse.document.list();
   const pagination = { page, first, offset };
+  const { authoriseCustomerRequisitions } = useResponse.utils.preferences();
   useDisableResponseRows(data?.nodes);
 
-  const columns = useColumns<ResponseRowFragment>(
+  const columnDefinitions: ColumnDescription<ResponseRowFragment>[] = [
+    [getNameAndColorColumn(), { setter: onUpdate }],
+    {
+      key: 'requisitionNumber',
+      label: 'label.number',
+      width: 100,
+    },
+    'createdDatetime',
     [
-      [getNameAndColorColumn(), { setter: onUpdate }],
+      'status',
       {
-        key: 'requisitionNumber',
-        label: 'label.number',
-        width: 100,
+        formatter: status =>
+          getRequisitionTranslator(t)(status as RequisitionNodeStatus),
       },
-      'createdDatetime',
-      [
-        'status',
-        {
-          formatter: status =>
-            getRequisitionTranslator(t)(status as RequisitionNodeStatus),
-        },
-      ],
+    ],
+  ];
+
+  if (authoriseCustomerRequisitions) {
+    columnDefinitions.push(
       // TODO Would ideally be a status (combination of requisition.status and requisition.approvalStatus) ?
       {
         key: 'approvalStatus',
         label: 'label.auth-status',
         width: 50,
-      },
-      ['comment', { minWidth: 400 }],
-    ],
+        sortable: false,
+        accessor: ({ rowData }) =>
+          t(
+            `approval-status.${String(
+              rowData.approvalStatus
+            ).toLowerCase()}` as LocaleKey
+          ),
+      }
+    );
+  }
+  columnDefinitions.push(['comment', { minWidth: 400 }]);
+
+  const columns = useColumns<ResponseRowFragment>(
+    columnDefinitions,
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
   );

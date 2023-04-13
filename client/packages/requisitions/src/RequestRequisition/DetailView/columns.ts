@@ -19,7 +19,8 @@ export const useRequestColumns = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams();
   const formatNumber = useFormatNumber();
-  const { requireSupplierAuthorisation } = useRequest.utils.preferences();
+  const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
+
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
     getCommentPopoverColumn(),
     [
@@ -97,17 +98,19 @@ export const useRequestColumns = () => {
     },
   ];
 
-  if (requireSupplierAuthorisation) {
+  if (usesRemoteAuthorisation) {
     columnDefinitions.push({
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
       align: ColumnAlign.Right,
+      sortable: false,
       accessor: ({ rowData }) =>
         rowData.linkedRequisitionLine?.approvedQuantity,
     });
     columnDefinitions.push({
       key: 'approvalComment',
       label: 'label.approval-comment',
+      sortable: false,
       accessor: ({ rowData }) => rowData.linkedRequisitionLine?.approvalComment,
     });
   }

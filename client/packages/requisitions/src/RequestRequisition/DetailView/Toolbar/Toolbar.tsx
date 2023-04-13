@@ -6,6 +6,8 @@ import {
   Grid,
   useTranslation,
   SearchBar,
+  Typography,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
@@ -16,10 +18,13 @@ export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
   const isDisabled = useRequest.utils.isDisabled();
   const { itemFilter, setItemFilter } = useRequest.line.list();
-  const { theirReference, update, otherParty } = useRequest.document.fields([
-    'theirReference',
-    'otherParty',
-  ]);
+  const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
+  const { linkedRequisition, theirReference, update, otherParty } =
+    useRequest.document.fields([
+      'theirReference',
+      'otherParty',
+      'linkedRequisition',
+    ]);
 
   return (
     <AppBarContentPortal
@@ -56,6 +61,20 @@ export const Toolbar: FC = () => {
               />
             }
           />
+          {usesRemoteAuthorisation && (
+            <InputWithLabelRow
+              label={t('label.auth-status')}
+              Input={
+                <Typography>
+                  {t(
+                    `approval-status.${String(
+                      linkedRequisition?.approvalStatus
+                    ).toLowerCase()}` as LocaleKey
+                  )}
+                </Typography>
+              }
+            />
+          )}
         </Grid>
         <Grid
           item

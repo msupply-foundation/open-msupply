@@ -68,10 +68,12 @@ export const useResponseColumns = () => {
     columnDefinitions.push({
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
+      sortable: false,
     });
     columnDefinitions.push({
       key: 'approvalComment',
       label: 'label.approval-comment',
+      sortable: false,
     });
   }
 

@@ -11,6 +11,8 @@ import {
   useTranslation,
   SearchBar,
   InfoPanel,
+  Typography,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -20,16 +22,18 @@ export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
-  const { otherParty, theirReference, shipments, update } =
+  const { approvalStatus, otherParty, theirReference, shipments, update } =
     useResponse.document.fields([
       'lines',
       'otherParty',
       'theirReference',
       'shipments',
+      'approvalStatus',
     ]);
   const { onDelete } = useResponse.line.delete();
   const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
   const showInfo = noLinkedShipments && !isDisabled;
+  const { authoriseCustomerRequisitions } = useResponse.utils.preferences();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -70,9 +74,21 @@ export const Toolbar: FC = () => {
                   />
                 }
               />
-              {showInfo && (
-                <InfoPanel message={t('info.no-shipment')} />
+              {authoriseCustomerRequisitions && (
+                <InputWithLabelRow
+                  label={t('label.auth-status')}
+                  Input={
+                    <Typography>
+                      {t(
+                        `approval-status.${String(
+                          approvalStatus
+                        ).toLowerCase()}` as LocaleKey
+                      )}
+                    </Typography>
+                  }
+                />
               )}
+              {showInfo && <InfoPanel message={t('info.no-shipment')} />}
             </Box>
           </Box>
         </Grid>

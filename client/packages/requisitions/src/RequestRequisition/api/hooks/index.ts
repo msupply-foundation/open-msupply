@@ -35,6 +35,7 @@ export const useRequest = {
     api: Utils.useRequestApi,
     addFromMasterList: Utils.useAddFromMasterList,
     isDisabled: Utils.useIsRequestDisabled,
+    isRemoteAuthorisation: Utils.useIsRemoteAuthorisation,
     suggestedQuantity: Utils.useSuggestedQuantity,
     preferences: Utils.useRequisitionPreferences,
   },
