@@ -128,7 +128,6 @@ pub(crate) enum PullDeleteRecordTable {
     Unit,
     Item,
     Store,
-    NameTag,
     MasterList,
     MasterListLine,
     MasterListNameJoin,
