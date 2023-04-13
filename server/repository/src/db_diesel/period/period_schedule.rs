@@ -1,12 +1,13 @@
 use super::{
     period_schedule_row::{period_schedule, period_schedule::dsl as period_schedule_dsl},
-    DBType, PeriodScheduleRow, StorageConnection,
+    PeriodScheduleRow,
 };
 use diesel::prelude::*;
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
+    DBType, StorageConnection,
 };
 
 use crate::{EqualFilter, Sort};

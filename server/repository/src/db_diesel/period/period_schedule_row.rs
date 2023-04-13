@@ -1,6 +1,6 @@
-use super::{period_schedule_row::period_schedule::dsl as period_schedule_dsl, StorageConnection};
+use super::period_schedule_row::period_schedule::dsl as period_schedule_dsl;
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, StorageConnection};
 
 use diesel::prelude::*;
 
@@ -52,20 +52,5 @@ impl<'a> PeriodScheduleRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
-    }
-
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<PeriodScheduleRow>, RepositoryError> {
-        Ok(period_schedule_dsl::period_schedule
-            .filter(period_schedule_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
-    }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(period_schedule_dsl::period_schedule.filter(period_schedule_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
-        Ok(())
     }
 }
