@@ -283,8 +283,6 @@ pub(crate) async fn check_records_against_database(
             MasterListNameJoin => {
                 check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
             }
-            PeriodSchedule => check_delete_record_by_id!(PeriodScheduleRowRepository, con, id),
-            Period => check_delete_record_by_id!(PeriodRowRepository, con, id),
             Report => check_delete_record_by_id!(ReportRowRepository, con, id),
             NameStoreJoin => check_delete_record_by_id!(ReportRowRepository, con, id),
             Invoice => check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id),

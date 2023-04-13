@@ -28,12 +28,10 @@ impl SyncTranslation for PeriodScheduleTranslation {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyPeriodScheduleRow>(&sync_record.data)?;
+        let LegacyPeriodScheduleRow { id, name } =
+            serde_json::from_str::<LegacyPeriodScheduleRow>(&sync_record.data)?;
 
-        let result = PeriodScheduleRow {
-            id: data.id.to_string(),
-            name: data.name.to_string(),
-        };
+        let result = PeriodScheduleRow { id, name };
 
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::PeriodSchedule(result),
