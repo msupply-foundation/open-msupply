@@ -1,9 +1,16 @@
 import { FilterOptionsState, RegexUtils } from '@openmsupply-client/common';
 import { NameRowFragment } from './api';
 
-export interface NameSearchProps {
+export type NameSearchProps = NameSearchModalProps | NameSearchListProps;
+
+export interface NameSearchModalProps {
   open: boolean;
   onClose: () => void;
+  onChange: (name: NameRowFragment) => void;
+}
+
+interface NameSearchListProps {
+  isList: true;
   onChange: (name: NameRowFragment) => void;
 }
 

@@ -6,10 +6,10 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useName, NameRowFragment } from '../../api';
-import { filterByNameAndCode, NameSearchProps } from '../../utils';
+import { filterByNameAndCode, NameSearchModalProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
-const SupplierSearchComponent: FC<NameSearchProps> = ({
+const SupplierSearchComponent: FC<NameSearchModalProps> = ({
   open,
   onClose,
   onChange,
@@ -36,7 +36,7 @@ const SupplierSearchComponent: FC<NameSearchProps> = ({
   );
 };
 
-export const SupplierSearchModal: FC<NameSearchProps> = props => (
+export const SupplierSearchModal: FC<NameSearchModalProps> = props => (
   <QueryParamsProvider
     createStore={createQueryParamsStore<NameRowFragment>({
       initialSortBy: { key: 'name' },
