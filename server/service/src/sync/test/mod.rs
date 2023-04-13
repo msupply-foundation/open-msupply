@@ -258,9 +258,6 @@ pub(crate) async fn check_records_against_database(
             Name => {
                 check_delete_record_by_id!(NameRowRepository, con, id)
             }
-            NameTag => {
-                check_delete_record_by_id!(NameTagRowRepository, con, id)
-            }
             NameTagJoin => {
                 check_delete_record_by_id!(NameTagJoinRepository, con, id)
             }
