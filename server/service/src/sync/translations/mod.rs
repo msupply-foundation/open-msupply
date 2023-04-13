@@ -136,8 +136,6 @@ pub(crate) enum PullDeleteRecordTable {
     MasterList,
     MasterListLine,
     MasterListNameJoin,
-    PeriodSchedule,
-    Period,
     Report,
     Name,
     InventoryAdjustmentReason,

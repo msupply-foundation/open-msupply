@@ -212,8 +212,6 @@ impl PullDeleteRecord {
             MasterList => MasterListRowRepository::new(con).delete(id),
             MasterListLine => MasterListLineRowRepository::new(con).delete(id),
             MasterListNameJoin => MasterListNameJoinRepository::new(con).delete(id),
-            PeriodSchedule => PeriodScheduleRowRepository::new(con).delete(id),
-            Period => PeriodRowRepository::new(con).delete(id),
             Report => ReportRowRepository::new(con).delete(id),
             NameStoreJoin => NameStoreJoinRepository::new(con).delete(id),
             Invoice => InvoiceRowRepository::new(con).delete(id),
