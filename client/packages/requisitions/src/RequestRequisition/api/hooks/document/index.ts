@@ -6,6 +6,7 @@ import { useRequestFields } from './useRequestFields';
 import { useRequests } from './useRequests';
 import { useRequestsAll } from './useRequestsAll';
 import { useUpdateRequest } from './useUpdateRequest';
+import { useInsertProgramRequest } from './useInsertProgramRequest';
 
 export const Document = {
   useDeleteRequests,
@@ -16,4 +17,5 @@ export const Document = {
   useRequests,
   useRequestsAll,
   useUpdateRequest,
+  useInsertProgramRequest,
 };
