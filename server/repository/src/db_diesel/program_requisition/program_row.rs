@@ -1,6 +1,8 @@
-use super::{program_row::program::dsl as program_dsl, StorageConnection};
+use super::program_row::program::dsl as program_dsl;
 
-use crate::{db_diesel::master_list_row::master_list, repository_error::RepositoryError};
+use crate::{
+    db_diesel::master_list_row::master_list, repository_error::RepositoryError, StorageConnection,
+};
 
 use diesel::prelude::*;
 
@@ -54,17 +56,5 @@ impl<'a> ProgramRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
-    }
-
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ProgramRow>, RepositoryError> {
-        Ok(program_dsl::program
-            .filter(program_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
-    }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(program_dsl::program.filter(program_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
-        Ok(())
     }
 }

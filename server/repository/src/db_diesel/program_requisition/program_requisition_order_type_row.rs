@@ -1,12 +1,9 @@
 use super::{
     program_requisition_order_type_row::program_requisition_order_type::dsl as program_requisition_order_type_dsl,
-    StorageConnection,
+    program_requisition_settings_row::program_requisition_settings,
 };
 
-use crate::{
-    db_diesel::program_requisition_settings_row::program_requisition_settings,
-    repository_error::RepositoryError,
-};
+use crate::{repository_error::RepositoryError, StorageConnection};
 
 use diesel::prelude::*;
 
@@ -71,25 +68,5 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
-    }
-
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<ProgramRequisitionOrderTypeRow>, RepositoryError> {
-        Ok(
-            program_requisition_order_type_dsl::program_requisition_order_type
-                .filter(program_requisition_order_type_dsl::id.eq_any(ids))
-                .load(&self.connection.connection)?,
-        )
-    }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            program_requisition_order_type_dsl::program_requisition_order_type
-                .filter(program_requisition_order_type_dsl::id.eq(id)),
-        )
-        .execute(&self.connection.connection)?;
-        Ok(())
     }
 }

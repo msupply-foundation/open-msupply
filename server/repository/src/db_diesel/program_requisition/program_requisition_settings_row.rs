@@ -1,13 +1,12 @@
 use super::{
     program_requisition_settings_row::program_requisition_settings::dsl as program_requisition_settings_dsl,
-    StorageConnection,
+    program_row::program,
 };
 
 use crate::{
-    db_diesel::{
-        name_tag_row::name_tag, period_schedule_row::period_schedule, program_row::program,
-    },
+    db_diesel::{name_tag_row::name_tag, period::period_schedule_row::period_schedule},
     repository_error::RepositoryError,
+    StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -71,25 +70,5 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
-    }
-
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<ProgramRequisitionSettingsRow>, RepositoryError> {
-        Ok(
-            program_requisition_settings_dsl::program_requisition_settings
-                .filter(program_requisition_settings_dsl::id.eq_any(ids))
-                .load(&self.connection.connection)?,
-        )
-    }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(
-            program_requisition_settings_dsl::program_requisition_settings
-                .filter(program_requisition_settings_dsl::id.eq(id)),
-        )
-        .execute(&self.connection.connection)?;
-        Ok(())
     }
 }
