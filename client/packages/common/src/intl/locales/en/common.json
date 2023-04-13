@@ -163,6 +163,8 @@
   "label.remaining-to-supply": "Remaining",
   "label.requested-quantity": "Requested",
   "label.requisition": "Requisition",
+  "label.requisition-general": "General",
+  "label.requisition-program": "Program",
   "label.rows-per-page": "Rows per page:",
   "label.select": "Select",
   "label.select-all": "Select all",
