@@ -1,3 +1,4 @@
+pub(crate) mod assign_requisition_number;
 pub(crate) mod create_response_requisition;
 pub(crate) mod link_request_requisition;
 pub(crate) mod update_request_requisition_status;
@@ -16,9 +17,10 @@ use crate::{
     processors::transfer::{
         get_requisition_and_linked_requisition,
         requisition::{
+            assign_requisition_number::AssignRequisitionNumberProcessor,
             create_response_requisition::CreateResponseRequisitionProcessor,
             link_request_requisition::LinkRequestRequisitionProcessor,
-            update_request_requisition_status::UpdateRequestRequstionStatusProcessor,
+            update_request_requisition_status::UpdateRequestRequisitionStatusProcessor,
         },
     },
     service_provider::ServiceProvider,
@@ -33,7 +35,7 @@ const CHANGELOG_BATCH_SIZE: u32 = 20;
 pub(crate) struct RequisitionTransferProcessorRecord {
     requisition: Requisition,
     /// Linked requisition, both relations are checked
-    /// (requisition.id = linked_requistion.linked_requisition_id OR requisition.linked_requistion_id = requisition.id)
+    /// (requisition.id = linked_requisition.linked_requisition_id OR requisition.linked_requisition_id = requisition.id)
     linked_requisition: Option<Requisition>,
     other_party_store_id: String,
 }
@@ -61,7 +63,8 @@ pub(crate) fn process_requisition_transfers(
     let processors: Vec<Box<dyn RequisitionTransferProcessor>> = vec![
         Box::new(CreateResponseRequisitionProcessor),
         Box::new(LinkRequestRequisitionProcessor),
-        Box::new(UpdateRequestRequstionStatusProcessor),
+        Box::new(UpdateRequestRequisitionStatusProcessor),
+        Box::new(AssignRequisitionNumberProcessor),
     ];
 
     let ctx = service_provider

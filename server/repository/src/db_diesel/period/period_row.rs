@@ -1,6 +1,6 @@
-use super::{period_row::period::dsl as period_dsl, StorageConnection};
+use super::period_row::period::dsl as period_dsl;
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, StorageConnection};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -59,17 +59,5 @@ impl<'a> PeriodRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
-    }
-
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PeriodRow>, RepositoryError> {
-        Ok(period_dsl::period
-            .filter(period_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
-    }
-
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(period_dsl::period.filter(period_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
-        Ok(())
     }
 }
