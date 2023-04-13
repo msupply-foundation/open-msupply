@@ -77,7 +77,12 @@ const PatientDetailView: FC = () => {
 
   const handleSave = useUpsertPatient();
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
-    useJsonForms(patient ? undefined : documentName, patientId, { handleSave }, createDoc);
+    useJsonForms(
+      patient ? undefined : documentName,
+      patientId,
+      { handleSave },
+      createDoc
+    );
 
   useEffect(() => {
     return () => setNewPatient(undefined);
@@ -125,7 +130,7 @@ export const PatientView: FC = () => {
   const { data } = useProgramEnrolments.document.programEnrolments({
     filterBy: { patientId: { equalTo: patientId } },
   });
-  const { patient } = usePatientCreateStore();
+  const { patient: createNewPatient } = usePatientCreateStore();
   const { setCurrentPatient } = usePatientStore();
   const { data: currentPatient } = usePatient.document.get(patientId);
 
@@ -162,7 +167,10 @@ export const PatientView: FC = () => {
           onClose={reset}
           onChange={async documentRegistry => {
             const createDocument = {
-              data: { enrolmentDatetime: new Date().toISOString(), status: 'ACTIVE' },
+              data: {
+                enrolmentDatetime: new Date().toISOString(),
+                status: 'ACTIVE',
+              },
               documentRegistry,
             };
             setCreationModal(
@@ -174,10 +182,10 @@ export const PatientView: FC = () => {
           }}
         />
       ) : null}
-      <AppBarButtons />
+      <AppBarButtons disabled={!!createNewPatient} />
       <PatientSummary />
       {/* Only show tabs for saved patients */}
-      {!!patient ? <PatientDetailView /> : <DetailTabs tabs={tabs} />}
+      {!!createNewPatient ? <PatientDetailView /> : <DetailTabs tabs={tabs} />}
     </React.Suspense>
   );
 };
