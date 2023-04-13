@@ -13,6 +13,8 @@ import {
   SortBy,
   LoadingButton,
   ToggleState,
+  Platform,
+  EnvUtils,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 import { RequestRowFragment, useRequest } from '../api';
@@ -52,6 +54,7 @@ export const AppBarButtons: FC<{
           variant="outlined"
           isLoading={isLoading}
           onClick={csvExport}
+          disabled={EnvUtils.platform === Platform.Android}
         >
           {t('button.export')}
         </LoadingButton>
