@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { useDashboard } from '../api';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
-import { useRequest } from 'packages/requisitions/src/RequestRequisition/api';
+import { useRequest } from '@openmsupply-client/requisitions';
 
 const LOW_MOS_THRESHOLD = 3;
 
