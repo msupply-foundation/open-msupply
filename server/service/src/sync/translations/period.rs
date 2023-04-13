@@ -2,9 +2,7 @@ use chrono::NaiveDate;
 use repository::{PeriodRow, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation,
-};
+use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::PERIOD;
 
@@ -37,14 +35,20 @@ impl SyncTranslation for PeriodTranslation {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyPeriodRow>(&sync_record.data)?;
+        let LegacyPeriodRow {
+            id,
+            period_schedule_id,
+            start_date,
+            end_date,
+            name,
+        } = serde_json::from_str::<LegacyPeriodRow>(&sync_record.data)?;
 
         let result = PeriodRow {
-            id: data.id.to_string(),
-            period_schedule_id: data.period_schedule_id.to_string(),
-            start_date: data.start_date,
-            end_date: data.end_date,
-            name: data.name.to_string(),
+            id,
+            period_schedule_id,
+            start_date,
+            end_date,
+            name,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
