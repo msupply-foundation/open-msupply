@@ -184,7 +184,6 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_id!(NameTagRowRepository, con, record, "NameTag");
             }
             NameTagJoin(record) => {
-                println!("NameTagJoin: {:?}", record,);
                 check_record_by_id!(NameTagJoinRepository, con, record, "NameTagJoin");
             }
             NameStoreJoin(record) => {
