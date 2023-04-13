@@ -15,11 +15,13 @@ import {
 import {
   PatientModal,
   ProgramEnrolmentRowFragmentWithId,
+  ProgramEventFragment,
   usePatientModalStore,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
 import { getStatusTranslation } from '../utils';
+import { encounterEventCellValue } from 'packages/system/src/Encounter/ListView/columns';
 
 const ProgramListComponent: FC = () => {
   const {
@@ -53,6 +55,13 @@ const ProgramListComponent: FC = () => {
       {
         key: 'programEnrolmentId',
         label: 'label.enrolment-patient-id',
+      },
+      {
+        key: 'events',
+        label: 'label.additional-info',
+        sortable: false,
+        formatter: events =>
+          encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
       },
       {
         key: 'status',
