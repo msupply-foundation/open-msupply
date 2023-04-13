@@ -65,7 +65,7 @@ export const ResponseRequisitionListView: FC = () => {
       {
         key: 'approvalStatus',
         label: 'label.auth-status',
-        width: 50,
+        minWidth: 150,
         sortable: false,
         accessor: ({ rowData }) =>
           t(
