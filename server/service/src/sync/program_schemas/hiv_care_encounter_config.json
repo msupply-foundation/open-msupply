@@ -5,6 +5,19 @@
       "conditions": [{ "field": "arvMedication.endOfSupply", "isSet": true }],
       "config": {
         "datetimeField": "arvMedication.endOfSupply",
+        "scheduleIn": { "days": 0 }
+      },
+      "event": {
+        "documentType": "HIVCareProgram",
+        "type": "programStatus",
+        "data": "Missed appointment"
+      }
+    },
+    {
+      "type": "Schedule",
+      "conditions": [{ "field": "arvMedication.endOfSupply", "isSet": true }],
+      "config": {
+        "datetimeField": "arvMedication.endOfSupply",
         "scheduleIn": { "days": 28 }
       },
       "event": {
