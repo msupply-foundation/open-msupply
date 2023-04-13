@@ -379,6 +379,19 @@ mutation insertRequest(
   }
 }
 
+mutation insertProgramRequest(
+  $storeId: String!
+  $input: InsertProgramRequestRequisitionInput!
+) {
+  insertProgramRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+  }
+}
+
 mutation updateRequest(
   $storeId: String!
   $input: UpdateRequestRequisitionInput!
@@ -441,5 +454,26 @@ mutation deleteRequest(
         }
       }
     }
+  }
+}
+
+fragment ProgramSettings on ProgramRequisitionSettingNode {
+  program {
+    name
+    suppliers {
+      name
+    }
+  }
+  orderTypes {
+    name
+    availablePeriods {
+      name
+    }
+  }
+}
+
+query programSettings($storeId: String!) {
+  programRequistitionSettings(storeId: $storeId) {
+    ...ProgramSettings
   }
 }

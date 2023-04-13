@@ -59,6 +59,7 @@ export type ActivityLogNode = {
 export enum ActivityLogNodeType {
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
+  InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
@@ -66,6 +67,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
+  RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   StocktakeCreated = 'STOCKTAKE_CREATED',
@@ -1020,6 +1022,15 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
+export type InsertProgramRequestRequisitionInput = {
+  id: Scalars['String'];
+  orderType: Scalars['String'];
+  otherPartyId: Scalars['String'];
+  programId: Scalars['String'];
+};
+
+export type InsertProgramRequestRequisitionResponse = RequisitionNode;
+
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
   error: InsertRequestRequisitionErrorInterface;
@@ -1650,6 +1661,7 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -1855,6 +1867,12 @@ export type MutationsInsertOutboundShipmentServiceLineArgs = {
 
 export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
   input: InsertOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertProgramRequestRequisitionArgs = {
+  input: InsertProgramRequestRequisitionInput;
   storeId: Scalars['String'];
 };
 
@@ -2163,6 +2181,13 @@ export type PaginationInput = {
   offset?: InputMaybe<Scalars['Int']>;
 };
 
+export type PeriodNode = {
+  __typename: 'PeriodNode';
+  endDate: Scalars['NaiveDate'];
+  name: Scalars['String'];
+  startDate: Scalars['NaiveDate'];
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   serviceTotalAfterTax: Scalars['Float'];
@@ -2198,6 +2223,26 @@ export type PrintReportNode = {
 };
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
+
+export type ProgramNode = {
+  __typename: 'ProgramNode';
+  masterList: MasterListNode;
+  name: Scalars['String'];
+  suppliers: Array<NameNode>;
+};
+
+export type ProgramRequisitionOrderTypeNode = {
+  __typename: 'ProgramRequisitionOrderTypeNode';
+  availablePeriods: Array<PeriodNode>;
+  id: Scalars['String'];
+  name: Scalars['String'];
+};
+
+export type ProgramRequisitionSettingNode = {
+  __typename: 'ProgramRequisitionSettingNode';
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+  program: ProgramNode;
+};
 
 export type Queries = {
   __typename: 'Queries';
@@ -2238,6 +2283,7 @@ export type Queries = {
    */
   printReport: PrintReportResponse;
   printReportDefinition: PrintReportResponse;
+  programRequistitionSettings: Array<ProgramRequisitionSettingNode>;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -2365,6 +2411,11 @@ export type QueriesPrintReportDefinitionArgs = {
   dataId: Scalars['String'];
   name?: InputMaybe<Scalars['String']>;
   report: Scalars['JSON'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesProgramRequistitionSettingsArgs = {
   storeId: Scalars['String'];
 };
 
@@ -3012,6 +3063,7 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String'];
   packToOne: Scalars['Boolean'];
+  requisitionsRequireSupplierAuthorisation: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;
