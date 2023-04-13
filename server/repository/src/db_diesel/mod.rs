@@ -94,6 +94,8 @@ pub use program_requisition_order_type_row::*;
 pub use program_requisition_settings_row::*;
 pub use program_row::*;
 pub use report::*;
+pub use report_row::*;
+pub use requisition::*;
 pub use requisition_line::*;
 pub use stock_line::*;
 pub use stock_line_row::*;
