@@ -50,6 +50,7 @@ export const DetailView: FC = () => {
     revert,
   } = useJsonForms(
     encounter?.document?.name,
+    encounter?.patient?.id,
     {
       handleSave,
     },

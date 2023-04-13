@@ -77,7 +77,7 @@ const PatientDetailView: FC = () => {
 
   const handleSave = useUpsertPatient();
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
-    useJsonForms(patient ? undefined : documentName, { handleSave }, createDoc);
+    useJsonForms(patient ? undefined : documentName, patientId, { handleSave }, createDoc);
 
   useEffect(() => {
     return () => setNewPatient(undefined);
@@ -162,7 +162,7 @@ export const PatientView: FC = () => {
           onClose={reset}
           onChange={async documentRegistry => {
             const createDocument = {
-              data: { enrolmentDatetime: new Date().toISOString() },
+              data: { enrolmentDatetime: new Date().toISOString(), status: 'ACTIVE' },
               documentRegistry,
             };
             setCreationModal(
