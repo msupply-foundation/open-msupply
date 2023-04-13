@@ -52,6 +52,7 @@ export const useEncounter = {
     list: Document.useEncounters,
     byId: Document.useEncounterById,
     byIdPromise: Document.useEncounterByIdPromise,
+    byDocName: Document.useEncounterByDocName,
     previous: Document.useEncounterPrevious,
     upsert: Document.useUpsertEncounter,
   },
@@ -61,6 +62,7 @@ export const useProgramEnrolments = {
   document: {
     programEnrolments: Document.useProgramEnrolments,
     programEnrolmentsPromise: Document.useProgramEnrolmentsPromise,
+    byDocName: Document.useProgramEnrolmentByDocName,
     insert: Document.useInsertProgramEnrolment,
     update: Document.useUpdateProgramEnrolment,
   },

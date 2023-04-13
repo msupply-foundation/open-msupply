@@ -27,6 +27,8 @@ import { useProgramEvents } from './useProgramEvents';
 import { useFormSchemaByType } from './useFormSchemaByType';
 import { useDocumentRegistryByType } from './useDocumentRegistriesByType';
 import { useDocumentRegistries } from './useDocumentRegistries';
+import { useEncounterByDocName } from './useEncounterByDocName';
+import { useProgramEnrolmentByDocName } from './useProgramEnrolmentByDocName';
 
 export const Document = {
   useDocumentByName,
@@ -43,12 +45,14 @@ export const Document = {
 
   useProgramEnrolments,
   useProgramEnrolmentsPromise,
+  useProgramEnrolmentByDocName,
   useInsertProgramEnrolment,
   useUpdateProgramEnrolment,
 
   useEncounters,
   useEncounterById,
   useEncounterByIdPromise,
+  useEncounterByDocName,
   useEncounterFields,
   useEncounterPrevious,
   useUpsertEncounter,
