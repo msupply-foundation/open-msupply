@@ -226,6 +226,13 @@ impl GeneralQueries {
     ) -> Result<StorePreferenceNode> {
         store_preferences(ctx, &store_id)
     }
+
+    pub async fn program_requistition_settings(
+        &self,
+        store_id: String,
+    ) -> Vec<ProgramRequisitionSettingNode> {
+        program_requisition_settings(&store_id)
+    }
 }
 
 #[derive(Default, Clone)]
