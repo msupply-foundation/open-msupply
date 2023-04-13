@@ -13,6 +13,7 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnDescription,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -64,9 +65,16 @@ export const RequestRequisitionListView: FC = () => {
 
   if (requireSupplierAuthorisation) {
     columnDefinitions.push({
-      key: 'authorisationStatus',
+      key: 'approvalStatus',
       label: 'label.auth-status',
-      width: 50,
+      minWidth: 150,
+      sortable: false,
+      accessor: ({ rowData }) =>
+        t(
+          `approval-status.${String(
+            rowData.linkedRequisition?.approvalStatus
+          ).toLowerCase()}` as LocaleKey
+        ),
     });
   }
 

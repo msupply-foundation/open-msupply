@@ -27,7 +27,7 @@ pub struct LegacyPrefRow {
 pub struct LegacyPrefData {
     #[serde(rename = "default_item_packsize_to_one")]
     pub pack_to_one: bool,
-    #[serde(rename = "shouldAuthoriseResponseRequisition")]
+    #[serde(rename = "includeRequisitionsInSuppliersRemoteAuthorisationProcesses")]
     pub response_requisition_requires_authorisation: bool,
     #[serde(rename = "shouldAuthoriseResponseRequisition")]
     pub use_authorisation_for_customer_requisitions: bool,
