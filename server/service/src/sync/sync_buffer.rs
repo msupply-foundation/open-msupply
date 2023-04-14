@@ -10,6 +10,8 @@ use util::inline_edit;
 const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
     LegacyTableName::NAME,
+    LegacyTableName::NAME_TAG,
+    LegacyTableName::NAME_TAG_JOIN,
     LegacyTableName::UNIT,
     LegacyTableName::ITEM,
     LegacyTableName::STORE,
@@ -17,6 +19,8 @@ const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::LIST_MASTER,
     LegacyTableName::LIST_MASTER_LINE,
     LegacyTableName::LIST_MASTER_NAME_JOIN,
+    LegacyTableName::PERIOD_SCHEDULE,
+    LegacyTableName::PERIOD,
     LegacyTableName::REPORT,
     LegacyTableName::LOCATION,
     LegacyTableName::ITEM_LINE,

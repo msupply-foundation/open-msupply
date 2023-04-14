@@ -26,7 +26,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
     /// 1. Source requisition name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source requisition is Request requisition
     /// 3. Source requisition is Status is Sent
-    /// 4. Response requisition does not exists (no link is found for source requisition)
+    /// 4. Response requisition does not exist (no link is found for source requisition)
     ///
     /// Only runs once:
     /// 5. Because new response requisition is linked to source requisition when it's created and `4.` will never be true again

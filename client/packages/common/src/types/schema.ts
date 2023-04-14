@@ -59,6 +59,7 @@ export type ActivityLogNode = {
 export enum ActivityLogNodeType {
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
+  InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
@@ -66,6 +67,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
+  RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   StocktakeCreated = 'STOCKTAKE_CREATED',
@@ -3023,6 +3025,7 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String'];
   packToOne: Scalars['Boolean'];
+  requestRequisitionRequiresAuthorisation: Scalars['Boolean'];
   responseRequisitionRequiresAuthorisation: Scalars['Boolean'];
 };
 
