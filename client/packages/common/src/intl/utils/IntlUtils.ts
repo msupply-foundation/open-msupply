@@ -9,6 +9,7 @@ export { useTranslationNext };
 const languageOptions = [
   { label: 'عربي', value: 'ar' },
   { label: 'Français', value: 'fr' },
+  { label: 'Français (Djibouti)', value: 'fr-DJ' },
   { label: 'English', value: 'en' },
   { label: 'Española (Colombia)', value: 'es-CO' },
   { label: 'Tetum', value: 'tet' },
@@ -20,6 +21,7 @@ const locales = [
   'es' as const,
   'es-CO' as const,
   'fr' as const,
+  'fr-DJ' as const,
   'tet' as const,
 ] as const;
 
