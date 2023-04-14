@@ -12,8 +12,6 @@ use crate::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_simple_string_filter,
         apply_sort, apply_sort_no_case,
     },
-    order_type_row::ProgramOrderTypeRow,
-    program_row::ProgramRow,
     repository_error::RepositoryError,
     DBType, NameRow, PeriodRow, StorageConnection, StoreRow,
 };
@@ -29,7 +27,7 @@ pub type RequisitionJoin = (
     NameRow,
     StoreRow,
     Option<PeriodRow>,
-    Option<ProgramRow>,
+    Option<ProgramRequistionRow>,
     Option<ProgramOrderTypeRow>,
 );
 
