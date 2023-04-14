@@ -24,7 +24,7 @@ joinable!(program_requisition_settings -> name_tag (name_tag_id));
 joinable!(program_requisition_settings -> program (program_id));
 joinable!(program_requisition_settings -> period_schedule(period_schedule_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "program_requisition_settings"]
 pub struct ProgramRequisitionSettingsRow {
     pub id: String,
@@ -33,13 +33,13 @@ pub struct ProgramRequisitionSettingsRow {
     pub period_schedule_id: String,
 }
 
-pub struct ProgramRequisitionSettingsRepository<'a> {
+pub struct ProgramRequisitionSettingsRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> ProgramRequisitionSettingsRepository<'a> {
+impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        ProgramRequisitionSettingsRepository { connection }
+        ProgramRequisitionSettingsRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
