@@ -40,6 +40,12 @@ pub struct LegacyRequisitionLineRow {
     // average_monthly_consumption: daily_usage * NUMBER_OF_DAYS_IN_A_MONTH
     pub daily_usage: f64,
 
+    pub approved_quantity: i32,
+
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "authoriser_comment")]
+    pub approval_comment: Option<String>,
+
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub comment: Option<String>,
 
@@ -73,6 +79,9 @@ impl SyncTranslation for RequisitionLineTranslation {
                 as i32,
             comment: data.comment,
             snapshot_datetime: data.snapshot_datetime,
+            approved_quantity: data.approved_quantity,
+            approval_comment: data.approval_comment,
+            is_sync_update: true,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -116,6 +125,9 @@ impl SyncTranslation for RequisitionLineTranslation {
             average_monthly_consumption,
             comment,
             snapshot_datetime,
+            approved_quantity,
+            approval_comment,
+            is_sync_update: _,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -134,6 +146,8 @@ impl SyncTranslation for RequisitionLineTranslation {
             daily_usage: average_monthly_consumption as f64 / NUMBER_OF_DAYS_IN_A_MONTH,
             comment,
             snapshot_datetime,
+            approved_quantity,
+            approval_comment,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

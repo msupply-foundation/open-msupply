@@ -1,11 +1,12 @@
-use crate::StorageConnection;
-
 use super::{version::Version, Migration};
 mod activity_log;
+mod is_sync_updated_for_requisition;
 mod name_tags;
 mod period_and_period_schedule;
+mod remote_authorisation;
 mod store_preference;
 
+use crate::StorageConnection;
 pub(crate) struct V1_01_11;
 
 impl Migration for V1_01_11 {
@@ -19,6 +20,10 @@ impl Migration for V1_01_11 {
         name_tags::migrate(connection)?;
         period_and_period_schedule::migrate(connection)?;
 
+        // Remote authorisation
+        remote_authorisation::migrate(connection)?;
+        is_sync_updated_for_requisition::migrate(connection)?;
+
         Ok(())
     }
 }
@@ -31,6 +36,7 @@ async fn migration_1_01_11() {
 
     let version = V1_01_11.version();
 
+    // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),
