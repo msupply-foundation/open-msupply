@@ -182,6 +182,9 @@ impl PullUpsertRecord {
             PeriodSchedule(record) => PeriodScheduleRowRepository::new(con).upsert_one(record),
             Period(record) => PeriodRowRepository::new(con).upsert_one(record),
             Program(record) => ProgramRowRepository::new(con).upsert_one(record),
+            ProgramRequisitionSettings(record) => {
+                ProgramRequisitionSettingsRowRepository::new(con).upsert_one(record)
+            }
             Report(record) => ReportRowRepository::new(con).upsert_one(record),
             Location(record) => LocationRowRepository::new(con).upsert_one(record),
             StockLine(record) => StockLineRowRepository::new(con).upsert_one(record),

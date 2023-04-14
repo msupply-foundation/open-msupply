@@ -1,4 +1,7 @@
-use repository::{MasterListRow, ProgramRow};
+use repository::{
+    mock::{mock_name_tag_1, mock_period_schedule_1},
+    MasterListRow, ProgramRequisitionSettingsRow, ProgramRow,
+};
 
 use crate::sync::{
     test::TestSyncPullRecord,
@@ -55,7 +58,25 @@ const MASTER_LIST_3: (&'static str, &'static str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": true,
-    "programSettings": null,
+    "programSettings": {
+        "elmisCode": "",
+        "storeTags": {
+            "NewProgramTag1": {
+                "orderTypes": [
+                    {
+                        "isEmergency": false,
+                        "maxEmergencyOrders": "",
+                        "maxMOS": 3,
+                        "maxOrdersPerPeriod": 1,
+                        "name": "New order 1",
+                        "thresholdMOS": 3,
+                        "type": "Order type"
+                    }
+                ],
+                "periodScheduleName": "Monthly"
+            }
+        }
+    },
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
@@ -99,6 +120,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     p.id = MASTER_LIST_3.0.to_owned();
                     p.name = "program_test".to_owned();
                 })),
+                PullUpsertRecord::ProgramRequisitionSettings(inline_init(
+                    |p: &mut ProgramRequisitionSettingsRow| {
+                        p.id = "program_test".to_owned() + &mock_name_tag_1().id;
+                        p.name_tag_id = mock_name_tag_1().id;
+                        p.program_id = "program_test".to_owned();
+                        p.period_schedule_id = mock_period_schedule_1().id;
+                    },
+                )),
             ],
         ),
     ]
