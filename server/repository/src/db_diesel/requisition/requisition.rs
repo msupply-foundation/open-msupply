@@ -12,8 +12,10 @@ use crate::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_simple_string_filter,
         apply_sort, apply_sort_no_case,
     },
+    order_type_row::ProgramOrderTypeRow,
+    program_row::ProgramRow,
     repository_error::RepositoryError,
-    DBType, NameRow, StorageConnection, StoreRow,
+    DBType, NameRow, PeriodRow, StorageConnection, StoreRow,
 };
 
 use crate::Pagination;
@@ -22,13 +24,23 @@ use diesel::{
     prelude::*,
 };
 
-pub type RequisitionJoin = (RequisitionRow, NameRow, StoreRow);
+pub type RequisitionJoin = (
+    RequisitionRow,
+    NameRow,
+    StoreRow,
+    Option<PeriodRow>,
+    Option<ProgramRow>,
+    Option<ProgramOrderTypeRow>,
+);
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct Requisition {
     pub requisition_row: RequisitionRow,
     pub name_row: NameRow,
     pub store_row: StoreRow,
+    pub period: Option<PeriodRow>,
+    pub program_name: Option<String>,
+    pub order_type: Option<String>,
 }
 
 pub struct RequisitionRepository<'a> {
@@ -183,10 +195,15 @@ fn create_filtered_query(
     Ok(query)
 }
 
-fn to_domain((requisition_row, name_row, store_row): RequisitionJoin) -> Requisition {
+fn to_domain(
+    (requisition_row, name_row, store_row, period_row, program_row, order_type_row): RequisitionJoin,
+) -> Requisition {
     Requisition {
         requisition_row,
         name_row,
         store_row,
+        period: period_row,
+        program_name: program_row.map(|program_row| program_row.name),
+        order_type: order_type_row.map(|order_type_row| order_type_row.name),
     }
 }
