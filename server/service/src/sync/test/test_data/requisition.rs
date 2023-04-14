@@ -79,6 +79,9 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
+            program_id: todo!(),
+            period_id: todo!(),
+            order_type_id: todo!(),
         }),
     )
 }
@@ -184,6 +187,9 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
+            program_id: todo!(),
+            period_id: todo!(),
+            order_type_id: todo!(),
         }),
     )
 }
@@ -301,6 +307,9 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
             max_months_of_stock: 10.0,
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
+            program_id: todo!(),
+            period_id: todo!(),
+            order_type_id: todo!(),
         }),
     )
 }
