@@ -202,6 +202,9 @@ impl SyncTranslation for RequisitionTranslation {
             min_months_of_stock: data.thresholdMOS,
             linked_requisition_id: data.linked_requisition_id,
             expected_delivery_date: data.expected_delivery_date,
+            program_id: todo!(),
+            period_id: todo!(),
+            order_type_id: todo!(),
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -252,6 +255,9 @@ impl SyncTranslation for RequisitionTranslation {
             min_months_of_stock,
             linked_requisition_id,
             expected_delivery_date,
+            program_id,
+            period_id,
+            order_type_id,
         } = RequisitionRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
