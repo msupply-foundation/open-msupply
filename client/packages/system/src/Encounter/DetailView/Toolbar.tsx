@@ -12,6 +12,7 @@ import {
   UserIcon,
   useFormatDateTime,
   ClinicianNode,
+  EncounterNodeStatus,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -23,6 +24,7 @@ import {
   getClinicianName,
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
+import { Select } from '@common/components';
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
@@ -32,6 +34,7 @@ interface ToolbarProps {
   encounter: EncounterFragment;
 }
 export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
+  const [status, setStatus] = useState<EncounterNodeStatus | undefined>();
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
@@ -44,6 +47,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   useEffect(() => {
     if (!encounter) return;
 
+    setStatus(encounter.status ?? undefined);
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
     setClinician({
@@ -87,10 +91,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
               <Row
                 label={t('label.patient')}
                 Input={
-                  <BasicTextInput
-                    disabled
-                    value={encounter?.patient.name}
-                  />
+                  <BasicTextInput disabled value={encounter?.patient.name} />
                 }
               />
               <Row
@@ -109,7 +110,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                 Input={
                   <BasicTextInput
                     disabled
-                    sx={{width: '190px'}}
+                    sx={{ width: '190px' }}
                     value={programDocument?.[0]?.name ?? ''}
                   />
                 }
@@ -126,6 +127,41 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                     }}
                     clinicianLabel={clinician?.label || ''}
                     clinicianValue={clinician?.value}
+                  />
+                }
+              />
+              <Row
+                label={t('label.encounter-status')}
+                Input={
+                  <Select
+                    fullWidth
+                    onChange={event => {
+                      const newStatus = event.target
+                        .value as EncounterNodeStatus;
+                      setStatus(newStatus);
+                      onChange({
+                        status: newStatus,
+                      });
+                    }}
+                    options={[
+                      {
+                        label: t('label.encounter-status-missed'),
+                        value: EncounterNodeStatus.Missed,
+                      },
+                      {
+                        label: t('label.encounter-status-scheduled'),
+                        value: EncounterNodeStatus.Scheduled,
+                      },
+                      {
+                        label: t('label.encounter-status-completed'),
+                        value: EncounterNodeStatus.Completed,
+                      },
+                      {
+                        label: t('label.encounter-status-cancelled'),
+                        value: EncounterNodeStatus.Cancelled,
+                      },
+                    ]}
+                    value={status}
                   />
                 }
               />
