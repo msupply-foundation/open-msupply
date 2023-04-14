@@ -6,6 +6,7 @@ import {
   Grid,
   PlusCircleIcon,
   Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 import { ProgramSettingsFragment } from '../api';
@@ -30,6 +31,7 @@ const useProgramRequisitionOptions = (
   const [orderType, setOrderType] = useState<OrderType | null>(null);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [period, setPeriod] = useState<Period | null>(null);
+  const t = useTranslation('replenishment');
 
   useEffect(() => {
     setOrderType(null);
@@ -45,7 +47,7 @@ const useProgramRequisitionOptions = (
       options: programSettings,
       value: program,
       set: setProgram,
-      label: 'Program',
+      label: t('label.program'),
       disabled: false,
     },
     orderTypes: {
@@ -53,25 +55,25 @@ const useProgramRequisitionOptions = (
       value: orderType,
       set: setOrderType,
       disabled: program === null,
-      labelNoOptions: 'Not configured',
-      label: 'Order Type',
+      labelNoOptions: t('messages.not-configured'),
+      label: t('label.order-type'),
     },
     suppliers: {
       options: program?.suppliers || [],
       value: supplier,
       set: setSupplier,
       disabled: program === null,
-      labelNoOptions: 'Not configured',
+      labelNoOptions: t('messages.not-configured'),
       // TODO supplier on hold ?
-      label: 'Select Supplier',
+      label: t('label.supplier-name'),
     },
     periods: {
       options: orderType?.availablePeriods || [],
       value: period,
       set: setPeriod,
       disabled: orderType == null,
-      labelNoOptions: 'Not configured',
-      label: 'Select Period',
+      labelNoOptions: t('messages.period-not-available'),
+      label: t('label.period'),
     },
     createOptions:
       !!program && !!orderType && !!supplier && !!period
@@ -135,6 +137,7 @@ export const ProgramRequisitionOptions = ({
 }) => {
   const { programs, orderTypes, suppliers, periods, createOptions } =
     useProgramRequisitionOptions(programSettings);
+  const t = useTranslation();
 
   return (
     <Grid
@@ -153,7 +156,7 @@ export const ProgramRequisitionOptions = ({
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           disabled={!createOptions}
-          label={'create'}
+          label={t('label.new')}
           onClick={() => {
             if (!createOptions) return;
             onCreate({
