@@ -1,11 +1,7 @@
 import React, { FC } from 'react';
 import {
   BasicSpinner,
-  Box,
-  ButtonWithIcon,
   ModalTabs,
-  PlusCircleIcon,
-  Typography,
   useDialog,
   useTranslation,
   useWindowDimensions,
@@ -15,14 +11,11 @@ import {
   InternalSupplierSearchModal,
   NameRowFragment,
 } from 'packages/system/src';
-import { ProgramSettingsFragment, useRequest } from '../api';
-
-interface NewProgramRequistion {
-  type: 'program';
-  programId: string;
-  orderType: string;
-  otherPartyId: string;
-}
+import { useRequest } from '../api';
+import {
+  NewProgramRequistion,
+  ProgramRequisitionOptions,
+} from './ProgramRequisitionOptions';
 
 interface NewGeneralRequisition {
   type: 'general';
@@ -32,7 +25,7 @@ interface NewGeneralRequisition {
 interface CreateRequisitionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onChange: (
+  onCreate: (
     newRequisition: NewGeneralRequisition | NewProgramRequistion
   ) => void;
 }
@@ -40,7 +33,7 @@ interface CreateRequisitionModalProps {
 export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
   isOpen,
   onClose,
-  onChange,
+  onCreate,
 }) => {
   const { data: programSettings, isLoading } =
     useRequest.utils.programSettings();
@@ -62,26 +55,27 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
             {
               Component: (
                 <ProgramRequisitionOptions
-                  onChange={onChange}
+                  onCreate={onCreate}
                   programSettings={programSettings}
                 />
               ),
               value: t('label.requisition-program'),
             },
             {
-              Component: <GeneralRequisitionOptions onChange={onChange} />,
+              Component: <GeneralRequisitionOptions onCreate={onCreate} />,
               value: t('label.requisition-general'),
             },
           ]}
         />
       );
 
-    return <GeneralRequisitionOptions onChange={onChange} />;
+    return <GeneralRequisitionOptions onCreate={onCreate} />;
   };
 
   return (
     <Modal
       height={height}
+      width={500}
       slideAnimation={false}
       title={t('label.new-requisition')}
     >
@@ -91,40 +85,12 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
 };
 
 const GeneralRequisitionOptions = ({
-  onChange,
+  onCreate,
 }: {
-  onChange: CreateRequisitionModalProps['onChange'];
+  onCreate: (props: NewGeneralRequisition) => void;
 }) => (
   <InternalSupplierSearchModal
     isList={true}
-    onChange={name => onChange({ type: 'general', name })}
+    onChange={name => onCreate({ type: 'general', name })}
   />
 );
-
-const ProgramRequisitionOptions = ({
-  programSettings,
-  onChange,
-}: {
-  onChange: CreateRequisitionModalProps['onChange'];
-  programSettings: ProgramSettingsFragment[];
-}) => {
-  const t = useTranslation('app');
-  // TODO in part 2
-  return (
-    <Box>
-      <ButtonWithIcon
-        Icon={<PlusCircleIcon />}
-        label={t('label.new-requisition')}
-        onClick={() =>
-          onChange({
-            type: 'program',
-            programId: 'program_id_here',
-            orderType: 'order_type_here',
-            otherPartyId: 'other_party_id_here',
-          })
-        }
-      />
-      <Typography>{JSON.stringify(programSettings, null, 1)}</Typography>
-    </Box>
-  );
-};
