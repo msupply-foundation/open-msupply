@@ -6,6 +6,8 @@ use super::{
 use crate::{
     db_diesel::{
         name_row::{name, name::dsl as name_dsl},
+        program_requisition::program::dsl as program_dsl,
+        program_requisition::program_requisition_order_type::dsl as program_requisition_order_type_dsl,
         store_row::{store, store::dsl as store_dsl},
     },
     diesel_macros::{
@@ -13,7 +15,8 @@ use crate::{
         apply_sort, apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    DBType, NameRow, PeriodRow, StorageConnection, StoreRow,
+    DBType, NameRow, PeriodRow, ProgramRequisitionOrderTypeRow, ProgramRow, StorageConnection,
+    StoreRow,
 };
 
 use crate::Pagination;
@@ -26,9 +29,9 @@ pub type RequisitionJoin = (
     RequisitionRow,
     NameRow,
     StoreRow,
-    Option<PeriodRow>,
-    Option<ProgramRequistionRow>,
-    Option<ProgramOrderTypeRow>,
+    // Option<PeriodRow>,
+    // Option<ProgramRow>,
+    // Option<ProgramRequisitionOrderTypeRow>,
 );
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -36,9 +39,9 @@ pub struct Requisition {
     pub requisition_row: RequisitionRow,
     pub name_row: NameRow,
     pub store_row: StoreRow,
-    pub period: Option<PeriodRow>,
-    pub program_name: Option<String>,
-    pub order_type: Option<String>,
+    // pub program_name: Option<String>,
+    // pub period: Option<PeriodRow>,
+    // pub order_type: Option<String>,
 }
 
 pub struct RequisitionRepository<'a> {
@@ -194,14 +197,14 @@ fn create_filtered_query(
 }
 
 fn to_domain(
-    (requisition_row, name_row, store_row, period_row, program_row, order_type_row): RequisitionJoin,
+    (requisition_row, name_row, store_row, /*period_row, program_row, order_type_row*/): RequisitionJoin,
 ) -> Requisition {
     Requisition {
         requisition_row,
         name_row,
         store_row,
-        period: period_row,
-        program_name: program_row.map(|program_row| program_row.name),
-        order_type: order_type_row.map(|order_type_row| order_type_row.name),
+        // period: period_row,
+        // program_name: program_row.map(|program_row| program_row.name),
+        // order_type: order_type_row.map(|order_type_row| order_type_row.name),
     }
 }

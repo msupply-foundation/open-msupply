@@ -134,6 +134,9 @@ fn generate(
         sent_datetime: None,
         finalised_datetime: None,
         linked_requisition_id: None,
+        program_id: todo!(),
+        period_id: todo!(),
+        order_type_id: todo!(),
     };
 
     Ok(result)
