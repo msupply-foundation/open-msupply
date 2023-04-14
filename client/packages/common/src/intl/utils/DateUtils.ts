@@ -81,6 +81,8 @@ const getLocale = (language: SupportedLocales) => {
       return navigator.language === 'en-US' ? enUS : enGB;
     case 'tet':
       return enGB;
+    case 'es-CO':
+      return es;
     default:
       return getLocaleObj[language];
   }
