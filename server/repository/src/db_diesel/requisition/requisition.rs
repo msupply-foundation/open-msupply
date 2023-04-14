@@ -6,6 +6,8 @@ use super::{
 use crate::{
     db_diesel::{
         name_row::{name, name::dsl as name_dsl},
+        period::period::{self, dsl as period_dsl},
+        program_requisition::program,
         program_requisition::program::dsl as program_dsl,
         program_requisition::program_requisition_order_type::dsl as program_requisition_order_type_dsl,
         store_row::{store, store::dsl as store_dsl},
@@ -14,6 +16,7 @@ use crate::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_simple_string_filter,
         apply_sort, apply_sort_no_case,
     },
+    program_requisition_order_type,
     repository_error::RepositoryError,
     DBType, NameRow, PeriodRow, ProgramRequisitionOrderTypeRow, ProgramRow, StorageConnection,
     StoreRow,
@@ -22,6 +25,7 @@ use crate::{
 use crate::Pagination;
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
+    helper_types::LeftJoin,
     prelude::*,
 };
 
@@ -29,9 +33,9 @@ pub type RequisitionJoin = (
     RequisitionRow,
     NameRow,
     StoreRow,
-    // Option<PeriodRow>,
-    // Option<ProgramRow>,
-    // Option<ProgramRequisitionOrderTypeRow>,
+    Option<ProgramRow>,
+    Option<PeriodRow>,
+    Option<ProgramRequisitionOrderTypeRow>,
 );
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -39,9 +43,9 @@ pub struct Requisition {
     pub requisition_row: RequisitionRow,
     pub name_row: NameRow,
     pub store_row: StoreRow,
-    // pub program_name: Option<String>,
-    // pub period: Option<PeriodRow>,
-    // pub order_type: Option<String>,
+    pub program_name: Option<String>,
+    pub period: Option<PeriodRow>,
+    pub order_type: Option<String>,
 }
 
 pub struct RequisitionRepository<'a> {
@@ -126,8 +130,20 @@ impl<'a> RequisitionRepository<'a> {
     }
 }
 
-type BoxedRequisitionQuery =
-    IntoBoxed<'static, InnerJoin<InnerJoin<requisition::table, name::table>, store::table>, DBType>;
+type BoxedRequisitionQuery = IntoBoxed<
+    'static,
+    LeftJoin<
+        LeftJoin<
+            LeftJoin<
+                InnerJoin<InnerJoin<requisition::table, name::table>, store::table>,
+                program::table,
+            >,
+            period::table,
+        >,
+        program_requisition_order_type::table,
+    >,
+    DBType,
+>;
 
 fn create_filtered_query(
     filter: Option<RequisitionFilter>,
@@ -135,6 +151,9 @@ fn create_filtered_query(
     let mut query = requisition_dsl::requisition
         .inner_join(name_dsl::name)
         .inner_join(store_dsl::store)
+        .left_join(program_dsl::program)
+        .left_join(period_dsl::period)
+        .left_join(program_requisition_order_type_dsl::program_requisition_order_type)
         .into_boxed();
 
     if let Some(RequisitionFilter {
@@ -197,14 +216,14 @@ fn create_filtered_query(
 }
 
 fn to_domain(
-    (requisition_row, name_row, store_row, /*period_row, program_row, order_type_row*/): RequisitionJoin,
+    (requisition_row, name_row, store_row,  program_row, period_row, order_type_row): RequisitionJoin,
 ) -> Requisition {
     Requisition {
         requisition_row,
         name_row,
         store_row,
-        // period: period_row,
-        // program_name: program_row.map(|program_row| program_row.name),
-        // order_type: order_type_row.map(|order_type_row| order_type_row.name),
+        program_name: program_row.map(|program_row| program_row.name),
+        period: period_row,
+        order_type: order_type_row.map(|order_type_row| order_type_row.name),
     }
 }
