@@ -2,6 +2,7 @@ use crate::StorageConnection;
 
 use super::{version::Version, Migration};
 mod activity_log;
+mod name_tags;
 mod store_preference;
 
 pub(crate) struct V1_01_11;
@@ -14,6 +15,8 @@ impl Migration for V1_01_11 {
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         activity_log::migrate(connection)?;
         store_preference::migrate(connection)?;
+
+        name_tags::migrate(connection)?;
 
         Ok(())
     }
