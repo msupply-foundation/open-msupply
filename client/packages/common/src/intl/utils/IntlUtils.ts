@@ -10,7 +10,7 @@ const languageOptions = [
   { label: 'عربي', value: 'ar' },
   { label: 'Français', value: 'fr' },
   { label: 'English', value: 'en' },
-  { label: 'Española', value: 'es' },
+  { label: 'Española (Colombia)', value: 'es-CO' },
   { label: 'Tetum', value: 'tet' },
 ];
 
@@ -18,11 +18,12 @@ const locales = [
   'ar' as const,
   'en' as const,
   'es' as const,
+  'es-CO' as const,
   'fr' as const,
   'tet' as const,
 ] as const;
 
-export type SupportedLocales = typeof locales[number];
+export type SupportedLocales = (typeof locales)[number];
 
 export const IntlUtils = {
   useChangeLanguage: () => {
