@@ -40,6 +40,10 @@ fragment RequestLine on RequisitionLineNode {
     availableMonthsOfStockOnHand
     averageMonthlyConsumption
   }
+  linkedRequisitionLine {
+    approvedQuantity
+    approvalComment
+  }
   item {
     ...ItemWithStats
   }

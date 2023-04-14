@@ -30,6 +30,8 @@ fragment ResponseLine on RequisitionLineNode {
     code
     unitName
   }
+  approvedQuantity
+  approvalComment
   linkedRequisitionLine {
     itemStats {
       availableStockOnHand
@@ -131,6 +133,7 @@ fragment ResponseRow on RequisitionNode {
   theirReference
   type
   otherPartyId
+  approvalStatus
 }
 
 query responses(

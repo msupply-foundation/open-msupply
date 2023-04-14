@@ -59,6 +59,7 @@ export type ActivityLogNode = {
 export enum ActivityLogNodeType {
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
+  InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
@@ -66,6 +67,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
+  RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   StocktakeCreated = 'STOCKTAKE_CREATED',
@@ -2590,6 +2592,8 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
+  approvalComment?: Maybe<Scalars['String']>;
+  approvedQuantity: Scalars['Int'];
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   /** InboundShipment lines linked to requisitions line */
@@ -2644,6 +2648,7 @@ export type RequisitionLineWithItemIdExists = InsertRequestRequisitionLineErrorI
 
 export type RequisitionNode = {
   __typename: 'RequisitionNode';
+  approvalStatus: RequisitionNodeApprovalStatus;
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['DateTime'];
@@ -2692,6 +2697,14 @@ export type RequisitionNode = {
 export type RequisitionNodeOtherPartyArgs = {
   storeId: Scalars['String'];
 };
+
+/** Approval status is applicable to response requisition only */
+export enum RequisitionNodeApprovalStatus {
+  Approved = 'APPROVED',
+  Denied = 'DENIED',
+  None = 'NONE',
+  Pending = 'PENDING'
+}
 
 export enum RequisitionNodeStatus {
   Draft = 'DRAFT',
@@ -3012,7 +3025,8 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String'];
   packToOne: Scalars['Boolean'];
-  requisitionsRequireSupplierAuthorisation: Scalars['Boolean'];
+  requestRequisitionRequiresAuthorisation: Scalars['Boolean'];
+  responseRequisitionRequiresAuthorisation: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;
