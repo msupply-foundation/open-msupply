@@ -104,13 +104,12 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                 }
               />
             </Box>
-            <Box display="flex" gap={0.5}>
+            <Box display="flex" gap={1.5}>
               <Row
                 label={t('label.program')}
                 Input={
                   <BasicTextInput
                     disabled
-                    sx={{ width: '190px' }}
                     value={programDocument?.[0]?.name ?? ''}
                   />
                 }
