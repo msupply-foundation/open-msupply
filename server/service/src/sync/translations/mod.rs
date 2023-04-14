@@ -11,6 +11,8 @@ pub(crate) mod name;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod period;
+pub(crate) mod period_schedule;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
@@ -41,6 +43,8 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(master_list::MasterListTranslation {}),
         Box::new(master_list_line::MasterListLineTranslation {}),
         Box::new(master_list_name_join::MasterListNameJoinTranslation {}),
+        Box::new(period_schedule::PeriodScheduleTranslation {}),
+        Box::new(period::PeriodTranslation {}),
         Box::new(report::ReportTranslation {}),
         Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
         Box::new(store_preference::StorePreferenceTranslation {}),
@@ -75,6 +79,8 @@ pub(crate) mod LegacyTableName {
     pub(crate) const REPORT: &str = "report";
     pub(crate) const INVENTORY_ADJUSTMENT_REASON: &str = "options";
     pub(crate) const STORE_PREFERENCE: &str = "pref";
+    pub(crate) const PERIOD_SCHEDULE: &str = "periodSchedule";
+    pub(crate) const PERIOD: &str = "period";
     // Remote
     pub(crate) const LOCATION: &str = "Location";
     pub(crate) const ITEM_LINE: &str = "item_line";
@@ -101,6 +107,8 @@ pub(crate) enum PullUpsertRecord {
     MasterList(MasterListRow),
     MasterListLine(MasterListLineRow),
     MasterListNameJoin(MasterListNameJoinRow),
+    PeriodSchedule(PeriodScheduleRow),
+    Period(PeriodRow),
     Report(ReportRow),
     Location(LocationRow),
     StockLine(StockLineRow),

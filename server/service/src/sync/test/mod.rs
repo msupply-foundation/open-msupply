@@ -232,6 +232,12 @@ pub(crate) async fn check_records_against_database(
                 "MasterListNameJoin"
             ),
 
+            PeriodSchedule(record) => {
+                check_record_by_id!(PeriodScheduleRowRepository, con, record, "PeriodSchedule")
+            }
+
+            Period(record) => check_record_by_id!(PeriodRowRepository, con, record, "Period"),
+
             Report(record) => check_record_by_id!(ReportRowRepository, con, record, "Report"),
 
             ActivityLog(record) => {
