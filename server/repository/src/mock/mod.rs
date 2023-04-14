@@ -10,7 +10,9 @@ mod item;
 mod location;
 mod name;
 mod name_store_join;
+mod name_tag;
 mod number;
+mod period_and_period_schedule;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
@@ -44,7 +46,9 @@ pub use item::*;
 pub use location::*;
 pub use name::*;
 pub use name_store_join::*;
+pub use name_tag::*;
 pub use number::*;
+pub use period_and_period_schedule::*;
 pub use stock_line::*;
 pub use stocktake::*;
 pub use stocktake_line::*;
@@ -70,10 +74,11 @@ use crate::{
     ActivityLogRow, ActivityLogRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    NumberRow, NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
-    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
-    SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow,
+    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
+    SyncLogRow, SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
@@ -91,6 +96,9 @@ pub struct MockData {
     pub user_store_joins: Vec<UserStoreJoinRow>,
     pub user_permissions: Vec<UserPermissionRow>,
     pub names: Vec<NameRow>,
+    pub name_tags: Vec<NameTagRow>,
+    pub period_schedules: Vec<PeriodScheduleRow>,
+    pub periods: Vec<PeriodRow>,
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
     pub items: Vec<ItemRow>,
@@ -132,6 +140,9 @@ pub struct MockDataInserts {
     pub user_store_joins: bool,
     pub user_permissions: bool,
     pub names: bool,
+    pub name_tags: bool,
+    pub period_schedules: bool,
+    pub periods: bool,
     pub stores: bool,
     pub units: bool,
     pub items: bool,
@@ -162,6 +173,9 @@ impl MockDataInserts {
             user_store_joins: true,
             user_permissions: true,
             names: true,
+            name_tags: true,
+            period_schedules: true,
+            periods: true,
             stores: true,
             units: true,
             items: true,
@@ -207,6 +221,21 @@ impl MockDataInserts {
 
     pub fn names(mut self) -> Self {
         self.names = true;
+        self
+    }
+
+    pub fn name_tags(mut self) -> Self {
+        self.name_tags = true;
+        self
+    }
+
+    pub fn period_schedules(mut self) -> Self {
+        self.period_schedules = true;
+        self
+    }
+
+    pub fn periods(mut self) -> Self {
+        self.periods = true;
         self
     }
 
@@ -340,6 +369,9 @@ fn all_mock_data() -> MockDataCollection {
             user_store_joins: mock_user_store_joins(),
             user_permissions: mock_user_permissions(),
             names: mock_names(),
+            name_tags: mock_name_tags(),
+            period_schedules: mock_period_schedules(),
+            periods: mock_periods(),
             stores: mock_stores(),
             units: mock_units(),
             items: mock_items(),
@@ -428,6 +460,27 @@ pub fn insert_mock_data(
         if inserts.names {
             let repo = NameRowRepository::new(connection);
             for row in &mock_data.names {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.name_tags {
+            let repo = NameTagRowRepository::new(connection);
+            for row in &mock_data.name_tags {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.period_schedules {
+            let repo = PeriodScheduleRowRepository::new(connection);
+            for row in &mock_data.period_schedules {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.periods {
+            let repo = PeriodRowRepository::new(connection);
+            for row in &mock_data.periods {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -606,6 +659,9 @@ impl MockData {
         let MockData {
             mut user_accounts,
             mut names,
+            mut name_tags,
+            mut period_schedules,
+            mut periods,
             mut stores,
             mut units,
             mut items,
@@ -633,6 +689,9 @@ impl MockData {
 
         self.user_accounts.append(&mut user_accounts);
         self.names.append(&mut names);
+        self.name_tags.append(&mut name_tags);
+        self.period_schedules.append(&mut period_schedules);
+        self.periods.append(&mut periods);
         self.stores.append(&mut stores);
         self.units.append(&mut units);
         self.items.append(&mut items);
