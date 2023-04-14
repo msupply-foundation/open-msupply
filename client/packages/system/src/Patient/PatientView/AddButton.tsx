@@ -21,11 +21,6 @@ export const AddButton: React.FC<AddButtonProps> = ({
   const { setModal: selectModal, reset } = usePatientModalStore();
   const options = [
     {
-      value: PatientModal.Prescription,
-      label: t('button.add-prescription'),
-      isDisabled: true,
-    },
-    {
       value: PatientModal.ProgramSearch,
       label: t('button.add-program'),
       isDisabled: false,
@@ -39,7 +34,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
 
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<PatientModal>
-  >(options[1] as SplitButtonOption<PatientModal>);
+  >(options[0] as SplitButtonOption<PatientModal>);
 
   const onSelectOption = (option: SplitButtonOption<PatientModal>) => {
     setSelectedOption(option);
