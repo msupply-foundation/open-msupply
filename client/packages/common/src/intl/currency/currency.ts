@@ -113,15 +113,6 @@ const currencyOptions = {
     negativePattern: '-!#',
     format,
   },
-  'es-CO': {
-    symbol: '$',
-    separator: ',',
-    decimal: '.',
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
   tet: {
     symbol: '$',
     separator: ',',
