@@ -4,6 +4,7 @@ use super::{version::Version, Migration};
 mod activity_log;
 mod name_tags;
 mod period_and_period_schedule;
+mod program_requisition;
 mod requisition;
 mod store_preference;
 
@@ -19,6 +20,7 @@ impl Migration for V1_01_11 {
         store_preference::migrate(connection)?;
         name_tags::migrate(connection)?;
         period_and_period_schedule::migrate(connection)?;
+        program_requisition::migrate(connection)?;
         requisition::migrate(connection)?;
 
         Ok(())
