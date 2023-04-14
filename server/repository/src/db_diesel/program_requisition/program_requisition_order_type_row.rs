@@ -20,7 +20,7 @@ table! {
 
 joinable!(program_requisition_order_type -> program_requisition_settings (program_requisition_settings_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "program_requisition_order_type"]
 pub struct ProgramRequisitionOrderTypeRow {
     pub id: String,

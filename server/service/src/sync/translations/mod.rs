@@ -111,6 +111,7 @@ pub(crate) enum PullUpsertRecord {
     Period(PeriodRow),
     Program(ProgramRow),
     ProgramRequisitionSettings(ProgramRequisitionSettingsRow),
+    ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow),
     Report(ReportRow),
     Location(LocationRow),
     StockLine(StockLineRow),

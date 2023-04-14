@@ -244,6 +244,12 @@ pub(crate) async fn check_records_against_database(
                 record,
                 "ProgramRequisitionSettings"
             ),
+            ProgramRequisitionOrderType(record) => check_record_by_id!(
+                ProgramRequisitionOrderTypeRowRepository,
+                con,
+                record,
+                "ProgramRequisitionOrderType"
+            ),
             Report(record) => check_record_by_id!(ReportRowRepository, con, record, "Report"),
 
             ActivityLog(record) => {
