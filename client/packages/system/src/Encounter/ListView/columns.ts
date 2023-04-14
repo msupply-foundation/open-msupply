@@ -12,7 +12,7 @@ import {
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
 
-const encounterEventCellValue = (events: ProgramEventFragment[]) => {
+export const encounterEventCellValue = (events: ProgramEventFragment[]) => {
   // just take the name of the first event
   return events[0]?.data ?? '';
 };
