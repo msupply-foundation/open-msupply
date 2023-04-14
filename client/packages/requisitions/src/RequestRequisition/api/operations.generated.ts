@@ -111,14 +111,14 @@ export type DeleteRequestMutationVariables = Types.Exact<{
 
 export type DeleteRequestMutation = { __typename: 'Mutations', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitions?: Array<{ __typename: 'DeleteRequestRequisitionResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionError', error: { __typename: 'CannotDeleteRequisitionWithLines', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type ProgramSettingsFragment = { __typename: 'ProgramRequisitionSettingNode', program: { __typename: 'ProgramNode', name: string, suppliers: Array<{ __typename: 'NameNode', name: string }> }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', name: string, availablePeriods: Array<{ __typename: 'PeriodNode', name: string }> }> };
+export type ProgramSettingsFragment = { __typename: 'ProgramRequisitionSettingNode', programId: string, label: string, suppliers: Array<{ __typename: 'NameNode', id: string, label: string }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, label: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, label: string }> }> };
 
 export type ProgramSettingsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
 }>;
 
 
-export type ProgramSettingsQuery = { __typename: 'Queries', programRequistitionSettings: Array<{ __typename: 'ProgramRequisitionSettingNode', program: { __typename: 'ProgramNode', name: string, suppliers: Array<{ __typename: 'NameNode', name: string }> }, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', name: string, availablePeriods: Array<{ __typename: 'PeriodNode', name: string }> }> }> };
+export type ProgramSettingsQuery = { __typename: 'Queries', programRequistitionSettings: Array<{ __typename: 'ProgramRequisitionSettingNode', programId: string, label: string, suppliers: Array<{ __typename: 'NameNode', id: string, label: string }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, label: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, label: string }> }> }> };
 
 export const RequestRowFragmentDoc = gql`
     fragment RequestRow on RequisitionNode {
@@ -228,16 +228,18 @@ export const RequestFragmentDoc = gql`
     ${RequestLineFragmentDoc}`;
 export const ProgramSettingsFragmentDoc = gql`
     fragment ProgramSettings on ProgramRequisitionSettingNode {
-  program {
-    name
-    suppliers {
-      name
-    }
+  label: programName
+  programId
+  suppliers {
+    id
+    label: name
   }
   orderTypes {
-    name
+    id
+    label: name
     availablePeriods {
-      name
+      id
+      label: name
     }
   }
 }

@@ -5,17 +5,12 @@ use repository::{MasterListRow, Name, NameRow};
 
 #[derive(SimpleObject)]
 pub struct PeriodNode {
+    id: String,
     name: String,
     start_date: NaiveDate,
     end_date: NaiveDate,
 }
 
-#[derive(SimpleObject)]
-pub struct ProgramNode {
-    pub name: String,
-    pub suppliers: Vec<NameNode>,
-    pub master_list: MasterListNode,
-}
 #[derive(SimpleObject)]
 pub struct ProgramRequisitionOrderTypeNode {
     pub name: String,
@@ -25,39 +20,46 @@ pub struct ProgramRequisitionOrderTypeNode {
 
 #[derive(SimpleObject)]
 pub struct ProgramRequisitionSettingNode {
-    pub program: ProgramNode,
+    /// Program name
+    pub program_name: String,
+    /// Program id
+    pub program_id: String,
+    pub suppliers: Vec<NameNode>,
+    pub master_list: MasterListNode,
     pub order_types: Vec<ProgramRequisitionOrderTypeNode>,
 }
 
 pub fn program_requisition_settings(_store_id: &str) -> Vec<ProgramRequisitionSettingNode> {
     vec![
         ProgramRequisitionSettingNode {
-            program: ProgramNode {
-                name: "hiv".to_string(),
-                master_list: MasterListNode::from_domain(MasterListRow {
-                    name: "testList".to_string(),
-                    ..MasterListRow::default()
-                }),
-                suppliers: vec![NameNode::from_domain(Name {
-                    name_row: NameRow {
-                        name: "test_name".to_string(),
-                        ..NameRow::default()
-                    },
-                    name_store_join_row: None,
-                    store_row: None,
-                })],
-            },
+            program_name: "hiv".to_string(),
+            program_id: "hiv".to_string(),
+            master_list: MasterListNode::from_domain(MasterListRow {
+                name: "testList".to_string(),
+                ..MasterListRow::default()
+            }),
+
+            suppliers: vec![NameNode::from_domain(Name {
+                name_row: NameRow {
+                    name: "test_name".to_string(),
+                    ..NameRow::default()
+                },
+                name_store_join_row: None,
+                store_row: None,
+            })],
             order_types: vec![
                 ProgramRequisitionOrderTypeNode {
                     name: "Normal".to_string(),
                     id: "mock_id_1".to_string(),
                     available_periods: vec![
                         PeriodNode {
+                            id: "april".to_string(),
                             name: "April 2023".to_string(),
                             start_date: NaiveDate::from_ymd_opt(2023, 4, 01).unwrap(),
                             end_date: NaiveDate::from_ymd_opt(2023, 4, 30).unwrap(),
                         },
                         PeriodNode {
+                            id: "name".to_string(),
                             name: "May 2023".to_string(),
                             start_date: NaiveDate::from_ymd_opt(2023, 5, 01).unwrap(),
                             end_date: NaiveDate::from_ymd_opt(2023, 5, 30).unwrap(),
@@ -69,11 +71,13 @@ pub fn program_requisition_settings(_store_id: &str) -> Vec<ProgramRequisitionSe
                     id: "mock_id_2".to_string(),
                     available_periods: vec![
                         PeriodNode {
+                            id: "april".to_string(),
                             name: "April 2023".to_string(),
                             start_date: NaiveDate::from_ymd_opt(2023, 4, 01).unwrap(),
                             end_date: NaiveDate::from_ymd_opt(2023, 4, 30).unwrap(),
                         },
                         PeriodNode {
+                            id: "may".to_string(),
                             name: "May 2023".to_string(),
                             start_date: NaiveDate::from_ymd_opt(2023, 5, 01).unwrap(),
                             end_date: NaiveDate::from_ymd_opt(2023, 5, 30).unwrap(),
@@ -84,21 +88,21 @@ pub fn program_requisition_settings(_store_id: &str) -> Vec<ProgramRequisitionSe
         },
         // Only emergency order has period
         ProgramRequisitionSettingNode {
-            program: ProgramNode {
-                name: "tb".to_string(),
-                master_list: MasterListNode::from_domain(MasterListRow {
-                    name: "testList".to_string(),
-                    ..MasterListRow::default()
-                }),
-                suppliers: vec![NameNode::from_domain(Name {
-                    name_row: NameRow {
-                        name: "test_name".to_string(),
-                        ..NameRow::default()
-                    },
-                    name_store_join_row: None,
-                    store_row: None,
-                })],
-            },
+            program_name: "tb".to_string(),
+            program_id: "tb".to_string(),
+            master_list: MasterListNode::from_domain(MasterListRow {
+                name: "testList".to_string(),
+                ..MasterListRow::default()
+            }),
+
+            suppliers: vec![NameNode::from_domain(Name {
+                name_row: NameRow {
+                    name: "test_name".to_string(),
+                    ..NameRow::default()
+                },
+                name_store_join_row: None,
+                store_row: None,
+            })],
             order_types: vec![
                 ProgramRequisitionOrderTypeNode {
                     name: "Normal".to_string(),
@@ -109,6 +113,7 @@ pub fn program_requisition_settings(_store_id: &str) -> Vec<ProgramRequisitionSe
                     name: "Emergency".to_string(),
                     id: "mock_id_4".to_string(),
                     available_periods: vec![PeriodNode {
+                        id: "may".to_string(),
                         name: "May 2023".to_string(),
                         start_date: NaiveDate::from_ymd_opt(2023, 5, 01).unwrap(),
                         end_date: NaiveDate::from_ymd_opt(2023, 5, 30).unwrap(),

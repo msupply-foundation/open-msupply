@@ -1024,9 +1024,9 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
 
 export type InsertProgramRequestRequisitionInput = {
   id: Scalars['String'];
-  orderType: Scalars['String'];
+  orderTypeId: Scalars['String'];
   otherPartyId: Scalars['String'];
-  programId: Scalars['String'];
+  periodId: Scalars['String'];
 };
 
 export type InsertProgramRequestRequisitionResponse = RequisitionNode;
@@ -2184,6 +2184,7 @@ export type PaginationInput = {
 export type PeriodNode = {
   __typename: 'PeriodNode';
   endDate: Scalars['NaiveDate'];
+  id: Scalars['String'];
   name: Scalars['String'];
   startDate: Scalars['NaiveDate'];
 };
@@ -2224,13 +2225,6 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
-export type ProgramNode = {
-  __typename: 'ProgramNode';
-  masterList: MasterListNode;
-  name: Scalars['String'];
-  suppliers: Array<NameNode>;
-};
-
 export type ProgramRequisitionOrderTypeNode = {
   __typename: 'ProgramRequisitionOrderTypeNode';
   availablePeriods: Array<PeriodNode>;
@@ -2240,8 +2234,13 @@ export type ProgramRequisitionOrderTypeNode = {
 
 export type ProgramRequisitionSettingNode = {
   __typename: 'ProgramRequisitionSettingNode';
+  masterList: MasterListNode;
   orderTypes: Array<ProgramRequisitionOrderTypeNode>;
-  program: ProgramNode;
+  /** Program id */
+  programId: Scalars['String'];
+  /** Program name */
+  programName: Scalars['String'];
+  suppliers: Array<NameNode>;
 };
 
 export type Queries = {

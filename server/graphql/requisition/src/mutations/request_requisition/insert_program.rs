@@ -7,8 +7,8 @@ use repository::Requisition;
 pub struct InsertInput {
     pub id: String,
     pub other_party_id: String,
-    pub program_id: String,
-    pub order_type: String,
+    pub order_type_id: String,
+    pub period_id: String,
 }
 
 #[derive(Union)]
