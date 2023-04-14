@@ -11,7 +11,7 @@ const languageOptions = [
   { label: 'Français', value: 'fr' },
   { label: 'Français (Djibouti)', value: 'fr-DJ' },
   { label: 'English', value: 'en' },
-  { label: 'Española (Colombia)', value: 'es-CO' },
+  { label: 'Español', value: 'es' },
   { label: 'Tetum', value: 'tet' },
 ];
 
@@ -19,7 +19,6 @@ const locales = [
   'ar' as const,
   'en' as const,
   'es' as const,
-  'es-CO' as const,
   'fr' as const,
   'fr-DJ' as const,
   'tet' as const,

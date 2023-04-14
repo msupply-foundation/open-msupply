@@ -68,7 +68,7 @@ export const IntlProvider: FC<IntlProviderProps> = ({
         ns: defaultNS, // behaving as I expect defaultNS should. Without specifying ns here, a request is made to 'translation.json'
         fallbackLng: 'en',
         fallbackNS: 'common',
-        // load: 'languageOnly', // if requested language is 'en-US' then we load 'en'; change to the default value of 'all' to load 'en-US' and 'en'
+        load: 'languageOnly', // if requested language is 'en-US' then we load 'en'; change to the default value of 'all' to load 'en-US' and 'en'
         interpolation: {
           escapeValue: false, // not needed for react!!
         },
