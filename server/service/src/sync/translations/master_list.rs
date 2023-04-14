@@ -1,6 +1,7 @@
 use repository::{
     MasterListRow, NameTagRowRepository, PeriodScheduleRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRow, StorageConnection, SyncBufferRow,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
+    SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -23,34 +24,34 @@ pub struct LegacyListMasterRow {
     program_settings: Option<LegacyProgramSettings>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct LegacyProgramSettings {
     #[serde(rename = "storeTags")]
     store_tags: LegacyStoreTagAndProgramName,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct LegacyStoreTagAndProgramName {
     #[serde(flatten)]
     tags: std::collections::HashMap<String, LegacyStoreTag>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct LegacyStoreTag {
-    order_types: Vec<LegacyOrderType>,
+    order_types: Option<Vec<LegacyOrderType>>,
     period_schedule_name: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 struct LegacyOrderType {
     name: String,
     #[serde(rename = "thresholdMOS")]
-    threshold_mos: i32,
+    threshold_mos: f64,
     #[serde(rename = "maxMOS")]
-    max_mos: i32,
+    max_mos: f64,
     #[serde(rename = "maxOrdersPerPeriod")]
-    max_order_per_period: i32,
+    max_order_per_period: f64,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -76,43 +77,40 @@ impl SyncTranslation for MasterListTranslation {
             description: data.note.clone(),
         };
 
-        let (program, program_requisition_settings) = if data.is_program == true {
-            let program_settings = data.program_settings.ok_or(anyhow::anyhow!(
-                "Program settings not found for program {}",
-                data.id
-            ))?;
-            let name_tag_and_period_schedule_ids = get_name_tag_and_period_schedule_id(
-                connection,
-                &program_settings.store_tags,
-                &data.id.clone(),
-            )?;
-
-            let program = ProgramRow {
-                id: data.id.clone(),
-                name: data.description.clone(),
+        let generate = generate_requisition_program(connection, &data)?;
+        let (program, program_requisition_settings, program_requisition_order_types) =
+            match generate {
+                Some(generate) => (
+                    generate.program_row,
+                    generate.program_requisition_settings_row,
+                    generate.program_requisition_order_type_rows,
+                ),
+                None => {
+                    return Ok(Some(IntegrationRecords::from_upsert(
+                        PullUpsertRecord::MasterList(master_list),
+                    )))
+                }
             };
 
-            let program_requisition_settings = ProgramRequisitionSettingsRow {
-                // Concatenate the program id and name tag id to create a unique id
-                // instead of using uuid since easier to test this way.
-                id: format!("{}{}", data.id, name_tag_and_period_schedule_ids.0),
-                name_tag_id: name_tag_and_period_schedule_ids.0,
-                program_id: data.id.clone(),
-                period_schedule_id: name_tag_and_period_schedule_ids.1,
-            };
+        let mut upserts = Vec::new();
 
-            (program, program_requisition_settings)
-        } else {
-            return Ok(Some(IntegrationRecords::from_upsert(
-                PullUpsertRecord::MasterList(master_list),
-            )));
+        upserts.push(PullUpsertRecord::MasterList(master_list));
+        upserts.push(PullUpsertRecord::Program(program));
+        upserts.push(PullUpsertRecord::ProgramRequisitionSettings(
+            program_requisition_settings,
+        ));
+
+        if !program_requisition_order_types.is_empty() {
+            program_requisition_order_types.into_iter().for_each(
+                |program_requisition_order_type| {
+                    upserts.push(PullUpsertRecord::ProgramRequisitionOrderType(
+                        program_requisition_order_type,
+                    ))
+                },
+            );
         };
 
-        Ok(Some(IntegrationRecords::from_upserts(vec![
-            PullUpsertRecord::MasterList(master_list),
-            PullUpsertRecord::Program(program),
-            PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings),
-        ])))
+        Ok(Some(IntegrationRecords::from_upserts(upserts)))
     }
 
     fn try_translate_pull_delete(
@@ -129,6 +127,75 @@ impl SyncTranslation for MasterListTranslation {
 
         Ok(result)
     }
+}
+
+struct GenerateRequisitionProgram {
+    pub program_row: ProgramRow,
+    pub program_requisition_settings_row: ProgramRequisitionSettingsRow,
+    pub program_requisition_order_type_rows: Vec<ProgramRequisitionOrderTypeRow>,
+}
+
+fn generate_requisition_program(
+    connection: &StorageConnection,
+    master_list: &LegacyListMasterRow,
+) -> Result<Option<GenerateRequisitionProgram>, anyhow::Error> {
+    if master_list.is_program == false {
+        return Ok(None);
+    }
+
+    let program_settings = master_list.program_settings.clone().ok_or(anyhow::anyhow!(
+        "Program settings not found for program {}",
+        master_list.id
+    ))?;
+    let order_types = program_settings
+        .store_tags
+        .tags
+        .values()
+        .filter_map(|tag| tag.order_types.clone())
+        .flatten()
+        .collect::<Vec<LegacyOrderType>>();
+
+    let name_tag_and_period_schedule_ids = get_name_tag_and_period_schedule_id(
+        connection,
+        &program_settings.store_tags,
+        &master_list.id.clone(),
+    )?;
+
+    let program_row = ProgramRow {
+        id: master_list.id.clone(),
+        name: master_list.description.clone(),
+    };
+
+    let program_requisition_settings_row = ProgramRequisitionSettingsRow {
+        // Concatenate the program id and name tag id to create a unique id
+        // instead of using uuid since easier to test this way.
+        id: format!("{}{}", master_list.id, name_tag_and_period_schedule_ids.0),
+        name_tag_id: name_tag_and_period_schedule_ids.0,
+        program_id: master_list.id.clone(),
+        period_schedule_id: name_tag_and_period_schedule_ids.1,
+    };
+
+    let program_requisition_order_type_rows = if !order_types.is_empty() {
+        order_types
+            .iter()
+            .map(|order_type| ProgramRequisitionOrderTypeRow {
+                id: format!("{}{}", program_requisition_settings_row.id, order_type.name),
+                program_requisition_settings_id: program_requisition_settings_row.id.clone(),
+                name: order_type.name.to_string(),
+                threshold_mos: order_type.threshold_mos,
+                max_mos: order_type.max_mos,
+                max_order_per_period: order_type.max_order_per_period,
+            })
+            .collect::<Vec<ProgramRequisitionOrderTypeRow>>()
+    } else {
+        Vec::new()
+    };
+
+    Ok(Some(GenerateRequisitionProgram {
+        program_row,
+        program_requisition_settings_row,
+        program_requisition_order_type_rows,
+    }))
 }
 
 fn get_name_tag_and_period_schedule_id(

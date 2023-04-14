@@ -1,6 +1,6 @@
 use repository::{
     mock::{mock_name_tag_1, mock_period_schedule_1},
-    MasterListRow, ProgramRequisitionSettingsRow, ProgramRow,
+    MasterListRow, ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
 };
 
 use crate::sync::{
@@ -73,7 +73,7 @@ const MASTER_LIST_3: (&'static str, &'static str) = (
                         "type": "Order type"
                     }
                 ],
-                "periodScheduleName": "Monthly"
+                "periodScheduleName": "Bi Weekly"
             }
         }
     },
@@ -126,6 +126,17 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                         p.name_tag_id = mock_name_tag_1().id;
                         p.program_id = "program_test".to_owned();
                         p.period_schedule_id = mock_period_schedule_1().id;
+                    },
+                )),
+                PullUpsertRecord::ProgramRequisitionOrderType(inline_init(
+                    |p: &mut ProgramRequisitionOrderTypeRow| {
+                        p.id = "program_test".to_owned() + &mock_name_tag_1().id + "New order 1";
+                        p.program_requisition_settings_id =
+                            "program_test".to_owned() + &mock_name_tag_1().id;
+                        p.name = "New order 1".to_owned();
+                        p.threshold_mos = 3.0;
+                        p.max_mos = 3.0;
+                        p.max_order_per_period = 1.0;
                     },
                 )),
             ],
