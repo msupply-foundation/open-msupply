@@ -63,7 +63,7 @@ export const AppBarButtons: FC<{
       <CreateRequisitionModal
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
-        onChange={async newRequistion => {
+        onCreate={async newRequistion => {
           modalController.toggleOff();
           switch (newRequistion.type) {
             case 'general':
