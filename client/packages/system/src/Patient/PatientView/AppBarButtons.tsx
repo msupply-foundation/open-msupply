@@ -13,7 +13,7 @@ import { ReportRowFragment, ReportSelector, useReport } from '../../Report';
 import { usePatient } from '../api';
 import { JsonData, useProgramEnrolments } from '@openmsupply-client/programs';
 
-export const AppBarButtons: FC = () => {
+export const AppBarButtons: FC<{ disabled: boolean }> = ({ disabled }) => {
   const t = useTranslation('common');
   const { print, isPrinting } = useReport.utils.print();
   const patientId = usePatient.utils.id();
@@ -35,9 +35,13 @@ export const AppBarButtons: FC = () => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <AddButton disableEncounterButton={disableEncounterButton} />
+        <AddButton
+          disabled={disabled}
+          disableEncounterButton={disableEncounterButton}
+        />
         <ReportSelector context={ReportContext.Patient} onClick={printReport}>
           <LoadingButton
+            disabled={disabled}
             variant="outlined"
             startIcon={<PrinterIcon />}
             isLoading={isPrinting}
