@@ -83,6 +83,8 @@ const getLocale = (language: SupportedLocales) => {
       return enGB;
     case 'es-CO':
       return es;
+    case 'fr-DJ':
+      return fr;
     default:
       return getLocaleObj[language];
   }

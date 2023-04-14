@@ -78,7 +78,16 @@ const currencyOptions = {
     format,
   },
   fr: {
-    symbol: 'XOF',
+    symbol: '€',
+    separator: '.',
+    decimal: ',',
+    precision: 2,
+    pattern: '# !',
+    negativePattern: '-# !',
+    format,
+  },
+  'fr-DJ': {
+    symbol: 'DJF',
     separator: '.',
     decimal: ',',
     precision: 2,
