@@ -3,7 +3,7 @@
     "app.initialise": "Inicializar",
     "app.login": "Inicio de sesión",
     "breadcrumb.item": "#{{id}}",
-    "button.add-item": "Agregar Artculo",
+    "button.add-item": "Agregar Artículo",
     "button.cancel": "Cancelar",
     "button.close": "Cerrar",
     "button.create-a-new-one": "Crear uno nuevo",
