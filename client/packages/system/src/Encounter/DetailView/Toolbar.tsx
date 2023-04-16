@@ -13,6 +13,9 @@ import {
   useFormatDateTime,
   ClinicianNode,
   EncounterNodeStatus,
+  LocaleKey,
+  TypedTFunction,
+  Option,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -25,6 +28,35 @@ import {
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
 import { Select } from '@common/components';
+
+const encounterStatusTranslation = (
+  status: EncounterNodeStatus,
+  t: TypedTFunction<LocaleKey>
+): string => {
+  switch (status) {
+    case EncounterNodeStatus.Missed:
+      return t('label.encounter-status-missed');
+    case EncounterNodeStatus.Cancelled:
+      return t('label.encounter-status-cancelled');
+    case EncounterNodeStatus.Completed:
+      return t('label.encounter-status-completed');
+    case EncounterNodeStatus.Scheduled:
+      return t('label.encounter-status-scheduled');
+    default:
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      return ((_: never) => '')(status);
+  }
+};
+
+const encounterStatusOption = (
+  status: EncounterNodeStatus,
+  t: TypedTFunction<LocaleKey>
+): Option => {
+  return {
+    label: encounterStatusTranslation(status, t),
+    value: status,
+  };
+};
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
@@ -143,22 +175,10 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                       });
                     }}
                     options={[
-                      {
-                        label: t('label.encounter-status-missed'),
-                        value: EncounterNodeStatus.Missed,
-                      },
-                      {
-                        label: t('label.encounter-status-scheduled'),
-                        value: EncounterNodeStatus.Scheduled,
-                      },
-                      {
-                        label: t('label.encounter-status-completed'),
-                        value: EncounterNodeStatus.Completed,
-                      },
-                      {
-                        label: t('label.encounter-status-cancelled'),
-                        value: EncounterNodeStatus.Cancelled,
-                      },
+                      encounterStatusOption(EncounterNodeStatus.Missed, t),
+                      encounterStatusOption(EncounterNodeStatus.Scheduled, t),
+                      encounterStatusOption(EncounterNodeStatus.Completed, t),
+                      encounterStatusOption(EncounterNodeStatus.Cancelled, t),
                     ]}
                     value={status}
                   />
