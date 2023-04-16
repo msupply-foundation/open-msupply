@@ -35,7 +35,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 name TEXT NOT NULL,
                 threshold_mos {DOUBLE} NOT NULL,
                 max_mos {DOUBLE} NOT NULL,
-                max_order_per_period {DOUBLE} NOT NULL
+                max_order_per_period INTEGER NOT NULL
             );
             "#
     )?;

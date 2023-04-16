@@ -14,7 +14,7 @@ table! {
         name -> Text,
         threshold_mos -> Double,
         max_mos -> Double,
-        max_order_per_period -> Double,
+        max_order_per_period -> Integer,
     }
 }
 
@@ -28,7 +28,7 @@ pub struct ProgramRequisitionOrderTypeRow {
     pub name: String,
     pub threshold_mos: f64,
     pub max_mos: f64,
-    pub max_order_per_period: f64,
+    pub max_order_per_period: i32,
 }
 
 pub struct ProgramRequisitionOrderTypeRowRepository<'a> {
