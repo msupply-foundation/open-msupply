@@ -59,6 +59,7 @@ export type ActivityLogNode = {
 export enum ActivityLogNodeType {
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
+  InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
@@ -66,6 +67,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
+  RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   StocktakeCreated = 'STOCKTAKE_CREATED',
@@ -2163,6 +2165,12 @@ export type PaginationInput = {
   offset?: InputMaybe<Scalars['Int']>;
 };
 
+export type PeriodNode = {
+  __typename: 'PeriodNode';
+  id: Scalars['String'];
+  name: Scalars['String'];
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   serviceTotalAfterTax: Scalars['Float'];
@@ -2668,6 +2676,9 @@ export type RequisitionNode = {
   otherParty: NameNode;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
+  period?: Maybe<PeriodNode>;
+  programName?: Maybe<Scalars['String']>;
+  programRequisitionOrderType?: Maybe<Scalars['String']>;
   /** Link to request requisition */
   requestRequisition?: Maybe<RequisitionNode>;
   requisitionNumber: Scalars['Int'];

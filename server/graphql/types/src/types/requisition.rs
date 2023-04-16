@@ -12,11 +12,11 @@ use graphql_core::{
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    unknown_user, NameRow, Requisition,
+    unknown_user, NameRow, PeriodRow, Requisition,
 };
 use service::ListResult;
 
-use super::{InvoiceConnector, NameNode, RequisitionLineConnector, UserNode};
+use super::{InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector, UserNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum RequisitionNodeType {
@@ -211,6 +211,21 @@ impl RequisitionNode {
         Ok(RequisitionLineConnector::from_vec(result))
     }
 
+    pub async fn program_name(&self) -> &Option<String> {
+        &self.requisition.program_name
+    }
+
+    pub async fn order_type(&self) -> &Option<String> {
+        &self.requisition.order_type
+    }
+
+    pub async fn period(&self) -> Option<PeriodNode> {
+        match &self.requisition.period {
+            Some(period) => Some(PeriodNode::from_domain(period.to_owned())),
+            None => None,
+        }
+    }
+
     // % allocated ?
     // % shipped ?
     // lead time ?
@@ -223,6 +238,10 @@ impl RequisitionNode {
 
     pub fn name_row(&self) -> &NameRow {
         &self.requisition.name_row
+    }
+
+    pub fn period_row(&self) -> &Option<PeriodRow> {
+        &self.requisition.period
     }
 
     pub fn from_domain(requisition: Requisition) -> RequisitionNode {
