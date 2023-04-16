@@ -32,13 +32,14 @@ struct LegacyProgramSettings {
 
 #[derive(Deserialize, Clone)]
 struct LegacyStoreTagAndProgramName {
+    // HashMap key is the program name
     #[serde(flatten)]
-    tags: std::collections::HashMap<String, LegacyStoreTag>,
+    tags: std::collections::HashMap<String, LegacyProgramSettingsStoreTag>,
 }
 
 #[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
-struct LegacyStoreTag {
+struct LegacyProgramSettingsStoreTag {
     order_types: Option<Vec<LegacyOrderType>>,
     period_schedule_name: String,
 }
@@ -77,7 +78,7 @@ impl SyncTranslation for MasterListTranslation {
             description: data.note.clone(),
         };
 
-        let generate = generate_requisition_program(connection, &data)?;
+        let generate = generate_requisition_program(connection, data)?;
         let (program, program_requisition_settings, program_requisition_order_types) =
             match generate {
                 Some(generate) => (
@@ -100,15 +101,13 @@ impl SyncTranslation for MasterListTranslation {
             program_requisition_settings,
         ));
 
-        if !program_requisition_order_types.is_empty() {
-            program_requisition_order_types.into_iter().for_each(
-                |program_requisition_order_type| {
-                    upserts.push(PullUpsertRecord::ProgramRequisitionOrderType(
-                        program_requisition_order_type,
-                    ))
-                },
-            );
-        };
+        program_requisition_order_types
+            .into_iter()
+            .for_each(|program_requisition_order_type| {
+                upserts.push(PullUpsertRecord::ProgramRequisitionOrderType(
+                    program_requisition_order_type,
+                ))
+            });
 
         Ok(Some(IntegrationRecords::from_upserts(upserts)))
     }
@@ -137,13 +136,13 @@ struct GenerateRequisitionProgram {
 
 fn generate_requisition_program(
     connection: &StorageConnection,
-    master_list: &LegacyListMasterRow,
+    master_list: LegacyListMasterRow,
 ) -> Result<Option<GenerateRequisitionProgram>, anyhow::Error> {
     if master_list.is_program == false {
         return Ok(None);
     }
 
-    let program_settings = master_list.program_settings.clone().ok_or(anyhow::anyhow!(
+    let program_settings = master_list.program_settings.ok_or(anyhow::anyhow!(
         "Program settings not found for program {}",
         master_list.id
     ))?;
@@ -179,6 +178,7 @@ fn generate_requisition_program(
         order_types
             .iter()
             .map(|order_type| ProgramRequisitionOrderTypeRow {
+                // Concatenate the program requisition setting id and order type id to create a unique id.
                 id: format!("{}{}", program_requisition_settings_row.id, order_type.name),
                 program_requisition_settings_id: program_requisition_settings_row.id.clone(),
                 name: order_type.name.to_string(),

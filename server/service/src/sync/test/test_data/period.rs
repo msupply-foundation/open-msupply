@@ -22,9 +22,9 @@ const PERIOD_2: (&'static str, &'static str) = (
     r#"{
     "ID": "period_2",
     "periodScheduleID": "period_schedule_2",
-    "startDate": "2023-02-01",
-    "endDate": "2023-03-01",
-    "name": "Feb 2023"
+    "startDate": "2023-01-01",
+    "endDate": "2023-12-31",
+    "name": "2023"
   }"#,
 );
 

@@ -72,7 +72,7 @@ const MASTER_LIST_3: (&'static str, &'static str) = (
                         "type": "Order type"
                     }
                 ],
-                "periodScheduleName": "Bi Weekly"
+                "periodScheduleName": "Monthly"
             }
         }
     },

@@ -6,7 +6,7 @@ use crate::PeriodScheduleRow;
 pub fn mock_period_schedule_1() -> PeriodScheduleRow {
     PeriodScheduleRow {
         id: "mock_period_schedule_1".to_string(),
-        name: "Bi Weekly".to_string(),
+        name: "Monthly".to_string(),
     }
 }
 
