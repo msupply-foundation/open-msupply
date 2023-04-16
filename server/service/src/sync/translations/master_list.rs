@@ -52,7 +52,7 @@ struct LegacyOrderType {
     #[serde(rename = "maxMOS")]
     max_mos: f64,
     #[serde(rename = "maxOrdersPerPeriod")]
-    max_order_per_period: f64,
+    max_order_per_period: i32,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -179,22 +179,18 @@ fn generate_requisition_program(
         period_schedule_id: name_tag_and_period_schedule_ids.1,
     };
 
-    let program_requisition_order_type_rows = if !order_types.is_empty() {
-        order_types
-            .iter()
-            .map(|order_type| ProgramRequisitionOrderTypeRow {
-                // Concatenate the program requisition setting id and order type id to create a unique id.
-                id: format!("{}{}", program_requisition_settings_row.id, order_type.name),
-                program_requisition_settings_id: program_requisition_settings_row.id.clone(),
-                name: order_type.name.to_string(),
-                threshold_mos: order_type.threshold_mos,
-                max_mos: order_type.max_mos,
-                max_order_per_period: order_type.max_order_per_period,
-            })
-            .collect::<Vec<ProgramRequisitionOrderTypeRow>>()
-    } else {
-        Vec::new()
-    };
+    let program_requisition_order_type_rows: Vec<ProgramRequisitionOrderTypeRow> = order_types
+        .iter()
+        .map(|order_type| ProgramRequisitionOrderTypeRow {
+            // Concatenate the program requisition setting id and order type id to create a unique id.
+            id: format!("{}{}", program_requisition_settings_row.id, order_type.name),
+            program_requisition_settings_id: program_requisition_settings_row.id.clone(),
+            name: order_type.name.to_string(),
+            threshold_mos: order_type.threshold_mos,
+            max_mos: order_type.max_mos,
+            max_order_per_period: order_type.max_order_per_period,
+        })
+        .collect::<Vec<ProgramRequisitionOrderTypeRow>>();
 
     Ok(Some(GenerateRequisitionProgram {
         program_row,

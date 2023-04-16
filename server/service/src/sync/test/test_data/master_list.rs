@@ -132,7 +132,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     name: "New order 1".to_owned(),
                     threshold_mos: 3.0,
                     max_mos: 3.0,
-                    max_order_per_period: 1.0,
+                    max_order_per_period: 1,
                 }),
             ],
         ),
