@@ -50,7 +50,7 @@ const MASTER_LIST_3: (&'static str, &'static str) = (
     "program_test",
     r#"{
     "ID": "program_test",
-    "description": "program_test",
+    "description": "Program Test 01",
     "date_created": "2017-08-17",
     "created_by_user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
     "note": "note 3",
@@ -111,22 +111,22 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             vec![
                 PullUpsertRecord::MasterList(MasterListRow {
                     id: MASTER_LIST_3.0.to_owned(),
-                    name: "program_test".to_owned(),
+                    name: "Program Test 01".to_owned(),
                     code: "".to_owned(),
                     description: "note 3".to_owned(),
                 }),
                 PullUpsertRecord::Program(ProgramRow {
                     id: MASTER_LIST_3.0.to_owned(),
-                    name: "program_test".to_owned(),
+                    name: "Program Test 01".to_owned(),
                 }),
                 PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
-                    id: "program_test".to_owned() + &mock_name_tag_1().id,
+                    id: MASTER_LIST_3.0.to_owned() + &mock_name_tag_1().id,
                     name_tag_id: mock_name_tag_1().id,
-                    program_id: "program_test".to_owned(),
+                    program_id: MASTER_LIST_3.0.to_owned(),
                     period_schedule_id: mock_period_schedule_1().id,
                 }),
                 PullUpsertRecord::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
-                    id: "program_test".to_owned() + &mock_name_tag_1().id + "New order 1",
+                    id: MASTER_LIST_3.0.to_owned() + &mock_name_tag_1().id + "New order 1",
                     program_requisition_settings_id: "program_test".to_owned()
                         + &mock_name_tag_1().id,
                     name: "New order 1".to_owned(),
