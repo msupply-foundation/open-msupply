@@ -56,7 +56,7 @@ impl<'a> NameTagRowRepository<'a> {
 
     pub fn find_one_by_name(&self, name: &str) -> Result<Option<NameTagRow>, RepositoryError> {
         let result = name_tag_dsl::name_tag
-            .filter(name_tag_dsl::name.eq(name))
+            .filter(name_tag_dsl::name.like(name))
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
