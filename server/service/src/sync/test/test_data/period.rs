@@ -47,9 +47,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             PullUpsertRecord::Period(PeriodRow {
                 id: "period_2".to_string(),
                 period_schedule_id: "period_schedule_2".to_string(),
-                name: "Feb 2023".to_string(),
-                start_date: NaiveDate::from_ymd_opt(2023, 02, 01).unwrap(),
-                end_date: NaiveDate::from_ymd_opt(2023, 03, 01).unwrap(),
+                name: "2023".to_string(),
+                start_date: NaiveDate::from_ymd_opt(2023, 01, 01).unwrap(),
+                end_date: NaiveDate::from_ymd_opt(2023, 12, 31).unwrap(),
             }),
         ),
     ]

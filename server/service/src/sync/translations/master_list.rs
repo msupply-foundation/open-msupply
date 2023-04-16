@@ -80,34 +80,38 @@ impl SyncTranslation for MasterListTranslation {
 
         let generate = generate_requisition_program(connection, data)?;
         let (program, program_requisition_settings, program_requisition_order_types) =
-            match generate {
+            match generate.clone() {
                 Some(generate) => (
                     generate.program_row,
                     generate.program_requisition_settings_row,
                     generate.program_requisition_order_type_rows,
                 ),
-                None => {
-                    return Ok(Some(IntegrationRecords::from_upsert(
-                        PullUpsertRecord::MasterList(master_list),
-                    )))
-                }
+                None => (
+                    ProgramRow::default(),
+                    ProgramRequisitionSettingsRow::default(),
+                    Vec::new(),
+                ),
             };
 
         let mut upserts = Vec::new();
 
-        upserts.push(PullUpsertRecord::MasterList(master_list));
-        upserts.push(PullUpsertRecord::Program(program));
-        upserts.push(PullUpsertRecord::ProgramRequisitionSettings(
-            program_requisition_settings,
-        ));
+        if generate.is_none() {
+            upserts.push(PullUpsertRecord::MasterList(master_list))
+        } else {
+            upserts.push(PullUpsertRecord::MasterList(master_list));
+            upserts.push(PullUpsertRecord::Program(program));
+            upserts.push(PullUpsertRecord::ProgramRequisitionSettings(
+                program_requisition_settings,
+            ));
 
-        program_requisition_order_types
-            .into_iter()
-            .for_each(|program_requisition_order_type| {
-                upserts.push(PullUpsertRecord::ProgramRequisitionOrderType(
-                    program_requisition_order_type,
-                ))
-            });
+            program_requisition_order_types.into_iter().for_each(
+                |program_requisition_order_type| {
+                    upserts.push(PullUpsertRecord::ProgramRequisitionOrderType(
+                        program_requisition_order_type,
+                    ))
+                },
+            );
+        }
 
         Ok(Some(IntegrationRecords::from_upserts(upserts)))
     }
@@ -128,6 +132,7 @@ impl SyncTranslation for MasterListTranslation {
     }
 }
 
+#[derive(Clone)]
 struct GenerateRequisitionProgram {
     pub program_row: ProgramRow,
     pub program_requisition_settings_row: ProgramRequisitionSettingsRow,
