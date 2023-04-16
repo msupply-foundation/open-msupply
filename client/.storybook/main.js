@@ -1,28 +1,21 @@
 const path = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const toPath = filePath => path.join(process.cwd(), filePath);
-
 module.exports = {
   staticDirs: ['../packages/host/public'],
-  typescript: { reactDocgen: 'react-docgen' },
-  framework: '@storybook/react',
-  core: {
-    builder: {
-      name: 'webpack5',
-      options: {
-        lazyCompilation: true,
-      },
-    },
+  framework: {
+    name: '@storybook/react-webpack5',
+    options: {
+      builder: {
+        lazyCompilation: true
+      }
+    }
   },
   features: {
-    storyStoreV7: true,
+    storyStoreV7: true
   },
   stories: ['../packages/**/*.stories.@(js|jsx|ts|tsx)'],
-  addons: [
-    '@storybook/addon-links',
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
-  ],
+  addons: ['@storybook/addon-links', '@storybook/addon-essentials', '@storybook/addon-interactions', '@storybook/addon-mdx-gfm'],
   typescript: {
     check: false,
     checkOptions: {},
@@ -37,11 +30,8 @@ module.exports = {
       // makes string and boolean types that can be undefined appear as inputs and switches
       shouldRemoveUndefinedFromOptional: true,
       // Filter out third-party props from node_modules except @mui packages
-      propFilter: prop =>
-        prop.parent
-          ? !/node_modules\/(?!@mui)/.test(prop.parent.fileName)
-          : true,
-    },
+      propFilter: prop => prop.parent ? !/node_modules\/(?!@mui)/.test(prop.parent.fileName) : true
+    }
   },
   webpackFinal: async config => {
     return {
@@ -51,10 +41,13 @@ module.exports = {
         alias: {
           ...config.resolve.alias,
           '@emotion/core': toPath('node_modules/@emotion/react'),
-          'emotion-theming': toPath('node_modules/@emotion/react'),
+          'emotion-theming': toPath('node_modules/@emotion/react')
         },
-        plugins: [new TsconfigPathsPlugin()],
-      },
+        plugins: [new TsconfigPathsPlugin()]
+      }
     };
   },
+  docs: {
+    autodocs: true
+  }
 };
