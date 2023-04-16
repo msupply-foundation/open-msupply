@@ -11,10 +11,13 @@ import {
 } from '@openmsupply-client/programs';
 
 interface AddButtonProps {
+  /** Disable the whole control */
+  disabled: boolean;
   disableEncounterButton: boolean;
 }
 
 export const AddButton: React.FC<AddButtonProps> = ({
+  disabled,
   disableEncounterButton,
 }) => {
   const t = useTranslation('patients');
@@ -56,6 +59,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
     <>
       <SplitButton
         color="primary"
+        isDisabled={disabled}
         options={options}
         selectedOption={selectedOption}
         onSelectOption={onSelectOption}
