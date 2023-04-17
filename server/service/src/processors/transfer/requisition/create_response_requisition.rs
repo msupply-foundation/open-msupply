@@ -126,19 +126,9 @@ impl AuthorisationFields {
         }
         // if not "shouldAuthoriseResponseRequisition" preference  return Auth::default();
 
-        // TODO this would only work with a datafile where master list name matches supplier name
-        // program_id would ideally transfer from request requisition, program_id, this is a hacky fix for now
-        let program_id = MasterListRepository::new(connection)
-            .query_by_filter(MasterListFilter::new().name(SimpleStringFilter::equal_to(
-                &request_requisition.name_row.name,
-            )))
-            .unwrap()[0]
-            .id
-            .clone();
-
         Ok(AuthorisationFields {
             approval_status: Some(RequisitionRowApprovalStatus::Pending),
-            program_id: Some(program_id),
+            program_id: request_requisition.requisition_row.program_id.clone(),
         })
     }
 }
@@ -202,9 +192,9 @@ fn generate_response_requisition(
         finalised_datetime: None,
         colour: None,
         is_sync_update: false,
-        program_id: None, // TODO?
-        period_id: None,
-        order_type: None,
+        program_id: request_requisition_row.program_id.clone(),
+        period_id: request_requisition_row.period_id.clone(),
+        order_type: request_requisition_row.order_type.clone(),
     };
 
     Ok(result)
