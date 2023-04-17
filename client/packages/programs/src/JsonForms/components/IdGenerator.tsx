@@ -8,13 +8,9 @@ import {
   useTranslation,
   BasicTextInput,
   Button,
-  FormLabel,
-  labelWithPunctuation,
   DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
-  FORM_LABEL_COLUMN_WIDTH,
-  FORM_INPUT_COLUMN_WIDTH,
   DefaultFormRowSx,
   JsonFormsConfig,
   useZodOptionsValidation,
@@ -374,50 +370,14 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
   return (
-    <>
-      <DetailInputWithLabelRow
-        sx={DefaultFormRowSx}
-        label={label}
-        labelWidthPercentage={FORM_LABEL_WIDTH}
-        inputAlignment={'start'}
-        Input={
-          <Box
-            flexBasis={'100%'}
-            display="flex"
-            alignItems="center"
-            gap={FORM_GAP}
-          >
-            <BasicTextInput
-              disabled={!props.enabled || !options?.allowManualEntry}
-              value={text}
-              style={{ flex: 1 }}
-              helperText={errors ?? customError}
-              onChange={e => onChange(e.target.value)}
-              error={!!errors || !!customError}
-            />
-
-            <Box>
-              <Button
-                disabled={error || !canGenerate}
-                onClick={
-                  requireConfirmation ? () => confirmRegenerate() : generate
-                }
-                variant="outlined"
-              >
-                {t('label.generate')}
-              </Button>
-            </Box>
-          </Box>
-        }
-      />
-      <Box sx={DefaultFormRowSx}>
-        <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-          <FormLabel sx={{ fontWeight: 'bold' }}>
-            {labelWithPunctuation(label)}:
-          </FormLabel>
-        </Box>
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
         <Box
-          flexBasis={FORM_INPUT_COLUMN_WIDTH}
+          flexBasis={'100%'}
           display="flex"
           alignItems="center"
           gap={FORM_GAP}
@@ -443,8 +403,8 @@ const UIComponent = (props: ControlProps) => {
             </Button>
           </Box>
         </Box>
-      </Box>
-    </>
+      }
+    />
   );
 };
 
