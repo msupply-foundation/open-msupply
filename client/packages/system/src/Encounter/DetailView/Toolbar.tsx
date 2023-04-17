@@ -48,7 +48,9 @@ interface ToolbarProps {
   encounter: EncounterFragment;
 }
 export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
-  const [status, setStatus] = useState<EncounterNodeStatus | undefined>();
+  const [status, setStatus] = useState<EncounterNodeStatus | undefined>(
+    encounter.status ?? undefined
+  );
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
@@ -59,8 +61,6 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
     useDocumentRegistry.get.documentRegistryByType(encounter?.program);
 
   useEffect(() => {
-    if (!encounter) return;
-
     setStatus(encounter.status ?? undefined);
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
@@ -68,9 +68,13 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
       label: getClinicianName(encounter.clinician as Clinician),
       value: encounter.clinician as Clinician,
     });
-  }, [encounter]);
+  }, [
+    encounter.status,
+    encounter.startDatetime,
+    encounter.endDatetime,
+    encounter.clinician,
+  ]);
 
-  if (!encounter) return null;
   const { patient } = encounter;
 
   return (
