@@ -114,6 +114,7 @@ export const DetailView: FC = () => {
         onSave={saveData}
         onCancel={revert}
         isDisabled={!isDirty || !!validationError}
+        encounter={data as EncounterFragment}
       />
     </React.Suspense>
   );
