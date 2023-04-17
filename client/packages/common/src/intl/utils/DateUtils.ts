@@ -65,10 +65,9 @@ const formatIfValid = (
 const addCurrentTime = (date: Date | null): Date | null => {
   if (date === null) return date;
   const d = new Date();
-  const e = new Date(d);
-  const msSinceMidnight = d.getTime() - e.setHours(0, 0, 0, 0);
+  const msSinceMidnight = d.getTime() - new Date(d).setHours(0, 0, 0, 0);
   const newDate = new Date(date);
-  newDate.setTime(e.getTime() + msSinceMidnight);
+  newDate.setTime(newDate.setHours(0, 0, 0, 0) + msSinceMidnight);
   return newDate;
 };
 
