@@ -11,7 +11,11 @@ import {
   withJsonFormsArrayControlProps,
   JsonFormsDispatch,
 } from '@jsonforms/react';
-import { Box, Typography } from '@openmsupply-client/common';
+import {
+  Box,
+  Typography,
+  labelWithPunctuation,
+} from '@openmsupply-client/common';
 
 import { FORM_LABEL_COLUMN_WIDTH } from '../../styleConstants';
 import { JsonData } from '../../JsonForm';
@@ -68,7 +72,7 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
         <Box display="flex" width="100%" gap={2} alignItems="center">
           <Box width={FORM_LABEL_COLUMN_WIDTH}>
             <Typography sx={{ fontWeight: 'bold', textAlign: 'end' }}>
-              {label}:
+              {labelWithPunctuation(label)}
             </Typography>
           </Box>
         </Box>

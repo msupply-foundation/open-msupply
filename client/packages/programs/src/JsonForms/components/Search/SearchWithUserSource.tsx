@@ -10,6 +10,7 @@ import {
   EditIcon,
   BasicTextInput,
   Typography,
+  labelWithPunctuation,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -93,7 +94,9 @@ export const SearchWithUserSource = (
       marginLeft={0}
     >
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
+        <FormLabel sx={{ fontWeight: 'bold' }}>
+          {labelWithPunctuation(label)}
+        </FormLabel>
       </Box>
       {editMode ? (
         <Box flexBasis={FORM_INPUT_COLUMN_WIDTH} justifyContent="flex-start">

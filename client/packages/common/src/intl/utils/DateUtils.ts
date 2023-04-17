@@ -60,6 +60,18 @@ const formatIfValid = (
   }
 ): string => (isValid(date) ? format(date, dateFormat, options) : '');
 
+/** Adds the current time to a date object (that presumably has 00:00 as its
+ * time component) -- does not mutate input Date object
+ */
+const addCurrentTime = (date: Date | null): Date | null => {
+  if (date === null) return date;
+  const d = new Date();
+  const msSinceMidnight = d.getTime() - new Date(d).setHours(0, 0, 0, 0);
+  const newDate = new Date(date);
+  newDate.setTime(newDate.setHours(0, 0, 0, 0) + msSinceMidnight);
+  return newDate;
+};
+
 // Time constants in [ms]
 const SECOND = 1000;
 const MINUTE = 60 * SECOND;
@@ -71,6 +83,7 @@ export const DateUtils = {
   addMinutes,
   addDays,
   addYears,
+  addCurrentTime,
   getDateOrNull: (date?: Date | string | null): Date | null => {
     if (!date) return null;
     if (date instanceof Date) return date;

@@ -3,18 +3,17 @@ import {
   AlertIcon,
   BasicSpinner,
   Box,
-  DateTimePickerInput,
   DialogButton,
   EncounterNodeStatus,
   InputWithLabelRow,
   RouteBuilder,
   Stack,
-  TimePickerInput,
   Typography,
   useDialog,
   useNavigate,
   useNotification,
   useAuthContext,
+  DatePickerInput,
 } from '@openmsupply-client/common';
 import { DateUtils, useTranslation } from '@common/intl';
 import {
@@ -55,7 +54,6 @@ export const CreateEncounterModal: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const [startDateTimeError, setStartDateTimeError] = useState(false);
-  const [endDateTimeError, setEndDateTimeError] = useState(false);
 
   const handleSave = useEncounter.document.upsert(
     patientId,
@@ -81,7 +79,9 @@ export const CreateEncounterModal: FC = () => {
   };
 
   const setStartDatetime = (date: Date | null): void => {
-    const startDatetime = DateUtils.formatRFC3339(date);
+    const startDatetime = DateUtils.formatRFC3339(
+      DateUtils.addCurrentTime(date)
+    );
     setDraft({
       createdDatetime,
       ...draft,
@@ -97,12 +97,6 @@ export const CreateEncounterModal: FC = () => {
     setStartDateTimeError(false);
   };
 
-  const setEndDatetime = (date: Date | null): void => {
-    const endDatetime = DateUtils.formatRFC3339(date);
-    setDraft({ createdDatetime, ...draft, endDatetime });
-    setEndDateTimeError(false);
-  };
-
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
     if (option === null) {
       setDraft({ createdDatetime, ...draft, clinician: undefined });
@@ -113,10 +107,7 @@ export const CreateEncounterModal: FC = () => {
   };
 
   const canSubmit = () =>
-    draft !== undefined &&
-    draft.startDatetime &&
-    !startDateTimeError &&
-    !endDateTimeError;
+    draft !== undefined && draft.startDatetime && !startDateTimeError;
 
   return (
     <Modal
@@ -164,21 +155,10 @@ export const CreateEncounterModal: FC = () => {
                 <InputWithLabelRow
                   label={t('label.visit-date')}
                   Input={
-                    <DateTimePickerInput
+                    <DatePickerInput
                       value={draft?.startDatetime ?? null}
                       onChange={setStartDatetime}
                       onError={() => setStartDateTimeError(true)}
-                    />
-                  }
-                />
-                <InputWithLabelRow
-                  label={t('label.visit-end')}
-                  Input={
-                    <TimePickerInput
-                      value={draft?.endDatetime ?? null}
-                      disabled={draft?.startDatetime === undefined}
-                      onChange={setEndDatetime}
-                      onError={() => setEndDateTimeError(true)}
                     />
                   }
                 />
