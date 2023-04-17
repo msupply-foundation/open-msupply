@@ -10,9 +10,10 @@ import {
 } from '@openmsupply-client/common';
 
 import { ProgramSettingsFragment } from '../api';
+import { NewRequisitionType } from './types';
 
 export interface NewProgramRequistion {
-  type: 'program';
+  type: NewRequisitionType.Program;
   orderTypeId: string;
   otherPartyId: string;
   periodId: string;
@@ -160,7 +161,7 @@ export const ProgramRequisitionOptions = ({
           onClick={() => {
             if (!createOptions) return;
             onCreate({
-              type: 'program',
+              type: NewRequisitionType.Program,
               ...createOptions,
             });
           }}

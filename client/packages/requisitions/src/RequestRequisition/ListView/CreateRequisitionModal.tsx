@@ -16,9 +16,10 @@ import {
   NewProgramRequistion,
   ProgramRequisitionOptions,
 } from './ProgramRequisitionOptions';
+import { NewRequisitionType } from './types';
 
 interface NewGeneralRequisition {
-  type: 'general';
+  type: NewRequisitionType.General;
   name: NameRowFragment;
 }
 
@@ -91,6 +92,6 @@ const GeneralRequisitionOptions = ({
 }) => (
   <InternalSupplierSearchModal
     isList={true}
-    onChange={name => onCreate({ type: 'general', name })}
+    onChange={name => onCreate({ type: NewRequisitionType.General, name })}
   />
 );
