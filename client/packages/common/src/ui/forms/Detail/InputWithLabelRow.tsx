@@ -40,7 +40,7 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
     <Box display="flex" alignItems="center" gap={1} sx={{ ...sx }}>
       <Box style={{ textAlign: 'end' }} flexBasis={labelFlexBasis}>
         <FormLabel sx={{ fontWeight: 'bold', ...labelSx }} {...labelPropsRest}>
-          {label}:
+          {labelWithPunctuation(label)}
         </FormLabel>
       </Box>
       <Box
@@ -52,4 +52,12 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
       </Box>
     </Box>
   );
+};
+
+// Adds a final ":" to the label, but not if it already ends in a punctuation
+// character
+export const labelWithPunctuation = (labelString: string) => {
+  console.log('labelString', labelString, /[^A-z0-9\s]$/.test(labelString));
+  if (/[^A-z0-9\s]$/.test(labelString)) return labelString;
+  else return labelString + ':';
 };

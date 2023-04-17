@@ -20,6 +20,7 @@ import {
   ChevronDownIcon,
   useTranslation,
   ConfirmationModal,
+  labelWithPunctuation,
 } from '@openmsupply-client/common';
 import { RegexUtils } from '@common/utils';
 import { z, ZodSchema } from 'zod';
@@ -181,7 +182,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
           <Typography
             sx={{ fontWeight: 'bold', textAlign: 'end', maxWidth: '100%' }}
           >
-            {label}:
+            {labelWithPunctuation(label)}
           </Typography>
         </Box>
         <Box width={FORM_INPUT_COLUMN_WIDTH} textAlign="right">

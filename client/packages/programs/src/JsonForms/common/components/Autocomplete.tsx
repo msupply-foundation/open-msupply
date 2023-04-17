@@ -5,6 +5,7 @@ import {
   Autocomplete as AutocompleteCommon,
   Box,
   FormLabel,
+  labelWithPunctuation,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
@@ -90,7 +91,9 @@ const UIComponent = (props: ControlProps) => {
   return (
     <Box sx={DefaultFormRowSx}>
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
+        <FormLabel sx={{ fontWeight: 'bold' }}>
+          {labelWithPunctuation(label)}
+        </FormLabel>
       </Box>
       <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
         <AutocompleteCommon
