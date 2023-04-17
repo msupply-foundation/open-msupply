@@ -19,6 +19,7 @@ import {
 import { RequestRowFragment, useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
 import { CreateRequisitionModal } from './CreateRequisitionModal';
+import { NewRequisitionType } from './types';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
@@ -66,12 +67,12 @@ export const AppBarButtons: FC<{
         onCreate={async newRequistion => {
           modalController.toggleOff();
           switch (newRequistion.type) {
-            case 'general':
+            case NewRequisitionType.General:
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequistion.name.id,
               });
-            case 'program':
+            case NewRequisitionType.Program:
               const { type: _, ...rest } = newRequistion;
               return onProgramCreate({
                 id: FnUtils.generateUUID(),
