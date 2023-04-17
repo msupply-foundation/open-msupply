@@ -14,12 +14,13 @@ import {
   useTranslation,
   FormLabel,
   Box,
+  DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
-  FORM_INPUT_COLUMN_WIDTH,
   FORM_LABEL_COLUMN_WIDTH,
   DefaultFormRowSx,
   FORM_GAP,
+  FORM_LABEL_WIDTH,
 } from '../common';
 
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
@@ -71,41 +72,39 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
   return (
-    <Box sx={DefaultFormRowSx}>
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>{label}:</FormLabel>
-      </Box>
-      <Box
-        flexBasis={FORM_INPUT_COLUMN_WIDTH}
-        display="flex"
-        alignItems="center"
-        gap={FORM_GAP}
-      >
-        <BaseDatePickerInput
-          // undefined is displayed as "now" and null as unset
-          value={dob ?? null}
-          onChange={onChangeDoB}
-          inputFormat="dd/MM/yyyy"
-          InputProps={{ style: { width: 135 } }}
-          disableFuture
-          disabled={!props.enabled}
-        />
-        <Box
-          flex={0}
-          style={{ textAlign: 'end' }}
-          flexBasis={FORM_LABEL_COLUMN_WIDTH}
-        >
-          <FormLabel sx={{ fontWeight: 'bold' }}>{t('label.age')}:</FormLabel>
-        </Box>
-        <Box flex={0}>
-          <NonNegativeIntegerInput
-            value={age}
-            style={{ width: 50 }}
-            onChange={onChangeAge}
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
+        <Box flexBasis="100%" display="flex" alignItems="center" gap={FORM_GAP}>
+          <BaseDatePickerInput
+            // undefined is displayed as "now" and null as unset
+            value={dob ?? null}
+            onChange={onChangeDoB}
+            inputFormat="dd/MM/yyyy"
+            InputProps={{ style: { width: 135 } }}
+            disableFuture
+            disabled={!props.enabled}
           />
+          <Box
+            flex={0}
+            style={{ textAlign: 'end' }}
+            flexBasis={FORM_LABEL_COLUMN_WIDTH}
+          >
+            <FormLabel sx={{ fontWeight: 'bold' }}>{t('label.age')}:</FormLabel>
+          </Box>
+          <Box flex={0}>
+            <NonNegativeIntegerInput
+              value={age}
+              style={{ width: 50 }}
+              onChange={onChangeAge}
+            />
+          </Box>
         </Box>
-      </Box>
-    </Box>
+      }
+    />
   );
 };
 

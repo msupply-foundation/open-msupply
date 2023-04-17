@@ -12,11 +12,12 @@ import {
   DateUtils,
   useTranslation,
   FormLabel,
-  labelWithPunctuation,
+  DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
+  DefaultFormRowSx,
   FORM_INPUT_COLUMN_WIDTH,
-  FORM_LABEL_COLUMN_WIDTH,
+  FORM_LABEL_WIDTH,
   useZodOptionsValidation,
 } from '../common';
 import { z } from 'zod';
@@ -239,32 +240,30 @@ const UIComponent = (props: ControlProps) => {
     value: adherenceScore !== undefined ? `${adherenceScore.toFixed(1)}%` : '',
   };
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      marginTop={1}
-    >
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>
-          {labelWithPunctuation(label)}:
-        </FormLabel>
-      </Box>
-      <Box
-        flexBasis={FORM_INPUT_COLUMN_WIDTH}
-        display="flex"
-        alignItems="center"
-      >
-        <BasicTextInput {...inputProps} />
-        <FormLabel
-          sx={{ color: 'warning.main', fontSize: '12px', marginLeft: '10px' }}
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
+        <Box
+          flexBasis={FORM_INPUT_COLUMN_WIDTH}
+          display="flex"
+          alignItems="center"
         >
-          {warning}
-        </FormLabel>
-      </Box>
-    </Box>
+          <BasicTextInput {...inputProps} />
+          <FormLabel
+            sx={{
+              color: 'warning.main',
+              fontSize: '12px',
+              marginLeft: '10px',
+            }}
+          >
+            {warning}
+          </FormLabel>
+        </Box>
+      }
+    />
   );
 };
 
