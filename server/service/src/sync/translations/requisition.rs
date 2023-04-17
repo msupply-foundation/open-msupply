@@ -2,7 +2,8 @@ use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
     ChangelogRow, ChangelogTableName, ProgramRequisitionOrderTypeRowRepository, RepositoryError,
-    RequisitionRow, RequisitionRowRepository, StorageConnection, SyncBufferRow,
+    RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection,
+    SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -74,6 +75,22 @@ pub enum LegacyRequisitionStatus {
     Others,
 }
 
+// https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/AUTHORISATION_STATUSES.4dm
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "lowercase")]
+pub enum LegacyAuthorisationStatus {
+    None,
+    Pending,
+    Authorised,
+    Denied,
+    #[serde(rename = "auto-authorised")]
+    AutoAuthorised,
+    #[serde(rename = "authorised by another authoriser")]
+    AuthorisedByAnother,
+    #[serde(rename = "denied by another authoriser")]
+    DeniedByAnother,
+}
+
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyRequisitionRow {
@@ -135,6 +152,10 @@ pub struct LegacyRequisitionRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
+
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(rename = "authorisationStatus")]
+    pub approval_status: Option<LegacyAuthorisationStatus>,
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub orderType: Option<String>,
@@ -209,6 +230,8 @@ impl SyncTranslation for RequisitionTranslation {
             min_months_of_stock: data.thresholdMOS,
             linked_requisition_id: data.linked_requisition_id,
             expected_delivery_date: data.expected_delivery_date,
+            approval_status: data.approval_status.map(|s| s.to()),
+            is_sync_update: true,
             program_id: data.programID.clone(),
             period_id: data.periodID,
             order_type_id: find_order_type_id(conn, data.programID, data.orderType)?,
@@ -262,6 +285,8 @@ impl SyncTranslation for RequisitionTranslation {
             min_months_of_stock,
             linked_requisition_id,
             expected_delivery_date,
+            approval_status,
+            is_sync_update: _,
             program_id,
             period_id,
             order_type_id,
@@ -301,6 +326,7 @@ impl SyncTranslation for RequisitionTranslation {
             max_months_of_stock: Some(max_months_of_stock),
             om_colour: colour.clone(),
             comment,
+            approval_status: approval_status.map(LegacyAuthorisationStatus::from),
             programID: program_id,
             periodID: period_id,
             orderType: find_order_type_name(connection, order_type_id)?,
@@ -426,6 +452,36 @@ fn to_legacy_status(
         },
     };
     Some(status)
+}
+
+impl LegacyAuthorisationStatus {
+    fn to(self) -> RequisitionRowApprovalStatus {
+        use LegacyAuthorisationStatus as from;
+        use RequisitionRowApprovalStatus as to;
+        match self {
+            from::None => to::None,
+            from::Pending => to::Pending,
+            from::Authorised => to::Approved,
+            from::Denied => to::Denied,
+            from::AutoAuthorised => to::AutoApproved,
+            from::AuthorisedByAnother => to::ApprovedByAnother,
+            from::DeniedByAnother => to::DeniedByAnother,
+        }
+    }
+
+    fn from(status: RequisitionRowApprovalStatus) -> LegacyAuthorisationStatus {
+        use LegacyAuthorisationStatus as to;
+        use RequisitionRowApprovalStatus as from;
+        match status {
+            from::None => to::None,
+            from::Pending => to::Pending,
+            from::Approved => to::Authorised,
+            from::Denied => to::Denied,
+            from::AutoApproved => to::AutoAuthorised,
+            from::ApprovedByAnother => to::AuthorisedByAnother,
+            from::DeniedByAnother => to::DeniedByAnother,
+        }
+    }
 }
 
 fn find_order_type_id(

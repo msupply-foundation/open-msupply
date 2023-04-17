@@ -55,6 +55,13 @@ export const ResponseRequisitionListView: FC = () => {
             getRequisitionTranslator(t)(status as RequisitionNodeStatus),
         },
       ],
+      // TODO Would ideally be a status (combination of requisition.status and requisition.approvalStatus) ?
+      // Should only be shown if there is store preference ? (response_requisition_requires_authorisation)
+      {
+        key: 'approvalStatus',
+        label: 'label.auth-status',
+        width: 50,
+      },
       ['comment', { minWidth: 400 }],
     ],
     { onChangeSortBy: updateSortQuery, sortBy },

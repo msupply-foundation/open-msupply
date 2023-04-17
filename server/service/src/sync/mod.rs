@@ -28,14 +28,16 @@ pub(crate) struct ActiveStoresOnSite {
 /// Returns changelog filter to filter out records that are not active on site
 /// It is possible to have entries for foreign records in change log (other half of transfers)
 /// these should be filtered out in sync push operation
-pub(crate) fn get_active_records_on_site_filter(
+pub(crate) fn get_sync_push_changelogs_filter(
     connection: &StorageConnection,
 ) -> Result<Option<ChangelogFilter>, GetActiveStoresOnSiteError> {
     let active_stores = ActiveStoresOnSite::get(&connection)?;
 
-    Ok(Some(ChangelogFilter::new().store_id(
-        EqualFilter::equal_any_or_null(active_stores.store_ids()),
-    )))
+    Ok(Some(
+        ChangelogFilter::new()
+            .store_id(EqualFilter::equal_any_or_null(active_stores.store_ids()))
+            .is_sync_update(EqualFilter::equal_or_null_bool(false)),
+    ))
 }
 
 #[derive(Error, Debug)]
