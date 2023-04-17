@@ -1,8 +1,8 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogRow, ChangelogTableName, RequisitionRow, RequisitionRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ProgramRequisitionOrderTypeRowRepository, RepositoryError,
+    RequisitionRow, RequisitionRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -135,13 +135,20 @@ pub struct LegacyRequisitionRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
+
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub orderType: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub periodID: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub programID: Option<String>,
 }
 
 pub(crate) struct RequisitionTranslation {}
 impl SyncTranslation for RequisitionTranslation {
     fn try_translate_pull_upsert(
         &self,
-        _: &StorageConnection,
+        conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
         if !match_pull_table(sync_record) {
@@ -202,9 +209,9 @@ impl SyncTranslation for RequisitionTranslation {
             min_months_of_stock: data.thresholdMOS,
             linked_requisition_id: data.linked_requisition_id,
             expected_delivery_date: data.expected_delivery_date,
-            program_id: todo!(),
-            period_id: todo!(),
-            order_type_id: todo!(),
+            program_id: data.programID.clone(),
+            period_id: data.periodID,
+            order_type_id: find_order_type_id(conn, data.programID, data.orderType)?,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -294,6 +301,9 @@ impl SyncTranslation for RequisitionTranslation {
             max_months_of_stock: Some(max_months_of_stock),
             om_colour: colour.clone(),
             comment,
+            programID: program_id,
+            periodID: period_id,
+            orderType: find_order_type_name(connection, order_type_id)?,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
@@ -416,6 +426,39 @@ fn to_legacy_status(
         },
     };
     Some(status)
+}
+
+fn find_order_type_id(
+    connection: &StorageConnection,
+    order_type_name: Option<String>,
+    program_id: Option<String>,
+) -> Result<Option<String>, RepositoryError> {
+    // We need both a program_id and an order_type_name to find an order type id based on the name
+    // Potentially if we have a order_type_name but no program_id we might need to throw an error?
+    let order_type_name = match order_type_name {
+        Some(order_type_name) => order_type_name,
+        None => return Ok(None),
+    };
+    let program_id = match program_id {
+        Some(program_id) => program_id,
+        None => return Ok(None),
+    };
+    let order_type = ProgramRequisitionOrderTypeRowRepository::new(connection)
+        .find_one_by_program_and_name(&program_id, &order_type_name)?;
+    Ok(order_type.map(|row| row.id))
+}
+
+fn find_order_type_name(
+    connection: &StorageConnection,
+    order_type_id: Option<String>,
+) -> Result<Option<String>, RepositoryError> {
+    let order_type_id = match order_type_id {
+        Some(order_type_id) => order_type_id,
+        None => return Ok(None),
+    };
+    let order_type =
+        ProgramRequisitionOrderTypeRowRepository::new(connection).find_one_by_id(&order_type_id)?;
+    Ok(order_type.map(|row| row.name))
 }
 
 #[cfg(test)]

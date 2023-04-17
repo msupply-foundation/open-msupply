@@ -134,9 +134,9 @@ fn generate(
         sent_datetime: None,
         finalised_datetime: None,
         linked_requisition_id: None,
-        program_id: todo!(),
-        period_id: todo!(),
-        order_type_id: todo!(),
+        program_id: None,    // TODO: Add program_id to input
+        period_id: None,     // TODO: Add period_id to input
+        order_type_id: None, // TODO: Add order_type_id to input
     };
 
     Ok(result)

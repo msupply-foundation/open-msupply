@@ -146,9 +146,9 @@ fn generate_response_requisition(
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,
-        program_id: todo!(),
-        period_id: todo!(),
-        order_type_id: todo!(),
+        program_id: None, // TODO?
+        period_id: None,
+        order_type_id: None,
     };
 
     Ok(result)
