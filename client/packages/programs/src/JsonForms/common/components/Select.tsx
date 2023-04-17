@@ -3,14 +3,9 @@ import { rankWith, isEnumControl, ControlProps } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Autocomplete,
-  FormLabel,
-  Box,
-  labelWithPunctuation,
+  DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
-import {
-  FORM_LABEL_COLUMN_WIDTH,
-  FORM_INPUT_COLUMN_WIDTH,
-} from '../styleConstants';
+import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import parse from 'autosuggest-highlight/parse';
@@ -265,23 +260,17 @@ const UIComponent = (props: ControlProps) => {
   const value = data ? options.find(o => o.value === data) : null;
 
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      justifyContent="space-around"
-      style={{ minWidth: 300 }}
-      margin={0.5}
-      marginLeft={0}
-    >
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>
-          {labelWithPunctuation(label)}
-        </FormLabel>
-      </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH} justifyContent="flex-start">
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
         <Autocomplete
-          sx={{ '.MuiFormControl-root': { minWidth: '100%' } }}
+          sx={{
+            '.MuiFormControl-root': { minWidth: '100%' },
+            flexBasis: '100%',
+          }}
           options={options}
           disabled={!enabled}
           value={value}
@@ -343,8 +332,8 @@ const UIComponent = (props: ControlProps) => {
           }}
           isOptionEqualToValue={option => option.value === data}
         />
-      </Box>
-    </Box>
+      }
+    />
   );
 };
 

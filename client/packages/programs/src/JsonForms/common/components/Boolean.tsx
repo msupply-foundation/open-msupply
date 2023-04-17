@@ -1,17 +1,8 @@
 import React from 'react';
 import { rankWith, isBooleanControl, ControlProps } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import {
-  FormLabel,
-  Box,
-  Switch,
-  labelWithPunctuation,
-} from '@openmsupply-client/common';
-import {
-  FORM_LABEL_COLUMN_WIDTH,
-  FORM_INPUT_COLUMN_WIDTH,
-  DefaultFormRowSx,
-} from '../styleConstants';
+import { Switch, DetailInputWithLabelRow } from '@openmsupply-client/common';
+import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
 
 export const booleanTester = rankWith(4, isBooleanControl);
 
@@ -22,15 +13,13 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  console.log('LABEL', label);
   return (
-    <Box sx={DefaultFormRowSx}>
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>
-          {labelWithPunctuation(label)}
-        </FormLabel>
-      </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
         <Switch
           labelPlacement="end"
           onChange={(_, checked) => {
@@ -40,8 +29,8 @@ const UIComponent = (props: ControlProps) => {
           checked={!!data}
           disabled={!enabled}
         />
-      </Box>
-    </Box>
+      }
+    />
   );
 };
 
