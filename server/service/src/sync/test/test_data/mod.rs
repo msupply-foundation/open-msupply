@@ -45,6 +45,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullReco
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
+    test_records.append(&mut barcode::test_pull_upsert_records());
     test_records
 }
 
@@ -60,7 +61,6 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncPullRecor
     test_records.append(&mut invoice::test_pull_upsert_records());
     test_records.append(&mut activity_log::test_pull_upsert_records());
     test_records.append(&mut name_tag_join::test_pull_upsert_records());
-    test_records.append(&mut barcode::test_pull_upsert_records());
     test_records
 }
 

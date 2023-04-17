@@ -1,6 +1,7 @@
-use std::{collections::HashMap, ops::Index};
+use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
+mod barcode;
 pub mod common;
 mod full_invoice;
 mod full_master_list;
@@ -35,6 +36,7 @@ mod test_unallocated_line;
 mod unit;
 mod user_account;
 
+pub use barcode::*;
 use common::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
@@ -67,13 +69,13 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    ActivityLogRow, ActivityLogRowRepository, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    NumberRow, NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
-    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
-    SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository,
+    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceRow, ItemRow, KeyValueStoreRepository, KeyValueStoreRow,
+    LocationRow, LocationRowRepository, NumberRow, NumberRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
+    SyncLogRow, SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
@@ -112,6 +114,7 @@ pub struct MockData {
     pub activity_logs: Vec<ActivityLogRow>,
     pub sync_logs: Vec<SyncLogRow>,
     pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
+    pub barcodes: Vec<BarcodeRow>,
 }
 
 impl MockData {
@@ -153,6 +156,7 @@ pub struct MockDataInserts {
     pub activity_logs: bool,
     pub sync_logs: bool,
     pub inventory_adjustment_reasons: bool,
+    pub barcodes: bool,
 }
 
 impl MockDataInserts {
@@ -183,6 +187,7 @@ impl MockDataInserts {
             activity_logs: true,
             sync_logs: true,
             inventory_adjustment_reasons: true,
+            barcodes: true,
         }
     }
 
@@ -299,6 +304,11 @@ impl MockDataInserts {
         self.inventory_adjustment_reasons = true;
         self
     }
+
+    pub fn barcodes(mut self) -> Self {
+        self.barcodes = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -361,6 +371,7 @@ fn all_mock_data() -> MockDataCollection {
             activity_logs: mock_activity_logs(),
             sync_logs: vec![],
             inventory_adjustment_reasons: vec![],
+            barcodes: vec![],
         },
     );
     data.insert(
@@ -596,6 +607,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+
+        if inserts.barcodes {
+            for row in &mock_data.barcodes {
+                let repo = BarcodeRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
     }
 
     mock_data
@@ -629,6 +647,7 @@ impl MockData {
             mut activity_logs,
             mut sync_logs,
             mut inventory_adjustment_reasons,
+            mut barcodes,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -654,6 +673,7 @@ impl MockData {
         self.sync_logs.append(&mut sync_logs);
         self.inventory_adjustment_reasons
             .append(&mut inventory_adjustment_reasons);
+        self.barcodes.append(&mut barcodes);
 
         self
     }

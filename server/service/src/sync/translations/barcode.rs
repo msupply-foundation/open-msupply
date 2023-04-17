@@ -45,6 +45,11 @@ impl SyncTranslation for BarcodeTranslation {
             return Ok(None);
         }
 
+        let deserialised_row = serde_json::from_str::<LegacyBarcodeRow>(&sync_record.data);
+        if let Err(e) = deserialised_row {
+            log::warn!("Failed to deserialise barcode row: {:?}", e);
+            return Ok(None);
+        }
         let LegacyBarcodeRow {
             id,
             value,
@@ -52,7 +57,7 @@ impl SyncTranslation for BarcodeTranslation {
             manufacturer_id,
             pack_size,
             parent_id,
-        } = serde_json::from_str::<LegacyBarcodeRow>(&sync_record.data)?;
+        } = deserialised_row.unwrap();
 
         let result = BarcodeRow {
             id,
