@@ -55,17 +55,16 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         }
 
         // Execute
-        let AuthorisationFields {
-            program_id,
-            approval_status,
-        } = AuthorisationFields::populate(
-            connection,
-            &request_requisition,
-            &record_for_processing,
-        )?;
+
+        // Check if approval status needs to be set
+        // TODO link to documentation of how remote authorisation works
+        let store_preference =
+            get_store_preferences(connection, &record_for_processing.other_party_store_id)?;
+        let approval_status = store_preference
+            .response_requisition_requires_authorisation
+            .then_some(RequisitionRowApprovalStatus::Pending);
 
         let new_response_requisition = RequisitionRow {
-            program_id,
             approval_status,
             ..generate_response_requisition(
                 connection,
@@ -103,33 +102,6 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         );
 
         Ok(Some(result))
-    }
-}
-
-#[derive(Default)]
-struct AuthorisationFields {
-    program_id: Option<String>,
-    approval_status: Option<RequisitionRowApprovalStatus>,
-}
-
-impl AuthorisationFields {
-    fn populate(
-        connection: &StorageConnection,
-        request_requisition: &Requisition,
-        record_for_processing: &RequisitionTransferProcessorRecord,
-    ) -> Result<AuthorisationFields, RepositoryError> {
-        let store_id = record_for_processing.other_party_store_id.clone();
-        let preferences = get_store_preferences(connection, &store_id)?;
-
-        if !preferences.response_requisition_requires_authorisation {
-            return Ok(AuthorisationFields::default());
-        }
-        // if not "shouldAuthoriseResponseRequisition" preference  return Auth::default();
-
-        Ok(AuthorisationFields {
-            approval_status: Some(RequisitionRowApprovalStatus::Pending),
-            program_id: request_requisition.requisition_row.program_id.clone(),
-        })
     }
 }
 
