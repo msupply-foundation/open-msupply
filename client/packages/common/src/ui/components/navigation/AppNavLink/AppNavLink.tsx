@@ -159,14 +159,12 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
             sx={{
               alignItems: 'center',
               flexGrow: 1,
-              '& .MuiBadge-badge': drawer.isOpen
+              '& .MuiBadge-badge:not(.MuiBadge-invisible)': drawer.isOpen
                 ? {
-                    display: !badgeProps?.badgeContent ? 'none' : undefined,
                     transform: 'scale(0.75) translate(75%, -25%)',
                   }
                 : {
                     top: 'unset',
-                    display: !badgeProps?.badgeContent ? 'none' : undefined,
                     transform: 'scale(0.75) translate(50%, -50%)',
                   },
             }}
