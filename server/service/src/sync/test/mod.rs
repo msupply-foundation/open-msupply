@@ -254,6 +254,7 @@ pub(crate) async fn check_records_against_database(
             StorePreference(record) => {
                 check_record_by_id!(StorePreferenceRowRepository, con, record, "StorePreference")
             }
+            Barcode(record) => check_record_by_id!(BarcodeRowRepository, con, record, "Barcode"),
         }
     }
 
