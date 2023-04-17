@@ -83,6 +83,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const STORE_PREFERENCE: &str = "pref";
     pub(crate) const PERIOD_SCHEDULE: &str = "periodSchedule";
     pub(crate) const PERIOD: &str = "period";
+    pub(crate) const BARCODE: &str = "barcode";
     // Remote
     pub(crate) const LOCATION: &str = "Location";
     pub(crate) const ITEM_LINE: &str = "item_line";
@@ -93,7 +94,6 @@ pub(crate) mod LegacyTableName {
     pub(crate) const REQUISITION: &str = "requisition";
     pub(crate) const REQUISITION_LINE: &str = "requisition_line";
     pub(crate) const OM_ACTIVITY_LOG: &str = "om_activity_log";
-    pub(crate) const BARCODE: &str = "barcode";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
     pub(crate) const NAME_TAG_JOIN: &str = "name_tag_join";
