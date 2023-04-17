@@ -9,6 +9,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
             CREATE TABLE program (
                 id TEXT NOT NULL REFERENCES master_list(id) PRIMARY KEY,
+                master_list_id TEXT NOT NULL REFERENCES master_list(id),
                 name TEXT NOT NULL
             );
             "#
