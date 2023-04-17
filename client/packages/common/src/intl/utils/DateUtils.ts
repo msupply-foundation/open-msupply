@@ -61,14 +61,14 @@ const formatIfValid = (
 ): string => (isValid(date) ? format(date, dateFormat, options) : '');
 
 // Adds the current time to a date object (that presumably has 00:00 as its time
-// component)
-const addCurrentTime = (date: Date | null) => {
+// component) -- does not mutate input Date object)
+const addCurrentTime = (date: Date | null): Date | null => {
   if (date === null) return date;
   const d = new Date();
   const e = new Date(d);
   const msSinceMidnight = d.getTime() - e.setHours(0, 0, 0, 0);
   const newDate = new Date(date);
-  newDate.setTime(date.getTime() + msSinceMidnight);
+  newDate.setTime(e.getTime() + msSinceMidnight);
   return newDate;
 };
 
