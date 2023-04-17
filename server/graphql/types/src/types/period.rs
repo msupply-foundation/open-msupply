@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 use repository::PeriodRow;
 
 #[derive(PartialEq, Debug)]

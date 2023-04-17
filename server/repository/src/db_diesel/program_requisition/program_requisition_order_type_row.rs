@@ -69,4 +69,21 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_one_by_program_and_name(
+        &self,
+        program_id: &str,
+        name: &str,
+    ) -> Result<Option<ProgramRequisitionOrderTypeRow>, RepositoryError> {
+        let result = program_requisition_order_type_dsl::program_requisition_order_type
+            .inner_join(program_requisition_settings::table)
+            .filter(program_requisition_settings::program_id.eq(program_id))
+            .filter(program_requisition_order_type_dsl::name.eq(name))
+            .select(
+                program_requisition_order_type_dsl::program_requisition_order_type::all_columns(),
+            )
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
 }

@@ -79,9 +79,9 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
-            program_id: todo!(),
-            period_id: todo!(),
-            order_type_id: todo!(),
+            program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
+            period_id: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
+            order_type_id: None, // TODO Look up ID for Some("Normal".to_string()),
         }),
     )
 }
@@ -121,6 +121,9 @@ fn requisition_request_push_record() -> TestSyncPushRecord {
             om_status: Some(RequisitionRowStatus::Sent),
             om_colour: None,
             expected_delivery_date: None,
+            orderType: None, // TODO
+            periodID: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
+            programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
         }),
     }
 }
@@ -187,9 +190,9 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
-            program_id: todo!(),
-            period_id: todo!(),
-            order_type_id: todo!(),
+            program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
+            period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
+            order_type_id: None, // TODO!
         }),
     )
 }
@@ -229,6 +232,9 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
             om_status: Some(RequisitionRowStatus::Finalised),
             om_colour: None,
             expected_delivery_date: None,
+            orderType: None, // TODO?
+            periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
+            programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
         }),
     }
 }
@@ -307,9 +313,9 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
             max_months_of_stock: 10.0,
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
-            program_id: todo!(),
-            period_id: todo!(),
-            order_type_id: todo!(),
+            program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
+            period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
+            order_type_id: None, // TODO
         }),
     )
 }
@@ -354,6 +360,9 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
             max_months_of_stock: Some(10.0),
             om_status: Some(RequisitionRowStatus::New),
             om_colour: Some("Colour".to_string()),
+            orderType: None, // TODO?
+            periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
+            programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
         }),
     }
 }
