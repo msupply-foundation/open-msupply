@@ -237,7 +237,7 @@ impl RequisitionNode {
     }
 
     pub async fn order_type(&self) -> &Option<String> {
-        &self.requisition.order_type
+        &self.row().order_type
     }
 
     pub async fn period(&self) -> Option<PeriodNode> {

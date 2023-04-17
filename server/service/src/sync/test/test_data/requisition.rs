@@ -86,7 +86,7 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
             is_sync_update: true,
             program_id: None,
             period_id: None,
-            order_type_id: None,
+            order_type: None,
         }),
     )
 }
@@ -200,7 +200,7 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
             is_sync_update: true,
             program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
-            order_type_id: None, // TODO!
+            order_type: Some("Normal".to_string()),
         }),
     )
 }
@@ -241,7 +241,7 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
             om_colour: None,
             expected_delivery_date: None,
             approval_status: Some(LegacyAuthorisationStatus::None),
-            orderType: None, // TODO?
+            orderType: Some("Normal".to_string()),
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
         }),
@@ -326,7 +326,7 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
             is_sync_update: true,
             program_id: None,
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
-            order_type_id: None, // TODO
+            order_type: Some("Normal".to_string()),
         }),
     )
 }
@@ -372,7 +372,7 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
             om_status: Some(RequisitionRowStatus::New),
             om_colour: Some("Colour".to_string()),
             approval_status: Some(LegacyAuthorisationStatus::Authorised),
-            orderType: None, // TODO?
+            orderType: Some("Normal".to_string()),
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             programID: None,
         }),
@@ -452,7 +452,7 @@ fn program_requisition_request_pull_record() -> TestSyncPullRecord {
             is_sync_update: true,
             program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
             period_id: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
-            order_type_id: None, // TODO Look up ID for Some("Normal".to_string()),
+            order_type: Some("Normal".to_string()),
         }),
     )
 }
@@ -493,7 +493,7 @@ fn program_requisition_request_push_record() -> TestSyncPushRecord {
             om_colour: None,
             expected_delivery_date: None,
             approval_status: None,
-            orderType: None, // TODO Order Type
+            orderType: Some("Normal".to_string()),
             periodID: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
         }),

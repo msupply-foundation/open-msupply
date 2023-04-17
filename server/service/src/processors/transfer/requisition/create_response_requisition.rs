@@ -204,7 +204,7 @@ fn generate_response_requisition(
         is_sync_update: false,
         program_id: None, // TODO?
         period_id: None,
-        order_type_id: None,
+        order_type: None,
     };
 
     Ok(result)
