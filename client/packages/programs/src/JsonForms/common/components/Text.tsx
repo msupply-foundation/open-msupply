@@ -128,6 +128,7 @@ const UIComponent = (props: ControlProps) => {
       inputProps={{
         value: text ?? '',
         sx: { width },
+        style: { flexBasis: '100%' },
         onChange: e => onChange(e.target.value || ''),
         disabled: !props.enabled,
         error,
