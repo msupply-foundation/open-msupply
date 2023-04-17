@@ -10,6 +10,7 @@ import {
   Button,
   FormLabel,
   labelWithPunctuation,
+  DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -20,6 +21,7 @@ import {
   useDocument,
   useProgramEnrolments,
   FORM_GAP,
+  FORM_LABEL_WIDTH,
 } from '@openmsupply-client/programs';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
@@ -372,38 +374,77 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
   return (
-    <Box sx={DefaultFormRowSx}>
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>
-          {labelWithPunctuation(label)}:
-        </FormLabel>
-      </Box>
-      <Box
-        flexBasis={FORM_INPUT_COLUMN_WIDTH}
-        display="flex"
-        alignItems="center"
-        gap={FORM_GAP}
-      >
-        <BasicTextInput
-          disabled={!props.enabled || !options?.allowManualEntry}
-          value={text}
-          style={{ flex: 1 }}
-          helperText={errors ?? customError}
-          onChange={e => onChange(e.target.value)}
-          error={!!errors || !!customError}
-        />
-
-        <Box>
-          <Button
-            disabled={error || !canGenerate}
-            onClick={requireConfirmation ? () => confirmRegenerate() : generate}
-            variant="outlined"
+    <>
+      <DetailInputWithLabelRow
+        sx={DefaultFormRowSx}
+        label={label}
+        labelWidthPercentage={FORM_LABEL_WIDTH}
+        inputAlignment={'start'}
+        Input={
+          <Box
+            flexBasis={'100%'}
+            display="flex"
+            alignItems="center"
+            gap={FORM_GAP}
           >
-            {t('label.generate')}
-          </Button>
+            <BasicTextInput
+              disabled={!props.enabled || !options?.allowManualEntry}
+              value={text}
+              style={{ flex: 1 }}
+              helperText={errors ?? customError}
+              onChange={e => onChange(e.target.value)}
+              error={!!errors || !!customError}
+            />
+
+            <Box>
+              <Button
+                disabled={error || !canGenerate}
+                onClick={
+                  requireConfirmation ? () => confirmRegenerate() : generate
+                }
+                variant="outlined"
+              >
+                {t('label.generate')}
+              </Button>
+            </Box>
+          </Box>
+        }
+      />
+      <Box sx={DefaultFormRowSx}>
+        <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
+          <FormLabel sx={{ fontWeight: 'bold' }}>
+            {labelWithPunctuation(label)}:
+          </FormLabel>
+        </Box>
+        <Box
+          flexBasis={FORM_INPUT_COLUMN_WIDTH}
+          display="flex"
+          alignItems="center"
+          gap={FORM_GAP}
+        >
+          <BasicTextInput
+            disabled={!props.enabled || !options?.allowManualEntry}
+            value={text}
+            style={{ flex: 1 }}
+            helperText={errors ?? customError}
+            onChange={e => onChange(e.target.value)}
+            error={!!errors || !!customError}
+          />
+
+          <Box>
+            <Button
+              disabled={error || !canGenerate}
+              onClick={
+                requireConfirmation ? () => confirmRegenerate() : generate
+              }
+              variant="outlined"
+            >
+              {t('label.generate')}
+            </Button>
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 

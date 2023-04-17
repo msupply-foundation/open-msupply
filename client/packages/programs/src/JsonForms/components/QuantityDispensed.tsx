@@ -9,12 +9,13 @@ import {
   useTranslation,
   FormLabel,
   Box,
-  labelWithPunctuation,
+  DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
-  FORM_INPUT_COLUMN_WIDTH,
   useZodOptionsValidation,
+  DefaultFormRowSx,
+  FORM_LABEL_WIDTH,
 } from '../common';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
@@ -153,25 +154,12 @@ const UIComponent = (props: ControlProps) => {
   }
   return (
     <>
-      <Box
-        display="flex"
-        alignItems="center"
-        gap={2}
-        justifyContent="space-around"
-        style={{ minWidth: 300 }}
-        marginTop={1}
-      >
-        <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-          <FormLabel sx={{ fontWeight: 'bold' }}>
-            {labelWithPunctuation(label)}:
-          </FormLabel>
-        </Box>
-        <Box
-          flexBasis={FORM_INPUT_COLUMN_WIDTH}
-          display="flex"
-          alignItems="center"
-          gap={2}
-        >
+      <DetailInputWithLabelRow
+        sx={DefaultFormRowSx}
+        label={label}
+        labelWidthPercentage={FORM_LABEL_WIDTH}
+        inputAlignment={'start'}
+        Input={
           <PositiveNumberInput
             min={0}
             type="number"
@@ -187,64 +175,54 @@ const UIComponent = (props: ControlProps) => {
             helperText={errors}
             value={localData ?? ''}
           />
-        </Box>
-      </Box>
+        }
+      />
+      <DetailInputWithLabelRow
+        sx={DefaultFormRowSx}
+        label={
+          options?.totalQuantityLabel
+            ? options?.totalQuantityLabel
+            : t('label.total-quantity', { ns: 'programs' })
+        }
+        labelWidthPercentage={FORM_LABEL_WIDTH}
+        inputAlignment={'start'}
+        Input={
+          <Box flexBasis="100%" display="flex" alignItems="center" gap={2}>
+            <PositiveNumberInput
+              min={0}
+              type="number"
+              InputProps={{
+                sx: { '& .MuiInput-input': { textAlign: 'right' } },
+              }}
+              onChange={value => {
+                if (value !== undefined) {
+                  setLocalData(value);
+                  onChange(value);
+                }
+              }}
+              disabled={true}
+              error={error}
+              helperText={errors}
+              value={remainingQuantity + (localData ?? 0)}
+            />
 
-      <Box
-        display="flex"
-        alignItems="center"
-        gap={2}
-        justifyContent="space-around"
-        style={{ minWidth: 300 }}
-        marginTop={1}
-      >
-        <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-          <FormLabel sx={{ fontWeight: 'bold' }}>
-            {options?.totalQuantityLabel
-              ? options?.totalQuantityLabel
-              : t('label.total-quantity', { ns: 'programs' })}
-          </FormLabel>
-        </Box>
-        <Box
-          flexBasis={FORM_INPUT_COLUMN_WIDTH}
-          display="flex"
-          alignItems="center"
-          gap={2}
-        >
-          <PositiveNumberInput
-            min={0}
-            type="number"
-            InputProps={{
-              sx: { '& .MuiInput-input': { textAlign: 'right' } },
-            }}
-            onChange={value => {
-              if (value !== undefined) {
-                setLocalData(value);
-                onChange(value);
-              }
-            }}
-            disabled={true}
-            error={error}
-            helperText={errors}
-            value={remainingQuantity + (localData ?? 0)}
-          />
-
-          <Box
-            flex={0}
-            style={{ textAlign: 'end' }}
-            flexBasis={FORM_LABEL_COLUMN_WIDTH}
-          >
-            <FormLabel sx={{ fontWeight: 'bold' }}>
-              {t('label.end-of-supply')}:
+            <Box
+              flex={0}
+              style={{ textAlign: 'end' }}
+              flexBasis={FORM_LABEL_COLUMN_WIDTH}
+            >
+              <FormLabel sx={{ fontWeight: 'bold' }}>
+                {t('label.end-of-supply')}:
+              </FormLabel>
+            </Box>
+            <FormLabel>
+              {endOfSupplySec
+                ? `${dateFormat.localisedDate(endOfSupplySec)}`
+                : ''}
             </FormLabel>
           </Box>
-          <FormLabel>
-            {endOfSupplySec
-              ? `${dateFormat.localisedDate(endOfSupplySec)}`
-              : ''}
-          </FormLabel>
-        </Box>
-      </Box>
+        }
+      />
     </>
   );
 };
