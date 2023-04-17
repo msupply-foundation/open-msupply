@@ -33,7 +33,9 @@ table! {
         their_reference -> Nullable<Text>,
         max_months_of_stock -> Double,
         min_months_of_stock -> Double,
+        approval_status -> Nullable<crate::db_diesel::requisition::requisition_row::RequisitionRowApprovalStatusMapping>,
         linked_requisition_id -> Nullable<Text>,
+        is_sync_update -> Bool,
         program_id -> Nullable<Text>,
         period_id -> Nullable<Text>,
         order_type_id -> Nullable<Text>,
@@ -62,6 +64,18 @@ pub enum RequisitionRowStatus {
     Sent,
     Finalised,
 }
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(strum::EnumIter))]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RequisitionRowApprovalStatus {
+    None,
+    Approved,
+    Pending,
+    Denied,
+    AutoApproved,
+    ApprovedByAnother,
+    DeniedByAnother,
+}
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[changeset_options(treat_none_as_null = "true")]
@@ -84,7 +98,9 @@ pub struct RequisitionRow {
     pub their_reference: Option<String>,
     pub max_months_of_stock: f64,
     pub min_months_of_stock: f64,
+    pub approval_status: Option<RequisitionRowApprovalStatus>,
     pub linked_requisition_id: Option<String>,
+    pub is_sync_update: bool,
     pub program_id: Option<String>,
     pub period_id: Option<String>,
     pub order_type_id: Option<String>,
@@ -110,7 +126,9 @@ impl Default for RequisitionRow {
             their_reference: Default::default(),
             max_months_of_stock: Default::default(),
             min_months_of_stock: Default::default(),
+            approval_status: Default::default(),
             linked_requisition_id: Default::default(),
+            is_sync_update: Default::default(),
             program_id: None,
             period_id: None,
             order_type_id: None,
@@ -174,5 +192,42 @@ impl<'a> RequisitionRowRepository<'a> {
             .select(max(requisition_dsl::requisition_number))
             .first(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use strum::IntoEnumIterator;
+
+    use crate::{
+        mock::{mock_request_draft_requisition_all_fields, MockDataInserts},
+        test_db::setup_all,
+        RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository,
+    };
+
+    #[actix_rt::test]
+    async fn approval_status_enum() {
+        let (_, connection, _, _) = setup_all(
+            "approval_status_enum",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let repo = RequisitionRowRepository::new(&connection);
+        // Try upsert all variants of RequisitionRowApprovalStatus, confirm that diesel enums match postgres
+        for variant in RequisitionRowApprovalStatus::iter() {
+            let row = RequisitionRow {
+                approval_status: Some(variant),
+                ..mock_request_draft_requisition_all_fields().requisition
+            };
+            let result = repo.upsert_one(&row);
+            assert_eq!(result, Ok(()));
+
+            let result = repo
+                .find_one_by_id(&mock_request_draft_requisition_all_fields().requisition.id)
+                .unwrap()
+                .unwrap();
+            assert_eq!(result.approval_status, row.approval_status);
+        }
     }
 }

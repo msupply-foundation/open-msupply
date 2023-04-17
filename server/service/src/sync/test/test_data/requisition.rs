@@ -1,12 +1,15 @@
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 use crate::sync::translations::{
-    requisition::{LegacyRequisitionRow, LegacyRequisitionStatus, LegacyRequisitionType},
+    requisition::{
+        LegacyAuthorisationStatus, LegacyRequisitionRow, LegacyRequisitionStatus,
+        LegacyRequisitionType,
+    },
     LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
 };
 use chrono::NaiveDate;
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    RequisitionRow,
+    RequisitionRow, RequisitionRowApprovalStatus,
 };
 use serde_json::json;
 
@@ -79,6 +82,8 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
+            approval_status: None,
+            is_sync_update: true,
             program_id: None,
             period_id: None,
             order_type_id: None,
@@ -121,6 +126,7 @@ fn requisition_request_push_record() -> TestSyncPushRecord {
             om_status: Some(RequisitionRowStatus::Sent),
             om_colour: None,
             expected_delivery_date: None,
+            approval_status: None,
             orderType: None,
             periodID: None,
             programID: None,
@@ -190,6 +196,8 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
+            approval_status: Some(RequisitionRowApprovalStatus::None),
+            is_sync_update: true,
             program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type_id: None, // TODO!
@@ -232,6 +240,7 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
             om_status: Some(RequisitionRowStatus::Finalised),
             om_colour: None,
             expected_delivery_date: None,
+            approval_status: Some(LegacyAuthorisationStatus::None),
             orderType: None, // TODO?
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
@@ -261,11 +270,11 @@ const REQUISITION_OM_FIELDS: (&'static str, &'static str) = (
       "custom_data": null,
       "linked_requisition_id": "mock_request_draft_requisition2",
       "linked_purchase_order_ID": "",
-      "authorisationStatus": "none",
+      "authorisationStatus": "authorised",
       "thresholdMOS": 3,
       "orderType": "Normal",
       "periodID": "641A3560C84A44BC9E6DDC01F3D75923",
-      "programID": "F36DBBC6DBCA4528BDA2403CE07CB44F",
+      "programID": "",
       "lastModifiedAt": 1594271180,
       "is_emergency": false,
       "isRemoteOrder": false,
@@ -313,7 +322,9 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
             max_months_of_stock: 10.0,
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
-            program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
+            approval_status: Some(RequisitionRowApprovalStatus::Approved),
+            is_sync_update: true,
+            program_id: None,
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type_id: None, // TODO
         }),
@@ -360,9 +371,10 @@ fn requisition_om_fields_push_record() -> TestSyncPushRecord {
             max_months_of_stock: Some(10.0),
             om_status: Some(RequisitionRowStatus::New),
             om_colour: Some("Colour".to_string()),
+            approval_status: Some(LegacyAuthorisationStatus::Authorised),
             orderType: None, // TODO?
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
-            programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
+            programID: None,
         }),
     }
 }
@@ -436,6 +448,8 @@ fn program_requisition_request_pull_record() -> TestSyncPullRecord {
             min_months_of_stock: 3.0,
             linked_requisition_id: Some("mock_request_draft_requisition2".to_string()),
             expected_delivery_date: None,
+            approval_status: None,
+            is_sync_update: true,
             program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
             period_id: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             order_type_id: None, // TODO Look up ID for Some("Normal".to_string()),
@@ -478,6 +492,7 @@ fn program_requisition_request_push_record() -> TestSyncPushRecord {
             om_status: Some(RequisitionRowStatus::Sent),
             om_colour: None,
             expected_delivery_date: None,
+            approval_status: None,
             orderType: None, // TODO Order Type
             periodID: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
