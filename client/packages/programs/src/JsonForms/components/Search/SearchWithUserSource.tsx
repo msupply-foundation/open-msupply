@@ -4,17 +4,17 @@ import {
   useDebounceCallback,
   useTranslation,
   Box,
-  FormLabel,
   Autocomplete,
   IconButton,
   EditIcon,
   BasicTextInput,
   Typography,
-  labelWithPunctuation,
+  DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
-  FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  DefaultFormRowSx,
+  FORM_LABEL_WIDTH,
 } from '../../common/styleConstants';
 import { useSearchQueries } from './useSearchQueries';
 import { UserOptions } from './Search';
@@ -85,79 +85,73 @@ export const SearchWithUserSource = (
   if (!visible) return null;
 
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      style={{ minWidth: 300 }}
-      margin={0.5}
-      marginLeft={0}
-    >
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>
-          {labelWithPunctuation(label)}:
-        </FormLabel>
-      </Box>
-      {editMode ? (
-        <Box flexBasis={FORM_INPUT_COLUMN_WIDTH} justifyContent="flex-start">
-          <>
-            <Autocomplete
-              sx={{ '.MuiFormControl-root': { minWidth: '100%' } }}
-              options={results}
-              disabled={!props.enabled}
-              onChange={(_, option) => handleDataUpdate(option)}
-              onInputChange={(_, value) => {
-                debouncedOnChange(value);
-                setSearchText(value);
-                setNoResultsText(t('control.search.searching-label'));
-              }}
-              onBlur={() => {
-                if (data) setEditMode(false);
-              }}
-              getOptionLabel={getOptionLabel ?? undefined}
-              clearable={!props.config?.required}
-              inputProps={{
-                error: !!error,
-                helperText: error,
-              }}
-              noOptionsText={getNoOptionsText()}
-              renderInput={params => (
-                <BasicTextInput
-                  {...params}
-                  placeholder={
-                    placeholderText ?? t('control.search.search-placeholder')
-                  }
-                />
-              )}
-            />
-          </>
-        </Box>
-      ) : (
-        <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
-        >
-          {!error ? (
-            <>
-              {getDisplayElement && getDisplayElement(data)}
-              <IconButton
-                label={t('label.edit')}
-                icon={<EditIcon style={{ width: 16 }} />}
-                onClick={() => {
-                  setEditMode(true);
-                }}
-                color="primary"
-                height="20px"
-                width="20px"
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
+        editMode ? (
+          <Autocomplete
+            sx={{
+              '.MuiFormControl-root': { minWidth: '100%' },
+              flexBasis: '100%',
+            }}
+            options={results}
+            disabled={!props.enabled}
+            onChange={(_, option) => handleDataUpdate(option)}
+            onInputChange={(_, value) => {
+              debouncedOnChange(value);
+              setSearchText(value);
+              setNoResultsText(t('control.search.searching-label'));
+            }}
+            onBlur={() => {
+              if (data) setEditMode(false);
+            }}
+            getOptionLabel={getOptionLabel ?? undefined}
+            clearable={!props.config?.required}
+            inputProps={{
+              error: !!error,
+              helperText: error,
+            }}
+            noOptionsText={getNoOptionsText()}
+            renderInput={params => (
+              <BasicTextInput
+                {...params}
+                placeholder={
+                  placeholderText ?? t('control.search.search-placeholder')
+                }
               />
-            </>
-          ) : (
-            <Typography color="red">{error}</Typography>
-          )}
-        </Box>
-      )}
-    </Box>
+            )}
+          />
+        ) : (
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            flexBasis="100%"
+            sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
+          >
+            {!error ? (
+              <>
+                {getDisplayElement && getDisplayElement(data)}
+                <IconButton
+                  label={t('label.edit')}
+                  icon={<EditIcon style={{ width: 16 }} />}
+                  onClick={() => {
+                    setEditMode(true);
+                  }}
+                  color="primary"
+                  height="20px"
+                  width="20px"
+                />
+              </>
+            ) : (
+              <Typography color="red">{error}</Typography>
+            )}
+          </Box>
+        )
+      }
+    />
   );
 };

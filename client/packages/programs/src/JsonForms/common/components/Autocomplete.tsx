@@ -3,17 +3,11 @@ import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Autocomplete as AutocompleteCommon,
-  Box,
-  FormLabel,
-  labelWithPunctuation,
+  DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
-import {
-  DefaultFormRowSx,
-  FORM_INPUT_COLUMN_WIDTH,
-  FORM_LABEL_COLUMN_WIDTH,
-} from '../styleConstants';
+import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 
 type Options = {
   freeText?: boolean;
@@ -89,15 +83,17 @@ const UIComponent = (props: ControlProps) => {
     })
   );
   return (
-    <Box sx={DefaultFormRowSx}>
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>
-          {labelWithPunctuation(label)}
-        </FormLabel>
-      </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
         <AutocompleteCommon
-          sx={{ '.MuiFormControl-root': { minWidth: '100%' } }}
+          sx={{
+            '.MuiFormControl-root': { minWidth: '100%' },
+            flexBasis: '100%',
+          }}
           options={options}
           value={{ label: localData ?? '' }}
           // some type problem here, freeSolo seems to have type `undefined`
@@ -119,8 +115,8 @@ const UIComponent = (props: ControlProps) => {
           }}
           disabled={!props.enabled}
         />
-      </Box>
-    </Box>
+      }
+    />
   );
 };
 
