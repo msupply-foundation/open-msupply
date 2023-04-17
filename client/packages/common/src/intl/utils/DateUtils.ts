@@ -60,8 +60,9 @@ const formatIfValid = (
   }
 ): string => (isValid(date) ? format(date, dateFormat, options) : '');
 
-// Adds the current time to a date object (that presumably has 00:00 as its time
-// component) -- does not mutate input Date object)
+/** Adds the current time to a date object (that presumably has 00:00 as its
+ * time component) -- does not mutate input Date object
+ */
 const addCurrentTime = (date: Date | null): Date | null => {
   if (date === null) return date;
   const d = new Date();
