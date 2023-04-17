@@ -1,8 +1,8 @@
 use super::requisition_row::requisition::dsl as requisition_dsl;
 
 use crate::db_diesel::{
-    name_row::name, period::period, program_requisition::program,
-    program_requisition::program_requisition_order_type, store_row::store, user_row::user_account,
+    name_row::name, period::period, program_requisition::program, store_row::store,
+    user_row::user_account,
 };
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
@@ -38,7 +38,7 @@ table! {
         is_sync_update -> Bool,
         program_id -> Nullable<Text>,
         period_id -> Nullable<Text>,
-        order_type_id -> Nullable<Text>,
+        order_type -> Nullable<Text>,
     }
 }
 
@@ -47,7 +47,6 @@ joinable!(requisition -> store (store_id));
 joinable!(requisition -> user_account (user_id));
 joinable!(requisition -> period (period_id));
 joinable!(requisition -> program (program_id));
-joinable!(requisition -> program_requisition_order_type (order_type_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -103,7 +102,7 @@ pub struct RequisitionRow {
     pub is_sync_update: bool,
     pub program_id: Option<String>,
     pub period_id: Option<String>,
-    pub order_type_id: Option<String>,
+    pub order_type: Option<String>,
 }
 
 impl Default for RequisitionRow {
@@ -131,7 +130,7 @@ impl Default for RequisitionRow {
             is_sync_update: Default::default(),
             program_id: None,
             period_id: None,
-            order_type_id: None,
+            order_type: None,
         }
     }
 }

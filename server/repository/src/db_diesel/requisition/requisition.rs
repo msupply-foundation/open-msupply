@@ -9,17 +9,14 @@ use crate::{
         period::period::{self, dsl as period_dsl},
         program_requisition::program,
         program_requisition::program::dsl as program_dsl,
-        program_requisition::program_requisition_order_type::dsl as program_requisition_order_type_dsl,
         store_row::{store, store::dsl as store_dsl},
     },
     diesel_macros::{
         apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_simple_string_filter,
         apply_sort, apply_sort_no_case,
     },
-    program_requisition_order_type,
     repository_error::RepositoryError,
-    DBType, NameRow, PeriodRow, ProgramRequisitionOrderTypeRow, ProgramRow, StorageConnection,
-    StoreRow,
+    DBType, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
 };
 
 use crate::Pagination;
@@ -35,7 +32,6 @@ pub type RequisitionJoin = (
     StoreRow,
     Option<ProgramRow>,
     Option<PeriodRow>,
-    Option<ProgramRequisitionOrderTypeRow>,
 );
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -45,7 +41,6 @@ pub struct Requisition {
     pub store_row: StoreRow,
     pub program_name: Option<String>,
     pub period: Option<PeriodRow>,
-    pub order_type: Option<String>,
 }
 
 pub struct RequisitionRepository<'a> {
@@ -134,13 +129,10 @@ type BoxedRequisitionQuery = IntoBoxed<
     'static,
     LeftJoin<
         LeftJoin<
-            LeftJoin<
-                InnerJoin<InnerJoin<requisition::table, name::table>, store::table>,
-                program::table,
-            >,
-            period::table,
+            InnerJoin<InnerJoin<requisition::table, name::table>, store::table>,
+            program::table,
         >,
-        program_requisition_order_type::table,
+        period::table,
     >,
     DBType,
 >;
@@ -153,7 +145,6 @@ fn create_filtered_query(
         .inner_join(store_dsl::store)
         .left_join(program_dsl::program)
         .left_join(period_dsl::period)
-        .left_join(program_requisition_order_type_dsl::program_requisition_order_type)
         .into_boxed();
 
     if let Some(RequisitionFilter {
@@ -216,7 +207,7 @@ fn create_filtered_query(
 }
 
 fn to_domain(
-    (requisition_row, name_row, store_row,  program_row, period_row, order_type_row): RequisitionJoin,
+    (requisition_row, name_row, store_row, program_row, period_row): RequisitionJoin,
 ) -> Requisition {
     Requisition {
         requisition_row,
@@ -224,6 +215,5 @@ fn to_domain(
         store_row,
         program_name: program_row.map(|program_row| program_row.name),
         period: period_row,
-        order_type: order_type_row.map(|order_type_row| order_type_row.name),
     }
 }

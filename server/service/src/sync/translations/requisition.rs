@@ -1,9 +1,8 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogRow, ChangelogTableName, ProgramRequisitionOrderTypeRowRepository, RepositoryError,
-    RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, RequisitionRow, RequisitionRowApprovalStatus,
+    RequisitionRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -169,7 +168,7 @@ pub(crate) struct RequisitionTranslation {}
 impl SyncTranslation for RequisitionTranslation {
     fn try_translate_pull_upsert(
         &self,
-        conn: &StorageConnection,
+        _conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
         if !match_pull_table(sync_record) {
@@ -234,7 +233,7 @@ impl SyncTranslation for RequisitionTranslation {
             is_sync_update: true,
             program_id: data.programID.clone(),
             period_id: data.periodID,
-            order_type_id: find_order_type_id(conn, data.programID, data.orderType)?,
+            order_type: data.orderType,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -289,7 +288,7 @@ impl SyncTranslation for RequisitionTranslation {
             is_sync_update: _,
             program_id,
             period_id,
-            order_type_id,
+            order_type,
         } = RequisitionRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -329,7 +328,7 @@ impl SyncTranslation for RequisitionTranslation {
             approval_status: approval_status.map(LegacyAuthorisationStatus::from),
             programID: program_id,
             periodID: period_id,
-            orderType: find_order_type_name(connection, order_type_id)?,
+            orderType: order_type,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
@@ -482,39 +481,6 @@ impl LegacyAuthorisationStatus {
             from::DeniedByAnother => to::DeniedByAnother,
         }
     }
-}
-
-fn find_order_type_id(
-    connection: &StorageConnection,
-    order_type_name: Option<String>,
-    program_id: Option<String>,
-) -> Result<Option<String>, RepositoryError> {
-    // We need both a program_id and an order_type_name to find an order type id based on the name
-    // Potentially if we have a order_type_name but no program_id we might need to throw an error?
-    let order_type_name = match order_type_name {
-        Some(order_type_name) => order_type_name,
-        None => return Ok(None),
-    };
-    let program_id = match program_id {
-        Some(program_id) => program_id,
-        None => return Ok(None),
-    };
-    let order_type = ProgramRequisitionOrderTypeRowRepository::new(connection)
-        .find_one_by_program_and_name(&program_id, &order_type_name)?;
-    Ok(order_type.map(|row| row.id))
-}
-
-fn find_order_type_name(
-    connection: &StorageConnection,
-    order_type_id: Option<String>,
-) -> Result<Option<String>, RepositoryError> {
-    let order_type_id = match order_type_id {
-        Some(order_type_id) => order_type_id,
-        None => return Ok(None),
-    };
-    let order_type =
-        ProgramRequisitionOrderTypeRowRepository::new(connection).find_one_by_id(&order_type_id)?;
-    Ok(order_type.map(|row| row.name))
 }
 
 #[cfg(test)]
