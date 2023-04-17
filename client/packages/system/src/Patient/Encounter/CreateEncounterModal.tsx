@@ -79,7 +79,6 @@ export const CreateEncounterModal: FC = () => {
   };
 
   const setStartDatetime = (date: Date | null): void => {
-    date?.setTime(date.getTime() + 50000);
     const startDatetime = DateUtils.formatRFC3339(
       DateUtils.addCurrentTime(date)
     );
