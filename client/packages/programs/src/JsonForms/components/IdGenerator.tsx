@@ -375,7 +375,7 @@ const UIComponent = (props: ControlProps) => {
     <Box sx={DefaultFormRowSx}>
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
         <FormLabel sx={{ fontWeight: 'bold' }}>
-          {labelWithPunctuation(label)}:
+          {labelWithPunctuation(label)}
         </FormLabel>
       </Box>
       <Box
