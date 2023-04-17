@@ -28,25 +28,7 @@ import {
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
 import { Select } from '@common/components';
-
-const encounterStatusTranslation = (
-  status: EncounterNodeStatus,
-  t: TypedTFunction<LocaleKey>
-): string => {
-  switch (status) {
-    case EncounterNodeStatus.Missed:
-      return t('label.encounter-status-missed');
-    case EncounterNodeStatus.Cancelled:
-      return t('label.encounter-status-cancelled');
-    case EncounterNodeStatus.Completed:
-      return t('label.encounter-status-completed');
-    case EncounterNodeStatus.Scheduled:
-      return t('label.encounter-status-scheduled');
-    default:
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      return ((_: never) => '')(status);
-  }
-};
+import { encounterStatusTranslation } from '../utils';
 
 const encounterStatusOption = (
   status: EncounterNodeStatus,
@@ -175,9 +157,8 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                       });
                     }}
                     options={[
-                      encounterStatusOption(EncounterNodeStatus.Missed, t),
-                      encounterStatusOption(EncounterNodeStatus.Scheduled, t),
-                      encounterStatusOption(EncounterNodeStatus.Completed, t),
+                      encounterStatusOption(EncounterNodeStatus.Pending, t),
+                      encounterStatusOption(EncounterNodeStatus.Visited, t),
                       encounterStatusOption(EncounterNodeStatus.Cancelled, t),
                     ]}
                     value={status}
