@@ -22,7 +22,6 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  console.log('LABEL', label);
   return (
     <Box sx={DefaultFormRowSx}>
       <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
