@@ -6,10 +6,9 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    ActivityLogType, MasterListFilter, MasterListRepository, NumberRowType, RepositoryError,
-    Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowApprovalStatus, RequisitionRowRepository, RequisitionRowStatus,
-    RequisitionRowType, SimpleStringFilter, StorageConnection,
+    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowApprovalStatus,
+    RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -157,6 +156,9 @@ fn generate_response_requisition(
         // 5.
         linked_requisition_id: Some(request_requisition_row.id.clone()),
         expected_delivery_date: request_requisition_row.expected_delivery_date,
+        program_id: request_requisition_row.program_id.clone(),
+        period_id: request_requisition_row.period_id.clone(),
+        order_type: request_requisition_row.order_type.clone(),
         // Default
         user_id: None,
         approval_status: None,
@@ -164,9 +166,6 @@ fn generate_response_requisition(
         finalised_datetime: None,
         colour: None,
         is_sync_update: false,
-        program_id: request_requisition_row.program_id.clone(),
-        period_id: request_requisition_row.period_id.clone(),
-        order_type: request_requisition_row.order_type.clone(),
     };
 
     Ok(result)
