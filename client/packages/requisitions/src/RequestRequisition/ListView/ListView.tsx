@@ -58,37 +58,32 @@ export const RequestRequisitionListView: FC = () => {
             getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
         },
       ],
-      [
-        'programName',
-        {
-          accessor: ({ rowData }) => {
-            return rowData.programName;
-          },
-          label: 'label.program',
-          description: 'description.program',
-          sortable: true,
+      {
+        key: 'programName',
+        accessor: ({ rowData }) => {
+          return rowData.programName;
         },
-      ],
-      [
-        'orderType',
-        {
-          accessor: ({ rowData }) => {
-            return rowData.orderType;
-          },
-          label: 'label.order-type',
-          sortable: true,
+        label: 'label.program',
+        description: 'description.program',
+        sortable: true,
+      },
+      {
+        key: 'orderType',
+        accessor: ({ rowData }) => {
+          return rowData.orderType;
         },
-      ],
-      [
-        'period',
-        {
-          accessor: ({ rowData }) => {
-            return rowData.period?.name ?? '';
-          },
-          label: 'label.period',
-          sortable: true,
+        label: 'label.order-type',
+        sortable: true,
+      },
+
+      {
+        key: 'period',
+        accessor: ({ rowData }) => {
+          return rowData.period?.name ?? '';
         },
-      ],
+        label: 'label.period',
+        sortable: true,
+      },
 
       ['comment', { width: '100%' }],
       'selection',
