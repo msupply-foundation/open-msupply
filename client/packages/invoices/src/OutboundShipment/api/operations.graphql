@@ -245,6 +245,23 @@ query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
   }
 }
 
+query barcodes($storeId: String!, $filter: BarcodeFilterInput) {
+  barcodes(storeId: $storeId, filter: $filter) {
+    ... on BarcodeConnector {
+      __typename
+      nodes {
+        id
+        itemId
+        manufacturerId
+        packSize
+        parentId
+        value
+      }
+      totalCount
+    }
+  }
+}
+
 mutation insertOutboundShipment(
   $id: String!
   $otherPartyId: String!
