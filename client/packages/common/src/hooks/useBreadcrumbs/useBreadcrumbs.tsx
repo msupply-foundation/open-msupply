@@ -10,8 +10,8 @@ export interface UrlPart {
 }
 
 type BreadcrumbState = {
-  setSuffix: (suffix?: string) => void;
-  suffix?: string;
+  setSuffix: (suffix?: string | React.ReactElement) => void;
+  suffix?: string | React.ReactElement;
   setUrlParts: (urlParts: UrlPart[]) => void;
   urlParts: UrlPart[];
 };
