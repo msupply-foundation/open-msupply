@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use repository::{
-    EqualFilter, Permission, RepositoryError, UserPermissionFilter, UserPermissionRepository,
-    UserPermissionRow,
+    EqualFilter, Pagination, Permission, RepositoryError, UserPermissionFilter,
+    UserPermissionRepository, UserPermissionRow,
 };
 
 use crate::{
