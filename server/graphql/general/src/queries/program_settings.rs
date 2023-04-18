@@ -1,15 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_types::types::{MasterListNode, NameNode};
-use repository::{MasterListRow, Name, NameRow};
-
-#[derive(SimpleObject)]
-pub struct PeriodNode {
-    id: String,
-    name: String,
-    start_date: NaiveDate,
-    end_date: NaiveDate,
-}
+use graphql_types::types::{MasterListNode, NameNode, PeriodNode};
+use repository::{MasterListRow, Name, NameRow, PeriodRow};
 
 #[derive(SimpleObject)]
 pub struct ProgramRequisitionOrderTypeNode {
@@ -52,36 +44,40 @@ pub fn program_requisition_settings(_store_id: &str) -> Vec<ProgramRequisitionSe
                     name: "Normal".to_string(),
                     id: "mock_id_1".to_string(),
                     available_periods: vec![
-                        PeriodNode {
+                        PeriodNode::from_domain(PeriodRow {
                             id: "april".to_string(),
                             name: "April 2023".to_string(),
                             start_date: NaiveDate::from_ymd_opt(2023, 4, 01).unwrap(),
                             end_date: NaiveDate::from_ymd_opt(2023, 4, 30).unwrap(),
-                        },
-                        PeriodNode {
+                            period_schedule_id: "monthly_id".to_string(),
+                        }),
+                        PeriodNode::from_domain(PeriodRow {
                             id: "name".to_string(),
                             name: "May 2023".to_string(),
                             start_date: NaiveDate::from_ymd_opt(2023, 5, 01).unwrap(),
                             end_date: NaiveDate::from_ymd_opt(2023, 5, 30).unwrap(),
-                        },
+                            period_schedule_id: "monthly_id".to_string(),
+                        }),
                     ],
                 },
                 ProgramRequisitionOrderTypeNode {
                     name: "Emergency".to_string(),
                     id: "mock_id_2".to_string(),
                     available_periods: vec![
-                        PeriodNode {
+                        PeriodNode::from_domain(PeriodRow {
                             id: "april".to_string(),
                             name: "April 2023".to_string(),
                             start_date: NaiveDate::from_ymd_opt(2023, 4, 01).unwrap(),
                             end_date: NaiveDate::from_ymd_opt(2023, 4, 30).unwrap(),
-                        },
-                        PeriodNode {
+                            period_schedule_id: "monthly_id".to_string(),
+                        }),
+                        PeriodNode::from_domain(PeriodRow {
                             id: "may".to_string(),
                             name: "May 2023".to_string(),
                             start_date: NaiveDate::from_ymd_opt(2023, 5, 01).unwrap(),
                             end_date: NaiveDate::from_ymd_opt(2023, 5, 30).unwrap(),
-                        },
+                            period_schedule_id: "monthly_id".to_string(),
+                        }),
                     ],
                 },
             ],
@@ -112,12 +108,13 @@ pub fn program_requisition_settings(_store_id: &str) -> Vec<ProgramRequisitionSe
                 ProgramRequisitionOrderTypeNode {
                     name: "Emergency".to_string(),
                     id: "mock_id_4".to_string(),
-                    available_periods: vec![PeriodNode {
+                    available_periods: vec![PeriodNode::from_domain(PeriodRow {
                         id: "may".to_string(),
                         name: "May 2023".to_string(),
                         start_date: NaiveDate::from_ymd_opt(2023, 5, 01).unwrap(),
                         end_date: NaiveDate::from_ymd_opt(2023, 5, 30).unwrap(),
-                    }],
+                        period_schedule_id: "monthly_id".to_string(),
+                    })],
                 },
             ],
         },
