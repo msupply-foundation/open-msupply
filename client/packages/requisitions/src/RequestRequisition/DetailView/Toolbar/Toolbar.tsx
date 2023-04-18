@@ -16,10 +16,14 @@ export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
   const isDisabled = useRequest.utils.isDisabled();
   const { itemFilter, setItemFilter } = useRequest.line.list();
-  const { theirReference, update, otherParty } = useRequest.document.fields([
-    'theirReference',
-    'otherParty',
-  ]);
+  const { theirReference, update, otherParty, programName, period, orderType } =
+    useRequest.document.fields([
+      'theirReference',
+      'otherParty',
+      'programName',
+      'period',
+      'orderType',
+    ]);
 
   return (
     <AppBarContentPortal
@@ -56,6 +60,45 @@ export const Toolbar: FC = () => {
               />
             }
           />
+          {orderType && (
+            <InputWithLabelRow
+              label={t('label.order-type')}
+              Input={
+                <BufferedTextInput
+                  disabled={true}
+                  size="small"
+                  sx={{ width: 250 }}
+                  value={orderType ?? ''}
+                />
+              }
+            />
+          )}
+          {programName && (
+            <InputWithLabelRow
+              label={t('label.program')}
+              Input={
+                <BufferedTextInput
+                  disabled={true}
+                  size="small"
+                  sx={{ width: 250 }}
+                  value={programName ?? ''}
+                />
+              }
+            />
+          )}
+          {period && (
+            <InputWithLabelRow
+              label={t('label.period')}
+              Input={
+                <BufferedTextInput
+                  disabled={true}
+                  size="small"
+                  sx={{ width: 250 }}
+                  value={period?.name ?? ''}
+                />
+              }
+            />
+          )}
         </Grid>
         <Grid
           item

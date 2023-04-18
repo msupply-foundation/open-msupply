@@ -215,7 +215,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update requisition');
   },
-  update: async (patch: Partial<RequestFragment> & { id: string }) => {
+  update: async (
+    patch: Partial<RequestFragment | RequestRowFragment> & { id: string }
+  ) => {
     const input = requestParser.toUpdate(patch);
     const result = await sdk.updateRequest({
       storeId,
