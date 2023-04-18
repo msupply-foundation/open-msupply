@@ -82,14 +82,13 @@ export const DetailView: FC = () => {
               .addPart(AppRoute.Patients)
               .addPart(encounter.patient.id)
               .build()}
-            key={'part.key'}
+            key={'patient'}
           >
             {`${encounter.patient.firstName} ${encounter.patient.lastName}`}
           </Breadcrumb>
-          {` / `}
-          <span key={'part.key'}>{`${
+          <span key={'encounter'}>{` / ${
             encounter.document.documentRegistry?.name
-          } - ${dateFormat.localisedDateTime(encounter.startDatetime)}`}</span>
+          } - ${dateFormat.localisedDate(encounter.startDatetime)}`}</span>
         </>
       );
   }, [encounter]);
