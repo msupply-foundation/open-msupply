@@ -14,13 +14,13 @@ table! {
         name -> Text,
         threshold_mos -> Double,
         max_mos -> Double,
-        max_order_per_period -> Double,
+        max_order_per_period -> Integer,
     }
 }
 
 joinable!(program_requisition_order_type -> program_requisition_settings (program_requisition_settings_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "program_requisition_order_type"]
 pub struct ProgramRequisitionOrderTypeRow {
     pub id: String,
@@ -28,7 +28,7 @@ pub struct ProgramRequisitionOrderTypeRow {
     pub name: String,
     pub threshold_mos: f64,
     pub max_mos: f64,
-    pub max_order_per_period: f64,
+    pub max_order_per_period: i32,
 }
 
 pub struct ProgramRequisitionOrderTypeRowRepository<'a> {
