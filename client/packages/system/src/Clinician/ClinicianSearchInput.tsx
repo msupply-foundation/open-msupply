@@ -6,6 +6,7 @@ import { ClinicianAutocompleteOption, Clinician } from './utils';
 
 interface ClinicianSearchInputProps {
   onChange: (clinician: ClinicianAutocompleteOption | null) => void;
+  width?: number;
   clinicianLabel: string;
   clinicianValue?: Clinician;
 }
@@ -20,6 +21,7 @@ export const getClinicianName = (
 
 export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
   onChange,
+  width = 250,
   clinicianLabel,
   clinicianValue,
 }) => {
@@ -32,7 +34,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
         label: clinicianLabel,
         value: clinicianValue,
       }}
-      width={'200'}
+      width={`${width}px`}
       onChange={(_, option) => {
         onChange(option);
       }}

@@ -14,8 +14,9 @@ export const BaseDatePickerInput: FC<
     onChange(date: Date): void;
     value: Date | string | null;
     error?: string | undefined;
+    width?: number;
   }
-> = ({ disabled, onChange, value, error, ...props }) => {
+> = ({ disabled, onChange, value, error, width, ...props }) => {
   const theme = useAppTheme();
   const [internalValue, setInternalValue] = useState<Date | null>(null);
 
@@ -76,6 +77,7 @@ export const BaseDatePickerInput: FC<
           ...params,
           variant: 'standard',
           helperText: error ?? '',
+          sx: { width },
         };
         return (
           <BasicTextInput
