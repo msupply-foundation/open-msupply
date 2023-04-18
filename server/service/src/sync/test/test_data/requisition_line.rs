@@ -60,6 +60,9 @@ fn requisition_line_request_pull_record() -> TestSyncPullRecord {
             average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
             comment: None,
             snapshot_datetime: None,
+            approved_quantity: 0,
+            approval_comment: None,
+            is_sync_update: true,
         }),
     )
 }
@@ -78,6 +81,8 @@ fn requisition_line_request_push_record() -> TestSyncPushRecord {
             daily_usage: 3.0,
             comment: None,
             snapshot_datetime: None,
+            approved_quantity: 0,
+            approval_comment: None,
         }),
     }
 }
@@ -114,7 +119,7 @@ const REQUISITION_LINE_OM_FIELD: (&'static str, &'static str) = (
         "DOSforAMCadjustment": 0,
         "requestedPackSize": 0,
         "approved_quantity": 0,
-        "authoriser_comment": "",
+        "authoriser_comment": "approval comment",
         "om_snapshot_datetime": "2022-04-04T14:48:11"
     }"#,
 );
@@ -130,6 +135,8 @@ fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
             suggested_quantity: 101,
             supply_quantity: 2,
             available_stock_on_hand: 10,
+            approved_quantity: 0,
+            approval_comment: Some("approval comment".to_string()),
             average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
             comment: Some("Some comment".to_string()),
             snapshot_datetime: Some(
@@ -138,6 +145,7 @@ fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
                     .and_hms_opt(14, 48, 11)
                     .unwrap(),
             ),
+            is_sync_update: true,
         }),
     )
 }
@@ -154,6 +162,8 @@ fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
             actualQuan: 2,
             stock_on_hand: 10,
             daily_usage: 3.0,
+            approved_quantity: 0,
+            approval_comment: Some("approval comment".to_string()),
             comment: Some("Some comment".to_string()),
             snapshot_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 04, 04)

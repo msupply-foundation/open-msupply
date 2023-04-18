@@ -20,10 +20,15 @@ impl StorePreferenceNode {
     pub async fn pack_to_one(&self) -> &bool {
         &self.store_preference.pack_to_one
     }
-    pub async fn requisitions_require_supplier_authorisation(&self) -> &bool {
+    pub async fn response_requisition_requires_authorisation(&self) -> &bool {
         &self
             .store_preference
-            .requisitions_require_supplier_authorisation
+            .response_requisition_requires_authorisation
+    }
+    pub async fn request_requisition_requires_authorisation(&self) -> &bool {
+        &self
+            .store_preference
+            .request_requisition_requires_authorisation
     }
 }
 

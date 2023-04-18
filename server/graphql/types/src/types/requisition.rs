@@ -12,11 +12,11 @@ use graphql_core::{
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    unknown_user, NameRow, Requisition,
+    unknown_user, NameRow, PeriodRow, Requisition, RequisitionRowApprovalStatus,
 };
 use service::ListResult;
 
-use super::{InvoiceConnector, NameNode, RequisitionLineConnector, UserNode};
+use super::{InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector, UserNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum RequisitionNodeType {
@@ -24,6 +24,19 @@ pub enum RequisitionNodeType {
     Request,
     /// Supplying store requisition in response to request requisition
     Response,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+/// Approval status is applicable to response requisition only
+pub enum RequisitionNodeApprovalStatus {
+    // Requisition is editable, no approval required
+    None,
+    /// Pending authorisation, requisition should not be editable
+    Pending,
+    /// Approved
+    Approved,
+    /// Approval was denied, requisition is not editable
+    Denied,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -70,6 +83,14 @@ impl RequisitionNode {
 
     pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
         &self.row().expected_delivery_date
+    }
+
+    pub async fn approval_status(&self) -> RequisitionNodeApprovalStatus {
+        self.row()
+            .approval_status
+            .as_ref()
+            .map(RequisitionNodeApprovalStatus::from_domain)
+            .unwrap_or(RequisitionNodeApprovalStatus::None)
     }
 
     /// User that last edited requisition, if user is not found in system default unknown user is returned
@@ -211,6 +232,21 @@ impl RequisitionNode {
         Ok(RequisitionLineConnector::from_vec(result))
     }
 
+    pub async fn program_name(&self) -> &Option<String> {
+        &self.requisition.program_name
+    }
+
+    pub async fn order_type(&self) -> &Option<String> {
+        &self.row().order_type
+    }
+
+    pub async fn period(&self) -> Option<PeriodNode> {
+        match &self.requisition.period {
+            Some(period) => Some(PeriodNode::from_domain(period.to_owned())),
+            None => None,
+        }
+    }
+
     // % allocated ?
     // % shipped ?
     // lead time ?
@@ -223,6 +259,10 @@ impl RequisitionNode {
 
     pub fn name_row(&self) -> &NameRow {
         &self.requisition.name_row
+    }
+
+    pub fn period_row(&self) -> &Option<PeriodRow> {
+        &self.requisition.period
     }
 
     pub fn from_domain(requisition: Requisition) -> RequisitionNode {
@@ -257,6 +297,21 @@ impl RequisitionNodeType {
         match r#type {
             Request => RequisitionNodeType::Request,
             Response => RequisitionNodeType::Response,
+        }
+    }
+}
+
+impl RequisitionNodeApprovalStatus {
+    fn from_domain(status: &RequisitionRowApprovalStatus) -> Self {
+        use RequisitionRowApprovalStatus::*;
+        match status {
+            None => Self::None,
+            Approved => Self::Approved,
+            Pending => Self::Pending,
+            Denied => Self::Denied,
+            AutoApproved => Self::Approved,
+            ApprovedByAnother => Self::Approved,
+            DeniedByAnother => Self::Denied,
         }
     }
 }
