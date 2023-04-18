@@ -32,14 +32,14 @@ impl SyncTranslation for MasterListTranslation {
 
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        let master_list = MasterListRow {
-            id: data.id.clone(),
-            name: data.description.clone(),
-            code: data.code.clone(),
-            description: data.note.clone(),
+        let result = MasterListRow {
+            id: data.id,
+            name: data.description,
+            code: data.code,
+            description: data.note,
         };
         Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::MasterList(master_list),
+            PullUpsertRecord::MasterList(result),
         )))
     }
 
@@ -69,11 +69,8 @@ mod tests {
         use crate::sync::test::test_data::master_list as test_data;
         let translator = MasterListTranslation {};
 
-        let (_, connection, _, _) = setup_all(
-            "test_master_list_translation",
-            MockDataInserts::none().name_tags().period_schedules(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_master_list_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
