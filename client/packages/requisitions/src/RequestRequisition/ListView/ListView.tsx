@@ -58,6 +58,38 @@ export const RequestRequisitionListView: FC = () => {
             getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
         },
       ],
+      [
+        'programName',
+        {
+          accessor: ({ rowData }) => {
+            return rowData.programName;
+          },
+          label: 'label.program',
+          description: 'description.program',
+          sortable: true,
+        },
+      ],
+      [
+        'orderType',
+        {
+          accessor: ({ rowData }) => {
+            return rowData.orderType;
+          },
+          label: 'label.order-type',
+          sortable: true,
+        },
+      ],
+      [
+        'period',
+        {
+          accessor: ({ rowData }) => {
+            return rowData.period?.name ?? '';
+          },
+          label: 'label.period',
+          sortable: true,
+        },
+      ],
+
       ['comment', { width: '100%' }],
       'selection',
     ],

@@ -2167,8 +2167,10 @@ export type PaginationInput = {
 
 export type PeriodNode = {
   __typename: 'PeriodNode';
+  endDate: Scalars['NaiveDate'];
   id: Scalars['String'];
   name: Scalars['String'];
+  startDate: Scalars['NaiveDate'];
 };
 
 export type PricingNode = {
@@ -2672,6 +2674,7 @@ export type RequisitionNode = {
   maxMonthsOfStock: Scalars['Float'];
   /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
   minMonthsOfStock: Scalars['Float'];
+  orderType?: Maybe<Scalars['String']>;
   /**
    * Request Requisition: Supplying store (store that is supplying stock)
    * Response Requisition: Customer store (store that is ordering stock)
@@ -2681,7 +2684,6 @@ export type RequisitionNode = {
   otherPartyName: Scalars['String'];
   period?: Maybe<PeriodNode>;
   programName?: Maybe<Scalars['String']>;
-  programRequisitionOrderType?: Maybe<Scalars['String']>;
   /** Link to request requisition */
   requestRequisition?: Maybe<RequisitionNode>;
   requisitionNumber: Scalars['Int'];
