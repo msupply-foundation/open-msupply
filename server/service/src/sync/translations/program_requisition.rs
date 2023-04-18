@@ -209,7 +209,7 @@ mod tests {
                 (_, Program(_)) => std::cmp::Ordering::Less,
                 (ProgramRequisitionSettings(a), ProgramRequisitionSettings(b)) => a.id.cmp(&b.id),
                 (ProgramRequisitionSettings(_), _) => std::cmp::Ordering::Greater,
-                (_, ProgramRequisitionSettings(_)) => std::cmp::Ordering::Greater,
+                (_, ProgramRequisitionSettings(_)) => std::cmp::Ordering::Less,
                 (ProgramRequisitionOrderType(a), ProgramRequisitionOrderType(b)) => a.id.cmp(&b.id),
                 _ => std::cmp::Ordering::Equal,
             });
@@ -233,9 +233,6 @@ mod tests {
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
 
-            // translation_result.unwrap().upserts.sort_by(compare)
-            println!("{:#?}", sort_results(translation_result.clone()));
-            println!("{:#?}", sort_results(record.translated_record.clone()));
             assert_eq!(
                 sort_results(translation_result),
                 sort_results(record.translated_record)
