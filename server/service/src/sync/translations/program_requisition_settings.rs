@@ -170,7 +170,7 @@ fn generate_requisition_program(
         if let Some(order_types) = tags.1.order_types {
             for order_type in order_types {
                 let program_requisition_order_type_row = ProgramRequisitionOrderTypeRow {
-                    // Concatenate the program requisition setting id and order type id to create a unique id.
+                    // Concatenate the program requisition setting id and order type name to create a unique id.
                     id: format!(
                         "{}{}",
                         program_requisition_settings_row.id.clone(),
