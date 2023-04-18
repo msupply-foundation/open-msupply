@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
 use repository::{
-    EqualFilter, Permission, RepositoryError, UserPermissionFilter, UserPermissionRepository,
-    UserPermissionRow,
+    EqualFilter, Pagination, Permission, RepositoryError, UserPermissionFilter,
+    UserPermissionRepository, UserPermissionRow,
 };
 
 use crate::{
@@ -466,8 +466,11 @@ impl AuthServiceTrait for AuthService {
         if let Some(store_id) = &resource_request.store_id {
             permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
         }
-        let user_permission =
-            UserPermissionRepository::new(&connection).query_by_filter(permission_filter)?;
+        let user_permission = UserPermissionRepository::new(&connection).query(
+            Pagination::all(),
+            Some(permission_filter),
+            None,
+        )?;
         let context: Vec<String> = user_permission
             .clone()
             .into_iter()

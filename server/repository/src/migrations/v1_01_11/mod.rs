@@ -1,6 +1,14 @@
 use super::{version::Version, Migration};
-use crate::StorageConnection;
+mod activity_log;
+mod is_sync_updated_for_requisition;
+mod name_tags;
+mod period_and_period_schedule;
+mod program_requisition;
+mod remote_authorisation;
+mod requisition;
+mod store_preference;
 
+use crate::StorageConnection;
 pub(crate) struct V1_01_11;
 
 impl Migration for V1_01_11 {
@@ -8,37 +16,17 @@ impl Migration for V1_01_11 {
         Version::from_str("1.1.11")
     }
 
-    #[cfg(feature = "postgres")]
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        use crate::migrations::sql;
+        activity_log::migrate(connection)?;
+        store_preference::migrate(connection)?;
+        name_tags::migrate(connection)?;
+        period_and_period_schedule::migrate(connection)?;
 
-        sql!(
-            connection,
-            r#"ALTER TYPE activity_log_type ADD VALUE 'INVOICE_NUMBER_ALLOCATED';"#
-        )?;
-        sql!(
-            connection,
-            r#"ALTER TYPE activity_log_type ADD VALUE 'REQUISITION_NUMBER_ALLOCATED';"#
-        )?;
-        sql!(
-            connection,
-            r#"
-            ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
-        "#
-        )?;
-
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    fn migrate(&self, connection: &crate::StorageConnection) -> anyhow::Result<()> {
-        use crate::migrations::sql;
-        sql!(
-            connection,
-            r#"
-            ALTER TABLE store_preference ADD COLUMN requisitions_require_supplier_authorisation bool NOT NULL DEFAULT false;
-        "#
-        )?;
+        // Remote authorisation
+        remote_authorisation::migrate(connection)?;
+        is_sync_updated_for_requisition::migrate(connection)?;
+        program_requisition::migrate(connection)?;
+        requisition::migrate(connection)?;
 
         Ok(())
     }
@@ -52,6 +40,7 @@ async fn migration_1_01_11() {
 
     let version = V1_01_11.version();
 
+    // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),

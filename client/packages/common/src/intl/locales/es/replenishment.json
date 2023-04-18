@@ -1,0 +1,11 @@
+{
+    "label.finalised": "Finalizado",
+    "label.location": "Ubicación",
+    "label.new": "Nuevo",
+    "messages.confirm-status-as": "¿Confirmar estado como $t({{status}})?",
+    "messages.saved": "Guardado",
+    "heading.are-you-sure": "¿Está seguro?",
+    "label.amc": "AMC",
+    "label.draft": "Borrador",
+    "label.soh": "Inventario Disponible (SOH)"
+}
