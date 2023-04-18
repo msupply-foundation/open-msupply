@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   useTranslation,
   useToggle,
@@ -29,7 +29,7 @@ export const AddFromScannerButtonComponent = ({
   const { otherPartyId } = useOutbound.document.fields(['otherPartyId']);
   const modalController = useToggle();
   const filterByName = { existsForNameId: { equalTo: otherPartyId } };
-  const { hasBarcodeScanner, isScanning, startScanning } =
+  const { hasBarcodeScanner, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { warning } = useNotification();
 
@@ -40,8 +40,7 @@ export const AddFromScannerButtonComponent = ({
       const barcodes = await getBarcodes(barcode);
 
       if (barcodes.totalCount === 0) {
-        // TODO: translate string
-        warning('item not found')();
+        warning(t('error.no-matching-item'))();
         // TODO: save barcode after selection
         onAddItem();
         return;
@@ -50,6 +49,21 @@ export const AddFromScannerButtonComponent = ({
       onAddItem({ id: barcodes.nodes[0]?.itemId } as ItemRowFragment);
     }
   };
+
+  const handleClick = () => {
+    if (isScanning) {
+      stopScan();
+    } else {
+      startScanning(handleScanResult);
+    }
+  };
+
+  //   stop scanning when the component unloads
+  useEffect(() => {
+    return () => {
+      stopScan();
+    };
+  }, []);
 
   if (!hasBarcodeScanner) return null;
 
@@ -65,8 +79,8 @@ export const AddFromScannerButtonComponent = ({
         filterBy={filterByName}
       />
       <ButtonWithIcon
-        disabled={isScanning || isDisabled}
-        onClick={() => startScanning(handleScanResult)}
+        disabled={isDisabled}
+        onClick={handleClick}
         Icon={
           isScanning ? (
             <CircularProgress size={20} color="primary" />
@@ -74,7 +88,7 @@ export const AddFromScannerButtonComponent = ({
             <ScanIcon />
           )
         }
-        label={t('button.scan')}
+        label={t(isScanning ? 'button.stop' : 'button.scan')}
       />
     </>
   );

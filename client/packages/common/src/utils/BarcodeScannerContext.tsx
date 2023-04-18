@@ -135,7 +135,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
         const { startBarcodeScan } = electronNativeAPI;
         startBarcodeScan().then(data => {
           const barcode = parseBarcodeData(data);
-          setIsScanning(false);
           callback(parseResult(barcode));
           // TODO: restart scanning
         });
