@@ -91,7 +91,18 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     if (hasElectronApi) {
       try {
         const { startBarcodeScan } = electronNativeAPI;
-        const data = await startBarcodeScan();
+        startBarcodeScan();
+        const scan = new Promise<number[]>((resolve, reject) => {
+          electronNativeAPI.onBarcodeScan((_event, data) => {
+            try {
+              resolve(data);
+            } catch (e) {
+              reject(e);
+            }
+          });
+        });
+
+        const data = await scan;
         const barcode = parseBarcodeData(data);
         clearTimeout(timeout);
         setIsScanning(false);
@@ -121,22 +132,16 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     return {};
   };
 
-  // const scanCallback = (data: BarcodeScanResult) => {
-  //   const barcode = parseBarcodeData(data);
-  //   setIsScanning(false);
-  //   return parseResult(barcode);
-  // };
-
   const startScanning = async (callback: ScanCallback) => {
     setIsScanning(true);
 
     if (hasElectronApi) {
       try {
         const { startBarcodeScan } = electronNativeAPI;
-        startBarcodeScan().then(data => {
+        startBarcodeScan();
+        electronNativeAPI.onBarcodeScan((_event, data) => {
           const barcode = parseBarcodeData(data);
           callback(parseResult(barcode));
-          // TODO: restart scanning
         });
       } catch (e) {
         error(t('error.unable-to-read-barcode'))();

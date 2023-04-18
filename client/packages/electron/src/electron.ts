@@ -48,17 +48,10 @@ class BarcodeScanner {
     return undefined;
   }
 
-  start() {
-    return new Promise((resolve, reject) => {
-      if (!this.device) reject(new Error('No scanners found'));
-      try {
-        this.device?.read((err, data) => {
-          if (err) reject(err);
-          resolve(data);
-        });
-      } catch (e) {
-        reject(e);
-      }
+  start(window: BrowserWindow) {
+    if (!this.device) throw new Error('No scanners found');
+    this.device?.on('data', data => {
+      window.webContents.send(IPC_MESSAGES.ON_BARCODE_SCAN, data);
     });
   }
 
@@ -135,8 +128,10 @@ const start = (): void => {
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
-  ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () => barcodeScanner.start());
-  ipcMain.on(IPC_MESSAGES.STOP_BARCODE_SCAN, () => barcodeScanner.stop());
+  ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () =>
+    barcodeScanner.start(window)
+  );
+  ipcMain.handle(IPC_MESSAGES.STOP_BARCODE_SCAN, () => barcodeScanner.stop());
 
   ipcMain.handle(IPC_MESSAGES.DISCOVERED_SERVERS, async () => {
     const servers = discoveredServers;
