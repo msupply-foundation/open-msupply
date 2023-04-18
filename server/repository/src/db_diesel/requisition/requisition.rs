@@ -6,6 +6,9 @@ use super::{
 use crate::{
     db_diesel::{
         name_row::{name, name::dsl as name_dsl},
+        period::period::{self, dsl as period_dsl},
+        program_requisition::program,
+        program_requisition::program::dsl as program_dsl,
         store_row::{store, store::dsl as store_dsl},
     },
     diesel_macros::{
@@ -13,22 +16,31 @@ use crate::{
         apply_sort, apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    DBType, NameRow, StorageConnection, StoreRow,
+    DBType, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
 };
 
 use crate::Pagination;
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
+    helper_types::LeftJoin,
     prelude::*,
 };
 
-pub type RequisitionJoin = (RequisitionRow, NameRow, StoreRow);
+pub type RequisitionJoin = (
+    RequisitionRow,
+    NameRow,
+    StoreRow,
+    Option<ProgramRow>,
+    Option<PeriodRow>,
+);
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct Requisition {
     pub requisition_row: RequisitionRow,
     pub name_row: NameRow,
     pub store_row: StoreRow,
+    pub program_name: Option<String>,
+    pub period: Option<PeriodRow>,
 }
 
 pub struct RequisitionRepository<'a> {
@@ -113,8 +125,17 @@ impl<'a> RequisitionRepository<'a> {
     }
 }
 
-type BoxedRequisitionQuery =
-    IntoBoxed<'static, InnerJoin<InnerJoin<requisition::table, name::table>, store::table>, DBType>;
+type BoxedRequisitionQuery = IntoBoxed<
+    'static,
+    LeftJoin<
+        LeftJoin<
+            InnerJoin<InnerJoin<requisition::table, name::table>, store::table>,
+            program::table,
+        >,
+        period::table,
+    >,
+    DBType,
+>;
 
 fn create_filtered_query(
     filter: Option<RequisitionFilter>,
@@ -122,6 +143,8 @@ fn create_filtered_query(
     let mut query = requisition_dsl::requisition
         .inner_join(name_dsl::name)
         .inner_join(store_dsl::store)
+        .left_join(program_dsl::program)
+        .left_join(period_dsl::period)
         .into_boxed();
 
     if let Some(RequisitionFilter {
@@ -183,10 +206,14 @@ fn create_filtered_query(
     Ok(query)
 }
 
-fn to_domain((requisition_row, name_row, store_row): RequisitionJoin) -> Requisition {
+fn to_domain(
+    (requisition_row, name_row, store_row, program_row, period_row): RequisitionJoin,
+) -> Requisition {
     Requisition {
         requisition_row,
         name_row,
         store_row,
+        program_name: program_row.map(|program_row| program_row.name),
+        period: period_row,
     }
 }
