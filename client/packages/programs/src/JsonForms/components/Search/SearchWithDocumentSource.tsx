@@ -4,13 +4,13 @@ import { get as extractProperty } from 'lodash';
 import {
   useTranslation,
   Box,
-  FormLabel,
   Typography,
-  labelWithPunctuation,
+  DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
-  FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  DefaultFormRowSx,
+  FORM_LABEL_WIDTH,
 } from '../../common/styleConstants';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { useEncounter } from '../../../api';
@@ -95,27 +95,25 @@ export const SearchWithDocumentSource = (
   if (!visible) return null;
 
   return (
-    <Box
-      display="flex"
-      alignItems="center"
-      gap={2}
-      style={{ minWidth: 300 }}
-      margin={0.5}
-      marginLeft={0}
-    >
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>
-          {labelWithPunctuation(label)}
-        </FormLabel>
-      </Box>
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
-      >
-        {!error ? displayElement : <Typography color="red">{error}</Typography>}
-      </Box>
-    </Box>
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
+        >
+          {!error ? (
+            displayElement
+          ) : (
+            <Typography color="red">{error}</Typography>
+          )}
+        </Box>
+      }
+    />
   );
 };

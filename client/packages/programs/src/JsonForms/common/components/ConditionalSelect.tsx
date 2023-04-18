@@ -3,15 +3,9 @@ import { rankWith, ControlProps, uiTypeIs } from '@jsonforms/core';
 import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Autocomplete,
-  FormLabel,
-  Box,
-  labelWithPunctuation,
+  DetailInputWithLabelRow,
 } from '@openmsupply-client/common';
-import {
-  FORM_LABEL_COLUMN_WIDTH,
-  FORM_INPUT_COLUMN_WIDTH,
-  DefaultFormRowSx,
-} from '../styleConstants';
+import { DefaultFormRowSx, FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
 import { get as extractProperty } from 'lodash';
@@ -75,15 +69,17 @@ const UIComponent = (props: ControlProps) => {
   };
 
   return (
-    <Box sx={DefaultFormRowSx}>
-      <Box style={{ textAlign: 'end' }} flexBasis={FORM_LABEL_COLUMN_WIDTH}>
-        <FormLabel sx={{ fontWeight: 'bold' }}>
-          {labelWithPunctuation(label)}
-        </FormLabel>
-      </Box>
-      <Box flexBasis={FORM_INPUT_COLUMN_WIDTH}>
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={label}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={'start'}
+      Input={
         <Autocomplete
-          sx={{ '.MuiFormControl-root': { minWidth: '100%' } }}
+          sx={{
+            '.MuiFormControl-root': { minWidth: '100%' },
+            flexBasis: '100%',
+          }}
           options={options}
           value={value}
           onChange={onChange}
@@ -95,8 +91,8 @@ const UIComponent = (props: ControlProps) => {
           isOptionEqualToValue={option => option.label === data}
           disabled={!props.enabled}
         />
-      </Box>
-    </Box>
+      }
+    />
   );
 };
 
