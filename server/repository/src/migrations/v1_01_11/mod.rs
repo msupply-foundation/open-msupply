@@ -3,7 +3,9 @@ mod activity_log;
 mod is_sync_updated_for_requisition;
 mod name_tags;
 mod period_and_period_schedule;
+mod program_requisition;
 mod remote_authorisation;
+mod requisition;
 mod store_preference;
 
 use crate::StorageConnection;
@@ -19,10 +21,12 @@ impl Migration for V1_01_11 {
         store_preference::migrate(connection)?;
         name_tags::migrate(connection)?;
         period_and_period_schedule::migrate(connection)?;
+        program_requisition::migrate(connection)?;
 
         // Remote authorisation
         remote_authorisation::migrate(connection)?;
         is_sync_updated_for_requisition::migrate(connection)?;
+        requisition::migrate(connection)?;
 
         Ok(())
     }
