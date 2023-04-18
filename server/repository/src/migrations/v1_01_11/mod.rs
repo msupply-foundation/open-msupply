@@ -26,7 +26,6 @@ impl Migration for V1_01_11 {
         // Remote authorisation
         remote_authorisation::migrate(connection)?;
         is_sync_updated_for_requisition::migrate(connection)?;
-        program_requisition::migrate(connection)?;
         requisition::migrate(connection)?;
 
         Ok(())
