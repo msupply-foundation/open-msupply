@@ -96,22 +96,10 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 master_list_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
             }),
             PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
-                id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_2().id,
-                name_tag_id: mock_name_tag_2().id,
-                program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
-                period_schedule_id: mock_period_schedule_1().id,
-            }),
-            PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
                 id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_1().id,
                 name_tag_id: mock_name_tag_1().id,
                 program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                 period_schedule_id: mock_period_schedule_1().id,
-            }),
-            PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
-                id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_3().id,
-                name_tag_id: mock_name_tag_3().id,
-                program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
-                period_schedule_id: mock_period_schedule_2().id,
             }),
             PullUpsertRecord::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
                 id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_1().id + "New order 1",
@@ -131,6 +119,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 max_mos: 3.0,
                 max_order_per_period: 1,
             }),
+            PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
+                id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_2().id,
+                name_tag_id: mock_name_tag_2().id,
+                program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
+                period_schedule_id: mock_period_schedule_1().id,
+            }),
             PullUpsertRecord::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
                 id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_2().id + "New order 1",
                 program_requisition_settings_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
@@ -139,6 +133,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 threshold_mos: 4.0,
                 max_mos: 4.0,
                 max_order_per_period: 1,
+            }),
+            PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
+                id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_3().id,
+                name_tag_id: mock_name_tag_3().id,
+                program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
+                period_schedule_id: mock_period_schedule_2().id,
             }),
             PullUpsertRecord::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
                 id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_3().id + "New order 1",
