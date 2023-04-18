@@ -200,6 +200,23 @@ mod tests {
     use super::*;
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
+    fn sort_results(unsorted: Option<IntegrationRecords>) -> Option<IntegrationRecords> {
+        unsorted.map(|mut unsorted| {
+            use PullUpsertRecord::*;
+            unsorted.upserts.sort_by(|a, b| match (a, b) {
+                (Program(a), Program(b)) => a.id.cmp(&b.id),
+                (Program(_), _) => std::cmp::Ordering::Greater,
+                (_, Program(_)) => std::cmp::Ordering::Less,
+                (ProgramRequisitionSettings(a), ProgramRequisitionSettings(b)) => a.id.cmp(&b.id),
+                (ProgramRequisitionSettings(_), _) => std::cmp::Ordering::Greater,
+                (_, ProgramRequisitionSettings(_)) => std::cmp::Ordering::Greater,
+                (ProgramRequisitionOrderType(a), ProgramRequisitionOrderType(b)) => a.id.cmp(&b.id),
+                _ => std::cmp::Ordering::Equal,
+            });
+            unsorted
+        })
+    }
+
     #[actix_rt::test]
     async fn test_program_requisition_translation() {
         use crate::sync::test::test_data::program_requisition as test_data;
@@ -216,7 +233,13 @@ mod tests {
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
 
-            assert_eq!(translation_result, record.translated_record);
+            // translation_result.unwrap().upserts.sort_by(compare)
+            println!("{:#?}", sort_results(translation_result.clone()));
+            println!("{:#?}", sort_results(record.translated_record.clone()));
+            assert_eq!(
+                sort_results(translation_result),
+                sort_results(record.translated_record)
+            );
         }
     }
 }
