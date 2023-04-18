@@ -56,8 +56,8 @@ struct LegacyOrderType {
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
     sync_record.table_name == LegacyTableName::LIST_MASTER
 }
-pub(crate) struct ProgramRequisitionTranslation {}
-impl SyncTranslation for ProgramRequisitionTranslation {
+pub(crate) struct ProgramRequisitionSettingsTranslation {}
+impl SyncTranslation for ProgramRequisitionSettingsTranslation {
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,
@@ -219,8 +219,8 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_program_requisition_translation() {
-        use crate::sync::test::test_data::program_requisition as test_data;
-        let translator = ProgramRequisitionTranslation {};
+        use crate::sync::test::test_data::program_requisition_settings as test_data;
+        let translator = ProgramRequisitionSettingsTranslation {};
 
         let (_, connection, _, _) = setup_all(
             "test_program_requisition_translation",
