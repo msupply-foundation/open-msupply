@@ -16,8 +16,13 @@ export type BasicTextInputProps = StandardTextFieldProps & {
  */
 
 export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
-  ({ sx, InputProps, error, required, textAlign, ...props }, ref) => (
-    <Box display="flex" justifyContent="flex-end" alignItems="center">
+  ({ sx, style, InputProps, error, required, textAlign, ...props }, ref) => (
+    <Box
+      display="flex"
+      justifyContent="flex-end"
+      alignItems="center"
+      flexBasis={style?.flexBasis}
+    >
       <TextField
         ref={ref}
         color="secondary"

@@ -143,7 +143,11 @@ export const CreateEncounterModal: FC = () => {
           <InputWithLabelRow
             label={t('label.encounter')}
             Input={
-              <EncounterSearchInput onChange={onChangeEncounter} value={null} />
+              <EncounterSearchInput
+                onChange={onChangeEncounter}
+                value={null}
+                width={250}
+              />
             }
           />
           <RenderForm
@@ -159,6 +163,7 @@ export const CreateEncounterModal: FC = () => {
                       value={draft?.startDatetime ?? null}
                       onChange={setStartDatetime}
                       onError={() => setStartDateTimeError(true)}
+                      width={250}
                     />
                   }
                 />
@@ -169,6 +174,7 @@ export const CreateEncounterModal: FC = () => {
                       onChange={setClinician}
                       clinicianLabel={getClinicianName(draft?.clinician)}
                       clinicianValue={draft?.clinician}
+                      width={250}
                     />
                   }
                 />
