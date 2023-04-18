@@ -63,8 +63,10 @@ class BarcodeScanner {
   }
 
   stop() {
-    this.device?.close();
-    this.device = this.findDevice();
+    try {
+      this.device?.close();
+      this.device = this.findDevice();
+    } catch {}
   }
 }
 
