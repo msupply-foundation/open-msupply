@@ -1,4 +1,4 @@
-mod period_row;
+pub(crate) mod period_row;
 mod period_schedule;
 pub mod period_schedule_row;
 

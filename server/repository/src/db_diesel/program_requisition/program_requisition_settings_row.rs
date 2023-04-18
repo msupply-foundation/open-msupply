@@ -4,9 +4,8 @@ use super::{
 };
 
 use crate::{
-    db_diesel::{name_tag_row::name_tag, period::period_schedule_row::period_schedule},
-    repository_error::RepositoryError,
-    StorageConnection,
+    db_diesel::name_tag_row::name_tag, period_schedule_row::period_schedule,
+    repository_error::RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;

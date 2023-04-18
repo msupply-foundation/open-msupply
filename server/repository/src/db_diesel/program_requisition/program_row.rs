@@ -15,6 +15,7 @@ table! {
 }
 
 joinable!(program -> master_list (master_list_id));
+
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "program"]
 pub struct ProgramRow {
