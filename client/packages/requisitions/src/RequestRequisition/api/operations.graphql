@@ -25,6 +25,11 @@ fragment RequestRow on RequisitionNode {
   theirReference
   type
   otherPartyId
+  programName
+  period {
+    name
+  }
+  orderType
 }
 
 fragment RequestLine on RequisitionLineNode {
