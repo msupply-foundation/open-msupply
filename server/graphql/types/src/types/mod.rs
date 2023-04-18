@@ -60,6 +60,9 @@ pub use self::response_requisition_stats::*;
 pub mod inventory_adjustment_reason;
 pub use self::inventory_adjustment_reason::*;
 
+pub mod barcode;
+pub use self::barcode::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
