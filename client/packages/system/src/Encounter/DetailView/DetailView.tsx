@@ -8,6 +8,7 @@ import {
   useDebounceCallback,
   useBreadcrumbs,
   useFormatDateTime,
+  Breadcrumb,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -75,9 +76,21 @@ export const DetailView: FC = () => {
   useEffect(() => {
     if (encounter)
       setSuffix(
-        `${
-          encounter.document.documentRegistry?.name
-        } - ${dateFormat.localisedDateTime(encounter.startDatetime)}`
+        <>
+          <Breadcrumb
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Patients)
+              .addPart(encounter.patient.id)
+              .build()}
+            key={'part.key'}
+          >
+            {`${encounter.patient.firstName} ${encounter.patient.lastName}`}
+          </Breadcrumb>
+          {` / `}
+          <span key={'part.key'}>{`${
+            encounter.document.documentRegistry?.name
+          } - ${dateFormat.localisedDateTime(encounter.startDatetime)}`}</span>
+        </>
       );
   }, [encounter]);
 
