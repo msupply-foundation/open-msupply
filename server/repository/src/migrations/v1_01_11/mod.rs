@@ -5,6 +5,7 @@ mod name_tags;
 mod period_and_period_schedule;
 mod program_requisition;
 mod remote_authorisation;
+mod requisition;
 mod store_preference;
 
 use crate::StorageConnection;
@@ -25,6 +26,8 @@ impl Migration for V1_01_11 {
         // Remote authorisation
         remote_authorisation::migrate(connection)?;
         is_sync_updated_for_requisition::migrate(connection)?;
+        program_requisition::migrate(connection)?;
+        requisition::migrate(connection)?;
 
         Ok(())
     }

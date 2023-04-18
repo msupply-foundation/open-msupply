@@ -21,6 +21,14 @@ const PERIOD_SCHEDULE_2: (&'static str, &'static str) = (
   }"#,
 );
 
+const PERIOD_SCHEDULE_3: (&'static str, &'static str) = (
+    "597074CBCCC24166B8C1F82553DACC2F",
+    r#"{
+  "ID": "597074CBCCC24166B8C1F82553DACC2F",
+  "name": "Quarterly"
+}"#,
+);
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         TestSyncPullRecord::new_pull_upsert(
@@ -37,6 +45,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             PullUpsertRecord::PeriodSchedule(PeriodScheduleRow {
                 id: "period_schedule_2".to_string(),
                 name: "Yearly2".to_string(),
+            }),
+        ),
+        TestSyncPullRecord::new_pull_upsert(
+            LegacyTableName::PERIOD_SCHEDULE,
+            PERIOD_SCHEDULE_3,
+            PullUpsertRecord::PeriodSchedule(PeriodScheduleRow {
+                id: "597074CBCCC24166B8C1F82553DACC2F".to_string(),
+                name: "Quarterly".to_string(),
             }),
         ),
     ]
