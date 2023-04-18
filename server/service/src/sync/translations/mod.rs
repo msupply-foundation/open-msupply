@@ -1,4 +1,5 @@
 pub(crate) mod activity_log;
+pub(crate) mod barcode;
 pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
@@ -58,6 +59,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(requisition::RequisitionTranslation {}),
         Box::new(requisition_line::RequisitionLineTranslation {}),
         Box::new(activity_log::ActivityLogTranslation {}),
+        Box::new(barcode::BarcodeTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
         // Special translations
@@ -81,6 +83,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const STORE_PREFERENCE: &str = "pref";
     pub(crate) const PERIOD_SCHEDULE: &str = "periodSchedule";
     pub(crate) const PERIOD: &str = "period";
+    pub(crate) const BARCODE: &str = "barcode";
     // Remote
     pub(crate) const LOCATION: &str = "Location";
     pub(crate) const ITEM_LINE: &str = "item_line";
@@ -122,6 +125,7 @@ pub(crate) enum PullUpsertRecord {
     ActivityLog(ActivityLogRow),
     InventoryAdjustmentReason(InventoryAdjustmentReasonRow),
     StorePreference(StorePreferenceRow),
+    Barcode(BarcodeRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
