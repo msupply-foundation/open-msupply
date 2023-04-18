@@ -13,6 +13,7 @@ pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
+pub(crate) mod program_requisition;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
@@ -45,6 +46,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(master_list_name_join::MasterListNameJoinTranslation {}),
         Box::new(period_schedule::PeriodScheduleTranslation {}),
         Box::new(period::PeriodTranslation {}),
+        Box::new(program_requisition::ProgramRequisitionTranslation {}),
         Box::new(report::ReportTranslation {}),
         Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
         Box::new(store_preference::StorePreferenceTranslation {}),
