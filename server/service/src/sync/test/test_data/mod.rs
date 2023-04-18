@@ -15,6 +15,7 @@ pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
+pub(crate) mod program_requisition;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
@@ -59,6 +60,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncPullRecor
     test_records.append(&mut invoice::test_pull_upsert_records());
     test_records.append(&mut activity_log::test_pull_upsert_records());
     test_records.append(&mut name_tag_join::test_pull_upsert_records());
+    test_records.append(&mut program_requisition::test_pull_upsert_records());
     test_records
 }
 

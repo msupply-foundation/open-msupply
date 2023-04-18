@@ -10,6 +10,13 @@ pub fn mock_period_schedule_1() -> PeriodScheduleRow {
     }
 }
 
+pub fn mock_period_schedule_2() -> PeriodScheduleRow {
+    PeriodScheduleRow {
+        id: "mock_period_schedule_2".to_string(),
+        name: "Weekly".to_string(),
+    }
+}
+
 pub fn mock_period() -> PeriodRow {
     PeriodRow {
         id: "period_1".to_string(),
@@ -21,7 +28,7 @@ pub fn mock_period() -> PeriodRow {
 }
 
 pub fn mock_period_schedules() -> Vec<PeriodScheduleRow> {
-    vec![mock_period_schedule_1()]
+    vec![mock_period_schedule_1(), mock_period_schedule_2()]
 }
 
 pub fn mock_periods() -> Vec<PeriodRow> {
