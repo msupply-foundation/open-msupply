@@ -19,17 +19,6 @@ export const encounterStatusTranslation = (
   }
 };
 
-export const effectiveStatus = (
-  encounter: EncounterRowFragment,
-  t: TypedTFunction<LocaleKey>
-): string => {
-  const status = encounter.status;
-  if (!status) {
-    return '';
-  }
-  return encounterStatusTranslation(status, t);
-};
-
 export type EncounterFragmentWithStatus = {
   effectiveStatus: string;
 } & EncounterRowFragment;
@@ -41,7 +30,9 @@ export const useEncounterFragmentWithStatus = (
   return useMemo(
     () =>
       nodes?.map(node => ({
-        effectiveStatus: effectiveStatus(node, t),
+        effectiveStatus: node.status
+          ? encounterStatusTranslation(node.status, t)
+          : '',
         ...node,
       })),
     [nodes]
