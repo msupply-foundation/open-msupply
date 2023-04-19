@@ -2030,6 +2030,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "chrono",
+ "cookie",
  "repository",
  "reqwest",
  "serde 1.0.137",

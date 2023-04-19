@@ -26,6 +26,7 @@ thiserror = { workspace = true }
 
 tokio = { version = "1.17.0", features = ["macros" ] }
 async-std = "1.9.0" 
+cookie = "0.16"
 
 [features]
 default = ["sqlite"]
