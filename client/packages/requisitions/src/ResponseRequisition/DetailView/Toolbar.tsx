@@ -20,13 +20,23 @@ export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
-  const { otherParty, theirReference, shipments, update } =
-    useResponse.document.fields([
-      'lines',
-      'otherParty',
-      'theirReference',
-      'shipments',
-    ]);
+  const {
+    otherParty,
+    theirReference,
+    shipments,
+    update,
+    programName,
+    period,
+    orderType,
+  } = useResponse.document.fields([
+    'lines',
+    'otherParty',
+    'theirReference',
+    'shipments',
+    'programName',
+    'period',
+    'orderType',
+  ]);
   const { onDelete } = useResponse.line.delete();
   const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
   const showInfo = noLinkedShipments && !isDisabled;
@@ -70,9 +80,51 @@ export const Toolbar: FC = () => {
                   />
                 }
               />
-              {showInfo && (
-                <InfoPanel message={t('info.no-shipment')} />
+              {orderType && (
+                <InputWithLabelRow
+                  label={t('label.order-type')}
+                  Input={
+                    <BasicTextInput
+                      disabled={true}
+                      size="small"
+                      sx={{ width: 250 }}
+                      value={orderType ?? ''}
+                    />
+                  }
+                />
               )}
+              {programName && (
+                <InputWithLabelRow
+                  label={t('label.program')}
+                  Input={
+                    <BasicTextInput
+                      disabled={true}
+                      size="small"
+                      sx={{ width: 250 }}
+                      value={programName ?? ''}
+                    />
+                  }
+                />
+              )}
+              {period && (
+                <InputWithLabelRow
+                  label={t('label.period')}
+                  Input={
+                    <BasicTextInput
+                      disabled={true}
+                      size="small"
+                      sx={{ width: 250 }}
+                      value={period?.name ?? ''}
+                    />
+                  }
+                />
+              )}
+            </Box>
+          </Box>
+          <Box display="flex" flexDirection="row" gap={4}>
+            <Box display="flex" flex={1} flexDirection="column" gap={1}></Box>
+            <Box display="flex" flex={4} flexDirection="column" gap={6}>
+              {showInfo && <InfoPanel message={t('info.no-shipment')} />}
             </Box>
           </Box>
         </Grid>
@@ -84,6 +136,7 @@ export const Toolbar: FC = () => {
           }}
           debounceTime={0}
         />
+
         <DropdownMenu label={t('label.actions')}>
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines', { ns: 'distribution' })}

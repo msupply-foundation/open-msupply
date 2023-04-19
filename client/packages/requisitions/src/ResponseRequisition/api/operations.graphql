@@ -106,6 +106,13 @@ fragment Response on RequisitionNode {
       code
     }
   }
+  programName
+  period {
+    name
+    startDate
+    endDate
+  }
+  orderType
 }
 query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
