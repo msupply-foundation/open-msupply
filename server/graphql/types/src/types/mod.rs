@@ -51,6 +51,9 @@ pub use self::user::*;
 pub mod activity_log;
 pub use self::activity_log::*;
 
+pub mod period;
+pub use self::period::*;
+
 pub mod permissions;
 pub use self::permissions::*;
 

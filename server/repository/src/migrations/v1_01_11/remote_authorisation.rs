@@ -28,7 +28,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"
             ALTER TABLE requisition ADD approval_status {APPROVAL_STATUS_TYPE};
-            ALTER TABLE requisition ADD program_id TEXT;
             ALTER TABLE requisition_line ADD approved_quantity INTEGER NOT NULL DEFAULT 0;
             ALTER TABLE requisition_line ADD approval_comment TEXT;
             "#

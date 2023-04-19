@@ -9,8 +9,9 @@ export { useTranslationNext };
 const languageOptions = [
   { label: 'عربي', value: 'ar' },
   { label: 'Français', value: 'fr' },
+  { label: 'Français (Djibouti)', value: 'fr-DJ' },
   { label: 'English', value: 'en' },
-  { label: 'Española', value: 'es' },
+  { label: 'Español', value: 'es' },
   { label: 'Tetum', value: 'tet' },
 ];
 
@@ -19,10 +20,11 @@ const locales = [
   'en' as const,
   'es' as const,
   'fr' as const,
+  'fr-DJ' as const,
   'tet' as const,
 ] as const;
 
-export type SupportedLocales = typeof locales[number];
+export type SupportedLocales = (typeof locales)[number];
 
 export const IntlUtils = {
   useChangeLanguage: () => {

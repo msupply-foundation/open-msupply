@@ -1,7 +1,14 @@
+use super::{version::Version, Migration};
+mod activity_log;
 mod is_sync_updated_for_requisition;
+mod name_tags;
+mod period_and_period_schedule;
+mod program_requisition;
 mod remote_authorisation;
+mod requisition;
+mod store_preference;
 
-use crate::{migrations::*, StorageConnection};
+use crate::StorageConnection;
 pub(crate) struct V1_01_11;
 
 impl Migration for V1_01_11 {
@@ -10,17 +17,16 @@ impl Migration for V1_01_11 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        activity_log::migrate(connection)?;
+        store_preference::migrate(connection)?;
+        name_tags::migrate(connection)?;
+        period_and_period_schedule::migrate(connection)?;
+        program_requisition::migrate(connection)?;
+
         // Remote authorisation
         remote_authorisation::migrate(connection)?;
         is_sync_updated_for_requisition::migrate(connection)?;
-
-        sql!(
-            connection,
-            r#"
-ALTER TABLE store_preference ADD COLUMN response_requisition_requires_authorisation bool NOT NULL DEFAULT false;
-ALTER TABLE store_preference ADD COLUMN use_authorisation_for_customer_requisitions bool NOT NULL DEFAULT false;
-            "#
-        )?;
+        requisition::migrate(connection)?;
 
         Ok(())
     }

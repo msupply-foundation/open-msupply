@@ -59,6 +59,7 @@ export type ActivityLogNode = {
 export enum ActivityLogNodeType {
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
+  InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
@@ -66,6 +67,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
+  RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   StocktakeCreated = 'STOCKTAKE_CREATED',
@@ -2163,6 +2165,14 @@ export type PaginationInput = {
   offset?: InputMaybe<Scalars['Int']>;
 };
 
+export type PeriodNode = {
+  __typename: 'PeriodNode';
+  endDate: Scalars['NaiveDate'];
+  id: Scalars['String'];
+  name: Scalars['String'];
+  startDate: Scalars['NaiveDate'];
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   serviceTotalAfterTax: Scalars['Float'];
@@ -2666,6 +2676,7 @@ export type RequisitionNode = {
   maxMonthsOfStock: Scalars['Float'];
   /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
   minMonthsOfStock: Scalars['Float'];
+  orderType?: Maybe<Scalars['String']>;
   /**
    * Request Requisition: Supplying store (store that is supplying stock)
    * Response Requisition: Customer store (store that is ordering stock)
@@ -2673,6 +2684,8 @@ export type RequisitionNode = {
   otherParty: NameNode;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
+  period?: Maybe<PeriodNode>;
+  programName?: Maybe<Scalars['String']>;
   requisitionNumber: Scalars['Int'];
   /** Applicable to request requisition only */
   sentDatetime?: Maybe<Scalars['DateTime']>;
@@ -3023,8 +3036,8 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String'];
   packToOne: Scalars['Boolean'];
+  requestRequisitionRequiresAuthorisation: Scalars['Boolean'];
   responseRequisitionRequiresAuthorisation: Scalars['Boolean'];
-  useAuthorisationForCustomerRequisitions: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;

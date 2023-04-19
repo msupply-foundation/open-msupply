@@ -157,15 +157,18 @@ pub struct LegacyRequisitionRow {
     pub approval_status: Option<LegacyAuthorisationStatus>,
 
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    #[serde(rename = "programID")]
-    pub program_id: Option<String>,
+    pub orderType: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub periodID: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub programID: Option<String>,
 }
 
 pub(crate) struct RequisitionTranslation {}
 impl SyncTranslation for RequisitionTranslation {
     fn try_translate_pull_upsert(
         &self,
-        _: &StorageConnection,
+        _conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
         if !match_pull_table(sync_record) {
@@ -227,8 +230,10 @@ impl SyncTranslation for RequisitionTranslation {
             linked_requisition_id: data.linked_requisition_id,
             expected_delivery_date: data.expected_delivery_date,
             approval_status: data.approval_status.map(|s| s.to()),
-            program_id: data.program_id,
             is_sync_update: true,
+            program_id: data.programID.clone(),
+            period_id: data.periodID,
+            order_type: data.orderType,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -280,8 +285,10 @@ impl SyncTranslation for RequisitionTranslation {
             linked_requisition_id,
             expected_delivery_date,
             approval_status,
-            program_id,
             is_sync_update: _,
+            program_id,
+            period_id,
+            order_type,
         } = RequisitionRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -319,7 +326,9 @@ impl SyncTranslation for RequisitionTranslation {
             om_colour: colour.clone(),
             comment,
             approval_status: approval_status.map(LegacyAuthorisationStatus::from),
-            program_id,
+            programID: program_id,
+            periodID: period_id,
+            orderType: order_type,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
@@ -414,7 +423,7 @@ fn from_legacy_status(
             _ => return None,
         },
         LegacyRequisitionType::Response => match status {
-            LegacyRequisitionStatus::Sg => return None,
+            LegacyRequisitionStatus::Sg => RequisitionRowStatus::New,
             &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
             LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
             _ => return None,
