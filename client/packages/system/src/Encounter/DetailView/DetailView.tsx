@@ -76,20 +76,19 @@ export const DetailView: FC = () => {
   useEffect(() => {
     if (encounter)
       setSuffix(
-        <>
+        <span key="patient-encounter">
           <Breadcrumb
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
               .addPart(encounter.patient.id)
               .build()}
-            key={'patient'}
           >
             {`${encounter.patient.firstName} ${encounter.patient.lastName}`}
           </Breadcrumb>
-          <span key={'encounter'}>{` / ${
+          <span>{` / ${
             encounter.document.documentRegistry?.name
           } - ${dateFormat.localisedDate(encounter.startDatetime)}`}</span>
-        </>
+        </span>
       );
   }, [encounter]);
 
