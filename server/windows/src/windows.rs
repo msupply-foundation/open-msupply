@@ -14,7 +14,7 @@ fn main() {
 #[cfg(windows)]
 mod omsupply_service {
     use eventlog;
-    use log::{error};
+    use log::error;
     use server::{configuration, logging_init, start_server};
     use service::settings::Settings;
     use std::{
@@ -60,7 +60,7 @@ mod omsupply_service {
         let settings: Settings = match configuration::get_configuration() {
             Ok(settings) => settings,
             Err(e) => {
-				eventlog::init("Application", log::Level::Error).unwrap();
+                eventlog::init("Application", log::Level::Error).unwrap();
                 error!("Failed to parse configuration settings: {:?}", e);
                 return;
             }
