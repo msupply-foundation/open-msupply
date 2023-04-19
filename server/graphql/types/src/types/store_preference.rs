@@ -21,10 +21,10 @@ impl StorePreferenceNode {
             .store_preference
             .response_requisition_requires_authorisation
     }
-    pub async fn use_authorisation_for_customer_requisitions(&self) -> &bool {
+    pub async fn request_requisition_requires_authorisation(&self) -> &bool {
         &self
             .store_preference
-            .use_authorisation_for_customer_requisitions
+            .request_requisition_requires_authorisation
     }
 }
 
