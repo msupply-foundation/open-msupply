@@ -131,11 +131,9 @@ fn map_error(error: InsertRequestRequisitionError) -> Result<InsertErrorInterfac
 mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
-    use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
-    };
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        mock::{mock_request_draft_requisition, MockDataInserts},
+        mock::{mock_program_request_draft_requisition, MockDataInserts},
         Requisition, StorageConnectionManager,
     };
     use serde_json::json;
@@ -146,7 +144,7 @@ mod test {
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
-    use util::{date_now, inline_init};
+    use util::inline_init;
 
     use crate::RequisitionMutations;
 
@@ -175,119 +173,6 @@ mod test {
         service_provider
     }
 
-    fn empty_variables() -> serde_json::Value {
-        json!({
-          "input": {
-            "id": "n/a",
-            "otherPartyId": "n/a",
-            "maxMonthsOfStock": 0,
-            "minMonthsOfStock": 0
-          },
-          "storeId": "n/a"
-        })
-    }
-
-    #[actix_rt::test]
-    async fn test_graphql_insert_request_requisition_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
-            EmptyMutation,
-            RequisitionMutations,
-            "test_graphql_insert_program_program_request_requisition_structured_errors",
-            MockDataInserts::all(),
-        )
-        .await;
-
-        let mutation = r#"
-        mutation ($input: InsertProgramRequestRequisitionInput!, $storeId: String) {
-            insertRequestRequisition(storeId: $storeId, input: $input) {
-              ... on InsertRequestRequisitionError {
-                error {
-                  __typename
-                }
-              }
-            }
-          }
-        "#;
-
-        // OtherPartyNotASupplier
-        let test_service = TestService(Box::new(|_| {
-            Err(InsertRequestRequisitionError::OtherPartyNotASupplier)
-        }));
-
-        let expected = json!({
-            "insertRequestRequisition": {
-              "error": {
-                "__typename": "OtherPartyNotASupplier"
-              }
-            }
-          }
-        );
-
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // RequisitionAlreadyExists
-        let test_service = TestService(Box::new(|_| {
-            Err(InsertRequestRequisitionError::RequisitionAlreadyExists)
-        }));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // OtherPartyDoesNotExist
-        let test_service = TestService(Box::new(|_| {
-            Err(InsertRequestRequisitionError::OtherPartyDoesNotExist)
-        }));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // OtherPartyIsNotAStore
-        let test_service = TestService(Box::new(|_| {
-            Err(InsertRequestRequisitionError::OtherPartyIsNotAStore)
-        }));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // NewlyCreatedRequisitionDoesNotExist
-        let test_service = TestService(Box::new(|_| {
-            Err(InsertRequestRequisitionError::NewlyCreatedRequisitionDoesNotExist)
-        }));
-        let expected_message = "Internal error";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-    }
-
     #[actix_rt::test]
     async fn test_graphql_insert_program_request_requisition_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
@@ -300,7 +185,7 @@ mod test {
 
         let mutation = r#"
         mutation ($storeId: String, $input: InsertProgramRequestRequisitionInput!) {
-            insertRequestRequisition(storeId: $storeId, input: $input) {
+            insertProgramRequestRequisition(storeId: $storeId, input: $input) {
                 ... on RequisitionNode {
                     id
                 }
@@ -324,7 +209,7 @@ mod test {
                 }
             );
             Ok(inline_init(|r: &mut Requisition| {
-                r.requisition_row = mock_request_draft_requisition()
+                r.requisition_row = mock_program_request_draft_requisition()
             }))
         }));
 
@@ -332,19 +217,19 @@ mod test {
           "input": {
             "id": "id input",
             "otherPartyId": "other party input",
-            "maxMonthsOfStock": 1,
-            "minMonthsOfStock": 2,
             "colour": "colour input",
             "theirReference": "reference input",
             "comment": "comment input",
-            "expectedDeliveryDate": "2022-01-03"
+            "expectedDeliveryDate": "2022-01-03",
+            "programOrderTypeId": "program_order_type_id",
+            "periodId": "period_id",
           },
           "storeId": "store_a"
         });
 
         let expected = json!({
-            "insertRequestRequisition": {
-                "id": mock_request_draft_requisition().id
+            "insertProgramRequestRequisition": {
+                "id": mock_program_request_draft_requisition().id
             }
           }
         );
@@ -353,32 +238,6 @@ mod test {
             &settings,
             mutation,
             &Some(variables),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // Default expected_delivery_date
-        let test_service = TestService(Box::new(|input| {
-            let now = date_now();
-            let expected = input.expected_delivery_date.unwrap();
-            assert_eq!((expected - now), chrono::Duration::weeks(2));
-
-            Ok(inline_init(|r: &mut Requisition| {
-                r.requisition_row = mock_request_draft_requisition()
-            }))
-        }));
-
-        let expected = json!({
-            "insertRequestRequisition": {
-                "id": mock_request_draft_requisition().id
-            }
-          }
-        );
-
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
             &expected,
             Some(service_provider(test_service, &connection_manager))
         );
