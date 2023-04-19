@@ -9,6 +9,7 @@ import {
   useBreadcrumbs,
   useFormatDateTime,
   Breadcrumb,
+  IntlUtils,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -27,6 +28,7 @@ export const DetailView: FC = () => {
   const navigate = useNavigate();
   const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
   const dateFormat = useFormatDateTime();
+  const getFullName = IntlUtils.useLocalisedFullName();
 
   const {
     data: encounter,
@@ -83,7 +85,10 @@ export const DetailView: FC = () => {
               .addPart(encounter.patient.id)
               .build()}
           >
-            {`${encounter.patient.firstName} ${encounter.patient.lastName}`}
+            {getFullName(
+              encounter.patient.firstName,
+              encounter.patient.lastName
+            )}
           </Breadcrumb>
           <span>{` / ${
             encounter.document.documentRegistry?.name

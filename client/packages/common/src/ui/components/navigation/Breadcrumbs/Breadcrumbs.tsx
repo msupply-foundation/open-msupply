@@ -42,6 +42,7 @@ export const Breadcrumbs = ({
   const crumbs = urlParts.map((part, index) => {
     if (index === urlParts.length - 1) {
       if (!suffix) return <span key={part.key}>{parseTitle(part)}</span>;
+
       return typeof suffix === 'string' ? (
         <span key={part.key}>{suffix}</span>
       ) : (

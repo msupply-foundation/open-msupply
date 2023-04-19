@@ -22,7 +22,8 @@ const locales = [
   'tet' as const,
 ] as const;
 
-export type SupportedLocales = typeof locales[number];
+export type SupportedLocales = (typeof locales)[number];
+type StringOrEmpty = string | null | undefined;
 
 export const IntlUtils = {
   useChangeLanguage: () => {
@@ -74,6 +75,12 @@ export const IntlUtils = {
     locales[username] = locale;
     LocalStorage.setItem('/localisation/locale', locales);
   },
+  useLocalisedFullName: () => {
+    const { i18n } = useTranslationNext();
+    const { language } = i18n;
+    return (firstName: StringOrEmpty, lastName: StringOrEmpty) =>
+      getFullName(language, firstName, lastName);
+  },
 };
 
 const parseLanguage = (language?: LanguageType) => {
@@ -96,5 +103,20 @@ const parseLanguage = (language?: LanguageType) => {
       return 'tet';
     default:
       return undefined;
+  }
+};
+
+/** Function to return a person's full name formatted for the current locale.
+ * Default will just be "{{firstName}} {{lastName}}"*/
+const getFullName = (
+  language: string,
+  firstName: StringOrEmpty,
+  lastName: StringOrEmpty
+): string => {
+  switch (language) {
+    // Add cases as required, for now all supported languages use the same
+    // format
+    default:
+      return `${firstName ?? ''} ${lastName ?? ''}`.trim();
   }
 };
