@@ -168,7 +168,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             Some(ref stock_line_id) => StockLineRowRepository::new(connection)
                 .find_one_by_id(&stock_line_id)
                 .is_ok(),
-            None => false,
+            None => true,
         };
 
         if !is_stock_line_valid {
