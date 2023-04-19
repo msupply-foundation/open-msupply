@@ -83,6 +83,7 @@ export const DetailView: FC = () => {
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
               .addPart(encounter.patient.id)
+              .addQuery({ tab: 'Encounters' })
               .build()}
           >
             {getFullName(
