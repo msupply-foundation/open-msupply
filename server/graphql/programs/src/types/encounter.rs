@@ -29,28 +29,25 @@ pub struct EncounterNode {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 pub enum EncounterNodeStatus {
-    Scheduled,
-    Completed,
+    Pending,
+    Visited,
     Cancelled,
-    Missed,
 }
 
 impl EncounterNodeStatus {
     pub fn to_domain(self) -> EncounterStatus {
         match self {
-            EncounterNodeStatus::Scheduled => EncounterStatus::Scheduled,
-            EncounterNodeStatus::Completed => EncounterStatus::Completed,
+            EncounterNodeStatus::Pending => EncounterStatus::Pending,
+            EncounterNodeStatus::Visited => EncounterStatus::Visited,
             EncounterNodeStatus::Cancelled => EncounterStatus::Cancelled,
-            EncounterNodeStatus::Missed => EncounterStatus::Missed,
         }
     }
 
     pub fn from_domain(status: &EncounterStatus) -> EncounterNodeStatus {
         match status {
-            EncounterStatus::Scheduled => EncounterNodeStatus::Scheduled,
-            EncounterStatus::Completed => EncounterNodeStatus::Completed,
+            EncounterStatus::Pending => EncounterNodeStatus::Pending,
+            EncounterStatus::Visited => EncounterNodeStatus::Visited,
             EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
-            EncounterStatus::Missed => EncounterNodeStatus::Missed,
         }
     }
 }

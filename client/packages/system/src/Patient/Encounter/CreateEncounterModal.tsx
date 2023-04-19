@@ -87,12 +87,7 @@ export const CreateEncounterModal: FC = () => {
       ...draft,
       startDatetime,
       createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
-      status:
-        date && DateUtils.isFuture(date)
-          ? EncounterNodeStatus.Scheduled
-          : date && DateUtils.isPast(date)
-          ? EncounterNodeStatus.Missed
-          : draft?.status,
+      status: EncounterNodeStatus.Pending,
     });
     setStartDateTimeError(false);
   };

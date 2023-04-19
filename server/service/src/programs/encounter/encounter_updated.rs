@@ -17,10 +17,9 @@ pub(crate) fn update_encounter_row(
 ) -> Result<(), RepositoryError> {
     let status = if let Some(status) = validated_encounter.encounter.status {
         Some(match status {
-            encounter_schema::EncounterStatus::Scheduled => EncounterStatus::Scheduled,
-            encounter_schema::EncounterStatus::Completed => EncounterStatus::Completed,
+            encounter_schema::EncounterStatus::Pending => EncounterStatus::Pending,
+            encounter_schema::EncounterStatus::Visited => EncounterStatus::Visited,
             encounter_schema::EncounterStatus::Cancelled => EncounterStatus::Cancelled,
-            encounter_schema::EncounterStatus::Missed => EncounterStatus::Missed,
         })
     } else {
         None

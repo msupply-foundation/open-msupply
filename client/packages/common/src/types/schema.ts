@@ -920,9 +920,8 @@ export type EncounterNodeEventsArgs = {
 
 export enum EncounterNodeStatus {
   Cancelled = 'CANCELLED',
-  Completed = 'COMPLETED',
-  Missed = 'MISSED',
-  Scheduled = 'SCHEDULED'
+  Pending = 'PENDING',
+  Visited = 'VISITED'
 }
 
 export type EncounterResponse = EncounterConnector;

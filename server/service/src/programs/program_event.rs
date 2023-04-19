@@ -82,13 +82,23 @@ fn remove_event_stack(
     // TODO: Below is some room for optimization. We might update the same events later...
     // For simplicity we cleanly remove the whole stack though.
 
-    // update active_end_datetime of the previous stack
-    let previous_stack = repo.query_by_filter(
-        event_target_filter(event_target).active_end_datetime(DatetimeFilter::equal_to(datetime)),
+    // update active_end_datetime of the latest event from the previous stack
+    let previous_stack = repo.query(
+        Pagination::all(),
+        Some(
+            event_target_filter(event_target)
+                .active_end_datetime(DatetimeFilter::equal_to(datetime)),
+        ),
+        Some(ProgramEventSort {
+            key: ProgramEventSortField::ActiveEndDatetime,
+            desc: Some(true),
+        }),
     )?;
-    for mut prev in previous_stack {
-        prev.active_end_datetime = longest.active_end_datetime;
-        ProgramEventRowRepository::new(connection).upsert_one(&prev)?;
+    let mut current_end_datetime = longest.active_end_datetime;
+    for mut current in previous_stack {
+        current.active_end_datetime = current_end_datetime;
+        current_end_datetime = current.active_start_datetime;
+        ProgramEventRowRepository::new(connection).upsert_one(&current)?;
     }
 
     Ok(())
@@ -143,33 +153,63 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         datetime: NaiveDateTime,
         events: Vec<EventInput>,
     ) -> Result<(), RepositoryError> {
-        // TODO do we need to lock rows in case events are updated concurrently?
-        let targets = events.into_iter().fold(
-            HashMap::<EventTarget, Vec<StackEvent>>::new(),
-            |mut map, it| {
-                let target = EventTarget {
-                    patient_id: patient_id.clone(),
-                    document_type: it.document_type,
-                    document_name: it.document_name,
-                    r#type: it.r#type,
-                };
-
-                map.entry(target).or_insert(vec![]).push(StackEvent {
-                    // sanitise active_start_datetime to not be small than datetime
-                    active_start_datetime: datetime.max(it.active_start_datetime),
-                    name: it.name,
-                });
-                map
-            },
-        );
         let result = ctx
             .connection
             .transaction_sync(|con| -> Result<(), RepositoryError> {
+                // TODO do we need to lock rows in case events are updated concurrently?
+
                 let repo = ProgramEventRepository::new(con);
+                let targets = if events.is_empty() {
+                    // We need to clear all events. For this we still need to find all targets.
+                    // To do this load all existing events and proceed.
+
+                    repo.query_by_filter(
+                        ProgramEventFilter::new()
+                            .patient_id(EqualFilter::equal_to(&patient_id))
+                            .datetime(DatetimeFilter::equal_to(datetime)),
+                    )?
+                    .into_iter()
+                    .fold(
+                        HashMap::<EventTarget, Vec<StackEvent>>::new(),
+                        |mut map, it| {
+                            let target = EventTarget {
+                                patient_id: patient_id.clone(),
+                                document_type: it.document_type,
+                                document_name: it.document_name,
+                                r#type: it.r#type,
+                            };
+
+                            map.entry(target).or_insert(vec![]);
+                            map
+                        },
+                    )
+                } else {
+                    events.into_iter().fold(
+                        HashMap::<EventTarget, Vec<StackEvent>>::new(),
+                        |mut map, it| {
+                            let target = EventTarget {
+                                patient_id: patient_id.clone(),
+                                document_type: it.document_type,
+                                document_name: it.document_name,
+                                r#type: it.r#type,
+                            };
+
+                            map.entry(target).or_insert(vec![]).push(StackEvent {
+                                // sanitise active_start_datetime to not be small than datetime
+                                active_start_datetime: datetime.max(it.active_start_datetime),
+                                name: it.name,
+                            });
+                            map
+                        },
+                    )
+                };
+
                 for (target, mut events) in targets {
                     // remove existing stack, if there is any
                     remove_event_stack(datetime, &target, con)?;
-
+                    if events.is_empty() {
+                        continue;
+                    }
                     // find events that need to be adjusted
                     let overlaps = repo.query(
                         Pagination::all(),
@@ -532,5 +572,137 @@ mod test {
         assert_names!(service, ctx, 31, vec![]);
         assert_names!(service, ctx, 35, vec!["G2_1"]);
         assert_names!(service, ctx, 40, vec!["G2_2"]);
+    }
+
+    #[actix_rt::test]
+    async fn test_program_events_remove_stacks() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_program_events_remove_stacks",
+            MockDataInserts::none().names(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let ctx = service_provider.basic_context().unwrap();
+
+        let service = service_provider.program_event_service;
+
+        service
+            .upsert_events(
+                &ctx,
+                "patient2".to_string(),
+                NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                vec![
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("data1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status2".to_string(),
+                        name: Some("data2".to_string()),
+                    },
+                ],
+            )
+            .unwrap();
+        assert_names!(service, ctx, 10, vec!["data1", "data2"]);
+
+        service
+            .upsert_events(
+                &ctx,
+                "patient2".to_string(),
+                NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                vec![],
+            )
+            .unwrap();
+        assert_names!(service, ctx, 10, vec![]);
+    }
+
+    #[actix_rt::test]
+    async fn test_program_events_remove_stacks2() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_program_events_remove_stacks2",
+            MockDataInserts::none().names(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let ctx = service_provider.basic_context().unwrap();
+
+        let service = service_provider.program_event_service;
+
+        // setup: g2 is overwriting g1
+        // ----------g1-----------g2
+        //           10---->15
+        //           10--------------->30
+        //                        25------->35
+        //                        25------------->40
+        service
+            .upsert_events(
+                &ctx,
+                "patient2".to_string(),
+                NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                vec![
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_2".to_string()),
+                    },
+                ],
+            )
+            .unwrap();
+        service
+            .upsert_events(
+                &ctx,
+                "patient2".to_string(),
+                NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
+                vec![
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_2".to_string()),
+                    },
+                ],
+            )
+            .unwrap();
+        assert_names!(service, ctx, 26, vec![]);
+        assert_names!(service, ctx, 31, vec![]);
+        assert_names!(service, ctx, 35, vec!["G2_1"]);
+        assert_names!(service, ctx, 40, vec!["G2_2"]);
+
+        // remove G2 -> G2 should become active again
+        service
+            .upsert_events(
+                &ctx,
+                "patient2".to_string(),
+                NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
+                vec![],
+            )
+            .unwrap();
+        assert_names!(service, ctx, 26, vec!["G1_1"]);
+        assert_names!(service, ctx, 31, vec!["G1_2"]);
     }
 }

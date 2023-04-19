@@ -18,6 +18,7 @@
   "label.visit-start": "Start",
   "label.visit-end": "End",
   "label.clinician": "Clinician",
+  "label.encounter-status": "Status",
   "label.additional-info": "Additional Info",
   "label.entered-by": "Entered by",
   "label.entered-on": "Entered on",

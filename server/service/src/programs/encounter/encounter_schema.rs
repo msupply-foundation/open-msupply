@@ -17,6 +17,7 @@ impl Default for SchemaEncounter {
             status: Default::default(),
             clinician: Default::default(),
             notes: Default::default(),
+            created_by: Default::default(),
         }
     }
 }
