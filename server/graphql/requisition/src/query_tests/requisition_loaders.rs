@@ -85,7 +85,9 @@ mod test {
             "requisitions": {
                 "nodes": [{
                     "id": &request_requisition.requisition.id,
-                    "linkedRequisition": null,
+                    "linkedRequisition": {
+                        "id": &response_requisition.requisition.id
+                    },
                 },
                 {
                     "id": &response_requisition.requisition.id,

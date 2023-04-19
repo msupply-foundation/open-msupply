@@ -266,7 +266,7 @@ const REQUISITION_QUERY: &str = r#"query RequisitionQuery($storeId: String, $dat
           verifiedDatetime
         }
       }
-      requestRequisition {
+      linkedRequisition {
         colour
         comment
         createdDatetime
