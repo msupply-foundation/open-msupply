@@ -15,7 +15,6 @@ export const encounterStatusTranslation = (
     case EncounterNodeStatus.Visited:
       return t('label.encounter-status-visited');
     default:
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       return ((_: never) => '')(status);
   }
 };
