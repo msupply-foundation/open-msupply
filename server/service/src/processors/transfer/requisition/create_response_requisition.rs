@@ -6,10 +6,9 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    ActivityLogType, MasterListFilter, MasterListRepository, NumberRowType, RepositoryError,
-    Requisition, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowApprovalStatus, RequisitionRowRepository, RequisitionRowStatus,
-    RequisitionRowType, SimpleStringFilter, StorageConnection,
+    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowApprovalStatus,
+    RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -26,7 +25,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
     /// 1. Source requisition name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source requisition is Request requisition
     /// 3. Source requisition is Status is Sent
-    /// 4. Response requisition does not exists (no link is found for source requisition)
+    /// 4. Response requisition does not exist (no link is found for source requisition)
     ///
     /// Only runs once:
     /// 5. Because new response requisition is linked to source requisition when it's created and `4.` will never be true again
@@ -55,17 +54,16 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         }
 
         // Execute
-        let AuthorisationFields {
-            program_id,
-            approval_status,
-        } = AuthorisationFields::populate(
-            connection,
-            &request_requisition,
-            &record_for_processing,
-        )?;
+
+        // Check if approval status needs to be set
+        // TODO link to documentation of how remote authorisation works
+        let store_preference =
+            get_store_preferences(connection, &record_for_processing.other_party_store_id)?;
+        let approval_status = store_preference
+            .response_requisition_requires_authorisation
+            .then_some(RequisitionRowApprovalStatus::Pending);
 
         let new_response_requisition = RequisitionRow {
-            program_id,
             approval_status,
             ..generate_response_requisition(
                 connection,
@@ -103,43 +101,6 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         );
 
         Ok(Some(result))
-    }
-}
-
-#[derive(Default)]
-struct AuthorisationFields {
-    program_id: Option<String>,
-    approval_status: Option<RequisitionRowApprovalStatus>,
-}
-
-impl AuthorisationFields {
-    fn populate(
-        connection: &StorageConnection,
-        request_requisition: &Requisition,
-        record_for_processing: &RequisitionTransferProcessorRecord,
-    ) -> Result<AuthorisationFields, RepositoryError> {
-        let store_id = record_for_processing.other_party_store_id.clone();
-        let preferences = get_store_preferences(connection, &store_id)?;
-
-        if !preferences.response_requisition_requires_authorisation {
-            return Ok(AuthorisationFields::default());
-        }
-        // if not "shouldAuthoriseResponseRequisition" preference  return Auth::default();
-
-        // TODO this would only work with a datafile where master list name matches supplier name
-        // program_id would ideally transfer from request requisition, program_id, this is a hacky fix for now
-        let program_id = MasterListRepository::new(connection)
-            .query_by_filter(MasterListFilter::new().name(SimpleStringFilter::equal_to(
-                &request_requisition.name_row.name,
-            )))
-            .unwrap()[0]
-            .id
-            .clone();
-
-        Ok(AuthorisationFields {
-            approval_status: Some(RequisitionRowApprovalStatus::Pending),
-            program_id: Some(program_id),
-        })
     }
 }
 
@@ -195,10 +156,12 @@ fn generate_response_requisition(
         // 5.
         linked_requisition_id: Some(request_requisition_row.id.clone()),
         expected_delivery_date: request_requisition_row.expected_delivery_date,
+        program_id: request_requisition_row.program_id.clone(),
+        period_id: request_requisition_row.period_id.clone(),
+        order_type: request_requisition_row.order_type.clone(),
         // Default
         user_id: None,
         approval_status: None,
-        program_id: None,
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,

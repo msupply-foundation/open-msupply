@@ -114,7 +114,6 @@ mod test {
         },
         test_db::setup_all,
         InvoiceLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
-        StorePreferenceType,
     };
     use util::{inline_edit, inline_init};
 
@@ -292,10 +291,8 @@ mod test {
         // pack to one preference is set
         let pack_to_one = StorePreferenceRow {
             id: mock_store_a().id.clone(),
-            r#type: StorePreferenceType::StorePreferences,
             pack_to_one: true,
-            response_requisition_requires_authorisation: false,
-            use_authorisation_for_customer_requisitions: false,
+            ..StorePreferenceRow::default()
         };
         StorePreferenceRowRepository::new(&connection)
             .upsert_one(&pack_to_one)
