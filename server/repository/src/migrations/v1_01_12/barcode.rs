@@ -8,7 +8,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 id text NOT NULL PRIMARY KEY,
                 value text NOT NULL UNIQUE,
                 item_id text REFERENCES item(id),
-                manufacturer_id text REFERENCES name(id),
+                manufacturer_id text,
                 pack_size int4,
                 parent_id text
             );            
