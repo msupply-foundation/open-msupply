@@ -14,7 +14,7 @@ fn main() {
 #[cfg(windows)]
 mod omsupply_service {
     use eventlog;
-    use log::{error, info};
+    use log::{error};
     use server::{configuration, logging_init, start_server};
     use service::settings::Settings;
     use std::{
@@ -51,8 +51,6 @@ mod omsupply_service {
     // parameters. There is no stdout or stderr at this point so make sure to configure the log
     // output to file if needed.
     pub fn omsupply_service_main(_arguments: Vec<OsString>) {
-        eventlog::init("Application", log::Level::Error).unwrap();
-
         // the current dir is used by the configuration module to find the config files
         // and also by the logging module for the log file location
         // when run in the service context, the current dir is the windows service directory
@@ -62,6 +60,7 @@ mod omsupply_service {
         let settings: Settings = match configuration::get_configuration() {
             Ok(settings) => settings,
             Err(e) => {
+				eventlog::init("Application", log::Level::Error).unwrap();
                 error!("Failed to parse configuration settings: {:?}", e);
                 return;
             }
