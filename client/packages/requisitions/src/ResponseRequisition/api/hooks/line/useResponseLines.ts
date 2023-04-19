@@ -51,9 +51,6 @@ export const useResponseLines = (): UseResponseLinesController => {
           SortUtils.getColumnSorter(getSortValue, !!sortBy.isDesc)
         )
       : lines?.nodes;
-    // return sortedLines.filter(({ item: { name } }) =>
-    // matchItem(itemFilter, name)
-    // );
     return sortedLines.filter(
       item => matchItem(itemFilter, item.item)
     )
