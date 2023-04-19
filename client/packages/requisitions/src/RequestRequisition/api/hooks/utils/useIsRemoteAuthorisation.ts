@@ -7,9 +7,11 @@ export const useIsRemoteAuthorisation = () => {
     'linkedRequisition',
   ]);
 
+  const linkedRequisitionStatus =
+    linkedRequisition?.approvalStatus ?? RequisitionNodeApprovalStatus.None;
   const usesRemoteAuthorisation =
     approvalStatus != RequisitionNodeApprovalStatus.None ||
-    linkedRequisition?.approvalStatus != RequisitionNodeApprovalStatus.None;
+    linkedRequisitionStatus != RequisitionNodeApprovalStatus.None;
 
   return { usesRemoteAuthorisation };
 };

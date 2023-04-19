@@ -4,7 +4,7 @@ export const useRequisitionPreferences = () => {
   const { store } = useAuthContext();
 
   const authoriseCustomerRequisitions =
-    !!store?.preferences?.requestRequisitionRequiresAuthorisation;
+    !!store?.preferences?.responseRequisitionRequiresAuthorisation;
 
   return { authoriseCustomerRequisitions };
 };
