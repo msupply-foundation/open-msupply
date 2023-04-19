@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, name: string, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, useAuthorisationForCustomerRequisitions: boolean, packToOne: boolean } };
+export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, name: string, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } };
 
 export type AuthTokenQueryVariables = Types.Exact<{
   username: Types.Scalars['String'];
@@ -17,7 +17,7 @@ export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: '
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, useAuthorisationForCustomerRequisitions: boolean, packToOne: boolean } } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, useAuthorisationForCustomerRequisitions: boolean, packToOne: boolean } }> } } };
+export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } }> } } };
 
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -36,7 +36,7 @@ export type StorePreferencesQueryVariables = Types.Exact<{
 }>;
 
 
-export type StorePreferencesQuery = { __typename: 'Queries', storePreferences: { __typename: 'StorePreferenceNode', responseRequisitionRequiresAuthorisation: boolean, useAuthorisationForCustomerRequisitions: boolean, packToOne: boolean, id: string } };
+export type StorePreferencesQuery = { __typename: 'Queries', storePreferences: { __typename: 'StorePreferenceNode', responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, id: string } };
 
 export const UserStoreNodeFragmentDoc = gql`
     fragment UserStoreNode on UserStoreNode {
@@ -46,7 +46,7 @@ export const UserStoreNodeFragmentDoc = gql`
   preferences {
     id
     responseRequisitionRequiresAuthorisation
-    useAuthorisationForCustomerRequisitions
+    requestRequisitionRequiresAuthorisation
     packToOne
   }
 }
@@ -157,7 +157,7 @@ export const StorePreferencesDocument = gql`
     query storePreferences($storeId: String!) {
   storePreferences(storeId: $storeId) {
     responseRequisitionRequiresAuthorisation
-    useAuthorisationForCustomerRequisitions
+    requestRequisitionRequiresAuthorisation
     packToOne
     id
   }
