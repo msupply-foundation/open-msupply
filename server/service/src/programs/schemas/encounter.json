@@ -20,6 +20,10 @@
         "clinician": {
           "$ref": "#/definitions/Clinician"
         },
+        "createdBy": {
+          "$ref": "#/definitions/User",
+          "description": "User who created the encounter (could be different to \"Clinician\")"
+        },
         "createdDatetime": {
           "description": "Date time when the encounter was made, e.g. when an clinician schedule the encounter.",
           "format": "date-time",
@@ -50,7 +54,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": ["SCHEDULED", "COMPLETED", "CANCELLED", "MISSED"],
+      "enum": ["PENDING", "VISITED", "CANCELLED"],
       "type": "string"
     },
     "Note": {
@@ -72,7 +76,18 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId", "authorName"],
+      "required": ["text"],
+      "type": "object"
+    },
+    "User": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
       "type": "object"
     }
   },

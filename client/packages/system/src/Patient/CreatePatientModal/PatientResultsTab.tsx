@@ -15,7 +15,6 @@ import { Gender, usePatientCreateStore } from '@openmsupply-client/programs';
 import { PatientFragment } from '../api/operations.generated';
 
 const genderToGenderInput = (gender: Gender): GenderInput => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const exhaustiveCheck = (_: never): GenderInput => {
     return GenderInput.Male; // never returned
   };
