@@ -92,7 +92,6 @@ const extractAt = (
       case 'after':
         return new Date(encounter?.startDatetime ?? date);
       default:
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ((_: never) => {})(options.at.encounterStartDatetime as never);
     }
   } else if (options?.at?.type === 'programEnrolment') {
@@ -105,7 +104,6 @@ const extractAt = (
       case 'after':
         return new Date(program?.enrolmentDatetime ?? date);
       default:
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         ((_: never) => {})(options.at.programEnrolmentDatetime as never);
     }
   }

@@ -192,6 +192,7 @@ fragment Encounter on EncounterNode {
     lastName
   }
   program
+  createdDatetime
   startDatetime
   endDatetime
   document {

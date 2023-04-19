@@ -281,7 +281,7 @@ mod test {
         let encounter = inline_init(|e: &mut SchemaEncounter| {
             e.created_datetime = Utc::now().to_rfc3339();
             e.start_datetime = Utc::now().to_rfc3339();
-            e.status = Some(EncounterStatus::Scheduled);
+            e.status = Some(EncounterStatus::Pending);
         });
         let program_type = "ProgramType".to_string();
         let initial_encounter = service
@@ -359,7 +359,7 @@ mod test {
         let encounter = inline_init(|e: &mut SchemaEncounter| {
             e.created_datetime = Utc::now().to_rfc3339();
             e.start_datetime = Utc::now().to_rfc3339();
-            e.status = Some(EncounterStatus::Completed);
+            e.status = Some(EncounterStatus::Visited);
         });
         let result = service
             .update_encounter(
@@ -390,6 +390,6 @@ mod test {
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(row.status, Some(repository::EncounterStatus::Completed));
+        assert_eq!(row.status, Some(repository::EncounterStatus::Visited));
     }
 }

@@ -3,30 +3,20 @@ import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import { EncounterNodeStatus } from '@common/types';
 import { EncounterRowFragment } from '@openmsupply-client/programs';
 
-const effectiveStatus = (
-  encounter: EncounterRowFragment,
+export const encounterStatusTranslation = (
+  status: EncounterNodeStatus,
   t: TypedTFunction<LocaleKey>
-) => {
-  const status = encounter.status;
-  if (!status) {
-    return '';
-  }
+): string => {
   switch (status) {
+    case EncounterNodeStatus.Pending:
+      return t('label.encounter-status-pending');
     case EncounterNodeStatus.Cancelled:
       return t('label.encounter-status-cancelled');
-    case EncounterNodeStatus.Completed:
-      return t('label.encounter-status-done');
-    case EncounterNodeStatus.Scheduled:
-      return t('label.encounter-status-scheduled');
-    case EncounterNodeStatus.Missed:
-      return t('label.encounter-status-missed');
+    case EncounterNodeStatus.Visited:
+      return t('label.encounter-status-visited');
     default:
-      ((_: never) => {
-        // exhaustive check
-        _;
-      })(status);
+      return ((_: never) => '')(status);
   }
-  return '';
 };
 
 export type EncounterFragmentWithStatus = {
@@ -40,7 +30,9 @@ export const useEncounterFragmentWithStatus = (
   return useMemo(
     () =>
       nodes?.map(node => ({
-        effectiveStatus: effectiveStatus(node, t),
+        effectiveStatus: node.status
+          ? encounterStatusTranslation(node.status, t)
+          : '',
         ...node,
       })),
     [nodes]

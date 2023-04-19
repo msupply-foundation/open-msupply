@@ -12,6 +12,10 @@ import {
   UserIcon,
   useFormatDateTime,
   ClinicianNode,
+  EncounterNodeStatus,
+  LocaleKey,
+  TypedTFunction,
+  Option,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -23,6 +27,18 @@ import {
   getClinicianName,
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
+import { Select } from '@common/components';
+import { encounterStatusTranslation } from '../utils';
+
+const encounterStatusOption = (
+  status: EncounterNodeStatus,
+  t: TypedTFunction<LocaleKey>
+): Option => {
+  return {
+    label: encounterStatusTranslation(status, t),
+    value: status,
+  };
+};
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
@@ -32,6 +48,9 @@ interface ToolbarProps {
   encounter: EncounterFragment;
 }
 export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
+  const [status, setStatus] = useState<EncounterNodeStatus | undefined>(
+    encounter.status ?? undefined
+  );
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
@@ -42,17 +61,20 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
     useDocumentRegistry.get.documentRegistryByType(encounter?.program);
 
   useEffect(() => {
-    if (!encounter) return;
-
+    setStatus(encounter.status ?? undefined);
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
     setClinician({
       label: getClinicianName(encounter.clinician as Clinician),
       value: encounter.clinician as Clinician,
     });
-  }, [encounter]);
+  }, [
+    encounter.status,
+    encounter.startDatetime,
+    encounter.endDatetime,
+    encounter.clinician,
+  ]);
 
-  if (!encounter) return null;
   const { patient } = encounter;
 
   return (
@@ -87,10 +109,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
               <Row
                 label={t('label.patient')}
                 Input={
-                  <BasicTextInput
-                    disabled
-                    value={encounter?.patient.name}
-                  />
+                  <BasicTextInput disabled value={encounter?.patient.name} />
                 }
               />
               <Row
@@ -103,13 +122,12 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                 }
               />
             </Box>
-            <Box display="flex" gap={0.5}>
+            <Box display="flex" gap={1.5}>
               <Row
                 label={t('label.program')}
                 Input={
                   <BasicTextInput
                     disabled
-                    sx={{width: '190px'}}
                     value={programDocument?.[0]?.name ?? ''}
                   />
                 }
@@ -126,6 +144,28 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                     }}
                     clinicianLabel={clinician?.label || ''}
                     clinicianValue={clinician?.value}
+                  />
+                }
+              />
+              <Row
+                label={t('label.encounter-status')}
+                Input={
+                  <Select
+                    fullWidth
+                    onChange={event => {
+                      const newStatus = event.target
+                        .value as EncounterNodeStatus;
+                      setStatus(newStatus);
+                      onChange({
+                        status: newStatus,
+                      });
+                    }}
+                    options={[
+                      encounterStatusOption(EncounterNodeStatus.Pending, t),
+                      encounterStatusOption(EncounterNodeStatus.Visited, t),
+                      encounterStatusOption(EncounterNodeStatus.Cancelled, t),
+                    ]}
+                    value={status}
                   />
                 }
               />

@@ -360,7 +360,7 @@ mod test {
         let encounter = inline_init(|e: &mut SchemaEncounter| {
             e.created_datetime = Utc::now().to_rfc3339();
             e.start_datetime = Utc::now().to_rfc3339();
-            e.status = Some(EncounterStatus::Scheduled);
+            e.status = Some(EncounterStatus::Pending);
         });
         let program_type = "ProgramType".to_string();
         let result = service
