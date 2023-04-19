@@ -123,7 +123,12 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
       }
     >
       {!isLoading ? (
-        <Grid flexDirection="column" display="flex" gap={2}>
+        <Grid
+          flexDirection="column"
+          display="flex"
+          gap={2}
+          alignItems="flex-start"
+        >
           <BasicTextInput
             autoFocus
             value={draft.name}
