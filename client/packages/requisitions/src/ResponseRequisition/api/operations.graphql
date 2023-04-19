@@ -134,6 +134,13 @@ fragment ResponseRow on RequisitionNode {
   type
   otherPartyId
   approvalStatus
+  programName
+  period {
+    name
+    startDate
+    endDate
+  }
+  orderType
 }
 
 query responses(
