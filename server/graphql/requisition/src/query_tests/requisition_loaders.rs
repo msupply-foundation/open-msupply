@@ -30,7 +30,7 @@ mod test {
                 otherParty(storeId: $storeId) {
                     id
                 }
-                requestRequisition {
+                linkedRequisition {
                     id
                 }
                 shipments {
@@ -80,16 +80,16 @@ mod test {
 
         assert_graphql_query!(&settings, query, &Some(variables.clone()), &expected, None);
 
-        // Test requestRequisition
+        // Test linkedRequisition
         let expected = json!({
             "requisitions": {
                 "nodes": [{
                     "id": &request_requisition.requisition.id,
-                    "requestRequisition": null,
+                    "linkedRequisition": null,
                 },
                 {
                     "id": &response_requisition.requisition.id,
-                    "requestRequisition": {
+                    "linkedRequisition": {
                         "id": &request_requisition.requisition.id
                     },
                 }]
