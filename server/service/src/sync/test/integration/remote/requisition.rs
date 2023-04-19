@@ -58,7 +58,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             average_monthly_consumption: 15,
             comment: None,
             snapshot_datetime: None,
-            approved_quantity: 10,
+            approved_quantity: 0,
             approval_comment: None,
             is_sync_update: false,
         };
