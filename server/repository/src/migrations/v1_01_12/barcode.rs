@@ -6,9 +6,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
             CREATE TABLE barcode (
                 id text NOT NULL PRIMARY KEY,
-                value text NOT NULL,
+                value text NOT NULL UNIQUE,
                 item_id text REFERENCES item(id),
-                manufacturer_id text,
+                manufacturer_id text REFERENCES name(id),
                 pack_size int4,
                 parent_id text
             );            
