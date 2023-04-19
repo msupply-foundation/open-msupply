@@ -134,7 +134,7 @@ pub fn update_program_events(
             service_provider.program_event_service.upsert_events(
                 ctx,
                 patient_id.to_string(),
-                base_time,
+                previous_base_time,
                 vec![],
             )?;
         }

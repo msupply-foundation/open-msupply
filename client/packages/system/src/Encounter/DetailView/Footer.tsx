@@ -12,21 +12,59 @@ import {
   DialogButton,
   ClockIcon,
   useDialog,
+  StatusCrumbs,
+  EncounterNodeStatus,
 } from '@openmsupply-client/common';
-import { DocumentHistory } from '@openmsupply-client/programs';
+import {
+  DocumentHistory,
+  EncounterFragment,
+} from '@openmsupply-client/programs';
+import { encounterStatusTranslation } from '../utils';
 
 interface FooterProps {
   documentName?: string;
   isDisabled: boolean;
   onCancel: () => void;
   onSave: () => void;
+  encounter?: EncounterFragment;
 }
+
+const EncounterStatusCrumbs: FC<{ encounter: EncounterFragment }> = ({
+  encounter,
+}) => {
+  const t = useTranslation('common');
+  // TODO StatusCrumbs shows "Order History" in the logs pop up -> make this configurable
+  return (
+    <StatusCrumbs
+      statuses={
+        encounter.status === EncounterNodeStatus.Cancelled
+          ? [EncounterNodeStatus.Pending, EncounterNodeStatus.Cancelled]
+          : [EncounterNodeStatus.Pending, EncounterNodeStatus.Visited]
+      }
+      statusLog={{
+        [EncounterNodeStatus.Pending]: encounter.createdDatetime,
+        [EncounterNodeStatus.Visited]:
+          encounter.status === EncounterNodeStatus.Visited
+            ? encounter.startDatetime
+            : '',
+        [EncounterNodeStatus.Cancelled]:
+          encounter.status === EncounterNodeStatus.Cancelled
+            ? encounter.startDatetime
+            : '',
+      }}
+      statusFormatter={(status: EncounterNodeStatus) =>
+        encounterStatusTranslation(status, t)
+      }
+    />
+  );
+};
 
 export const Footer: FC<FooterProps> = ({
   documentName,
   isDisabled,
   onCancel,
   onSave,
+  encounter,
 }) => {
   const t = useTranslation('common');
   const navigate = useNavigate();
@@ -48,6 +86,7 @@ export const Footer: FC<FooterProps> = ({
             disabled={documentName === undefined}
             onClick={showDialog}
           />
+          {encounter ? <EncounterStatusCrumbs encounter={encounter} /> : null}
           <Box
             flex={1}
             display="flex"
