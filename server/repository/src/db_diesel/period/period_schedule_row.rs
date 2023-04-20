@@ -53,4 +53,15 @@ impl<'a> PeriodScheduleRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_one_by_name(
+        &self,
+        name: &str,
+    ) -> Result<Option<PeriodScheduleRow>, RepositoryError> {
+        let result = period_schedule_dsl::period_schedule
+            .filter(period_schedule_dsl::name.eq(name))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
 }
