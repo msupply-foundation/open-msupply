@@ -4,17 +4,19 @@ import {
   Select,
   MenuItem,
   Option,
+  LanguageType,
 } from '@openmsupply-client/common';
-import { IntlUtils, SupportedLocales, useUserName } from '@common/intl';
+import { useIntlUtils, SupportedLocales, useUserName } from '@common/intl';
 
 export const LanguageMenu: React.FC = () => {
   const navigate = useNavigate();
-  const i18n = IntlUtils.useI18N();
+  const { changeLanguage, setUserLocale, languageOptions, currentLanguage } =
+    useIntlUtils();
   const username = useUserName();
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = event.target;
-    i18n.changeLanguage(value);
-    IntlUtils.setUserLocale(username, value as SupportedLocales);
+    changeLanguage(value as LanguageType);
+    setUserLocale(username, value as SupportedLocales);
     navigate(0);
   };
 
@@ -31,8 +33,8 @@ export const LanguageMenu: React.FC = () => {
   return (
     <Select
       onChange={handleChange}
-      options={IntlUtils.languageOptions}
-      value={i18n.language}
+      options={languageOptions}
+      value={currentLanguage}
       renderOption={renderOption}
     />
   );

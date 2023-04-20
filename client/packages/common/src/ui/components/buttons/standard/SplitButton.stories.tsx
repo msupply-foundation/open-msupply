@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import { ComponentMeta } from '@storybook/react';
 import { SplitButton, SplitButtonOption } from './SplitButton';
-import { IntlUtils } from '@common/intl';
+import { useIntlUtils } from '@common/intl';
 
 const getOptions = (): [
   SplitButtonOption<string>,
@@ -83,11 +83,11 @@ const RTLComponent = () => {
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
   >(options[0]);
-  const i18n = IntlUtils.useI18N();
+  const { changeLanguage } = useIntlUtils();
 
   useEffect(() => {
-    i18n.changeLanguage('ar');
-  }, [i18n]);
+    changeLanguage('ar');
+  }, [changeLanguage]);
 
   return (
     <Box>
