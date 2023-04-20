@@ -42,6 +42,15 @@ const ItemListComponent: FC = () => {
     [
       'code',
       'name',
+      {
+        accessor: ({ rowData }) =>
+          rowData.unitName ?? '',
+        align: ColumnAlign.Right,
+        key: 'unitName',
+        label: 'label.unit',
+        sortable: false,
+        width: 100,
+      },
       [
         'stockOnHand',
         {
