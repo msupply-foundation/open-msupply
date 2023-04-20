@@ -29,8 +29,11 @@ export const useIntlUtils = () => {
   const { i18n } = useTranslationNext();
   const { language } = i18n;
 
-  const changeLanguage = (language?: LanguageType) => {
-    const userLanguage = parseLanguage(language);
+  const changeLanguage = (language?: string) => {
+    const userLanguage =
+      // Longer name implies input is full language name, not the 2-letter
+      // locale code
+      language && language?.length > 2 ? parseLanguage(language) : language;
     if (!userLanguage) return;
     if (!locales.some(locale => userLanguage === locale)) return;
 
@@ -50,9 +53,9 @@ export const useIntlUtils = () => {
     return 'en';
   })();
 
-  const currentLanguageName = (() => {
-    return languageOptions.find(option => option.value === language)?.label;
-  })();
+  const currentLanguageName = languageOptions.find(
+    option => option.value === language
+  )?.label;
 
   const getUserLocale = (username: string) => {
     const locales = LocalStorage.getItem('/localisation/locale');
@@ -144,7 +147,7 @@ export const useIntlUtils = () => {
 //   },
 // };
 
-const parseLanguage = (language?: LanguageType) => {
+const parseLanguage = (language?: string) => {
   switch (language) {
     case LanguageType.English:
       return 'en';
