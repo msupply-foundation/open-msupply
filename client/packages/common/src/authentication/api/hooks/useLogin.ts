@@ -1,4 +1,4 @@
-import { IntlUtils } from '@common/intl';
+import { useIntlUtils } from '@common/intl';
 import { AuthCookie, AuthError, setAuthCookie } from '../../AuthContext';
 import { useGetAuthToken } from './useGetAuthToken';
 import {
@@ -43,7 +43,7 @@ export const useLogin = (
   setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
 ) => {
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
-  const changeLanguage = IntlUtils.useChangeLanguage();
+  const { changeLanguage, getUserLocale } = useIntlUtils();
   const { setHeader, setSkipRequest } = useGql();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
   const queryClient = useQueryClient();
@@ -113,7 +113,7 @@ export const useLogin = (
       },
     };
 
-    const userLocale = IntlUtils.getUserLocale(username);
+    const userLocale = getUserLocale(username);
     if (userLocale === undefined) {
       changeLanguage(userDetails?.language);
     }

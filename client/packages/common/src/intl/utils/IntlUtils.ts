@@ -1,4 +1,4 @@
-import { i18n } from 'i18next';
+// import { i18n } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { EnvUtils } from '@common/utils';
 import { LanguageType } from '../../types/schema';
@@ -25,35 +25,21 @@ const locales = [
 export type SupportedLocales = (typeof locales)[number];
 type StringOrEmpty = string | null | undefined;
 
-export const IntlUtils = {
-  useChangeLanguage: () => {
-    const { i18n } = useTranslationNext();
-    return (language?: LanguageType) => {
-      const userLanguage = parseLanguage(language);
-      if (!userLanguage) return;
-      if (!locales.some(locale => userLanguage === locale)) return;
+export const useIntlUtils = () => {
+  const { i18n } = useTranslationNext();
+  const { language } = i18n;
 
-      i18n.changeLanguage(userLanguage);
-    };
-  },
-  useRtl: (): boolean => {
-    const { i18n } = useTranslationNext();
-    const { language } = i18n;
-    const isRtl = language === 'ar';
-    return isRtl;
-  },
-  useI18N: (): i18n => {
-    const { i18n } = useTranslationNext();
-    return i18n;
-  },
-  // TODO: When the server supports a query to find the deployments
-  // default language, use a query to fetch it.
-  useDefaultLanguage: (): SupportedLocales => {
-    return 'en';
-  },
-  useCurrentLanguage: (): SupportedLocales => {
-    const { i18n } = useTranslationNext();
-    const { language } = i18n;
+  const changeLanguage = (language?: LanguageType) => {
+    const userLanguage = parseLanguage(language);
+    if (!userLanguage) return;
+    if (!locales.some(locale => userLanguage === locale)) return;
+
+    i18n.changeLanguage(userLanguage);
+  };
+
+  const isRtl = language === 'ar';
+
+  const currentLanguage = (() => {
     const supportedLanguage = language as SupportedLocales;
     if (locales.includes(supportedLanguage)) {
       return supportedLanguage;
@@ -62,26 +48,101 @@ export const IntlUtils = {
       throw new Error(`Language '${language}' not supported`);
     }
     return 'en';
-  },
-  languageOptions,
-  getLanguageName: (language: string) =>
-    languageOptions.find(option => option.value === language)?.label,
-  getUserLocale: (username: string) => {
+  })();
+
+  const currentLanguageName = (() => {
+    return languageOptions.find(option => option.value === language)?.label;
+  })();
+
+  const getUserLocale = (username: string) => {
     const locales = LocalStorage.getItem('/localisation/locale');
     return !!locales ? locales[username] : undefined;
-  },
-  setUserLocale: (username: string, locale: SupportedLocales) => {
+  };
+
+  const setUserLocale = (username: string, locale: SupportedLocales) => {
     const locales = LocalStorage.getItem('/localisation/locale') ?? {};
     locales[username] = locale;
     LocalStorage.setItem('/localisation/locale', locales);
-  },
-  useLocalisedFullName: () => {
-    const { i18n } = useTranslationNext();
-    const { language } = i18n;
-    return (firstName: StringOrEmpty, lastName: StringOrEmpty) =>
-      getFullName(language, firstName, lastName);
-  },
+  };
+
+  const getLocalisedFullName = (
+    firstName: StringOrEmpty,
+    lastName: StringOrEmpty
+  ) => getFullName(language, firstName, lastName);
+
+  return {
+    i18n,
+    // TODO: When the server supports a query to find the deployments
+    // default language, use a query to fetch it.
+    defaultLanguage: 'en',
+    isRtl,
+    currentLanguage,
+    languageOptions,
+    currentLanguageName,
+    changeLanguage,
+    getUserLocale,
+    setUserLocale,
+    getLocalisedFullName,
+  };
 };
+
+// export const IntlUtils = {
+//   useChangeLanguage: () => {
+//     const { i18n } = useTranslationNext();
+//     return (language?: LanguageType) => {
+//       const userLanguage = parseLanguage(language);
+//       if (!userLanguage) return;
+//       if (!locales.some(locale => userLanguage === locale)) return;
+
+//       i18n.changeLanguage(userLanguage);
+//     };
+//   },
+//   useRtl: (): boolean => {
+//     const { i18n } = useTranslationNext();
+//     const { language } = i18n;
+//     const isRtl = language === 'ar';
+//     return isRtl;
+//   },
+//   useI18N: (): i18n => {
+//     const { i18n } = useTranslationNext();
+//     return i18n;
+//   },
+//   // TODO: When the server supports a query to find the deployments
+//   // default language, use a query to fetch it.
+//   useDefaultLanguage: (): SupportedLocales => {
+//     return 'en';
+//   },
+//   useCurrentLanguage: (): SupportedLocales => {
+//     const { i18n } = useTranslationNext();
+//     const { language } = i18n;
+//     const supportedLanguage = language as SupportedLocales;
+//     if (locales.includes(supportedLanguage)) {
+//       return supportedLanguage;
+//     }
+//     if (!EnvUtils.isProduction()) {
+//       throw new Error(`Language '${language}' not supported`);
+//     }
+//     return 'en';
+//   },
+//   languageOptions,
+//   getLanguageName: (language: string) =>
+//     languageOptions.find(option => option.value === language)?.label,
+//   getUserLocale: (username: string) => {
+//     const locales = LocalStorage.getItem('/localisation/locale');
+//     return !!locales ? locales[username] : undefined;
+//   },
+//   setUserLocale: (username: string, locale: SupportedLocales) => {
+//     const locales = LocalStorage.getItem('/localisation/locale') ?? {};
+//     locales[username] = locale;
+//     LocalStorage.setItem('/localisation/locale', locales);
+//   },
+//   useLocalisedFullName: () => {
+//     const { i18n } = useTranslationNext();
+//     const { language } = i18n;
+//     return (firstName: StringOrEmpty, lastName: StringOrEmpty) =>
+//       getFullName(language, firstName, lastName);
+//   },
+// };
 
 const parseLanguage = (language?: LanguageType) => {
   switch (language) {
