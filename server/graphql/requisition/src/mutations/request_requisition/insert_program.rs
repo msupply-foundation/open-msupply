@@ -24,6 +24,8 @@ pub fn insert(_ctx: &Context<'_>, _store_id: &str, _input: InsertInput) -> Resul
             requisition_row: Default::default(),
             name_row: Default::default(),
             store_row: Default::default(),
+            program_name: Default::default(),
+            period: Default::default(),
         },
     )))
 }
