@@ -95,21 +95,6 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
 
         Ok(Some(IntegrationRecords::from_upserts(upserts)))
     }
-
-    fn try_translate_pull_delete(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::MasterList,
-            )
-        });
-
-        Ok(result)
-    }
 }
 
 #[derive(Clone)]
