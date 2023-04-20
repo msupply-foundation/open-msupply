@@ -1,0 +1,16 @@
+This is unofficial MacOS sqlite built of omSupply intended for demonstration, testing and other internal purposes.
+
+Double click on open_msupply.sh to run the app, you will need to allow this app to run in System Settings -> Privacy & Security -> Security. Successfull start should launch omSupply in browser window.
+
+The folder name is written in this format: omSupply_mac_{ARCHITECHTURE}_{VERSION}_{COMMIT_DAY_MONTH}_{COMMIT_HOUR_AND_SECOND}. Even though version is included in the build, intermediary builds can be created, thus the need for differentiation via commit date and time. There is also a file call sha.txt, which can be usefull to developers when reporting a bug (to narrow on on exact version).
+
+Configuration files are located in configurations folder, they can be used to adjust settings, like port, database name etc.. App needs to be restarted after configurations have changed.
+
+Some builds come with bundled data, please contact devs or project managers if you unsure what the user credentials are.
+
+If you want to re-initialise omSupply from mSupply central server after it's already been initialised (either manually or through bundled demo data) you can either remove omsupply-database file, or change database_name in configurations/base.yaml
+
+Common Problems:
+
+'Error: Os { code: 48, kind: AddrInUse, message: "Address already in use" }' -> omSupply is likely already running, close all terminals and try again, or launch in a different port, see configurations above
+
