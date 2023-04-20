@@ -1,8 +1,8 @@
 on: 
   workflow_dispatch:
     inputs:
-      architechture:
-        description: 'Architechture'
+      architecture:
+        description: 'Architecture'
         required: true
         default: 'intel'
         type: choice
@@ -32,14 +32,14 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: server
-          prefix-key: ${{ inputs.architechture }}
+          prefix-key: ${{ inputs.architecture }}
       - name: Build
-        run: ./build/mac/build.sh ${{ inputs.architechture }} ${{ inputs.includeDemoData }}
+        run: ./build/mac/build.sh ${{ inputs.architecture }} ${{ inputs.includeDemoData }}
       # Upload artifact would remove +x (execute) permission and attributes from files when zipping
       # thus need to manually zip (unfortunately it would be double zipped)
       - name: Get Name and Zip
         run: |
-          ARTIFACT_NAME=$(./build/mac/get_name.sh ${{ inputs.architechture }})
+          ARTIFACT_NAME=$(./build/mac/get_name.sh ${{ inputs.architecture }})
           ZIPPED_ARTIFACT_NAME="${ARTIFACT_NAME}.zip"
           # https://developer.apple.com/forums/thread/690457 (keep attributes)
           ditto -c -k --keepParent --sequesterRsrc "${ARTIFACT_NAME}/" $ZIPPED_ARTIFACT_NAME

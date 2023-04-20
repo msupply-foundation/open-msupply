@@ -2,7 +2,7 @@ This is unofficial MacOS sqlite built of omSupply intended for demonstration, te
 
 Double click on open_msupply.sh to run the app, you will need to allow this app to run in System Settings -> Privacy & Security -> Security. Successfull start should launch omSupply in browser window.
 
-The folder name is written in this format: omSupply_mac_{ARCHITECHTURE}_{VERSION}_{COMMIT_DAY_MONTH}_{COMMIT_HOUR_AND_SECOND}. Even though version is included in the build, intermediary builds can be created, thus the need for differentiation via commit date and time. There is also a file call sha.txt, which can be usefull to developers when reporting a bug (to narrow on on exact version).
+The folder name is written in this format: omSupply_mac_{ARCHITECTURE}_{VERSION}_{COMMIT_DAY_MONTH}_{COMMIT_HOUR_AND_SECOND}. Even though version is included in the build, intermediary builds can be created, thus the need for differentiation via commit date and time. There is also a file call sha.txt, which can be usefull to developers when reporting a bug (to narrow on on exact version).
 
 Configuration files are located in configurations folder, they can be used to adjust settings, like port, database name etc.. App needs to be restarted after configurations have changed.
 
