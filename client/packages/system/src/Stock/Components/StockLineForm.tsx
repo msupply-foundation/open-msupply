@@ -29,7 +29,7 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
     sx={{
       justifyContent: 'space-between',
       '.MuiFormControl-root > .MuiInput-root, > input': {
-        maxWidth: '120px',
+        maxWidth: '160px',
       },
     }}
   />
@@ -158,6 +158,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
               autoFocus={false}
               disabled={false}
               value={draft.location ?? null}
+              width={160}
               onChange={location => onUpdate({ locationId: location?.id })}
             />
           }
