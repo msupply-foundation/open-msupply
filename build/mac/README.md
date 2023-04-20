@@ -9,7 +9,7 @@
 ./build/mac/build.sh arm true
 ```
 
-Above will build and `bundle` files in `omSupply_mac_{ARCHITECHTURE}_{VERSION}_{COMMIT_DAY_MONTH}_{COMMIT_HOUR_AND_SECOND}`
+Above will build and `bundle` files in `omSupply_mac_{ARCHITECTURE}_{VERSION}_{COMMIT_DAY_MONTH}_{COMMIT_HOUR_AND_SECOND}`
 
 You can zip the contents of that folder now and share with testers or for demo purposes. (they would need to double click on open_msupply_server.sh, and allow it in their mac security settings)
 
@@ -27,4 +27,4 @@ Add 'true' as last argument (after intel or mac)
 * Log in with all of the users that will need access in the demo data
 * cmd + c out of terminal that was opened when `open_msupply_server.sh` was clicked
 
-Now zipping `omSupply_mac_{ARCHITECHTURE}_{VERSION}_{COMMIT_DAY_MONTH}_{COMMIT_HOUR_AND_SECOND}` should save the data as well
+Now zipping `omSupply_mac_{ARCHITECTURE}_{VERSION}_{COMMIT_DAY_MONTH}_{COMMIT_HOUR_AND_SECOND}` should save the data as well

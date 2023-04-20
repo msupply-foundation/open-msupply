@@ -3,16 +3,16 @@
 # Current directory
 DIR="$(cd "$(dirname "$0")" && pwd)"
 # intel or arm
-ARCHITECHTURE=$1
+ARCHITECTURE=$1
 SHOULD_INCLUDE_DEMO_DATA=$2
-DESTINATION=$("${DIR}"/get_name.sh $ARCHITECHTURE)
+DESTINATION=$("${DIR}"/get_name.sh $ARCHITECTURE)
 
 echo "destination: ${DESTINATION}"
 
 # Select target
-if [ "$ARCHITECHTURE" == "intel" ]; then
+if [ "$ARCHITECTURE" == "intel" ]; then
     TARGET="x86_64-apple-darwin"
-elif [ "$ARCHITECHTURE" == "arm" ]; then
+elif [ "$ARCHITECTURE" == "arm" ]; then
     TARGET="aarch64-apple-darwin"
 else
     echo "Error: first argument must be 'intel' or 'arm'"
@@ -60,6 +60,7 @@ xattr -wx com.apple.LaunchServices.OpenWith 62706C6973743030D3010203040506577665
 chmod +x $DESTINATION/open_msupply_server.sh
 
 # Copy instructions
+
 cp build/mac/instructions.txt $DESTINATION/
 # Write hash
 echo $(git log -1) > $DESTINATION/sha.txt
