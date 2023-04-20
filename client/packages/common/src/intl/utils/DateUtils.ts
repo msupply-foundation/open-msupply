@@ -1,4 +1,4 @@
-import { IntlUtils, SupportedLocales } from '@common/intl';
+import { SupportedLocales, useIntlUtils } from '@common/intl';
 import {
   addMinutes,
   addDays,
@@ -134,8 +134,8 @@ const getLocale = (language: SupportedLocales) => {
 };
 
 export const useFormatDateTime = () => {
-  const language = IntlUtils.useCurrentLanguage();
-  const locale = getLocale(language);
+  const { currentLanguage } = useIntlUtils();
+  const locale = getLocale(currentLanguage);
 
   const localisedDate = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'P', { locale });

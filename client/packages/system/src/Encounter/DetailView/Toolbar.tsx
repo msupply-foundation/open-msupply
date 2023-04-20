@@ -16,6 +16,7 @@ import {
   LocaleKey,
   TypedTFunction,
   Option,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -24,7 +25,6 @@ import {
 import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
-  getClinicianName,
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
 import { Select } from '@common/components';
@@ -55,6 +55,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
   const t = useTranslation('patients');
   const { localisedDate } = useFormatDateTime();
+  const { getLocalisedFullName } = useIntlUtils();
   const [clinician, setClinician] =
     useState<ClinicianAutocompleteOption | null>();
   const { data: programDocument } =
@@ -65,7 +66,10 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
     setStartDatetime(encounter.startDatetime);
     setEndDatetime(encounter.endDatetime);
     setClinician({
-      label: getClinicianName(encounter.clinician as Clinician),
+      label: getLocalisedFullName(
+        encounter.clinician?.firstName,
+        encounter.clinician?.lastName
+      ),
       value: encounter.clinician as Clinician,
     });
   }, [

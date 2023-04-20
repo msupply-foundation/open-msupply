@@ -8,6 +8,8 @@ import {
   useDebounceCallback,
   useBreadcrumbs,
   useFormatDateTime,
+  Breadcrumb,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -26,6 +28,7 @@ export const DetailView: FC = () => {
   const navigate = useNavigate();
   const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
   const dateFormat = useFormatDateTime();
+  const { getLocalisedFullName } = useIntlUtils();
 
   const {
     data: encounter,
@@ -75,9 +78,23 @@ export const DetailView: FC = () => {
   useEffect(() => {
     if (encounter)
       setSuffix(
-        `${
-          encounter.document.documentRegistry?.name
-        } - ${dateFormat.localisedDateTime(encounter.startDatetime)}`
+        <span key="patient-encounter">
+          <Breadcrumb
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Patients)
+              .addPart(encounter.patient.id)
+              .addQuery({ tab: 'Encounters' })
+              .build()}
+          >
+            {getLocalisedFullName(
+              encounter.patient.firstName,
+              encounter.patient.lastName
+            )}
+          </Breadcrumb>
+          <span>{` / ${
+            encounter.document.documentRegistry?.name
+          } - ${dateFormat.localisedDate(encounter.startDatetime)}`}</span>
+        </span>
       );
   }, [encounter]);
 
