@@ -129,14 +129,16 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           gap={2}
           alignItems="flex-start"
         >
-          <BasicTextInput sx={{width: 450}}
+          <BasicTextInput
+            fullWidth
             autoFocus
             value={draft.name}
             onChange={e => onUpdate({ name: e.target.value })}
             label={t('label.name')}
             InputLabelProps={{ shrink: true }}
           />
-          <BasicTextInput sx={{width: 450}}
+          <BasicTextInput
+            fullWidth
             value={draft.code}
             onChange={e => onUpdate({ code: e.target.value })}
             label={t('label.code')}
