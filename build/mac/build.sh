@@ -62,4 +62,4 @@ chmod +x $DESTINATION/open_msupply_server.sh
 # Copy instructions
 cp build/mac/instructions.txt $DESTINATION/
 # Write hash
-echo echo $(git log -1) > $DESTINATION/sha.txt
+echo $(git log -1) > $DESTINATION/sha.txt
