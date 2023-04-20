@@ -24,6 +24,7 @@ const locales = [
 const rtlLocales = ['ar'];
 
 export type SupportedLocales = (typeof locales)[number];
+
 type StringOrEmpty = string | null | undefined;
 
 export const useIntlUtils = () => {
@@ -73,7 +74,6 @@ export const useIntlUtils = () => {
   ) => getFullName(language, firstName, lastName);
 
   return {
-    i18n,
     // TODO: When the server supports a query to find the deployments
     // default language, use a query to fetch it.
     defaultLanguage: 'en',

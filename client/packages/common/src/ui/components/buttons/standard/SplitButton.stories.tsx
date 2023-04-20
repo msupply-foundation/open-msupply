@@ -83,11 +83,11 @@ const RTLComponent = () => {
   const [selectedOption, setSelectedOption] = useState<
     SplitButtonOption<string>
   >(options[0]);
-  const { i18n } = useIntlUtils();
+  const { changeLanguage } = useIntlUtils();
 
   useEffect(() => {
-    i18n.changeLanguage('ar');
-  }, [i18n]);
+    changeLanguage('ar');
+  }, [changeLanguage]);
 
   return (
     <Box>
