@@ -17,13 +17,13 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation('app');
   const username = useUserName();
 
-  const { i18n, languageOptions, changeLanguage, setUserLocale } =
+  const { languageOptions, currentLanguage, changeLanguage, setUserLocale } =
     useIntlUtils();
 
   const languageButtons = languageOptions.map(l => (
     <FlatButton
       label={l.label}
-      disabled={l.value === i18n.language}
+      disabled={l.value === currentLanguage}
       onClick={() => {
         changeLanguage(l.value as LanguageType);
         setUserLocale(username, l.value as SupportedLocales);
