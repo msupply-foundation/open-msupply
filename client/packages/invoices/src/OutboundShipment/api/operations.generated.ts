@@ -12,6 +12,8 @@ export type OutboundFragment = { __typename: 'InvoiceNode', id: string, comment?
 
 export type OutboundRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, taxPercentage?: number | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, taxPercentage?: number | null } };
 
+export type BarcodeFragment = { __typename: 'BarcodeNode', id: string, itemId?: string | null, manufacturerId?: string | null, packSize?: number | null, parentId?: string | null, value: string };
+
 export type InvoicesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -113,6 +115,14 @@ export type AddToOutboundShipmentFromMasterListMutationVariables = Types.Exact<{
 
 
 export type AddToOutboundShipmentFromMasterListMutation = { __typename: 'Mutations', addToOutboundShipmentFromMasterList: { __typename: 'AddToOutboundShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisName', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
+
+export type InsertBarcodeMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.InsertBarcodeInput;
+}>;
+
+
+export type InsertBarcodeMutation = { __typename: 'Mutations', insertBarcode: { __typename: 'BarcodeNode', id: string, itemId?: string | null, manufacturerId?: string | null, packSize?: number | null, parentId?: string | null, value: string } };
 
 export const PartialStockLineFragmentDoc = gql`
     fragment PartialStockLine on StockLineNode {
@@ -268,6 +278,17 @@ export const OutboundRowFragmentDoc = gql`
   }
 }
     `;
+export const BarcodeFragmentDoc = gql`
+    fragment Barcode on BarcodeNode {
+  __typename
+  id
+  itemId
+  manufacturerId
+  packSize
+  parentId
+  value
+}
+    `;
 export const InvoicesDocument = gql`
     query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
@@ -359,18 +380,13 @@ export const BarcodesDocument = gql`
     ... on BarcodeConnector {
       __typename
       nodes {
-        id
-        itemId
-        manufacturerId
-        packSize
-        parentId
-        value
+        ...Barcode
       }
       totalCount
     }
   }
 }
-    `;
+    ${BarcodeFragmentDoc}`;
 export const InsertOutboundShipmentDocument = gql`
     mutation insertOutboundShipment($id: String!, $otherPartyId: String!, $storeId: String!) {
   insertOutboundShipment(
@@ -927,6 +943,15 @@ export const AddToOutboundShipmentFromMasterListDocument = gql`
   }
 }
     `;
+export const InsertBarcodeDocument = gql`
+    mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
+  insertBarcode(input: $input, storeId: $storeId) {
+    ... on BarcodeNode {
+      ...Barcode
+    }
+  }
+}
+    ${BarcodeFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -970,6 +995,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     addToOutboundShipmentFromMasterList(variables: AddToOutboundShipmentFromMasterListMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AddToOutboundShipmentFromMasterListMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AddToOutboundShipmentFromMasterListMutation>(AddToOutboundShipmentFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addToOutboundShipmentFromMasterList', 'mutation');
+    },
+    insertBarcode(variables: InsertBarcodeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertBarcodeMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertBarcodeMutation>(InsertBarcodeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertBarcode', 'mutation');
     }
   };
 }
@@ -1176,5 +1204,22 @@ export const mockDeleteOutboundShipmentLinesMutation = (resolver: ResponseResolv
 export const mockAddToOutboundShipmentFromMasterListMutation = (resolver: ResponseResolver<GraphQLRequest<AddToOutboundShipmentFromMasterListMutationVariables>, GraphQLContext<AddToOutboundShipmentFromMasterListMutation>, any>) =>
   graphql.mutation<AddToOutboundShipmentFromMasterListMutation, AddToOutboundShipmentFromMasterListMutationVariables>(
     'addToOutboundShipmentFromMasterList',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertBarcodeMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertBarcode })
+ *   )
+ * })
+ */
+export const mockInsertBarcodeMutation = (resolver: ResponseResolver<GraphQLRequest<InsertBarcodeMutationVariables>, GraphQLContext<InsertBarcodeMutation>, any>) =>
+  graphql.mutation<InsertBarcodeMutation, InsertBarcodeMutationVariables>(
+    'insertBarcode',
     resolver
   )

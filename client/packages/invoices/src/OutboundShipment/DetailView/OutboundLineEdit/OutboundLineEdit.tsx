@@ -32,28 +32,30 @@ import {
   getAllocatedQuantity,
   getAllocatedPacks,
 } from './utils';
-import { useOutbound } from '../../api';
+import { DraftItem, useOutbound } from '../../api';
 import { DraftOutboundLine } from '../../../types';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: ItemRowFragment | null;
+  draft: DraftItem | null;
   mode: ModalMode | null;
 }
 
 export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   isOpen,
   onClose,
-  item,
+  draft,
   mode,
 }) => {
+  const item = !draft ? null : draft.item ?? null;
   const t = useTranslation(['distribution']);
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
 
-  const { mutate } = useOutbound.line.save();
+  const { mutateAsync } = useOutbound.line.save();
+  const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
   const { status } = useOutbound.document.fields('status');
   const isDisabled = useOutbound.utils.isDisabled();
   const {
@@ -71,8 +73,33 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
   );
 
+  const onSave = async () => {
+    if (!isDirty) return;
+
+    await mutateAsync(draftOutboundLines);
+
+    if (!draft) return;
+
+    const { barcode } = draft;
+    const barcodeExists = !!barcode?.id;
+    if (!barcode || !currentItem || barcodeExists) return;
+
+    draftOutboundLines
+      .filter(line => line.numberOfPacks > 0)
+      .forEach(async line => {
+        const input = {
+          input: {
+            value: barcode.value,
+            itemId: currentItem?.id,
+            packSize: line.packSize,
+          },
+        };
+        await insertBarcode(input);
+      });
+  };
+
   const onNext = async () => {
-    if (isDirty) await mutate(draftOutboundLines);
+    await onSave();
     if (!!placeholder) {
       const infoSnack = info(t('message.placeholder-line'));
       infoSnack();
@@ -117,7 +144,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           variant="ok"
           onClick={async () => {
             try {
-              if (isDirty) await mutate(draftOutboundLines);
+              onSave();
               setIsDirty(false);
               if (!!placeholder) {
                 const infoSnack = info(t('message.placeholder-line'));

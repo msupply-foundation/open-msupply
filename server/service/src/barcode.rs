@@ -2,6 +2,7 @@ use repository::{
     Barcode, BarcodeFilter, BarcodeRepository, BarcodeRow, BarcodeSort, EqualFilter, ItemFilter,
     ItemRepository, PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager,
 };
+use util::uuid::uuid;
 
 use crate::service_provider::ServiceContext;
 
@@ -18,7 +19,6 @@ pub struct InsertResult {
 }
 
 pub struct BarcodeInput {
-    pub id: String,
     pub value: String,
     pub item_id: String,
     pub pack_size: Option<i32>,
@@ -78,7 +78,7 @@ pub trait BarcodeServiceTrait: Sync + Send {
                 validate(con, &ctx.store_id, &barcode)?;
                 let barcode_repository = BarcodeRepository::new(con);
                 let new_barcode = BarcodeRow {
-                    id: barcode.id.clone(),
+                    id: uuid(),
                     value: barcode.value.clone(),
                     item_id: Some(barcode.item_id.clone()),
                     pack_size: barcode.pack_size,
@@ -100,11 +100,24 @@ impl BarcodeServiceTrait for BarcodeService {}
 
 fn check_barcode_does_not_exist(
     connection: &StorageConnection,
-    id: &str,
+    barcode: &BarcodeInput,
 ) -> Result<bool, RepositoryError> {
-    let count = BarcodeRepository::new(connection)
-        .count(Some(BarcodeFilter::new().id(EqualFilter::equal_to(id))))?;
-    Ok(count == 0)
+    match barcode.pack_size {
+        Some(pack_size) => {
+            let count = BarcodeRepository::new(connection).count(Some(
+                BarcodeFilter::new()
+                    .value(EqualFilter::equal_to(&barcode.value))
+                    .pack_size(EqualFilter::equal_to_i32(pack_size)),
+            ))?;
+            Ok(count == 0)
+        }
+        None => {
+            let count = BarcodeRepository::new(connection).count(Some(
+                BarcodeFilter::new().value(EqualFilter::equal_to(&barcode.value)),
+            ))?;
+            Ok(count == 0)
+        }
+    }
 }
 
 fn check_item_exists(
@@ -124,7 +137,7 @@ fn validate(
     store_id: &str,
     barcode: &BarcodeInput,
 ) -> Result<(), InsertBarcodeError> {
-    if !check_barcode_does_not_exist(connection, &barcode.id)? {
+    if !check_barcode_does_not_exist(connection, barcode)? {
         return Err(InsertBarcodeError::BarcodeAlreadyExists);
     }
 

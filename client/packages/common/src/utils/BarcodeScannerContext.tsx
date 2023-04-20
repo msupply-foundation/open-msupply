@@ -31,14 +31,21 @@ const BarcodeScannerContext = createContext<BarcodeScannerControl>({} as any);
 
 const { Provider } = BarcodeScannerContext;
 
+const getIndex = (digit: number, data: number[]) => {
+  const index = data.indexOf(digit);
+  return index === -1 ? undefined : index;
+};
+
 const parseBarcodeData = (data: number[] | undefined) => {
   if (!data || data.length < 5) return undefined;
-  const synchronousIdleIndex = data.indexOf(22);
-  const endIndex =
-    synchronousIdleIndex === -1 ? undefined : synchronousIdleIndex;
+  // the parsing is not happy if codes 22 ( synchronous idle )
+  // or 0 is encountered, so we trim from there
+  const synchronousIdleIndex = getIndex(22, data);
+  const trimmedData = data.slice(4, synchronousIdleIndex);
+  const zeroIndex = getIndex(0, trimmedData);
 
-  return data
-    .slice(4, endIndex)
+  return trimmedData
+    .slice(0, zeroIndex)
     .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
 };
 
