@@ -1,4 +1,5 @@
 use self::{
+    program_settings::{get_program_requisition_settings, ProgramSettings},
     query::{get_requisition, get_requisition_by_number, get_requisitions},
     request_requisition::{
         add_from_master_list, batch_request_requisition, delete_request_requisition,
@@ -25,6 +26,7 @@ use repository::{
 };
 
 pub mod common;
+pub mod program_settings;
 pub mod query;
 pub mod request_requisition;
 pub mod requisition_supply_status;
@@ -139,6 +141,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: BatchRequestRequisition,
     ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
         batch_request_requisition(ctx, input)
+    }
+
+    fn get_program_requisition_settings(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+    ) -> Result<Vec<ProgramSettings>, RepositoryError> {
+        get_program_requisition_settings(ctx, store_id)
     }
 }
 
