@@ -1,0 +1,52 @@
+on: 
+  workflow_dispatch:
+    inputs:
+      architechture:
+        description: 'Architechture'
+        required: true
+        default: 'intel'
+        type: choice
+        options:
+          - intel
+          - arm
+      includeDemoData:
+        description: 'Includ demo data'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - false
+          - true
+
+name: Build mac demo
+
+jobs:
+  build_and_test:
+    name: Build mac demo
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server
+          prefix-key: ${{ inputs.architechture }}
+      - name: Build
+        run: ./build/mac/build.sh ${{ inputs.architechture }} ${{ inputs.includeDemoData }}
+      # Upload artifact would remove +x (execute) permission and attributes from files when zipping
+      # thus need to manually zip (unfortunately it would be double zipped)
+      - name: Get Name and Zip
+        run: |
+          ARTIFACT_NAME=$(./build/mac/get_name.sh ${{ inputs.architechture }})
+          ZIPPED_ARTIFACT_NAME="${ARTIFACT_NAME}.zip"
+          # https://developer.apple.com/forums/thread/690457 (keep attributes)
+          ditto -c -k --keepParent --sequesterRsrc "${ARTIFACT_NAME}/" $ZIPPED_ARTIFACT_NAME
+          # Below would add it env.artifactName and env.zippedArtifactName, so it can be used in upload-artifact action
+          echo "artifactName=${ARTIFACT_NAME}" >> $GITHUB_ENV
+          echo "zippedArtifactName=${ZIPPED_ARTIFACT_NAME}" >> $GITHUB_ENV
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.artifactName }}
+          path: ${{ env.zippedArtifactName }}
