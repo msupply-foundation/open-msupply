@@ -9,7 +9,7 @@ import {
 } from '@openmsupply-client/common';
 import { useIntlUtils, SupportedLocales, useUserName } from '@common/intl';
 
-import { LanguageType, PropsWithChildrenOnly } from '@common/types';
+import { PropsWithChildrenOnly } from '@common/types';
 
 export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
       label={l.label}
       disabled={l.value === currentLanguage}
       onClick={() => {
-        changeLanguage(l.value as LanguageType);
+        changeLanguage(l.value);
         setUserLocale(username, l.value as SupportedLocales);
         hide();
         navigate(0);
