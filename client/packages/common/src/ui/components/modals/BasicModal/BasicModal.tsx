@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import Dialog, { DialogProps as MuiDialogProps } from '@mui/material/Dialog';
-import { IntlUtils } from '@common/intl';
+import { useIntlUtils } from '@common/intl';
 import { SxProps, Theme } from '@mui/material';
 
 interface DialogProps extends MuiDialogProps {
@@ -16,7 +16,7 @@ export const BasicModal: FC<DialogProps> = ({
   sx,
   ...dialogProps
 }) => {
-  const isRtl = IntlUtils.useRtl();
+  const { isRtl } = useIntlUtils();
   return (
     <Dialog
       PaperProps={{

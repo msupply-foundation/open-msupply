@@ -1,13 +1,11 @@
 import { act } from 'react-dom/test-utils';
-import { IntlUtils } from '@common/intl';
+import { useIntlUtils } from '@common/intl';
 import { renderHookWithProvider } from '@common/utils';
 
 describe('RTLProvider', () => {
   it('Sets the direction of the body to be rtl when a rtl language is the current locale', () => {
     const useHook = () => {
-      const isRtl = IntlUtils.useRtl();
-      const i18n = IntlUtils.useI18N();
-
+      const { i18n, isRtl } = useIntlUtils();
       return { isRtl, i18n };
     };
     const { result } = renderHookWithProvider(useHook);

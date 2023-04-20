@@ -1,4 +1,4 @@
-import { Autocomplete, IntlUtils } from '@openmsupply-client/common';
+import { Autocomplete, useIntlUtils } from '@openmsupply-client/common';
 import { ClinicianFragment, useClinicians } from '@openmsupply-client/programs';
 import React from 'react';
 import { FC } from 'react';
@@ -18,7 +18,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
   clinicianValue,
 }) => {
   const { data } = useClinicians.document.list({});
-  const getFullName = IntlUtils.useLocalisedFullName();
+  const { getLocalisedFullName } = useIntlUtils();
   const clinicians: ClinicianFragment[] = data?.nodes ?? [];
 
   return (
@@ -33,7 +33,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
       }}
       options={clinicians.map(
         (clinician): ClinicianAutocompleteOption => ({
-          label: getFullName(clinician.firstName, clinician.lastName),
+          label: getLocalisedFullName(clinician.firstName, clinician.lastName),
           value: {
             firstName: clinician.firstName ?? '',
             lastName: clinician.lastName ?? '',
