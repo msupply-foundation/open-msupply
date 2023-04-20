@@ -116,7 +116,7 @@ mod test {
     };
 
     #[actix_rt::test]
-    async fn program_requisition_settings_repository() {
+    async fn requisitions_in_period_repository() {
         let period1 = PeriodRow {
             id: "period1".to_string(),
             name: "period1".to_string(),
@@ -208,7 +208,7 @@ mod test {
         };
 
         let (_, connection, _, _) = setup_all_with_data(
-            "program_requisition_settings_repository",
+            "requisitions_in_period_repository",
             MockDataInserts::none().names().stores().period_schedules(),
             MockData {
                 periods: vec![
@@ -246,7 +246,7 @@ mod test {
         let mut result = repo.query(filter.clone()).unwrap();
         result.sort_by(sort);
 
-        assert_eq!(
+        pretty_assertions::assert_eq!(
             result,
             vec![
                 RequisitionsInPeriod {
@@ -277,7 +277,7 @@ mod test {
         let mut result = repo.query(filter.clone()).unwrap();
         result.sort_by(sort);
 
-        assert_eq!(
+        pretty_assertions::assert_eq!(
             result,
             vec![
                 RequisitionsInPeriod {
@@ -317,7 +317,7 @@ mod test {
             .unwrap();
         result.sort_by(sort);
 
-        assert_eq!(
+        pretty_assertions::assert_eq!(
             result,
             vec![RequisitionsInPeriod {
                 id: "n/a".to_string(),
