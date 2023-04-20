@@ -24,7 +24,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     {
         sql!(
             connection,
-            r#"ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'barcode';"#
+            r#"
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'barcode';
+                ALTER TYPE permission_type ADD VALUE IF NOT EXISTS 'ITEM_MUTATE';
+            "#
         )?;
 
         sql!(
