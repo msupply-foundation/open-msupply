@@ -6,9 +6,7 @@ use repository::{
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
-};
+use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Debug)]
