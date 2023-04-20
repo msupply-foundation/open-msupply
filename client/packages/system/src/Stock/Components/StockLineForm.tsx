@@ -18,6 +18,7 @@ import {
   CircularProgress,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
+import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   <InputWithLabelRow
@@ -147,6 +148,17 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
             <Checkbox
               checked={draft.onHold}
               onChange={(_, onHold) => onUpdate({ onHold })}
+            />
+          }
+        />
+        <StyledInputRow
+          label={t('label.location')}
+          Input={
+            <LocationSearchInput
+              autoFocus={false}
+              disabled={false}
+              value={draft.location ?? null}
+              onChange={location => onUpdate({ locationId: location?.id })}
             />
           }
         />
