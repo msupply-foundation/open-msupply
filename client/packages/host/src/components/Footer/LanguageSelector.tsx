@@ -7,7 +7,7 @@ import {
   useTranslation,
   useNavigate,
 } from '@openmsupply-client/common';
-import { IntlUtils, SupportedLocales, useUserName } from '@common/intl';
+import { useIntlUtils, SupportedLocales, useUserName } from '@common/intl';
 
 import { PropsWithChildrenOnly } from '@common/types';
 
@@ -17,15 +17,16 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation('app');
   const username = useUserName();
 
-  const i18n = IntlUtils.useI18N();
+  const { languageOptions, currentLanguage, changeLanguage, setUserLocale } =
+    useIntlUtils();
 
-  const languageButtons = IntlUtils.languageOptions.map(l => (
+  const languageButtons = languageOptions.map(l => (
     <FlatButton
       label={l.label}
-      disabled={l.value === i18n.language}
+      disabled={l.value === currentLanguage}
       onClick={() => {
-        i18n.changeLanguage(l.value);
-        IntlUtils.setUserLocale(username, l.value as SupportedLocales);
+        changeLanguage(l.value);
+        setUserLocale(username, l.value as SupportedLocales);
         hide();
         navigate(0);
       }}
