@@ -18,9 +18,13 @@ const useItemFilter = () => {
   };
 };
 
-const matchItem = (itemFilter: string, { name, code }: Partial<ItemNode>) =>
-  RegexUtils.includes(itemFilter, name ?? '') ||
-  RegexUtils.includes(itemFilter, code ?? '');
+const matchItem = (itemFilter: string, { name, code }: Partial<ItemNode>) => {
+  const filter = RegexUtils.escapeChars(itemFilter);
+  return (
+    RegexUtils.includes(filter, name ?? '') ||
+    RegexUtils.includes(filter, code ?? '')
+  );
+};
 
 export const useRequestLines = () => {
   const { on } = useHideOverStocked();
