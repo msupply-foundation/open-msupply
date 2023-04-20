@@ -10,7 +10,7 @@ import {
   useLocalStorage,
   useQueryClient,
 } from '@openmsupply-client/common';
-import { UserNode } from '@common/types';
+import { LanguageType, UserNode } from '@common/types';
 
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 
@@ -43,7 +43,7 @@ export const useLogin = (
   setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
 ) => {
   const { mutateAsync, isLoading: isLoggingIn } = useGetAuthToken();
-  const { changeLanguage, getUserLocale } = useIntlUtils();
+  const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
   const { setHeader, setSkipRequest } = useGql();
   const { mutateAsync: getUserDetails } = useGetUserDetails();
   const queryClient = useQueryClient();
@@ -115,7 +115,7 @@ export const useLogin = (
 
     const userLocale = getUserLocale(username);
     if (userLocale === undefined) {
-      changeLanguage(userDetails?.language);
+      changeLanguage(getLocaleCode(userDetails?.language as LanguageType));
     }
     setMRUCredentials({ username, store });
     setAuthCookie(authCookie);
