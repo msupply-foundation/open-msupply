@@ -9,16 +9,18 @@ use diesel::prelude::*;
 table! {
     program (id) {
         id -> Text,
+        master_list_id -> Text,
         name -> Text,
     }
 }
 
-joinable!(program -> master_list (id));
+joinable!(program -> master_list (master_list_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "program"]
 pub struct ProgramRow {
     pub id: String, // Master list id
+    pub master_list_id: String,
     pub name: String,
 }
 

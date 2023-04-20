@@ -176,7 +176,7 @@
   "label.server": "Server",
   "label.settings-central-site-id": "Central server Site ID",
   "label.settings-interval": "Interval (seconds)",
-  "label.settings-password": "Sync password",
+  "label.settings-password": "Site password",
   "label.settings-site-id": "Site ID",
   "label.settings-url": "Central server URL",
   "label.settings-username": "Site name",
