@@ -21,7 +21,7 @@ import {
 } from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
 import { getStatusTranslation } from '../utils';
-import { encounterEventCellValue } from 'packages/system/src/Encounter/ListView/columns';
+import { encounterEventCellValue } from '../../../Encounter/ListView/columns';
 
 const ProgramListComponent: FC = () => {
   const {
