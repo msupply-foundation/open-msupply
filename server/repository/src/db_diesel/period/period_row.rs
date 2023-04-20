@@ -15,7 +15,7 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "period"]
 pub struct PeriodRow {
     pub id: String,
@@ -58,6 +58,16 @@ impl<'a> PeriodRowRepository<'a> {
             .filter(period_dsl::id.eq(id))
             .first(&self.connection.connection)
             .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_program_schedule_ids(
+        &self,
+        period_schedule_ids: Vec<&str>,
+    ) -> Result<Vec<PeriodRow>, RepositoryError> {
+        let result = period_dsl::period
+            .filter(period_dsl::period_schedule_id.eq_any(period_schedule_ids))
+            .load(&self.connection.connection)?;
         Ok(result)
     }
 }
