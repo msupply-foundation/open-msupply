@@ -74,13 +74,10 @@ export const useIntlUtils = () => {
   ) => getFullName(language, firstName, lastName);
 
   return {
-    // TODO: When the server supports a query to find the deployments
-    // default language, use a query to fetch it.
-    defaultLanguage: 'en',
-    isRtl,
     currentLanguage,
-    languageOptions,
     currentLanguageName,
+    isRtl,
+    languageOptions,
     changeLanguage,
     getLocaleCode,
     getUserLocale,
