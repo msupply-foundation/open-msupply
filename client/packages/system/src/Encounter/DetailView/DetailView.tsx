@@ -9,7 +9,7 @@ import {
   useBreadcrumbs,
   useFormatDateTime,
   Breadcrumb,
-  IntlUtils,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -28,7 +28,7 @@ export const DetailView: FC = () => {
   const navigate = useNavigate();
   const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
   const dateFormat = useFormatDateTime();
-  const getFullName = IntlUtils.useLocalisedFullName();
+  const { getLocalisedFullName } = useIntlUtils();
 
   const {
     data: encounter,
@@ -86,7 +86,7 @@ export const DetailView: FC = () => {
               .addQuery({ tab: 'Encounters' })
               .build()}
           >
-            {getFullName(
+            {getLocalisedFullName(
               encounter.patient.firstName,
               encounter.patient.lastName
             )}
