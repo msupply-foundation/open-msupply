@@ -24,6 +24,7 @@ pub struct InsertStocktake {
     pub is_locked: Option<bool>,
     pub master_list_id: Option<String>,
     pub location_id: Option<String>,
+    pub items_have_stock: Option<bool>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -111,6 +112,7 @@ fn generate(
         is_locked,
         location_id,
         master_list_id,
+        items_have_stock,
     }: InsertStocktake,
 ) -> Result<(StocktakeRow, Vec<StocktakeLineRow>), RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
@@ -125,7 +127,11 @@ fn generate(
         Some(location_id) => generate_lines_from_location(connection, store_id, &id, &location_id)?,
         None => Vec::new(),
     };
-    let lines = [master_list_lines, location_lines].concat();
+    let items_have_stock_lines = match items_have_stock {
+        Some(_) => generate_lines_with_stock(connection, store_id, &id)?,
+        None => Vec::new(),
+    };
+    let lines = [master_list_lines, location_lines, items_have_stock_lines].concat();
 
     Ok((
         StocktakeRow {
@@ -292,6 +298,60 @@ fn generate_lines_from_location(
     Ok(result)
 }
 
+pub fn generate_lines_with_stock(
+    connection: &StorageConnection,
+    store_id: &str,
+    stocktake_id: &str,
+) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
+    let stock_lines = StockLineRepository::new(&connection).query_by_filter(
+        StockLineFilter::new()
+            .store_id(EqualFilter::equal_to(store_id))
+            .has_packs_in_store(true),
+        Some(store_id.to_string()),
+    )?;
+
+    let result = stock_lines
+        .into_iter()
+        .map(|line| {
+            let StockLineRow {
+                id: stock_line_id,
+                item_id,
+                location_id,
+                batch,
+                pack_size,
+                cost_price_per_pack,
+                sell_price_per_pack,
+                total_number_of_packs,
+                expiry_date,
+                note,
+                supplier_id: _,
+                store_id: _,
+                on_hold: _,
+                available_number_of_packs: _,
+            } = line.stock_line_row;
+
+            StocktakeLineRow {
+                id: uuid(),
+                stocktake_id: stocktake_id.to_string(),
+                snapshot_number_of_packs: total_number_of_packs,
+                item_id,
+                location_id,
+                batch,
+                expiry_date,
+                note,
+                stock_line_id: Some(stock_line_id),
+                pack_size: Some(pack_size),
+                cost_price_per_pack: Some(cost_price_per_pack),
+                sell_price_per_pack: Some(sell_price_per_pack),
+                comment: None,
+                counted_number_of_packs: None,
+                inventory_adjustment_reason_id: None,
+            }
+        })
+        .collect();
+    Ok(result)
+}
+
 pub fn insert_stocktake(
     ctx: &ServiceContext,
     input: InsertStocktake,
@@ -399,6 +459,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: None,
                     master_list_id: None,
+                    items_have_stock: None,
                 },
             )
             .unwrap();
@@ -453,6 +514,7 @@ mod test {
                 is_locked: Some(true),
                 location_id: None,
                 master_list_id: Some("master_list_filter_test".to_string()),
+                items_have_stock: None,
             },
         );
         assert!(invalid_result.is_err());
@@ -478,6 +540,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: None,
                     master_list_id: Some(master_list_id.clone()),
+                    items_have_stock: None,
                 },
             )
             .unwrap();
@@ -526,6 +589,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: None,
                     master_list_id: Some(master_list_id.clone()),
+                    items_have_stock: None,
                 },
             )
             .unwrap();
@@ -573,6 +637,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: Some(location_id.clone()),
                     master_list_id: None,
+                    items_have_stock: None,
                 },
             )
             .unwrap();
@@ -609,6 +674,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: Some(location_id.clone()),
                     master_list_id: None,
+                    items_have_stock: None,
                 },
             )
             .unwrap();
