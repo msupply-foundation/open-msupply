@@ -95,6 +95,19 @@ export const useRequestColumns = () => {
         width: 150,
         getSortValue: rowData => rowData.requestedQuantity,
       },
+      // TODO: Should only be visible if linked requisition has approvalStatus != None)
+      {
+        key: 'approvedQuantity',
+        label: 'label.approved-quantity',
+        accessor: ({ rowData }) =>
+          rowData.linkedRequisitionLine?.approvedQuantity,
+      },
+      {
+        key: 'approvalComment',
+        label: 'label.approval-comment',
+        accessor: ({ rowData }) =>
+          rowData.linkedRequisitionLine?.approvalComment,
+      },
       GenericColumnKey.Selection,
     ],
     {

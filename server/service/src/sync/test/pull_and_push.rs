@@ -1,6 +1,5 @@
 use crate::sync::{
     api::SyncActionV5,
-    get_active_records_on_site_filter,
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
@@ -25,6 +24,7 @@ use super::{
 
 #[actix_rt::test]
 async fn test_sync_pull_and_push() {
+    // Uncomment to see logs such as Foreign key constraint failed in test
     // util::init_logger(util::LogLevel::Warn);
 
     let (_, connection, _, _) = test_db::setup_all_with_data(
@@ -40,7 +40,7 @@ async fn test_sync_pull_and_push() {
     )
     .await;
 
-    // Get push cursor before inserting pull data (so that we can test push)
+    // Get push cursor before inserting pull data (so that we can test push, excluding inserted mock data)
     let push_cursor = ChangelogRepository::new(&connection)
         .latest_cursor()
         .unwrap()
@@ -65,10 +65,14 @@ async fn test_sync_pull_and_push() {
 
     // PUSH UPSERT
     let mut test_records = get_all_push_test_records();
-    let change_log_filter = get_active_records_on_site_filter(&connection).unwrap();
+
+    // Not using get_sync_push_changelogs_filter, since this test uses record integrated via sync as push records
+    // which are usually filtered out via is_sync_updated flag
+    // let change_log_filter = get_sync_push_changelogs_filter(&connection).unwrap();
+
     // Records would have been inserted in test Pull Upsert and trigger should have inserted changelogs
     let changelogs = ChangelogRepository::new(&connection)
-        .changelogs(push_cursor, 100000, change_log_filter)
+        .changelogs(push_cursor, 100000, None /*change_log_filter*/)
         .unwrap();
     // Translate and sort
     let mut translated =
@@ -99,10 +103,10 @@ async fn test_sync_pull_and_push() {
     ]
     .concat();
     insert_all_extra_data(&test_records, &connection).await;
-    let sync_reords: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
+    let sync_records: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 
     SyncBufferRowRepository::new(&connection)
-        .upsert_many(&sync_reords)
+        .upsert_many(&sync_records)
         .unwrap();
 
     integrate_and_translate_sync_buffer(&connection, true).unwrap();

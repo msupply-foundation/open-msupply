@@ -340,7 +340,13 @@ mod tests {
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_invoice_line_translation",
-            MockDataInserts::none().units().items().names().stores(),
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .locations()
+                .stock_lines(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![mock_outbound_shipment_a()];
                 r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {

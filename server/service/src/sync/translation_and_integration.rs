@@ -171,12 +171,23 @@ impl PullUpsertRecord {
         use PullUpsertRecord::*;
         match self {
             Name(record) => NameRowRepository::new(con).upsert_one(record),
+            NameTag(record) => NameTagRowRepository::new(con).upsert_one(record),
+            NameTagJoin(record) => NameTagJoinRepository::new(con).upsert_one(record),
             Unit(record) => UnitRowRepository::new(con).upsert_one(record),
             Item(record) => ItemRowRepository::new(con).upsert_one(record),
             Store(record) => StoreRowRepository::new(con).upsert_one(record),
             MasterList(record) => MasterListRowRepository::new(con).upsert_one(record),
             MasterListLine(record) => MasterListLineRowRepository::new(con).upsert_one(record),
             MasterListNameJoin(record) => MasterListNameJoinRepository::new(con).upsert_one(record),
+            PeriodSchedule(record) => PeriodScheduleRowRepository::new(con).upsert_one(record),
+            Period(record) => PeriodRowRepository::new(con).upsert_one(record),
+            Program(record) => ProgramRowRepository::new(con).upsert_one(record),
+            ProgramRequisitionSettings(record) => {
+                ProgramRequisitionSettingsRowRepository::new(con).upsert_one(record)
+            }
+            ProgramRequisitionOrderType(record) => {
+                ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(record)
+            }
             Report(record) => ReportRowRepository::new(con).upsert_one(record),
             Location(record) => LocationRowRepository::new(con).upsert_one(record),
             StockLine(record) => StockLineRowRepository::new(con).upsert_one(record),
@@ -192,6 +203,7 @@ impl PullUpsertRecord {
                 InventoryAdjustmentReasonRowRepository::new(con).upsert_one(record)
             }
             StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
+            Barcode(record) => BarcodeRowRepository::new(con).upsert_one(record),
         }
     }
 }
@@ -202,6 +214,7 @@ impl PullDeleteRecord {
         let id = &self.id;
         match self.table {
             Name => NameRowRepository::new(con).delete(id),
+            NameTagJoin => NameTagJoinRepository::new(con).delete(id),
             Unit => UnitRowRepository::new(con).delete(id),
             Item => ItemRowRepository::new(con).delete(id),
             Store => StoreRowRepository::new(con).delete(id),

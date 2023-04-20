@@ -4,7 +4,6 @@
   "private": true,
   "devDependencies": {
     "@capacitor-community/barcode-scanner": "^3.0.3",
-    "@capacitor-community/keep-awake": "^3.0.0",
     "@capacitor/cli": "^4.7.1",
     "@capacitor/keyboard": "^4.1.1",
     "@capacitor/preferences": "^4.0.2",
