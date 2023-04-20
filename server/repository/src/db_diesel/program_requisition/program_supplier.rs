@@ -117,7 +117,7 @@ mod test {
     };
 
     #[actix_rt::test]
-    async fn program_requisition_settings_repository() {
+    async fn program_supplier_repository() {
         let name1 = NameRow {
             id: "name1".to_string(),
             ..Default::default()

@@ -295,11 +295,6 @@ impl MockDataInserts {
         self
     }
 
-    pub fn full_master_lists(mut self) -> Self {
-        self.full_master_lists = true;
-        self
-    }
-
     pub fn stock_lines(mut self) -> Self {
         self.stock_lines = true;
         self
@@ -703,12 +698,12 @@ pub fn insert_mock_data(
         for row in &mock_data.requisition_order_types {
             let repo = ProgramRequisitionOrderTypeRowRepository::new(connection);
             repo.upsert_one(row).unwrap();
+        }
 
-            if inserts.barcodes {
-                for row in &mock_data.barcodes {
-                    let repo = BarcodeRowRepository::new(connection);
-                    repo.upsert_one(row).unwrap();
-                }
+        if inserts.barcodes {
+            for row in &mock_data.barcodes {
+                let repo = BarcodeRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
             }
         }
     }
