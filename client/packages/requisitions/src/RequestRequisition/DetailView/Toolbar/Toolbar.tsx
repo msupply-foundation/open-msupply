@@ -6,6 +6,7 @@ import {
   Grid,
   useTranslation,
   SearchBar,
+  Typography,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
@@ -63,40 +64,19 @@ export const Toolbar: FC = () => {
           {orderType && (
             <InputWithLabelRow
               label={t('label.order-type')}
-              Input={
-                <BufferedTextInput
-                  disabled={true}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={orderType ?? ''}
-                />
-              }
+              Input={<Typography>{orderType ?? ''}</Typography>}
             />
           )}
           {programName && (
             <InputWithLabelRow
               label={t('label.program')}
-              Input={
-                <BufferedTextInput
-                  disabled={true}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={programName ?? ''}
-                />
-              }
+              Input={<Typography>{programName ?? ''}</Typography>}
             />
           )}
           {period && (
             <InputWithLabelRow
               label={t('label.period')}
-              Input={
-                <BufferedTextInput
-                  disabled={true}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={period?.name ?? ''}
-                />
-              }
+              Input={<Typography>{period?.name ?? ''}</Typography>}
             />
           )}
         </Grid>

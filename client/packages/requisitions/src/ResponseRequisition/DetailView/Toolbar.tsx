@@ -11,6 +11,7 @@ import {
   useTranslation,
   SearchBar,
   InfoPanel,
+  Typography,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -83,50 +84,28 @@ export const Toolbar: FC = () => {
               {orderType && (
                 <InputWithLabelRow
                   label={t('label.order-type')}
-                  Input={
-                    <BasicTextInput
-                      disabled={true}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={orderType ?? ''}
-                    />
-                  }
+                  Input={<Typography>{orderType ?? ''}</Typography>}
                 />
               )}
               {programName && (
                 <InputWithLabelRow
                   label={t('label.program')}
-                  Input={
-                    <BasicTextInput
-                      disabled={true}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={programName ?? ''}
-                    />
-                  }
+                  Input={<Typography>{programName ?? ''}</Typography>}
                 />
               )}
               {period && (
                 <InputWithLabelRow
                   label={t('label.period')}
-                  Input={
-                    <BasicTextInput
-                      disabled={true}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={period?.name ?? ''}
-                    />
-                  }
+                  Input={<Typography>{period?.name ?? ''}</Typography>}
                 />
               )}
             </Box>
           </Box>
-          <Box display="flex" flexDirection="row" gap={4}>
-            <Box display="flex" flex={1} flexDirection="column" gap={1}></Box>
-            <Box display="flex" flex={4} flexDirection="column" gap={6}>
-              {showInfo && <InfoPanel message={t('info.no-shipment')} />}
+          {showInfo && (
+            <Box padding={2}>
+              <InfoPanel message={t('info.no-shipment')} />
             </Box>
-          </Box>
+          )}
         </Grid>
         <SearchBar
           placeholder={t('placeholder.filter-items')}
