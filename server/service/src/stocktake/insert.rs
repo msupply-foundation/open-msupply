@@ -395,10 +395,11 @@ mod test {
     use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{
-            item_query_test1, mock_item_a, mock_location_1, mock_master_list_item_query_test1,
-            mock_stocktake_a, mock_store_a, mock_store_b, mock_user_account_a, MockDataInserts,
+            item_query_test1, mock_item_a, mock_item_b, mock_location_1,
+            mock_master_list_item_query_test1, mock_stocktake_a, mock_store_a, mock_store_b,
+            mock_user_account_a, MockData, MockDataInserts,
         },
-        test_db::setup_all,
+        test_db::{setup_all, setup_all_with_data},
         EqualFilter, MasterListLineRow, MasterListLineRowRepository, StockLineRow,
         StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository, StocktakeRow,
         StocktakeRowRepository, StocktakeStatus,
@@ -695,5 +696,106 @@ mod test {
             stock_line_row.unwrap().line.stock_line_id,
             Some("stock_line_row_1".to_string())
         );
+    }
+
+    #[actix_rt::test]
+    async fn insert_stocktake_with_stock() {
+        fn item_a_stock() -> StockLineRow {
+            inline_init(|s: &mut StockLineRow| {
+                s.id = "stock_line_row_1".to_string();
+                s.store_id = mock_store_a().id;
+                s.item_id = mock_item_a().id;
+                s.total_number_of_packs = 100.0;
+            })
+        }
+
+        fn item_b_stock() -> StockLineRow {
+            inline_init(|s: &mut StockLineRow| {
+                s.id = "stock_line_row_3".to_string();
+                s.store_id = mock_store_a().id;
+                s.item_id = mock_item_b().id;
+                s.total_number_of_packs = 10.0;
+            })
+        }
+
+        fn item_a_no_stock() -> StockLineRow {
+            inline_init(|s: &mut StockLineRow| {
+                s.id = "stock_line_row_2".to_string();
+                s.store_id = mock_store_a().id;
+                s.item_id = mock_item_b().id;
+                s.total_number_of_packs = 0.0;
+            })
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_stocktake_with_stock",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .name_store_joins()
+                .user_accounts()
+                .user_permissions()
+                .user_store_joins()
+                .items()
+                .units(),
+            inline_init(|m: &mut MockData| {
+                m.stock_lines = vec![item_a_stock(), item_b_stock(), item_a_no_stock()]
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.stocktake_service;
+
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_1".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    is_locked: Some(true),
+                    location_id: None,
+                    master_list_id: None,
+                    items_have_stock: None,
+                },
+            )
+            .unwrap();
+
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+            )
+            .unwrap();
+
+        assert_eq!(stocktake_rows.len(), 0);
+
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_2".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    is_locked: Some(true),
+                    location_id: None,
+                    master_list_id: None,
+                    items_have_stock: Some(true),
+                },
+            )
+            .unwrap();
+
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+            )
+            .unwrap();
+
+        assert_eq!(stocktake_rows.len(), 2);
     }
 }
