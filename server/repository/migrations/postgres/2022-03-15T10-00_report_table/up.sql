@@ -9,9 +9,7 @@ CREATE TYPE context_type AS ENUM
     'OUTBOUND_SHIPMENT',
     'REQUISITION',
     'STOCKTAKE',
-    'RESOURCE',
-    'PATIENT',
-    'DISPENSARY'
+    'RESOURCE'
 );
 
 
