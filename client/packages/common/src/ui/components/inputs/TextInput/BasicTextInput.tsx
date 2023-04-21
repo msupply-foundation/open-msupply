@@ -15,7 +15,7 @@ export type BasicTextInputProps = StandardTextFieldProps;
 
 export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
   ({ sx, InputProps, error, required, ...props }, ref) => (
-    <Box display="flex" justifyContent="flex-end" alignItems="center">
+    <Box display="flex" justifyContent="flex-end" alignItems="center" width={props.fullWidth ? '100%' : undefined}>
       <TextField
         ref={ref}
         color="secondary"
