@@ -157,20 +157,24 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       }
     }
 
-    // TODO: implement native barcode scanner
-    // if (hasNativeBarcodeScanner) {
-    //   // Check camera permission
-    //   await BarcodeScanner.checkPermission({ force: true });
+    if (hasNativeBarcodeScanner) {
+      setIsScanning(true);
+      const timeout = setTimeout(() => {
+        stopScan();
+        if (!hasElectronApi) error(t('error.unable-to-read-barcode'))();
+      }, SCAN_TIMEOUT_IN_MS);
 
-    //   // make background of WebView transparent
-    //   BarcodeScanner.hideBackground();
-    //   const result = await BarcodeScanner.startScan(); // start scanning and wait for a result
-    //   clearTimeout(timeout);
-    //   setIsScanning(false);
-    //   BarcodeScanner.showBackground();
-    //   const { content } = result;
-    //   return parseResult(content);
-    // }
+      // Check camera permission
+      await BarcodeScanner.checkPermission({ force: true });
+
+      // make background of WebView transparent
+      BarcodeScanner.hideBackground();
+      const result = await BarcodeScanner.startScan(); // start scanning and wait for a result
+      clearTimeout(timeout);
+      setIsScanning(false);
+      BarcodeScanner.showBackground();
+      callback(result);
+    }
 
     return {};
   };
