@@ -25,6 +25,13 @@ fragment RequestRow on RequisitionNode {
   theirReference
   type
   otherPartyId
+  programName
+  period {
+    name
+    startDate
+    endDate
+  }
+  orderType
 }
 
 fragment RequestLine on RequisitionLineNode {
@@ -108,6 +115,13 @@ fragment Request on RequisitionNode {
       code
     }
   }
+  programName
+  period {
+    name
+    startDate
+    endDate
+  }
+  orderType
 }
 
 query requestByNumber($storeId: String!, $requisitionNumber: Int!) {

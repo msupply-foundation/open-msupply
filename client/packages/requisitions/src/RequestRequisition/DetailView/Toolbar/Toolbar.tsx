@@ -6,6 +6,7 @@ import {
   Grid,
   useTranslation,
   SearchBar,
+  Typography,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
@@ -16,10 +17,14 @@ export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
   const isDisabled = useRequest.utils.isDisabled();
   const { itemFilter, setItemFilter } = useRequest.line.list();
-  const { theirReference, update, otherParty } = useRequest.document.fields([
-    'theirReference',
-    'otherParty',
-  ]);
+  const { theirReference, update, otherParty, programName, period, orderType } =
+    useRequest.document.fields([
+      'theirReference',
+      'otherParty',
+      'programName',
+      'period',
+      'orderType',
+    ]);
 
   return (
     <AppBarContentPortal
@@ -56,6 +61,24 @@ export const Toolbar: FC = () => {
               />
             }
           />
+          {orderType && (
+            <InputWithLabelRow
+              label={t('label.order-type')}
+              Input={<Typography>{orderType ?? ''}</Typography>}
+            />
+          )}
+          {programName && (
+            <InputWithLabelRow
+              label={t('label.program')}
+              Input={<Typography>{programName ?? ''}</Typography>}
+            />
+          )}
+          {period && (
+            <InputWithLabelRow
+              label={t('label.period')}
+              Input={<Typography>{period?.name ?? ''}</Typography>}
+            />
+          )}
         </Grid>
         <Grid
           item
