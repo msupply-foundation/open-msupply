@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Typography,
   DialogButton,
@@ -42,6 +42,20 @@ interface ItemDetailsModalProps {
   mode: ModalMode | null;
 }
 
+const useFocusNumberOfPacksInput = (draft: DraftItem | null) => {
+  const batch = draft?.barcode?.batch;
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (!batch) return;
+      const input = document.getElementById(`pack_quantity_${batch}`);
+      if (input) {
+        input.focus();
+      }
+    }, 500);
+  }, [batch]);
+};
+
 export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   isOpen,
   onClose,
@@ -68,6 +82,9 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
+  const { warning } = useNotification();
+  useFocusNumberOfPacksInput(draft);
+
   const placeholder = draftOutboundLines?.find(
     ({ type, numberOfPacks }) =>
       type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
@@ -94,7 +111,11 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
             packSize: line.packSize,
           },
         };
-        await insertBarcode(input);
+        try {
+          await insertBarcode(input);
+        } catch (error) {
+          warning(t('error.unable-to-save-barcode', { error }))();
+        }
       });
   };
 
@@ -181,6 +202,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           draftOutboundLines={draftOutboundLines}
           allocatedQuantity={getAllocatedQuantity(draftOutboundLines)}
           allocatedPacks={getAllocatedPacks(draftOutboundLines)}
+          batch={draft?.barcode?.batch}
         />
       </Grid>
     </Modal>
@@ -196,6 +218,7 @@ interface TableProps {
   draftOutboundLines: DraftOutboundLine[];
   allocatedQuantity: number;
   allocatedPacks: number;
+  batch?: string;
 }
 
 const TableWrapper: React.FC<TableProps> = ({
@@ -207,6 +230,7 @@ const TableWrapper: React.FC<TableProps> = ({
   draftOutboundLines,
   allocatedQuantity,
   allocatedPacks,
+  batch,
 }) => {
   const t = useTranslation('distribution');
 
@@ -244,6 +268,7 @@ const TableWrapper: React.FC<TableProps> = ({
         onChange={updateQuantity}
         rows={draftOutboundLines}
         item={currentItem}
+        batch={batch}
         allocatedQuantity={allocatedQuantity}
         allocatedPacks={allocatedPacks}
       />
