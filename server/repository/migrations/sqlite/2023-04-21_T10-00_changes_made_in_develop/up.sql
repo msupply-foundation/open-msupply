@@ -3,7 +3,6 @@
 -- earlier migrations had already run.
 
 -- 2021-08-15T10-00_create_name_table
--- BEGIN;
 CREATE TABLE name_new (
     id TEXT NOT NULL PRIMARY KEY,
     -- Human-readable representation of the entity associated with the name record.
@@ -58,8 +57,6 @@ CREATE TABLE name_new (
 INSERT INTO name_new SELECT * FROM name;
 DROP name;
 ALTER TABLE name_new RENAME to name;
-
--- COMMIT;
 
 -- 2022-03-15T10-00_report_table
 
