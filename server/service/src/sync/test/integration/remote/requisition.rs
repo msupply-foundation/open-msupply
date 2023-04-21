@@ -16,8 +16,9 @@ pub(crate) struct RequisitionRecordTester;
 impl SyncRecordTester for RequisitionRecordTester {
     fn test_step_data(&self, new_site_properties: &NewSiteProperties) -> Vec<TestStepData> {
         let mut result = Vec::new();
-        // STEP 1 - insert
         let store_id = &new_site_properties.store_id;
+
+        // STEP 1 - insert
         let base_requisition_row = RequisitionRow {
             id: uuid(),
             store_id: store_id.to_string(),
@@ -39,6 +40,11 @@ impl SyncRecordTester for RequisitionRecordTester {
             max_months_of_stock: 10.0,
             min_months_of_stock: 5.0,
             linked_requisition_id: None,
+            approval_status: None,
+            is_sync_update: false,
+            program_id: None,
+            period_id: None,
+            order_type: None,
         };
         let requisition_row_1 = base_requisition_row.clone();
         let requisition_line_row_1 = RequisitionLineRow {
@@ -52,6 +58,9 @@ impl SyncRecordTester for RequisitionRecordTester {
             average_monthly_consumption: 15,
             comment: None,
             snapshot_datetime: None,
+            approved_quantity: 0,
+            approval_comment: None,
+            is_sync_update: false,
         };
 
         let requisition_row_2 = inline_edit(&base_requisition_row, |mut d| {
