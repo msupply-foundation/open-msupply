@@ -3,6 +3,7 @@ import { useIsResponseDisabled } from './useIsResponseDisabled';
 import { useResponseApi } from './useResponseApi';
 import { useSupplyRequestedQuantity } from './useSupplyRequestedQuantity';
 import { useIsRemoteAuthorisation } from './useIsRemoteAuthorisation';
+import { useRequisitionPreferences } from './useRequisitionPreferences';
 
 export const Utils = {
   useCreateOutboundFromResponse,
@@ -10,4 +11,5 @@ export const Utils = {
   useResponseApi,
   useIsRemoteAuthorisation,
   useSupplyRequestedQuantity,
+  useRequisitionPreferences,
 };
