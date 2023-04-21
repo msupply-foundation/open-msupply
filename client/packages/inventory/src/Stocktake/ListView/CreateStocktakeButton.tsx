@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   BasicSpinner,
   ButtonWithIcon,
+  Checkbox,
   DialogButton,
   InputWithLabelRow,
   Select,
@@ -18,15 +19,18 @@ import {
   InsertStocktakeInput,
   useAuthContext,
 } from '@openmsupply-client/common';
+import { useStock } from 'packages/system/src/Stock/api';
 
 interface CreateStocktakeArgs {
   masterListId: string;
   locationId: string;
+  itemsHaveStock: boolean;
 }
 
 const DEFAULT_ARGS: CreateStocktakeArgs = {
   masterListId: '',
   locationId: '',
+  itemsHaveStock: false,
 };
 
 export const CreateStocktakeButton: React.FC<{
@@ -44,13 +48,17 @@ export const CreateStocktakeButton: React.FC<{
     isLoading: isLoadingLocations,
     mutate: fetchLocations,
   } = useLocation.document.listAll({ key: 'name', direction: 'asc' });
+  const { data: stockData, isLoading: isLoadingStock } = useStock.line.sorted({
+    key: 'expiryDate',
+    direction: 'asc',
+  });
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
   const [createStocktakeArgs, setCreateStocktakeArgs] =
     useState<CreateStocktakeArgs>(DEFAULT_ARGS);
 
   const generateComment = () => {
-    const { locationId, masterListId } = createStocktakeArgs;
+    const { locationId, masterListId, itemsHaveStock } = createStocktakeArgs;
     if (masterListId) {
       const masterList = masterListData?.nodes?.find(
         list => list.id === masterListId
@@ -68,6 +76,10 @@ export const CreateStocktakeButton: React.FC<{
           location: location.label,
         });
     }
+
+    if (itemsHaveStock) {
+      return t('stocktake-comment-items-have-stock-template');
+    }
   };
 
   const onChange = async () => {
@@ -75,12 +87,13 @@ export const CreateStocktakeButton: React.FC<{
       username: user ? user.name : 'unknown user',
       date: localisedDate(new Date()),
     });
-    const { locationId, masterListId } = createStocktakeArgs;
+    const { locationId, masterListId, itemsHaveStock } = createStocktakeArgs;
     const input: InsertStocktakeInput = {
       id: FnUtils.generateUUID(),
       description,
       masterListId: masterListId ? masterListId : undefined,
       locationId: locationId ? locationId : undefined,
+      itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,
       comment: generateComment(),
     };
     await mutateAsync(input);
@@ -110,7 +123,7 @@ export const CreateStocktakeButton: React.FC<{
       value: location.id,
     })) || [];
 
-  const isLoading = isLoadingMasterLists || isLoadingLocations;
+  const isLoading = isLoadingMasterLists || isLoadingLocations || isLoadingStock;
 
   useEffect(() => {
     fetchMasterLists();
@@ -194,6 +207,27 @@ export const CreateStocktakeButton: React.FC<{
                     )
                   }
                   label={t('label.location')}
+                />
+                <Box sx={{ height: 16 }} />
+                <InputWithLabelRow
+                  Input={
+                    !stockData ? (
+                      <Typography sx={{ color: 'gray.main' }}>
+                        {t('messages.no-items-with-stock')}
+                      </Typography>
+                    ) : (
+                      <Checkbox
+                        checked={createStocktakeArgs.itemsHaveStock}
+                        onChange={event => {
+                          setCreateStocktakeArgs({
+                            ...DEFAULT_ARGS,
+                            itemsHaveStock: event.target.checked,
+                          });
+                        }}
+                      />
+                    )
+                  }
+                  label={t('label.items-with-stock')}
                 />
               </Box>
             ) : (
