@@ -32,7 +32,7 @@ export const AddFromScannerButtonComponent = ({
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
-      const { content, gtin } = result;
+      const { content, gtin, batch } = result;
       const value = gtin ?? content;
       const barcodes = await getBarcodes(value);
 
@@ -41,14 +41,17 @@ export const AddFromScannerButtonComponent = ({
         const id = barcode?.itemId;
 
         if (!!id) {
-          onAddItem({ item: { id }, barcode } as DraftItem);
+          onAddItem({
+            item: { id },
+            barcode: { ...barcode, batch },
+          } as DraftItem);
           return;
         }
       }
 
       warning(t('error.no-matching-item'))();
 
-      onAddItem({ barcode: { value } } as DraftItem);
+      onAddItem({ barcode: { value, batch } } as DraftItem);
     }
   };
 

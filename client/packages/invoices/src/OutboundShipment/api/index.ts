@@ -10,4 +10,7 @@ export {
 
 export * from './hooks';
 
-export type DraftItem = { item?: ItemRowFragment; barcode?: BarcodeFragment };
+export type DraftItem = {
+  item?: ItemRowFragment;
+  barcode?: BarcodeFragment & { batch?: string };
+};
