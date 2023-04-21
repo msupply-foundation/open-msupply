@@ -65,6 +65,15 @@ fn validate(
         return Err(OutError::RequisitionAlreadyExists);
     }
 
+    // TODO: Check if we already have reached out max requisitions for this period
+    // https://github.com/openmsupply/open-msupply/issues/1599
+
+    // TODO: Check Order Type is valid for this Program
+    // https://github.com/openmsupply/open-msupply/issues/1599
+
+    // TODO: Check if the 'other_party' is a valid Program Supplier
+    // https://github.com/openmsupply/open-msupply/issues/1599
+
     let other_party = check_other_party(
         connection,
         store_id,
@@ -111,6 +120,8 @@ fn generate(
     };
 
     // Lookup program requisition settings
+    // TODO: Use `get_program_requisition_settings` from Service Layer
+    // https://github.com/openmsupply/open-msupply/issues/1599
     let program_requisition_settings = ProgramRequisitionSettingsRowRepository::new(connection)
         .find_one_by_id(&order_type.program_requisition_settings_id)?;
     let program_requisition_settings = match program_requisition_settings {
@@ -318,6 +329,7 @@ mod test_insert {
                 id: "program_order_type_id".to_owned(),
                 name: "program_order_type_name".to_owned(),
                 program_requisition_settings_id: program_id.clone(),
+                max_order_per_period: 1,
                 ..Default::default()
             })
             .unwrap();
@@ -350,5 +362,8 @@ mod test_insert {
             Some("program_order_type_name".to_string())
         );
         assert_eq!(new_row.program_id, Some(program_id));
+
+        // TODO Validate that we can't create more requisitions the `max_order_per_period` in requisition_settings
+        // https://github.com/openmsupply/open-msupply/issues/1599
     }
 }
