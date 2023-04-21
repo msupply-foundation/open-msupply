@@ -19,12 +19,22 @@ export const Toolbar: FC = () => {
   const isDisabled = useRequest.utils.isDisabled();
   const { itemFilter, setItemFilter } = useRequest.line.list();
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
-  const { linkedRequisition, theirReference, update, otherParty } =
-    useRequest.document.fields([
-      'theirReference',
-      'otherParty',
-      'linkedRequisition',
-    ]);
+  const {
+    linkedRequisition,
+    theirReference,
+    update,
+    otherParty,
+    orderType,
+    programName,
+    period,
+  } = useRequest.document.fields([
+    'theirReference',
+    'otherParty',
+    'linkedRequisition',
+    'programName',
+    'period',
+    'orderType',
+  ]);
 
   return (
     <AppBarContentPortal
@@ -73,6 +83,25 @@ export const Toolbar: FC = () => {
                   )}
                 </Typography>
               }
+            />
+          )}
+
+          {orderType && (
+            <InputWithLabelRow
+              label={t('label.order-type')}
+              Input={<Typography>{orderType ?? ''}</Typography>}
+            />
+          )}
+          {programName && (
+            <InputWithLabelRow
+              label={t('label.program')}
+              Input={<Typography>{programName ?? ''}</Typography>}
+            />
+          )}
+          {period && (
+            <InputWithLabelRow
+              label={t('label.period')}
+              Input={<Typography>{period?.name ?? ''}</Typography>}
             />
           )}
         </Grid>
