@@ -159,7 +159,7 @@ fn generate(
 mod test_insert {
     use crate::{
         requisition::request_requisition::{
-            InsertRequestRequisition, InsertRequestRequisitionError as ServiceError,
+            InsertProgramRequestRequisition, InsertRequestRequisitionError as ServiceError,
         },
         service_provider::ServiceProvider,
     };
@@ -175,7 +175,7 @@ mod test_insert {
     use util::{inline_edit, inline_init};
 
     #[actix_rt::test]
-    async fn insert_request_requisition_errors() {
+    async fn insert_program_request_requisition_errors() {
         fn not_visible() -> NameRow {
             inline_init(|r: &mut NameRow| {
                 r.id = "not_visible".to_string();
@@ -183,7 +183,7 @@ mod test_insert {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "insert_request_requisition_errors",
+            "insert_program_request_requisition_errors",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.names = vec![not_visible()];
@@ -199,11 +199,12 @@ mod test_insert {
 
         // RequisitionAlreadyExists
         assert_eq!(
-            service.insert_request_requisition(
+            service.insert_program_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = mock_request_draft_requisition().id;
-                }),
+                InsertProgramRequestRequisition {
+                    id: mock_request_draft_requisition().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::RequisitionAlreadyExists)
         );
@@ -211,57 +212,64 @@ mod test_insert {
         let name_store_b = mock_name_store_b();
         // OtherPartyNotASupplier
         assert_eq!(
-            service.insert_request_requisition(
+            service.insert_program_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_owned();
-                    r.other_party_id = name_store_b.id.clone();
-                }),
+                InsertProgramRequestRequisition {
+                    id: "new_program_request_requisition".to_owned(),
+                    other_party_id: name_store_b.id.clone(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
 
         // OtherPartyNotVisible
         assert_eq!(
-            service.insert_request_requisition(
+            service.insert_program_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_id".to_string();
-                    r.other_party_id = not_visible().id;
-                })
+                InsertProgramRequestRequisition {
+                    id: "new_program_request_requisition".to_owned(),
+                    other_party_id: not_visible().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
 
         // OtherPartyDoesNotExist
         assert_eq!(
-            service.insert_request_requisition(
+            service.insert_program_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_owned();
-                    r.other_party_id = "invalid".to_owned();
-                }),
+                InsertProgramRequestRequisition {
+                    id: "new_program_request_requisition".to_owned(),
+                    other_party_id: "invalid".to_string(),
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
 
         // OtherPartyIsNotAStore
         assert_eq!(
-            service.insert_request_requisition(
+            service.insert_program_request_requisition(
                 &context,
-                inline_init(|r: &mut InsertRequestRequisition| {
-                    r.id = "new_request_requisition".to_owned();
-                    r.other_party_id = mock_name_a().id;
-                }),
+                InsertProgramRequestRequisition {
+                    id: "new_program_request_requisition".to_owned(),
+                    other_party_id: mock_name_a().id,
+                    ..Default::default()
+                }
             ),
             Err(ServiceError::OtherPartyIsNotAStore)
         );
     }
 
     #[actix_rt::test]
-    async fn insert_request_requisition_success() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_request_requisition_success", MockDataInserts::all()).await;
+    async fn insert_program_request_requisition_success() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_program_request_requisition_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -272,17 +280,17 @@ mod test_insert {
         let before_insert = Utc::now().naive_utc();
 
         let result = service
-            .insert_request_requisition(
+            .insert_program_request_requisition(
                 &context,
-                InsertRequestRequisition {
+                InsertProgramRequestRequisition {
                     id: "new_request_requisition".to_owned(),
                     other_party_id: mock_name_store_c().id,
                     colour: Some("new colour".to_owned()),
                     their_reference: Some("new their_reference".to_owned()),
                     comment: Some("new comment".to_owned()),
-                    max_months_of_stock: 1.0,
-                    min_months_of_stock: 0.5,
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
+                    program_order_type_id: "program_order_type_id".to_owned(),
+                    period_id: "period_id".to_owned(),
                 },
             )
             .unwrap();

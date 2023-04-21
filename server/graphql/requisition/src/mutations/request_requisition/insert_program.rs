@@ -1,11 +1,6 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::{
-    simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible},
-    standard_graphql_error::validate_auth,
-    standard_graphql_error::StandardGraphqlError,
-    ContextExt,
-};
+use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
@@ -16,9 +11,7 @@ use service::{
 };
 use util::{constants::expected_delivery_date_offset, date_now_with_offset};
 
-use crate::mutations::request_requisition::InsertErrorInterface;
-
-use super::{InsertError, InsertResponse};
+use super::{map_error, InsertError, InsertResponse};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertProgramRequestRequisitionInput")]
@@ -95,36 +88,6 @@ impl InsertProgramRequestRequisitionInput {
             period_id,
         }
     }
-}
-
-fn map_error(error: InsertRequestRequisitionError) -> Result<InsertErrorInterface> {
-    use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
-
-    let graphql_error = match error {
-        // Structured Errors
-        InsertRequestRequisitionError::OtherPartyNotASupplier => {
-            return Ok(InsertErrorInterface::OtherPartyNotASupplier(
-                OtherPartyNotASupplier,
-            ))
-        }
-        InsertRequestRequisitionError::OtherPartyNotVisible => {
-            return Ok(InsertErrorInterface::OtherPartyNotVisible(
-                OtherPartyNotVisible,
-            ))
-        }
-        // Standard Graphql Errors
-        InsertRequestRequisitionError::RequisitionAlreadyExists => BadUserInput(formatted_error),
-        InsertRequestRequisitionError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
-
-        InsertRequestRequisitionError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
-        InsertRequestRequisitionError::NewlyCreatedRequisitionDoesNotExist => {
-            InternalError(formatted_error)
-        }
-        InsertRequestRequisitionError::DatabaseError(_) => InternalError(formatted_error),
-    };
-
-    Err(graphql_error.extend())
 }
 
 #[cfg(test)]
