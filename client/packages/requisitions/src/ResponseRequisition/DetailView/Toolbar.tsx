@@ -11,6 +11,7 @@ import {
   useTranslation,
   SearchBar,
   InfoPanel,
+  Typography,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -83,40 +84,19 @@ export const Toolbar: FC = () => {
               {orderType && (
                 <InputWithLabelRow
                   label={t('label.order-type')}
-                  Input={
-                    <BasicTextInput
-                      disabled={true}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={orderType ?? ''}
-                    />
-                  }
+                  Input={<Typography>{orderType ?? ''}</Typography>}
                 />
               )}
               {programName && (
                 <InputWithLabelRow
                   label={t('label.program')}
-                  Input={
-                    <BasicTextInput
-                      disabled={true}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={programName ?? ''}
-                    />
-                  }
+                  Input={<Typography>{programName ?? ''}</Typography>}
                 />
               )}
               {period && (
                 <InputWithLabelRow
                   label={t('label.period')}
-                  Input={
-                    <BasicTextInput
-                      disabled={true}
-                      size="small"
-                      sx={{ width: 250 }}
-                      value={period?.name ?? ''}
-                    />
-                  }
+                  Input={<Typography>{period?.name ?? ''}</Typography>}
                 />
               )}
             </Box>
