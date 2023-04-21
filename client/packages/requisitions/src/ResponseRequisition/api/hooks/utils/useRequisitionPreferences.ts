@@ -3,8 +3,8 @@ import { useAuthContext } from '@openmsupply-client/common';
 export const useRequisitionPreferences = () => {
   const { store } = useAuthContext();
 
-  const authoriseCustomerRequisitions =
+  const authoriseResponseRequisitions =
     !!store?.preferences?.responseRequisitionRequiresAuthorisation;
 
-  return { authoriseCustomerRequisitions };
+  return { authoriseResponseRequisitions };
 };

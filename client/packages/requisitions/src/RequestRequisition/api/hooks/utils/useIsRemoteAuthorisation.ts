@@ -2,15 +2,13 @@ import { RequisitionNodeApprovalStatus } from '@common/types';
 import { useRequest } from '..';
 
 export const useIsRemoteAuthorisation = () => {
-  const { approvalStatus, linkedRequisition } = useRequest.document.fields([
-    'approvalStatus',
+  const { linkedRequisition } = useRequest.document.fields([
     'linkedRequisition',
   ]);
 
   const linkedRequisitionStatus =
     linkedRequisition?.approvalStatus ?? RequisitionNodeApprovalStatus.None;
   const usesRemoteAuthorisation =
-    approvalStatus != RequisitionNodeApprovalStatus.None ||
     linkedRequisitionStatus != RequisitionNodeApprovalStatus.None;
 
   return { usesRemoteAuthorisation };

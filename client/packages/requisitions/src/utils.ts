@@ -8,6 +8,8 @@ import {
   useTranslation,
   TypedTFunction,
   Formatter,
+  RequisitionNodeApprovalStatus,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { ResponseRowFragment } from './ResponseRequisition/api';
 
@@ -123,3 +125,24 @@ export const responsesToCsv = (
 export const isRequestLinePlaceholderRow = (
   row: RequestLineFragment
 ): boolean => row.requestedQuantity === 0;
+
+export const getApprovalStatusText = (
+  approvalStatus?: RequisitionNodeApprovalStatus
+): LocaleKey => {
+  if (!approvalStatus) return 'approval-status.none';
+
+  switch (approvalStatus) {
+    case RequisitionNodeApprovalStatus.Approved:
+      return 'approval-status.approved';
+    case RequisitionNodeApprovalStatus.Denied:
+      return 'approval-status.denied';
+    case RequisitionNodeApprovalStatus.None:
+      return 'approval-status.none';
+    case RequisitionNodeApprovalStatus.Pending:
+      return 'approval-status.pending';
+    default:
+      noOtherVariants(approvalStatus);
+  }
+  // this is just to keep ts linter happy - we won't ever get here
+  return 'approval-status.none';
+};

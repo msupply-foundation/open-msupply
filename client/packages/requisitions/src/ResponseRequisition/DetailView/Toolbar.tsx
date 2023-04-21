@@ -33,7 +33,7 @@ export const Toolbar: FC = () => {
   const { onDelete } = useResponse.line.delete();
   const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
   const showInfo = noLinkedShipments && !isDisabled;
-  const { authoriseCustomerRequisitions } = useResponse.utils.preferences();
+  const { authoriseResponseRequisitions } = useResponse.utils.preferences();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -74,7 +74,7 @@ export const Toolbar: FC = () => {
                   />
                 }
               />
-              {authoriseCustomerRequisitions && (
+              {authoriseResponseRequisitions && (
                 <InputWithLabelRow
                   label={t('label.auth-status')}
                   Input={
