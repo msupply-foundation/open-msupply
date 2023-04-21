@@ -28,7 +28,7 @@ export const AddFromScannerButtonComponent = ({
   const filterByName = { existsForNameId: { equalTo: otherPartyId } };
   const { hasBarcodeScanner, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
-  const { warning } = useNotification();
+  const { error, warning } = useNotification();
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
@@ -55,11 +55,15 @@ export const AddFromScannerButtonComponent = ({
     }
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (isScanning) {
       stopScan();
     } else {
-      startScanning(handleScanResult);
+      try {
+        await startScanning(handleScanResult);
+      } catch (e) {
+        error(t('error.unable-to-start-scanning', { error: e }))();
+      }
     }
   };
 

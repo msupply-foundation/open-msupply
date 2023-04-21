@@ -20,6 +20,8 @@ export const useOutboundLineEditRows = (
     incorrectBatchRows,
   } = useMemo(() => {
     const placeholderRow = rows.find(isA.placeholderLine);
+    const rowsIncludeScannedBatch =
+      !!batch && rows.some(row => row.stockLine?.batch === batch);
 
     const rowsWithoutPlaceholder = rows
       .filter(line => !isA.placeholderLine(line))
@@ -51,7 +53,7 @@ export const useOutboundLineEditRows = (
         return;
       }
 
-      if (!!batch && row.stockLine?.batch !== batch) {
+      if (rowsIncludeScannedBatch && row.stockLine?.batch !== batch) {
         incorrectBatchRows.push(row);
         return;
       }

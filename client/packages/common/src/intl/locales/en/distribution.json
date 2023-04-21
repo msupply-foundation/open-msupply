@@ -21,6 +21,7 @@
   "error.requisition-not-found": "Requisition not found",
   "error.shipment-not-found": "Shipment not found",
   "error.unable-to-save-barcode": "Unable to save the barcode for this item: {{error}}",
+  "error.unable-to-start-scanning": "Unable to start scanning: {{error}}",
   "heading.are-you-sure": "Are you sure?",
   "heading.cannot-do-that": "Can't do that!",
   "heading.invoice-details": "Invoice Details",
