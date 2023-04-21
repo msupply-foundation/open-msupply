@@ -40,10 +40,7 @@ impl UserStoreNode {
     }
 
     pub async fn preferences(&self, ctx: &Context<'_>) -> Result<StorePreferenceNode> {
-        let connection = ctx.get_connection_manager().connection()?;
-        let store_preferences = get_store_preferences(&connection, &self.user_store.store_row.id)?;
-
-        Ok(store_preferences.into())
+        self.user_store.store_preferences.clone().into()
     }
 }
 

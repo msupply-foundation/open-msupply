@@ -13,12 +13,15 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnDescription,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestRowFragment, useRequest } from '../api';
-import { getRequisitionTranslator, isRequestDisabled } from '../../utils';
+import {
+  getApprovalStatusText,
+  getRequisitionTranslator,
+  isRequestDisabled,
+} from '../../utils';
 
 const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -70,11 +73,7 @@ export const RequestRequisitionListView: FC = () => {
       minWidth: 150,
       sortable: false,
       accessor: ({ rowData }) =>
-        t(
-          `approval-status.${String(
-            rowData.linkedRequisition?.approvalStatus
-          ).toLowerCase()}` as LocaleKey
-        ),
+        t(getApprovalStatusText(rowData.linkedRequisition?.approvalStatus)),
     });
   }
 

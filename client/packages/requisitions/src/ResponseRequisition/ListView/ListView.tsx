@@ -11,12 +11,15 @@ import {
   useTranslation,
   NothingHere,
   useUrlQueryParams,
-  LocaleKey,
   ColumnDescription,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getRequisitionTranslator, isResponseDisabled } from '../../utils';
+import {
+  getApprovalStatusText,
+  getRequisitionTranslator,
+  isResponseDisabled,
+} from '../../utils';
 import { useResponse, ResponseRowFragment } from '../api';
 
 const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
@@ -39,7 +42,7 @@ export const ResponseRequisitionListView: FC = () => {
   } = useUrlQueryParams({ filterKey: 'comment' });
   const { data, isError, isLoading } = useResponse.document.list();
   const pagination = { page, first, offset };
-  const { authoriseCustomerRequisitions } = useResponse.utils.preferences();
+  const { authoriseResponseRequisitions } = useResponse.utils.preferences();
   useDisableResponseRows(data?.nodes);
 
   const columnDefinitions: ColumnDescription<ResponseRowFragment>[] = [
@@ -59,22 +62,15 @@ export const ResponseRequisitionListView: FC = () => {
     ],
   ];
 
-  if (authoriseCustomerRequisitions) {
-    columnDefinitions.push(
-      // TODO Would ideally be a status (combination of requisition.status and requisition.approvalStatus) ?
-      {
-        key: 'approvalStatus',
-        label: 'label.auth-status',
-        minWidth: 150,
-        sortable: false,
-        accessor: ({ rowData }) =>
-          t(
-            `approval-status.${String(
-              rowData.approvalStatus
-            ).toLowerCase()}` as LocaleKey
-          ),
-      }
-    );
+  if (authoriseResponseRequisitions) {
+    columnDefinitions.push({
+      key: 'approvalStatus',
+      label: 'label.auth-status',
+      minWidth: 150,
+      sortable: false,
+      accessor: ({ rowData }) =>
+        t(getApprovalStatusText(rowData.approvalStatus)),
+    });
   }
   columnDefinitions.push(['comment', { minWidth: 400 }]);
 
