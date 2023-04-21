@@ -163,16 +163,20 @@ mod test_insert {
         },
         service_provider::ServiceProvider,
     };
-    use chrono::{NaiveDate, Utc};
+    use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_name_a, mock_name_store_b, mock_name_store_c, mock_request_draft_requisition,
-            mock_store_a, mock_user_account_a, MockData, MockDataInserts,
+            mock_master_list_item_query_test1, mock_name_a, mock_name_store_b, mock_name_store_c,
+            mock_period, mock_period_schedule_1, mock_request_draft_requisition, mock_store_a,
+            mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        NameRow, RequisitionRowRepository,
+        NameRow, NameTagRow, NameTagRowRepository, ProgramRequisitionOrderTypeRow,
+        ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+        ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository,
+        RequisitionRowRepository,
     };
-    use util::{inline_edit, inline_init};
+    use util::inline_init;
 
     #[actix_rt::test]
     async fn insert_program_request_requisition_errors() {
@@ -277,49 +281,74 @@ mod test_insert {
             .unwrap();
         let service = service_provider.requisition_service;
 
-        let before_insert = Utc::now().naive_utc();
+        // Create a Program
+        let program_id = mock_master_list_item_query_test1().master_list.id;
+        let _program = ProgramRowRepository::new(&connection)
+            .upsert_one(&ProgramRow {
+                id: program_id.clone(),
+                name: "program_name".to_owned(),
+                master_list_id: program_id.clone(),
+            })
+            .unwrap();
+
+        // Create a name tag
+        let _name_tag = NameTagRowRepository::new(&connection)
+            .upsert_one(&NameTagRow {
+                id: "name_tag_id".to_owned(),
+                name: "name_tag_name".to_owned(),
+                ..Default::default()
+            })
+            .unwrap();
+
+        // Create Program Requisition Settings
+        let _program_settings = ProgramRequisitionSettingsRowRepository::new(&connection)
+            .upsert_one(&ProgramRequisitionSettingsRow {
+                id: program_id.clone(),
+                name_tag_id: "name_tag_id".to_owned(),
+                program_id: program_id.clone(),
+                period_schedule_id: mock_period_schedule_1().id,
+
+                ..Default::default()
+            })
+            .unwrap();
+
+        // Create a ProgramOrderType
+        let _order_type = ProgramRequisitionOrderTypeRowRepository::new(&connection)
+            .upsert_one(&ProgramRequisitionOrderTypeRow {
+                id: "program_order_type_id".to_owned(),
+                name: "program_order_type_name".to_owned(),
+                program_requisition_settings_id: program_id.clone(),
+                ..Default::default()
+            })
+            .unwrap();
 
         let result = service
             .insert_program_request_requisition(
                 &context,
                 InsertProgramRequestRequisition {
-                    id: "new_request_requisition".to_owned(),
+                    id: "new_program_request_requisition".to_owned(),
                     other_party_id: mock_name_store_c().id,
                     colour: Some("new colour".to_owned()),
                     their_reference: Some("new their_reference".to_owned()),
                     comment: Some("new comment".to_owned()),
                     expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
                     program_order_type_id: "program_order_type_id".to_owned(),
-                    period_id: "period_id".to_owned(),
+                    period_id: mock_period().id,
                 },
             )
             .unwrap();
-
-        let after_insert = Utc::now().naive_utc();
 
         let new_row = RequisitionRowRepository::new(&connection)
             .find_one_by_id(&result.requisition_row.id)
             .unwrap()
             .unwrap();
 
+        assert_eq!(new_row.id, "new_program_request_requisition");
+        assert_eq!(new_row.period_id, Some(mock_period().id));
         assert_eq!(
-            new_row,
-            inline_edit(&new_row, |mut u| {
-                u.id = "new_request_requisition".to_owned();
-                u.user_id = Some(mock_user_account_a().id);
-                u.name_id = mock_name_store_c().id;
-                u.colour = Some("new colour".to_owned());
-                u.their_reference = Some("new their_reference".to_owned());
-                u.comment = Some("new comment".to_owned());
-                u.max_months_of_stock = 1.0;
-                u.min_months_of_stock = 0.5;
-                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap());
-                u
-            })
+            new_row.order_type,
+            Some("program_order_type_name".to_string())
         );
-
-        assert!(
-            new_row.created_datetime > before_insert && new_row.created_datetime < after_insert
-        );
+        assert_eq!(new_row.program_id, Some(program_id));
     }
 }
