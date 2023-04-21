@@ -42,7 +42,7 @@ export const ResponseRequisitionListView: FC = () => {
   } = useUrlQueryParams({ filterKey: 'comment' });
   const { data, isError, isLoading } = useResponse.document.list();
   const pagination = { page, first, offset };
-  const { authoriseResponseRequisitions } = useResponse.utils.preferences();
+  const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
   useDisableResponseRows(data?.nodes);
 
   const columnDefinitions: ColumnDescription<ResponseRowFragment>[] = [
@@ -88,7 +88,7 @@ export const ResponseRequisitionListView: FC = () => {
     },
   ];
 
-  if (authoriseResponseRequisitions) {
+  if (isRemoteAuthorisation) {
     columnDefinitions.push({
       key: 'approvalStatus',
       label: 'label.auth-status',

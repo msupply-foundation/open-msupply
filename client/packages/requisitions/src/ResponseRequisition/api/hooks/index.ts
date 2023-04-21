@@ -23,7 +23,7 @@ export const useResponse = {
     api: Utils.useResponseApi,
     createOutbound: Utils.useCreateOutboundFromResponse,
     isDisabled: Utils.useIsResponseDisabled,
-    preferences: Utils.useRequisitionPreferences,
+    isRemoteAuthorisation: Utils.useIsRemoteAuthorisation,
     supplyRequested: Utils.useSupplyRequestedQuantity,
   },
 };
