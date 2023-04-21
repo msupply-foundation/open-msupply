@@ -28,6 +28,13 @@ fragment RequestRow on RequisitionNode {
   linkedRequisition {
     approvalStatus
   }
+  programName
+  period {
+    name
+    startDate
+    endDate
+  }
+  orderType
 }
 
 fragment RequestLine on RequisitionLineNode {
@@ -116,6 +123,13 @@ fragment Request on RequisitionNode {
   linkedRequisition {
     approvalStatus
   }
+  programName
+  period {
+    name
+    startDate
+    endDate
+  }
+  orderType
 }
 
 query requestByNumber($storeId: String!, $requisitionNumber: Int!) {

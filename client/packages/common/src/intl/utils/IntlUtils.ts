@@ -59,6 +59,13 @@ export const IntlUtils = {
     if (locales.includes(supportedLanguage)) {
       return supportedLanguage;
     }
+
+    // Handle languages such as en-US or fr-FR
+    const baseLanguage = supportedLanguage.split('-')[0] as SupportedLocales;
+    if (locales.includes(baseLanguage)) {
+      return baseLanguage;
+    }
+
     if (!EnvUtils.isProduction()) {
       throw new Error(`Language '${language}' not supported`);
     }

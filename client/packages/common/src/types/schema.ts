@@ -1022,6 +1022,18 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
+export type InsertProgramRequestRequisitionInput = {
+  colour?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
+  /** Defaults to 2 weeks from now */
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  otherPartyId: Scalars['String'];
+  periodId: Scalars['String'];
+  programOrderTypeId: Scalars['String'];
+  theirReference?: InputMaybe<Scalars['String']>;
+};
+
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
   error: InsertRequestRequisitionErrorInterface;
@@ -1652,6 +1664,7 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  insertProgramRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -1857,6 +1870,12 @@ export type MutationsInsertOutboundShipmentServiceLineArgs = {
 
 export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
   input: InsertOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertProgramRequestRequisitionArgs = {
+  input: InsertProgramRequestRequisitionInput;
   storeId: Scalars['String'];
 };
 
@@ -2736,7 +2755,10 @@ export enum RequisitionSortFieldInput {
   CreatedDatetime = 'createdDatetime',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   FinalisedDatetime = 'finalisedDatetime',
+  OrderType = 'orderType',
   OtherPartyName = 'otherPartyName',
+  PeriodName = 'periodName',
+  ProgramName = 'programName',
   RequisitionNumber = 'requisitionNumber',
   SentDatetime = 'sentDatetime',
   Status = 'status',
