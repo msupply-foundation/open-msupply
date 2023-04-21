@@ -13,7 +13,7 @@ export const useResponseColumns = () => {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const { authoriseResponseRequisitions } = useResponse.utils.preferences();
+  const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     getCommentPopoverColumn(),
     [
@@ -64,7 +64,7 @@ export const useResponseColumns = () => {
     ],
   ];
 
-  if (authoriseResponseRequisitions) {
+  if (isRemoteAuthorisation) {
     columnDefinitions.push({
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
