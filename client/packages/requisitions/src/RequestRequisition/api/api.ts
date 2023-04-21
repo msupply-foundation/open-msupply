@@ -51,6 +51,15 @@ const requestParser = {
       case 'status': {
         return RequisitionSortFieldInput.Status;
       }
+      case 'orderType': {
+        return RequisitionSortFieldInput.OrderType;
+      }
+      case 'period': {
+        return RequisitionSortFieldInput.PeriodName;
+      }
+      case 'programName': {
+        return RequisitionSortFieldInput.ProgramName;
+      }
 
       case 'sentDatetime':
       case 'finalisedDatetime':
