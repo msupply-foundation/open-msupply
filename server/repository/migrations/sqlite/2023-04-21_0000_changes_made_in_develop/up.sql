@@ -1,6 +1,10 @@
--- Create name table.
+-- These changes were originally inserted into an earlier migration on develop,
+-- which means they won't run when updating to a "programs" branch if the
+-- earlier migrations had already run.
 
-CREATE TABLE name (
+-- 2021-08-15T10-00_create_name_table
+BEGIN;
+CREATE TABLE name_new (
     id TEXT NOT NULL PRIMARY KEY,
     -- Human-readable representation of the entity associated with the name record.
     name TEXT NOT NULL,
@@ -23,6 +27,7 @@ CREATE TABLE name (
     gender TEXT CHECK (gender IN (
         'FEMALE',
         'MALE',
+        'TRANSGENDER',
         'TRANSGENDER_MALE',
         'TRANSGENDER_MALE_HORMONE',
         'TRANSGENDER_MALE_SURGICAL',
@@ -44,5 +49,19 @@ CREATE TABLE name (
     is_manufacturer BOOLEAN,
     is_donor BOOLEAN,
     on_hold BOOLEAN,
-    created_datetime TIMESTAMP
-)
+    created_datetime TIMESTAMP,
+    is_deceased BOOLEAN,
+    national_health_number TEXT
+);
+
+INSERT INTO name_new SELECT * FROM name;
+DROP name;
+ALTER TABLE name_new RENAME to name;
+
+COMMIT;
+
+-- 2022-03-15T10-00_report_table
+
+
+-- 2022-03-25T14-30_create_user_permission_table
+
