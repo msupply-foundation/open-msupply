@@ -6,7 +6,7 @@ use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 use repository::{Language, User, UserStore};
-use service::{permission::permissions, store_preference::get_store_preferences};
+use service::permission::permissions;
 
 pub struct UserStoreNode {
     user_store: UserStore,
@@ -39,8 +39,8 @@ impl UserStoreNode {
         Ok(name_row.name)
     }
 
-    pub async fn preferences(&self, ctx: &Context<'_>) -> Result<StorePreferenceNode> {
-        self.user_store.store_preferences.clone().into()
+    pub async fn preferences(&self) -> Result<StorePreferenceNode> {
+        Ok(self.user_store.store_preferences.clone().into())
     }
 }
 
