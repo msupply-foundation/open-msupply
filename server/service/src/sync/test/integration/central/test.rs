@@ -42,4 +42,9 @@ mod tests {
         test_central_sync_record("period_schedule_and_period", &PeriodScheduleAndPeriodTester)
             .await;
     }
+
+    #[actix_rt::test]
+    async fn integration_sync_central_barcode() {
+        test_central_sync_record("barcode", &ReportTester).await;
+    }
 }
