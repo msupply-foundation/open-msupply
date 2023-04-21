@@ -108,7 +108,7 @@ impl InsertInput {
     }
 }
 
-fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
