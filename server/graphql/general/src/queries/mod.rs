@@ -35,6 +35,8 @@ pub mod item_counts;
 pub use self::item_counts::*;
 pub mod store_preference;
 pub use self::store_preference::*;
+pub mod requisition_counts;
+pub use self::requisition_counts::*;
 
 #[cfg(test)]
 mod tests;
