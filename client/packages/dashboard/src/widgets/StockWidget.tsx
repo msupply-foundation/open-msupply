@@ -90,7 +90,7 @@ export const StockWidget: React.FC = () => {
                   value: formatNumber.round(expiryData?.expiringSoon),
                 },
               ]}
-            />
+            />            
             <StatsPanel
               error={itemCountsError as ApiException}
               isError={hasItemStatsError}
@@ -114,6 +114,12 @@ export const StockWidget: React.FC = () => {
                     count: Math.round(itemCountsData?.lowStock || 0),
                   }),
                   value: formatNumber.round(itemCountsData?.lowStock || 0),
+                },
+                {
+                  label: t('label.more-than-six-months-stock-items', {
+                    count: Math.round(itemCountsData?.moreThanSixMonthsStock || 0),
+                  }),
+                  value: formatNumber.round(itemCountsData?.moreThanSixMonthsStock || 0),
                 },
               ]}
             />

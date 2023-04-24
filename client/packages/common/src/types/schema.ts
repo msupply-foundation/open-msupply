@@ -1399,6 +1399,7 @@ export type ItemCounts = {
 export type ItemCountsResponse = {
   __typename: 'ItemCountsResponse';
   lowStock: Scalars['Int'];
+  moreThanSixMonthsStock: Scalars['Int'];
   noStock: Scalars['Int'];
   total: Scalars['Int'];
 };
