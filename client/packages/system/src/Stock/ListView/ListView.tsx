@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
+import { AppBarButtons } from './AppBarButtons';
 
 const StockListComponent: FC = () => {
   const {
@@ -91,6 +92,7 @@ const StockListComponent: FC = () => {
       )}
 
       <Toolbar filter={filter} />
+      <AppBarButtons sortBy={sortBy} />
       <DataTable
         id="stock-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
