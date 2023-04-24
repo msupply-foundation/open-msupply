@@ -125,6 +125,26 @@ impl InboundInvoiceCounts {
             store_id: self.store_id.clone(),
         }
     }
+
+    async fn not_delivered(&self, ctx: &Context<'_>) -> Result<i64> {
+        let service_provider = ctx.service_provider();
+        let service_ctx = service_provider.basic_context().map_err(|_| Error {
+            message: "InternalError".to_string(),
+            source: None,
+            extensions: None,
+        })?;
+        let service = &service_provider.invoice_count_service;
+
+        let not_delivered: i64 = service
+            .inbound_invoices_not_delivered_count(&service_ctx, &self.store_id)
+            .map_err(|_| Error {
+                message: "InternalError".to_string(),
+                source: None,
+                extensions: None,
+            })?;
+
+        Ok(not_delivered)
+    }
 }
 
 pub struct InvoiceCounts {
