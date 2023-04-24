@@ -433,11 +433,11 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   dashboard: {
     shipmentCount: async (): Promise<{
-      toBePicked: number;
+      notShipped: number;
     }> => {
       const result = await sdk.invoiceCounts({ storeId });
       return {
-        toBePicked: result?.invoiceCounts?.outbound.toBePicked ?? 0,
+        notShipped: result?.invoiceCounts?.outbound.notShipped ?? 0,
       };
     },
   },

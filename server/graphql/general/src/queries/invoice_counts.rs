@@ -90,8 +90,8 @@ impl OutboundInvoiceCounts {
         }
     }
 
-    /// Number of outbound shipments ready to be picked
-    async fn to_be_picked(&self, ctx: &Context<'_>) -> Result<i64> {
+    /// Number of outbound shipments not shipped yet
+    async fn not_shipped(&self, ctx: &Context<'_>) -> Result<i64> {
         let service_provider = ctx.service_provider();
         let service_ctx = service_provider.basic_context().map_err(|_| Error {
             message: "InternalError".to_string(),
@@ -99,14 +99,14 @@ impl OutboundInvoiceCounts {
             extensions: None,
         })?;
         let service = &service_provider.invoice_count_service;
-        let to_by_picked = service
-            .outbound_invoices_pickable_count(&service_ctx, &self.store_id)
+        let not_shipped: i64 = service
+            .outbound_invoices_not_shipped_count(&service_ctx, &self.store_id)
             .map_err(|_| Error {
                 message: "InternalError".to_string(),
                 source: None,
                 extensions: None,
             })?;
-        Ok(to_by_picked)
+        Ok(not_shipped)
     }
 }
 

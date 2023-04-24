@@ -63,7 +63,7 @@ export const StockWidget: React.FC = () => {
           }}
         />
       ) : null}
-      <Widget title={t('heading-stock')}>
+      <Widget title={t('inventory-management')}>
         <Grid
           container
           justifyContent="flex-start"
