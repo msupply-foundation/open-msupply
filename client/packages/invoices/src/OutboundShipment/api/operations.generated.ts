@@ -48,6 +48,13 @@ export type InvoiceCountsQueryVariables = Types.Exact<{
 
 export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', notShipped: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
+export type RequisitionCountsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type RequisitionCountsQuery = { __typename: 'Queries', requisitionCounts: { __typename: 'RequisitionCounts', newResponseRequisitionCount: number } };
+
 export type InsertOutboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String'];
   otherPartyId: Types.Scalars['String'];
@@ -342,6 +349,13 @@ export const InvoiceCountsDocument = gql`
       }
       notShipped
     }
+  }
+}
+    `;
+export const RequisitionCountsDocument = gql`
+    query requisitionCounts($storeId: String!) {
+  requisitionCounts(storeId: $storeId) {
+    newResponseRequisitionCount
   }
 }
     `;
@@ -921,6 +935,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts', 'query');
     },
+    requisitionCounts(variables: RequisitionCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionCountsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionCountsQuery>(RequisitionCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionCounts', 'query');
+    },
     insertOutboundShipment(variables: InsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertOutboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundShipmentMutation>(InsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundShipment', 'mutation');
     },
@@ -1011,6 +1028,23 @@ export const mockOutboundByNumberQuery = (resolver: ResponseResolver<GraphQLRequ
 export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceCountsQueryVariables>, GraphQLContext<InvoiceCountsQuery>, any>) =>
   graphql.query<InvoiceCountsQuery, InvoiceCountsQueryVariables>(
     'invoiceCounts',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockRequisitionCountsQuery((req, res, ctx) => {
+ *   const { storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ requisitionCounts })
+ *   )
+ * })
+ */
+export const mockRequisitionCountsQuery = (resolver: ResponseResolver<GraphQLRequest<RequisitionCountsQueryVariables>, GraphQLContext<RequisitionCountsQuery>, any>) =>
+  graphql.query<RequisitionCountsQuery, RequisitionCountsQueryVariables>(
+    'requisitionCounts',
     resolver
   )
 

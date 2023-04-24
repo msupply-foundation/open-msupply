@@ -19,7 +19,18 @@ export const OutboundShipmentWidget: React.FC = () => {
   const { error: errorNotification } = useNotification();
   const t = useTranslation(['app', 'dashboard']);
   const formatNumber = useFormatNumber();
-  const { data, isLoading, isError, error } = useOutbound.utils.count();
+  const {
+    data: outboundCount,
+    isLoading: isOutboundCountLoading,
+    isError: isOutboundCountError,
+    error: outboundCountError,
+  } = useOutbound.utils.count();
+  const {
+    data: responseCount,
+    isLoading: isResponseCountLoading,
+    isError: isResponseCountError,
+    error: responseCountError,
+  } = useOutbound.utils.responseCount();
 
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const onError = (e: unknown) => {
@@ -57,14 +68,30 @@ export const OutboundShipmentWidget: React.FC = () => {
         >
           <Grid item>
             <StatsPanel
-              error={error as ApiException}
-              isError={isError}
-              isLoading={isLoading}
+              error={outboundCountError as ApiException}
+              isError={isOutboundCountError}
+              isLoading={isOutboundCountLoading}
               title={t('heading.shipments-not-shipped')}
               stats={[
                 {
                   label: t('label.today', { ns: 'dashboard' }),
-                  value: formatNumber.round(data?.notShipped),
+                  value: formatNumber.round(outboundCount?.notShipped),
+                },
+              ]}
+            />
+          </Grid>
+          <Grid item>
+            <StatsPanel
+              error={responseCountError as ApiException}
+              isError={isResponseCountError}
+              isLoading={isResponseCountLoading}
+              title={t('heading.new-requisitions', { ns: 'dashboard' })}
+              stats={[
+                {
+                  label: t('label.today', { ns: 'dashboard' }),
+                  value: formatNumber.round(
+                    responseCount?.newResponseRequisitionCount
+                  ),
                 },
               ]}
             />
