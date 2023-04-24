@@ -46,7 +46,7 @@ export type InvoiceCountsQueryVariables = Types.Exact<{
 }>;
 
 
-export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', toBePicked: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
+export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', notShipped: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
 export type InsertOutboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String'];
@@ -340,7 +340,7 @@ export const InvoiceCountsDocument = gql`
         today
         thisWeek
       }
-      toBePicked
+      notShipped
     }
   }
 }

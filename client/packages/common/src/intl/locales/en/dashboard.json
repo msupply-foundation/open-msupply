@@ -1,9 +1,9 @@
 {
+  "inventory-management": "Inventory Management",
   "button.new-outbound-shipment": "New Outbound Shipment",
   "button.order-more": "Order more",
   "heading.expiring-stock": "Expiring stock",
-  "heading.shipments-to-be-picked": "Shipments to be picked",
-  "heading-stock": "Stock",
+  "heading.shipments-not-shipped": "Shipments that have not been shipped",
   "heading.stock-levels": "Stock levels",
   "error.failed-to-create-requisition": "Failed to create requisition! {{message}}",
   "label.expired_one": "Expired batch",

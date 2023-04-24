@@ -48,7 +48,7 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           }}
         />
       ) : null}
-      <Widget title={t('inbound-shipments')}>
+      <Widget title={t('replenishment')}>
         <Grid
           container
           justifyContent="flex-start"

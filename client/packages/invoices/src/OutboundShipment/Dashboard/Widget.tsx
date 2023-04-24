@@ -48,7 +48,7 @@ export const OutboundShipmentWidget: React.FC = () => {
           }}
         />
       ) : null}
-      <Widget title={t('outbound-shipments')}>
+      <Widget title={t('distribution')}>
         <Grid
           container
           justifyContent="flex-start"
@@ -60,11 +60,11 @@ export const OutboundShipmentWidget: React.FC = () => {
               error={error as ApiException}
               isError={isError}
               isLoading={isLoading}
-              title={t('heading.shipments-to-be-picked')}
+              title={t('heading.shipments-not-shipped')}
               stats={[
                 {
                   label: t('label.today', { ns: 'dashboard' }),
-                  value: formatNumber.round(data?.toBePicked),
+                  value: formatNumber.round(data?.notShipped),
                 },
               ]}
             />

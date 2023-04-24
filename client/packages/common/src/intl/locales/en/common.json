@@ -78,7 +78,7 @@
   "heading.settings-display": "Display settings",
   "heading.settings-android": "Android Settings",
   "heading.settings-sync": "Synchronisation",
-  "heading.shipments-to-be-picked": "Shipments to be picked",
+  "heading.shipments-not-shipped": "Shipments that have not been shipped",
   "info.server-restarting": "Server restarting...",
   "label.actions": "Actions",
   "label.address": "Address",
