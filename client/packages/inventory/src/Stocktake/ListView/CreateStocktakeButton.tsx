@@ -21,6 +21,8 @@ import {
 } from '@openmsupply-client/common';
 import { useStock } from 'packages/system/src/Stock/api';
 
+const LABEL_WIDTH = '150px';
+
 interface CreateStocktakeArgs {
   masterListId: string;
   locationId: string;
@@ -123,7 +125,8 @@ export const CreateStocktakeButton: React.FC<{
       value: location.id,
     })) || [];
 
-  const isLoading = isLoadingMasterLists || isLoadingLocations || isLoadingStock;
+  const isLoading =
+    isLoadingMasterLists || isLoadingLocations || isLoadingStock;
 
   useEffect(() => {
     fetchMasterLists();
@@ -164,6 +167,7 @@ export const CreateStocktakeButton: React.FC<{
                   {t('messages.create-stocktake-2')}
                 </Typography>
                 <InputWithLabelRow
+                  labelWidth={LABEL_WIDTH}
                   Input={
                     masterLists.length === 0 ? (
                       <Typography sx={{ color: 'gray.main' }}>
@@ -187,6 +191,7 @@ export const CreateStocktakeButton: React.FC<{
                 />
                 <Box sx={{ height: 16 }} />
                 <InputWithLabelRow
+                  labelWidth={LABEL_WIDTH}
                   Input={
                     locations.length === 0 ? (
                       <Typography sx={{ color: 'gray.main' }}>
@@ -210,6 +215,7 @@ export const CreateStocktakeButton: React.FC<{
                 />
                 <Box sx={{ height: 16 }} />
                 <InputWithLabelRow
+                  labelWidth={LABEL_WIDTH}
                   Input={
                     !stockData ? (
                       <Typography sx={{ color: 'gray.main' }}>
@@ -217,6 +223,7 @@ export const CreateStocktakeButton: React.FC<{
                       </Typography>
                     ) : (
                       <Checkbox
+                        style={{ paddingLeft: 0 }}
                         checked={createStocktakeArgs.itemsHaveStock}
                         onChange={event => {
                           setCreateStocktakeArgs({
