@@ -14,14 +14,17 @@ CREATE TYPE gender_type_original AS ENUM (
     'NON_BINARY'
 );
 
-UPDATE name SET gender_type = NULL
-WHERE gender_type = 'TRANSGENDER';
+UPDATE name SET gender = NULL
+WHERE gender = 'TRANSGENDER';
 
 ALTER TABLE name
     ALTER COLUMN gender TYPE gender_type_original
     USING (gender::text::gender_type_original);
+ALTER TABLE IF EXISTS clinician
+    ALTER COLUMN gender TYPE gender_type_original
+    USING (gender::text::gender_type_original);
 
-DROP TYPE gender;
+DROP TYPE gender_type;
 ALTER TYPE gender_type_original RENAME TO gender_type;
 
 ALTER TABLE name DROP COLUMN is_deceased;
@@ -68,8 +71,8 @@ CREATE TYPE permission_type_original AS ENUM (
 );
 
 DELETE FROM user_permission
-WHERE permission = 'PATIENT_QUERY' OR permission = 'PATIENT_MUTATE';
-OR permission = 'DOCUMENT_QUERY' OR permission = 'DOCUMENT_MUTATE'
+WHERE permission = 'PATIENT_QUERY' OR permission = 'PATIENT_MUTATE'
+OR permission = 'DOCUMENT_QUERY' OR permission = 'DOCUMENT_MUTATE';
 
 ALTER TABLE user_permission
     ALTER COLUMN permission TYPE permission_type_original

@@ -3,60 +3,18 @@
 -- earlier migrations had already run.
 
 -- 2021-08-15T10-00_create_name_table
-CREATE TABLE name_new (
-    id TEXT NOT NULL PRIMARY KEY,
-    -- Human-readable representation of the entity associated with the name record.
-    name TEXT NOT NULL,
-    code TEXT NOT NULL,
-    type TEXT CHECK (type IN (
-        'FACILITY',
-        'PATIENT',
-        'BUILD',
-        'INVAD',
-        'REPACK',
-        'STORE',
-        'OTHERS'
-    )) NOT NULL,
-    is_customer BOOLEAN NOT NULL,
-    is_supplier BOOLEAN NOT NULL,
-   
-    supplying_store_id Text,
-    first_name Text,
-    last_name Text,
-    gender TEXT CHECK (gender IN (
-        'FEMALE',
-        'MALE',
-        'TRANSGENDER',
-        'TRANSGENDER_MALE',
-        'TRANSGENDER_MALE_HORMONE',
-        'TRANSGENDER_MALE_SURGICAL',
-        'TRANSGENDER_FEMALE',
-        'TRANSGENDER_FEMALE_HORMONE',
-        'TRANSGENDER_FEMALE_SURGICAL',
-        'UNKNOWN',
-        'NON_BINARY'
-    )),
-    date_of_birth TEXT,
-    phone TEXT,
-    charge_code TEXT,
-    comment TEXT,
-    country TEXT,
-    address1 TEXT,
-    address2 TEXT,
-    email TEXT,
-    website TEXT,
-    is_manufacturer BOOLEAN,
-    is_donor BOOLEAN,
-    on_hold BOOLEAN,
-    created_datetime TIMESTAMP,
-    is_deceased BOOLEAN,
-    national_health_number TEXT,
-    is_sync_update BOOLEAN
-);
+ALTER TABLE name ADD COLUMN type_new TEXT NOT NULL DEFAULT "FACILITY";
+UPDATE name SET type_new =  type;
+ALTER TABLE name DROP COLUMN type;
+ALTER TABLE name RENAME COLUMN type_new TO type;
 
-INSERT INTO name_new SELECT * FROM name;
-DROP name;
-ALTER TABLE name_new RENAME to name;
+ALTER TABLE name ADD COLUMN gender_new TEXT;
+UPDATE name SET gender_new =  gender;
+ALTER TABLE name DROP COLUMN gender;
+ALTER TABLE name RENAME COLUMN gender_new TO gender;
+
+ALTER TABLE name ADD COLUMN is_deceased BOOLEAN;
+ALTER TABLE name ADD COLUMN national_health_number TEXT;
 
 -- 2022-03-15T10-00_report_table
 
