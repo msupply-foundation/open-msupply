@@ -1915,9 +1915,9 @@ Screen.Back();
 <Name>On Next</Name>
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
--- Launch omSupply Server
-if (not hasOmsupplyInstalled and cbStartOmSupply) then
-	File.OpenURL(SessionVar.Expand("https://localhost:%omsupply_port%"));
+-- Launch omSupply 
+if (cbStartOmSupply) then
+	File.Run(SessionVar.Expand("%AppFolder%\\open mSupply.exe"));
 end
 -- advance to the next screen
 Screen.Next();
@@ -3252,7 +3252,7 @@ g_HandleSystemReboot();
 <Name>On Startup</Name>
 <Args/>
 <Script>-- Set window title
-local sWindowTitle = "omSupply Standalone Setup";
+local sWindowTitle = "omSupply Setup";
 local omSupplyServerPath = "";
 
 hasOmsupplyDesktopInstalled = false;
@@ -3265,7 +3265,7 @@ end
 
 hasOmsupplyInstalled = File.DoesExist(omSupplyServerPath);
 if hasOmsupplyInstalled then
-	sWindowTitle = "omSupply Standalone Upgrader Setup";
+	sWindowTitle = "omSupply Upgrader Setup";
 end
 
 -- Check if the omSupply Desktop has been already installed on this machine
@@ -3413,7 +3413,7 @@ g_HandleSystemReboot();
 <SUF7SessionVars>
 <SessionVar>
 <Name>%ProductName%</Name>
-<Value>omSupply Standalone</Value>
+<Value>omSupply</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
