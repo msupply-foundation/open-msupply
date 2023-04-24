@@ -70,6 +70,10 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                   label: t('label.this-week', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.thisWeek),
                 },
+                {
+                  label: t('label.inbound-not-delivered', { ns: 'dashboard' }),
+                  value: formatNumber.round(data?.notDelivered),
+                },
               ]}
             />
           </Grid>

@@ -4,6 +4,7 @@
   "button.order-more": "Order more",
   "heading.expiring-stock": "Expiring stock",
   "heading.shipments-not-shipped": "Shipments that have not been shipped",
+  "heading.new-requisitions": "New requisitions",
   "heading.stock-levels": "Stock levels",
   "error.failed-to-create-requisition": "Failed to create requisition! {{message}}",
   "label.expired_one": "Expired batch",
@@ -17,5 +18,6 @@
   "label.this-week": "This week",
   "label.today": "Today",
   "label.total-items_one": "Total item",
-  "label.total-items_other": "Total items"
+  "label.total-items_other": "Total items",
+  "label.inbound-not-delivered": "Inbound shipments not delivered"
 }
