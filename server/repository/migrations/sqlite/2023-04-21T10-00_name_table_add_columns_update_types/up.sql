@@ -12,6 +12,21 @@ ALTER TABLE name ADD COLUMN is_deceased BOOLEAN;
 ALTER TABLE name ADD COLUMN national_health_number TEXT;
 
 -- 2022-03-15T10-00_report_table
+CREATE TABLE report_new
+(
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT CHECK (type IN ('OM_SUPPLY')) NOT NULL,
+    template TEXT NOT NULL,
+    context TEXT NOT NULL,
+    comment TEXT,
+    sub_context TEXT,
+    argument_schema_id TEXT REFERENCES form_schema(id)
+);
+
+INSERT INTO report_new SELECT id, name, type, template, context, comment, sub_context, argument_schema_id FROM report;
+DROP TABLE report;
+ALTER TABLE report_new RENAME TO report;
 
 
 -- 2022-03-25T14-30_create_user_permission_table
