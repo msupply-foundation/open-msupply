@@ -23,6 +23,8 @@ export const useStockApi = () => {
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<StockLineRowFragment>) =>
+      [...keys.list(), sortBy] as const,
   };
 
   return { ...queries, keys, storeId };
