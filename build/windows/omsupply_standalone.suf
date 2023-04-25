@@ -3337,7 +3337,7 @@ if hasOmsupplyInstalled then
 	end
 else
 	local config = "server:\r\n"
-	config = config .. "  host: 192.168.178.68\r\n";
+	config = config .. "  host: 127.0.0.1\r\n";
 	config = config .. "  port: " .. SessionVar.Get("%omsupply_port%") .. "\r\n";
 	config = config .. "database:\r\n";
 	config = config .. "  port: " .. SessionVar.Get("%postgres_db_port%") .. "\r\n";
@@ -3356,7 +3356,7 @@ else
 	-- Create omSupply Server keys in registry
 	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Server");
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", omSupplyServerPath, REG_SZ);
-	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", sqlite, REG_SZ);
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", "sqlite", REG_SZ);
 end 
 
 Service.Create(SessionVar.Expand("%AppFolder%\\server\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
