@@ -319,10 +319,6 @@ pub(crate) async fn check_records_against_database(
             }
             Item => check_delete_record_by_id!(ItemRowRepository, con, id),
             Store => check_delete_record_by_id!(StoreRowRepository, con, id),
-            MasterList => check_delete_record_by_id_option!(MasterListRowRepository, con, id),
-            MasterListLine => {
-                check_delete_record_by_id_option!(MasterListLineRowRepository, con, id)
-            }
             MasterListNameJoin => {
                 check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
             }
