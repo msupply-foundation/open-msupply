@@ -1,3 +1,4 @@
+
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { EnvUtils } from '@common/utils';
 import { LanguageType } from '../../types/schema';
@@ -8,8 +9,9 @@ export { useTranslationNext };
 const languageOptions = [
   { label: 'عربي', value: 'ar' },
   { label: 'Français', value: 'fr' },
+  { label: 'Français (Djibouti)', value: 'fr-DJ' },
   { label: 'English', value: 'en' },
-  { label: 'Española', value: 'es' },
+  { label: 'Español', value: 'es' },
   { label: 'Tetum', value: 'tet' },
 ];
 
@@ -18,6 +20,7 @@ const locales = [
   'en' as const,
   'es' as const,
   'fr' as const,
+  'fr-DJ' as const,
   'tet' as const,
 ] as const;
 
@@ -45,6 +48,13 @@ export const useIntlUtils = () => {
     if (locales.includes(supportedLanguage)) {
       return supportedLanguage;
     }
+
+    // Handle languages such as en-US or fr-FR
+    const baseLanguage = supportedLanguage.split('-')[0] as SupportedLocales;
+    if (locales.includes(baseLanguage)) {
+      return baseLanguage;
+    }
+
     if (!EnvUtils.isProduction()) {
       throw new Error(`Language '${language}' not supported`);
     }

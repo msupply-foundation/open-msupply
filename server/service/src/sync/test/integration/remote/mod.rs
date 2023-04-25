@@ -4,6 +4,7 @@ pub(crate) mod document;
 pub(crate) mod invoice;
 pub(crate) mod location;
 pub(crate) mod patient_name_and_store_and_name_store_join;
+pub(crate) mod program_requisition;
 pub(crate) mod requisition;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;

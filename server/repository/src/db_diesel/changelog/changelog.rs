@@ -52,6 +52,7 @@ pub enum ChangelogTableName {
     RequisitionLine,
     ActivityLog,
     InventoryAdjustmentReason,
+    Barcode,
     Clinician,
     ClinicianStoreJoin,
     Name,

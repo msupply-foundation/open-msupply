@@ -5,7 +5,8 @@ mod tests {
         inventory_adjustment_reason::InventoryAdjustmentReasonTester,
         master_list::MasterListTester,
         name_and_store_and_name_store_join::NameAndStoreAndNameStoreJoinTester,
-        report::ReportTester, test_central_sync_record, unit_and_item::UnitAndItemTester,
+        period_schedule_and_period::PeriodScheduleAndPeriodTester, report::ReportTester,
+        test_central_sync_record, unit_and_item::UnitAndItemTester,
     };
 
     #[actix_rt::test]
@@ -35,6 +36,17 @@ mod tests {
             &InventoryAdjustmentReasonTester,
         )
         .await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_central_period_schedule_and_period() {
+        test_central_sync_record("period_schedule_and_period", &PeriodScheduleAndPeriodTester)
+            .await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_central_barcode() {
+        test_central_sync_record("barcode", &ReportTester).await;
     }
 
     #[actix_rt::test]

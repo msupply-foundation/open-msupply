@@ -18,8 +18,9 @@ export const SidePanel: FC = () => {
   const t = useTranslation('common');
   const isTransfer = !!data?.linkedShipment?.id;
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');
-    success('Copied to clipboard successfully')();
+    navigator.clipboard
+      .writeText(JSON.stringify(data, null, 4) ?? '')
+      .then(() => success('Copied to clipboard successfully')());
   };
 
   return (

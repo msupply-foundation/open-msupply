@@ -41,6 +41,11 @@ mod tests {
     }
 
     #[actix_rt::test]
+    async fn intergration_sync_program_requisition() {
+        test_remote_sync_record("program_requisition", &ProgramRequisitionTester).await;
+    }
+
+    #[actix_rt::test]
     async fn integration_sync_remote_clinician() {
         test_remote_sync_record("clinician", &ClinicianRecordTester).await;
     }
