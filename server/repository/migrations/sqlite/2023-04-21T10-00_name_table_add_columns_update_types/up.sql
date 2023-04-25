@@ -16,7 +16,7 @@ CREATE TABLE report_new
 (
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
-    type TEXT CHECK (type IN ('OM_SUPPLY')) NOT NULL,
+    type TEXT NOT NULL,
     template TEXT NOT NULL,
     context TEXT NOT NULL,
     comment TEXT,
