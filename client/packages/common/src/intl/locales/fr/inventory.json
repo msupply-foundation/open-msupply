@@ -14,7 +14,7 @@
     "error.stocktake-not-found": "Inventaire introuvable",
     "label.add-new-line": "Ajouter une ligne",
     "label.cant-delete-disabled": "Il n'est possible de supprimer des lignes que lorsque le statut est 'Nouvel(le)'",
-    "label.counted-num-of-packs": "Nbre de Packs comptés",
+    "label.counted-num-of-packs": "Nbre d'emb. comptés",
     "label.create-location": "Créer emplacement",
     "label.edit-location": "Éditer emplacement",
     "label.group-by-item": "Grouper par article",
@@ -62,5 +62,6 @@
     "messages.create-stocktake-1": "Vous pouvez créer un inventaire pour les articles se trouvant dans un emplacement spécifique ou bien pour les articles d'une liste maîtresse.",
     "messages.create-stocktake-2": "pour créer un inventaire manuel, cliquez sur OK pour continuer.",
     "messages.finalised-stock-take": "Cet inventaire est finalisé et ne peut être modifié",
-    "messages.on-hold-stock-take": "Cet inventaire est bloqué et ne peut être modifié"
+    "messages.on-hold-stock-take": "Cet inventaire est bloqué et ne peut être modifié",
+    "stocktake.comment-list-template": "Créé(e) avec la liste {{list}}"
 }

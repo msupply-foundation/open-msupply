@@ -8,6 +8,8 @@ import {
   FileUtils,
   LoadingButton,
   SortBy,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
 import { useMasterList } from '../api/hooks';
 import { masterListsToCsv } from '../../utils';
@@ -36,6 +38,7 @@ export const AppBarButtons: FC<{
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <LoadingButton
+          disabled={EnvUtils.platform === Platform.Android}
           startIcon={<DownloadIcon />}
           variant="outlined"
           isLoading={isLoading}

@@ -20,6 +20,16 @@ impl StorePreferenceNode {
     pub async fn pack_to_one(&self) -> &bool {
         &self.store_preference.pack_to_one
     }
+    pub async fn response_requisition_requires_authorisation(&self) -> &bool {
+        &self
+            .store_preference
+            .response_requisition_requires_authorisation
+    }
+    pub async fn request_requisition_requires_authorisation(&self) -> &bool {
+        &self
+            .store_preference
+            .request_requisition_requires_authorisation
+    }
 }
 
 pub(crate) fn store_preferences(ctx: &Context<'_>, store_id: &str) -> Result<StorePreferenceNode> {

@@ -1,4 +1,4 @@
-// json! hits recursion limit in integration test (central_server_configurations), recusion_limit attribute must be top level
+// json! hits recursion limit in integration test (central_server_configurations), recursion_limit attribute must be top level
 #![cfg_attr(feature = "integration_test", recursion_limit = "256")]
 use repository::RepositoryError;
 use repository::{Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};

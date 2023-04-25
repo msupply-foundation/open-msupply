@@ -115,6 +115,28 @@ export const useOutboundColumns = ({
         },
       ],
       [
+        'itemUnit',
+        {
+          getSortValue: row => {
+            if ('lines' in row) {
+              return row.lines[0]?.item.unitName ?? '';
+            } else {
+              return row.item.unitName ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const items = rowData.lines.map(({ item }) => item);
+              return (
+                ArrayUtils.ifTheSameElseDefault(items, 'unitName', '') ?? ''
+              );
+            } else {
+              return rowData.item.unitName ?? '';
+            }
+          },
+        },
+      ],
+      [
         'batch',
         {
           getSortValue: row => {
@@ -192,28 +214,6 @@ export const useOutboundColumns = ({
               return ArrayUtils.ifTheSameElseDefault(locations, 'name', '');
             } else {
               return rowData.location?.name ?? '';
-            }
-          },
-        },
-      ],
-      [
-        'itemUnit',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              return row.lines[0]?.item.unitName ?? '';
-            } else {
-              return row.item.unitName ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const items = rowData.lines.map(({ item }) => item);
-              return (
-                ArrayUtils.ifTheSameElseDefault(items, 'unitName', '') ?? ''
-              );
-            } else {
-              return rowData.item.unitName ?? '';
             }
           },
         },

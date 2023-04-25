@@ -9,9 +9,9 @@ use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 
 const DESCRIPTION: &'static str = "Update request requisition status to finalised";
 
-pub struct UpdateRequestRequstionStatusProcessor;
+pub struct UpdateRequestRequisitionStatusProcessor;
 
-impl RequisitionTransferProcessor for UpdateRequestRequstionStatusProcessor {
+impl RequisitionTransferProcessor for UpdateRequestRequisitionStatusProcessor {
     fn get_description(&self) -> String {
         DESCRIPTION.to_string()
     }
@@ -21,7 +21,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequstionStatusProcessor {
     /// 1. Source requisition name_id is for a store that is active on current site (transfer processor driver guarantees this)
     /// 2. Source requisition is Response requisition
     /// 3. Linked requisition exists (the request requisition)
-    /// 4. Linked request requsition is not Finalised
+    /// 4. Linked request requisition is not Finalised
     /// 5. Source response requisition is Finalised
     ///
     /// Only runs once:

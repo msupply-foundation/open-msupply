@@ -22,6 +22,7 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
       justifyContent="flex-end"
       alignItems="center"
       flexBasis={style?.flexBasis}
+      width={props.fullWidth ? '100%' : undefined}
     >
       <TextField
         ref={ref}

@@ -59,6 +59,7 @@ export type ActivityLogNode = {
 export enum ActivityLogNodeType {
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
+  InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
   InvoiceStatusAllocated = 'INVOICE_STATUS_ALLOCATED',
   InvoiceStatusDelivered = 'INVOICE_STATUS_DELIVERED',
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
@@ -66,6 +67,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
+  RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
   StocktakeCreated = 'STOCKTAKE_CREATED',
@@ -1404,6 +1406,18 @@ export type InsertProgramEnrolmentInput = {
 
 export type InsertProgramEnrolmentResponse = ProgramEnrolmentNode;
 
+export type InsertProgramRequestRequisitionInput = {
+  colour?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
+  /** Defaults to 2 weeks from now */
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  otherPartyId: Scalars['String'];
+  periodId: Scalars['String'];
+  programOrderTypeId: Scalars['String'];
+  theirReference?: InputMaybe<Scalars['String']>;
+};
+
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
   error: InsertRequestRequisitionErrorInterface;
@@ -1463,6 +1477,7 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
   isLocked?: InputMaybe<Scalars['Boolean']>;
+  itemsHaveStock?: InputMaybe<Scalars['Boolean']>;
   locationId?: InputMaybe<Scalars['String']>;
   masterListId?: InputMaybe<Scalars['String']>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']>;
@@ -2057,6 +2072,7 @@ export type Mutations = {
    * Every patient can only have one program document of each program type.
    */
   insertProgramEnrolment: InsertProgramEnrolmentResponse;
+  insertProgramRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -2308,6 +2324,12 @@ export type MutationsInsertPatientArgs = {
 
 export type MutationsInsertProgramEnrolmentArgs = {
   input: InsertProgramEnrolmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertProgramRequestRequisitionArgs = {
+  input: InsertProgramRequestRequisitionInput;
   storeId: Scalars['String'];
 };
 
@@ -2764,6 +2786,14 @@ export type PatientSortInput = {
   desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: PatientSortFieldInput;
+};
+
+export type PeriodNode = {
+  __typename: 'PeriodNode';
+  endDate: Scalars['NaiveDate'];
+  id: Scalars['String'];
+  name: Scalars['String'];
+  startDate: Scalars['NaiveDate'];
 };
 
 export type PricingNode = {
@@ -3432,6 +3462,8 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
+  approvalComment?: Maybe<Scalars['String']>;
+  approvedQuantity: Scalars['Int'];
   comment?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   /** InboundShipment lines linked to requisitions line */
@@ -3486,6 +3518,7 @@ export type RequisitionLineWithItemIdExists = InsertRequestRequisitionLineErrorI
 
 export type RequisitionNode = {
   __typename: 'RequisitionNode';
+  approvalStatus: RequisitionNodeApprovalStatus;
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['DateTime'];
@@ -3503,6 +3536,7 @@ export type RequisitionNode = {
   maxMonthsOfStock: Scalars['Float'];
   /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
   minMonthsOfStock: Scalars['Float'];
+  orderType?: Maybe<Scalars['String']>;
   /**
    * Request Requisition: Supplying store (store that is supplying stock)
    * Response Requisition: Customer store (store that is ordering stock)
@@ -3510,6 +3544,8 @@ export type RequisitionNode = {
   otherParty: NameNode;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
+  period?: Maybe<PeriodNode>;
+  programName?: Maybe<Scalars['String']>;
   /** Link to request requisition */
   requestRequisition?: Maybe<RequisitionNode>;
   requisitionNumber: Scalars['Int'];
@@ -3535,6 +3571,14 @@ export type RequisitionNodeOtherPartyArgs = {
   storeId: Scalars['String'];
 };
 
+/** Approval status is applicable to response requisition only */
+export enum RequisitionNodeApprovalStatus {
+  Approved = 'APPROVED',
+  Denied = 'DENIED',
+  None = 'NONE',
+  Pending = 'PENDING'
+}
+
 export enum RequisitionNodeStatus {
   Draft = 'DRAFT',
   Finalised = 'FINALISED',
@@ -3554,7 +3598,10 @@ export enum RequisitionSortFieldInput {
   CreatedDatetime = 'createdDatetime',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   FinalisedDatetime = 'finalisedDatetime',
+  OrderType = 'orderType',
   OtherPartyName = 'otherPartyName',
+  PeriodName = 'periodName',
+  ProgramName = 'programName',
   RequisitionNumber = 'requisitionNumber',
   SentDatetime = 'sentDatetime',
   Status = 'status',
@@ -3861,6 +3908,8 @@ export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String'];
   packToOne: Scalars['Boolean'];
+  requestRequisitionRequiresAuthorisation: Scalars['Boolean'];
+  responseRequisitionRequiresAuthorisation: Scalars['Boolean'];
 };
 
 export type StoreResponse = NodeError | StoreNode;

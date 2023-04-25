@@ -40,6 +40,9 @@ pub enum RequisitionSortField {
     FinalisedDatetime,
     ExpectedDeliveryDate,
     TheirReference,
+    OrderType,
+    ProgramName,
+    PeriodName,
 }
 
 pub type RequisitionSort = Sort<RequisitionSortField>;

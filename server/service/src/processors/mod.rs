@@ -64,7 +64,7 @@ impl Processors {
 
         tokio::spawn(async move {
             loop {
-                // See test below for reasoning behind biased, even though there is no foreseen use case wehere
+                // See test below for reasoning behind biased, even though there is no foreseen use case where
                 // requisition must be processed before shipment, it easy to reason about future use cases if
                 // order is guaranteed when requisition transfer is triggered before shipment transfer (like it is in synchroniser)
                 let result = tokio::select! {
