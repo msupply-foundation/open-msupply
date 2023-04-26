@@ -12,11 +12,11 @@ use graphql_core::{
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    unknown_user, NameRow, Requisition, RequisitionRowApprovalStatus,
+    unknown_user, NameRow, PeriodRow, Requisition, RequisitionRowApprovalStatus,
 };
 use service::ListResult;
 
-use super::{InvoiceConnector, NameNode, RequisitionLineConnector, UserNode};
+use super::{InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector, UserNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum RequisitionNodeType {
@@ -186,13 +186,9 @@ impl RequisitionNode {
         Ok(RequisitionLineConnector::from_vec(result))
     }
 
-    /// Link to request requisition
-    pub async fn request_requisition(&self, ctx: &Context<'_>) -> Result<Option<RequisitionNode>> {
-        if &self.row().r#type == &RequisitionRowType::Request {
-            return Ok(None);
-        }
-
-        let request_requisition_id = if let Some(id) = &self.row().linked_requisition_id {
+    /// Linked requisition
+    pub async fn linked_requisition(&self, ctx: &Context<'_>) -> Result<Option<RequisitionNode>> {
+        let linked_requisition_id = if let Some(id) = &self.row().linked_requisition_id {
             id
         } else {
             return Ok(None);
@@ -201,7 +197,7 @@ impl RequisitionNode {
         let loader = ctx.get_loader::<DataLoader<RequisitionsByIdLoader>>();
 
         Ok(loader
-            .load_one(request_requisition_id.clone())
+            .load_one(linked_requisition_id.clone())
             .await?
             .map(RequisitionNode::from_domain))
     }
@@ -232,6 +228,21 @@ impl RequisitionNode {
         Ok(RequisitionLineConnector::from_vec(result))
     }
 
+    pub async fn program_name(&self) -> &Option<String> {
+        &self.requisition.program_name
+    }
+
+    pub async fn order_type(&self) -> &Option<String> {
+        &self.row().order_type
+    }
+
+    pub async fn period(&self) -> Option<PeriodNode> {
+        match &self.requisition.period {
+            Some(period) => Some(PeriodNode::from_domain(period.to_owned())),
+            None => None,
+        }
+    }
+
     // % allocated ?
     // % shipped ?
     // lead time ?
@@ -244,6 +255,10 @@ impl RequisitionNode {
 
     pub fn name_row(&self) -> &NameRow {
         &self.requisition.name_row
+    }
+
+    pub fn period_row(&self) -> &Option<PeriodRow> {
+        &self.requisition.period
     }
 
     pub fn from_domain(requisition: Requisition) -> RequisitionNode {
