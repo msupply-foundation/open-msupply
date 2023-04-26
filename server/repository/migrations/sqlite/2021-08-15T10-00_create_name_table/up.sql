@@ -23,7 +23,6 @@ CREATE TABLE name (
     gender TEXT CHECK (gender IN (
         'FEMALE',
         'MALE',
-        'TRANSGENDER',
         'TRANSGENDER_MALE',
         'TRANSGENDER_MALE_HORMONE',
         'TRANSGENDER_MALE_SURGICAL',
@@ -45,7 +44,5 @@ CREATE TABLE name (
     is_manufacturer BOOLEAN,
     is_donor BOOLEAN,
     on_hold BOOLEAN,
-    created_datetime TIMESTAMP,
-    is_deceased BOOLEAN,
-    national_health_number TEXT
+    created_datetime TIMESTAMP
 )
