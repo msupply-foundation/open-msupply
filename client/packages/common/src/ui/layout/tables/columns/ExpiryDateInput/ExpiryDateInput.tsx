@@ -5,7 +5,7 @@ import { EnvUtils } from '@common/utils';
 import { ColumnDefinition } from '../../columns';
 
 export const getExpiryDateInputColumn = <
-  T extends RecordWithId
+  T extends RecordWithId & { expiryDate?: string | Date | null }
 >(): ColumnDefinition<T> => ({
   key: 'expiryDateInput',
   label: 'label.expiry',

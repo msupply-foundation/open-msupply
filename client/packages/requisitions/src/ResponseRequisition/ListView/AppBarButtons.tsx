@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
   useNotification,
@@ -6,20 +6,21 @@ import {
   AppBarButtonsPortal,
   Grid,
   FileUtils,
-  SortBy,
   LoadingButton,
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
-import { ResponseRowFragment, useResponse } from '../api';
+import { useResponse } from '../api';
 import { responsesToCsv } from '../../utils';
 
-export const AppBarButtons: FC<{
-  sortBy: SortBy<ResponseRowFragment>;
-}> = ({ sortBy }) => {
+export const AppBarButtons = () => {
   const { success, error } = useNotification();
   const t = useTranslation('common');
-  const { mutateAsync, isLoading } = useResponse.document.listAll(sortBy);
+  const { mutateAsync, isLoading } = useResponse.document.listAll({
+    key: 'createdDatetime',
+    direction: 'desc',
+    isDesc: true,
+  });
 
   const csvExport = async () => {
     const data = await mutateAsync();

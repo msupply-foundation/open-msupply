@@ -11,7 +11,7 @@ use repository::{
 use util::inline_edit;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum UpdateResponseRequstionStatus {
+pub enum UpdateResponseRequisitionStatus {
     Finalised,
 }
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -20,7 +20,7 @@ pub struct UpdateResponseRequisition {
     pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    pub status: Option<UpdateResponseRequstionStatus>,
+    pub status: Option<UpdateResponseRequisitionStatus>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -149,7 +149,7 @@ mod test_update {
     use crate::{
         requisition::response_requisition::{
             UpdateResponseRequisition, UpdateResponseRequisitionError as ServiceError,
-            UpdateResponseRequstionStatus,
+            UpdateResponseRequisitionStatus,
         },
         service_provider::ServiceProvider,
     };
@@ -249,7 +249,7 @@ mod test_update {
                 UpdateResponseRequisition {
                     id: mock_new_response_requisition().id,
                     colour: Some("new colour".to_owned()),
-                    status: Some(UpdateResponseRequstionStatus::Finalised),
+                    status: Some(UpdateResponseRequisitionStatus::Finalised),
                     their_reference: Some("new their_reference".to_owned()),
                     comment: Some("new comment".to_owned()),
                 },

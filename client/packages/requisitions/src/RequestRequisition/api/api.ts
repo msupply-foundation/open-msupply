@@ -8,6 +8,7 @@ import {
   UpdateRequestRequisitionInput,
   UpdateRequestRequisitionStatusInput,
   RequisitionSortFieldInput,
+  InsertProgramRequestRequisitionInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import {
@@ -50,6 +51,15 @@ const requestParser = {
       }
       case 'status': {
         return RequisitionSortFieldInput.Status;
+      }
+      case 'orderType': {
+        return RequisitionSortFieldInput.OrderType;
+      }
+      case 'period': {
+        return RequisitionSortFieldInput.PeriodName;
+      }
+      case 'programName': {
+        return RequisitionSortFieldInput.ProgramName;
       }
 
       case 'sentDatetime':
@@ -215,7 +225,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update requisition');
   },
-  update: async (patch: Partial<RequestFragment> & { id: string }) => {
+  update: async (
+    patch: Partial<RequestFragment | RequestRowFragment> & { id: string }
+  ) => {
     const input = requestParser.toUpdate(patch);
     const result = await sdk.updateRequest({
       storeId,
@@ -255,6 +267,26 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     if (insertRequestRequisition?.__typename === 'RequisitionNode') {
       return insertRequestRequisition;
+    }
+
+    throw new Error('Unable to create requisition');
+  },
+  insertProgram: async (
+    input: InsertProgramRequestRequisitionInput
+  ): Promise<{
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  }> => {
+    const result = await sdk.insertProgramRequest({
+      storeId,
+      input,
+    });
+
+    const { insertProgramRequestRequisition } = result || {};
+
+    if (insertProgramRequestRequisition?.__typename === 'RequisitionNode') {
+      return insertProgramRequestRequisition;
     }
 
     throw new Error('Unable to create requisition');
@@ -301,5 +333,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   useSuggestedQuantity: async (requestId: string) => {
     const result = await sdk.useSuggestedQuantity({ requestId, storeId });
     return result;
+  },
+  programSettings: async () => {
+    const result = await sdk.programSettings({ storeId });
+    return result.programRequisitionSettings;
   },
 });
