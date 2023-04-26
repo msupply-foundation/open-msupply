@@ -14,7 +14,7 @@ import { NewRequisitionType } from './types';
 
 export interface NewProgramRequisition {
   type: NewRequisitionType.Program;
-  orderTypeId: string;
+  programOrderTypeId: string;
   otherPartyId: string;
   periodId: string;
 }
@@ -79,7 +79,7 @@ const useProgramRequisitionOptions = (
     createOptions:
       !!program && !!orderType && !!supplier && !!period
         ? {
-            orderTypeId: orderType.id,
+            programOrderTypeId: orderType.id,
             otherPartyId: supplier.id,
             periodId: period.id,
           }
