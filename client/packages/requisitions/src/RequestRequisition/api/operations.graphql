@@ -479,7 +479,7 @@ fragment ProgramSettings on ProgramRequisitionSettingNode {
 }
 
 query programSettings($storeId: String!) {
-  programRequistitionSettings(storeId: $storeId) {
+  programRequisitionSettings(storeId: $storeId) {
     ...ProgramSettings
   }
 }

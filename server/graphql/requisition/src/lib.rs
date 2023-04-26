@@ -43,7 +43,7 @@ impl RequisitionQueries {
         get_requisition_by_number(ctx, &store_id, requisition_number, r#type)
     }
 
-    pub async fn program_requistition_settings(
+    pub async fn program_requisition_settings(
         &self,
         ctx: &Context<'_>,
         store_id: String,
