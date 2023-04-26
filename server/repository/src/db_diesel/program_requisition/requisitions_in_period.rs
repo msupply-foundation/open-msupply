@@ -226,18 +226,17 @@ mod test {
             r#type: RequisitionRowType::Request,
             ..Default::default()
         };
+        // Different order type same period, different store
         let requisition5 = RequisitionRow {
             id: "requisition5".to_string(),
             order_type: Some("Order Type 2".to_string()),
             name_id: mock_name_store_a().id,
-            // Different store
             store_id: mock_store_b().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),
             r#type: RequisitionRowType::Request,
             ..Default::default()
         };
-
         // Same as requisition1, but it's a response requisition
         let requisition6 = RequisitionRow {
             id: "requisition6".to_string(),
