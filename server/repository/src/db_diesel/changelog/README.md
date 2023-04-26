@@ -45,4 +45,4 @@ For some data tables it's not possible to have foreign records on the site, thus
 
 At the time of writing:
 * only central server synchronisation and shipment/requisition transfers are using changelog
-* name_id and store_id is only stored in changelog for `requistion, requisition_line, invoice and invoice_line`
+* name_id and store_id is only stored in changelog for `requisition, requisition_line, invoice and invoice_line`

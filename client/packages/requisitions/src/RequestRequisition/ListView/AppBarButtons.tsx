@@ -16,15 +16,17 @@ import {
   Platform,
   EnvUtils,
 } from '@openmsupply-client/common';
-import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 import { RequestRowFragment, useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
+import { CreateRequisitionModal } from './CreateRequisitionModal';
+import { NewRequisitionType } from './types';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
   sortBy: SortBy<RequestRowFragment>;
 }> = ({ modalController, sortBy }) => {
   const { mutate: onCreate } = useRequest.document.insert();
+  const { mutate: onProgramCreate } = useRequest.document.insertProgram();
   const { success, error } = useNotification();
   const t = useTranslation('common');
   const { isLoading, fetchAsync } = useRequest.document.listAll(sortBy);
@@ -59,15 +61,24 @@ export const AppBarButtons: FC<{
           {t('button.export')}
         </LoadingButton>
       </Grid>
-      <InternalSupplierSearchModal
-        open={modalController.isOn}
+      <CreateRequisitionModal
+        isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
-        onChange={async name => {
+        onCreate={async newRequisition => {
           modalController.toggleOff();
-          onCreate({
-            id: FnUtils.generateUUID(),
-            otherPartyId: name?.id,
-          });
+          switch (newRequisition.type) {
+            case NewRequisitionType.General:
+              return onCreate({
+                id: FnUtils.generateUUID(),
+                otherPartyId: newRequisition.name.id,
+              });
+            case NewRequisitionType.Program:
+              const { type: _, ...rest } = newRequisition;
+              return onProgramCreate({
+                id: FnUtils.generateUUID(),
+                ...rest,
+              });
+          }
         }}
       />
     </AppBarButtonsPortal>

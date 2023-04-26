@@ -1,6 +1,5 @@
 use super::{name_tag_join::name_tag_join::dsl as name_tag_join_dsl, StorageConnection};
-
-use crate::repository_error::RepositoryError;
+use crate::{db_diesel::name_row::name, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 
@@ -19,6 +18,8 @@ pub struct NameTagJoinRow {
     pub name_id: String,
     pub name_tag_id: String,
 }
+
+joinable!(name_tag_join -> name (name_id));
 
 pub struct NameTagJoinRepository<'a> {
     connection: &'a StorageConnection,

@@ -87,6 +87,14 @@ export type InsertRequestMutationVariables = Types.Exact<{
 
 export type InsertRequestMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
+export type InsertProgramRequestMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  input: Types.InsertProgramRequestRequisitionInput;
+}>;
+
+
+export type InsertProgramRequestMutation = { __typename: 'Mutations', insertProgramRequestRequisition: { __typename: 'InsertRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
+
 export type UpdateRequestMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.UpdateRequestRequisitionInput;
@@ -102,6 +110,15 @@ export type DeleteRequestMutationVariables = Types.Exact<{
 
 
 export type DeleteRequestMutation = { __typename: 'Mutations', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitions?: Array<{ __typename: 'DeleteRequestRequisitionResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionError', error: { __typename: 'CannotDeleteRequisitionWithLines', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+
+export type ProgramSettingsFragment = { __typename: 'ProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', id: string, name: string }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
+
+export type ProgramSettingsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type ProgramSettingsQuery = { __typename: 'Queries', programRequisitionSettings: Array<{ __typename: 'ProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', id: string, name: string }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
 
 export const RequestRowFragmentDoc = gql`
     fragment RequestRow on RequisitionNode {
@@ -234,6 +251,24 @@ export const RequestFragmentDoc = gql`
   orderType
 }
     ${RequestLineFragmentDoc}`;
+export const ProgramSettingsFragmentDoc = gql`
+    fragment ProgramSettings on ProgramRequisitionSettingNode {
+  programName
+  programId
+  suppliers {
+    id
+    name
+  }
+  orderTypes {
+    id
+    name
+    availablePeriods {
+      id
+      name
+    }
+  }
+}
+    `;
 export const RequestByNumberDocument = gql`
     query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
@@ -495,6 +530,17 @@ export const InsertRequestDocument = gql`
   }
 }
     `;
+export const InsertProgramRequestDocument = gql`
+    mutation insertProgramRequest($storeId: String!, $input: InsertProgramRequestRequisitionInput!) {
+  insertProgramRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+  }
+}
+    `;
 export const UpdateRequestDocument = gql`
     mutation updateRequest($storeId: String!, $input: UpdateRequestRequisitionInput!) {
   updateRequestRequisition(input: $input, storeId: $storeId) {
@@ -556,6 +602,13 @@ export const DeleteRequestDocument = gql`
   }
 }
     `;
+export const ProgramSettingsDocument = gql`
+    query programSettings($storeId: String!) {
+  programRequisitionSettings(storeId: $storeId) {
+    ...ProgramSettings
+  }
+}
+    ${ProgramSettingsFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -591,11 +644,17 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     insertRequest(variables: InsertRequestMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertRequestMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestMutation>(InsertRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequest', 'mutation');
     },
+    insertProgramRequest(variables: InsertProgramRequestMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertProgramRequestMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramRequestMutation>(InsertProgramRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramRequest', 'mutation');
+    },
     updateRequest(variables: UpdateRequestMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateRequestMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestMutation>(UpdateRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequest', 'mutation');
     },
     deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteRequestMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation');
+    },
+    programSettings(variables: ProgramSettingsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ProgramSettingsQuery>(ProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programSettings', 'query');
     }
   };
 }
@@ -758,6 +817,23 @@ export const mockInsertRequestMutation = (resolver: ResponseResolver<GraphQLRequ
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
+ * mockInsertProgramRequestMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertProgramRequestRequisition })
+ *   )
+ * })
+ */
+export const mockInsertProgramRequestMutation = (resolver: ResponseResolver<GraphQLRequest<InsertProgramRequestMutationVariables>, GraphQLContext<InsertProgramRequestMutation>, any>) =>
+  graphql.mutation<InsertProgramRequestMutation, InsertProgramRequestMutationVariables>(
+    'insertProgramRequest',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
  * mockUpdateRequestMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
@@ -785,5 +861,22 @@ export const mockUpdateRequestMutation = (resolver: ResponseResolver<GraphQLRequ
 export const mockDeleteRequestMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteRequestMutationVariables>, GraphQLContext<DeleteRequestMutation>, any>) =>
   graphql.mutation<DeleteRequestMutation, DeleteRequestMutationVariables>(
     'deleteRequest',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockProgramSettingsQuery((req, res, ctx) => {
+ *   const { storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ programRequisitionSettings })
+ *   )
+ * })
+ */
+export const mockProgramSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<ProgramSettingsQueryVariables>, GraphQLContext<ProgramSettingsQuery>, any>) =>
+  graphql.query<ProgramSettingsQuery, ProgramSettingsQueryVariables>(
+    'programSettings',
     resolver
   )
