@@ -9,7 +9,8 @@ use super::{
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
 pub struct LegacyListMasterRow {
-    ID: String,
+    #[serde(rename = "ID")]
+    id: String,
     description: String,
     code: String,
     note: String,
@@ -32,12 +33,11 @@ impl SyncTranslation for MasterListTranslation {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
         let result = MasterListRow {
-            id: data.ID,
+            id: data.id,
             name: data.description,
             code: data.code,
             description: data.note,
         };
-
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::MasterList(result),
         )))

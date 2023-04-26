@@ -25,11 +25,11 @@ Diesel dsl can be used in data migrations, however, for some operations sql stat
 
 ## How to add migration
 
-Identify next version, see [package.json](../../../../package.json) for current version, then increment `patch` by one (we use semantic versioning syntax for our version number, but our app versioning wouldn't necesseraly follow SemVer guidelines which are aimed at publicly consumed packages and libraries, see [version.rs](./version.rs) for more details).
+Identify next version, see [package.json](../../../../package.json) for current version, then increment `patch` by one (we use semantic versioning syntax for our version number, but our app versioning wouldn't necessarily follow SemVer guidelines which are aimed at publicly consumed packages and libraries, see [version.rs](./version.rs) for more details).
 
-**note** everything after `patch` is condiered `pre-release`, and cannot be upgraded further (pre-relase version is really undefined, it could be a test branch or a release candidate), but `pre-release` versions can be used to manually test migrations/functionality in production.
+**note** everything after `patch` is considered `pre-release`, and cannot be upgraded further (pre-release version is really undefined, it could be a test branch or a release candidate), but `pre-release` versions can be used to manually test migrations/functionality in production.
 
-Increment [package.json](../../../../package.json) version to the new version and create new migration folder with the version number. Copy template or existing migration, and rename to new version approprately. 
+Increment [package.json](../../../../package.json) version to the new version and create new migration folder with the version number. Copy template or existing migration, and rename to new version appropriately. 
 
 Add new version mod to [root migrations mode](mod.rs) and add new version to `vec!` of visitors. Add actual migration code and tests, through tests you should be able to check sql syntax and data migration logic without starting server.
 
@@ -41,7 +41,7 @@ Ideally we would be using existing repositories for data migrations, but this wi
 * Since raw sql query still requires a struct to save a result in, I found that adding diesel `table!` with minimum fields has about the same amount of code and allows for a way to select a result into a tuple and opens a way to use diesel dsl for queries and updates, [again in data migration template, query/update in migration and query in test](templates/data_migration/mod.rs)
 * Updates in the templates could have been done with sql, using diesel dsl felt just as easy and in examples use cases updates were done in in `depth` of rust code, and for some reason use diesel dsl felt more natural
 
-A quick note about type safety in migrations, since the schema (before/after) is well know at the time of migration and since it shouldn't change in the future, unit test should be adequate to guarantee type safety (i.e. we dont' need compiler to tell use that our database types are not aligned with new future schema)
+A quick note about type safety in migrations, since the schema (before/after) is well know at the time of migration and since it shouldn't change in the future, unit test should be adequate to guarantee type safety (i.e. we don't need compiler to tell use that our database types are not aligned with new future schema)
 
 We've also considered using [SeaQL](https://github.com/SeaQL/sea-query), but haven't made any examples, mainly because it's another tool and pattern to learn and refine vs learning a bit more about diesel dsl and also there wasn't that much difference in schema sql syntax (which SeaQL also provides vs diesel), lastly couldn't find `CREATE VIEW` in SeaQL so thought we would at the very least have to use raw sql for that.
 

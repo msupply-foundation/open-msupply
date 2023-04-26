@@ -13,8 +13,8 @@ repository = { path = "../../repository" }
 service = { path = "../../service" }
 util = { path = "../../util" }
 
-actix-web = { workspace = true }
-anymap= { workspace = true }
+actix-web = { features = ["cookies"], workspace = true }
+anymap = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
@@ -24,8 +24,9 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 
-tokio = { version = "1.17.0", features = ["macros" ] }
-async-std = "1.9.0" 
+tokio = { version = "1.17.0", features = ["macros"] }
+async-std = "1.9.0"
+
 
 [features]
 default = ["sqlite"]

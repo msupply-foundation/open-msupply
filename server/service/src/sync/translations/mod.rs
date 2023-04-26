@@ -1,4 +1,5 @@
 pub(crate) mod activity_log;
+pub(crate) mod barcode;
 pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
@@ -13,6 +14,7 @@ pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
+pub(crate) mod program_requisition_settings;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
@@ -45,6 +47,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(master_list_name_join::MasterListNameJoinTranslation {}),
         Box::new(period_schedule::PeriodScheduleTranslation {}),
         Box::new(period::PeriodTranslation {}),
+        Box::new(program_requisition_settings::ProgramRequisitionSettingsTranslation {}),
         Box::new(report::ReportTranslation {}),
         Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
         Box::new(store_preference::StorePreferenceTranslation {}),
@@ -58,6 +61,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(requisition::RequisitionTranslation {}),
         Box::new(requisition_line::RequisitionLineTranslation {}),
         Box::new(activity_log::ActivityLogTranslation {}),
+        Box::new(barcode::BarcodeTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
         // Special translations
@@ -81,6 +85,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const STORE_PREFERENCE: &str = "pref";
     pub(crate) const PERIOD_SCHEDULE: &str = "periodSchedule";
     pub(crate) const PERIOD: &str = "period";
+    pub(crate) const BARCODE: &str = "barcode";
     // Remote
     pub(crate) const LOCATION: &str = "Location";
     pub(crate) const ITEM_LINE: &str = "item_line";
@@ -109,6 +114,9 @@ pub(crate) enum PullUpsertRecord {
     MasterListNameJoin(MasterListNameJoinRow),
     PeriodSchedule(PeriodScheduleRow),
     Period(PeriodRow),
+    Program(ProgramRow),
+    ProgramRequisitionSettings(ProgramRequisitionSettingsRow),
+    ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow),
     Report(ReportRow),
     Location(LocationRow),
     StockLine(StockLineRow),
@@ -122,6 +130,7 @@ pub(crate) enum PullUpsertRecord {
     ActivityLog(ActivityLogRow),
     InventoryAdjustmentReason(InventoryAdjustmentReasonRow),
     StorePreference(StorePreferenceRow),
+    Barcode(BarcodeRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]

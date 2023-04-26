@@ -1022,6 +1022,18 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
+export type InsertProgramRequestRequisitionInput = {
+  colour?: InputMaybe<Scalars['String']>;
+  comment?: InputMaybe<Scalars['String']>;
+  /** Defaults to 2 weeks from now */
+  expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']>;
+  id: Scalars['String'];
+  otherPartyId: Scalars['String'];
+  periodId: Scalars['String'];
+  programOrderTypeId: Scalars['String'];
+  theirReference?: InputMaybe<Scalars['String']>;
+};
+
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
   error: InsertRequestRequisitionErrorInterface;
@@ -1081,6 +1093,7 @@ export type InsertStocktakeInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['String'];
   isLocked?: InputMaybe<Scalars['Boolean']>;
+  itemsHaveStock?: InputMaybe<Scalars['Boolean']>;
   locationId?: InputMaybe<Scalars['String']>;
   masterListId?: InputMaybe<Scalars['String']>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']>;
@@ -1652,6 +1665,7 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  insertProgramRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -1857,6 +1871,12 @@ export type MutationsInsertOutboundShipmentServiceLineArgs = {
 
 export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
   input: InsertOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertProgramRequestRequisitionArgs = {
+  input: InsertProgramRequestRequisitionInput;
   storeId: Scalars['String'];
 };
 
@@ -2163,6 +2183,14 @@ export type PaginationInput = {
   first?: InputMaybe<Scalars['Int']>;
   /** First returned item is at the `offset` position in the full list */
   offset?: InputMaybe<Scalars['Int']>;
+};
+
+export type PeriodNode = {
+  __typename: 'PeriodNode';
+  endDate: Scalars['NaiveDate'];
+  id: Scalars['String'];
+  name: Scalars['String'];
+  startDate: Scalars['NaiveDate'];
 };
 
 export type PricingNode = {
@@ -2662,10 +2690,13 @@ export type RequisitionNode = {
    * only applicable to Response requisition, Request requisition will empty connector
    */
   linesRemainingToSupply: RequisitionLineConnector;
+  /** Linked requisition */
+  linkedRequisition?: Maybe<RequisitionNode>;
   /** Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line */
   maxMonthsOfStock: Scalars['Float'];
   /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
   minMonthsOfStock: Scalars['Float'];
+  orderType?: Maybe<Scalars['String']>;
   /**
    * Request Requisition: Supplying store (store that is supplying stock)
    * Response Requisition: Customer store (store that is ordering stock)
@@ -2673,8 +2704,8 @@ export type RequisitionNode = {
   otherParty: NameNode;
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
-  /** Link to request requisition */
-  requestRequisition?: Maybe<RequisitionNode>;
+  period?: Maybe<PeriodNode>;
+  programName?: Maybe<Scalars['String']>;
   requisitionNumber: Scalars['Int'];
   /** Applicable to request requisition only */
   sentDatetime?: Maybe<Scalars['DateTime']>;
@@ -2725,7 +2756,10 @@ export enum RequisitionSortFieldInput {
   CreatedDatetime = 'createdDatetime',
   ExpectedDeliveryDate = 'expectedDeliveryDate',
   FinalisedDatetime = 'finalisedDatetime',
+  OrderType = 'orderType',
   OtherPartyName = 'otherPartyName',
+  PeriodName = 'periodName',
+  ProgramName = 'programName',
   RequisitionNumber = 'requisitionNumber',
   SentDatetime = 'sentDatetime',
   Status = 'status',
@@ -3652,6 +3686,7 @@ export type UserStoreNode = {
   code: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
+  preferences: StorePreferenceNode;
 };
 
 export type UserStorePermissionConnector = {
