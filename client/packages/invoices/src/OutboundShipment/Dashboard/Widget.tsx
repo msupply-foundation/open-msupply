@@ -17,7 +17,7 @@ import { useOutbound } from '../api';
 export const OutboundShipmentWidget: React.FC = () => {
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
-  const t = useTranslation(['app', 'dashboard']);
+  const t = useTranslation(['dashboard']);
   const formatNumber = useFormatNumber();
   const {
     data: outboundCount,
@@ -59,7 +59,7 @@ export const OutboundShipmentWidget: React.FC = () => {
           }}
         />
       ) : null}
-      <Widget title={t('distribution')}>
+      <Widget title={t('distribution', { ns: 'app' })}>
         <Grid
           container
           justifyContent="flex-start"
@@ -74,7 +74,7 @@ export const OutboundShipmentWidget: React.FC = () => {
               title={t('heading.shipments-not-shipped')}
               stats={[
                 {
-                  label: t('label.today', { ns: 'dashboard' }),
+                  label: t('label.today'),
                   value: formatNumber.round(outboundCount?.notShipped),
                 },
               ]}
@@ -85,10 +85,10 @@ export const OutboundShipmentWidget: React.FC = () => {
               error={responseCountError as ApiException}
               isError={isResponseCountError}
               isLoading={isResponseCountLoading}
-              title={t('heading.new-requisitions', { ns: 'dashboard' })}
+              title={t('heading.new-requisitions')}
               stats={[
                 {
-                  label: t('label.today', { ns: 'dashboard' }),
+                  label: t('label.today'),
                   value: formatNumber.round(
                     responseCount?.newResponseRequisitionCount
                   ),
