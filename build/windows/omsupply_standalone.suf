@@ -3350,9 +3350,6 @@ else
 	config = config .. "  host: 127.0.0.1\r\n";
 	config = config .. "  port: " .. SessionVar.Get("%omsupply_port%") .. "\r\n";
 	config = config .. "database:\r\n";
-	config = config .. "  port: " .. SessionVar.Get("%postgres_db_port%") .. "\r\n";
-	config = config .. "  username: \"" .. SessionVar.Get("%postgres_db_user%") .. "\"\r\n";
-	config = config .. "  password: \"" .. SessionVar.Expand("%postgres_db_pass%") .. "\"\r\n";
 	config = config .. "  database_name: \"" .. SessionVar.Get("%omsupply_db_name%") .. "\"\r\n";
 	config = config .. "logging:\r\n";
 	config = config .. "  mode: File\r\n";
