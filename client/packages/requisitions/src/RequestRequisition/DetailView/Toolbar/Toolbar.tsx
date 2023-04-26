@@ -17,6 +17,7 @@ import { getApprovalStatusText } from 'packages/requisitions/src/utils';
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
   const isDisabled = useRequest.utils.isDisabled();
+  const isProgram = useRequest.utils.isProgram();
   const { itemFilter, setItemFilter } = useRequest.line.list();
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
   const {
@@ -52,7 +53,7 @@ export const Toolbar: FC = () => {
               label={t('label.supplier-name')}
               Input={
                 <InternalSupplierSearchInput
-                  disabled={isDisabled}
+                  disabled={isDisabled || isProgram}
                   value={otherParty ?? null}
                   onChange={otherParty => update({ otherParty })}
                 />
