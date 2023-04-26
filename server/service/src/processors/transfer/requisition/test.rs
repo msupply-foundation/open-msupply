@@ -320,7 +320,7 @@ impl RequisitionTransferTester {
                 &ctx,
                 inline_init(|r: &mut UpdateResponseRequisition| {
                     r.id = self.response_requisition.clone().map(|r| r.id).unwrap();
-                    r.status = Some(UpdateResponseRequstionStatus::Finalised);
+                    r.status = Some(UpdateResponseRequisitionStatus::Finalised);
                 }),
             )
             .unwrap();

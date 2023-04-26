@@ -4,7 +4,7 @@ import {
   useMutation,
   RouteBuilder,
 } from '@openmsupply-client/common';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 import { useInboundApi } from '../utils/useInboundApi';
 
 export const useInsertInbound = () => {
