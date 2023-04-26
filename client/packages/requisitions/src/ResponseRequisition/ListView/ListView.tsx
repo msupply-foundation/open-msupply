@@ -97,7 +97,7 @@ export const ResponseRequisitionListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons />
 
       <DataTable
         id="requisition-list"

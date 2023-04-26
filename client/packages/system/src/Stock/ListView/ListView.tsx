@@ -92,7 +92,7 @@ const StockListComponent: FC = () => {
       )}
 
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons />
       <DataTable
         id="stock-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}

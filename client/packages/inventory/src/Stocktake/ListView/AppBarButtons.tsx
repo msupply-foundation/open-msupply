@@ -5,7 +5,6 @@ import {
   AppBarButtonsPortal,
   Grid,
   FileUtils,
-  SortBy,
   LoadingButton,
   ToggleState,
   EnvUtils,
@@ -13,16 +12,19 @@ import {
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { CreateStocktakeButton } from './CreateStocktakeButton';
-import { StocktakeRowFragment, useStocktake } from '../api';
+import { useStocktake } from '../api';
 import { stocktakesToCsv } from '../../utils';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
-  sortBy: SortBy<StocktakeRowFragment>;
-}> = ({ modalController, sortBy }) => {
+}> = ({ modalController }) => {
   const { success, error } = useNotification();
-  const t = useTranslation(['distribution', 'common']);
-  const { isLoading, fetchAsync } = useStocktake.document.listAll(sortBy);
+  const t = useTranslation('distribution');
+  const { isLoading, fetchAsync } = useStocktake.document.listAll({
+    key: 'createdDatetime',
+    direction: 'desc',
+    isDesc: true,
+  });
 
   const csvExport = async () => {
     const data = await fetchAsync();

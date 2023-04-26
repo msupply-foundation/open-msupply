@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
   useNotification,
@@ -7,19 +7,19 @@ import {
   useTranslation,
   FileUtils,
   LoadingButton,
-  SortBy,
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment, useStock } from '../api';
+import { useStock } from '../api';
 import { stockLinesToCsv } from '../../utils';
 
-export const AppBarButtonsComponent: FC<{
-  sortBy: SortBy<StockLineRowFragment>;
-}> = ({ sortBy }) => {
+export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
   const t = useTranslation(['distribution', 'common']);
-  const { fetchAsync, isLoading } = useStock.line.listAll(sortBy);
+  const { fetchAsync, isLoading } = useStock.line.listAll({
+    key: 'itemName',
+    direction: 'asc',
+  });
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -29,7 +29,7 @@ export const AppBarButtonsComponent: FC<{
     }
 
     const csv = stockLinesToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.outbounds'));
+    FileUtils.exportCSV(csv, t('filename.stock'));
     success(t('success'))();
   };
 

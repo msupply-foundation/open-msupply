@@ -45,7 +45,7 @@ export const masterListsToCsv = (
 };
 
 export const stockLinesToCsv = (
-  invoices: StockLineRowFragment[],
+  stockLines: StockLineRowFragment[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
@@ -62,13 +62,13 @@ export const stockLinesToCsv = (
     t('label.supplier'),
   ];
 
-  const data = invoices.map(node => [
+  const data = stockLines.map(node => [
     node.id,
     node.item.code,
     node.item.name,
     node.batch,
     Formatter.csvDateString(node.expiryDate),
-    node.location,
+    node.locationName,
     node.item.unitName,
     node.packSize,
     node.totalNumberOfPacks,

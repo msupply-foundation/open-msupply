@@ -59,6 +59,7 @@
   "filename.outbounds": "outbound-shipments",
   "filename.requests": "internal-orders",
   "filename.responses": "requisitions",
+  "filename.stock": "stock",
   "filename.stocktakes": "stocktakes",
   "heading.404": "Feeling lost?",
   "heading.actions": "Actions",
