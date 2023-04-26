@@ -64,7 +64,6 @@
   "label.requisition": "Requisition",
   "label.requested-quantity": "Requested quantity",
   "label.select-rows-to-allocate-them": "Select rows to allocate them",
-  "label.cant-delete-disabled-requisition": "Can only delete lines when requisition is in Draft",
   "label.supply-quantity": "Quantity to supply",
   "label.unit_one": "{{unit}}",
   "label.unit_other": "{{unit}}s",

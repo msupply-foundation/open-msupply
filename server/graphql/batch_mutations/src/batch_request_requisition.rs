@@ -15,7 +15,7 @@ type ServiceInput = BatchRequestRequisition;
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "InsertRequestRequisitionResponseWithId",
-    params(request_requisition::InsertResponse)
+    params(request_requisition::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateRequestRequisitionResponseWithId",
@@ -42,7 +42,8 @@ pub struct MutationWithId<T: OutputType> {
     pub response: T,
 }
 
-type InsertRequisitionsResponse = Option<Vec<MutationWithId<request_requisition::InsertResponse>>>;
+type InsertRequisitionsResponse =
+    Option<Vec<MutationWithId<request_requisition::insert::InsertResponse>>>;
 type InsertRequisitionLinesResponse =
     Option<Vec<MutationWithId<request_requisition_line::InsertResponse>>>;
 type UpdateRequisitionLinesResponse =
@@ -66,7 +67,7 @@ pub struct BatchResponse {
 #[derive(InputObject)]
 #[graphql(name = "BatchRequestRequisitionInput")]
 pub struct BatchInput {
-    pub insert_request_requisitions: Option<Vec<request_requisition::InsertInput>>,
+    pub insert_request_requisitions: Option<Vec<request_requisition::insert::InsertInput>>,
     pub insert_request_requisition_lines: Option<Vec<request_requisition_line::InsertInput>>,
     pub update_request_requisition_lines: Option<Vec<request_requisition_line::UpdateInput>>,
     pub delete_request_requisition_lines: Option<Vec<request_requisition_line::DeleteInput>>,

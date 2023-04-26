@@ -61,17 +61,17 @@ impl<'a> BarcodeRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<BarcodeRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<BarcodeRow>, RepositoryError> {
         let result = barcode_dsl::barcode
-            .filter(barcode_dsl::id.eq(log_id))
+            .filter(barcode_dsl::id.eq(id))
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
-    pub fn find_many_by_item_id(&self, id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
+    pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
         let result = barcode_dsl::barcode
-            .filter(barcode_dsl::item_id.eq(id))
+            .filter(barcode_dsl::item_id.eq(item_id))
             .get_results(&self.connection.connection)?;
         Ok(result)
     }

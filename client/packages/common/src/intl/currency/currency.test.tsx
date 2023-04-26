@@ -47,7 +47,7 @@ describe('currency formatting - fr', () => {
       providerProps: { locale: 'fr' },
     });
     const f1 = result.current.c(1.11111111111).format();
-    expect(f1).toBe('1,11 XOF');
+    expect(f1).toBe('1,11 €');
   });
   it('formats a string with up to the precision number of decimal places, dropping decimal places where needed even with large numbers', () => {
     const { result } = renderHookWithProvider(useCurrency, {
@@ -55,7 +55,7 @@ describe('currency formatting - fr', () => {
     });
 
     const f1 = result.current.c(111_111.11111111111).format();
-    expect(f1).toBe('111.111,11 XOF');
+    expect(f1).toBe('111.111,11 €');
   });
 
   it('does drop trailing zeroes', () => {
@@ -66,7 +66,7 @@ describe('currency formatting - fr', () => {
     // Note: Using a string to pass into c as formatters will generally
     // auto clear trailing zeroes when literal numbers.
     const f1 = result.current.c('111,11000').format();
-    expect(f1).toBe('111,11 XOF');
+    expect(f1).toBe('111,11 €');
   });
   it('has a minimum of two trailing zeroes, adding one if needed', () => {
     const { result } = renderHookWithProvider(useCurrency, {
@@ -74,7 +74,7 @@ describe('currency formatting - fr', () => {
     });
 
     const f1 = result.current.c('111,1000').format();
-    expect(f1).toBe('111,10 XOF');
+    expect(f1).toBe('111,10 €');
   });
   it('has a minimum of two trailing zeroes, adding two if needed', () => {
     const { result } = renderHookWithProvider(useCurrency, {
@@ -82,6 +82,6 @@ describe('currency formatting - fr', () => {
     });
 
     const f1 = result.current.c(111).format();
-    expect(f1).toBe('111,00 XOF');
+    expect(f1).toBe('111,00 €');
   });
 });

@@ -1,6 +1,7 @@
 pub(crate) mod activity_log;
 pub(crate) mod invoice;
 pub(crate) mod location;
+pub(crate) mod program_requisition;
 pub(crate) mod requisition;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
