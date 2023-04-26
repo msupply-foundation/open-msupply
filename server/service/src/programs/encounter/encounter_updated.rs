@@ -44,6 +44,10 @@ pub(crate) fn update_encounter_row(
         end_datetime: validated_encounter.end_datetime,
         status,
         clinician_id,
+        store_id: validated_encounter
+            .encounter
+            .location
+            .and_then(|l| l.store_id),
     };
     EncounterRowRepository::new(con).upsert_one(&row)?;
 

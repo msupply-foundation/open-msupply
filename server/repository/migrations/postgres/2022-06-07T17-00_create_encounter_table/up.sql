@@ -14,5 +14,7 @@ CREATE TABLE encounter (
     start_datetime TIMESTAMP NOT NULL,
     end_datetime TIMESTAMP,
     status encounter_status,
-    clinician_id TEXT REFERENCES clinician(id)
+    clinician_id TEXT REFERENCES clinician(id),
+    -- The encounter's location (if the location is a store)
+    store_id TEXT
 )

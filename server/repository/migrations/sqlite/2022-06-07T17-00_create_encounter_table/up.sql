@@ -8,5 +8,6 @@ CREATE TABLE encounter (
     start_datetime TIMESTAMP NOT NULL,
     end_datetime TIMESTAMP,
     status TEXT,
-    clinician_id TEXT REFERENCES clinician(id)
+    clinician_id TEXT REFERENCES clinician(id),
+    store_id TEXT
 )
