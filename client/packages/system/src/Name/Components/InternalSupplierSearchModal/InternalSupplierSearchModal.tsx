@@ -1,5 +1,7 @@
 import React, { FC } from 'react';
 import {
+  AutocompleteList,
+  AutocompleteListProps,
   createQueryParamsStore,
   ListSearch,
   QueryParamsProvider,
@@ -9,29 +11,32 @@ import { useName, NameRowFragment } from '../../api';
 import { filterByNameAndCode, NameSearchProps } from '../../utils';
 import { getNameOptionRenderer } from '../NameOptionRenderer';
 
-const InternalSupplierSearchComponent: FC<NameSearchProps> = ({
-  open,
-  onClose,
-  onChange,
-}) => {
+const InternalSupplierSearchComponent: FC<NameSearchProps> = props => {
   const { data, isLoading } = useName.document.internalSuppliers();
   const t = useTranslation('app');
   const NameOptionRenderer = getNameOptionRenderer(t('label.on-hold'));
 
+  const listProps: AutocompleteListProps<NameRowFragment> = {
+    loading: isLoading,
+    filterOptions: filterByNameAndCode,
+    getOptionLabel: option => option.name,
+    renderOption: NameOptionRenderer,
+    onChange: (_, name) => {
+      if (name && !(name instanceof Array)) props.onChange(name);
+    },
+    options: data?.nodes ?? [],
+    getOptionDisabled: option => option.isOnHold,
+  };
+
+  if ('isList' in props) return <AutocompleteList {...listProps} />;
+
+  const { open, onClose } = props;
   return (
     <ListSearch
-      loading={isLoading}
       open={open}
-      options={data?.nodes ?? []}
       onClose={onClose}
       title={t('suppliers')}
-      renderOption={NameOptionRenderer}
-      filterOptions={filterByNameAndCode}
-      getOptionLabel={(option: NameRowFragment) => option.name}
-      onChange={(_, name: NameRowFragment | NameRowFragment[] | null) => {
-        if (name && !(name instanceof Array)) onChange(name);
-      }}
-      getOptionDisabled={option => option.isOnHold}
+      {...listProps}
     />
   );
 };

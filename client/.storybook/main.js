@@ -1,15 +1,12 @@
 const path = require('path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const toPath = filePath => path.join(process.cwd(), filePath);
-
 module.exports = {
   staticDirs: ['../packages/host/public'],
-  typescript: { reactDocgen: 'react-docgen' },
-  framework: '@storybook/react',
-  core: {
-    builder: {
-      name: 'webpack5',
-      options: {
+  framework: {
+    name: '@storybook/react-webpack5',
+    options: {
+      builder: {
         lazyCompilation: true,
       },
     },
@@ -55,6 +52,28 @@ module.exports = {
         },
         plugins: [new TsconfigPathsPlugin()],
       },
+      module: {
+        ...config.modules,
+        rules: [
+          ...config.module.rules,
+          {
+            test: /\.tsx?$/,
+            use: [
+              {
+                loader: 'babel-loader',
+                options: {
+                  sourceType: 'unambiguous',
+                  babelrc: false,
+                  presets: [['react-app', { flow: true, typescript: true }]],
+                },
+              },
+            ],
+          },
+        ],
+      },
     };
+  },
+  docs: {
+    autodocs: true,
   },
 };

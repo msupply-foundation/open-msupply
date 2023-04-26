@@ -3,7 +3,7 @@ import {
   StockLineNode,
   useQuery,
   useUrlQueryParams,
-} from 'packages/common/src';
+} from '@openmsupply-client/common';
 import { useStockApi } from '../utils/useStockApi';
 
 export const useSortedStockLines = (sortBy: SortBy<StockLineNode>) => {

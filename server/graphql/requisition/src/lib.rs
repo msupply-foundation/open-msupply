@@ -1,8 +1,10 @@
 pub mod mutations;
+mod program_settings;
 mod requisition_queries;
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::RequisitionNodeType;
+use program_settings::{get_program_requisition_settings, ProgramRequisitionSettingNode};
 
 use self::mutations::{request_requisition, response_requisition};
 use self::requisition_queries::*;
@@ -40,6 +42,14 @@ impl RequisitionQueries {
     ) -> Result<RequisitionResponse> {
         get_requisition_by_number(ctx, &store_id, requisition_number, r#type)
     }
+
+    pub async fn program_requisition_settings(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Vec<ProgramRequisitionSettingNode>> {
+        get_program_requisition_settings(ctx, &store_id)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -51,9 +61,9 @@ impl RequisitionMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: request_requisition::InsertInput,
-    ) -> Result<request_requisition::InsertResponse> {
-        request_requisition::insert(ctx, &store_id, input)
+        input: request_requisition::insert::InsertInput,
+    ) -> Result<request_requisition::insert::InsertResponse> {
+        request_requisition::insert::insert(ctx, &store_id, input)
     }
 
     async fn insert_program_request_requisition(

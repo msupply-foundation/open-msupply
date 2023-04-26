@@ -20,6 +20,7 @@ export const useRequest = {
     delete: Document.useDeleteRequests,
     deleteSelected: Document.useDeleteSelectedRequisitions,
     insert: Document.useInsertRequest,
+    insertProgram: Document.useInsertProgramRequest,
     update: Document.useUpdateRequest,
 
     fields: Document.useRequestFields,
@@ -37,6 +38,7 @@ export const useRequest = {
     isDisabled: Utils.useIsRequestDisabled,
     isRemoteAuthorisation: Utils.useIsRemoteAuthorisation,
     suggestedQuantity: Utils.useSuggestedQuantity,
+    programSettings: Utils.useProgramSettings,
     preferences: Utils.useRequisitionPreferences,
   },
 };
