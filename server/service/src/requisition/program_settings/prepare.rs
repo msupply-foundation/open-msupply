@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, MasterListFilter, NameFilter, NameTagFilter, PeriodRow, PeriodRowRepository,
+    EqualFilter, MasterListFilter, NameTagFilter, PeriodRow, PeriodRowRepository,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, ProgramSupplier, ProgramSupplierFilter,
@@ -73,9 +73,7 @@ pub(super) fn prepare(
 
     // Suppliers, which are visible in current store and have these program (this is determined by having program master list visible)
     // TODO confirm if they are strictly stores, i.e. can't make internal program order (requisition) to a non store supplier
-    let filter = ProgramSupplierFilter::new()
-        .program_id(EqualFilter::equal_any(program_ids))
-        .name(NameFilter::new().is_store(true).is_visible(true));
+    let filter = ProgramSupplierFilter::new().program_id(EqualFilter::equal_any(program_ids));
     let program_suppliers =
         ProgramSupplierRepository::new(&ctx.connection).query(store_id, filter)?;
 
