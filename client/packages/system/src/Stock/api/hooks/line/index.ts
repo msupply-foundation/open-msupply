@@ -1,3 +1,4 @@
+import { useSortedStockLines } from './useSortedStockLines';
 import { useStockLine } from './useStockLine';
 import { useStockLines } from './useStockLines';
 import { useStockLinesAll } from './useStockLinesAll';
@@ -8,4 +9,5 @@ export const Lines = {
   useStockLines,
   useStockLinesAll,
   useStockLineUpdate,
+  useSortedStockLines,
 };

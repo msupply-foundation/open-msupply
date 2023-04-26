@@ -11,7 +11,7 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition::response_requisition::{
         UpdateResponseRequisition as ServiceInput, UpdateResponseRequisitionError as ServiceError,
-        UpdateResponseRequstionStatus,
+        UpdateResponseRequisitionStatus,
     },
 };
 
@@ -121,10 +121,10 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 }
 
 impl UpdateResponseRequisitionStatusInput {
-    pub fn to_domain(self) -> UpdateResponseRequstionStatus {
+    pub fn to_domain(self) -> UpdateResponseRequisitionStatus {
         use UpdateResponseRequisitionStatusInput::*;
         match self {
-            Finalised => UpdateResponseRequstionStatus::Finalised,
+            Finalised => UpdateResponseRequisitionStatus::Finalised,
         }
     }
 }
@@ -146,7 +146,7 @@ mod test {
         requisition::{
             response_requisition::{
                 UpdateResponseRequisition as ServiceInput,
-                UpdateResponseRequisitionError as ServiceError, UpdateResponseRequstionStatus,
+                UpdateResponseRequisitionError as ServiceError, UpdateResponseRequisitionStatus,
             },
             RequisitionServiceTrait,
         },
@@ -316,7 +316,7 @@ mod test {
                     colour: Some("colour input".to_string()),
                     their_reference: Some("reference input".to_string()),
                     comment: Some("comment input".to_string()),
-                    status: Some(UpdateResponseRequstionStatus::Finalised)
+                    status: Some(UpdateResponseRequisitionStatus::Finalised)
                 }
             );
             Ok(inline_init(|r: &mut Requisition| {
