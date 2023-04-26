@@ -1,5 +1,4 @@
-CREATE TABLE report
-(
+CREATE TABLE report (
     id TEXT NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     type TEXT CHECK (type IN ('OM_SUPPLY')) NOT NULL,
