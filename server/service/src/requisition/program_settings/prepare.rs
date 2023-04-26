@@ -14,7 +14,7 @@ pub(super) struct PrepareProgramSettings {
     pub(super) program_suppliers: Vec<ProgramSupplier>,
     pub(super) order_types: Vec<ProgramRequisitionOrderTypeRow>,
     pub(super) periods: Vec<PeriodRow>,
-    pub(super) requisitions_in_period: Vec<RequisitionsInPeriod>,
+    pub(super) requisitions_in_periods: Vec<RequisitionsInPeriod>,
 }
 
 /// Get program_settings, order_types, periods and requisitions_in_periods for a store
@@ -64,11 +64,11 @@ pub(super) fn prepare(
             periods.iter().map(|p| p.id.clone()).collect(),
         ));
 
-    let requisitions_in_period =
+    let requisitions_in_periods =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
     // Suppliers, which are visible in current store and have these program (this is determined by having program master list visible)
-    // TODO confirm if they are strictly stores (can't make internal program order (requisition) to a non store name)
+    // TODO confirm if they are strictly stores, i.e. can't make internal program order (requisition) to a non store supplier
     let program_ids = settings.iter().map(|s| s.program_row.id.clone()).collect();
 
     let filter = ProgramSupplierFilter::new()
@@ -81,7 +81,7 @@ pub(super) fn prepare(
         settings,
         order_types,
         periods,
-        requisitions_in_period,
+        requisitions_in_periods,
         program_suppliers,
     }))
 }
