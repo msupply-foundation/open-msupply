@@ -68,7 +68,7 @@ pub(super) fn prepare(
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
     // Suppliers, which are visible in current store and have these program (this is determined by having program master list visible)
-    // TODO confirm if they are strictly stores
+    // TODO confirm if they are strictly stores (can't make internal program order (requisition) to a non store name)
     let program_ids = settings.iter().map(|s| s.program_row.id.clone()).collect();
 
     let filter = ProgramSupplierFilter::new()
