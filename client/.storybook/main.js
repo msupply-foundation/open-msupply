@@ -7,15 +7,25 @@ module.exports = {
     name: '@storybook/react-webpack5',
     options: {
       builder: {
-        lazyCompilation: true
-      }
-    }
+        lazyCompilation: true,
+      },
+    },
   },
   features: {
-    storyStoreV7: true
+    storyStoreV7: true,
   },
   stories: ['../packages/**/*.stories.@(js|jsx|ts|tsx)'],
-  addons: ['@storybook/addon-links', '@storybook/addon-essentials', '@storybook/addon-interactions', '@storybook/addon-mdx-gfm'],
+  addons: [
+    '@storybook/addon-links',
+    '@storybook/addon-essentials',
+    '@storybook/addon-interactions',
+  ],
+  // babel: async options => {
+  //   return {
+  //     ...options,
+  //     presets: [...options.presets, '@babel/preset-flow'],
+  //   };
+  // },
   typescript: {
     check: false,
     checkOptions: {},
@@ -30,8 +40,11 @@ module.exports = {
       // makes string and boolean types that can be undefined appear as inputs and switches
       shouldRemoveUndefinedFromOptional: true,
       // Filter out third-party props from node_modules except @mui packages
-      propFilter: prop => prop.parent ? !/node_modules\/(?!@mui)/.test(prop.parent.fileName) : true
-    }
+      propFilter: prop =>
+        prop.parent
+          ? !/node_modules\/(?!@mui)/.test(prop.parent.fileName)
+          : true,
+    },
   },
   webpackFinal: async config => {
     return {
@@ -41,13 +54,32 @@ module.exports = {
         alias: {
           ...config.resolve.alias,
           '@emotion/core': toPath('node_modules/@emotion/react'),
-          'emotion-theming': toPath('node_modules/@emotion/react')
+          'emotion-theming': toPath('node_modules/@emotion/react'),
         },
-        plugins: [new TsconfigPathsPlugin()]
-      }
+        plugins: [new TsconfigPathsPlugin()],
+      },
+      module: {
+        ...config.modules,
+        rules: [
+          ...config.module.rules,
+          {
+            test: /\.tsx?$/,
+            use: [
+              {
+                loader: 'babel-loader',
+                options: {
+                  sourceType: 'unambiguous',
+                  babelrc: false,
+                  presets: [['react-app', { flow: true, typescript: true }]],
+                },
+              },
+            ],
+          },
+        ],
+      },
     };
   },
   docs: {
-    autodocs: true
-  }
+    autodocs: true,
+  },
 };
