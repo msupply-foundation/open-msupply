@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
   useNotification,
@@ -7,20 +7,19 @@ import {
   useTranslation,
   FileUtils,
   LoadingButton,
-  SortBy,
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
 import { useMasterList } from '../api/hooks';
 import { masterListsToCsv } from '../../utils';
-import { MasterListRowFragment } from '../api';
 
-export const AppBarButtons: FC<{
-  sortBy: SortBy<MasterListRowFragment>;
-}> = ({ sortBy }) => {
+export const AppBarButtons = () => {
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { isLoading, fetchAsync } = useMasterList.document.listAll(sortBy);
+  const { isLoading, fetchAsync } = useMasterList.document.listAll({
+    key: 'name',
+    direction: 'asc',
+  });
 
   const csvExport = async () => {
     const data = await fetchAsync();

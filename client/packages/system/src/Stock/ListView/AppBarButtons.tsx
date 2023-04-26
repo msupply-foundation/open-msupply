@@ -1,29 +1,24 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
   useNotification,
   AppBarButtonsPortal,
   Grid,
+  useTranslation,
   FileUtils,
   LoadingButton,
-  ToggleState,
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
-import { useTranslation } from '@common/intl';
-import { CreateStocktakeButton } from './CreateStocktakeButton';
-import { useStocktake } from '../api';
-import { stocktakesToCsv } from '../../utils';
+import { useStock } from '../api';
+import { stockLinesToCsv } from '../../utils';
 
-export const AppBarButtons: FC<{
-  modalController: ToggleState;
-}> = ({ modalController }) => {
+export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
-  const t = useTranslation('distribution');
-  const { isLoading, fetchAsync } = useStocktake.document.listAll({
-    key: 'createdDatetime',
-    direction: 'desc',
-    isDesc: true,
+  const t = useTranslation(['distribution', 'common']);
+  const { fetchAsync, isLoading } = useStock.line.listAll({
+    key: 'itemName',
+    direction: 'asc',
   });
 
   const csvExport = async () => {
@@ -33,19 +28,18 @@ export const AppBarButtons: FC<{
       return;
     }
 
-    const csv = stocktakesToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.stocktakes'));
+    const csv = stockLinesToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, t('filename.stock'));
     success(t('success'))();
   };
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <CreateStocktakeButton modalController={modalController} />
         <LoadingButton
           startIcon={<DownloadIcon />}
-          variant="outlined"
           isLoading={isLoading}
+          variant="outlined"
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
         >
@@ -55,3 +49,5 @@ export const AppBarButtons: FC<{
     </AppBarButtonsPortal>
   );
 };
+
+export const AppBarButtons = React.memo(AppBarButtonsComponent);
