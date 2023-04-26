@@ -34,6 +34,10 @@
           "format": "date-time",
           "type": "string"
         },
+        "location": {
+          "$ref": "#/definitions/EncounterLocation",
+          "description": "The store/clinic/location of the encounter"
+        },
         "notes": {
           "description": "An overall note for additional comments about the encounter",
           "items": {
@@ -51,6 +55,14 @@
         }
       },
       "required": ["createdDatetime", "startDatetime"],
+      "type": "object"
+    },
+    "EncounterLocation": {
+      "properties": {
+        "storeId": {
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "EncounterStatus": {
