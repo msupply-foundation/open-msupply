@@ -9,9 +9,7 @@ CREATE TABLE report
         'OUTBOUND_SHIPMENT',
         'REQUISITION',
         'STOCKTAKE',
-        'RESOURCE',
-        'PATIENT',
-        'DISPENSARY'
+        'RESOURCE'
     )) NOT NULL,
     comment TEXT
 )
