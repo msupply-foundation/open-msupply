@@ -1,3 +1,4 @@
+use super::{StorePreferenceNode, UserStorePermissionConnector};
 use async_graphql::{
     dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result, SimpleObject,
 };
@@ -6,8 +7,6 @@ use graphql_core::{
 };
 use repository::{Language, User, UserStore};
 use service::permission::permissions;
-
-use super::UserStorePermissionConnector;
 
 pub struct UserStoreNode {
     user_store: UserStore,
@@ -38,6 +37,10 @@ impl UserStoreNode {
             )?;
 
         Ok(name_row.name)
+    }
+
+    pub async fn preferences(&self) -> StorePreferenceNode {
+        StorePreferenceNode::from_domain(self.user_store.store_preferences.clone())
     }
 }
 

@@ -2690,6 +2690,8 @@ export type RequisitionNode = {
    * only applicable to Response requisition, Request requisition will empty connector
    */
   linesRemainingToSupply: RequisitionLineConnector;
+  /** Linked requisition */
+  linkedRequisition?: Maybe<RequisitionNode>;
   /** Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line */
   maxMonthsOfStock: Scalars['Float'];
   /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
@@ -2704,8 +2706,6 @@ export type RequisitionNode = {
   otherPartyName: Scalars['String'];
   period?: Maybe<PeriodNode>;
   programName?: Maybe<Scalars['String']>;
-  /** Link to request requisition */
-  requestRequisition?: Maybe<RequisitionNode>;
   requisitionNumber: Scalars['Int'];
   /** Applicable to request requisition only */
   sentDatetime?: Maybe<Scalars['DateTime']>;
@@ -3686,6 +3686,7 @@ export type UserStoreNode = {
   code: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
+  preferences: StorePreferenceNode;
 };
 
 export type UserStorePermissionConnector = {
