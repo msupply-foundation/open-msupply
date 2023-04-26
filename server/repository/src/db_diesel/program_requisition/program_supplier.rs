@@ -24,7 +24,6 @@ pub struct ProgramSupplier {
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct ProgramSupplierFilter {
     pub program_id: Option<EqualFilter<String>>,
-    pub name: Option<NameFilter>,
 }
 
 pub struct ProgramSupplierRepository<'a> {
@@ -41,21 +40,25 @@ impl<'a> ProgramSupplierRepository<'a> {
         store_id: &str,
         ProgramSupplierFilter {
             program_id: program_id_filter,
-            name: name_filter,
         }: ProgramSupplierFilter,
     ) -> Result<Vec<ProgramSupplier>, RepositoryError> {
-        let mut query = NameRepository::create_filtered_query(store_id.to_string(), name_filter)
-            .inner_join(
-                master_list_name_join_dsl::master_list_name_join
-                    .on(master_list_name_join_dsl::name_id.eq(name_dsl::id)),
-            )
-            .inner_join(
-                master_list_dsl::master_list
-                    .on(master_list_dsl::id.eq(master_list_name_join_dsl::master_list_id)),
-            )
-            .inner_join(
-                program_dsl::program.on(program_dsl::master_list_id.eq(master_list_dsl::id)),
-            );
+        // If this filter is lifter to service layer, we may have an issue this after `query.select` below, name_store_join_row and store_row
+        // becomes not null, but can be if this fitler is not exposed, causing diesel deserialisation error TODO add issue with diesel
+        let name_filter = NameFilter::new().is_store(true).is_visible(false);
+
+        let mut query =
+            NameRepository::create_filtered_query(store_id.to_string(), Some(name_filter))
+                .inner_join(
+                    master_list_name_join_dsl::master_list_name_join
+                        .on(master_list_name_join_dsl::name_id.eq(name_dsl::id)),
+                )
+                .inner_join(
+                    master_list_dsl::master_list
+                        .on(master_list_dsl::id.eq(master_list_name_join_dsl::master_list_id)),
+                )
+                .inner_join(
+                    program_dsl::program.on(program_dsl::master_list_id.eq(master_list_dsl::id)),
+                );
 
         apply_equal_filter!(query, program_id_filter, program_dsl::id);
 
@@ -99,11 +102,6 @@ impl ProgramSupplierFilter {
         self.program_id = Some(filter);
         self
     }
-
-    pub fn name(mut self, filter: NameFilter) -> Self {
-        self.name = Some(filter);
-        self
-    }
 }
 
 #[cfg(test)]
@@ -112,8 +110,8 @@ mod test {
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
         EqualFilter, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, Name,
-        NameFilter, NameRow, NameStoreJoinRepository, NameStoreJoinRow, ProgramRow,
-        ProgramSupplier, ProgramSupplierFilter, ProgramSupplierRepository, StoreRow,
+        NameRow, NameStoreJoinRepository, NameStoreJoinRow, ProgramRow, ProgramSupplier,
+        ProgramSupplierFilter, ProgramSupplierRepository, StoreRow,
     };
 
     #[actix_rt::test]
@@ -234,12 +232,10 @@ mod test {
         // should result in nothing (since name1 is not store)
         let repo = ProgramSupplierRepository::new(&connection);
 
-        let filter = ProgramSupplierFilter::new()
-            .program_id(EqualFilter::equal_any(vec![
-                program1.id.clone(),
-                program2.id.clone(),
-            ]))
-            .name(NameFilter::new().is_store(true).is_visible(true));
+        let filter = ProgramSupplierFilter::new().program_id(EqualFilter::equal_any(vec![
+            program1.id.clone(),
+            program2.id.clone(),
+        ]));
 
         let result = repo.query(&store3.id, filter);
 
@@ -247,12 +243,10 @@ mod test {
 
         // TEST 2 with master list join for store 1 and without name_store_join for store 2
         // should result in one found, store_name1
-        let filter = ProgramSupplierFilter::new()
-            .program_id(EqualFilter::equal_any(vec![
-                program1.id.clone(),
-                program2.id.clone(),
-            ]))
-            .name(NameFilter::new().is_store(true).is_visible(true));
+        let filter = ProgramSupplierFilter::new().program_id(EqualFilter::equal_any(vec![
+            program1.id.clone(),
+            program2.id.clone(),
+        ]));
 
         MasterListNameJoinRepository::new(&connection)
             .upsert_one(&master_list_name_join2)
@@ -274,12 +268,10 @@ mod test {
 
         // TEST 3 with master list join for store 1 and with name_store_join for store 2
         // should result in two found, store_name1 and store_name2
-        let filter = ProgramSupplierFilter::new()
-            .program_id(EqualFilter::equal_any(vec![
-                program1.id.clone(),
-                program2.id.clone(),
-            ]))
-            .name(NameFilter::new().is_store(true).is_visible(true));
+        let filter = ProgramSupplierFilter::new().program_id(EqualFilter::equal_any(vec![
+            program1.id.clone(),
+            program2.id.clone(),
+        ]));
 
         NameStoreJoinRepository::new(&connection)
             .upsert_one(&name_store_join3)
