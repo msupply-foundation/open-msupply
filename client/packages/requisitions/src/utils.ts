@@ -141,8 +141,6 @@ export const getApprovalStatusText = (
     case RequisitionNodeApprovalStatus.Pending:
       return 'approval-status.pending';
     default:
-      noOtherVariants(approvalStatus);
+      return noOtherVariants(approvalStatus);
   }
-  // this is just to keep ts linter happy - we won't ever get here
-  return 'approval-status.none';
 };

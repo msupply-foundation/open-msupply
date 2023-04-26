@@ -39,8 +39,8 @@ impl UserStoreNode {
         Ok(name_row.name)
     }
 
-    pub async fn preferences(&self) -> Result<StorePreferenceNode> {
-        Ok(self.user_store.store_preferences.clone().into())
+    pub async fn preferences(&self) -> StorePreferenceNode {
+        StorePreferenceNode::from_domain(self.user_store.store_preferences.clone())
     }
 }
 
