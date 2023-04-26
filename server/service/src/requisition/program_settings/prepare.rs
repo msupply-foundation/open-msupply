@@ -67,7 +67,7 @@ pub(super) fn prepare(
     let requisitions_in_period =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
-    // Suppliers, which are visible in current store and have these program (this is determinded by having program master list visible)
+    // Suppliers, which are visible in current store and have these program (this is determined by having program master list visible)
     // TODO confirm if they are strictly stores
     let program_ids = settings.iter().map(|s| s.program_row.id.clone()).collect();
 
