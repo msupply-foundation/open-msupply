@@ -157,7 +157,7 @@ export const ProgramRequisitionOptions = ({
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           disabled={!createOptions}
-          label={t('label.new')}
+          label={t('label.create')}
           onClick={() => {
             if (!createOptions) return;
             onCreate({
