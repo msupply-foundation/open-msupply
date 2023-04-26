@@ -138,19 +138,17 @@ fn delete_requisition_program(
     let mut program_requisition_settings_ids = Vec::new();
     let mut program_requisition_order_type_ids = Vec::new();
 
-    let program_requisition_settings = ProgramRequisitionSettingsRowRepository::new(connection)
-        .find_many_by_program_id(&master_list.id)?;
+    ProgramRequisitionSettingsRowRepository::new(connection)
+        .find_many_by_program_id(&master_list.id)?
+        .iter()
+        .for_each(|program_requisition_setting| {
+            program_requisition_settings_ids.push(program_requisition_setting.id.clone())
+        });
 
-    for program_requisition_setting in program_requisition_settings {
-        program_requisition_settings_ids.push(program_requisition_setting.id)
-    }
-
-    let order_types = ProgramRequisitionOrderTypeRowRepository::new(connection)
-        .find_many_by_requisition_settings_id(&program_requisition_settings_ids)?;
-
-    for order_type in order_types {
-        program_requisition_order_type_ids.push(order_type.id)
-    }
+    ProgramRequisitionOrderTypeRowRepository::new(connection)
+        .find_many_by_requisition_settings_id(&program_requisition_settings_ids)?
+        .iter()
+        .for_each(|order_type| program_requisition_order_type_ids.push(order_type.id.clone()));
 
     Ok(Some(DeleteRequisitionProgram {
         program_requisition_settings_ids,
