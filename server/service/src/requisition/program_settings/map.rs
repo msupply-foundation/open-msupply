@@ -14,7 +14,7 @@ pub(super) fn map(
         order_types,
         periods,
         program_suppliers,
-        requisitions_in_period,
+        requisitions_in_periods,
     }: PrepareProgramSettings,
 ) -> Vec<ProgramSettings> {
     settings
@@ -35,7 +35,7 @@ pub(super) fn map(
                                 period,
                                 &program_setting,
                                 &order_type,
-                                &requisitions_in_period,
+                                &requisitions_in_periods,
                             )
                         })
                         .map(|p| p.clone())
@@ -73,21 +73,26 @@ fn period_is_available(
     period: &PeriodRow,
     setting: &ProgramRequisitionSettings,
     order_type: &ProgramRequisitionOrderTypeRow,
-    requisitions_in_period: &Vec<RequisitionsInPeriod>,
+    requisitions_in_periods: &Vec<RequisitionsInPeriod>,
 ) -> bool {
     if period.period_schedule_id != setting.program_settings_row.period_schedule_id {
         return false;
     }
 
-    match requisitions_in_period.iter().find(|requisition_in_period| {
-        requisition_in_period.program_id == setting.program_row.id
-        && requisition_in_period.period_id == period.id
-        // Case insensitive match for order_type
-            && requisition_in_period.order_type.to_lowercase() == order_type.name.to_lowercase()
-    }) {
-        Some(requisitions_in_period) => {
-            requisitions_in_period.count < order_type.max_order_per_period as i64
-        }
-        None => true,
-    }
+    // requisitions_in_period already has a count of how many requisitions are in a period
+    // there should only be one requistions_in_period entry for one program period, see
+    // requisitions_in_period view
+    let this_period_requisitions = requisitions_in_periods
+        .iter()
+        .find(|requisition_in_period| {
+            requisition_in_period.program_id == setting.program_row.id
+                && requisition_in_period.period_id == period.id
+                // Case insensitive match for order_type
+                && requisition_in_period.order_type.to_lowercase() == order_type.name.to_lowercase()
+        });
+
+    let number_of_requisitions_in_this_period =
+        this_period_requisitions.map(|r| r.count).unwrap_or(0);
+
+    number_of_requisitions_in_this_period < order_type.max_order_per_period as i64
 }
