@@ -21,6 +21,7 @@ pub struct InsertInput {
     pub stocktake_date: Option<NaiveDate>,
     pub master_list_id: Option<String>,
     pub location_id: Option<String>,
+    pub items_have_stock: Option<bool>,
 }
 
 #[derive(Union)]
@@ -94,6 +95,7 @@ impl InsertInput {
             is_locked,
             location_id,
             master_list_id,
+            items_have_stock,
         } = self;
 
         ServiceInput {
@@ -104,6 +106,7 @@ impl InsertInput {
             is_locked,
             location_id,
             master_list_id,
+            items_have_stock,
         }
     }
 }
@@ -180,6 +183,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: None,
                     master_list_id: None,
+                    items_have_stock: None,
                 }
             );
             // StocktakeNode result is checked in queries

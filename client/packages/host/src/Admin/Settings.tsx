@@ -213,6 +213,7 @@ export const Settings: React.FC = () => {
           defaultValue={customLogoValue}
           onSave={saveLogo}
           onToggle={onToggleCustomLogo}
+          infoText={t('heading.custom-logo-info')}
           title={t('heading.custom-logo')}
         />
         <SyncSettings />

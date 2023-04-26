@@ -1,6 +1,7 @@
 import {
   FilterBy,
   SortBy,
+  StockLineNode,
   useAuthContext,
   useGql,
 } from '@openmsupply-client/common';
@@ -23,6 +24,8 @@ export const useStockApi = () => {
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<StockLineNode>) =>
+      [...keys.list(), sortBy] as const,
   };
 
   return { ...queries, keys, storeId };

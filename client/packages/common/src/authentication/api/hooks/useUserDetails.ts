@@ -1,15 +1,9 @@
-import { UserNode } from '@common/types';
 import { useMutation, useQuery } from 'react-query';
 import { useAuthApi } from './useAuthApi';
 
 export const useGetUserDetails = () => {
   const api = useAuthApi();
-  return useMutation<
-    Partial<UserNode> | undefined,
-    unknown,
-    string | undefined,
-    unknown
-  >(api.get.me);
+  return useMutation(api.get.me);
 };
 
 export const useUserDetails = (token: string) => {
