@@ -291,7 +291,7 @@ mod test {
         let mut result = repo.query(filter.clone()).unwrap();
         result.sort_by(sort);
 
-        pretty_assertions::assert_eq!(
+        assert_eq!(
             result,
             vec![
                 RequisitionsInPeriod {
@@ -324,7 +324,7 @@ mod test {
         let mut result = repo.query(filter.clone()).unwrap();
         result.sort_by(sort);
 
-        pretty_assertions::assert_eq!(
+        assert_eq!(
             result,
             vec![
                 RequisitionsInPeriod {
@@ -367,7 +367,7 @@ mod test {
             .unwrap();
         result.sort_by(sort);
 
-        pretty_assertions::assert_eq!(
+        assert_eq!(
             result,
             vec![RequisitionsInPeriod {
                 id: "n/a".to_string(),
