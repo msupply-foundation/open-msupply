@@ -37,11 +37,12 @@ interface Encounter {
   startDatetime?: string;
   endDatetime?: string;
   clinician?: Clinician;
+  location?: { storeId?: string };
 }
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
-  const { user } = useAuthContext();
+  const { user, storeId } = useAuthContext();
   const t = useTranslation('patients');
   const { getLocalisedFullName } = useIntlUtils();
   const { current, setModal: selectModal } = usePatientModalStore();
@@ -78,27 +79,36 @@ export const CreateEncounterModal: FC = () => {
     setEncounterRegistry(entry);
   };
 
+  const currentOrNewDraft = (): Encounter => {
+    return (
+      draft ?? {
+        createdDatetime,
+        createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
+        status: EncounterNodeStatus.Pending,
+        location: {
+          storeId,
+        },
+      }
+    );
+  };
   const setStartDatetime = (date: Date | null): void => {
     const startDatetime = DateUtils.formatRFC3339(
       DateUtils.addCurrentTime(date)
     );
     setDraft({
-      createdDatetime,
-      ...draft,
+      ...currentOrNewDraft(),
       startDatetime,
-      createdBy: { id: user?.id ?? '', username: user?.name ?? '' },
-      status: EncounterNodeStatus.Pending,
     });
     setStartDateTimeError(false);
   };
 
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
     if (option === null) {
-      setDraft({ createdDatetime, ...draft, clinician: undefined });
+      setDraft({ ...currentOrNewDraft(), clinician: undefined });
       return;
     }
     const clinician = option.value;
-    setDraft({ createdDatetime, ...draft, clinician });
+    setDraft({ ...currentOrNewDraft(), clinician });
   };
 
   const canSubmit = () =>
