@@ -2229,6 +2229,22 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
+export type ProgramRequisitionOrderTypeNode = {
+  __typename: 'ProgramRequisitionOrderTypeNode';
+  availablePeriods: Array<PeriodNode>;
+  id: Scalars['String'];
+  name: Scalars['String'];
+};
+
+export type ProgramRequisitionSettingNode = {
+  __typename: 'ProgramRequisitionSettingNode';
+  masterList: MasterListNode;
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+  programId: Scalars['String'];
+  programName: Scalars['String'];
+  suppliers: Array<NameNode>;
+};
+
 export type Queries = {
   __typename: 'Queries';
   activityLogs: ActivityLogResponse;
@@ -2268,6 +2284,7 @@ export type Queries = {
    */
   printReport: PrintReportResponse;
   printReportDefinition: PrintReportResponse;
+  programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -2395,6 +2412,11 @@ export type QueriesPrintReportDefinitionArgs = {
   dataId: Scalars['String'];
   name?: InputMaybe<Scalars['String']>;
   report: Scalars['JSON'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesProgramRequisitionSettingsArgs = {
   storeId: Scalars['String'];
 };
 

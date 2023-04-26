@@ -8,6 +8,7 @@ import {
   UpdateRequestRequisitionInput,
   UpdateRequestRequisitionStatusInput,
   RequisitionSortFieldInput,
+  InsertProgramRequestRequisitionInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import {
@@ -270,6 +271,26 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to create requisition');
   },
+  insertProgram: async (
+    input: InsertProgramRequestRequisitionInput
+  ): Promise<{
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  }> => {
+    const result = await sdk.insertProgramRequest({
+      storeId,
+      input,
+    });
+
+    const { insertProgramRequestRequisition } = result || {};
+
+    if (insertProgramRequestRequisition?.__typename === 'RequisitionNode') {
+      return insertProgramRequestRequisition;
+    }
+
+    throw new Error('Unable to create requisition');
+  },
   deleteRequests: async (requisitions: RequestRowFragment[]) => {
     const deleteRequestRequisitions = requisitions.map(requestParser.toDelete);
     const result = await sdk.deleteRequest({
@@ -312,5 +333,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
   useSuggestedQuantity: async (requestId: string) => {
     const result = await sdk.useSuggestedQuantity({ requestId, storeId });
     return result;
+  },
+  programSettings: async () => {
+    const result = await sdk.programSettings({ storeId });
+    return result.programRequisitionSettings;
   },
 });

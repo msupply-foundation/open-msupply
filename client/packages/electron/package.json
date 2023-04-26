@@ -12,66 +12,13 @@
   "author": {
     "name": "mSupply Foundation"
   },
-  "config": {
-    "forge": {
-      "packagerConfig": {
-        "icon": "./src/public/oms"
-      },
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "omSupply"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": [
-            "darwin",
-            "windows"
-          ]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {}
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {}
-        }
-      ],
-      "plugins": [
-        {
-          "name": "@electron-forge/plugin-webpack",
-          "config": {
-            "mainConfig": "./webpack.main.config.js",
-            "//": "needed for api requests during discovery",
-            "devContentSecurityPolicy": "connect-src *",
-            "renderer": {
-              "config": "./webpack.renderer.config.js",
-              "entryPoints": [
-                {
-                  "html": "./src/index.html",
-                  "js": "./src/renderer.ts",
-                  "name": "main_window",
-                  "preload": {
-                    "js": "./src/preload.ts"
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    }
-  },
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.63",
-    "@electron-forge/maker-deb": "^6.0.0-beta.63",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.63",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.63",
-    "@electron-forge/maker-zip": "^6.0.0-beta.63",
-    "@electron-forge/plugin-webpack": "^6.0.5",
+    "@electron-forge/cli": "^6.1.1",
+    "@electron-forge/maker-deb": "^6.1.1",
+    "@electron-forge/maker-rpm": "^6.1.1",
+    "@electron-forge/maker-squirrel": "^6.1.1",
+    "@electron-forge/maker-zip": "^6.1.1",
+    "@electron-forge/plugin-webpack": "^6.1.1",
     "@types/dnssd": "^0.4.2",
     "@types/ip": "^1.1.0",
     "@types/node-hid": "^1.3.1",
@@ -80,9 +27,10 @@
     "@vercel/webpack-asset-relocator-loader": "1.7.3",
     "copy-webpack-plugin": "11.0.0",
     "css-loader": "^6.0.0",
-    "electron": "^23.1.4",
+    "electron": "^24.1.2",
     "eslint": "^8.0.1",
     "eslint-plugin-import": "^2.25.0",
+    "file-loader": "^6.2.0",
     "fork-ts-checker-webpack-plugin": "^8.0.0",
     "node-loader": "^2.0.0",
     "style-loader": "^3.0.0",
