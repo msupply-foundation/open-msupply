@@ -127,6 +127,9 @@ impl<'a> NameRepository<'a> {
         Ok(result.into_iter().map(Name::from_join).collect())
     }
 
+    /// Returns a list of names left joined to name_store_join (for name_store_joins matching store_id parameter)
+    /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
+    /// but it's considered invisible in subseqent filters.
     pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
         let mut query = name_dsl::name
             .left_join(
