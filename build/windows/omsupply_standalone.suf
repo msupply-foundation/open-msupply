@@ -2030,7 +2030,7 @@ end
 <Visible>1</Visible>
 <Enabled>1</Enabled>
 <TabOrder>5</TabOrder>
-<Checked>0</Checked>
+<Checked>1</Checked>
 <Variable>cbStartOmSupply</Variable>
 </Control>
 <Control>
@@ -3055,7 +3055,10 @@ end
 
 if (bServiceExists) then
 	Service.Delete("Open mSupply Server", "omsupply-server");
-end</Script>
+end
+
+Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop");
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
