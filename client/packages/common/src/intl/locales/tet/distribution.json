@@ -2,7 +2,6 @@
   "button.new-outbound-shipment": "Remessa sasan sai foun",
   "label.incoming-stock": "Stock Ne'ebe tama mai",
   "label.requisition": "Requizisaun",
-  "label.cant-delete-disabled-requisition": "Bele deit hamos linas wainhira requizisaun iha hela Draf",
   "messages.create-outbound-from-requisition": "Ita certeja hakarak kria remessa Sasan Sai husi konsumidor nia requizisaun?",
   "button.add-from-master-list": "Aumenta husi Master List",
   "button.add-item": "Aumenta Item",

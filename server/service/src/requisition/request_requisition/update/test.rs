@@ -18,7 +18,7 @@ mod test_update {
     use crate::{
         requisition::request_requisition::{
             UpdateRequestRequisition, UpdateRequestRequisitionError as ServiceError,
-            UpdateRequestRequistionStatus,
+            UpdateRequestRequisitionStatus,
         },
         service_provider::ServiceProvider,
     };
@@ -162,7 +162,7 @@ mod test_update {
                 UpdateRequestRequisition {
                     id: mock_draft_request_requisition_for_update_test().id,
                     colour: Some("new colour".to_owned()),
-                    status: Some(UpdateRequestRequistionStatus::Sent),
+                    status: Some(UpdateRequestRequisitionStatus::Sent),
                     their_reference: Some("new their_reference".to_owned()),
                     comment: Some("new comment".to_owned()),
                     max_months_of_stock: None,
