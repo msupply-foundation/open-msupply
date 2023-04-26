@@ -40,5 +40,6 @@ export const useRequest = {
     suggestedQuantity: Utils.useSuggestedQuantity,
     programSettings: Utils.useProgramSettings,
     preferences: Utils.useRequisitionPreferences,
+    isProgram: Utils.useIsProgramRequest,
   },
 };

@@ -5,6 +5,7 @@ import { useSuggestedQuantity } from './useSuggestedQuantity';
 import { useProgramSettings } from './useProgramSettings';
 import { useRequisitionPreferences } from './useRequisitionPreferences';
 import { useIsRemoteAuthorisation } from './useIsRemoteAuthorisation';
+import { useIsProgramRequest } from './useIsProgramRequest';
 
 export const Utils = {
   useRequestApi,
@@ -14,4 +15,5 @@ export const Utils = {
   useSuggestedQuantity,
   useProgramSettings,
   useIsRemoteAuthorisation,
+  useIsProgramRequest,
 };
