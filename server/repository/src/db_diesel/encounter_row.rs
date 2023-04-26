@@ -29,6 +29,7 @@ table! {
         end_datetime -> Nullable<Timestamp>,
         status -> Nullable<crate::db_diesel::encounter_row::EncounterStatusMapping>,
         clinician_id -> Nullable<Text>,
+        store_id -> Nullable<Text>,
     }
 }
 
@@ -49,6 +50,8 @@ pub struct EncounterRow {
     pub end_datetime: Option<NaiveDateTime>,
     pub status: Option<EncounterStatus>,
     pub clinician_id: Option<String>,
+    ///  The encounter's location (if the location is a store)
+    pub store_id: Option<String>,
 }
 
 pub struct EncounterRowRepository<'a> {
