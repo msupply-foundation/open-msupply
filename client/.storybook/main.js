@@ -20,12 +20,6 @@ module.exports = {
     '@storybook/addon-essentials',
     '@storybook/addon-interactions',
   ],
-  // babel: async options => {
-  //   return {
-  //     ...options,
-  //     presets: [...options.presets, '@babel/preset-flow'],
-  //   };
-  // },
   typescript: {
     check: false,
     checkOptions: {},
