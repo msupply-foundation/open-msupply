@@ -218,6 +218,12 @@ impl PullDeleteRecord {
             Unit => UnitRowRepository::new(con).delete(id),
             Item => ItemRowRepository::new(con).delete(id),
             Store => StoreRowRepository::new(con).delete(id),
+            ProgramRequisitionOrderType => {
+                ProgramRequisitionOrderTypeRowRepository::new(con).delete(id)
+            }
+            ProgramRequisitionSettings => {
+                ProgramRequisitionSettingsRowRepository::new(con).delete(id)
+            }
             MasterListNameJoin => MasterListNameJoinRepository::new(con).delete(id),
             Report => ReportRowRepository::new(con).delete(id),
             NameStoreJoin => NameStoreJoinRepository::new(con).delete(id),
