@@ -3,8 +3,8 @@ use repository::{
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, ProgramSupplier, ProgramSupplierFilter,
-    ProgramSupplierRepository, RepositoryError, RequisitionsInPeriod, RequisitionsInPeriodFilter,
-    RequisitionsInPeriodRepository,
+    ProgramSupplierRepository, RepositoryError, RequisitionRowType, RequisitionsInPeriod,
+    RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -45,6 +45,8 @@ pub(super) fn prepare(
         .map(|s| s.program_settings_row.id.as_str())
         .collect();
 
+    let program_ids: Vec<String> = settings.iter().map(|s| s.program_row.id.clone()).collect();
+
     let order_types = ProgramRequisitionOrderTypeRowRepository::new(&ctx.connection)
         .find_many_by_program_requisition_settings_ids(program_requisition_settings_ids)?;
 
@@ -57,20 +59,20 @@ pub(super) fn prepare(
     let periods = PeriodRowRepository::new(&ctx.connection)
         .find_many_by_program_schedule_ids(program_schedule_ids)?;
 
+    let period_ids = periods.iter().map(|p| p.id.clone()).collect();
+
     // Requisitions in Period (for all periods and store)
     let filter = RequisitionsInPeriodFilter::new()
         .store_id(equal_to_store_id)
-        .period_id(EqualFilter::equal_any(
-            periods.iter().map(|p| p.id.clone()).collect(),
-        ));
+        .program_id(EqualFilter::equal_any(program_ids.clone()))
+        .period_id(EqualFilter::equal_any(period_ids))
+        .r#type(RequisitionRowType::Request.equal_to());
 
     let requisitions_in_periods =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;
 
     // Suppliers, which are visible in current store and have these program (this is determined by having program master list visible)
     // TODO confirm if they are strictly stores, i.e. can't make internal program order (requisition) to a non store supplier
-    let program_ids = settings.iter().map(|s| s.program_row.id.clone()).collect();
-
     let filter = ProgramSupplierFilter::new()
         .program_id(EqualFilter::equal_any(program_ids))
         .name(NameFilter::new().is_store(true).is_visible(true));
