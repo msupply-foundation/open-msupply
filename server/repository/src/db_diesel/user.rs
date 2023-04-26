@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use super::{
+    store_preference_row::store_preference::dsl as store_preference_dsl,
     store_row::{store, store::dsl as store_dsl},
     user_row::{user_account, user_account::dsl as user_dsl},
     user_store_join_row::{user_store_join, user_store_join::dsl as user_store_join_dsl},
@@ -9,7 +10,7 @@ use super::{
 use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    EqualFilter, Pagination, SimpleStringFilter, Sort,
+    store_preference, EqualFilter, Pagination, SimpleStringFilter, Sort, StorePreferenceRow,
 };
 
 use diesel::{
@@ -22,6 +23,7 @@ use diesel::{
 pub struct UserStore {
     pub store_row: StoreRow,
     pub user_store_join: UserStoreJoinRow,
+    pub store_preferences: StorePreferenceRow,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -51,7 +53,12 @@ pub enum UserSortField {
 
 pub type UserSort = Sort<UserSortField>;
 
-type UserAndUserStoreJoin = (UserAccountRow, Option<UserStoreJoinRow>, Option<StoreRow>);
+type UserAndUserStoreJoin = (
+    UserAccountRow,
+    Option<UserStoreJoinRow>,
+    Option<StoreRow>,
+    Option<StorePreferenceRow>,
+);
 
 pub struct UserRepository<'a> {
     connection: &'a StorageConnection,
@@ -112,15 +119,17 @@ impl<'a> UserRepository<'a> {
 fn to_domain(results: Vec<UserAndUserStoreJoin>) -> Vec<User> {
     // collect all joins for a user
     let mut user_map = HashMap::<String, User>::new();
-    for (user_row, user_store_join, store_row) in results {
+    for (user_row, user_store_join, store_row, store_preferences) in results {
         let entry = user_map.entry(user_row.id.clone()).or_insert(User {
             user_row,
             stores: vec![],
         });
+        let store_preferences = store_preferences.unwrap_or_default();
         if let (Some(user_store_join), Some(store_row)) = (user_store_join, store_row) {
             entry.stores.push(UserStore {
                 store_row,
                 user_store_join,
+                store_preferences,
             })
         }
     }
@@ -132,14 +141,24 @@ fn to_domain(results: Vec<UserAndUserStoreJoin>) -> Vec<User> {
 type UserIdEqualToId = Eq<user_store_join_dsl::user_id, user_dsl::id>;
 // store_dsl::id.eq(store_id))
 type StoreIdEqualToId = Eq<store_dsl::id, user_store_join_dsl::store_id>;
+// store_preference_dsl::id.eq(id))
+type IdEqualToId = Eq<store_preference_dsl::id, user_store_join_dsl::store_id>;
 // user_store_join.on(user_id.eq(user_dsl::id))
 type OnUserStoreJoinToUserJoin = OnClauseWrapper<user_store_join::table, UserIdEqualToId>;
 // store.on(id.eq(store_id))
 type OnStoreJoinToUserStoreJoin = OnClauseWrapper<store::table, StoreIdEqualToId>;
+// store_preference.on(id.eq(store_id))
+type OnStorePreferenceJoinToUserStoreJoin = OnClauseWrapper<store_preference::table, IdEqualToId>;
 
 type BoxedUserQuery = IntoBoxed<
     'static,
-    LeftJoin<LeftJoin<user_account::table, OnUserStoreJoinToUserJoin>, OnStoreJoinToUserStoreJoin>,
+    LeftJoin<
+        LeftJoin<
+            LeftJoin<user_account::table, OnUserStoreJoinToUserJoin>,
+            OnStoreJoinToUserStoreJoin,
+        >,
+        OnStorePreferenceJoinToUserStoreJoin,
+    >,
     DBType,
 >;
 
@@ -149,6 +168,10 @@ fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserQuery {
             user_store_join_dsl::user_store_join.on(user_store_join_dsl::user_id.eq(user_dsl::id)),
         )
         .left_join(store_dsl::store.on(store_dsl::id.eq(user_store_join_dsl::store_id)))
+        .left_join(
+            store_preference_dsl::store_preference
+                .on(store_preference_dsl::id.eq(user_store_join_dsl::store_id)),
+        )
         .into_boxed();
 
     if let Some(f) = filter {
