@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Autocomplete,
-  AutocompleteOption,
+  AutocompleteProps,
   ButtonWithIcon,
   Grid,
   PlusCircleIcon,
@@ -95,14 +95,14 @@ const LabelAndOptions = <T,>({
   set,
   value,
   autoFocus,
-}: {
+  optionKey,
+}: Pick<
+  AutocompleteProps<T>,
+  'options' | 'value' | 'optionKey' | 'autoFocus' | 'disabled'
+> & {
   label: string;
-  options: AutocompleteOption<T>[];
-  value: AutocompleteOption<T> | null;
   set: (value: T | null) => void;
-  disabled: boolean;
   labelNoOptions?: string;
-  autoFocus?: boolean;
 }) => {
   const noOptionsDisplay = options.length == 0 &&
     !disabled &&
@@ -119,6 +119,7 @@ const LabelAndOptions = <T,>({
             width="300"
             autoFocus={autoFocus}
             options={options}
+            optionKey={optionKey}
             value={value}
             disabled={disabled}
             onChange={(_, newValue) => set(newValue)}
@@ -149,10 +150,10 @@ export const ProgramRequisitionOptions = ({
       justifyContent="center"
       alignItems="center"
     >
-      <LabelAndOptions {...programs} autoFocus={true} />
-      <LabelAndOptions {...suppliers} />
-      <LabelAndOptions {...orderTypes} />
-      <LabelAndOptions {...periods} />
+      <LabelAndOptions {...programs} optionKey="programName" autoFocus={true} />
+      <LabelAndOptions {...suppliers} optionKey="name" />
+      <LabelAndOptions {...orderTypes} optionKey="name" />
+      <LabelAndOptions {...periods} optionKey="name" />
       <Grid item>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
