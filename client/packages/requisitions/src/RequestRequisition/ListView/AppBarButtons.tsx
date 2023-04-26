@@ -10,24 +10,26 @@ import {
   Grid,
   useTranslation,
   FileUtils,
-  SortBy,
   LoadingButton,
   ToggleState,
   Platform,
   EnvUtils,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
-import { RequestRowFragment, useRequest } from '../api';
+import { useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
-  sortBy: SortBy<RequestRowFragment>;
-}> = ({ modalController, sortBy }) => {
+}> = ({ modalController }) => {
   const { mutate: onCreate } = useRequest.document.insert();
   const { success, error } = useNotification();
   const t = useTranslation('common');
-  const { isLoading, fetchAsync } = useRequest.document.listAll(sortBy);
+  const { isLoading, fetchAsync } = useRequest.document.listAll({
+    key: 'createdDatetime',
+    direction: 'desc',
+    isDesc: true,
+  });
 
   const csvExport = async () => {
     const data = await fetchAsync();
