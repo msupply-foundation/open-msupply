@@ -135,7 +135,7 @@ impl<'a> NameRepository<'a> {
             .left_join(
                 name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_id
                     .eq(name_dsl::id)
-                    .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
+                    .and(name_store_join_dsl::store_id.eq(store_id.clone()))), // if the name is visible to the `store_id` passed into this function, attach its `name store_join` information
             )
             .left_join(store_dsl::store)
             .into_boxed();
