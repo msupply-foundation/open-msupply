@@ -20,3 +20,6 @@ pub fn expected_delivery_date_offset() -> Duration {
 pub const DEFAULT_AMC_LOOKBACK_MONTHS: u32 = 3;
 // System user
 pub const SYSTEM_USER_ID: &str = "omsupply_system";
+// Missing program
+// Delete when soft delete of master list in implemented
+pub const MISSING_PROGRAM: &str = "missing_program";
