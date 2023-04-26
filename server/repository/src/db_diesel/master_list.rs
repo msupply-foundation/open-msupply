@@ -77,6 +77,7 @@ impl<'a> MasterListRepository<'a> {
             {
                 let mut name_join_query = master_list_name_join_dsl::master_list_name_join
                     .select(master_list_name_join_dsl::master_list_id)
+                    .distinct()
                     .left_join(name_dsl::name.left_join(store_dsl::store))
                     .into_boxed();
 
