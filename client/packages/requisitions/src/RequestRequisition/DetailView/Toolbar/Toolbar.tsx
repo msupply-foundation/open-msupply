@@ -7,12 +7,12 @@ import {
   useTranslation,
   SearchBar,
   Typography,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { ToolbarDropDown } from './ToolbarDropDown';
 import { ToolbarActions } from './ToolbarActions';
+import { getApprovalStatusText } from 'packages/requisitions/src/utils';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
@@ -76,11 +76,7 @@ export const Toolbar: FC = () => {
               label={t('label.auth-status')}
               Input={
                 <Typography>
-                  {t(
-                    `approval-status.${String(
-                      linkedRequisition?.approvalStatus
-                    ).toLowerCase()}` as LocaleKey
-                  )}
+                  {getApprovalStatusText(linkedRequisition?.approvalStatus)}
                 </Typography>
               }
             />

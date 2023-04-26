@@ -16,7 +16,8 @@ pub(crate) fn store_preferences(ctx: &Context<'_>, store_id: &str) -> Result<Sto
     )?;
 
     let connection = ctx.get_connection_manager().connection()?;
-    let store_preference = get_store_preferences(&connection, store_id)?;
+    let result =
+        get_store_preferences(&connection, store_id).map(StorePreferenceNode::from_domain)?;
 
-    Ok(store_preference.into())
+    Ok(result)
 }

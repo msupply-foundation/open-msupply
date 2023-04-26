@@ -28,10 +28,8 @@ impl StorePreferenceNode {
     }
 }
 
-impl From<StorePreferenceRow> for StorePreferenceNode {
-    fn from(row: StorePreferenceRow) -> Self {
-        StorePreferenceNode {
-            store_preference: row,
-        }
+impl StorePreferenceNode {
+    pub fn from_domain(store_preference: StorePreferenceRow) -> StorePreferenceNode {
+        StorePreferenceNode { store_preference }
     }
 }
