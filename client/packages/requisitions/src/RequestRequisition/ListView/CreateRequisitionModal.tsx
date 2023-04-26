@@ -13,7 +13,7 @@ import {
 } from 'packages/system/src';
 import { useRequest } from '../api';
 import {
-  NewProgramRequistion,
+  NewProgramRequisition,
   ProgramRequisitionOptions,
 } from './ProgramRequisitionOptions';
 import { NewRequisitionType } from './types';
@@ -27,7 +27,7 @@ interface CreateRequisitionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (
-    newRequisition: NewGeneralRequisition | NewProgramRequistion
+    newRequisition: NewGeneralRequisition | NewProgramRequisition
   ) => void;
 }
 

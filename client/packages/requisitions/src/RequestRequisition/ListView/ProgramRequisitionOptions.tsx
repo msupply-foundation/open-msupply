@@ -12,7 +12,7 @@ import {
 import { ProgramSettingsFragment } from '../api';
 import { NewRequisitionType } from './types';
 
-export interface NewProgramRequistion {
+export interface NewProgramRequisition {
   type: NewRequisitionType.Program;
   orderTypeId: string;
   otherPartyId: string;
@@ -133,7 +133,7 @@ export const ProgramRequisitionOptions = ({
   programSettings,
   onCreate,
 }: {
-  onCreate: (props: NewProgramRequistion) => void;
+  onCreate: (props: NewProgramRequisition) => void;
   programSettings: ProgramSettingsFragment[];
 }) => {
   const { programs, orderTypes, suppliers, periods, createOptions } =

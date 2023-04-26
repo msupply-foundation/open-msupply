@@ -64,16 +64,16 @@ export const AppBarButtons: FC<{
       <CreateRequisitionModal
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
-        onCreate={async newRequistion => {
+        onCreate={async newRequisition => {
           modalController.toggleOff();
-          switch (newRequistion.type) {
+          switch (newRequisition.type) {
             case NewRequisitionType.General:
               return onCreate({
                 id: FnUtils.generateUUID(),
-                otherPartyId: newRequistion.name.id,
+                otherPartyId: newRequisition.name.id,
               });
             case NewRequisitionType.Program:
-              const { type: _, ...rest } = newRequistion;
+              const { type: _, ...rest } = newRequisition;
               return onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
