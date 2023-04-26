@@ -1,4 +1,4 @@
-use super::{UpdateRequestRequisition, UpdateRequestRequistionStatus};
+use super::{UpdateRequestRequisition, UpdateRequestRequisitionStatus};
 use crate::requisition::{
     common::get_lines_for_requisition,
     request_requisition::{generate_suggested_quantity, GenerateSuggestedQuantity},
@@ -116,14 +116,14 @@ pub fn generate_updated_lines(
 pub fn empty_lines_to_trim(
     connection: &StorageConnection,
     requisition: &RequisitionRow,
-    status: &Option<UpdateRequestRequistionStatus>,
+    status: &Option<UpdateRequestRequisitionStatus>,
 ) -> Result<Option<Vec<RequisitionLineRow>>, RepositoryError> {
     let new_status = match status {
         Some(new_status) => new_status,
         None => return Ok(None),
     };
 
-    if new_status != &UpdateRequestRequistionStatus::Sent {
+    if new_status != &UpdateRequestRequisitionStatus::Sent {
         return Ok(None);
     }
 
