@@ -797,6 +797,7 @@ export enum GenderType {
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
+  notDelivered: Scalars['Int'];
 };
 
 export type InitialisationStatusNode = {
@@ -1399,6 +1400,7 @@ export type ItemCounts = {
 export type ItemCountsResponse = {
   __typename: 'ItemCountsResponse';
   lowStock: Scalars['Int'];
+  moreThanSixMonthsStock: Scalars['Int'];
   noStock: Scalars['Int'];
   total: Scalars['Int'];
 };
@@ -2169,8 +2171,8 @@ export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentE
 export type OutboundInvoiceCounts = {
   __typename: 'OutboundInvoiceCounts';
   created: InvoiceCountsSummary;
-  /** Number of outbound shipments ready to be picked */
-  toBePicked: Scalars['Int'];
+  /** Number of outbound shipments not shipped yet */
+  notShipped: Scalars['Int'];
 };
 
 /**
@@ -2294,6 +2296,7 @@ export type Queries = {
   reports: ReportsResponse;
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
+  requisitionCounts: RequisitionCounts;
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
@@ -2439,6 +2442,11 @@ export type QueriesRequisitionByNumberArgs = {
   requisitionNumber: Scalars['Int'];
   storeId: Scalars['String'];
   type: RequisitionNodeType;
+};
+
+
+export type QueriesRequisitionCountsArgs = {
+  storeId: Scalars['String'];
 };
 
 
@@ -2604,6 +2612,11 @@ export type RequisitionConnector = {
   __typename: 'RequisitionConnector';
   nodes: Array<RequisitionNode>;
   totalCount: Scalars['Int'];
+};
+
+export type RequisitionCounts = {
+  __typename: 'RequisitionCounts';
+  newResponseRequisitionCount: Scalars['Int'];
 };
 
 export type RequisitionFilterInput = {
