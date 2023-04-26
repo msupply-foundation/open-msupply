@@ -10,7 +10,8 @@ import {
 import {
   InternalSupplierSearchModal,
   NameRowFragment,
-} from 'packages/system/src';
+} from '@openmsupply-client/system';
+
 import { useRequest } from '../api';
 import {
   NewProgramRequisition,
