@@ -79,7 +79,7 @@ async fn migration_1_00_06() {
         &connection,
         r#"
         INSERT INTO name 
-        (id, type, is_customer, is_supplier, code, name) 
+        (id, type, is_customer, is_supplier, code, name)
         VALUES 
         ('name_id', 'STORE', false, false, '', '');
     "#
@@ -90,9 +90,9 @@ async fn migration_1_00_06() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code, 'store_mode') 
+        (id, name_id, site_id, code, store_mode)
         VALUES 
-        ('store_id', 'name_id', 1, '', 'store');
+        ('store_id', 'name_id', 1, '', 'STORE');
     "#
     )
     .unwrap();
