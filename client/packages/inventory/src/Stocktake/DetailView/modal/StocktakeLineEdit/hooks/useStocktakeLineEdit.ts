@@ -10,8 +10,7 @@ import { StocktakeLineFragment, useStocktake } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
-import { useStocktakeLineErrorContext } from 'packages/inventory/src/Stocktake/context';
-
+import { useStocktakeLineErrorContext } from '../../../../context/stocktakeLineError';
 interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
   update: (patch: RecordPatch<StocktakeLineFragment>) => void;

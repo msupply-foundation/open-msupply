@@ -33,9 +33,8 @@ pub mod inventory_adjustment_reason;
 pub use self::inventory_adjustment_reason::*;
 pub mod item_counts;
 pub use self::item_counts::*;
-pub mod store_preference;
-pub use self::store_preference::*;
 pub mod requisition_counts;
+pub mod store_preference;
 pub use self::requisition_counts::*;
 
 #[cfg(test)]
