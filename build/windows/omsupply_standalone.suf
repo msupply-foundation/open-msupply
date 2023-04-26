@@ -3253,27 +3253,40 @@ g_HandleSystemReboot();
 <Args/>
 <Script>-- Set window title
 local sWindowTitle = "omSupply Setup";
-local omSupplyServerPath = "";
+local omSupplyStandalonePath = "";
 
 hasOmsupplyDesktopInstalled = false;
 omSupplyDesktopPath = SessionVar.Expand("%AppFolder%\\open mSupply.exe");
 
 -- Check if the omSupply Server has been already installed on this machine
 if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Server") then
-	omSupplyServerPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", true);
-end
-
-hasOmsupplyInstalled = File.DoesExist(omSupplyServerPath);
-if hasOmsupplyInstalled then
-	sWindowTitle = "omSupply Upgrader Setup";
+	local omSupplyServerPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", true);
+	if File.DoesExist(omSupplyServerPath) then
+		Dialog.Message("Error!", "This computer has open mSupply server installed. Installation cannot continue.", MB_OK, MB_ICONSTOP);
+		Application.Exit();
+	end
 end
 
 -- Check if the omSupply Desktop has been already installed on this machine
 if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
-	omSupplyDesktopPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop", "Path", true);
+	local omSupplyDesktopPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop", "Path", true);
 	if File.DoesExist(omSupplyDesktopPath) then
-		hasOmsupplyDesktopInstalled = true;
+		Dialog.Message("Error!", "This computer has open mSupply desktop installed. Installation cannot continue.", MB_OK, MB_ICONSTOP);
+		Application.Exit();
 	end
+end
+
+-- Check if the omSupply Standalone has been already installed on this machine
+if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone") then
+	omSupplyStandalonePath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Path", true);
+	if File.DoesExist(omSupplyStandalonePath) then
+		hasOmsupplyStandaloneInstalled = true;
+	end
+end
+
+hasOmsupplyStandaloneInstalled = File.DoesExist(omSupplyStandalonePath);
+if hasOmsupplyStandaloneInstalled then
+	sWindowTitle = "omSupply Upgrader";
 end
 
 SessionVar.Set("%window_title%", sWindowTitle);</Script>
@@ -3315,21 +3328,18 @@ end
 <Name>On Post Install</Name>
 <Args/>
 <Script>local omSupplyServerPath = SessionVar.Expand("%AppFolder%\\server\\omSupply-sqlite.exe");
+local omSupplyDesktopPath = SessionVar.Expand("%AppFolder%\\open mSupply.exe");
 local omSupplyServerDatabase = "sqlite";
 
--- Get current database name from registry (if already installed)
-if hasOmsupplyInstalled then
-	omSupplyServerDatabase = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", true);
-end
 
-if hasOmsupplyInstalled then
+if hasOmsupplyStandaloneInstalled then
 	local uninstallPath = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 	local installedApps = Registry.GetKeyNames(HKEY_LOCAL_MACHINE, uninstallPath);
 	if (installedApps ~= nil) then	
 		-- Remove previous versions of this app from the uninstall list
 		if (Table.Count(installedApps) &gt; 0) then
 			for index, value in pairs(installedApps) do
-				if ((String.Find(value, "omSupply Serverv", 1, false) ~= -1) and (value ~= SessionVar.Expand("omSupply Server%ProductVer%"))) then
+				if ((String.Find(value, "omSupply Standalone", 1, false) ~= -1) and (value ~= SessionVar.Expand("omSupply Standalone%ProductVer%"))) then
 					Registry.DeleteKey(HKEY_LOCAL_MACHINE, uninstallPath .. "\\" .. value);
 				end
 			end
@@ -3354,19 +3364,19 @@ else
 	TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\server\\configuration\\local.yaml"), config, false);
 
 	-- Create omSupply Server keys in registry
-	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Server");
-	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Path", omSupplyServerPath, REG_SZ);
-	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Server", "Database", "sqlite", REG_SZ);
+	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone");
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Path", omSupplyServerPath, REG_SZ);
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Database", "sqlite", REG_SZ);
 end 
 
 Service.Create(SessionVar.Expand("%AppFolder%\\server\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 
 Service.Start("Open mSupply Server", "omsupply-server", nil);
 
-if not hasOmsupplyDesktopInstalled then
+if not hasOmsupplyStandaloneInstalled then
 	-- Create omSupply Desktop keys in registry
-	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
-	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop", "Path", omSupplyDesktopPath, REG_SZ);
+	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone");
+	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Path", omSupplyDesktopPath, REG_SZ);
 
 	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 end</Script>
@@ -3464,11 +3474,6 @@ g_HandleSystemReboot();
 <SessionVar>
 <Name>%omsupply_db_name%</Name>
 <Value>omsupply-database</Value>
-<Type>10</Type>
-</SessionVar>
-<SessionVar>
-<Name>%postgres_db_port%</Name>
-<Value>5432</Value>
 <Type>10</Type>
 </SessionVar>
 <SessionVar>
