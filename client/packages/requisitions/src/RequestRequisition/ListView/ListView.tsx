@@ -12,11 +12,16 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
+  ColumnDescription,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestRowFragment, useRequest } from '../api';
-import { getRequisitionTranslator, isRequestDisabled } from '../../utils';
+import {
+  getApprovalStatusText,
+  getRequisitionTranslator,
+  isRequestDisabled,
+} from '../../utils';
 
 const useDisableRequestRows = (rows?: RequestRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
@@ -41,53 +46,67 @@ export const RequestRequisitionListView: FC = () => {
   const { data, isError, isLoading } = useRequest.document.list();
   const pagination = { page, first, offset };
   useDisableRequestRows(data?.nodes);
+  const { requireSupplierAuthorisation } = useRequest.utils.preferences();
+
+  const columnDefinitions: ColumnDescription<RequestRowFragment>[] = [
+    [getNameAndColorColumn(), { setter: onUpdate }],
+    {
+      key: 'requisitionNumber',
+      label: 'label.number',
+      width: 100,
+    },
+    'createdDatetime',
+    {
+      key: 'programName',
+      accessor: ({ rowData }) => {
+        return rowData.programName;
+      },
+      label: 'label.program',
+      description: 'description.program',
+      sortable: true,
+    },
+    {
+      key: 'orderType',
+      accessor: ({ rowData }) => {
+        return rowData.orderType;
+      },
+      label: 'label.order-type',
+      sortable: true,
+    },
+
+    {
+      key: 'period',
+      accessor: ({ rowData }) => {
+        return rowData.period?.name ?? '';
+      },
+      label: 'label.period',
+      sortable: true,
+    },
+    [
+      'status',
+      {
+        formatter: currentStatus =>
+          getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
+      },
+    ],
+    ['comment', { width: '100%' }],
+  ];
+
+  if (requireSupplierAuthorisation) {
+    columnDefinitions.push({
+      key: 'approvalStatus',
+      label: 'label.auth-status',
+      minWidth: 150,
+      sortable: false,
+      accessor: ({ rowData }) =>
+        t(getApprovalStatusText(rowData.linkedRequisition?.approvalStatus)),
+    });
+  }
+
+  columnDefinitions.push('selection');
 
   const columns = useColumns<RequestRowFragment>(
-    [
-      [getNameAndColorColumn(), { setter: onUpdate }],
-      {
-        key: 'requisitionNumber',
-        label: 'label.number',
-        width: 100,
-      },
-      'createdDatetime',
-      [
-        'status',
-        {
-          formatter: currentStatus =>
-            getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
-        },
-      ],
-      {
-        key: 'programName',
-        accessor: ({ rowData }) => {
-          return rowData.programName;
-        },
-        label: 'label.program',
-        description: 'description.program',
-        sortable: true,
-      },
-      {
-        key: 'orderType',
-        accessor: ({ rowData }) => {
-          return rowData.orderType;
-        },
-        label: 'label.order-type',
-        sortable: true,
-      },
-
-      {
-        key: 'period',
-        accessor: ({ rowData }) => {
-          return rowData.period?.name ?? '';
-        },
-        label: 'label.period',
-        sortable: true,
-      },
-
-      ['comment', { width: '100%' }],
-      'selection',
-    ],
+    columnDefinitions,
     { sortBy, onChangeSortBy: updateSortQuery },
     [sortBy, updateSortQuery]
   );

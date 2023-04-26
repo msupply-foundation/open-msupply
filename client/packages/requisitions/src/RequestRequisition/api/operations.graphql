@@ -25,6 +25,9 @@ fragment RequestRow on RequisitionNode {
   theirReference
   type
   otherPartyId
+  linkedRequisition {
+    approvalStatus
+  }
   programName
   period {
     name
@@ -72,6 +75,7 @@ fragment Request on RequisitionNode {
   otherPartyId
   maxMonthsOfStock
   minMonthsOfStock
+  approvalStatus
 
   user {
     __typename
@@ -114,6 +118,10 @@ fragment Request on RequisitionNode {
       id
       code
     }
+  }
+
+  linkedRequisition {
+    approvalStatus
   }
   programName
   period {

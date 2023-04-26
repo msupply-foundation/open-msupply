@@ -17,7 +17,7 @@ use crate::{
     },
     invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine,
     processors::test_helpers::{delay_for_processor, exec_concurrent},
-    requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequistionStatus},
+    requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
@@ -307,7 +307,7 @@ impl ShipmentTransferTester {
                 &ctx,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = self.request_requisition.id.clone();
-                    r.status = Some(UpdateRequestRequistionStatus::Sent);
+                    r.status = Some(UpdateRequestRequisitionStatus::Sent);
                 }),
             )
             .unwrap();
