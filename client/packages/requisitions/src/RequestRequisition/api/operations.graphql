@@ -462,18 +462,18 @@ mutation deleteRequest(
 }
 
 fragment ProgramSettings on ProgramRequisitionSettingNode {
-  label: programName
+  programName
   programId
   suppliers {
     id
-    label: name
+    name
   }
   orderTypes {
     id
-    label: name
+    name
     availablePeriods {
       id
-      label: name
+      name
     }
   }
 }
