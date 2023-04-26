@@ -63,6 +63,9 @@ pub use self::response_requisition_stats::*;
 pub mod inventory_adjustment_reason;
 pub use self::inventory_adjustment_reason::*;
 
+pub mod store_preference;
+pub use self::store_preference::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

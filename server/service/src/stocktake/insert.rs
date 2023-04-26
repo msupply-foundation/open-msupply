@@ -24,6 +24,7 @@ pub struct InsertStocktake {
     pub is_locked: Option<bool>,
     pub master_list_id: Option<String>,
     pub location_id: Option<String>,
+    pub items_have_stock: Option<bool>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -111,6 +112,7 @@ fn generate(
         is_locked,
         location_id,
         master_list_id,
+        items_have_stock,
     }: InsertStocktake,
 ) -> Result<(StocktakeRow, Vec<StocktakeLineRow>), RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
@@ -125,7 +127,11 @@ fn generate(
         Some(location_id) => generate_lines_from_location(connection, store_id, &id, &location_id)?,
         None => Vec::new(),
     };
-    let lines = [master_list_lines, location_lines].concat();
+    let items_have_stock_lines = match items_have_stock {
+        Some(_) => generate_lines_with_stock(connection, store_id, &id)?,
+        None => Vec::new(),
+    };
+    let lines = [master_list_lines, location_lines, items_have_stock_lines].concat();
 
     Ok((
         StocktakeRow {
@@ -292,6 +298,60 @@ fn generate_lines_from_location(
     Ok(result)
 }
 
+pub fn generate_lines_with_stock(
+    connection: &StorageConnection,
+    store_id: &str,
+    stocktake_id: &str,
+) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
+    let stock_lines = StockLineRepository::new(&connection).query_by_filter(
+        StockLineFilter::new()
+            .store_id(EqualFilter::equal_to(store_id))
+            .has_packs_in_store(true),
+        Some(store_id.to_string()),
+    )?;
+
+    let result = stock_lines
+        .into_iter()
+        .map(|line| {
+            let StockLineRow {
+                id: stock_line_id,
+                item_id,
+                location_id,
+                batch,
+                pack_size,
+                cost_price_per_pack,
+                sell_price_per_pack,
+                total_number_of_packs,
+                expiry_date,
+                note,
+                supplier_id: _,
+                store_id: _,
+                on_hold: _,
+                available_number_of_packs: _,
+            } = line.stock_line_row;
+
+            StocktakeLineRow {
+                id: uuid(),
+                stocktake_id: stocktake_id.to_string(),
+                snapshot_number_of_packs: total_number_of_packs,
+                item_id,
+                location_id,
+                batch,
+                expiry_date,
+                note,
+                stock_line_id: Some(stock_line_id),
+                pack_size: Some(pack_size),
+                cost_price_per_pack: Some(cost_price_per_pack),
+                sell_price_per_pack: Some(sell_price_per_pack),
+                comment: None,
+                counted_number_of_packs: None,
+                inventory_adjustment_reason_id: None,
+            }
+        })
+        .collect();
+    Ok(result)
+}
+
 pub fn insert_stocktake(
     ctx: &ServiceContext,
     input: InsertStocktake,
@@ -335,10 +395,11 @@ mod test {
     use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{
-            item_query_test1, mock_item_a, mock_location_1, mock_master_list_item_query_test1,
-            mock_stocktake_a, mock_store_a, mock_store_b, mock_user_account_a, MockDataInserts,
+            item_query_test1, mock_item_a, mock_item_b, mock_location_1,
+            mock_master_list_item_query_test1, mock_stocktake_a, mock_store_a, mock_store_b,
+            mock_user_account_a, MockData, MockDataInserts,
         },
-        test_db::setup_all,
+        test_db::{setup_all, setup_all_with_data},
         EqualFilter, MasterListLineRow, MasterListLineRowRepository, StockLineRow,
         StockLineRowRepository, StocktakeLineFilter, StocktakeLineRepository, StocktakeRow,
         StocktakeRowRepository, StocktakeStatus,
@@ -399,6 +460,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: None,
                     master_list_id: None,
+                    items_have_stock: None,
                 },
             )
             .unwrap();
@@ -453,6 +515,7 @@ mod test {
                 is_locked: Some(true),
                 location_id: None,
                 master_list_id: Some("master_list_filter_test".to_string()),
+                items_have_stock: None,
             },
         );
         assert!(invalid_result.is_err());
@@ -478,6 +541,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: None,
                     master_list_id: Some(master_list_id.clone()),
+                    items_have_stock: None,
                 },
             )
             .unwrap();
@@ -526,6 +590,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: None,
                     master_list_id: Some(master_list_id.clone()),
+                    items_have_stock: None,
                 },
             )
             .unwrap();
@@ -573,6 +638,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: Some(location_id.clone()),
                     master_list_id: None,
+                    items_have_stock: None,
                 },
             )
             .unwrap();
@@ -609,6 +675,7 @@ mod test {
                     is_locked: Some(true),
                     location_id: Some(location_id.clone()),
                     master_list_id: None,
+                    items_have_stock: None,
                 },
             )
             .unwrap();
@@ -629,5 +696,106 @@ mod test {
             stock_line_row.unwrap().line.stock_line_id,
             Some("stock_line_row_1".to_string())
         );
+    }
+
+    #[actix_rt::test]
+    async fn insert_stocktake_with_stock() {
+        fn item_a_stock() -> StockLineRow {
+            inline_init(|s: &mut StockLineRow| {
+                s.id = "stock_line_row_1".to_string();
+                s.store_id = mock_store_a().id;
+                s.item_id = mock_item_a().id;
+                s.total_number_of_packs = 100.0;
+            })
+        }
+
+        fn item_b_stock() -> StockLineRow {
+            inline_init(|s: &mut StockLineRow| {
+                s.id = "stock_line_row_3".to_string();
+                s.store_id = mock_store_a().id;
+                s.item_id = mock_item_b().id;
+                s.total_number_of_packs = 10.0;
+            })
+        }
+
+        fn item_a_no_stock() -> StockLineRow {
+            inline_init(|s: &mut StockLineRow| {
+                s.id = "stock_line_row_2".to_string();
+                s.store_id = mock_store_a().id;
+                s.item_id = mock_item_b().id;
+                s.total_number_of_packs = 0.0;
+            })
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_stocktake_with_stock",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .name_store_joins()
+                .user_accounts()
+                .user_permissions()
+                .user_store_joins()
+                .items()
+                .units(),
+            inline_init(|m: &mut MockData| {
+                m.stock_lines = vec![item_a_stock(), item_b_stock(), item_a_no_stock()]
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.stocktake_service;
+
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_1".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    is_locked: Some(true),
+                    location_id: None,
+                    master_list_id: None,
+                    items_have_stock: None,
+                },
+            )
+            .unwrap();
+
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+            )
+            .unwrap();
+
+        assert_eq!(stocktake_rows.len(), 0);
+
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_2".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    is_locked: Some(true),
+                    location_id: None,
+                    master_list_id: None,
+                    items_have_stock: Some(true),
+                },
+            )
+            .unwrap();
+
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+            )
+            .unwrap();
+
+        assert_eq!(stocktake_rows.len(), 2);
     }
 }

@@ -111,6 +111,15 @@ impl<'a> RequisitionRepository<'a> {
                 RequisitionSortField::TheirReference => {
                     apply_sort_no_case!(query, sort, requisition_dsl::their_reference);
                 }
+                RequisitionSortField::OrderType => {
+                    apply_sort_no_case!(query, sort, requisition_dsl::order_type);
+                }
+                RequisitionSortField::PeriodName => {
+                    apply_sort_no_case!(query, sort, period_dsl::name);
+                }
+                RequisitionSortField::ProgramName => {
+                    apply_sort_no_case!(query, sort, program_dsl::name);
+                }
             }
         } else {
             query = query.order(requisition_dsl::id.asc())

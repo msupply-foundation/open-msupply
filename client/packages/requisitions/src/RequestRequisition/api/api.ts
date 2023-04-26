@@ -52,6 +52,15 @@ const requestParser = {
       case 'status': {
         return RequisitionSortFieldInput.Status;
       }
+      case 'orderType': {
+        return RequisitionSortFieldInput.OrderType;
+      }
+      case 'period': {
+        return RequisitionSortFieldInput.PeriodName;
+      }
+      case 'programName': {
+        return RequisitionSortFieldInput.ProgramName;
+      }
 
       case 'sentDatetime':
       case 'finalisedDatetime':
@@ -216,7 +225,9 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update requisition');
   },
-  update: async (patch: Partial<RequestFragment> & { id: string }) => {
+  update: async (
+    patch: Partial<RequestFragment | RequestRowFragment> & { id: string }
+  ) => {
     const input = requestParser.toUpdate(patch);
     const result = await sdk.updateRequest({
       storeId,
