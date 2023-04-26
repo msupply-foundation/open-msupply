@@ -11,8 +11,8 @@ use util::{inline_edit, inline_init, uuid::uuid};
 use crate::{
     processors::test_helpers::{delay_for_processor, exec_concurrent},
     requisition::{
-        request_requisition::{UpdateRequestRequisition, UpdateRequestRequistionStatus},
-        response_requisition::{UpdateResponseRequisition, UpdateResponseRequstionStatus},
+        request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
+        response_requisition::{UpdateResponseRequisition, UpdateResponseRequisitionStatus},
     },
     service_provider::ServiceProvider,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
@@ -230,7 +230,7 @@ impl RequisitionTransferTester {
                 &ctx,
                 inline_init(|r: &mut UpdateRequestRequisition| {
                     r.id = self.request_requisition.id.clone();
-                    r.status = Some(UpdateRequestRequistionStatus::Sent);
+                    r.status = Some(UpdateRequestRequisitionStatus::Sent);
                 }),
             )
             .unwrap();
@@ -320,7 +320,7 @@ impl RequisitionTransferTester {
                 &ctx,
                 inline_init(|r: &mut UpdateResponseRequisition| {
                     r.id = self.response_requisition.clone().map(|r| r.id).unwrap();
-                    r.status = Some(UpdateResponseRequstionStatus::Finalised);
+                    r.status = Some(UpdateResponseRequisitionStatus::Finalised);
                 }),
             )
             .unwrap();

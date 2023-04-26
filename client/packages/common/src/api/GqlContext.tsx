@@ -119,7 +119,7 @@ class GQLClient extends GraphQLClient {
       ({ response }) => {
         if (response && response.errors) {
           handleResponseError(response.errors);
-          return this.emptyData as T;
+          return this.emptyData as unknown as T;
         } else {
           throw new Error('Unknown error');
         }

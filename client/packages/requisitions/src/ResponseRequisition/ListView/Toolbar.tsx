@@ -9,8 +9,8 @@ import { ResponseRowFragment } from '../api';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const key = 'comment' as keyof ResponseRowFragment;
-  const filterString = filter.filterBy?.[key]?.like as string;
+  const key = 'otherPartyName' as keyof ResponseRowFragment;
+  const filterString = (filter.filterBy?.[key]?.like as string) || '';
 
   return (
     <AppBarContentPortal

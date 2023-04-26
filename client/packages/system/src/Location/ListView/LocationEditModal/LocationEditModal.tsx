@@ -125,6 +125,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
       {!isLoading ? (
         <Grid flexDirection="column" display="flex" gap={2}>
           <BasicTextInput
+            fullWidth
             autoFocus
             value={draft.name}
             onChange={e => onUpdate({ name: e.target.value })}
@@ -132,6 +133,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
             InputLabelProps={{ shrink: true }}
           />
           <BasicTextInput
+            fullWidth
             value={draft.code}
             onChange={e => onUpdate({ code: e.target.value })}
             label={t('label.code')}
