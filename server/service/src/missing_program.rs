@@ -5,7 +5,7 @@ use util::constants::MISSING_PROGRAM;
 
 use crate::service_provider::ServiceProvider;
 
-// Delete when soft delete of master list in implemented
+// Delete when soft delete for master list is implemented
 pub fn create_missing_master_list_and_program(
     service_provider: &ServiceProvider,
 ) -> Result<(), RepositoryError> {

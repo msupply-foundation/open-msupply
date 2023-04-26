@@ -227,7 +227,7 @@ pub async fn start_server(
         .unwrap();
 
     // CREATE MISSING MASTER LIST AND PROGRAM
-    // Delete when soft delete of master list in implemented
+    // Delete when soft delete for master list is implemented
     service_provider
         .general_service
         .create_missing_master_list_and_program(&service_provider)
