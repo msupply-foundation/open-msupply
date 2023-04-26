@@ -1,8 +1,7 @@
-import { SortBy, useMutation } from '@openmsupply-client/common';
+import { SortBy, StockLineNode, useMutation } from '@openmsupply-client/common';
 import { useStockApi } from '../utils/useStockApi';
-import { StockLineRowFragment } from '../../operations.generated';
 
-export const useStockLinesAll = (sortBy: SortBy<StockLineRowFragment>) => {
+export const useStockLinesAll = (sortBy: SortBy<StockLineNode>) => {
   const api = useStockApi();
   const result = useMutation(api.keys.sortedList(sortBy), () =>
     api.get.listAll({
