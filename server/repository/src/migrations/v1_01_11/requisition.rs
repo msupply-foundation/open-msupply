@@ -18,8 +18,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"
         CREATE VIEW requisitions_in_period AS
-        SELECT 'n/a' as id, program_id, period_id, store_id, order_type, count(*) as count FROM requisition
-            GROUP BY 1,2,3,4,5;
+        SELECT 'n/a' as id, program_id, period_id, store_id, order_type, type, count(*) as count FROM requisition
+            GROUP BY 1,2,3,4,5,6;
     "#
     )?;
 

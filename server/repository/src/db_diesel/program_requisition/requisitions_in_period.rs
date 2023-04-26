@@ -3,7 +3,7 @@ use diesel::prelude::*;
 use crate::{
     diesel_macros::{apply_equal_filter, apply_simple_string_filter},
     repository_error::RepositoryError,
-    EqualFilter, SimpleStringFilter, StorageConnection,
+    EqualFilter, RequisitionRowType, SimpleStringFilter, StorageConnection,
 };
 
 table! {
@@ -14,6 +14,7 @@ table! {
         store_id -> Text,
         order_type -> Text,
         count -> BigInt,
+        #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionRowTypeMapping,
     }
 }
 
@@ -23,9 +24,10 @@ pub struct RequisitionsInPeriodFilter {
     pub period_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub order_type: Option<SimpleStringFilter>,
+    pub r#type: Option<EqualFilter<RequisitionRowType>>,
 }
 
-#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq)]
 #[table_name = "requisitions_in_period"]
 pub struct RequisitionsInPeriod {
     id: String,
@@ -34,6 +36,23 @@ pub struct RequisitionsInPeriod {
     store_id: String,
     pub order_type: String,
     pub count: i64,
+    #[column_name = "type_"]
+    pub r#type: RequisitionRowType,
+}
+
+impl Default for RequisitionsInPeriod {
+    fn default() -> Self {
+        Self {
+            r#type: RequisitionRowType::Request,
+            // Default
+            id: Default::default(),
+            program_id: Default::default(),
+            period_id: Default::default(),
+            store_id: Default::default(),
+            order_type: Default::default(),
+            count: Default::default(),
+        }
+    }
 }
 
 pub struct RequisitionsInPeriodRepository<'a> {
@@ -54,6 +73,7 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
             period_id,
             store_id,
             order_type,
+            r#type,
         }: RequisitionsInPeriodFilter,
     ) -> Result<Vec<RequisitionsInPeriod>, RepositoryError> {
         let mut query = requisitions_in_period_dsl::requisitions_in_period.into_boxed();
@@ -61,6 +81,7 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
         apply_equal_filter!(query, program_id, requisitions_in_period_dsl::program_id);
         apply_equal_filter!(query, period_id, requisitions_in_period_dsl::period_id);
         apply_equal_filter!(query, store_id, requisitions_in_period_dsl::store_id);
+        apply_equal_filter!(query, r#type, requisitions_in_period_dsl::type_);
         apply_simple_string_filter!(query, order_type, requisitions_in_period_dsl::order_type);
 
         //  Debug diesel query
@@ -99,6 +120,11 @@ impl RequisitionsInPeriodFilter {
         self.order_type = Some(filter);
         self
     }
+
+    pub fn r#type(mut self, filter: EqualFilter<RequisitionRowType>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
 }
 
 #[cfg(test)]
@@ -111,8 +137,8 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, MasterListRow, PeriodRow, ProgramRow, RequisitionRow, RequisitionsInPeriod,
-        RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
+        EqualFilter, MasterListRow, PeriodRow, ProgramRow, RequisitionRow, RequisitionRowType,
+        RequisitionsInPeriod, RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
     };
 
     #[actix_rt::test]
@@ -164,6 +190,7 @@ mod test {
             store_id: mock_store_a().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),
+            r#type: RequisitionRowType::Request,
             ..Default::default()
         };
         // Same order type same period
@@ -174,6 +201,7 @@ mod test {
             store_id: mock_store_a().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),
+            r#type: RequisitionRowType::Request,
             ..Default::default()
         };
         // Same order type same period, different program
@@ -184,6 +212,7 @@ mod test {
             store_id: mock_store_a().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program2.id.clone()),
+            r#type: RequisitionRowType::Request,
             ..Default::default()
         };
         // Different order type same period
@@ -194,6 +223,7 @@ mod test {
             store_id: mock_store_a().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),
+            r#type: RequisitionRowType::Request,
             ..Default::default()
         };
         let requisition5 = RequisitionRow {
@@ -204,6 +234,19 @@ mod test {
             store_id: mock_store_b().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),
+            r#type: RequisitionRowType::Request,
+            ..Default::default()
+        };
+
+        // Same as requisition1, but it's a response requisition
+        let requisition6 = RequisitionRow {
+            id: "requisition6".to_string(),
+            order_type: Some("Order Type 1".to_string()),
+            name_id: mock_name_store_a().id,
+            store_id: mock_store_a().id,
+            period_id: Some(period2.id.clone()),
+            program_id: Some(program1.id.clone()),
+            r#type: RequisitionRowType::Response,
             ..Default::default()
         };
 
@@ -224,6 +267,7 @@ mod test {
                     requisition3.clone(),
                     requisition4.clone(),
                     requisition5.clone(),
+                    requisition6,
                 ],
                 master_lists: vec![master_list],
                 ..Default::default()
@@ -236,6 +280,7 @@ mod test {
         // TEST query for first program in first store, and all periods
         let mut filter = RequisitionsInPeriodFilter::new()
             .program_id(EqualFilter::equal_to(&program1.id.clone()))
+            .r#type(RequisitionRowType::Request.equal_to())
             .period_id(EqualFilter::equal_any(vec![
                 period1.id.clone(),
                 period2.id.clone(),
@@ -255,7 +300,8 @@ mod test {
                     program_id: program1.id.clone(),
                     store_id: mock_store_a().id,
                     order_type: "Order Type 1".to_string(),
-                    count: 2
+                    count: 2,
+                    r#type: RequisitionRowType::Request,
                 },
                 RequisitionsInPeriod {
                     id: "n/a".to_string(),
@@ -263,7 +309,8 @@ mod test {
                     program_id: program1.id.clone(),
                     store_id: mock_store_a().id,
                     order_type: "Order Type 2".to_string(),
-                    count: 1
+                    count: 1,
+                    r#type: RequisitionRowType::Request,
                 },
             ]
         );
@@ -286,7 +333,8 @@ mod test {
                     program_id: program1.id.clone(),
                     store_id: mock_store_a().id,
                     order_type: "Order Type 1".to_string(),
-                    count: 2
+                    count: 2,
+                    r#type: RequisitionRowType::Request,
                 },
                 RequisitionsInPeriod {
                     id: "n/a".to_string(),
@@ -294,7 +342,8 @@ mod test {
                     program_id: program2.id.clone(),
                     store_id: mock_store_a().id,
                     order_type: "Order Type 1".to_string(),
-                    count: 1
+                    count: 1,
+                    r#type: RequisitionRowType::Request,
                 },
                 RequisitionsInPeriod {
                     id: "n/a".to_string(),
@@ -302,7 +351,8 @@ mod test {
                     program_id: program1.id.clone(),
                     store_id: mock_store_a().id,
                     order_type: "Order Type 2".to_string(),
-                    count: 1
+                    count: 1,
+                    r#type: RequisitionRowType::Request,
                 },
             ]
         );
@@ -325,7 +375,8 @@ mod test {
                 program_id: program1.id.clone(),
                 store_id: mock_store_b().id,
                 order_type: "Order Type 2".to_string(),
-                count: 1
+                count: 1,
+                r#type: RequisitionRowType::Request,
             }]
         );
     }
