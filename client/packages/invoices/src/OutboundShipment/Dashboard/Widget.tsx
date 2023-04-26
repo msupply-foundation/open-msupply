@@ -17,7 +17,7 @@ import { useOutbound } from '../api';
 export const OutboundShipmentWidget: React.FC = () => {
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
-  const t = useTranslation(['dashboard']);
+  const t = useTranslation('dashboard');
   const formatNumber = useFormatNumber();
   const {
     data: outboundCount,
