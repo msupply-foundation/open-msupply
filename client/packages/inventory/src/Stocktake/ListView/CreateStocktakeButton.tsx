@@ -19,7 +19,7 @@ import {
   InsertStocktakeInput,
   useAuthContext,
 } from '@openmsupply-client/common';
-import { useStock } from 'packages/system/src/Stock/api';
+import { useStock } from '@openmsupply-client/system';
 
 const LABEL_WIDTH = '150px';
 
