@@ -95,7 +95,7 @@
     "react-dom": "^18.0.0",
     "storybook": "^7.0.4",
     "storybook-addon-swc": "^1.1.7",
-    "ts-jest": "29.0.5",
+    "ts-jest": "^29.1.0",
     "tsconfig-paths-webpack-plugin": "^4.0.1",
     "typescript": "^5.0.2",
     "webpack": "^5.76.2",
