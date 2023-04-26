@@ -87,7 +87,7 @@ const useProgramRequisitionOptions = (
   };
 };
 
-const LabelAndOptions = <T extends unknown>({
+const LabelAndOptions = <T,>({
   label,
   options,
   disabled,
