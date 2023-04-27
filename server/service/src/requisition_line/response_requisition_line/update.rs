@@ -130,8 +130,8 @@ mod test {
     use repository::{
         mock::{
             mock_finalised_request_requisition_line, mock_new_response_requisition_test,
-            mock_sent_request_requisition_line, mock_store_a, mock_store_b, mock_user_account_b,
-            MockDataInserts,
+            mock_response_program_requisition, mock_sent_request_requisition_line, mock_store_a,
+            mock_store_b, mock_user_account_b, MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository, RequisitionRowRepository,
@@ -203,6 +203,18 @@ mod test {
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
+
+        // CannotEditRequisition (for program requisitions)
+        context.store_id = mock_store_a().id;
+        assert_eq!(
+            service.update_response_requisition_line(
+                &context,
+                inline_init(|r: &mut UpdateResponseRequisitionLine| {
+                    r.id = mock_response_program_requisition().lines[0].id.clone();
+                }),
+            ),
+            Err(ServiceError::CannotEditRequisition)
+        )
     }
 
     #[actix_rt::test]

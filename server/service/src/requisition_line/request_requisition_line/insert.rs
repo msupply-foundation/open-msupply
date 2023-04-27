@@ -141,10 +141,10 @@ mod test {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_draft_response_requisition_for_update_test, mock_item_c, mock_program_requisition,
+            mock_draft_response_requisition_for_update_test, mock_item_c,
             mock_request_draft_requisition, mock_request_draft_requisition_calculation_test,
-            mock_sent_request_requisition, mock_store_a, mock_store_b, test_item_stats,
-            MockDataInserts,
+            mock_request_program_requisition, mock_sent_request_requisition, mock_store_a,
+            mock_store_b, test_item_stats, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         RequisitionLineRowRepository,
@@ -268,7 +268,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
                     r.id = "some mock program line".to_string();
-                    r.requisition_id = mock_program_requisition().id;
+                    r.requisition_id = mock_request_program_requisition().id;
                 }),
             ),
             Err(ServiceError::CannotAddItemToProgramRequisition),
