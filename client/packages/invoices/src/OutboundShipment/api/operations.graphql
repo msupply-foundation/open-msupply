@@ -240,7 +240,7 @@ query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
         today
         thisWeek
       }
-      toBePicked
+      notShipped
     }
   }
 }
@@ -259,6 +259,12 @@ query barcodes($storeId: String!, $filter: BarcodeFilterInput) {
       }
       totalCount
     }
+  }
+}
+
+query requisitionCounts($storeId: String!) {
+  requisitionCounts(storeId: $storeId) {
+    newResponseRequisitionCount
   }
 }
 

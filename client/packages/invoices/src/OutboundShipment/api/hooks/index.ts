@@ -10,6 +10,7 @@ export const useOutbound = {
     count: Utils.useOutboundCounts,
     isDisabled: Utils.useOutboundIsDisabled,
     number: Utils.useOutboundNumber,
+    responseCount: Utils.useResponseCounts,
   },
 
   document: {
