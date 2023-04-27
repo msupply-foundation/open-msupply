@@ -33,6 +33,8 @@ const { Provider } = BarcodeScannerContext;
 
 const parseBarcodeData = (data: number[] | undefined) => {
   if (!data || data.length < 5) return undefined;
+  // the scanner is returning /x00 and /x22 characters when in continuous mode
+  // these need to be stripped out to prevent issues when parsing the barcode
   const synchronousIdleIndex = data.indexOf(22);
   const endIndex =
     synchronousIdleIndex === -1 ? undefined : synchronousIdleIndex;

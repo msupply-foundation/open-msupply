@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
 import {
   useTranslation,
-  useToggle,
-  InvoiceNodeStatus,
   useBarcodeScannerContext,
   CircularProgress,
   ScanIcon,
@@ -10,11 +8,9 @@ import {
   ButtonWithIcon,
   useNotification,
 } from '@openmsupply-client/common';
-import {
-  ItemRowFragment,
-  MasterListSearchModal,
-} from '@openmsupply-client/system';
+import { ItemRowFragment } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
+import { isOutboundDisabled } from '../../utils';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
@@ -22,13 +18,9 @@ export const AddFromScannerButtonComponent = ({
   onAddItem: (item?: ItemRowFragment) => void;
 }) => {
   const t = useTranslation('distribution');
-  const { status } = useOutbound.document.fields(['status']);
-  const isDisabled = status !== InvoiceNodeStatus.New;
-  const { addFromMasterList } = useOutbound.utils.addFromMasterList();
+  const { data: outbound } = useOutbound.document.get();
+  const isDisabled = !!outbound && isOutboundDisabled(outbound);
   const { mutateAsync: getBarcodes } = useOutbound.utils.barcodes();
-  const { otherPartyId } = useOutbound.document.fields(['otherPartyId']);
-  const modalController = useToggle();
-  const filterByName = { existsForNameId: { equalTo: otherPartyId } };
   const { hasBarcodeScanner, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { warning } = useNotification();
@@ -68,29 +60,18 @@ export const AddFromScannerButtonComponent = ({
   if (!hasBarcodeScanner) return null;
 
   return (
-    <>
-      <MasterListSearchModal
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
-        onChange={masterList => {
-          modalController.toggleOff();
-          addFromMasterList(masterList);
-        }}
-        filterBy={filterByName}
-      />
-      <ButtonWithIcon
-        disabled={isDisabled}
-        onClick={handleClick}
-        Icon={
-          isScanning ? (
-            <CircularProgress size={20} color="primary" />
-          ) : (
-            <ScanIcon />
-          )
-        }
-        label={t(isScanning ? 'button.stop' : 'button.scan')}
-      />
-    </>
+    <ButtonWithIcon
+      disabled={isDisabled}
+      onClick={handleClick}
+      Icon={
+        isScanning ? (
+          <CircularProgress size={20} color="primary" />
+        ) : (
+          <ScanIcon />
+        )
+      }
+      label={t(isScanning ? 'button.stop' : 'button.scan')}
+    />
   );
 };
 
