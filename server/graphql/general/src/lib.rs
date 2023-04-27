@@ -241,6 +241,14 @@ impl GeneralQueries {
     ) -> Result<BarcodesResponse> {
         barcodes(ctx, store_id, page, filter, sort)
     }
+
+    pub async fn requisition_counts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<RequisitionCounts> {
+        requisition_counts(ctx, store_id)
+    }
 }
 
 #[derive(Default, Clone)]
