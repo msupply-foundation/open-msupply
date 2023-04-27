@@ -148,13 +148,15 @@ mod test_update {
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
-            mock_new_response_requisition, mock_sent_request_requisition, mock_store_a,
-            mock_store_b, mock_user_account_b, MockDataInserts,
+            mock_new_response_requisition, mock_response_program_requisition,
+            mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
+            MockDataInserts,
         },
         requisition_row::{RequisitionRow, RequisitionRowStatus},
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
     };
+    use util::inline_init;
 
     use crate::{
         requisition::response_requisition::{
@@ -234,6 +236,18 @@ mod test_update {
                 },
             ),
             Err(ServiceError::NotThisStoreRequisition)
+        );
+
+        // CannotEditRequisition (for program requisitions)
+        context.store_id = mock_store_a().id;
+        assert_eq!(
+            service.update_response_requisition(
+                &context,
+                inline_init(|r: &mut UpdateResponseRequisition| {
+                    r.id = mock_response_program_requisition().requisition.id;
+                })
+            ),
+            Err(ServiceError::CannotEditRequisition)
         );
     }
 
