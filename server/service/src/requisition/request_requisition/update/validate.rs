@@ -17,6 +17,14 @@ pub fn validate(
         .ok_or(OutError::RequisitionDoesNotExist)?;
     let status_changed = input.status.is_some();
 
+    if requisition_row.program_id.is_some()
+        && (input.other_party_id.is_some()
+            || input.min_months_of_stock.is_some()
+            || input.max_months_of_stock.is_some())
+    {
+        return Err(OutError::CannotEditProgramRequisitionInformation);
+    }
+
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
     }
@@ -52,14 +60,6 @@ pub fn validate(
     other_party
         .store_id()
         .ok_or(OutError::OtherPartyIsNotAStore)?;
-
-    if requisition_row.program_id.is_some()
-        && (input.other_party_id.is_some()
-            || input.min_months_of_stock.is_some()
-            || input.max_months_of_stock.is_some())
-    {
-        return Err(OutError::CannotEditProgramRequisitionInformation);
-    }
 
     Ok((requisition_row, status_changed))
 }
