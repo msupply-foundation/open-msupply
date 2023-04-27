@@ -58,7 +58,7 @@ pub fn validate(
             || input.min_months_of_stock.is_some()
             || input.max_months_of_stock.is_some())
     {
-        return Err(OutError::CannotChangeProgramRequisitionInformation);
+        return Err(OutError::CannotEditProgramRequisitionInformation);
     }
 
     Ok((requisition_row, status_changed))

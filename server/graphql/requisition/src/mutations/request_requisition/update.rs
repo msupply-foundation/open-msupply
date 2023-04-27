@@ -147,7 +147,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotARequestRequisition => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
-        ServiceError::CannotChangeProgramRequisitionInformation => BadUserInput(formatted_error),
+        ServiceError::CannotEditProgramRequisitionInformation => BadUserInput(formatted_error),
         ServiceError::UpdatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
