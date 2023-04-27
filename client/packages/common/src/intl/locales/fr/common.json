@@ -181,7 +181,7 @@
     "log.requisition-status-finalised": "Réquisition finalisée",
     "log.requisition-status-sent": "Réquisition envoyée",
     "label.rows-per-page": "Lignes par page:",
-    "log.invoice-status-allocated": "Livraison allouée",
+    "log.invoice-status-allocated": "Livraison confirmée comme \"allouée\"",
     "log.invoice-created": "Livraison créée",
     "log.invoice-status-delivered": "Livraison confirmée comme livrée",
     "log.invoice-status-picked": "Livraison prélevée",
