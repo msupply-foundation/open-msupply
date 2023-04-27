@@ -177,8 +177,8 @@ app.on('window-all-closed', () => {
 process.on('uncaughtException', error => {
   // See comment below
   if (
-    error.message.includes('t[this.constructor.name] is not a constructor') &&
-    error.stack?.includes('v._addKnownAnswers')
+    error.message.includes('[this.constructor.name] is not a constructor') &&
+    error.stack?.includes('._addKnownAnswers')
   ) {
     return;
   }
@@ -200,6 +200,12 @@ process.on('uncaughtException', error => {
         at Timeout._onTimeout (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:2:82424)
         at listOnTimeout (node:internal/timers:559:17)
         at process.processTimers (node:internal/timers:502:7)
+  */
+
+  /*
+    The error has changed to the following, so have relaxed the condition to include it
+        error.message.includes('e[this.constructor.name] is not a constructor') &&
+        error.stack?.includes('m._addKnownAnswers')
   */
 });
 
