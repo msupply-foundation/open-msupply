@@ -1,9 +1,11 @@
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
     auth::{AuthService, AuthServiceTrait},
+    barcode::{BarcodeService, BarcodeServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
+        requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
     display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
@@ -52,6 +54,7 @@ pub struct ServiceProvider {
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
     pub item_count_service: Box<dyn ItemCountServiceTrait>,
+    pub requisition_count_service: Box<dyn RequisitionCountServiceTrait>,
     // Stock stats
     pub item_stats_service: Box<dyn ItemStatsServiceTrait>,
     // Stock
@@ -70,6 +73,8 @@ pub struct ServiceProvider {
     pub sync_trigger: SyncTrigger,
     pub site_is_initialised_trigger: SiteIsInitialisedTrigger,
     pub display_settings_service: Box<dyn DisplaySettingsServiceTrait>,
+    // Barcodes
+    pub barcode_service: Box<dyn BarcodeServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -107,6 +112,7 @@ impl ServiceProvider {
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),
+            requisition_count_service: Box::new(RequisitionCountService {}),
             invoice_service: Box::new(InvoiceService {}),
             stock_expiry_count_service: Box::new(StockExpiryServiceCount {}),
             stocktake_service: Box::new(StocktakeService {}),
@@ -126,6 +132,7 @@ impl ServiceProvider {
             display_settings_service: Box::new(DisplaySettingsService {}),
             stock_line_service: Box::new(StockLineService {}),
             item_count_service: Box::new(ItemServiceCount {}),
+            barcode_service: Box::new(BarcodeService {}),
         }
     }
 

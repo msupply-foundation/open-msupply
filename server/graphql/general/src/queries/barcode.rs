@@ -8,10 +8,7 @@ use graphql_core::{
 use graphql_types::types::BarcodeConnector;
 use repository::{BarcodeFilter, BarcodeSort, BarcodeSortField};
 use repository::{EqualFilter, PaginationOption};
-use service::{
-    auth::{Resource, ResourceAccessRequest},
-    barcode::get_barcodes,
-};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(remote = "repository::BarcodeSortField")]
@@ -58,15 +55,18 @@ pub fn barcodes(
     )?;
 
     let connection_manager = ctx.get_connection_manager();
-    let barcodes = get_barcodes(
-        connection_manager,
-        page.map(PaginationOption::from),
-        filter.map(|filter| filter.to_domain()),
-        // Currently only one sort option is supported, use the first from the list.
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-    )
-    .map_err(StandardGraphqlError::from_list_error)?;
+    let service_provider = ctx.service_provider();
+    let barcodes = service_provider
+        .barcode_service
+        .get_barcodes(
+            connection_manager,
+            page.map(PaginationOption::from),
+            filter.map(|filter| filter.to_domain()),
+            // Currently only one sort option is supported, use the first from the list.
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|sort| sort.to_domain()),
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(BarcodesResponse::Response(BarcodeConnector::from_domain(
         barcodes,

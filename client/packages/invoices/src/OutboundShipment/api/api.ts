@@ -234,23 +234,47 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       }
     },
   },
-  insert: async (
-    invoice: Omit<InsertOutboundShipmentMutationVariables, 'storeId'>
-  ): Promise<number> => {
-    const result =
-      (await sdk.insertOutboundShipment({
-        id: invoice.id,
-        otherPartyId: invoice.otherPartyId,
-        storeId,
-      })) || {};
+  insert: {
+    barcode: async ({
+      input,
+    }: {
+      input: {
+        itemId: string;
+        packSize?: number | null;
+        value: string;
+      };
+    }): Promise<string> => {
+      const result =
+        (await sdk.insertBarcode({
+          storeId,
+          input,
+        })) || {};
 
-    const { insertOutboundShipment } = result;
+      const { insertBarcode } = result;
+      if (insertBarcode?.__typename === 'BarcodeNode') {
+        return insertBarcode.id;
+      }
 
-    if (insertOutboundShipment?.__typename === 'InvoiceNode') {
-      return insertOutboundShipment.invoiceNumber;
-    }
+      throw new Error('Could not insert barcode');
+    },
+    outbound: async (
+      invoice: Omit<InsertOutboundShipmentMutationVariables, 'storeId'>
+    ): Promise<number> => {
+      const result =
+        (await sdk.insertOutboundShipment({
+          id: invoice.id,
+          otherPartyId: invoice.otherPartyId,
+          storeId,
+        })) || {};
 
-    throw new Error('Could not insert invoice');
+      const { insertOutboundShipment } = result;
+
+      if (insertOutboundShipment?.__typename === 'InvoiceNode') {
+        return insertOutboundShipment.invoiceNumber;
+      }
+
+      throw new Error('Could not insert invoice');
+    },
   },
   delete: async (invoices: OutboundRowFragment[]): Promise<string[]> => {
     const result =
@@ -447,11 +471,20 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   dashboard: {
     shipmentCount: async (): Promise<{
-      toBePicked: number;
+      notShipped: number;
     }> => {
       const result = await sdk.invoiceCounts({ storeId });
       return {
-        toBePicked: result?.invoiceCounts?.outbound.toBePicked ?? 0,
+        notShipped: result?.invoiceCounts?.outbound.notShipped ?? 0,
+      };
+    },
+    requisitionCount: async (): Promise<{
+      newResponseRequisitionCount: number;
+    }> => {
+      const result = await sdk.requisitionCounts({ storeId });
+      return {
+        newResponseRequisitionCount:
+          result?.requisitionCounts?.newResponseRequisitionCount ?? 0,
       };
     },
   },

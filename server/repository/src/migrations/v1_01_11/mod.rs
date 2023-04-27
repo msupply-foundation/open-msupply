@@ -1,5 +1,6 @@
 use super::{version::Version, Migration};
 mod activity_log;
+mod barcode;
 mod is_sync_updated_for_requisition;
 mod name_tags;
 mod period_and_period_schedule;
@@ -27,6 +28,8 @@ impl Migration for V1_01_11 {
         remote_authorisation::migrate(connection)?;
         is_sync_updated_for_requisition::migrate(connection)?;
         requisition::migrate(connection)?;
+
+        barcode::migrate(connection)?;
 
         Ok(())
     }

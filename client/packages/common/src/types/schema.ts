@@ -837,6 +837,7 @@ export enum GenderType {
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
+  notDelivered: Scalars['Int'];
 };
 
 export type InitialisationStatusNode = {
@@ -852,6 +853,14 @@ export enum InitialisationStatusType {
 }
 
 export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
+
+export type InsertBarcodeInput = {
+  itemId: Scalars['String'];
+  packSize?: InputMaybe<Scalars['Int']>;
+  value: Scalars['String'];
+};
+
+export type InsertBarcodeResponse = BarcodeNode;
 
 export type InsertErrorInterface = {
   description: Scalars['String'];
@@ -1439,6 +1448,7 @@ export type ItemCounts = {
 export type ItemCountsResponse = {
   __typename: 'ItemCountsResponse';
   lowStock: Scalars['Int'];
+  moreThanSixMonthsStock: Scalars['Int'];
   noStock: Scalars['Int'];
   total: Scalars['Int'];
 };
@@ -1697,6 +1707,7 @@ export type Mutations = {
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
+  insertBarcode: InsertBarcodeResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
@@ -1864,6 +1875,12 @@ export type MutationsDeleteStocktakeLineArgs = {
 
 export type MutationsInitialiseSiteArgs = {
   input: SyncSettingsInput;
+};
+
+
+export type MutationsInsertBarcodeArgs = {
+  input: InsertBarcodeInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -2209,8 +2226,8 @@ export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentE
 export type OutboundInvoiceCounts = {
   __typename: 'OutboundInvoiceCounts';
   created: InvoiceCountsSummary;
-  /** Number of outbound shipments ready to be picked */
-  toBePicked: Scalars['Int'];
+  /** Number of outbound shipments not shipped yet */
+  notShipped: Scalars['Int'];
 };
 
 /**
@@ -2335,6 +2352,7 @@ export type Queries = {
   reports: ReportsResponse;
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
+  requisitionCounts: RequisitionCounts;
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
@@ -2488,6 +2506,11 @@ export type QueriesRequisitionByNumberArgs = {
   requisitionNumber: Scalars['Int'];
   storeId: Scalars['String'];
   type: RequisitionNodeType;
+};
+
+
+export type QueriesRequisitionCountsArgs = {
+  storeId: Scalars['String'];
 };
 
 
@@ -2653,6 +2676,11 @@ export type RequisitionConnector = {
   __typename: 'RequisitionConnector';
   nodes: Array<RequisitionNode>;
   totalCount: Scalars['Int'];
+};
+
+export type RequisitionCounts = {
+  __typename: 'RequisitionCounts';
+  newResponseRequisitionCount: Scalars['Int'];
 };
 
 export type RequisitionFilterInput = {
@@ -3729,6 +3757,7 @@ export type UserNodePermissionsArgs = {
 export enum UserPermission {
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  ItemMutate = 'ITEM_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
   LogQuery = 'LOG_QUERY',
   OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',
