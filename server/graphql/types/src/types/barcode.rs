@@ -107,19 +107,16 @@ mod test {
         impl TestQuery {
             pub async fn test_query(&self) -> BarcodeNode {
                 BarcodeNode {
-                    barcode: inline_init(|r: &mut Barcode| {
-                        r.barcode_row = inline_init(|r: &mut BarcodeRow| {
-                            r.legacy_record = r#"{
-                                "ID": "CB81F6CD62C1476F9411362053D49E84",
-                                "barcode": "0123456789",
-                                "itemID": "AA460A207402434A89B1F6EEAC08DA43",
-                                "packSize": 1,
-                                "manufacturerID": "",
-                                "parentID": ""
-                            }"#
-                            .to_string();
-                        });
-                    }),
+                    barcode: Barcode {
+                        barcode_row: {
+                            inline_init(|r: &mut BarcodeRow| {
+                                r.id = "CB81F6CD62C1476F9411362053D49E84".to_string();
+                                r.value = "0123456789".to_string();
+                                r.item_id = Some("AA460A207402434A89B1F6EEAC08DA43".to_string());
+                                r.pack_size = Some(1);
+                            })
+                        },
+                    },
                 }
             }
         }
