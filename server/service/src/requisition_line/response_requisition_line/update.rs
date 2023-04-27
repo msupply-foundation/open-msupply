@@ -7,7 +7,7 @@ use crate::{
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRowRepository, StorageConnection,
+    RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -71,6 +71,16 @@ fn validate(
     let requisition_row =
         check_requisition_exists(connection, &requisition_line_row.requisition_id)?
             .ok_or(OutError::RequisitionDoesNotExist)?;
+
+    if let Some(approval_status) = requisition_row.approval_status.clone() {
+        if requisition_row.program_id.is_some()
+            && (approval_status == RequisitionRowApprovalStatus::Pending
+                || approval_status == RequisitionRowApprovalStatus::Denied
+                || approval_status == RequisitionRowApprovalStatus::DeniedByAnother)
+        {
+            return Err(OutError::CannotEditRequisition);
+        }
+    }
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);

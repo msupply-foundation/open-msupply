@@ -6,7 +6,8 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    ActivityLogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
+    ActivityLogType, RepositoryError, Requisition, RequisitionRowApprovalStatus,
+    RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -31,7 +32,6 @@ pub enum UpdateResponseRequisitionError {
     CannotEditRequisition,
     NotAResponseRequisition,
     UpdatedRequisitionDoesNotExist,
-    // TODO https://github.com/openmsupply/remote-server/issues/760
     DatabaseError(RepositoryError),
 }
 
@@ -77,6 +77,16 @@ pub fn validate(
 ) -> Result<(RequisitionRow, bool), OutError> {
     let requisition_row = check_requisition_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
+
+    if let Some(approval_status) = requisition_row.approval_status.clone() {
+        if requisition_row.program_id.is_some()
+            && (approval_status == RequisitionRowApprovalStatus::Pending
+                || approval_status == RequisitionRowApprovalStatus::Denied
+                || approval_status == RequisitionRowApprovalStatus::DeniedByAnother)
+        {
+            return Err(OutError::CannotEditRequisition);
+        }
+    }
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
