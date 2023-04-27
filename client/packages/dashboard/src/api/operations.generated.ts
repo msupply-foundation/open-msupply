@@ -19,7 +19,7 @@ export type ItemCountsQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemCountsQuery = { __typename: 'Queries', itemCounts: { __typename: 'ItemCounts', itemCounts: { __typename: 'ItemCountsResponse', lowStock: number, noStock: number, total: number } } };
+export type ItemCountsQuery = { __typename: 'Queries', itemCounts: { __typename: 'ItemCounts', itemCounts: { __typename: 'ItemCountsResponse', lowStock: number, noStock: number, moreThanSixMonthsStock: number, total: number } } };
 
 
 export const StockCountsDocument = gql`
@@ -40,6 +40,7 @@ export const ItemCountsDocument = gql`
     itemCounts {
       lowStock
       noStock
+      moreThanSixMonthsStock
       total
     }
   }
