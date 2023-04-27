@@ -48,6 +48,14 @@ export type InvoiceCountsQueryVariables = Types.Exact<{
 
 export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', notShipped: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
+export type BarcodesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  filter?: Types.InputMaybe<Types.BarcodeFilterInput>;
+}>;
+
+
+export type BarcodesQuery = { __typename: 'Queries', barcodes: { __typename: 'BarcodeConnector', totalCount: number, nodes: Array<{ __typename: 'BarcodeNode', id: string, itemId?: string | null, manufacturerId?: string | null, packSize?: number | null, parentId?: string | null, value: string }> } };
+
 export type RequisitionCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
 }>;
@@ -348,6 +356,24 @@ export const InvoiceCountsDocument = gql`
         thisWeek
       }
       notShipped
+    }
+  }
+}
+    `;
+export const BarcodesDocument = gql`
+    query barcodes($storeId: String!, $filter: BarcodeFilterInput) {
+  barcodes(storeId: $storeId, filter: $filter) {
+    ... on BarcodeConnector {
+      __typename
+      nodes {
+        id
+        itemId
+        manufacturerId
+        packSize
+        parentId
+        value
+      }
+      totalCount
     }
   }
 }
@@ -935,6 +961,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts', 'query');
     },
+    barcodes(variables: BarcodesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<BarcodesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<BarcodesQuery>(BarcodesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'barcodes', 'query');
+    },
     requisitionCounts(variables: RequisitionCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequisitionCountsQuery>(RequisitionCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionCounts', 'query');
     },
@@ -1028,6 +1057,23 @@ export const mockOutboundByNumberQuery = (resolver: ResponseResolver<GraphQLRequ
 export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceCountsQueryVariables>, GraphQLContext<InvoiceCountsQuery>, any>) =>
   graphql.query<InvoiceCountsQuery, InvoiceCountsQueryVariables>(
     'invoiceCounts',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockBarcodesQuery((req, res, ctx) => {
+ *   const { storeId, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ barcodes })
+ *   )
+ * })
+ */
+export const mockBarcodesQuery = (resolver: ResponseResolver<GraphQLRequest<BarcodesQueryVariables>, GraphQLContext<BarcodesQuery>, any>) =>
+  graphql.query<BarcodesQuery, BarcodesQueryVariables>(
+    'barcodes',
     resolver
   )
 

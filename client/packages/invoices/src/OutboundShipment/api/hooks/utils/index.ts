@@ -3,6 +3,7 @@ import { useOutboundIsDisabled } from './useOutboundIsDisabled';
 import { useOutboundApi } from './useOutboundApi';
 import { useOutboundCounts } from './useOutboundCounts';
 import { useAddFromMasterList } from './useAddFromMasterList';
+import { useBarcodes } from './useBarcodes';
 import { useResponseCounts } from './useResponseCounts';
 
 export const Utils = {
@@ -11,5 +12,6 @@ export const Utils = {
   useOutboundIsDisabled,
   useOutboundApi,
   useOutboundCounts,
+  useBarcodes,
   useResponseCounts,
 };

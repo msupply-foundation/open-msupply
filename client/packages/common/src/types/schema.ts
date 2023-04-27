@@ -199,6 +199,46 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
+export type BarcodeConnector = {
+  __typename: 'BarcodeConnector';
+  nodes: Array<BarcodeNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type BarcodeFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  packSize?: InputMaybe<EqualFilterNumberInput>;
+  value?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type BarcodeNode = {
+  __typename: 'BarcodeNode';
+  id: Scalars['String'];
+  itemId?: Maybe<Scalars['String']>;
+  manufacturerId?: Maybe<Scalars['String']>;
+  packSize?: Maybe<Scalars['Int']>;
+  parentId?: Maybe<Scalars['String']>;
+  value: Scalars['String'];
+};
+
+export enum BarcodeSortFieldInput {
+  Barcode = 'BARCODE',
+  Id = 'ID'
+}
+
+export type BarcodeSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: BarcodeSortFieldInput;
+};
+
+export type BarcodesResponse = BarcodeConnector;
+
 export type BatchInboundShipmentInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']>;
   deleteInboundShipmentLines?: InputMaybe<Array<DeleteInboundShipmentLineInput>>;
@@ -2256,6 +2296,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  barcodes: BarcodesResponse;
   displaySettings: DisplaySettingsNode;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
@@ -2323,6 +2364,14 @@ export type QueriesActivityLogsArgs = {
 export type QueriesAuthTokenArgs = {
   password: Scalars['String'];
   username: Scalars['String'];
+};
+
+
+export type QueriesBarcodesArgs = {
+  filter?: InputMaybe<BarcodeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<BarcodeSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
