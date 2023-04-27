@@ -53,5 +53,13 @@ pub fn validate(
         .store_id()
         .ok_or(OutError::OtherPartyIsNotAStore)?;
 
+    if requisition_row.program_id.is_some()
+        && (input.other_party_id.is_some()
+            || input.min_months_of_stock.is_some()
+            || input.max_months_of_stock.is_some())
+    {
+        return Err(OutError::CannotChangeProgramRequisitionInformation);
+    }
+
     Ok((requisition_row, status_changed))
 }

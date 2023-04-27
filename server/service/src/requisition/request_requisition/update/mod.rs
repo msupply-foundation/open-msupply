@@ -42,6 +42,7 @@ pub enum UpdateRequestRequisitionError {
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,
+    CannotChangeProgramRequisitionInformation,
     // Name validation
     OtherPartyNotASupplier,
     OtherPartyNotVisible,

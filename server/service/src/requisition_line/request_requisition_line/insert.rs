@@ -32,6 +32,7 @@ pub enum InsertRequestRequisitionLineError {
     ItemAlreadyExistInRequisition,
     ItemDoesNotExist,
     // TODO  ItemIsNotVisibleInThisStore,
+    CannotAddItemToProgramRequisition,
     RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
@@ -96,6 +97,10 @@ fn validate(
 
     if !check_item_exists(connection, &input.item_id, store_id)? {
         return Err(OutError::ItemDoesNotExist);
+    }
+
+    if requisition_row.program_id.is_some() {
+        return Err(OutError::CannotAddItemToProgramRequisition);
     }
 
     Ok(requisition_row)
