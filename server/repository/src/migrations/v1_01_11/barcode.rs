@@ -24,7 +24,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     {
         sql!(
             connection,
-            r#"ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'barcode';"#
+            r#"
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'barcode';
+                ALTER TYPE permission_type ADD VALUE IF NOT EXISTS 'ITEM_MUTATE';
+            "#
         )?;
 
         sql!(
@@ -50,8 +53,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         LANGUAGE plpgsql
        AS $function$
          BEGIN
-           INSERT INTO changelog (table_name, record_id, row_action, name_id)
-                 VALUES ('barcode', OLD.id, 'DELETE', OLD.name_id);
+           INSERT INTO changelog (table_name, record_id, row_action)
+                 VALUES ('barcode', OLD.id, 'DELETE');
            -- The return value is required, even though it is ignored for a row-level AFTER trigger
            RETURN NULL;
          END;

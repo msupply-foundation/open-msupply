@@ -24,6 +24,7 @@ export interface OutboundLineEditTableProps {
   item: ItemRowFragment | null;
   allocatedQuantity: number;
   allocatedPacks: number;
+  batch?: string;
 }
 
 const PlaceholderCell = styled(TableCell)(({ theme }) => ({
@@ -122,11 +123,13 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   item,
   allocatedQuantity,
   allocatedPacks,
+  batch,
 }) => {
   const t = useTranslation('distribution');
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
     rows,
-    packSizeController
+    packSizeController,
+    batch
   );
   const onEditStockLine = (key: string, value: number, packSize: number) => {
     onChange(key, value, packSize);

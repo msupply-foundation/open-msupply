@@ -14,6 +14,7 @@ pub struct ItemCountsResponse {
     total: i64,
     no_stock: i64,
     low_stock: i64,
+    more_than_six_months_stock: i64,
 }
 
 #[Object]
@@ -31,6 +32,7 @@ impl ItemCounts {
                 total: item_counts.total,
                 no_stock: item_counts.no_stock,
                 low_stock: item_counts.low_stock,
+                more_than_six_months_stock: item_counts.more_than_six_months_stock,
             }),
             Err(err) => Err(err.into()),
         }

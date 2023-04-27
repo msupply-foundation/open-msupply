@@ -4,6 +4,8 @@ import { useOutboundApi } from './useOutboundApi';
 import { useOutboundCounts } from './useOutboundCounts';
 import { useAddFromMasterList } from './useAddFromMasterList';
 import { useBarcodes } from './useBarcodes';
+import { useBarcodeInsert } from './useBarcodeInsert';
+import { useResponseCounts } from './useResponseCounts';
 
 export const Utils = {
   useAddFromMasterList,
@@ -12,4 +14,6 @@ export const Utils = {
   useOutboundApi,
   useOutboundCounts,
   useBarcodes,
+  useBarcodeInsert,
+  useResponseCounts,
 };
