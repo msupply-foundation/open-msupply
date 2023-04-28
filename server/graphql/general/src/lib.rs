@@ -10,6 +10,7 @@ use graphql_core::pagination::PaginationInput;
 use crate::store_preference::store_preferences;
 use graphql_types::types::StorePreferenceNode;
 use mutations::{
+    barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
     display_settings::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
@@ -282,6 +283,15 @@ impl GeneralMutations {
         input: DisplaySettingsInput,
     ) -> Result<UpdateDisplaySettingsResponse> {
         update_display_settings(ctx, input)
+    }
+
+    pub async fn insert_barcode(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: BarcodeInput,
+    ) -> Result<mutations::barcode::InsertResponse> {
+        insert_barcode(ctx, &store_id, input)
     }
 }
 

@@ -10,16 +10,13 @@ import {
   ButtonWithIcon,
   useNotification,
 } from '@openmsupply-client/common';
-import {
-  ItemRowFragment,
-  MasterListSearchModal,
-} from '@openmsupply-client/system';
-import { useOutbound } from '../api';
+import { MasterListSearchModal } from '@openmsupply-client/system';
+import { DraftItem, useOutbound } from '../api';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
 }: {
-  onAddItem: (item?: ItemRowFragment) => void;
+  onAddItem: (item?: DraftItem) => void;
 }) => {
   const t = useTranslation('distribution');
   const { status } = useOutbound.document.fields(['status']);
@@ -31,30 +28,42 @@ export const AddFromScannerButtonComponent = ({
   const filterByName = { existsForNameId: { equalTo: otherPartyId } };
   const { hasBarcodeScanner, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
-  const { warning } = useNotification();
+  const { error, warning } = useNotification();
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
-      const { content, gtin } = result;
-      const barcode = gtin ?? content;
-      const barcodes = await getBarcodes(barcode);
+      const { content, gtin, batch } = result;
+      const value = gtin ?? content;
+      const barcodes = await getBarcodes(value);
 
-      if (barcodes.totalCount === 0) {
-        warning(t('error.no-matching-item'))();
-        // TODO: save barcode after selection
-        onAddItem();
-        return;
+      if (barcodes.totalCount > 0) {
+        const barcode = barcodes.nodes[0];
+        const id = barcode?.itemId;
+
+        if (!!id) {
+          onAddItem({
+            item: { id },
+            barcode: { ...barcode, batch },
+          } as DraftItem);
+          return;
+        }
       }
 
-      onAddItem({ id: barcodes.nodes[0]?.itemId } as ItemRowFragment);
+      warning(t('error.no-matching-item'))();
+
+      onAddItem({ barcode: { value, batch } } as DraftItem);
     }
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (isScanning) {
       stopScan();
     } else {
-      startScanning(handleScanResult);
+      try {
+        await startScanning(handleScanResult);
+      } catch (e) {
+        error(t('error.unable-to-start-scanning', { error: e }))();
+      }
     }
   };
 

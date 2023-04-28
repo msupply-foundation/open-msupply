@@ -854,6 +854,14 @@ export enum InitialisationStatusType {
 
 export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
+export type InsertBarcodeInput = {
+  itemId: Scalars['String'];
+  packSize?: InputMaybe<Scalars['Int']>;
+  value: Scalars['String'];
+};
+
+export type InsertBarcodeResponse = BarcodeNode;
+
 export type InsertErrorInterface = {
   description: Scalars['String'];
 };
@@ -1699,6 +1707,7 @@ export type Mutations = {
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
+  insertBarcode: InsertBarcodeResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
@@ -1866,6 +1875,12 @@ export type MutationsDeleteStocktakeLineArgs = {
 
 export type MutationsInitialiseSiteArgs = {
   input: SyncSettingsInput;
+};
+
+
+export type MutationsInsertBarcodeArgs = {
+  input: InsertBarcodeInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -3742,6 +3757,7 @@ export type UserNodePermissionsArgs = {
 export enum UserPermission {
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  ItemMutate = 'ITEM_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
   LogQuery = 'LOG_QUERY',
   OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',

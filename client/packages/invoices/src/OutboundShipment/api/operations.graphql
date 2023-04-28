@@ -157,6 +157,16 @@ fragment OutboundRow on InvoiceNode {
   }
 }
 
+fragment Barcode on BarcodeNode {
+  __typename
+  id
+  itemId
+  manufacturerId
+  packSize
+  parentId
+  value
+}
+
 query invoices(
   $first: Int
   $offset: Int
@@ -250,12 +260,7 @@ query barcodes($storeId: String!, $filter: BarcodeFilterInput) {
     ... on BarcodeConnector {
       __typename
       nodes {
-        id
-        itemId
-        manufacturerId
-        packSize
-        parentId
-        value
+        ...Barcode
       }
       totalCount
     }
@@ -836,6 +841,14 @@ mutation addToOutboundShipmentFromMasterList(
     ... on InvoiceLineConnector {
       __typename
       totalCount
+    }
+  }
+}
+
+mutation insertBarcode($storeId: String!, $input: InsertBarcodeInput!) {
+  insertBarcode(input: $input, storeId: $storeId) {
+    ... on BarcodeNode {
+      ...Barcode
     }
   }
 }
