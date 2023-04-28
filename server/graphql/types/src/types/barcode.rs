@@ -123,11 +123,11 @@ mod test {
 
         let expected = json!({
             "testQuery": {
-              "__typename": "BarcodeNode",
-              "id": "CB81F6CD62C1476F9411362053D49E84",
-              "value": "0123456789",
-              "item_id": "AA460A207402434A89B1F6EEAC08DA43",
-              "pack_size": 1
+                "__typename": "BarcodeNode",
+                "id": "CB81F6CD62C1476F9411362053D49E84",
+                "value": "0123456789",
+                "itemId": "AA460A207402434A89B1F6EEAC08DA43",
+                "packSize": 1
             }
           }
         );
@@ -138,8 +138,8 @@ mod test {
                 __typename
                id
                value
-               item_id
-               pack_size
+               itemId
+               packSize
             }
         }
         "#;
