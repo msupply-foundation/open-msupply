@@ -139,8 +139,9 @@ export const SidePanel: FC = () => {
   const t = useTranslation(['replenishment', 'common']);
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(data, null, 4) ?? '');
-    success('Copied to clipboard successfully')();
+    navigator.clipboard
+      .writeText(JSON.stringify(data, null, 4) ?? '')
+      .then(() => success('Copied to clipboard successfully')());
   };
 
   return (

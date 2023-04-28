@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { useDashboard } from '../api';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
-import { useRequest } from 'packages/requisitions/src/RequestRequisition/api';
+import { useRequest } from '@openmsupply-client/requisitions';
 
 const LOW_MOS_THRESHOLD = 3;
 
@@ -63,7 +63,7 @@ export const StockWidget: React.FC = () => {
           }}
         />
       ) : null}
-      <Widget title={t('heading-stock')}>
+      <Widget title={t('inventory-management')}>
         <Grid
           container
           justifyContent="flex-start"
@@ -90,7 +90,7 @@ export const StockWidget: React.FC = () => {
                   value: formatNumber.round(expiryData?.expiringSoon),
                 },
               ]}
-            />
+            />            
             <StatsPanel
               error={itemCountsError as ApiException}
               isError={hasItemStatsError}
@@ -114,6 +114,12 @@ export const StockWidget: React.FC = () => {
                     count: Math.round(itemCountsData?.lowStock || 0),
                   }),
                   value: formatNumber.round(itemCountsData?.lowStock || 0),
+                },
+                {
+                  label: t('label.more-than-six-months-stock-items', {
+                    count: Math.round(itemCountsData?.moreThanSixMonthsStock || 0),
+                  }),
+                  value: formatNumber.round(itemCountsData?.moreThanSixMonthsStock || 0),
                 },
               ]}
             />

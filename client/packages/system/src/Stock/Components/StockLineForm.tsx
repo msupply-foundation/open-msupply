@@ -18,6 +18,7 @@ import {
   CircularProgress,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
+import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   <InputWithLabelRow
@@ -28,7 +29,7 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
     sx={{
       justifyContent: 'space-between',
       '.MuiFormControl-root > .MuiInput-root, > input': {
-        maxWidth: '120px',
+        maxWidth: '160px',
       },
     }}
   />
@@ -151,6 +152,18 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
           }
         />
         <StyledInputRow
+          label={t('label.location')}
+          Input={
+            <LocationSearchInput
+              autoFocus={false}
+              disabled={false}
+              value={draft.location ?? null}
+              width={160}
+              onChange={location => onUpdate({ locationId: location?.id })}
+            />
+          }
+        />
+        <StyledInputRow
           label={t('label.barcode')}
           Input={
             <Box>
@@ -166,7 +179,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
                       <ScanIcon />
                     )
                   }
-                  label={'Scan'}
+                  label={t('button.scan')}
                 />
               )}
             </Box>

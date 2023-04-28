@@ -10,7 +10,6 @@
       "@common/styles": ["packages/common/src/styles"],
       "@common/types": ["packages/common/src/types"],
       "@common/utils": ["packages/common/src/utils"],
-      // the graphql-codegen v3.2.2 is relying on an internal export of graphql-request which was removed in v5.2.0
       "graphql-request/dist/types.dom": [
         "node_modules/graphql-request/src/types.dom"
       ]

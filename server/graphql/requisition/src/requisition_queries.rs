@@ -30,6 +30,9 @@ pub enum RequisitionSortFieldInput {
     FinalisedDatetime,
     ExpectedDeliveryDate,
     TheirReference,
+    OrderType,
+    ProgramName,
+    PeriodName,
 }
 
 #[derive(InputObject)]
@@ -199,6 +202,9 @@ impl RequisitionSortInput {
             from::FinalisedDatetime => to::FinalisedDatetime,
             from::ExpectedDeliveryDate => to::ExpectedDeliveryDate,
             from::TheirReference => to::TheirReference,
+            from::OrderType => to::OrderType,
+            from::ProgramName => to::ProgramName,
+            from::PeriodName => to::PeriodName,
         };
 
         RequisitionSort {

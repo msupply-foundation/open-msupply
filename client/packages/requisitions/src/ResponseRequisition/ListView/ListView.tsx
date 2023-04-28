@@ -11,10 +11,15 @@ import {
   useTranslation,
   NothingHere,
   useUrlQueryParams,
+  ColumnDescription,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getRequisitionTranslator, isResponseDisabled } from '../../utils';
+import {
+  getApprovalStatusText,
+  getRequisitionTranslator,
+  isResponseDisabled,
+} from '../../utils';
 import { useResponse, ResponseRowFragment } from '../api';
 
 const useDisableResponseRows = (rows?: ResponseRowFragment[]) => {
@@ -37,26 +42,66 @@ export const ResponseRequisitionListView: FC = () => {
   } = useUrlQueryParams({ filterKey: 'comment' });
   const { data, isError, isLoading } = useResponse.document.list();
   const pagination = { page, first, offset };
+  const { authoriseResponseRequisitions } = useResponse.utils.preferences();
   useDisableResponseRows(data?.nodes);
 
-  const columns = useColumns<ResponseRowFragment>(
+  const columnDefinitions: ColumnDescription<ResponseRowFragment>[] = [
+    [getNameAndColorColumn(), { setter: onUpdate }],
+    {
+      key: 'requisitionNumber',
+      label: 'label.number',
+      width: 100,
+    },
+    'createdDatetime',
     [
-      [getNameAndColorColumn(), { setter: onUpdate }],
+      'status',
       {
-        key: 'requisitionNumber',
-        label: 'label.number',
-        width: 100,
+        formatter: status =>
+          getRequisitionTranslator(t)(status as RequisitionNodeStatus),
       },
-      'createdDatetime',
-      [
-        'status',
-        {
-          formatter: status =>
-            getRequisitionTranslator(t)(status as RequisitionNodeStatus),
-        },
-      ],
-      ['comment', { minWidth: 400 }],
     ],
+    {
+      key: 'programName',
+      accessor: ({ rowData }) => {
+        return rowData.programName;
+      },
+      label: 'label.program',
+      description: 'description.program',
+      sortable: true,
+    },
+    {
+      key: 'orderType',
+      accessor: ({ rowData }) => {
+        return rowData.orderType;
+      },
+      label: 'label.order-type',
+      sortable: true,
+    },
+
+    {
+      key: 'period',
+      accessor: ({ rowData }) => {
+        return rowData.period?.name ?? '';
+      },
+      label: 'label.period',
+      sortable: true,
+    },
+  ];
+
+  if (authoriseResponseRequisitions) {
+    columnDefinitions.push({
+      key: 'approvalStatus',
+      label: 'label.auth-status',
+      minWidth: 150,
+      sortable: false,
+      accessor: ({ rowData }) =>
+        t(getApprovalStatusText(rowData.approvalStatus)),
+    });
+  }
+  columnDefinitions.push(['comment', { minWidth: 400 }]);
+
+  const columns = useColumns<ResponseRowFragment>(
+    columnDefinitions,
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
   );
@@ -64,7 +109,7 @@ export const ResponseRequisitionListView: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons />
 
       <DataTable
         id="requisition-list"

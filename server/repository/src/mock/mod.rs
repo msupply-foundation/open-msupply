@@ -1,6 +1,7 @@
-use std::{collections::HashMap, ops::Index};
+use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
+mod barcode;
 pub mod common;
 mod full_invoice;
 mod full_master_list;
@@ -10,7 +11,9 @@ mod item;
 mod location;
 mod name;
 mod name_store_join;
+mod name_tag;
 mod number;
+mod period_and_period_schedule;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
@@ -35,6 +38,7 @@ mod test_unallocated_line;
 mod unit;
 mod user_account;
 
+pub use barcode::*;
 use common::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
@@ -44,7 +48,9 @@ pub use item::*;
 pub use location::*;
 pub use name::*;
 pub use name_store_join::*;
+pub use name_tag::*;
 pub use number::*;
+pub use period_and_period_schedule::*;
 pub use stock_line::*;
 pub use stocktake::*;
 pub use stocktake_line::*;
@@ -67,13 +73,18 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    ActivityLogRow, ActivityLogRowRepository, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    NumberRow, NumberRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
-    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
-    SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository,
+    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceRow, ItemRow, KeyValueStoreRepository, KeyValueStoreRow,
+    LocationRow, LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
+    MasterListRow, MasterListRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow,
+    NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository,
+    PeriodScheduleRow, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
+    SyncLogRow, SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
@@ -91,6 +102,9 @@ pub struct MockData {
     pub user_store_joins: Vec<UserStoreJoinRow>,
     pub user_permissions: Vec<UserPermissionRow>,
     pub names: Vec<NameRow>,
+    pub name_tags: Vec<NameTagRow>,
+    pub period_schedules: Vec<PeriodScheduleRow>,
+    pub periods: Vec<PeriodRow>,
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
     pub items: Vec<ItemRow>,
@@ -102,6 +116,8 @@ pub struct MockData {
     pub invoice_lines: Vec<InvoiceLineRow>,
     pub full_invoices: HashMap<String, FullMockInvoice>,
     pub full_master_lists: Vec<FullMockMasterList>,
+    pub master_lists: Vec<MasterListRow>,
+    pub master_list_name_joins: Vec<MasterListNameJoinRow>,
     pub numbers: Vec<NumberRow>,
     pub requisitions: Vec<RequisitionRow>,
     pub requisition_lines: Vec<RequisitionLineRow>,
@@ -111,7 +127,13 @@ pub struct MockData {
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
     pub sync_logs: Vec<SyncLogRow>,
+    pub name_tag_rows: Vec<NameTagRow>,
+    pub name_tag_join_rows: Vec<NameTagJoinRow>,
     pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
+    pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
+    pub programs: Vec<ProgramRow>,
+    pub requisition_order_types: Vec<ProgramRequisitionOrderTypeRow>,
+    pub barcodes: Vec<BarcodeRow>,
 }
 
 impl MockData {
@@ -132,6 +154,9 @@ pub struct MockDataInserts {
     pub user_store_joins: bool,
     pub user_permissions: bool,
     pub names: bool,
+    pub name_tags: bool,
+    pub period_schedules: bool,
+    pub periods: bool,
     pub stores: bool,
     pub units: bool,
     pub items: bool,
@@ -153,6 +178,7 @@ pub struct MockDataInserts {
     pub activity_logs: bool,
     pub sync_logs: bool,
     pub inventory_adjustment_reasons: bool,
+    pub barcodes: bool,
 }
 
 impl MockDataInserts {
@@ -162,6 +188,9 @@ impl MockDataInserts {
             user_store_joins: true,
             user_permissions: true,
             names: true,
+            name_tags: true,
+            period_schedules: true,
+            periods: true,
             stores: true,
             units: true,
             items: true,
@@ -183,6 +212,7 @@ impl MockDataInserts {
             activity_logs: true,
             sync_logs: true,
             inventory_adjustment_reasons: true,
+            barcodes: true,
         }
     }
 
@@ -207,6 +237,21 @@ impl MockDataInserts {
 
     pub fn names(mut self) -> Self {
         self.names = true;
+        self
+    }
+
+    pub fn name_tags(mut self) -> Self {
+        self.name_tags = true;
+        self
+    }
+
+    pub fn period_schedules(mut self) -> Self {
+        self.period_schedules = true;
+        self
+    }
+
+    pub fn periods(mut self) -> Self {
+        self.periods = true;
         self
     }
 
@@ -299,6 +344,11 @@ impl MockDataInserts {
         self.inventory_adjustment_reasons = true;
         self
     }
+
+    pub fn barcodes(mut self) -> Self {
+        self.barcodes = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -340,12 +390,14 @@ fn all_mock_data() -> MockDataCollection {
             user_store_joins: mock_user_store_joins(),
             user_permissions: mock_user_permissions(),
             names: mock_names(),
+            name_tags: mock_name_tags(),
+            period_schedules: mock_period_schedules(),
+            periods: mock_periods(),
             stores: mock_stores(),
             units: mock_units(),
             items: mock_items(),
             locations: mock_locations(),
             name_store_joins: mock_name_store_joins(),
-            full_requisitions: vec![],
             invoices: mock_invoices(),
             stock_lines: mock_stock_lines(),
             invoice_lines: mock_invoice_lines(),
@@ -354,13 +406,8 @@ fn all_mock_data() -> MockDataCollection {
             numbers: mock_numbers(),
             stocktakes: mock_stocktake_data(),
             stocktake_lines: mock_stocktake_line_data(),
-            requisitions: vec![],
-            requisition_lines: vec![],
-            sync_buffer_rows: vec![],
-            key_value_store_rows: vec![],
             activity_logs: mock_activity_logs(),
-            sync_logs: vec![],
-            inventory_adjustment_reasons: vec![],
+            ..Default::default()
         },
     );
     data.insert(
@@ -428,6 +475,27 @@ pub fn insert_mock_data(
         if inserts.names {
             let repo = NameRowRepository::new(connection);
             for row in &mock_data.names {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.name_tags {
+            let repo = NameTagRowRepository::new(connection);
+            for row in &mock_data.name_tags {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.period_schedules {
+            let repo = PeriodScheduleRowRepository::new(connection);
+            for row in &mock_data.period_schedules {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.periods {
+            let repo = PeriodRowRepository::new(connection);
+            for row in &mock_data.periods {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -541,6 +609,16 @@ pub fn insert_mock_data(
             }
         }
 
+        for row in &mock_data.master_lists {
+            let repo = MasterListRowRepository::new(connection);
+            repo.upsert_one(&row).unwrap();
+        }
+
+        for row in &mock_data.master_list_name_joins {
+            let repo = MasterListNameJoinRepository::new(connection);
+            repo.upsert_one(&row).unwrap();
+        }
+
         if inserts.numbers {
             let repo = NumberRowRepository::new(connection);
             for row in &mock_data.numbers {
@@ -596,8 +674,39 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
-    }
 
+        for row in &mock_data.name_tag_rows {
+            let repo = NameTagRowRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
+        for row in &mock_data.name_tag_join_rows {
+            let repo = NameTagJoinRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
+        for row in &mock_data.programs {
+            let repo = ProgramRowRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
+        for row in &mock_data.program_requisition_settings {
+            let repo = ProgramRequisitionSettingsRowRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
+        for row in &mock_data.requisition_order_types {
+            let repo = ProgramRequisitionOrderTypeRowRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
+        if inserts.barcodes {
+            for row in &mock_data.barcodes {
+                let repo = BarcodeRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
+    }
     mock_data
 }
 
@@ -606,6 +715,9 @@ impl MockData {
         let MockData {
             mut user_accounts,
             mut names,
+            mut name_tags,
+            mut period_schedules,
+            mut periods,
             mut stores,
             mut units,
             mut items,
@@ -629,10 +741,21 @@ impl MockData {
             mut activity_logs,
             mut sync_logs,
             mut inventory_adjustment_reasons,
+            mut name_tag_join_rows,
+            mut name_tag_rows,
+            mut program_requisition_settings,
+            mut programs,
+            mut master_lists,
+            mut master_list_name_joins,
+            mut requisition_order_types,
+            mut barcodes,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
         self.names.append(&mut names);
+        self.name_tags.append(&mut name_tags);
+        self.period_schedules.append(&mut period_schedules);
+        self.periods.append(&mut periods);
         self.stores.append(&mut stores);
         self.units.append(&mut units);
         self.items.append(&mut items);
@@ -654,6 +777,17 @@ impl MockData {
         self.sync_logs.append(&mut sync_logs);
         self.inventory_adjustment_reasons
             .append(&mut inventory_adjustment_reasons);
+        self.name_tag_join_rows.append(&mut name_tag_join_rows);
+        self.name_tag_rows.append(&mut name_tag_rows);
+        self.program_requisition_settings
+            .append(&mut program_requisition_settings);
+        self.programs.append(&mut programs);
+        self.master_lists.append(&mut master_lists);
+        self.master_list_name_joins
+            .append(&mut master_list_name_joins);
+        self.requisition_order_types
+            .append(&mut requisition_order_types);
+        self.barcodes.append(&mut barcodes);
 
         self
     }

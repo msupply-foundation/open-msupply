@@ -6,14 +6,18 @@ use repository::{
 };
 use util::inline_edit;
 
-// Ordered by referencial constraints
+// Ordered by referential constraints
 const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
     LegacyTableName::NAME,
+    LegacyTableName::NAME_TAG,
+    LegacyTableName::NAME_TAG_JOIN,
     LegacyTableName::UNIT,
     LegacyTableName::ITEM,
     LegacyTableName::STORE,
     LegacyTableName::STORE_PREFERENCE,
+    LegacyTableName::PERIOD_SCHEDULE,
+    LegacyTableName::PERIOD,
     LegacyTableName::LIST_MASTER,
     LegacyTableName::LIST_MASTER_LINE,
     LegacyTableName::LIST_MASTER_NAME_JOIN,
@@ -28,6 +32,7 @@ const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::REQUISITION_LINE,
     LegacyTableName::NAME_STORE_JOIN,
     LegacyTableName::OM_ACTIVITY_LOG,
+    LegacyTableName::BARCODE,
 ];
 
 pub(crate) struct SyncBuffer<'a> {

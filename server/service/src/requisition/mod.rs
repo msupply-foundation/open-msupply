@@ -1,12 +1,14 @@
 use self::{
+    program_settings::{get_program_requisition_settings, ProgramSettings},
     query::{get_requisition, get_requisition_by_number, get_requisitions},
     request_requisition::{
         add_from_master_list, batch_request_requisition, delete_request_requisition,
-        insert_request_requisition, update_request_requisition, use_suggested_quantity,
-        AddFromMasterList, AddFromMasterListError, BatchRequestRequisition,
+        insert_program_request_requisition, insert_request_requisition, update_request_requisition,
+        use_suggested_quantity, AddFromMasterList, AddFromMasterListError, BatchRequestRequisition,
         BatchRequestRequisitionResult, DeleteRequestRequisition, DeleteRequestRequisitionError,
-        InsertRequestRequisition, InsertRequestRequisitionError, UpdateRequestRequisition,
-        UpdateRequestRequisitionError, UseSuggestedQuantity, UseSuggestedQuantityError,
+        InsertProgramRequestRequisition, InsertRequestRequisition, InsertRequestRequisitionError,
+        UpdateRequestRequisition, UpdateRequestRequisitionError, UseSuggestedQuantity,
+        UseSuggestedQuantityError,
     },
     requisition_supply_status::{get_requisitions_supply_statuses, RequisitionLineSupplyStatus},
     response_requisition::{
@@ -25,6 +27,7 @@ use repository::{
 };
 
 pub mod common;
+pub mod program_settings;
 pub mod query;
 pub mod request_requisition;
 pub mod requisition_supply_status;
@@ -75,6 +78,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: InsertRequestRequisition,
     ) -> Result<Requisition, InsertRequestRequisitionError> {
         insert_request_requisition(ctx, input)
+    }
+
+    fn insert_program_request_requisition(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertProgramRequestRequisition,
+    ) -> Result<Requisition, InsertRequestRequisitionError> {
+        insert_program_request_requisition(ctx, input)
     }
 
     fn update_request_requisition(
@@ -139,6 +150,14 @@ pub trait RequisitionServiceTrait: Sync + Send {
         input: BatchRequestRequisition,
     ) -> Result<BatchRequestRequisitionResult, RepositoryError> {
         batch_request_requisition(ctx, input)
+    }
+
+    fn get_program_requisition_settings(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+    ) -> Result<Vec<ProgramSettings>, RepositoryError> {
+        get_program_requisition_settings(ctx, store_id)
     }
 }
 
