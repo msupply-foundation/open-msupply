@@ -32,7 +32,7 @@
     "description.unit-quantity": "Quantité reçue en nombre d'unités",
     "error.404": "Veuillez revenir en arrière ou utilisez le menu pour retrouver votre chemin.",
     "error.general-query-error": "Il y a eu une erreur de communication avec le serveur",
-    "error.no-data": "Pas de données disponibles",
+    "error.no-data": "Aucune donnée disponible",
     "error.no-items": "Article non trouvé",
     "error.no-items-filter-on": "Aucun élément à afficher. Essayez de modifier les critères de filtrage.",
     "error.no-report-permission": "Aucune autorisation pour afficher les rapports",
@@ -256,6 +256,6 @@
     "messages.native-mode": "Sélectionnez le mode que vous souhaitez utiliser. Notez que vous pouvez modifier cette option ultérieurement si vous disposez d'un accès administrateur.",
     "messages.native-mode-client": "Ce mode permet de sélectionner le serveur auquel se connecter.",
     "messages.native-mode-server": "En sélectionnant cette option, le serveur local sera démarré et une connexion automatique y sera établie. Les autres utilisateurs du réseau pourront également se connecter à ce serveur.",
-    "error.no-permission": "Vous n'avez pas l'autorisation de voir ces données",
+    "error.no-permission": "Vous n'avez pas l'autorisation pour voir ces données",
     "error.no-service-charges": "Il n'y a aucun Frais de service associé à ce dépôt"
 }
