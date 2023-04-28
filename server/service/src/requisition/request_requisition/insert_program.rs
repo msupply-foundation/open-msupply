@@ -42,8 +42,8 @@ pub fn insert_program_request_requisition(
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
 
             let requisition_line_repo = RequisitionLineRowRepository::new(&connection);
-            for requisition_lines in requisition_lines {
-                requisition_line_repo.upsert_one(&requisition_lines)?;
+            for requisition_line in requisition_lines {
+                requisition_line_repo.upsert_one(&requisition_line)?;
             }
 
             activity_log_entry(
