@@ -38,10 +38,10 @@ const getIndex = (digit: number, data: number[]) => {
   return index === -1 ? undefined : index;
 };
 
-const parseBarcodeData = (data: number[] | undefined) => {
+export const parseBarcodeData = (data: number[] | undefined) => {
   if (!data || data.length < 5) return undefined;
-  // the parsing is not happy if codes 22 ( synchronous idle )
-  // or 0 is encountered, so we trim from there
+  // the scanner is returning \x00 and \x22 characters when in continuous mode
+  // these need to be stripped out to prevent issues when parsing the barcode
   const synchronousIdleIndex = getIndex(22, data);
   const trimmedData = data.slice(4, synchronousIdleIndex);
   const zeroIndex = getIndex(0, trimmedData);
@@ -51,7 +51,7 @@ const parseBarcodeData = (data: number[] | undefined) => {
     .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
 };
 
-const parseResult = (content?: string): ScanResult => {
+export const parseResult = (content?: string): ScanResult => {
   if (!content) return {};
   try {
     const gs1 = parseBarcode(content);
@@ -101,15 +101,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       try {
         const { startBarcodeScan } = electronNativeAPI;
         await startBarcodeScan();
-        const scan = new Promise<number[]>((resolve, reject) => {
-          electronNativeAPI.onBarcodeScan((_event, data) => {
-            try {
-              resolve(data);
-            } catch (e) {
-              reject(e);
-            }
-          });
-        });
+        const scan = new Promise<number[]>(resolve =>
+          electronNativeAPI.onBarcodeScan((_event, data) => resolve(data))
+        );
 
         const data = await scan;
         const barcode = parseBarcodeData(data);
