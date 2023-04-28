@@ -168,7 +168,7 @@ fn generate(
         finalised_datetime: None,
         linked_requisition_id: None,
         is_sync_update: false,
-        program_id: Some(program.id.clone()),
+        program_id: Some(program.id),
         period_id: Some(period_id),
         order_type: Some(order_type.name),
     };
