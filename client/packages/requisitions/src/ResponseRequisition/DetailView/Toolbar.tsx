@@ -117,7 +117,6 @@ export const Toolbar: FC = () => {
                   Input={<Typography>{period?.name ?? ''}</Typography>}
                 />
               )}
-              {showInfo && <InfoPanel message={t('info.no-shipment')} />}
             </Box>
           </Box>
           {showInfo && (
