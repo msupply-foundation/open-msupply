@@ -38,6 +38,7 @@ export interface AutocompleteProps<T>
   isOptionEqualToValue?: (option: T, value: T) => boolean;
   disabled?: boolean;
   autoFocus?: boolean;
+  optionKey?: keyof T;
   onInputChange?: (
     event: React.SyntheticEvent,
     value: string,
@@ -57,6 +58,7 @@ export function Autocomplete<T>({
   filterOptionConfig,
   filterOptions,
   getOptionDisabled,
+  optionKey,
   loading,
   loadingText,
   noOptionsText,
@@ -93,6 +95,8 @@ export function Autocomplete<T>({
     />
   );
   const defaultGetOptionLabel = (option: T): string => {
+    if (!!optionKey) return String(option[optionKey]);
+
     return (option as { label?: string }).label ?? '';
   };
 

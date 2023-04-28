@@ -179,7 +179,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
                       <ScanIcon />
                     )
                   }
-                  label={'Scan'}
+                  label={t('button.scan')}
                 />
               )}
             </Box>

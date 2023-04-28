@@ -16,4 +16,4 @@ export type AutocompleteOptionRenderer<T> = (
   state: AutocompleteRenderOptionState
 ) => React.ReactNode;
 
-export type AutocompleteOption<SomeObject> = SomeObject & { label: string };
+export type AutocompleteOption<SomeObject> = SomeObject & { label?: string };

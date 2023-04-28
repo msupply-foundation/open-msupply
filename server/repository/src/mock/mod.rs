@@ -81,8 +81,12 @@ use crate::{
     DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow,
-    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, RequisitionLineRow,
+    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
+    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
+    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
+    PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
     StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
     SyncLogRow, SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
@@ -117,6 +121,8 @@ pub struct MockData {
     pub invoice_lines: Vec<InvoiceLineRow>,
     pub full_invoices: HashMap<String, FullMockInvoice>,
     pub full_master_lists: Vec<FullMockMasterList>,
+    pub master_lists: Vec<MasterListRow>,
+    pub master_list_name_joins: Vec<MasterListNameJoinRow>,
     pub numbers: Vec<NumberRow>,
     pub requisitions: Vec<RequisitionRow>,
     pub requisition_lines: Vec<RequisitionLineRow>,
@@ -128,7 +134,12 @@ pub struct MockData {
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
     pub sync_logs: Vec<SyncLogRow>,
+    pub name_tag_rows: Vec<NameTagRow>,
+    pub name_tag_join_rows: Vec<NameTagJoinRow>,
     pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
+    pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
+    pub programs: Vec<ProgramRow>,
+    pub requisition_order_types: Vec<ProgramRequisitionOrderTypeRow>,
     pub barcodes: Vec<BarcodeRow>,
 }
 
@@ -410,7 +421,6 @@ fn all_mock_data() -> MockDataCollection {
             items: mock_items(),
             locations: mock_locations(),
             name_store_joins: mock_name_store_joins(),
-            full_requisitions: vec![],
             invoices: mock_invoices(),
             stock_lines: mock_stock_lines(),
             invoice_lines: mock_invoice_lines(),
@@ -419,16 +429,10 @@ fn all_mock_data() -> MockDataCollection {
             numbers: mock_numbers(),
             stocktakes: mock_stocktake_data(),
             stocktake_lines: mock_stocktake_line_data(),
-            requisitions: vec![],
-            requisition_lines: vec![],
             form_schemas: mock_form_schemas(),
             documents: mock_documents(),
-            sync_buffer_rows: vec![],
-            key_value_store_rows: vec![],
             activity_logs: mock_activity_logs(),
-            sync_logs: vec![],
-            inventory_adjustment_reasons: vec![],
-            barcodes: vec![],
+            ..Default::default()
         },
     );
     data.insert(
@@ -630,6 +634,16 @@ pub fn insert_mock_data(
             }
         }
 
+        for row in &mock_data.master_lists {
+            let repo = MasterListRowRepository::new(connection);
+            repo.upsert_one(&row).unwrap();
+        }
+
+        for row in &mock_data.master_list_name_joins {
+            let repo = MasterListNameJoinRepository::new(connection);
+            repo.upsert_one(&row).unwrap();
+        }
+
         if inserts.numbers {
             let repo = NumberRowRepository::new(connection);
             for row in &mock_data.numbers {
@@ -699,6 +713,31 @@ pub fn insert_mock_data(
             }
         }
 
+        for row in &mock_data.name_tag_rows {
+            let repo = NameTagRowRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
+        for row in &mock_data.name_tag_join_rows {
+            let repo = NameTagJoinRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
+        for row in &mock_data.programs {
+            let repo = ProgramRowRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
+        for row in &mock_data.program_requisition_settings {
+            let repo = ProgramRequisitionSettingsRowRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
+        for row in &mock_data.requisition_order_types {
+            let repo = ProgramRequisitionOrderTypeRowRepository::new(connection);
+            repo.upsert_one(row).unwrap();
+        }
+
         if inserts.barcodes {
             for row in &mock_data.barcodes {
                 let repo = BarcodeRowRepository::new(connection);
@@ -706,7 +745,6 @@ pub fn insert_mock_data(
             }
         }
     }
-
     mock_data
 }
 
@@ -743,6 +781,13 @@ impl MockData {
             mut activity_logs,
             mut sync_logs,
             mut inventory_adjustment_reasons,
+            mut name_tag_join_rows,
+            mut name_tag_rows,
+            mut program_requisition_settings,
+            mut programs,
+            mut master_lists,
+            mut master_list_name_joins,
+            mut requisition_order_types,
             mut barcodes,
         } = other;
 
@@ -774,6 +819,16 @@ impl MockData {
         self.sync_logs.append(&mut sync_logs);
         self.inventory_adjustment_reasons
             .append(&mut inventory_adjustment_reasons);
+        self.name_tag_join_rows.append(&mut name_tag_join_rows);
+        self.name_tag_rows.append(&mut name_tag_rows);
+        self.program_requisition_settings
+            .append(&mut program_requisition_settings);
+        self.programs.append(&mut programs);
+        self.master_lists.append(&mut master_lists);
+        self.master_list_name_joins
+            .append(&mut master_list_name_joins);
+        self.requisition_order_types
+            .append(&mut requisition_order_types);
         self.barcodes.append(&mut barcodes);
 
         self

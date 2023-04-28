@@ -205,6 +205,46 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
+export type BarcodeConnector = {
+  __typename: 'BarcodeConnector';
+  nodes: Array<BarcodeNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type BarcodeFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  packSize?: InputMaybe<EqualFilterNumberInput>;
+  value?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type BarcodeNode = {
+  __typename: 'BarcodeNode';
+  id: Scalars['String'];
+  itemId?: Maybe<Scalars['String']>;
+  manufacturerId?: Maybe<Scalars['String']>;
+  packSize?: Maybe<Scalars['Int']>;
+  parentId?: Maybe<Scalars['String']>;
+  value: Scalars['String'];
+};
+
+export enum BarcodeSortFieldInput {
+  Barcode = 'BARCODE',
+  Id = 'ID'
+}
+
+export type BarcodeSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: BarcodeSortFieldInput;
+};
+
+export type BarcodesResponse = BarcodeConnector;
+
 export type BatchInboundShipmentInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']>;
   deleteInboundShipmentLines?: InputMaybe<Array<DeleteInboundShipmentLineInput>>;
@@ -1126,6 +1166,7 @@ export enum GenderType {
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
+  notDelivered: Scalars['Int'];
 };
 
 export type InitialisationStatusNode = {
@@ -1783,6 +1824,7 @@ export type ItemCounts = {
 export type ItemCountsResponse = {
   __typename: 'ItemCountsResponse';
   lowStock: Scalars['Int'];
+  moreThanSixMonthsStock: Scalars['Int'];
   noStock: Scalars['Int'];
   total: Scalars['Int'];
 };
@@ -2670,8 +2712,8 @@ export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentE
 export type OutboundInvoiceCounts = {
   __typename: 'OutboundInvoiceCounts';
   created: InvoiceCountsSummary;
-  /** Number of outbound shipments ready to be picked */
-  toBePicked: Scalars['Int'];
+  /** Number of outbound shipments not shipped yet */
+  notShipped: Scalars['Int'];
 };
 
 /**
@@ -2947,6 +2989,22 @@ export type ProgramEventSortInput = {
   key: ProgramEventSortFieldInput;
 };
 
+export type ProgramRequisitionOrderTypeNode = {
+  __typename: 'ProgramRequisitionOrderTypeNode';
+  availablePeriods: Array<PeriodNode>;
+  id: Scalars['String'];
+  name: Scalars['String'];
+};
+
+export type ProgramRequisitionSettingNode = {
+  __typename: 'ProgramRequisitionSettingNode';
+  masterList: MasterListNode;
+  orderTypes: Array<ProgramRequisitionOrderTypeNode>;
+  programId: Scalars['String'];
+  programName: Scalars['String'];
+  suppliers: Array<NameNode>;
+};
+
 export type Queries = {
   __typename: 'Queries';
   activityLogs: ActivityLogResponse;
@@ -2956,6 +3014,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  barcodes: BarcodesResponse;
   clinicians: CliniciansResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
@@ -2999,6 +3058,7 @@ export type Queries = {
   printReportDefinition: PrintReportResponse;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
+  programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -3008,6 +3068,7 @@ export type Queries = {
   reports: ReportsResponse;
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
+  requisitionCounts: RequisitionCounts;
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
@@ -3034,6 +3095,14 @@ export type QueriesActivityLogsArgs = {
 export type QueriesAuthTokenArgs = {
   password: Scalars['String'];
   username: Scalars['String'];
+};
+
+
+export type QueriesBarcodesArgs = {
+  filter?: InputMaybe<BarcodeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<BarcodeSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
@@ -3225,6 +3294,11 @@ export type QueriesProgramEventsArgs = {
 };
 
 
+export type QueriesProgramRequisitionSettingsArgs = {
+  storeId: Scalars['String'];
+};
+
+
 export type QueriesReportsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -3243,6 +3317,11 @@ export type QueriesRequisitionByNumberArgs = {
   requisitionNumber: Scalars['Int'];
   storeId: Scalars['String'];
   type: RequisitionNodeType;
+};
+
+
+export type QueriesRequisitionCountsArgs = {
+  storeId: Scalars['String'];
 };
 
 
@@ -3426,6 +3505,11 @@ export type RequisitionConnector = {
   totalCount: Scalars['Int'];
 };
 
+export type RequisitionCounts = {
+  __typename: 'RequisitionCounts';
+  newResponseRequisitionCount: Scalars['Int'];
+};
+
 export type RequisitionFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
   comment?: InputMaybe<SimpleStringFilterInput>;
@@ -3532,6 +3616,8 @@ export type RequisitionNode = {
    * only applicable to Response requisition, Request requisition will empty connector
    */
   linesRemainingToSupply: RequisitionLineConnector;
+  /** Linked requisition */
+  linkedRequisition?: Maybe<RequisitionNode>;
   /** Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line */
   maxMonthsOfStock: Scalars['Float'];
   /** Minimum quantity to have for stock to be ordered, used to deduce calculated quantity for each line, see calculated in requisition line */
@@ -3546,8 +3632,6 @@ export type RequisitionNode = {
   otherPartyName: Scalars['String'];
   period?: Maybe<PeriodNode>;
   programName?: Maybe<Scalars['String']>;
-  /** Link to request requisition */
-  requestRequisition?: Maybe<RequisitionNode>;
   requisitionNumber: Scalars['Int'];
   /** Applicable to request requisition only */
   sentDatetime?: Maybe<Scalars['DateTime']>;
@@ -4603,6 +4687,7 @@ export type UserStoreNode = {
   code: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
+  preferences: StorePreferenceNode;
   storeMode: StoreModeNodeType;
 };
 

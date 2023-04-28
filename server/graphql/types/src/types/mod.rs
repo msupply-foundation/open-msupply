@@ -69,6 +69,12 @@ pub use self::json_schema::*;
 pub mod clinician;
 pub use self::clinician::*;
 
+pub mod barcode;
+pub use self::barcode::*;
+
+pub mod store_preference;
+pub use self::store_preference::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
