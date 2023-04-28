@@ -10,23 +10,25 @@ import {
   FnUtils,
   FileUtils,
   LoadingButton,
-  SortBy,
   ToggleState,
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
-import { OutboundRowFragment, useOutbound } from '../api';
+import { useOutbound } from '../api';
 import { outboundsToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
-  sortBy: SortBy<OutboundRowFragment>;
-}> = ({ modalController, sortBy }) => {
+}> = ({ modalController }) => {
   const { success, error } = useNotification();
   const { mutate: onCreate } = useOutbound.document.insert();
   const t = useTranslation(['distribution', 'common']);
-  const { fetchAsync, isLoading } = useOutbound.document.listAll(sortBy);
+  const { fetchAsync, isLoading } = useOutbound.document.listAll({
+    key: 'createdDateTime',
+    direction: 'desc',
+    isDesc: true,
+  });
 
   const csvExport = async () => {
     const data = await fetchAsync();

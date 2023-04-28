@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/src/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType };
+export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } };
 
 export type AuthTokenQueryVariables = Types.Exact<{
   username: Types.Scalars['String'];
@@ -17,7 +17,7 @@ export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: '
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType }> } } };
+export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } }> } } };
 
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -31,12 +31,25 @@ export type PermissionsQueryVariables = Types.Exact<{
 
 export type PermissionsQuery = { __typename: 'Queries', me: { __typename: 'UserNode', username: string, permissions: { __typename: 'UserStorePermissionConnector', totalCount: number, nodes: Array<{ __typename: 'UserStorePermissionNode', permissions: Array<Types.UserPermission>, storeId: string }> } } };
 
+export type StorePreferencesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type StorePreferencesQuery = { __typename: 'Queries', storePreferences: { __typename: 'StorePreferenceNode', responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, id: string } };
+
 export const UserStoreNodeFragmentDoc = gql`
     fragment UserStoreNode on UserStoreNode {
   code
   id
   name
   storeMode
+  preferences {
+    id
+    responseRequisitionRequiresAuthorisation
+    requestRequisitionRequiresAuthorisation
+    packToOne
+  }
 }
     `;
 export const AuthTokenDocument = gql`
@@ -141,6 +154,16 @@ export const PermissionsDocument = gql`
   }
 }
     `;
+export const StorePreferencesDocument = gql`
+    query storePreferences($storeId: String!) {
+  storePreferences(storeId: $storeId) {
+    responseRequisitionRequiresAuthorisation
+    requestRequisitionRequiresAuthorisation
+    packToOne
+    id
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -160,6 +183,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     permissions(variables: PermissionsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PermissionsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PermissionsQuery>(PermissionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'permissions', 'query');
+    },
+    storePreferences(variables: StorePreferencesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StorePreferencesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<StorePreferencesQuery>(StorePreferencesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'storePreferences', 'query');
     }
   };
 }
@@ -228,5 +254,22 @@ export const mockRefreshTokenQuery = (resolver: ResponseResolver<GraphQLRequest<
 export const mockPermissionsQuery = (resolver: ResponseResolver<GraphQLRequest<PermissionsQueryVariables>, GraphQLContext<PermissionsQuery>, any>) =>
   graphql.query<PermissionsQuery, PermissionsQueryVariables>(
     'permissions',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockStorePreferencesQuery((req, res, ctx) => {
+ *   const { storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ storePreferences })
+ *   )
+ * })
+ */
+export const mockStorePreferencesQuery = (resolver: ResponseResolver<GraphQLRequest<StorePreferencesQueryVariables>, GraphQLContext<StorePreferencesQuery>, any>) =>
+  graphql.query<StorePreferencesQuery, StorePreferencesQueryVariables>(
+    'storePreferences',
     resolver
   )

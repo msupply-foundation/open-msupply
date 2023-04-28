@@ -48,7 +48,7 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           }}
         />
       ) : null}
-      <Widget title={t('inbound-shipments')}>
+      <Widget title={t('replenishment')}>
         <Grid
           container
           justifyContent="flex-start"
@@ -69,6 +69,10 @@ export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 {
                   label: t('label.this-week', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.thisWeek),
+                },
+                {
+                  label: t('label.inbound-not-delivered', { ns: 'dashboard' }),
+                  value: formatNumber.round(data?.notDelivered),
                 },
               ]}
             />

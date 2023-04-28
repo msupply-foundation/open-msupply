@@ -186,13 +186,9 @@ impl RequisitionNode {
         Ok(RequisitionLineConnector::from_vec(result))
     }
 
-    /// Link to request requisition
-    pub async fn request_requisition(&self, ctx: &Context<'_>) -> Result<Option<RequisitionNode>> {
-        if &self.row().r#type == &RequisitionRowType::Request {
-            return Ok(None);
-        }
-
-        let request_requisition_id = if let Some(id) = &self.row().linked_requisition_id {
+    /// Linked requisition
+    pub async fn linked_requisition(&self, ctx: &Context<'_>) -> Result<Option<RequisitionNode>> {
+        let linked_requisition_id = if let Some(id) = &self.row().linked_requisition_id {
             id
         } else {
             return Ok(None);
@@ -201,7 +197,7 @@ impl RequisitionNode {
         let loader = ctx.get_loader::<DataLoader<RequisitionsByIdLoader>>();
 
         Ok(loader
-            .load_one(request_requisition_id.clone())
+            .load_one(linked_requisition_id.clone())
             .await?
             .map(RequisitionNode::from_domain))
     }
