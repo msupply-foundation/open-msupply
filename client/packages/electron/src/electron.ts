@@ -222,7 +222,7 @@ app.addListener(
   'certificate-error',
   (event, _webContents, url, error, certificate, callback) => {
     // We are only handling self signed certificate errors
-    if (error != 'net::ERR_CERT_INVALID') {
+    if (error != 'net::ERR_CERT_AUTHORITY_INVALID') {
       return callback(false);
     }
 
