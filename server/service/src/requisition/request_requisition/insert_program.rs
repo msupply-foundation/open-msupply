@@ -376,6 +376,11 @@ mod test_insert {
             .find_one_by_id(&result.requisition_row.id)
             .unwrap()
             .unwrap();
+        let requisition_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+            )
+            .unwrap();
 
         assert_eq!(new_row.id, "new_program_request_requisition");
         assert_eq!(new_row.period_id, Some(mock_period().id));
@@ -384,6 +389,7 @@ mod test_insert {
             Some("program_order_type_name".to_string())
         );
         assert_eq!(new_row.program_id, Some(program_id));
+        assert_eq!(requisition_lines.len(), 1);
 
         // TODO Validate that we can't create more requisitions the `max_order_per_period` in requisition_settings
         // https://github.com/openmsupply/open-msupply/issues/1599
