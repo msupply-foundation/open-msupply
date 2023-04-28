@@ -8,12 +8,13 @@ use crate::{
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    ActivityLogType, NumberRowType, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRowRepository, ProgramRowRepository, RepositoryError, Requisition,
-    RequisitionRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, MasterListLineFilter, MasterListLineRepository, NumberRowType,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRowRepository,
+    ProgramRowRepository, RepositoryError, Requisition, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
 };
 
-use super::InsertRequestRequisitionError;
+use super::{generate_requisition_lines, InsertRequestRequisitionError};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertProgramRequestRequisition {
@@ -37,8 +38,13 @@ pub fn insert_program_request_requisition(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
-            let new_requisition = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
+            let (new_requisition, requisition_lines) = generate(ctx, input)?;
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
+
+            let requisition_line_repo = RequisitionLineRowRepository::new(&connection);
+            for requisition_line in requisition_lines {
+                requisition_line_repo.upsert_one(&requisition_line)?;
+            }
 
             activity_log_entry(
                 &ctx,
@@ -97,9 +103,7 @@ fn validate(
 }
 
 fn generate(
-    connection: &StorageConnection,
-    store_id: &str,
-    user_id: &str,
+    ctx: &ServiceContext,
     InsertProgramRequestRequisition {
         id,
         other_party_id,
@@ -110,7 +114,9 @@ fn generate(
         program_order_type_id,
         period_id,
     }: InsertProgramRequestRequisition,
-) -> Result<RequisitionRow, RepositoryError> {
+) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
+    let connection = &ctx.connection;
+
     // Lookup order type
     let order_type = ProgramRequisitionOrderTypeRowRepository::new(connection)
         .find_one_by_id(&program_order_type_id)?;
@@ -137,12 +143,16 @@ fn generate(
         None => return Err(RepositoryError::NotFound),
     };
 
-    let result = RequisitionRow {
+    let requisition = RequisitionRow {
         id,
-        user_id: Some(user_id.to_string()),
-        requisition_number: next_number(connection, &NumberRowType::RequestRequisition, &store_id)?,
+        user_id: Some(ctx.user_id.to_string()),
+        requisition_number: next_number(
+            connection,
+            &NumberRowType::RequestRequisition,
+            &ctx.store_id,
+        )?,
         name_id: other_party_id,
-        store_id: store_id.to_owned(),
+        store_id: ctx.store_id.to_owned(),
         r#type: RequisitionRowType::Request,
         status: RequisitionRowStatus::Draft,
         created_datetime: Utc::now().naive_utc(),
@@ -163,7 +173,19 @@ fn generate(
         order_type: Some(order_type.name),
     };
 
-    Ok(result)
+    let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
+        .query_by_filter(
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(&program.master_list_id)),
+        )?
+        .into_iter()
+        .map(|line| line.item_id)
+        .collect();
+
+    let requisition_line_rows =
+        generate_requisition_lines(ctx, &ctx.store_id, &requisition, program_item_ids)?;
+
+    Ok((requisition, requisition_line_rows))
 }
 
 #[cfg(test)]
@@ -182,10 +204,10 @@ mod test_insert {
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        NameRow, NameTagRow, NameTagRowRepository, ProgramRequisitionOrderTypeRow,
+        EqualFilter, NameRow, NameTagRow, NameTagRowRepository, ProgramRequisitionOrderTypeRow,
         ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
         ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository,
-        RequisitionRowRepository,
+        RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
     };
     use util::inline_init;
 
@@ -294,7 +316,7 @@ mod test_insert {
 
         // Create a Program
         let program_id = mock_master_list_item_query_test1().master_list.id;
-        let _program = ProgramRowRepository::new(&connection)
+        ProgramRowRepository::new(&connection)
             .upsert_one(&ProgramRow {
                 id: program_id.clone(),
                 name: "program_name".to_owned(),
@@ -303,7 +325,7 @@ mod test_insert {
             .unwrap();
 
         // Create a name tag
-        let _name_tag = NameTagRowRepository::new(&connection)
+        NameTagRowRepository::new(&connection)
             .upsert_one(&NameTagRow {
                 id: "name_tag_id".to_owned(),
                 name: "name_tag_name".to_owned(),
@@ -312,7 +334,7 @@ mod test_insert {
             .unwrap();
 
         // Create Program Requisition Settings
-        let _program_settings = ProgramRequisitionSettingsRowRepository::new(&connection)
+        ProgramRequisitionSettingsRowRepository::new(&connection)
             .upsert_one(&ProgramRequisitionSettingsRow {
                 id: program_id.clone(),
                 name_tag_id: "name_tag_id".to_owned(),
@@ -324,7 +346,7 @@ mod test_insert {
             .unwrap();
 
         // Create a ProgramOrderType
-        let _order_type = ProgramRequisitionOrderTypeRowRepository::new(&connection)
+        ProgramRequisitionOrderTypeRowRepository::new(&connection)
             .upsert_one(&ProgramRequisitionOrderTypeRow {
                 id: "program_order_type_id".to_owned(),
                 name: "program_order_type_name".to_owned(),
@@ -354,6 +376,11 @@ mod test_insert {
             .find_one_by_id(&result.requisition_row.id)
             .unwrap()
             .unwrap();
+        let requisition_lines = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new().requisition_id(EqualFilter::equal_to(&new_row.id)),
+            )
+            .unwrap();
 
         assert_eq!(new_row.id, "new_program_request_requisition");
         assert_eq!(new_row.period_id, Some(mock_period().id));
@@ -362,6 +389,7 @@ mod test_insert {
             Some("program_order_type_name".to_string())
         );
         assert_eq!(new_row.program_id, Some(program_id));
+        assert_eq!(requisition_lines.len(), 1);
 
         // TODO Validate that we can't create more requisitions the `max_order_per_period` in requisition_settings
         // https://github.com/openmsupply/open-msupply/issues/1599
