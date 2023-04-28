@@ -101,15 +101,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       try {
         const { startBarcodeScan } = electronNativeAPI;
         await startBarcodeScan();
-        const scan = new Promise<number[]>((resolve, reject) => {
-          electronNativeAPI.onBarcodeScan((_event, data) => {
-            try {
-              resolve(data);
-            } catch (e) {
-              reject(e);
-            }
-          });
-        });
+        const scan = new Promise<number[]>(resolve =>
+          electronNativeAPI.onBarcodeScan((_event, data) => resolve(data))
+        );
 
         const data = await scan;
         const barcode = parseBarcodeData(data);

@@ -3,7 +3,7 @@ import { useOutboundIsDisabled } from './useOutboundIsDisabled';
 import { useOutboundApi } from './useOutboundApi';
 import { useOutboundCounts } from './useOutboundCounts';
 import { useAddFromMasterList } from './useAddFromMasterList';
-import { useBarcodes } from './useBarcodes';
+import { useBarcode } from './useBarcode';
 import { useBarcodeInsert } from './useBarcodeInsert';
 import { useResponseCounts } from './useResponseCounts';
 
@@ -13,7 +13,7 @@ export const Utils = {
   useOutboundIsDisabled,
   useOutboundApi,
   useOutboundCounts,
-  useBarcodes,
+  useBarcode,
   useBarcodeInsert,
   useResponseCounts,
 };

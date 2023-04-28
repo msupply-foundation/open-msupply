@@ -23,6 +23,7 @@ import {
   InsertOutboundShipmentMutationVariables,
   Sdk,
   OutboundLineFragment,
+  BarcodeByValueQuery,
 } from './operations.generated';
 
 export type ListParams = {
@@ -154,19 +155,14 @@ const outboundParsers = {
 
 export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    barcodesByValue: async (
-      value?: string
-    ): Promise<{
-      nodes: { id: string; itemId?: string | null; value: string }[];
-      totalCount: number;
-    }> => {
-      const filter = !!value ? { value: { equalTo: value } } : undefined;
-
-      const result = await sdk.barcodes({
-        filter,
+    barcodeByValue: async (
+      value: string
+    ): Promise<BarcodeByValueQuery['barcodeByValue']> => {
+      const result = await sdk.barcodeByValue({
+        value,
         storeId,
       });
-      return result?.barcodes;
+      return result?.barcodeByValue;
     },
     list: async ({
       first,
@@ -249,7 +245,6 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
           storeId,
           input,
         })) || {};
-
       const { insertBarcode } = result;
       if (insertBarcode?.__typename === 'BarcodeNode') {
         return insertBarcode.id;
