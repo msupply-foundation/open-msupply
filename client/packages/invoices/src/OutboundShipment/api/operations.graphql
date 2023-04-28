@@ -161,9 +161,7 @@ fragment Barcode on BarcodeNode {
   __typename
   id
   itemId
-  manufacturerId
   packSize
-  parentId
   value
 }
 
@@ -255,14 +253,11 @@ query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
   }
 }
 
-query barcodes($storeId: String!, $filter: BarcodeFilterInput) {
-  barcodes(storeId: $storeId, filter: $filter) {
-    ... on BarcodeConnector {
+query barcodeByValue($storeId: String!, $value: String!) {
+  barcodeByValue(storeId: $storeId, value: $value) {
+    ... on BarcodeNode {
       __typename
-      nodes {
-        ...Barcode
-      }
-      totalCount
+      ...Barcode
     }
   }
 }

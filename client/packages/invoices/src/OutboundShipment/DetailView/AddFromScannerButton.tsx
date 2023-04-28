@@ -19,7 +19,7 @@ export const AddFromScannerButtonComponent = ({
   const t = useTranslation('distribution');
   const { data: outbound } = useOutbound.document.get();
   const isDisabled = !!outbound && isOutboundDisabled(outbound);
-  const { mutateAsync: getBarcodes } = useOutbound.utils.barcodes();
+  const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const { hasBarcodeScanner, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
@@ -28,10 +28,9 @@ export const AddFromScannerButtonComponent = ({
     if (!!result.content) {
       const { content, gtin, batch } = result;
       const value = gtin ?? content;
-      const barcodes = await getBarcodes(value);
+      const barcode = await getBarcode(value);
 
-      if (barcodes.totalCount > 0) {
-        const barcode = barcodes.nodes[0];
+      if (barcode?.__typename === 'BarcodeNode') {
         const id = barcode?.itemId;
 
         if (!!id) {

@@ -230,16 +230,13 @@ impl GeneralQueries {
         store_preferences(ctx, &store_id)
     }
 
-    pub async fn barcodes(
+    pub async fn barcode_by_value(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<BarcodeFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<BarcodeSortInput>>,
-    ) -> Result<BarcodesResponse> {
-        barcodes(ctx, store_id, page, filter, sort)
+        value: String,
+    ) -> Result<BarcodeResponse> {
+        barcode_by_value(ctx, store_id, value)
     }
 
     pub async fn requisition_counts(
