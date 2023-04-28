@@ -32,6 +32,7 @@ pub enum InsertRequestRequisitionLineError {
     ItemAlreadyExistInRequisition,
     ItemDoesNotExist,
     // TODO  ItemIsNotVisibleInThisStore,
+    CannotAddItemToProgramRequisition,
     RequisitionDoesNotExist,
     NotThisStoreRequisition,
     CannotEditRequisition,
@@ -75,6 +76,10 @@ fn validate(
 
     let requisition_row = check_requisition_exists(connection, &input.requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
+
+    if requisition_row.program_id.is_some() {
+        return Err(OutError::CannotAddItemToProgramRequisition);
+    }
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
@@ -138,8 +143,8 @@ mod test {
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_item_c,
             mock_request_draft_requisition, mock_request_draft_requisition_calculation_test,
-            mock_sent_request_requisition, mock_store_a, mock_store_b, test_item_stats,
-            MockDataInserts,
+            mock_request_program_requisition, mock_sent_request_requisition, mock_store_a,
+            mock_store_b, test_item_stats, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         RequisitionLineRowRepository,
@@ -255,6 +260,19 @@ mod test {
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
+
+        // CannotAddItemToProgramRequisition
+        context.store_id = mock_store_a().id;
+        assert_eq!(
+            service.insert_request_requisition_line(
+                &context,
+                inline_init(|r: &mut InsertRequestRequisitionLine| {
+                    r.id = "some mock program line".to_string();
+                    r.requisition_id = mock_request_program_requisition().id;
+                }),
+            ),
+            Err(ServiceError::CannotAddItemToProgramRequisition),
+        )
     }
 
     #[actix_rt::test]
