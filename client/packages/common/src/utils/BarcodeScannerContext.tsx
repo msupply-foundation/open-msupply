@@ -38,7 +38,7 @@ const getIndex = (digit: number, data: number[]) => {
   return index === -1 ? undefined : index;
 };
 
-const parseBarcodeData = (data: number[] | undefined) => {
+export const parseBarcodeData = (data: number[] | undefined) => {
   if (!data || data.length < 5) return undefined;
   // the scanner is returning \x00 and \x22 characters when in continuous mode
   // these need to be stripped out to prevent issues when parsing the barcode
@@ -51,7 +51,7 @@ const parseBarcodeData = (data: number[] | undefined) => {
     .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
 };
 
-const parseResult = (content?: string): ScanResult => {
+export const parseResult = (content?: string): ScanResult => {
   if (!content) return {};
   try {
     const gs1 = parseBarcode(content);
