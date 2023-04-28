@@ -16,6 +16,8 @@ export const CreateShipmentButtonComponent = () => {
   const t = useTranslation('distribution');
   const { mutate: createOutbound } = useResponse.utils.createOutbound();
   const isDisabled = useResponse.utils.isDisabled();
+  const isDisabledForAuthorisation =
+    useResponse.utils.isDisabledForAuthorisation();
 
   const getConfirmation = useConfirmationModal({
     onConfirm: createOutbound,
@@ -44,7 +46,7 @@ export const CreateShipmentButtonComponent = () => {
       Icon={<PlusCircleIcon />}
       label={t('button.create-shipment')}
       onClick={onCreateShipment}
-      disabled={isDisabled}
+      disabled={isDisabled || isDisabledForAuthorisation}
     />
   );
 };

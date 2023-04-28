@@ -105,6 +105,8 @@ export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, getConfirmation } =
     useStatusChangeButton();
   const isDisabled = useResponse.utils.isDisabled();
+  const isDisabledForAuthorisation =
+    useResponse.utils.isDisabledForAuthorisation();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -116,6 +118,7 @@ export const StatusChangeButton = () => {
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
       onClick={() => getConfirmation()}
+      isDisabled={isDisabledForAuthorisation}
     />
   );
 };
