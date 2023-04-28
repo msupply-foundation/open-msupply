@@ -33,19 +33,6 @@ pub struct BarcodeRow {
     pub parent_id: Option<String>,
 }
 
-impl Default for BarcodeRow {
-    fn default() -> Self {
-        BarcodeRow {
-            id: Default::default(),
-            value: Default::default(),
-            item_id: None,
-            manufacturer_id: None,
-            pack_size: None,
-            parent_id: None,
-        }
-    }
-}
-
 pub struct BarcodeRowRepository<'a> {
     connection: &'a StorageConnection,
 }
