@@ -21,7 +21,7 @@ table! {
 joinable!(barcode -> item (item_id));
 joinable!(barcode -> invoice_line (id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "barcode"]
 pub struct BarcodeRow {
@@ -31,6 +31,19 @@ pub struct BarcodeRow {
     pub manufacturer_id: Option<String>,
     pub pack_size: Option<i32>,
     pub parent_id: Option<String>,
+}
+
+impl Default for BarcodeRow {
+    fn default() -> Self {
+        BarcodeRow {
+            id: Default::default(),
+            value: Default::default(),
+            item_id: None,
+            manufacturer_id: None,
+            pack_size: None,
+            parent_id: None,
+        }
+    }
 }
 
 pub struct BarcodeRowRepository<'a> {
