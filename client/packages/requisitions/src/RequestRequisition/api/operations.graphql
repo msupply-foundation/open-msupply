@@ -25,6 +25,9 @@ fragment RequestRow on RequisitionNode {
   theirReference
   type
   otherPartyId
+  linkedRequisition {
+    approvalStatus
+  }
   programName
   period {
     name
@@ -72,6 +75,7 @@ fragment Request on RequisitionNode {
   otherPartyId
   maxMonthsOfStock
   minMonthsOfStock
+  approvalStatus
 
   user {
     __typename
@@ -114,6 +118,10 @@ fragment Request on RequisitionNode {
       id
       code
     }
+  }
+
+  linkedRequisition {
+    approvalStatus
   }
   programName
   period {
@@ -397,6 +405,19 @@ mutation insertRequest(
   }
 }
 
+mutation insertProgramRequest(
+  $storeId: String!
+  $input: InsertProgramRequestRequisitionInput!
+) {
+  insertProgramRequestRequisition(input: $input, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      id
+      requisitionNumber
+    }
+  }
+}
+
 mutation updateRequest(
   $storeId: String!
   $input: UpdateRequestRequisitionInput!
@@ -459,5 +480,28 @@ mutation deleteRequest(
         }
       }
     }
+  }
+}
+
+fragment ProgramSettings on ProgramRequisitionSettingNode {
+  programName
+  programId
+  suppliers {
+    id
+    name
+  }
+  orderTypes {
+    id
+    name
+    availablePeriods {
+      id
+      name
+    }
+  }
+}
+
+query programSettings($storeId: String!) {
+  programRequisitionSettings(storeId: $storeId) {
+    ...ProgramSettings
   }
 }

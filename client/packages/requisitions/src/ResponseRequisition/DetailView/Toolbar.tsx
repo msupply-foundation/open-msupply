@@ -12,6 +12,7 @@ import {
   SearchBar,
   InfoPanel,
   Typography,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -21,7 +22,9 @@ export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
+
   const {
+    approvalStatus,
     otherParty,
     theirReference,
     shipments,
@@ -30,7 +33,7 @@ export const Toolbar: FC = () => {
     period,
     orderType,
   } = useResponse.document.fields([
-    'lines',
+    'approvalStatus',
     'otherParty',
     'theirReference',
     'shipments',
@@ -41,6 +44,7 @@ export const Toolbar: FC = () => {
   const { onDelete } = useResponse.line.delete();
   const noLinkedShipments = (shipments?.totalCount ?? 0) === 0;
   const showInfo = noLinkedShipments && !isDisabled;
+  const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -81,6 +85,20 @@ export const Toolbar: FC = () => {
                   />
                 }
               />
+              {isRemoteAuthorisation && (
+                <InputWithLabelRow
+                  label={t('label.auth-status')}
+                  Input={
+                    <Typography>
+                      {t(
+                        `approval-status.${String(
+                          approvalStatus
+                        ).toLowerCase()}` as LocaleKey
+                      )}
+                    </Typography>
+                  }
+                />
+              )}
               {orderType && (
                 <InputWithLabelRow
                   label={t('label.order-type')}

@@ -37,7 +37,7 @@ const MasterListComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons />
       <DataTable
         id="master-list-list"
         pagination={{ ...pagination, total: data?.totalCount }}

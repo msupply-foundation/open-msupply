@@ -120,7 +120,7 @@ mod permission_tests {
                 query: r#"query Query {
                 invoiceCounts(storeId: "") {
                   outbound {
-                    toBePicked
+                    notShipped
                   }
                 }
               }"#,

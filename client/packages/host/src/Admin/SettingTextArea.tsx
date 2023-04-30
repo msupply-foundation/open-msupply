@@ -19,6 +19,8 @@ interface SettingTextAreaProps {
   icon?: JSX.Element;
   onSave: (value: TextValue) => void;
   onToggle?: (checked: boolean) => void;
+  /** Info text displayed next to the settings label */
+  infoText?: string;
   title: string;
 }
 
@@ -27,6 +29,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
   icon,
   onSave,
   onToggle,
+  infoText,
   title,
 }) => {
   const t = useTranslation('common');
@@ -46,12 +49,14 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
   return (
     <>
       <Setting
+        infoText={infoText}
         component={
           <Switch checked={value.enabled} onChange={onToggleChecked} />
         }
         icon={icon}
         title={title}
       />
+
       {value.enabled && (
         <Grid container flexDirection="column" alignItems="flex-end">
           <Grid
