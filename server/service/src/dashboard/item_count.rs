@@ -9,6 +9,7 @@ pub struct ItemCounts {
     pub total: i64,
     pub no_stock: i64,
     pub low_stock: i64,
+    pub more_than_six_months_stock: i64,
 }
 
 pub trait ItemCountServiceTrait: Send + Sync {
@@ -61,10 +62,20 @@ impl ItemCountServiceTrait for ItemServiceCount {
             .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
             .count() as i64;
 
+        let more_than_six_months_stock = item_stats
+            .iter()
+            .filter_map(|i| {
+                (i.available_stock_on_hand > 0)
+                    .then(|| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
+            })
+            .filter(|months_of_stock| *months_of_stock > 6.0)
+            .count() as i64;
+
         Ok(ItemCounts {
             total: visible_items_count,
             no_stock,
             low_stock,
+            more_than_six_months_stock,
         })
     }
 }

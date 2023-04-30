@@ -1,18 +1,16 @@
-const rules = require('./webpack.rules');
-const plugins = require('./webpack.plugins');
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+import type { Configuration } from 'webpack';
+
+import { rules } from './webpack.rules';
+import { plugins } from './webpack.plugins';
+
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin';
 
 rules.push({
   test: /\.css$/,
   use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
 });
 
-rules.push({
-  test: /\.(png|svg|jpg|jpeg|gif)$/i,
-  type: 'asset/resource',
-});
-
-module.exports = {
+export const rendererConfig: Configuration = {
   module: {
     rules,
     parser: {
@@ -24,9 +22,9 @@ module.exports = {
       },
     },
   },
-  plugins: plugins,
+  plugins,
   resolve: {
-    extensions: ['.js', '.ts', '.tsx', '.css'],
+    extensions: ['.js', '.ts', '.jsx', '.tsx', '.css'],
     plugins: [new TsconfigPathsPlugin()],
   },
 };

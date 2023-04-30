@@ -28,9 +28,13 @@ export const Formatter = {
     data: unknown[] | UnparseObject<unknown>,
     config?: UnparseConfig
   ): string => Papa.unparse(data, config),
-  csvDateString: (dateString?: string | null | undefined): string => {
+  csvDateTimeString: (dateString?: string | null | undefined): string => {
     const date = dateString ? new Date(dateString) : null;
     return date && isValid(date) ? format(date, "yyyy-MM-dd' 'HH:mm:ss") : '';
+  },
+  csvDateString: (dateString?: string | null | undefined): string => {
+    const date = dateString ? new Date(dateString) : null;
+    return date && isValid(date) ? format(date, 'yyyy-MM-dd') : '';
   },
   logTypeTranslation: (logType: string): LocaleKey =>
     `log.${logType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
