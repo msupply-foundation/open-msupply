@@ -175,6 +175,8 @@ app.on('window-all-closed', () => {
 });
 
 process.on('uncaughtException', error => {
+  console.log(error.message);
+  console.log(error);
   // See comment below
   if (
     error.message.includes('[this.constructor.name] is not a constructor') &&
@@ -223,6 +225,7 @@ app.addListener(
       error != 'net::ERR_CERT_INVALID' &&
       error != 'net::ERR_CERT_AUTHORITY_INVALID'
     ) {
+      console.error(`certificate-error: ${error}`);
       return callback(false);
     }
 
@@ -234,6 +237,7 @@ app.addListener(
 
     // Default behaviour if not connected to a server or if url is not connectedServer
 
+    console.error(`connectedServer: ${connectedServer}, url: ${url}`);
     if (!connectedServer) return callback(false);
 
     if (!url.startsWith(frontEndHostUrl(connectedServer))) {
