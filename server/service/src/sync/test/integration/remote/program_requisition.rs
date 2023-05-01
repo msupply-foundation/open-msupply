@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
 };
 use repository::{
     MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameTagRow, PeriodScheduleRow,
@@ -180,7 +180,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         };
 
         let master_list_row2 = MasterListRow {
-            id: uuid(),
+            id: "program_test_2".to_string(),
             name: uuid(),
             code: uuid(),
             description: uuid(),
@@ -247,11 +247,11 @@ impl SyncRecordTester for ProgramRequisitionTester {
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::PeriodSchedule(period_schedule1),
+                PullUpsertRecord::PeriodSchedule(period_schedule1.clone()),
                 PullUpsertRecord::PeriodSchedule(period_schedule2),
                 PullUpsertRecord::NameTag(name_tag1),
                 PullUpsertRecord::NameTag(name_tag2),
-                PullUpsertRecord::MasterList(master_list_row),
+                PullUpsertRecord::MasterList(master_list_row.clone()),
                 PullUpsertRecord::MasterList(master_list_row2),
                 PullUpsertRecord::MasterListNameJoin(master_list_name_join_row),
                 PullUpsertRecord::MasterListNameJoin(master_list_name_join_row2),
@@ -259,13 +259,102 @@ impl SyncRecordTester for ProgramRequisitionTester {
                 PullUpsertRecord::MasterListLine(master_list_line_row2),
                 PullUpsertRecord::Program(program),
                 PullUpsertRecord::Program(program2),
-                PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings1),
-                PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings2),
+                PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings1.clone()),
+                PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings2.clone()),
                 PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings3),
-                PullUpsertRecord::ProgramRequisitionOrderType(order_type1),
-                PullUpsertRecord::ProgramRequisitionOrderType(order_type2),
-                PullUpsertRecord::ProgramRequisitionOrderType(order_type3),
+                PullUpsertRecord::ProgramRequisitionOrderType(order_type1.clone()),
+                PullUpsertRecord::ProgramRequisitionOrderType(order_type2.clone()),
+                PullUpsertRecord::ProgramRequisitionOrderType(order_type3.clone()),
             ]),
+        });
+
+        // STEP 2 - mutate from central
+        let upsert_name_tag = NameTagRow {
+            id: "changed_name_tag".to_string(),
+            name: "ChangedTagName".to_string(),
+        };
+        let upsert_name_tag_json = json!({
+            "ID": upsert_name_tag.id,
+            "description": upsert_name_tag.name,
+        });
+
+        let upsert_master_list_json = json!({
+        "ID": master_list_row.id,
+        "description":  master_list_row.name,
+        "code": master_list_row.code,
+        "note": master_list_row.description,
+        "isProgram": true,
+        "programSettings": {
+            "elmisCode": "",
+            "storeTags": {
+                "ChangedTagName": {
+                    "orderTypes": [
+                        {
+                            "isEmergency": false,
+                            "maxEmergencyOrders": "",
+                            "maxMOS": 6,
+                            "maxOrdersPerPeriod": 1,
+                            "name": "Changed order 1",
+                            "thresholdMOS": 3,
+                            "type": "Order type"
+                        }],
+                        "periodScheduleName": "Weekly"
+                    }
+                }
+            }});
+
+        let upsert_program_requisition_settings = ProgramRequisitionSettingsRow {
+            id: master_list_row.id.clone() + &upsert_name_tag.id,
+            name_tag_id: upsert_name_tag.id.clone(),
+            program_id: master_list_row.id.clone(),
+            period_schedule_id: period_schedule1.id.clone(),
+        };
+
+        let upsert_order_type = ProgramRequisitionOrderTypeRow {
+            id: upsert_program_requisition_settings.id.clone() + "Changed order 1",
+            program_requisition_settings_id: upsert_program_requisition_settings.id.clone(),
+            name: "Changed order 1".to_string(),
+            threshold_mos: 3.0,
+            max_mos: 6.0,
+            max_order_per_period: 1,
+        };
+
+        let upserts = vec![
+            PullUpsertRecord::NameTag(upsert_name_tag),
+            PullUpsertRecord::ProgramRequisitionSettings(upsert_program_requisition_settings),
+            PullUpsertRecord::ProgramRequisitionOrderType(upsert_order_type),
+        ];
+
+        let deletes = vec![
+            PullDeleteRecord {
+                id: order_type1.id,
+                table: PullDeleteRecordTable::ProgramRequisitionOrderType,
+            },
+            PullDeleteRecord {
+                id: order_type2.id,
+                table: PullDeleteRecordTable::ProgramRequisitionOrderType,
+            },
+            PullDeleteRecord {
+                id: order_type3.id,
+                table: PullDeleteRecordTable::ProgramRequisitionOrderType,
+            },
+            PullDeleteRecord {
+                id: program_requisition_settings1.id,
+                table: PullDeleteRecordTable::ProgramRequisitionSettings,
+            },
+            PullDeleteRecord {
+                id: program_requisition_settings2.id,
+                table: PullDeleteRecordTable::ProgramRequisitionSettings,
+            },
+        ];
+
+        result.push(TestStepData {
+            central_upsert: json!({
+                "name_tag": [upsert_name_tag_json],
+                "list_master": [upsert_master_list_json],
+            }),
+            central_delete: json!({}),
+            integration_records: IntegrationRecords { upserts, deletes },
         });
 
         result
