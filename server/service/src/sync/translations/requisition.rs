@@ -1,12 +1,12 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogRow, ChangelogTableName, RequisitionRow, RequisitionRowApprovalStatus,
-    RequisitionRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ProgramRowRepository, RequisitionRow,
+    RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
-use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
+use util::constants::{MISSING_PROGRAM, NUMBER_OF_DAYS_IN_A_MONTH};
 
 use crate::sync::{
     api::RemoteSyncRecordV5,
@@ -168,7 +168,7 @@ pub(crate) struct RequisitionTranslation {}
 impl SyncTranslation for RequisitionTranslation {
     fn try_translate_pull_upsert(
         &self,
-        _conn: &StorageConnection,
+        conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
         if !match_pull_table(sync_record) {
@@ -211,6 +211,18 @@ impl SyncTranslation for RequisitionTranslation {
             ),
         };
 
+        // TODO: Delete when soft delete for master list is implemented
+        let program_id = if let Some(program_id) = data.programID {
+            let program = ProgramRowRepository::new(conn).find_one_by_id(&program_id)?;
+
+            match program {
+                Some(program) => Some(program.id),
+                None => Some(MISSING_PROGRAM.to_string()),
+            }
+        } else {
+            None
+        };
+
         let result = RequisitionRow {
             id: data.ID.to_string(),
             user_id: data.user_id,
@@ -231,7 +243,7 @@ impl SyncTranslation for RequisitionTranslation {
             expected_delivery_date: data.expected_delivery_date,
             approval_status: data.approval_status.map(|s| s.to()),
             is_sync_update: true,
-            program_id: data.programID.clone(),
+            program_id,
             period_id: data.periodID,
             order_type: data.orderType,
         };
@@ -315,8 +327,8 @@ impl SyncTranslation for RequisitionTranslation {
                 sent_datetime,
                 finalised_datetime,
             ),
-            sent_datetime: sent_datetime,
-            finalised_datetime: finalised_datetime,
+            sent_datetime,
+            finalised_datetime,
             expected_delivery_date,
             requester_reference: their_reference,
             linked_requisition_id,

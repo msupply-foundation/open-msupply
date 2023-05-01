@@ -198,7 +198,7 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
             expected_delivery_date: None,
             approval_status: Some(RequisitionRowApprovalStatus::None),
             is_sync_update: true,
-            program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
+            program_id: Some("missing_program".to_string()),
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
         }),
@@ -243,7 +243,7 @@ fn requisition_response_push_record() -> TestSyncPushRecord {
             approval_status: Some(LegacyAuthorisationStatus::None),
             orderType: Some("Normal".to_string()),
             periodID: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
-            programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
+            programID: Some("missing_program".to_string()),
         }),
     }
 }
@@ -450,7 +450,7 @@ fn program_requisition_request_pull_record() -> TestSyncPullRecord {
             expected_delivery_date: None,
             approval_status: None,
             is_sync_update: true,
-            program_id: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
+            program_id: Some("missing_program".to_string()),
             period_id: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             order_type: Some("Normal".to_string()),
         }),
@@ -495,7 +495,7 @@ fn program_requisition_request_push_record() -> TestSyncPushRecord {
             approval_status: None,
             orderType: Some("Normal".to_string()),
             periodID: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
-            programID: Some("F36DBBC6DBCA4528BDA2403CE07CB44F".to_string()),
+            programID: Some("missing_program".to_string()),
         }),
     }
 }
