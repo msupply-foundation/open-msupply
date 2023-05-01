@@ -1,7 +1,6 @@
 import { RecordPatch, RecordWithId } from '@common/types';
 import groupBy from 'lodash/groupBy';
 import uniqBy from 'lodash/uniqBy';
-import uniq from 'lodash/uniq';
 
 export const ArrayUtils = {
   ifTheSameElseDefault: <T, K extends keyof T, J>(
@@ -48,5 +47,4 @@ export const ArrayUtils = {
     }),
   groupBy,
   uniqBy,
-  uniq,
 };
