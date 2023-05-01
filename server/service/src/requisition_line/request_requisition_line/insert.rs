@@ -1,4 +1,5 @@
 use crate::{
+    item::check_item_exists,
     requisition::{
         common::check_requisition_exists, request_requisition::generate_requisition_lines,
     },
@@ -7,7 +8,6 @@ use crate::{
         query::get_requisition_line,
     },
     service_provider::ServiceContext,
-    stocktake_line::validate::check_item_exists,
 };
 
 use repository::{
@@ -94,7 +94,7 @@ fn validate(
         return Err(OutError::ItemAlreadyExistInRequisition);
     }
 
-    if !check_item_exists(connection, &input.item_id, store_id)? {
+    if !check_item_exists(connection, store_id.to_string(), &input.item_id)? {
         return Err(OutError::ItemDoesNotExist);
     }
 

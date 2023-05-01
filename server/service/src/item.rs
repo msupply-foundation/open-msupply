@@ -1,5 +1,7 @@
-use repository::PaginationOption;
-use repository::{Item, ItemFilter, ItemRepository, ItemSort, StorageConnectionManager};
+use repository::{
+    EqualFilter, Item, ItemFilter, ItemRepository, ItemSort, PaginationOption, RepositoryError,
+    StorageConnection, StorageConnectionManager,
+};
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
@@ -21,4 +23,16 @@ pub fn get_items(
         rows: repository.query(pagination, filter.clone(), sort, Some(store_id.to_owned()))?,
         count: i64_to_u32(repository.count(store_id.to_owned(), filter)?),
     })
+}
+
+pub fn check_item_exists(
+    connection: &StorageConnection,
+    store_id: String,
+    item_id: &str,
+) -> Result<bool, RepositoryError> {
+    let count = ItemRepository::new(connection).count(
+        store_id,
+        Some(ItemFilter::new().id(EqualFilter::equal_to(item_id))),
+    )?;
+    Ok(count > 0)
 }

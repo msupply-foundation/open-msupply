@@ -7,7 +7,7 @@ import { isA } from '../../../../utils';
 export const useOutboundLineEditRows = (
   rows: DraftOutboundLine[],
   packSizeController: PackSizeController,
-  batch?: string
+  scannedBatch?: string
 ) => {
   const tableStore = useTableStore();
 
@@ -17,11 +17,11 @@ export const useOutboundLineEditRows = (
     onHoldRows,
     noStockRows,
     placeholderRow,
-    incorrectBatchRows,
+    batchAndScannedBatchMismatchRows,
   } = useMemo(() => {
     const placeholderRow = rows.find(isA.placeholderLine);
     const rowsIncludeScannedBatch =
-      !!batch && rows.some(row => row.stockLine?.batch === batch);
+      !!scannedBatch && rows.some(row => row.stockLine?.batch === scannedBatch);
 
     const rowsWithoutPlaceholder = rows
       .filter(line => !isA.placeholderLine(line))
@@ -35,7 +35,7 @@ export const useOutboundLineEditRows = (
     const onHoldRows: DraftOutboundLine[] = [];
     const noStockRows: DraftOutboundLine[] = [];
     const wrongPackSizeRows: DraftOutboundLine[] = [];
-    const incorrectBatchRows: DraftOutboundLine[] = [];
+    const batchAndScannedBatchMismatchRows: DraftOutboundLine[] = [];
 
     rowsWithoutPlaceholder.forEach(row => {
       if (!!row.stockLine?.onHold) {
@@ -53,8 +53,8 @@ export const useOutboundLineEditRows = (
         return;
       }
 
-      if (rowsIncludeScannedBatch && row.stockLine?.batch !== batch) {
-        incorrectBatchRows.push(row);
+      if (rowsIncludeScannedBatch && row.stockLine?.batch !== scannedBatch) {
+        batchAndScannedBatchMismatchRows.push(row);
         return;
       }
 
@@ -66,7 +66,7 @@ export const useOutboundLineEditRows = (
       onHoldRows,
       noStockRows,
       wrongPackSizeRows,
-      incorrectBatchRows,
+      batchAndScannedBatchMismatchRows,
       placeholderRow,
     };
   }, [rows, packSizeController]);
@@ -74,7 +74,7 @@ export const useOutboundLineEditRows = (
   const orderedRows = useMemo(() => {
     return [
       ...allocatableRows,
-      ...incorrectBatchRows,
+      ...batchAndScannedBatchMismatchRows,
       ...wrongPackSizeRows,
       ...onHoldRows,
       ...noStockRows,
@@ -86,9 +86,14 @@ export const useOutboundLineEditRows = (
       ...wrongPackSizeRows,
       ...onHoldRows,
       ...noStockRows,
-      ...incorrectBatchRows,
+      ...batchAndScannedBatchMismatchRows,
     ];
-  }, [wrongPackSizeRows, onHoldRows, noStockRows, incorrectBatchRows]);
+  }, [
+    wrongPackSizeRows,
+    onHoldRows,
+    noStockRows,
+    batchAndScannedBatchMismatchRows,
+  ]);
 
   useEffect(() => {
     tableStore.setDisabledRows(disabledRows.map(({ id }) => id));
@@ -102,6 +107,6 @@ export const useOutboundLineEditRows = (
     noStockRows,
     wrongPackSizeRows,
     placeholderRow,
-    incorrectBatchRows,
+    batchAndScannedBatchMismatchRows,
   };
 };
