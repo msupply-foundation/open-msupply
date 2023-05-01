@@ -80,7 +80,7 @@ pub trait BarcodeServiceTrait: Sync + Send {
                 let new_barcode = BarcodeRow {
                     id: uuid(),
                     value: barcode.value.clone(),
-                    item_id: Some(barcode.item_id.clone()),
+                    item_id: barcode.item_id.clone(),
                     pack_size: barcode.pack_size,
                     manufacturer_id: None,
                     parent_id: None,
