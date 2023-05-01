@@ -89,7 +89,7 @@ export const requestsToCsv = (
     node.otherPartyName,
     node.requisitionNumber,
     node.status,
-    Formatter.csvDateString(node.createdDatetime),
+    Formatter.csvDateTimeString(node.createdDatetime),
     node.theirReference,
     node.comment,
   ]);
@@ -114,8 +114,8 @@ export const responsesToCsv = (
     node.id,
     node.otherPartyName,
     node.requisitionNumber,
+    Formatter.csvDateTimeString(node.createdDatetime),
     node.status,
-    Formatter.csvDateString(node.createdDatetime),
     node.theirReference,
     node.comment,
   ]);

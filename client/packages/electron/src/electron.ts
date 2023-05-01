@@ -48,23 +48,18 @@ class BarcodeScanner {
     return undefined;
   }
 
-  start() {
-    return new Promise((resolve, reject) => {
-      if (!this.device) reject(new Error('No scanners found'));
-      try {
-        this.device?.read((err, data) => {
-          if (err) reject(err);
-          resolve(data);
-        });
-      } catch (e) {
-        reject(e);
-      }
+  start(window: BrowserWindow) {
+    if (!this.device) throw new Error('No scanners found');
+    this.device?.on('data', data => {
+      window.webContents.send(IPC_MESSAGES.ON_BARCODE_SCAN, data);
     });
   }
 
   stop() {
-    this.device?.close();
-    this.device = this.findDevice();
+    try {
+      this.device?.close();
+      this.device = this.findDevice();
+    } catch {}
   }
 }
 
@@ -133,8 +128,10 @@ const start = (): void => {
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
-  ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () => barcodeScanner.start());
-  ipcMain.on(IPC_MESSAGES.STOP_BARCODE_SCAN, () => barcodeScanner.stop());
+  ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () =>
+    barcodeScanner.start(window)
+  );
+  ipcMain.handle(IPC_MESSAGES.STOP_BARCODE_SCAN, () => barcodeScanner.stop());
 
   ipcMain.handle(IPC_MESSAGES.DISCOVERED_SERVERS, async () => {
     const servers = discoveredServers;
@@ -180,8 +177,8 @@ app.on('window-all-closed', () => {
 process.on('uncaughtException', error => {
   // See comment below
   if (
-    error.message.includes('t[this.constructor.name] is not a constructor') &&
-    error.stack?.includes('v._addKnownAnswers')
+    error.message.includes('[this.constructor.name] is not a constructor') &&
+    error.stack?.includes('._addKnownAnswers')
   ) {
     return;
   }
@@ -204,6 +201,12 @@ process.on('uncaughtException', error => {
         at listOnTimeout (node:internal/timers:559:17)
         at process.processTimers (node:internal/timers:502:7)
   */
+
+  /*
+    The error has changed to the following, so have relaxed the condition to include it
+        error.message.includes('e[this.constructor.name] is not a constructor') &&
+        error.stack?.includes('m._addKnownAnswers')
+  */
 });
 
 // App data store
@@ -216,7 +219,10 @@ app.addListener(
   'certificate-error',
   (event, _webContents, url, error, certificate, callback) => {
     // We are only handling self signed certificate errors
-    if (error != 'net::ERR_CERT_INVALID') {
+    if (
+      error != 'net::ERR_CERT_INVALID' &&
+      error != 'net::ERR_CERT_AUTHORITY_INVALID'
+    ) {
       return callback(false);
     }
 

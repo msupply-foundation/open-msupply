@@ -63,6 +63,9 @@ pub use self::response_requisition_stats::*;
 pub mod inventory_adjustment_reason;
 pub use self::inventory_adjustment_reason::*;
 
+pub mod barcode;
+pub use self::barcode::*;
+
 pub mod store_preference;
 pub use self::store_preference::*;
 

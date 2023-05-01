@@ -23,6 +23,11 @@ The two main (supported by devices) ABI architectures are:
 
 `PATH=$PATH:$NDK_BIN cargo build --release` from this directory will build for both ABI mentioned above, it's quicker to build one when doing a debug build `PATH=$PATH:$NDK_BIN cargo build --target aarch64-linux-android --release`
 
+## Build problem: missing `-lunwind` (aarch64 on Linux)
+
+When building the server for `aarch64` there might be an error message regarding a missing `-lunwind` lib.
+This can be fixed by creating an empty `libunwind.a` file in `$NDK_HOME/{version}/toolchains/llvm/prebuilt/linux-x86_64/aarch64-linux-android/libunwind.a`.;
+
 ## How it connects to Mobile ?
 
 See [mobile app readme](../../client/packages/mobile/README.md) for further description of how libs are connected to native java. Specifically `RemoteServer.java`, and referenced yarn scripts

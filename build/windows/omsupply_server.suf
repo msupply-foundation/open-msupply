@@ -4192,7 +4192,7 @@ if hasOmsupplyInstalled then
 	end
 else
 	local config = "server:\r\n"
-	config = config .. "  host: 192.168.178.68\r\n";
+	config = config .. "  host: 127.0.0.1\r\n";
 	config = config .. "  port: " .. SessionVar.Get("%omsupply_port%") .. "\r\n";
 	config = config .. "database:\r\n";
 	config = config .. "  port: " .. SessionVar.Get("%postgres_db_port%") .. "\r\n";

@@ -70,4 +70,23 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_many_by_program_id(
+        &self,
+        program_id: &str,
+    ) -> Result<Vec<ProgramRequisitionSettingsRow>, RepositoryError> {
+        let result = program_requisition_settings_dsl::program_requisition_settings
+            .filter(program_requisition_settings_dsl::program_id.eq(program_id))
+            .load(&self.connection.connection)?;
+        Ok(result)
+    }
+
+    pub fn delete(&self, settings_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(
+            program_requisition_settings_dsl::program_requisition_settings
+                .filter(program_requisition_settings_dsl::id.eq(settings_id)),
+        )
+        .execute(&self.connection.connection)?;
+        Ok(())
+    }
 }
