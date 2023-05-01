@@ -16,6 +16,7 @@ import {
   useKeyboardHeightAdjustment,
   InvoiceLineNodeType,
   useNotification,
+  ArrayUtils,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
@@ -101,22 +102,27 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     const barcodeExists = !!barcode?.value;
     if (!barcode || !currentItem || barcodeExists) return;
 
-    draftOutboundLines
-      .filter(line => line.numberOfPacks > 0)
-      .forEach(async line => {
-        const input = {
-          input: {
-            value: barcode.value,
-            itemId: currentItem?.id,
-            packSize: line.packSize,
-          },
-        };
-        try {
-          await insertBarcode(input);
-        } catch (error) {
-          warning(t('error.unable-to-save-barcode', { error }))();
-        }
-      });
+    const barcodes = ArrayUtils.uniq(
+      draftOutboundLines
+        .filter(line => line.numberOfPacks > 0)
+        .map(({ packSize }) => packSize)
+    );
+
+    barcodes.forEach(async packSize => {
+      const input = {
+        input: {
+          value: barcode.value,
+          itemId: currentItem?.id,
+          packSize,
+        },
+      };
+
+      try {
+        await insertBarcode(input);
+      } catch (error) {
+        warning(t('error.unable-to-save-barcode', { error }))();
+      }
+    });
   };
 
   const onNext = async () => {

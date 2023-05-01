@@ -17,7 +17,7 @@ export const useOutboundLineEditRows = (
     onHoldRows,
     noStockRows,
     placeholderRow,
-    batchAndScannedBatchMismatchRows,
+    scannedBatchMismatchRows,
   } = useMemo(() => {
     const placeholderRow = rows.find(isA.placeholderLine);
     const rowsIncludeScannedBatch =
@@ -35,7 +35,7 @@ export const useOutboundLineEditRows = (
     const onHoldRows: DraftOutboundLine[] = [];
     const noStockRows: DraftOutboundLine[] = [];
     const wrongPackSizeRows: DraftOutboundLine[] = [];
-    const batchAndScannedBatchMismatchRows: DraftOutboundLine[] = [];
+    const scannedBatchMismatchRows: DraftOutboundLine[] = [];
 
     rowsWithoutPlaceholder.forEach(row => {
       if (!!row.stockLine?.onHold) {
@@ -54,7 +54,7 @@ export const useOutboundLineEditRows = (
       }
 
       if (rowsIncludeScannedBatch && row.stockLine?.batch !== scannedBatch) {
-        batchAndScannedBatchMismatchRows.push(row);
+        scannedBatchMismatchRows.push(row);
         return;
       }
 
@@ -66,7 +66,7 @@ export const useOutboundLineEditRows = (
       onHoldRows,
       noStockRows,
       wrongPackSizeRows,
-      batchAndScannedBatchMismatchRows,
+      scannedBatchMismatchRows,
       placeholderRow,
     };
   }, [rows, packSizeController]);
@@ -74,7 +74,7 @@ export const useOutboundLineEditRows = (
   const orderedRows = useMemo(() => {
     return [
       ...allocatableRows,
-      ...batchAndScannedBatchMismatchRows,
+      ...scannedBatchMismatchRows,
       ...wrongPackSizeRows,
       ...onHoldRows,
       ...noStockRows,
@@ -86,14 +86,9 @@ export const useOutboundLineEditRows = (
       ...wrongPackSizeRows,
       ...onHoldRows,
       ...noStockRows,
-      ...batchAndScannedBatchMismatchRows,
+      ...scannedBatchMismatchRows,
     ];
-  }, [
-    wrongPackSizeRows,
-    onHoldRows,
-    noStockRows,
-    batchAndScannedBatchMismatchRows,
-  ]);
+  }, [wrongPackSizeRows, onHoldRows, noStockRows, scannedBatchMismatchRows]);
 
   useEffect(() => {
     tableStore.setDisabledRows(disabledRows.map(({ id }) => id));
@@ -107,6 +102,6 @@ export const useOutboundLineEditRows = (
     noStockRows,
     wrongPackSizeRows,
     placeholderRow,
-    batchAndScannedBatchMismatchRows,
+    scannedBatchMismatchRows,
   };
 };
