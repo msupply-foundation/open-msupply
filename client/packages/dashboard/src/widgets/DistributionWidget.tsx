@@ -12,9 +12,10 @@ import {
   ApiException,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
-import { useOutbound } from '../api';
+import { useDashboard } from '../api';
+import { useOutbound } from '@openmsupply-client/invoices';
 
-export const OutboundShipmentWidget: React.FC = () => {
+export const DistributionWidget: React.FC = () => {
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
   const t = useTranslation('dashboard');
@@ -24,13 +25,13 @@ export const OutboundShipmentWidget: React.FC = () => {
     isLoading: isOutboundCountLoading,
     isError: isOutboundCountError,
     error: outboundCountError,
-  } = useOutbound.utils.count();
+  } = useDashboard.statistics.outbound();
   const {
     data: responseCount,
     isLoading: isResponseCountLoading,
     isError: isResponseCountError,
     error: responseCountError,
-  } = useOutbound.utils.responseCount();
+  } = useDashboard.statistics.response();
 
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const onError = (e: unknown) => {
