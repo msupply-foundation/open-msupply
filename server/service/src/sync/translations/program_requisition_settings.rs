@@ -146,7 +146,7 @@ fn delete_requisition_program(
         });
 
     ProgramRequisitionOrderTypeRowRepository::new(connection)
-        .find_many_by_requisition_settings_id(&program_requisition_settings_ids)?
+        .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?
         .iter()
         .for_each(|order_type| program_requisition_order_type_ids.push(order_type.id.clone()));
 

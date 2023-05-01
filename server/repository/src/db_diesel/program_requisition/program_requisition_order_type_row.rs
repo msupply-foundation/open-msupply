@@ -72,22 +72,12 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
 
     pub fn find_many_by_program_requisition_settings_ids(
         &self,
-        ids: Vec<&str>,
-    ) -> Result<Vec<ProgramRequisitionOrderTypeRow>, RepositoryError> {
-        let result = program_requisition_order_type_dsl::program_requisition_order_type
-            .filter(program_requisition_order_type_dsl::program_requisition_settings_id.eq_any(ids))
-            .load(&self.connection.connection)?;
-
-        Ok(result)
-    }
-
-    pub fn find_many_by_requisition_settings_id(
-        &self,
         ids: &[String],
     ) -> Result<Vec<ProgramRequisitionOrderTypeRow>, RepositoryError> {
         let result = program_requisition_order_type_dsl::program_requisition_order_type
             .filter(program_requisition_order_type_dsl::program_requisition_settings_id.eq_any(ids))
             .load(&self.connection.connection)?;
+
         Ok(result)
     }
 
