@@ -2,9 +2,7 @@ use repository::{MasterListLineRow, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
-};
+use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -39,21 +37,6 @@ impl SyncTranslation for MasterListLineTranslation {
             PullUpsertRecord::MasterListLine(result),
         )))
     }
-
-    fn try_translate_pull_delete(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::MasterListLine,
-            )
-        });
-
-        Ok(result)
-    }
 }
 
 #[cfg(test)]
@@ -72,14 +55,6 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

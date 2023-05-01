@@ -2,7 +2,7 @@ use repository::MasterListLineRow;
 
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
+    translations::{LegacyTableName, PullUpsertRecord},
 };
 
 const MASTER_LIST_LINE_1: (&'static str, &'static str) = (
@@ -26,13 +26,5 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             item_id: "8F252B5884B74888AAB73A0D42C09E7F".to_owned(),
             master_list_id: "87027C44835B48E6989376F42A58F7E3".to_owned(),
         }),
-    )]
-}
-
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::LIST_MASTER_LINE,
-        MASTER_LIST_LINE_1.0,
-        PullDeleteRecordTable::MasterListLine,
     )]
 }

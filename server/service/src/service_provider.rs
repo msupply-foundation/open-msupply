@@ -13,6 +13,7 @@ use crate::{
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
+    missing_program::create_missing_master_list_and_program,
     name::get_names,
     processors::ProcessorsTrigger,
     report::report_service::{ReportService, ReportServiceTrait},
@@ -208,6 +209,14 @@ pub trait GeneralServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
     ) -> Result<(), RepositoryError> {
         create_system_user(service_provider)
+    }
+
+    // TODO: Delete when soft delete for master list is implemented
+    fn create_missing_master_list_and_program(
+        &self,
+        service_provider: &ServiceProvider,
+    ) -> Result<(), RepositoryError> {
+        create_missing_master_list_and_program(service_provider)
     }
 }
 
