@@ -105,7 +105,7 @@ export const Toolbar: FC = () => {
           )}
         </Grid>
         {programName && (
-          <Box padding={2}>
+          <Box padding={2} style= {{ maxWidth: 500 }}>
             <InfoPanel message={t('info.cannot-edit-program-requisition')} />
           </Box>
         )}
