@@ -33,6 +33,10 @@ pub enum InsertRequestRequisitionError {
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyIsNotAStore,
+    // Program validation
+    ProgramDoesNotExist,
+    ProgramOrderTypeDoesNotExist,
+    MaxOrdersReachedForPeriod(Vec<Requisition>),
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),

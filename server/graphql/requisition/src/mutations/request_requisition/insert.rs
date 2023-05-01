@@ -6,7 +6,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::RequisitionNode;
+use graphql_types::types::{RequisitionConnector, RequisitionNode};
 use repository::Requisition;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -30,12 +30,26 @@ pub struct InsertInput {
     pub expected_delivery_date: Option<NaiveDate>,
 }
 
+pub struct MaxOrdersReachedForPeriod(RequisitionConnector);
+
+#[Object]
+impl MaxOrdersReachedForPeriod {
+    pub async fn description(&self) -> &'static str {
+        "Max orders have been reached for this period."
+    }
+
+    pub async fn errors(&self) -> &RequisitionConnector {
+        &self.0
+    }
+}
+
 #[derive(Interface)]
 #[graphql(name = "InsertRequestRequisitionErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
+    MaxOrdersReachedForPeriod(MaxOrdersReachedForPeriod),
 }
 
 #[derive(SimpleObject)]
@@ -124,12 +138,19 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 OtherPartyNotVisible,
             ))
         }
+        ServiceError::MaxOrdersReachedForPeriod(requisitions) => {
+            return Ok(InsertErrorInterface::MaxOrdersReachedForPeriod(
+                MaxOrdersReachedForPeriod(RequisitionConnector::from_vec(requisitions)),
+            ))
+        }
         // Standard Graphql Errors
         ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
+        ServiceError::ProgramOrderTypeDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

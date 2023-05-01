@@ -1,7 +1,10 @@
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
-    requisition::{common::check_requisition_exists, query::get_requisition},
+    requisition::{
+        common::check_requisition_exists, program_settings::get_program_requisition_settings,
+        query::get_requisition,
+    },
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
@@ -9,9 +12,9 @@ use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     ActivityLogType, EqualFilter, MasterListLineFilter, MasterListLineRepository, NumberRowType,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRowRepository,
-    ProgramRowRepository, RepositoryError, Requisition, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow, RepositoryError,
+    Requisition, RequisitionFilter, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRepository, RequisitionRowRepository,
 };
 
 use super::{generate_requisition_lines, InsertRequestRequisitionError};
@@ -37,8 +40,8 @@ pub fn insert_program_request_requisition(
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &ctx.store_id, &input)?;
-            let (new_requisition, requisition_lines) = generate(ctx, input)?;
+            let (program, order_type) = validate(ctx, &input)?;
+            let (new_requisition, requisition_lines) = generate(ctx, program, order_type, input)?;
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
 
             let requisition_line_repo = RequisitionLineRowRepository::new(&connection);
@@ -63,26 +66,66 @@ pub fn insert_program_request_requisition(
 }
 
 fn validate(
-    connection: &StorageConnection,
-    store_id: &str,
+    ctx: &ServiceContext,
     input: &InsertProgramRequestRequisition,
-) -> Result<(), OutError> {
+) -> Result<(ProgramRow, ProgramRequisitionOrderTypeRow), OutError> {
+    let connection = &ctx.connection;
+
     if let Some(_) = check_requisition_exists(connection, &input.id)? {
         return Err(OutError::RequisitionAlreadyExists);
     }
 
-    // TODO: Check if we already have reached out max requisitions for this period
-    // https://github.com/openmsupply/open-msupply/issues/1599
+    let requisitions = RequisitionRepository::new(&connection).query_by_filter(
+        RequisitionFilter::new().order_type(EqualFilter::equal_to(&input.program_order_type_id)),
+    )?;
 
-    // TODO: Check Order Type is valid for this Program
-    // https://github.com/openmsupply/open-msupply/issues/1599
+    let program_settings = get_program_requisition_settings(ctx, &ctx.store_id)?;
 
-    // TODO: Check if the 'other_party' is a valid Program Supplier
-    // https://github.com/openmsupply/open-msupply/issues/1599
+    let order_type: ProgramRequisitionOrderTypeRow = program_settings
+        .iter()
+        .map(|setting| {
+            setting
+                .order_types
+                .iter()
+                .filter(|order_type| order_type.order_type.id == input.program_order_type_id)
+                .map(|order_type| order_type.order_type.clone())
+        })
+        .flatten()
+        .next()
+        .ok_or(OutError::ProgramOrderTypeDoesNotExist)?;
+
+    if requisitions.len() as i32 >= order_type.max_order_per_period {
+        return Err(OutError::MaxOrdersReachedForPeriod(requisitions));
+    }
+
+    let program_requisition_settings: ProgramRequisitionSettingsRow = program_settings
+        .iter()
+        .filter(|setting| {
+            setting.program_requisition_settings.program_settings_row.id
+                == order_type.program_requisition_settings_id
+        })
+        .map(|setting| {
+            setting
+                .program_requisition_settings
+                .program_settings_row
+                .clone()
+        })
+        .next()
+        .ok_or(OutError::DatabaseError(RepositoryError::NotFound))?;
+
+    let program = program_settings
+        .iter()
+        .filter(|setting| {
+            setting.program_requisition_settings.program_row.id
+                == program_requisition_settings.program_id
+        })
+        .map(|setting| setting.program_requisition_settings.program_row.clone())
+        .next()
+        .ok_or(OutError::ProgramDoesNotExist)?;
 
     let other_party = check_other_party(
         connection,
-        store_id,
+        &ctx.store_id,
         &input.other_party_id,
         CheckOtherPartyType::Supplier,
     )
@@ -99,11 +142,26 @@ fn validate(
         .store_id()
         .ok_or(OutError::OtherPartyIsNotAStore)?;
 
-    Ok(())
+    // Check if the 'other_party' is a valid Program Supplier
+    program_settings
+        .iter()
+        .map(|setting| {
+            setting
+                .suppliers
+                .iter()
+                .find(|supplier| supplier.supplier.name_row.id == input.other_party_id)
+        })
+        .flatten()
+        .next()
+        .ok_or(OutError::OtherPartyNotASupplier)?;
+
+    Ok((program, order_type))
 }
 
 fn generate(
     ctx: &ServiceContext,
+    program: ProgramRow,
+    order_type: ProgramRequisitionOrderTypeRow,
     InsertProgramRequestRequisition {
         id,
         other_party_id,
@@ -111,48 +169,22 @@ fn generate(
         comment,
         their_reference,
         expected_delivery_date,
-        program_order_type_id,
+        program_order_type_id: _,
         period_id,
     }: InsertProgramRequestRequisition,
 ) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
     let connection = &ctx.connection;
 
-    // Lookup order type
-    let order_type = ProgramRequisitionOrderTypeRowRepository::new(connection)
-        .find_one_by_id(&program_order_type_id)?;
-    let order_type = match order_type {
-        Some(order_type) => order_type,
-        None => return Err(RepositoryError::NotFound),
-    };
-
-    // Lookup program requisition settings
-    // TODO: Use `get_program_requisition_settings` from Service Layer
-    // https://github.com/openmsupply/open-msupply/issues/1599
-    let program_requisition_settings = ProgramRequisitionSettingsRowRepository::new(connection)
-        .find_one_by_id(&order_type.program_requisition_settings_id)?;
-    let program_requisition_settings = match program_requisition_settings {
-        Some(program_requisition_settings) => program_requisition_settings,
-        None => return Err(RepositoryError::NotFound),
-    };
-
-    // Lookup program
-    let program = ProgramRowRepository::new(connection)
-        .find_one_by_id(&program_requisition_settings.program_id)?;
-    let program = match program {
-        Some(program) => program,
-        None => return Err(RepositoryError::NotFound),
-    };
-
     let requisition = RequisitionRow {
         id,
-        user_id: Some(ctx.user_id.to_string()),
+        user_id: Some(ctx.user_id.clone()),
         requisition_number: next_number(
-            connection,
+            &ctx.connection,
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
         name_id: other_party_id,
-        store_id: ctx.store_id.to_owned(),
+        store_id: ctx.store_id.clone(),
         r#type: RequisitionRowType::Request,
         status: RequisitionRowStatus::Draft,
         created_datetime: Utc::now().naive_utc(),
@@ -162,15 +194,15 @@ fn generate(
         their_reference,
         max_months_of_stock: order_type.max_mos,
         min_months_of_stock: order_type.threshold_mos,
+        program_id: Some(program.id),
+        period_id: Some(period_id),
+        order_type: Some(order_type.name),
         // Default
         sent_datetime: None,
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
         is_sync_update: false,
-        program_id: Some(program.id),
-        period_id: Some(period_id),
-        order_type: Some(order_type.name),
     };
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
@@ -329,7 +361,6 @@ mod test_insert {
             .upsert_one(&NameTagRow {
                 id: "name_tag_id".to_owned(),
                 name: "name_tag_name".to_owned(),
-                ..Default::default()
             })
             .unwrap();
 
