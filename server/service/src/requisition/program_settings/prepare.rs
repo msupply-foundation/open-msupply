@@ -40,15 +40,15 @@ pub(super) fn prepare(
     }
 
     // Order Types (matching settings program_settings_ids)
-    let program_requisition_settings_ids = settings
+    let program_requisition_settings_ids: Vec<String> = settings
         .iter()
-        .map(|s| s.program_settings_row.id.as_str())
+        .map(|s| s.program_settings_row.id.clone())
         .collect();
 
     let program_ids: Vec<String> = settings.iter().map(|s| s.program_row.id.clone()).collect();
 
     let order_types = ProgramRequisitionOrderTypeRowRepository::new(&ctx.connection)
-        .find_many_by_program_requisition_settings_ids(program_requisition_settings_ids)?;
+        .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?;
 
     // Periods (matching settings program_schedule_ids)
     let program_schedule_ids = settings
