@@ -11,12 +11,12 @@ import {
   useNotification,
 } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
-import { DraftItem, useOutbound } from '../api';
+import { Draft, useOutbound } from '../api';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
 }: {
-  onAddItem: (item?: DraftItem) => void;
+  onAddItem: (draft?: Draft) => void;
 }) => {
   const t = useTranslation('distribution');
   const { status } = useOutbound.document.fields(['status']);
@@ -44,14 +44,14 @@ export const AddFromScannerButtonComponent = ({
           onAddItem({
             item: { id },
             barcode: { ...barcode, batch },
-          } as DraftItem);
+          });
           return;
         }
       }
 
       warning(t('error.no-matching-item'))();
 
-      onAddItem({ barcode: { value, batch } } as DraftItem);
+      onAddItem({ barcode: { value, batch } });
     }
   };
 

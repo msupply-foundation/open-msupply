@@ -234,3 +234,6 @@ export const inboundsToCsv = (
   ]);
   return Formatter.csv({ fields, data });
 };
+
+export const getPackQuantityCellId = (batch?: string | null) =>
+  `pack_quantity_${batch}`;
