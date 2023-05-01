@@ -72,10 +72,10 @@ export const DistributionWidget: React.FC = () => {
               error={outboundCountError as ApiException}
               isError={isOutboundCountError}
               isLoading={isOutboundCountLoading}
-              title={t('heading.shipments-not-shipped')}
+              title={t('heading.shipments')}
               stats={[
                 {
-                  label: t('label.today'),
+                  label: t('label.have-not-shipped'),
                   value: formatNumber.round(outboundCount?.notShipped),
                 },
               ]}
@@ -86,10 +86,10 @@ export const DistributionWidget: React.FC = () => {
               error={responseCountError as ApiException}
               isError={isResponseCountError}
               isLoading={isResponseCountLoading}
-              title={t('heading.new-requisitions')}
+              title={t('customer-requisition', { ns: 'app' })}
               stats={[
                 {
-                  label: t('label.today'),
+                  label: t('label.new'),
                   value: formatNumber.round(
                     responseCount?.newResponseRequisitionCount
                   ),

@@ -51,5 +51,13 @@ export const getDashboardQueries = (
         notDelivered: result?.invoiceCounts?.inbound?.notDelivered ?? 0,
       };
     },
+    requestRequisitionCounts: async (): Promise<{
+      draftCount: number;
+    }> => {
+      const result = await queries.requestRequisitionCounts({ storeId });
+      return {
+        draftCount: result?.requestRequisitionCounts?.draftCount ?? 0,
+      };
+    },
   },
 });

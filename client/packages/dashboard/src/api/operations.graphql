@@ -53,3 +53,9 @@ query inboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
     }
   }
 }
+
+query requestRequisitionCounts($storeId: String!) {
+  requestRequisitionCounts(storeId: $storeId) {
+    draftCount
+  }
+}
