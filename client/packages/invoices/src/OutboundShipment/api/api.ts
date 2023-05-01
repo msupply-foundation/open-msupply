@@ -154,6 +154,20 @@ const outboundParsers = {
 
 export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
+    barcodesByValue: async (
+      value?: string
+    ): Promise<{
+      nodes: { id: string; itemId?: string | null; value: string }[];
+      totalCount: number;
+    }> => {
+      const filter = !!value ? { value: { equalTo: value } } : undefined;
+
+      const result = await sdk.barcodes({
+        filter,
+        storeId,
+      });
+      return result?.barcodes;
+    },
     list: async ({
       first,
       offset,
@@ -433,11 +447,20 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   dashboard: {
     shipmentCount: async (): Promise<{
-      toBePicked: number;
+      notShipped: number;
     }> => {
       const result = await sdk.invoiceCounts({ storeId });
       return {
-        toBePicked: result?.invoiceCounts?.outbound.toBePicked ?? 0,
+        notShipped: result?.invoiceCounts?.outbound.notShipped ?? 0,
+      };
+    },
+    requisitionCount: async (): Promise<{
+      newResponseRequisitionCount: number;
+    }> => {
+      const result = await sdk.requisitionCounts({ storeId });
+      return {
+        newResponseRequisitionCount:
+          result?.requisitionCounts?.newResponseRequisitionCount ?? 0,
       };
     },
   },

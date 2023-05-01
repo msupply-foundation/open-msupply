@@ -14,7 +14,7 @@ import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { ToolbarDropDown } from './ToolbarDropDown';
 import { ToolbarActions } from './ToolbarActions';
-import { getApprovalStatusText } from 'packages/requisitions/src/utils';
+import { getApprovalStatusText } from '../../../utils';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');

@@ -85,6 +85,21 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
       const { nodes, totalCount } = result?.stockLines;
       return { nodes, totalCount };
     },
+    listAll: async ({
+      sortBy,
+    }: {
+      sortBy: SortBy<StockLineNode>;
+    }): Promise<{
+      nodes: StockLineRowFragment[];
+      totalCount: number;
+    }> => {
+      const result = await stockApi.stockLines({
+        key: stockLineParsers.toSortField(sortBy),
+        desc: !!sortBy.isDesc,
+        storeId,
+      });
+      return result?.stockLines;
+    },
   },
   update: async (patch: RecordPatch<StockLineRowFragment>) => {
     const result =
