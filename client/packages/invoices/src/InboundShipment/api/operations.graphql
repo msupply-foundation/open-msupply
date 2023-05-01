@@ -359,6 +359,7 @@ query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
         today
         thisWeek
       }
+      notDelivered
     }
   }
 }

@@ -65,7 +65,7 @@ export const stocktakesToCsv = (
     node.status,
     node.description,
     node.comment,
-    Formatter.csvDateString(node.createdDatetime),
+    Formatter.csvDateTimeString(node.createdDatetime),
     Formatter.csvDateString(node.stocktakeDate),
   ]);
   return Formatter.csv({ fields, data });

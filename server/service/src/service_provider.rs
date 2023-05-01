@@ -4,6 +4,7 @@ use crate::{
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
+        requisition_count::{RequisitionCountService, RequisitionCountServiceTrait},
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
     display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
@@ -12,6 +13,7 @@ use crate::{
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
+    missing_program::create_missing_master_list_and_program,
     name::get_names,
     processors::ProcessorsTrigger,
     report::report_service::{ReportService, ReportServiceTrait},
@@ -52,6 +54,7 @@ pub struct ServiceProvider {
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
     pub item_count_service: Box<dyn ItemCountServiceTrait>,
+    pub requisition_count_service: Box<dyn RequisitionCountServiceTrait>,
     // Stock stats
     pub item_stats_service: Box<dyn ItemStatsServiceTrait>,
     // Stock
@@ -107,6 +110,7 @@ impl ServiceProvider {
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),
+            requisition_count_service: Box::new(RequisitionCountService {}),
             invoice_service: Box::new(InvoiceService {}),
             stock_expiry_count_service: Box::new(StockExpiryServiceCount {}),
             stocktake_service: Box::new(StocktakeService {}),
@@ -205,6 +209,14 @@ pub trait GeneralServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
     ) -> Result<(), RepositoryError> {
         create_system_user(service_provider)
+    }
+
+    // TODO: Delete when soft delete for master list is implemented
+    fn create_missing_master_list_and_program(
+        &self,
+        service_provider: &ServiceProvider,
+    ) -> Result<(), RepositoryError> {
+        create_missing_master_list_and_program(service_provider)
     }
 }
 

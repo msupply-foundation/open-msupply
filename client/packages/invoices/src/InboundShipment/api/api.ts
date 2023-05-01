@@ -362,12 +362,14 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     shipmentCount: async (): Promise<{
       today: number;
       thisWeek: number;
+      notDelivered: number;
     }> => {
       const result = await sdk.invoiceCounts({ storeId });
 
       return {
         thisWeek: result?.invoiceCounts?.inbound?.created?.thisWeek ?? 0,
         today: result?.invoiceCounts?.inbound?.created?.today ?? 0,
+        notDelivered: result?.invoiceCounts?.inbound?.notDelivered ?? 0,
       };
     },
   },

@@ -60,7 +60,7 @@ export function useTableStore<T = TableStore>(
   selector?: (state: TableStore) => T,
   equalityFn?: (a: T, b: T) => boolean
 ): T {
-  if (!selector) return useStore(useContext(tableContext)) as T;
+  if (!selector) return useStore(useContext(tableContext)) as unknown as T;
 
   const store = useContext(tableContext);
   if (!equalityFn) return useStore(store, selector);

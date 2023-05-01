@@ -18,6 +18,7 @@ query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
     itemCounts {
       lowStock
       noStock
+      moreThanSixMonthsStock
       total
     }
   }

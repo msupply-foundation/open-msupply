@@ -19,7 +19,7 @@ impl SyncRecordTester for PeriodScheduleAndPeriodTester {
         // STEP 1 - insert
         let period_schedule_1 = PeriodScheduleRow {
             id: uuid(),
-            name: "Monthly".to_string(),
+            name: "Monthly1".to_string(),
         };
         let period_schedule_1_json = json!({
             "ID": period_schedule_1.id,
@@ -44,7 +44,7 @@ impl SyncRecordTester for PeriodScheduleAndPeriodTester {
 
         let period_schedule_2 = PeriodScheduleRow {
             id: uuid(),
-            name: "Yearly".to_string(),
+            name: "Yearly1".to_string(),
         };
 
         let period_schedule_2_json = json!({
