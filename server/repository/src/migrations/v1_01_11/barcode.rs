@@ -15,11 +15,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             "#
     )?;
 
-    sql!(
-        connection,
-        r#"ALTER TABLE invoice_line ADD barcode_id text NULL REFERENCES barcode(id);"#
-    )?;
-
     #[cfg(feature = "postgres")]
     {
         sql!(
