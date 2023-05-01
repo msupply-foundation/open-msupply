@@ -9,7 +9,7 @@ use crate::{
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection,
+    RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
