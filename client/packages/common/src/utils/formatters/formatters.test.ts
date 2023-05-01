@@ -15,6 +15,14 @@ describe('Formatter', () => {
     expect(Formatter.csvDateString(null)).toBe('');
     expect(Formatter.csvDateString(undefined)).toBe('');
     expect(Formatter.csvDateString('bah')).toBe('');
+    expect(Formatter.csvDateString('2022/03/30')).toBe('2022-03-30');
+    expect(Formatter.csvDateString('2020/10/12 04:30')).toBe('2020-10-12');
+  });
+
+  it('csvDateTimeString', () => {
+    expect(Formatter.csvDateString(null)).toBe('');
+    expect(Formatter.csvDateString(undefined)).toBe('');
+    expect(Formatter.csvDateString('bah')).toBe('');
     expect(Formatter.csvDateString('2022/03/30')).toBe('2022-03-30 00:00:00');
     expect(Formatter.csvDateString('2020/10/12 04:30')).toBe(
       '2020-10-12 04:30:00'

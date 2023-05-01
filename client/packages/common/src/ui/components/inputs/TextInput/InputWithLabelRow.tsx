@@ -22,7 +22,7 @@ export const InputWithLabelRow: FC<InputWithLabelRowProps> = ({
   return (
     <Box display="flex" alignItems="center" gap={1} sx={sx}>
       <FormLabel
-        sx={{ fontWeight: 'bold', flex: `0 0 ${labelWidth}`, ...labelSx }}
+        sx={{ width: labelWidth, fontWeight: 'bold', ...labelSx }}
         {...labelPropsRest}
       >
         {label}:

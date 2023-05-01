@@ -46,13 +46,21 @@ pub trait InvoiceCountServiceTrait: Send + Sync {
         )
     }
 
-    fn outbound_invoices_pickable_count(
+    fn outbound_invoices_not_shipped_count(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
     ) -> Result<i64, RepositoryError> {
         // default implementation:
-        InvoiceCountService {}.outbound_invoices_pickable_count(ctx, store_id)
+        InvoiceCountService {}.outbound_invoices_not_shipped_count(ctx, store_id)
+    }
+
+    fn inbound_invoices_not_delivered_count(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+    ) -> Result<i64, RepositoryError> {
+        InvoiceCountService {}.inbound_invoices_not_delivered_count(ctx, store_id)
     }
 }
 
@@ -156,7 +164,7 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         Ok(count)
     }
 
-    fn outbound_invoices_pickable_count(
+    fn outbound_invoices_not_shipped_count(
         &self,
         ctx: &ServiceContext,
         store_id: &str,
@@ -164,9 +172,27 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let repo = InvoiceRepository::new(&ctx.connection);
         Ok(repo.count(Some(
             InvoiceFilter::new()
-                .store_id(EqualFilter::equal_to(&store_id))
+                .store_id(EqualFilter::equal_to(store_id))
                 .r#type(InvoiceRowType::OutboundShipment.equal_to())
-                .status(InvoiceRowStatus::Allocated.equal_to()),
+                .status(InvoiceRowStatus::equal_any(vec![
+                    InvoiceRowStatus::New,
+                    InvoiceRowStatus::Allocated,
+                    InvoiceRowStatus::Picked,
+                ])),
+        ))?)
+    }
+
+    fn inbound_invoices_not_delivered_count(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+    ) -> Result<i64, RepositoryError> {
+        let repo = InvoiceRepository::new(&ctx.connection);
+        Ok(repo.count(Some(
+            InvoiceFilter::new()
+                .store_id(EqualFilter::equal_to(store_id))
+                .r#type(InvoiceRowType::InboundShipment.equal_to())
+                .status(InvoiceRowStatus::Shipped.equal_to()),
         ))?)
     }
 }

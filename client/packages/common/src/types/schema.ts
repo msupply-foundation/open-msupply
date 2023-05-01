@@ -199,6 +199,46 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
+export type BarcodeConnector = {
+  __typename: 'BarcodeConnector';
+  nodes: Array<BarcodeNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type BarcodeFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  packSize?: InputMaybe<EqualFilterNumberInput>;
+  value?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type BarcodeNode = {
+  __typename: 'BarcodeNode';
+  id: Scalars['String'];
+  itemId?: Maybe<Scalars['String']>;
+  manufacturerId?: Maybe<Scalars['String']>;
+  packSize?: Maybe<Scalars['Int']>;
+  parentId?: Maybe<Scalars['String']>;
+  value: Scalars['String'];
+};
+
+export enum BarcodeSortFieldInput {
+  Barcode = 'BARCODE',
+  Id = 'ID'
+}
+
+export type BarcodeSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: BarcodeSortFieldInput;
+};
+
+export type BarcodesResponse = BarcodeConnector;
+
 export type BatchInboundShipmentInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']>;
   deleteInboundShipmentLines?: InputMaybe<Array<DeleteInboundShipmentLineInput>>;
@@ -797,6 +837,7 @@ export enum GenderType {
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
+  notDelivered: Scalars['Int'];
 };
 
 export type InitialisationStatusNode = {
@@ -1399,6 +1440,7 @@ export type ItemCounts = {
 export type ItemCountsResponse = {
   __typename: 'ItemCountsResponse';
   lowStock: Scalars['Int'];
+  moreThanSixMonthsStock: Scalars['Int'];
   noStock: Scalars['Int'];
   total: Scalars['Int'];
 };
@@ -2169,8 +2211,8 @@ export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentE
 export type OutboundInvoiceCounts = {
   __typename: 'OutboundInvoiceCounts';
   created: InvoiceCountsSummary;
-  /** Number of outbound shipments ready to be picked */
-  toBePicked: Scalars['Int'];
+  /** Number of outbound shipments not shipped yet */
+  notShipped: Scalars['Int'];
 };
 
 /**
@@ -2254,6 +2296,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
+  barcodes: BarcodesResponse;
   displaySettings: DisplaySettingsNode;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
@@ -2294,6 +2337,7 @@ export type Queries = {
   reports: ReportsResponse;
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
+  requisitionCounts: RequisitionCounts;
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
@@ -2320,6 +2364,14 @@ export type QueriesActivityLogsArgs = {
 export type QueriesAuthTokenArgs = {
   password: Scalars['String'];
   username: Scalars['String'];
+};
+
+
+export type QueriesBarcodesArgs = {
+  filter?: InputMaybe<BarcodeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<BarcodeSortInput>>;
+  storeId: Scalars['String'];
 };
 
 
@@ -2439,6 +2491,11 @@ export type QueriesRequisitionByNumberArgs = {
   requisitionNumber: Scalars['Int'];
   storeId: Scalars['String'];
   type: RequisitionNodeType;
+};
+
+
+export type QueriesRequisitionCountsArgs = {
+  storeId: Scalars['String'];
 };
 
 
@@ -2604,6 +2661,11 @@ export type RequisitionConnector = {
   __typename: 'RequisitionConnector';
   nodes: Array<RequisitionNode>;
   totalCount: Scalars['Int'];
+};
+
+export type RequisitionCounts = {
+  __typename: 'RequisitionCounts';
+  newResponseRequisitionCount: Scalars['Int'];
 };
 
 export type RequisitionFilterInput = {

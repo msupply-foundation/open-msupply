@@ -17,6 +17,7 @@ import {
   ReportSelector,
 } from '@openmsupply-client/system';
 import { AddFromMasterListButton } from './AddFromMasterListButton';
+import { AddFromScannerButton } from './AddFromScannerButton';
 
 interface AppBarButtonProps {
   onAddItem: () => void;
@@ -46,6 +47,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onClick={() => onAddItem()}
         />
         <AddFromMasterListButton />
+        <AddFromScannerButton onAddItem={onAddItem} />
         <ReportSelector
           context={ReportContext.OutboundShipment}
           onClick={printReport}

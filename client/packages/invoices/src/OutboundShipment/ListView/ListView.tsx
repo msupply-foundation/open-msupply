@@ -80,7 +80,7 @@ const OutboundShipmentListViewComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} modalController={modalController} />
+      <AppBarButtons modalController={modalController} />
 
       <DataTable
         id="outbound-list"
