@@ -211,6 +211,7 @@ pub trait GeneralServiceTrait: Sync + Send {
         create_system_user(service_provider)
     }
 
+    // TODO: Delete when soft delete for master list is implemented
     fn create_missing_master_list_and_program(
         &self,
         service_provider: &ServiceProvider,

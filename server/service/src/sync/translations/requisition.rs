@@ -211,7 +211,7 @@ impl SyncTranslation for RequisitionTranslation {
             ),
         };
 
-        // Delete when soft delete for master list is implemented
+        // TODO: Delete when soft delete for master list is implemented
         let program_id = if let Some(program_id) = data.programID {
             let program = ProgramRowRepository::new(conn).find_one_by_id(&program_id)?;
 

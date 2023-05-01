@@ -1,3 +1,4 @@
+// TODO: Delete whole file when soft delete for master list is implemented
 use repository::{
     MasterListRow, MasterListRowRepository, ProgramRow, ProgramRowRepository, RepositoryError,
 };
@@ -5,7 +6,6 @@ use util::constants::MISSING_PROGRAM;
 
 use crate::service_provider::ServiceProvider;
 
-// Delete when soft delete for master list is implemented
 pub fn create_missing_master_list_and_program(
     service_provider: &ServiceProvider,
 ) -> Result<(), RepositoryError> {
