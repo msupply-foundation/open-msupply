@@ -2,9 +2,9 @@ import { useResponse } from '../document/useResponse';
 import { RequisitionNodeApprovalStatus } from '@common/types';
 import { useIsRemoteAuthorisation } from './useIsRemoteAuthorisation';
 
-export const useResponseDisabledForAuthorisation = (): boolean => {
+export const useIsDisabledByAuthorisation = (): boolean => {
   const { data } = useResponse();
-  let authorisation = useIsRemoteAuthorisation();
+  const authorisation = useIsRemoteAuthorisation();
 
   if (
     authorisation &&

@@ -8,13 +8,11 @@ interface ContentAreaProps {
 
 export const ContentArea = ({ onRowClick }: ContentAreaProps) => {
   const { columns, lines } = useResponse.line.list();
-  let isDisabledForAuthorisation =
-    useResponse.utils.isDisabledForAuthorisation();
 
   return (
     <DataTable
       id="requisition-detail"
-      onRowClick={!isDisabledForAuthorisation ? onRowClick : null}
+      onRowClick={onRowClick}
       columns={columns}
       data={lines}
       noDataElement={<NothingHere />}

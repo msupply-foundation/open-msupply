@@ -9,8 +9,7 @@ use crate::{
 use chrono::Utc;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    ActivityLogType, RepositoryError, Requisition, RequisitionRowApprovalStatus,
-    RequisitionRowRepository, StorageConnection,
+    ActivityLogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 

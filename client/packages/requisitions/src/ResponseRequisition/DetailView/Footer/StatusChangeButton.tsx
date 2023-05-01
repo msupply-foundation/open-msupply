@@ -105,11 +105,11 @@ export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, getConfirmation } =
     useStatusChangeButton();
   const isDisabled = useResponse.utils.isDisabled();
-  const isDisabledForAuthorisation =
-    useResponse.utils.isDisabledForAuthorisation();
+  const isDisabledByAuthorisation =
+    useResponse.utils.isDisabledByAuthorisation();
 
   if (!selectedOption) return null;
-  if (isDisabled) return null;
+  if (isDisabled && !isDisabledByAuthorisation) return null;
 
   return (
     <SplitButton
@@ -118,7 +118,7 @@ export const StatusChangeButton = () => {
       onSelectOption={setSelectedOption}
       Icon={<ArrowRightIcon />}
       onClick={() => getConfirmation()}
-      isDisabled={isDisabledForAuthorisation}
+      isDisabled={isDisabledByAuthorisation}
     />
   );
 };
