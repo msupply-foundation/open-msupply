@@ -17,7 +17,6 @@ import {
   InvoiceLineNodeType,
   useNotification,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
 import {
@@ -32,23 +31,24 @@ import {
   getAllocatedQuantity,
   getAllocatedPacks,
 } from './utils';
-import { DraftItem, useOutbound } from '../../api';
+import { Draft, DraftItem, useOutbound } from '../../api';
 import { DraftOutboundLine } from '../../../types';
+import { getPackQuantityCellId } from '../../../utils';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  draft: DraftItem | null;
+  draft: Draft | null;
   mode: ModalMode | null;
 }
 
-const useFocusNumberOfPacksInput = (draft: DraftItem | null) => {
+const useFocusNumberOfPacksInput = (draft: Draft | null) => {
   const batch = draft?.barcode?.batch;
 
   useEffect(() => {
     setTimeout(() => {
       if (!batch) return;
-      const input = document.getElementById(`pack_quantity_${batch}`);
+      const input = document.getElementById(getPackQuantityCellId(batch));
       if (input) {
         input.focus();
       }
@@ -98,7 +98,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     if (!draft) return;
 
     const { barcode } = draft;
-    const barcodeExists = !!barcode?.id;
+    const barcodeExists = !!barcode?.value;
     if (!barcode || !currentItem || barcodeExists) return;
 
     draftOutboundLines
@@ -211,7 +211,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
 
 interface TableProps {
   canAutoAllocate: boolean;
-  currentItem: ItemRowFragment | null;
+  currentItem: DraftItem | null;
   isLoading: boolean;
   packSizeController: PackSizeController;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
