@@ -11,15 +11,16 @@ import {
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { ApiException, PropsWithChildrenOnly } from '@common/types';
-import { useInbound } from '../api';
+import { useDashboard } from '../api';
+import { useInbound } from '@openmsupply-client/invoices';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 
-export const InboundShipmentWidget: React.FC<PropsWithChildrenOnly> = () => {
+export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
   const t = useTranslation(['app', 'dashboard']);
   const formatNumber = useFormatNumber();
-  const { data, isLoading, isError, error } = useInbound.utils.counts();
+  const { data, isLoading, isError, error } = useDashboard.statistics.inbound();
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {

@@ -233,18 +233,6 @@ query outboundByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
-query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
-  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-    outbound {
-      created {
-        today
-        thisWeek
-      }
-      notShipped
-    }
-  }
-}
-
 query barcodes($storeId: String!, $filter: BarcodeFilterInput) {
   barcodes(storeId: $storeId, filter: $filter) {
     ... on BarcodeConnector {
@@ -259,12 +247,6 @@ query barcodes($storeId: String!, $filter: BarcodeFilterInput) {
       }
       totalCount
     }
-  }
-}
-
-query requisitionCounts($storeId: String!) {
-  requisitionCounts(storeId: $storeId) {
-    newResponseRequisitionCount
   }
 }
 
