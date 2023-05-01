@@ -1,10 +1,10 @@
 use repository::{
-    Barcode, BarcodeFilter, BarcodeRepository, BarcodeRow, BarcodeSort, EqualFilter, ItemFilter,
-    ItemRepository, PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager,
+    Barcode, BarcodeFilter, BarcodeRepository, BarcodeRow, BarcodeSort, EqualFilter,
+    PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager,
 };
 use util::uuid::uuid;
 
-use crate::service_provider::ServiceContext;
+use crate::{item::check_item_exists, service_provider::ServiceContext};
 
 use super::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
@@ -102,34 +102,15 @@ fn check_barcode_does_not_exist(
     connection: &StorageConnection,
     barcode: &BarcodeInput,
 ) -> Result<bool, RepositoryError> {
-    match barcode.pack_size {
-        Some(pack_size) => {
-            let count = BarcodeRepository::new(connection).count(Some(
-                BarcodeFilter::new()
-                    .value(EqualFilter::equal_to(&barcode.value))
-                    .pack_size(EqualFilter::equal_to_i32(pack_size)),
-            ))?;
-            Ok(count == 0)
-        }
-        None => {
-            let count = BarcodeRepository::new(connection).count(Some(
-                BarcodeFilter::new().value(EqualFilter::equal_to(&barcode.value)),
-            ))?;
-            Ok(count == 0)
-        }
-    }
-}
+    let mut filter = BarcodeFilter::new().value(EqualFilter::equal_to(&barcode.value));
 
-fn check_item_exists(
-    connection: &StorageConnection,
-    store_id: String,
-    item_id: &str,
-) -> Result<bool, RepositoryError> {
-    let count = ItemRepository::new(connection).count(
-        store_id,
-        Some(ItemFilter::new().id(EqualFilter::equal_to(item_id))),
-    )?;
-    Ok(count > 0)
+    if let Some(pack_size) = barcode.pack_size {
+        filter = filter.pack_size(EqualFilter::equal_to_i32(pack_size))
+    }
+
+    let count = BarcodeRepository::new(connection).count(Some(filter))?;
+
+    Ok(count == 0)
 }
 
 fn validate(
