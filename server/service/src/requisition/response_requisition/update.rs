@@ -1,6 +1,9 @@
 use crate::{
     activity_log::activity_log_entry,
-    requisition::{common::check_requisition_exists, query::get_requisition},
+    requisition::{
+        common::{check_approval_status, check_requisition_exists},
+        query::get_requisition,
+    },
     service_provider::ServiceContext,
 };
 use chrono::Utc;
@@ -78,14 +81,8 @@ pub fn validate(
     let requisition_row = check_requisition_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
-    if let Some(approval_status) = requisition_row.approval_status.clone() {
-        if requisition_row.program_id.is_some()
-            && (approval_status == RequisitionRowApprovalStatus::Pending
-                || approval_status == RequisitionRowApprovalStatus::Denied
-                || approval_status == RequisitionRowApprovalStatus::DeniedByAnother)
-        {
-            return Err(OutError::CannotEditRequisition);
-        }
+    if check_approval_status(requisition_row.clone()) {
+        return Err(OutError::CannotEditRequisition);
     }
 
     if requisition_row.store_id != store_id {
