@@ -2335,6 +2335,7 @@ export type Queries = {
   refreshToken: RefreshTokenResponse;
   /** Queries a list of available reports */
   reports: ReportsResponse;
+  requestRequisitionCounts: RequestRequisitionsNotSentCount;
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
   requisitionCounts: RequisitionCounts;
@@ -2477,6 +2478,11 @@ export type QueriesReportsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ReportSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesRequestRequisitionCountsArgs = {
   storeId: Scalars['String'];
 };
 
@@ -2648,6 +2654,11 @@ export type ReportSortInput = {
 };
 
 export type ReportsResponse = ReportConnector;
+
+export type RequestRequisitionsNotSentCount = {
+  __typename: 'RequestRequisitionsNotSentCount';
+  draftCount: Scalars['Int'];
+};
 
 export type RequestStoreStatsNode = {
   __typename: 'RequestStoreStatsNode';

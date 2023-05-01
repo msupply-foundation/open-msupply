@@ -10,6 +10,7 @@ export const useDashboard = {
     item: Statistics.useItemCounts,
     inbound: Statistics.useInboundCounts,
     outbound: Statistics.useOutboundCounts,
+    request: Statistics.useRequestCounts,
     response: Statistics.useResponseCounts,
     stock: Statistics.useStockCounts,
   },

@@ -248,6 +248,14 @@ impl GeneralQueries {
     ) -> Result<RequisitionCounts> {
         requisition_counts(ctx, store_id)
     }
+
+    pub async fn request_requisition_counts(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<RequestRequisitionsNotSentCount> {
+        request_requisition_counts(ctx, store_id)
+    }
 }
 
 #[derive(Default, Clone)]

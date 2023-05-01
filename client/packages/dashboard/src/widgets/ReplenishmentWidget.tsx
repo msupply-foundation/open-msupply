@@ -18,9 +18,15 @@ import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
-  const t = useTranslation(['app', 'dashboard']);
+  const t = useTranslation('dashboard');
   const formatNumber = useFormatNumber();
   const { data, isLoading, isError, error } = useDashboard.statistics.inbound();
+  const {
+    data: requestCount,
+    isLoading: isRequestCountLoading,
+    isError: isRequestCountError,
+    error: responseCountError,
+  } = useDashboard.statistics.request();
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {
@@ -49,7 +55,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           }}
         />
       ) : null}
-      <Widget title={t('replenishment')}>
+      <Widget title={t('replenishment', { ns: 'app' })}>
         <Grid
           container
           justifyContent="flex-start"
@@ -61,7 +67,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
               error={error as ApiException}
               isError={isError}
               isLoading={isLoading}
-              title={t('inbound-shipments')}
+              title={t('inbound-shipments', { ns: 'app' })}
               stats={[
                 {
                   label: t('label.today', { ns: 'dashboard' }),
@@ -74,6 +80,20 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 {
                   label: t('label.inbound-not-delivered', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.notDelivered),
+                },
+              ]}
+            />
+          </Grid>
+          <Grid item>
+            <StatsPanel
+              error={responseCountError as ApiException}
+              isError={isRequestCountError}
+              isLoading={isRequestCountLoading}
+              title={t('internal-order', { ns: 'app' })}
+              stats={[
+                {
+                  label: t('label.new'),
+                  value: formatNumber.round(requestCount?.draftCount),
                 },
               ]}
             />
