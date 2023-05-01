@@ -1,15 +1,19 @@
 use repository::{
     NameTagRowRepository, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionSettingsRow, ProgramRow, StorageConnection, SyncBufferRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
 use std::collections::HashMap;
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord,
+    SyncTranslation,
+};
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone)]
 pub struct LegacyListMasterRow {
     #[serde(rename = "ID")]
     id: String,
@@ -20,27 +24,27 @@ pub struct LegacyListMasterRow {
     program_settings: Option<LegacyProgramSettings>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone)]
 struct LegacyProgramSettings {
     #[serde(rename = "storeTags")]
     store_tags: LegacyStoreTagAndProgramName,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone)]
 struct LegacyStoreTagAndProgramName {
     // HashMap key is the program name
     #[serde(flatten)]
     tags: HashMap<String, LegacyProgramSettingsStoreTag>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 struct LegacyProgramSettingsStoreTag {
     order_types: Option<Vec<LegacyOrderType>>,
     period_schedule_name: String,
 }
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone)]
 struct LegacyOrderType {
     name: String,
     #[serde(rename = "thresholdMOS")]
@@ -67,9 +71,31 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
 
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        let Some(generate) = generate_requisition_program(connection, data)? else {return Ok(None)};
+        let Some(generate) = generate_requisition_program(connection, data.clone())? else {return Ok(None)};
+        let Some(delete) = delete_requisition_program(connection, data)? else {return Ok(None)};
 
         let mut upserts = Vec::new();
+        let mut deletes = Vec::new();
+
+        delete
+            .program_requisition_order_type_ids
+            .into_iter()
+            .for_each(|order_type_id| {
+                deletes.push(PullDeleteRecord {
+                    id: order_type_id,
+                    table: PullDeleteRecordTable::ProgramRequisitionOrderType,
+                })
+            });
+
+        delete
+            .program_requisition_settings_ids
+            .into_iter()
+            .for_each(|settings_id| {
+                deletes.push(PullDeleteRecord {
+                    id: settings_id,
+                    table: PullDeleteRecordTable::ProgramRequisitionSettings,
+                })
+            });
 
         upserts.push(PullUpsertRecord::Program(generate.program_row));
 
@@ -91,8 +117,43 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
                 ))
             });
 
-        Ok(Some(IntegrationRecords::from_upserts(upserts)))
+        Ok(Some(IntegrationRecords { upserts, deletes }))
     }
+}
+
+#[derive(Clone)]
+struct DeleteRequisitionProgram {
+    pub program_requisition_settings_ids: Vec<String>,
+    pub program_requisition_order_type_ids: Vec<String>,
+}
+
+fn delete_requisition_program(
+    connection: &StorageConnection,
+    master_list: LegacyListMasterRow,
+) -> Result<Option<DeleteRequisitionProgram>, anyhow::Error> {
+    if master_list.is_program == false {
+        return Ok(None);
+    }
+
+    let mut program_requisition_settings_ids = Vec::new();
+    let mut program_requisition_order_type_ids = Vec::new();
+
+    ProgramRequisitionSettingsRowRepository::new(connection)
+        .find_many_by_program_id(&master_list.id)?
+        .iter()
+        .for_each(|program_requisition_setting| {
+            program_requisition_settings_ids.push(program_requisition_setting.id.clone())
+        });
+
+    ProgramRequisitionOrderTypeRowRepository::new(connection)
+        .find_many_by_program_requisition_settings_ids(&program_requisition_settings_ids)?
+        .iter()
+        .for_each(|order_type| program_requisition_order_type_ids.push(order_type.id.clone()));
+
+    Ok(Some(DeleteRequisitionProgram {
+        program_requisition_settings_ids,
+        program_requisition_order_type_ids,
+    }))
 }
 
 #[derive(Clone)]

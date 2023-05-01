@@ -101,5 +101,6 @@
   "messages.error-saving-shipment": "Error saving shipment 🥺",
   "messages.saved": "Saved",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
-  "messages.shipment-saved": "Shipment saved 🥳"
+  "messages.shipment-saved": "Shipment saved 🥳",
+  "info.cannot-edit-program-requisition": "Cannot edit supplier, minimum MOS, maximum MOS or add items in a program requisition."
 }

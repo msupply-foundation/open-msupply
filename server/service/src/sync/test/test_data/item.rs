@@ -200,7 +200,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_delete(
         LegacyTableName::ITEM,
-        ITEM_2.0,
+        ITEM_1.0,
         PullDeleteRecordTable::Item,
     )]
 }

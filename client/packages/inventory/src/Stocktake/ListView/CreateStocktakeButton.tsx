@@ -21,7 +21,7 @@ import {
 } from '@openmsupply-client/common';
 import { useStock } from '@openmsupply-client/system';
 
-const LABEL_WIDTH = '150px';
+const LABEL_FLEX = '0 0 150px';
 
 interface CreateStocktakeArgs {
   masterListId: string;
@@ -167,7 +167,7 @@ export const CreateStocktakeButton: React.FC<{
                   {t('messages.create-stocktake-2')}
                 </Typography>
                 <InputWithLabelRow
-                  labelWidth={LABEL_WIDTH}
+                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                   Input={
                     masterLists.length === 0 ? (
                       <Typography sx={{ color: 'gray.main' }}>
@@ -191,7 +191,7 @@ export const CreateStocktakeButton: React.FC<{
                 />
                 <Box sx={{ height: 16 }} />
                 <InputWithLabelRow
-                  labelWidth={LABEL_WIDTH}
+                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                   Input={
                     locations.length === 0 ? (
                       <Typography sx={{ color: 'gray.main' }}>
@@ -215,7 +215,7 @@ export const CreateStocktakeButton: React.FC<{
                 />
                 <Box sx={{ height: 16 }} />
                 <InputWithLabelRow
-                  labelWidth={LABEL_WIDTH}
+                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                   Input={
                     !stockData ? (
                       <Typography sx={{ color: 'gray.main' }}>
