@@ -5,7 +5,7 @@ mod test_update {
         mock::{
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_name_store_c,
-            mock_program_requisition, mock_request_draft_requisition_calculation_test,
+            mock_request_draft_requisition_calculation_test, mock_request_program_requisition,
             mock_sent_request_requisition, mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
@@ -147,7 +147,7 @@ mod test_update {
             service.update_request_requisition(
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_program_requisition().id;
+                    r.id = mock_request_program_requisition().id;
                     r.max_months_of_stock = Some(5.0);
                 }),
             ),
