@@ -8,7 +8,6 @@ export const useOutbound = {
     api: Utils.useOutboundApi,
     barcode: Utils.useBarcode,
     barcodeInsert: Utils.useBarcodeInsert,
-    count: Utils.useOutboundCounts,
     isDisabled: Utils.useOutboundIsDisabled,
     number: Utils.useOutboundNumber,
   },
