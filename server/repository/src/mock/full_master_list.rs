@@ -68,7 +68,11 @@ pub fn mock_master_list_program() -> FullMockMasterList {
                 name_id: mock_name_store_b().id,
             },
         ],
-        lines: Vec::new(),
+        lines: vec![MasterListLineRow {
+            id: "program_item".to_owned(),
+            item_id: "item_query_test1".to_owned(),
+            master_list_id: "master_list_program".to_owned(),
+        }],
     }
 }
 
