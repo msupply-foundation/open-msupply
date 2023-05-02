@@ -84,6 +84,7 @@ const extractAt = (
 
   if (options?.at?.type === 'encounter') {
     switch (options.at.encounterStartDatetime) {
+      case undefined: // fallthrough to the default 'before' value
       case 'before':
         const before = new Date(
           new Date(encounter?.startDatetime ?? date).getTime() - 1
@@ -92,10 +93,11 @@ const extractAt = (
       case 'after':
         return new Date(encounter?.startDatetime ?? date);
       default:
-        ((_: never) => {})(options.at.encounterStartDatetime as never);
+        ((_: never) => {})(options.at.encounterStartDatetime);
     }
   } else if (options?.at?.type === 'programEnrolment') {
     switch (options.at.programEnrolmentDatetime) {
+      case undefined: // fallthrough to the default 'before' value
       case 'before':
         const before = new Date(
           new Date(program?.enrolmentDatetime ?? date).getTime() - 1
@@ -104,7 +106,7 @@ const extractAt = (
       case 'after':
         return new Date(program?.enrolmentDatetime ?? date);
       default:
-        ((_: never) => {})(options.at.programEnrolmentDatetime as never);
+        ((_: never) => {})(options.at.programEnrolmentDatetime);
     }
   }
 
