@@ -202,7 +202,7 @@ export type AuthTokenResponse = AuthToken | AuthTokenError;
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
   id: Scalars['String'];
-  itemId?: Maybe<Scalars['String']>;
+  itemId: Scalars['String'];
   manufacturerId?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   parentId?: Maybe<Scalars['String']>;
