@@ -2,6 +2,8 @@
   "button.new-outbound-shipment": "Nouvelle Livraison sortante",
   "button.order-more": "Nouvelle commande",
   "heading.expiring-stock": "Lots sur le point d'expirer",
+  "heading.shipments-to-be-picked": "Livraisons sortantes à prélever",
+  "heading-stock": "Stock",
   "heading.stock-levels": "États des Stocks",
   "label.expired_one": "Lot expiré",
   "label.expired_other": "Lots expirés",
@@ -14,5 +16,6 @@
   "label.this-week": "Cette Semaine",
   "label.today": "Aujourd'hui",
   "label.total-items_one": "Article",
-  "label.total-items_other": "Articles"
+  "label.total-items_other": "Articles",
+  "error.failed-to-create-requisition": "Impossible de créer le bon de commande {{message}}"
 }

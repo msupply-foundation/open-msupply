@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
 import {
   useTranslation,
-  useToggle,
-  InvoiceNodeStatus,
   useBarcodeScannerContext,
   CircularProgress,
   ScanIcon,
@@ -10,51 +8,55 @@ import {
   ButtonWithIcon,
   useNotification,
 } from '@openmsupply-client/common';
-import {
-  ItemRowFragment,
-  MasterListSearchModal,
-} from '@openmsupply-client/system';
-import { useOutbound } from '../api';
+import { Draft, useOutbound } from '../api';
+import { isOutboundDisabled } from '../../utils';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
 }: {
-  onAddItem: (item?: ItemRowFragment) => void;
+  onAddItem: (draft?: Draft) => void;
 }) => {
   const t = useTranslation('distribution');
-  const { status } = useOutbound.document.fields(['status']);
-  const isDisabled = status !== InvoiceNodeStatus.New;
-  const { addFromMasterList } = useOutbound.utils.addFromMasterList();
-  const { mutateAsync: getBarcodes } = useOutbound.utils.barcodes();
-  const { otherPartyId } = useOutbound.document.fields(['otherPartyId']);
-  const modalController = useToggle();
-  const filterByName = { existsForNameId: { equalTo: otherPartyId } };
+  const { data: outbound } = useOutbound.document.get();
+  const isDisabled = !!outbound && isOutboundDisabled(outbound);
+  const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const { hasBarcodeScanner, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
-  const { warning } = useNotification();
+  const { error, warning } = useNotification();
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
-      const { content, gtin } = result;
-      const barcode = gtin ?? content;
-      const barcodes = await getBarcodes(barcode);
+      const { content, gtin, batch } = result;
+      const value = gtin ?? content;
+      const barcode = await getBarcode(value);
 
-      if (barcodes.totalCount === 0) {
-        warning(t('error.no-matching-item'))();
-        // TODO: save barcode after selection
-        onAddItem();
-        return;
+      if (barcode?.__typename === 'BarcodeNode') {
+        const id = barcode?.itemId;
+
+        if (!!id) {
+          onAddItem({
+            item: { id },
+            barcode: { ...barcode, batch },
+          });
+          return;
+        }
       }
 
-      onAddItem({ id: barcodes.nodes[0]?.itemId } as ItemRowFragment);
+      warning(t('error.no-matching-item'))();
+
+      onAddItem({ barcode: { value, batch } });
     }
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (isScanning) {
       stopScan();
     } else {
-      startScanning(handleScanResult);
+      try {
+        await startScanning(handleScanResult);
+      } catch (e) {
+        error(t('error.unable-to-start-scanning', { error: e }))();
+      }
     }
   };
 
@@ -68,29 +70,18 @@ export const AddFromScannerButtonComponent = ({
   if (!hasBarcodeScanner) return null;
 
   return (
-    <>
-      <MasterListSearchModal
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
-        onChange={masterList => {
-          modalController.toggleOff();
-          addFromMasterList(masterList);
-        }}
-        filterBy={filterByName}
-      />
-      <ButtonWithIcon
-        disabled={isDisabled}
-        onClick={handleClick}
-        Icon={
-          isScanning ? (
-            <CircularProgress size={20} color="primary" />
-          ) : (
-            <ScanIcon />
-          )
-        }
-        label={t(isScanning ? 'button.stop' : 'button.scan')}
-      />
-    </>
+    <ButtonWithIcon
+      disabled={isDisabled}
+      onClick={handleClick}
+      Icon={
+        isScanning ? (
+          <CircularProgress size={20} color="primary" />
+        ) : (
+          <ScanIcon />
+        )
+      }
+      label={t(isScanning ? 'button.stop' : 'button.scan')}
+    />
   );
 };
 
