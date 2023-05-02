@@ -27,11 +27,11 @@ export const DistributionWidget: React.FC = () => {
     error: outboundCountError,
   } = useDashboard.statistics.outbound();
   const {
-    data: responseCount,
-    isLoading: isResponseCountLoading,
-    isError: isResponseCountError,
-    error: responseCountError,
-  } = useDashboard.statistics.response();
+    data: requisitionCount,
+    isLoading: isRequisitionCountLoading,
+    isError: isRequisitionCountError,
+    error: requisitionCountError,
+  } = useDashboard.statistics.requisitions();
 
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const onError = (e: unknown) => {
@@ -83,16 +83,14 @@ export const DistributionWidget: React.FC = () => {
           </Grid>
           <Grid item>
             <StatsPanel
-              error={responseCountError as ApiException}
-              isError={isResponseCountError}
-              isLoading={isResponseCountLoading}
+              error={requisitionCountError as ApiException}
+              isError={isRequisitionCountError}
+              isLoading={isRequisitionCountLoading}
               title={t('customer-requisition', { ns: 'app' })}
               stats={[
                 {
                   label: t('label.new'),
-                  value: formatNumber.round(
-                    responseCount?.newResponseRequisitionCount
-                  ),
+                  value: formatNumber.round(requisitionCount?.response?.new),
                 },
               ]}
             />
