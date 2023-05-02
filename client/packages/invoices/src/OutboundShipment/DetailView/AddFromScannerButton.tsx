@@ -8,13 +8,13 @@ import {
   ButtonWithIcon,
   useNotification,
 } from '@openmsupply-client/common';
-import { DraftItem, useOutbound } from '../api';
+import { Draft, useOutbound } from '../api';
 import { isOutboundDisabled } from '../../utils';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
 }: {
-  onAddItem: (item?: DraftItem) => void;
+  onAddItem: (draft?: Draft) => void;
 }) => {
   const t = useTranslation('distribution');
   const { data: outbound } = useOutbound.document.get();
@@ -37,14 +37,14 @@ export const AddFromScannerButtonComponent = ({
           onAddItem({
             item: { id },
             barcode: { ...barcode, batch },
-          } as DraftItem);
+          });
           return;
         }
       }
 
       warning(t('error.no-matching-item'))();
 
-      onAddItem({ barcode: { value, batch } } as DraftItem);
+      onAddItem({ barcode: { value, batch } });
     }
   };
 

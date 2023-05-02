@@ -1,5 +1,4 @@
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { BarcodeFragment } from './operations.generated';
 
 export {
   OutboundFragment,
@@ -10,7 +9,9 @@ export {
 
 export * from './hooks';
 
-export type DraftItem = {
-  item?: ItemRowFragment;
-  barcode?: BarcodeFragment & { batch?: string };
+export type DraftItem = Pick<ItemRowFragment, 'id' | 'unitName'>;
+
+export type Draft = {
+  item?: DraftItem;
+  barcode?: { id?: string; value: string; batch?: string };
 };

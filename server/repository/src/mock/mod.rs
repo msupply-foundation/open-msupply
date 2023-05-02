@@ -14,6 +14,7 @@ mod name_store_join;
 mod name_tag;
 mod number;
 mod period_and_period_schedule;
+mod program;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
@@ -51,6 +52,7 @@ pub use name_store_join::*;
 pub use name_tag::*;
 pub use number::*;
 pub use period_and_period_schedule::*;
+pub use program::*;
 pub use stock_line::*;
 pub use stocktake::*;
 pub use stocktake_line::*;
@@ -179,6 +181,7 @@ pub struct MockDataInserts {
     pub sync_logs: bool,
     pub inventory_adjustment_reasons: bool,
     pub barcodes: bool,
+    pub programs: bool,
 }
 
 impl MockDataInserts {
@@ -213,6 +216,7 @@ impl MockDataInserts {
             sync_logs: true,
             inventory_adjustment_reasons: true,
             barcodes: true,
+            programs: true,
         }
     }
 
@@ -349,6 +353,11 @@ impl MockDataInserts {
         self.barcodes = true;
         self
     }
+
+    pub fn programs(mut self) -> Self {
+        self.programs = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -407,6 +416,7 @@ fn all_mock_data() -> MockDataCollection {
             stocktakes: mock_stocktake_data(),
             stocktake_lines: mock_stocktake_line_data(),
             activity_logs: mock_activity_logs(),
+            programs: mock_programs(),
             ..Default::default()
         },
     );
@@ -685,9 +695,11 @@ pub fn insert_mock_data(
             repo.upsert_one(row).unwrap();
         }
 
-        for row in &mock_data.programs {
-            let repo = ProgramRowRepository::new(connection);
-            repo.upsert_one(row).unwrap();
+        if inserts.programs {
+            for row in &mock_data.programs {
+                let repo = ProgramRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
         }
 
         for row in &mock_data.program_requisition_settings {

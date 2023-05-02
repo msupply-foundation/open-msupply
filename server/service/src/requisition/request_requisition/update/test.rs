@@ -5,8 +5,8 @@ mod test_update {
         mock::{
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_name_store_c,
-            mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            mock_store_a, mock_store_b, MockData, MockDataInserts,
+            mock_program_requisition, mock_request_draft_requisition_calculation_test,
+            mock_sent_request_requisition, mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
         test_db::{setup_all, setup_all_with_data},
@@ -139,6 +139,19 @@ mod test_update {
                 }),
             ),
             Err(ServiceError::NotThisStoreRequisition)
+        );
+
+        // CannotEditProgramRequisitionInformation
+        context.store_id = mock_store_a().id;
+        assert_eq!(
+            service.update_request_requisition(
+                &context,
+                inline_init(|r: &mut UpdateRequestRequisition| {
+                    r.id = mock_program_requisition().id;
+                    r.max_months_of_stock = Some(5.0);
+                }),
+            ),
+            Err(ServiceError::CannotEditProgramRequisitionInformation)
         );
     }
 

@@ -7,10 +7,10 @@ import {
   useDirtyCheck,
   SortUtils,
 } from '@openmsupply-client/common';
-import { useStockLines, ItemRowFragment } from '@openmsupply-client/system';
+import { useStockLines } from '@openmsupply-client/system';
 import { DraftOutboundLine } from '../../../../types';
 import { issueStock } from '../utils';
-import { useOutbound } from '../../../api';
+import { DraftItem, useOutbound } from '../../../api';
 import {
   OutboundLineFragment,
   PartialStockLineFragment,
@@ -105,7 +105,7 @@ interface UseDraftOutboundLinesControl {
 }
 
 export const useDraftOutboundLines = (
-  item: ItemRowFragment | null
+  item: DraftItem | null
 ): UseDraftOutboundLinesControl => {
   const { id: invoiceId, status } = useOutbound.document.fields([
     'id',
@@ -159,7 +159,8 @@ export const useDraftOutboundLines = (
           );
         }
         if (placeholder) {
-          placeholder.item = item;
+          const placeHolderItem = lines?.find(l => l.item.id === item.id)?.item;
+          if (!!placeHolderItem) placeholder.item = placeHolderItem;
           rows.push(
             createDraftOutboundLine({ invoiceId, invoiceLine: placeholder })
           );

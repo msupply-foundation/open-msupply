@@ -25,7 +25,7 @@ pub struct LegacyBarcodeRow {
     #[serde(rename = "barcode")]
     pub value: String,
     #[serde(rename = "itemID")]
-    pub item_id: Option<String>,
+    pub item_id: String,
     #[serde(rename = "manufacturerID")]
     pub manufacturer_id: Option<String>,
     #[serde(rename = "packSize")]

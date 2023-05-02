@@ -226,6 +226,13 @@ pub async fn start_server(
         .create_system_user(&service_provider)
         .unwrap();
 
+    // CREATE MISSING MASTER LIST AND PROGRAM
+    // TODO: Delete when soft delete for master list is implemented
+    service_provider
+        .general_service
+        .create_missing_master_list_and_program(&service_provider)
+        .unwrap();
+
     // START SERVER
     info!("Initialising http server..",);
     let processors_task = processors.spawn(service_provider.clone().into_inner());

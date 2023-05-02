@@ -3,8 +3,8 @@ use repository::{
     InventoryAdjustmentReasonRepository, InventoryAdjustmentReasonType, StockLineRow,
 };
 use repository::{
-    ItemFilter, ItemRepository, LocationFilter, LocationRepository, RepositoryError,
-    StocktakeLineRow, StocktakeLineRowRepository, StorageConnection,
+    LocationFilter, LocationRepository, RepositoryError, StocktakeLineRow,
+    StocktakeLineRowRepository, StorageConnection,
 };
 
 pub fn check_stocktake_line_exist(
@@ -20,18 +20,6 @@ pub fn check_location_exists(
 ) -> Result<bool, RepositoryError> {
     let count = LocationRepository::new(connection)
         .count(Some(LocationFilter::new().id(EqualFilter::equal_to(id))))?;
-    Ok(count == 1)
-}
-
-pub fn check_item_exists(
-    connection: &StorageConnection,
-    id: &str,
-    store_id: &str,
-) -> Result<bool, RepositoryError> {
-    let count = ItemRepository::new(connection).count(
-        store_id.to_owned(),
-        Some(ItemFilter::new().id(EqualFilter::equal_to(id))),
-    )?;
     Ok(count == 1)
 }
 

@@ -11,7 +11,7 @@ table! {
     barcode (id) {
         id -> Text,
         value -> Text,
-        item_id -> Nullable<Text>,
+        item_id -> Text,
         manufacturer_id -> Nullable<Text>,
         pack_size -> Nullable<Integer>,
         parent_id -> Nullable<Text>,
@@ -27,7 +27,7 @@ joinable!(barcode -> invoice_line (id));
 pub struct BarcodeRow {
     pub id: String,
     pub value: String,
-    pub item_id: Option<String>,
+    pub item_id: String,
     pub manufacturer_id: Option<String>,
     pub pack_size: Option<i32>,
     pub parent_id: Option<String>,
@@ -38,14 +38,13 @@ impl Default for BarcodeRow {
         BarcodeRow {
             id: Default::default(),
             value: Default::default(),
-            item_id: None,
+            item_id: Default::default(),
             manufacturer_id: None,
             pack_size: None,
             parent_id: None,
         }
     }
 }
-
 pub struct BarcodeRowRepository<'a> {
     connection: &'a StorageConnection,
 }

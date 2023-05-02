@@ -7,6 +7,8 @@ import {
   useTranslation,
   SearchBar,
   Typography,
+  InfoPanel,
+  Box,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
@@ -17,6 +19,7 @@ import { getApprovalStatusText } from '../../../utils';
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
   const isDisabled = useRequest.utils.isDisabled();
+  const isProgram = useRequest.utils.isProgram();
   const { itemFilter, setItemFilter } = useRequest.line.list();
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
   const {
@@ -52,7 +55,7 @@ export const Toolbar: FC = () => {
               label={t('label.supplier-name')}
               Input={
                 <InternalSupplierSearchInput
-                  disabled={isDisabled}
+                  disabled={isDisabled || isProgram}
                   value={otherParty ?? null}
                   onChange={otherParty => update({ otherParty })}
                 />
@@ -101,6 +104,11 @@ export const Toolbar: FC = () => {
             />
           )}
         </Grid>
+        {programName && (
+          <Box padding={2} style= {{ maxWidth: 500 }}>
+            <InfoPanel message={t('info.cannot-edit-program-requisition')} />
+          </Box>
+        )}
         <Grid
           item
           flexDirection="column"
