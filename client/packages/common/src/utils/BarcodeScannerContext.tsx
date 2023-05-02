@@ -38,10 +38,10 @@ const getIndex = (digit: number, data: number[]) => {
   return index === -1 ? undefined : index;
 };
 
-const parseBarcodeData = (data: number[] | undefined) => {
+export const parseBarcodeData = (data: number[] | undefined) => {
   if (!data || data.length < 5) return undefined;
-  // the parsing is not happy if codes 22 ( synchronous idle )
-  // or 0 is encountered, so we trim from there
+  // the scanner is returning \x00 and \x22 characters when in continuous mode
+  // these need to be stripped out to prevent issues when parsing the barcode
   const synchronousIdleIndex = getIndex(22, data);
   const trimmedData = data.slice(4, synchronousIdleIndex);
   const zeroIndex = getIndex(0, trimmedData);
@@ -51,7 +51,7 @@ const parseBarcodeData = (data: number[] | undefined) => {
     .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
 };
 
-const parseResult = (content?: string): ScanResult => {
+export const parseResult = (content?: string): ScanResult => {
   if (!content) return {};
   try {
     const gs1 = parseBarcode(content);
@@ -89,56 +89,55 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const startScan = async () => {
     setIsScanning(true);
-    const timeout = setTimeout(async () => {
+
+    const timeoutPromise = new Promise<undefined>((_, reject) =>
+      setTimeout(reject, SCAN_TIMEOUT_IN_MS, 'Scan timed out')
+    );
+
+    const getBarcodePromise = () =>
+      new Promise<string | undefined>(async (resolve, reject) => {
+        switch (true) {
+          case hasElectronApi:
+            const { startBarcodeScan } = electronNativeAPI;
+            await startBarcodeScan();
+
+            electronNativeAPI.onBarcodeScan((_event, data) =>
+              resolve(parseBarcodeData(data))
+            );
+            break;
+          case hasNativeBarcodeScanner:
+            // Check camera permission
+            await BarcodeScanner.checkPermission({ force: true });
+
+            // make background of WebView transparent
+            BarcodeScanner.hideBackground();
+
+            // start scanning and wait for a result
+            const result = await BarcodeScanner.startScan();
+            BarcodeScanner.showBackground();
+
+            resolve(result.content);
+            break;
+          default:
+            reject(new Error('Cannot find scan api'));
+            break;
+        }
+      });
+
+    let result: ScanResult = {};
+
+    try {
+      const barcode = await Promise.race([timeoutPromise, getBarcodePromise()]);
+      result = parseResult(barcode);
+    } catch (e) {
+      error(t('error.unable-to-read-barcode'))();
+      console.error(e);
+    } finally {
       await stopScan();
-      // if the timeout has been hit then an error is raised
-      // by the electron implementation, and the snack is shown
-      // in that error handler, no need to duplicate
-      if (!hasElectronApi) error(t('error.unable-to-read-barcode'))();
-    }, SCAN_TIMEOUT_IN_MS);
-
-    if (hasElectronApi) {
-      try {
-        const { startBarcodeScan } = electronNativeAPI;
-        await startBarcodeScan();
-        const scan = new Promise<number[]>((resolve, reject) => {
-          electronNativeAPI.onBarcodeScan((_event, data) => {
-            try {
-              resolve(data);
-            } catch (e) {
-              reject(e);
-            }
-          });
-        });
-
-        const data = await scan;
-        const barcode = parseBarcodeData(data);
-        clearTimeout(timeout);
-        setIsScanning(false);
-        return parseResult(barcode);
-      } catch (e) {
-        error(t('error.unable-to-read-barcode'))();
-        clearTimeout(timeout);
-        setIsScanning(false);
-        console.error(e);
-      }
-    }
-
-    if (hasNativeBarcodeScanner) {
-      // Check camera permission
-      await BarcodeScanner.checkPermission({ force: true });
-
-      // make background of WebView transparent
-      BarcodeScanner.hideBackground();
-      const result = await BarcodeScanner.startScan(); // start scanning and wait for a result
-      clearTimeout(timeout);
       setIsScanning(false);
-      BarcodeScanner.showBackground();
-      const { content } = result;
-      return parseResult(content);
     }
 
-    return {};
+    return result;
   };
 
   const startScanning = async (callback: ScanCallback) => {

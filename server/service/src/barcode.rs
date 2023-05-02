@@ -67,6 +67,18 @@ pub trait BarcodeServiceTrait: Sync + Send {
         })
     }
 
+    fn get_barcode_by_value(
+        &self,
+        ctx: &ServiceContext,
+        value: &str,
+    ) -> Result<Option<Barcode>, RepositoryError> {
+        let repository = BarcodeRepository::new(&ctx.connection);
+
+        Ok(repository
+            .query_by_filter(BarcodeFilter::new().value(EqualFilter::equal_to(value)))?
+            .pop())
+    }
+
     fn insert_barcode(
         &self,
         ctx: &ServiceContext,
