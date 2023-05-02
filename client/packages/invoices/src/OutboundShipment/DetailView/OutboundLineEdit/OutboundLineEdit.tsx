@@ -17,7 +17,6 @@ import {
   InvoiceLineNodeType,
   useNotification,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
 import {
@@ -32,23 +31,24 @@ import {
   getAllocatedQuantity,
   getAllocatedPacks,
 } from './utils';
-import { DraftItem, useOutbound } from '../../api';
+import { Draft, DraftItem, useOutbound } from '../../api';
 import { DraftOutboundLine } from '../../../types';
+import { getPackQuantityCellId } from '../../../utils';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  draft: DraftItem | null;
+  draft: Draft | null;
   mode: ModalMode | null;
 }
 
-const useFocusNumberOfPacksInput = (draft: DraftItem | null) => {
+const useFocusNumberOfPacksInput = (draft: Draft | null) => {
   const batch = draft?.barcode?.batch;
 
   useEffect(() => {
     setTimeout(() => {
       if (!batch) return;
-      const input = document.getElementById(`pack_quantity_${batch}`);
+      const input = document.getElementById(getPackQuantityCellId(batch));
       if (input) {
         input.focus();
       }
@@ -94,29 +94,38 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     if (!isDirty) return;
 
     await mutateAsync(draftOutboundLines);
-
+    console.log('draft', draft);
     if (!draft) return;
 
     const { barcode } = draft;
     const barcodeExists = !!barcode?.id;
+    console.info(
+      `barcode: ${JSON.stringify(barcode)} currentItem: ${JSON.stringify(
+        currentItem
+      )} barcodeExists: ${barcodeExists})`
+    );
     if (!barcode || !currentItem || barcodeExists) return;
 
-    draftOutboundLines
-      .filter(line => line.numberOfPacks > 0)
-      .forEach(async line => {
-        const input = {
-          input: {
-            value: barcode.value,
-            itemId: currentItem?.id,
-            packSize: line.packSize,
-          },
-        };
-        try {
-          await insertBarcode(input);
-        } catch (error) {
-          warning(t('error.unable-to-save-barcode', { error }))();
-        }
-      });
+    // it is possible for the user to select multiple batch lines
+    // if the scanned barcode does not contain a batch number
+    // however the scanned barcode can only relate to a specific pack size and therefore batch
+    const packSize = draftOutboundLines.find(
+      line => line.numberOfPacks > 0
+    )?.packSize;
+
+    const input = {
+      input: {
+        value: barcode.value,
+        itemId: currentItem?.id,
+        packSize,
+      },
+    };
+
+    try {
+      await insertBarcode(input);
+    } catch (error) {
+      warning(t('error.unable-to-save-barcode', { error }))();
+    }
   };
 
   const onNext = async () => {
@@ -211,7 +220,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
 
 interface TableProps {
   canAutoAllocate: boolean;
-  currentItem: ItemRowFragment | null;
+  currentItem: DraftItem | null;
   isLoading: boolean;
   packSizeController: PackSizeController;
   updateQuantity: (batchId: string, updateQuantity: number) => void;

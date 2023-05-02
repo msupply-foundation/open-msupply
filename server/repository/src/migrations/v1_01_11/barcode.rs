@@ -7,17 +7,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             CREATE TABLE barcode (
                 id text NOT NULL PRIMARY KEY,
                 value text NOT NULL UNIQUE,
-                item_id text REFERENCES item(id),
+                item_id text NOT NULL REFERENCES item(id),
                 manufacturer_id text,
                 pack_size int4,
                 parent_id text
             );            
             "#
-    )?;
-
-    sql!(
-        connection,
-        r#"ALTER TABLE invoice_line ADD barcode_id text NULL REFERENCES barcode(id);"#
     )?;
 
     #[cfg(feature = "postgres")]
