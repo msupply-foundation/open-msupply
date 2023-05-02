@@ -22,11 +22,11 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const formatNumber = useFormatNumber();
   const { data, isLoading, isError, error } = useDashboard.statistics.inbound();
   const {
-    data: requestCount,
-    isLoading: isRequestCountLoading,
-    isError: isRequestCountError,
-    error: responseCountError,
-  } = useDashboard.statistics.request();
+    data: requisitionCount,
+    isLoading: isRequisitionCountLoading,
+    isError: isRequisitionCountError,
+    error: requisitionCountError,
+  } = useDashboard.statistics.requisitions();
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {
@@ -86,14 +86,14 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
           </Grid>
           <Grid item>
             <StatsPanel
-              error={responseCountError as ApiException}
-              isError={isRequestCountError}
-              isLoading={isRequestCountLoading}
+              error={requisitionCountError as ApiException}
+              isError={isRequisitionCountError}
+              isLoading={isRequisitionCountLoading}
               title={t('internal-order', { ns: 'app' })}
               stats={[
                 {
                   label: t('label.new'),
-                  value: formatNumber.round(requestCount?.draftCount),
+                  value: formatNumber.round(requisitionCount?.request?.draft),
                 },
               ]}
             />

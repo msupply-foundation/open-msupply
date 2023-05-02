@@ -11,15 +11,12 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
-import { useDashboard } from '@openmsupply-client/dashboard';
-import { getBadgeProps } from '../../utils';
 
 export const ReplenishmentNav: FC = () => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Replenishment).addWildCard().build()
   );
   const t = useTranslation('app');
-  const { data: requestCount } = useDashboard.statistics.request();
 
   return (
     <AppNavSection isActive={isActive} to={AppRoute.Replenishment}>
@@ -45,7 +42,6 @@ export const ReplenishmentNav: FC = () => {
               .addPart(AppRoute.InternalOrder)
               .build()}
             text={t('internal-order')}
-            badgeProps={getBadgeProps(requestCount?.draftCount)}
           />
 
           <AppNavLink

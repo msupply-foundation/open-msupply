@@ -24,9 +24,14 @@ query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
   }
 }
 
-query responseRequisitionCounts($storeId: String!) {
+query requisitionCounts($storeId: String!) {
   requisitionCounts(storeId: $storeId) {
-    newResponseRequisitionCount
+    request {
+      draft
+    }
+    response {
+      new
+    }
   }
 }
 
@@ -51,11 +56,5 @@ query inboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
       }
       notDelivered
     }
-  }
-}
-
-query requestRequisitionCounts($storeId: String!) {
-  requestRequisitionCounts(storeId: $storeId) {
-    draftCount
   }
 }
