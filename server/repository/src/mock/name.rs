@@ -80,6 +80,7 @@ pub fn mock_name_master_list_filter_test() -> NameRow {
         r.name = String::from("name_master_list_filter_test");
         r.code = String::from("master_list_filter_test");
         r.is_supplier = true;
+        r.is_customer = true;
     })
 }
 
