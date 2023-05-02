@@ -13,6 +13,7 @@ use graphql_core::pagination::PaginationInput;
 use crate::store_preference::store_preferences;
 use graphql_types::types::StorePreferenceNode;
 use mutations::{
+    barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
     display_settings::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
@@ -232,16 +233,13 @@ impl GeneralQueries {
         store_preferences(ctx, &store_id)
     }
 
-    pub async fn barcodes(
+    pub async fn barcode_by_value(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<BarcodeFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<BarcodeSortInput>>,
-    ) -> Result<BarcodesResponse> {
-        barcodes(ctx, store_id, page, filter, sort)
+        value: String,
+    ) -> Result<BarcodeResponse> {
+        barcode_by_value(ctx, store_id, value)
     }
 
     pub async fn requisition_counts(
@@ -285,6 +283,15 @@ impl GeneralMutations {
         input: DisplaySettingsInput,
     ) -> Result<UpdateDisplaySettingsResponse> {
         update_display_settings(ctx, input)
+    }
+
+    pub async fn insert_barcode(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: BarcodeInput,
+    ) -> Result<mutations::barcode::InsertResponse> {
+        insert_barcode(ctx, &store_id, input)
     }
 }
 

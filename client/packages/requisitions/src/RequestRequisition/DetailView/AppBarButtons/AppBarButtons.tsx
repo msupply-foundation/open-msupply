@@ -29,6 +29,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
   const isDisabled = useRequest.utils.isDisabled();
+  const isProgram = useRequest.utils.isProgram();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('distribution');
   const { data } = useRequest.document.get();
@@ -46,7 +47,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
-          disabled={isDisabled}
+          disabled={isDisabled || isProgram}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem(true)}

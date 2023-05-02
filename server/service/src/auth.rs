@@ -47,6 +47,7 @@ pub enum Resource {
     QueryMasterList,
     // items
     QueryItems,
+    MutateItems,
     // stock
     StockCount,
     QueryStockLine,
@@ -129,6 +130,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     // items
     map.insert(Resource::QueryItems, PermissionDSL::HasStoreAccess);
+    map.insert(
+        Resource::MutateItems,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::ItemMutate),
+        ]),
+    );
 
     // stock
     map.insert(

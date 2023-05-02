@@ -26,5 +26,6 @@ export const useResponse = {
     isRemoteAuthorisation: Utils.useIsRemoteAuthorisation,
     preferences: Utils.useRequisitionPreferences,
     supplyRequested: Utils.useSupplyRequestedQuantity,
+    isDisabledByAuthorisation: Utils.useIsDisabledByAuthorisation,
   },
 };

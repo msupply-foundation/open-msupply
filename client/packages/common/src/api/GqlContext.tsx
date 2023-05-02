@@ -25,7 +25,7 @@ const permissionExceptions = [
   'stockCounts',
   'invoiceCounts',
   'itemCounts',
-  'requisitionCounts'
+  'requisitionCounts',
 ];
 interface ResponseError {
   message?: string;

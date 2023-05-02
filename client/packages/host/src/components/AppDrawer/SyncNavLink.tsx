@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   AlertIcon,
   AppNavLink,
@@ -6,8 +7,8 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import React, { ReactNode } from 'react';
 import { useHost } from '../../api/hooks';
+import { getBadgeProps } from '../../utils';
 
 const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000;
 
@@ -21,13 +22,7 @@ export const SyncNavLink = () => {
   // the Badge does not show if the content is 0
   // somehow though the numberOfRecordsInPushQueue can be '0' which does show
   const syncCount = Number(numberOfRecordsInPushQueue);
-  const badgeContent = Number.isNaN(syncCount) ? 0 : (syncCount as ReactNode);
-
-  const badgeProps = {
-    badgeContent,
-    max: 99,
-    color: 'primary' as 'primary' | 'default',
-  };
+  const badgeProps = getBadgeProps(Number.isNaN(syncCount) ? 0 : syncCount);
 
   if (syncStatus && syncStatus.error) {
     badgeProps.color = 'default';

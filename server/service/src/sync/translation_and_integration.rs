@@ -139,18 +139,6 @@ impl IntegrationRecords {
         // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
         let start_nested_transaction = { connection.transaction_level.get() > 0 };
 
-        for upsert in self.upserts.iter() {
-            // Integrate every record in a sub transaction. This is mainly for Postgres where the
-            // whole transaction fails when there is a DB error (not a problem in sqlite).
-            if start_nested_transaction {
-                connection
-                    .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx), false)
-                    .map_err(|e| e.to_inner_error())?;
-            } else {
-                upsert.upsert(&connection)?;
-            }
-        }
-
         for delete in self.deletes.iter() {
             // Integrate every record in a sub transaction. This is mainly for Postgres where the
             // whole transaction fails when there is a DB error (not a problem in sqlite).
@@ -160,6 +148,18 @@ impl IntegrationRecords {
                     .map_err(|e| e.to_inner_error())?;
             } else {
                 delete.delete(&connection)?;
+            }
+        }
+
+        for upsert in self.upserts.iter() {
+            // Integrate every record in a sub transaction. This is mainly for Postgres where the
+            // whole transaction fails when there is a DB error (not a problem in sqlite).
+            if start_nested_transaction {
+                connection
+                    .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx), false)
+                    .map_err(|e| e.to_inner_error())?;
+            } else {
+                upsert.upsert(&connection)?;
             }
         }
 
@@ -228,8 +228,12 @@ impl PullDeleteRecord {
             Unit => UnitRowRepository::new(con).delete(id),
             Item => ItemRowRepository::new(con).delete(id),
             Store => StoreRowRepository::new(con).delete(id),
-            MasterList => MasterListRowRepository::new(con).delete(id),
-            MasterListLine => MasterListLineRowRepository::new(con).delete(id),
+            ProgramRequisitionOrderType => {
+                ProgramRequisitionOrderTypeRowRepository::new(con).delete(id)
+            }
+            ProgramRequisitionSettings => {
+                ProgramRequisitionSettingsRowRepository::new(con).delete(id)
+            }
             MasterListNameJoin => MasterListNameJoinRepository::new(con).delete(id),
             Report => ReportRowRepository::new(con).delete(id),
             NameStoreJoin => NameStoreJoinRepository::new(con).delete(id),
