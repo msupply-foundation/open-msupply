@@ -1,5 +1,7 @@
 use crate::{
-    requisition::common::{check_requisition_exists, generate_requisition_user_id_update},
+    requisition::common::{
+        check_approval_status, check_requisition_exists, generate_requisition_user_id_update,
+    },
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
 };
@@ -72,6 +74,10 @@ fn validate(
         check_requisition_exists(connection, &requisition_line_row.requisition_id)?
             .ok_or(OutError::RequisitionDoesNotExist)?;
 
+    if check_approval_status(requisition_row.clone()) {
+        return Err(OutError::CannotEditRequisition);
+    }
+
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
     }
@@ -120,8 +126,8 @@ mod test {
     use repository::{
         mock::{
             mock_finalised_request_requisition_line, mock_new_response_requisition_test,
-            mock_sent_request_requisition_line, mock_store_a, mock_store_b, mock_user_account_b,
-            MockDataInserts,
+            mock_response_program_requisition, mock_sent_request_requisition_line, mock_store_a,
+            mock_store_b, mock_user_account_b, MockDataInserts,
         },
         test_db::setup_all,
         RequisitionLineRowRepository, RequisitionRowRepository,
@@ -193,6 +199,18 @@ mod test {
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
+
+        // CannotEditRequisition (for program requisitions)
+        context.store_id = mock_store_a().id;
+        assert_eq!(
+            service.update_response_requisition_line(
+                &context,
+                inline_init(|r: &mut UpdateResponseRequisitionLine| {
+                    r.id = mock_response_program_requisition().lines[0].id.clone();
+                }),
+            ),
+            Err(ServiceError::CannotEditRequisition)
+        )
     }
 
     #[actix_rt::test]

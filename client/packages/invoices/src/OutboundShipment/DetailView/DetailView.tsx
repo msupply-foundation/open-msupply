@@ -11,11 +11,7 @@ import {
   createQueryParamsStore,
   DetailTabs,
 } from '@openmsupply-client/common';
-import {
-  toItemRow,
-  ItemRowFragment,
-  LogList,
-} from '@openmsupply-client/system';
+import { toItemRow, LogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { OutboundLineEdit } from './OutboundLineEdit';
 import { OutboundItem } from '../../types';
@@ -23,20 +19,19 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useOutbound } from '../api';
+import { Draft, useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OutboundLineFragment } from '../api/operations.generated';
 
 export const DetailView: FC = () => {
   const isDisabled = useOutbound.utils.isDisabled();
-  const { entity, mode, onOpen, onClose, isOpen } =
-    useEditModal<ItemRowFragment>();
+  const { entity, mode, onOpen, onClose, isOpen } = useEditModal<Draft>();
   const { data, isLoading } = useOutbound.document.get();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
   const onRowClick = useCallback(
     (item: OutboundLineFragment | OutboundItem) => {
-      onOpen(toItemRow(item));
+      onOpen({ item: toItemRow(item) });
     },
     [toItemRow, onOpen]
   );
@@ -77,7 +72,7 @@ export const DetailView: FC = () => {
           <AppBarButtons onAddItem={onOpen} />
           {isOpen && (
             <OutboundLineEdit
-              item={entity}
+              draft={entity}
               mode={mode}
               isOpen={isOpen}
               onClose={onClose}

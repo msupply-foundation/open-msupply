@@ -16,6 +16,7 @@ import {
   ScanIcon,
   useBarcodeScannerContext,
   CircularProgress,
+  useNotification,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -42,6 +43,7 @@ interface StockLineFormProps {
 }
 export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const t = useTranslation('inventory');
+  const { error } = useNotification();
   const { hasBarcodeScanner, isScanning, startScan } =
     useBarcodeScannerContext();
   const supplierName = draft.supplierName
@@ -49,17 +51,21 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
     : t('message.no-supplier');
 
   const scanBarcode = async () => {
-    const result = await startScan();
-    if (!!result.content) {
-      const { batch, content, expiryDate, gtin } = result;
-      const barcode = gtin ?? content;
-      const draft = {
-        barcode,
-        batch,
-        expiryDate,
-      };
+    try {
+      const result = await startScan();
+      if (!!result.content) {
+        const { batch, content, expiryDate, gtin } = result;
+        const barcode = gtin ?? content;
+        const draft = {
+          barcode,
+          batch,
+          expiryDate,
+        };
 
-      onUpdate(draft);
+        onUpdate(draft);
+      }
+    } catch (e) {
+      error(t('error.unable-to-scan', { error: e }))();
     }
   };
 

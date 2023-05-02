@@ -11,7 +11,7 @@ export const useOutboundInsert = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const api = useOutboundApi();
-  return useMutation(api.insert, {
+  return useMutation(api.insert.outbound, {
     onSuccess: invoiceNumber => {
       const route = RouteBuilder.create(AppRoute.Distribution)
         .addPart(AppRoute.OutboundShipment)

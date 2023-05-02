@@ -1,6 +1,7 @@
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
     auth::{AuthService, AuthServiceTrait},
+    barcode::{BarcodeService, BarcodeServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
@@ -13,6 +14,7 @@ use crate::{
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     location::{LocationService, LocationServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
+    missing_program::create_missing_master_list_and_program,
     name::get_names,
     processors::ProcessorsTrigger,
     report::report_service::{ReportService, ReportServiceTrait},
@@ -72,6 +74,8 @@ pub struct ServiceProvider {
     pub sync_trigger: SyncTrigger,
     pub site_is_initialised_trigger: SiteIsInitialisedTrigger,
     pub display_settings_service: Box<dyn DisplaySettingsServiceTrait>,
+    // Barcodes
+    pub barcode_service: Box<dyn BarcodeServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -129,6 +133,7 @@ impl ServiceProvider {
             display_settings_service: Box::new(DisplaySettingsService {}),
             stock_line_service: Box::new(StockLineService {}),
             item_count_service: Box::new(ItemServiceCount {}),
+            barcode_service: Box::new(BarcodeService {}),
         }
     }
 
@@ -208,6 +213,14 @@ pub trait GeneralServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
     ) -> Result<(), RepositoryError> {
         create_system_user(service_provider)
+    }
+
+    // TODO: Delete when soft delete for master list is implemented
+    fn create_missing_master_list_and_program(
+        &self,
+        service_provider: &ServiceProvider,
+    ) -> Result<(), RepositoryError> {
+        create_missing_master_list_and_program(service_provider)
     }
 }
 
