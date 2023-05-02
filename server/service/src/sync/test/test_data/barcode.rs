@@ -36,7 +36,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             PullUpsertRecord::Barcode(BarcodeRow {
                 id: BARCODE_1.0.to_string(),
                 value: "0123456789".to_string(),
-                item_id: Some("item_a".to_string()),
+                item_id: "item_a".to_string(),
                 manufacturer_id: Some("manufacturer_a".to_string()),
                 pack_size: Some(1),
                 parent_id: None,
@@ -48,7 +48,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             PullUpsertRecord::Barcode(BarcodeRow {
                 id: BARCODE_2.0.to_string(),
                 value: "9876543210".to_string(),
-                item_id: Some("item_b".to_string()),
+                item_id: "item_b".to_string(),
                 manufacturer_id: Some("manufacturer_a".to_string()),
                 pack_size: Some(1),
                 parent_id: None,
@@ -65,7 +65,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             push_data: json!(LegacyBarcodeRow {
                 id: BARCODE_1.0.to_string(),
                 value: "0123456789".to_string(),
-                item_id: Some("item_a".to_string()),
+                item_id: "item_a".to_string(),
                 manufacturer_id: Some("manufacturer_a".to_string()),
                 pack_size: Some(1),
                 parent_id: None,
@@ -77,7 +77,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             push_data: json!(LegacyBarcodeRow {
                 id: BARCODE_2.0.to_string(),
                 value: "9876543210".to_string(),
-                item_id: Some("item_b".to_string()),
+                item_id: "item_b".to_string(),
                 manufacturer_id: Some("manufacturer_a".to_string()),
                 pack_size: Some(1),
                 parent_id: None,

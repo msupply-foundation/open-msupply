@@ -14,6 +14,7 @@
   "error.provide-valid-reason": "Adjustment reason does not match adjustment direction",
   "error.reduced-below-zero": "Stock line exist in new outbound shipments. The quantity cannot be reduced below zero.",
   "error.stocktake-has-stock-reduced-below-zero": "Stock take cannot be finalised because some of the stock has been used in new outbound shipments.",
+  "error.unable-to-scan": "Unable to scan barcode: {{error}}",
   "label.add-batch": "Add batch",
   "label.add-new-line": "Add a new line",
   "label.cost-price": "Cost price",

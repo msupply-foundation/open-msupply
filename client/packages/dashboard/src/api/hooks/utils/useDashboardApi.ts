@@ -8,6 +8,9 @@ export const useDashboardApi = () => {
     count: () => [...keys.base(), 'count', storeId] as const,
     items: () => [...keys.count(), 'items'] as const,
     stock: () => [...keys.count(), 'stock'] as const,
+    requisition: () => [...keys.count(), 'requisition'] as const,
+    outbound: () => [...keys.count(), 'outbound'] as const,
+    inbound: () => [...keys.count(), 'inbound'] as const,
   };
 
   const { client } = useGql();

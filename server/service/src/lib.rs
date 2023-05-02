@@ -23,6 +23,7 @@ pub mod item_stats;
 pub mod location;
 pub mod login;
 pub mod master_list;
+pub mod missing_program;
 pub mod name;
 pub mod number;
 pub mod permission;

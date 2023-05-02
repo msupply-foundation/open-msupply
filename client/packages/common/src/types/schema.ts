@@ -205,45 +205,17 @@ export type AuthTokenErrorInterface = {
 
 export type AuthTokenResponse = AuthToken | AuthTokenError;
 
-export type BarcodeConnector = {
-  __typename: 'BarcodeConnector';
-  nodes: Array<BarcodeNode>;
-  totalCount: Scalars['Int'];
-};
-
-export type BarcodeFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  itemId?: InputMaybe<EqualFilterStringInput>;
-  packSize?: InputMaybe<EqualFilterNumberInput>;
-  value?: InputMaybe<EqualFilterStringInput>;
-};
-
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
   id: Scalars['String'];
-  itemId?: Maybe<Scalars['String']>;
+  itemId: Scalars['String'];
   manufacturerId?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   parentId?: Maybe<Scalars['String']>;
   value: Scalars['String'];
 };
 
-export enum BarcodeSortFieldInput {
-  Barcode = 'BARCODE',
-  Id = 'ID'
-}
-
-export type BarcodeSortInput = {
-  /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']>;
-  /** Sort query result by `key` */
-  key: BarcodeSortFieldInput;
-};
-
-export type BarcodesResponse = BarcodeConnector;
+export type BarcodeResponse = BarcodeNode | NodeError;
 
 export type BatchInboundShipmentInput = {
   continueOnError?: InputMaybe<Scalars['Boolean']>;
@@ -1183,6 +1155,14 @@ export enum InitialisationStatusType {
 
 export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
+export type InsertBarcodeInput = {
+  itemId: Scalars['String'];
+  packSize?: InputMaybe<Scalars['Int']>;
+  value: Scalars['String'];
+};
+
+export type InsertBarcodeResponse = BarcodeNode;
+
 export type InsertDocumentRegistryInput = {
   context: DocumentRegistryNodeContext;
   documentType: Scalars['String'];
@@ -2097,6 +2077,7 @@ export type Mutations = {
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
+  insertBarcode: InsertBarcodeResponse;
   insertDocumentRegistry: InsertDocumentResponse;
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
@@ -2291,6 +2272,12 @@ export type MutationsDeleteStocktakeLineArgs = {
 
 export type MutationsInitialiseSiteArgs = {
   input: SyncSettingsInput;
+};
+
+
+export type MutationsInsertBarcodeArgs = {
+  input: InsertBarcodeInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -3014,7 +3001,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  barcodes: BarcodesResponse;
+  barcodeByValue: BarcodeResponse;
   clinicians: CliniciansResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
@@ -3098,11 +3085,9 @@ export type QueriesAuthTokenArgs = {
 };
 
 
-export type QueriesBarcodesArgs = {
-  filter?: InputMaybe<BarcodeFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<BarcodeSortInput>>;
+export type QueriesBarcodeByValueArgs = {
   storeId: Scalars['String'];
+  value: Scalars['String'];
 };
 
 
@@ -3491,6 +3476,11 @@ export type ReportSortInput = {
 
 export type ReportsResponse = ReportConnector;
 
+export type RequestRequisitionCounts = {
+  __typename: 'RequestRequisitionCounts';
+  draft: Scalars['Int'];
+};
+
 export type RequestStoreStatsNode = {
   __typename: 'RequestStoreStatsNode';
   averageMonthlyConsumption: Scalars['Int'];
@@ -3507,7 +3497,8 @@ export type RequisitionConnector = {
 
 export type RequisitionCounts = {
   __typename: 'RequisitionCounts';
-  newResponseRequisitionCount: Scalars['Int'];
+  request: RequestRequisitionCounts;
+  response: ResponseRequisitionCounts;
 };
 
 export type RequisitionFilterInput = {
@@ -3704,6 +3695,11 @@ export type RequisitionSortInput = {
 };
 
 export type RequisitionsResponse = RequisitionConnector;
+
+export type ResponseRequisitionCounts = {
+  __typename: 'ResponseRequisitionCounts';
+  new: Scalars['Int'];
+};
 
 export type ResponseRequisitionStatsNode = {
   __typename: 'ResponseRequisitionStatsNode';
@@ -4657,6 +4653,7 @@ export enum UserPermission {
   DocumentQuery = 'DOCUMENT_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  ItemMutate = 'ITEM_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
   LogQuery = 'LOG_QUERY',
   OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',

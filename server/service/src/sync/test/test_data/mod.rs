@@ -77,9 +77,7 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncPullReco
     test_records.append(&mut user_permission::test_pull_delete_records());
     test_records.append(&mut unit::test_pull_delete_records());
     test_records.append(&mut item::test_pull_delete_records());
-    test_records.append(&mut master_list_line::test_pull_delete_records());
     test_records.append(&mut master_list_name_join::test_pull_delete_records());
-    test_records.append(&mut master_list::test_pull_delete_records());
     test_records.append(&mut name::test_pull_delete_records());
     test_records.append(&mut report::test_pull_delete_records());
     test_records.append(&mut store::test_pull_delete_records());

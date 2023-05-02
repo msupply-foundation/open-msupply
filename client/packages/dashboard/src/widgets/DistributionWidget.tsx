@@ -12,9 +12,10 @@ import {
   ApiException,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
-import { useOutbound } from '../api';
+import { useDashboard } from '../api';
+import { useOutbound } from '@openmsupply-client/invoices';
 
-export const OutboundShipmentWidget: React.FC = () => {
+export const DistributionWidget: React.FC = () => {
   const modalControl = useToggle(false);
   const { error: errorNotification } = useNotification();
   const t = useTranslation('dashboard');
@@ -24,13 +25,13 @@ export const OutboundShipmentWidget: React.FC = () => {
     isLoading: isOutboundCountLoading,
     isError: isOutboundCountError,
     error: outboundCountError,
-  } = useOutbound.utils.count();
+  } = useDashboard.statistics.outbound();
   const {
-    data: responseCount,
-    isLoading: isResponseCountLoading,
-    isError: isResponseCountError,
-    error: responseCountError,
-  } = useOutbound.utils.responseCount();
+    data: requisitionCount,
+    isLoading: isRequisitionCountLoading,
+    isError: isRequisitionCountError,
+    error: requisitionCountError,
+  } = useDashboard.statistics.requisitions();
 
   const { mutateAsync: onCreate } = useOutbound.document.insert();
   const onError = (e: unknown) => {
@@ -71,10 +72,10 @@ export const OutboundShipmentWidget: React.FC = () => {
               error={outboundCountError as ApiException}
               isError={isOutboundCountError}
               isLoading={isOutboundCountLoading}
-              title={t('heading.shipments-not-shipped')}
+              title={t('heading.shipments')}
               stats={[
                 {
-                  label: t('label.today'),
+                  label: t('label.have-not-shipped'),
                   value: formatNumber.round(outboundCount?.notShipped),
                 },
               ]}
@@ -82,16 +83,14 @@ export const OutboundShipmentWidget: React.FC = () => {
           </Grid>
           <Grid item>
             <StatsPanel
-              error={responseCountError as ApiException}
-              isError={isResponseCountError}
-              isLoading={isResponseCountLoading}
-              title={t('heading.new-requisitions')}
+              error={requisitionCountError as ApiException}
+              isError={isRequisitionCountError}
+              isLoading={isRequisitionCountLoading}
+              title={t('customer-requisition', { ns: 'app' })}
               stats={[
                 {
-                  label: t('label.today'),
-                  value: formatNumber.round(
-                    responseCount?.newResponseRequisitionCount
-                  ),
+                  label: t('label.new'),
+                  value: formatNumber.round(requisitionCount?.response?.new),
                 },
               ]}
             />

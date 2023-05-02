@@ -19,12 +19,12 @@ import {
   ItemRowFragment,
 } from '@openmsupply-client/system';
 import { PackSizeController } from './hooks';
-import { useOutbound } from '../../api';
+import { DraftItem, useOutbound } from '../../api';
 
 interface OutboundLineEditFormProps {
   allocatedQuantity: number;
   availableQuantity: number;
-  item: ItemRowFragment | null;
+  item: DraftItem | null;
   onChangeItem: (newItem: ItemRowFragment | null) => void;
   onChangeQuantity: (quantity: number, packSize: number | null) => void;
   packSizeController: PackSizeController;
