@@ -2,14 +2,13 @@ use repository::{MasterListRow, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
-};
+use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
 pub struct LegacyListMasterRow {
-    ID: String,
+    #[serde(rename = "ID")]
+    id: String,
     description: String,
     code: String,
     note: String,
@@ -32,30 +31,14 @@ impl SyncTranslation for MasterListTranslation {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
         let result = MasterListRow {
-            id: data.ID,
+            id: data.id,
             name: data.description,
             code: data.code,
             description: data.note,
         };
-
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::MasterList(result),
         )))
-    }
-
-    fn try_translate_pull_delete(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::MasterList,
-            )
-        });
-
-        Ok(result)
     }
 }
 
@@ -75,14 +58,6 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

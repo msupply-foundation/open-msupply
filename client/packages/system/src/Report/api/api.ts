@@ -33,7 +33,7 @@ export const getReportQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
         format,
       });
-      if (result?.printReport.__typename === 'PrintReportNode') {
+      if (result?.printReport?.__typename === 'PrintReportNode') {
         return result.printReport.fileId;
       }
 

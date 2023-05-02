@@ -15,6 +15,7 @@ export const ToolbarActions = () => {
   const { on, toggle } = useHideOverStocked();
   const t = useTranslation('replenishment');
   const isDisabled = useRequest.utils.isDisabled();
+  const isProgram = useRequest.utils.isProgram();
   const { minMonthsOfStock, maxMonthsOfStock, update } =
     useRequest.document.fields(['minMonthsOfStock', 'maxMonthsOfStock']);
 
@@ -36,7 +37,7 @@ export const ToolbarActions = () => {
           label={t('label.min-months-of-stock')}
           Input={
             <Autocomplete
-              disabled={isDisabled}
+              disabled={isDisabled || isProgram}
               clearIcon={null}
               isOptionEqualToValue={(a, b) => a.value === b.value}
               value={{
@@ -54,6 +55,7 @@ export const ToolbarActions = () => {
                   onConfirm: () => update({ minMonthsOfStock: option.value }),
                 })
               }
+              getOptionDisabled={option => option.value > maxMonthsOfStock}
             />
           }
         />
@@ -64,7 +66,7 @@ export const ToolbarActions = () => {
           label={t('label.max-months-of-stock')}
           Input={
             <Autocomplete
-              disabled={isDisabled}
+              disabled={isDisabled || isProgram}
               clearIcon={null}
               isOptionEqualToValue={(a, b) => a.value === b.value}
               value={{
@@ -82,6 +84,7 @@ export const ToolbarActions = () => {
                   onConfirm: () => update({ maxMonthsOfStock: option.value }),
                 })
               }
+              getOptionDisabled={option => option.value < minMonthsOfStock}
             />
           }
         />

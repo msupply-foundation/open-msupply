@@ -8,6 +8,9 @@ export const useDashboard = {
 
   statistics: {
     item: Statistics.useItemCounts,
+    inbound: Statistics.useInboundCounts,
+    outbound: Statistics.useOutboundCounts,
+    requisitions: Statistics.useRequisitionCounts,
     stock: Statistics.useStockCounts,
   },
 };

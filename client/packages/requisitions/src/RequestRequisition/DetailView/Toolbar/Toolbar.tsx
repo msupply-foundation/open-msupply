@@ -6,19 +6,37 @@ import {
   Grid,
   useTranslation,
   SearchBar,
+  Typography,
+  InfoPanel,
+  Box,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { ToolbarDropDown } from './ToolbarDropDown';
 import { ToolbarActions } from './ToolbarActions';
+import { getApprovalStatusText } from '../../../utils';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
   const isDisabled = useRequest.utils.isDisabled();
+  const isProgram = useRequest.utils.isProgram();
   const { itemFilter, setItemFilter } = useRequest.line.list();
-  const { theirReference, update, otherParty } = useRequest.document.fields([
+  const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
+  const {
+    linkedRequisition,
+    theirReference,
+    update,
+    otherParty,
+    orderType,
+    programName,
+    period,
+  } = useRequest.document.fields([
     'theirReference',
     'otherParty',
+    'linkedRequisition',
+    'programName',
+    'period',
+    'orderType',
   ]);
 
   return (
@@ -37,7 +55,7 @@ export const Toolbar: FC = () => {
               label={t('label.supplier-name')}
               Input={
                 <InternalSupplierSearchInput
-                  disabled={isDisabled}
+                  disabled={isDisabled || isProgram}
                   value={otherParty ?? null}
                   onChange={otherParty => update({ otherParty })}
                 />
@@ -56,7 +74,41 @@ export const Toolbar: FC = () => {
               />
             }
           />
+          {usesRemoteAuthorisation && (
+            <InputWithLabelRow
+              label={t('label.auth-status')}
+              Input={
+                <Typography>
+                  {getApprovalStatusText(linkedRequisition?.approvalStatus)}
+                </Typography>
+              }
+            />
+          )}
+
+          {orderType && (
+            <InputWithLabelRow
+              label={t('label.order-type')}
+              Input={<Typography>{orderType ?? ''}</Typography>}
+            />
+          )}
+          {programName && (
+            <InputWithLabelRow
+              label={t('label.program')}
+              Input={<Typography>{programName ?? ''}</Typography>}
+            />
+          )}
+          {period && (
+            <InputWithLabelRow
+              label={t('label.period')}
+              Input={<Typography>{period?.name ?? ''}</Typography>}
+            />
+          )}
         </Grid>
+        {programName && (
+          <Box padding={2} style= {{ maxWidth: 500 }}>
+            <InfoPanel message={t('info.cannot-edit-program-requisition')} />
+          </Box>
+        )}
         <Grid
           item
           flexDirection="column"

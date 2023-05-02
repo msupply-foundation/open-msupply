@@ -5,8 +5,8 @@ mod test_update {
         mock::{
             mock_draft_request_requisition_for_update_test,
             mock_draft_response_requisition_for_update_test, mock_name_store_c,
-            mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
-            mock_store_a, mock_store_b, MockData, MockDataInserts,
+            mock_request_draft_requisition_calculation_test, mock_request_program_requisition,
+            mock_sent_request_requisition, mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
         test_db::{setup_all, setup_all_with_data},
@@ -18,7 +18,7 @@ mod test_update {
     use crate::{
         requisition::request_requisition::{
             UpdateRequestRequisition, UpdateRequestRequisitionError as ServiceError,
-            UpdateRequestRequistionStatus,
+            UpdateRequestRequisitionStatus,
         },
         service_provider::ServiceProvider,
     };
@@ -140,6 +140,19 @@ mod test_update {
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
+
+        // CannotEditProgramRequisitionInformation
+        context.store_id = mock_store_a().id;
+        assert_eq!(
+            service.update_request_requisition(
+                &context,
+                inline_init(|r: &mut UpdateRequestRequisition| {
+                    r.id = mock_request_program_requisition().id;
+                    r.max_months_of_stock = Some(5.0);
+                }),
+            ),
+            Err(ServiceError::CannotEditProgramRequisitionInformation)
+        );
     }
 
     #[actix_rt::test]
@@ -162,7 +175,7 @@ mod test_update {
                 UpdateRequestRequisition {
                     id: mock_draft_request_requisition_for_update_test().id,
                     colour: Some("new colour".to_owned()),
-                    status: Some(UpdateRequestRequistionStatus::Sent),
+                    status: Some(UpdateRequestRequisitionStatus::Sent),
                     their_reference: Some("new their_reference".to_owned()),
                     comment: Some("new comment".to_owned()),
                     max_months_of_stock: None,

@@ -4,13 +4,13 @@ use util::inline_init;
 use crate::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    MasterListRow, RequisitionLineRow, RequisitionRow,
+    MasterListRow, RequisitionLineRow, RequisitionRow, RequisitionRowApprovalStatus,
 };
 
 use super::{
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockMasterList, FullMockRequisition},
-    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_stock_line_a,
-    mock_store_a, MockData,
+    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_program_a,
+    mock_stock_line_a, mock_store_a, MockData,
 };
 
 pub fn mock_test_requisition_service() -> MockData {
@@ -45,6 +45,10 @@ pub fn mock_test_requisition_service() -> MockData {
     result
         .full_master_lists
         .push(mock_test_not_store_a_master_list());
+    result.requisitions.push(mock_request_program_requisition());
+    result
+        .full_requisitions
+        .push(mock_response_program_requisition());
 
     result.full_invoices = vec![(
         "mock_new_response_requisition_test_invoice".to_owned(),
@@ -382,5 +386,56 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
                 stock_line: mock_stock_line_a(),
             },
         ],
+    }
+}
+
+pub fn mock_request_program_requisition() -> RequisitionRow {
+    inline_init(|r: &mut RequisitionRow| {
+        r.id = "mock_request_program_requisition".to_owned();
+        r.requisition_number = 3;
+        r.name_id = "name_a".to_owned();
+        r.store_id = mock_store_a().id;
+        r.r#type = RequisitionRowType::Request;
+        r.status = RequisitionRowStatus::Draft;
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap();
+        r.max_months_of_stock = 1.0;
+        r.min_months_of_stock = 0.9;
+        r.program_id = Some(mock_program_a().id);
+    })
+}
+
+pub fn mock_response_program_requisition() -> FullMockRequisition {
+    let requisition_id = "mock_response_program_requisition".to_owned();
+    let line1_id = format!("{}1", requisition_id);
+    FullMockRequisition {
+        requisition: inline_init(|r: &mut RequisitionRow| {
+            r.id = requisition_id.clone();
+            r.requisition_number = 10;
+            r.name_id = "name_a".to_owned();
+            r.store_id = mock_store_a().id;
+            r.r#type = RequisitionRowType::Response;
+            r.status = RequisitionRowStatus::New;
+            r.approval_status = Some(RequisitionRowApprovalStatus::Pending);
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap();
+            r.max_months_of_stock = 3.0;
+            r.min_months_of_stock = 1.0;
+            r.program_id = Some(mock_program_a().id);
+        }),
+        lines: vec![inline_init(|r: &mut RequisitionLineRow| {
+            r.id = line1_id;
+            r.requisition_id = requisition_id;
+            r.item_id = mock_item_a().id;
+            r.requested_quantity = 10;
+            r.suggested_quantity = 10;
+            r.supply_quantity = 100;
+            r.available_stock_on_hand = 1;
+            r.average_monthly_consumption = 1;
+        })],
     }
 }

@@ -352,17 +352,6 @@ mutation deleteInboundShipmentLines(
   }
 }
 
-query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
-  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-    inbound {
-      created {
-        today
-        thisWeek
-      }
-    }
-  }
-}
-
 mutation upsertInboundShipment(
   $storeId: String!
   $input: BatchInboundShipmentInput!

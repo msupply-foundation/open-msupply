@@ -16,8 +16,10 @@ import {
   ScanIcon,
   useBarcodeScannerContext,
   CircularProgress,
+  useNotification,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
+import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   <InputWithLabelRow
@@ -28,7 +30,7 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
     sx={{
       justifyContent: 'space-between',
       '.MuiFormControl-root > .MuiInput-root, > input': {
-        maxWidth: '120px',
+        maxWidth: '160px',
       },
     }}
   />
@@ -41,6 +43,7 @@ interface StockLineFormProps {
 }
 export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const t = useTranslation('inventory');
+  const { error } = useNotification();
   const { hasBarcodeScanner, isScanning, startScan } =
     useBarcodeScannerContext();
   const supplierName = draft.supplierName
@@ -48,17 +51,21 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
     : t('message.no-supplier');
 
   const scanBarcode = async () => {
-    const result = await startScan();
-    if (!!result.content) {
-      const { batch, content, expiryDate, gtin } = result;
-      const barcode = gtin ?? content;
-      const draft = {
-        barcode,
-        batch,
-        expiryDate,
-      };
+    try {
+      const result = await startScan();
+      if (!!result.content) {
+        const { batch, content, expiryDate, gtin } = result;
+        const barcode = gtin ?? content;
+        const draft = {
+          barcode,
+          batch,
+          expiryDate,
+        };
 
-      onUpdate(draft);
+        onUpdate(draft);
+      }
+    } catch (e) {
+      error(t('error.unable-to-scan', { error: e }))();
     }
   };
 
@@ -151,6 +158,18 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
           }
         />
         <StyledInputRow
+          label={t('label.location')}
+          Input={
+            <LocationSearchInput
+              autoFocus={false}
+              disabled={false}
+              value={draft.location ?? null}
+              width={160}
+              onChange={location => onUpdate({ locationId: location?.id })}
+            />
+          }
+        />
+        <StyledInputRow
           label={t('label.barcode')}
           Input={
             <Box>
@@ -166,7 +185,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
                       <ScanIcon />
                     )
                   }
-                  label={'Scan'}
+                  label={t('button.scan')}
                 />
               )}
             </Box>

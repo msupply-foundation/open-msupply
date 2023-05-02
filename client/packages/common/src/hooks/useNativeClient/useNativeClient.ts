@@ -1,5 +1,6 @@
-import { uniqWith } from '@common/utils';
+import { uniqWith } from 'lodash';
 import { useState, useEffect } from 'react';
+import { KeepAwake } from '@capacitor-community/keep-awake';
 import {
   getNativeAPI,
   getPreference,
@@ -13,6 +14,7 @@ import {
   NativeAPI,
   NativeMode,
 } from './types';
+import { Capacitor } from '@capacitor/core';
 
 declare global {
   interface Window {
@@ -88,6 +90,22 @@ export const useNativeClient = ({
     return result.log || noResult;
   };
 
+  const allowSleep = async () => {
+    // Currently only supported on native platforms via capacitor
+    if (!Capacitor.isNativePlatform) return;
+
+    const result = await KeepAwake.isSupported();
+    if (result.isSupported) await KeepAwake.allowSleep();
+  };
+
+  const keepAwake = async () => {
+    // Currently only supported on native platforms via capacitor
+    if (!Capacitor.isNativePlatform) return;
+
+    const result = await KeepAwake.isSupported();
+    if (result.isSupported) await KeepAwake.keepAwake();
+  };
+
   useEffect(() => {
     if (!state.isDiscovering) return;
 
@@ -160,5 +178,7 @@ export const useNativeClient = ({
     stopDiscovery,
     setMode,
     readLog,
+    keepAwake,
+    allowSleep,
   };
 };

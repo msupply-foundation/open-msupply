@@ -46,6 +46,15 @@ impl<T> Default for EqualFilter<T> {
     }
 }
 
+impl EqualFilter<bool> {
+    pub fn equal_or_null_bool(value: bool) -> Self {
+        Self {
+            equal_any_or_null: Some(vec![value]),
+            ..Default::default()
+        }
+    }
+}
+
 impl EqualFilter<i64> {
     pub fn equal_to_i64(value: i64) -> Self {
         inline_init(|r: &mut Self| r.equal_to = Some(value))

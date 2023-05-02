@@ -30,6 +30,8 @@ fragment ResponseLine on RequisitionLineNode {
     code
     unitName
   }
+  approvedQuantity
+  approvalComment
   linkedRequisitionLine {
     itemStats {
       availableStockOnHand
@@ -53,6 +55,7 @@ fragment Response on RequisitionNode {
   otherPartyId
   maxMonthsOfStock
   minMonthsOfStock
+  approvalStatus
 
   user {
     __typename
@@ -104,6 +107,13 @@ fragment Response on RequisitionNode {
       code
     }
   }
+  programName
+  period {
+    name
+    startDate
+    endDate
+  }
+  orderType
 }
 query responseByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
@@ -131,6 +141,14 @@ fragment ResponseRow on RequisitionNode {
   theirReference
   type
   otherPartyId
+  approvalStatus
+  programName
+  period {
+    name
+    startDate
+    endDate
+  }
+  orderType
 }
 
 query responses(

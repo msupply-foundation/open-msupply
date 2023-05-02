@@ -1,10 +1,10 @@
 import React from 'react';
 import { Grid } from '@openmsupply-client/common';
-import { StockWidget } from './widgets';
 import {
-  InboundShipmentWidget,
-  OutboundShipmentWidget,
-} from '@openmsupply-client/invoices';
+  DistributionWidget,
+  ReplenishmentWidget,
+  StockWidget,
+} from './widgets';
 
 const Dashboard: React.FC = () => (
   <Grid
@@ -15,8 +15,8 @@ const Dashboard: React.FC = () => (
     }}
     justifyContent="space-evenly"
   >
-    <InboundShipmentWidget />
-    <OutboundShipmentWidget />
+    <ReplenishmentWidget />
+    <DistributionWidget />
     <StockWidget />
   </Grid>
 );

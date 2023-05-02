@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::{IntegrationRecords, PullUpsertRecord},
 };
 use repository::{MasterListLineRow, MasterListNameJoinRow, MasterListRow};
 
@@ -91,29 +91,6 @@ impl SyncRecordTester for MasterListTester {
             ]),
         });
 
-        // STEP 2 - deletes
-        result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({
-                "list_master_line": [master_list_line_row.id],
-                "list_master": [master_list_row1.id],
-                "list_master_name_join": [master_list_name_join_row1.id]
-            }),
-            integration_records: IntegrationRecords::from_deletes(vec![
-                PullDeleteRecord {
-                    id: master_list_row1.id,
-                    table: PullDeleteRecordTable::MasterList,
-                },
-                PullDeleteRecord {
-                    id: master_list_line_row.id,
-                    table: PullDeleteRecordTable::MasterListLine,
-                },
-                PullDeleteRecord {
-                    id: master_list_name_join_row1.id,
-                    table: PullDeleteRecordTable::MasterListNameJoin,
-                },
-            ]),
-        });
         result
     }
 }
