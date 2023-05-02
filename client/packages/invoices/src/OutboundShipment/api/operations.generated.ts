@@ -12,7 +12,7 @@ export type OutboundFragment = { __typename: 'InvoiceNode', id: string, comment?
 
 export type OutboundRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, taxPercentage?: number | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, taxPercentage?: number | null } };
 
-export type BarcodeFragment = { __typename: 'BarcodeNode', id: string, itemId?: string | null, manufacturerId?: string | null, packSize?: number | null, parentId?: string | null, value: string };
+export type BarcodeFragment = { __typename: 'BarcodeNode', id: string, itemId?: string | null, packSize?: number | null, value: string };
 
 export type InvoicesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -50,13 +50,13 @@ export type InvoiceCountsQueryVariables = Types.Exact<{
 
 export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', notShipped: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
-export type BarcodesQueryVariables = Types.Exact<{
+export type BarcodeByValueQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
-  filter?: Types.InputMaybe<Types.BarcodeFilterInput>;
+  value: Types.Scalars['String'];
 }>;
 
 
-export type BarcodesQuery = { __typename: 'Queries', barcodes: { __typename: 'BarcodeConnector', totalCount: number, nodes: Array<{ __typename: 'BarcodeNode', id: string, itemId?: string | null, manufacturerId?: string | null, packSize?: number | null, parentId?: string | null, value: string }> } };
+export type BarcodeByValueQuery = { __typename: 'Queries', barcodeByValue: { __typename: 'BarcodeNode', id: string, itemId?: string | null, packSize?: number | null, value: string } | { __typename: 'NodeError' } };
 
 export type RequisitionCountsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -129,7 +129,7 @@ export type InsertBarcodeMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertBarcodeMutation = { __typename: 'Mutations', insertBarcode: { __typename: 'BarcodeNode', id: string, itemId?: string | null, manufacturerId?: string | null, packSize?: number | null, parentId?: string | null, value: string } };
+export type InsertBarcodeMutation = { __typename: 'Mutations', insertBarcode: { __typename: 'BarcodeNode', id: string, itemId?: string | null, packSize?: number | null, value: string } };
 
 export const PartialStockLineFragmentDoc = gql`
     fragment PartialStockLine on StockLineNode {
@@ -290,9 +290,7 @@ export const BarcodeFragmentDoc = gql`
   __typename
   id
   itemId
-  manufacturerId
   packSize
-  parentId
   value
 }
     `;
@@ -381,15 +379,12 @@ export const InvoiceCountsDocument = gql`
   }
 }
     `;
-export const BarcodesDocument = gql`
-    query barcodes($storeId: String!, $filter: BarcodeFilterInput) {
-  barcodes(storeId: $storeId, filter: $filter) {
-    ... on BarcodeConnector {
+export const BarcodeByValueDocument = gql`
+    query barcodeByValue($storeId: String!, $value: String!) {
+  barcodeByValue(storeId: $storeId, value: $value) {
+    ... on BarcodeNode {
       __typename
-      nodes {
-        ...Barcode
-      }
-      totalCount
+      ...Barcode
     }
   }
 }
@@ -986,8 +981,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts', 'query');
     },
-    barcodes(variables: BarcodesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<BarcodesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<BarcodesQuery>(BarcodesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'barcodes', 'query');
+    barcodeByValue(variables: BarcodeByValueQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<BarcodeByValueQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<BarcodeByValueQuery>(BarcodeByValueDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'barcodeByValue', 'query');
     },
     requisitionCounts(variables: RequisitionCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequisitionCountsQuery>(RequisitionCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionCounts', 'query');
@@ -1092,16 +1087,16 @@ export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockBarcodesQuery((req, res, ctx) => {
- *   const { storeId, filter } = req.variables;
+ * mockBarcodeByValueQuery((req, res, ctx) => {
+ *   const { storeId, value } = req.variables;
  *   return res(
- *     ctx.data({ barcodes })
+ *     ctx.data({ barcodeByValue })
  *   )
  * })
  */
-export const mockBarcodesQuery = (resolver: ResponseResolver<GraphQLRequest<BarcodesQueryVariables>, GraphQLContext<BarcodesQuery>, any>) =>
-  graphql.query<BarcodesQuery, BarcodesQueryVariables>(
-    'barcodes',
+export const mockBarcodeByValueQuery = (resolver: ResponseResolver<GraphQLRequest<BarcodeByValueQueryVariables>, GraphQLContext<BarcodeByValueQuery>, any>) =>
+  graphql.query<BarcodeByValueQuery, BarcodeByValueQueryVariables>(
+    'barcodeByValue',
     resolver
   )
 

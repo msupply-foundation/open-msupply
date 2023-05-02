@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
 import {
   useTranslation,
-  useToggle,
-  InvoiceNodeStatus,
   useBarcodeScannerContext,
   CircularProgress,
   ScanIcon,
@@ -10,8 +8,8 @@ import {
   ButtonWithIcon,
   useNotification,
 } from '@openmsupply-client/common';
-import { MasterListSearchModal } from '@openmsupply-client/system';
 import { Draft, useOutbound } from '../api';
+import { isOutboundDisabled } from '../../utils';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
@@ -19,13 +17,9 @@ export const AddFromScannerButtonComponent = ({
   onAddItem: (draft?: Draft) => void;
 }) => {
   const t = useTranslation('distribution');
-  const { status } = useOutbound.document.fields(['status']);
-  const isDisabled = status !== InvoiceNodeStatus.New;
-  const { addFromMasterList } = useOutbound.utils.addFromMasterList();
-  const { mutateAsync: getBarcodes } = useOutbound.utils.barcodes();
-  const { otherPartyId } = useOutbound.document.fields(['otherPartyId']);
-  const modalController = useToggle();
-  const filterByName = { existsForNameId: { equalTo: otherPartyId } };
+  const { data: outbound } = useOutbound.document.get();
+  const isDisabled = !!outbound && isOutboundDisabled(outbound);
+  const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
   const { hasBarcodeScanner, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
@@ -34,10 +28,9 @@ export const AddFromScannerButtonComponent = ({
     if (!!result.content) {
       const { content, gtin, batch } = result;
       const value = gtin ?? content;
-      const barcodes = await getBarcodes(value);
+      const barcode = await getBarcode(value);
 
-      if (barcodes.totalCount > 0) {
-        const barcode = barcodes.nodes[0];
+      if (barcode?.__typename === 'BarcodeNode') {
         const id = barcode?.itemId;
 
         if (!!id) {
@@ -77,29 +70,18 @@ export const AddFromScannerButtonComponent = ({
   if (!hasBarcodeScanner) return null;
 
   return (
-    <>
-      <MasterListSearchModal
-        open={modalController.isOn}
-        onClose={modalController.toggleOff}
-        onChange={masterList => {
-          modalController.toggleOff();
-          addFromMasterList(masterList);
-        }}
-        filterBy={filterByName}
-      />
-      <ButtonWithIcon
-        disabled={isDisabled}
-        onClick={handleClick}
-        Icon={
-          isScanning ? (
-            <CircularProgress size={20} color="primary" />
-          ) : (
-            <ScanIcon />
-          )
-        }
-        label={t(isScanning ? 'button.stop' : 'button.scan')}
-      />
-    </>
+    <ButtonWithIcon
+      disabled={isDisabled}
+      onClick={handleClick}
+      Icon={
+        isScanning ? (
+          <CircularProgress size={20} color="primary" />
+        ) : (
+          <ScanIcon />
+        )
+      }
+      label={t(isScanning ? 'button.stop' : 'button.scan')}
+    />
   );
 };
 
