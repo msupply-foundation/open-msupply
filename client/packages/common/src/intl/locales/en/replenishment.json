@@ -61,6 +61,11 @@
   "label.supplier-ref": "Reference",
   "label.add-charges": "Add charges",
   "label.shipment": "Shipment",
+  "label.program": "Program",
+  "label.order-type": "Order Type",
+  "label.period": "Period",
+  "messages.not-configured": "Not configured",
+  "messages.period-not-available": "No available periods",
   "messages.requested-to-suggested": "This will set all lines requested quantity to the suggested quantity.",
   "messages.no-shipments-yet": "No shipments created yet.",
   "messages.no-related-documents": "No related documents",
@@ -96,5 +101,6 @@
   "messages.error-saving-shipment": "Error saving shipment 🥺",
   "messages.saved": "Saved",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
-  "messages.shipment-saved": "Shipment saved 🥳"
+  "messages.shipment-saved": "Shipment saved 🥳",
+  "info.cannot-edit-program-requisition": "Cannot edit supplier, minimum MOS, maximum MOS or add items in a program requisition."
 }

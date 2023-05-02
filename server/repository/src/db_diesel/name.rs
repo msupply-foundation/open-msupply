@@ -25,7 +25,7 @@ pub struct Name {
     pub store_row: Option<StoreRow>,
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, PartialEq, Debug)]
 pub struct NameFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<SimpleStringFilter>,
@@ -69,7 +69,7 @@ impl<'a> NameRepository<'a> {
         store_id: &str,
         filter: Option<NameFilter>,
     ) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(store_id.to_string(), filter);
+        let query = Self::create_filtered_query(store_id.to_string(), filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -97,7 +97,7 @@ impl<'a> NameRepository<'a> {
         filter: Option<NameFilter>,
         sort: Option<NameSort>,
     ) -> Result<Vec<Name>, RepositoryError> {
-        let mut query = create_filtered_query(store_id.to_string(), filter);
+        let mut query = Self::create_filtered_query(store_id.to_string(), filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -124,15 +124,79 @@ impl<'a> NameRepository<'a> {
 
         let result = final_query.load::<NameAndNameStoreJoin>(&self.connection.connection)?;
 
-        Ok(result.into_iter().map(to_domain).collect())
+        Ok(result.into_iter().map(Name::from_join).collect())
+    }
+
+    /// Returns a list of names left joined to name_store_join (for name_store_joins matching store_id parameter)
+    /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
+    /// but it's considered invisible in subseqent filters.
+    pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
+        let mut query = name_dsl::name
+            .left_join(
+                name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_id
+                    .eq(name_dsl::id)
+                    .and(name_store_join_dsl::store_id.eq(store_id.clone()))), // if the name is visible to the `store_id` passed into this function, attach its `name store_join` information
+            )
+            .left_join(store_dsl::store)
+            .into_boxed();
+
+        if let Some(f) = filter {
+            let NameFilter {
+                id,
+                name,
+                code,
+                is_customer,
+                is_supplier,
+                is_store,
+                store_code,
+                is_visible,
+                is_system_name,
+                r#type,
+            } = f;
+
+            apply_equal_filter!(query, id, name_dsl::id);
+            apply_simple_string_filter!(query, code, name_dsl::code);
+            apply_simple_string_filter!(query, name, name_dsl::name_);
+            apply_simple_string_filter!(query, store_code, store_dsl::code);
+            apply_equal_filter!(query, r#type, name_dsl::type_);
+
+            if let Some(is_customer) = is_customer {
+                query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
+            }
+            if let Some(is_supplier) = is_supplier {
+                query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
+            }
+
+            query = match is_visible {
+                Some(true) => query.filter(name_store_join_dsl::id.is_not_null()),
+                Some(false) => query.filter(name_store_join_dsl::id.is_null()),
+                None => query,
+            };
+
+            query = match is_system_name {
+                Some(true) => query.filter(name_dsl::code.eq_any(SYSTEM_NAME_CODES)),
+                Some(false) => query.filter(name_dsl::code.ne_all(SYSTEM_NAME_CODES)),
+                None => query,
+            };
+
+            query = match is_store {
+                Some(true) => query.filter(store_dsl::id.is_not_null()),
+                Some(false) => query.filter(store_dsl::id.is_null()),
+                None => query,
+            };
+        };
+
+        query
     }
 }
 
-fn to_domain((name_row, name_store_join_row, store_row): NameAndNameStoreJoin) -> Name {
-    Name {
-        name_row,
-        name_store_join_row,
-        store_row,
+impl Name {
+    pub fn from_join((name_row, name_store_join_row, store_row): NameAndNameStoreJoin) -> Name {
+        Name {
+            name_row,
+            name_store_join_row,
+            store_row,
+        }
     }
 }
 
@@ -149,65 +213,6 @@ type BoxedNameQuery = IntoBoxed<
     LeftJoin<LeftJoin<name::table, OnNameStoreJoinToNameJoin>, store::table>,
     DBType,
 >;
-
-fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
-    let mut query = name_dsl::name
-        .left_join(
-            name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_id
-                .eq(name_dsl::id)
-                .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
-        )
-        .left_join(store_dsl::store)
-        .into_boxed();
-
-    if let Some(f) = filter {
-        let NameFilter {
-            id,
-            name,
-            code,
-            is_customer,
-            is_supplier,
-            is_store,
-            store_code,
-            is_visible,
-            is_system_name,
-            r#type,
-        } = f;
-
-        apply_equal_filter!(query, id, name_dsl::id);
-        apply_simple_string_filter!(query, code, name_dsl::code);
-        apply_simple_string_filter!(query, name, name_dsl::name_);
-        apply_simple_string_filter!(query, store_code, store_dsl::code);
-        apply_equal_filter!(query, r#type, name_dsl::type_);
-
-        if let Some(is_customer) = is_customer {
-            query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
-        }
-        if let Some(is_supplier) = is_supplier {
-            query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
-        }
-
-        query = match is_visible {
-            Some(true) => query.filter(name_store_join_dsl::id.is_not_null()),
-            Some(false) => query.filter(name_store_join_dsl::id.is_null()),
-            None => query,
-        };
-
-        query = match is_system_name {
-            Some(true) => query.filter(name_dsl::code.eq_any(SYSTEM_NAME_CODES)),
-            Some(false) => query.filter(name_dsl::code.ne_all(SYSTEM_NAME_CODES)),
-            None => query,
-        };
-
-        query = match is_store {
-            Some(true) => query.filter(store_dsl::id.is_not_null()),
-            Some(false) => query.filter(store_dsl::id.is_null()),
-            None => query,
-        };
-    };
-
-    query
-}
 
 impl NameFilter {
     pub fn new() -> NameFilter {

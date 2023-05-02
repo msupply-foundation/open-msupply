@@ -18,7 +18,7 @@ use validate::validate;
 use self::generate::GenerateResult;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum UpdateRequestRequistionStatus {
+pub enum UpdateRequestRequisitionStatus {
     Sent,
 }
 
@@ -31,7 +31,7 @@ pub struct UpdateRequestRequisition {
     pub comment: Option<String>,
     pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: Option<f64>,
-    pub status: Option<UpdateRequestRequistionStatus>,
+    pub status: Option<UpdateRequestRequisitionStatus>,
     pub expected_delivery_date: Option<NaiveDate>,
 }
 
@@ -42,6 +42,7 @@ pub enum UpdateRequestRequisitionError {
     NotThisStoreRequisition,
     CannotEditRequisition,
     NotARequestRequisition,
+    CannotEditProgramRequisitionInformation,
     // Name validation
     OtherPartyNotASupplier,
     OtherPartyNotVisible,

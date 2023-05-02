@@ -2,7 +2,7 @@ use repository::MasterListRow;
 
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
+    translations::{LegacyTableName, PullUpsertRecord},
 };
 
 const MASTER_LIST_1: (&'static str, &'static str) = (
@@ -66,12 +66,4 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             }),
         ),
     ]
-}
-
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::LIST_MASTER,
-        MASTER_LIST_1.0,
-        PullDeleteRecordTable::MasterList,
-    )]
 }

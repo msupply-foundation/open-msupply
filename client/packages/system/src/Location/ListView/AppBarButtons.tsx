@@ -9,21 +9,24 @@ import {
   Grid,
   useTranslation,
   FileUtils,
-  SortBy,
   LoadingButton,
+  EnvUtils,
+  Platform,
 } from '@openmsupply-client/common';
-import { LocationRowFragment, useLocation } from '..';
+import { useLocation } from '..';
 import { locationsToCsv } from '../../utils';
 
 interface AppBarButtonsProps {
   onCreate: () => void;
-  sortBy: SortBy<LocationRowFragment>;
 }
 
-export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate, sortBy }) => {
+export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate }) => {
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { isLoading, fetchAsync } = useLocation.document.listAll(sortBy);
+  const { isLoading, fetchAsync } = useLocation.document.listAll({
+    key: 'name',
+    direction: 'asc',
+  });
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -46,6 +49,7 @@ export const AppBarButtons: FC<AppBarButtonsProps> = ({ onCreate, sortBy }) => {
           onClick={onCreate}
         />
         <LoadingButton
+          disabled={EnvUtils.platform === Platform.Android}
           startIcon={<DownloadIcon />}
           variant="outlined"
           isLoading={isLoading}

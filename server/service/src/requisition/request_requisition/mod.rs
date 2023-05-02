@@ -4,6 +4,9 @@ pub use self::generate::*;
 mod insert;
 pub use self::insert::*;
 
+mod insert_program;
+pub use self::insert_program::*;
+
 mod batch;
 pub use self::batch::*;
 

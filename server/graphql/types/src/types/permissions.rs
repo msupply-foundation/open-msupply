@@ -30,6 +30,7 @@ pub enum UserPermission {
     Report,
     LogQuery,
     StockLineMutate,
+    ItemMutate,
 }
 
 #[Object]
@@ -87,6 +88,7 @@ impl UserPermission {
             Permission::Report => UserPermission::Report,
             Permission::LogQuery => UserPermission::LogQuery,
             Permission::StockLineMutate => UserPermission::StockLineMutate,
+            Permission::ItemMutate => UserPermission::ItemMutate,
         }
     }
 
@@ -107,6 +109,7 @@ impl UserPermission {
             UserPermission::Report => Permission::Report,
             UserPermission::LogQuery => Permission::LogQuery,
             UserPermission::StockLineMutate => Permission::StockLineMutate,
+            UserPermission::ItemMutate => Permission::ItemMutate,
         }
     }
 }

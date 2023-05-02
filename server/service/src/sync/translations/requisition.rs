@@ -1,12 +1,12 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogRow, ChangelogTableName, RequisitionRow, RequisitionRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ProgramRowRepository, RequisitionRow,
+    RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
-use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
+use util::constants::{MISSING_PROGRAM, NUMBER_OF_DAYS_IN_A_MONTH};
 
 use crate::sync::{
     api::RemoteSyncRecordV5,
@@ -74,6 +74,22 @@ pub enum LegacyRequisitionStatus {
     Others,
 }
 
+// https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/AUTHORISATION_STATUSES.4dm
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "lowercase")]
+pub enum LegacyAuthorisationStatus {
+    None,
+    Pending,
+    Authorised,
+    Denied,
+    #[serde(rename = "auto-authorised")]
+    AutoAuthorised,
+    #[serde(rename = "authorised by another authoriser")]
+    AuthorisedByAnother,
+    #[serde(rename = "denied by another authoriser")]
+    DeniedByAnother,
+}
+
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacyRequisitionRow {
@@ -135,13 +151,24 @@ pub struct LegacyRequisitionRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
+
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(rename = "authorisationStatus")]
+    pub approval_status: Option<LegacyAuthorisationStatus>,
+
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub orderType: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub periodID: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub programID: Option<String>,
 }
 
 pub(crate) struct RequisitionTranslation {}
 impl SyncTranslation for RequisitionTranslation {
     fn try_translate_pull_upsert(
         &self,
-        _: &StorageConnection,
+        conn: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
         if !match_pull_table(sync_record) {
@@ -184,6 +211,18 @@ impl SyncTranslation for RequisitionTranslation {
             ),
         };
 
+        // TODO: Delete when soft delete for master list is implemented
+        let program_id = if let Some(program_id) = data.programID {
+            let program = ProgramRowRepository::new(conn).find_one_by_id(&program_id)?;
+
+            match program {
+                Some(program) => Some(program.id),
+                None => Some(MISSING_PROGRAM.to_string()),
+            }
+        } else {
+            None
+        };
+
         let result = RequisitionRow {
             id: data.ID.to_string(),
             user_id: data.user_id,
@@ -202,6 +241,11 @@ impl SyncTranslation for RequisitionTranslation {
             min_months_of_stock: data.thresholdMOS,
             linked_requisition_id: data.linked_requisition_id,
             expected_delivery_date: data.expected_delivery_date,
+            approval_status: data.approval_status.map(|s| s.to()),
+            is_sync_update: true,
+            program_id,
+            period_id: data.periodID,
+            order_type: data.orderType,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -252,6 +296,11 @@ impl SyncTranslation for RequisitionTranslation {
             min_months_of_stock,
             linked_requisition_id,
             expected_delivery_date,
+            approval_status,
+            is_sync_update: _,
+            program_id,
+            period_id,
+            order_type,
         } = RequisitionRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -278,8 +327,8 @@ impl SyncTranslation for RequisitionTranslation {
                 sent_datetime,
                 finalised_datetime,
             ),
-            sent_datetime: sent_datetime,
-            finalised_datetime: finalised_datetime,
+            sent_datetime,
+            finalised_datetime,
             expected_delivery_date,
             requester_reference: their_reference,
             linked_requisition_id,
@@ -288,6 +337,10 @@ impl SyncTranslation for RequisitionTranslation {
             max_months_of_stock: Some(max_months_of_stock),
             om_colour: colour.clone(),
             comment,
+            approval_status: approval_status.map(LegacyAuthorisationStatus::from),
+            programID: program_id,
+            periodID: period_id,
+            orderType: order_type,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
@@ -382,7 +435,7 @@ fn from_legacy_status(
             _ => return None,
         },
         LegacyRequisitionType::Response => match status {
-            LegacyRequisitionStatus::Sg => return None,
+            LegacyRequisitionStatus::Sg => RequisitionRowStatus::New,
             &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
             LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
             _ => return None,
@@ -410,6 +463,36 @@ fn to_legacy_status(
         },
     };
     Some(status)
+}
+
+impl LegacyAuthorisationStatus {
+    fn to(self) -> RequisitionRowApprovalStatus {
+        use LegacyAuthorisationStatus as from;
+        use RequisitionRowApprovalStatus as to;
+        match self {
+            from::None => to::None,
+            from::Pending => to::Pending,
+            from::Authorised => to::Approved,
+            from::Denied => to::Denied,
+            from::AutoAuthorised => to::AutoApproved,
+            from::AuthorisedByAnother => to::ApprovedByAnother,
+            from::DeniedByAnother => to::DeniedByAnother,
+        }
+    }
+
+    fn from(status: RequisitionRowApprovalStatus) -> LegacyAuthorisationStatus {
+        use LegacyAuthorisationStatus as to;
+        use RequisitionRowApprovalStatus as from;
+        match status {
+            from::None => to::None,
+            from::Pending => to::Pending,
+            from::Approved => to::Authorised,
+            from::Denied => to::Denied,
+            from::AutoApproved => to::AutoAuthorised,
+            from::ApprovedByAnother => to::AuthorisedByAnother,
+            from::DeniedByAnother => to::DeniedByAnother,
+        }
+    }
 }
 
 #[cfg(test)]

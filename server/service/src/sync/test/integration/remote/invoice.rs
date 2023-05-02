@@ -191,6 +191,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             r.id = uuid();
             r.name_id = invoice_row_1.name_id.clone();
             r.store_id = store_id.clone();
+            r.is_sync_update = false;
             r
         });
 

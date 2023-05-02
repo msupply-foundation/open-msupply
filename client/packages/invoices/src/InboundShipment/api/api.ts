@@ -358,17 +358,4 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not add from master list');
   },
-  dashboard: {
-    shipmentCount: async (): Promise<{
-      today: number;
-      thisWeek: number;
-    }> => {
-      const result = await sdk.invoiceCounts({ storeId });
-
-      return {
-        thisWeek: result?.invoiceCounts?.inbound?.created?.thisWeek ?? 0,
-        today: result?.invoiceCounts?.inbound?.created?.today ?? 0,
-      };
-    },
-  },
 });

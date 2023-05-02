@@ -1,6 +1,9 @@
 use crate::{
     activity_log::activity_log_entry,
-    requisition::{common::check_requisition_exists, query::get_requisition},
+    requisition::{
+        common::{check_approval_status, check_requisition_exists},
+        query::get_requisition,
+    },
     service_provider::ServiceContext,
 };
 use chrono::Utc;
@@ -11,7 +14,7 @@ use repository::{
 use util::inline_edit;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum UpdateResponseRequstionStatus {
+pub enum UpdateResponseRequisitionStatus {
     Finalised,
 }
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -20,7 +23,7 @@ pub struct UpdateResponseRequisition {
     pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    pub status: Option<UpdateResponseRequstionStatus>,
+    pub status: Option<UpdateResponseRequisitionStatus>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -31,7 +34,6 @@ pub enum UpdateResponseRequisitionError {
     CannotEditRequisition,
     NotAResponseRequisition,
     UpdatedRequisitionDoesNotExist,
-    // TODO https://github.com/openmsupply/remote-server/issues/760
     DatabaseError(RepositoryError),
 }
 
@@ -77,6 +79,10 @@ pub fn validate(
 ) -> Result<(RequisitionRow, bool), OutError> {
     let requisition_row = check_requisition_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
+
+    if check_approval_status(requisition_row.clone()) {
+        return Err(OutError::CannotEditRequisition);
+    }
 
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
@@ -138,18 +144,20 @@ mod test_update {
     use repository::{
         mock::{
             mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
-            mock_new_response_requisition, mock_sent_request_requisition, mock_store_a,
-            mock_store_b, mock_user_account_b, MockDataInserts,
+            mock_new_response_requisition, mock_response_program_requisition,
+            mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
+            MockDataInserts,
         },
         requisition_row::{RequisitionRow, RequisitionRowStatus},
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
     };
+    use util::inline_init;
 
     use crate::{
         requisition::response_requisition::{
             UpdateResponseRequisition, UpdateResponseRequisitionError as ServiceError,
-            UpdateResponseRequstionStatus,
+            UpdateResponseRequisitionStatus,
         },
         service_provider::ServiceProvider,
     };
@@ -225,6 +233,18 @@ mod test_update {
             ),
             Err(ServiceError::NotThisStoreRequisition)
         );
+
+        // CannotEditRequisition (for program requisitions)
+        context.store_id = mock_store_a().id;
+        assert_eq!(
+            service.update_response_requisition(
+                &context,
+                inline_init(|r: &mut UpdateResponseRequisition| {
+                    r.id = mock_response_program_requisition().requisition.id;
+                })
+            ),
+            Err(ServiceError::CannotEditRequisition)
+        );
     }
 
     #[actix_rt::test]
@@ -249,7 +269,7 @@ mod test_update {
                 UpdateResponseRequisition {
                     id: mock_new_response_requisition().id,
                     colour: Some("new colour".to_owned()),
-                    status: Some(UpdateResponseRequstionStatus::Finalised),
+                    status: Some(UpdateResponseRequisitionStatus::Finalised),
                     their_reference: Some("new their_reference".to_owned()),
                     comment: Some("new comment".to_owned()),
                 },

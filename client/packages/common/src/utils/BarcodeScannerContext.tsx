@@ -16,26 +16,42 @@ export interface ScanResult {
   expiryDate?: string | null;
   gtin?: string;
 }
+
+export type ScanCallback = (result: ScanResult) => void;
+
 interface BarcodeScannerControl {
   hasBarcodeScanner: boolean;
   isScanning: boolean;
   startScan: () => Promise<ScanResult>;
-  stopScan: () => void;
+  startScanning: (
+    callback: (result: ScanResult, err?: any) => void
+  ) => Promise<void>;
+  stopScan: () => Promise<void>;
 }
 
 const BarcodeScannerContext = createContext<BarcodeScannerControl>({} as any);
 
 const { Provider } = BarcodeScannerContext;
 
-const parseBarcodeData = (data: number[] | undefined) => {
-  if (!data || data.length < 5) return undefined;
+const getIndex = (digit: number, data: number[]) => {
+  const index = data.indexOf(digit);
+  return index === -1 ? undefined : index;
+};
 
-  return data
-    .slice(4)
+export const parseBarcodeData = (data: number[] | undefined) => {
+  if (!data || data.length < 5) return undefined;
+  // the scanner is returning \x00 and \x22 characters when in continuous mode
+  // these need to be stripped out to prevent issues when parsing the barcode
+  const synchronousIdleIndex = getIndex(22, data);
+  const trimmedData = data.slice(4, synchronousIdleIndex);
+  const zeroIndex = getIndex(0, trimmedData);
+
+  return trimmedData
+    .slice(0, zeroIndex)
     .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
 };
 
-const parseResult = (content?: string): ScanResult => {
+export const parseResult = (content?: string): ScanResult => {
   if (!content) return {};
   try {
     const gs1 = parseBarcode(content);
@@ -73,31 +89,81 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
 
   const startScan = async () => {
     setIsScanning(true);
-    const timeout = setTimeout(() => {
-      stopScan();
-      // if the timeout has been hit then an error is raised
-      // by the electron implementation, and the snack is shown
-      // in that error handler, no need to duplicate
-      if (!hasElectronApi) error(t('error.unable-to-read-barcode'))();
-    }, SCAN_TIMEOUT_IN_MS);
+
+    const timeoutPromise = new Promise<undefined>((_, reject) =>
+      setTimeout(reject, SCAN_TIMEOUT_IN_MS, 'Scan timed out')
+    );
+
+    const getBarcodePromise = () =>
+      new Promise<string | undefined>(async (resolve, reject) => {
+        switch (true) {
+          case hasElectronApi:
+            const { startBarcodeScan } = electronNativeAPI;
+            await startBarcodeScan();
+
+            electronNativeAPI.onBarcodeScan((_event, data) =>
+              resolve(parseBarcodeData(data))
+            );
+            break;
+          case hasNativeBarcodeScanner:
+            // Check camera permission
+            await BarcodeScanner.checkPermission({ force: true });
+
+            // make background of WebView transparent
+            BarcodeScanner.hideBackground();
+
+            // start scanning and wait for a result
+            const result = await BarcodeScanner.startScan();
+            BarcodeScanner.showBackground();
+
+            resolve(result.content);
+            break;
+          default:
+            reject(new Error('Cannot find scan api'));
+            break;
+        }
+      });
+
+    let result: ScanResult = {};
+
+    try {
+      const barcode = await Promise.race([timeoutPromise, getBarcodePromise()]);
+      result = parseResult(barcode);
+    } catch (e) {
+      error(t('error.unable-to-read-barcode'))();
+      console.error(e);
+    } finally {
+      await stopScan();
+      setIsScanning(false);
+    }
+
+    return result;
+  };
+
+  const startScanning = async (callback: ScanCallback) => {
+    setIsScanning(true);
 
     if (hasElectronApi) {
       try {
         const { startBarcodeScan } = electronNativeAPI;
-        const data = await startBarcodeScan();
-        const barcode = parseBarcodeData(data);
-        clearTimeout(timeout);
-        setIsScanning(false);
-        return parseResult(barcode);
+        await startBarcodeScan();
+        electronNativeAPI.onBarcodeScan((_event, data) => {
+          const barcode = parseBarcodeData(data);
+          callback(parseResult(barcode));
+        });
       } catch (e) {
-        error(t('error.unable-to-read-barcode'))();
-        clearTimeout(timeout);
         setIsScanning(false);
-        console.error(e);
+        throw e;
       }
     }
 
     if (hasNativeBarcodeScanner) {
+      setIsScanning(true);
+      const timeout = setTimeout(async () => {
+        await stopScan();
+        if (!hasElectronApi) error(t('error.unable-to-read-barcode'))();
+      }, SCAN_TIMEOUT_IN_MS);
+
       // Check camera permission
       await BarcodeScanner.checkPermission({ force: true });
 
@@ -107,22 +173,19 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       clearTimeout(timeout);
       setIsScanning(false);
       BarcodeScanner.showBackground();
-      const { content } = result;
-      return parseResult(content);
+      callback(result);
     }
-
-    return {};
   };
 
-  const stopScan = () => {
+  const stopScan = async () => {
     setIsScanning(false);
     if (hasElectronApi) {
-      electronNativeAPI.stopBarcodeScan();
+      await electronNativeAPI.stopBarcodeScan();
     }
 
     if (hasNativeBarcodeScanner) {
-      BarcodeScanner.stopScan({ resolveScan: true });
-      BarcodeScanner.showBackground();
+      await BarcodeScanner.stopScan({ resolveScan: true });
+      await BarcodeScanner.showBackground();
     }
   };
 
@@ -131,9 +194,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       hasBarcodeScanner,
       isScanning,
       startScan,
+      startScanning,
       stopScan,
     }),
-    [hasBarcodeScanner, startScan, stopScan]
+    [hasBarcodeScanner, startScan, stopScan, startScanning]
   );
 
   return (

@@ -18,7 +18,43 @@ query itemCounts($storeId: String!, $lowStockThreshold: Int!) {
     itemCounts {
       lowStock
       noStock
+      moreThanSixMonthsStock
       total
+    }
+  }
+}
+
+query requisitionCounts($storeId: String!) {
+  requisitionCounts(storeId: $storeId) {
+    request {
+      draft
+    }
+    response {
+      new
+    }
+  }
+}
+
+query outboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
+  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
+    outbound {
+      created {
+        today
+        thisWeek
+      }
+      notShipped
+    }
+  }
+}
+
+query inboundShipmentCounts($storeId: String!, $timezoneOffset: Int) {
+  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
+    inbound {
+      created {
+        today
+        thisWeek
+      }
+      notDelivered
     }
   }
 }

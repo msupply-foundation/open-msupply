@@ -71,14 +71,6 @@ export type DeleteInboundShipmentLinesMutationVariables = Types.Exact<{
 
 export type DeleteInboundShipmentLinesMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type InvoiceCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
-}>;
-
-
-export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', inbound: { __typename: 'InboundInvoiceCounts', created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
-
 export type UpsertInboundShipmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.BatchInboundShipmentInput;
@@ -428,18 +420,6 @@ export const DeleteInboundShipmentLinesDocument = gql`
   }
 }
     `;
-export const InvoiceCountsDocument = gql`
-    query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
-  invoiceCounts(storeId: $storeId, timezoneOffset: $timezoneOffset) {
-    inbound {
-      created {
-        today
-        thisWeek
-      }
-    }
-  }
-}
-    `;
 export const UpsertInboundShipmentDocument = gql`
     mutation upsertInboundShipment($storeId: String!, $input: BatchInboundShipmentInput!) {
   batchInboundShipment(storeId: $storeId, input: $input) {
@@ -753,9 +733,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteInboundShipmentLines(variables: DeleteInboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteInboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentLinesMutation>(DeleteInboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipmentLines', 'mutation');
     },
-    invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts', 'query');
-    },
     upsertInboundShipment(variables: UpsertInboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertInboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertInboundShipmentMutation>(UpsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertInboundShipment', 'mutation');
     },
@@ -882,23 +859,6 @@ export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
 export const mockDeleteInboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentLinesMutationVariables>, GraphQLContext<DeleteInboundShipmentLinesMutation>, any>) =>
   graphql.mutation<DeleteInboundShipmentLinesMutation, DeleteInboundShipmentLinesMutationVariables>(
     'deleteInboundShipmentLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInvoiceCountsQuery((req, res, ctx) => {
- *   const { storeId, timezoneOffset } = req.variables;
- *   return res(
- *     ctx.data({ invoiceCounts })
- *   )
- * })
- */
-export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceCountsQueryVariables>, GraphQLContext<InvoiceCountsQuery>, any>) =>
-  graphql.query<InvoiceCountsQuery, InvoiceCountsQueryVariables>(
-    'invoiceCounts',
     resolver
   )
 

@@ -1,3 +1,4 @@
+import { IpcRendererEvent } from 'electron';
 export const DISCOVERY_TIMEOUT = 7000;
 export const DISCOVERED_SERVER_POLL = 2000;
 
@@ -17,8 +18,12 @@ export interface NativeAPI {
   connectedServer: () => Promise<FrontEndHost | null>;
   goBackToDiscovery: () => void;
   advertiseService?: () => void;
-  startBarcodeScan: () => Promise<number[]>;
-  stopBarcodeScan: () => void;
+  startBarcodeScan: () => Promise<void>;
+  stopBarcodeScan: () => Promise<void>;
+  // Callback for barcode scan result
+  onBarcodeScan: (
+    callback: (event: IpcRendererEvent, data: number[]) => void
+  ) => void;
   readLog: () => Promise<{ log: string; error: string }>;
 }
 

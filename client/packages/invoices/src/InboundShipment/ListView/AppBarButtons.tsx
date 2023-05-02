@@ -9,22 +9,26 @@ import {
   Grid,
   useTranslation,
   FileUtils,
-  SortBy,
   LoadingButton,
   ToggleState,
+  Platform,
+  EnvUtils,
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
-import { InboundRowFragment, useInbound } from '../api';
+import { useInbound } from '../api';
 import { inboundsToCsv } from '../../utils';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
-  sortBy: SortBy<InboundRowFragment>;
-}> = ({ modalController, sortBy }) => {
+}> = ({ modalController }) => {
   const { mutate: onCreate } = useInbound.document.insert();
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
-  const { isLoading, fetchAsync } = useInbound.document.listAll(sortBy);
+  const { isLoading, fetchAsync } = useInbound.document.listAll({
+    key: 'createdDateTime',
+    direction: 'desc',
+    isDesc: true,
+  });
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -51,6 +55,7 @@ export const AppBarButtons: FC<{
           variant="outlined"
           onClick={csvExport}
           isLoading={isLoading}
+          disabled={EnvUtils.platform === Platform.Android}
         >
           {t('button.export', { ns: 'common' })}
         </LoadingButton>
