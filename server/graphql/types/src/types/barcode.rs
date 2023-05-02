@@ -24,8 +24,8 @@ impl BarcodeNode {
         &self.row().value
     }
 
-    pub async fn item_id(&self) -> Option<String> {
-        self.row().item_id.clone()
+    pub async fn item_id(&self) -> &str {
+        &self.row().item_id
     }
 
     pub async fn manufacturer_id(&self) -> Option<String> {
@@ -112,7 +112,7 @@ mod test {
                             inline_init(|r: &mut BarcodeRow| {
                                 r.id = "CB81F6CD62C1476F9411362053D49E84".to_string();
                                 r.value = "0123456789".to_string();
-                                r.item_id = Some("AA460A207402434A89B1F6EEAC08DA43".to_string());
+                                r.item_id = "AA460A207402434A89B1F6EEAC08DA43".to_string();
                                 r.pack_size = Some(1);
                             })
                         },
@@ -123,11 +123,11 @@ mod test {
 
         let expected = json!({
             "testQuery": {
-              "__typename": "BarcodeNode",
-              "id": "CB81F6CD62C1476F9411362053D49E84",
-              "value": "0123456789",
-              "itemId": "AA460A207402434A89B1F6EEAC08DA43",
-              "packSize": 1
+                "__typename": "BarcodeNode",
+                "id": "CB81F6CD62C1476F9411362053D49E84",
+                "value": "0123456789",
+                "itemId": "AA460A207402434A89B1F6EEAC08DA43",
+                "packSize": 1
             }
           }
         );
