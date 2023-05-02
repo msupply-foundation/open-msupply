@@ -6,7 +6,9 @@ export const useOutbound = {
   utils: {
     addFromMasterList: Utils.useAddFromMasterList,
     api: Utils.useOutboundApi,
-    barcodes: Utils.useBarcodes,
+    barcode: Utils.useBarcode,
+    barcodeInsert: Utils.useBarcodeInsert,
+    count: Utils.useOutboundCounts,
     isDisabled: Utils.useOutboundIsDisabled,
     number: Utils.useOutboundNumber,
   },

@@ -358,8 +358,13 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::ViewReports => {
                 output.insert(Permission::Report);
             }
+            // log
             Permissions::ViewLog => {
                 output.insert(Permission::LogQuery);
+            }
+            // items
+            Permissions::EditItems => {
+                output.insert(Permission::ItemMutate);
             }
             _ => continue,
         }

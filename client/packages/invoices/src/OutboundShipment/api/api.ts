@@ -23,6 +23,7 @@ import {
   InsertOutboundShipmentMutationVariables,
   Sdk,
   OutboundLineFragment,
+  BarcodeByValueQuery,
 } from './operations.generated';
 
 export type ListParams = {
@@ -154,19 +155,14 @@ const outboundParsers = {
 
 export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    barcodesByValue: async (
-      value?: string
-    ): Promise<{
-      nodes: { id: string; itemId?: string | null; value: string }[];
-      totalCount: number;
-    }> => {
-      const filter = !!value ? { value: { equalTo: value } } : undefined;
-
-      const result = await sdk.barcodes({
-        filter,
+    barcodeByValue: async (
+      value: string
+    ): Promise<BarcodeByValueQuery['barcodeByValue']> => {
+      const result = await sdk.barcodeByValue({
+        value,
         storeId,
       });
-      return result?.barcodes;
+      return result?.barcodeByValue;
     },
     list: async ({
       first,
@@ -234,23 +230,46 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       }
     },
   },
-  insert: async (
-    invoice: Omit<InsertOutboundShipmentMutationVariables, 'storeId'>
-  ): Promise<number> => {
-    const result =
-      (await sdk.insertOutboundShipment({
-        id: invoice.id,
-        otherPartyId: invoice.otherPartyId,
-        storeId,
-      })) || {};
+  insert: {
+    barcode: async ({
+      input,
+    }: {
+      input: {
+        itemId: string;
+        packSize?: number | null;
+        value: string;
+      };
+    }): Promise<string> => {
+      const result =
+        (await sdk.insertBarcode({
+          storeId,
+          input,
+        })) || {};
+      const { insertBarcode } = result;
+      if (insertBarcode?.__typename === 'BarcodeNode') {
+        return insertBarcode.id;
+      }
 
-    const { insertOutboundShipment } = result;
+      throw new Error('Could not insert barcode');
+    },
+    outbound: async (
+      invoice: Omit<InsertOutboundShipmentMutationVariables, 'storeId'>
+    ): Promise<number> => {
+      const result =
+        (await sdk.insertOutboundShipment({
+          id: invoice.id,
+          otherPartyId: invoice.otherPartyId,
+          storeId,
+        })) || {};
 
-    if (insertOutboundShipment?.__typename === 'InvoiceNode') {
-      return insertOutboundShipment.invoiceNumber;
-    }
+      const { insertOutboundShipment } = result;
 
-    throw new Error('Could not insert invoice');
+      if (insertOutboundShipment?.__typename === 'InvoiceNode') {
+        return insertOutboundShipment.invoiceNumber;
+      }
+
+      throw new Error('Could not insert invoice');
+    },
   },
   delete: async (invoices: OutboundRowFragment[]): Promise<string[]> => {
     const result =

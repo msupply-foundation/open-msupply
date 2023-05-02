@@ -18,8 +18,8 @@ export interface NativeAPI {
   connectedServer: () => Promise<FrontEndHost | null>;
   goBackToDiscovery: () => void;
   advertiseService?: () => void;
-  startBarcodeScan: () => void;
-  stopBarcodeScan: () => void;
+  startBarcodeScan: () => Promise<void>;
+  stopBarcodeScan: () => Promise<void>;
   // Callback for barcode scan result
   onBarcodeScan: (
     callback: (event: IpcRendererEvent, data: number[]) => void

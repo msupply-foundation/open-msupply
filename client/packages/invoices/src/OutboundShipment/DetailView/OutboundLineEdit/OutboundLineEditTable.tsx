@@ -10,10 +10,9 @@ import {
   TableCell,
   styled,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController, useOutboundLineEditRows } from './hooks';
-import { useOutbound } from '../../api';
+import { DraftItem, useOutbound } from '../../api';
 import { useOutboundLineEditColumns } from './columns';
 import { shouldUpdatePlaceholder } from './utils';
 
@@ -21,9 +20,10 @@ export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
   packSizeController: PackSizeController;
   rows: DraftOutboundLine[];
-  item: ItemRowFragment | null;
+  item: DraftItem | null;
   allocatedQuantity: number;
   allocatedPacks: number;
+  batch?: string;
 }
 
 const PlaceholderCell = styled(TableCell)(({ theme }) => ({
@@ -122,11 +122,13 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   item,
   allocatedQuantity,
   allocatedPacks,
+  batch,
 }) => {
   const t = useTranslation('distribution');
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
     rows,
-    packSizeController
+    packSizeController,
+    batch
   );
   const onEditStockLine = (key: string, value: number, packSize: number) => {
     onChange(key, value, packSize);
