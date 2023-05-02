@@ -32,6 +32,14 @@ pub fn mock_user_store_join_a_store_a() -> UserStoreJoinRow {
 }
 
 // user store joins
+pub fn mock_user_store_join_program_master_list() -> UserStoreJoinRow {
+    UserStoreJoinRow {
+        id: "user_store_join_program_master_list".to_string(),
+        user_id: "user_account_a".to_string(),
+        store_id: "program_master_list_store".to_string(),
+        is_default: false,
+    }
+}
 
 pub fn mock_user_store_join_a_store_b() -> UserStoreJoinRow {
     UserStoreJoinRow {
@@ -92,6 +100,7 @@ pub fn mock_user_store_joins() -> Vec<UserStoreJoinRow> {
         mock_user_store_join_a_store_a(),
         mock_user_store_join_a_store_b(),
         mock_user_store_join_b_store_a(),
+        mock_user_store_join_program_master_list(),
     ]
 }
 
