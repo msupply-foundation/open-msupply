@@ -55,12 +55,16 @@ export const StyledBaseButton = styled(MuiButton)(
   }
 );
 
-export const BaseButton: React.FC<MuiButtonProps> = ({ ...rest }) => {
+export const BaseButton: React.FC<MuiButtonProps> = ({ onClick, ...rest }) => {
   return (
     <StyledBaseButton
       variant="contained"
       color="primary"
       size="small"
+      onClick={onClick}
+      onKeyDown={(event: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (event.code === 'Enter' && !!onClick) onClick({} as any);
+      }}
       {...rest}
     />
   );

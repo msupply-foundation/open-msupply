@@ -31,7 +31,7 @@ interface ShrinkableBaseButtonProps extends ButtonProps {
 }
 
 export const ShrinkableBaseButton: FC<ShrinkableBaseButtonProps> =
-  React.forwardRef(({ shrink = false, ...props }, ref) => {
+  React.forwardRef(({ shrink = false, onClick, ...props }, ref) => {
     const isRtl = IntlUtils.useRtl();
     return (
       <StyledShrinkableBaseButton
@@ -39,6 +39,10 @@ export const ShrinkableBaseButton: FC<ShrinkableBaseButtonProps> =
         shrink={shrink}
         size="small"
         isRtl={isRtl}
+        onClick={onClick}
+        onKeyDown={(event: React.KeyboardEvent<HTMLButtonElement>) => {
+          if (event.code === 'Enter' && !!onClick) onClick({} as any);
+        }}
         {...props}
       />
     );
