@@ -262,12 +262,6 @@ query barcodeByValue($storeId: String!, $value: String!) {
   }
 }
 
-query requisitionCounts($storeId: String!) {
-  requisitionCounts(storeId: $storeId) {
-    newResponseRequisitionCount
-  }
-}
-
 mutation insertOutboundShipment(
   $id: String!
   $otherPartyId: String!

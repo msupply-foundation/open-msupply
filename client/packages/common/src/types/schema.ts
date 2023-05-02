@@ -202,7 +202,7 @@ export type AuthTokenResponse = AuthToken | AuthTokenError;
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
   id: Scalars['String'];
-  itemId?: Maybe<Scalars['String']>;
+  itemId: Scalars['String'];
   manufacturerId?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   parentId?: Maybe<Scalars['String']>;
@@ -2634,6 +2634,11 @@ export type ReportSortInput = {
 
 export type ReportsResponse = ReportConnector;
 
+export type RequestRequisitionCounts = {
+  __typename: 'RequestRequisitionCounts';
+  draft: Scalars['Int'];
+};
+
 export type RequestStoreStatsNode = {
   __typename: 'RequestStoreStatsNode';
   averageMonthlyConsumption: Scalars['Int'];
@@ -2650,7 +2655,8 @@ export type RequisitionConnector = {
 
 export type RequisitionCounts = {
   __typename: 'RequisitionCounts';
-  newResponseRequisitionCount: Scalars['Int'];
+  request: RequestRequisitionCounts;
+  response: ResponseRequisitionCounts;
 };
 
 export type RequisitionFilterInput = {
@@ -2847,6 +2853,11 @@ export type RequisitionSortInput = {
 };
 
 export type RequisitionsResponse = RequisitionConnector;
+
+export type ResponseRequisitionCounts = {
+  __typename: 'ResponseRequisitionCounts';
+  new: Scalars['Int'];
+};
 
 export type ResponseRequisitionStatsNode = {
   __typename: 'ResponseRequisitionStatsNode';
