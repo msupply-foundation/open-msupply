@@ -228,18 +228,15 @@ mod test_insert {
         },
         service_provider::ServiceProvider,
     };
-    use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_master_list_item_query_test1, mock_name_a, mock_name_store_b, mock_name_store_c,
-            mock_period, mock_period_schedule_1, mock_request_draft_requisition, mock_store_a,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_name_a, mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_period,
+            mock_program_a, mock_program_order_types_a, mock_request_draft_requisition,
+            mock_user_account_a, program_master_list_store, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, NameRow, NameTagRow, NameTagRowRepository, ProgramRequisitionOrderTypeRow,
-        ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
-        ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
+        EqualFilter, NameRow, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionRepository, RequisitionRowRepository,
     };
     use util::inline_init;
 
@@ -262,7 +259,7 @@ mod test_insert {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_a().id, "".to_string())
+            .context(program_master_list_store().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.requisition_service;
 
@@ -278,16 +275,30 @@ mod test_insert {
             Err(ServiceError::RequisitionAlreadyExists)
         );
 
-        let name_store_b = mock_name_store_b();
+        // ProgramOrderTypeDoesNotExist
+        assert_eq!(
+            service.insert_program_request_requisition(
+                &context,
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition".to_owned();
+                    r.other_party_id = mock_name_store_b().id.clone();
+                    r.program_order_type_id = "does_not_exist".to_owned();
+                    r.period_id = mock_period().id;
+                })
+            ),
+            Err(ServiceError::ProgramOrderTypeDoesNotExist)
+        );
+
         // OtherPartyNotASupplier
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: name_store_b.id.clone(),
-                    ..Default::default()
-                }
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition".to_owned();
+                    r.other_party_id = mock_name_store_a().id.clone();
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                })
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -296,11 +307,12 @@ mod test_insert {
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: not_visible().id,
-                    ..Default::default()
-                }
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition".to_owned();
+                    r.other_party_id = mock_name_store_c().id.clone();
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                })
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -309,11 +321,12 @@ mod test_insert {
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: "invalid".to_string(),
-                    ..Default::default()
-                }
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition".to_owned();
+                    r.other_party_id = "invalid".to_owned();
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                })
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -322,11 +335,12 @@ mod test_insert {
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: mock_name_a().id,
-                    ..Default::default()
-                }
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition".to_owned();
+                    r.other_party_id = mock_name_a().id;
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                })
             ),
             Err(ServiceError::OtherPartyIsNotAStore)
         );
@@ -342,64 +356,19 @@ mod test_insert {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_a().id, mock_user_account_a().id)
+            .context(program_master_list_store().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.requisition_service;
-
-        // Create a Program
-        let program_id = mock_master_list_item_query_test1().master_list.id;
-        ProgramRowRepository::new(&connection)
-            .upsert_one(&ProgramRow {
-                id: program_id.clone(),
-                name: "program_name".to_owned(),
-                master_list_id: program_id.clone(),
-            })
-            .unwrap();
-
-        // Create a name tag
-        NameTagRowRepository::new(&connection)
-            .upsert_one(&NameTagRow {
-                id: "name_tag_id".to_owned(),
-                name: "name_tag_name".to_owned(),
-            })
-            .unwrap();
-
-        // Create Program Requisition Settings
-        ProgramRequisitionSettingsRowRepository::new(&connection)
-            .upsert_one(&ProgramRequisitionSettingsRow {
-                id: program_id.clone(),
-                name_tag_id: "name_tag_id".to_owned(),
-                program_id: program_id.clone(),
-                period_schedule_id: mock_period_schedule_1().id,
-
-                ..Default::default()
-            })
-            .unwrap();
-
-        // Create a ProgramOrderType
-        ProgramRequisitionOrderTypeRowRepository::new(&connection)
-            .upsert_one(&ProgramRequisitionOrderTypeRow {
-                id: "program_order_type_id".to_owned(),
-                name: "program_order_type_name".to_owned(),
-                program_requisition_settings_id: program_id.clone(),
-                max_order_per_period: 1,
-                ..Default::default()
-            })
-            .unwrap();
 
         let result = service
             .insert_program_request_requisition(
                 &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: mock_name_store_c().id,
-                    colour: Some("new colour".to_owned()),
-                    their_reference: Some("new their_reference".to_owned()),
-                    comment: Some("new comment".to_owned()),
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
-                    program_order_type_id: "program_order_type_id".to_owned(),
-                    period_id: mock_period().id,
-                },
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition".to_owned();
+                    r.other_party_id = mock_name_store_b().id.clone();
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                }),
             )
             .unwrap();
 
@@ -415,14 +384,29 @@ mod test_insert {
 
         assert_eq!(new_row.id, "new_program_request_requisition");
         assert_eq!(new_row.period_id, Some(mock_period().id));
-        assert_eq!(
-            new_row.order_type,
-            Some("program_order_type_name".to_string())
-        );
-        assert_eq!(new_row.program_id, Some(program_id));
+        assert_eq!(new_row.order_type, Some(mock_program_order_types_a().id));
+        assert_eq!(new_row.program_id, Some(mock_program_a().id));
         assert_eq!(requisition_lines.len(), 1);
 
-        // TODO Validate that we can't create more requisitions the `max_order_per_period` in requisition_settings
-        // https://github.com/openmsupply/open-msupply/issues/1599
+        // Error: MaxOrdersReachedForPeriod
+        let requisition = RequisitionRepository::new(&connection)
+            .query_by_filter(
+                RequisitionFilter::new()
+                    .order_type(EqualFilter::equal_to(&mock_program_order_types_a().id)),
+            )
+            .unwrap();
+
+        assert_eq!(
+            service.insert_program_request_requisition(
+                &context,
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "error_program_requisition".to_owned();
+                    r.other_party_id = mock_name_store_b().id.clone();
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                }),
+            ),
+            Err(ServiceError::MaxOrdersReachedForPeriod(requisition))
+        );
     }
 }
