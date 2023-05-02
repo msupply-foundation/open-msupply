@@ -1,0 +1,21 @@
+{
+    "button.new-outbound-shipment": "Nueva Salida",
+    "heading.shipments-to-be-picked": "Envíos por recoger",
+    "button.order-more": "Pedir más",
+    "heading.expiring-stock": "Existencias por caducar",
+    "heading-stock": "Inventario",
+    "heading.stock-levels": "Niveles de inventario",
+    "error.failed-to-create-requisition": "¡Error al crear la requisición! {{message}}",
+    "label.expired_one": "Lote caducado",
+    "label.expired_other": "Lotes caducados",
+    "label.expiring-soon_one": "Lote próximo a caducar",
+    "label.expiring-soon_other": "Lotes próximos a caducar",
+    "label.low-stock-items_one": "Artículo con menos de 3 meses de inventario",
+    "label.low-stock-items_other": "Artículos con menos de 3 meses de inventario",
+    "label.items-no-stock_one": "Artículo sin inventario",
+    "label.this-week": "Esta semana",
+    "label.today": "Hoy",
+    "label.total-items_one": "Total de artículos",
+    "label.total-items_other": "Cantidad total de artículos",
+    "label.items-no-stock_other": "Artículos sin inventario"
+}

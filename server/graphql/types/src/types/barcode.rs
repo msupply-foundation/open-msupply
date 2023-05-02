@@ -24,8 +24,8 @@ impl BarcodeNode {
         &self.row().value
     }
 
-    pub async fn item_id(&self) -> Option<String> {
-        self.row().item_id.clone()
+    pub async fn item_id(&self) -> &str {
+        &self.row().item_id
     }
 
     pub async fn manufacturer_id(&self) -> Option<String> {
@@ -80,69 +80,69 @@ impl BarcodeConnector {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use async_graphql::{EmptyMutation, Object};
-//     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
-//     use repository::mock::MockDataInserts;
-//     use serde_json::json;
-//     use util::inline_init;
+#[cfg(test)]
+mod test {
+    use async_graphql::{EmptyMutation, Object};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use repository::mock::MockDataInserts;
+    use serde_json::json;
+    use util::inline_init;
 
-//     use super::*;
+    use super::*;
 
-//     #[actix_rt::test]
-//     async fn graphq_test_barcode_node_details() {
-//         #[derive(Clone)]
-//         struct TestQuery;
+    #[actix_rt::test]
+    async fn graphq_test_barcode_node_details() {
+        #[derive(Clone)]
+        struct TestQuery;
 
-//         let (_, _, _, settings) = setup_graphl_test(
-//             TestQuery,
-//             EmptyMutation,
-//             "graphq_test_barcode_node_details",
-//             MockDataInserts::none(),
-//         )
-//         .await;
+        let (_, _, _, settings) = setup_graphl_test(
+            TestQuery,
+            EmptyMutation,
+            "graphq_test_barcode_node_details",
+            MockDataInserts::none(),
+        )
+        .await;
 
-//         #[Object]
-//         impl TestQuery {
-//             pub async fn test_query(&self) -> BarcodeNode {
-//                 BarcodeNode {
-//                     barcode: Barcode {
-//                         barcode_row: {
-//                             inline_init(|r: &mut BarcodeRow| {
-//                                 r.id = "CB81F6CD62C1476F9411362053D49E84".to_string();
-//                                 r.value = "0123456789".to_string();
-//                                 r.item_id = Some("AA460A207402434A89B1F6EEAC08DA43".to_string());
-//                                 r.pack_size = Some(1);
-//                             })
-//                         },
-//                     },
-//                 }
-//             }
-//         }
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query(&self) -> BarcodeNode {
+                BarcodeNode {
+                    barcode: Barcode {
+                        barcode_row: {
+                            inline_init(|r: &mut BarcodeRow| {
+                                r.id = "CB81F6CD62C1476F9411362053D49E84".to_string();
+                                r.value = "0123456789".to_string();
+                                r.item_id = "AA460A207402434A89B1F6EEAC08DA43".to_string();
+                                r.pack_size = Some(1);
+                            })
+                        },
+                    },
+                }
+            }
+        }
 
-//         let expected = json!({
-//             "testQuery": {
-//               "__typename": "BarcodeNode",
-//               "id": "CB81F6CD62C1476F9411362053D49E84",
-//               "value": "0123456789",
-//               "itemId": "AA460A207402434A89B1F6EEAC08DA43",
-//               "packSize": 1
-//             }
-//           }
-//         );
+        let expected = json!({
+            "testQuery": {
+                "__typename": "BarcodeNode",
+                "id": "CB81F6CD62C1476F9411362053D49E84",
+                "value": "0123456789",
+                "itemId": "AA460A207402434A89B1F6EEAC08DA43",
+                "packSize": 1
+            }
+          }
+        );
 
-//         let query = r#"
-//         query {
-//             testQuery {
-//                 __typename
-//                id
-//                value
-//                itemId
-//                packSize
-//             }
-//         }
-//         "#;
-//         assert_graphql_query!(&settings, &query, &None, expected, None);
-//     }
-// }
+        let query = r#"
+        query {
+            testQuery {
+                __typename
+               id
+               value
+               itemId
+               packSize
+            }
+        }
+        "#;
+        assert_graphql_query!(&settings, &query, &None, expected, None);
+    }
+}

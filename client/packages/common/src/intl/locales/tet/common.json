@@ -1,6 +1,5 @@
 {
   "button.language": "Lingua",
-  "label.cant-delete-disabled-requisition": "Bele deit hamos linas wainhira requizisaun iha hela Draf",
   "label.rows-per-page": "Linas por pájina:",
   "label.toggle-password-visibility": "Toggle palavra passe nia vizibilidade",
   "log.invoice-status-allocated": "Remessa aloka ona",
@@ -204,7 +203,7 @@
   "label.website": "Sitio",
   "log.invoice-created": "Remessa kria ona",
   "log.user-logged-in": "Ujuáriu tama ona",
-  "log.invoice-deleted": "Remessa hamos ona",
+  "log.invoic-deleted": "Remessa hamos ona",
   "log.invoice-status-picked": "Remessa ne'ebe hili ona",
   "log.invoice-status-shipped": "Remessa manda ona",
   "log.invoice-status-delivered": "Remessa entrega ona",

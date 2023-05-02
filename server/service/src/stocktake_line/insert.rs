@@ -6,13 +6,11 @@ use repository::{
     StorageConnection,
 };
 
+use crate::item::check_item_exists;
 use crate::{
     service_provider::ServiceContext,
     stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
-    stocktake_line::{
-        query::get_stocktake_line,
-        validate::{check_item_exists, check_location_exists},
-    },
+    stocktake_line::{query::get_stocktake_line, validate::check_location_exists},
     u32_to_i32,
     validate::check_store_id_matches,
 };
@@ -175,7 +173,7 @@ fn validate(
     let item_id = check_stock_line_xor_item(&stock_line, input)
         .ok_or(InsertStocktakeLineError::StockLineXOrItem)?;
     if let Some(item_id) = &input.item_id {
-        if !check_item_exists(connection, &item_id, store_id)? {
+        if !check_item_exists(connection, store_id.to_string(), &item_id)? {
             return Err(InsertStocktakeLineError::ItemDoesNotExist);
         }
     }
