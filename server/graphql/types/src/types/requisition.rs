@@ -14,7 +14,7 @@ use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     unknown_user, NameRow, PeriodRow, Requisition, RequisitionRowApprovalStatus,
 };
-use service::{usize_to_u32, ListResult};
+use service::ListResult;
 
 use super::{InvoiceConnector, NameNode, PeriodNode, RequisitionLineConnector, UserNode};
 
@@ -272,16 +272,6 @@ impl RequisitionConnector {
             total_count: requisitions.count,
             nodes: requisitions
                 .rows
-                .into_iter()
-                .map(RequisitionNode::from_domain)
-                .collect(),
-        }
-    }
-
-    pub fn from_vec(requisitions: Vec<Requisition>) -> RequisitionConnector {
-        RequisitionConnector {
-            total_count: usize_to_u32(requisitions.len()),
-            nodes: requisitions
                 .into_iter()
                 .map(RequisitionNode::from_domain)
                 .collect(),

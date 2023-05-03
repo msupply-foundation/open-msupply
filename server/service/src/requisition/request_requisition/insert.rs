@@ -36,7 +36,7 @@ pub enum InsertRequestRequisitionError {
     // Program validation
     ProgramDoesNotExist,
     ProgramOrderTypeDoesNotExist,
-    MaxOrdersReachedForPeriod(Vec<Requisition>),
+    MaxOrdersReachedForPeriod,
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
