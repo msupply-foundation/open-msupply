@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::sync::{
     api::RemoteSyncRecordV5,
-    sync_serde::{date_option_to_isostring, naive_time, zero_date_as_option},
+    sync_serde::{
+        date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
+    },
 };
 
 use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
@@ -29,6 +31,7 @@ pub struct LegacyLocationMovementRow {
     pub store_id: String,
     #[serde(rename = "item_line_ID")]
     pub stock_line_id: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "location_ID")]
     pub location_id: Option<String>,
 
@@ -38,6 +41,8 @@ pub struct LegacyLocationMovementRow {
     #[serde(deserialize_with = "naive_time")]
     pub enter_time: NaiveTime,
 
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
     pub exit_date: Option<NaiveDate>,
     #[serde(deserialize_with = "naive_time")]
     pub exit_time: NaiveTime,
@@ -143,7 +148,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_location_translation() {
-        use crate::sync::test::test_data::location as test_data;
+        use crate::sync::test::test_data::location_movement as test_data;
         let translator = LocationMovementTranslation {};
 
         let (_, connection, _, _) = setup_all(
