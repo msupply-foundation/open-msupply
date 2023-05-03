@@ -213,12 +213,14 @@ mod test {
             id: "name_store_join1".to_string(),
             name_id: mock_name_store_b().id.clone(),
             store_id: mock_store_a().id,
+            name_is_supplier: true,
             ..Default::default()
         };
         let name_store_join2 = NameStoreJoinRow {
             id: "name_store_join2".to_string(),
             name_id: mock_name_store_c().id.clone(),
             store_id: mock_store_a().id,
+            name_is_supplier: true,
             ..Default::default()
         };
         let ServiceTestContext {
