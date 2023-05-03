@@ -10,6 +10,7 @@ import { useResponse } from '../../api';
 export const SupplyRequestedQuantityButtonComponent = () => {
   const t = useTranslation('distribution');
   const isDisabled = useResponse.utils.isDisabled();
+  const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
   const { mutate: supplyRequestedQuantity } =
     useResponse.utils.supplyRequested();
   const getConfirmation = useConfirmationModal({
@@ -18,11 +19,15 @@ export const SupplyRequestedQuantityButtonComponent = () => {
     title: t('heading.supply-to-requested'),
   });
 
+  const label = isRemoteAuthorisation
+    ? t('button.supply-to-approved')
+    : t('button.supply-to-requested');
+
   return (
     <ButtonWithIcon
       disabled={isDisabled}
       Icon={<ZapIcon />}
-      label={t('button.supply-to-requested')}
+      label={label}
       onClick={() => getConfirmation()}
     />
   );
