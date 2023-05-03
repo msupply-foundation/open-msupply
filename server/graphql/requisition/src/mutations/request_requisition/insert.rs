@@ -131,7 +131,6 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
         ServiceError::ProgramOrderTypeDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
         ServiceError::MaxOrdersReachedForPeriod => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
