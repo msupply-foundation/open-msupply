@@ -5,6 +5,7 @@ pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
 pub(crate) mod location;
+pub(crate) mod location_movement;
 pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
@@ -53,6 +54,7 @@ pub(crate) fn all_translators() -> SyncTanslators {
         Box::new(store_preference::StorePreferenceTranslation {}),
         // Remote
         Box::new(location::LocationTranslation {}),
+        Box::new(location_movement::LocationMovementTranslation {}),
         Box::new(stock_line::StockLineTranslation {}),
         Box::new(invoice::InvoiceTranslation {}),
         Box::new(invoice_line::InvoiceLineTranslation {}),
@@ -88,6 +90,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const BARCODE: &str = "barcode";
     // Remote
     pub(crate) const LOCATION: &str = "Location";
+    pub(crate) const LOCATION_MOVEMENT: &str = "location_movement";
     pub(crate) const ITEM_LINE: &str = "item_line";
     pub(crate) const TRANSACT: &str = "transact";
     pub(crate) const TRANS_LINE: &str = "trans_line";
@@ -119,6 +122,7 @@ pub(crate) enum PullUpsertRecord {
     ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow),
     Report(ReportRow),
     Location(LocationRow),
+    LocationMovement(LocationMovementRow),
     StockLine(StockLineRow),
     NameStoreJoin(NameStoreJoinRow),
     Invoice(InvoiceRow),
@@ -161,6 +165,8 @@ pub(crate) enum PullDeleteRecordTable {
     RequisitionLine,
     #[cfg(all(test, feature = "integration_test"))]
     Location,
+    #[cfg(all(test, feature = "integration_test"))]
+    LocationMovement,
     #[cfg(all(test, feature = "integration_test"))]
     StockLine,
     #[cfg(all(test, feature = "integration_test"))]

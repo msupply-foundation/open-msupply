@@ -204,6 +204,7 @@ impl PullUpsertRecord {
             }
             StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
             Barcode(record) => BarcodeRowRepository::new(con).upsert_one(record),
+            LocationMovement(record) => LocationMovementRowRepository::new(con).upsert_one(record),
         }
     }
 }
@@ -236,6 +237,8 @@ impl PullDeleteRecord {
             }
             #[cfg(all(test, feature = "integration_test"))]
             Location => LocationRowRepository::new(con).delete(id),
+            #[cfg(all(test, feature = "integration_test"))]
+            LocationMovement => LocationMovementRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             StockLine => StockLineRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
