@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import { EncounterNodeStatus } from '@common/types';
 import { EncounterRowFragment } from '@openmsupply-client/programs';
+import { noOtherVariants } from '@openmsupply-client/common';
 
 export const encounterStatusTranslation = (
   status: EncounterNodeStatus,
@@ -15,7 +16,7 @@ export const encounterStatusTranslation = (
     case EncounterNodeStatus.Visited:
       return t('label.encounter-status-visited');
     default:
-      return ((_: never) => '')(status);
+      return noOtherVariants(status);
   }
 };
 
