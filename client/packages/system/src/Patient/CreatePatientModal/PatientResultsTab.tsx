@@ -4,6 +4,7 @@ import {
   DataTable,
   GenderInput,
   Typography,
+  noOtherVariants,
   useColumns,
   useFormatDateTime,
   useNavigate,
@@ -15,9 +16,6 @@ import { Gender, usePatientCreateStore } from '@openmsupply-client/programs';
 import { PatientFragment } from '../api/operations.generated';
 
 const genderToGenderInput = (gender: Gender): GenderInput => {
-  const exhaustiveCheck = (_: never): GenderInput => {
-    return GenderInput.Male; // never returned
-  };
   switch (gender) {
     case Gender.MALE:
       return GenderInput.Male;
@@ -32,7 +30,7 @@ const genderToGenderInput = (gender: Gender): GenderInput => {
     case Gender.NON_BINARY:
       return GenderInput.NonBinary;
     default:
-      return exhaustiveCheck(gender);
+      return noOtherVariants(gender);
   }
 };
 
