@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 mod activity_log;
 mod barcode;
 mod is_sync_updated_for_requisition;
+mod location_movement_triggers;
 mod name_tags;
 mod period_and_period_schedule;
 mod program_requisition;
@@ -31,6 +32,7 @@ impl Migration for V1_01_11 {
 
         barcode::migrate(connection)?;
 
+        location_movement_triggers::migrate(connection)?;
         Ok(())
     }
 }
