@@ -9,7 +9,6 @@
   "button.supply-to-requested": "Supply requested",
   "button.new-shipment": "New Shipment",
   "button.save-and-confirm-status": "Confirm {{status}}",
-  "button.scan": "Scan",
   "button.select-a-color": "Select a color",
   "button.stop": "Stop",
   "error.failed-to-create-outbound": "Failed to create Outbound Shipment",
