@@ -190,6 +190,7 @@ impl PullUpsertRecord {
             }
             Report(record) => ReportRowRepository::new(con).upsert_one(record),
             Location(record) => LocationRowRepository::new(con).upsert_one(record),
+            LocationMovement(record) => LocationMovementRowRepository::new(con).upsert_one(record),
             StockLine(record) => StockLineRowRepository::new(con).upsert_one(record),
             NameStoreJoin(record) => NameStoreJoinRepository::new(con).upsert_one(record),
             Invoice(record) => InvoiceRowRepository::new(con).upsert_one(record),
@@ -204,7 +205,6 @@ impl PullUpsertRecord {
             }
             StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
             Barcode(record) => BarcodeRowRepository::new(con).upsert_one(record),
-            LocationMovement(record) => LocationMovementRowRepository::new(con).upsert_one(record),
         }
     }
 }
