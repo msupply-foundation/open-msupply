@@ -4,6 +4,7 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   NumericTextInput,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import {
   DefaultFormRowSx,
@@ -93,7 +94,7 @@ const extractAt = (
       case 'after':
         return new Date(encounter?.startDatetime ?? date);
       default:
-        ((_: never) => {})(options.at.encounterStartDatetime);
+        noOtherVariants(options.at.encounterStartDatetime);
     }
   } else if (options?.at?.type === 'programEnrolment') {
     switch (options.at.programEnrolmentDatetime) {
@@ -106,7 +107,7 @@ const extractAt = (
       case 'after':
         return new Date(program?.enrolmentDatetime ?? date);
       default:
-        ((_: never) => {})(options.at.programEnrolmentDatetime);
+        noOtherVariants(options.at.programEnrolmentDatetime);
     }
   }
 
