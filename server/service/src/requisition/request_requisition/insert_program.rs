@@ -12,9 +12,8 @@ use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     ActivityLogType, EqualFilter, MasterListLineFilter, MasterListLineRepository, NumberRowType,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow, RepositoryError,
-    Requisition, RequisitionFilter, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRepository, RequisitionRowRepository,
+    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
 use super::{generate_requisition_lines, InsertRequestRequisitionError};
@@ -75,53 +74,22 @@ fn validate(
         return Err(OutError::RequisitionAlreadyExists);
     }
 
-    let requisitions = RequisitionRepository::new(&connection).query_by_filter(
-        RequisitionFilter::new().order_type(EqualFilter::equal_to(&input.program_order_type_id)),
-    )?;
-
     let program_settings = get_program_requisition_settings(ctx, &ctx.store_id)?;
 
-    let order_type: ProgramRequisitionOrderTypeRow = program_settings
+    let (program_setting, order_type) = program_settings
         .iter()
-        .map(|setting| {
+        .find_map(|setting| {
             setting
                 .order_types
                 .iter()
-                .filter(|order_type| order_type.order_type.id == input.program_order_type_id)
-                .map(|order_type| order_type.order_type.clone())
+                .find(|order_type| order_type.order_type.id == input.program_order_type_id)
+                .map(|order_type| (setting.clone(), order_type.clone()))
         })
-        .flatten()
-        .next()
         .ok_or(OutError::ProgramOrderTypeDoesNotExist)?;
 
-    if requisitions.len() as i32 >= order_type.max_order_per_period {
-        return Err(OutError::MaxOrdersReachedForPeriod(requisitions));
+    if order_type.available_periods.is_empty() {
+        return Err(OutError::MaxOrdersReachedForPeriod);
     }
-
-    let program_requisition_settings: ProgramRequisitionSettingsRow = program_settings
-        .iter()
-        .filter(|setting| {
-            setting.program_requisition_settings.program_settings_row.id
-                == order_type.program_requisition_settings_id
-        })
-        .map(|setting| {
-            setting
-                .program_requisition_settings
-                .program_settings_row
-                .clone()
-        })
-        .next()
-        .ok_or(OutError::DatabaseError(RepositoryError::NotFound))?;
-
-    let program = program_settings
-        .iter()
-        .filter(|setting| {
-            setting.program_requisition_settings.program_row.id
-                == program_requisition_settings.program_id
-        })
-        .map(|setting| setting.program_requisition_settings.program_row.clone())
-        .next()
-        .ok_or(OutError::ProgramDoesNotExist)?;
 
     let other_party = check_other_party(
         connection,
@@ -142,20 +110,22 @@ fn validate(
         .store_id()
         .ok_or(OutError::OtherPartyIsNotAStore)?;
 
-    // Check if the 'other_party' is a valid Program Supplier
-    program_settings
+    if program_setting
+        .suppliers
         .iter()
-        .map(|setting| {
-            setting
-                .suppliers
-                .iter()
-                .find(|supplier| supplier.supplier.name_row.id == input.other_party_id)
-        })
-        .flatten()
-        .next()
-        .ok_or(OutError::OtherPartyNotASupplier)?;
+        .find(|supplier| supplier.supplier.name_row.id == input.other_party_id)
+        .is_none()
+    {
+        return Err(OutError::OtherPartyNotASupplier);
+    }
 
-    Ok((program, order_type))
+    Ok((
+        program_setting
+            .program_requisition_settings
+            .program_row
+            .clone(),
+        order_type.order_type.clone(),
+    ))
 }
 
 fn generate(
@@ -235,8 +205,8 @@ mod test_insert {
             mock_user_account_a, program_master_list_store, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, NameRow, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionRepository, RequisitionRowRepository,
+        EqualFilter, NameRow, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionRowRepository,
     };
     use util::inline_init;
 
@@ -389,13 +359,6 @@ mod test_insert {
         assert_eq!(requisition_lines.len(), 1);
 
         // Error: MaxOrdersReachedForPeriod
-        let requisition = RequisitionRepository::new(&connection)
-            .query_by_filter(
-                RequisitionFilter::new()
-                    .order_type(EqualFilter::equal_to(&mock_program_order_types_a().id)),
-            )
-            .unwrap();
-
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
@@ -406,7 +369,7 @@ mod test_insert {
                     r.period_id = mock_period().id;
                 }),
             ),
-            Err(ServiceError::MaxOrdersReachedForPeriod(requisition))
+            Err(ServiceError::MaxOrdersReachedForPeriod)
         );
     }
 }
