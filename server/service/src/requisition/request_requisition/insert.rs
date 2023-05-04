@@ -33,9 +33,6 @@ pub enum InsertRequestRequisitionError {
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
     OtherPartyIsNotAStore,
-    // Program validation
-    ProgramOrderTypeDoesNotExist,
-    MaxOrdersReachedForPeriod,
     // Internal
     NewlyCreatedRequisitionDoesNotExist,
     DatabaseError(RepositoryError),
