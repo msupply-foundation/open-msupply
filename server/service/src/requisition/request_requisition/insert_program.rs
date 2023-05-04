@@ -6,7 +6,6 @@ use crate::{
         query::get_requisition,
     },
     service_provider::ServiceContext,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
@@ -16,7 +15,20 @@ use repository::{
     RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
-use super::{generate_requisition_lines, InsertRequestRequisitionError};
+use super::generate_requisition_lines;
+
+#[derive(Debug, PartialEq)]
+pub enum InsertProgramRequestRequisitionError {
+    RequisitionAlreadyExists,
+    // Name validation
+    SupplierNotValid,
+    // Program validation
+    ProgramOrderTypeDoesNotExist,
+    MaxOrdersReachedForPeriod,
+    // Internal
+    NewlyCreatedRequisitionDoesNotExist,
+    DatabaseError(RepositoryError),
+}
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertProgramRequestRequisition {
@@ -30,7 +42,7 @@ pub struct InsertProgramRequestRequisition {
     pub period_id: String,
 }
 
-type OutError = InsertRequestRequisitionError;
+type OutError = InsertProgramRequestRequisitionError;
 
 pub fn insert_program_request_requisition(
     ctx: &ServiceContext,
@@ -91,32 +103,13 @@ fn validate(
         return Err(OutError::MaxOrdersReachedForPeriod);
     }
 
-    let other_party = check_other_party(
-        connection,
-        &ctx.store_id,
-        &input.other_party_id,
-        CheckOtherPartyType::Supplier,
-    )
-    .map_err(|e| match e {
-        OtherPartyErrors::OtherPartyDoesNotExist => OutError::OtherPartyDoesNotExist {},
-        OtherPartyErrors::OtherPartyNotVisible => OutError::OtherPartyNotVisible,
-        OtherPartyErrors::TypeMismatched => OutError::OtherPartyNotASupplier,
-        OtherPartyErrors::DatabaseError(repository_error) => {
-            OutError::DatabaseError(repository_error)
-        }
-    })?;
-
-    other_party
-        .store_id()
-        .ok_or(OutError::OtherPartyIsNotAStore)?;
-
     if program_setting
         .suppliers
         .iter()
         .find(|supplier| supplier.supplier.name_row.id == input.other_party_id)
         .is_none()
     {
-        return Err(OutError::OtherPartyNotASupplier);
+        return Err(OutError::SupplierNotValid);
     }
 
     Ok((
@@ -190,19 +183,25 @@ fn generate(
     Ok((requisition, requisition_line_rows))
 }
 
+impl From<RepositoryError> for InsertProgramRequestRequisitionError {
+    fn from(error: RepositoryError) -> Self {
+        InsertProgramRequestRequisitionError::DatabaseError(error)
+    }
+}
+
 #[cfg(test)]
 mod test_insert {
     use crate::{
         requisition::request_requisition::{
-            InsertProgramRequestRequisition, InsertRequestRequisitionError as ServiceError,
+            InsertProgramRequestRequisition, InsertProgramRequestRequisitionError as ServiceError,
         },
         service_provider::ServiceProvider,
     };
     use repository::{
         mock::{
-            mock_name_a, mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_period,
-            mock_program_a, mock_program_order_types_a, mock_request_draft_requisition,
-            mock_user_account_a, program_master_list_store, MockData, MockDataInserts,
+            mock_name_store_b, mock_period, mock_program_a, mock_program_order_types_a,
+            mock_request_draft_requisition, mock_user_account_a, program_master_list_store,
+            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, NameRow, RequisitionLineFilter, RequisitionLineRepository,
@@ -259,34 +258,6 @@ mod test_insert {
             Err(ServiceError::ProgramOrderTypeDoesNotExist)
         );
 
-        // OtherPartyNotASupplier
-        assert_eq!(
-            service.insert_program_request_requisition(
-                &context,
-                inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition".to_owned();
-                    r.other_party_id = mock_name_store_a().id.clone();
-                    r.program_order_type_id = mock_program_order_types_a().id;
-                    r.period_id = mock_period().id;
-                })
-            ),
-            Err(ServiceError::OtherPartyNotASupplier)
-        );
-
-        // OtherPartyNotVisible
-        assert_eq!(
-            service.insert_program_request_requisition(
-                &context,
-                inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition".to_owned();
-                    r.other_party_id = mock_name_store_c().id.clone();
-                    r.program_order_type_id = mock_program_order_types_a().id;
-                    r.period_id = mock_period().id;
-                })
-            ),
-            Err(ServiceError::OtherPartyNotVisible)
-        );
-
         // OtherPartyDoesNotExist
         assert_eq!(
             service.insert_program_request_requisition(
@@ -298,21 +269,7 @@ mod test_insert {
                     r.period_id = mock_period().id;
                 })
             ),
-            Err(ServiceError::OtherPartyDoesNotExist)
-        );
-
-        // OtherPartyIsNotAStore
-        assert_eq!(
-            service.insert_program_request_requisition(
-                &context,
-                inline_init(|r: &mut InsertProgramRequestRequisition| {
-                    r.id = "new_program_request_requisition".to_owned();
-                    r.other_party_id = mock_name_a().id;
-                    r.program_order_type_id = mock_program_order_types_a().id;
-                    r.period_id = mock_period().id;
-                })
-            ),
-            Err(ServiceError::OtherPartyIsNotAStore)
+            Err(ServiceError::SupplierNotValid)
         );
     }
 
