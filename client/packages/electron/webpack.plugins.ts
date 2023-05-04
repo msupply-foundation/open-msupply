@@ -23,6 +23,7 @@ export const plugins = [
         from: '**/*.json',
         to: './locales/',
       },
+      { from: './src/error.html', to: './error.html' },
     ],
   }),
 ];
