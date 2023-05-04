@@ -3,7 +3,7 @@ use crate::sync::translations::PullDeleteRecordTable;
 use super::{
     sync_buffer::SyncBuffer,
     translations::{
-        all_translators, IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTanslators,
+        all_translators, IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslators,
     },
 };
 use log::warn;
@@ -38,7 +38,7 @@ impl<'a> TranslationAndIntegration<'a> {
     fn translate_sync_record(
         &self,
         sync_record: &SyncBufferRow,
-        translators: &SyncTanslators,
+        translators: &SyncTranslators,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
         let mut translation_results = IntegrationRecords::new();
 
