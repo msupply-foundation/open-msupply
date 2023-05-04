@@ -26,6 +26,7 @@ pub struct RequisitionFilter {
     pub comment: Option<SimpleStringFilter>,
     pub store_id: Option<EqualFilter<String>>,
     pub linked_requisition_id: Option<EqualFilter<String>>,
+    pub order_type: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -66,6 +67,7 @@ impl RequisitionFilter {
             comment: None,
             store_id: None,
             linked_requisition_id: None,
+            order_type: None,
         }
     }
 
@@ -155,6 +157,11 @@ impl RequisitionFilter {
 
     pub fn by_linked_requisition_id(id: &str) -> RequisitionFilter {
         RequisitionFilter::new().linked_requisition_id(EqualFilter::equal_to(id))
+    }
+
+    pub fn order_type(mut self, filter: EqualFilter<String>) -> Self {
+        self.order_type = Some(filter);
+        self
     }
 }
 
