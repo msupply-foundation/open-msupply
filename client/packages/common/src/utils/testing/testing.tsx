@@ -99,7 +99,7 @@ export const TestingProvider: FC<
         <SnackbarProvider maxSnack={3}>
           <IntlTestProvider locale={locale}>
             <TableProvider
-              createStore={createTableStore()}
+              createStore={createTableStore}
               queryParamsStore={createQueryParamsStore({
                 initialSortBy: { key: 'id' },
                 initialFilterBy: {
@@ -123,7 +123,7 @@ export const StoryProvider: FC<PropsWithChildrenOnly> = ({ children }) => (
       <GqlProvider url={Environment.GRAPHQL_URL}>
         <SnackbarProvider maxSnack={3}>
           <IntlTestProvider locale="en">
-            <TableProvider createStore={createTableStore()}>
+            <TableProvider createStore={createTableStore}>
               <AppThemeProvider>
                 <ConfirmationModalProvider>
                   {children}
