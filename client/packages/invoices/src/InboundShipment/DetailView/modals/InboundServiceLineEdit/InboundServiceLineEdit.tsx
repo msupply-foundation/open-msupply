@@ -79,7 +79,7 @@ const InboundServiceLineEditComponent = ({
             />
           </Box>
           <TableProvider
-            createStore={createTableStore()}
+            createStore={createTableStore}
             queryParamsStore={createQueryParamsStore({
               initialSortBy: { key: 'serviceItemName' },
             })}
