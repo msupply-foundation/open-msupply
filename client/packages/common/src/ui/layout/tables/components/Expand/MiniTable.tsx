@@ -36,7 +36,7 @@ export const MiniTable = <T extends RecordWithId>({
         }}
       >
         <TableProvider
-          createStore={createTableStore()}
+          createStore={createTableStore}
           queryParamsStore={
             queryParamsStore ||
             createQueryParamsStore<T>({ initialSortBy: { key: 'name' } })

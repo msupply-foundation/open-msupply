@@ -55,7 +55,7 @@ const MasterListComponent: FC = () => {
 
 export const MasterListListView: FC = () => (
   <TableProvider<MasterListRowFragment>
-    createStore={createTableStore()}
+    createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<MasterListRowFragment>({
       initialSortBy: { key: 'name' },
     })}
