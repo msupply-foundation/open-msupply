@@ -173,6 +173,7 @@ fn create_filtered_query(
         comment,
         store_id,
         linked_requisition_id,
+        order_type,
     }) = filter
     {
         apply_equal_filter!(query, id, requisition_dsl::id);
@@ -210,6 +211,7 @@ fn create_filtered_query(
         apply_simple_string_filter!(query, comment, requisition_dsl::comment);
 
         apply_equal_filter!(query, store_id, requisition_dsl::store_id);
+        apply_equal_filter!(query, order_type, requisition_dsl::order_type)
     }
 
     Ok(query)
