@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::{IntegrationRecords, PullUpsertRecord},
 };
-use chrono::Utc;
+use chrono::{Timelike, Utc};
 use repository::{Document, DocumentStatus};
 use serde_json::json;
 use util::uuid::uuid;
@@ -41,7 +41,8 @@ impl SyncRecordTester for DocumentRecordTester {
             name: "document/name".to_string(),
             parent_ids: vec![],
             user_id: "some_user".to_string(),
-            datetime: Utc::now(),
+            // limit time precision, otherwise test fail because of limited DB precision (postgres)
+            datetime: Utc::now().with_nanosecond(0).unwrap(),
             r#type: "MyDocument".to_string(),
             data: json!({"some": "data"}),
             form_schema_id: Some(schema_id),
