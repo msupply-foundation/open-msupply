@@ -1043,6 +1043,15 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
+export type InsertProgramRequestRequisitionError = {
+  __typename: 'InsertProgramRequestRequisitionError';
+  error: InsertProgramRequestRequisitionErrorInterface;
+};
+
+export type InsertProgramRequestRequisitionErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type InsertProgramRequestRequisitionInput = {
   colour?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
@@ -1054,6 +1063,8 @@ export type InsertProgramRequestRequisitionInput = {
   programOrderTypeId: Scalars['String'];
   theirReference?: InputMaybe<Scalars['String']>;
 };
+
+export type InsertProgramRequestRequisitionResponse = InsertProgramRequestRequisitionError | RequisitionNode;
 
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
@@ -1647,6 +1658,11 @@ export type MasterListSortInput = {
 
 export type MasterListsResponse = MasterListConnector;
 
+export type MaxOrdersReachedForPeriod = InsertProgramRequestRequisitionErrorInterface & {
+  __typename: 'MaxOrdersReachedForPeriod';
+  description: Scalars['String'];
+};
+
 export type Mutations = {
   __typename: 'Mutations';
   /** Add requisition lines from master item master list */
@@ -1688,7 +1704,7 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
-  insertProgramRequestRequisition: InsertRequestRequisitionResponse;
+  insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -2666,6 +2682,7 @@ export type RequisitionFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<SimpleStringFilterInput>;
   requisitionNumber?: InputMaybe<EqualFilterBigNumberInput>;
