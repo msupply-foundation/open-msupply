@@ -77,8 +77,12 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
     let mut ts = TopologicalSort::<&str>::new();
     for translator in translators {
         let pull_dep = translator.pull_dependencies();
-        for dep in pull_dep.dependencies {
-            ts.add_dependency(dep, pull_dep.table);
+        if pull_dep.dependencies.len() == 0 {
+            ts.add_dependency("", pull_dep.table);
+        } else {
+            for dep in pull_dep.dependencies {
+                ts.add_dependency(dep, pull_dep.table);
+            }
         }
     }
     // fill output so that tables with the least dependencies come first
