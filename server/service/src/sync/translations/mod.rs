@@ -32,9 +32,9 @@ use thiserror::Error;
 
 use super::api::{CommonSyncRecordV5, RemoteSyncRecordV5, SyncActionV5};
 
-pub(crate) type SyncTanslators = Vec<Box<dyn SyncTranslation>>;
+pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 
-pub(crate) fn all_translators() -> SyncTanslators {
+pub(crate) fn all_translators() -> SyncTranslators {
     vec![
         // Central
         Box::new(name::NameTranslation {}),
@@ -317,7 +317,7 @@ pub(crate) fn translate_changelogs_to_push_records(
 
 fn translate_changelog(
     connection: &StorageConnection,
-    translators: &SyncTanslators,
+    translators: &SyncTranslators,
     changelog: &ChangelogRow,
 ) -> Result<Vec<RemoteSyncRecordV5>, anyhow::Error> {
     let mut translation_results = Vec::new();
