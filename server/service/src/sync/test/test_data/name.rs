@@ -577,9 +577,14 @@ fn name_push_record_1() -> TestSyncPushRecord {
             on_hold: true,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
-            created_date: Some(NaiveDate::from_ymd(2022, 05, 22)),
+            created_date: Some(NaiveDate::from_ymd_opt(2022, 05, 22).unwrap()),
             female: true,
-            created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 05, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
             gender: Some(Gender::Female)
         }),
     }
@@ -599,7 +604,7 @@ fn name_push_record_2() -> TestSyncPushRecord {
             supplying_store_id: Some("store_a".to_string()),
             first_name: Some("Alex".to_string()),
             last_name: Some("Moemoe".to_string()),
-            date_of_birth: Some(NaiveDate::from_ymd(1998, 07, 29)),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 07, 29).unwrap()),
             phone: Some("02345678".to_string()),
             charge_code: Some("00102/19/01".to_string()),
             comment: Some("name comment 1".to_string()),
@@ -614,8 +619,13 @@ fn name_push_record_2() -> TestSyncPushRecord {
             is_deceased: true,
             national_health_number: Some("NHN003".to_string()),
             female: true,
-            created_date: Some(NaiveDate::from_ymd(2022, 05, 22)),
-            created_datetime: Some(NaiveDate::from_ymd(2022, 05, 22).and_hms(0, 0, 0)),
+            created_date: Some(NaiveDate::from_ymd_opt(2022, 05, 22).unwrap()),
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2022, 05, 22)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+            ),
             gender: Some(Gender::Female)
         }),
     }

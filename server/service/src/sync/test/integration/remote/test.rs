@@ -5,9 +5,9 @@ mod tests {
         document::DocumentRecordTester, invoice::InvoiceRecordTester,
         location::LocationRecordTester,
         patient_name_and_store_and_name_store_join::PatientNameAndStoreAndNameStoreJoinTester,
-        requisition::RequisitionRecordTester, stock_line::StockLineRecordTester,
-        stocktake::StocktakeRecordTester, test_remote_sync_record,
-        user_permission::UserPermissionTester,
+        program_requisition::ProgramRequisitionTester, requisition::RequisitionRecordTester,
+        stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
+        test_remote_sync_record, user_permission::UserPermissionTester,
     };
 
     #[actix_rt::test]

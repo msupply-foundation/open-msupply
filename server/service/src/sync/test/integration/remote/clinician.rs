@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::{IntegrationRecords, PullUpsertRecord},
 };
-use repository::{ClinicianRow, ClinicianStoreJoinRow, Gender, StoreRow};
+use repository::{ClinicianRow, ClinicianStoreJoinRow, Gender, StoreMode, StoreRow};
 use serde_json::json;
 use util::{
     inline_edit,
@@ -22,6 +22,7 @@ impl SyncRecordTester for ClinicianRecordTester {
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
             logo: None,
+            store_mode: StoreMode::Dispensary,
         };
         let store_json = json!({
             "ID": store_row.id,
