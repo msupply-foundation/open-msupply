@@ -2,7 +2,9 @@ use repository::{NameTagRow, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -17,6 +19,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 
 pub(crate) struct NameTagTranslation {}
 impl SyncTranslation for NameTagTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::NAME_TAG,
+            dependencies: vec![],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

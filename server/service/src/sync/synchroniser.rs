@@ -19,6 +19,7 @@ use super::{
     sync_buffer::SyncBuffer,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
+    translations::{all_translators, pull_integration_order},
 };
 
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
@@ -228,19 +229,22 @@ pub fn integrate_and_translate_sync_buffer(
         ),
         RepositoryError,
     > {
+        let translators = all_translators();
+        let table_order = pull_integration_order(&translators);
+
         let sync_buffer = SyncBuffer::new(connection);
         let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert)?;
+            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
         let upsert_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(upsert_sync_buffer_records)?;
+            .translate_and_integrate_sync_records(upsert_sync_buffer_records, &translators)?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete)?;
+            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
         let delete_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(delete_sync_buffer_records)?;
+            .translate_and_integrate_sync_records(delete_sync_buffer_records, &translators)?;
 
         Ok((upsert_integration_result, delete_integration_result))
     };
