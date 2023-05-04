@@ -176,10 +176,7 @@ app.on('window-all-closed', () => {
 
 process.on('uncaughtException', error => {
   // See comment below
-  if (
-    error.message.includes('[this.constructor.name] is not a constructor') &&
-    error.stack?.includes('._addKnownAnswers')
-  ) {
+  if (error.message.includes('[this.constructor.name] is not a constructor')) {
     return;
   }
 
@@ -207,6 +204,20 @@ process.on('uncaughtException', error => {
         error.message.includes('e[this.constructor.name] is not a constructor') &&
         error.stack?.includes('m._addKnownAnswers')
   */
+  /*
+    Have now had this version of the error - relaxing the condition again based on this:
+      TypeError: e[this.constructor.name] is not a constructor
+      at t.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:8:77453)
+      at ..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:8:49749
+      at Array.reduce (<anonymous>)
+      at t.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:8:49606)
+      at t.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:8:49025)
+      at ..open mSupply.app/Contents/Resources/app/.webpack/main/index.js:8:104855
+      at Array.forEach (<anonymous>)
+      at t.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:8:104807)
+      at t.value (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:8:104661)
+      at t.enter (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:8:99043)
+ */
 });
 
 // App data store
