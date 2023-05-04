@@ -98,8 +98,8 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
 
         output.append(&mut next);
     }
-
-    output
+    // remove the empty helper dependency added earlier
+    output.into_iter().filter(|table| *table != "").collect()
 }
 
 #[allow(non_snake_case)]
