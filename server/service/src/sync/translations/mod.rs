@@ -29,6 +29,7 @@ pub(crate) mod unit;
 
 use repository::*;
 use thiserror::Error;
+use topological_sort::TopologicalSort;
 
 use super::api::{CommonSyncRecordV5, RemoteSyncRecordV5, SyncActionV5};
 
@@ -69,6 +70,32 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
+}
+
+/// Calculates the integration order based on the PullDependencies in the SyncTranslators
+pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'static str> {
+    let mut ts = TopologicalSort::<&str>::new();
+    for translator in translators {
+        let pull_dep = translator.pull_dependencies();
+        for dep in pull_dep.dependencies {
+            ts.add_dependency(dep, pull_dep.table);
+        }
+    }
+    // fill output so that tables with the least dependencies come first
+    let mut output = vec![];
+    loop {
+        let mut next = ts.pop_all();
+        if next.len() == 0 {
+            if ts.len() != 0 {
+                panic!("Circular dependencies");
+            }
+            break;
+        }
+
+        output.append(&mut next);
+    }
+
+    output
 }
 
 #[allow(non_snake_case)]
@@ -223,7 +250,17 @@ impl IntegrationRecords {
     }
 }
 
+/// Pull dependency description for a SyncTranslation
+pub(crate) struct PullDependency {
+    /// The legacy table name from where data is pulled for the SyncTranslation.
+    pub table: &'static str,
+    /// List of legacy table names that need to be pulled first before the SyncTranslation can run.
+    pub dependencies: Vec<&'static str>,
+}
+
 pub(crate) trait SyncTranslation {
+    fn pull_dependencies(&self) -> PullDependency;
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
