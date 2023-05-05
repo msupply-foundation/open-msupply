@@ -263,6 +263,7 @@ impl NameFilter {
         self.is_customer = Some(value);
         self
     }
+    
 
     pub fn r#type(mut self, filter: EqualFilter<NameType>) -> Self {
         self.r#type = Some(filter);

@@ -8,6 +8,7 @@ import {
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
+import { getNameOptionRenderer } from '@openmsupply-client/system';
 
 import { ProgramSettingsFragment } from '../api';
 import { NewRequisitionType } from './types';
@@ -18,6 +19,15 @@ export interface NewProgramRequisition {
   otherPartyId: string;
   periodId: string;
 }
+
+type Common<T> = Pick<
+  AutocompleteProps<T>,
+  'options' | 'value' | 'disabled' | 'renderOption' | 'getOptionDisabled'
+> & {
+  label: string;
+  set: (value: T | null) => void;
+  labelNoOptions?: string;
+};
 
 const useProgramRequisitionOptions = (
   programSettings: ProgramSettingsFragment[]
@@ -43,7 +53,12 @@ const useProgramRequisitionOptions = (
     setPeriod(null);
   }, [orderType]);
 
-  return {
+  const allOptions: {
+    programs: Common<ProgramSetting>;
+    orderTypes: Common<OrderType>;
+    suppliers: Common<Supplier>;
+    periods: Common<Period>;
+  } = {
     programs: {
       options: programSettings,
       value: program,
@@ -65,8 +80,9 @@ const useProgramRequisitionOptions = (
       set: setSupplier,
       disabled: program === null,
       labelNoOptions: t('messages.not-configured'),
-      // TODO supplier on hold ?
       label: t('label.supplier-name'),
+      renderOption: getNameOptionRenderer(t('label.on-hold')),
+      getOptionDisabled: (supplier: Supplier) => supplier.isOnHold,
     },
     periods: {
       options: orderType?.availablePeriods || [],
@@ -76,6 +92,10 @@ const useProgramRequisitionOptions = (
       labelNoOptions: t('messages.period-not-available'),
       label: t('label.period'),
     },
+  };
+
+  return {
+    ...allOptions,
     createOptions:
       !!program && !!orderType && !!supplier && !!period
         ? {
@@ -96,14 +116,10 @@ const LabelAndOptions = <T,>({
   value,
   autoFocus,
   optionKey,
-}: Pick<
-  AutocompleteProps<T>,
-  'options' | 'value' | 'optionKey' | 'autoFocus' | 'disabled'
-> & {
-  label: string;
-  set: (value: T | null) => void;
-  labelNoOptions?: string;
-}) => {
+  renderOption,
+  getOptionDisabled,
+}: Pick<AutocompleteProps<T>, 'optionKey' | 'autoFocus'> &
+  Common<T>) => {
   const noOptionsDisplay = options.length == 0 &&
     !disabled &&
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
@@ -117,6 +133,8 @@ const LabelAndOptions = <T,>({
         {noOptionsDisplay || (
           <Autocomplete
             width="300"
+            renderOption={renderOption}
+            getOptionDisabled={getOptionDisabled}
             autoFocus={autoFocus}
             options={options}
             optionKey={optionKey}
