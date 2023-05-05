@@ -13,15 +13,20 @@ export const SupplyRequestedQuantityButtonComponent = () => {
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
   const { mutate: supplyRequestedQuantity } =
     useResponse.utils.supplyRequested();
-  const getConfirmation = useConfirmationModal({
-    onConfirm: supplyRequestedQuantity,
-    message: t('messages.supply-to-requested'),
-    title: t('heading.supply-to-requested'),
-  });
 
   const label = isRemoteAuthorisation
     ? t('button.supply-to-approved')
     : t('button.supply-to-requested');
+
+  const getConfirmation = useConfirmationModal({
+    onConfirm: supplyRequestedQuantity,
+    message: isRemoteAuthorisation
+      ? t('messages.supply-to-approved')
+      : t('messages.supply-to-requested'),
+    title: isRemoteAuthorisation
+      ? t('heading.supply-to-approved')
+      : t('heading.supply-to-requested'),
+  });
 
   return (
     <ButtonWithIcon
