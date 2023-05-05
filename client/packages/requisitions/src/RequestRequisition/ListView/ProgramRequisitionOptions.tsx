@@ -119,11 +119,7 @@ const LabelAndOptions = <T,>({
   renderOption,
   getOptionDisabled,
 }: Pick<AutocompleteProps<T>, 'optionKey' | 'autoFocus'> &
-  Common<T> & {
-    label: string;
-    set: (value: T | null) => void;
-    labelNoOptions?: string;
-  }) => {
+  Common<T>) => {
   const noOptionsDisplay = options.length == 0 &&
     !disabled &&
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
