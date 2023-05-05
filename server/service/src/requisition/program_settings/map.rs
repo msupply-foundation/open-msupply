@@ -5,6 +5,7 @@ use util::date_now;
 
 use super::{prepare::PrepareProgramSettings, OrderType, ProgramSettings};
 
+// History = historic and current
 const MAX_NUMBER_OF_HISTORIC_PERIODS: usize = 3;
 const MAX_NUMBER_OF_FUTURE_PERIODS: usize = 3;
 
@@ -105,6 +106,7 @@ fn period_is_available(
 /// and sort in ascending order
 fn reduce_and_sort_periods(periods: Vec<PeriodRow>) -> Vec<PeriodRow> {
     let now = date_now();
+    // History = historic and current, thus p.start_date < now
     let (mut historic, mut future): (Vec<PeriodRow>, Vec<PeriodRow>) =
         periods.into_iter().partition(|p| p.start_date < now);
     // Sort them
