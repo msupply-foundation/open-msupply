@@ -7,6 +7,24 @@ pub(crate) async fn delay_for_processor() {
     tokio::time::sleep(Duration::from_millis(PROCESSOR_DELAY_MILLISECONDS)).await
 }
 
+// This is implemented as a macro to avoid thread problems if the $call expression is not Send
+macro_rules! delayed_with_retries {
+    ($check:expr, $err_message:expr) => {{
+        let mut success = false;
+        for _ in 1..=3 {
+            delay_for_processor().await;
+            if $check {
+                success = true;
+                break;
+            }
+        }
+        if !success {
+            panic!("Failed with retries: {}", $err_message);
+        }
+    }};
+}
+pub(crate) use delayed_with_retries;
+
 pub(crate) async fn exec_concurrent<C, T, Fut, F>(
     context: C,
     number_of_instances: u32,
