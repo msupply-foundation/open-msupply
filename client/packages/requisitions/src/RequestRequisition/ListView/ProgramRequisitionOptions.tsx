@@ -53,7 +53,7 @@ const useProgramRequisitionOptions = (
     setPeriod(null);
   }, [orderType]);
 
-  let allOptions: {
+  const allOptions: {
     programs: Common<ProgramSetting>;
     orderTypes: Common<OrderType>;
     suppliers: Common<Supplier>;
