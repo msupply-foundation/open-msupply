@@ -12,11 +12,11 @@ import {
   SearchBar,
   InfoPanel,
   Typography,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
 import { useResponse } from '../api';
+import { getApprovalStatusKey } from '../../utils';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
@@ -90,11 +90,7 @@ export const Toolbar: FC = () => {
                   label={t('label.auth-status')}
                   Input={
                     <Typography>
-                      {t(
-                        `approval-status.${String(
-                          approvalStatus
-                        ).toLowerCase()}` as LocaleKey
-                      )}
+                      {t(getApprovalStatusKey(approvalStatus))}
                     </Typography>
                   }
                 />
