@@ -3,6 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ItemWithStatsFragment = { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
 
@@ -111,14 +112,14 @@ export type DeleteRequestMutationVariables = Types.Exact<{
 
 export type DeleteRequestMutation = { __typename: 'Mutations', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitions?: Array<{ __typename: 'DeleteRequestRequisitionResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionError', error: { __typename: 'CannotDeleteRequisitionWithLines', description: string } | { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type ProgramSettingsFragment = { __typename: 'ProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', id: string, name: string }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
+export type ProgramSettingsFragment = { __typename: 'ProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
 
 export type ProgramSettingsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
 }>;
 
 
-export type ProgramSettingsQuery = { __typename: 'Queries', programRequisitionSettings: Array<{ __typename: 'ProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', id: string, name: string }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
+export type ProgramSettingsQuery = { __typename: 'Queries', programRequisitionSettings: Array<{ __typename: 'ProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> }> };
 
 export const RequestRowFragmentDoc = gql`
     fragment RequestRow on RequisitionNode {
@@ -256,8 +257,7 @@ export const ProgramSettingsFragmentDoc = gql`
   programName
   programId
   suppliers {
-    id
-    name
+    ...NameRow
   }
   orderTypes {
     id
@@ -268,7 +268,7 @@ export const ProgramSettingsFragmentDoc = gql`
     }
   }
 }
-    `;
+    ${NameRowFragmentDoc}`;
 export const RequestByNumberDocument = gql`
     query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
