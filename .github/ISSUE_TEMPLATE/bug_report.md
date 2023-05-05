@@ -23,6 +23,12 @@ Steps to reproduce the behaviour:
 4. See error
 
 ## Your environment 🌱
- - Version [e.g. 1.2.3]
- - Platform [e.g. tablet, browser, windows desktop, macOS desktop, server]
+<!-- e.g. 1.2.3 -->
+ - Version: 
+ - Platform:
+   - [ ] android (tablet)
+   - [ ] browser (extra points if you tell us which one)
+   - [ ] desktop (windows)
+   - [ ] desktop (macOS)
+   - [ ] server (windows)
  
