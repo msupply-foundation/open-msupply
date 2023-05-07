@@ -12,7 +12,7 @@ use repository::{
     SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
+use util::constants::{INVENTORY_ADJUSTMENT_NAME_CODE, REPACK_NAME_CODE};
 
 use super::{
     IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
@@ -39,8 +39,10 @@ pub enum LegacyTransactType {
     #[serde(rename = "sc")]
     #[serde(alias = "Sc")]
     Sc,
+    #[serde(rename = "sr")]
+    Sr,
     /// Bucket to catch all other variants
-    /// E.g. "cc" (customer credit), "sr" (repack), "bu" (build),
+    /// E.g. "cc" (customer credit), "bu" (build),
     /// "rc" (cash receipt), "ps" (cash payment)
     #[serde(other)]
     Others,
@@ -361,6 +363,12 @@ fn invoice_type(_type: &LegacyTransactType, name: &NameRow) -> Option<InvoiceRow
             _ => return None,
         };
     }
+    if name.code == REPACK_NAME_CODE {
+        return match _type {
+            LegacyTransactType::Sr => Some(InvoiceRowType::Repack),
+            _ => return None,
+        };
+    }
     match _type {
         LegacyTransactType::Si => Some(InvoiceRowType::InboundShipment),
         LegacyTransactType::Ci => Some(InvoiceRowType::OutboundShipment),
@@ -445,6 +453,15 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
             }
             _ => {}
         },
+        InvoiceRowType::Repack => match data.status {
+            LegacyTransactStatus::Cn => {
+                mapping.verified_datetime = confirm_datetime;
+            }
+            LegacyTransactStatus::Fn => {
+                mapping.verified_datetime = confirm_datetime;
+            }
+            _ => {}
+        },
     };
     mapping
 }
@@ -462,6 +479,7 @@ fn to_legacy_confirm_time(
         InvoiceRowType::OutboundShipment => picked_datetime,
         InvoiceRowType::InboundShipment => delivered_datetime,
         InvoiceRowType::InventoryAddition | InvoiceRowType::InventoryReduction => verified_datetime,
+        InvoiceRowType::Repack => verified_datetime,
     };
 
     let date = datetime.map(|datetime| datetime.date());
@@ -500,6 +518,13 @@ fn invoice_status(
             LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
             _ => return None,
         },
+        InvoiceRowType::Repack => match data.status {
+            LegacyTransactStatus::Nw => InvoiceRowStatus::New,
+            LegacyTransactStatus::Sg => InvoiceRowStatus::New,
+            LegacyTransactStatus::Cn => InvoiceRowStatus::Verified,
+            LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
+            _ => return None,
+        },
     };
     Some(status)
 }
@@ -511,6 +536,7 @@ fn legacy_invoice_type(_type: &InvoiceRowType) -> Option<LegacyTransactType> {
         // Inventory Adjustment
         InvoiceRowType::InventoryAddition => LegacyTransactType::Si,
         InvoiceRowType::InventoryReduction => LegacyTransactType::Sc,
+        InvoiceRowType::Repack => LegacyTransactType::Sr,
     };
     return Some(t);
 }
@@ -537,6 +563,14 @@ fn legacy_invoice_status(
             InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
         },
         InvoiceRowType::InventoryAddition | InvoiceRowType::InventoryReduction => match status {
+            InvoiceRowStatus::New => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Allocated => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Picked => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Shipped => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Delivered => LegacyTransactStatus::Nw,
+            InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
+        },
+        InvoiceRowType::Repack => match status {
             InvoiceRowStatus::New => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Allocated => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Picked => LegacyTransactStatus::Nw,
