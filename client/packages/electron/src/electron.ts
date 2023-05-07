@@ -10,9 +10,6 @@ import {
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const path = require('path');
-
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
 const CLIENT_VERSION_KEY = 'client_version';
@@ -179,13 +176,9 @@ const start = (): void => {
       if (hasLoadingError) return;
 
       hasLoadingError = true;
-      const search = `error=Failed to load URL ${validatedURL} with error: ${errorDescription}`;
-      // loading './error.html' should work but doesn't, either as loadURL or loadFile
-      const filename = app.isPackaged
-        ? path.join(__dirname, '..', 'renderer', 'error.html')
-        : 'src/error.html';
-
-      window.loadFile(filename, { search });
+      window.loadURL(
+        `${START_URL}#/error?error=Failed to load URL ${validatedURL} with error: ${errorDescription}`
+      );
     }
   );
 };
