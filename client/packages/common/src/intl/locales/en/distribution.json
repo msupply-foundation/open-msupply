@@ -10,7 +10,6 @@
   "button.supply-to-approved": "Supply approved",
   "button.new-shipment": "New Shipment",
   "button.save-and-confirm-status": "Confirm {{status}}",
-  "button.scan": "Scan",
   "button.select-a-color": "Select a color",
   "button.stop": "Stop",
   "error.failed-to-create-outbound": "Failed to create Outbound Shipment",
