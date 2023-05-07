@@ -7,7 +7,9 @@ pub(crate) async fn delay_for_processor() {
     tokio::time::sleep(Duration::from_millis(PROCESSOR_DELAY_MILLISECONDS)).await
 }
 
-// This is implemented as a macro to avoid thread problems if the $call expression is not Send
+/// Retries the input $check expression till the expression evaluates to true or till the number of
+/// max retries is reached.
+/// This is implemented as a macro to avoid thread problems if the $check expression is !Send
 macro_rules! delayed_with_retries {
     ($check:expr, $err_message:expr) => {{
         let mut success = false;
