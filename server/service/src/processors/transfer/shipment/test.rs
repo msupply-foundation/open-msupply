@@ -16,7 +16,10 @@ use crate::{
         outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
     },
     invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine,
-    processors::test_helpers::{delay_for_processor, delayed_with_retries, exec_concurrent},
+    processors::{
+        test_helpers::{delay_for_processor, delayed_with_retries, exec_concurrent},
+        transfer::requisition::test::requisition_processed,
+    },
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
     sync::ActiveStoresOnSite,
@@ -29,14 +32,13 @@ fn shipments_processed(connection: &StorageConnection) -> bool {
     let key_value_store_repo = KeyValueStoreRepository::new(connection);
 
     let cursor = key_value_store_repo
-        .get_i64(KeyValueType::RequisitionTransferProcessorCursor)
+        .get_i64(KeyValueType::ShipmentTransferProcessorCursor)
         .unwrap()
         .unwrap_or(0) as u64;
-
     // For transfers, changelog MUST be filtered by records where name_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
-        .table_name(ChangelogTableName::Requisition.equal_to())
+        .table_name(ChangelogTableName::Invoice.equal_to())
         .name_id(EqualFilter::equal_any(active_stores.name_ids()));
     let logs = changelog_repo
         .changelogs(cursor, 1, Some(filter.clone()))
@@ -124,9 +126,14 @@ async fn invoice_transfers() {
                 ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
 
             tester.insert_request_requisition(&service_provider).await;
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            delayed_with_retries!(requisition_processed(&ctx.connection), "wait for processor");
             tester.check_response_requisition_created(&ctx.connection);
             tester.insert_outbound_shipment(&ctx.connection);
+            // manually trigger because inserting the shipment didn't trigger the processor
+            ctx.processors_trigger
+                .shipment_transfer
+                .try_send(())
+                .unwrap();
             delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
             tester.check_inbound_shipment_not_created(&ctx.connection);
             delay_for_processor().await;
@@ -156,7 +163,7 @@ async fn invoice_transfers() {
                 ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
 
             tester.insert_request_requisition(&service_provider).await;
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            delayed_with_retries!(requisition_processed(&ctx.connection), "wait for processor");
             tester.check_response_requisition_created(&ctx.connection);
             tester.insert_outbound_shipment(&ctx.connection);
             delay_for_processor().await;

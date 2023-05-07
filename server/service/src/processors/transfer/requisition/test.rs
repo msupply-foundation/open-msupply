@@ -20,7 +20,7 @@ use crate::{
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
-fn requisition_processed(connection: &StorageConnection) -> bool {
+pub(crate) fn requisition_processed(connection: &StorageConnection) -> bool {
     let active_stores = ActiveStoresOnSite::get(connection).unwrap();
     let changelog_repo = ChangelogRepository::new(connection);
     let key_value_store_repo = KeyValueStoreRepository::new(connection);
