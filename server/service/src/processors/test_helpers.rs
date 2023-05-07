@@ -1,7 +1,7 @@
 use std::{future::Future, time::Duration};
 use tokio::task::JoinSet;
 
-const PROCESSOR_DELAY_MILLISECONDS: u64 = 300;
+const PROCESSOR_DELAY_MILLISECONDS: u64 = 50;
 
 pub(crate) async fn delay_for_processor() {
     tokio::time::sleep(Duration::from_millis(PROCESSOR_DELAY_MILLISECONDS)).await
@@ -13,7 +13,7 @@ pub(crate) async fn delay_for_processor() {
 macro_rules! delayed_with_retries {
     ($check:expr, $err_message:expr) => {{
         let mut success = false;
-        for _ in 1..=3 {
+        for _ in 1..=50 {
             delay_for_processor().await;
             if $check {
                 success = true;
