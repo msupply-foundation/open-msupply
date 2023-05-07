@@ -46,6 +46,7 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
             InvoiceRowStatus::Verified => false,
         },
         InvoiceRowType::InventoryAddition | InvoiceRowType::InventoryReduction => false,
+        InvoiceRowType::Repack => false,
     };
 
     if is_editable {

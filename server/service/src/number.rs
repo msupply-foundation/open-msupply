@@ -42,6 +42,11 @@ pub fn next_number(
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
                 return Ok(next_number.number);
             }
+            NumberRowType::Repack => {
+                let next_number =
+                    repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
+                return Ok(next_number.number);
+            }
         };
 
         let max_next_number = max_number.map(|n| n + 1);
