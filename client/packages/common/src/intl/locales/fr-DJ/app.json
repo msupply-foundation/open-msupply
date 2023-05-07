@@ -1,8 +1,8 @@
 {
-    "outbound-shipment": "Livraisons Sortantes",
+    "outbound-shipment": "Sorties de stock",
     "cmdk.goto-internal-order": "Aller à : Bons de commande",
     "cmdk.goto-master-lists": "Aller à : Listes Maîtresses",
-    "cmdk.goto-outbound": "Aller à : Livraisons Sortantes",
+    "cmdk.goto-outbound": "Aller à : Sorties de stock",
     "admin": "Admin",
     "app": "mSupply",
     "auth.alert-title": "Erreur d'authentification",
@@ -14,5 +14,7 @@
     "cmdk.goto-reports": "Aller à : Rapports",
     "customers": "Clients",
     "dashboard": "Tableau de bord",
-    "customer-requisition": "Commandes Client"
+    "customer-requisition": "Commandes Client",
+    "catalogue": "Articles",
+    "outbound-shipments": "Sorties de stock"
 }
