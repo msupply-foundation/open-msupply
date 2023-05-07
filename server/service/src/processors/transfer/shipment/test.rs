@@ -156,16 +156,16 @@ async fn invoice_transfers() {
                 ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
 
             tester.insert_request_requisition(&service_provider).await;
-            delay_for_processor().await;
+            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
             tester.check_response_requisition_created(&ctx.connection);
             tester.insert_outbound_shipment(&ctx.connection);
             delay_for_processor().await;
             tester.update_outbound_shipment_to_picked(&service_provider);
-            delay_for_processor().await;
+            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
             tester.check_inbound_shipment_created(&ctx.connection);
             delay_for_processor().await;
             tester.delete_outbound_shipment(&service_provider);
-            delay_for_processor().await;
+            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
             tester.check_inbound_shipment_deleted(&ctx.connection);
         },
     );
