@@ -487,8 +487,7 @@ fragment ProgramSettings on ProgramRequisitionSettingNode {
   programName
   programId
   suppliers {
-    id
-    name
+    ...NameRow
   }
   orderTypes {
     id
