@@ -1,4 +1,7 @@
-use repository::{RepositoryError, StockLineRow, StockLineRowRepository, StorageConnection};
+use repository::{
+    EqualFilter, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
+    StorageConnection,
+};
 
 use super::{
     common::calculate_stock_line_total,
@@ -10,12 +13,12 @@ pub fn validate(
     store_id: &str,
     input: &InsertRepack,
 ) -> Result<StockLineRow, InsertRepackError> {
-    let stock_line = match check_stock_line_exists(connection, &input.stock_line_id)? {
+    let stock_line = match check_stock_line_exists(connection, store_id, &input.stock_line_id)? {
         Some(stock_line) => stock_line,
         None => return Err(InsertRepackError::StockLineDoesNotExist),
     };
 
-    if store_id != stock_line.store_id {
+    if store_id != stock_line.stock_line_row.store_id {
         return Err(InsertRepackError::NotThisStoreStockLine);
     };
 
@@ -23,18 +26,24 @@ pub fn validate(
         return Err(InsertRepackError::CannotHaveFractionalRepack);
     }
 
-    if check_stock_line_reduced_to_zero(input, &stock_line) {
-        return Err(InsertRepackError::StockReducedBelowZero(stock_line));
+    if check_stock_line_reduced_to_zero(input, &stock_line.stock_line_row) {
+        return Err(InsertRepackError::StockLineReducedBelowZero(stock_line));
     }
 
-    Ok(stock_line)
+    Ok(stock_line.stock_line_row)
 }
 
 fn check_stock_line_exists(
     connection: &StorageConnection,
+    store_id: &str,
     id: &str,
-) -> Result<Option<StockLineRow>, RepositoryError> {
-    Ok(StockLineRowRepository::new(connection).find_one_by_id_option(id)?)
+) -> Result<Option<StockLine>, RepositoryError> {
+    Ok(StockLineRepository::new(connection)
+        .query_by_filter(
+            StockLineFilter::new().id(EqualFilter::equal_to(id)),
+            Some(store_id.to_string()),
+        )?
+        .pop())
 }
 
 fn check_stock_line_reduced_to_zero(input: &InsertRepack, stock_line: &StockLineRow) -> bool {
