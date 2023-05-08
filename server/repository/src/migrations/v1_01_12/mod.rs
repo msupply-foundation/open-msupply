@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 pub(crate) struct V1_01_12;
 mod invoice_and_number_type;
+mod location_movement_triggers;
 mod permission;
 
 impl Migration for V1_01_12 {
@@ -13,6 +14,7 @@ impl Migration for V1_01_12 {
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         invoice_and_number_type::migrate(connection)?;
         permission::migrate(connection)?;
+        location_movement_triggers::migrate(connection)?;
 
         Ok(())
     }
