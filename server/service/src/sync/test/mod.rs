@@ -196,6 +196,12 @@ pub(crate) async fn check_records_against_database(
             Location(record) => {
                 check_record_by_id!(LocationRowRepository, con, record, "Location");
             }
+            LocationMovement(record) => check_record_by_id!(
+                LocationMovementRowRepository,
+                con,
+                record,
+                "LocationMovement"
+            ),
             StockLine(record) => {
                 check_record_by_option_id!(StockLineRowRepository, con, record, "StockLine");
             }
@@ -341,6 +347,8 @@ pub(crate) async fn check_records_against_database(
             }
             #[cfg(feature = "integration_test")]
             Location => check_delete_record_by_id!(LocationRowRepository, con, id),
+            #[cfg(feature = "integration_test")]
+            LocationMovement => check_delete_record_by_id!(LocationMovementRowRepository, con, id),
             #[cfg(feature = "integration_test")]
             StockLine => check_delete_record_by_id_option!(StockLineRowRepository, con, id),
             #[cfg(feature = "integration_test")]
