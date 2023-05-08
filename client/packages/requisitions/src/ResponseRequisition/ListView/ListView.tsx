@@ -16,7 +16,7 @@ import {
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import {
-  getApprovalStatusText,
+  getApprovalStatusKey,
   getRequisitionTranslator,
   isResponseDisabled,
 } from '../../utils';
@@ -95,7 +95,7 @@ export const ResponseRequisitionListView: FC = () => {
       minWidth: 150,
       sortable: false,
       accessor: ({ rowData }) =>
-        t(getApprovalStatusText(rowData.approvalStatus)),
+        t(getApprovalStatusKey(rowData.approvalStatus)),
     });
   }
   columnDefinitions.push(['comment', { minWidth: 400 }]);
