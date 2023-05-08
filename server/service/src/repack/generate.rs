@@ -147,22 +147,16 @@ fn generate_new_stock_lines(stock_line: &StockLineRow, input: &InsertRepack) -> 
 
         new_line.id = uuid();
         new_line.pack_size = input.new_pack_size;
+        new_line.available_number_of_packs =
+            input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
+        new_line.total_number_of_packs =
+            input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
 
         if stock_line.pack_size > input.new_pack_size {
-            new_line.available_number_of_packs =
-                input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
-            new_line.total_number_of_packs =
-                input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
-
             let difference = stock_line.pack_size as f64 / input.new_pack_size as f64;
             new_line.cost_price_per_pack = stock_line.cost_price_per_pack / difference;
             new_line.sell_price_per_pack = stock_line.sell_price_per_pack / difference;
         } else {
-            new_line.available_number_of_packs =
-                input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
-            new_line.total_number_of_packs =
-                input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
-
             let difference = input.new_pack_size as f64 / stock_line.pack_size as f64;
             new_line.cost_price_per_pack = stock_line.cost_price_per_pack * difference;
             new_line.sell_price_per_pack = stock_line.sell_price_per_pack * difference;
