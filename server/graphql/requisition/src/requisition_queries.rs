@@ -74,6 +74,7 @@ pub struct RequisitionFilterInput {
     pub colour: Option<EqualFilterStringInput>,
     pub their_reference: Option<SimpleStringFilterInput>,
     pub comment: Option<SimpleStringFilterInput>,
+    pub order_type: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -237,6 +238,7 @@ impl RequisitionFilterInput {
             comment: self.comment.map(SimpleStringFilter::from),
             linked_requisition_id: None,
             store_id: None,
+            order_type: self.order_type.map(EqualFilter::from),
         }
     }
 }

@@ -28,6 +28,7 @@ export {
   useNavigate,
   useParams,
   BrowserRouter,
+  HashRouter,
   Routes,
   Route,
   Navigate,
