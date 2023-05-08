@@ -10,7 +10,7 @@ on:
           - intel
           - arm
       includeDemoData:
-        description: 'Includ demo data'
+        description: 'Include demo data'
         required: true
         default: 'false'
         type: choice
