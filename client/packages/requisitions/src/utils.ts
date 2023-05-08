@@ -126,7 +126,7 @@ export const isRequestLinePlaceholderRow = (
   row: RequestLineFragment
 ): boolean => row.requestedQuantity === 0;
 
-export const getApprovalStatusText = (
+export const getApprovalStatusKey = (
   approvalStatus?: RequisitionNodeApprovalStatus
 ): LocaleKey => {
   if (!approvalStatus) return 'approval-status.none';
