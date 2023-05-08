@@ -1,4 +1,4 @@
-This is an unofficial MacOS sqlite built of omSupply intended for demonstration, testing and other internal purposes.
+This is an unofficial MacOS sqlite build of omSupply intended for demonstration, testing and other internal purposes.
 
 Double click on open_msupply.sh to run the app, you will need to allow this app to run in System Settings -> Privacy & Security -> Security. Successful start should launch omSupply in the browser window.
 
