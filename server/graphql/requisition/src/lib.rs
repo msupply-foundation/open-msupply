@@ -71,7 +71,7 @@ impl RequisitionMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: request_requisition::InsertProgramRequestRequisitionInput,
-    ) -> Result<request_requisition::InsertResponse> {
+    ) -> Result<request_requisition::insert_program::InsertResponse> {
         request_requisition::insert_program(ctx, &store_id, input)
     }
 

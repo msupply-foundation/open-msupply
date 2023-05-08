@@ -74,7 +74,7 @@ fn validate(
         check_requisition_exists(connection, &requisition_line_row.requisition_id)?
             .ok_or(OutError::RequisitionDoesNotExist)?;
 
-    if check_approval_status(requisition_row.clone()) {
+    if check_approval_status(&requisition_row) {
         return Err(OutError::CannotEditRequisition);
     }
 
