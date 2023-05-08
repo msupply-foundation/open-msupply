@@ -3,7 +3,7 @@ use super::{
     stock_line_row::stock_line::dsl as stock_line_dsl, store_row::store, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 
@@ -25,6 +25,7 @@ table! {
         on_hold -> Bool,
         note -> Nullable<Text>,
         supplier_id -> Nullable<Text>,
+        barcode_id -> Nullable<Text>,
     }
 }
 
@@ -32,6 +33,7 @@ joinable!(stock_line -> item (item_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
 joinable!(stock_line -> name (supplier_id));
+joinable!(stock_line -> barcode (barcode_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
@@ -51,6 +53,7 @@ pub struct StockLineRow {
     pub on_hold: bool,
     pub note: Option<String>,
     pub supplier_id: Option<String>,
+    pub barcode_id: Option<String>,
 }
 
 pub struct StockLineRowRepository<'a> {

@@ -18,6 +18,7 @@ pub fn mock_stock_line_a() -> StockLineRow {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     }
 }
 
@@ -37,6 +38,7 @@ pub fn mock_stock_line_b() -> StockLineRow {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     }
 }
 
@@ -64,6 +66,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     let mock_item_b_line_b: StockLineRow = StockLineRow {
@@ -81,6 +84,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     vec![mock_item_b_line_a, mock_item_b_line_b]
@@ -102,6 +106,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
         on_hold: false,
         note: Some("stock line note".to_owned()),
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     let mock_item_c_line_b: StockLineRow = StockLineRow {
@@ -119,6 +124,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     vec![mock_item_c_line_a, mock_item_c_line_b]
@@ -140,6 +146,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     let mock_stock_line_si_d_siline_b: StockLineRow = StockLineRow {
@@ -157,6 +164,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     vec![mock_stock_line_si_d_siline_a, mock_stock_line_si_d_siline_b]
@@ -178,6 +186,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     let mock_stock_line_ci_c_siline_b: StockLineRow = StockLineRow {
@@ -195,6 +204,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     vec![mock_stock_line_ci_c_siline_a, mock_stock_line_ci_c_siline_b]
@@ -216,6 +226,7 @@ pub fn mock_stock_line_ci_d() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     vec![mock_stock_line_ci_d_siline_a]
@@ -237,6 +248,7 @@ pub fn mock_item_query_test1() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     vec![mock_item_query_test1]
@@ -258,6 +270,7 @@ pub fn mock_stock_line_on_hold() -> Vec<StockLineRow> {
         on_hold: true,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     vec![mock_stock_line_on_hold]
@@ -279,6 +292,7 @@ pub fn mock_stock_line_location_is_on_hold() -> Vec<StockLineRow> {
         on_hold: false,
         note: None,
         supplier_id: Some(String::from("name_store_b")),
+        barcode_id: None,
     };
 
     vec![mock_stock_line_location_is_on_hold]
