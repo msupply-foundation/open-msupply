@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, Invoice, InvoiceFilter, InvoiceLineRowRepository, InvoiceRepository,
-    InvoiceRowRepository, LocationMovementRowRepository, RepositoryError, StockLineRow,
+    InvoiceRowRepository, LocationMovementRowRepository, RepositoryError, StockLine,
     StockLineRowRepository,
 };
 
@@ -25,7 +25,7 @@ pub enum InsertRepackError {
     NotThisStoreStockLine,
     CannotHaveFractionalRepack,
     NewlyCreatedInvoiceDoesNotExist,
-    StockReducedBelowZero(StockLineRow),
+    StockLineReducedBelowZero(StockLine),
     DatabaseError(RepositoryError),
     InternalError(String),
 }
@@ -97,7 +97,8 @@ mod test {
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, LocationMovement,
-        LocationMovementFilter, LocationMovementRepository, StockLineRow, StockLineRowRepository,
+        LocationMovementFilter, LocationMovementRepository, StockLineFilter, StockLineRepository,
+        StockLineRow, StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -106,7 +107,7 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_repack_errors() {
-        let (_, _, connection_manager, _) =
+        let (_, connection, connection_manager, _) =
             setup_all("insert_repack_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
@@ -150,7 +151,15 @@ mod test {
             Err(ServiceError::CannotHaveFractionalRepack)
         );
 
-        // StockReducedBelowZero
+        // StockLineReducedBelowZero
+        let stock_line = StockLineRepository::new(&connection)
+            .query_by_filter(
+                StockLineFilter::new().id(EqualFilter::equal_to(&mock_stock_line_b().id)),
+                None,
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
         assert_eq!(
             service.insert_repack(
                 &context,
@@ -160,7 +169,7 @@ mod test {
                     r.new_pack_size = 2;
                 })
             ),
-            Err(ServiceError::StockReducedBelowZero(mock_stock_line_b()))
+            Err(ServiceError::StockLineReducedBelowZero(stock_line))
         );
     }
 
