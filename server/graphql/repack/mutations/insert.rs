@@ -11,7 +11,7 @@ use service::{
 };
 
 #[derive(InputObject)]
-#[graphql(name = "RepackInput")]
+#[graphql(name = "InsertRepackInput")]
 pub struct InsertRepackInput {
     pub stock_line_id: String,
     pub number_of_packs: f64,
@@ -20,14 +20,14 @@ pub struct InsertRepackInput {
 }
 
 #[derive(Interface)]
-#[graphql(name = "RepackInputErrorInterface")]
+#[graphql(name = "InsertRepackErrorInterface")]
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "InsertRepackInputError")]
+#[graphql(name = "InsertRepackError")]
 pub struct InsertError {
     pub error: InsertErrorInterface,
 }
@@ -105,7 +105,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         // Standard Graphql Errors
         ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
         ServiceError::NotThisStoreStockLine => BadUserInput(formatted_error),
-        ServiceError::CannotHaveFractionalRepack => BadUserInput(formatted_error),
+        ServiceError::CannotHaveFractionalPack => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),
