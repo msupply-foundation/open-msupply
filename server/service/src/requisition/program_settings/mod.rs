@@ -213,12 +213,14 @@ mod test {
             id: "name_store_join1".to_string(),
             name_id: mock_name_store_b().id.clone(),
             store_id: mock_store_a().id,
+            name_is_supplier: true,
             ..Default::default()
         };
         let name_store_join2 = NameStoreJoinRow {
             id: "name_store_join2".to_string(),
             name_id: mock_name_store_c().id.clone(),
             store_id: mock_store_a().id,
+            name_is_supplier: true,
             ..Default::default()
         };
         let ServiceTestContext {
@@ -236,8 +238,8 @@ mod test {
                     period4.clone(),
                 ],
                 period_schedules: vec![period_schedule1, period_schedule2],
-                name_tag_rows: vec![name_tag1, name_tag2],
-                name_tag_join_rows: vec![name_tag_join1, name_tag_join2],
+                name_tags: vec![name_tag1, name_tag2],
+                name_tag_joins: vec![name_tag_join1, name_tag_join2],
                 name_store_joins: vec![name_store_join1.clone(), name_store_join2.clone()],
                 master_lists: vec![master_list1.clone(), master_list2.clone()],
                 master_list_name_joins: vec![
@@ -250,7 +252,7 @@ mod test {
                     program_requisition_setting1.clone(),
                     program_requisition_setting2.clone(),
                 ],
-                requisition_order_types: vec![order_type1.clone(), order_type2.clone()],
+                program_order_types: vec![order_type1.clone(), order_type2.clone()],
                 programs: vec![program1.clone(), program2.clone()],
                 requisitions: vec![requisition1.clone(), requisition2.clone()],
                 ..Default::default()

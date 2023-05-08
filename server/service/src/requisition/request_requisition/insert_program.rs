@@ -1,20 +1,34 @@
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
-    requisition::{common::check_requisition_exists, query::get_requisition},
+    requisition::{
+        common::check_requisition_exists, program_settings::get_program_requisition_settings,
+        query::get_requisition,
+    },
     service_provider::ServiceContext,
-    validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     ActivityLogType, EqualFilter, MasterListLineFilter, MasterListLineRepository, NumberRowType,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRowRepository,
-    ProgramRowRepository, RepositoryError, Requisition, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRowRepository, StorageConnection,
+    ProgramRequisitionOrderTypeRow, ProgramRow, RepositoryError, Requisition, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRowRepository,
 };
 
-use super::{generate_requisition_lines, InsertRequestRequisitionError};
+use super::generate_requisition_lines;
+
+#[derive(Debug, PartialEq)]
+pub enum InsertProgramRequestRequisitionError {
+    RequisitionAlreadyExists,
+    // Name validation
+    SupplierNotValid,
+    // Program validation
+    ProgramOrderTypeDoesNotExist,
+    MaxOrdersReachedForPeriod,
+    // Internal
+    NewlyCreatedRequisitionDoesNotExist,
+    DatabaseError(RepositoryError),
+}
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub struct InsertProgramRequestRequisition {
@@ -28,7 +42,7 @@ pub struct InsertProgramRequestRequisition {
     pub period_id: String,
 }
 
-type OutError = InsertRequestRequisitionError;
+type OutError = InsertProgramRequestRequisitionError;
 
 pub fn insert_program_request_requisition(
     ctx: &ServiceContext,
@@ -37,8 +51,8 @@ pub fn insert_program_request_requisition(
     let requisition = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(connection, &ctx.store_id, &input)?;
-            let (new_requisition, requisition_lines) = generate(ctx, input)?;
+            let (program, order_type) = validate(ctx, &input)?;
+            let (new_requisition, requisition_lines) = generate(ctx, program, order_type, input)?;
             RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
 
             let requisition_line_repo = RequisitionLineRowRepository::new(&connection);
@@ -63,47 +77,54 @@ pub fn insert_program_request_requisition(
 }
 
 fn validate(
-    connection: &StorageConnection,
-    store_id: &str,
+    ctx: &ServiceContext,
     input: &InsertProgramRequestRequisition,
-) -> Result<(), OutError> {
+) -> Result<(ProgramRow, ProgramRequisitionOrderTypeRow), OutError> {
+    let connection = &ctx.connection;
+
     if let Some(_) = check_requisition_exists(connection, &input.id)? {
         return Err(OutError::RequisitionAlreadyExists);
     }
 
-    // TODO: Check if we already have reached out max requisitions for this period
-    // https://github.com/openmsupply/open-msupply/issues/1599
+    let program_settings = get_program_requisition_settings(ctx, &ctx.store_id)?;
 
-    // TODO: Check Order Type is valid for this Program
-    // https://github.com/openmsupply/open-msupply/issues/1599
+    let (program_setting, order_type) = program_settings
+        .iter()
+        .find_map(|setting| {
+            setting
+                .order_types
+                .iter()
+                .find(|order_type| order_type.order_type.id == input.program_order_type_id)
+                .map(|order_type| (setting.clone(), order_type.clone()))
+        })
+        .ok_or(OutError::ProgramOrderTypeDoesNotExist)?;
 
-    // TODO: Check if the 'other_party' is a valid Program Supplier
-    // https://github.com/openmsupply/open-msupply/issues/1599
+    if order_type.available_periods.is_empty() {
+        return Err(OutError::MaxOrdersReachedForPeriod);
+    }
 
-    let other_party = check_other_party(
-        connection,
-        store_id,
-        &input.other_party_id,
-        CheckOtherPartyType::Supplier,
-    )
-    .map_err(|e| match e {
-        OtherPartyErrors::OtherPartyDoesNotExist => OutError::OtherPartyDoesNotExist {},
-        OtherPartyErrors::OtherPartyNotVisible => OutError::OtherPartyNotVisible,
-        OtherPartyErrors::TypeMismatched => OutError::OtherPartyNotASupplier,
-        OtherPartyErrors::DatabaseError(repository_error) => {
-            OutError::DatabaseError(repository_error)
-        }
-    })?;
+    if program_setting
+        .suppliers
+        .iter()
+        .find(|supplier| supplier.supplier.name_row.id == input.other_party_id)
+        .is_none()
+    {
+        return Err(OutError::SupplierNotValid);
+    }
 
-    other_party
-        .store_id()
-        .ok_or(OutError::OtherPartyIsNotAStore)?;
-
-    Ok(())
+    Ok((
+        program_setting
+            .program_requisition_settings
+            .program_row
+            .clone(),
+        order_type.order_type.clone(),
+    ))
 }
 
 fn generate(
     ctx: &ServiceContext,
+    program: ProgramRow,
+    order_type: ProgramRequisitionOrderTypeRow,
     InsertProgramRequestRequisition {
         id,
         other_party_id,
@@ -111,48 +132,22 @@ fn generate(
         comment,
         their_reference,
         expected_delivery_date,
-        program_order_type_id,
+        program_order_type_id: _,
         period_id,
     }: InsertProgramRequestRequisition,
 ) -> Result<(RequisitionRow, Vec<RequisitionLineRow>), RepositoryError> {
     let connection = &ctx.connection;
 
-    // Lookup order type
-    let order_type = ProgramRequisitionOrderTypeRowRepository::new(connection)
-        .find_one_by_id(&program_order_type_id)?;
-    let order_type = match order_type {
-        Some(order_type) => order_type,
-        None => return Err(RepositoryError::NotFound),
-    };
-
-    // Lookup program requisition settings
-    // TODO: Use `get_program_requisition_settings` from Service Layer
-    // https://github.com/openmsupply/open-msupply/issues/1599
-    let program_requisition_settings = ProgramRequisitionSettingsRowRepository::new(connection)
-        .find_one_by_id(&order_type.program_requisition_settings_id)?;
-    let program_requisition_settings = match program_requisition_settings {
-        Some(program_requisition_settings) => program_requisition_settings,
-        None => return Err(RepositoryError::NotFound),
-    };
-
-    // Lookup program
-    let program = ProgramRowRepository::new(connection)
-        .find_one_by_id(&program_requisition_settings.program_id)?;
-    let program = match program {
-        Some(program) => program,
-        None => return Err(RepositoryError::NotFound),
-    };
-
     let requisition = RequisitionRow {
         id,
-        user_id: Some(ctx.user_id.to_string()),
+        user_id: Some(ctx.user_id.clone()),
         requisition_number: next_number(
-            connection,
+            &ctx.connection,
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
         name_id: other_party_id,
-        store_id: ctx.store_id.to_owned(),
+        store_id: ctx.store_id.clone(),
         r#type: RequisitionRowType::Request,
         status: RequisitionRowStatus::Draft,
         created_datetime: Utc::now().naive_utc(),
@@ -162,15 +157,15 @@ fn generate(
         their_reference,
         max_months_of_stock: order_type.max_mos,
         min_months_of_stock: order_type.threshold_mos,
+        program_id: Some(program.id),
+        period_id: Some(period_id),
+        order_type: Some(order_type.name),
         // Default
         sent_datetime: None,
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
         is_sync_update: false,
-        program_id: Some(program.id),
-        period_id: Some(period_id),
-        order_type: Some(order_type.name),
     };
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
@@ -188,26 +183,29 @@ fn generate(
     Ok((requisition, requisition_line_rows))
 }
 
+impl From<RepositoryError> for InsertProgramRequestRequisitionError {
+    fn from(error: RepositoryError) -> Self {
+        InsertProgramRequestRequisitionError::DatabaseError(error)
+    }
+}
+
 #[cfg(test)]
 mod test_insert {
     use crate::{
         requisition::request_requisition::{
-            InsertProgramRequestRequisition, InsertRequestRequisitionError as ServiceError,
+            InsertProgramRequestRequisition, InsertProgramRequestRequisitionError as ServiceError,
         },
         service_provider::ServiceProvider,
     };
-    use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_master_list_item_query_test1, mock_name_a, mock_name_store_b, mock_name_store_c,
-            mock_period, mock_period_schedule_1, mock_request_draft_requisition, mock_store_a,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_name_store_b, mock_period, mock_program_a, mock_program_order_types_a,
+            mock_request_draft_requisition, mock_user_account_a, program_master_list_store,
+            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, NameRow, NameTagRow, NameTagRowRepository, ProgramRequisitionOrderTypeRow,
-        ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
-        ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionRowRepository,
+        EqualFilter, NameRow, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionRowRepository,
     };
     use util::inline_init;
 
@@ -230,7 +228,7 @@ mod test_insert {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_a().id, "".to_string())
+            .context(program_master_list_store().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.requisition_service;
 
@@ -246,57 +244,32 @@ mod test_insert {
             Err(ServiceError::RequisitionAlreadyExists)
         );
 
-        let name_store_b = mock_name_store_b();
-        // OtherPartyNotASupplier
+        // ProgramOrderTypeDoesNotExist
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: name_store_b.id.clone(),
-                    ..Default::default()
-                }
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition".to_owned();
+                    r.other_party_id = mock_name_store_b().id.clone();
+                    r.program_order_type_id = "does_not_exist".to_owned();
+                    r.period_id = mock_period().id;
+                })
             ),
-            Err(ServiceError::OtherPartyNotASupplier)
-        );
-
-        // OtherPartyNotVisible
-        assert_eq!(
-            service.insert_program_request_requisition(
-                &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: not_visible().id,
-                    ..Default::default()
-                }
-            ),
-            Err(ServiceError::OtherPartyNotVisible)
+            Err(ServiceError::ProgramOrderTypeDoesNotExist)
         );
 
         // OtherPartyDoesNotExist
         assert_eq!(
             service.insert_program_request_requisition(
                 &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: "invalid".to_string(),
-                    ..Default::default()
-                }
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition".to_owned();
+                    r.other_party_id = "invalid".to_owned();
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                })
             ),
-            Err(ServiceError::OtherPartyDoesNotExist)
-        );
-
-        // OtherPartyIsNotAStore
-        assert_eq!(
-            service.insert_program_request_requisition(
-                &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: mock_name_a().id,
-                    ..Default::default()
-                }
-            ),
-            Err(ServiceError::OtherPartyIsNotAStore)
+            Err(ServiceError::SupplierNotValid)
         );
     }
 
@@ -310,65 +283,19 @@ mod test_insert {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_a().id, mock_user_account_a().id)
+            .context(program_master_list_store().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.requisition_service;
-
-        // Create a Program
-        let program_id = mock_master_list_item_query_test1().master_list.id;
-        ProgramRowRepository::new(&connection)
-            .upsert_one(&ProgramRow {
-                id: program_id.clone(),
-                name: "program_name".to_owned(),
-                master_list_id: program_id.clone(),
-            })
-            .unwrap();
-
-        // Create a name tag
-        NameTagRowRepository::new(&connection)
-            .upsert_one(&NameTagRow {
-                id: "name_tag_id".to_owned(),
-                name: "name_tag_name".to_owned(),
-                ..Default::default()
-            })
-            .unwrap();
-
-        // Create Program Requisition Settings
-        ProgramRequisitionSettingsRowRepository::new(&connection)
-            .upsert_one(&ProgramRequisitionSettingsRow {
-                id: program_id.clone(),
-                name_tag_id: "name_tag_id".to_owned(),
-                program_id: program_id.clone(),
-                period_schedule_id: mock_period_schedule_1().id,
-
-                ..Default::default()
-            })
-            .unwrap();
-
-        // Create a ProgramOrderType
-        ProgramRequisitionOrderTypeRowRepository::new(&connection)
-            .upsert_one(&ProgramRequisitionOrderTypeRow {
-                id: "program_order_type_id".to_owned(),
-                name: "program_order_type_name".to_owned(),
-                program_requisition_settings_id: program_id.clone(),
-                max_order_per_period: 1,
-                ..Default::default()
-            })
-            .unwrap();
 
         let result = service
             .insert_program_request_requisition(
                 &context,
-                InsertProgramRequestRequisition {
-                    id: "new_program_request_requisition".to_owned(),
-                    other_party_id: mock_name_store_c().id,
-                    colour: Some("new colour".to_owned()),
-                    their_reference: Some("new their_reference".to_owned()),
-                    comment: Some("new comment".to_owned()),
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
-                    program_order_type_id: "program_order_type_id".to_owned(),
-                    period_id: mock_period().id,
-                },
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "new_program_request_requisition".to_owned();
+                    r.other_party_id = mock_name_store_b().id.clone();
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                }),
             )
             .unwrap();
 
@@ -384,14 +311,22 @@ mod test_insert {
 
         assert_eq!(new_row.id, "new_program_request_requisition");
         assert_eq!(new_row.period_id, Some(mock_period().id));
-        assert_eq!(
-            new_row.order_type,
-            Some("program_order_type_name".to_string())
-        );
-        assert_eq!(new_row.program_id, Some(program_id));
+        assert_eq!(new_row.order_type, Some(mock_program_order_types_a().id));
+        assert_eq!(new_row.program_id, Some(mock_program_a().id));
         assert_eq!(requisition_lines.len(), 1);
 
-        // TODO Validate that we can't create more requisitions the `max_order_per_period` in requisition_settings
-        // https://github.com/openmsupply/open-msupply/issues/1599
+        // Error: MaxOrdersReachedForPeriod
+        assert_eq!(
+            service.insert_program_request_requisition(
+                &context,
+                inline_init(|r: &mut InsertProgramRequestRequisition| {
+                    r.id = "error_program_requisition".to_owned();
+                    r.other_party_id = mock_name_store_b().id.clone();
+                    r.program_order_type_id = mock_program_order_types_a().id;
+                    r.period_id = mock_period().id;
+                }),
+            ),
+            Err(ServiceError::MaxOrdersReachedForPeriod)
+        );
     }
 }
