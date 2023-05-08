@@ -26,6 +26,7 @@ pub mod name;
 pub mod number;
 pub mod permission;
 pub mod processors;
+pub mod repack;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
