@@ -3644,6 +3644,7 @@ export type UpdateStockLineErrorInterface = {
 };
 
 export type UpdateStockLineInput = {
+  barcode?: InputMaybe<Scalars['String']>;
   batch?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
