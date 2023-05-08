@@ -1,6 +1,6 @@
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
-use crate::NameRow;
+use crate::{NameRow, NameType};
 
 pub fn mock_name_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
@@ -83,6 +83,15 @@ pub fn mock_name_master_list_filter_test() -> NameRow {
     })
 }
 
+pub fn mock_name_repack() -> NameRow {
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("name_repack");
+        r.name = String::from("repack");
+        r.code = String::from("repack");
+        r.r#type = NameType::Repack;
+    })
+}
+
 pub fn mock_names() -> Vec<NameRow> {
     vec![
         mock_name_a(),
@@ -93,5 +102,6 @@ pub fn mock_names() -> Vec<NameRow> {
         mock_name_store_a(),
         mock_name_store_b(),
         mock_name_store_c(),
+        mock_name_repack(),
     ]
 }
