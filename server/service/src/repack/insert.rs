@@ -1,6 +1,7 @@
 use repository::{
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, LocationMovementRowRepository,
-    RepositoryError, StockLineRow, StockLineRowRepository,
+    EqualFilter, Invoice, InvoiceFilter, InvoiceLineRowRepository, InvoiceRepository,
+    InvoiceRowRepository, LocationMovementRowRepository, RepositoryError, StockLineRow,
+    StockLineRowRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -32,7 +33,7 @@ pub enum InsertRepackError {
 pub fn insert_repack(
     ctx: &ServiceContext,
     input: InsertRepack,
-) -> Result<InvoiceRow, InsertRepackError> {
+) -> Result<Invoice, InsertRepackError> {
     let result = ctx
         .connection
         .transaction_sync(|connection| {
@@ -65,8 +66,13 @@ pub fn insert_repack(
                 }
             }
 
-            invoice_repo
-                .find_one_by_id_option(&repack_invoice.id)?
+            InvoiceRepository::new(connection)
+                .query_by_filter(
+                    InvoiceFilter::new()
+                        .id(EqualFilter::equal_to(&repack_invoice.id))
+                        .store_id(EqualFilter::equal_to(&ctx.store_id)),
+                )?
+                .pop()
                 .ok_or(InsertRepackError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -204,7 +210,7 @@ mod test {
             .unwrap();
 
         let invoice = invoice_repo
-            .find_one_by_id(&increased_pack_size.id)
+            .find_one_by_id(&increased_pack_size.invoice_row.id)
             .unwrap();
         let invoice_lines = invoice_line_repo
             .find_many_by_invoice_id(&invoice.id)
@@ -254,7 +260,7 @@ mod test {
             .unwrap();
 
         let invoice = invoice_repo
-            .find_one_by_id(&increased_pack_size.id)
+            .find_one_by_id(&increased_pack_size.invoice_row.id)
             .unwrap();
         let invoice_lines = invoice_line_repo
             .find_many_by_invoice_id(&invoice.id)
@@ -303,7 +309,9 @@ mod test {
             )
             .unwrap();
 
-        let invoice = invoice_repo.find_one_by_id(&repack_all.id).unwrap();
+        let invoice = invoice_repo
+            .find_one_by_id(&repack_all.invoice_row.id)
+            .unwrap();
         let invoice_lines = invoice_line_repo
             .find_many_by_invoice_id(&invoice.id)
             .unwrap();
@@ -351,7 +359,7 @@ mod test {
             .unwrap();
 
         let invoice = invoice_repo
-            .find_one_by_id(&decreased_pack_size_to_one.id)
+            .find_one_by_id(&decreased_pack_size_to_one.invoice_row.id)
             .unwrap();
         let invoice_lines = invoice_line_repo
             .find_many_by_invoice_id(&invoice.id)
@@ -403,7 +411,7 @@ mod test {
             .unwrap();
 
         let invoice = invoice_repo
-            .find_one_by_id(&decreased_pack_size.id)
+            .find_one_by_id(&decreased_pack_size.invoice_row.id)
             .unwrap();
         let invoice_lines = invoice_line_repo
             .find_many_by_invoice_id(&invoice.id)

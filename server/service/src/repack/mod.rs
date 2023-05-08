@@ -1,7 +1,7 @@
 use crate::service_provider::ServiceContext;
 
 use self::insert::{insert_repack, InsertRepack, InsertRepackError};
-use repository::InvoiceRow;
+use repository::Invoice;
 
 pub mod common;
 pub mod generate;
@@ -16,7 +16,7 @@ pub trait RepackServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: InsertRepack,
-    ) -> Result<InvoiceRow, InsertRepackError> {
+    ) -> Result<Invoice, InsertRepackError> {
         insert_repack(ctx, input)
     }
 }
