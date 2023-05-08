@@ -23,7 +23,7 @@ pub fn validate(
     };
 
     if check_packs_are_fractional(input) {
-        return Err(InsertRepackError::CannotHaveFractionalRepack);
+        return Err(InsertRepackError::CannotHaveFractionalPack);
     }
 
     if check_stock_line_reduced_to_zero(input, &stock_line.stock_line_row) {
