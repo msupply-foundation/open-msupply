@@ -3,7 +3,7 @@ use crate::sync::translations::PullDeleteRecordTable;
 use super::{
     sync_buffer::SyncBuffer,
     translations::{
-        all_translators, IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTanslators,
+        all_translators, IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslators,
     },
 };
 use log::warn;
@@ -38,7 +38,7 @@ impl<'a> TranslationAndIntegration<'a> {
     fn translate_sync_record(
         &self,
         sync_record: &SyncBufferRow,
-        translators: &SyncTanslators,
+        translators: &SyncTranslators,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
         let mut translation_results = IntegrationRecords::new();
 
@@ -190,6 +190,7 @@ impl PullUpsertRecord {
             }
             Report(record) => ReportRowRepository::new(con).upsert_one(record),
             Location(record) => LocationRowRepository::new(con).upsert_one(record),
+            LocationMovement(record) => LocationMovementRowRepository::new(con).upsert_one(record),
             StockLine(record) => StockLineRowRepository::new(con).upsert_one(record),
             NameStoreJoin(record) => NameStoreJoinRepository::new(con).upsert_one(record),
             Invoice(record) => InvoiceRowRepository::new(con).upsert_one(record),
@@ -236,6 +237,8 @@ impl PullDeleteRecord {
             }
             #[cfg(all(test, feature = "integration_test"))]
             Location => LocationRowRepository::new(con).delete(id),
+            #[cfg(all(test, feature = "integration_test"))]
+            LocationMovement => LocationMovementRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             StockLine => StockLineRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
