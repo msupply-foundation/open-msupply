@@ -144,7 +144,7 @@ export const RequestRequisitionListView: FC = () => {
 };
 
 export const ListView: FC = () => (
-  <TableProvider createStore={createTableStore()}>
+  <TableProvider createStore={createTableStore}>
     <RequestRequisitionListView />
   </TableProvider>
 );

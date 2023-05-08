@@ -159,8 +159,8 @@ mod test {
                 .periods()
                 .period_schedules(),
             MockData {
-                name_tag_rows: vec![name_tag1],
-                name_tag_join_rows: vec![name_tag_join1],
+                name_tags: vec![name_tag1],
+                name_tag_joins: vec![name_tag_join1],
                 master_lists: vec![master_list.clone()],
                 programs: vec![program.clone()],
                 master_list_name_joins: vec![master_list_name_join],

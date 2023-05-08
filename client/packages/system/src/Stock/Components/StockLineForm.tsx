@@ -172,7 +172,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
         <StyledInputRow
           label={t('label.barcode')}
           Input={
-            <Box>
+            <Box display="flex" style={{ width: 162 }}>
               <BasicTextInput value={draft.barcode ?? ''} onChange={() => {}} />
               {hasBarcodeScanner && (
                 <IconButton

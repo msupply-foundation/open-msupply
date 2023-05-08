@@ -26,9 +26,12 @@ pub fn cors_policy(config_settings: &Settings) -> Cors {
             });
 
             match sec_fetch_site_header {
-                Some(b"cross-site") => true,
+                Some(b"same-site") => true,
                 Some(b"same-origin") => true,
+                // Both 'none' and None value indicates browser considers to be the same origin
+                // found this in an edge case when connecting by IP in Chrome sec-fetch-site headers are missing
                 Some(b"none") => true,
+                None => true,
                 _ => false,
             }
         });

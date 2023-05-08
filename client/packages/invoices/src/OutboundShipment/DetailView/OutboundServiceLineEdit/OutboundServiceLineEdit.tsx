@@ -78,7 +78,7 @@ const OutboundServiceLineEditComponent = ({
             />
           </Box>
           <TableProvider
-            createStore={createTableStore()}
+            createStore={createTableStore}
             queryParamsStore={createQueryParamsStore({
               initialSortBy: { key: 'serviceItemName' },
             })}
