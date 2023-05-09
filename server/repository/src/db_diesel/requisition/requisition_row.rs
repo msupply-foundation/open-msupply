@@ -35,10 +35,17 @@ table! {
         min_months_of_stock -> Double,
         approval_status -> Nullable<crate::db_diesel::requisition::requisition_row::RequisitionRowApprovalStatusMapping>,
         linked_requisition_id -> Nullable<Text>,
-        is_sync_update -> Bool,
         program_id -> Nullable<Text>,
         period_id -> Nullable<Text>,
         order_type -> Nullable<Text>,
+    }
+}
+
+table! {
+    #[sql_name = "requisition"]
+    requistion_is_sync_update (id) {
+        id -> Text,
+        is_sync_update -> Bool,
     }
 }
 
@@ -47,6 +54,15 @@ joinable!(requisition -> store (store_id));
 joinable!(requisition -> user_account (user_id));
 joinable!(requisition -> period (period_id));
 joinable!(requisition -> program (program_id));
+
+#[derive(AsChangeset)]
+#[table_name = "requistion_is_sync_update"]
+#[cfg_attr(test, derive(Debug, PartialEq, Queryable))]
+struct RequisitionIsSyncUpdate {
+    #[allow(dead_code)]
+    id: String,
+    is_sync_update: bool,
+}
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -99,7 +115,6 @@ pub struct RequisitionRow {
     pub min_months_of_stock: f64,
     pub approval_status: Option<RequisitionRowApprovalStatus>,
     pub linked_requisition_id: Option<String>,
-    pub is_sync_update: bool,
     pub program_id: Option<String>,
     pub period_id: Option<String>,
     pub order_type: Option<String>,
@@ -127,7 +142,6 @@ impl Default for RequisitionRow {
             min_months_of_stock: Default::default(),
             approval_status: Default::default(),
             linked_requisition_id: Default::default(),
-            is_sync_update: Default::default(),
             program_id: None,
             period_id: None,
             order_type: None,
@@ -145,7 +159,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+    fn upsert_one_etc(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(requisition_dsl::requisition)
             .values(row)
             .on_conflict(requisition_dsl::id)
@@ -156,10 +170,20 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+    fn upsert_one_etc(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(requisition_dsl::requisition)
             .values(row)
             .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+        self.upsert_one_etc(row)?;
+
+        diesel::update(requistion_is_sync_update::table)
+            .set(row.as_is_sync_update(false))
+            .execute(&self.connection.connection)?;
+
         Ok(())
     }
 
@@ -192,17 +216,47 @@ impl<'a> RequisitionRowRepository<'a> {
             .first(&self.connection.connection)?;
         Ok(result)
     }
+
+    pub fn sync_upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+        self.upsert_one_etc(row)?;
+
+        diesel::update(requistion_is_sync_update::table)
+            .set(row.as_is_sync_update(true))
+            .execute(&self.connection.connection)?;
+
+        Ok(())
+    }
+
+    #[cfg(test)]
+    fn sync_find_one_by_id(
+        &self,
+        id: &str,
+    ) -> Result<Option<RequisitionIsSyncUpdate>, RepositoryError> {
+        let result = requistion_is_sync_update::table
+            .filter(requistion_is_sync_update::dsl::id.eq(id))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
 }
 
+impl RequisitionRow {
+    fn as_is_sync_update(&self, is_sync_update: bool) -> RequisitionIsSyncUpdate {
+        RequisitionIsSyncUpdate {
+            id: self.id.clone(),
+            is_sync_update,
+        }
+    }
+}
 #[cfg(test)]
 mod test {
-    use strum::IntoEnumIterator;
-
+    use super::*;
     use crate::{
         mock::{mock_request_draft_requisition_all_fields, MockDataInserts},
         test_db::setup_all,
         RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository,
     };
+    use strum::IntoEnumIterator;
 
     #[actix_rt::test]
     async fn approval_status_enum() {
@@ -228,5 +282,51 @@ mod test {
                 .unwrap();
             assert_eq!(result.approval_status, row.approval_status);
         }
+    }
+
+    #[actix_rt::test]
+    async fn requisition_is_sync_update() {
+        let (_, connection, _, _) = setup_all(
+            "requisition_is_sync_update",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let repo = RequisitionRowRepository::new(&connection);
+
+        let row = mock_request_draft_requisition_all_fields().requisition;
+
+        // First insert
+        repo.upsert_one(&row).unwrap();
+
+        assert_eq!(
+            repo.sync_find_one_by_id(&row.id),
+            Ok(Some(RequisitionIsSyncUpdate {
+                id: row.id.clone(),
+                is_sync_update: false
+            }))
+        );
+
+        // Synchronisation upsert
+        repo.sync_upsert_one(&row).unwrap();
+
+        assert_eq!(
+            repo.sync_find_one_by_id(&row.id),
+            Ok(Some(RequisitionIsSyncUpdate {
+                id: row.id.clone(),
+                is_sync_update: true
+            }))
+        );
+
+        // Normal upsert
+        repo.upsert_one(&row).unwrap();
+
+        assert_eq!(
+            repo.sync_find_one_by_id(&row.id),
+            Ok(Some(RequisitionIsSyncUpdate {
+                id: row.id.clone(),
+                is_sync_update: false
+            }))
+        );
     }
 }
