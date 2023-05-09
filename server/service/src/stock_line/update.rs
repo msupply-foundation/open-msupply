@@ -198,6 +198,11 @@ fn generate_barcode_row(
     existing: StockLineRow,
     value: String,
 ) -> Option<BarcodeRow> {
+    // for an empty string, simply unlink the barcode
+    if value.is_empty() {
+        return None;
+    }
+
     let filter = BarcodeFilter::new()
         .item_id(EqualFilter::equal_to(&existing.item_id))
         .pack_size(EqualFilter::equal_to_i32(existing.pack_size));
