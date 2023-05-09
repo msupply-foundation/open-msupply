@@ -79,6 +79,17 @@ export const useStocktakeColumns = ({
         },
       ],
       [
+        'itemUnit',
+        {
+          getSortValue: row => {
+            return row.item?.unitName ?? '';
+          },
+          accessor: ({ rowData }) => {
+            return rowData.item?.unitName ?? '';
+          },
+        },
+      ],
+      [
         'batch',
         {
           getSortValue: row => {

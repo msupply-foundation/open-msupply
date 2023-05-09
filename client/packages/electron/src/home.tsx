@@ -3,20 +3,29 @@ import { createRoot } from 'react-dom/client';
 import '@fontsource/inter/variable.css';
 import {
   AppThemeProvider,
+  HashRouter,
   IntlProvider,
   RandomLoader,
+  Route,
+  Routes,
   ServerDiscovery,
 } from '@openmsupply-client/common';
 import { Viewport } from '@openmsupply-client/host/src/components';
+import { ErrorPage } from './error';
 
 const ClientHomeScreen = () => (
   <React.Suspense fallback={<div />}>
     <IntlProvider isElectron={true}>
       <React.Suspense fallback={<RandomLoader />}>
         <AppThemeProvider>
-          <Viewport>
-            <ServerDiscovery />
-          </Viewport>
+          <HashRouter>
+            <Viewport>
+              <Routes>
+                <Route path="/error" element={<ErrorPage />} />
+                <Route path="/" element={<ServerDiscovery />} />
+              </Routes>
+            </Viewport>
+          </HashRouter>
         </AppThemeProvider>
       </React.Suspense>
     </IntlProvider>
