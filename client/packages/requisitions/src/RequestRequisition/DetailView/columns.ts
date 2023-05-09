@@ -40,6 +40,24 @@ export const useRequestColumns = () => {
       },
     ],
     {
+      key: 'unit',
+      label: 'label.unit',
+      align: ColumnAlign.Left,
+
+      // width: 100,
+      accessor: ({ rowData }) => rowData.item.unitName,
+      getSortValue: rowData => rowData.item.unitName ?? '',
+    },
+    {
+      key: 'defaultPackSize',
+      label: 'label.default-pack-size',
+      align: ColumnAlign.Left,
+
+      // width: 200,
+      accessor: ({ rowData }) => rowData.item.defaultPackSize,
+      getSortValue: rowData => rowData.item.defaultPackSize,
+    },
+    {
       key: 'availableStockOnHand',
       label: 'label.stock-on-hand',
       description: 'description.stock-on-hand',
@@ -95,6 +113,18 @@ export const useRequestColumns = () => {
       align: ColumnAlign.Right,
       width: 150,
       getSortValue: rowData => rowData.requestedQuantity,
+    },
+    {
+      key: 'requestedNumPacks',
+      label: 'label.requested-packs',
+      description: 'label.requested-number-packs',
+      align: ColumnAlign.Right,
+      // width: 150,
+      accessor: ({ rowData }) =>
+        formatNumber.roundUp(
+          rowData.requestedQuantity / rowData.item.defaultPackSize
+        ),
+      sortable: false,
     },
   ];
 

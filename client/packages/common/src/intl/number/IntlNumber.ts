@@ -12,5 +12,6 @@ export const useFormatNumber = () => {
       });
       return intl.format(value ?? 0);
     },
+    roundUp: (value?: number) => Math.ceil(value ?? 0),
   };
 };
