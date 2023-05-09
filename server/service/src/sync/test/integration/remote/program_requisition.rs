@@ -38,7 +38,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
 
         let name_tag1 = NameTagRow {
             id: uuid(),
-            name: "NewProgramTag1".to_string(),
+            name: uuid(),
         };
         let name_tag_json1 = json!({
             "ID": name_tag1.id,
@@ -46,7 +46,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         });
         let name_tag2 = NameTagRow {
             id: uuid(),
-            name: "NewProgramTag2".to_string(),
+            name: uuid(),
         };
         let name_tag_json2 = json!({
             "ID": name_tag2.id,
@@ -68,7 +68,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         "programSettings": {
             "elmisCode": "",
             "storeTags": {
-                "NewProgramTag1": {
+                &name_tag1.name: {
                     "orderTypes": [
                         {
                             "isEmergency": false,
@@ -91,23 +91,23 @@ impl SyncRecordTester for ProgramRequisitionTester {
                         ],
                         "periodScheduleName": "Weekly"
                     },
-                    "NewProgramTag2": {
-                        "orderTypes": [
-                            {
-                                "isEmergency": false,
-                                "maxEmergencyOrders": "",
-                                "maxMOS": 4,
-                                "maxOrdersPerPeriod": 1,
-                                "name": "New order 1",
-                                "thresholdMOS": 4,
-                                "type": "Order type"
-                            }
-                            ],
-                            "periodScheduleName": "Monthly"
+                &name_tag2.name: {
+                    "orderTypes": [
+                        {
+                            "isEmergency": false,
+                            "maxEmergencyOrders": "",
+                            "maxMOS": 4,
+                            "maxOrdersPerPeriod": 1,
+                            "name": "New order 1",
+                            "thresholdMOS": 4,
+                            "type": "Order type"
                         }
+                        ],
+                        "periodScheduleName": "Monthly"
                     }
                 }
-            });
+            }
+        });
 
         let master_list_name_join_row = MasterListNameJoinRow {
             id: uuid(),
@@ -270,8 +270,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
 
         // STEP 2 - mutate from central
         let upsert_name_tag = NameTagRow {
-            id: "changed_name_tag".to_string(),
-            name: "ChangedTagName".to_string(),
+            id: uuid(),
+            name: uuid(),
         };
         let upsert_name_tag_json = json!({
             "ID": upsert_name_tag.id,
@@ -287,7 +287,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         "programSettings": {
             "elmisCode": "",
             "storeTags": {
-                "ChangedTagName": {
+                &upsert_name_tag.name: {
                     "orderTypes": [
                         {
                             "isEmergency": false,
