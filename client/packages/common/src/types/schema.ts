@@ -2964,6 +2964,7 @@ export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & Updat
 export type StockLineNode = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: Scalars['Float'];
+  barcode?: Maybe<Scalars['String']>;
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;

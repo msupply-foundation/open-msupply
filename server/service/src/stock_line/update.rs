@@ -132,12 +132,18 @@ fn generate(
         None => None,
     };
 
+    let barcode_id = match barcode_row {
+        Some(ref barcode_row) => Some(barcode_row.id.clone()),
+        None => None,
+    };
+
     existing.location_id = location_id.or(existing.location_id);
     existing.batch = batch.or(existing.batch);
     existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
     existing.expiry_date = expiry_date.or(existing.expiry_date);
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
+    existing.barcode_id = barcode_id;
 
     Ok((existing, location_movements, barcode_row))
 }
@@ -190,26 +196,34 @@ fn generate_location_movement(
 fn generate_barcode_row(
     connection: &StorageConnection,
     existing: StockLineRow,
-    barcode: String,
+    value: String,
 ) -> Option<BarcodeRow> {
     let filter = BarcodeFilter::new()
-        .value(EqualFilter::equal_to(&barcode))
         .item_id(EqualFilter::equal_to(&existing.item_id))
         .pack_size(EqualFilter::equal_to_i32(existing.pack_size));
 
     let existing_rows = BarcodeRepository::new(connection).query_by_filter(filter);
 
-    if existing_rows.is_err() || existing_rows.ok().unwrap().len() > 0 {
+    if existing_rows.is_err() {
         return None;
     }
 
+    if let Some(barcode_rows) = existing_rows.ok() {
+        if let Some(row) = barcode_rows.first() {
+            // barcode already exists - persist the value change if there is one
+            return Some(BarcodeRow {
+                value,
+                ..row.barcode_row.clone()
+            });
+        }
+    }
+    // create a new barcode row
     Some(BarcodeRow {
         id: uuid(),
-        value: barcode,
+        value,
         item_id: existing.item_id,
-        manufacturer_id: None,
         pack_size: Some(existing.pack_size),
-        parent_id: None,
+        ..Default::default()
     })
 }
 
