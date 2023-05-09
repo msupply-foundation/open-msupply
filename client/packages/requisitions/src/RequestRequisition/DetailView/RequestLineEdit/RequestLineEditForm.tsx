@@ -130,7 +130,7 @@ export const RequestLineEditForm = ({
               )}
             />
           ) : null}
-          {item && item?.unitName ? (
+          {item && item?.defaultPackSize ? (
             <InfoRow
               label={t('label.default-pack-size')}
               value={String(item.defaultPackSize)}

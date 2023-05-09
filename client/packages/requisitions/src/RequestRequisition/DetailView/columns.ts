@@ -51,7 +51,7 @@ export const useRequestColumns = () => {
     {
       key: 'defaultPackSize',
       label: 'label.default-pack-size',
-      align: ColumnAlign.Left,
+      align: ColumnAlign.Right,
 
       // width: 200,
       accessor: ({ rowData }) => rowData.item.defaultPackSize,
@@ -121,8 +121,9 @@ export const useRequestColumns = () => {
       align: ColumnAlign.Right,
       // width: 150,
       accessor: ({ rowData }) =>
-        formatNumber.roundUp(
-          rowData.requestedQuantity / rowData.item.defaultPackSize
+        formatNumber.round(
+          rowData.requestedQuantity / rowData.item.defaultPackSize,
+          2
         ),
       sortable: false,
     },
