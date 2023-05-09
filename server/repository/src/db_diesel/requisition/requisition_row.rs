@@ -55,15 +55,6 @@ joinable!(requisition -> user_account (user_id));
 joinable!(requisition -> period (period_id));
 joinable!(requisition -> program (program_id));
 
-#[derive(AsChangeset)]
-#[table_name = "requistion_is_sync_update"]
-#[cfg_attr(test, derive(Debug, PartialEq, Queryable))]
-struct RequisitionIsSyncUpdate {
-    #[allow(dead_code)]
-    id: String,
-    is_sync_update: bool,
-}
-
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionRowType {
@@ -177,13 +168,17 @@ impl<'a> RequisitionRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
-        self.upsert_one_etc(row)?;
-
-        diesel::update(requistion_is_sync_update::table)
-            .set(row.as_is_sync_update(false))
+    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
+        diesel::update(requistion_is_sync_update::table.find(id))
+            .set(requistion_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
             .execute(&self.connection.connection)?;
 
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+        self.upsert_one_etc(row)?;
+        self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
@@ -219,40 +214,29 @@ impl<'a> RequisitionRowRepository<'a> {
 
     pub fn sync_upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         self.upsert_one_etc(row)?;
-
-        diesel::update(requistion_is_sync_update::table)
-            .set(row.as_is_sync_update(true))
-            .execute(&self.connection.connection)?;
+        self.toggle_is_sync_update(&row.id, true)?;
 
         Ok(())
     }
 
     #[cfg(test)]
-    fn sync_find_one_by_id(
-        &self,
-        id: &str,
-    ) -> Result<Option<RequisitionIsSyncUpdate>, RepositoryError> {
+    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = requistion_is_sync_update::table
-            .filter(requistion_is_sync_update::dsl::id.eq(id))
+            .find(id)
+            .select(requistion_is_sync_update::dsl::is_sync_update)
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
     }
 }
 
-impl RequisitionRow {
-    fn as_is_sync_update(&self, is_sync_update: bool) -> RequisitionIsSyncUpdate {
-        RequisitionIsSyncUpdate {
-            id: self.id.clone(),
-            is_sync_update,
-        }
-    }
-}
 #[cfg(test)]
 mod test {
-    use super::*;
     use crate::{
-        mock::{mock_request_draft_requisition_all_fields, MockDataInserts},
+        mock::{
+            mock_request_draft_requisition_all_fields, mock_response_draft_requisition_all_fields,
+            MockDataInserts,
+        },
         test_db::setup_all,
         RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository,
     };
@@ -293,40 +277,26 @@ mod test {
         .await;
 
         let repo = RequisitionRowRepository::new(&connection);
-
+        // Two rows, to make sure is_sync_udpate update only affects one row
         let row = mock_request_draft_requisition_all_fields().requisition;
-
+        let row2 = mock_response_draft_requisition_all_fields().requisition;
         // First insert
         repo.upsert_one(&row).unwrap();
+        repo.upsert_one(&row2).unwrap();
 
-        assert_eq!(
-            repo.sync_find_one_by_id(&row.id),
-            Ok(Some(RequisitionIsSyncUpdate {
-                id: row.id.clone(),
-                is_sync_update: false
-            }))
-        );
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
 
         // Synchronisation upsert
         repo.sync_upsert_one(&row).unwrap();
 
-        assert_eq!(
-            repo.sync_find_one_by_id(&row.id),
-            Ok(Some(RequisitionIsSyncUpdate {
-                id: row.id.clone(),
-                is_sync_update: true
-            }))
-        );
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
 
         // Normal upsert
         repo.upsert_one(&row).unwrap();
 
-        assert_eq!(
-            repo.sync_find_one_by_id(&row.id),
-            Ok(Some(RequisitionIsSyncUpdate {
-                id: row.id.clone(),
-                is_sync_update: false
-            }))
-        );
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
     }
 }
