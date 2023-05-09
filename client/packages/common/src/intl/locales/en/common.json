@@ -114,6 +114,7 @@
   "label.create": "Create",
   "label.date": "Date",
   "label.date-created": "Date Created",
+  "label.default-pack-size": "Default pack size",
   "label.delete": "Delete",
   "label.delivered": "Delivered",
   "label.details": "Details",
