@@ -75,7 +75,10 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
 
         // Integrate
 
-        integration_records.integrate(&previous_connection).unwrap();
+        // is_sync = false, because we want these records to sync back to server (otherwise they will be ignored in changelog)
+        integration_records
+            .integrate(&previous_connection, false)
+            .unwrap();
         // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
         // Re initialise
