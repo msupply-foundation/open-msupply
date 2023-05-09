@@ -272,6 +272,7 @@ mod test {
                 item_row: mock_item_a(),
                 location_row: None,
                 name_row: None,
+                barcode_row: None,
             })
         }));
 

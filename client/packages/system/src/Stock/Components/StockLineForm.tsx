@@ -36,10 +36,8 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   />
 );
 interface StockLineFormProps {
-  draft: StockLineRowFragment & { barcode?: string };
-  onUpdate: (
-    patch: Partial<StockLineRowFragment & { barcode?: string }>
-  ) => void;
+  draft: StockLineRowFragment;
+  onUpdate: (patch: Partial<StockLineRowFragment>) => void;
 }
 export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const t = useTranslation('inventory');
