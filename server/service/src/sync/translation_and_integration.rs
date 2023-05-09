@@ -109,7 +109,7 @@ impl<'a> TranslationAndIntegration<'a> {
             };
 
             // Integrate
-            let integration_result = integration_records.integrate(self.connection);
+            let integration_result = integration_records.integrate(self.connection, true);
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
@@ -134,7 +134,11 @@ impl<'a> TranslationAndIntegration<'a> {
 }
 
 impl IntegrationRecords {
-    pub(crate) fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+    pub(crate) fn integrate(
+        &self,
+        connection: &StorageConnection,
+        is_sync: bool,
+    ) -> Result<(), RepositoryError> {
         // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
         let start_nested_transaction = { connection.transaction_level.get() > 0 };
 
@@ -155,10 +159,10 @@ impl IntegrationRecords {
             // whole transaction fails when there is a DB error (not a problem in sqlite).
             if start_nested_transaction {
                 connection
-                    .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx), false)
+                    .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx, is_sync), false)
                     .map_err(|e| e.to_inner_error())?;
             } else {
-                upsert.upsert(&connection)?;
+                upsert.upsert(&connection, is_sync)?;
             }
         }
 
@@ -167,7 +171,11 @@ impl IntegrationRecords {
 }
 
 impl PullUpsertRecord {
-    pub(crate) fn upsert(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    pub(crate) fn upsert(
+        &self,
+        con: &StorageConnection,
+        is_sync: bool,
+    ) -> Result<(), RepositoryError> {
         use PullUpsertRecord::*;
         match self {
             Name(record) => NameRowRepository::new(con).upsert_one(record),
@@ -197,8 +205,20 @@ impl PullUpsertRecord {
             InvoiceLine(record) => InvoiceLineRowRepository::new(con).upsert_one(record),
             Stocktake(record) => StocktakeRowRepository::new(con).upsert_one(record),
             StocktakeLine(record) => StocktakeLineRowRepository::new(con).upsert_one(record),
-            Requisition(record) => RequisitionRowRepository::new(con).upsert_one(record),
-            RequisitionLine(record) => RequisitionLineRowRepository::new(con).upsert_one(record),
+            Requisition(record) => {
+                let repo = RequisitionRowRepository::new(con);
+                match is_sync {
+                    true => repo.sync_upsert_one(record),
+                    false => repo.upsert_one(record),
+                }
+            }
+            RequisitionLine(record) => {
+                let repo = RequisitionLineRowRepository::new(con);
+                match is_sync {
+                    true => repo.sync_upsert_one(record),
+                    false => repo.upsert_one(record),
+                }
+            }
             ActivityLog(record) => ActivityLogRowRepository::new(con).insert_one(record),
             InventoryAdjustmentReason(record) => {
                 InventoryAdjustmentReasonRowRepository::new(con).upsert_one(record)
@@ -298,7 +318,7 @@ mod test {
                         r.id = "unit".to_string();
                     },
                 )))
-                .integrate(connection);
+                .integrate(connection, true);
 
                 assert_eq!(result, Ok(()));
 
@@ -309,7 +329,7 @@ mod test {
                         r.unit_id = Some("invalid".to_string());
                     },
                 )))
-                .integrate(connection);
+                .integrate(connection, true);
 
                 assert_ne!(result, Ok(()));
 
