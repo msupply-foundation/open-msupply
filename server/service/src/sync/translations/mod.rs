@@ -74,19 +74,22 @@ pub(crate) fn all_translators() -> SyncTranslators {
 
 /// Calculates the integration order based on the PullDependencies in the SyncTranslators
 pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'static str> {
+    // fill output so that tables with the least dependencies come first
+    let mut output = vec![];
+
     let mut ts = TopologicalSort::<&str>::new();
     for translator in translators {
         let pull_dep = translator.pull_dependencies();
         if pull_dep.dependencies.len() == 0 {
-            ts.add_dependency("", pull_dep.table);
-        } else {
-            for dep in pull_dep.dependencies {
-                ts.add_dependency(dep, pull_dep.table);
-            }
+            // no dependencies; add it strait to the top of the output
+            output.push(pull_dep.table);
+            continue;
+        }
+        for dep in pull_dep.dependencies {
+            ts.add_dependency(dep, pull_dep.table);
         }
     }
-    // fill output so that tables with the least dependencies come first
-    let mut output = vec![];
+
     loop {
         let mut next = ts.pop_all();
         if next.len() == 0 {
@@ -95,11 +98,10 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
             }
             break;
         }
-
         output.append(&mut next);
     }
-    // remove the empty helper dependency added earlier
-    output.into_iter().filter(|table| *table != "").collect()
+
+    output
 }
 
 #[allow(non_snake_case)]
