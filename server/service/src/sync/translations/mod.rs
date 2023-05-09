@@ -166,8 +166,6 @@ pub(crate) enum PullDeleteRecordTable {
     #[cfg(all(test, feature = "integration_test"))]
     Location,
     #[cfg(all(test, feature = "integration_test"))]
-    LocationMovement,
-    #[cfg(all(test, feature = "integration_test"))]
     StockLine,
     #[cfg(all(test, feature = "integration_test"))]
     Stocktake,
