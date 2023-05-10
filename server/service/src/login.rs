@@ -224,11 +224,7 @@ impl LoginService {
             username: user_info.user.name.to_string(),
             hashed_password: UserAccountService::hash_password(&password)
                 .map_err(UpdateUserError::PasswordHashError)?,
-            email: match user_info.user.e_mail.as_str() {
-                // TODO do this using serde
-                "" => None,
-                _ => Some(user_info.user.e_mail.to_string()),
-            },
+            email: optional_string(&user_info.user.e_mail),
             language: match user_info.user.language {
                 0 => Language::English,
                 1 => Language::French,
@@ -240,6 +236,10 @@ impl LoginService {
                 7 => Language::Tetum,
                 _ => Language::English,
             },
+            first_name: optional_string(&user_info.user.first_name),
+            last_name: optional_string(&user_info.user.last_name),
+            phone_number: optional_string(&user_info.user.phone1),
+            job_title: optional_string(&user_info.user.job_title),
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores
@@ -279,6 +279,14 @@ impl LoginService {
             .upsert_user(user, stores_permissions)
             .map_err(|e| UpdateUserError::DatabaseError(e))?;
         Ok(())
+    }
+}
+
+fn optional_string(str: &str) -> Option<String> {
+    match str {
+        // TODO do this using serde
+        "" => None,
+        _ => Some(str.to_string()),
     }
 }
 
@@ -353,6 +361,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             }
             Permissions::CreateAndEditRequisitions => {
                 output.insert(Permission::RequisitionMutate);
+            }
+            Permissions::ConfirmInternalOrderSent => {
+                output.insert(Permission::RequisitionSend);
             }
             // reports
             Permissions::ViewReports => {

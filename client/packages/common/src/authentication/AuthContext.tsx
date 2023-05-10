@@ -35,6 +35,11 @@ type User = {
   id: string;
   name: string;
   permissions: UserPermission[];
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  phoneNumber?: string | null;
+  jobTitle?: string | null;
 };
 
 type MRUCredentials = {

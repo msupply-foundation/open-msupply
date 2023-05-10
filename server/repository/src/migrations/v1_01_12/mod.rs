@@ -1,5 +1,6 @@
 use super::{version::Version, Migration};
 
+mod local_authorisation;
 mod location_movement_triggers;
 
 use crate::StorageConnection;
@@ -12,6 +13,7 @@ impl Migration for V1_01_12 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         location_movement_triggers::migrate(connection)?;
+        local_authorisation::migrate(connection)?;
         Ok(())
     }
 }
