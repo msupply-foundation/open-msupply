@@ -137,11 +137,16 @@ export const StatusChangeButton = () => {
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
+  const hasPermission =
+    selectedOption.value === RequisitionNodeStatus.Sent
+      ? userHasPermission(UserPermission.RequisitionSend)
+      : true;
+
   return (
     <ButtonWithIcon
       color="secondary"
       variant="contained"
-      disabled={!userHasPermission(UserPermission.RequisitionSend)}
+      disabled={!hasPermission}
       label={selectedOption.label}
       Icon={<ArrowRightIcon />}
       onClick={() => getConfirmation()}
