@@ -49,6 +49,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const supplierName = draft.supplierName
     ? draft.supplierName
     : t('message.no-supplier');
+  const location = draft?.location ?? null;
 
   const scanBarcode = async () => {
     try {
@@ -163,9 +164,11 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
             <LocationSearchInput
               autoFocus={false}
               disabled={false}
-              value={draft.location ?? null}
+              value={location}
               width={160}
-              onChange={location => onUpdate({ locationId: location?.id })}
+              onChange={(location) => {
+                onUpdate({ location, locationId: location?.id });
+              }}
             />
           }
         />
