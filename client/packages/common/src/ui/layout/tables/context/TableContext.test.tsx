@@ -303,7 +303,7 @@ describe('useIsGrouped', () => {
   const Wrapper: FC<PropsWithChildrenOnly> = ({ children }) => {
     return (
       <TableProvider
-        createStore={createTableStore()}
+        createStore={createTableStore}
         queryParamsStore={createQueryParamsStore({
           initialSortBy: { key: 'id' },
         })}

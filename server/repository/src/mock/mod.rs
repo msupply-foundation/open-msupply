@@ -17,6 +17,8 @@ mod name_tag;
 mod number;
 mod period_and_period_schedule;
 mod program;
+mod program_order_types;
+mod program_requisition_settings;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
@@ -57,6 +59,8 @@ pub use name_tag::*;
 pub use number::*;
 pub use period_and_period_schedule::*;
 pub use program::*;
+pub use program_order_types::*;
+pub use program_requisition_settings::*;
 pub use stock_line::*;
 pub use stocktake::*;
 pub use stocktake_line::*;
@@ -109,7 +113,6 @@ pub struct MockData {
     pub user_store_joins: Vec<UserStoreJoinRow>,
     pub user_permissions: Vec<UserPermissionRow>,
     pub names: Vec<NameRow>,
-    pub name_tags: Vec<NameTagRow>,
     pub period_schedules: Vec<PeriodScheduleRow>,
     pub periods: Vec<PeriodRow>,
     pub stores: Vec<StoreRow>,
@@ -136,12 +139,12 @@ pub struct MockData {
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
     pub sync_logs: Vec<SyncLogRow>,
-    pub name_tag_rows: Vec<NameTagRow>,
-    pub name_tag_join_rows: Vec<NameTagJoinRow>,
+    pub name_tags: Vec<NameTagRow>,
+    pub name_tag_joins: Vec<NameTagJoinRow>,
     pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
     pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
     pub programs: Vec<ProgramRow>,
-    pub requisition_order_types: Vec<ProgramRequisitionOrderTypeRow>,
+    pub program_order_types: Vec<ProgramRequisitionOrderTypeRow>,
     pub barcodes: Vec<BarcodeRow>,
 }
 
@@ -164,6 +167,7 @@ pub struct MockDataInserts {
     pub user_permissions: bool,
     pub names: bool,
     pub name_tags: bool,
+    pub name_tag_joins: bool,
     pub period_schedules: bool,
     pub periods: bool,
     pub stores: bool,
@@ -192,6 +196,8 @@ pub struct MockDataInserts {
     pub inventory_adjustment_reasons: bool,
     pub barcodes: bool,
     pub programs: bool,
+    pub program_requisition_settings: bool,
+    pub program_order_types: bool,
 }
 
 impl MockDataInserts {
@@ -202,6 +208,7 @@ impl MockDataInserts {
             user_permissions: true,
             names: true,
             name_tags: true,
+            name_tag_joins: true,
             period_schedules: true,
             periods: true,
             stores: true,
@@ -230,6 +237,8 @@ impl MockDataInserts {
             inventory_adjustment_reasons: true,
             barcodes: true,
             programs: true,
+            program_requisition_settings: true,
+            program_order_types: true,
         }
     }
 
@@ -259,6 +268,11 @@ impl MockDataInserts {
 
     pub fn name_tags(mut self) -> Self {
         self.name_tags = true;
+        self
+    }
+
+    pub fn name_tag_joins(mut self) -> Self {
+        self.name_tag_joins = true;
         self
     }
 
@@ -381,6 +395,16 @@ impl MockDataInserts {
         self.documents = true;
         self
     }
+
+    pub fn program_requisition_settings(mut self) -> Self {
+        self.program_requisition_settings = true;
+        self
+    }
+
+    pub fn program_order_types(mut self) -> Self {
+        self.program_order_types = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -442,6 +466,9 @@ fn all_mock_data() -> MockDataCollection {
             documents: mock_documents(),
             activity_logs: mock_activity_logs(),
             programs: mock_programs(),
+            program_requisition_settings: mock_program_requisition_settings(),
+            program_order_types: mock_program_order_types(),
+            name_tag_joins: mock_name_tag_joins(),
             ..Default::default()
         },
     );
@@ -723,16 +750,6 @@ pub fn insert_mock_data(
             }
         }
 
-        for row in &mock_data.name_tag_rows {
-            let repo = NameTagRowRepository::new(connection);
-            repo.upsert_one(row).unwrap();
-        }
-
-        for row in &mock_data.name_tag_join_rows {
-            let repo = NameTagJoinRepository::new(connection);
-            repo.upsert_one(row).unwrap();
-        }
-
         if inserts.programs {
             for row in &mock_data.programs {
                 let repo = ProgramRowRepository::new(connection);
@@ -740,20 +757,31 @@ pub fn insert_mock_data(
             }
         }
 
-        for row in &mock_data.program_requisition_settings {
-            let repo = ProgramRequisitionSettingsRowRepository::new(connection);
-            repo.upsert_one(row).unwrap();
+        if inserts.program_requisition_settings {
+            for row in &mock_data.program_requisition_settings {
+                let repo = ProgramRequisitionSettingsRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
         }
 
-        for row in &mock_data.requisition_order_types {
-            let repo = ProgramRequisitionOrderTypeRowRepository::new(connection);
-            repo.upsert_one(row).unwrap();
+        if inserts.program_order_types {
+            for row in &mock_data.program_order_types {
+                let repo = ProgramRequisitionOrderTypeRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
         }
 
         if inserts.barcodes {
             for row in &mock_data.barcodes {
                 let repo = BarcodeRowRepository::new(connection);
                 repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.name_tag_joins {
+            let repo = NameTagJoinRepository::new(connection);
+            for row in &mock_data.name_tag_joins {
+                repo.upsert_one(&row).unwrap();
             }
         }
     }
@@ -793,13 +821,12 @@ impl MockData {
             mut activity_logs,
             mut sync_logs,
             mut inventory_adjustment_reasons,
-            mut name_tag_join_rows,
-            mut name_tag_rows,
+            mut name_tag_joins,
             mut program_requisition_settings,
             mut programs,
             mut master_lists,
             mut master_list_name_joins,
-            mut requisition_order_types,
+            mut program_order_types,
             mut barcodes,
         } = other;
 
@@ -831,16 +858,14 @@ impl MockData {
         self.sync_logs.append(&mut sync_logs);
         self.inventory_adjustment_reasons
             .append(&mut inventory_adjustment_reasons);
-        self.name_tag_join_rows.append(&mut name_tag_join_rows);
-        self.name_tag_rows.append(&mut name_tag_rows);
+        self.name_tag_joins.append(&mut name_tag_joins);
         self.program_requisition_settings
             .append(&mut program_requisition_settings);
         self.programs.append(&mut programs);
         self.master_lists.append(&mut master_lists);
         self.master_list_name_joins
             .append(&mut master_list_name_joins);
-        self.requisition_order_types
-            .append(&mut requisition_order_types);
+        self.program_order_types.append(&mut program_order_types);
         self.barcodes.append(&mut barcodes);
 
         self

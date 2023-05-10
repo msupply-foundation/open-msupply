@@ -1427,6 +1427,15 @@ export type InsertProgramEnrolmentInput = {
 
 export type InsertProgramEnrolmentResponse = ProgramEnrolmentNode;
 
+export type InsertProgramRequestRequisitionError = {
+  __typename: 'InsertProgramRequestRequisitionError';
+  error: InsertProgramRequestRequisitionErrorInterface;
+};
+
+export type InsertProgramRequestRequisitionErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type InsertProgramRequestRequisitionInput = {
   colour?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
@@ -1438,6 +1447,8 @@ export type InsertProgramRequestRequisitionInput = {
   programOrderTypeId: Scalars['String'];
   theirReference?: InputMaybe<Scalars['String']>;
 };
+
+export type InsertProgramRequestRequisitionResponse = InsertProgramRequestRequisitionError | RequisitionNode;
 
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
@@ -2037,6 +2048,11 @@ export type MasterListSortInput = {
 
 export type MasterListsResponse = MasterListConnector;
 
+export type MaxOrdersReachedForPeriod = InsertProgramRequestRequisitionErrorInterface & {
+  __typename: 'MaxOrdersReachedForPeriod';
+  description: Scalars['String'];
+};
+
 export type MergeRequiredError = UpdateDocumentErrorInterface & {
   __typename: 'MergeRequiredError';
   autoMerge?: Maybe<RawDocumentNode>;
@@ -2095,7 +2111,7 @@ export type Mutations = {
    * Every patient can only have one program document of each program type.
    */
   insertProgramEnrolment: InsertProgramEnrolmentResponse;
-  insertProgramRequestRequisition: InsertRequestRequisitionResponse;
+  insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -3508,6 +3524,7 @@ export type RequisitionFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<SimpleStringFilterInput>;
   requisitionNumber?: InputMaybe<EqualFilterBigNumberInput>;

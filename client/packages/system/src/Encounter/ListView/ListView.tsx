@@ -56,7 +56,7 @@ const EncounterListComponent: FC = () => {
 
 export const EncounterListView: FC = () => (
   <TableProvider
-    createStore={createTableStore()}
+    createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<EncounterFragment>({
       initialSortBy: { key: 'startDatetime' },
     })}
