@@ -49,6 +49,7 @@ export const useRequestColumns = () => {
     {
       key: 'defaultPackSize',
       label: 'label.default-pack-size',
+      description: 'description.default-pack-size',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item.defaultPackSize,
       getSortValue: rowData => rowData.item.defaultPackSize,
@@ -57,7 +58,7 @@ export const useRequestColumns = () => {
       key: 'availableStockOnHand',
       label: 'label.stock-on-hand',
       description: 'description.stock-on-hand',
-      align: ColumnAlign.Left,
+      align: ColumnAlign.Right,
       width: 200,
       accessor: ({ rowData }) => {
         const { itemStats } = rowData;
@@ -80,6 +81,7 @@ export const useRequestColumns = () => {
       'monthlyConsumption',
       {
         width: 150,
+        align: ColumnAlign.Right,
         accessor: ({ rowData }) => rowData.itemStats.averageMonthlyConsumption,
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
       },
