@@ -12,7 +12,7 @@ use repository::{
     SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
-use util::constants::{INVENTORY_ADJUSTMENT_NAME_CODE, REPACK_NAME_CODE};
+use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::{
     IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
@@ -39,6 +39,7 @@ pub enum LegacyTransactType {
     #[serde(rename = "sc")]
     #[serde(alias = "Sc")]
     Sc,
+    /// Repack
     #[serde(rename = "sr")]
     Sr,
     /// Bucket to catch all other variants
@@ -363,15 +364,10 @@ fn invoice_type(_type: &LegacyTransactType, name: &NameRow) -> Option<InvoiceRow
             _ => return None,
         };
     }
-    if name.code == REPACK_NAME_CODE {
-        return match _type {
-            LegacyTransactType::Sr => Some(InvoiceRowType::Repack),
-            _ => return None,
-        };
-    }
     match _type {
         LegacyTransactType::Si => Some(InvoiceRowType::InboundShipment),
         LegacyTransactType::Ci => Some(InvoiceRowType::OutboundShipment),
+        LegacyTransactType::Sr => Some(InvoiceRowType::Repack),
         _ => return None,
     }
 }
