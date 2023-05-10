@@ -42,6 +42,7 @@ pub fn line_to_supply_q5() -> RequisitionLineRow {
         r.id = "line_to_supply_q5".to_string();
         r.item_id = mock_item_a().id;
         r.supply_quantity = 5;
+        r.requested_quantity = 5;
     })
 }
 // One unallocated line linked
@@ -51,6 +52,7 @@ pub fn line_to_supply_q2() -> RequisitionLineRow {
         r.id = "line_to_supply_q2".to_string();
         r.item_id = mock_item_b().id;
         r.supply_quantity = 5;
+        r.requested_quantity = 5;
     })
 }
 
@@ -72,6 +74,7 @@ pub fn line_to_supply_q1() -> RequisitionLineRow {
         r.id = "line_to_supply_q1".to_string();
         r.item_id = mock_item_c().id;
         r.supply_quantity = 10;
+        r.requested_quantity = 10;
     })
 }
 pub fn linked_line_2() -> InvoiceLineRow {

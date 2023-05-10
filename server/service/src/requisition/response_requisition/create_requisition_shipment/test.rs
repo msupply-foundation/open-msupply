@@ -120,8 +120,8 @@ mod test_update {
 
         assert_eq!(invoice_lines.len(), 2);
 
-        assert_eq!(invoice_lines[0].invoice_line_row.number_of_packs, 44.0);
-        assert_eq!(invoice_lines[1].invoice_line_row.number_of_packs, 100.0);
+        assert_eq!(invoice_lines[0].invoice_line_row.number_of_packs, 4.0);
+        assert_eq!(invoice_lines[1].invoice_line_row.number_of_packs, 11.0);
 
         // NothingRemainingToSupply
         assert_eq!(
