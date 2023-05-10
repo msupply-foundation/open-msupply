@@ -73,7 +73,10 @@ pub struct RequisitionLineSupplyStatus {
 
 impl RequisitionLineSupplyStatus {
     pub fn remaining_quantity(&self) -> f64 {
-        let result = self.requisition_line.requisition_line_row.supply_quantity as f64
+        let result = self
+            .requisition_line
+            .requisition_line_row
+            .requested_quantity as f64
             - self.quantity_in_invoices();
 
         if result > 0.0 {
