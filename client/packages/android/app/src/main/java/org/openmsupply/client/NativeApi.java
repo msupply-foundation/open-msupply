@@ -417,12 +417,12 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             this.data = data;
         }
 
+        /**
+         * @return the servers url string including protocol, ip and port,
+         * e.g. https://127.0.0.1:8000
+         */
         public String getUrl() {
-            String path = "";
-            if (data.getString("path") != null) {
-                path = "/" + data.getString("path");
-            }
-            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port") + path;
+            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port");
         }
 
         public boolean isLocal() {
