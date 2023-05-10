@@ -3,7 +3,7 @@ mod tests {
     use crate::sync::test::integration::remote::{
         activity_log::ActivityLogRecordTester, clinician::ClinicianRecordTester,
         document::DocumentRecordTester, invoice::InvoiceRecordTester,
-        location::LocationRecordTester,
+        location::LocationRecordTester, location_movement::LocationMovementRecordTester,
         patient_name_and_store_and_name_store_join::PatientNameAndStoreAndNameStoreJoinTester,
         program_requisition::ProgramRequisitionTester, requisition::RequisitionRecordTester,
         stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
@@ -13,6 +13,11 @@ mod tests {
     #[actix_rt::test]
     async fn integration_sync_remote_location() {
         test_remote_sync_record("location", &LocationRecordTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_location_movement() {
+        test_remote_sync_record("location_movement", &LocationMovementRecordTester).await;
     }
 
     #[actix_rt::test]

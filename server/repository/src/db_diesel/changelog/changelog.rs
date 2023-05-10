@@ -43,6 +43,7 @@ pub enum ChangelogAction {
 pub enum ChangelogTableName {
     Number,
     Location,
+    LocationMovement,
     StockLine,
     Invoice,
     InvoiceLine,

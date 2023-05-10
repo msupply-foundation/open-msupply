@@ -26,6 +26,7 @@ const TRANSLATION_AND_INTEGRATION_ORDER: &[&str] = &[
     LegacyTableName::REPORT,
     LegacyTableName::LOCATION,
     LegacyTableName::ITEM_LINE,
+    LegacyTableName::LOCATION_MOVEMENT,
     LegacyTableName::TRANSACT,
     LegacyTableName::TRANS_LINE,
     LegacyTableName::STOCKTAKE,

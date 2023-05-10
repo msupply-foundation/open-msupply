@@ -5,12 +5,11 @@ import {
   useColumns,
   createTableStore,
   NothingHere,
-  createQueryParamsStore,
   useFormatDateTime,
   ColumnAlign,
   useTranslation,
-  useQueryParamsStore,
   ProgramEnrolmentSortFieldInput,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import {
   PatientModal,
@@ -22,20 +21,27 @@ import {
 import { usePatient } from '../../api';
 import { getStatusTranslation } from '../utils';
 import { encounterEventCellValue } from '../../../Encounter/ListView/columns';
+import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
 
 const ProgramListComponent: FC = () => {
   const {
-    sort: { sortBy, onChangeSortBy },
     pagination: { page, first, offset, onChangePage },
   } = useQueryParamsStore();
+
+  const { queryParams, updateSortQuery } = useUrlQueryParams({
+    initialSort: {
+      key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
+      dir: 'asc',
+    },
+  });
 
   const patientId = usePatient.utils.id();
 
   const { data, isError, isLoading } =
     useProgramEnrolments.document.programEnrolments({
       sortBy: {
-        key: sortBy.key as ProgramEnrolmentSortFieldInput,
-        isDesc: sortBy.isDesc,
+        key: queryParams.sortBy.key as ProgramEnrolmentSortFieldInput,
+        isDesc: queryParams.sortBy.isDesc,
       },
       filterBy: { patientId: { equalTo: patientId } },
     });
@@ -77,8 +83,11 @@ const ProgramListComponent: FC = () => {
           dateString ? localisedDate((dateString as string) || '') : '',
       },
     ],
-    { onChangeSortBy, sortBy },
-    [sortBy]
+    {
+      sortBy: queryParams.sortBy,
+      onChangeSortBy: updateSortQuery,
+    },
+    [queryParams.sortBy, updateSortQuery]
   );
 
   return (
@@ -111,10 +120,13 @@ const ProgramListComponent: FC = () => {
 
 export const ProgramListView: FC = () => (
   <TableProvider
-    createStore={createTableStore()}
+    createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<ProgramEnrolmentRowFragmentWithId>(
       {
-        initialSortBy: { key: 'type' },
+        initialSortBy: {
+          key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
+          isDesc: false,
+        },
       }
     )}
   >

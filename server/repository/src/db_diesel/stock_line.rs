@@ -84,7 +84,7 @@ impl<'a> StockLineRepository<'a> {
         filter: StockLineFilter,
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None, store_id)
+        self.query(Pagination::all(), Some(filter), None, store_id)
     }
 
     pub fn query(

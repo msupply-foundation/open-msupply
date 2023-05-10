@@ -9,6 +9,7 @@ pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
 pub(crate) mod location;
+pub(crate) mod location_movement;
 pub(crate) mod master_list;
 pub(crate) mod master_list_line;
 pub(crate) mod master_list_name_join;
@@ -57,6 +58,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullReco
 pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncPullRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut location::test_pull_upsert_records());
+    test_records.append(&mut location_movement::test_pull_upsert_records());
     test_records.append(&mut requisition_line::test_pull_upsert_records());
     test_records.append(&mut requisition::test_pull_upsert_records());
     test_records.append(&mut stock_line::test_pull_upsert_records());
@@ -102,6 +104,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut name::test_push_records());
     test_records.append(&mut location::test_push_records());
+    test_records.append(&mut location_movement::test_push_records());
     test_records.append(&mut requisition_line::test_push_records());
     test_records.append(&mut requisition::test_push_records());
     test_records.append(&mut stock_line::test_push_records());
