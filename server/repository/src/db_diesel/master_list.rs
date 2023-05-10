@@ -2,6 +2,7 @@ use super::{
     master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
     master_list_row::{master_list, master_list::dsl as master_list_dsl},
     name_row::name::dsl as name_dsl,
+    program_row::program::dsl as program_dsl,
     store_row::store::dsl as store_dsl,
     DBType, MasterListRow, StorageConnection,
 };
@@ -30,6 +31,7 @@ pub struct MasterListFilter {
     pub exists_for_name: Option<SimpleStringFilter>,
     pub exists_for_name_id: Option<EqualFilter<String>>,
     pub exists_for_store_id: Option<EqualFilter<String>>,
+    pub is_program: Option<bool>,
 }
 
 pub enum MasterListSortField {
@@ -87,6 +89,19 @@ impl<'a> MasterListRepository<'a> {
 
                 query = query.filter(master_list_dsl::id.eq_any(name_join_query));
             }
+
+            if let Some(is_program) = f.is_program {
+                let program_join_query = program_dsl::program
+                    .select(program_dsl::master_list_id)
+                    .distinct()
+                    .into_boxed();
+
+                if is_program {
+                    query = query.filter(master_list_dsl::id.eq_any(program_join_query));
+                } else {
+                    query = query.filter(master_list_dsl::id.ne_all(program_join_query));
+                }
+            }
         }
 
         query
@@ -138,6 +153,7 @@ impl MasterListFilter {
             exists_for_name: None,
             exists_for_name_id: None,
             exists_for_store_id: None,
+            is_program: None,
         }
     }
 
@@ -173,6 +189,11 @@ impl MasterListFilter {
 
     pub fn exists_for_store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.exists_for_store_id = Some(filter);
+        self
+    }
+
+    pub fn is_program(mut self, filter: bool) -> Self {
+        self.is_program = Some(filter);
         self
     }
 }
