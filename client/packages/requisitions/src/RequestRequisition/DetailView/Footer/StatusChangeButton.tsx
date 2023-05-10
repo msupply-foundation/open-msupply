@@ -7,6 +7,8 @@ import {
   useConfirmationModal,
   RequisitionNodeStatus,
   ButtonWithIcon,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
 import { useRequest } from '../../api';
@@ -64,9 +66,13 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update } = useRequest.document.fields('status');
+  const { status, update, comment } = useRequest.document.fields([
+    'status',
+    'comment',
+  ]);
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
+  const { user } = useAuthContext();
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -81,7 +87,23 @@ const useStatusChangeButton = () => {
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
     try {
-      await update({ status: selectedOption.value });
+      let updatedComment = comment;
+
+      if (selectedOption.value === RequisitionNodeStatus.Sent) {
+        // TODO: change to `getLocalisedFullName` when the programs feature is merged
+        const name = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
+        const job = !!user?.jobTitle ? ` (${user?.jobTitle})` : '';
+        updatedComment = `${comment ? comment + '\n' : ''}${t(
+          'template.requisition-sent',
+          {
+            name: name || user?.name,
+            job,
+            phone: user?.phoneNumber ?? '-',
+            email: user?.email ?? '-',
+          }
+        )}`;
+      }
+      await update({ status: selectedOption.value, comment: updatedComment });
       success(t('messages.saved'))();
     } catch (e) {
       error(t('messages.could-not-save'))();
@@ -110,6 +132,7 @@ const useStatusChangeButton = () => {
 export const StatusChangeButton = () => {
   const { selectedOption, getConfirmation } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
+  const { userHasPermission } = useAuthContext();
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -118,7 +141,7 @@ export const StatusChangeButton = () => {
     <ButtonWithIcon
       color="secondary"
       variant="contained"
-      disabled={isDisabled}
+      disabled={!userHasPermission(UserPermission.RequisitionSend)}
       label={selectedOption.label}
       Icon={<ArrowRightIcon />}
       onClick={() => getConfirmation()}

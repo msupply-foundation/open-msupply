@@ -103,6 +103,7 @@ export const useLogin = (
     const store = await getStore(userDetails);
     const permissions = await getUserPermissions(token, store);
     setSkipRequest(skipNoStoreRequests);
+
     const authCookie = {
       store,
       token,
@@ -110,6 +111,11 @@ export const useLogin = (
         id: '',
         name: username,
         permissions,
+        firstName: userDetails?.firstName,
+        lastName: userDetails?.lastName,
+        phoneNumber: userDetails?.phoneNumber,
+        jobTitle: userDetails?.jobTitle,
+        email: userDetails?.email,
       },
     };
 

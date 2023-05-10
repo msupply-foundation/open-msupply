@@ -240,7 +240,7 @@ mod repository_test {
                 username: "user 1".to_string(),
                 hashed_password: "p1".to_string(),
                 email: Some("email".to_string()),
-                language: Default::default(),
+                ..UserAccountRow::default()
             }
         }
 
@@ -249,8 +249,7 @@ mod repository_test {
                 id: "user2".to_string(),
                 username: "user 2".to_string(),
                 hashed_password: "p2".to_string(),
-                email: None,
-                language: Default::default(),
+                ..UserAccountRow::default()
             }
         }
 
