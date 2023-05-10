@@ -1,7 +1,6 @@
-use repository::{
-    EqualFilter, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
-    StorageConnection,
-};
+use repository::{RepositoryError, StockLineRow, StorageConnection};
+
+use crate::common_stock::{check_stock_line_exists, CommonStockLineError};
 
 use super::insert::{InsertRepack, InsertRepackError};
 
@@ -10,37 +9,25 @@ pub fn validate(
     store_id: &str,
     input: &InsertRepack,
 ) -> Result<StockLineRow, InsertRepackError> {
-    let stock_line = match check_stock_line_exists(connection, store_id, &input.stock_line_id)? {
-        Some(stock_line) => stock_line,
-        None => return Err(InsertRepackError::StockLineDoesNotExist),
-    };
+    use InsertRepackError::*;
 
-    if store_id != stock_line.stock_line_row.store_id {
-        return Err(InsertRepackError::NotThisStoreStockLine);
-    };
+    let stock_line = check_stock_line_exists(connection, store_id, &input.stock_line_id).map_err(
+        |err| match err {
+            CommonStockLineError::DatabaseError(RepositoryError::NotFound) => StockLineDoesNotExist,
+            CommonStockLineError::DatabaseError(error) => DatabaseError(error),
+            CommonStockLineError::StockLineDoesNotBelongToStore => NotThisStoreStockLine,
+        },
+    )?;
 
     if check_packs_are_fractional(input, &stock_line.stock_line_row) {
-        return Err(InsertRepackError::CannotHaveFractionalRepack);
+        return Err(CannotHaveFractionalRepack);
     }
 
     if check_stock_line_reduced_to_zero(input, &stock_line.stock_line_row) {
-        return Err(InsertRepackError::StockLineReducedBelowZero(stock_line));
+        return Err(StockLineReducedBelowZero(stock_line));
     }
 
     Ok(stock_line.stock_line_row)
-}
-
-fn check_stock_line_exists(
-    connection: &StorageConnection,
-    store_id: &str,
-    id: &str,
-) -> Result<Option<StockLine>, RepositoryError> {
-    Ok(StockLineRepository::new(connection)
-        .query_by_filter(
-            StockLineFilter::new().id(EqualFilter::equal_to(id)),
-            Some(store_id.to_string()),
-        )?
-        .pop())
 }
 
 fn check_stock_line_reduced_to_zero(input: &InsertRepack, stock_line: &StockLineRow) -> bool {

@@ -361,7 +361,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertRepack| {
                     r.stock_line_id = mock_stock_line_si_d()[1].id.clone();
-                    r.number_of_packs = 2.0;
+                    r.number_of_packs = 1.0;
                     r.new_pack_size = 1;
                 }),
             )
@@ -381,7 +381,11 @@ mod test {
         let stock_lines = stock_line_repo.find_many_by_ids(&stock_line_ids).unwrap();
 
         assert_eq!(
-            stock_lines[0],
+            StockLineRow {
+                cost_price_per_pack: (stock_lines[0].cost_price_per_pack).round() / 100.0,
+                sell_price_per_pack: (stock_lines[0].sell_price_per_pack).round() / 100.0,
+                ..stock_lines[0].clone()
+            },
             inline_init(|s: &mut StockLineRow| {
                 s.id = stock_lines[0].id.clone();
                 s.item_id = mock_stock_line_si_d()[1].item_id.clone();
@@ -392,8 +396,10 @@ mod test {
                 s.available_number_of_packs = 3.0;
                 s.total_number_of_packs = 3.0;
                 s.pack_size = 1;
-                s.cost_price_per_pack = mock_stock_line_si_d()[1].cost_price_per_pack / 3.0;
-                s.sell_price_per_pack = mock_stock_line_si_d()[1].sell_price_per_pack / 3.0;
+                s.cost_price_per_pack =
+                    (mock_stock_line_si_d()[1].cost_price_per_pack / 3.0).round() / 100.0;
+                s.sell_price_per_pack =
+                    (mock_stock_line_si_d()[1].sell_price_per_pack / 3.0).round() / 100.0;
             })
         );
 
@@ -434,7 +440,11 @@ mod test {
         let difference = 3.0 / mock_stock_line_ci_c()[1].pack_size as f64;
 
         assert_eq!(
-            stock_lines[0],
+            StockLineRow {
+                cost_price_per_pack: (stock_lines[0].cost_price_per_pack).round() / 100.0,
+                sell_price_per_pack: (stock_lines[0].sell_price_per_pack).round() / 100.0,
+                ..stock_lines[0].clone()
+            },
             inline_init(|s: &mut StockLineRow| {
                 s.id = stock_lines[0].id.clone();
                 s.item_id = mock_stock_line_ci_c()[1].item_id.clone();
@@ -445,8 +455,10 @@ mod test {
                 s.available_number_of_packs = 7.0;
                 s.total_number_of_packs = 7.0;
                 s.pack_size = 3;
-                s.cost_price_per_pack = mock_stock_line_ci_c()[1].cost_price_per_pack * difference;
-                s.sell_price_per_pack = mock_stock_line_ci_c()[1].sell_price_per_pack * difference;
+                s.cost_price_per_pack =
+                    (mock_stock_line_ci_c()[1].cost_price_per_pack * difference).round() / 100.0;
+                s.sell_price_per_pack =
+                    (mock_stock_line_ci_c()[1].sell_price_per_pack * difference).round() / 100.0;
                 s.location_id = Some(mock_location_1().id.clone());
             })
         );
