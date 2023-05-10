@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   Checkbox,
   Grid,
@@ -20,7 +20,6 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { LocationRowFragment } from '../../Location';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   <InputWithLabelRow
@@ -50,7 +49,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const supplierName = draft.supplierName
     ? draft.supplierName
     : t('message.no-supplier');
-  const [location, setLocation] = useState<LocationRowFragment | null>();
+  const location = draft?.location ?? null;
 
   const scanBarcode = async () => {
     try {
@@ -165,11 +164,10 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
             <LocationSearchInput
               autoFocus={false}
               disabled={false}
-              value={location ?? draft.location ?? null}
+              value={location}
               width={160}
               onChange={(location) => {
-                onUpdate({ locationId: location?.id });
-                setLocation(location);
+                onUpdate({ location, locationId: location?.id });
               }}
             />
           }
