@@ -151,6 +151,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // TODO some are structured errors (where can be changed concurrently)
         ServiceError::InvalidStore => BadUserInput(formatted_error),
         ServiceError::StocktakeLineDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
         ServiceError::StocktakeIsLocked => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),

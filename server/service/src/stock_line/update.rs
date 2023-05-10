@@ -8,8 +8,9 @@ use util::uuid::uuid;
 
 use crate::{
     activity_log::activity_log_stock_entry,
+    common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
-    stock_line::validate::{check_location_exists, check_stock_line_exists, check_store},
+    stock_line::validate::check_location_exists,
     SingleRecordError,
 };
 
@@ -74,18 +75,20 @@ fn validate(
 ) -> Result<StockLineRow, UpdateStockLineError> {
     use UpdateStockLineError::*;
 
-    let stock_line = check_stock_line_exists(connection, &input.id)?.ok_or(StockDoesNotExist)?;
+    let stock_line: StockLine =
+        check_stock_line_exists(connection, store_id, &input.id).map_err(|err| match err {
+            CommonStockLineError::DatabaseError(RepositoryError::NotFound) => StockDoesNotExist,
+            CommonStockLineError::StockLineDoesNotBelongToStore => StockDoesNotBelongToStore,
+            CommonStockLineError::DatabaseError(error) => DatabaseError(error),
+        })?;
 
-    if !check_store(&stock_line, store_id) {
-        return Err(StockDoesNotBelongToStore);
-    };
     if let Some(location_id) = input.location_id.clone() {
         if !check_location_exists(connection, &location_id)? {
             return Err(LocationDoesNotExist);
         }
     }
 
-    Ok(stock_line)
+    Ok(stock_line.stock_line_row)
 }
 
 fn generate(
