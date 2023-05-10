@@ -350,7 +350,7 @@ mod test {
             stock_lines[1],
             inline_edit(&mock_stock_line_a(), |mut s| {
                 s.available_number_of_packs = 0.0;
-                s.total_number_of_packs = 0.0;
+                s.total_number_of_packs = 10.0;
                 s
             })
         );
@@ -361,7 +361,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertRepack| {
                     r.stock_line_id = mock_stock_line_si_d()[1].id.clone();
-                    r.number_of_packs = 1.0;
+                    r.number_of_packs = 2.0;
                     r.new_pack_size = 1;
                 }),
             )

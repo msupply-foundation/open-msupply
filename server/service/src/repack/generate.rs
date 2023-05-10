@@ -4,11 +4,11 @@ use repository::{
     ItemRowRepository, LocationMovementRow, NameRowRepository, NumberRowType, RepositoryError,
     StockLineRow,
 };
-use util::{constants::REPACK_NAME_CODE, inline_edit, uuid::uuid};
+use util::{constants::REPACK_NAME_CODE, uuid::uuid};
 
 use crate::{number::next_number, service_provider::ServiceContext};
 
-use super::{common::calculate_stock_line_total, insert::InsertRepack};
+use super::insert::InsertRepack;
 
 pub struct GenerateRepack {
     pub repack_invoice: InvoiceRow,
@@ -33,7 +33,7 @@ pub fn generate(
     } = generate_new_stock_lines(&stock_line, &input);
 
     let (repack_invoice, repack_invoice_lines) =
-        generate_invoice_and_lines(&ctx, &stock_line, &new_stock_line)?;
+        generate_invoice_and_lines(&ctx, input.number_of_packs, &stock_line, &new_stock_line)?;
     let location_movement = if let Some(_) = input.new_location_id {
         Some(generate_location_movement(
             &ctx.store_id,
@@ -56,6 +56,7 @@ pub fn generate(
 
 fn generate_invoice_and_lines(
     ctx: &ServiceContext,
+    number_of_packs: f64,
     stock_line: &StockLineRow,
     new_stock_line: &StockLineRow,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), RepositoryError> {
@@ -103,18 +104,17 @@ fn generate_invoice_and_lines(
         ..Default::default()
     };
 
-    let stock_out = inline_edit(&stock_in, |mut l| {
-        l.id = uuid();
-        l.stock_line_id = Some(stock_line.id.clone());
-        l.location_id = stock_line.location_id.clone();
-        l.pack_size = stock_line.pack_size;
-        l.r#type = InvoiceLineRowType::StockOut;
-        l.number_of_packs = new_stock_line.pack_size as f64 * new_stock_line.total_number_of_packs;
-        l.cost_price_per_pack = stock_line.cost_price_per_pack;
-        l.sell_price_per_pack = stock_line.sell_price_per_pack;
-
-        l
-    });
+    let stock_out = InvoiceLineRow {
+        id: uuid(),
+        stock_line_id: Some(stock_line.id.clone()),
+        location_id: stock_line.location_id.clone(),
+        pack_size: stock_line.pack_size,
+        r#type: InvoiceLineRowType::StockOut,
+        number_of_packs: stock_line.total_number_of_packs - number_of_packs,
+        cost_price_per_pack: stock_line.cost_price_per_pack,
+        sell_price_per_pack: stock_line.sell_price_per_pack,
+        ..stock_in.clone()
+    };
 
     invoice_lines.push(stock_in);
     invoice_lines.push(stock_out);
@@ -123,27 +123,15 @@ fn generate_invoice_and_lines(
 }
 
 fn generate_new_stock_lines(stock_line: &StockLineRow, input: &InsertRepack) -> StockLineJob {
-    let stock_line_total = calculate_stock_line_total(stock_line);
-
-    let stock_line_to_update = if stock_line_total == input.number_of_packs {
-        let mut new_line = stock_line.clone();
-
-        new_line.available_number_of_packs = 0.0;
-        new_line.total_number_of_packs = 0.0;
-
-        new_line
-    } else {
-        let mut new_line = stock_line.clone();
-
-        new_line.available_number_of_packs =
-            new_line.available_number_of_packs - input.number_of_packs;
-        new_line.total_number_of_packs = new_line.total_number_of_packs - input.number_of_packs;
-
-        new_line
+    let stock_line_to_update = StockLineRow {
+        available_number_of_packs: stock_line.available_number_of_packs - input.number_of_packs,
+        total_number_of_packs: stock_line.total_number_of_packs - input.number_of_packs,
+        ..stock_line.clone()
     };
 
     let new_stock_line = {
         let mut new_line = stock_line.clone();
+        let difference = input.new_pack_size as f64 / stock_line.pack_size as f64;
 
         new_line.id = uuid();
         new_line.pack_size = input.new_pack_size;
@@ -151,18 +139,10 @@ fn generate_new_stock_lines(stock_line: &StockLineRow, input: &InsertRepack) -> 
             input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
         new_line.total_number_of_packs =
             input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
+        new_line.sell_price_per_pack = stock_line.sell_price_per_pack * difference;
+        new_line.cost_price_per_pack = stock_line.cost_price_per_pack * difference;
 
-        if stock_line.pack_size > input.new_pack_size {
-            let difference = stock_line.pack_size as f64 / input.new_pack_size as f64;
-            new_line.cost_price_per_pack = stock_line.cost_price_per_pack / difference;
-            new_line.sell_price_per_pack = stock_line.sell_price_per_pack / difference;
-        } else {
-            let difference = input.new_pack_size as f64 / stock_line.pack_size as f64;
-            new_line.cost_price_per_pack = stock_line.cost_price_per_pack * difference;
-            new_line.sell_price_per_pack = stock_line.sell_price_per_pack * difference;
-        }
-
-        if input.new_location_id.is_some() {
+        if new_line.location_id != input.new_location_id {
             new_line.location_id = input.new_location_id.clone();
         }
 
@@ -186,7 +166,7 @@ pub fn generate_location_movement(
         id: uuid(),
         store_id: store_id.to_string(),
         stock_line_id: stock_line.id.clone(),
-        location_id: stock_line.location_id.clone(),
+        location_id: None,
         enter_datetime: None,
         exit_datetime: Some(Utc::now().naive_utc()),
     });

@@ -3,7 +3,6 @@ use crate::service_provider::ServiceContext;
 use self::insert::{insert_repack, InsertRepack, InsertRepackError};
 use repository::Invoice;
 
-pub mod common;
 pub mod generate;
 pub mod insert;
 pub mod validate;

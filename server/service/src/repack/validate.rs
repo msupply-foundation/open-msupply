@@ -3,10 +3,7 @@ use repository::{
     StorageConnection,
 };
 
-use super::{
-    common::calculate_stock_line_total,
-    insert::{InsertRepack, InsertRepackError},
-};
+use super::insert::{InsertRepack, InsertRepackError};
 
 pub fn validate(
     connection: &StorageConnection,
@@ -22,7 +19,7 @@ pub fn validate(
         return Err(InsertRepackError::NotThisStoreStockLine);
     };
 
-    if check_packs_are_fractional(input) {
+    if check_packs_are_fractional(input, &stock_line.stock_line_row) {
         return Err(InsertRepackError::CannotHaveFractionalRepack);
     }
 
@@ -47,16 +44,15 @@ fn check_stock_line_exists(
 }
 
 fn check_stock_line_reduced_to_zero(input: &InsertRepack, stock_line: &StockLineRow) -> bool {
-    let stock_line_total = calculate_stock_line_total(stock_line);
-
-    if stock_line_total < input.number_of_packs {
+    if stock_line.available_number_of_packs < input.number_of_packs {
         return true;
     }
     false
 }
 
-fn check_packs_are_fractional(input: &InsertRepack) -> bool {
-    let split_pack = input.number_of_packs / input.new_pack_size as f64;
+fn check_packs_are_fractional(input: &InsertRepack, stock_line: &StockLineRow) -> bool {
+    let split_pack =
+        input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
 
     if split_pack.fract() != 0.0 {
         return true;
