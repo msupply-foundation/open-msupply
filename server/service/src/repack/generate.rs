@@ -4,7 +4,7 @@ use repository::{
     ItemRowRepository, LocationMovementRow, NameRowRepository, NumberRowType, RepositoryError,
     StockLineRow,
 };
-use util::{inline_edit, uuid::uuid};
+use util::{constants::REPACK_NAME_CODE, inline_edit, uuid::uuid};
 
 use crate::{number::next_number, service_provider::ServiceContext};
 
@@ -62,7 +62,7 @@ fn generate_invoice_and_lines(
     let connection = &ctx.connection;
 
     let repack_name = NameRowRepository::new(connection)
-        .find_one_by_code("repack")?
+        .find_one_by_code(REPACK_NAME_CODE)?
         .ok_or(RepositoryError::NotFound)?;
 
     let invoice = InvoiceRow {
