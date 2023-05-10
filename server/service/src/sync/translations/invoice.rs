@@ -478,8 +478,9 @@ fn to_legacy_confirm_time(
     let datetime = match r#type {
         InvoiceRowType::OutboundShipment => picked_datetime,
         InvoiceRowType::InboundShipment => delivered_datetime,
-        InvoiceRowType::InventoryAddition | InvoiceRowType::InventoryReduction => verified_datetime,
-        InvoiceRowType::Repack => verified_datetime,
+        InvoiceRowType::InventoryAddition
+        | InvoiceRowType::InventoryReduction
+        | InvoiceRowType::Repack => verified_datetime,
     };
 
     let date = datetime.map(|datetime| datetime.date());
@@ -510,15 +511,9 @@ fn invoice_status(
             LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
             _ => return None,
         },
-        InvoiceRowType::InventoryAddition | InvoiceRowType::InventoryReduction => match data.status
-        {
-            LegacyTransactStatus::Nw => InvoiceRowStatus::New,
-            LegacyTransactStatus::Sg => InvoiceRowStatus::New,
-            LegacyTransactStatus::Cn => InvoiceRowStatus::Verified,
-            LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
-            _ => return None,
-        },
-        InvoiceRowType::Repack => match data.status {
+        InvoiceRowType::InventoryAddition
+        | InvoiceRowType::InventoryReduction
+        | InvoiceRowType::Repack => match data.status {
             LegacyTransactStatus::Nw => InvoiceRowStatus::New,
             LegacyTransactStatus::Sg => InvoiceRowStatus::New,
             LegacyTransactStatus::Cn => InvoiceRowStatus::Verified,
@@ -562,15 +557,9 @@ fn legacy_invoice_status(
             InvoiceRowStatus::Delivered => LegacyTransactStatus::Cn,
             InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
         },
-        InvoiceRowType::InventoryAddition | InvoiceRowType::InventoryReduction => match status {
-            InvoiceRowStatus::New => LegacyTransactStatus::Nw,
-            InvoiceRowStatus::Allocated => LegacyTransactStatus::Nw,
-            InvoiceRowStatus::Picked => LegacyTransactStatus::Nw,
-            InvoiceRowStatus::Shipped => LegacyTransactStatus::Nw,
-            InvoiceRowStatus::Delivered => LegacyTransactStatus::Nw,
-            InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
-        },
-        InvoiceRowType::Repack => match status {
+        InvoiceRowType::InventoryAddition
+        | InvoiceRowType::InventoryReduction
+        | InvoiceRowType::Repack => match status {
             InvoiceRowStatus::New => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Allocated => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Picked => LegacyTransactStatus::Nw,
