@@ -24,6 +24,7 @@ export const AddFromMasterListButtonComponent = () => {
           modalController.toggleOff();
           addFromMasterList(masterList);
         }}
+        filterBy={{ isProgram: false }}
       />
       <ButtonWithIcon
         disabled={isDisabled || isProgram}
