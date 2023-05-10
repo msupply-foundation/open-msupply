@@ -110,7 +110,7 @@ export const RequestLineEditForm = ({
           />
 
           {item && item?.unitName ? (
-            <InfoRow label="Unit" value={item.unitName} />
+            <InfoRow label={t('label.unit')} value={item.unitName} />
           ) : null}
           {!!draftLine?.itemStats.averageMonthlyConsumption ? (
             <InfoRow
@@ -128,6 +128,12 @@ export const RequestLineEditForm = ({
                 draftLine?.itemStats.availableStockOnHand,
                 2
               )}
+            />
+          ) : null}
+          {item && item?.defaultPackSize ? (
+            <InfoRow
+              label={t('label.default-pack-size')}
+              value={String(item.defaultPackSize)}
             />
           ) : null}
         </>

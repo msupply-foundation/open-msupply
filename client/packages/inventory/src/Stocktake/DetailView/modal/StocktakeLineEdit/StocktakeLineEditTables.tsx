@@ -194,7 +194,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     [
       expiryDateColumn,
       {
-        width: 120,
+        width: 140,
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
