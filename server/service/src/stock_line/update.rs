@@ -128,7 +128,7 @@ fn generate(
     };
 
     let barcode_row = match barcode {
-        Some(barcode) => generate_barcode_row(connection, existing.clone(), barcode.clone()),
+        Some(barcode) => generate_barcode_row(connection, existing.clone(), barcode.clone())?,
         None => None,
     };
 
@@ -197,39 +197,36 @@ fn generate_barcode_row(
     connection: &StorageConnection,
     existing: StockLineRow,
     value: String,
-) -> Option<BarcodeRow> {
+) -> Result<Option<BarcodeRow>, RepositoryError> {
     // for an empty string, simply unlink the barcode
     if value.is_empty() {
-        return None;
+        return Ok(None);
     }
 
     let filter = BarcodeFilter::new()
         .item_id(EqualFilter::equal_to(&existing.item_id))
         .pack_size(EqualFilter::equal_to_i32(existing.pack_size));
 
-    let existing_rows = BarcodeRepository::new(connection).query_by_filter(filter);
-
-    if existing_rows.is_err() {
-        return None;
-    }
-
-    if let Some(barcode_rows) = existing_rows.ok() {
-        if let Some(row) = barcode_rows.first() {
-            // barcode already exists - persist the value change if there is one
-            return Some(BarcodeRow {
+    let barcode_rows = BarcodeRepository::new(connection).query_by_filter(filter)?;
+    let barcode_row = match barcode_rows.first() {
+        // barcode already exists - persist the value change if there is one
+        Some(row) => BarcodeRow {
+            value,
+            ..row.barcode_row.clone()
+        },
+        None => {
+            // barcode does not exist - create a new one
+            BarcodeRow {
+                id: uuid(),
                 value,
-                ..row.barcode_row.clone()
-            });
+                item_id: existing.item_id,
+                pack_size: Some(existing.pack_size),
+                ..Default::default()
+            }
         }
-    }
-    // create a new barcode row
-    Some(BarcodeRow {
-        id: uuid(),
-        value,
-        item_id: existing.item_id,
-        pack_size: Some(existing.pack_size),
-        ..Default::default()
-    })
+    };
+
+    Ok(Some(barcode_row))
 }
 
 fn log_stock_changes(
