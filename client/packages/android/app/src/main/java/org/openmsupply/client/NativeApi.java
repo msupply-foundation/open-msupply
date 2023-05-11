@@ -38,7 +38,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
-    omSupplyServer connectedServer;
+    FrontEndHost connectedServer;
     NsdManager discoveryManager;
     boolean isDebug;
     boolean isAdvertising;
@@ -73,7 +73,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         return isDebug;
     }
 
-    public omSupplyServer getConnectedServer() {
+    public FrontEndHost getConnectedServer() {
         return connectedServer;
     }
 
@@ -245,7 +245,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     @PluginMethod()
     public void connectToServer(PluginCall call) {
-        omSupplyServer server = new omSupplyServer(call.getData());
+        FrontEndHost server = new FrontEndHost(call.getData());
 
         stopServerDiscovery();
         connectedServer = server;
@@ -410,10 +410,11 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         call.resolve(response);
     }
 
-    public class omSupplyServer {
+    /** Helper class to get access to the JS FrontEndHost data */
+    public class FrontEndHost {
         JSObject data;
         
-        public omSupplyServer(JSObject data) {
+        public FrontEndHost(JSObject data) {
             this.data = data;
         }
 
