@@ -257,7 +257,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         WebView webView = bridge.getWebView();
         this.serverUrl = url;
         // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(url));
+        webView.post(() -> webView.loadUrl(server.getConnectionUrl()));
     }
 
     // NsdManager.DiscoveryListener
@@ -419,11 +419,23 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
 
         /**
-         * @return the servers url string including protocol, ip and port,
+         * Constructs the server's base url string including protocol, ip and port,
          * e.g. https://127.0.0.1:8000
          */
         public String getUrl() {
             return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port");
+        }
+
+        /**
+         * Constructs the url to be used when connecting to a server,
+         * e.g. https://127.0.0.1:8000/login
+         */
+        public String getConnectionUrl() {
+            String path = "";
+            if (data.getString("path") != null) {
+                path = "/" + data.getString("path");
+            }
+            return getUrl()  + path;
         }
 
         public boolean isLocal() {
