@@ -3882,7 +3882,10 @@ end</Script>
 <Event>
 <Name>On Post Uninstall</Name>
 <Args/>
-<Script/>
+<Script>local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";
+if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
+	Registry.DeleteValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN");
+end</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -4275,6 +4278,21 @@ else
 end
 
 File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
+
+-- Add a firewall rule to allow incoming requests
+local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";
+if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
+
+	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN", "v2.28|Action=Allow|Active=TRUE|Dir=In|Protocol=6|LPort=" .. SessionVar.Get("%omsupply_port%") .. "|Name=omSupply Server|", REG_SZ);
+	
+	-- The firewall service requires restarting to detect the new rule
+	local firewallServiceName = "Windows Firewall";
+	queryResult = Service.Query(firewallServiceName, "");
+	if (queryResult == SERVICE_RUNNING) then
+		Service.Stop(firewallServiceName, "", 5);
+		Service.Start(firewallServiceName, "", nil);
+	end
+end
 
 Service.Start("Open mSupply Server", "omsupply-server", nil);
 </Script>
