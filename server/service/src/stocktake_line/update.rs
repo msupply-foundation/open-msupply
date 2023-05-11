@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    EqualFilter, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StocktakeLine,
-    StocktakeLineRow, StocktakeLineRowRepository, StorageConnection,
+    RepositoryError, StockLine, StocktakeLine, StocktakeLineRow, StocktakeLineRowRepository,
+    StorageConnection,
 };
 
 use crate::{
