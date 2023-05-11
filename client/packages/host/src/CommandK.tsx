@@ -173,21 +173,9 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
         ),
     },
     {
-      id: 'navigation:suppliers',
-      name: `${t('cmdk.goto-suppliers')} (g+s)`,
-      keywords: 'suppliers',
-      shortcut: ['g', 's'],
-      perform: () =>
-        navigate(
-          RouteBuilder.create(AppRoute.Replenishment)
-            .addPart(AppRoute.Suppliers)
-            .build()
-        ),
-    },
-    {
       id: 'navigation:stock',
-      name: `${t('cmdk.goto-stock')} (s)`,
-      shortcut: ['s'],
+      name: `${t('cmdk.goto-stock')} (g+s)`,
+      shortcut: ['g', 's'],
       keywords: 'stock',
       perform: () =>
         navigate(

@@ -13,6 +13,22 @@ export interface ButtonWithIconProps extends ButtonProps {
   disabled?: boolean;
   shrinkThreshold?: 'sm' | 'md' | 'lg' | 'xl';
 }
+const formatLabel = (label: string) => {
+  if (label.indexOf('&') === -1) {
+    return label;
+  }
+  const match = /(.*)\&(.)(.*)/.exec(label);
+  if (!match || match.length !== 4) {
+    return label;
+  }
+  return (
+    <>
+      {match[1]}
+      <u>{match[2]}</u>
+      {match[3]}
+    </>
+  );
+};
 
 export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
   label,
@@ -28,11 +44,11 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
   const isShrinkThreshold = useIsScreen(shrinkThreshold);
 
   // On small screens, if the button shouldShrink, then
-  // only display a centered icon, with no text.
+  // only display a centred icon, with no text.
   const shrink = isShrinkThreshold && shouldShrink;
   const startIcon = shrink ? null : Icon;
-  const centeredIcon = shrink ? Icon : null;
-  const text = shrink ? null : label;
+  const centredIcon = shrink ? Icon : null;
+  const text = shrink ? null : formatLabel(label);
 
   return (
     <Tooltip disableHoverListener={!shrink} title={label}>
@@ -48,7 +64,7 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
           aria-label={label}
           {...buttonProps}
         >
-          {centeredIcon}
+          {centredIcon}
           {text}
         </ShrinkableBaseButton>
       </span>
