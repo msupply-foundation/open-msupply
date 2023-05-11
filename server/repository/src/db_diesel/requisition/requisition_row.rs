@@ -150,7 +150,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    fn upsert_one_etc(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(requisition_dsl::requisition)
             .values(row)
             .on_conflict(requisition_dsl::id)
@@ -161,7 +161,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    fn upsert_one_etc(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(requisition_dsl::requisition)
             .values(row)
             .execute(&self.connection.connection)?;
@@ -177,7 +177,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
-        self.upsert_one_etc(row)?;
+        self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
@@ -213,7 +213,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     pub fn sync_upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
-        self.upsert_one_etc(row)?;
+        self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
         Ok(())
