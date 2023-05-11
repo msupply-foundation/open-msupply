@@ -33,7 +33,8 @@ import javax.net.ssl.SSLHandshakeException;
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static final String LOG_FILE_NAME = "remote_server.log";
     public static final String OM_SUPPLY = "omSupply";
-    private static final String DEFAULT_URL = "https://localhost:8000/";
+    public static final Integer DEFAULT_PORT = DiscoveryConstants.PORT;
+    private static final String DEFAULT_URL = "https://localhost:" + DEFAULT_PORT + "/";
     private static final String CONFIGURATION_GROUP = "omSupply_preferences";
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
