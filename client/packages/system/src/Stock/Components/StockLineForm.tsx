@@ -17,6 +17,7 @@ import {
   useBarcodeScannerContext,
   CircularProgress,
   useNotification,
+  useKeyboardShortcut,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -69,6 +70,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
       error(t('error.unable-to-scan', { error: e }))();
     }
   };
+
+  useKeyboardShortcut({ key: 'b', handler: scanBarcode });
 
   return (
     <Grid
@@ -166,7 +169,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
               disabled={false}
               value={location}
               width={160}
-              onChange={(location) => {
+              onChange={location => {
                 onUpdate({ location, locationId: location?.id });
               }}
             />
