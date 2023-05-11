@@ -7,7 +7,6 @@ import {
   ScanResult,
   ButtonWithIcon,
   useNotification,
-  useKeyboardShortcut,
 } from '@openmsupply-client/common';
 import { Draft, useOutbound } from '../api';
 import { isOutboundDisabled } from '../../utils';
@@ -60,8 +59,6 @@ export const AddFromScannerButtonComponent = ({
       }
     }
   };
-
-  useKeyboardShortcut({ key: 'b', handler: handleClick });
 
   //   stop scanning when the component unloads
   useEffect(() => {
