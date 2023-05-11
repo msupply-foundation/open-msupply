@@ -71,7 +71,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
     }
   };
 
-  useKeyboardShortcut({ key: 's', handler: scanBarcode });
+  useKeyboardShortcut({ key: 'b', handler: scanBarcode });
 
   return (
     <Grid
