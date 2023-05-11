@@ -31,10 +31,7 @@ pub fn validate(
 }
 
 fn check_stock_line_reduced_to_zero(input: &InsertRepack, stock_line: &StockLineRow) -> bool {
-    if stock_line.available_number_of_packs < input.number_of_packs {
-        return true;
-    }
-    false
+    stock_line.available_number_of_packs < input.number_of_packs
 }
 
 fn check_packs_are_fractional(input: &InsertRepack, stock_line: &StockLineRow) -> bool {

@@ -56,8 +56,8 @@ pub fn generate(
 
 fn generate_invoice_and_lines(
     ctx: &ServiceContext,
-    number_of_packs: f64,
-    stock_line: &StockLineRow,
+    number_of_packs_input: f64,
+    stock_line_to_update: &StockLineRow,
     new_stock_line: &StockLineRow,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), RepositoryError> {
     let connection = &ctx.connection;
@@ -83,19 +83,19 @@ fn generate_invoice_and_lines(
     let mut invoice_lines = Vec::new();
 
     let item = ItemRowRepository::new(connection)
-        .find_one_by_id(&stock_line.item_id)?
+        .find_one_by_id(&stock_line_to_update.item_id)?
         .ok_or(RepositoryError::NotFound)?;
 
     let stock_in = InvoiceLineRow {
         id: uuid(),
         invoice_id: invoice.id.clone(),
-        item_id: stock_line.item_id.clone(),
+        item_id: stock_line_to_update.item_id.clone(),
         item_name: item.name.clone(),
         item_code: item.code.clone(),
         stock_line_id: Some(new_stock_line.id.clone()),
         location_id: new_stock_line.location_id.clone(),
-        batch: stock_line.batch.clone(),
-        expiry_date: stock_line.expiry_date,
+        batch: stock_line_to_update.batch.clone(),
+        expiry_date: stock_line_to_update.expiry_date,
         pack_size: new_stock_line.pack_size,
         r#type: InvoiceLineRowType::StockIn,
         number_of_packs: new_stock_line.total_number_of_packs,
@@ -106,13 +106,13 @@ fn generate_invoice_and_lines(
 
     let stock_out = InvoiceLineRow {
         id: uuid(),
-        stock_line_id: Some(stock_line.id.clone()),
-        location_id: stock_line.location_id.clone(),
-        pack_size: stock_line.pack_size,
+        stock_line_id: Some(stock_line_to_update.id.clone()),
+        location_id: stock_line_to_update.location_id.clone(),
+        pack_size: stock_line_to_update.pack_size,
         r#type: InvoiceLineRowType::StockOut,
-        number_of_packs: stock_line.total_number_of_packs - number_of_packs,
-        cost_price_per_pack: stock_line.cost_price_per_pack,
-        sell_price_per_pack: stock_line.sell_price_per_pack,
+        number_of_packs: number_of_packs_input,
+        cost_price_per_pack: stock_line_to_update.cost_price_per_pack,
+        sell_price_per_pack: stock_line_to_update.sell_price_per_pack,
         ..stock_in.clone()
     };
 
@@ -141,10 +141,7 @@ fn generate_new_stock_lines(stock_line: &StockLineRow, input: &InsertRepack) -> 
             input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
         new_line.sell_price_per_pack = stock_line.sell_price_per_pack * difference;
         new_line.cost_price_per_pack = stock_line.cost_price_per_pack * difference;
-
-        if new_line.location_id != input.new_location_id {
-            new_line.location_id = input.new_location_id.clone();
-        }
+        new_line.location_id = input.new_location_id.clone();
 
         new_line
     };
