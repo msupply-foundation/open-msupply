@@ -15,6 +15,7 @@ Colocation of all helpers for working with translations & all localisation files
 - The `common` translation file is often used in many places. Sticking to the translation file mapping to the UI where you string will be used ensures we're only ever needing to load strings which will be seen by the user.
 - Translation files for other languages don't need to be fully populated, only add the translated entries need to be present; all others will fallback to `en`
 - We are using weblate to allow collaborative translation, if you are adding entries it is probably easier to use that
+- In locale strings, you can prefix a character with `&` to underline it in a button label. This indicates that the character is a keyboard shortcut, as per the windows convention. For example the scan/stop button has the label `button.scan` = `&Scan` and `button.top` = `&Stop` This shows the `S` underlined.
 
 ### Future considerations
 - It might be required to ensure localisation files are loaded before rendering. See: https://github.com/i18next/react-i18next/pull/523/files#diff-6cc2a4b04b8f73c37303657262b2e2827c7feabcdda33b3ba5885d06cad99cdcR57

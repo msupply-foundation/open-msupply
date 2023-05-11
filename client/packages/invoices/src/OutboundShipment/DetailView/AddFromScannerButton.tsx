@@ -61,7 +61,11 @@ export const AddFromScannerButtonComponent = ({
     }
   };
 
-  useKeyboardShortcut({ key: 'b', handler: handleClick });
+  useKeyboardShortcut({
+    key: 's',
+    handler: handleClick,
+    dependencies: [isScanning],
+  });
 
   //   stop scanning when the component unloads
   useEffect(() => {
