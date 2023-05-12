@@ -173,11 +173,7 @@ export const RequestLineEditForm = ({
               />
             }
             labelWidth="750px"
-            label={t(
-              isPacksEnabled
-                ? 'label.suggested-units'
-                : 'label.suggested-quantity'
-            )}
+            label={t('label.suggested-quantity')}
           />
           <InputWithLabelRow
             Input={
@@ -190,11 +186,7 @@ export const RequestLineEditForm = ({
               />
             }
             labelWidth="750px"
-            label={t(
-              isPacksEnabled
-                ? 'label.order-quantity-units'
-                : 'label.order-quantity'
-            )}
+            label={t('label.order-quantity')}
           />
           {isPacksEnabled && (
             <InputWithLabelRow
