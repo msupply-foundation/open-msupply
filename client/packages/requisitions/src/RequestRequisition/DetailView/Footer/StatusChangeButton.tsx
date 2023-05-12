@@ -7,6 +7,9 @@ import {
   useConfirmationModal,
   RequisitionNodeStatus,
   ButtonWithIcon,
+  useAuthContext,
+  UserPermission,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
 import { useRequest } from '../../api';
@@ -64,9 +67,13 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update } = useRequest.document.fields('status');
+  const { status, update, comment } = useRequest.document.fields([
+    'status',
+    'comment',
+  ]);
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
+  const { user } = useAuthContext();
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -78,10 +85,30 @@ const useStatusChangeButton = () => {
       getNextStatusOption(status, options)
     );
 
+  const getUpdatedComment = () => {
+    if (selectedOption?.value !== RequisitionNodeStatus.Sent) {
+      return comment;
+    }
+
+    // TODO: change to `getLocalisedFullName` when the programs feature is merged
+    const name = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
+    const job = !!user?.jobTitle ? ` (${user?.jobTitle})` : '';
+
+    return `${comment ? comment + '\n' : ''}${t('template.requisition-sent', {
+      name: name || user?.name,
+      job,
+      phone: user?.phoneNumber ?? '-',
+      email: user?.email ?? '-',
+    })}`;
+  };
+
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
     try {
-      await update({ status: selectedOption.value });
+      await update({
+        status: selectedOption.value,
+        comment: getUpdatedComment(),
+      });
       success(t('messages.saved'))();
     } catch (e) {
       error(t('messages.could-not-save'))();
@@ -110,18 +137,31 @@ const useStatusChangeButton = () => {
 export const StatusChangeButton = () => {
   const { selectedOption, getConfirmation } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
+  const { userHasPermission } = useAuthContext();
+  const t = useTranslation('app');
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
+  const hasPermission =
+    selectedOption.value === RequisitionNodeStatus.Sent
+      ? userHasPermission(UserPermission.RequisitionSend)
+      : true;
+
   return (
-    <ButtonWithIcon
-      color="secondary"
-      variant="contained"
-      disabled={isDisabled}
-      label={selectedOption.label}
-      Icon={<ArrowRightIcon />}
-      onClick={() => getConfirmation()}
-    />
+    <>
+      <Tooltip title={hasPermission ? '' : t('auth.permission-denied')}>
+        <div>
+          <ButtonWithIcon
+            color="secondary"
+            variant="contained"
+            disabled={!hasPermission}
+            label={selectedOption.label}
+            Icon={<ArrowRightIcon />}
+            onClick={() => getConfirmation()}
+          />
+        </div>
+      </Tooltip>
+    </>
   );
 };

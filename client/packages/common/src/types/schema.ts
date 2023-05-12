@@ -3742,8 +3742,12 @@ export type UserNode = {
   defaultStore?: Maybe<UserStoreNode>;
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
+  firstName?: Maybe<Scalars['String']>;
+  jobTitle?: Maybe<Scalars['String']>;
   language: LanguageType;
+  lastName?: Maybe<Scalars['String']>;
   permissions: UserStorePermissionConnector;
+  phoneNumber?: Maybe<Scalars['String']>;
   stores: UserStoreConnector;
   /** Internal user id */
   userId: Scalars['String'];
@@ -3766,6 +3770,7 @@ export enum UserPermission {
   Report = 'REPORT',
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
+  RequisitionSend = 'REQUISITION_SEND',
   ServerAdmin = 'SERVER_ADMIN',
   StocktakeMutate = 'STOCKTAKE_MUTATE',
   StocktakeQuery = 'STOCKTAKE_QUERY',
