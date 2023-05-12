@@ -50,16 +50,17 @@ pub fn update_stock_line(
             let existing = validate(connection, &ctx.store_id, &input)?;
             let (new_stock_line, location_movements, barcode_row) =
                 generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
+
+            if let Some(barcode_row) = barcode_row {
+                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
+            }
+
             StockLineRowRepository::new(&connection).upsert_one(&new_stock_line)?;
 
             if let Some(location_movements) = location_movements {
                 for movement in location_movements {
                     LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                 }
-            }
-
-            if let Some(barcode_row) = barcode_row {
-                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
             }
 
             log_stock_changes(ctx, existing, new_stock_line.clone())?;
