@@ -135,7 +135,6 @@ fn generate(
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
-        is_sync_update: false,
         program_id: None,
         period_id: None,
         order_type: None,

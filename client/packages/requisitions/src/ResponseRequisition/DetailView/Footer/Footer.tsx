@@ -29,7 +29,7 @@ export const Footer: FC = () => {
   return (
     <AppFooterPortal
       Content={
-        data ? (
+        data && (
           <Box
             gap={2}
             display="flex"
@@ -47,7 +47,7 @@ export const Footer: FC = () => {
               <StatusChangeButton />
             </Box>
           </Box>
-        ) : null
+        )
       }
     />
   );

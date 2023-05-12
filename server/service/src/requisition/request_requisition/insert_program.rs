@@ -165,7 +165,6 @@ fn generate(
         approval_status: None,
         finalised_datetime: None,
         linked_requisition_id: None,
-        is_sync_update: false,
     };
 
     let program_item_ids: Vec<String> = MasterListLineRepository::new(connection)
