@@ -48,7 +48,7 @@ export const useRequestColumns = () => {
     },
     {
       key: 'defaultPackSize',
-      label: 'label.default-pack-size',
+      label: 'label.dps',
       description: 'description.default-pack-size',
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => rowData.item.defaultPackSize,
