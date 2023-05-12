@@ -41,13 +41,17 @@ const TotalCell = styled(TableCell)({
 const PlaceholderRow = ({
   line,
   onChange,
+  allocatedQuantity,
 }: {
   line?: DraftOutboundLine;
   onChange: (key: string, value: number, packSize: number) => void;
+  allocatedQuantity: number;
 }) => {
   const t = useTranslation('distribution');
   const { status } = useOutbound.document.fields('status');
-  const debouncedOnChange = useDebounceCallback(onChange, []);
+  // adding allocatedQuantity to the deps to prevent a captured enclosure - the onChange function
+  // is capturing the draftLines and using them to allocate when the placeholder changes
+  const debouncedOnChange = useDebounceCallback(onChange, [allocatedQuantity]);
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
@@ -150,6 +154,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
       line={placeholderRow}
       onChange={onChange}
       key="placeholder-row"
+      allocatedQuantity={allocatedQuantity}
     />,
     <tr key="divider-row">
       <td colSpan={10}>
