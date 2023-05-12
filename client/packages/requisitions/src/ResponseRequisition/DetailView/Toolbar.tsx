@@ -3,7 +3,6 @@ import {
   AppBarContentPortal,
   Box,
   InputWithLabelRow,
-  BasicTextInput,
   Grid,
   DropdownMenu,
   DropdownMenuItem,
@@ -12,11 +11,13 @@ import {
   SearchBar,
   InfoPanel,
   Typography,
-  LocaleKey,
+  BufferedTextInput,
+  
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
 import { useResponse } from '../api';
+import { getApprovalStatusKey } from '../../utils';
 
 export const Toolbar: FC = () => {
   const t = useTranslation(['distribution', 'common']);
@@ -76,7 +77,7 @@ export const Toolbar: FC = () => {
               <InputWithLabelRow
                 label={t('label.customer-ref')}
                 Input={
-                  <BasicTextInput
+                  <BufferedTextInput
                     disabled={isDisabled}
                     size="small"
                     sx={{ width: 250 }}
@@ -90,11 +91,7 @@ export const Toolbar: FC = () => {
                   label={t('label.auth-status')}
                   Input={
                     <Typography>
-                      {t(
-                        `approval-status.${String(
-                          approvalStatus
-                        ).toLowerCase()}` as LocaleKey
-                      )}
+                      {t(getApprovalStatusKey(approvalStatus))}
                     </Typography>
                   }
                 />

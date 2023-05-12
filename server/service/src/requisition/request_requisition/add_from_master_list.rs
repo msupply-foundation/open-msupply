@@ -126,7 +126,8 @@ pub fn check_master_list_for_store(
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
             .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_store_id(EqualFilter::equal_to(store_id)),
+            .exists_for_store_id(EqualFilter::equal_to(store_id))
+            .is_program(false),
     )?;
     Ok(rows.pop())
 }

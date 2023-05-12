@@ -1,4 +1,4 @@
-import create from 'zustand';
+import { create } from 'zustand';
 import LocalStorage from '../../localStorage/LocalStorage';
 
 type DrawerController = {

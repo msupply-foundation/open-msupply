@@ -18,7 +18,7 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { RequestRowFragment, useRequest } from '../api';
 import {
-  getApprovalStatusText,
+  getApprovalStatusKey,
   getRequisitionTranslator,
   isRequestDisabled,
 } from '../../utils';
@@ -99,7 +99,7 @@ export const RequestRequisitionListView: FC = () => {
       minWidth: 150,
       sortable: false,
       accessor: ({ rowData }) =>
-        t(getApprovalStatusText(rowData.linkedRequisition?.approvalStatus)),
+        t(getApprovalStatusKey(rowData.linkedRequisition?.approvalStatus)),
     });
   }
 
