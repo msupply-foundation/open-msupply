@@ -99,7 +99,7 @@ const useStatusChangeButton = () => {
   });
 
   // When the status changes (after an update), set the selected option to the next status.
-  // It would be set to the current status, which is now a disabled option.
+  // Otherwise, it would be set to the current status, which is now a disabled option.
   useEffect(() => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
