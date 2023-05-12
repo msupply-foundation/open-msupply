@@ -193,6 +193,7 @@ pub enum Permissions {
     HISAddEncounterDiseases,
     HISEditEncounterDiseases,
     HISAddProcedure,
+    ConfirmInternalOrderSent,
 }
 
 pub fn permission_mapping() -> HashMap<i16, Permissions> {
@@ -376,6 +377,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (177, Permissions::EditStoreCredentials),
         (178, Permissions::ChangeAssetStatus),
         (179, Permissions::AddEditVaccinators),
+        (200, Permissions::ConfirmInternalOrderSent),
         (501, Permissions::HISAddPatients),
         (502, Permissions::HISEditPatientsInfo),
         (503, Permissions::HISCreateEncounters),
