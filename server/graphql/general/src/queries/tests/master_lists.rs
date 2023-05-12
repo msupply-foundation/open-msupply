@@ -213,6 +213,7 @@ mod graphql {
                         .exists_for_name(SimpleStringFilter::like("exists_for_name_filter"))
                         .exists_for_name_id(EqualFilter::not_equal_to("test_name_id_filter"))
                         .exists_for_store_id(EqualFilter::equal_to("store_a"))
+                        .is_program(false)
                 )
             );
             Ok(ListResult::empty())
@@ -226,7 +227,8 @@ mod graphql {
             "description": {"equalTo": "description_filter_1", "like": "description_filter_2" },
             "existsForName": {"like": "exists_for_name_filter" },
             "existsForStoreId": {"equalTo": "store_a"},
-            "existsForNameId": {"notEqualTo": "test_name_id_filter"}
+            "existsForNameId": {"notEqualTo": "test_name_id_filter"},
+            "isProgram": false
           }
         });
 
