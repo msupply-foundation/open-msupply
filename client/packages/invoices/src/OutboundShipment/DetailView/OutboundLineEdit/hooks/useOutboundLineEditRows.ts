@@ -11,6 +11,10 @@ export const useOutboundLineEditRows = (
 ) => {
   const tableStore = useTableStore();
 
+  const isOnHold = (row: DraftOutboundLine) => !!row.stockLine?.onHold;
+  const hasNoStock = (row: DraftOutboundLine) =>
+    row.stockLine?.availableNumberOfPacks === 0;
+
   const {
     allocatableRows,
     wrongPackSizeRows,
@@ -20,16 +24,23 @@ export const useOutboundLineEditRows = (
     scannedBatchMismatchRows,
   } = useMemo(() => {
     const placeholderRow = rows.find(isA.placeholderLine);
+    const isRequestedPackSize = (packSize: number) =>
+      packSizeController.selected?.value === -1 ||
+      packSize === packSizeController.selected?.value;
+
     const rowsIncludeScannedBatch =
-      !!scannedBatch && rows.some(row => row.stockLine?.batch === scannedBatch);
+      !!scannedBatch &&
+      rows.some(
+        row =>
+          row.stockLine?.batch === scannedBatch &&
+          !isOnHold(row) &&
+          !hasNoStock(row) &&
+          isRequestedPackSize(row.packSize)
+      );
 
     const rowsWithoutPlaceholder = rows
       .filter(line => !isA.placeholderLine(line))
       .sort(SortUtils.byExpiryAsc);
-
-    const isRequestedPackSize = (packSize: number) =>
-      packSizeController.selected?.value === -1 ||
-      packSize === packSizeController.selected?.value;
 
     const allocatableRows: DraftOutboundLine[] = [];
     const onHoldRows: DraftOutboundLine[] = [];
@@ -38,12 +49,12 @@ export const useOutboundLineEditRows = (
     const scannedBatchMismatchRows: DraftOutboundLine[] = [];
 
     rowsWithoutPlaceholder.forEach(row => {
-      if (!!row.stockLine?.onHold) {
+      if (isOnHold(row)) {
         onHoldRows.push(row);
         return;
       }
 
-      if (row.stockLine?.availableNumberOfPacks === 0) {
+      if (hasNoStock(row)) {
         noStockRows.push(row);
         return;
       }
