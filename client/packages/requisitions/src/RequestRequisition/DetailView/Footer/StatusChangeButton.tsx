@@ -9,6 +9,7 @@ import {
   ButtonWithIcon,
   useAuthContext,
   UserPermission,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
 import { useRequest } from '../../api';
@@ -84,26 +85,30 @@ const useStatusChangeButton = () => {
       getNextStatusOption(status, options)
     );
 
+  const getUpdatedComment = () => {
+    if (selectedOption?.value !== RequisitionNodeStatus.Sent) {
+      return comment;
+    }
+
+    // TODO: change to `getLocalisedFullName` when the programs feature is merged
+    const name = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
+    const job = !!user?.jobTitle ? ` (${user?.jobTitle})` : '';
+
+    return `${comment ? comment + '\n' : ''}${t('template.requisition-sent', {
+      name: name || user?.name,
+      job,
+      phone: user?.phoneNumber ?? '-',
+      email: user?.email ?? '-',
+    })}`;
+  };
+
   const onConfirmStatusChange = async () => {
     if (!selectedOption) return null;
     try {
-      let updatedComment = comment;
-
-      if (selectedOption.value === RequisitionNodeStatus.Sent) {
-        // TODO: change to `getLocalisedFullName` when the programs feature is merged
-        const name = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
-        const job = !!user?.jobTitle ? ` (${user?.jobTitle})` : '';
-        updatedComment = `${comment ? comment + '\n' : ''}${t(
-          'template.requisition-sent',
-          {
-            name: name || user?.name,
-            job,
-            phone: user?.phoneNumber ?? '-',
-            email: user?.email ?? '-',
-          }
-        )}`;
-      }
-      await update({ status: selectedOption.value, comment: updatedComment });
+      await update({
+        status: selectedOption.value,
+        comment: getUpdatedComment(),
+      });
       success(t('messages.saved'))();
     } catch (e) {
       error(t('messages.could-not-save'))();
@@ -133,6 +138,7 @@ export const StatusChangeButton = () => {
   const { selectedOption, getConfirmation } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission } = useAuthContext();
+  const t = useTranslation('app');
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -143,13 +149,19 @@ export const StatusChangeButton = () => {
       : true;
 
   return (
-    <ButtonWithIcon
-      color="secondary"
-      variant="contained"
-      disabled={!hasPermission}
-      label={selectedOption.label}
-      Icon={<ArrowRightIcon />}
-      onClick={() => getConfirmation()}
-    />
+    <>
+      <Tooltip title={hasPermission ? '' : t('auth.permission-denied')}>
+        <div>
+          <ButtonWithIcon
+            color="secondary"
+            variant="contained"
+            disabled={!hasPermission}
+            label={selectedOption.label}
+            Icon={<ArrowRightIcon />}
+            onClick={() => getConfirmation()}
+          />
+        </div>
+      </Tooltip>
+    </>
   );
 };
