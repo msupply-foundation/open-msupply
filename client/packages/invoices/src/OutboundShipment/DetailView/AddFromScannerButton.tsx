@@ -7,7 +7,7 @@ import {
   ScanResult,
   ButtonWithIcon,
   useNotification,
-  useKeyboardShortcut,
+  useRegisterActions,
 } from '@openmsupply-client/common';
 import { Draft, useOutbound } from '../api';
 import { isOutboundDisabled } from '../../utils';
@@ -61,18 +61,26 @@ export const AddFromScannerButtonComponent = ({
     }
   };
 
-  useKeyboardShortcut({
-    key: 's',
-    handler: handleClick,
-    dependencies: [isScanning],
-  });
-
   //   stop scanning when the component unloads
   useEffect(() => {
     return () => {
       stopScan();
     };
   }, []);
+
+  const label = t(isScanning ? 'button.stop' : 'button.scan');
+  useRegisterActions(
+    [
+      {
+        id: 'action:scan-barcode',
+        name: `${label} (ctrl+s)`,
+        shortcut: ['Control+s'],
+        keywords: 'drawer, close',
+        perform: handleClick,
+      },
+    ],
+    [isScanning]
+  );
 
   if (!hasBarcodeScanner) return null;
 
@@ -87,7 +95,7 @@ export const AddFromScannerButtonComponent = ({
           <ScanIcon />
         )
       }
-      label={t(isScanning ? 'button.stop' : 'button.scan')}
+      label={label}
     />
   );
 };
