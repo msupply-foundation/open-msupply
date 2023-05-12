@@ -9,7 +9,6 @@ interface props {
 export const useKeyboardShortcut = ({ key, handler, dependencies }: props) => {
   useEffect(() => {
     function handleKeyDown(this: HTMLElement, ev: KeyboardEvent) {
-      console.log(ev);
       if (ev.ctrlKey && ev.key === key) {
         handler();
       }
