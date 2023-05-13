@@ -4283,7 +4283,7 @@ File.Delete(sFileToBeDeletePath); -- Delete unchoosen app file (.exe) by a user
 local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";
 if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
 
-	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN", "v2.28|Action=Allow|Active=TRUE|Dir=In|Protocol=6|LPort=" .. SessionVar.Get("%omsupply_port%") .. "|Name=omSupply Server|", REG_SZ);
+	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN", "v2.28|Action=Allow|Active=TRUE|Dir=In|Protocol=6|LPort=" .. SessionVar.Get("%omsupply_port%") .. "|Name=".. SessionVar.Get("%ProductName%") .. "|", REG_SZ);
 	
 	-- The firewall service requires restarting to detect the new rule
 	local firewallServiceName = "Windows Firewall";
