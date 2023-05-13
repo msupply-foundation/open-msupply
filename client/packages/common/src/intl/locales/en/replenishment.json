@@ -45,9 +45,11 @@
   "label.number-months_one": "{{count}} Month",
   "label.number-months_other": "{{count}} Months",
   "label.order-quantity": "Requested quantity",
+  "label.packs": "Packs",
   "label.past": "Past",
   "label.pricing": "Pricing",
   "label.projected": "Projected",
+  "label.requested-packs": "Requested packs",
   "label.quantities": "Quantities",
   "label.amc": "AMC",
   "label.cant-delete-disabled": "Can only delete lines when status is New",
@@ -102,5 +104,6 @@
   "messages.saved": "Saved",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "messages.shipment-saved": "Shipment saved 🥳",
-  "info.cannot-edit-program-requisition": "Cannot edit supplier, minimum MOS, maximum MOS or add items in a program requisition."
+  "info.cannot-edit-program-requisition": "Cannot edit supplier, minimum MOS, maximum MOS or add items in a program requisition.",
+  "template.requisition-sent": "Approved by {{name}}{{job}}. Email: {{email}} and Phone Number: {{phone}}."
 }

@@ -115,28 +115,6 @@ pub(crate) async fn insert_all_extra_data(
     }
 }
 
-macro_rules! check_record_by_id_ignore_is_sync_update {
-    ($repository:ident, $connection:ident, $comparison_record:ident, $record_type:tt, $record_string:expr) => {{
-        let record = $repository::new(&$connection)
-            .find_one_by_id(&$comparison_record.id)
-            .unwrap()
-            .expect(&format!(
-                "{} row not found: {}",
-                $record_string, $comparison_record.id
-            ));
-        assert_eq!(
-            $record_type {
-                is_sync_update: false,
-                ..record
-            },
-            $record_type {
-                is_sync_update: false,
-                ..$comparison_record
-            }
-        )
-    }};
-}
-
 macro_rules! check_record_by_id {
     ($repository:ident, $connection:ident, $comparison_record:ident, $record_string:expr) => {{
         assert_eq!(
@@ -230,22 +208,10 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_id!(StocktakeLineRowRepository, con, record, "StocktakeLine");
             }
             Requisition(record) => {
-                check_record_by_id_ignore_is_sync_update!(
-                    RequisitionRowRepository,
-                    con,
-                    record,
-                    RequisitionRow,
-                    "Requisition"
-                );
+                check_record_by_id!(RequisitionRowRepository, con, record, "Requisition");
             }
             RequisitionLine(record) => {
-                check_record_by_id_ignore_is_sync_update!(
-                    RequisitionLineRowRepository,
-                    con,
-                    record,
-                    RequisitionLineRow,
-                    "RequisitionLine"
-                );
+                check_record_by_id!(RequisitionLineRowRepository, con, record, "RequisitionLine");
             }
             Unit(record) => {
                 check_record_by_option_id!(UnitRowRepository, con, record, "Unit");

@@ -40,11 +40,25 @@ export const useRequestColumns = () => {
       },
     ],
     {
+      key: 'unit',
+      label: 'label.unit',
+      align: ColumnAlign.Left,
+      accessor: ({ rowData }) => rowData.item.unitName,
+      getSortValue: rowData => rowData.item.unitName ?? '',
+    },
+    {
+      key: 'defaultPackSize',
+      label: 'label.dps',
+      description: 'description.default-pack-size',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => rowData.item.defaultPackSize,
+      getSortValue: rowData => rowData.item.defaultPackSize,
+    },
+    {
       key: 'availableStockOnHand',
       label: 'label.stock-on-hand',
       description: 'description.stock-on-hand',
-      align: ColumnAlign.Left,
-
+      align: ColumnAlign.Right,
       width: 200,
       accessor: ({ rowData }) => {
         const { itemStats } = rowData;
@@ -67,6 +81,7 @@ export const useRequestColumns = () => {
       'monthlyConsumption',
       {
         width: 150,
+        align: ColumnAlign.Right,
         accessor: ({ rowData }) => rowData.itemStats.averageMonthlyConsumption,
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
       },
@@ -95,6 +110,19 @@ export const useRequestColumns = () => {
       align: ColumnAlign.Right,
       width: 150,
       getSortValue: rowData => rowData.requestedQuantity,
+    },
+    {
+      key: 'requestedNumPacks',
+      label: 'label.requested-packs',
+      description: 'label.requested-number-packs',
+      align: ColumnAlign.Right,
+      // width: 150,
+      accessor: ({ rowData }) =>
+        formatNumber.round(
+          rowData.requestedQuantity / rowData.item.defaultPackSize,
+          2
+        ),
+      sortable: false,
     },
   ];
 
