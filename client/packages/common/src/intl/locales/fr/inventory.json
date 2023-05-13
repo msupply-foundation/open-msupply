@@ -66,5 +66,9 @@
     "stocktake.comment-list-template": "Créé(e) avec la liste {{list}}",
     "stocktake.comment-location-template": "Créé(e) avec les articles de l'emplacement '{{location}}'",
     "messages.no-locations": "Aucun emplacement disponible",
-    "messages.no-master-lists": "Aucune liste disponible"
+    "messages.no-master-lists": "Aucune liste disponible",
+    "error.unable-to-scan": "Impossible de lire le code-barre : {{error}}",
+    "messages.no-items-with-stock": "Aucun article avec du stock disponible",
+    "stocktake-comment-items-have-stock-template": "Créé(e) pour tous les articles en stock",
+    "label.items-with-stock": "Articles avec du stock"
 }

@@ -202,7 +202,7 @@ export type AuthTokenResponse = AuthToken | AuthTokenError;
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
   id: Scalars['String'];
-  itemId?: Maybe<Scalars['String']>;
+  itemId: Scalars['String'];
   manufacturerId?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   parentId?: Maybe<Scalars['String']>;
@@ -1043,6 +1043,15 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
+export type InsertProgramRequestRequisitionError = {
+  __typename: 'InsertProgramRequestRequisitionError';
+  error: InsertProgramRequestRequisitionErrorInterface;
+};
+
+export type InsertProgramRequestRequisitionErrorInterface = {
+  description: Scalars['String'];
+};
+
 export type InsertProgramRequestRequisitionInput = {
   colour?: InputMaybe<Scalars['String']>;
   comment?: InputMaybe<Scalars['String']>;
@@ -1054,6 +1063,8 @@ export type InsertProgramRequestRequisitionInput = {
   programOrderTypeId: Scalars['String'];
   theirReference?: InputMaybe<Scalars['String']>;
 };
+
+export type InsertProgramRequestRequisitionResponse = InsertProgramRequestRequisitionError | RequisitionNode;
 
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
@@ -1647,6 +1658,11 @@ export type MasterListSortInput = {
 
 export type MasterListsResponse = MasterListConnector;
 
+export type MaxOrdersReachedForPeriod = InsertProgramRequestRequisitionErrorInterface & {
+  __typename: 'MaxOrdersReachedForPeriod';
+  description: Scalars['String'];
+};
+
 export type Mutations = {
   __typename: 'Mutations';
   /** Add requisition lines from master item master list */
@@ -1688,7 +1704,7 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
-  insertProgramRequestRequisition: InsertRequestRequisitionResponse;
+  insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -2634,6 +2650,11 @@ export type ReportSortInput = {
 
 export type ReportsResponse = ReportConnector;
 
+export type RequestRequisitionCounts = {
+  __typename: 'RequestRequisitionCounts';
+  draft: Scalars['Int'];
+};
+
 export type RequestStoreStatsNode = {
   __typename: 'RequestStoreStatsNode';
   averageMonthlyConsumption: Scalars['Int'];
@@ -2650,7 +2671,8 @@ export type RequisitionConnector = {
 
 export type RequisitionCounts = {
   __typename: 'RequisitionCounts';
-  newResponseRequisitionCount: Scalars['Int'];
+  request: RequestRequisitionCounts;
+  response: ResponseRequisitionCounts;
 };
 
 export type RequisitionFilterInput = {
@@ -2660,6 +2682,7 @@ export type RequisitionFilterInput = {
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<SimpleStringFilterInput>;
   requisitionNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -2847,6 +2870,11 @@ export type RequisitionSortInput = {
 };
 
 export type RequisitionsResponse = RequisitionConnector;
+
+export type ResponseRequisitionCounts = {
+  __typename: 'ResponseRequisitionCounts';
+  new: Scalars['Int'];
+};
 
 export type ResponseRequisitionStatsNode = {
   __typename: 'ResponseRequisitionStatsNode';

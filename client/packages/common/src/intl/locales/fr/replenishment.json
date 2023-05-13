@@ -99,5 +99,11 @@
     "messages.saved": "Sauvegardé",
     "heading.tax": "Taxe",
     "heading.grand-total": "Grand total",
-    "heading.edit-tax-rate": "Modifier le taux de taxation (%)"
+    "heading.edit-tax-rate": "Modifier le taux de taxation (%)",
+    "label.program": "Bon de commande",
+    "info.cannot-edit-program-requisition": "On ne peut pas modifier le fournisseur, le MDS minimum et maximum ou ajouter des articles dans un bon de commande \"programme\".",
+    "messages.not-configured": "Non configuré",
+    "messages.period-not-available": "Aucune période disponible",
+    "label.order-type": "Type",
+    "label.period": "Période"
 }

@@ -1,5 +1,7 @@
 use crate::{
-    requisition::common::{check_requisition_exists, generate_requisition_user_id_update},
+    requisition::common::{
+        check_approval_status, check_requisition_exists, generate_requisition_user_id_update,
+    },
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
 };
@@ -7,7 +9,7 @@ use crate::{
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection,
+    RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
 
@@ -72,14 +74,8 @@ fn validate(
         check_requisition_exists(connection, &requisition_line_row.requisition_id)?
             .ok_or(OutError::RequisitionDoesNotExist)?;
 
-    if let Some(approval_status) = requisition_row.approval_status.clone() {
-        if requisition_row.program_id.is_some()
-            && (approval_status == RequisitionRowApprovalStatus::Pending
-                || approval_status == RequisitionRowApprovalStatus::Denied
-                || approval_status == RequisitionRowApprovalStatus::DeniedByAnother)
-        {
-            return Err(OutError::CannotEditRequisition);
-        }
+    if check_approval_status(&requisition_row) {
+        return Err(OutError::CannotEditRequisition);
     }
 
     if requisition_row.store_id != store_id {

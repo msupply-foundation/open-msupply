@@ -59,6 +59,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         // TODO link to documentation of how remote authorisation works
         let store_preference =
             get_store_preferences(connection, &record_for_processing.other_party_store_id)?;
+        // TODO Rework once plugin functionality has been implemented
         let approval_status = if store_preference.response_requisition_requires_authorisation
             && request_requisition.requisition_row.program_id.is_some()
         {

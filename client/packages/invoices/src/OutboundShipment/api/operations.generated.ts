@@ -12,7 +12,7 @@ export type OutboundFragment = { __typename: 'InvoiceNode', id: string, comment?
 
 export type OutboundRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, taxPercentage?: number | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, taxPercentage?: number | null } };
 
-export type BarcodeFragment = { __typename: 'BarcodeNode', id: string, itemId?: string | null, packSize?: number | null, value: string };
+export type BarcodeFragment = { __typename: 'BarcodeNode', id: string, itemId: string, packSize?: number | null, value: string };
 
 export type InvoicesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -56,14 +56,7 @@ export type BarcodeByValueQueryVariables = Types.Exact<{
 }>;
 
 
-export type BarcodeByValueQuery = { __typename: 'Queries', barcodeByValue: { __typename: 'BarcodeNode', id: string, itemId?: string | null, packSize?: number | null, value: string } | { __typename: 'NodeError' } };
-
-export type RequisitionCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-}>;
-
-
-export type RequisitionCountsQuery = { __typename: 'Queries', requisitionCounts: { __typename: 'RequisitionCounts', newResponseRequisitionCount: number } };
+export type BarcodeByValueQuery = { __typename: 'Queries', barcodeByValue: { __typename: 'BarcodeNode', id: string, itemId: string, packSize?: number | null, value: string } | { __typename: 'NodeError' } };
 
 export type InsertOutboundShipmentMutationVariables = Types.Exact<{
   id: Types.Scalars['String'];
@@ -129,7 +122,7 @@ export type InsertBarcodeMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertBarcodeMutation = { __typename: 'Mutations', insertBarcode: { __typename: 'BarcodeNode', id: string, itemId?: string | null, packSize?: number | null, value: string } };
+export type InsertBarcodeMutation = { __typename: 'Mutations', insertBarcode: { __typename: 'BarcodeNode', id: string, itemId: string, packSize?: number | null, value: string } };
 
 export const PartialStockLineFragmentDoc = gql`
     fragment PartialStockLine on StockLineNode {
@@ -389,13 +382,6 @@ export const BarcodeByValueDocument = gql`
   }
 }
     ${BarcodeFragmentDoc}`;
-export const RequisitionCountsDocument = gql`
-    query requisitionCounts($storeId: String!) {
-  requisitionCounts(storeId: $storeId) {
-    newResponseRequisitionCount
-  }
-}
-    `;
 export const InsertOutboundShipmentDocument = gql`
     mutation insertOutboundShipment($id: String!, $otherPartyId: String!, $storeId: String!) {
   insertOutboundShipment(
@@ -984,9 +970,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     barcodeByValue(variables: BarcodeByValueQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<BarcodeByValueQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<BarcodeByValueQuery>(BarcodeByValueDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'barcodeByValue', 'query');
     },
-    requisitionCounts(variables: RequisitionCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionCountsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<RequisitionCountsQuery>(RequisitionCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionCounts', 'query');
-    },
     insertOutboundShipment(variables: InsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertOutboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundShipmentMutation>(InsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundShipment', 'mutation');
     },
@@ -1097,23 +1080,6 @@ export const mockInvoiceCountsQuery = (resolver: ResponseResolver<GraphQLRequest
 export const mockBarcodeByValueQuery = (resolver: ResponseResolver<GraphQLRequest<BarcodeByValueQueryVariables>, GraphQLContext<BarcodeByValueQuery>, any>) =>
   graphql.query<BarcodeByValueQuery, BarcodeByValueQueryVariables>(
     'barcodeByValue',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockRequisitionCountsQuery((req, res, ctx) => {
- *   const { storeId } = req.variables;
- *   return res(
- *     ctx.data({ requisitionCounts })
- *   )
- * })
- */
-export const mockRequisitionCountsQuery = (resolver: ResponseResolver<GraphQLRequest<RequisitionCountsQueryVariables>, GraphQLContext<RequisitionCountsQuery>, any>) =>
-  graphql.query<RequisitionCountsQuery, RequisitionCountsQueryVariables>(
-    'requisitionCounts',
     resolver
   )
 

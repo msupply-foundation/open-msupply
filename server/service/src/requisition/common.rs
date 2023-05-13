@@ -1,8 +1,8 @@
-use repository::EqualFilter;
 use repository::{
     requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
+use repository::{EqualFilter, RequisitionRowApprovalStatus};
 use util::inline_edit;
 
 pub fn check_requisition_exists(
@@ -33,4 +33,20 @@ pub fn generate_requisition_user_id_update(
             u
         })
     })
+}
+
+pub fn check_approval_status(requisition_row: &RequisitionRow) -> bool {
+    // TODO Rework once plugins are implemented
+    if let Some(approval_status) = &requisition_row.approval_status {
+        if requisition_row.program_id.is_some()
+            && (*approval_status == RequisitionRowApprovalStatus::Pending
+                || *approval_status == RequisitionRowApprovalStatus::Denied
+                || *approval_status == RequisitionRowApprovalStatus::DeniedByAnother)
+        {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    false
 }

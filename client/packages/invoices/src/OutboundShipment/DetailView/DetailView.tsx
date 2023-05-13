@@ -19,13 +19,13 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { DraftItem, useOutbound } from '../api';
+import { Draft, useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OutboundLineFragment } from '../api/operations.generated';
 
 export const DetailView: FC = () => {
   const isDisabled = useOutbound.utils.isDisabled();
-  const { entity, mode, onOpen, onClose, isOpen } = useEditModal<DraftItem>();
+  const { entity, mode, onOpen, onClose, isOpen } = useEditModal<Draft>();
   const { data, isLoading } = useOutbound.document.get();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ export const DetailView: FC = () => {
     >
       {data ? (
         <TableProvider
-          createStore={createTableStore()}
+          createStore={createTableStore}
           queryParamsStore={createQueryParamsStore<
             OutboundLineFragment | OutboundItem
           >({

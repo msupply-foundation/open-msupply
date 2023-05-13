@@ -14,7 +14,7 @@ import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { ToolbarDropDown } from './ToolbarDropDown';
 import { ToolbarActions } from './ToolbarActions';
-import { getApprovalStatusText } from '../../../utils';
+import { getApprovalStatusKey } from '../../../utils';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
@@ -79,7 +79,7 @@ export const Toolbar: FC = () => {
               label={t('label.auth-status')}
               Input={
                 <Typography>
-                  {getApprovalStatusText(linkedRequisition?.approvalStatus)}
+                  {t(getApprovalStatusKey(linkedRequisition?.approvalStatus))}
                 </Typography>
               }
             />
@@ -105,7 +105,7 @@ export const Toolbar: FC = () => {
           )}
         </Grid>
         {programName && (
-          <Box padding={2}>
+          <Box padding={2} style={{ maxWidth: 500 }}>
             <InfoPanel message={t('info.cannot-edit-program-requisition')} />
           </Box>
         )}

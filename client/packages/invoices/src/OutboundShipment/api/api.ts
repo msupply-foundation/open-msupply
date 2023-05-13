@@ -464,25 +464,6 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Unable to update invoice');
   },
-  dashboard: {
-    shipmentCount: async (): Promise<{
-      notShipped: number;
-    }> => {
-      const result = await sdk.invoiceCounts({ storeId });
-      return {
-        notShipped: result?.invoiceCounts?.outbound.notShipped ?? 0,
-      };
-    },
-    requisitionCount: async (): Promise<{
-      newResponseRequisitionCount: number;
-    }> => {
-      const result = await sdk.requisitionCounts({ storeId });
-      return {
-        newResponseRequisitionCount:
-          result?.requisitionCounts?.newResponseRequisitionCount ?? 0,
-      };
-    },
-  },
   addFromMasterList: async ({
     shipmentId,
     masterListId,

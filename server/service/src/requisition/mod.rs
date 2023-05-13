@@ -6,9 +6,9 @@ use self::{
         insert_program_request_requisition, insert_request_requisition, update_request_requisition,
         use_suggested_quantity, AddFromMasterList, AddFromMasterListError, BatchRequestRequisition,
         BatchRequestRequisitionResult, DeleteRequestRequisition, DeleteRequestRequisitionError,
-        InsertProgramRequestRequisition, InsertRequestRequisition, InsertRequestRequisitionError,
-        UpdateRequestRequisition, UpdateRequestRequisitionError, UseSuggestedQuantity,
-        UseSuggestedQuantityError,
+        InsertProgramRequestRequisition, InsertProgramRequestRequisitionError,
+        InsertRequestRequisition, InsertRequestRequisitionError, UpdateRequestRequisition,
+        UpdateRequestRequisitionError, UseSuggestedQuantity, UseSuggestedQuantityError,
     },
     requisition_supply_status::{get_requisitions_supply_statuses, RequisitionLineSupplyStatus},
     response_requisition::{
@@ -84,7 +84,7 @@ pub trait RequisitionServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: InsertProgramRequestRequisition,
-    ) -> Result<Requisition, InsertRequestRequisitionError> {
+    ) -> Result<Requisition, InsertProgramRequestRequisitionError> {
         insert_program_request_requisition(ctx, input)
     }
 

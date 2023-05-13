@@ -27,7 +27,7 @@ export const MasterListDetailView: FC = () => {
   if (isLoading) return <DetailViewSkeleton />;
 
   return !!data ? (
-    <TableProvider createStore={createTableStore()}>
+    <TableProvider createStore={createTableStore}>
       <Toolbar />
       <ContentArea />
     </TableProvider>
