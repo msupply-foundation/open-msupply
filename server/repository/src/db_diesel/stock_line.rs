@@ -310,7 +310,7 @@ impl StockLine {
     pub fn barcode(&self) -> Option<&str> {
         self.barcode_row
             .as_ref()
-            .map(|barcode_row| barcode_row.value.as_str())
+            .map(|barcode_row| barcode_row.gtin.as_str())
     }
 }
 

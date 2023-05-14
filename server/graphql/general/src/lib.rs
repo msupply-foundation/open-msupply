@@ -230,13 +230,13 @@ impl GeneralQueries {
         store_preferences(ctx, &store_id)
     }
 
-    pub async fn barcode_by_value(
+    pub async fn barcode_by_gtin(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        value: String,
+        gtin: String,
     ) -> Result<BarcodeResponse> {
-        barcode_by_value(ctx, store_id, value)
+        barcode_by_gtin(ctx, store_id, gtin)
     }
 
     pub async fn requisition_counts(
