@@ -44,7 +44,7 @@ export const AddFromScannerButtonComponent = ({
 
       warning(t('error.no-matching-item'))();
 
-      onAddItem({ barcode: { value, batch } });
+      onAddItem({ barcode: { gtin: value, batch } });
     }
   };
 

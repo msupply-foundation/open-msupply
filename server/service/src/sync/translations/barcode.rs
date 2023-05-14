@@ -23,7 +23,7 @@ pub struct LegacyBarcodeRow {
     #[serde(rename = "ID")]
     pub id: String,
     #[serde(rename = "barcode")]
-    pub value: String,
+    pub gtin: String,
     #[serde(rename = "itemID")]
     pub item_id: String,
     #[serde(rename = "manufacturerID")]
@@ -54,7 +54,7 @@ impl SyncTranslation for BarcodeTranslation {
         };
         let LegacyBarcodeRow {
             id,
-            value,
+            gtin,
             item_id,
             manufacturer_id,
             pack_size,
@@ -63,7 +63,7 @@ impl SyncTranslation for BarcodeTranslation {
 
         let result = BarcodeRow {
             id,
-            value,
+            gtin,
             item_id,
             manufacturer_id,
             pack_size,
@@ -86,7 +86,7 @@ impl SyncTranslation for BarcodeTranslation {
 
         let BarcodeRow {
             id,
-            value,
+            gtin,
             item_id,
             manufacturer_id,
             pack_size,
@@ -100,7 +100,7 @@ impl SyncTranslation for BarcodeTranslation {
 
         let legacy_row = LegacyBarcodeRow {
             id,
-            value,
+            gtin,
             item_id,
             manufacturer_id,
             pack_size,
