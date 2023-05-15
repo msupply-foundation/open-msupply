@@ -73,11 +73,13 @@ export const PaginationRow: FC<PaginationRowProps> = ({
       {!!total && (
         <>
           <Box display="flex" flexDirection="row" flexWrap="wrap" flex={1}>
-            <Typography sx={{ marginRight: '4px' }}>Showing</Typography>
+            <Typography sx={{ marginRight: '4px' }}>
+              {t('label.showing')}
+            </Typography>
             <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
               {xToY}
             </Typography>
-            <Typography sx={{ marginRight: '4px' }}>of</Typography>
+            <Typography sx={{ marginRight: '4px' }}>{t('label.of')}</Typography>
             <Typography sx={{ fontWeight: 'bold', marginRight: '4px' }}>
               {total}
             </Typography>
