@@ -136,6 +136,18 @@ export const useRequestColumns = () => {
         rowData.linkedRequisitionLine?.approvedQuantity,
     });
     columnDefinitions.push({
+      key: 'approvedNumPacks',
+      label: 'label.approved-packs',
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) =>
+        formatNumber.round(
+          rowData.linkedRequisitionLine?.approvedQuantity ??
+            0 / rowData.item.defaultPackSize,
+          2
+        ),
+      sortable: false,
+    });
+    columnDefinitions.push({
       key: 'approvalComment',
       label: 'label.approval-comment',
       sortable: false,
