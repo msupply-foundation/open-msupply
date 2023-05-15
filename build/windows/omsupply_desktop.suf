@@ -2906,6 +2906,12 @@ end
 <Script>Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop");
 if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
 	Registry.DeleteKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
+end
+
+local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";
+if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
+	Registry.DeleteValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "TCP Query User{F9DC9425-4A13-4FFE-9682-84C57917A6A1}open msupply.exe");
+	Registry.DeleteValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "UDP Query User{0B61B8B0-9AF9-47AA-9A17-404C68DC8AF6}open msupply.exe");
 end</Script>
 <BookMarks count="0">
 </BookMarks>
@@ -3125,6 +3131,21 @@ SessionVar.Set("%window_title%", sWindowTitle);</Script>
 	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 end
 
+-- Add a firewall rule to allow the omSupply Desktop to communicate with the server
+local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";
+if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
+
+	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "TCP Query User{F9DC9425-4A13-4FFE-9682-84C57917A6A1}open msupply.exe", "v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=6|Profile=Private|App="..omSupplyDesktopPath.."|Name=open mSupply|Desc=open mSupply|Defer=User|", REG_SZ);
+	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "UDP Query User{0B61B8B0-9AF9-47AA-9A17-404C68DC8AF6}open msupply.exe", "v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Private|App="..omSupplyDesktopPath.."|Name=open mSupply|Desc=open mSupply|Defer=User|", REG_SZ);
+
+	-- The firewall service requires restarting to detect the new rule
+	local firewallServiceName = "Windows Firewall";
+	queryResult = Service.Query(firewallServiceName, "");
+	if (queryResult == SERVICE_RUNNING) then
+		Service.Stop(firewallServiceName, "", 5);
+		Service.Start(firewallServiceName, "", nil);
+	end
+end
 </Script>
 <BookMarks count="0">
 </BookMarks>

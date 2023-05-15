@@ -3076,6 +3076,8 @@ Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop");
 <Script>local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";
 if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
 	Registry.DeleteValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN");
+	Registry.DeleteValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "TCP Query User{F9DC9425-4A13-4FFE-9682-84C57917A6A1}open msupply.exe");
+	Registry.DeleteValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "UDP Query User{0B61B8B0-9AF9-47AA-9A17-404C68DC8AF6}open msupply.exe");
 end</Script>
 <BookMarks count="0">
 </BookMarks>
@@ -3377,7 +3379,9 @@ local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Para
 if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
 
 	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN", "v2.28|Action=Allow|Active=TRUE|Dir=In|Protocol=6|LPort=" .. SessionVar.Get("%omsupply_port%") .. "|Name=".. SessionVar.Get("%ProductName%") .. "|", REG_SZ);
-	
+	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "TCP Query User{F9DC9425-4A13-4FFE-9682-84C57917A6A1}open msupply.exe", "v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=6|Profile=Private|App="..omSupplyDesktopPath.."|Name=".. SessionVar.Get("%ProductName%") .. "|Desc=open mSupply|Defer=User|", REG_SZ);
+	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "UDP Query User{0B61B8B0-9AF9-47AA-9A17-404C68DC8AF6}open msupply.exe", "v2.10|Action=Allow|Active=TRUE|Dir=In|Protocol=17|Profile=Private|App="..omSupplyDesktopPath.."|Name=".. SessionVar.Get("%ProductName%") .. "|Desc=open mSupply|Defer=User|", REG_SZ);
+
 	-- The firewall service requires restarting to detect the new rule
 	local firewallServiceName = "Windows Firewall";
 	queryResult = Service.Query(firewallServiceName, "");
