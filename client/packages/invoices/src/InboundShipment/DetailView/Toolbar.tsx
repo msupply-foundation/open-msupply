@@ -10,6 +10,7 @@ import {
   DeleteIcon,
   useTranslation,
   InfoPanel,
+  Switch,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { useInbound } from '../api';
@@ -24,6 +25,7 @@ export const Toolbar: FC = () => {
     'otherParty',
     'theirReference',
   ]);
+  const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
 
   const t = useTranslation('replenishment');
   const isManuallyCreated = !shipment?.linkedShipment?.id;
@@ -78,11 +80,28 @@ export const Toolbar: FC = () => {
             />
           </Box>
         </Grid>
-        <DropdownMenu label={t('label.actions')}>
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-            {t('button.delete-lines')}
-          </DropdownMenuItem>
-        </DropdownMenu>
+        <Grid
+          item
+          display="flex"
+          gap={1}
+          justifyContent="flex-end"
+          alignItems="center"
+        >
+          <Box sx={{ marginRight: 2 }}>
+            <Switch
+              label={t('label.group-by-item')}
+              onChange={toggleIsGrouped}
+              checked={isGrouped}
+              size="small"
+              color="secondary"
+            />
+          </Box>
+          <DropdownMenu label={t('label.actions')}>
+            <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+              {t('button.delete-lines')}
+            </DropdownMenuItem>
+          </DropdownMenu>
+        </Grid>
       </Grid>
     </AppBarContentPortal>
   );

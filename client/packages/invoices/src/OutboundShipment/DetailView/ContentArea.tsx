@@ -3,7 +3,6 @@ import {
   DataTable,
   useTranslation,
   Box,
-  Switch,
   MiniTable,
   useIsGrouped,
   InvoiceLineNodeType,
@@ -87,7 +86,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
+  const { isGrouped } = useIsGrouped('outboundShipment');
   const { rows } = useOutbound.line.rows(isGrouped);
   const columns = useOutboundColumns({
     onChangeSortBy: updateSortQuery,
@@ -100,18 +99,6 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
 
   return (
     <Box flexDirection="column" style={{ width: '100%' }} display="flex">
-      {rows.length !== 0 && (
-        <Box style={{ padding: 5, marginInlineStart: 15 }} flex={0}>
-          <Switch
-            label={t('label.group-by-item')}
-            onChange={toggleIsGrouped}
-            checked={isGrouped}
-            size="small"
-            disabled={rows.length === 0}
-            color="secondary"
-          />
-        </Box>
-      )}
       <Box flex={1} style={{ overflowY: 'auto' }}>
         <DataTable
           id="outbound-detail"

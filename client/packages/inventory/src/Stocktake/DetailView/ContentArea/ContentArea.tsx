@@ -3,7 +3,6 @@ import {
   DataTable,
   useTranslation,
   Box,
-  Switch,
   useIsGrouped,
   MiniTable,
   createQueryParamsStore,
@@ -93,7 +92,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
   onRowClick,
 }) => {
   const t = useTranslation('inventory');
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
+  const { isGrouped } = useIsGrouped('stocktake');
   const { rows, onChangeSortBy, sortBy } = useStocktake.line.rows(isGrouped);
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
   const isDisabled = useStocktake.utils.isDisabled();
@@ -102,16 +101,6 @@ export const ContentArea: FC<ContentAreaProps> = ({
 
   return (
     <Box flexDirection="column" flex={1}>
-      <Box style={{ padding: 5, marginInlineStart: 15 }}>
-        <Switch
-          label={t('label.group-by-item')}
-          onChange={toggleIsGrouped}
-          checked={isGrouped}
-          size="small"
-          disabled={rows?.length === 0}
-          color="secondary"
-        />
-      </Box>
       <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
         onRowClick={onRowClick}
         ExpandContent={Expando}
