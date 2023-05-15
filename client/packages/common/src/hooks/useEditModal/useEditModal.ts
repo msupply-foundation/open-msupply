@@ -9,6 +9,7 @@ export enum ModalMode {
 interface EditModalState<T> {
   entity: T | null;
   mode: ModalMode | null;
+  setMode: (mode: ModalMode) => void;
   onOpen: (entity?: T | null) => void;
   onClose: () => void;
   isOpen: boolean;
@@ -36,6 +37,7 @@ export const useEditModal = <T>(): EditModalState<T> => {
     onClose,
     entity,
     mode,
+    setMode,
     isOpen: modalControl.isOn,
   };
 };
