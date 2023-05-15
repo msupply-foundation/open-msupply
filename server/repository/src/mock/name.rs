@@ -80,6 +80,17 @@ pub fn mock_name_master_list_filter_test() -> NameRow {
         r.name = String::from("name_master_list_filter_test");
         r.code = String::from("master_list_filter_test");
         r.is_supplier = true;
+        r.is_customer = true;
+    })
+}
+
+pub fn mock_program_master_list_test() -> NameRow {
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("program_master_list_test");
+        r.name = String::from("program_master_list_test");
+        r.code = String::from("program_master_list_test");
+        r.is_supplier = true;
+        r.is_customer = true;
     })
 }
 
@@ -93,5 +104,6 @@ pub fn mock_names() -> Vec<NameRow> {
         mock_name_store_a(),
         mock_name_store_b(),
         mock_name_store_c(),
+        mock_program_master_list_test(),
     ]
 }

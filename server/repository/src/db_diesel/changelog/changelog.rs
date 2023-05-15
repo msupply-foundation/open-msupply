@@ -43,6 +43,7 @@ pub enum ChangelogAction {
 pub enum ChangelogTableName {
     Number,
     Location,
+    LocationMovement,
     StockLine,
     Invoice,
     InvoiceLine,
@@ -128,6 +129,16 @@ impl<'a> ChangelogRepository<'a> {
             .select(diesel::dsl::max(changelog::dsl::cursor))
             .first::<Option<i64>>(&self.connection.connection)?;
         Ok(result.unwrap_or(0) as u64)
+    }
+
+    // Needed for tests, when is_sync_update needs to be reset when records were inserted via
+    // PullUpsertRecord (but not through sync)
+    pub fn reset_is_sync_update(&self, from_cursor: u64) -> Result<(), RepositoryError> {
+        diesel::update(changelog::dsl::changelog)
+            .set(changelog::dsl::is_sync_update.eq(false))
+            .filter(changelog::dsl::cursor.gt(from_cursor as i64))
+            .execute(&self.connection.connection)?;
+        Ok(())
     }
 }
 

@@ -1,13 +1,14 @@
 pub(crate) mod activity_log;
 pub(crate) mod invoice;
 pub(crate) mod location;
+pub(crate) mod location_movement;
 pub(crate) mod program_requisition;
 pub(crate) mod requisition;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 mod test;
 
-use repository::{InvoiceRowType, NameRowRepository, StorageConnection};
+use repository::{ChangelogRepository, InvoiceRowType, NameRowRepository, StorageConnection};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use crate::sync::{
@@ -74,8 +75,15 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
 
         // Integrate
 
-        integration_records.integrate(&previous_connection).unwrap();
-        // Push integrated changes
+        {
+            let changelog_repo = ChangelogRepository::new(&previous_connection);
+            let cursor = changelog_repo.latest_cursor().unwrap();
+            integration_records.integrate(&previous_connection).unwrap();
+            // Need to reset is_sync_update since we've inserted test data with sync methods
+            // they need to sync to central (if is_sync_update is set to true they will not sync to central)
+            changelog_repo.reset_is_sync_update(cursor).unwrap();
+        } // Extra scope is needed to drop changelog_repo since it has ref to mutable previous_connection
+          // Push integrated changes
         previous_synchroniser.sync().await.unwrap();
         // Re initialise
         let SyncIntegrationContext {
@@ -95,7 +103,7 @@ fn replace_system_name_ids(records: &mut IntegrationRecords, connection: &Storag
     let inventory_adjustment_name = NameRowRepository::new(connection)
         .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)
         .unwrap()
-        .expect("Cannont find intenvory adjustment name");
+        .expect("Cannot find inventory adjustment name");
 
     for mut record in records.upserts.iter_mut() {
         if let PullUpsertRecord::Invoice(invoice) = &mut record {

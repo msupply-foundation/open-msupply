@@ -5,7 +5,7 @@ use crate::sync::{
     translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
 };
 use repository::{
-    MasterListLineRow, MasterListNameJoinRow, MasterListRow, NameTagRow, PeriodScheduleRow,
+    MasterListNameJoinRow, MasterListRow, NameTagRow, PeriodScheduleRow,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
 };
 
@@ -38,7 +38,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
 
         let name_tag1 = NameTagRow {
             id: uuid(),
-            name: "NewProgramTag1".to_string(),
+            name: uuid(),
         };
         let name_tag_json1 = json!({
             "ID": name_tag1.id,
@@ -46,7 +46,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         });
         let name_tag2 = NameTagRow {
             id: uuid(),
-            name: "NewProgramTag2".to_string(),
+            name: uuid(),
         };
         let name_tag_json2 = json!({
             "ID": name_tag2.id,
@@ -68,7 +68,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         "programSettings": {
             "elmisCode": "",
             "storeTags": {
-                "NewProgramTag1": {
+                &name_tag1.name: {
                     "orderTypes": [
                         {
                             "isEmergency": false,
@@ -91,23 +91,23 @@ impl SyncRecordTester for ProgramRequisitionTester {
                         ],
                         "periodScheduleName": "Weekly"
                     },
-                    "NewProgramTag2": {
-                        "orderTypes": [
-                            {
-                                "isEmergency": false,
-                                "maxEmergencyOrders": "",
-                                "maxMOS": 4,
-                                "maxOrdersPerPeriod": 1,
-                                "name": "New order 1",
-                                "thresholdMOS": 4,
-                                "type": "Order type"
-                            }
-                            ],
-                            "periodScheduleName": "Monthly"
+                &name_tag2.name: {
+                    "orderTypes": [
+                        {
+                            "isEmergency": false,
+                            "maxEmergencyOrders": "",
+                            "maxMOS": 4,
+                            "maxOrdersPerPeriod": 1,
+                            "name": "New order 1",
+                            "thresholdMOS": 4,
+                            "type": "Order type"
                         }
+                        ],
+                        "periodScheduleName": "Monthly"
                     }
                 }
-            });
+            }
+        });
 
         let master_list_name_join_row = MasterListNameJoinRow {
             id: uuid(),
@@ -118,18 +118,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
             "ID": master_list_name_join_row.id,
             "list_master_ID":  master_list_name_join_row.master_list_id,
             "name_ID": master_list_name_join_row.name_id,
-        });
-
-        let item_id = uuid();
-        let master_list_line_row = MasterListLineRow {
-            id: uuid(),
-            item_id: item_id.clone(),
-            master_list_id: master_list_row.id.clone(),
-        };
-        let master_list_line_json = json!({
-            "ID": master_list_line_row.id,
-            "item_master_ID": master_list_line_row.master_list_id,
-            "item_ID":  master_list_line_row.item_id,
         });
 
         let program = ProgramRow {
@@ -180,7 +168,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         };
 
         let master_list_row2 = MasterListRow {
-            id: "program_test_2".to_string(),
+            id: uuid(),
             name: uuid(),
             code: uuid(),
             description: uuid(),
@@ -194,7 +182,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         "programSettings": {
             "elmisCode": "",
             "storeTags": {
-                "NewProgramTag1": {
+                &name_tag1.name: {
                     "orderTypes": [],
                     "periodScheduleName": "Weekly"
                     }
@@ -210,17 +198,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
             "ID": master_list_name_join_row2.id,
             "list_master_ID":  master_list_name_join_row2.master_list_id,
             "name_ID": master_list_name_join_row2.name_id,
-        });
-
-        let master_list_line_row2 = MasterListLineRow {
-            id: uuid(),
-            item_id: item_id.clone(),
-            master_list_id: master_list_row2.id.clone(),
-        };
-        let master_list_line_json2 = json!({
-            "ID": master_list_line_row2.id,
-            "item_master_ID": master_list_line_row2.master_list_id,
-            "item_ID":  master_list_line_row2.item_id,
         });
 
         let program2 = ProgramRow {
@@ -242,8 +219,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
                 "name_tag": [name_tag_json1, name_tag_json2],
                 "list_master": [master_list_json, master_list_json2],
                 "list_master_name_join": [master_list_name_join_json, master_list_name_join_json2],
-                "list_master_line": [master_list_line_json, master_list_line_json2],
-                "item": [{"ID": item_id, "type_of": "general"}]
             }),
             central_delete: json!({}),
             integration_records: IntegrationRecords::from_upserts(vec![
@@ -255,8 +230,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
                 PullUpsertRecord::MasterList(master_list_row2),
                 PullUpsertRecord::MasterListNameJoin(master_list_name_join_row),
                 PullUpsertRecord::MasterListNameJoin(master_list_name_join_row2),
-                PullUpsertRecord::MasterListLine(master_list_line_row),
-                PullUpsertRecord::MasterListLine(master_list_line_row2),
                 PullUpsertRecord::Program(program),
                 PullUpsertRecord::Program(program2),
                 PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings1.clone()),
@@ -270,8 +243,8 @@ impl SyncRecordTester for ProgramRequisitionTester {
 
         // STEP 2 - mutate from central
         let upsert_name_tag = NameTagRow {
-            id: "changed_name_tag".to_string(),
-            name: "ChangedTagName".to_string(),
+            id: uuid(),
+            name: uuid(),
         };
         let upsert_name_tag_json = json!({
             "ID": upsert_name_tag.id,
@@ -287,7 +260,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         "programSettings": {
             "elmisCode": "",
             "storeTags": {
-                "ChangedTagName": {
+                &upsert_name_tag.name: {
                     "orderTypes": [
                         {
                             "isEmergency": false,

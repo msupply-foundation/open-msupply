@@ -1,17 +1,18 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use graphql_types::types::RequisitionNode;
 use repository::Requisition;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition::request_requisition::{
-        InsertProgramRequestRequisition, InsertRequestRequisitionError,
+        InsertProgramRequestRequisition, InsertProgramRequestRequisitionError as ServiceError,
     },
 };
 use util::{constants::expected_delivery_date_offset, date_now_with_offset};
-
-use super::{map_error, InsertError, InsertResponse};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertProgramRequestRequisitionInput")]
@@ -25,6 +26,26 @@ pub struct InsertProgramRequestRequisitionInput {
     pub period_id: String,
     /// Defaults to 2 weeks from now
     pub expected_delivery_date: Option<NaiveDate>,
+}
+
+#[derive(Interface)]
+#[graphql(name = "InsertProgramRequestRequisitionErrorInterface")]
+#[graphql(field(name = "description", type = "String"))]
+pub enum InsertErrorInterface {
+    MaxOrdersReachedForPeriod(MaxOrdersReachedForPeriod),
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "InsertProgramRequestRequisitionError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
+#[derive(Union)]
+#[graphql(name = "InsertProgramRequestRequisitionResponse")]
+pub enum InsertResponse {
+    Error(InsertError),
+    Response(RequisitionNode),
 }
 
 pub fn insert_program(
@@ -50,9 +71,7 @@ pub fn insert_program(
     )
 }
 
-pub fn map_response(
-    from: Result<Requisition, InsertRequestRequisitionError>,
-) -> Result<InsertResponse> {
+pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<InsertResponse> {
     let result = match from {
         Ok(requisition) => InsertResponse::Response(RequisitionNode::from_domain(requisition)),
         Err(error) => InsertResponse::Error(InsertError {
@@ -61,6 +80,29 @@ pub fn map_response(
     };
 
     Ok(result)
+}
+
+pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::MaxOrdersReachedForPeriod => {
+            return Ok(InsertErrorInterface::MaxOrdersReachedForPeriod(
+                MaxOrdersReachedForPeriod,
+            ))
+        }
+        // Standard Graphql Errors
+        ServiceError::RequisitionAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::SupplierNotValid => BadUserInput(formatted_error),
+        ServiceError::ProgramOrderTypeDoesNotExist => BadUserInput(formatted_error),
+
+        ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
 
 impl InsertProgramRequestRequisitionInput {
@@ -90,6 +132,15 @@ impl InsertProgramRequestRequisitionInput {
     }
 }
 
+pub struct MaxOrdersReachedForPeriod;
+
+#[Object]
+impl MaxOrdersReachedForPeriod {
+    pub async fn description(&self) -> &'static str {
+        "Maximum orders reached for program, order type and period"
+    }
+}
+
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
@@ -102,7 +153,10 @@ mod test {
     use serde_json::json;
     use service::{
         requisition::{
-            request_requisition::{InsertProgramRequestRequisition, InsertRequestRequisitionError},
+            request_requisition::{
+                InsertProgramRequestRequisition,
+                InsertProgramRequestRequisitionError as ServiceError,
+            },
             RequisitionServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -111,9 +165,8 @@ mod test {
 
     use crate::RequisitionMutations;
 
-    type InsertLineMethod = dyn Fn(InsertProgramRequestRequisition) -> Result<Requisition, InsertRequestRequisitionError>
-        + Sync
-        + Send;
+    type InsertLineMethod =
+        dyn Fn(InsertProgramRequestRequisition) -> Result<Requisition, ServiceError> + Sync + Send;
 
     pub struct TestService(pub Box<InsertLineMethod>);
 
@@ -122,7 +175,7 @@ mod test {
             &self,
             _: &ServiceContext,
             input: InsertProgramRequestRequisition,
-        ) -> Result<Requisition, InsertRequestRequisitionError> {
+        ) -> Result<Requisition, ServiceError> {
             self.0(input)
         }
     }
@@ -145,6 +198,46 @@ mod test {
             MockDataInserts::all(),
         )
         .await;
+
+        let mutation = r#"
+        mutation ($storeId: String, $input: InsertProgramRequestRequisitionInput!) {
+            insertProgramRequestRequisition(storeId: $storeId, input: $input) {
+              ... on InsertProgramRequestRequisitionError {
+                error {
+                  __typename
+                }
+              }
+            }
+          }
+        "#;
+
+        // MaxOrdersReachedForPeriod
+        let test_service = TestService(Box::new(|_| Err(ServiceError::MaxOrdersReachedForPeriod)));
+
+        let expected = json!({
+            "insertProgramRequestRequisition": {
+              "error": {
+                "__typename": "MaxOrdersReachedForPeriod"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(json!({
+              "input": {
+                "id": "id input",
+                "otherPartyId": "other party input",
+                "programOrderTypeId": "program_order_type_id",
+                "periodId": "period_id",
+              },
+              "storeId": "store_a"
+            })),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
 
         let mutation = r#"
         mutation ($storeId: String, $input: InsertProgramRequestRequisitionInput!) {

@@ -62,5 +62,6 @@ pub fn generate_batch(
         on_hold: false,
         note,
         supplier_id: Some(supplier_id.to_string()),
+        barcode_id: None,
     }
 }

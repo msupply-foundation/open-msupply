@@ -13,5 +13,5 @@ export type DraftItem = Pick<ItemRowFragment, 'id' | 'unitName'>;
 
 export type Draft = {
   item?: DraftItem;
-  barcode?: { id?: string; value: string; batch?: string };
+  barcode?: { id?: string; gtin: string; batch?: string };
 };

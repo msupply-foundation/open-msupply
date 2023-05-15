@@ -25,6 +25,7 @@ fragment RequestRow on RequisitionNode {
   theirReference
   type
   otherPartyId
+  approvalStatus
   linkedRequisition {
     approvalStatus
   }
@@ -487,8 +488,7 @@ fragment ProgramSettings on ProgramRequisitionSettingNode {
   programName
   programId
   suppliers {
-    id
-    name
+    ...NameRow
   }
   orderTypes {
     id

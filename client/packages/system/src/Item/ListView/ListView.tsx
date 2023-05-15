@@ -43,8 +43,7 @@ const ItemListComponent: FC = () => {
       'code',
       'name',
       {
-        accessor: ({ rowData }) =>
-          rowData.unitName ?? '',
+        accessor: ({ rowData }) => rowData.unitName ?? '',
         align: ColumnAlign.Right,
         key: 'unitName',
         label: 'label.unit',
@@ -112,7 +111,7 @@ const ItemListComponent: FC = () => {
 };
 
 export const ItemListView: FC = () => (
-  <TableProvider createStore={createTableStore()}>
+  <TableProvider createStore={createTableStore}>
     <ItemListComponent />
   </TableProvider>
 );

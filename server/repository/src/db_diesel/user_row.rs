@@ -12,6 +12,10 @@ table! {
         hashed_password -> Text,
         email -> Nullable<Text>,
         language -> crate::db_diesel::user_row::LanguageMapping,
+        first_name -> Nullable<Text>,
+        last_name -> Nullable<Text>,
+        phone_number -> Nullable<Text>,
+        job_title -> Nullable<Text>,
     }
 }
 
@@ -35,7 +39,7 @@ impl Default for Language {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq)]
 #[table_name = "user_account"]
 pub struct UserAccountRow {
     pub id: String,
@@ -43,6 +47,26 @@ pub struct UserAccountRow {
     pub hashed_password: String,
     pub email: Option<String>,
     pub language: Language,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub phone_number: Option<String>,
+    pub job_title: Option<String>,
+}
+
+impl Default for UserAccountRow {
+    fn default() -> Self {
+        Self {
+            id: "".to_string(),
+            username: "".to_string(),
+            hashed_password: "".to_string(),
+            email: None,
+            language: Default::default(),
+            first_name: None,
+            last_name: None,
+            phone_number: None,
+            job_title: None,
+        }
+    }
 }
 
 pub struct UserAccountRowRepository<'a> {
@@ -120,7 +144,7 @@ pub fn unknown_user() -> User {
             username: "unknown".to_string(),
             hashed_password: "unknown".to_string(),
             email: Some("unknown@sussol.net".to_string()),
-            language: Default::default(),
+            ..UserAccountRow::default()
         },
         stores: vec![],
     }

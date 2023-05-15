@@ -99,11 +99,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
 
     const { barcode } = draft;
     const barcodeExists = !!barcode?.id;
-    console.info(
-      `barcode: ${JSON.stringify(barcode)} currentItem: ${JSON.stringify(
-        currentItem
-      )} barcodeExists: ${barcodeExists})`
-    );
+
     if (!barcode || !currentItem || barcodeExists) return;
 
     // it is possible for the user to select multiple batch lines
@@ -115,7 +111,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
 
     const input = {
       input: {
-        value: barcode.value,
+        gtin: barcode.gtin,
         itemId: currentItem?.id,
         packSize,
       },
@@ -267,7 +263,7 @@ const TableWrapper: React.FC<TableProps> = ({
 
   return (
     <TableProvider
-      createStore={createTableStore()}
+      createStore={createTableStore}
       queryParamsStore={createQueryParamsStore({
         initialSortBy: { key: 'expiryDate' },
       })}
