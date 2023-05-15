@@ -65,6 +65,7 @@ mod repository_test {
                 note: None,
                 location_id: None,
                 supplier_id: Some(String::from("name1")),
+                barcode_id: None,
             }
         }
 

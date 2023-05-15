@@ -99,11 +99,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
 
     const { barcode } = draft;
     const barcodeExists = !!barcode?.id;
-    console.info(
-      `barcode: ${JSON.stringify(barcode)} currentItem: ${JSON.stringify(
-        currentItem
-      )} barcodeExists: ${barcodeExists})`
-    );
+
     if (!barcode || !currentItem || barcodeExists) return;
 
     // it is possible for the user to select multiple batch lines
