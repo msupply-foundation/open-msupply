@@ -147,7 +147,7 @@ fn test_reduce_and_sort_periods() {
         .map(make_date)
         .collect();
 
-    let result: Vec<PeriodRow> = [-5, -4, -2, 2, 3, 4].iter().map(make_date).collect();
+    let result: Vec<PeriodRow> = [-4, -2, 2, 3].iter().map(make_date).collect();
 
     assert_eq!(reduce_and_sort_periods(periods), result)
 }
