@@ -197,10 +197,10 @@ fn generate_location_movement(
 fn generate_barcode_row(
     connection: &StorageConnection,
     existing: StockLineRow,
-    value: String,
+    gtin: String,
 ) -> Result<Option<BarcodeRow>, RepositoryError> {
     // for an empty string, simply unlink the barcode
-    if value.is_empty() {
+    if gtin.is_empty() {
         return Ok(None);
     }
 
@@ -210,16 +210,16 @@ fn generate_barcode_row(
 
     let barcode_rows = BarcodeRepository::new(connection).query_by_filter(filter)?;
     let barcode_row = match barcode_rows.first() {
-        // barcode already exists - persist the value change if there is one
+        // barcode already exists - persist the gtin change if there is one
         Some(row) => BarcodeRow {
-            value,
+            gtin,
             ..row.barcode_row.clone()
         },
         None => {
             // barcode does not exist - create a new one
             BarcodeRow {
                 id: uuid(),
-                value,
+                gtin,
                 item_id: existing.item_id,
                 pack_size: Some(existing.pack_size),
                 ..Default::default()

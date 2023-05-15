@@ -19,7 +19,7 @@ pub struct Barcode {
 #[derive(Clone, PartialEq, Debug)]
 pub struct BarcodeFilter {
     pub id: Option<EqualFilter<String>>,
-    pub value: Option<EqualFilter<String>>,
+    pub gtin: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub pack_size: Option<EqualFilter<i32>>,
 }
@@ -63,11 +63,11 @@ impl<'a> BarcodeRepository<'a> {
                     apply_sort_no_case!(query, sort, barcode_dsl::id)
                 }
                 BarcodeSortField::Barcode => {
-                    apply_sort_no_case!(query, sort, barcode_dsl::value)
+                    apply_sort_no_case!(query, sort, barcode_dsl::gtin)
                 }
             }
         } else {
-            query = query.order(barcode_dsl::value.asc())
+            query = query.order(barcode_dsl::gtin.asc())
         }
 
         let result = query
@@ -105,7 +105,7 @@ fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedLogQuery {
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, barcode_dsl::id);
-        apply_equal_filter!(query, filter.value, barcode_dsl::value);
+        apply_equal_filter!(query, filter.gtin, barcode_dsl::gtin);
         apply_equal_filter!(query, filter.item_id, barcode_dsl::item_id);
         apply_equal_filter!(query, filter.pack_size, barcode_dsl::pack_size);
     }
@@ -121,7 +121,7 @@ impl BarcodeFilter {
     pub fn new() -> BarcodeFilter {
         BarcodeFilter {
             id: None,
-            value: None,
+            gtin: None,
             item_id: None,
             pack_size: None,
         }
@@ -132,8 +132,8 @@ impl BarcodeFilter {
         self
     }
 
-    pub fn value(mut self, filter: EqualFilter<String>) -> Self {
-        self.value = Some(filter);
+    pub fn gtin(mut self, filter: EqualFilter<String>) -> Self {
+        self.gtin = Some(filter);
         self
     }
 

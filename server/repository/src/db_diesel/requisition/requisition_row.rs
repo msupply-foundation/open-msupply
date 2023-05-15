@@ -43,7 +43,7 @@ table! {
 
 table! {
     #[sql_name = "requisition"]
-    requistion_is_sync_update (id) {
+    requisition_is_sync_update (id) {
         id -> Text,
         is_sync_update -> Bool,
     }
@@ -169,8 +169,8 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
-        diesel::update(requistion_is_sync_update::table.find(id))
-            .set(requistion_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
+        diesel::update(requisition_is_sync_update::table.find(id))
+            .set(requisition_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
             .execute(&self.connection.connection)?;
 
         Ok(())
@@ -221,9 +221,9 @@ impl<'a> RequisitionRowRepository<'a> {
 
     #[cfg(test)]
     fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = requistion_is_sync_update::table
+        let result = requisition_is_sync_update::table
             .find(id)
-            .select(requistion_is_sync_update::dsl::is_sync_update)
+            .select(requisition_is_sync_update::dsl::is_sync_update)
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
@@ -277,7 +277,7 @@ mod test {
         .await;
 
         let repo = RequisitionRowRepository::new(&connection);
-        // Two rows, to make sure is_sync_udpate update only affects one row
+        // Two rows, to make sure is_sync_update update only affects one row
         let row = mock_request_draft_requisition_all_fields().requisition;
         let row2 = mock_response_draft_requisition_all_fields().requisition;
         // First insert

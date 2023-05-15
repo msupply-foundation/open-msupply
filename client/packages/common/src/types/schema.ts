@@ -201,12 +201,12 @@ export type AuthTokenResponse = AuthToken | AuthTokenError;
 
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
+  gtin: Scalars['String'];
   id: Scalars['String'];
   itemId: Scalars['String'];
   manufacturerId?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   parentId?: Maybe<Scalars['String']>;
-  value: Scalars['String'];
 };
 
 export type BarcodeResponse = BarcodeNode | NodeError;
@@ -827,9 +827,9 @@ export enum InitialisationStatusType {
 export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
 export type InsertBarcodeInput = {
+  gtin: Scalars['String'];
   itemId: Scalars['String'];
   packSize?: InputMaybe<Scalars['Int']>;
-  value: Scalars['String'];
 };
 
 export type InsertBarcodeResponse = BarcodeNode;
@@ -2300,7 +2300,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  barcodeByValue: BarcodeResponse;
+  barcodeByGtin: BarcodeResponse;
   displaySettings: DisplaySettingsNode;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
@@ -2371,9 +2371,9 @@ export type QueriesAuthTokenArgs = {
 };
 
 
-export type QueriesBarcodeByValueArgs = {
+export type QueriesBarcodeByGtinArgs = {
+  gtin: Scalars['String'];
   storeId: Scalars['String'];
-  value: Scalars['String'];
 };
 
 
