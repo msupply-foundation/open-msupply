@@ -130,7 +130,7 @@ impl<'a> BarcodeRowRepository<'a> {
 
 #[cfg(test)]
 mod test {
-    use util::inline_init;
+    use util::{inline_init, uuid::uuid};
 
     use crate::{mock::MockDataInserts, test_db::setup_all, BarcodeRow, BarcodeRowRepository};
 
