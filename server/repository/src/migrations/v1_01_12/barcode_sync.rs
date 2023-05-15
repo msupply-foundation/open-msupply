@@ -42,7 +42,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 connection,
                 r#"
                     CREATE TRIGGER barcode_{operation}_trigger
-                    AFTER INSERT ON barcode
+                    AFTER {operation} ON barcode
                     BEGIN
                         INSERT INTO changelog (table_name, record_id, row_action, is_sync_update)
                         VALUES ("barcode", NEW.id, "UPSERT", NEW.is_sync_update);
