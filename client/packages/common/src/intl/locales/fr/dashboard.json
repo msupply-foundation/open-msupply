@@ -20,7 +20,7 @@
     "error.failed-to-create-requisition": "Impossible de créer le bon de commande {{message}}",
     "heading.shipments": "Livraisons",
     "inventory-management": "Gestion de stock",
-    "label.have-not-shipped": "N'a pas été expédié(e)",
+    "label.have-not-shipped": "Non finalisée(s)",
     "label.inbound-not-delivered": "Bons de livraison en transit",
     "label.more-than-six-months-stock-items_one": "Article avec plus de 6 mois de stock",
     "label.more-than-six-months-stock-items_other": "Articles avec plus de 6 mois de stock",
