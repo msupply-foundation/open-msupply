@@ -8,7 +8,7 @@ pub mod settings;
 pub mod site_info;
 mod sync_api_credentials;
 mod sync_buffer;
-mod sync_serde;
+pub(crate) mod sync_serde;
 pub mod sync_status;
 pub mod synchroniser;
 pub mod synchroniser_driver;

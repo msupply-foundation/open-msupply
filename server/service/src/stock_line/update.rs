@@ -1,8 +1,9 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, DatetimeFilter, EqualFilter, LocationMovementFilter,
-    LocationMovementRepository, LocationMovementRow, LocationMovementRowRepository,
-    RepositoryError, StockLine, StockLineRow, StockLineRowRepository, StorageConnection,
+    ActivityLogType, BarcodeFilter, BarcodeRepository, BarcodeRow, BarcodeRowRepository,
+    DatetimeFilter, EqualFilter, LocationMovementFilter, LocationMovementRepository,
+    LocationMovementRow, LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
+    StockLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -24,6 +25,7 @@ pub struct UpdateStockLine {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: Option<bool>,
     pub batch: Option<String>,
+    pub barcode: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -46,8 +48,13 @@ pub fn update_stock_line(
         .connection
         .transaction_sync(|connection| {
             let existing = validate(connection, &ctx.store_id, &input)?;
-            let (new_stock_line, location_movements) =
+            let (new_stock_line, location_movements, barcode_row) =
                 generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
+
+            if let Some(barcode_row) = barcode_row {
+                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
+            }
+
             StockLineRowRepository::new(&connection).upsert_one(&new_stock_line)?;
 
             if let Some(location_movements) = location_movements {
@@ -100,8 +107,16 @@ fn generate(
         expiry_date,
         batch,
         on_hold,
+        barcode,
     }: UpdateStockLine,
-) -> Result<(StockLineRow, Option<Vec<LocationMovementRow>>), UpdateStockLineError> {
+) -> Result<
+    (
+        StockLineRow,
+        Option<Vec<LocationMovementRow>>,
+        Option<BarcodeRow>,
+    ),
+    UpdateStockLineError,
+> {
     let location_movements = if location_id != existing.location_id {
         Some(generate_location_movement(
             store_id,
@@ -113,14 +128,25 @@ fn generate(
         None
     };
 
+    let barcode_row = match barcode {
+        Some(barcode) => generate_barcode_row(connection, existing.clone(), barcode.clone())?,
+        None => None,
+    };
+
+    let barcode_id = match barcode_row {
+        Some(ref barcode_row) => Some(barcode_row.id.clone()),
+        None => None,
+    };
+
     existing.location_id = location_id.or(existing.location_id);
     existing.batch = batch.or(existing.batch);
     existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
     existing.expiry_date = expiry_date.or(existing.expiry_date);
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
+    existing.barcode_id = barcode_id;
 
-    Ok((existing, location_movements))
+    Ok((existing, location_movements, barcode_row))
 }
 
 fn generate_location_movement(
@@ -166,6 +192,42 @@ fn generate_location_movement(
     });
 
     Ok(movement)
+}
+
+fn generate_barcode_row(
+    connection: &StorageConnection,
+    existing: StockLineRow,
+    gtin: String,
+) -> Result<Option<BarcodeRow>, RepositoryError> {
+    // for an empty string, simply unlink the barcode
+    if gtin.is_empty() {
+        return Ok(None);
+    }
+
+    let filter = BarcodeFilter::new()
+        .item_id(EqualFilter::equal_to(&existing.item_id))
+        .pack_size(EqualFilter::equal_to_i32(existing.pack_size));
+
+    let barcode_rows = BarcodeRepository::new(connection).query_by_filter(filter)?;
+    let barcode_row = match barcode_rows.first() {
+        // barcode already exists - persist the gtin change if there is one
+        Some(row) => BarcodeRow {
+            gtin,
+            ..row.barcode_row.clone()
+        },
+        None => {
+            // barcode does not exist - create a new one
+            BarcodeRow {
+                id: uuid(),
+                gtin,
+                item_id: existing.item_id,
+                pack_size: Some(existing.pack_size),
+                ..Default::default()
+            }
+        }
+    };
+
+    Ok(Some(barcode_row))
 }
 
 fn log_stock_changes(

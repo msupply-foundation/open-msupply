@@ -41,7 +41,6 @@ impl SyncRecordTester for RequisitionRecordTester {
             min_months_of_stock: 5.0,
             linked_requisition_id: None,
             approval_status: None,
-            is_sync_update: false,
             program_id: None,
             period_id: None,
             order_type: None,
@@ -60,7 +59,6 @@ impl SyncRecordTester for RequisitionRecordTester {
             snapshot_datetime: None,
             approved_quantity: 0,
             approval_comment: None,
-            is_sync_update: false,
         };
 
         let requisition_row_2 = inline_edit(&base_requisition_row, |mut d| {

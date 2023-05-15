@@ -1,6 +1,7 @@
 use crate::{
     requisition::common::{
-        check_requisition_exists, generate_requisition_user_id_update, get_lines_for_requisition,
+        check_approval_status, check_requisition_exists, generate_requisition_user_id_update,
+        get_lines_for_requisition,
     },
     service_provider::ServiceContext,
 };
@@ -9,7 +10,7 @@ use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
     EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, StorageConnection,
+    RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq)]
@@ -86,6 +87,10 @@ fn validate(
         return Err(OutError::CannotEditRequisition);
     }
 
+    if check_approval_status(&requisition_row) {
+        return Err(OutError::CannotEditRequisition);
+    }
+
     Ok(requisition_row)
 }
 
@@ -97,18 +102,25 @@ fn generate(
 ) -> Result<(Option<RequisitionRow>, Vec<RequisitionLineRow>), RepositoryError> {
     let lines = get_lines_for_requisition(connection, requisition_id)?;
 
+    // Use approved_quantity rather then requested_quantity if requisition was authorised
+    let no_approval_status = matches!(
+        existing_requisition_row.approval_status,
+        None | Some(RequisitionRowApprovalStatus::None)
+    );
+
     let result = lines
         .into_iter()
-        .map(
-            |RequisitionLine {
-                 mut requisition_line_row,
-                 ..
-             }| {
-                requisition_line_row.supply_quantity = requisition_line_row.requested_quantity;
+        .map(|line| {
+            let supply_quantity = match no_approval_status {
+                true => line.requisition_line_row.requested_quantity,
+                false => line.requisition_line_row.approved_quantity,
+            };
 
-                requisition_line_row
-            },
-        )
+            RequisitionLineRow {
+                supply_quantity,
+                ..line.requisition_line_row
+            }
+        })
         .collect();
 
     Ok((
@@ -132,7 +144,8 @@ mod test {
             mock_store_b, mock_user_account_b, MockDataInserts,
         },
         test_db::setup_all,
-        RequisitionRowRepository,
+        RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+        RequisitionRowApprovalStatus, RequisitionRowRepository,
     };
     use util::inline_edit;
 
@@ -214,6 +227,65 @@ mod test {
             .unwrap();
         let service = service_provider.requisition_service;
 
+        // Without approval
+        let result = service
+            .supply_requested_quantity(
+                &context,
+                SupplyRequestedQuantity {
+                    response_requisition_id: mock_new_response_requisition_test().requisition.id,
+                },
+            )
+            .unwrap();
+
+        let lines = get_lines_for_requisition(
+            &connection,
+            &mock_new_response_requisition_test().requisition.id,
+        )
+        .unwrap();
+
+        assert_eq!(result, lines);
+
+        for requisition_line in lines.iter() {
+            assert_eq!(
+                // vs requested_quantity
+                requisition_line.requisition_line_row.supply_quantity,
+                requisition_line.requisition_line_row.requested_quantity
+            )
+        }
+
+        let requisition = RequisitionRowRepository::new(&connection)
+            .find_one_by_id(&mock_new_response_requisition_test().requisition.id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(
+            requisition,
+            inline_edit(&requisition, |mut u| {
+                u.user_id = Some(mock_user_account_b().id);
+                u
+            })
+        );
+
+        // With approval status
+
+        RequisitionRowRepository::new(&connection)
+            .upsert_one(&RequisitionRow {
+                approval_status: Some(RequisitionRowApprovalStatus::Approved),
+                ..requisition
+            })
+            .unwrap();
+
+        let line_repo = RequisitionLineRowRepository::new(&connection);
+        for requisition_line_row in lines {
+            let row = requisition_line_row.requisition_line_row;
+            line_repo
+                .upsert_one(&RequisitionLineRow {
+                    approved_quantity: row.requested_quantity + 3,
+                    ..row
+                })
+                .unwrap();
+        }
+
         let result = service
             .supply_requested_quantity(
                 &context,
@@ -233,22 +305,10 @@ mod test {
 
         for requisition_line in lines {
             assert_eq!(
+                // vs approved_quantity
                 requisition_line.requisition_line_row.supply_quantity,
-                requisition_line.requisition_line_row.requested_quantity
+                requisition_line.requisition_line_row.approved_quantity
             )
         }
-
-        let requisition = RequisitionRowRepository::new(&connection)
-            .find_one_by_id(&mock_new_response_requisition_test().requisition.id)
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(
-            requisition,
-            inline_edit(&requisition, |mut u| {
-                u.user_id = Some(mock_user_account_b().id);
-                u
-            })
-        );
     }
 }

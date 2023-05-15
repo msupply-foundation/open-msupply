@@ -1,4 +1,5 @@
 use super::{
+    barcode_row::{barcode, barcode::dsl as barcode_dsl},
     item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     name_row::{name, name::dsl as name_dsl},
@@ -12,7 +13,7 @@ use crate::{
         apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, NameRow, Pagination,
+    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, NameRow, Pagination,
     SimpleStringFilter, Sort,
 };
 
@@ -27,6 +28,7 @@ pub struct StockLine {
     pub item_row: ItemRow,
     pub location_row: Option<LocationRow>,
     pub name_row: Option<NameRow>,
+    pub barcode_row: Option<BarcodeRow>,
 }
 
 pub enum StockLineSortField {
@@ -53,7 +55,13 @@ pub struct StockLineFilter {
 
 pub type StockLineSort = Sort<StockLineSortField>;
 
-type StockLineJoin = (StockLineRow, ItemRow, Option<LocationRow>, Option<NameRow>);
+type StockLineJoin = (
+    StockLineRow,
+    ItemRow,
+    Option<LocationRow>,
+    Option<NameRow>,
+    Option<BarcodeRow>,
+);
 pub struct StockLineRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -84,7 +92,7 @@ impl<'a> StockLineRepository<'a> {
         filter: StockLineFilter,
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None, store_id)
+        self.query(Pagination::all(), Some(filter), None, store_id)
     }
 
     pub fn query(
@@ -149,7 +157,10 @@ impl<'a> StockLineRepository<'a> {
 
 type BoxedStockLineQuery = IntoBoxed<
     'static,
-    LeftJoin<LeftJoin<InnerJoin<stock_line::table, item::table>, location::table>, name::table>,
+    LeftJoin<
+        LeftJoin<LeftJoin<InnerJoin<stock_line::table, item::table>, location::table>, name::table>,
+        barcode::table,
+    >,
     DBType,
 >;
 
@@ -158,6 +169,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         .inner_join(item_dsl::item)
         .left_join(location_dsl::location)
         .left_join(name_dsl::name)
+        .left_join(barcode_dsl::barcode)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -216,12 +228,15 @@ fn apply_item_filter(
     query
 }
 
-pub fn to_domain((stock_line_row, item_row, location_row, name_row): StockLineJoin) -> StockLine {
+pub fn to_domain(
+    (stock_line_row, item_row, location_row, name_row, barcode_row): StockLineJoin,
+) -> StockLine {
     StockLine {
         stock_line_row,
         item_row,
         location_row,
         name_row,
+        barcode_row,
     }
 }
 
@@ -290,6 +305,12 @@ impl StockLine {
         self.name_row
             .as_ref()
             .map(|name_row| name_row.name.as_str())
+    }
+
+    pub fn barcode(&self) -> Option<&str> {
+        self.barcode_row
+            .as_ref()
+            .map(|barcode_row| barcode_row.gtin.as_str())
     }
 }
 

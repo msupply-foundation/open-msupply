@@ -10,6 +10,7 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
+  ModalMode,
 } from '@openmsupply-client/common';
 import { toItemRow, LogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -25,7 +26,8 @@ import { OutboundLineFragment } from '../api/operations.generated';
 
 export const DetailView: FC = () => {
   const isDisabled = useOutbound.utils.isDisabled();
-  const { entity, mode, onOpen, onClose, isOpen } = useEditModal<Draft>();
+  const { entity, mode, onOpen, onClose, isOpen, setMode } =
+    useEditModal<Draft>();
   const { data, isLoading } = useOutbound.document.get();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
@@ -35,6 +37,10 @@ export const DetailView: FC = () => {
     },
     [toItemRow, onOpen]
   );
+  const onAddItem = (draft?: Draft) => {
+    onOpen(draft);
+    setMode(ModalMode.Create);
+  };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -43,7 +49,7 @@ export const DetailView: FC = () => {
       Component: (
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={onOpen}
+          onAddItem={onAddItem}
         />
       ),
       value: 'Details',
@@ -60,7 +66,7 @@ export const DetailView: FC = () => {
     >
       {data ? (
         <TableProvider
-          createStore={createTableStore()}
+          createStore={createTableStore}
           queryParamsStore={createQueryParamsStore<
             OutboundLineFragment | OutboundItem
           >({
@@ -69,7 +75,7 @@ export const DetailView: FC = () => {
             },
           })}
         >
-          <AppBarButtons onAddItem={onOpen} />
+          <AppBarButtons onAddItem={onAddItem} />
           {isOpen && (
             <OutboundLineEdit
               draft={entity}

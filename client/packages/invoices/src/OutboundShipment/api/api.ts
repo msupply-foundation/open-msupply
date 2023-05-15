@@ -23,7 +23,7 @@ import {
   InsertOutboundShipmentMutationVariables,
   Sdk,
   OutboundLineFragment,
-  BarcodeByValueQuery,
+  BarcodeByGtinQuery,
 } from './operations.generated';
 
 export type ListParams = {
@@ -155,14 +155,14 @@ const outboundParsers = {
 
 export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    barcodeByValue: async (
-      value: string
-    ): Promise<BarcodeByValueQuery['barcodeByValue']> => {
-      const result = await sdk.barcodeByValue({
-        value,
+    barcodeByGtin: async (
+      gtin: string
+    ): Promise<BarcodeByGtinQuery['barcodeByGtin']> => {
+      const result = await sdk.barcodeByGtin({
+        gtin,
         storeId,
       });
-      return result?.barcodeByValue;
+      return result?.barcodeByGtin;
     },
     list: async ({
       first,
@@ -237,7 +237,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       input: {
         itemId: string;
         packSize?: number | null;
-        value: string;
+        gtin: string;
       };
     }): Promise<string> => {
       const result =

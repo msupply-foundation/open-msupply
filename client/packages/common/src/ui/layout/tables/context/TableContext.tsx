@@ -41,18 +41,19 @@ export const TableProvider = <T extends RecordWithId>({
   createStore,
   queryParamsStore,
 }: PropsWithChildren<{
-  createStore: UseBoundStore<StoreApi<TableStore>>;
+  createStore: () => UseBoundStore<StoreApi<TableStore>>;
   queryParamsStore?: UseBoundStore<StoreApi<QueryParamsState<T>>>;
 }>) => {
   const { Provider } = tableContext;
+  const store = React.useMemo(createStore, []);
   return queryParamsStore ? (
-    <Provider value={createStore}>
+    <Provider value={store}>
       <QueryParamsProvider createStore={queryParamsStore}>
         {children}
       </QueryParamsProvider>
     </Provider>
   ) : (
-    <Provider value={createStore}>{children}</Provider>
+    <Provider value={store}>{children}</Provider>
   );
 };
 

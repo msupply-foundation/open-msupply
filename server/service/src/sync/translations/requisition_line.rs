@@ -4,8 +4,8 @@ use crate::sync::{
 };
 use chrono::NaiveDateTime;
 use repository::{
-    ChangelogRow, ChangelogTableName, RequisitionLineRow, RequisitionLineRowRepository,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, ItemRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
@@ -52,6 +52,9 @@ pub struct LegacyRequisitionLineRow {
     #[serde(rename = "om_snapshot_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub snapshot_datetime: Option<NaiveDateTime>,
+
+    #[serde(rename = "itemName")]
+    pub item_name: String,
 }
 
 pub(crate) struct RequisitionLineTranslation {}
@@ -81,7 +84,6 @@ impl SyncTranslation for RequisitionLineTranslation {
             snapshot_datetime: data.snapshot_datetime,
             approved_quantity: data.approved_quantity,
             approval_comment: data.approval_comment,
-            is_sync_update: true,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -127,13 +129,20 @@ impl SyncTranslation for RequisitionLineTranslation {
             snapshot_datetime,
             approved_quantity,
             approval_comment,
-            is_sync_update: _,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Requisition line row not found: {}",
                 changelog.record_id
             )))?;
+
+        // Required for backward compatibility (authorisation web app uses this to display item name)
+        let item_name = ItemRowRepository::new(connection)
+            .find_one_by_id(&item_id)?
+            .ok_or(anyhow::anyhow!(
+                "Item ({item_id}) not found in requisition line ({id})"
+            ))?
+            .name;
 
         let legacy_row = LegacyRequisitionLineRow {
             ID: id.clone(),
@@ -148,6 +157,7 @@ impl SyncTranslation for RequisitionLineTranslation {
             snapshot_datetime,
             approved_quantity,
             approval_comment,
+            item_name,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

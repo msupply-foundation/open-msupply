@@ -162,7 +162,7 @@ fragment Barcode on BarcodeNode {
   id
   itemId
   packSize
-  value
+  gtin
 }
 
 query invoices(
@@ -253,8 +253,8 @@ query invoiceCounts($storeId: String!, $timezoneOffset: Int) {
   }
 }
 
-query barcodeByValue($storeId: String!, $value: String!) {
-  barcodeByValue(storeId: $storeId, value: $value) {
+query barcodeByGtin($storeId: String!, $gtin: String!) {
+  barcodeByGtin(storeId: $storeId, gtin: $gtin) {
     ... on BarcodeNode {
       __typename
       ...Barcode

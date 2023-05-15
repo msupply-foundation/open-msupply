@@ -46,6 +46,7 @@ export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {
       onRowClick={onRowClick}
       columns={columns}
       data={lines}
+      enableColumnSelection
       noDataElement={
         <NothingHere
           body={t(

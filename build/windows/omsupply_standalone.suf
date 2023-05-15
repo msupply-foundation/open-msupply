@@ -3073,7 +3073,10 @@ Shell.DeleteShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop");
 <Event>
 <Name>On Post Uninstall</Name>
 <Args/>
-<Script/>
+<Script>local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";
+if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
+	Registry.DeleteValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN");
+end</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>
@@ -3369,6 +3372,21 @@ else
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Database", "sqlite", REG_SZ);
 end 
 
+-- Add a firewall rule to allow incoming requests
+local firewallRuleKey = "SYSTEM\\CurrentControlSet\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\FirewallRules";
+if (Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, firewallRuleKey)) then
+
+	Registry.SetValue(HKEY_LOCAL_MACHINE, firewallRuleKey, "open-mSupply-Server-TCP-IN", "v2.28|Action=Allow|Active=TRUE|Dir=In|Protocol=6|LPort=" .. SessionVar.Get("%omsupply_port%") .. "|Name=".. SessionVar.Get("%ProductName%") .. "|", REG_SZ);
+	
+	-- The firewall service requires restarting to detect the new rule
+	local firewallServiceName = "Windows Firewall";
+	queryResult = Service.Query(firewallServiceName, "");
+	if (queryResult == SERVICE_RUNNING) then
+		Service.Stop(firewallServiceName, "", 5);
+		Service.Start(firewallServiceName, "", nil);
+	end
+end
+
 Service.Create(SessionVar.Expand("%AppFolder%\\server\\omSupply-sqlite.exe"), "Open mSupply Server", "omsupply-server", SERVICE_WIN32_OWN_PROCESS, false, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, "", nil, nil, "", "");
 
 Service.Start("Open mSupply Server", "omsupply-server", nil);
@@ -3379,7 +3397,8 @@ if not hasOmsupplyStandaloneInstalled then
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Path", omSupplyDesktopPath, REG_SZ);
 
 	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
-end</Script>
+end
+</Script>
 <BookMarks count="0">
 </BookMarks>
 </Event>

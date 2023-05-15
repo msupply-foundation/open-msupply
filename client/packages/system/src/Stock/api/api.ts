@@ -41,6 +41,7 @@ const stockLineParsers = {
     expiryDate: patch.expiryDate,
     batch: patch.batch,
     onHold: patch.onHold,
+    barcode: patch.barcode,
   }),
 };
 
