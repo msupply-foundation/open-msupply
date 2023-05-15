@@ -80,7 +80,7 @@ export const useOutboundLineEditRows = (
       scannedBatchMismatchRows,
       placeholderRow,
     };
-  }, [rows, packSizeController]);
+  }, [rows, packSizeController.selected?.value]);
 
   const orderedRows = useMemo(() => {
     return [
