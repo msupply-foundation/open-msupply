@@ -28,10 +28,10 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
   const isShrinkThreshold = useIsScreen(shrinkThreshold);
 
   // On small screens, if the button shouldShrink, then
-  // only display a centered icon, with no text.
+  // only display a centred icon, with no text.
   const shrink = isShrinkThreshold && shouldShrink;
   const startIcon = shrink ? null : Icon;
-  const centeredIcon = shrink ? Icon : null;
+  const centredIcon = shrink ? Icon : null;
   const text = shrink ? null : label;
 
   return (
@@ -48,7 +48,7 @@ export const ButtonWithIcon: React.FC<ButtonWithIconProps> = ({
           aria-label={label}
           {...buttonProps}
         >
-          {centeredIcon}
+          {centredIcon}
           {text}
         </ShrinkableBaseButton>
       </span>
