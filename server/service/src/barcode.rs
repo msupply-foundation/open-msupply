@@ -13,13 +13,13 @@ pub const MIN_LIMIT: u32 = 1;
 
 pub struct InsertResult {
     pub id: String,
-    pub value: String,
+    pub gtin: String,
     pub item_id: String,
     pub pack_size: Option<i32>,
 }
 
 pub struct BarcodeInput {
-    pub value: String,
+    pub gtin: String,
     pub item_id: String,
     pub pack_size: Option<i32>,
 }
@@ -67,15 +67,15 @@ pub trait BarcodeServiceTrait: Sync + Send {
         })
     }
 
-    fn get_barcode_by_value(
+    fn get_barcode_by_gtin(
         &self,
         ctx: &ServiceContext,
-        value: &str,
+        gtin: &str,
     ) -> Result<Option<Barcode>, RepositoryError> {
         let repository = BarcodeRepository::new(&ctx.connection);
 
         Ok(repository
-            .query_by_filter(BarcodeFilter::new().value(EqualFilter::equal_to(value)))?
+            .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(gtin)))?
             .pop())
     }
 
@@ -91,7 +91,7 @@ pub trait BarcodeServiceTrait: Sync + Send {
                 let barcode_repository = BarcodeRepository::new(con);
                 let new_barcode = BarcodeRow {
                     id: uuid(),
-                    value: barcode.value.clone(),
+                    gtin: barcode.gtin.clone(),
                     item_id: barcode.item_id.clone(),
                     pack_size: barcode.pack_size,
                     manufacturer_id: None,
@@ -114,7 +114,7 @@ fn check_barcode_does_not_exist(
     connection: &StorageConnection,
     barcode: &BarcodeInput,
 ) -> Result<bool, RepositoryError> {
-    let mut filter = BarcodeFilter::new().value(EqualFilter::equal_to(&barcode.value));
+    let mut filter = BarcodeFilter::new().gtin(EqualFilter::equal_to(&barcode.gtin));
 
     if let Some(pack_size) = barcode.pack_size {
         filter = filter.pack_size(EqualFilter::equal_to_i32(pack_size))

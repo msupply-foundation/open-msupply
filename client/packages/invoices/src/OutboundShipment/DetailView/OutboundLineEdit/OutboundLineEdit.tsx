@@ -111,7 +111,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
 
     const input = {
       input: {
-        value: barcode.value,
+        gtin: barcode.gtin,
         itemId: currentItem?.id,
         packSize,
       },
