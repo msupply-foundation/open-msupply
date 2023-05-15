@@ -12,6 +12,7 @@ import {
   DatePickerInput,
   Formatter,
   InfoPanel,
+  SearchBar,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 
@@ -21,6 +22,7 @@ export const Toolbar: FC = () => {
   const { isLocked, stocktakeDate, description, update } =
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
   const onDelete = useStocktake.line.deleteSelected();
+  const { itemFilter, setItemFilter } = useStocktake.line.rows();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
@@ -66,7 +68,15 @@ export const Toolbar: FC = () => {
           {isDisabled && <InfoPanel message={infoMessage} />}
         </Grid>
 
-        <Grid item>
+        <Grid item display="flex" gap={1} justifyContent="flex-end">
+          <SearchBar
+            placeholder={t('placeholder.filter-items')}
+            value={itemFilter}
+            onChange={newValue => {
+              setItemFilter(newValue);
+            }}
+            debounceTime={0}
+          />
           <DropdownMenu disabled={isDisabled} label={t('label.actions')}>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
