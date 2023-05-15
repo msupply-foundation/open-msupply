@@ -5,7 +5,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"
         ALTER TABLE barcode ADD is_sync_update bool NOT NULL DEFAULT False;
-        ALTER TABLE public.barcode RENAME COLUMN value TO gtin;
+        ALTER TABLE barcode RENAME COLUMN value TO gtin;
         "#
     )?;
 

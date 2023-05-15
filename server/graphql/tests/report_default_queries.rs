@@ -45,25 +45,21 @@ mod tests {
         .await;
 
         // invoice
-
-        // TODO: fix this error
-        // "message": "\"UNKNOWN\" (\"\\\"\\\\\\\"no such column: barcode.gtin\\\\\\\"\\\"\")",
-
-        // let query = get_default_gql_query(DefaultQuery::Invoice).query;
-        // let mock_invoice = mock_outbound_shipment_a();
-        // let expected = json!({
-        //   "invoice": {
-        //     "id": mock_invoice.id
-        //   },
-        //   "store": {
-        //     "id": mock_invoice.store_id
-        //   }
-        // });
-        // let variables = Some(json!({
-        //     "storeId": mock_invoice.store_id,
-        //     "dataId": mock_invoice.id,
-        // }));
-        // assert_graphql_query!(&settings, &query, &variables, &expected, None);
+        let query = get_default_gql_query(DefaultQuery::Invoice).query;
+        let mock_invoice = mock_outbound_shipment_a();
+        let expected = json!({
+          "invoice": {
+            "id": mock_invoice.id
+          },
+          "store": {
+            "id": mock_invoice.store_id
+          }
+        });
+        let variables = Some(json!({
+            "storeId": mock_invoice.store_id,
+            "dataId": mock_invoice.id,
+        }));
+        assert_graphql_query!(&settings, &query, &variables, &expected, None);
 
         // stocktake
         let query = get_default_gql_query(DefaultQuery::Stocktake).query;
