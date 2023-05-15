@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   Checkbox,
   Grid,
@@ -69,6 +69,16 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
       error(t('error.unable-to-scan', { error: e }))();
     }
   };
+
+  useEffect(() => {
+    function handleKeyDown(this: HTMLElement, ev: KeyboardEvent) {
+      if (ev.ctrlKey && ev.key === 's') {
+        scanBarcode();
+      }
+    }
+    document.body.addEventListener('keydown', handleKeyDown);
+    return () => document.body.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <Grid
@@ -166,7 +176,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
               disabled={false}
               value={location}
               width={160}
-              onChange={(location) => {
+              onChange={location => {
                 onUpdate({ location, locationId: location?.id });
               }}
             />
