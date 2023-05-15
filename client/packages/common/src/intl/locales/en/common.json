@@ -164,6 +164,7 @@
   "label.auth-status": "Approval Status",
   "label.approved-quantity": "Approved Quantity",
   "label.approval-comment": "Approval Comment",
+  "label.group-by-item": "Group by Item",
   "label.on-hold": "On Hold",
   "label.order-history": "Order History",
   "label.order-type": "Order Type",
