@@ -13,6 +13,9 @@ import {
   Formatter,
   InfoPanel,
   SearchBar,
+  useIsGrouped,
+  Box,
+  Switch,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 
@@ -24,6 +27,7 @@ export const Toolbar: FC = () => {
   const onDelete = useStocktake.line.deleteSelected();
   const { itemFilter, setItemFilter } = useStocktake.line.rows();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
@@ -68,7 +72,13 @@ export const Toolbar: FC = () => {
           {isDisabled && <InfoPanel message={infoMessage} />}
         </Grid>
 
-        <Grid item display="flex" gap={1} justifyContent="flex-end">
+        <Grid
+          item
+          display="flex"
+          gap={1}
+          justifyContent="flex-end"
+          alignItems="center"
+        >
           <SearchBar
             placeholder={t('placeholder.filter-items')}
             value={itemFilter}
@@ -77,6 +87,15 @@ export const Toolbar: FC = () => {
             }}
             debounceTime={0}
           />
+          <Box sx={{ marginRight: 2 }}>
+            <Switch
+              label={t('label.group-by-item')}
+              onChange={toggleIsGrouped}
+              checked={isGrouped}
+              size="small"
+              color="secondary"
+            />
+          </Box>
           <DropdownMenu disabled={isDisabled} label={t('label.actions')}>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}

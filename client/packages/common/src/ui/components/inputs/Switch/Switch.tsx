@@ -94,6 +94,7 @@ export const Switch: React.FC<SwitchProps> = ({
 
   const labelStyle = {
     '& .MuiFormControlLabel-label': getLabelStyle(labelPlacement, size),
+    marginLeft: labelPlacement === 'start' ? 0 : undefined,
   };
 
   const styledSwitch = (
