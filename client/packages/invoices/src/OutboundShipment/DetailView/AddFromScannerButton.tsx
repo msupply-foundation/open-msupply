@@ -25,6 +25,8 @@ export const AddFromScannerButtonComponent = ({
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
 
+  if (!hasBarcodeScanner) return null;
+
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
       const { content, gtin, batch } = result;
@@ -73,7 +75,7 @@ export const AddFromScannerButtonComponent = ({
     [
       {
         id: 'action:scan-barcode',
-        name: `${label} (ctrl+s)`,
+        name: `${label} (Ctrl+s)`,
         shortcut: ['Control+s'],
         keywords: 'drawer, close',
         perform: handleClick,
@@ -81,8 +83,6 @@ export const AddFromScannerButtonComponent = ({
     ],
     [isScanning]
   );
-
-  if (!hasBarcodeScanner) return null;
 
   return (
     <ButtonWithIcon
