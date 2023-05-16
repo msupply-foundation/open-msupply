@@ -275,8 +275,6 @@ app.addListener(
       // Update stored fingerprint
       storedFingerprint = certificate.fingerprint;
       store.set(identifier, storedFingerprint);
-
-      return callback(false);
     }
 
     // storedFingerprint did not exist or it matched certificate fingerprint
