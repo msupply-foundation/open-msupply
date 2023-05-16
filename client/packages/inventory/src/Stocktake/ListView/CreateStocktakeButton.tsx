@@ -40,11 +40,18 @@ export const CreateStocktakeButton: React.FC<{
 }> = ({ modalController }) => {
   const t = useTranslation('inventory');
   const { mutateAsync, isLoading: isSaving } = useStocktake.document.insert();
+  const { user, storeId } = useAuthContext();
   const {
     data: masterListData,
     isLoading: isLoadingMasterLists,
     mutate: fetchMasterLists,
-  } = useMasterList.document.listAll({ key: 'name', direction: 'asc' });
+  } = useMasterList.document.listAll(
+    {
+      key: 'name',
+      direction: 'asc',
+    },
+    { existsForStoreId: { equalTo: storeId } }
+  );
   const {
     data: locationData,
     isLoading: isLoadingLocations,
@@ -54,7 +61,6 @@ export const CreateStocktakeButton: React.FC<{
     key: 'expiryDate',
     direction: 'asc',
   });
-  const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
   const [createStocktakeArgs, setCreateStocktakeArgs] =
     useState<CreateStocktakeArgs>(DEFAULT_ARGS);
