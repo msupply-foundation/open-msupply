@@ -12,7 +12,7 @@ export const useMasterListsAll = (
 ) => {
   const api = useMasterListApi();
   const result = useMutation(api.keys.sortedList(sortBy, filterBy), () =>
-    api.get.listAll({ sortBy, filterBy })
+    api.get.listAll({ sortBy, filter: filterBy })
   );
   return {
     ...result,
