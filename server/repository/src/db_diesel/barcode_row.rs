@@ -154,8 +154,11 @@ mod test {
 
     #[actix_rt::test]
     async fn barcode_is_sync_update() {
-        let (_, connection, _, _) =
-            setup_all("barcode_is_sync_update", MockDataInserts::none().items()).await;
+        let (_, connection, _, _) = setup_all(
+            "barcode_is_sync_update",
+            MockDataInserts::none().items().units(),
+        )
+        .await;
 
         let repo = BarcodeRowRepository::new(&connection);
 
