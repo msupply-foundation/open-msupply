@@ -25,6 +25,7 @@ fragment RequestRow on RequisitionNode {
   theirReference
   type
   otherPartyId
+  approvalStatus
   linkedRequisition {
     approvalStatus
   }

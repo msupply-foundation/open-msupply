@@ -60,7 +60,7 @@ const getButtonLabel =
 const useStatusChangeButton = () => {
   const { status, update } = useResponse.document.fields('status');
   const { success, error } = useNotification();
-  const t = useTranslation('replenishment');
+  const t = useTranslation('distribution');
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),

@@ -201,12 +201,12 @@ export type AuthTokenResponse = AuthToken | AuthTokenError;
 
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
+  gtin: Scalars['String'];
   id: Scalars['String'];
   itemId: Scalars['String'];
   manufacturerId?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   parentId?: Maybe<Scalars['String']>;
-  value: Scalars['String'];
 };
 
 export type BarcodeResponse = BarcodeNode | NodeError;
@@ -827,9 +827,9 @@ export enum InitialisationStatusType {
 export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
 export type InsertBarcodeInput = {
+  gtin: Scalars['String'];
   itemId: Scalars['String'];
   packSize?: InputMaybe<Scalars['Int']>;
-  value: Scalars['String'];
 };
 
 export type InsertBarcodeResponse = BarcodeNode;
@@ -1605,6 +1605,7 @@ export type MasterListFilterInput = {
   existsForNameId?: InputMaybe<EqualFilterStringInput>;
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isProgram?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<SimpleStringFilterInput>;
 };
 
@@ -2299,7 +2300,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  barcodeByValue: BarcodeResponse;
+  barcodeByGtin: BarcodeResponse;
   displaySettings: DisplaySettingsNode;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
@@ -2370,9 +2371,9 @@ export type QueriesAuthTokenArgs = {
 };
 
 
-export type QueriesBarcodeByValueArgs = {
+export type QueriesBarcodeByGtinArgs = {
+  gtin: Scalars['String'];
   storeId: Scalars['String'];
-  value: Scalars['String'];
 };
 
 
@@ -2964,6 +2965,7 @@ export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & Updat
 export type StockLineNode = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: Scalars['Float'];
+  barcode?: Maybe<Scalars['String']>;
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;
@@ -3644,6 +3646,7 @@ export type UpdateStockLineErrorInterface = {
 };
 
 export type UpdateStockLineInput = {
+  barcode?: InputMaybe<Scalars['String']>;
   batch?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
@@ -3739,8 +3742,12 @@ export type UserNode = {
   defaultStore?: Maybe<UserStoreNode>;
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
+  firstName?: Maybe<Scalars['String']>;
+  jobTitle?: Maybe<Scalars['String']>;
   language: LanguageType;
+  lastName?: Maybe<Scalars['String']>;
   permissions: UserStorePermissionConnector;
+  phoneNumber?: Maybe<Scalars['String']>;
   stores: UserStoreConnector;
   /** Internal user id */
   userId: Scalars['String'];
@@ -3763,6 +3770,7 @@ export enum UserPermission {
   Report = 'REPORT',
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
+  RequisitionSend = 'REQUISITION_SEND',
   ServerAdmin = 'SERVER_ADMIN',
   StocktakeMutate = 'STOCKTAKE_MUTATE',
   StocktakeQuery = 'STOCKTAKE_QUERY',

@@ -95,6 +95,10 @@ impl StockLineNode {
     pub async fn supplier_name(&self) -> Option<&str> {
         self.stock_line.supplier_name()
     }
+
+    pub async fn barcode(&self) -> Option<&str> {
+        self.stock_line.barcode()
+    }
 }
 
 #[derive(Union)]
