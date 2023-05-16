@@ -3,16 +3,13 @@ import {
   Divider,
   Box,
   DataTable,
-  NonNegativeNumberInput,
   useTranslation,
-  useDebounceCallback,
-  InvoiceNodeStatus,
   TableCell,
   styled,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController, useOutboundLineEditRows } from './hooks';
-import { DraftItem, useOutbound } from '../../api';
+import { DraftItem } from '../../api';
 import { useOutboundLineEditColumns } from './columns';
 import { shouldUpdatePlaceholder } from './utils';
 
@@ -22,13 +19,12 @@ export interface OutboundLineEditTableProps {
   rows: DraftOutboundLine[];
   item: DraftItem | null;
   allocatedQuantity: number;
-  allocatedPacks: number;
   batch?: string;
 }
 
 const PlaceholderCell = styled(TableCell)(({ theme }) => ({
   fontSize: 12,
-  padding: '4px 12px 4px 12px',
+  padding: '4px 20px 4px 12px',
   color: theme.palette.secondary.main,
 }));
 
@@ -38,20 +34,8 @@ const TotalCell = styled(TableCell)({
   fontWeight: 'bold',
 });
 
-const PlaceholderRow = ({
-  line,
-  onChange,
-  allocatedQuantity,
-}: {
-  line?: DraftOutboundLine;
-  onChange: (key: string, value: number, packSize: number) => void;
-  allocatedQuantity: number;
-}) => {
+const PlaceholderRow = ({ line }: { line?: DraftOutboundLine }) => {
   const t = useTranslation('distribution');
-  const { status } = useOutbound.document.fields('status');
-  // adding allocatedQuantity to the deps to prevent a captured enclosure - the onChange function
-  // is capturing the draftLines and using them to allocate when the placeholder changes
-  const debouncedOnChange = useDebounceCallback(onChange, [allocatedQuantity]);
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0
   );
@@ -70,29 +54,11 @@ const PlaceholderRow = ({
       <PlaceholderCell style={{ textAlign: 'right' }}>
         {placeholderBuffer}
       </PlaceholderCell>
-      <PlaceholderCell>
-        <Box>
-          <NonNegativeNumberInput
-            onChange={value => {
-              setPlaceholderBuffer(value);
-              debouncedOnChange(line.id, value, 1);
-            }}
-            value={placeholderBuffer}
-            disabled={status !== InvoiceNodeStatus.New}
-          />
-        </Box>
-      </PlaceholderCell>
     </tr>
   );
 };
 
-const TotalRow = ({
-  allocatedPacks,
-  allocatedQuantity,
-}: {
-  allocatedPacks: number;
-  allocatedQuantity: number;
-}) => {
+const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
   const t = useTranslation('distribution');
 
   return (
@@ -107,14 +73,6 @@ const TotalRow = ({
       >
         {allocatedQuantity}
       </TotalCell>
-      <TotalCell
-        style={{
-          textAlign: 'right',
-          paddingRight: 36,
-        }}
-      >
-        {allocatedPacks}
-      </TotalCell>
     </tr>
   );
 };
@@ -125,7 +83,6 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   rows,
   item,
   allocatedQuantity,
-  allocatedPacks,
   batch,
 }) => {
   const t = useTranslation('distribution');
@@ -150,22 +107,13 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   });
 
   const additionalRows = [
-    <PlaceholderRow
-      line={placeholderRow}
-      onChange={onChange}
-      key="placeholder-row"
-      allocatedQuantity={allocatedQuantity}
-    />,
+    <PlaceholderRow line={placeholderRow} key="placeholder-row" />,
     <tr key="divider-row">
       <td colSpan={10}>
         <Divider margin={10} />
       </td>
     </tr>,
-    <TotalRow
-      key="total-row"
-      allocatedQuantity={allocatedQuantity}
-      allocatedPacks={allocatedPacks}
-    />,
+    <TotalRow key="total-row" allocatedQuantity={allocatedQuantity} />,
   ];
 
   return (
