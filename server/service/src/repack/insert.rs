@@ -280,6 +280,8 @@ mod test {
                 pack_size: 2,
                 cost_price_per_pack: mock_stock_line_a().cost_price_per_pack * 2.0,
                 sell_price_per_pack: mock_stock_line_a().sell_price_per_pack * 2.0,
+                total_before_tax: (mock_stock_line_a().cost_price_per_pack * 2.0) * 4.0,
+                total_after_tax: (mock_stock_line_a().cost_price_per_pack * 2.0) * 4.0,
                 r#type: InvoiceLineRowType::StockIn,
                 number_of_packs: 4.0,
                 ..Default::default()
@@ -300,6 +302,8 @@ mod test {
                 pack_size: mock_stock_line_a().pack_size,
                 cost_price_per_pack: mock_stock_line_a().cost_price_per_pack,
                 sell_price_per_pack: mock_stock_line_a().sell_price_per_pack,
+                total_after_tax: mock_stock_line_a().cost_price_per_pack * 8.0,
+                total_before_tax: mock_stock_line_a().cost_price_per_pack * 8.0,
                 r#type: InvoiceLineRowType::StockOut,
                 number_of_packs: 8.0,
                 ..Default::default()
