@@ -52,7 +52,7 @@
     "label.no-unallocated-rows-selected": "Tous les lignes sélectionnées sont déjà allouées",
     "label.packs-of_one": "emb. de",
     "label.packs-of_other": "emb. de",
-    "label.placeholder": "Placeholder",
+    "label.placeholder": "En attente",
     "label.delete": "Supprimer",
     "label.shipment": "Bon de livraison",
     "label.requested-quantity": "Qté demandée",
@@ -116,5 +116,9 @@
     "error.no-matching-item": "Aucun article correspondant",
     "error.unable-to-save-barcode": "Impossible de sauver le code-barre pour cet article : {{error}}",
     "button.stop": "Stop",
-    "error.unable-to-start-scanning": "Impossible de scanner : {{error}}"
+    "error.unable-to-start-scanning": "Impossible de scanner : {{error}}",
+    "messages.confirm-status-as": "Êtes vous sûr(e) de vouloir confirmer le statut comme $t({{status}}) ?",
+    "heading.supply-to-approved": "Fournir les quantités autorisées",
+    "messages.supply-to-approved": "Etes vous sûr(e) de vouloir définir les quantités à fournir avec les quantités autorisées pour toutes les lignes ?",
+    "button.supply-to-approved": "Fournir Qtés Autorisées"
 }
