@@ -101,6 +101,10 @@ fn generate_invoice_and_lines(
         number_of_packs: new_stock_line.total_number_of_packs,
         cost_price_per_pack: new_stock_line.cost_price_per_pack,
         sell_price_per_pack: new_stock_line.sell_price_per_pack,
+        total_before_tax: new_stock_line.cost_price_per_pack
+            * new_stock_line.total_number_of_packs as f64,
+        total_after_tax: new_stock_line.cost_price_per_pack
+            * new_stock_line.total_number_of_packs as f64,
         ..Default::default()
     };
 
@@ -113,6 +117,8 @@ fn generate_invoice_and_lines(
         number_of_packs: number_of_packs_input,
         cost_price_per_pack: stock_line_to_update.cost_price_per_pack,
         sell_price_per_pack: stock_line_to_update.sell_price_per_pack,
+        total_before_tax: stock_line_to_update.cost_price_per_pack * number_of_packs_input as f64,
+        total_after_tax: stock_line_to_update.cost_price_per_pack * number_of_packs_input as f64,
         ..stock_in.clone()
     };
 
