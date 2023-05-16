@@ -223,7 +223,7 @@ const store = new ElectronStore<StoreType>();
 
 app.addListener(
   'certificate-error',
-  (event, _webContents, url, error, certificate, callback) => {
+  async (event, _webContents, url, error, certificate, callback) => {
     // We are only handling self signed certificate errors
     if (
       error != 'net::ERR_CERT_INVALID' &&
@@ -259,11 +259,22 @@ app.addListener(
       // If fingerprint does not match
     } else if (storedFingerprint != certificate.fingerprint) {
       // Display error message and go back to discovery
-      dialog.showErrorBox(
-        'SSL Error',
-        'Certificate fingerprint for server was changed'
-      );
-      ipcMain.emit(IPC_MESSAGES.GO_BACK_TO_DISCOVERY);
+      const returnValue = await dialog.showMessageBox({
+        type: 'warning',
+        buttons: ['No', 'Yes'],
+        title: 'SSL Error',
+        message:
+          'The security certificate on the server has changed!\r\n\r\nThis can happen when the server is reinstalled, so may be normal, but please check with your IT department if you are unsure.\r\n\r\nWould you like to accept the new certificate? ',
+      });
+
+      if (returnValue.response === 0) {
+        ipcMain.emit(IPC_MESSAGES.GO_BACK_TO_DISCOVERY);
+        return callback(false);
+      }
+
+      // Update stored fingerprint
+      storedFingerprint = certificate.fingerprint;
+      store.set(identifier, storedFingerprint);
 
       return callback(false);
     }
