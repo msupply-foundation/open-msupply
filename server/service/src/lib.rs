@@ -11,6 +11,7 @@ pub mod app_data;
 pub mod auth;
 pub mod auth_data;
 pub mod barcode;
+mod common_stock;
 pub mod dashboard;
 pub mod display_settings_service;
 pub mod inventory_adjustment_reason;

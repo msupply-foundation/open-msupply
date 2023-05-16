@@ -111,6 +111,7 @@ Transfer integration test follow this pattern:
 * As per normal tests, you should be testing both databases
 * When tests fail, you can uncomment `util::init_logger(util::LogLevel::Warn);`, in the test methods
 * Sometimes central server seems to get overloaded and returns 'connection closed before message completed' or 'Site record locked preventing authentication update' for that reason 'with_retry' was added
+* All ids and unique field must be generated (to avoid duplicates), single 4d data file should be able to run more then one full integration test.
 
 Full test including integration can be run with:
 ```bash

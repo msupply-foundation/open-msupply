@@ -96,9 +96,9 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InvoiceLineRowRepository, InvoiceRowRepository, LocationMovement,
-        LocationMovementFilter, LocationMovementRepository, StockLineFilter, StockLineRepository,
-        StockLineRow, StockLineRowRepository,
+        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType,
+        InvoiceRowRepository, LocationMovement, LocationMovementFilter, LocationMovementRepository,
+        LocationMovementRow, StockLineFilter, StockLineRepository, StockLineRow, StorageConnection,
     };
     use util::{inline_edit, inline_init};
 
@@ -175,6 +175,13 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_repack_success() {
+        struct SortedInvoiceAndStock {
+            in_line: InvoiceLineRow,
+            out_line: InvoiceLineRow,
+            updated_stock: StockLineRow,
+            new_stock: StockLineRow,
+        }
+
         let stock_line_a = StockLineRow {
             id: "stock_line_a".to_string(),
             item_id: "item_a".to_string(),
@@ -186,6 +193,36 @@ mod test {
             total_number_of_packs: 100.0,
             ..Default::default()
         };
+
+        fn sort_invoice_lines(
+            connection: &StorageConnection,
+            invoice_id: &str,
+        ) -> SortedInvoiceAndStock {
+            let invoice_lines = InvoiceLineRepository::new(&connection)
+                .query_by_filter(
+                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)),
+                )
+                .unwrap();
+
+            let (in_line, out_line) =
+                if invoice_lines[0].invoice_line_row.r#type == InvoiceLineRowType::StockIn {
+                    (invoice_lines[0].clone(), invoice_lines[1].clone())
+                } else {
+                    (invoice_lines[1].clone(), invoice_lines[0].clone())
+                };
+
+            let (new_stock, updated_stock) = (
+                in_line.stock_line_option.clone().unwrap(),
+                out_line.stock_line_option.clone().unwrap(),
+            );
+
+            SortedInvoiceAndStock {
+                in_line: in_line.invoice_line_row,
+                out_line: out_line.invoice_line_row,
+                updated_stock,
+                new_stock,
+            }
+        }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "insert_repack_success",
@@ -203,8 +240,6 @@ mod test {
         let service = service_provider.repack_service;
 
         let invoice_repo = InvoiceRowRepository::new(&connection);
-        let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
-        let stock_line_repo = StockLineRowRepository::new(&connection);
 
         // Repack increase where stock pack size == one
         let increased_pack_size = service
@@ -221,39 +256,79 @@ mod test {
         let invoice = invoice_repo
             .find_one_by_id(&increased_pack_size.invoice_row.id)
             .unwrap();
-        let invoice_lines = invoice_line_repo
-            .find_many_by_invoice_id(&invoice.id)
-            .unwrap();
 
-        let stock_line_ids: Vec<String> = invoice_lines
-            .iter()
-            .map(|line| line.stock_line_id.clone().unwrap())
-            .collect();
-        let stock_lines = stock_line_repo.find_many_by_ids(&stock_line_ids).unwrap();
+        let SortedInvoiceAndStock {
+            in_line,
+            out_line,
+            updated_stock,
+            new_stock,
+        } = sort_invoice_lines(&connection, &invoice.id);
 
-        assert_eq!(invoice_lines.len(), 2);
-        // New stock line
+        // Check invoice lines have been generated correctly
         assert_eq!(
-            stock_lines[0],
-            inline_init(|s: &mut StockLineRow| {
-                s.id = stock_lines[0].id.clone();
-                s.item_id = mock_stock_line_a().item_id.clone();
-                s.store_id = mock_stock_line_a().store_id.clone();
-                s.supplier_id = mock_stock_line_a().supplier_id.clone();
-                s.available_number_of_packs = 4.0;
-                s.total_number_of_packs = 4.0;
-                s.pack_size = 2;
-                s.cost_price_per_pack = mock_stock_line_a().cost_price_per_pack * 2.0;
-                s.sell_price_per_pack = mock_stock_line_a().sell_price_per_pack * 2.0;
-            })
+            in_line,
+            InvoiceLineRow {
+                id: in_line.id.clone(),
+                invoice_id: invoice.id.clone(),
+                item_id: "item_a".to_string(),
+                item_name: "Item A".to_string(),
+                item_code: "item_a_code".to_string(),
+                stock_line_id: Some(new_stock.id.clone()),
+                location_id: mock_stock_line_a().location_id,
+                batch: mock_stock_line_a().batch,
+                expiry_date: mock_stock_line_a().expiry_date,
+                pack_size: 2,
+                cost_price_per_pack: mock_stock_line_a().cost_price_per_pack * 2.0,
+                sell_price_per_pack: mock_stock_line_a().sell_price_per_pack * 2.0,
+                r#type: InvoiceLineRowType::StockIn,
+                number_of_packs: 4.0,
+                ..Default::default()
+            }
         );
         assert_eq!(
-            stock_lines[1],
-            inline_edit(&mock_stock_line_a(), |mut s| {
-                s.available_number_of_packs = 22.0;
-                s.total_number_of_packs = 32.0;
-                s
-            })
+            out_line,
+            InvoiceLineRow {
+                id: out_line.id.clone(),
+                invoice_id: invoice.id.clone(),
+                item_id: mock_stock_line_a().item_id,
+                item_name: "Item A".to_string(),
+                item_code: "item_a_code".to_string(),
+                stock_line_id: Some(mock_stock_line_a().id),
+                location_id: mock_stock_line_a().location_id,
+                batch: mock_stock_line_a().batch,
+                expiry_date: mock_stock_line_a().expiry_date,
+                pack_size: mock_stock_line_a().pack_size,
+                cost_price_per_pack: mock_stock_line_a().cost_price_per_pack,
+                sell_price_per_pack: mock_stock_line_a().sell_price_per_pack,
+                r#type: InvoiceLineRowType::StockOut,
+                number_of_packs: 8.0,
+                ..Default::default()
+            }
+        );
+
+        // Check stock lines have been generated correctly
+        assert_eq!(
+            new_stock,
+            StockLineRow {
+                id: new_stock.id.clone(),
+                item_id: mock_stock_line_a().item_id,
+                store_id: mock_stock_line_a().store_id,
+                supplier_id: mock_stock_line_a().supplier_id,
+                available_number_of_packs: 4.0,
+                total_number_of_packs: 4.0,
+                pack_size: 2,
+                cost_price_per_pack: mock_stock_line_a().cost_price_per_pack * 2.0,
+                sell_price_per_pack: mock_stock_line_a().sell_price_per_pack * 2.0,
+                ..Default::default()
+            }
+        );
+        assert_eq!(
+            updated_stock,
+            StockLineRow {
+                available_number_of_packs: mock_stock_line_a().available_number_of_packs - 8.0,
+                total_number_of_packs: mock_stock_line_a().total_number_of_packs - 8.0,
+                ..mock_stock_line_a()
+            }
         );
 
         // Repack increase where size != 1
@@ -271,39 +346,35 @@ mod test {
         let invoice = invoice_repo
             .find_one_by_id(&increased_pack_size.invoice_row.id)
             .unwrap();
-        let invoice_lines = invoice_line_repo
-            .find_many_by_invoice_id(&invoice.id)
-            .unwrap();
 
-        let stock_line_ids: Vec<String> = invoice_lines
-            .iter()
-            .map(|line| line.stock_line_id.clone().unwrap())
-            .collect();
-        let stock_lines = stock_line_repo.find_many_by_ids(&stock_line_ids).unwrap();
+        let SortedInvoiceAndStock {
+            in_line: _,
+            out_line: _,
+            updated_stock,
+            new_stock,
+        } = sort_invoice_lines(&connection, &invoice.id);
+
         let difference = 6.0 / stock_line_a.pack_size as f64;
 
-        // New stock line
         assert_eq!(
-            stock_lines[0],
-            inline_init(|s: &mut StockLineRow| {
-                s.id = stock_lines[0].id.clone();
-                s.item_id = stock_line_a.item_id.clone();
-                s.store_id = stock_line_a.store_id.clone();
-                s.supplier_id = stock_line_a.supplier_id.clone();
-                s.available_number_of_packs = 5.0;
-                s.total_number_of_packs = 5.0;
-                s.pack_size = 6;
-                s.cost_price_per_pack = stock_line_a.cost_price_per_pack * difference;
-                s.sell_price_per_pack = stock_line_a.sell_price_per_pack * difference;
-            })
+            new_stock,
+            StockLineRow {
+                id: new_stock.id.clone(),
+                available_number_of_packs: 5.0,
+                total_number_of_packs: 5.0,
+                pack_size: 6,
+                cost_price_per_pack: stock_line_a.cost_price_per_pack * difference,
+                sell_price_per_pack: stock_line_a.sell_price_per_pack * difference,
+                ..stock_line_a.clone()
+            }
         );
         assert_eq!(
-            stock_lines[1],
-            inline_edit(&stock_line_a, |mut s| {
-                s.available_number_of_packs = 94.0;
-                s.total_number_of_packs = 94.0;
-                s
-            })
+            updated_stock,
+            StockLineRow {
+                available_number_of_packs: 94.0,
+                total_number_of_packs: 94.0,
+                ..stock_line_a
+            }
         );
 
         // Repack all
@@ -321,38 +392,35 @@ mod test {
         let invoice = invoice_repo
             .find_one_by_id(&repack_all.invoice_row.id)
             .unwrap();
-        let invoice_lines = invoice_line_repo
-            .find_many_by_invoice_id(&invoice.id)
-            .unwrap();
 
-        let stock_line_ids: Vec<String> = invoice_lines
-            .iter()
-            .map(|line| line.stock_line_id.clone().unwrap())
-            .collect();
-        let stock_lines = stock_line_repo.find_many_by_ids(&stock_line_ids).unwrap();
+        let SortedInvoiceAndStock {
+            in_line: _,
+            out_line: _,
+            updated_stock,
+            new_stock,
+        } = sort_invoice_lines(&connection, &invoice.id);
+
         let difference = 11.0 / mock_stock_line_a().pack_size as f64;
 
         assert_eq!(
-            stock_lines[0],
-            inline_init(|s: &mut StockLineRow| {
-                s.id = stock_lines[0].id.clone();
-                s.item_id = mock_stock_line_a().item_id.clone();
-                s.store_id = mock_stock_line_a().store_id.clone();
-                s.supplier_id = mock_stock_line_a().supplier_id.clone();
-                s.available_number_of_packs = 2.0;
-                s.total_number_of_packs = 2.0;
-                s.pack_size = 11;
-                s.cost_price_per_pack = mock_stock_line_a().cost_price_per_pack * difference;
-                s.sell_price_per_pack = mock_stock_line_a().sell_price_per_pack * difference;
-            })
+            new_stock,
+            StockLineRow {
+                id: new_stock.id.clone(),
+                available_number_of_packs: 2.0,
+                total_number_of_packs: 2.0,
+                pack_size: 11,
+                cost_price_per_pack: mock_stock_line_a().cost_price_per_pack * difference,
+                sell_price_per_pack: mock_stock_line_a().sell_price_per_pack * difference,
+                ..mock_stock_line_a()
+            }
         );
         assert_eq!(
-            stock_lines[1],
-            inline_edit(&mock_stock_line_a(), |mut s| {
-                s.available_number_of_packs = 0.0;
-                s.total_number_of_packs = 0.0;
-                s
-            })
+            updated_stock,
+            StockLineRow {
+                available_number_of_packs: 0.0,
+                total_number_of_packs: 10.0,
+                ..mock_stock_line_a()
+            }
         );
 
         // Repack stock line to one
@@ -370,40 +438,37 @@ mod test {
         let invoice = invoice_repo
             .find_one_by_id(&decreased_pack_size_to_one.invoice_row.id)
             .unwrap();
-        let invoice_lines = invoice_line_repo
-            .find_many_by_invoice_id(&invoice.id)
-            .unwrap();
 
-        let stock_line_ids: Vec<String> = invoice_lines
-            .iter()
-            .map(|line| line.stock_line_id.clone().unwrap())
-            .collect();
-        let stock_lines = stock_line_repo.find_many_by_ids(&stock_line_ids).unwrap();
+        let SortedInvoiceAndStock {
+            in_line: _,
+            out_line: _,
+            updated_stock,
+            new_stock,
+        } = sort_invoice_lines(&connection, &invoice.id);
 
         assert_eq!(
-            stock_lines[0],
-            inline_init(|s: &mut StockLineRow| {
-                s.id = stock_lines[0].id.clone();
-                s.item_id = mock_stock_line_si_d()[1].item_id.clone();
-                s.store_id = mock_stock_line_si_d()[1].store_id.clone();
-                s.supplier_id = mock_stock_line_si_d()[1].supplier_id.clone();
-                s.batch = mock_stock_line_si_d()[1].batch.clone();
-                s.expiry_date = mock_stock_line_si_d()[1].expiry_date.clone();
-                s.available_number_of_packs = 3.0;
-                s.total_number_of_packs = 3.0;
-                s.pack_size = 1;
-                s.cost_price_per_pack = mock_stock_line_si_d()[1].cost_price_per_pack / 3.0;
-                s.sell_price_per_pack = mock_stock_line_si_d()[1].sell_price_per_pack / 3.0;
-            })
-        );
-
-        assert_eq!(
-            stock_lines[1],
-            inline_edit(&mock_stock_line_si_d()[1], |mut s| {
-                s.available_number_of_packs = 1.0;
-                s.total_number_of_packs = 1.0;
+            inline_edit(&new_stock, |mut s| {
+                s.sell_price_per_pack =
+                    (mock_stock_line_si_d()[1].sell_price_per_pack / 3.0).round();
                 s
-            })
+            }),
+            StockLineRow {
+                id: new_stock.id.clone(),
+                available_number_of_packs: 3.0,
+                total_number_of_packs: 3.0,
+                pack_size: 1,
+                cost_price_per_pack: mock_stock_line_si_d()[1].cost_price_per_pack / 3.0,
+                sell_price_per_pack: (mock_stock_line_si_d()[1].sell_price_per_pack / 3.0).round(),
+                ..mock_stock_line_si_d()[1].clone()
+            }
+        );
+        assert_eq!(
+            updated_stock,
+            StockLineRow {
+                available_number_of_packs: 1.0,
+                total_number_of_packs: 1.0,
+                ..mock_stock_line_si_d()[1].clone()
+            }
         );
 
         // Repack stock line with location
@@ -422,68 +487,62 @@ mod test {
         let invoice = invoice_repo
             .find_one_by_id(&decreased_pack_size.invoice_row.id)
             .unwrap();
-        let invoice_lines = invoice_line_repo
-            .find_many_by_invoice_id(&invoice.id)
-            .unwrap();
 
-        let stock_line_ids: Vec<String> = invoice_lines
-            .iter()
-            .map(|line| line.stock_line_id.clone().unwrap())
-            .collect();
-        let stock_lines = stock_line_repo.find_many_by_ids(&stock_line_ids).unwrap();
+        let SortedInvoiceAndStock {
+            in_line: _,
+            out_line: _,
+            updated_stock,
+            new_stock,
+        } = sort_invoice_lines(&connection, &invoice.id);
         let difference = 3.0 / mock_stock_line_ci_c()[1].pack_size as f64;
 
         assert_eq!(
-            stock_lines[0],
-            inline_init(|s: &mut StockLineRow| {
-                s.id = stock_lines[0].id.clone();
-                s.item_id = mock_stock_line_ci_c()[1].item_id.clone();
-                s.store_id = mock_stock_line_ci_c()[1].store_id.clone();
-                s.supplier_id = mock_stock_line_ci_c()[1].supplier_id.clone();
-                s.batch = mock_stock_line_ci_c()[1].batch.clone();
-                s.expiry_date = mock_stock_line_ci_c()[1].expiry_date.clone();
-                s.available_number_of_packs = 7.0;
-                s.total_number_of_packs = 7.0;
-                s.pack_size = 3;
-                s.cost_price_per_pack = mock_stock_line_ci_c()[1].cost_price_per_pack * difference;
-                s.sell_price_per_pack = mock_stock_line_ci_c()[1].sell_price_per_pack * difference;
-                s.location_id = Some(mock_location_1().id.clone());
-            })
+            new_stock,
+            StockLineRow {
+                id: new_stock.id.clone(),
+                location_id: Some(mock_location_1().id),
+                available_number_of_packs: 7.0,
+                total_number_of_packs: 7.0,
+                pack_size: 3,
+                cost_price_per_pack: mock_stock_line_ci_c()[1].cost_price_per_pack * difference,
+                sell_price_per_pack: mock_stock_line_ci_c()[1].sell_price_per_pack * difference,
+                ..mock_stock_line_ci_c()[1].clone()
+            }
         );
         assert_eq!(
-            stock_lines[1],
-            inline_edit(&mock_stock_line_ci_c()[1], |mut s| {
-                s.available_number_of_packs = 17.0;
-                s.total_number_of_packs = 18.0;
-                s
-            })
+            updated_stock,
+            StockLineRow {
+                available_number_of_packs: 17.0,
+                total_number_of_packs: 18.0,
+                ..mock_stock_line_ci_c()[1].clone()
+            }
         );
 
         let enter_location_movement = LocationMovementRepository::new(&connection)
             .query_by_filter(
-                LocationMovementFilter::new()
-                    .stock_line_id(EqualFilter::equal_to(&stock_lines[0].id)),
+                LocationMovementFilter::new().stock_line_id(EqualFilter::equal_to(&new_stock.id)),
             )
             .unwrap()
             .pop()
             .unwrap();
         assert_eq!(
             enter_location_movement,
-            inline_init(|l: &mut LocationMovement| {
-                l.location_movement_row.id =
-                    enter_location_movement.location_movement_row.id.clone();
-                l.location_movement_row.store_id = mock_store_a().id.clone();
-                l.location_movement_row.location_id = Some(mock_location_1().id.clone());
-                l.location_movement_row.stock_line_id = stock_lines[0].id.clone();
-                l.location_movement_row.enter_datetime =
-                    enter_location_movement.location_movement_row.enter_datetime;
-            })
+            LocationMovement {
+                location_movement_row: LocationMovementRow {
+                    id: enter_location_movement.location_movement_row.id.clone(),
+                    store_id: mock_store_a().id.clone(),
+                    stock_line_id: new_stock.id.clone(),
+                    location_id: Some(mock_location_1().id.clone()),
+                    enter_datetime: enter_location_movement.location_movement_row.enter_datetime,
+                    ..Default::default()
+                }
+            }
         );
 
         let exit_location_movement = LocationMovementRepository::new(&connection)
             .query_by_filter(
                 LocationMovementFilter::new()
-                    .stock_line_id(EqualFilter::equal_to(&stock_lines[1].id)),
+                    .stock_line_id(EqualFilter::equal_to(&updated_stock.id)),
             )
             .unwrap()
             .pop()
@@ -491,14 +550,15 @@ mod test {
 
         assert_eq!(
             exit_location_movement,
-            inline_init(|l: &mut LocationMovement| {
-                l.location_movement_row.id =
-                    exit_location_movement.location_movement_row.id.clone();
-                l.location_movement_row.store_id = mock_store_a().id.clone();
-                l.location_movement_row.stock_line_id = stock_lines[1].id.clone();
-                l.location_movement_row.exit_datetime =
-                    exit_location_movement.location_movement_row.exit_datetime;
-            })
+            LocationMovement {
+                location_movement_row: LocationMovementRow {
+                    id: exit_location_movement.location_movement_row.id.clone(),
+                    store_id: mock_store_a().id.clone(),
+                    stock_line_id: updated_stock.id.clone(),
+                    exit_datetime: exit_location_movement.location_movement_row.exit_datetime,
+                    ..Default::default()
+                }
+            }
         );
     }
 }

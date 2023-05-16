@@ -197,14 +197,16 @@ impl PullUpsertRecord {
             InvoiceLine(record) => InvoiceLineRowRepository::new(con).upsert_one(record),
             Stocktake(record) => StocktakeRowRepository::new(con).upsert_one(record),
             StocktakeLine(record) => StocktakeLineRowRepository::new(con).upsert_one(record),
-            Requisition(record) => RequisitionRowRepository::new(con).upsert_one(record),
-            RequisitionLine(record) => RequisitionLineRowRepository::new(con).upsert_one(record),
+            Requisition(record) => RequisitionRowRepository::new(con).sync_upsert_one(record),
+            RequisitionLine(record) => {
+                RequisitionLineRowRepository::new(con).sync_upsert_one(record)
+            }
             ActivityLog(record) => ActivityLogRowRepository::new(con).insert_one(record),
             InventoryAdjustmentReason(record) => {
                 InventoryAdjustmentReasonRowRepository::new(con).upsert_one(record)
             }
             StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
-            Barcode(record) => BarcodeRowRepository::new(con).upsert_one(record),
+            Barcode(record) => BarcodeRowRepository::new(con).sync_upsert_one(record),
         }
     }
 }

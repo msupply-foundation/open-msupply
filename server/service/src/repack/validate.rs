@@ -1,62 +1,42 @@
-use repository::{
-    EqualFilter, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
-    StorageConnection,
-};
+use repository::{RepositoryError, StockLineRow, StorageConnection};
 
-use super::{
-    common::calculate_stock_line_total,
-    insert::{InsertRepack, InsertRepackError},
-};
+use crate::common_stock::{check_stock_line_exists, CommonStockLineError};
+
+use super::insert::{InsertRepack, InsertRepackError};
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &InsertRepack,
 ) -> Result<StockLineRow, InsertRepackError> {
-    let stock_line = match check_stock_line_exists(connection, store_id, &input.stock_line_id)? {
-        Some(stock_line) => stock_line,
-        None => return Err(InsertRepackError::StockLineDoesNotExist),
-    };
+    use InsertRepackError::*;
 
-    if store_id != stock_line.stock_line_row.store_id {
-        return Err(InsertRepackError::NotThisStoreStockLine);
-    };
+    let stock_line = check_stock_line_exists(connection, store_id, &input.stock_line_id).map_err(
+        |err| match err {
+            CommonStockLineError::DatabaseError(RepositoryError::NotFound) => StockLineDoesNotExist,
+            CommonStockLineError::DatabaseError(error) => DatabaseError(error),
+            CommonStockLineError::StockLineDoesNotBelongToStore => NotThisStoreStockLine,
+        },
+    )?;
 
-    if check_packs_are_fractional(input) {
-        return Err(InsertRepackError::CannotHaveFractionalPack);
+    if check_packs_are_fractional(input, &stock_line.stock_line_row) {
+        return Err(CannotHaveFractionalPack);
     }
 
     if check_stock_line_reduced_to_zero(input, &stock_line.stock_line_row) {
-        return Err(InsertRepackError::StockLineReducedBelowZero(stock_line));
+        return Err(StockLineReducedBelowZero(stock_line));
     }
 
     Ok(stock_line.stock_line_row)
 }
 
-fn check_stock_line_exists(
-    connection: &StorageConnection,
-    store_id: &str,
-    id: &str,
-) -> Result<Option<StockLine>, RepositoryError> {
-    Ok(StockLineRepository::new(connection)
-        .query_by_filter(
-            StockLineFilter::new().id(EqualFilter::equal_to(id)),
-            Some(store_id.to_string()),
-        )?
-        .pop())
-}
-
 fn check_stock_line_reduced_to_zero(input: &InsertRepack, stock_line: &StockLineRow) -> bool {
-    let stock_line_total = calculate_stock_line_total(stock_line);
-
-    if stock_line_total < input.number_of_packs {
-        return true;
-    }
-    false
+    stock_line.available_number_of_packs < input.number_of_packs
 }
 
-fn check_packs_are_fractional(input: &InsertRepack) -> bool {
-    let split_pack = input.number_of_packs / input.new_pack_size as f64;
+fn check_packs_are_fractional(input: &InsertRepack, stock_line: &StockLineRow) -> bool {
+    let split_pack =
+        input.number_of_packs * stock_line.pack_size as f64 / input.new_pack_size as f64;
 
     if split_pack.fract() != 0.0 {
         return true;

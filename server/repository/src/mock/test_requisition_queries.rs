@@ -213,6 +213,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     on_hold: false,
                     note: None,
                     supplier_id: Some(String::from("name_store_b")),
+                    barcode_id: None,
                 },
             },
             FullMockInvoiceLine {
@@ -252,6 +253,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     on_hold: false,
                     note: None,
                     supplier_id: Some(String::from("name_store_b")),
+                    barcode_id: None,
                 },
             },
         ],
@@ -313,6 +315,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 on_hold: false,
                 note: None,
                 supplier_id: Some(String::from("name_store_b")),
+                barcode_id: None,
             },
         }],
     }
@@ -373,6 +376,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 on_hold: false,
                 note: None,
                 supplier_id: Some(String::from("name_store_b")),
+                barcode_id: None,
             },
         }],
     }

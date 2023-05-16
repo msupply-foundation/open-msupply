@@ -117,12 +117,13 @@ class GQLClient extends GraphQLClient {
     // without it, the page will re-render continuously
     return response.then(
       data => (data ?? this.emptyData) as T,
-      ({ response }) => {
+      reason => {
+        const { response } = reason;
         if (response && response.errors) {
           handleResponseError(response.errors);
           return this.emptyData as unknown as T;
         } else {
-          throw new Error('Unknown error');
+          throw new Error(`Error making API request: ${reason}`);
         }
       }
     );
