@@ -237,6 +237,7 @@ fn generate_stock_line_update(
         on_hold: stock_line.on_hold,
         note: stock_line.note.clone(),
         supplier_id: stock_line.supplier_id.clone(),
+        barcode_id: stock_line.barcode_id.clone(),
     };
 
     let item = match ItemRowRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
@@ -346,6 +347,7 @@ fn generate_new_stock_line(
         on_hold: false,
         note: row.note.clone(),
         supplier_id,
+        barcode_id: None,
     };
 
     let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {

@@ -50,6 +50,7 @@ pub enum Resource {
     MutateRequisition,
     RequisitionChart,
     RequisitionStats,
+    RequisitionSend,
     // stock take line
     InsertStocktakeLine,
     UpdateStocktakeLine,
@@ -203,6 +204,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::RequisitionQuery),
+        ]),
+    );
+    map.insert(
+        Resource::RequisitionSend,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::RequisitionSend),
         ]),
     );
     // invoice

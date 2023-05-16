@@ -39,6 +39,7 @@ pub enum Permission {
     // requisition
     RequisitionQuery,
     RequisitionMutate,
+    RequisitionSend,
     // outbound shipment
     OutboundShipmentQuery,
     OutboundShipmentMutate,

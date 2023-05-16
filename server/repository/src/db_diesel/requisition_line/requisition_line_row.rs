@@ -21,6 +21,13 @@ table! {
         approved_quantity -> Integer,
         approval_comment -> Nullable<Text>,
         comment -> Nullable<Text>,
+    }
+}
+
+table! {
+    #[sql_name = "requisition_line"]
+    requistion_line_is_sync_update (id) {
+        id -> Text,
         is_sync_update -> Bool,
     }
 }
@@ -43,7 +50,6 @@ pub struct RequisitionLineRow {
     pub approved_quantity: i32,
     pub approval_comment: Option<String>,
     pub comment: Option<String>,
-    pub is_sync_update: bool,
 }
 
 pub struct RequisitionLineRowRepository<'a> {
@@ -56,7 +62,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(requisition_line_dsl::requisition_line)
             .values(row)
             .on_conflict(requisition_line_dsl::id)
@@ -67,10 +73,24 @@ impl<'a> RequisitionLineRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(requisition_line_dsl::requisition_line)
             .values(row)
             .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
+        diesel::update(requistion_line_is_sync_update::table.find(id))
+            .set(requistion_line_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
+            .execute(&self.connection.connection)?;
+
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
@@ -89,5 +109,68 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+
+    pub fn sync_upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        self.toggle_is_sync_update(&row.id, true)?;
+
+        Ok(())
+    }
+
+    #[cfg(test)]
+    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
+        let result = requistion_line_is_sync_update::table
+            .find(id)
+            .select(requistion_line_is_sync_update::dsl::is_sync_update)
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        mock::{mock_request_draft_requisition_all_fields, MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+    };
+
+    use super::*;
+
+    #[actix_rt::test]
+    async fn requisition_line_is_sync_update() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "requisition_line",
+            MockDataInserts::none().names().stores().units().items(),
+            MockData {
+                requisitions: vec![mock_request_draft_requisition_all_fields().requisition],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repo = RequisitionLineRowRepository::new(&connection);
+
+        let row = mock_request_draft_requisition_all_fields().lines[0].clone();
+        let row2 = mock_request_draft_requisition_all_fields().lines[1].clone();
+        // First insert
+        repo.upsert_one(&row).unwrap();
+        repo.upsert_one(&row2).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+
+        // Synchronisation upsert
+        repo.sync_upsert_one(&row).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+
+        // Normal upsert
+        repo.upsert_one(&row).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
     }
 }

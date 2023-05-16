@@ -13,7 +13,7 @@ use service::{
 #[derive(InputObject)]
 #[graphql(name = "InsertBarcodeInput")]
 pub struct BarcodeInput {
-    pub value: String,
+    pub gtin: String,
     pub item_id: String,
     pub pack_size: Option<i32>,
 }
@@ -32,7 +32,7 @@ pub struct InsertBarcodeError {
 impl BarcodeInput {
     pub fn to_domain(&self) -> service::barcode::BarcodeInput {
         service::barcode::BarcodeInput {
-            value: self.value.clone(),
+            gtin: self.gtin.clone(),
             item_id: self.item_id.clone(),
             pack_size: self.pack_size,
         }
