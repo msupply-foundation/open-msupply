@@ -24,7 +24,7 @@ export interface OutboundLineEditTableProps {
 
 const PlaceholderCell = styled(TableCell)(({ theme }) => ({
   fontSize: 12,
-  padding: '4px 12px 4px 12px',
+  padding: '4px 20px 4px 12px',
   color: theme.palette.secondary.main,
 }));
 
