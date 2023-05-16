@@ -1,234 +1,143 @@
 use repository::{
-    EqualFilter, Invoice, InvoiceFilter, InvoiceLineRowRepository, InvoiceRepository,
-    InvoiceRowRepository, LocationMovementRowRepository, RepositoryError, StockLine,
-    StockLineRowRepository,
+    EqualFilter, Invoice, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository,
+    InvoiceLineRowType, InvoiceRepository, InvoiceRowType, RepositoryError, StockLine,
+    StockLineFilter, StockLineRepository,
 };
 
 use crate::service_provider::ServiceContext;
 
-use super::{
-    generate::{generate, GenerateRepack},
-    validate,
-};
-
-#[derive(Default)]
-pub struct InsertRepack {
-    pub stock_line_id: String,
-    pub number_of_packs: f64,
-    pub new_pack_size: i32,
-    pub new_location_id: Option<String>,
-}
-
 #[derive(Debug, PartialEq)]
-pub enum InsertRepackError {
-    StockLineDoesNotExist,
-    NotThisStoreStockLine,
-    CannotHaveFractionalRepack,
-    NewlyCreatedInvoiceDoesNotExist,
-    StockLineReducedBelowZero(StockLine),
-    DatabaseError(RepositoryError),
-    InternalError(String),
+pub struct Repack {
+    pub invoice: Invoice,
+    pub stock_from: StockLine,
+    pub stock_to: StockLine,
 }
 
-pub fn insert_repack(
-    ctx: &ServiceContext,
-    input: InsertRepack,
-) -> Result<Invoice, InsertRepackError> {
-    let result = ctx
-        .connection
-        .transaction_sync(|connection| {
-            let stock_line = validate(connection, &ctx.store_id, &input)?;
-            let GenerateRepack {
-                repack_invoice,
-                repack_invoice_lines,
-                stock_lines,
-                location_movement,
-            } = generate(ctx, stock_line, input)?;
+pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, RepositoryError> {
+    let connection = &ctx.connection;
 
-            let stock_line_repo = StockLineRowRepository::new(connection);
+    let invoice = InvoiceRepository::new(connection)
+        .query_by_filter(
+            InvoiceFilter::new()
+                .id(EqualFilter::equal_to(invoice_id))
+                .store_id(EqualFilter::equal_to(&ctx.store_id))
+                .r#type(InvoiceRowType::Repack.equal_to()),
+        )?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
 
-            for line in stock_lines {
-                stock_line_repo.upsert_one(&line)?;
+    let invoice_lines = InvoiceLineRepository::new(connection)
+        .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?;
+
+    let stock_from_id = invoice_lines
+        .iter()
+        .find_map(|line| {
+            if line.invoice_line_row.r#type == InvoiceLineRowType::StockOut {
+                line.stock_line_option
+                    .as_ref()
+                    .map(|stock_line| stock_line.id.clone())
+            } else {
+                None
             }
-
-            let invoice_repo = InvoiceRowRepository::new(connection);
-            invoice_repo.upsert_one(&repack_invoice)?;
-
-            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
-            for line in repack_invoice_lines {
-                invoice_line_repo.upsert_one(&line)?;
-            }
-
-            if let Some(movements) = location_movement {
-                let location_movement_repo = LocationMovementRowRepository::new(connection);
-                for movement in movements {
-                    location_movement_repo.upsert_one(&movement)?;
-                }
-            }
-
-            InvoiceRepository::new(connection)
-                .query_by_filter(
-                    InvoiceFilter::new()
-                        .id(EqualFilter::equal_to(&repack_invoice.id))
-                        .store_id(EqualFilter::equal_to(&ctx.store_id)),
-                )?
-                .pop()
-                .ok_or(InsertRepackError::NewlyCreatedInvoiceDoesNotExist)
         })
-        .map_err(|error| error.to_inner_error())?;
+        .ok_or(RepositoryError::NotFound)?;
 
-    Ok(result)
-}
+    let stock_to_id = invoice_lines
+        .iter()
+        .find_map(|line| {
+            if line.invoice_line_row.r#type == InvoiceLineRowType::StockIn {
+                line.stock_line_option
+                    .as_ref()
+                    .map(|stock_line| stock_line.id.clone())
+            } else {
+                None
+            }
+        })
+        .ok_or(RepositoryError::NotFound)?;
 
-impl From<RepositoryError> for InsertRepackError {
-    fn from(error: RepositoryError) -> Self {
-        InsertRepackError::DatabaseError(error)
-    }
+    let stock_from = StockLineRepository::new(connection)
+        .query_by_filter(
+            StockLineFilter::new().id(EqualFilter::equal_to(&stock_from_id)),
+            Some(ctx.store_id.clone()),
+        )?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
+
+    let stock_to = StockLineRepository::new(connection)
+        .query_by_filter(
+            StockLineFilter::new().id(EqualFilter::equal_to(&stock_to_id)),
+            Some(ctx.store_id.clone()),
+        )?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
+
+    Ok(Repack {
+        invoice,
+        stock_from,
+        stock_to,
+    })
 }
 
 #[cfg(test)]
 mod test {
     use crate::service_provider::ServiceProvider;
+    use chrono::Utc;
     use repository::{
         mock::{
-            mock_item_b_lines, mock_location_1, mock_stock_line_a, mock_stock_line_b,
-            mock_stock_line_ci_c, mock_stock_line_si_d, mock_store_a, mock_user_account_a,
-            MockData, MockDataInserts,
+            mock_item_a, mock_location_1, mock_stock_line_a, mock_stock_line_ci_c,
+            mock_stock_line_si_d, mock_store_a, mock_user_account_a, MockData, MockDataInserts,
         },
-        test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType,
-        InvoiceRowRepository, LocationMovement, LocationMovementFilter, LocationMovementRepository,
-        LocationMovementRow, StockLineFilter, StockLineRepository, StockLineRow, StorageConnection,
+        test_db::setup_all_with_data,
+        EqualFilter, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
+        InvoiceRowStatus, InvoiceRowType, LocationMovement, LocationMovementFilter,
+        LocationMovementRepository, LocationMovementRow, StockLineRow,
     };
     use util::{inline_edit, inline_init};
 
-    use super::{InsertRepack, InsertRepackError};
-    type ServiceError = InsertRepackError;
-
     #[actix_rt::test]
-    async fn insert_repack_errors() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_repack_errors", MockDataInserts::all()).await;
+    async fn query_repacks() {
+        let invoice_a = InvoiceRow {
+            id: "repack_invoice_a".to_string(),
+            name_id: "name_store_a".to_string(),
+            store_id: "store_a".to_string(),
+            invoice_number: 10,
+            r#type: InvoiceRowType::Repack,
+            status: InvoiceRowStatus::Verified,
+            created_datetime: Utc::now().naive_utc(),
+            verified_datetime: Some(Utc::now().naive_utc()),
+            ..Default::default()
+        };
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
-            .context(mock_store_a().id, mock_user_account_a().id.to_string())
-            .unwrap();
-        let service = service_provider.repack_service;
+        let invoice_a_line_a = InvoiceLineRow {
+            id: "invoice_a_line_a".to_string(),
+            invoice_id: invoice_a.id,
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            item_code: mock_item_a().code,
+            stock_line_id: line_a_stock_line_a.id.to_string(),
+            cost_price_per_pack: 10.0,
+            sell_price_per_pack 20.0,
+            
+        };
 
-        // StockLineDoesNotExist
-        assert_eq!(
-            service.insert_repack(
-                &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = "invalid".to_string();
-                })
-            ),
-            Err(ServiceError::StockLineDoesNotExist)
-        );
-
-        // NotThisStoreStockLine
-        assert_eq!(
-            service.insert_repack(
-                &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_item_b_lines()[0].id.clone();
-                })
-            ),
-            Err(ServiceError::NotThisStoreStockLine)
-        );
-
-        // CannotHaveFractionalRepack
-        assert_eq!(
-            service.insert_repack(
-                &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_stock_line_a().id.clone();
-                    r.number_of_packs = 9.0;
-                    r.new_pack_size = 2;
-                })
-            ),
-            Err(ServiceError::CannotHaveFractionalRepack)
-        );
-
-        // StockLineReducedBelowZero
-        let stock_line = StockLineRepository::new(&connection)
-            .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(&mock_stock_line_b().id)),
-                None,
-            )
-            .unwrap()
-            .pop()
-            .unwrap();
-        assert_eq!(
-            service.insert_repack(
-                &context,
-                inline_init(|r: &mut InsertRepack| {
-                    r.stock_line_id = mock_stock_line_b().id.clone();
-                    r.number_of_packs = 40.0;
-                    r.new_pack_size = 2;
-                })
-            ),
-            Err(ServiceError::StockLineReducedBelowZero(stock_line))
-        );
-    }
-
-    #[actix_rt::test]
-    async fn insert_repack_success() {
-        struct SortedInvoiceAndStock {
-            in_line: InvoiceLineRow,
-            out_line: InvoiceLineRow,
-            updated_stock: StockLineRow,
-            new_stock: StockLineRow,
-        }
-
-        let stock_line_a = StockLineRow {
+        let line_a_stock_line_a = StockLineRow {
             id: "stock_line_a".to_string(),
-            item_id: "item_a".to_string(),
+            item_id: mock_item_a().id,
             store_id: mock_store_a().id.clone(),
             pack_size: 5,
-            cost_price_per_pack: 0.20,
-            sell_price_per_pack: 0.50,
+            cost_price_per_pack: 10.0,
+            sell_price_per_pack: 20.0,
             available_number_of_packs: 100.0,
             total_number_of_packs: 100.0,
             ..Default::default()
         };
 
-        fn sort_invoice_lines(
-            connection: &StorageConnection,
-            invoice_id: &str,
-        ) -> SortedInvoiceAndStock {
-            let invoice_lines = InvoiceLineRepository::new(&connection)
-                .query_by_filter(
-                    InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)),
-                )
-                .unwrap();
-
-            let (in_line, out_line) =
-                if invoice_lines[0].invoice_line_row.r#type == InvoiceLineRowType::StockIn {
-                    (invoice_lines[0].clone(), invoice_lines[1].clone())
-                } else {
-                    (invoice_lines[1].clone(), invoice_lines[0].clone())
-                };
-
-            let (new_stock, updated_stock) = (
-                in_line.stock_line_option.clone().unwrap(),
-                out_line.stock_line_option.clone().unwrap(),
-            );
-
-            SortedInvoiceAndStock {
-                in_line: in_line.invoice_line_row,
-                out_line: out_line.invoice_line_row,
-                updated_stock,
-                new_stock,
-            }
-        }
-
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "insert_repack_success",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
-                r.stock_lines = vec![stock_line_a.clone()];
+                r.invoices = vec![invoice_a.clone()];
+                r.stock_lines = vec![line_a_stock_line_a.clone()];
             }),
         )
         .await;
@@ -280,8 +189,6 @@ mod test {
                 pack_size: 2,
                 cost_price_per_pack: mock_stock_line_a().cost_price_per_pack * 2.0,
                 sell_price_per_pack: mock_stock_line_a().sell_price_per_pack * 2.0,
-                total_before_tax: (mock_stock_line_a().cost_price_per_pack * 2.0) * 4.0,
-                total_after_tax: (mock_stock_line_a().cost_price_per_pack * 2.0) * 4.0,
                 r#type: InvoiceLineRowType::StockIn,
                 number_of_packs: 4.0,
                 ..Default::default()
@@ -302,8 +209,6 @@ mod test {
                 pack_size: mock_stock_line_a().pack_size,
                 cost_price_per_pack: mock_stock_line_a().cost_price_per_pack,
                 sell_price_per_pack: mock_stock_line_a().sell_price_per_pack,
-                total_after_tax: mock_stock_line_a().cost_price_per_pack * 8.0,
-                total_before_tax: mock_stock_line_a().cost_price_per_pack * 8.0,
                 r#type: InvoiceLineRowType::StockOut,
                 number_of_packs: 8.0,
                 ..Default::default()
