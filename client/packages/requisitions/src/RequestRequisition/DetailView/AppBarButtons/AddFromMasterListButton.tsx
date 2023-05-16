@@ -4,6 +4,7 @@ import {
   useTranslation,
   useToggle,
   PlusCircleIcon,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
@@ -14,6 +15,7 @@ export const AddFromMasterListButtonComponent = () => {
   const isProgram = useRequest.utils.isProgram();
   const { addFromMasterList } = useRequest.utils.addFromMasterList();
   const modalController = useToggle();
+  const { storeId } = useAuthContext();
 
   return (
     <>
@@ -24,7 +26,7 @@ export const AddFromMasterListButtonComponent = () => {
           modalController.toggleOff();
           addFromMasterList(masterList);
         }}
-        filterBy={{ isProgram: false }}
+        filterBy={{ isProgram: false, existsForStoreId: { equalTo: storeId } }}
       />
       <ButtonWithIcon
         disabled={isDisabled || isProgram}
