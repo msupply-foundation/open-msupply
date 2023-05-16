@@ -7,6 +7,7 @@ import {
   ScanResult,
   ButtonWithIcon,
   useNotification,
+  useRegisterActions,
 } from '@openmsupply-client/common';
 import { Draft, useOutbound } from '../api';
 import { isOutboundDisabled } from '../../utils';
@@ -23,6 +24,8 @@ export const AddFromScannerButtonComponent = ({
   const { hasBarcodeScanner, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
+
+  if (!hasBarcodeScanner) return null;
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
@@ -44,7 +47,7 @@ export const AddFromScannerButtonComponent = ({
 
       warning(t('error.no-matching-item'))();
 
-      onAddItem({ barcode: { value, batch } });
+      onAddItem({ barcode: { gtin: value, batch } });
     }
   };
 
@@ -67,7 +70,19 @@ export const AddFromScannerButtonComponent = ({
     };
   }, []);
 
-  if (!hasBarcodeScanner) return null;
+  const label = t(isScanning ? 'button.stop' : 'button.scan');
+  useRegisterActions(
+    [
+      {
+        id: 'action:scan-barcode',
+        name: `${label} (Ctrl+s)`,
+        shortcut: ['Control+s'],
+        keywords: 'drawer, close',
+        perform: handleClick,
+      },
+    ],
+    [isScanning]
+  );
 
   return (
     <ButtonWithIcon
@@ -80,7 +95,7 @@ export const AddFromScannerButtonComponent = ({
           <ScanIcon />
         )
       }
-      label={t(isScanning ? 'button.stop' : 'button.scan')}
+      label={label}
     />
   );
 };

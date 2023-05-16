@@ -1,9 +1,13 @@
 use super::{version::Version, Migration};
 
+mod barcode_sync;
+mod invoice_and_number_type;
+mod local_authorisation;
+mod location_movement_triggers;
+mod stock_line_barcode_id;
+
 use crate::StorageConnection;
 pub(crate) struct V1_01_12;
-mod invoice_and_number_type;
-mod location_movement_triggers;
 
 impl Migration for V1_01_12 {
     fn version(&self) -> Version {
@@ -13,7 +17,9 @@ impl Migration for V1_01_12 {
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         invoice_and_number_type::migrate(connection)?;
         location_movement_triggers::migrate(connection)?;
-
+        stock_line_barcode_id::migrate(connection)?;
+        local_authorisation::migrate(connection)?;
+        barcode_sync::migrate(connection)?;
         Ok(())
     }
 }

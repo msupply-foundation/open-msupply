@@ -34,13 +34,13 @@ impl SynchroniserDriver {
     /// SynchroniserDriver entry point, this method is meant to be run within main `select!` macro
     /// should fail only when database is not accessible or when all receivers were dropped
     ///
-    /// * `force_run` - shoud we trigger sync straigh await regardless of initialisation stage ?
+    /// * `force_run` - should we trigger sync straight away regardless of initialisation stage ?
     ///
     /// Operations:
     /// * Try to sync if already initialise or if `force_run`
     /// * In loop
     ///    * If initialised await for manual trigger OR interval sec timeout
-    ///    * If not initialised await onyl for manual trigger
+    ///    * If not initialised await only for manual trigger
     ///    * do sync if any of the above were triggered
     pub async fn run(mut self, service_provider: Arc<ServiceProvider>, force_run: bool) {
         if force_run || is_initialised(&service_provider) {
