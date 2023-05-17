@@ -6,6 +6,7 @@ import {
   FrontEndHost,
   frontEndHostUrl,
   isProtocol,
+  BarcodeScanner,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
@@ -14,18 +15,23 @@ const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
 const CLIENT_VERSION_KEY = 'client_version';
 const HARDWARE_ID_KEY = 'hardware_id';
-const SUPPORTED_SCANNERS = [
-  {
-    vendorId: 1504,
-    vendorName: 'Zebra / Symbol Technologies, Inc, 2008',
-    products: [
-      { id: 2194, model: 'DS2208' },
-      { id: 4864, model: 'DS2208' },
-    ],
-  },
-];
+const BARCODE_SCANNER_DEVICE_KEY = 'barcode_scanner_device';
+const DEVICE_CLOSE_DELAY = 5000;
+const OMSUPPLY_BARCODE =
+  '19,16,3,0,111,112,101,110,32,109,83,117,112,112,108,121,0,24,11';
 
-class BarcodeScanner {
+// App data store
+type StoreType = {
+  [key: string]: string | null;
+};
+
+const store = new ElectronStore<StoreType>();
+const storedScanner = store.get(BARCODE_SCANNER_DEVICE_KEY, null);
+const barcodeScannerDevice: BarcodeScanner | null = !storedScanner
+  ? null
+  : { ...JSON.parse(storedScanner), connected: false };
+
+class Scanner {
   device: HID.HID | undefined;
 
   constructor() {
@@ -33,19 +39,50 @@ class BarcodeScanner {
   }
 
   private findDevice() {
-    const devices = HID.devices();
-    for (const scanner of SUPPORTED_SCANNERS) {
-      // const productIds = scanner.products.map(p => p.id);
-      const deviceInfo = devices.find(
-        d => d.vendorId === scanner.vendorId // &&
-        // productIds.some(pid => d.productId === pid);
-      );
-
-      if (deviceInfo && !!deviceInfo.path) {
-        return new HID.HID(deviceInfo.path);
+    if (barcodeScannerDevice && barcodeScannerDevice.path) {
+      try {
+        const hid = new HID.HID(barcodeScannerDevice.path);
+        barcodeScannerDevice.connected = true;
+        return hid;
+      } catch (e) {
+        console.error(e);
       }
+      return;
     }
     return undefined;
+  }
+
+  scanDevices(window: BrowserWindow) {
+    const devices: BarcodeScanner[] = [];
+    // if a scanner is already connected, we'll need to close it in order to open it
+    if (this.device) {
+      this.device?.close();
+    }
+
+    HID.devices().forEach(device => {
+      devices.push({ ...device, connected: false });
+      if (device.path) {
+        try {
+          const hid = new HID.HID(device.path);
+          hid.on('data', data => {
+            if (typeof data !== 'object') return;
+            const valid = data.slice(0, 19).join(',') === OMSUPPLY_BARCODE;
+
+            if (valid) {
+              const scanner = { ...device, connected: true };
+              store.set(BARCODE_SCANNER_DEVICE_KEY, JSON.stringify(scanner));
+              window.webContents.send(IPC_MESSAGES.ON_DEVICE_MATCHED, scanner);
+            }
+          });
+          // close the devices after a delay
+          setTimeout(() => hid.close(), DEVICE_CLOSE_DELAY);
+        } catch (e) {
+          // keyboard devices are unable to be opened and will throw an error
+          console.error(e);
+        }
+      }
+    });
+    return devices;
   }
 
   start(window: BrowserWindow) {
@@ -64,7 +101,7 @@ class BarcodeScanner {
 }
 
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
-const barcodeScanner = new BarcodeScanner();
+const barcodeScanner = new Scanner();
 
 let connectedServer: FrontEndHost | null = null;
 let discoveredServers: FrontEndHost[] = [];
@@ -104,8 +141,10 @@ const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
 const start = (): void => {
   // Create the browser window.
   const window = new BrowserWindow({
-    height: 768,
-    width: 1024,
+    height: 800,
+    width: 1200,
+    minWidth: 800,
+    minHeight: 768,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -139,6 +178,14 @@ const start = (): void => {
     discoveredServers = [];
     return { servers };
   });
+
+  ipcMain.handle(
+    IPC_MESSAGES.BARCODE_SCANNER_DEVICE,
+    async () => barcodeScannerDevice
+  );
+  ipcMain.handle(IPC_MESSAGES.START_DEVICE_SCAN, () =>
+    barcodeScanner.scanDevices(window)
+  );
 
   // not currently implemented in the desktop implementation
   ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
@@ -214,12 +261,6 @@ process.on('uncaughtException', error => {
       at t.enter (..open mSupply-darwin-arm64/open mSupply.app/Contents/Resources/app/.webpack/main/index.js:8:99043)
  */
 });
-
-// App data store
-type StoreType = {
-  [key: string]: string | null;
-};
-const store = new ElectronStore<StoreType>();
 
 app.addListener(
   'certificate-error',
