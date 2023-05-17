@@ -27,7 +27,7 @@ type StoreType = {
 
 const store = new ElectronStore<StoreType>();
 const storedScanner = store.get(BARCODE_SCANNER_DEVICE_KEY, null);
-const barcodeScannerDevice: BarcodeScanner | null = !storedScanner
+let barcodeScannerDevice: BarcodeScanner | null = !storedScanner
   ? null
   : { ...JSON.parse(storedScanner), connected: false };
 
@@ -72,10 +72,18 @@ class Scanner {
               const scanner = { ...device, connected: true };
               store.set(BARCODE_SCANNER_DEVICE_KEY, JSON.stringify(scanner));
               window.webContents.send(IPC_MESSAGES.ON_DEVICE_MATCHED, scanner);
+              // now close the device and configure as the current scanner
+              hid.close();
+              barcodeScanner = new Scanner();
+              barcodeScannerDevice = scanner;
             }
           });
           // close the devices after a delay
-          setTimeout(() => hid.close(), DEVICE_CLOSE_DELAY);
+          setTimeout(() => {
+            try {
+              hid.close();
+            } catch {}
+          }, DEVICE_CLOSE_DELAY);
         } catch (e) {
           // keyboard devices are unable to be opened and will throw an error
           console.error(e);
@@ -101,7 +109,7 @@ class Scanner {
 }
 
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
-const barcodeScanner = new Scanner();
+let barcodeScanner = new Scanner();
 
 let connectedServer: FrontEndHost | null = null;
 let discoveredServers: FrontEndHost[] = [];
