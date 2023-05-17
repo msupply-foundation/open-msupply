@@ -8,6 +8,8 @@ import {
   ButtonWithIcon,
   useNotification,
   useRegisterActions,
+  Tooltip,
+  Box,
 } from '@openmsupply-client/common';
 import { Draft, useOutbound } from '../api';
 import { isOutboundDisabled } from '../../utils';
@@ -21,11 +23,11 @@ export const AddFromScannerButtonComponent = ({
   const { data: outbound } = useOutbound.document.get();
   const isDisabled = !!outbound && isOutboundDisabled(outbound);
   const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
-  const { hasBarcodeScanner, isScanning, startScanning, stopScan } =
+  const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
 
-  if (!hasBarcodeScanner) return null;
+  if (!isEnabled) return null;
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
@@ -85,18 +87,22 @@ export const AddFromScannerButtonComponent = ({
   );
 
   return (
-    <ButtonWithIcon
-      disabled={isDisabled}
-      onClick={handleClick}
-      Icon={
-        isScanning ? (
-          <CircularProgress size={20} color="primary" />
-        ) : (
-          <ScanIcon />
-        )
-      }
-      label={label}
-    />
+    <Tooltip title={isConnected ? '' : t('error.scanner-not-connected')}>
+      <Box>
+        <ButtonWithIcon
+          disabled={isDisabled || !isConnected}
+          onClick={handleClick}
+          Icon={
+            isScanning ? (
+              <CircularProgress size={20} color="primary" />
+            ) : (
+              <ScanIcon />
+            )
+          }
+          label={label}
+        />
+      </Box>
+    </Tooltip>
   );
 };
 
