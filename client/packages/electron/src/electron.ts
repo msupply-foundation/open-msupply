@@ -257,6 +257,9 @@ process.on('uncaughtException', error => {
     return;
   }
 
+  // When running the barcode scanner discovery on windows, you can get this error which we want to ignore
+  if (error.message === 'could not read from HID device') return;
+
   // TODO bugsnag ?
   dialog.showErrorBox('Error', error.stack || error.message);
 
