@@ -26,7 +26,7 @@ export interface NativeAPI {
   ) => void;
   readLog: () => Promise<{ log: string; error: string }>;
   startDeviceScan: () => Promise<BarcodeScanner[]>;
-  barcodeScannerDevice: () => Promise<BarcodeScanner>;
+  linkedBarcodeScannerDevice: () => Promise<BarcodeScanner>;
   onDeviceMatched: (
     callback: (event: IpcRendererEvent, scanner: BarcodeScanner) => void
   ) => void;
