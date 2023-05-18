@@ -74,7 +74,6 @@ class Scanner {
 
           hid.on('data', data => {
             if (typeof data !== 'object') return;
-            if (!Array.isArray(data)) return;
             const valid = data.slice(0, 19).join(',') === OMSUPPLY_BARCODE;
 
             if (valid) {
