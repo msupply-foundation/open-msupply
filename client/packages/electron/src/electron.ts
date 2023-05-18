@@ -7,8 +7,8 @@ import {
   frontEndHostUrl,
   isProtocol,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
-import HID from 'node-hid';
 import ElectronStore from 'electron-store';
+import { SerialPort } from 'serialport';
 
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
@@ -23,26 +23,37 @@ const SUPPORTED_SCANNERS = [
       { id: 4864, model: 'DS2208' },
     ],
   },
+  {
+    vendorId: 9969,
+    vendorName: 'ZKTeco',
+    products: [{ id: 34817, model: 'HIDKeyBoard' }],
+  },
 ];
 
 class BarcodeScanner {
-  device: HID.HID | undefined;
+  device: SerialPort | undefined;
 
   constructor() {
-    this.device = this.findDevice();
+    this.findDevice();
   }
 
-  private findDevice() {
-    const devices = HID.devices();
+  private async findDevice() {
+    const devices = await SerialPort.list();
+    console.log('devices', devices);
     for (const scanner of SUPPORTED_SCANNERS) {
       // const productIds = scanner.products.map(p => p.id);
       const deviceInfo = devices.find(
-        d => d.vendorId === scanner.vendorId // &&
+        d => {
+          let vendorId = Number('0x' + d.vendorId);
+          return vendorId === scanner.vendorId;
+        } // &&
         // productIds.some(pid => d.productId === pid);
       );
 
       if (deviceInfo && !!deviceInfo.path) {
-        return new HID.HID(deviceInfo.path);
+        console.log('found', deviceInfo);
+        this.device = new SerialPort({ path: deviceInfo.path, baudRate: 9600 });
+        return;
       }
     }
     return undefined;
@@ -58,7 +69,7 @@ class BarcodeScanner {
   stop() {
     try {
       this.device?.close();
-      this.device = this.findDevice();
+      this.findDevice();
     } catch {}
   }
 }

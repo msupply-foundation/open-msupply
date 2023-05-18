@@ -38,12 +38,14 @@
   "dependencies": {
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/host": "^0.0.0",
+    "@types/serialport": "^8.0.2",
     "dnssd": "^0.4.1",
     "electron-squirrel-startup": "^1.0.0",
     "electron-store": "^8.1.0",
     "ip": "^1.1.8",
     "node-hid": "^2.1.2",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react-dom": "^18.0.0",
+    "serialport": "^11.0.0"
   }
 }

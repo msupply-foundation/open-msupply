@@ -15,6 +15,9 @@ export const mainConfig: Configuration = {
   module: {
     rules,
   },
+  externals: {
+    serialport: 'serialport',
+  },
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
     alias: {
