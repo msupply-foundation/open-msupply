@@ -55,7 +55,9 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
         })
         .ok_or(RepositoryError::NotFound)?;
 
-    let stock_from = StockLineRepository::new(connection)
+    let stock_line_repo = StockLineRepository::new(connection);
+
+    let stock_from = stock_line_repo.
         .query_by_filter(
             StockLineFilter::new().id(EqualFilter::equal_to(&stock_from_id)),
             Some(ctx.store_id.clone()),
@@ -63,7 +65,7 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
         .pop()
         .ok_or(RepositoryError::NotFound)?;
 
-    let stock_to = StockLineRepository::new(connection)
+    let stock_to = stock_line_repo
         .query_by_filter(
             StockLineFilter::new().id(EqualFilter::equal_to(&stock_to_id)),
             Some(ctx.store_id.clone()),
