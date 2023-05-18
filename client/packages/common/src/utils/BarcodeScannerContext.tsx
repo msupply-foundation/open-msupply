@@ -1,4 +1,4 @@
-import React, { createContext, useMemo, FC, useState } from 'react';
+import React, { createContext, useMemo, FC, useState, useEffect } from 'react';
 import { PropsWithChildrenOnly } from '@common/types';
 import { BarcodeScanner as BarcodeScannerPlugin } from '@capacitor-community/barcode-scanner';
 import { Capacitor } from '@capacitor/core';
@@ -29,6 +29,7 @@ interface BarcodeScannerControl {
     callback: (result: ScanResult, err?: any) => void
   ) => Promise<void>;
   stopScan: () => Promise<void>;
+  setScanner: (scanner: BarcodeScanner) => void;
 }
 
 const BarcodeScannerContext = createContext<BarcodeScannerControl>({} as any);
@@ -193,13 +194,16 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   };
 
   // calling this outside of a useEffect so that it will detect when a new scanner is added
-  electronNativeAPI?.barcodeScannerDevice().then(setScanner);
+  useEffect(() => {
+    electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
+  }, []);
 
   const val = useMemo(
     () => ({
       isEnabled,
       isConnected: !!scanner?.connected,
       isScanning,
+      setScanner,
       startScan,
       startScanning,
       stopScan,

@@ -10,7 +10,7 @@ export const IPC_MESSAGES = {
   READ_LOG: 'read-log',
   GET_PREFERENCE: 'get-preference',
   SET_PREFERENCE: 'set-preference',
-  BARCODE_SCANNER_DEVICE: 'barcode-scanner-device',
+  LINKED_BARCODE_SCANNER_DEVICE: 'linked-barcode-scanner-device',
   START_DEVICE_SCAN: 'start-device-scan',
   ON_DEVICE_MATCHED: 'on-device-matched',
 };

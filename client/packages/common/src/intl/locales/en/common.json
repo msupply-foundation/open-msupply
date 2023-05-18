@@ -171,6 +171,7 @@
   "label.auth-status": "Approval Status",
   "label.approved-quantity": "Approved Quantity",
   "label.approval-comment": "Approval Comment",
+  "label.barcode-scanner-id": "Vendor ID: {{vid}}, Product ID: {{pid}}",
   "label.group-by-item": "Group by Item",
   "label.of": "of",
   "label.on-hold": "On Hold",

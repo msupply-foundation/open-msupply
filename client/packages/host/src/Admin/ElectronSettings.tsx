@@ -7,6 +7,7 @@ import {
   LoadingButton,
   LocaleKey,
   Typography,
+  useBarcodeScannerContext,
   useNotification,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -30,6 +31,12 @@ const Scanner = ({ scanner }: { scanner: BarcodeScanner }) => {
           {scanner.manufacturer}
         </Typography>
         <Typography>{scanner.product}</Typography>
+        <Typography>
+          {t('label.barcode-scanner-id', {
+            vid: scanner.vendorId,
+            pid: scanner.productId,
+          })}
+        </Typography>
         <Typography color={status.color}>{t(status.message)}</Typography>
       </Box>
     </Box>
@@ -42,6 +49,7 @@ export const ElectronSettings = () => {
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const { error, success } = useNotification();
+  const { setScanner: setBarcodeScanner } = useBarcodeScannerContext();
 
   const startDeviceScan = async () => {
     setIsScanning(true);
@@ -64,6 +72,7 @@ export const ElectronSettings = () => {
       const device = await Promise.race([timeoutPromise, getDevicePromise()]);
       if (!device) return;
       setScanner(device);
+      setBarcodeScanner(device);
       success(t('messages.scanner-found'))();
     } catch (e) {
       error(t('error.unable-to-detect-scanner'))();
@@ -74,7 +83,7 @@ export const ElectronSettings = () => {
   };
 
   useEffect(() => {
-    electronNativeAPI?.barcodeScannerDevice().then(setScanner);
+    electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
   }, [electronNativeAPI]);
 
   if (!electronNativeAPI) return null;

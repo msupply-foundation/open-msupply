@@ -25,31 +25,31 @@ type StoreType = {
   [key: string]: string | null;
 };
 
-const store = new ElectronStore<StoreType>();
-const storedScanner = store.get(BARCODE_SCANNER_DEVICE_KEY, null);
-let barcodeScannerDevice: BarcodeScanner | null = !storedScanner
-  ? null
-  : { ...JSON.parse(storedScanner), connected: false };
-
 class Scanner {
   device: HID.HID | undefined;
+  barcodeScanner: BarcodeScanner | undefined;
 
   constructor() {
     this.device = this.findDevice();
+    const storedScanner = store.get(BARCODE_SCANNER_DEVICE_KEY, null);
+    this.barcodeScanner = !storedScanner
+      ? undefined
+      : { ...JSON.parse(storedScanner), connected: false };
   }
 
   private findDevice() {
-    if (barcodeScannerDevice && barcodeScannerDevice.path) {
+    if (this.barcodeScanner) {
       try {
-        const hid = new HID.HID(barcodeScannerDevice.path);
-        barcodeScannerDevice.connected = true;
+        const hid = new HID.HID(
+          this.barcodeScanner.vendorId,
+          this.barcodeScanner.productId
+        );
+        this.barcodeScanner.connected = true;
         return hid;
       } catch (e) {
         console.error(e);
       }
-      return;
     }
-    return undefined;
   }
 
   scanDevices(window: BrowserWindow) {
@@ -63,27 +63,29 @@ class Scanner {
       devices.push({ ...device, connected: false });
       if (device.path) {
         try {
-          const hid = new HID.HID(device.path);
+          const hid = new HID.HID(device.vendorId, device.productId);
+
+          // close the devices after a delay
+          const timeout = setTimeout(() => {
+            try {
+              hid.close();
+            } catch {}
+          }, DEVICE_CLOSE_DELAY);
+
           hid.on('data', data => {
             if (typeof data !== 'object') return;
+            if (!Array.isArray(data)) return;
             const valid = data.slice(0, 19).join(',') === OMSUPPLY_BARCODE;
 
             if (valid) {
               const scanner = { ...device, connected: true };
               store.set(BARCODE_SCANNER_DEVICE_KEY, JSON.stringify(scanner));
               window.webContents.send(IPC_MESSAGES.ON_DEVICE_MATCHED, scanner);
-              // now close the device and configure as the current scanner
-              hid.close();
-              barcodeScanner = new Scanner();
-              barcodeScannerDevice = scanner;
+              clearTimeout(timeout);
+              this.device = hid;
+              this.barcodeScanner = scanner;
             }
           });
-          // close the devices after a delay
-          setTimeout(() => {
-            try {
-              hid.close();
-            } catch {}
-          }, DEVICE_CLOSE_DELAY);
         } catch (e) {
           // keyboard devices are unable to be opened and will throw an error
           console.error(e);
@@ -106,10 +108,15 @@ class Scanner {
       this.device = this.findDevice();
     } catch {}
   }
+
+  linkedScanner() {
+    return this.barcodeScanner;
+  }
 }
 
+const store = new ElectronStore<StoreType>();
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
-let barcodeScanner = new Scanner();
+const barcodeScanner = new Scanner();
 
 let connectedServer: FrontEndHost | null = null;
 let discoveredServers: FrontEndHost[] = [];
@@ -187,9 +194,8 @@ const start = (): void => {
     return { servers };
   });
 
-  ipcMain.handle(
-    IPC_MESSAGES.BARCODE_SCANNER_DEVICE,
-    async () => barcodeScannerDevice
+  ipcMain.handle(IPC_MESSAGES.LINKED_BARCODE_SCANNER_DEVICE, async () =>
+    barcodeScanner.linkedScanner()
   );
   ipcMain.handle(IPC_MESSAGES.START_DEVICE_SCAN, () =>
     barcodeScanner.scanDevices(window)
