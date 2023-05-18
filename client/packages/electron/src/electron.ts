@@ -74,7 +74,9 @@ class Scanner {
 
           hid.on('data', data => {
             if (typeof data !== 'object') return;
-            const valid = data.slice(0, 19).join(',') === OMSUPPLY_BARCODE;
+            if (!Buffer.isBuffer(data)) return;
+
+            const valid = data.subarray(0, 19).join(',') === OMSUPPLY_BARCODE;
 
             if (valid) {
               const scanner = { ...device, connected: true };
