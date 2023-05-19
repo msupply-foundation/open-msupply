@@ -74,7 +74,7 @@
     "messages.confirm-delete-shipment-lines_other": "Cela supprimera définitivement {{count}} lignes du bon de livraison",
     "messages.confirm-delete-shipments_one": "Ce bon de livraison sera définitivement supprimé",
     "messages.confirm-delete-shipments_other": "Cela supprimera définitivement {{count}} bons de livraison",
-    "messages.could-not-save": "Impossible de sauvegarder",
+    "messages.could-not-save": "Sauvegarde impossible",
     "messages.deleted-lines": "{{number}} ligne(s) supprimée(s)",
     "messages.deleted-lines_one": "{{count}} ligne supprimée",
     "messages.deleted-lines_other": "{{count}} lignes supprimées",
@@ -106,5 +106,7 @@
     "messages.period-not-available": "Aucune période disponible",
     "label.order-type": "Type",
     "label.period": "Période",
-    "template.requisition-sent": "Autorisé par {{name}}{{job}}. Courriel: {{email}} et Téléphone: {{phone}}."
+    "template.requisition-sent": "Autorisé par {{name}}{{job}}. Courriel: {{email}} et Téléphone: {{phone}}.",
+    "label.packs": "Boites",
+    "label.requested-packs": "Qté de boites demandées"
 }
