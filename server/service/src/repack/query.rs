@@ -1,7 +1,7 @@
 use repository::{
     EqualFilter, Invoice, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository,
-    InvoiceLineRowType, InvoiceRepository, InvoiceRowType, RepositoryError, StockLine,
-    StockLineFilter, StockLineRepository,
+    InvoiceLineRowType, InvoiceRepository, InvoiceRowType, Location, LocationFilter,
+    LocationRepository, RepositoryError, StockLine, StockLineFilter, StockLineRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -9,6 +9,8 @@ use crate::service_provider::ServiceContext;
 #[derive(Debug, PartialEq)]
 pub struct Repack {
     pub invoice: Invoice,
+    pub location_from: Option<Location>,
+    pub location_to: Option<Location>,
     pub stock_from: StockLine,
     pub stock_to: StockLine,
 }
@@ -28,6 +30,34 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
 
     let invoice_lines = InvoiceLineRepository::new(connection)
         .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?;
+
+    let location_from = invoice_lines.iter().find_map(|line| {
+        if line.invoice_line_row.r#type == InvoiceLineRowType::StockOut {
+            match line.invoice_line_row.location_id.clone() {
+                Some(location_id) => LocationRepository::new(connection)
+                    .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&location_id)))
+                    .ok()?
+                    .pop(),
+                None => None,
+            }
+        } else {
+            None
+        }
+    });
+
+    let location_to = invoice_lines.iter().find_map(|line| {
+        if line.invoice_line_row.r#type == InvoiceLineRowType::StockIn {
+            match line.invoice_line_row.location_id.clone() {
+                Some(location_id) => LocationRepository::new(connection)
+                    .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&location_id)))
+                    .ok()?
+                    .pop(),
+                None => None,
+            }
+        } else {
+            None
+        }
+    });
 
     let stock_from_id = invoice_lines
         .iter()
@@ -57,7 +87,7 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
 
     let stock_line_repo = StockLineRepository::new(connection);
 
-    let stock_from = stock_line_repo.
+    let stock_from = stock_line_repo
         .query_by_filter(
             StockLineFilter::new().id(EqualFilter::equal_to(&stock_from_id)),
             Some(ctx.store_id.clone()),
@@ -75,6 +105,8 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
 
     Ok(Repack {
         invoice,
+        location_from,
+        location_to,
         stock_from,
         stock_to,
     })
