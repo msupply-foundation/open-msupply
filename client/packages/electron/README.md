@@ -59,4 +59,4 @@ For above to work we store SSL fingerprint when we first connect to the server a
 The SSL fingeprint is stored in app data and is associated with `hardwareId` and `port` of the server. 
 This works very similar to ssh client, but we associate fingerprint with hardwareId and port instead of domain or ip since local ip can change for the server.
 
-To clear electron app data you would need to delete or edit `/Users/{user}/Library/Application Support/open mSupply/config.json`
+To clear electron app data you would need to delete or edit `/Users/{user}/Library/Application Support/open mSupply/config.json` on macOS or `%APPDATA%\open mSupply\config.json` on windows

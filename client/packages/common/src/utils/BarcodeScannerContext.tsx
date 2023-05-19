@@ -1,12 +1,13 @@
-import React, { createContext, useMemo, FC } from 'react';
+import React, { createContext, useMemo, FC, useState, useEffect } from 'react';
 import { PropsWithChildrenOnly } from '@common/types';
-import { BarcodeScanner } from '@capacitor-community/barcode-scanner';
+import { BarcodeScanner as BarcodeScannerPlugin } from '@capacitor-community/barcode-scanner';
 import { Capacitor } from '@capacitor/core';
 import { GlobalStyles } from '@mui/material';
 import { useNotification } from '../hooks/useNotification';
 import { useTranslation } from '@common/intl';
 import { parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
+import { BarcodeScanner } from '@openmsupply-client/common';
 
 const SCAN_TIMEOUT_IN_MS = 5000;
 
@@ -20,13 +21,15 @@ export interface ScanResult {
 export type ScanCallback = (result: ScanResult) => void;
 
 interface BarcodeScannerControl {
-  hasBarcodeScanner: boolean;
+  isEnabled: boolean;
+  isConnected: boolean;
   isScanning: boolean;
   startScan: () => Promise<ScanResult>;
   startScanning: (
     callback: (result: ScanResult, err?: any) => void
   ) => Promise<void>;
   stopScan: () => Promise<void>;
+  setScanner: (scanner: BarcodeScanner) => void;
 }
 
 const BarcodeScannerContext = createContext<BarcodeScannerControl>({} as any);
@@ -77,15 +80,16 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   children,
 }) => {
   const t = useTranslation('common');
-  const [isScanning, setIsScanning] = React.useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const { error } = useNotification();
   const { electronNativeAPI } = window;
+  const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
 
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
     Capacitor.isNativePlatform();
   const hasElectronApi = !!electronNativeAPI;
-  const hasBarcodeScanner = hasNativeBarcodeScanner || hasElectronApi;
+  const isEnabled = hasNativeBarcodeScanner || hasElectronApi;
 
   const startScan = async () => {
     setIsScanning(true);
@@ -107,14 +111,14 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             break;
           case hasNativeBarcodeScanner:
             // Check camera permission
-            await BarcodeScanner.checkPermission({ force: true });
+            await BarcodeScannerPlugin.checkPermission({ force: true });
 
             // make background of WebView transparent
-            BarcodeScanner.hideBackground();
+            BarcodeScannerPlugin.hideBackground();
 
             // start scanning and wait for a result
-            const result = await BarcodeScanner.startScan();
-            BarcodeScanner.showBackground();
+            const result = await BarcodeScannerPlugin.startScan();
+            BarcodeScannerPlugin.showBackground();
 
             resolve(result.content);
             break;
@@ -165,14 +169,14 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       }, SCAN_TIMEOUT_IN_MS);
 
       // Check camera permission
-      await BarcodeScanner.checkPermission({ force: true });
+      await BarcodeScannerPlugin.checkPermission({ force: true });
 
       // make background of WebView transparent
-      BarcodeScanner.hideBackground();
-      const result = await BarcodeScanner.startScan(); // start scanning and wait for a result
+      BarcodeScannerPlugin.hideBackground();
+      const result = await BarcodeScannerPlugin.startScan(); // start scanning and wait for a result
       clearTimeout(timeout);
       setIsScanning(false);
-      BarcodeScanner.showBackground();
+      BarcodeScannerPlugin.showBackground();
       callback(result);
     }
   };
@@ -184,20 +188,27 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     }
 
     if (hasNativeBarcodeScanner) {
-      await BarcodeScanner.stopScan({ resolveScan: true });
-      await BarcodeScanner.showBackground();
+      await BarcodeScannerPlugin.stopScan({ resolveScan: true });
+      await BarcodeScannerPlugin.showBackground();
     }
   };
 
+  // calling this outside of a useEffect so that it will detect when a new scanner is added
+  useEffect(() => {
+    electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
+  }, []);
+
   const val = useMemo(
     () => ({
-      hasBarcodeScanner,
+      isEnabled,
+      isConnected: !!scanner?.connected,
       isScanning,
+      setScanner,
       startScan,
       startScanning,
       stopScan,
     }),
-    [hasBarcodeScanner, startScan, stopScan, startScanning]
+    [isEnabled, startScan, stopScan, startScanning]
   );
 
   return (
