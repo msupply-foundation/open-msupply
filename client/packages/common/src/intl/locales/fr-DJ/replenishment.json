@@ -1,3 +1,5 @@
 {
-  "button.add-from-master-list": "Utiliser un programme"
+    "button.add-from-master-list": "Utiliser un programme",
+    "label.requested-packs": "Qté de boites demandées",
+    "label.packs": "Boites"
 }
