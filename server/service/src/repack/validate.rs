@@ -20,7 +20,7 @@ pub fn validate(
     )?;
 
     if check_packs_are_fractional(input, &stock_line.stock_line_row) {
-        return Err(CannotHaveFractionalRepack);
+        return Err(CannotHaveFractionalPack);
     }
 
     if check_stock_line_reduced_to_zero(input, &stock_line.stock_line_row) {

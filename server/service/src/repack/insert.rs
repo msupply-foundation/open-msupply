@@ -23,7 +23,7 @@ pub struct InsertRepack {
 pub enum InsertRepackError {
     StockLineDoesNotExist,
     NotThisStoreStockLine,
-    CannotHaveFractionalRepack,
+    CannotHaveFractionalPack,
     NewlyCreatedInvoiceDoesNotExist,
     StockLineReducedBelowZero(StockLine),
     DatabaseError(RepositoryError),
@@ -135,7 +135,7 @@ mod test {
             Err(ServiceError::NotThisStoreStockLine)
         );
 
-        // CannotHaveFractionalRepack
+        // CannotHaveFractionalPack
         assert_eq!(
             service.insert_repack(
                 &context,
@@ -145,7 +145,7 @@ mod test {
                     r.new_pack_size = 2;
                 })
             ),
-            Err(ServiceError::CannotHaveFractionalRepack)
+            Err(ServiceError::CannotHaveFractionalPack)
         );
 
         // StockLineReducedBelowZero

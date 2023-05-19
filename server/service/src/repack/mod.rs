@@ -1,6 +1,6 @@
 use crate::service_provider::ServiceContext;
 
-use self::insert::{insert_repack, InsertRepack, InsertRepackError};
+pub use self::insert::{insert_repack, InsertRepack, InsertRepackError};
 use repository::Invoice;
 
 pub mod generate;
