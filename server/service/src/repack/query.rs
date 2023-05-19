@@ -117,10 +117,13 @@ mod test {
     use crate::service_provider::ServiceProvider;
     use chrono::Utc;
     use repository::{
-        mock::{mock_item_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_location_1, mock_location_on_hold, mock_store_a, mock_user_account_a,
+            MockData, MockDataInserts,
+        },
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        StockLineRow,
+        StockLineRow, StockLineRowRepository,
     };
     use util::inline_init;
 
@@ -147,6 +150,7 @@ mod test {
             sell_price_per_pack: 0.50,
             available_number_of_packs: 10.0,
             total_number_of_packs: 10.0,
+            location_id: Some(mock_location_1().id.clone()),
             ..Default::default()
         };
 
@@ -166,6 +170,7 @@ mod test {
             number_of_packs: invoice_a_line_a_stock_line_a.total_number_of_packs,
             pack_size: invoice_a_line_a_stock_line_a.pack_size,
             r#type: InvoiceLineRowType::StockIn,
+            location_id: Some(mock_location_1().id.clone()),
             ..Default::default()
         };
 
@@ -222,7 +227,21 @@ mod test {
 
         let repack = service.get_repack(&context, "repack_invoice_a").unwrap();
 
+        // Change location of repack line to test that location is the repack location
+        let update_stock_line_location = StockLineRow {
+            location_id: Some(mock_location_on_hold().id.clone()),
+            ..invoice_a_line_a_stock_line_a.clone()
+        };
+
+        StockLineRowRepository::new(&context.connection)
+            .upsert_one(&update_stock_line_location)
+            .unwrap();
+
         assert_eq!(invoice_a, repack.invoice.invoice_row);
+        assert_eq!(
+            repack.location_to.unwrap().location_row.id,
+            mock_location_1().id
+        );
         assert_eq!(
             invoice_a_line_a_stock_line_a,
             repack.stock_to.stock_line_row
