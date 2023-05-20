@@ -1,14 +1,14 @@
 {
     "button.new-outbound-shipment": "Nouvelle Livraison sortante",
     "button.order-more": "Nouvelle commande",
-    "heading.expiring-stock": "Lots sur le point d'expirer",
+    "heading.expiring-stock": "Lots expirant dans les 3 mois",
     "heading.shipments-to-be-picked": "Livraisons sortantes à prélever",
     "heading-stock": "Stock",
     "heading.stock-levels": "États des Stocks",
     "label.expired_one": "Lot expiré",
     "label.expired_other": "Lots expirés",
-    "label.expiring-soon_one": "Lot sur le points d'expirer",
-    "label.expiring-soon_other": "Lots sur le points d'expirer",
+    "label.expiring-soon_one": "Lot expirant dans les 30 jours",
+    "label.expiring-soon_other": "Lots expirant dans les 30 jours",
     "label.items-no-stock_one": "Article en rupture de stock",
     "label.items-no-stock_other": "Articles en rupture de stock",
     "label.low-stock-items_one": "Article avec moins de 3 mois de stock",
@@ -20,10 +20,10 @@
     "error.failed-to-create-requisition": "Impossible de créer le bon de commande {{message}}",
     "heading.shipments": "Livraisons",
     "inventory-management": "Gestion de stock",
-    "label.have-not-shipped": "Non finalisée(s)",
-    "label.inbound-not-delivered": "Bons de livraison en transit",
+    "label.have-not-shipped": "pas encore expédiée(s)",
+    "label.inbound-not-delivered": "Bon(s) de livraison pas encore livré(s)",
     "label.more-than-six-months-stock-items_one": "Article avec plus de 6 mois de stock",
     "label.more-than-six-months-stock-items_other": "Articles avec plus de 6 mois de stock",
     "label.new": "Nouvel(le)",
-    "label.not-sent": "bon(s) de commande non envoyé(s)"
+    "label.not-sent": "pas encore envoyé(s)"
 }
