@@ -6,6 +6,7 @@ import {
   Box,
   LoadingButton,
   LocaleKey,
+  Switch,
   Typography,
   useBarcodeScannerContext,
   useNotification,
@@ -49,7 +50,11 @@ export const ElectronSettings = () => {
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const { error, success } = useNotification();
-  const { setScanner: setBarcodeScanner } = useBarcodeScannerContext();
+  const {
+    setScanner: setBarcodeScanner,
+    scannerType,
+    setScannerType,
+  } = useBarcodeScannerContext();
 
   const startDeviceScan = async () => {
     setIsScanning(true);
@@ -84,7 +89,7 @@ export const ElectronSettings = () => {
 
   useEffect(() => {
     electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
-  }, [electronNativeAPI]);
+  }, [electronNativeAPI, scannerType]);
 
   if (!electronNativeAPI) return null;
 
@@ -93,47 +98,73 @@ export const ElectronSettings = () => {
       <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
         {t('heading.barcode-scanners')}
       </Typography>
+
       <Setting
-        title={t('label.current')}
+        title={'Scanner Type'}
         component={
-          !scanner ? (
-            <Box display="flex">
-              <AlertIcon color="error" />
-              <Typography
-                component="div"
-                sx={{
-                  alignItems: 'center',
-                  display: 'inline-flex',
-                  fontSize: '14px',
-                  paddingLeft: 1,
-                }}
-              >
-                {t('messages.no-scanners-found')}
-              </Typography>
-            </Box>
-          ) : (
-            <Scanner scanner={scanner} />
-          )
-        }
-      />
-      <Setting
-        title=""
-        component={
-          <Box>
-            {isScanning && (
-              <Box style={{ textAlign: 'center' }} padding={2}>
-                <img src={omsBarcode} alt="omSupply Barcode" />
-                <Typography>{t('messages.detect-scanner')}</Typography>
-              </Box>
-            )}
-            <Box display="flex" justifyContent="flex-end">
-              <LoadingButton onClick={startDeviceScan} isLoading={isScanning}>
-                {t('label.detect-scanners')}
-              </LoadingButton>
+          <Box display="flex" justifyContent="flex-end" alignItems="center">
+            <Switch
+              label={'USB Serial'}
+              checked={scannerType === 'usb_keyboard'}
+              onChange={(_event, checked) => {
+                setScannerType(checked ? 'usb_keyboard' : 'usb_serial');
+              }}
+              size="small"
+            />
+            <Box paddingLeft={2} paddingRight={2}>
+              {'USB Keyboard'}
             </Box>
           </Box>
         }
       />
+      {scannerType === 'usb_serial' && (
+        <>
+          <Setting
+            title={t('label.current')}
+            component={
+              !scanner ? (
+                <Box display="flex">
+                  <AlertIcon color="error" />
+                  <Typography
+                    component="div"
+                    sx={{
+                      alignItems: 'center',
+                      display: 'inline-flex',
+                      fontSize: '14px',
+                      paddingLeft: 1,
+                    }}
+                  >
+                    {t('messages.no-scanners-found')}
+                  </Typography>
+                </Box>
+              ) : (
+                <Scanner scanner={scanner} />
+              )
+            }
+          />
+          <Setting
+            title=""
+            component={
+              <Box>
+                {isScanning && (
+                  <Box style={{ textAlign: 'center' }} padding={2}>
+                    <img src={omsBarcode} alt="omSupply Barcode" />
+                    <Typography>{t('messages.detect-scanner')}</Typography>
+                  </Box>
+                )}
+                <Box display="flex" justifyContent="flex-end">
+                  <LoadingButton
+                    onClick={startDeviceScan}
+                    isLoading={isScanning}
+                  >
+                    {t('label.detect-scanners')}
+                  </LoadingButton>
+                </Box>
+              </Box>
+            }
+          />
+        </>
+      )}
     </>
   );
 };
