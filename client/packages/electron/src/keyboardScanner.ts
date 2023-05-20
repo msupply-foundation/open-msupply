@@ -101,8 +101,8 @@ export class KeyboardScanner {
       this.lockBuffer = true;
 
       let checkSequence: KeyEvent[] = [];
-      let passThrough: KeyEvent[] | undefined = undefined;
-      let barcode: KeyEvent[] | undefined = undefined;
+      let passThrough: KeyEvent[] = [];
+      let barcode: KeyEvent[] = [];
 
       this.buffer.forEach((current, index) => {
         // Get ms for next input event or now
@@ -110,36 +110,31 @@ export class KeyboardScanner {
         let diff = nextMs - current.ms;
 
         checkSequence.push(current);
-        switch (true) {
-          // Sequence is still ongoing
-          // ms diff between every event is sequence is below  maxMSBetweenScannerKeyInputs
-          case diff < this.settings.maxMSBetweenScannerKeyInputs:
-            return;
-          // If exceeding maxMSBetweenScannerKeyInputs and sequence length
-          // is not long enough to be barcode, pass all input through
-          case checkSequence.length < this.settings.minBarcodeLength:
-            passThrough = passThrough
-              ? [...passThrough, ...checkSequence]
-              : checkSequence;
-            checkSequence = [];
-            return;
+        // Sequence is still ongoing
+        // ms diff between every event is sequence is below  maxMSBetweenScannerKeyInputs
+        if (diff < this.settings.maxMSBetweenScannerKeyInputs) return;
+        // If exceeding maxMSBetweenScannerKeyInputs and sequence length
+        // is not long enough to be barcode, pass all input through
+        if (checkSequence.length < this.settings.minBarcodeLength) {
+          passThrough = [...passThrough, ...checkSequence];
+          checkSequence = [];
+        } else {
           // If exceeding maxMSBetweenScannerKeyInputs but sequnce length
           // is long enought to be barcode, record as barcode;
-          default:
-            // Very unlikely that two barcodes will be scanned within PROCESSOR_INTERVAL
-            barcode = checkSequence;
-            checkSequence = [];
+          // Very unlikely that two barcodes will be scanned within PROCESSOR_INTERVAL
+          barcode = checkSequence;
+          checkSequence = [];
         }
       });
 
       // Remember left over for next check
       this.buffer = checkSequence;
-      if (barcode) {
+      if (barcode.length != 0) {
         console.log(JSON.stringify(barcode, null, ' '));
         this.sendBarcode(barcode);
       }
 
-      if (passThrough) {
+      if (passThrough.length != 0) {
         // Should allow pass through input events, even if bufferIsLocked
         this.allowEvents = true;
 
