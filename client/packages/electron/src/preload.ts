@@ -24,6 +24,9 @@ const electronNativeAPI: NativeAPI = {
     ipcRenderer.removeAllListeners(IPC_MESSAGES.ON_DEVICE_MATCHED);
     ipcRenderer.on(IPC_MESSAGES.ON_DEVICE_MATCHED, callback);
   },
+  setScannerType: scannerType =>
+    ipcRenderer.send(IPC_MESSAGES.SET_SCANNER_TYPE, scannerType),
+  getScannerType: () => ipcRenderer.invoke(IPC_MESSAGES.GET_SCANNER_TYPE),
 };
 
 contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);

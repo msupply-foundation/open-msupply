@@ -7,7 +7,7 @@ import { useNotification } from '../hooks/useNotification';
 import { useTranslation } from '@common/intl';
 import { parseBarcode } from 'gs1-barcode-parser-mod';
 import { Formatter } from './formatters';
-import { BarcodeScanner } from '@openmsupply-client/common';
+import { BarcodeScanner, ScannerType } from '@openmsupply-client/common';
 
 const SCAN_TIMEOUT_IN_MS = 5000;
 
@@ -30,6 +30,8 @@ interface BarcodeScannerControl {
   ) => Promise<void>;
   stopScan: () => Promise<void>;
   setScanner: (scanner: BarcodeScanner) => void;
+  setScannerType: (scanner: ScannerType) => void;
+  scannerType: ScannerType;
 }
 
 const BarcodeScannerContext = createContext<BarcodeScannerControl>({} as any);
@@ -84,6 +86,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const { error } = useNotification();
   const { electronNativeAPI } = window;
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
+  const [scannerType, _setScannerType] = useState<ScannerType>('usb_serial');
 
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
@@ -193,9 +196,15 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
     }
   };
 
+  const setScannerType = (type: ScannerType) => {
+    electronNativeAPI.setScannerType(type);
+    electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
+    _setScannerType(type);
+  };
   // calling this outside of a useEffect so that it will detect when a new scanner is added
   useEffect(() => {
     electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
+    electronNativeAPI?.getScannerType().then(_setScannerType);
   }, []);
 
   const val = useMemo(
@@ -206,7 +215,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       setScanner,
       startScan,
       startScanning,
+      setScannerType,
       stopScan,
+      scannerType,
     }),
     [isEnabled, startScan, stopScan, startScanning]
   );

@@ -30,6 +30,8 @@ export interface NativeAPI {
   onDeviceMatched: (
     callback: (event: IpcRendererEvent, scanner: BarcodeScanner) => void
   ) => void;
+  setScannerType: (server: ScannerType) => void;
+  getScannerType: () => Promise<ScannerType>;
 }
 
 export enum NativeMode {
@@ -66,3 +68,5 @@ export type BarcodeScanner = {
   product?: string;
   connected: boolean;
 };
+
+export type ScannerType = 'usb_serial' | 'usb_keyboard';
