@@ -11,8 +11,6 @@ pub struct Repack {
     pub invoice: Invoice,
     pub invoice_line_from: InvoiceLine,
     pub invoice_line_to: InvoiceLine,
-    pub stock_from: StockLine,
-    pub stock_to: StockLine,
 }
 
 pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, RepositoryError> {
@@ -37,48 +35,16 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
         .ok_or(RepositoryError::NotFound)?
         .clone();
 
-    let stock_from_id = invoice_line_from
-        .stock_line_option
-        .as_ref()
-        .map(|stock_line| stock_line.id.clone())
-        .ok_or(RepositoryError::NotFound)?;
-
     let invoice_line_to = invoice_lines
         .iter()
         .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockIn)
         .ok_or(RepositoryError::NotFound)?
         .clone();
 
-    let stock_to_id = invoice_line_to
-        .stock_line_option
-        .as_ref()
-        .map(|stock_line| stock_line.id.clone())
-        .ok_or(RepositoryError::NotFound)?;
-
-    let stock_line_repo = StockLineRepository::new(connection);
-
-    let stock_from = stock_line_repo
-        .query_by_filter(
-            StockLineFilter::new().id(EqualFilter::equal_to(&stock_from_id)),
-            Some(ctx.store_id.clone()),
-        )?
-        .pop()
-        .ok_or(RepositoryError::NotFound)?;
-
-    let stock_to = stock_line_repo
-        .query_by_filter(
-            StockLineFilter::new().id(EqualFilter::equal_to(&stock_to_id)),
-            Some(ctx.store_id.clone()),
-        )?
-        .pop()
-        .ok_or(RepositoryError::NotFound)?;
-
     Ok(Repack {
         invoice,
         invoice_line_from,
         invoice_line_to,
-        stock_from,
-        stock_to,
     })
 }
 
