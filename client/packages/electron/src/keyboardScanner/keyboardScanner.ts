@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import { IPC_MESSAGES } from './shared';
+import { IPC_MESSAGES } from '../shared';
 import { BarcodeScanner } from '@common/hooks';
 
 // Some modifier keys are passed through (no preventDefault)
