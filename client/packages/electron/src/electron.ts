@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
-import { KeyboardScanner } from './keyboardScanner';
+import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
 
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
