@@ -1,5 +1,6 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDateTime;
+use graphql_core::{loader::LocationByIdLoader, ContextExt};
 use service::repack::query::Repack;
 
 use super::{LocationNode, StockLineNode};
@@ -18,7 +19,7 @@ pub struct RepackStockLineNode {
     // Repacked number of packs before conversion (for from stock line)
     pub number_of_packs: f64,
     pub pack_size: i32,
-    pub location: Option<LocationNode>,
+    pub location_id: Option<String>,
     pub stock_line: StockLineNode,
 }
 
@@ -59,8 +60,17 @@ impl RepackStockLineNode {
         self.pack_size
     }
 
-    async fn location(&self) -> &Option<LocationNode> {
-        &self.location
+    async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+
+        let location_id = match &self.location_id {
+            None => return Ok(None),
+            Some(location_id) => location_id,
+        };
+
+        let result = loader.load_one(location_id.clone()).await?;
+
+        Ok(result.map(LocationNode::from_domain))
     }
 
     async fn stock_line(&self) -> &StockLineNode {
@@ -80,17 +90,25 @@ impl RepackNode {
                 .verified_datetime
                 .unwrap_or(repack.invoice.invoice_row.created_datetime),
             from: RepackStockLineNode {
-                number_of_packs: repack.stock_to.stock_line_row.total_number_of_packs
-                    * repack.stock_to.stock_line_row.pack_size as f64
-                    / repack.stock_from.stock_line_row.pack_size as f64,
-                pack_size: repack.stock_from.stock_line_row.pack_size,
-                location: repack.location_from.map(LocationNode::from_domain),
+                number_of_packs: repack.invoice_line_to.invoice_line_row.number_of_packs
+                    * repack.invoice_line_to.invoice_line_row.pack_size as f64
+                    / repack.invoice_line_from.invoice_line_row.pack_size as f64,
+                pack_size: repack.invoice_line_from.invoice_line_row.pack_size,
+                location_id: repack
+                    .invoice_line_from
+                    .location_row_option
+                    .as_ref()
+                    .map(|l| l.id.clone()),
                 stock_line: StockLineNode::from_domain(repack.stock_from.clone()),
             },
             to: RepackStockLineNode {
-                number_of_packs: repack.stock_to.stock_line_row.total_number_of_packs,
-                pack_size: repack.stock_to.stock_line_row.pack_size,
-                location: repack.location_to.map(LocationNode::from_domain),
+                number_of_packs: repack.invoice_line_to.invoice_line_row.number_of_packs,
+                pack_size: repack.invoice_line_to.invoice_line_row.pack_size,
+                location_id: repack
+                    .invoice_line_to
+                    .location_row_option
+                    .as_ref()
+                    .map(|l| l.id.clone()),
                 stock_line: StockLineNode::from_domain(repack.stock_to),
             },
         }

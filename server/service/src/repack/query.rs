@@ -1,7 +1,7 @@
 use repository::{
-    EqualFilter, Invoice, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository,
-    InvoiceLineRowType, InvoiceRepository, InvoiceRowType, Location, LocationFilter,
-    LocationRepository, RepositoryError, StockLine, StockLineFilter, StockLineRepository,
+    EqualFilter, Invoice, InvoiceFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
+    InvoiceLineRowType, InvoiceRepository, InvoiceRowType, RepositoryError, StockLine,
+    StockLineFilter, StockLineRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -9,8 +9,8 @@ use crate::service_provider::ServiceContext;
 #[derive(Debug, PartialEq)]
 pub struct Repack {
     pub invoice: Invoice,
-    pub location_from: Option<Location>,
-    pub location_to: Option<Location>,
+    pub invoice_line_from: InvoiceLine,
+    pub invoice_line_to: InvoiceLine,
     pub stock_from: StockLine,
     pub stock_to: StockLine,
 }
@@ -31,58 +31,28 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
     let invoice_lines = InvoiceLineRepository::new(connection)
         .query_by_filter(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id)))?;
 
-    let location_from = invoice_lines.iter().find_map(|line| {
-        if line.invoice_line_row.r#type == InvoiceLineRowType::StockOut {
-            match line.invoice_line_row.location_id.clone() {
-                Some(location_id) => LocationRepository::new(connection)
-                    .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&location_id)))
-                    .ok()?
-                    .pop(),
-                None => None,
-            }
-        } else {
-            None
-        }
-    });
-
-    let location_to = invoice_lines.iter().find_map(|line| {
-        if line.invoice_line_row.r#type == InvoiceLineRowType::StockIn {
-            match line.invoice_line_row.location_id.clone() {
-                Some(location_id) => LocationRepository::new(connection)
-                    .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(&location_id)))
-                    .ok()?
-                    .pop(),
-                None => None,
-            }
-        } else {
-            None
-        }
-    });
-
-    let stock_from_id = invoice_lines
+    let invoice_line_from = invoice_lines
         .iter()
-        .find_map(|line| {
-            if line.invoice_line_row.r#type == InvoiceLineRowType::StockOut {
-                line.stock_line_option
-                    .as_ref()
-                    .map(|stock_line| stock_line.id.clone())
-            } else {
-                None
-            }
-        })
+        .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockOut)
+        .ok_or(RepositoryError::NotFound)?
+        .clone();
+
+    let stock_from_id = invoice_line_from
+        .stock_line_option
+        .as_ref()
+        .map(|stock_line| stock_line.id.clone())
         .ok_or(RepositoryError::NotFound)?;
 
-    let stock_to_id = invoice_lines
+    let invoice_line_to = invoice_lines
         .iter()
-        .find_map(|line| {
-            if line.invoice_line_row.r#type == InvoiceLineRowType::StockIn {
-                line.stock_line_option
-                    .as_ref()
-                    .map(|stock_line| stock_line.id.clone())
-            } else {
-                None
-            }
-        })
+        .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockIn)
+        .ok_or(RepositoryError::NotFound)?
+        .clone();
+
+    let stock_to_id = invoice_line_to
+        .stock_line_option
+        .as_ref()
+        .map(|stock_line| stock_line.id.clone())
         .ok_or(RepositoryError::NotFound)?;
 
     let stock_line_repo = StockLineRepository::new(connection);
@@ -105,8 +75,8 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
 
     Ok(Repack {
         invoice,
-        location_from,
-        location_to,
+        invoice_line_from,
+        invoice_line_to,
         stock_from,
         stock_to,
     })
@@ -239,7 +209,7 @@ mod test {
 
         assert_eq!(invoice_a, repack.invoice.invoice_row);
         assert_eq!(
-            repack.location_to.unwrap().location_row.id,
+            repack.invoice_line_to.location_row_option.unwrap().id,
             mock_location_1().id
         );
         assert_eq!(
