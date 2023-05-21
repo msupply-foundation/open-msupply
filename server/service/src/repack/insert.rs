@@ -59,11 +59,8 @@ pub fn insert_repack(
                 invoice_line_repo.upsert_one(&line)?;
             }
 
-            if let Some(movements) = location_movement {
-                let location_movement_repo = LocationMovementRowRepository::new(connection);
-                for movement in movements {
-                    location_movement_repo.upsert_one(&movement)?;
-                }
+            if let Some(movement) = location_movement {
+                LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
             }
 
             InvoiceRepository::new(connection)
@@ -538,28 +535,6 @@ mod test {
                     stock_line_id: new_stock.id.clone(),
                     location_id: Some(mock_location_1().id.clone()),
                     enter_datetime: enter_location_movement.location_movement_row.enter_datetime,
-                    ..Default::default()
-                }
-            }
-        );
-
-        let exit_location_movement = LocationMovementRepository::new(&connection)
-            .query_by_filter(
-                LocationMovementFilter::new()
-                    .stock_line_id(EqualFilter::equal_to(&updated_stock.id)),
-            )
-            .unwrap()
-            .pop()
-            .unwrap();
-
-        assert_eq!(
-            exit_location_movement,
-            LocationMovement {
-                location_movement_row: LocationMovementRow {
-                    id: exit_location_movement.location_movement_row.id.clone(),
-                    store_id: mock_store_a().id.clone(),
-                    stock_line_id: updated_stock.id.clone(),
-                    exit_datetime: exit_location_movement.location_movement_row.exit_datetime,
                     ..Default::default()
                 }
             }
