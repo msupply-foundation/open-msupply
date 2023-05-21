@@ -1,7 +1,6 @@
 use repository::{
     EqualFilter, Invoice, InvoiceFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-    InvoiceLineRowType, InvoiceRepository, InvoiceRowType, RepositoryError, StockLine,
-    StockLineFilter, StockLineRepository,
+    InvoiceLineRowType, InvoiceRepository, InvoiceRowType, RepositoryError,
 };
 
 use crate::service_provider::ServiceContext;
@@ -180,11 +179,11 @@ mod test {
         );
         assert_eq!(
             invoice_a_line_a_stock_line_a,
-            repack.stock_to.stock_line_row
+            repack.invoice_line_to.stock_line_option.unwrap()
         );
         assert_eq!(
             invoice_a_line_b_stock_line_b,
-            repack.stock_from.stock_line_row
+            repack.invoice_line_from.stock_line_option.unwrap()
         );
     }
 }
