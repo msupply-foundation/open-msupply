@@ -14,7 +14,7 @@ pub struct GenerateRepack {
     pub repack_invoice: InvoiceRow,
     pub repack_invoice_lines: Vec<InvoiceLineRow>,
     pub stock_lines: Vec<StockLineRow>,
-    pub location_movement: Option<Vec<LocationMovementRow>>,
+    pub location_movement: Option<LocationMovementRow>,
 }
 
 struct StockLineJob {
@@ -35,11 +35,7 @@ pub fn generate(
     let (repack_invoice, repack_invoice_lines) =
         generate_invoice_and_lines(&ctx, input.number_of_packs, &stock_line, &new_stock_line)?;
     let location_movement = if let Some(_) = input.new_location_id {
-        Some(generate_location_movement(
-            &ctx.store_id,
-            &stock_line,
-            &new_stock_line,
-        ))
+        Some(generate_location_movement(&ctx.store_id, &new_stock_line))
     } else {
         None
     };
@@ -160,28 +156,14 @@ fn generate_new_stock_lines(stock_line: &StockLineRow, input: &InsertRepack) -> 
 
 pub fn generate_location_movement(
     store_id: &str,
-    stock_line: &StockLineRow,
     new_stock_line: &StockLineRow,
-) -> Vec<LocationMovementRow> {
-    let mut location_movement = Vec::new();
-
-    location_movement.push(LocationMovementRow {
-        id: uuid(),
-        store_id: store_id.to_string(),
-        stock_line_id: stock_line.id.clone(),
-        location_id: None,
-        enter_datetime: None,
-        exit_datetime: Some(Utc::now().naive_utc()),
-    });
-
-    location_movement.push(LocationMovementRow {
+) -> LocationMovementRow {
+    LocationMovementRow {
         id: uuid(),
         store_id: store_id.to_string(),
         stock_line_id: new_stock_line.id.clone(),
         location_id: new_stock_line.location_id.clone(),
         enter_datetime: Some(Utc::now().naive_utc()),
         exit_datetime: None,
-    });
-
-    location_movement
+    }
 }
