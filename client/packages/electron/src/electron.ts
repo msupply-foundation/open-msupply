@@ -196,11 +196,11 @@ const start = (): void => {
   });
 
   // BARCODES
-  const SerialScanner = new Scanner(window);
+  const serialScanner = new Scanner(window);
   const keyboardScanner = new KeyboardScanner(window);
   const getCurrentScanner = () =>
     store.get(SCANNER_TYPE, 'usb_serial') == 'usb_serial'
-      ? SerialScanner
+      ? serialScanner
       : keyboardScanner;
 
   ipcMain.on(
@@ -217,7 +217,7 @@ const start = (): void => {
     getCurrentScanner().stop()
   );
   ipcMain.handle(IPC_MESSAGES.START_DEVICE_SCAN, () =>
-    SerialScanner.scanDevices(window)
+    serialScanner.scanDevices(window)
   );
   ipcMain.handle(IPC_MESSAGES.GET_SCANNER_TYPE, async () =>
     store.get(SCANNER_TYPE, 'usb_serial')
