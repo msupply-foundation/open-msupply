@@ -1,6 +1,10 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDateTime;
-use graphql_core::{loader::LocationByIdLoader, ContextExt};
+use graphql_core::{
+    loader::{LocationByIdLoader, StockLineByIdLoader},
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
+};
 use service::repack::query::Repack;
 
 use super::{LocationNode, StockLineNode};
@@ -20,7 +24,7 @@ pub struct RepackStockLineNode {
     pub number_of_packs: f64,
     pub pack_size: i32,
     pub location_id: Option<String>,
-    pub stock_line: StockLineNode,
+    pub stock_line_id: Option<String>,
 }
 
 #[Object]
@@ -73,8 +77,20 @@ impl RepackStockLineNode {
         Ok(result.map(LocationNode::from_domain))
     }
 
-    async fn stock_line(&self) -> &StockLineNode {
-        &self.stock_line
+    async fn stock_line(&self, ctx: &Context<'_>) -> Result<Option<StockLineNode>> {
+        if let Some(stock_line_id) = &self.stock_line_id {
+            let loader = ctx.get_loader::<DataLoader<StockLineByIdLoader>>();
+            let stock_line = loader.load_one(stock_line_id.clone()).await?.ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find stock line {}",
+                    stock_line_id
+                ))
+                .extend(),
+            )?;
+            Ok(Some(StockLineNode { stock_line }))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -82,8 +98,13 @@ impl RepackNode {
     pub fn from_domain(repack: Repack) -> RepackNode {
         RepackNode {
             id: repack.invoice.invoice_row.id,
-            repack_id: repack.stock_to.stock_line_row.id.clone(),
-            batch: repack.stock_to.stock_line_row.batch.clone(),
+            repack_id: repack
+                .invoice_line_to
+                .invoice_line_row
+                .stock_line_id
+                .clone()
+                .unwrap_or_default(),
+            batch: repack.invoice_line_to.invoice_line_row.batch,
             datetime: repack
                 .invoice
                 .invoice_row
@@ -99,7 +120,11 @@ impl RepackNode {
                     .location_row_option
                     .as_ref()
                     .map(|l| l.id.clone()),
-                stock_line: StockLineNode::from_domain(repack.stock_from.clone()),
+                stock_line_id: repack
+                    .invoice_line_from
+                    .invoice_line_row
+                    .stock_line_id
+                    .clone(),
             },
             to: RepackStockLineNode {
                 number_of_packs: repack.invoice_line_to.invoice_line_row.number_of_packs,
@@ -109,7 +134,11 @@ impl RepackNode {
                     .location_row_option
                     .as_ref()
                     .map(|l| l.id.clone()),
-                stock_line: StockLineNode::from_domain(repack.stock_to),
+                stock_line_id: repack
+                    .invoice_line_to
+                    .invoice_line_row
+                    .stock_line_id
+                    .clone(),
             },
         }
     }
