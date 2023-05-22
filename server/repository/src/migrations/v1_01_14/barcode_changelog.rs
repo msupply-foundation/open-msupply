@@ -33,7 +33,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         .select(barcode::id)
         .load::<String>(&connection.connection)?;
 
-    // Delete all changelogs for able barcode where record_id is not found
+    // Delete all changelogs for table barcode where record_id is not found
     // in barcode table and changelog is of upsert type
     diesel::delete(changelog_dsl::changelog)
         .filter(
