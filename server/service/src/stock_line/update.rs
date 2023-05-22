@@ -132,11 +132,13 @@ fn generate(
         None
     };
 
-    let barcode_row = match barcode {
+    let barcode_row = match &barcode {
+        // Don't generate row for empty gtin
+        Some(gtin) if gtin == "" => None,
         Some(gtin) => Some(barcode::generate(
             connection,
             BarcodeInput {
-                gtin,
+                gtin: gtin.clone(),
                 item_id: existing.item_id.clone(),
                 pack_size: Some(existing.pack_size),
             },
@@ -144,9 +146,12 @@ fn generate(
         None => None,
     };
 
-    let barcode_id = match barcode_row {
-        Some(ref barcode_row) => Some(barcode_row.id.clone()),
-        None => None,
+    let barcode_id = match &barcode {
+        // If it'e empty gtin unlink
+        Some(gtin) if gtin == "" => None,
+        // If gtin not specified keep existing
+        None => existing.barcode_id,
+        Some(_) => barcode_row.as_ref().map(|b| b.id.clone()),
     };
 
     existing.location_id = location_id.or(existing.location_id);
