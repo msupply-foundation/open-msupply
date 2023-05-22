@@ -77,6 +77,7 @@ impl Processors {
                 // See test below for reasoning behind biased, even though there is no foreseen use case where
                 // requisition must be processed before shipment, it easy to reason about future use cases if
                 // order is guaranteed when requisition transfer is triggered before shipment transfer (like it is in synchroniser)
+                // The biased flag also makes sure that `await_process_queue` is only called after all other channels are empty.
                 let result = tokio::select! {
                     biased;
                     Some(_) = requisition_transfer.recv() => {
