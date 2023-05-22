@@ -260,11 +260,13 @@ impl IntegrationRecords {
 pub(crate) struct PullDependency {
     /// The legacy table name from where data is pulled for the SyncTranslation.
     pub table: &'static str,
-    /// List of legacy table names that need to be pulled first before the SyncTranslation can run.
+    /// List of legacy tables that need to be pulled first before the SyncTranslation can run.
     pub dependencies: Vec<&'static str>,
 }
 
 pub(crate) trait SyncTranslation {
+    /// Returns information about which legacy tables need to be integrated first before this
+    /// translation can run.
     fn pull_dependencies(&self) -> PullDependency;
 
     fn try_translate_pull_upsert(
