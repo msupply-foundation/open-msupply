@@ -1,4 +1,3 @@
-
 use chrono::Utc;
 use repository::{
     DatetimeFilter, EqualFilter, RepositoryError, StorageConnection, SyncBufferAction,
@@ -6,7 +5,6 @@ use repository::{
 };
 use util::inline_edit;
 
-    LegacyTableName::BARCODE,
 pub(crate) struct SyncBuffer<'a> {
     query_repository: SyncBufferRepository<'a>,
     row_repository: SyncBufferRowRepository<'a>,
