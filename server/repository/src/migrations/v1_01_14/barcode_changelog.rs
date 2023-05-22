@@ -49,7 +49,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
 #[cfg(test)]
 #[actix_rt::test]
-async fn migration_1_01_14() {
+async fn migration_1_01_1_barcode_changelog() {
     use crate::migrations::*;
     use crate::test_db::*;
     use diesel::RunQueryDsl;
@@ -61,7 +61,7 @@ async fn migration_1_01_14() {
 
     // Migrate to version - 1
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}"),
+        db_name: &format!("migration_1_01_1_barcode_changelog_{version}"),
         version: Some(previous_version.clone()),
         ..Default::default()
     })
