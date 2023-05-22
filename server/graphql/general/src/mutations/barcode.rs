@@ -57,7 +57,7 @@ pub fn insert_barcode(
     map_response(
         service_provider
             .barcode_service
-            .insert_barcode(&service_context, &input.to_domain()),
+            .upsert_barcode(&service_context, input.to_domain()),
     )
 }
 
@@ -69,7 +69,6 @@ pub fn map_response(from: Result<Barcode, ServiceError>) -> Result<InsertRespons
             let formatted_error = format!("{:#?}", error);
 
             let graphql_error = match error {
-                ServiceError::BarcodeAlreadyExists => BadUserInput(formatted_error),
                 ServiceError::InternalError(err) => InternalError(err),
                 ServiceError::DatabaseError(_) => InternalError(formatted_error),
                 ServiceError::InvalidItem => BadUserInput(formatted_error),
