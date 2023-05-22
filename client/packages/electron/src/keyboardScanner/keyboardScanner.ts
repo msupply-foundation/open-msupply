@@ -160,9 +160,8 @@ export class KeyboardScanner {
       if (keysToPassThrough.includes(input.key)) return;
 
       while (this.lockBuffer) {
-        // Buffer will be locked when processing input, and when input is being processed and key event
-        // is identified as normal keyboard event it will be triggered from processor, this event should be
-        // passed through (no preventDefault)
+        // Buffer will be locked when processing input, and when input is identified as normal keyboard event
+        // input keys will be passed through (no preventDefault), allowEvents flag is used for this reason
         if (this.allowEvents) return;
       }
 
