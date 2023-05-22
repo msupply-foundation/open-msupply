@@ -3,7 +3,7 @@
   "label.dps": "Cond.",
   "label.requisition-general": "Général",
   "label.program": "Bon de commande",
-  "label.requested-packs": "Emb. demandés",
+  "label.requested-packs": "Qté de boites demandées",
   "label.requisition-program": "Bon de commande",
   "log.requisition-deleted": "Commande supprimée",
   "log.requisition-number-allocated": "Numéro de commande alloué",
@@ -19,5 +19,7 @@
   "description.program": "Les bons de commande programme sont utilisées pour gérer des groupes d'article et les calendriers de commande.",
   "filename.outbounds": "Sorties de stock",
   "description.remaining-to-supply": "C'est la quantité restante à livrer, c'est à dire la quantité total à livrer moins la quantité déjà livrée avec les sorties de stock",
-  "button.new-outbound-shipment": "Nouvelle sortie de stock"
+  "button.new-outbound-shipment": "Nouvelle sortie de stock",
+  "description.default-pack-size": "Conditionnement",
+  "label.default-pack-size": "Conditionnement"
 }
