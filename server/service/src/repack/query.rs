@@ -47,6 +47,48 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
     })
 }
 
+pub fn get_repacks(
+    ctx: &ServiceContext,
+    stock_line_id: &str,
+) -> Result<Vec<Repack>, RepositoryError> {
+    let connection = &ctx.connection;
+
+    let invoices = InvoiceRepository::new(connection).query_by_filter(
+        InvoiceFilter::new()
+            .store_id(EqualFilter::equal_to(&ctx.store_id))
+            .r#type(InvoiceRowType::Repack.equal_to())
+            .stock_line_id(stock_line_id.to_string()),
+    )?;
+
+    let mut repacks = Vec::new();
+
+    for invoice in invoices {
+        let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id)),
+        )?;
+
+        let invoice_line_from = invoice_lines
+            .iter()
+            .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockOut)
+            .ok_or(RepositoryError::NotFound)?
+            .clone();
+
+        let invoice_line_to = invoice_lines
+            .iter()
+            .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockIn)
+            .ok_or(RepositoryError::NotFound)?
+            .clone();
+
+        repacks.push(Repack {
+            invoice,
+            invoice_line_from,
+            invoice_line_to,
+        });
+    }
+
+    Ok(repacks)
+}
+
 #[cfg(test)]
 mod test {
     use crate::service_provider::ServiceProvider;
