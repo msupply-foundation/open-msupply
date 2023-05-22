@@ -240,7 +240,7 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
 
         if let Some(stock_line_id) = stock_line_id {
             let invoice_line_query = invoice_line_dsl::invoice_line
-                .filter(invoice_line_dsl::stock_line_id.eq(stock_line_id.clone()))
+                .filter(invoice_line_dsl::stock_line_id.eq(stock_line_id))
                 .select(invoice_line_dsl::invoice_id);
 
             query = query.filter(invoice_dsl::id.eq_any(invoice_line_query));
