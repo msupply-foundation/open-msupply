@@ -1,7 +1,7 @@
 use crate::service_provider::ServiceContext;
 
 pub use self::insert::{insert_repack, InsertRepack, InsertRepackError};
-use self::query::{get_repack, get_repacks, Repack};
+use self::query::{get_repack, get_repacks_by_stock_line, Repack};
 use repository::{Invoice, RepositoryError};
 
 pub mod generate;
@@ -29,12 +29,12 @@ pub trait RepackServiceTrait: Sync + Send {
         get_repack(ctx, invoice_id)
     }
 
-    fn get_repacks(
+    fn get_repacks_by_stock_line(
         &self,
         ctx: &ServiceContext,
         stock_line_id: &str,
     ) -> Result<Vec<Repack>, RepositoryError> {
-        get_repacks(ctx, stock_line_id)
+        get_repacks_by_stock_line(ctx, stock_line_id)
     }
 }
 
