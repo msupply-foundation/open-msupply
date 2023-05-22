@@ -16,7 +16,7 @@ use crate::{
         outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
     },
     invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine,
-    processors::test_helpers::{delay_for_processor, exec_concurrent},
+    processors::test_helpers::exec_concurrent,
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
@@ -112,27 +112,21 @@ async fn invoice_transfers() {
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_not_created(&ctx.connection);
-            delay_for_processor().await;
             tester.update_outbound_shipment_to_picked(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_created(&ctx.connection);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_was_linked(&ctx.connection);
-            delay_for_processor().await;
             tester.update_outbound_shipment_lines(&service_provider);
-            delay_for_processor().await;
             tester.update_outbound_shipment_to_shipped(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_was_updated(&ctx.connection);
-            delay_for_processor().await;
             tester.update_inbound_shipment_to_delivered(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
-            delay_for_processor().await;
             tester.update_inbound_shipment_to_verified(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
-            delay_for_processor().await;
 
             // With delete
             let mut tester =
@@ -142,11 +136,9 @@ async fn invoice_transfers() {
             ctx.processors_trigger.await_events_processed().await;
             tester.check_response_requisition_created(&ctx.connection);
             tester.insert_outbound_shipment(&ctx.connection);
-            delay_for_processor().await;
             tester.update_outbound_shipment_to_picked(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_created(&ctx.connection);
-            delay_for_processor().await;
             tester.delete_outbound_shipment(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_deleted(&ctx.connection);

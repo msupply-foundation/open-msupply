@@ -9,7 +9,7 @@ use repository::{
 use util::{inline_edit, inline_init, uuid::uuid};
 
 use crate::{
-    processors::test_helpers::{delay_for_processor, exec_concurrent},
+    processors::test_helpers::exec_concurrent,
     requisition::{
         request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
         response_requisition::{UpdateResponseRequisition, UpdateResponseRequisitionStatus},
@@ -104,13 +104,11 @@ async fn requisition_transfer() {
                 .unwrap();
             ctx.processors_trigger.await_events_processed().await;
             tester.check_response_requisition_not_created(&ctx.connection);
-            delay_for_processor().await;
             tester.update_request_requisition_to_sent(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_response_requisition_created(&ctx.connection);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_was_linked(&ctx.connection);
-            delay_for_processor().await;
             tester.update_response_requisition_to_finalised(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_status_updated(&ctx.connection);
