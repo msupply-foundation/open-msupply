@@ -33,7 +33,7 @@ const PROCESSOR_INTERVAL = 50;
 
 type KeyEvent = { input: Electron.Input; ms: number };
 
-// Some keys need to be removed (mention about the thig)
+// Some keys need to be removed, see README.md
 const ignoreKeys = (input: Electron.Input) =>
   // Just focusing on keyDown events
   input.type != 'keyDown' ||
