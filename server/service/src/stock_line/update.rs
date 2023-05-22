@@ -27,7 +27,7 @@ pub struct UpdateStockLine {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: Option<bool>,
     pub batch: Option<String>,
-    pub barcode_gtin: Option<String>,
+    pub barcode: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -111,7 +111,7 @@ fn generate(
         expiry_date,
         batch,
         on_hold,
-        barcode_gtin,
+        barcode,
     }: UpdateStockLine,
 ) -> Result<
     (
@@ -132,7 +132,7 @@ fn generate(
         None
     };
 
-    let barcode_row = match barcode_gtin {
+    let barcode_row = match barcode {
         Some(gtin) => Some(barcode::generate(
             connection,
             BarcodeInput {

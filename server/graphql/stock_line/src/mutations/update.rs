@@ -22,7 +22,7 @@ pub struct UpdateInput {
     pub expiry_date: Option<NaiveDate>,
     pub batch: Option<String>,
     pub on_hold: Option<bool>,
-    pub barcode_gtin: Option<String>,
+    pub barcode: Option<String>,
 }
 
 #[derive(Interface)]
@@ -87,7 +87,7 @@ impl UpdateInput {
             expiry_date,
             batch,
             on_hold,
-            barcode_gtin,
+            barcode,
         } = self;
 
         ServiceInput {
@@ -98,7 +98,7 @@ impl UpdateInput {
             expiry_date,
             batch,
             on_hold,
-            barcode_gtin,
+            barcode,
         }
     }
 }
@@ -264,7 +264,7 @@ mod test {
                     expiry_date: None,
                     batch: None,
                     on_hold: None,
-                    barcode_gtin: None,
+                    barcode: None,
                 }
             );
             Ok(StockLine {
