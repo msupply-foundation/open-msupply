@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::mpsc::{self, Receiver, Sender};
+use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 
 use crate::service_provider::ServiceProvider;
@@ -21,11 +22,13 @@ const CHANNEL_BUFFER_SIZE: usize = 30;
 pub struct ProcessorsTrigger {
     requisition_transfer: Sender<()>,
     shipment_transfer: Sender<()>,
+    await_process_queue: Sender<oneshot::Sender<()>>,
 }
 
 pub struct Processors {
     requisition_transfer: Receiver<()>,
     shipment_transfer: Receiver<()>,
+    await_process_queue: Receiver<oneshot::Sender<()>>,
 }
 
 #[derive(Debug, Error)]
@@ -34,6 +37,8 @@ enum ProcessorsError {
     ShipmentTransfer(ProcessShipmentTransfersError),
     #[error("Error in requisition transfer processor ({0})")]
     RequisitionTransfer(ProcessRequisitionTransfersError),
+    #[error("Error when waiting for the process queue to be processed")]
+    AwaitProcessQueue(()),
 }
 
 impl Processors {
@@ -44,14 +49,18 @@ impl Processors {
         let (shipment_transfer_sender, shipment_transfer_receiver) =
             mpsc::channel(CHANNEL_BUFFER_SIZE);
 
+        let (request_check_sender, request_check_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
+
         (
             ProcessorsTrigger {
                 requisition_transfer: requisition_transfer_sender,
                 shipment_transfer: shipment_transfer_sender,
+                await_process_queue: request_check_sender,
             },
             Processors {
                 requisition_transfer: requisition_transfer_receiver,
                 shipment_transfer: shipment_transfer_receiver,
+                await_process_queue: request_check_receiver,
             },
         )
     }
@@ -60,6 +69,7 @@ impl Processors {
         let Processors {
             mut requisition_transfer,
             mut shipment_transfer,
+            mut await_process_queue,
         } = self;
 
         tokio::spawn(async move {
@@ -74,6 +84,9 @@ impl Processors {
                     },
                     Some(_) = shipment_transfer.recv() => {
                         process_shipment_transfers(&service_provider).map_err(ProcessorsError::ShipmentTransfer)
+                    },
+                    Some(sender) = await_process_queue.recv() => {
+                        sender.send(()).map_err(ProcessorsError::AwaitProcessQueue)
                     },
                     // None will be returned by recv if channel is closed, this would only really happen if all receivers were dropped
                     else => break,
@@ -106,11 +119,35 @@ impl ProcessorsTrigger {
         }
     }
 
+    /// Waits till all current events in the processor queue are handled.
+    /// Its guaranteed that all queued processor events that where in the queue before calling
+    /// this method are handled when this method returns.
+    /// However, new events might have been added while this method was running.
+    pub async fn await_events_processed(&self) {
+        let (sender, receiver) = oneshot::channel();
+        if let Err(error) = self.await_process_queue.try_send(sender) {
+            log::error!(
+                "Problem sending the await_events_processed queue {:#?}",
+                error
+            );
+            return;
+        }
+
+        if let Err(error) = receiver.await {
+            log::error!(
+                "Problem receiving the await_events_processed response {:#?}",
+                error
+            );
+            return;
+        }
+    }
+
     /// Empty processor triggers for test that don't use processors but require processors for construction of ServiceContext and ServiceProvider
     pub(crate) fn new_void() -> ProcessorsTrigger {
         ProcessorsTrigger {
             requisition_transfer: mpsc::channel(1).0,
             shipment_transfer: mpsc::channel(1).0,
+            await_process_queue: mpsc::channel(1).0,
         }
     }
 }
