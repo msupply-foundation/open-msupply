@@ -9,7 +9,7 @@ use repository::{
 use util::{inline_edit, inline_init, uuid::uuid};
 
 use crate::{
-    processors::test_helpers::{delay_for_processor, exec_concurrent},
+    processors::test_helpers::exec_concurrent,
     requisition::{
         request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
         response_requisition::{UpdateResponseRequisition, UpdateResponseRequisitionStatus},
@@ -97,18 +97,20 @@ async fn requisition_transfer() {
                 RequisitionTransferTester::new(&request_store, &response_store, &item1, &item2);
 
             tester.insert_request_requisition(&ctx.connection);
-            // todo manual trigger
-            delay_for_processor().await;
+            // manually trigger because inserting the requisition doesn't trigger the processor
+            ctx.processors_trigger
+                .requisition_transfer
+                .try_send(())
+                .unwrap();
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_response_requisition_not_created(&ctx.connection);
-            delay_for_processor().await;
             tester.update_request_requisition_to_sent(&service_provider);
-            delay_for_processor().await;
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_response_requisition_created(&ctx.connection);
-            delay_for_processor().await;
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_was_linked(&ctx.connection);
-            delay_for_processor().await;
             tester.update_response_requisition_to_finalised(&service_provider);
-            delay_for_processor().await;
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_status_updated(&ctx.connection);
         },
     );
