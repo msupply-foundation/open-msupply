@@ -47,7 +47,7 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
     })
 }
 
-pub fn get_repacks(
+pub fn get_repacks_by_stock_line(
     ctx: &ServiceContext,
     stock_line_id: &str,
 ) -> Result<Vec<Repack>, RepositoryError> {
@@ -261,7 +261,7 @@ mod test {
             .unwrap();
 
         let repacks = service
-            .get_repacks(&context, &original_stock_line.id)
+            .get_repacks_by_stock_line(&context, &original_stock_line.id)
             .unwrap();
 
         let sorted_repacks = sort_repacks_by_invoice_timestamp(repacks.clone());
