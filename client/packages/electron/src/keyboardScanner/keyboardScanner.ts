@@ -129,6 +129,8 @@ export class KeyboardScanner {
       // Remember left over for next check
       this.buffer = checkSequence;
       if (barcode.length != 0) {
+        // This console log is super useful and is supposed to be here!
+        // TODO can be improved by login to window console as per: https://github.com/openmsupply/open-msupply/pull/1804#discussion_r1199888198
         console.log(JSON.stringify(barcode, null, ' '));
         this.sendBarcode(barcode);
       }
