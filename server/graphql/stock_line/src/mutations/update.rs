@@ -22,6 +22,7 @@ pub struct UpdateInput {
     pub expiry_date: Option<NaiveDate>,
     pub batch: Option<String>,
     pub on_hold: Option<bool>,
+    /// Empty barcode will unlink barcode from StockLine
     pub barcode: Option<String>,
 }
 
