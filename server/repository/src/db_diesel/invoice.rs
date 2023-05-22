@@ -1,4 +1,5 @@
 use super::{
+    invoice_line_row::invoice_line::dsl as invoice_line_dsl,
     invoice_row::{invoice, invoice::dsl as invoice_dsl},
     name_row::{name, name::dsl as name_dsl},
     store_row::{store, store::dsl as store_dsl},
@@ -48,6 +49,7 @@ pub struct InvoiceFilter {
     pub colour: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
     pub linked_invoice_id: Option<EqualFilter<String>>,
+    pub stock_line_id: Option<String>,
 }
 
 pub enum InvoiceSortField {
@@ -206,6 +208,7 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
             colour,
             requisition_id,
             linked_invoice_id,
+            stock_line_id,
         } = f;
 
         apply_equal_filter!(query, id, invoice_dsl::id);
@@ -234,6 +237,14 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
         apply_date_time_filter!(query, shipped_datetime, invoice_dsl::shipped_datetime);
         apply_date_time_filter!(query, delivered_datetime, invoice_dsl::delivered_datetime);
         apply_date_time_filter!(query, verified_datetime, invoice_dsl::verified_datetime);
+
+        if let Some(stock_line_id) = stock_line_id {
+            let invoice_line_query = invoice_line_dsl::invoice_line
+                .filter(invoice_line_dsl::stock_line_id.eq(stock_line_id.clone()))
+                .select(invoice_line_dsl::invoice_id);
+
+            query = query.filter(invoice_dsl::id.eq_any(invoice_line_query));
+        }
     }
     query
 }
@@ -377,6 +388,11 @@ impl InvoiceFilter {
 
     pub fn new_match_linked_invoice_id(id: &str) -> InvoiceFilter {
         InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(id))
+    }
+
+    pub fn stock_line_id(mut self, stock_line_id: String) -> Self {
+        self.stock_line_id = Some(stock_line_id);
+        self
     }
 }
 
