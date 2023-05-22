@@ -18,8 +18,27 @@ import { Setting } from './Setting';
 const omsBarcode = require('./omsupply-barcode.gif');
 const SCAN_TIMEOUT_IN_MS = 50000;
 
-const Scanner = ({ scanner }: { scanner: BarcodeScanner }) => {
+const Scanner = ({ scanner }: { scanner: BarcodeScanner | null }) => {
   const t = useTranslation();
+
+  if (!scanner)
+    return (
+      <Box display="flex">
+        <AlertIcon color="error" />
+        <Typography
+          component="div"
+          sx={{
+            alignItems: 'center',
+            display: 'inline-flex',
+            fontSize: '14px',
+            paddingLeft: 1,
+          }}
+        >
+          {t('messages.no-scanners-found')}
+        </Typography>
+      </Box>
+    );
+
   const status: { color: 'green' | 'error'; message: LocaleKey } =
     scanner.connected
       ? { color: 'green', message: 'messages.scanner-connected' }
@@ -121,26 +140,7 @@ export const ElectronSettings = () => {
         <>
           <Setting
             title={t('label.current')}
-            component={
-              !scanner ? (
-                <Box display="flex">
-                  <AlertIcon color="error" />
-                  <Typography
-                    component="div"
-                    sx={{
-                      alignItems: 'center',
-                      display: 'inline-flex',
-                      fontSize: '14px',
-                      paddingLeft: 1,
-                    }}
-                  >
-                    {t('messages.no-scanners-found')}
-                  </Typography>
-                </Box>
-              ) : (
-                <Scanner scanner={scanner} />
-              )
-            }
+            component={<Scanner scanner={scanner} />}
           />
           <Setting
             title=""
