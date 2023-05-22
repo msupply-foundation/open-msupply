@@ -86,7 +86,8 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const { error } = useNotification();
   const { electronNativeAPI } = window;
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
-  const [scannerType, _setScannerType] = useState<ScannerType>('usb_serial');
+  const [localScannerType, setLocalScannerType] =
+    useState<ScannerType>('usb_serial');
 
   const hasNativeBarcodeScanner =
     Capacitor.isPluginAvailable('BarcodeScanner') &&
@@ -199,12 +200,12 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const setScannerType = (type: ScannerType) => {
     electronNativeAPI.setScannerType(type);
     electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
-    _setScannerType(type);
+    setLocalScannerType(type);
   };
   // calling this outside of a useEffect so that it will detect when a new scanner is added
   useEffect(() => {
     electronNativeAPI?.linkedBarcodeScannerDevice().then(setScanner);
-    electronNativeAPI?.getScannerType().then(_setScannerType);
+    electronNativeAPI?.getScannerType().then(setLocalScannerType);
   }, []);
 
   const val = useMemo(
@@ -217,7 +218,7 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
       startScanning,
       setScannerType,
       stopScan,
-      scannerType,
+      scannerType: localScannerType,
     }),
     [isEnabled, startScan, stopScan, startScanning]
   );
