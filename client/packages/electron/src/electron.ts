@@ -7,15 +7,18 @@ import {
   frontEndHostUrl,
   isProtocol,
   BarcodeScanner,
+  ScannerType,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
+import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
 
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
 const CLIENT_VERSION_KEY = 'client_version';
 const HARDWARE_ID_KEY = 'hardware_id';
 const BARCODE_SCANNER_DEVICE_KEY = 'barcode_scanner_device';
+const SCANNER_TYPE = 'scanner_type';
 const DEVICE_CLOSE_DELAY = 5000;
 const OMSUPPLY_BARCODE =
   '19,16,3,0,111,112,101,110,32,109,83,117,112,112,108,121,0,24,11';
@@ -28,9 +31,11 @@ type StoreType = {
 class Scanner {
   device: HID.HID | undefined;
   barcodeScanner: BarcodeScanner | undefined;
+  window: BrowserWindow;
 
-  constructor() {
+  constructor(window: BrowserWindow) {
     this.device = this.findDevice();
+    this.window = window;
     const storedScanner = store.get(BARCODE_SCANNER_DEVICE_KEY, null);
     this.barcodeScanner = !storedScanner
       ? undefined
@@ -96,10 +101,10 @@ class Scanner {
     return devices;
   }
 
-  start(window: BrowserWindow) {
+  start() {
     if (!this.device) throw new Error('No scanners found');
     this.device?.on('data', data => {
-      window.webContents.send(IPC_MESSAGES.ON_BARCODE_SCAN, data);
+      this.window.webContents.send(IPC_MESSAGES.ON_BARCODE_SCAN, data);
     });
   }
 
@@ -117,7 +122,6 @@ class Scanner {
 
 const store = new ElectronStore<StoreType>();
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
-const barcodeScanner = new Scanner();
 
 let connectedServer: FrontEndHost | null = null;
 let discoveredServers: FrontEndHost[] = [];
@@ -184,10 +188,6 @@ const start = (): void => {
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
-  ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () =>
-    barcodeScanner.start(window)
-  );
-  ipcMain.handle(IPC_MESSAGES.STOP_BARCODE_SCAN, () => barcodeScanner.stop());
 
   ipcMain.handle(IPC_MESSAGES.DISCOVERED_SERVERS, async () => {
     const servers = discoveredServers;
@@ -195,11 +195,32 @@ const start = (): void => {
     return { servers };
   });
 
+  // BARCODES
+  const serialScanner = new Scanner(window);
+  const keyboardScanner = new KeyboardScanner(window);
+  const getCurrentScanner = () =>
+    store.get(SCANNER_TYPE, 'usb_serial') == 'usb_serial'
+      ? serialScanner
+      : keyboardScanner;
+
+  ipcMain.on(
+    IPC_MESSAGES.SET_SCANNER_TYPE,
+    (_event, scannerType: ScannerType) => store.set(SCANNER_TYPE, scannerType)
+  );
   ipcMain.handle(IPC_MESSAGES.LINKED_BARCODE_SCANNER_DEVICE, async () =>
-    barcodeScanner.linkedScanner()
+    getCurrentScanner().linkedScanner()
+  );
+  ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () =>
+    getCurrentScanner().start()
+  );
+  ipcMain.handle(IPC_MESSAGES.STOP_BARCODE_SCAN, () =>
+    getCurrentScanner().stop()
   );
   ipcMain.handle(IPC_MESSAGES.START_DEVICE_SCAN, () =>
-    barcodeScanner.scanDevices(window)
+    serialScanner.scanDevices(window)
+  );
+  ipcMain.handle(IPC_MESSAGES.GET_SCANNER_TYPE, async () =>
+    store.get(SCANNER_TYPE, 'usb_serial')
   );
 
   // not currently implemented in the desktop implementation
