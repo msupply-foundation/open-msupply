@@ -29,4 +29,14 @@ const electronNativeAPI: NativeAPI = {
   getScannerType: () => ipcRenderer.invoke(IPC_MESSAGES.GET_SCANNER_TYPE),
 };
 
+ipcRenderer.on(
+  IPC_MESSAGES.ON_CONSOLE,
+  (
+    _event: Electron.IpcRendererEvent,
+    type: 'log' | 'warn' | 'error' | 'debug',
+    message?: any,
+    ...optionalParams: any[]
+  ) => console[type](message, ...optionalParams)
+);
+
 contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);

@@ -129,7 +129,11 @@ export class KeyboardScanner {
       // Remember left over for next check
       this.buffer = checkSequence;
       if (barcode.length != 0) {
-        console.log(JSON.stringify(barcode, null, ' '));
+        this.window.webContents.send(
+          IPC_MESSAGES.ON_CONSOLE,
+          'debug',
+          JSON.stringify(barcode, null, ' ')
+        );
         this.sendBarcode(barcode);
       }
 
