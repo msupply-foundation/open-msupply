@@ -27,7 +27,7 @@ export const setPreference = async (
       localStorage.setItem(`preference/${key}`, value);
     }
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 };
 

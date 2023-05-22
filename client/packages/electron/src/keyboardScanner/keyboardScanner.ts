@@ -174,7 +174,7 @@ export class KeyboardScanner {
           this.buffer.push({ input, ms: Date.now() });
         }
       } catch (e) {
-        console.log(e);
+        console.error(e);
       } finally {
         // Make sure lockBuffer is always unlocked
         this.lockBuffer = false;
