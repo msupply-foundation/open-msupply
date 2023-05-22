@@ -64,7 +64,6 @@ export class KeyboardScanner {
   settings: KeyboardScannerSettings;
 
   constructor(window: BrowserWindow) {
-    // this.device = this.findDevice();
     this.window = window;
     this.scanning = false;
     this.lockBuffer = false;
