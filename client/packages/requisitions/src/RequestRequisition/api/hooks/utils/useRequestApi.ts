@@ -11,7 +11,8 @@ export const useRequestApi = () => {
     sortedList: (sortBy: SortBy<RequestRowFragment>) =>
       [...keys.list(), sortBy] as const,
     chartData: (lineId: string) => [...keys.base(), storeId, lineId] as const,
-    programSettings: () => ['programSettings', storeId] as const,
+    programSettings: () =>
+      [...keys.base(), 'programSettings', storeId] as const,
   };
 
   const { client } = useGql();
