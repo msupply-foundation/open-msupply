@@ -11,6 +11,7 @@ import {
   useTranslation,
   InfoPanel,
   Switch,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { useInbound } from '../api';
@@ -75,7 +76,9 @@ export const Toolbar: FC = () => {
               message={t(
                 isManuallyCreated
                   ? 'info.manual-shipment'
-                  : 'info.automatic-shipment'
+                  : shipment?.status === InvoiceNodeStatus.Shipped
+                  ? 'info.automatic-shipment'
+                  : 'info.automatic-shipment-edit'
               )}
             />
           </Box>

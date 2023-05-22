@@ -28,6 +28,7 @@
   "heading.grand-total": "Grand total",
   "heading.edit-tax-rate": "Edit tax rate percentage",
   "info.automatic-shipment": "This shipment was created automatically, as the result of an Outbound Shipment in another store. You are unable to edit details until the status is confirmed as Delivered.",
+  "info.automatic-shipment-edit": "This shipment was created automatically, as the result of an Outbound Shipment in another store.",
   "info.manual-shipment": "This shipment was created manually. The delivery status will not be automatically updated.",
   "label.add-batch": "Add batch",
   "label.consumption": "Consumption",
