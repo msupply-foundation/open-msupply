@@ -10,7 +10,7 @@ Because scanner scans and sends keyboard events very fast, we can idetify scanne
 
 `maxMSBetweenScannerKeyInputs` defaults to 50 and `minBarcodeLength` defaults to 5.
 
-Ofcourse it's possible for user to spam keyboard and replicate scanner input, this should be OK because:
+Of course it's possible for user to spam keyboard and replicate scanner input, this should be OK because:
 
 * It's highly unlikely
 * Our UI is not really catered for operations at this speed (even without barcode scanner these operations are not really considered, as they are unlikely low probabiliy and low impact)
@@ -18,7 +18,7 @@ Ofcourse it's possible for user to spam keyboard and replicate scanner input, th
 
 #### How does it work ?
 
-During barcode scanning mode (when keyboard scanner in selected), all keyboard input is captured with `window.webContents.on('before-input-event'` and stored in buffer.
+During barcode scanning mode (when keyboard scanner is selected), all keyboard input is captured with `window.webContents.on('before-input-event'` and stored in a buffer.
 
 A processor is triggered every PROCESSOR_INTERVAL (50ms), it will try to find scanner input by iterating over buffer and finding input seqences matching scanner input criteria. Any input not matching scanner input criteria will be passed through (as if it wasn't captured).
 
@@ -28,7 +28,7 @@ Processor is started (setInterval) when scanning operation is started and will b
 
 #### Passing through input
 
-Any controll keys (keysToPassThrough array) are passed through automatically (when input is captured). Other input that is identified by processor as not scanner input is passed through by manually calling keyDown and char event (apparently that is what [chromium](https://stackoverflow.com/a/53223619) needs to consider it input entered by keyboard). 
+Any control keys (keysToPassThrough array) are passed through automatically (when input is captured). Other input that is identified by processor as not scanner input is passed through by manually calling keyDown and char event (apparently that is what [chromium](https://stackoverflow.com/a/53223619) needs to consider it input entered by keyboard). 
 
 Since we are capturing input with `window.webContents.on('before-input-event'` we have to temporary allow this input to go through with `allowEvents` flag. Which is set in the processor when input is identified as not being from scanner.
 
@@ -48,4 +48,4 @@ It is possible for actual keyboard input to be perceived as scanner input or for
 
 * Only capturing and processing input when scanning mode is turned on.
 * Considering that during scanning mode we only entering quantities (simple digits) or searching for item (simple alphanumeric keys)
-* We actually recommend using USB serial scanner mode and Zebra scanners, some support is provided for keyboard scanners but it's is limited and at TMF discretion
+* We actually recommend using USB serial scanner mode and Zebra scanners, some support is provided for keyboard scanners but it's limited and at TMF discretion
