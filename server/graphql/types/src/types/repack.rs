@@ -118,13 +118,8 @@ impl RepackNode {
                 location_id: repack
                     .invoice_line_from
                     .location_row_option
-                    .as_ref()
                     .map(|l| l.id.clone()),
-                stock_line_id: repack
-                    .invoice_line_from
-                    .invoice_line_row
-                    .stock_line_id
-                    .clone(),
+                stock_line_id: repack.invoice_line_from.invoice_line_row.stock_line_id,
             },
             to: RepackStockLineNode {
                 number_of_packs: repack.invoice_line_to.invoice_line_row.number_of_packs,
@@ -132,13 +127,8 @@ impl RepackNode {
                 location_id: repack
                     .invoice_line_to
                     .location_row_option
-                    .as_ref()
                     .map(|l| l.id.clone()),
-                stock_line_id: repack
-                    .invoice_line_to
-                    .invoice_line_row
-                    .stock_line_id
-                    .clone(),
+                stock_line_id: repack.invoice_line_to.invoice_line_row.stock_line_id,
             },
         }
     }
