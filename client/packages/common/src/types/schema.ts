@@ -1066,6 +1066,24 @@ export type InsertProgramRequestRequisitionInput = {
 
 export type InsertProgramRequestRequisitionResponse = InsertProgramRequestRequisitionError | RequisitionNode;
 
+export type InsertRepackError = {
+  __typename: 'InsertRepackError';
+  error: InsertRepackErrorInterface;
+};
+
+export type InsertRepackErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type InsertRepackInput = {
+  newLocationId?: InputMaybe<Scalars['String']>;
+  newPackSize: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
+  stockLineId: Scalars['String'];
+};
+
+export type InsertRepackResponse = InsertRepackError | InvoiceNode;
+
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
   error: InsertRequestRequisitionErrorInterface;
@@ -1376,7 +1394,8 @@ export enum InvoiceNodeType {
   InboundShipment = 'INBOUND_SHIPMENT',
   InventoryAddition = 'INVENTORY_ADDITION',
   InventoryReduction = 'INVENTORY_REDUCTION',
-  OutboundShipment = 'OUTBOUND_SHIPMENT'
+  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Repack = 'REPACK'
 }
 
 export type InvoiceResponse = InvoiceNode | NodeError;
@@ -1706,6 +1725,7 @@ export type Mutations = {
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
+  insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -1923,6 +1943,12 @@ export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
 
 export type MutationsInsertProgramRequestRequisitionArgs = {
   input: InsertProgramRequestRequisitionInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertRepackArgs = {
+  input: InsertRepackInput;
   storeId: Scalars['String'];
 };
 
@@ -2984,7 +3010,7 @@ export type StockLineNode = {
   totalNumberOfPacks: Scalars['Float'];
 };
 
-export type StockLineReducedBelowZero = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+export type StockLineReducedBelowZero = InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'StockLineReducedBelowZero';
   description: Scalars['String'];
   stockLine: StockLineNode;
@@ -3646,6 +3672,7 @@ export type UpdateStockLineErrorInterface = {
 };
 
 export type UpdateStockLineInput = {
+  /** Empty barcode will unlink barcode from StockLine */
   barcode?: InputMaybe<Scalars['String']>;
   batch?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
@@ -3760,6 +3787,7 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  CreateRepack = 'CREATE_REPACK',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   ItemMutate = 'ITEM_MUTATE',

@@ -1,8 +1,9 @@
 use crate::StorageConnection;
+#[cfg(not(feature = "postgres"))]
 use diesel::prelude::*;
 
 #[cfg(feature = "postgres")]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(_connection: &StorageConnection) -> anyhow::Result<()> {
     Ok(())
 }
 
@@ -48,6 +49,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 }
 
 #[cfg(test)]
+#[cfg(not(feature = "postgres"))]
 #[actix_rt::test]
 async fn migration_1_01_1_barcode_changelog() {
     use crate::migrations::*;
