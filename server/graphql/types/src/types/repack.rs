@@ -111,9 +111,7 @@ impl RepackNode {
                 .verified_datetime
                 .unwrap_or(repack.invoice.invoice_row.created_datetime),
             from: RepackStockLineNode {
-                number_of_packs: repack.invoice_line_to.invoice_line_row.number_of_packs
-                    * repack.invoice_line_to.invoice_line_row.pack_size as f64
-                    / repack.invoice_line_from.invoice_line_row.pack_size as f64,
+                number_of_packs: repack.invoice_line_from.invoice_line_row.number_of_packs,
                 pack_size: repack.invoice_line_from.invoice_line_row.pack_size,
                 location_id: repack
                     .invoice_line_from
