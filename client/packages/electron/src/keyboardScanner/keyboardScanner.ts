@@ -119,8 +119,8 @@ export class KeyboardScanner {
           passThrough = [...passThrough, ...checkSequence];
           checkSequence = [];
         } else {
-          // If exceeding maxMSBetweenScannerKeyInputs but sequnce length
-          // is long enought to be barcode, record as barcode;
+          // If exceeding maxMSBetweenScannerKeyInputs but sequence length
+          // is long enough to be a barcode, record as barcode;
           // Very unlikely that two barcodes will be scanned within PROCESSOR_INTERVAL
           barcode = checkSequence;
           checkSequence = [];
