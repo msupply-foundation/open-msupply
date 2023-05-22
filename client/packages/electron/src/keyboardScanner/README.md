@@ -30,7 +30,7 @@ Processor is started (setInterval) when scanning operation is started and will b
 
 Any control keys (keysToPassThrough array) are passed through automatically (when input is captured). Other input that is identified by processor as not scanner input is passed through by manually calling keyDown and char event (apparently that is what [chromium](https://stackoverflow.com/a/53223619) needs to consider it input entered by keyboard). 
 
-Since we are capturing input with `window.webContents.on('before-input-event'` we have to temporary allow this input to go through with `allowEvents` flag. Which is set in the processor when input is identified as not being from scanner.
+Since we are capturing input with `window.webContents.on('before-input-event'` we have to temporary allow this input to go through with `allowEvents` flag which is set in the processor when the input is identified as not being from scanner.
 
 #### Other notes
 
