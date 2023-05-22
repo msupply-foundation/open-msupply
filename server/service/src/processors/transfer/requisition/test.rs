@@ -1,8 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
     mock::{insert_extra_mock_data, MockData, MockDataInserts},
-    ChangelogFilter, ChangelogRepository, ChangelogTableName, EqualFilter, ItemRow,
-    KeyValueStoreRepository, KeyValueStoreRow, KeyValueType, NameRow, RequisitionFilter,
+    EqualFilter, ItemRow, KeyValueStoreRow, KeyValueType, NameRow, RequisitionFilter,
     RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow, RequisitionRepository,
     RequisitionRow, RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType,
     StorageConnection, StoreRow,
@@ -10,36 +9,14 @@ use repository::{
 use util::{inline_edit, inline_init, uuid::uuid};
 
 use crate::{
-    processors::test_helpers::{delay_for_processor, delayed_with_retries, exec_concurrent},
+    processors::test_helpers::{delay_for_processor, exec_concurrent},
     requisition::{
         request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
         response_requisition::{UpdateResponseRequisition, UpdateResponseRequisitionStatus},
     },
     service_provider::ServiceProvider,
-    sync::ActiveStoresOnSite,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
-
-pub(crate) fn requisition_processed(connection: &StorageConnection) -> bool {
-    let active_stores = ActiveStoresOnSite::get(connection).unwrap();
-    let changelog_repo = ChangelogRepository::new(connection);
-    let key_value_store_repo = KeyValueStoreRepository::new(connection);
-
-    let cursor = key_value_store_repo
-        .get_i64(KeyValueType::RequisitionTransferProcessorCursor)
-        .unwrap()
-        .unwrap_or(0) as u64;
-
-    // For transfers, changelog MUST be filtered by records where name_id is active store on this site
-    // this is the contract obligation for try_process_record in ProcessorTrait
-    let filter = ChangelogFilter::new()
-        .table_name(ChangelogTableName::Requisition.equal_to())
-        .name_id(EqualFilter::equal_any(active_stores.name_ids()));
-    let logs = changelog_repo
-        .changelogs(cursor, 1, Some(filter.clone()))
-        .unwrap();
-    logs.is_empty()
-}
 
 /// This test is for requesting and responding store on the same site
 /// See same site transfer diagram in README.md for example of how
@@ -125,17 +102,17 @@ async fn requisition_transfer() {
                 .requisition_transfer
                 .try_send(())
                 .unwrap();
-            delayed_with_retries!(requisition_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_response_requisition_not_created(&ctx.connection);
             delay_for_processor().await;
             tester.update_request_requisition_to_sent(&service_provider);
-            delayed_with_retries!(requisition_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_response_requisition_created(&ctx.connection);
-            delayed_with_retries!(requisition_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_was_linked(&ctx.connection);
             delay_for_processor().await;
             tester.update_response_requisition_to_finalised(&service_provider);
-            delayed_with_retries!(requisition_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_request_requisition_status_updated(&ctx.connection);
         },
     );
