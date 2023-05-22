@@ -1,12 +1,12 @@
 use chrono::NaiveDate;
 use repository::{
     mock::{insert_extra_mock_data, MockData, MockDataInserts},
-    ChangelogFilter, ChangelogRepository, ChangelogTableName, EqualFilter, InvoiceFilter,
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowRepository,
-    InvoiceLineRowType, InvoiceRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
-    InvoiceRowType, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, KeyValueType, LocationRow,
-    NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow, RequisitionRowRepository,
-    RequisitionRowStatus, RequisitionRowType, StockLineRow, StorageConnection, StoreRow,
+    EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRow, KeyValueStoreRow,
+    KeyValueType, LocationRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType, StockLineRow,
+    StorageConnection, StoreRow,
 };
 use util::{inline_edit, inline_init, uuid::uuid};
 
@@ -16,36 +16,12 @@ use crate::{
         outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
     },
     invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine,
-    processors::{
-        test_helpers::{delay_for_processor, delayed_with_retries, exec_concurrent},
-        transfer::requisition::test::requisition_processed,
-    },
+    processors::test_helpers::{delay_for_processor, exec_concurrent},
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
-    sync::ActiveStoresOnSite,
     test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
 };
 
-fn shipments_processed(connection: &StorageConnection) -> bool {
-    let active_stores = ActiveStoresOnSite::get(connection).unwrap();
-    let changelog_repo = ChangelogRepository::new(connection);
-    let key_value_store_repo = KeyValueStoreRepository::new(connection);
-
-    let cursor = key_value_store_repo
-        .get_i64(KeyValueType::ShipmentTransferProcessorCursor)
-        .unwrap()
-        .unwrap_or(0) as u64;
-    // For transfers, changelog MUST be filtered by records where name_id is active store on this site
-    // this is the contract obligation for try_process_record in ProcessorTrait
-    let filter = ChangelogFilter::new()
-        .table_name(ChangelogTableName::Invoice.equal_to())
-        .name_id(EqualFilter::equal_any(active_stores.name_ids()));
-    let logs = changelog_repo
-        .changelogs(cursor, 1, Some(filter.clone()))
-        .unwrap();
-
-    logs.is_empty()
-}
 /// This test is for requesting and responding store on the same site
 /// See same site transfer diagram in requisition README.md for example of how
 /// changelog is upserted and processed by the same instance of triggered processor
@@ -126,7 +102,7 @@ async fn invoice_transfers() {
                 ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
 
             tester.insert_request_requisition(&service_provider).await;
-            delayed_with_retries!(requisition_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_response_requisition_created(&ctx.connection);
             tester.insert_outbound_shipment(&ctx.connection);
             // manually trigger because inserting the shipment didn't trigger the processor
@@ -134,27 +110,27 @@ async fn invoice_transfers() {
                 .shipment_transfer
                 .try_send(())
                 .unwrap();
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_not_created(&ctx.connection);
             delay_for_processor().await;
             tester.update_outbound_shipment_to_picked(&service_provider);
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_created(&ctx.connection);
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_was_linked(&ctx.connection);
             delay_for_processor().await;
             tester.update_outbound_shipment_lines(&service_provider);
             delay_for_processor().await;
             tester.update_outbound_shipment_to_shipped(&service_provider);
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_was_updated(&ctx.connection);
             delay_for_processor().await;
             tester.update_inbound_shipment_to_delivered(&service_provider);
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
             delay_for_processor().await;
             tester.update_inbound_shipment_to_verified(&service_provider);
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
             delay_for_processor().await;
 
@@ -163,16 +139,16 @@ async fn invoice_transfers() {
                 ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
 
             tester.insert_request_requisition(&service_provider).await;
-            delayed_with_retries!(requisition_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_response_requisition_created(&ctx.connection);
             tester.insert_outbound_shipment(&ctx.connection);
             delay_for_processor().await;
             tester.update_outbound_shipment_to_picked(&service_provider);
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_created(&ctx.connection);
             delay_for_processor().await;
             tester.delete_outbound_shipment(&service_provider);
-            delayed_with_retries!(shipments_processed(&ctx.connection), "wait for processor");
+            ctx.processors_trigger.await_events_processed().await;
             tester.check_inbound_shipment_deleted(&ctx.connection);
         },
     );
