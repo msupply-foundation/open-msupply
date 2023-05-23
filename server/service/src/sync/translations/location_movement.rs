@@ -128,17 +128,6 @@ impl SyncTranslation for LocationMovementTranslation {
             serde_json::to_value(&legacy_row)?,
         )]))
     }
-
-    fn try_translate_push_delete(
-        &self,
-        _: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
-    }
 }
 
 #[cfg(test)]
