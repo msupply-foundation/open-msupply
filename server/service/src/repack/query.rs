@@ -59,23 +59,33 @@ pub fn get_repacks_by_stock_line(
             .r#type(InvoiceRowType::Repack.equal_to())
             .stock_line_id(stock_line_id.to_owned()),
     )?;
+    let invoice_ids: Vec<String> = invoices
+        .iter()
+        .map(|invoice| invoice.invoice_row.id.clone())
+        .collect();
+
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(invoice_ids)),
+    )?;
 
     let mut repacks = Vec::new();
 
     for invoice in invoices {
-        let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&invoice.invoice_row.id)),
-        )?;
-
         let invoice_line_from = invoice_lines
             .iter()
-            .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockOut)
+            .find(|line| {
+                line.invoice_line_row.r#type == InvoiceLineRowType::StockOut
+                    && line.invoice_line_row.invoice_id == invoice.invoice_row.id
+            })
             .ok_or(RepositoryError::NotFound)?
             .clone();
 
         let invoice_line_to = invoice_lines
             .iter()
-            .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockIn)
+            .find(|line| {
+                line.invoice_line_row.r#type == InvoiceLineRowType::StockIn
+                    && line.invoice_line_row.invoice_id == invoice.invoice_row.id
+            })
             .ok_or(RepositoryError::NotFound)?
             .clone();
 
