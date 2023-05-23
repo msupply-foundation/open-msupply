@@ -11,9 +11,31 @@ import {
   useTranslation,
   InfoPanel,
   Switch,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { useInbound } from '../api';
+import { InboundRowFragment, useInbound } from '../api';
+
+const InboundInfoPanel = ({
+  shipment,
+}: {
+  shipment: InboundRowFragment | undefined;
+}) => {
+  const t = useTranslation('replenishment');
+  const loadMessage = (shipment: InboundRowFragment | undefined) => {
+    if (!shipment?.linkedShipment?.id) {
+      return t('info.manual-shipment');
+    }
+    if (shipment?.status === InvoiceNodeStatus.Shipped) {
+      return `${t('info.automatic-shipment')} ${t(
+        'info.automatic-shipment-no-edit'
+      )}`;
+    }
+    return t('info.automatic-shipment');
+  };
+
+  return <InfoPanel message={loadMessage(shipment)} />;
+};
 
 export const Toolbar: FC = () => {
   const isDisabled = useInbound.utils.isDisabled();
@@ -26,9 +48,7 @@ export const Toolbar: FC = () => {
     'theirReference',
   ]);
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
-
   const t = useTranslation('replenishment');
-  const isManuallyCreated = !shipment?.linkedShipment?.id;
 
   if (!data) return null;
 
@@ -71,13 +91,7 @@ export const Toolbar: FC = () => {
                 />
               }
             />
-            <InfoPanel
-              message={t(
-                isManuallyCreated
-                  ? 'info.manual-shipment'
-                  : 'info.automatic-shipment'
-              )}
-            />
+            <InboundInfoPanel shipment={shipment} />
           </Box>
         </Grid>
         <Grid
