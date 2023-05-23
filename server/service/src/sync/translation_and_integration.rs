@@ -240,8 +240,6 @@ impl PullDeleteRecord {
             #[cfg(all(test, feature = "integration_test"))]
             Location => LocationRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
-            LocationMovement => LocationMovementRowRepository::new(con).delete(id),
-            #[cfg(all(test, feature = "integration_test"))]
             StockLine => StockLineRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             Stocktake => StocktakeRowRepository::new(con).delete(id),

@@ -77,25 +77,6 @@ impl<'a> BarcodeRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
-
-    #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &BarcodeRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(barcode_dsl::barcode)
-            .values(row)
-            .on_conflict(barcode_dsl::id)
-            .do_update()
-            .set(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &BarcodeRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(barcode_dsl::barcode)
-            .values(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
 }
 
 type BoxedLogQuery = barcode::BoxedQuery<'static, DBType>;
