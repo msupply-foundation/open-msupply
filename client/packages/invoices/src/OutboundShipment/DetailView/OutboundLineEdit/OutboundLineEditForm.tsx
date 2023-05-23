@@ -13,6 +13,7 @@ import {
   Typography,
   ButtonWithIcon,
   ZapIcon,
+  InfoPanel,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -48,6 +49,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     Math.abs(Number(packSizeController.selected?.value || 1));
 
   const [issueQuantity, setIssueQuantity] = useState(0);
+  const [isAllocated, setIsAllocated] = useState(false);
   const { items } = useOutbound.line.rows();
 
   const onChangePackSize = (newPackSize: number) => {
@@ -68,7 +70,10 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
         ? null
         : Number(packSizeController.selected?.value)
     );
+    setIsAllocated(true);
   };
+
+  const showAllocationWarning = isAllocated && issueQuantity < quantity;
 
   useEffect(() => {
     setIssueQuantity(quantity);
@@ -123,7 +128,16 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
-
+          {showAllocationWarning && (
+            <Grid display="flex" justifyContent="center" flex={1}>
+              <InfoPanel
+                message={t('messages.over-allocated', {
+                  quantity,
+                  issueQuantity,
+                })}
+              />
+            </Grid>
+          )}
           <Grid container>
             <ModalLabel label={t('label.issue')} />
             <NonNegativeIntegerInput
