@@ -39,7 +39,7 @@
   "error.no-reports-available": "Aucun rapport disponible",
   "error.no-results": "Aucune donnée trouvée",
   "error.something-wrong": "Oups ! Une erreur s'est produite.",
-  "error.unable-to-load-data": "Une erreur s'est produite: un problème est survenu lors du chargement des données",
+  "error.unable-to-load-data": "Une erreur s'est produite: un problème est survenu lors du chargement des données.",
   "filename.inbounds": "Bons de livraison",
   "filename.locations": "emplacements",
   "filename.master-lists": "listes-maîtresses",
