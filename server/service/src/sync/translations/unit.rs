@@ -3,7 +3,8 @@ use repository::{StorageConnection, SyncBufferRow, UnitRow};
 use serde::Deserialize;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -21,6 +22,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 
 pub(crate) struct UnitTranslation {}
 impl SyncTranslation for UnitTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::UNIT,
+            dependencies: vec![],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

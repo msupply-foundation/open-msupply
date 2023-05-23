@@ -1,7 +1,9 @@
 use repository::{StorageConnection, StorePreferenceRow, StorePreferenceType, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::STORE_PREFERENCE;
 
@@ -35,6 +37,13 @@ pub struct LegacyPrefData {
 
 pub(crate) struct StorePreferenceTranslation {}
 impl SyncTranslation for StorePreferenceTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::STORE_PREFERENCE,
+            dependencies: vec![],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

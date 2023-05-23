@@ -2,7 +2,9 @@ use repository::{MasterListLineRow, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -17,6 +19,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 }
 pub(crate) struct MasterListLineTranslation {}
 impl SyncTranslation for MasterListLineTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::LIST_MASTER_LINE,
+            dependencies: vec![LegacyTableName::ITEM, LegacyTableName::LIST_MASTER],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
