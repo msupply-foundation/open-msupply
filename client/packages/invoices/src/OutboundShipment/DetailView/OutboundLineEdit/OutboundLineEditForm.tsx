@@ -27,10 +27,15 @@ interface OutboundLineEditFormProps {
   availableQuantity: number;
   item: DraftItem | null;
   onChangeItem: (newItem: ItemRowFragment | null) => void;
-  onChangeQuantity: (quantity: number, packSize: number | null) => void;
+  onChangeQuantity: (
+    quantity: number,
+    packSize: number | null,
+    isAutoAllocated: boolean
+  ) => void;
   packSizeController: PackSizeController;
   disabled: boolean;
   canAutoAllocate: boolean;
+  isAutoAllocated: boolean;
 }
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -42,6 +47,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   availableQuantity,
   disabled,
   canAutoAllocate,
+  isAutoAllocated,
 }) => {
   const t = useTranslation('distribution');
   const quantity =
@@ -49,7 +55,6 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     Math.abs(Number(packSizeController.selected?.value || 1));
 
   const [issueQuantity, setIssueQuantity] = useState(0);
-  const [isAllocated, setIsAllocated] = useState(false);
   const { items } = useOutbound.line.rows();
 
   const onChangePackSize = (newPackSize: number) => {
@@ -58,7 +63,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     packSizeController.setPackSize(newPackSize);
     onChangeQuantity(
       newAllocatedQuantity,
-      newPackSize === -1 ? null : newPackSize
+      newPackSize === -1 ? null : newPackSize,
+      false
     );
   };
 
@@ -68,12 +74,12 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       issueQuantity,
       packSizeController.selected?.value === -1
         ? null
-        : Number(packSizeController.selected?.value)
+        : Number(packSizeController.selected?.value),
+      true
     );
-    setIsAllocated(true);
   };
 
-  const showAllocationWarning = isAllocated && issueQuantity < quantity;
+  const showAllocationWarning = isAutoAllocated && issueQuantity < quantity;
 
   useEffect(() => {
     setIssueQuantity(quantity);
