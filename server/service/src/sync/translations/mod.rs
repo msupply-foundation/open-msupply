@@ -81,8 +81,7 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
     for translator in translators {
         let pull_dep = translator.pull_dependencies();
         if pull_dep.dependencies.len() == 0 {
-            // no dependencies; add it strait to the top of the output
-            output.push(pull_dep.table);
+            ts.insert(pull_dep.table);
             continue;
         }
         for dep in pull_dep.dependencies {
