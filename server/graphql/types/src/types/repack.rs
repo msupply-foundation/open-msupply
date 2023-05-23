@@ -102,49 +102,34 @@ impl RepackStockLineNode {
 
 impl RepackNode {
     pub fn from_domain(repack: Repack) -> RepackNode {
+        let invoice = repack.invoice.invoice_row;
+        let invoice_line_to = repack.invoice_line_to.invoice_line_row;
+        let invoice_line_from = repack.invoice_line_from.invoice_line_row;
+
         RepackNode {
-            id: repack.invoice.invoice_row.id,
-            repack_id: repack
-                .invoice_line_to
-                .invoice_line_row
-                .stock_line_id
-                .clone()
-                .unwrap_or_default(),
-            batch: repack.invoice_line_to.invoice_line_row.batch,
-            datetime: repack
-                .invoice
-                .invoice_row
+            id: invoice.id,
+            repack_id: invoice_line_to.stock_line_id.clone().unwrap_or_default(),
+            batch: invoice_line_to.batch,
+            datetime: invoice
                 .verified_datetime
-                .unwrap_or(repack.invoice.invoice_row.created_datetime),
+                .unwrap_or(invoice.created_datetime),
             from: RepackStockLineNode {
-                number_of_packs: repack.invoice_line_to.invoice_line_row.number_of_packs
-                    * repack.invoice_line_to.invoice_line_row.pack_size as f64
-                    / repack.invoice_line_from.invoice_line_row.pack_size as f64,
-                pack_size: repack.invoice_line_from.invoice_line_row.pack_size,
+                number_of_packs: invoice_line_from.number_of_packs,
+                pack_size: invoice_line_from.pack_size,
                 location_id: repack
                     .invoice_line_from
                     .location_row_option
-                    .as_ref()
                     .map(|l| l.id.clone()),
-                stock_line_id: repack
-                    .invoice_line_from
-                    .invoice_line_row
-                    .stock_line_id
-                    .clone(),
+                stock_line_id: invoice_line_from.stock_line_id,
             },
             to: RepackStockLineNode {
-                number_of_packs: repack.invoice_line_to.invoice_line_row.number_of_packs,
-                pack_size: repack.invoice_line_to.invoice_line_row.pack_size,
+                number_of_packs: invoice_line_to.number_of_packs,
+                pack_size: invoice_line_to.pack_size,
                 location_id: repack
                     .invoice_line_to
                     .location_row_option
-                    .as_ref()
                     .map(|l| l.id.clone()),
-                stock_line_id: repack
-                    .invoice_line_to
-                    .invoice_line_row
-                    .stock_line_id
-                    .clone(),
+                stock_line_id: invoice_line_to.stock_line_id,
             },
         }
     }

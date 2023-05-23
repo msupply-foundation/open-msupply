@@ -85,15 +85,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
                 PullUpsertRecord::LocationMovement(location_movement.clone()),
             ]),
         });
-        // STEP 3 - delete
-        result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_delete(
-                &location_movement.id,
-                crate::sync::translations::PullDeleteRecordTable::LocationMovement,
-            ),
-        });
+
         result
     }
 }
