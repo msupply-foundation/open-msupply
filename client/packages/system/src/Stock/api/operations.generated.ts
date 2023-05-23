@@ -6,6 +6,8 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type StockLineRowFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } };
 
+export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: any, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null } };
+
 export type StockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -33,6 +35,14 @@ export type UpdateStockLineMutationVariables = Types.Exact<{
 
 
 export type UpdateStockLineMutation = { __typename: 'Mutations', updateStockLine: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } } | { __typename: 'UpdateStockLineError' } };
+
+export type RepacksByStockLineQueryVariables = Types.Exact<{
+  stockLineId: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type RepacksByStockLineQuery = { __typename: 'Queries', repacksByStockLine: { __typename: 'RepackConnector', totalCount: number, nodes: Array<{ __typename: 'RepackNode', id: string, datetime: any, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null } }> } };
 
 export const StockLineRowFragmentDoc = gql`
     fragment StockLineRow on StockLineNode {
@@ -62,6 +72,31 @@ export const StockLineRowFragmentDoc = gql`
     unitName
   }
   barcode
+}
+    `;
+export const RepackFragmentDoc = gql`
+    fragment Repack on RepackNode {
+  id
+  datetime
+  repackId
+  from {
+    location {
+      id
+      code
+      name
+    }
+    packSize
+    numberOfPacks
+  }
+  to {
+    location {
+      id
+      code
+      name
+    }
+    packSize
+    numberOfPacks
+  }
 }
     `;
 export const StockLinesDocument = gql`
@@ -107,6 +142,18 @@ export const UpdateStockLineDocument = gql`
   }
 }
     ${StockLineRowFragmentDoc}`;
+export const RepacksByStockLineDocument = gql`
+    query repacksByStockLine($stockLineId: String!, $storeId: String!) {
+  repacksByStockLine(stockLineId: $stockLineId, storeId: $storeId) {
+    ... on RepackConnector {
+      nodes {
+        ...Repack
+      }
+      totalCount
+    }
+  }
+}
+    ${RepackFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -123,6 +170,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateStockLine(variables: UpdateStockLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateStockLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateStockLineMutation>(UpdateStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStockLine', 'mutation');
+    },
+    repacksByStockLine(variables: RepacksByStockLineQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RepacksByStockLineQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RepacksByStockLineQuery>(RepacksByStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'repacksByStockLine', 'query');
     }
   };
 }
@@ -176,5 +226,22 @@ export const mockStockLineQuery = (resolver: ResponseResolver<GraphQLRequest<Sto
 export const mockUpdateStockLineMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateStockLineMutationVariables>, GraphQLContext<UpdateStockLineMutation>, any>) =>
   graphql.mutation<UpdateStockLineMutation, UpdateStockLineMutationVariables>(
     'updateStockLine',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockRepacksByStockLineQuery((req, res, ctx) => {
+ *   const { stockLineId, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ repacksByStockLine })
+ *   )
+ * })
+ */
+export const mockRepacksByStockLineQuery = (resolver: ResponseResolver<GraphQLRequest<RepacksByStockLineQueryVariables>, GraphQLContext<RepacksByStockLineQuery>, any>) =>
+  graphql.query<RepacksByStockLineQuery, RepacksByStockLineQueryVariables>(
+    'repacksByStockLine',
     resolver
   )

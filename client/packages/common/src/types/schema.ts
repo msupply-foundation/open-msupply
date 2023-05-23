@@ -28,6 +28,14 @@ export type Scalars = {
    * * `2000-02-24`
    */
   NaiveDate: string;
+  /**
+   * ISO 8601 combined date and time without timezone.
+   *
+   * # Examples
+   *
+   * * `2015-07-01T08:59:60.123`,
+   */
+  NaiveDateTime: string;
 };
 
 export type ActivityLogConnector = {
@@ -2363,6 +2371,8 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   refreshToken: RefreshTokenResponse;
+  repack: RepackResponse;
+  repacksByStockLine: RepackConnector;
   /** Queries a list of available reports */
   reports: ReportsResponse;
   requisition: RequisitionResponse;
@@ -2501,6 +2511,18 @@ export type QueriesProgramRequisitionSettingsArgs = {
 };
 
 
+export type QueriesRepackArgs = {
+  invoiceId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesRepacksByStockLineArgs = {
+  stockLineId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
 export type QueriesReportsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -2631,6 +2653,32 @@ export type RefreshTokenErrorInterface = {
 };
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
+
+export type RepackConnector = {
+  __typename: 'RepackConnector';
+  nodes: Array<RepackNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type RepackNode = {
+  __typename: 'RepackNode';
+  batch?: Maybe<Scalars['String']>;
+  datetime: Scalars['NaiveDateTime'];
+  from: RepackStockLineNode;
+  id: Scalars['String'];
+  repackId: Scalars['String'];
+  to: RepackStockLineNode;
+};
+
+export type RepackResponse = NodeError | RepackNode;
+
+export type RepackStockLineNode = {
+  __typename: 'RepackStockLineNode';
+  location?: Maybe<LocationNode>;
+  numberOfPacks: Scalars['Float'];
+  packSize: Scalars['Int'];
+  stockLine?: Maybe<StockLineNode>;
+};
 
 export type ReportConnector = {
   __typename: 'ReportConnector';
