@@ -74,7 +74,7 @@
   "messages.confirm-delete-shipment-lines_other": "Cela supprimera définitivement {{count}} lignes du bon de livraison",
   "messages.confirm-delete-shipments_one": "Ce bon de livraison sera définitivement supprimé",
   "messages.confirm-delete-shipments_other": "Cela supprimera définitivement {{count}} bons de livraison",
-  "messages.could-not-save": "Impossible de sauvegarder",
+  "messages.could-not-save": "Sauvegarde impossible",
   "messages.deleted-lines": "{{number}} ligne(s) supprimée(s)",
   "messages.deleted-lines_one": "{{count}} ligne supprimée",
   "messages.deleted-lines_other": "{{count}} lignes supprimées",
@@ -92,10 +92,10 @@
   "messages.requested-to-suggested": "Cela définira les quantités demandées avec les quantités suggérées.",
   "messages.select-rows-to-delete": "Sélectionner des lignes pour les supprimer",
   "messages.select-rows-to-delete-them": "Sélectionner les lignes pour les supprimer",
-  "messages.confirm-inbound-status-as": "Confirmer le status comme $t({{status}}) ?\nNote : changer le statut va supprimer les lignes avec zéro quantité.",
+  "messages.confirm-inbound-status-as": "Êtes vous sûr(e) de vouloir confirmer le statut comme  $t({{status}}) ?\nNote : changer le statut va supprimer les lignes avec zéro quantité.",
   "messages.error-saving-shipment": "Erreur lors de la sauvegarde du bon de livraison 🥺",
   "messages.shipment-saved": "Bon de livraison sauvegardé 🥳",
-  "messages.confirm-status-as": "Confirmer le status comme $t({{status}})",
+  "messages.confirm-status-as": "Êtes vous sûr(e) de vouloir confirmer le statut comme $t({{status}}) ?",
   "messages.saved": "Sauvegardé",
   "heading.tax": "Taxe",
   "heading.grand-total": "Grand total",
@@ -106,5 +106,7 @@
   "messages.period-not-available": "Aucune période disponible",
   "label.order-type": "Type",
   "label.period": "Période",
-  "template.requisition-sent": "Autorisé par {{name}}{{job}}. Courriel: {{email}} et Téléphone: {{phone}}."
+  "template.requisition-sent": "Autorisé par {{name}}{{job}}. Courriel: {{email}} et Téléphone: {{phone}}.",
+  "label.packs": "Boites",
+  "label.requested-packs": "Qté de boites demandées"
 }

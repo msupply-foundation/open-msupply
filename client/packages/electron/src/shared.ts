@@ -13,4 +13,6 @@ export const IPC_MESSAGES = {
   LINKED_BARCODE_SCANNER_DEVICE: 'linked-barcode-scanner-device',
   START_DEVICE_SCAN: 'start-device-scan',
   ON_DEVICE_MATCHED: 'on-device-matched',
+  SET_SCANNER_TYPE: 'set-scanner-type',
+  GET_SCANNER_TYPE: 'get-scanner-type',
 };

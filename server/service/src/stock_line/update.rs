@@ -1,14 +1,15 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, BarcodeFilter, BarcodeRepository, BarcodeRow, BarcodeRowRepository,
-    DatetimeFilter, EqualFilter, LocationMovementFilter, LocationMovementRepository,
-    LocationMovementRow, LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
+    ActivityLogType, BarcodeRow, BarcodeRowRepository, DatetimeFilter, EqualFilter,
+    LocationMovementFilter, LocationMovementRepository, LocationMovementRow,
+    LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
     StockLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
 use crate::{
     activity_log::activity_log_stock_entry,
+    barcode::{self, BarcodeInput},
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
     stock_line::validate::check_location_exists,
@@ -131,14 +132,26 @@ fn generate(
         None
     };
 
-    let barcode_row = match barcode {
-        Some(barcode) => generate_barcode_row(connection, existing.clone(), barcode.clone())?,
+    let barcode_row = match &barcode {
+        // Don't generate row for empty gtin
+        Some(gtin) if gtin == "" => None,
+        Some(gtin) => Some(barcode::generate(
+            connection,
+            BarcodeInput {
+                gtin: gtin.clone(),
+                item_id: existing.item_id.clone(),
+                pack_size: Some(existing.pack_size),
+            },
+        )?),
         None => None,
     };
 
-    let barcode_id = match barcode_row {
-        Some(ref barcode_row) => Some(barcode_row.id.clone()),
-        None => None,
+    let barcode_id = match &barcode {
+        // If it'e empty gtin unlink
+        Some(gtin) if gtin == "" => None,
+        // If gtin not specified keep existing
+        None => existing.barcode_id,
+        Some(_) => barcode_row.as_ref().map(|b| b.id.clone()),
     };
 
     existing.location_id = location_id.or(existing.location_id);
@@ -195,42 +208,6 @@ fn generate_location_movement(
     });
 
     Ok(movement)
-}
-
-fn generate_barcode_row(
-    connection: &StorageConnection,
-    existing: StockLineRow,
-    gtin: String,
-) -> Result<Option<BarcodeRow>, RepositoryError> {
-    // for an empty string, simply unlink the barcode
-    if gtin.is_empty() {
-        return Ok(None);
-    }
-
-    let filter = BarcodeFilter::new()
-        .item_id(EqualFilter::equal_to(&existing.item_id))
-        .pack_size(EqualFilter::equal_to_i32(existing.pack_size));
-
-    let barcode_rows = BarcodeRepository::new(connection).query_by_filter(filter)?;
-    let barcode_row = match barcode_rows.first() {
-        // barcode already exists - persist the gtin change if there is one
-        Some(row) => BarcodeRow {
-            gtin,
-            ..row.barcode_row.clone()
-        },
-        None => {
-            // barcode does not exist - create a new one
-            BarcodeRow {
-                id: uuid(),
-                gtin,
-                item_id: existing.item_id,
-                pack_size: Some(existing.pack_size),
-                ..Default::default()
-            }
-        }
-    };
-
-    Ok(Some(barcode_row))
 }
 
 fn log_stock_changes(
