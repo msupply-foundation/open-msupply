@@ -224,6 +224,7 @@ impl InvoiceFilterInput {
             colour: self.colour.map(EqualFilter::from),
             requisition_id: self.requisition_id.map(EqualFilter::from),
             linked_invoice_id: self.linked_invoice_id.map(EqualFilter::from),
+            stock_line_id: None,
         }
     }
 }
