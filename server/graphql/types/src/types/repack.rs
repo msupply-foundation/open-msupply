@@ -27,6 +27,12 @@ pub struct RepackStockLineNode {
     pub stock_line_id: Option<String>,
 }
 
+#[derive(SimpleObject)]
+pub struct RepackConnector {
+    total_count: u32,
+    nodes: Vec<RepackNode>,
+}
+
 #[Object]
 impl RepackNode {
     async fn id(&self) -> &str {
@@ -126,5 +132,14 @@ impl RepackNode {
                 stock_line_id: invoice_line_to.stock_line_id,
             },
         }
+    }
+}
+
+impl RepackConnector {
+    pub fn from_vec(repacks: Vec<Repack>) -> RepackConnector {
+        let total_count = repacks.len() as u32;
+        let nodes = repacks.into_iter().map(RepackNode::from_domain).collect();
+
+        RepackConnector { total_count, nodes }
     }
 }
