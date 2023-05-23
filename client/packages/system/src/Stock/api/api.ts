@@ -6,7 +6,7 @@ import {
   RecordPatch,
   UpdateStockLineInput,
 } from '@openmsupply-client/common';
-import { getSdk, StockLineRowFragment } from './operations.generated';
+import { getSdk, Sdk, StockLineRowFragment } from './operations.generated';
 
 export type StockApi = ReturnType<typeof getSdk>;
 
@@ -116,5 +116,18 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
     }
 
     throw new Error('Unable to update stock line');
+  },
+});
+
+export const getRepackQueries = (sdk: Sdk, storeId: string) => ({
+  get: {
+    repacksByStockLine: async (stockLineId: string) => {
+      const result = await sdk.repacksByStockLine({
+        storeId,
+        stockLineId,
+      });
+
+      return result.repacksByStockLine;
+    },
   },
 });

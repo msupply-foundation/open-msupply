@@ -27,6 +27,30 @@ fragment StockLineRow on StockLineNode {
   barcode
 }
 
+fragment Repack on RepackNode {
+  id
+  datetime
+  repackId
+  from {
+    location {
+      id
+      code
+      name
+    }
+    packSize
+    numberOfPacks
+  }
+  to {
+    location {
+      id
+      code
+      name
+    }
+    packSize
+    numberOfPacks
+  }
+}
+
 query stockLines(
   $first: Int
   $offset: Int
@@ -70,6 +94,17 @@ mutation updateStockLine($input: UpdateStockLineInput!, $storeId: String!) {
     ... on StockLineNode {
       __typename
       ...StockLineRow
+    }
+  }
+}
+
+query repacksByStockLine($stockLineId: String!, $storeId: String!) {
+  repacksByStockLine(stockLineId: $stockLineId, storeId: $storeId) {
+    ... on RepackConnector {
+      nodes {
+        ...Repack
+      }
+      totalCount
     }
   }
 }
