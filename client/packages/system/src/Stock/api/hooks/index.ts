@@ -14,6 +14,7 @@ export const useStock = {
     api: Utils.useStockApi,
   },
   repack: {
+    get: Repacks.useRepack,
     list: Repacks.useRepacksByStockLine,
   },
 };

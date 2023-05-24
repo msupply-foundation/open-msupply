@@ -36,6 +36,14 @@ export type UpdateStockLineMutationVariables = Types.Exact<{
 
 export type UpdateStockLineMutation = { __typename: 'Mutations', updateStockLine: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } } | { __typename: 'UpdateStockLineError' } };
 
+export type RepackQueryVariables = Types.Exact<{
+  invoiceId: Types.Scalars['String'];
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type RepackQuery = { __typename: 'Queries', repack: { __typename: 'NodeError' } | { __typename: 'RepackNode', id: string, datetime: any, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null } } };
+
 export type RepacksByStockLineQueryVariables = Types.Exact<{
   stockLineId: Types.Scalars['String'];
   storeId: Types.Scalars['String'];
@@ -142,6 +150,16 @@ export const UpdateStockLineDocument = gql`
   }
 }
     ${StockLineRowFragmentDoc}`;
+export const RepackDocument = gql`
+    query repack($invoiceId: String!, $storeId: String!) {
+  repack(invoiceId: $invoiceId, storeId: $storeId) {
+    ... on RepackNode {
+      __typename
+      ...Repack
+    }
+  }
+}
+    ${RepackFragmentDoc}`;
 export const RepacksByStockLineDocument = gql`
     query repacksByStockLine($stockLineId: String!, $storeId: String!) {
   repacksByStockLine(stockLineId: $stockLineId, storeId: $storeId) {
@@ -170,6 +188,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateStockLine(variables: UpdateStockLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateStockLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateStockLineMutation>(UpdateStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateStockLine', 'mutation');
+    },
+    repack(variables: RepackQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RepackQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RepackQuery>(RepackDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'repack', 'query');
     },
     repacksByStockLine(variables: RepacksByStockLineQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RepacksByStockLineQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RepacksByStockLineQuery>(RepacksByStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'repacksByStockLine', 'query');
@@ -226,6 +247,23 @@ export const mockStockLineQuery = (resolver: ResponseResolver<GraphQLRequest<Sto
 export const mockUpdateStockLineMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateStockLineMutationVariables>, GraphQLContext<UpdateStockLineMutation>, any>) =>
   graphql.mutation<UpdateStockLineMutation, UpdateStockLineMutationVariables>(
     'updateStockLine',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockRepackQuery((req, res, ctx) => {
+ *   const { invoiceId, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ repack })
+ *   )
+ * })
+ */
+export const mockRepackQuery = (resolver: ResponseResolver<GraphQLRequest<RepackQueryVariables>, GraphQLContext<RepackQuery>, any>) =>
+  graphql.query<RepackQuery, RepackQueryVariables>(
+    'repack',
     resolver
   )
 
