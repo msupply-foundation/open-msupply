@@ -98,6 +98,15 @@ mutation updateStockLine($input: UpdateStockLineInput!, $storeId: String!) {
   }
 }
 
+query repack($invoiceId: String!, $storeId: String!) {
+  repack(invoiceId: $invoiceId, storeId: $storeId) {
+    ... on RepackNode {
+      __typename
+      ...Repack
+    }
+  }
+}
+
 query repacksByStockLine($stockLineId: String!, $storeId: String!) {
   repacksByStockLine(stockLineId: $stockLineId, storeId: $storeId) {
     ... on RepackConnector {

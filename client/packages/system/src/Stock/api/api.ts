@@ -121,6 +121,17 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
 
 export const getRepackQueries = (sdk: Sdk, storeId: string) => ({
   get: {
+    repack: async (invoiceId: string) => {
+      const result = await sdk.repack({
+        storeId,
+        invoiceId,
+      });
+
+      if (result.repack.__typename === 'RepackNode') {
+        return result.repack;
+      }
+      throw new Error("Can't find repack");
+    },
     repacksByStockLine: async (stockLineId: string) => {
       const result = await sdk.repacksByStockLine({
         storeId,

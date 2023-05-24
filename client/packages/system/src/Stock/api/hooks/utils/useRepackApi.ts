@@ -9,7 +9,9 @@ export const useRepackApi = () => {
 
   const keys = {
     base: () => ['repack'] as const,
-    listByStockLine: (id: string) => [...keys.base(), storeId, id] as const,
+    repack: (invoiceId: string) => [...keys.base(), invoiceId] as const,
+    listByStockLine: (stockLineId: string) =>
+      [...keys.base(), storeId, stockLineId] as const,
   };
 
   return { ...queries, keys, storeId };
