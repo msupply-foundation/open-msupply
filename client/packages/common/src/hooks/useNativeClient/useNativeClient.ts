@@ -2,6 +2,7 @@ import { uniqWith } from 'lodash';
 import { useState, useEffect } from 'react';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import {
+  frontEndHostUrl,
   getNativeAPI,
   getPreference,
   matchUniqueServer,
@@ -156,18 +157,22 @@ export const useNativeClient = ({
 
   // Auto connect if autoconnect=true and server found matching previousConnectedServer
   useEffect(() => {
-    const { servers, previousServer } = state;
+    const { previousServer } = state;
     if (!nativeAPI) return;
     if (!autoconnect) return;
     if (previousServer === null) return;
 
-    const server = servers.find(server =>
-      matchUniqueServer(server, previousServer)
-    );
-    if (server) {
-      connectToServer(server);
-    }
-  }, [state.previousServer, state.servers, autoconnect]);
+    fetch(`${frontEndHostUrl(previousServer)}/login`)
+      .then(response => {
+        if (response.status === 200) {
+          connectToServer(previousServer);
+        }
+      })
+      .catch(error => {
+        setState(state => ({ ...state, connectToPreviousTimedOut: true })),
+          console.error('Connecting to previous server:', error);
+      });
+  }, [state.previousServer, autoconnect]);
 
   return {
     ...state,
