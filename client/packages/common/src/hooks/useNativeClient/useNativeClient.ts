@@ -162,7 +162,7 @@ export const useNativeClient = ({
     if (!autoconnect) return;
     if (previousServer === null) return;
 
-    fetch(`${frontEndHostUrl(previousServer)}/login`)
+    fetch(frontEndHostUrl(previousServer))
       .then(response => {
         if (response.status === 200) {
           connectToServer(previousServer);
