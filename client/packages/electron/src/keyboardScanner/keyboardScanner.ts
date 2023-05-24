@@ -55,7 +55,7 @@ export class KeyboardScanner {
   window: BrowserWindow;
   interval: NodeJS.Timer | undefined;
   // Buffer can be written concurrent in event handles and when processing input
-  // this lock is to make sure it's edited syncrhonously
+  // this lock is to make sure it's edited synchronously
   lockBuffer: boolean;
   // In scanning mode, when non barcode data entry is made, should allow it (no preventDefault())
   allowEvents: boolean;
@@ -106,7 +106,7 @@ export class KeyboardScanner {
       this.buffer.forEach((current, index) => {
         // Get ms for next input event or now
         const nextMs = this.buffer[index + 1]?.ms ?? Date.now();
-        let diff = nextMs - current.ms;
+        const diff = nextMs - current.ms;
 
         checkSequence.push(current);
         // Sequence is still ongoing
@@ -130,8 +130,8 @@ export class KeyboardScanner {
       this.buffer = checkSequence;
       if (barcode.length != 0) {
         // This console log is super useful and is supposed to be here!
-        // TODO can be improved by login to window console as per: https://github.com/openmsupply/open-msupply/pull/1804#discussion_r1199888198
-        console.log(JSON.stringify(barcode, null, ' '));
+        const msg = `console.log(${JSON.stringify(barcode, null, ' ')});`;
+        this.window.webContents.executeJavaScript(msg);
         this.sendBarcode(barcode);
       }
 
@@ -148,7 +148,7 @@ export class KeyboardScanner {
         this.allowEvents = false;
       }
     } catch (e) {
-      console.log(e);
+      console.error(e);
     } finally {
       // Make sure lockBuffer is always unlocked
       this.lockBuffer = false;
@@ -159,6 +159,11 @@ export class KeyboardScanner {
     // Bind keyboard capture on startup (this.scanning is false by default)
     this.window.webContents.on('before-input-event', (event, input) => {
       if (!this.scanning) return;
+
+      this.window.webContents.executeJavaScript(
+        `console.log('key=${input.key}');`
+      );
+
       if (keysToPassThrough.includes(input.key)) return;
 
       while (this.lockBuffer) {
