@@ -129,9 +129,10 @@ export class KeyboardScanner {
       // Remember left over for next check
       this.buffer = checkSequence;
       if (barcode.length != 0) {
-        // This console log is super useful and is supposed to be here!
-        const msg = `console.log(${JSON.stringify(barcode, null, ' ')});`;
-        this.window.webContents.executeJavaScript(msg);
+        // This console logging is super useful so we've left it in place deliberately
+        const barcodeString = barcode.map(({ input: { key } }) => key).join('');
+        this.log(`Full barcode: ${barcodeString}`);
+        this.log(barcode);
         this.sendBarcode(barcode);
       }
 
@@ -155,14 +156,22 @@ export class KeyboardScanner {
     }
   }
 
+  log = (something: string | object) => {
+    try {
+      const js =
+        typeof something === 'object'
+          ? `console.log(${JSON.stringify(something, null, ' ')});`
+          : `console.log('${something.replace("'", "\\'")}');`;
+      this.window.webContents.executeJavaScript(js);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   bindInputEvent() {
     // Bind keyboard capture on startup (this.scanning is false by default)
     this.window.webContents.on('before-input-event', (event, input) => {
       if (!this.scanning) return;
-
-      this.window.webContents.executeJavaScript(
-        `console.log('key=${input.key}');`
-      );
 
       if (keysToPassThrough.includes(input.key)) return;
 
@@ -214,7 +223,7 @@ export class KeyboardScanner {
             modifiers.includes('alt') &&
             modifiers.includes('iskeypad'):
             return [...acc, String.fromCharCode(29)];
-          // Group separator, on ZKTeco I've noticed it's 'F8', with alt and iskeypad
+          // Group separator, on ZKTeco I've noticed it's 'F8'
           case code === 'F8':
             return [...acc, String.fromCharCode(29)];
           default:

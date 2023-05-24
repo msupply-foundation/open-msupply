@@ -6,21 +6,21 @@ To mimic existing USB serial barcode scanner implementation with keyboard scanne
 
 #### What is scanner input ?
 
-Because scanner scans and sends keyboard events very fast, we can idetify scanner input by looking the speed at which keys are entered. Two configurations are used to determine if input is form barcode scanner (at the time of writting these are hardcoded):
+Because scanner scans and sends keyboard events very fast, we can identify scanner input by looking the speed at which keys are entered. Two configurations are used to determine if input is form barcode scanner (at the time of writing these are hardcoded):
 
 `maxMSBetweenScannerKeyInputs` defaults to 50 and `minBarcodeLength` defaults to 5.
 
 Of course it's possible for user to spam keyboard and replicate scanner input, this should be OK because:
 
 * It's highly unlikely
-* Our UI is not really catered for operations at this speed (even without barcode scanner these operations are not really considered, as they are unlikely low probabiliy and low impact)
+* Our UI is not really catered for operations at this speed (even without barcode scanner these operations are not really considered, as they are unlikely low probably and low impact)
 * We actually recommend using USB serial scanner mode
 
 #### How does it work ?
 
 During barcode scanning mode (when keyboard scanner is selected), all keyboard input is captured with `window.webContents.on('before-input-event'` and stored in a buffer.
 
-A processor is triggered every PROCESSOR_INTERVAL (50ms), it will try to find scanner input by iterating over buffer and finding input seqences matching scanner input criteria. Any input not matching scanner input criteria will be passed through (as if it wasn't captured).
+A processor is triggered every PROCESSOR_INTERVAL (50ms), it will try to find scanner input by iterating over buffer and finding input sequences matching scanner input criteria. Any input not matching scanner input criteria will be passed through (as if it wasn't captured).
 
 If sequence input is not `finalised` (still ongoing while processor is triggered), it will be put back into buffer.
 
@@ -40,7 +40,7 @@ We also capture and ignore `isAutoRepeat` type input, this is when they key is h
 
 When barcode is created from input sequence, we only keep inputs starting with Digit and Key, and instead of using `key` of input, we use `code` of input, i.e. (Digit1 or KeyA), this means any special characters in barcode are ignored and capitalisation is ignored. This is done to make sure that keyboard OS settings dont' interfere with resulting barcode (i.e. when French AZERTY keyboard mode is on). This should only affect lot/batch number, and from my understanding those are always capital english letters.
 
-In more complex barcodes, as per image below, special character seperates lot and [serial number](https://www.databar-barcode.info/application-identifiers/), for Zebra this special character seems to be `Numpad0` + 'alt' + 'iskeypad' and for ZKTeco it was 'F8', this is replaced with charcode `29` (when scanned with USB serial mode this appears as charcode 29):
+In more complex barcodes, as per image below, special character separates lot and [serial number](https://www.databar-barcode.info/application-identifiers/), for Zebra this special character seems to be `Numpad0` + 'alt' + 'iskeypad' and for ZKTeco it was 'F8', this is replaced with charcode `29` (when scanned with USB serial mode this appears as charcode 29):
 
 ![complex barcode](./docs/complex_barcode.png)
 
