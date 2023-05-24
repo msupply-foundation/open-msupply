@@ -55,7 +55,7 @@ export class KeyboardScanner {
   window: BrowserWindow;
   interval: NodeJS.Timer | undefined;
   // Buffer can be written concurrent in event handles and when processing input
-  // this lock is to make sure it's edited syncrhonously
+  // this lock is to make sure it's edited synchronously
   lockBuffer: boolean;
   // In scanning mode, when non barcode data entry is made, should allow it (no preventDefault())
   allowEvents: boolean;
@@ -106,7 +106,7 @@ export class KeyboardScanner {
       this.buffer.forEach((current, index) => {
         // Get ms for next input event or now
         const nextMs = this.buffer[index + 1]?.ms ?? Date.now();
-        let diff = nextMs - current.ms;
+        const diff = nextMs - current.ms;
 
         checkSequence.push(current);
         // Sequence is still ongoing
@@ -129,9 +129,10 @@ export class KeyboardScanner {
       // Remember left over for next check
       this.buffer = checkSequence;
       if (barcode.length != 0) {
-        // This console log is super useful and is supposed to be here!
-        // TODO can be improved by login to window console as per: https://github.com/openmsupply/open-msupply/pull/1804#discussion_r1199888198
-        console.log(JSON.stringify(barcode, null, ' '));
+        // This console logging is super useful so we've left it in place deliberately
+        const barcodeString = barcode.map(({ input: { key } }) => key).join('');
+        this.log(`Full barcode: ${barcodeString}`);
+        this.log(barcode);
         this.sendBarcode(barcode);
       }
 
@@ -148,17 +149,30 @@ export class KeyboardScanner {
         this.allowEvents = false;
       }
     } catch (e) {
-      console.log(e);
+      console.error(e);
     } finally {
       // Make sure lockBuffer is always unlocked
       this.lockBuffer = false;
     }
   }
 
+  log = (something: string | object) => {
+    try {
+      const js =
+        typeof something === 'object'
+          ? `console.log(${JSON.stringify(something, null, ' ')});`
+          : `console.log('${something.replace("'", "\\'")}');`;
+      this.window.webContents.executeJavaScript(js);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   bindInputEvent() {
     // Bind keyboard capture on startup (this.scanning is false by default)
     this.window.webContents.on('before-input-event', (event, input) => {
       if (!this.scanning) return;
+
       if (keysToPassThrough.includes(input.key)) return;
 
       while (this.lockBuffer) {
@@ -209,7 +223,7 @@ export class KeyboardScanner {
             modifiers.includes('alt') &&
             modifiers.includes('iskeypad'):
             return [...acc, String.fromCharCode(29)];
-          // Group separator, on ZKTeco I've noticed it's 'F8', with alt and iskeypad
+          // Group separator, on ZKTeco I've noticed it's 'F8'
           case code === 'F8':
             return [...acc, String.fromCharCode(29)];
           default:
