@@ -1,16 +1,11 @@
-import React, { FC } from 'react';
 import {
-  useTranslation,
-  useFormatDateTime,
-  useColumns,
-  DataTable,
   ColumnFormat,
+  useColumns,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
-import { RepackFragment, useStock } from '../../api';
+import { RepackFragment } from '../../api/operations.generated';
 
-export const ListView: FC<{ recordId: string }> = ({ recordId }) => {
-  const t = useTranslation('inventory');
-  const { data, isError, isLoading } = useStock.repack.list(recordId);
+export const useRepackColumns = () => {
   const { localisedTime } = useFormatDateTime();
 
   const columns = useColumns<RepackFragment>([
@@ -41,15 +36,5 @@ export const ListView: FC<{ recordId: string }> = ({ recordId }) => {
     },
   ]);
 
-  return (
-    <DataTable
-      id="repack-list"
-      columns={columns}
-      data={data?.nodes}
-      isLoading={isLoading}
-      isError={isError}
-      noDataMessage={t('messages.no-repacks')}
-      overflowX="auto"
-    />
-  );
+  return { columns };
 };
