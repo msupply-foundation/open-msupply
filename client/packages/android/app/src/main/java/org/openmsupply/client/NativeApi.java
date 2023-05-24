@@ -33,12 +33,13 @@ import javax.net.ssl.SSLHandshakeException;
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static final String LOG_FILE_NAME = "remote_server.log";
     public static final String OM_SUPPLY = "omSupply";
-    private static final String DEFAULT_URL = "https://localhost:8000/";
+    private static final Integer DEFAULT_PORT = DiscoveryConstants.PORT;
+    private static final String DEFAULT_URL = "https://localhost:" + DEFAULT_PORT + "/";
     private static final String CONFIGURATION_GROUP = "omSupply_preferences";
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
-    omSupplyServer connectedServer;
+    FrontEndHost connectedServer;
     NsdManager discoveryManager;
     boolean isDebug;
     boolean isAdvertising;
@@ -73,7 +74,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         return isDebug;
     }
 
-    public omSupplyServer getConnectedServer() {
+    public FrontEndHost getConnectedServer() {
         return connectedServer;
     }
 
@@ -245,7 +246,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     @PluginMethod()
     public void connectToServer(PluginCall call) {
-        omSupplyServer server = new omSupplyServer(call.getData());
+        FrontEndHost server = new FrontEndHost(call.getData());
 
         stopServerDiscovery();
         connectedServer = server;
@@ -257,7 +258,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         WebView webView = bridge.getWebView();
         this.serverUrl = url;
         // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(url));
+        webView.post(() -> webView.loadUrl(server.getConnectionUrl()));
     }
 
     // NsdManager.DiscoveryListener
@@ -410,19 +411,32 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         call.resolve(response);
     }
 
-    public class omSupplyServer {
+    /** Helper class to get access to the JS FrontEndHost data */
+    public class FrontEndHost {
         JSObject data;
         
-        public omSupplyServer(JSObject data) {
+        public FrontEndHost(JSObject data) {
             this.data = data;
         }
 
+        /**
+         * Constructs the server's base url string including protocol, ip and port,
+         * e.g. https://127.0.0.1:8000
+         */
         public String getUrl() {
+            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port");
+        }
+
+        /**
+         * Constructs the url to be used when connecting to a server,
+         * e.g. https://127.0.0.1:8000/login
+         */
+        public String getConnectionUrl() {
             String path = "";
             if (data.getString("path") != null) {
                 path = "/" + data.getString("path");
             }
-            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port") + path;
+            return getUrl()  + path;
         }
 
         public boolean isLocal() {
