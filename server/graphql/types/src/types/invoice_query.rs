@@ -24,6 +24,7 @@ pub enum InvoiceNodeType {
     InboundShipment,
     InventoryAddition,
     InventoryReduction,
+    Repack,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -348,6 +349,7 @@ impl InvoiceNodeType {
             InboundShipment => InvoiceRowType::InboundShipment,
             InventoryAddition => InvoiceRowType::InventoryAddition,
             InventoryReduction => InvoiceRowType::InventoryReduction,
+            Repack => InvoiceRowType::Repack,
         }
     }
 
@@ -358,6 +360,7 @@ impl InvoiceNodeType {
             InboundShipment => InvoiceNodeType::InboundShipment,
             InventoryAddition => InvoiceNodeType::InventoryAddition,
             InventoryReduction => InvoiceNodeType::InventoryReduction,
+            Repack => InvoiceNodeType::Repack,
         }
     }
 }

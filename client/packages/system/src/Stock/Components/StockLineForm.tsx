@@ -17,6 +17,7 @@ import {
   useBarcodeScannerContext,
   CircularProgress,
   useNotification,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -42,7 +43,7 @@ interface StockLineFormProps {
 export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
   const t = useTranslation('inventory');
   const { error } = useNotification();
-  const { hasBarcodeScanner, isScanning, startScan } =
+  const { isConnected, isEnabled, isScanning, startScan } =
     useBarcodeScannerContext();
   const supplierName = draft.supplierName
     ? draft.supplierName
@@ -188,19 +189,25 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
                 value={draft.barcode ?? ''}
                 onChange={e => onUpdate({ barcode: e.target.value })}
               />
-              {hasBarcodeScanner && (
-                <IconButton
-                  disabled={isScanning}
-                  onClick={scanBarcode}
-                  icon={
-                    isScanning ? (
-                      <CircularProgress size={20} color="secondary" />
-                    ) : (
-                      <ScanIcon />
-                    )
-                  }
-                  label={t('button.scan')}
-                />
+              {isEnabled && (
+                <Tooltip
+                  title={isConnected ? '' : t('error.scanner-not-connected')}
+                >
+                  <Box>
+                    <IconButton
+                      disabled={isScanning || !isConnected}
+                      onClick={scanBarcode}
+                      icon={
+                        isScanning ? (
+                          <CircularProgress size={20} color="secondary" />
+                        ) : (
+                          <ScanIcon />
+                        )
+                      }
+                      label={t('button.scan')}
+                    />
+                  </Box>
+                </Tooltip>
               )}
             </Box>
           }

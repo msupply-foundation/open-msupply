@@ -25,6 +25,13 @@ export interface NativeAPI {
     callback: (event: IpcRendererEvent, data: number[]) => void
   ) => void;
   readLog: () => Promise<{ log: string; error: string }>;
+  startDeviceScan: () => Promise<BarcodeScanner[]>;
+  linkedBarcodeScannerDevice: () => Promise<BarcodeScanner>;
+  onDeviceMatched: (
+    callback: (event: IpcRendererEvent, scanner: BarcodeScanner) => void
+  ) => void;
+  setScannerType: (server: ScannerType) => void;
+  getScannerType: () => Promise<ScannerType>;
 }
 
 export enum NativeMode {
@@ -51,3 +58,15 @@ export type FrontEndHost = {
   // Allows specifying a path to use when connecting
   path?: string;
 };
+
+export type BarcodeScanner = {
+  vendorId: number;
+  productId: number;
+  path?: string;
+  serialNumber?: string;
+  manufacturer?: string;
+  product?: string;
+  connected: boolean;
+};
+
+export type ScannerType = 'usb_serial' | 'usb_keyboard';

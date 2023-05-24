@@ -38,6 +38,7 @@ members = [
   "graphql/location",
   "graphql/general",
   "graphql/batch_mutations",
+  "graphql/repack",
   "cli",
   "windows",
 ]

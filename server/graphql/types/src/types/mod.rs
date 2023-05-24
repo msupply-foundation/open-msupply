@@ -69,6 +69,9 @@ pub use self::barcode::*;
 pub mod store_preference;
 pub use self::store_preference::*;
 
+pub mod repack;
+pub use self::repack::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

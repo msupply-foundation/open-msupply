@@ -6,7 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::sync::api::RemoteSyncRecordV5;
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::BARCODE;
 
@@ -36,6 +38,13 @@ pub struct LegacyBarcodeRow {
 
 pub(crate) struct BarcodeTranslation {}
 impl SyncTranslation for BarcodeTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::BARCODE,
+            dependencies: vec![LegacyTableName::ITEM],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

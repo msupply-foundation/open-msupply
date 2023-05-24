@@ -11,7 +11,7 @@ use crate::{
     DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
 };
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Default)]
 pub struct LocationMovement {
     pub location_movement_row: LocationMovementRow,
 }

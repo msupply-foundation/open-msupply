@@ -6,52 +6,105 @@ import {
   FrontEndHost,
   frontEndHostUrl,
   isProtocol,
+  BarcodeScanner,
+  ScannerType,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
+import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
 
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
 const CLIENT_VERSION_KEY = 'client_version';
 const HARDWARE_ID_KEY = 'hardware_id';
-const SUPPORTED_SCANNERS = [
-  {
-    vendorId: 1504,
-    vendorName: 'Zebra / Symbol Technologies, Inc, 2008',
-    products: [
-      { id: 2194, model: 'DS2208' },
-      { id: 4864, model: 'DS2208' },
-    ],
-  },
-];
+const BARCODE_SCANNER_DEVICE_KEY = 'barcode_scanner_device';
+const SCANNER_TYPE = 'scanner_type';
+const DEVICE_CLOSE_DELAY = 5000;
+const OMSUPPLY_BARCODE =
+  '19,16,3,0,111,112,101,110,32,109,83,117,112,112,108,121,0,24,11';
 
-class BarcodeScanner {
+// App data store
+type StoreType = {
+  [key: string]: string | null;
+};
+
+class Scanner {
   device: HID.HID | undefined;
+  barcodeScanner: BarcodeScanner | undefined;
+  window: BrowserWindow;
 
-  constructor() {
+  constructor(window: BrowserWindow) {
     this.device = this.findDevice();
+    this.window = window;
+    const storedScanner = store.get(BARCODE_SCANNER_DEVICE_KEY, null);
+    this.barcodeScanner = !storedScanner
+      ? undefined
+      : { ...JSON.parse(storedScanner), connected: false };
   }
 
   private findDevice() {
-    const devices = HID.devices();
-    for (const scanner of SUPPORTED_SCANNERS) {
-      // const productIds = scanner.products.map(p => p.id);
-      const deviceInfo = devices.find(
-        d => d.vendorId === scanner.vendorId // &&
-        // productIds.some(pid => d.productId === pid);
-      );
-
-      if (deviceInfo && !!deviceInfo.path) {
-        return new HID.HID(deviceInfo.path);
+    if (this.barcodeScanner) {
+      try {
+        const hid = new HID.HID(
+          this.barcodeScanner.vendorId,
+          this.barcodeScanner.productId
+        );
+        this.barcodeScanner.connected = true;
+        return hid;
+      } catch (e) {
+        console.error(e);
       }
     }
-    return undefined;
   }
 
-  start(window: BrowserWindow) {
+  scanDevices(window: BrowserWindow) {
+    const devices: BarcodeScanner[] = [];
+    // if a scanner is already connected, we'll need to close it in order to open it
+    if (this.device) {
+      this.device?.close();
+    }
+
+    HID.devices().forEach(device => {
+      devices.push({ ...device, connected: false });
+      if (device.path) {
+        try {
+          const hid = new HID.HID(device.vendorId, device.productId);
+
+          // close the devices after a delay
+          const timeout = setTimeout(() => {
+            try {
+              hid.close();
+            } catch {}
+          }, DEVICE_CLOSE_DELAY);
+
+          hid.on('data', data => {
+            if (typeof data !== 'object') return;
+            if (!Buffer.isBuffer(data)) return;
+
+            const valid = data.subarray(0, 19).join(',') === OMSUPPLY_BARCODE;
+
+            if (valid) {
+              const scanner = { ...device, connected: true };
+              store.set(BARCODE_SCANNER_DEVICE_KEY, JSON.stringify(scanner));
+              window.webContents.send(IPC_MESSAGES.ON_DEVICE_MATCHED, scanner);
+              clearTimeout(timeout);
+              this.device = hid;
+              this.barcodeScanner = scanner;
+            }
+          });
+        } catch (e) {
+          // keyboard devices are unable to be opened and will throw an error
+          console.error(e);
+        }
+      }
+    });
+    return devices;
+  }
+
+  start() {
     if (!this.device) throw new Error('No scanners found');
     this.device?.on('data', data => {
-      window.webContents.send(IPC_MESSAGES.ON_BARCODE_SCAN, data);
+      this.window.webContents.send(IPC_MESSAGES.ON_BARCODE_SCAN, data);
     });
   }
 
@@ -61,10 +114,14 @@ class BarcodeScanner {
       this.device = this.findDevice();
     } catch {}
   }
+
+  linkedScanner() {
+    return this.barcodeScanner;
+  }
 }
 
+const store = new ElectronStore<StoreType>();
 const discovery = new dnssd.Browser(dnssd.tcp(SERVICE_TYPE));
-const barcodeScanner = new BarcodeScanner();
 
 let connectedServer: FrontEndHost | null = null;
 let discoveredServers: FrontEndHost[] = [];
@@ -104,8 +161,10 @@ const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
 const start = (): void => {
   // Create the browser window.
   const window = new BrowserWindow({
-    height: 768,
-    width: 1024,
+    height: 800,
+    width: 1200,
+    minWidth: 800,
+    minHeight: 768,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -129,16 +188,40 @@ const start = (): void => {
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
-  ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () =>
-    barcodeScanner.start(window)
-  );
-  ipcMain.handle(IPC_MESSAGES.STOP_BARCODE_SCAN, () => barcodeScanner.stop());
 
   ipcMain.handle(IPC_MESSAGES.DISCOVERED_SERVERS, async () => {
     const servers = discoveredServers;
     discoveredServers = [];
     return { servers };
   });
+
+  // BARCODES
+  const serialScanner = new Scanner(window);
+  const keyboardScanner = new KeyboardScanner(window);
+  const getCurrentScanner = () =>
+    store.get(SCANNER_TYPE, 'usb_serial') == 'usb_serial'
+      ? serialScanner
+      : keyboardScanner;
+
+  ipcMain.on(
+    IPC_MESSAGES.SET_SCANNER_TYPE,
+    (_event, scannerType: ScannerType) => store.set(SCANNER_TYPE, scannerType)
+  );
+  ipcMain.handle(IPC_MESSAGES.LINKED_BARCODE_SCANNER_DEVICE, async () =>
+    getCurrentScanner().linkedScanner()
+  );
+  ipcMain.handle(IPC_MESSAGES.START_BARCODE_SCAN, () =>
+    getCurrentScanner().start()
+  );
+  ipcMain.handle(IPC_MESSAGES.STOP_BARCODE_SCAN, () =>
+    getCurrentScanner().stop()
+  );
+  ipcMain.handle(IPC_MESSAGES.START_DEVICE_SCAN, () =>
+    serialScanner.scanDevices(window)
+  );
+  ipcMain.handle(IPC_MESSAGES.GET_SCANNER_TYPE, async () =>
+    store.get(SCANNER_TYPE, 'usb_serial')
+  );
 
   // not currently implemented in the desktop implementation
   ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
@@ -195,6 +278,9 @@ process.on('uncaughtException', error => {
     return;
   }
 
+  // When running the barcode scanner discovery on windows, you can get this error which we want to ignore
+  if (error.message === 'could not read from HID device') return;
+
   // TODO bugsnag ?
   dialog.showErrorBox('Error', error.stack || error.message);
 
@@ -215,15 +301,9 @@ process.on('uncaughtException', error => {
  */
 });
 
-// App data store
-type StoreType = {
-  [key: string]: string | null;
-};
-const store = new ElectronStore<StoreType>();
-
 app.addListener(
   'certificate-error',
-  (event, _webContents, url, error, certificate, callback) => {
+  async (event, _webContents, url, error, certificate, callback) => {
     // We are only handling self signed certificate errors
     if (
       error != 'net::ERR_CERT_INVALID' &&
@@ -259,13 +339,22 @@ app.addListener(
       // If fingerprint does not match
     } else if (storedFingerprint != certificate.fingerprint) {
       // Display error message and go back to discovery
-      dialog.showErrorBox(
-        'SSL Error',
-        'Certificate fingerprint for server was changed'
-      );
-      ipcMain.emit(IPC_MESSAGES.GO_BACK_TO_DISCOVERY);
+      const returnValue = await dialog.showMessageBox({
+        type: 'warning',
+        buttons: ['No', 'Yes'],
+        title: 'SSL Error',
+        message:
+          'The security certificate on the server has changed!\r\n\r\nThis can happen when the server is reinstalled, so may be normal, but please check with your IT department if you are unsure.\r\n\r\nWould you like to accept the new certificate? ',
+      });
 
-      return callback(false);
+      if (returnValue.response === 0) {
+        ipcMain.emit(IPC_MESSAGES.GO_BACK_TO_DISCOVERY);
+        return callback(false);
+      }
+
+      // Update stored fingerprint
+      storedFingerprint = certificate.fingerprint;
+      store.set(identifier, storedFingerprint);
     }
 
     // storedFingerprint did not exist or it matched certificate fingerprint
