@@ -20,6 +20,8 @@ import {
   frontEndHostDiscoveryGraphql,
   IconButton,
   RefreshIcon,
+  ConnectionResult,
+  useNotification,
 } from '@openmsupply-client/common';
 
 type ConnectToServer = ReturnType<typeof useNativeClient>['connectToServer'];
@@ -130,6 +132,7 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
 }) => {
   const { data: initStatus } = useInitialisationStatus();
   const t = useTranslation();
+  const { error } = useNotification();
 
   const getSiteName = () => {
     if (initStatus?.status == InitialisationStatusType.Initialised)
@@ -137,10 +140,19 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
     return t('messages.not-initialised');
   };
 
+  const handleConnectResult = (result: ConnectionResult) => {
+    if (result.success) return;
+
+    error(t('error.connection-error'))();
+    console.error(result.error);
+  };
+
   return (
     <MenuItem
       onClick={() => {
-        connect(server);
+        connect(server)
+          .then(result => handleConnectResult(result))
+          .catch(e => ({ success: false, error: e.message }));
       }}
       sx={{ color: 'inherit' }}
     >

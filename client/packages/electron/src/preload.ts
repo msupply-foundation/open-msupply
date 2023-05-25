@@ -7,7 +7,7 @@ const electronNativeAPI: NativeAPI = {
     ipcRenderer.send(IPC_MESSAGES.START_SERVER_DISCOVERY),
   connectedServer: () => ipcRenderer.invoke(IPC_MESSAGES.CONNECTED_SERVER),
   connectToServer: server =>
-    ipcRenderer.send(IPC_MESSAGES.CONNECT_TO_SERVER, server),
+    ipcRenderer.invoke(IPC_MESSAGES.CONNECT_TO_SERVER, server),
   startBarcodeScan: () => ipcRenderer.invoke(IPC_MESSAGES.START_BARCODE_SCAN),
   stopBarcodeScan: () => ipcRenderer.invoke(IPC_MESSAGES.STOP_BARCODE_SCAN),
   onBarcodeScan: callback => {

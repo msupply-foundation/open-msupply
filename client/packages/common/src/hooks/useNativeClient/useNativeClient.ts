@@ -9,6 +9,7 @@ import {
   setPreference,
 } from './helpers';
 import {
+  ConnectionResult,
   DISCOVERED_SERVER_POLL,
   DISCOVERY_TIMEOUT,
   FrontEndHost,
@@ -54,9 +55,11 @@ export const useNativeClient = ({
     servers: [],
   });
 
-  const connectToServer = (server: FrontEndHost) => {
+  const connectToServer = (server: FrontEndHost): Promise<ConnectionResult> => {
     setPreference('previousServer', server);
-    nativeAPI?.connectToServer(server);
+    return (
+      nativeAPI?.connectToServer(server) ?? Promise.resolve({ success: false })
+    );
   };
 
   const stopDiscovery = () =>
@@ -105,6 +108,13 @@ export const useNativeClient = ({
 
     const result = await KeepAwake.isSupported();
     if (result.isSupported) await KeepAwake.keepAwake();
+  };
+
+  const handleConnectionError = (result: ConnectionResult) => {
+    if (result.success) return;
+
+    setState(state => ({ ...state, connectToPreviousTimedOut: true }));
+    console.error('Connecting to previous server:', result.error);
   };
 
   useEffect(() => {
@@ -163,17 +173,9 @@ export const useNativeClient = ({
     if (previousServer === null) return;
 
     // this will check to see if the server is alive and if so, connect to it
-    connectToServer(previousServer);
-    // fetch(frontEndHostUrl(previousServer))
-    //   .then(response => {
-    //     if (response.status === 200) {
-    //       connectToServer(previousServer);
-    //     }
-    //   })
-    //   .catch(error => {
-    //     setState(state => ({ ...state, connectToPreviousTimedOut: true })),
-    //       console.error('Connecting to previous server:', error);
-    //   });
+    connectToServer(previousServer)
+      .then(result => handleConnectionError(result))
+      .catch(e => handleConnectionError({ success: false, error: e.message }));
   }, [state.previousServer, autoconnect]);
 
   return {

@@ -135,7 +135,8 @@ export const Android = () => {
       const localServer = servers.find(server => server.isLocal);
       if (localServer) {
         const path = !token ? 'login' : '';
-        connectToServer({ ...localServer, path });
+        // TODO
+        connectToServer({ ...localServer, path }).then();
       }
     }
   }, [mode, servers]);
