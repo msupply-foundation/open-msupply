@@ -64,6 +64,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   if (!stockLine) return null;
 
   const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
+
   const tabs = [
     {
       Component: <StockLineForm draft={draft} onUpdate={onUpdate} />,
@@ -77,8 +78,8 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
 
   return (
     <Modal
-      width={700}
-      height={575}
+      width={900}
+      height={700}
       slideAnimation={false}
       title={t('title.stock-line-details')}
       okButton={

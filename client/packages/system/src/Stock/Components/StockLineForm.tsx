@@ -86,7 +86,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
       container
       paddingTop={2}
       paddingBottom={2}
-      width="100%"
+      width="80%"
+      alignSelf={'center'}
     >
       <Grid
         container
