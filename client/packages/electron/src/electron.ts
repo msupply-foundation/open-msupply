@@ -12,6 +12,8 @@ import {
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
 import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
+import https from 'https';
+import http from 'http';
 
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
@@ -149,7 +151,35 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+// run a check to see if the server is available before attempting to connect
+const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
+  const lib = server.protocol === 'https' ? https : http;
+  const request = lib.get(frontEndHostUrl(server), response => {
+    if (response.statusCode === 200) {
+      connectToServer(window, server);
+    }
+  });
+  request.on('error', e => {
+    // server is responding, but there is a certificate error
+    // which is expected for localhost self-signed certs
+    if (e.message === 'self signed certificate') {
+      connectToServer(window, server);
+    }
+  });
+};
+
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
+  const request = https.get(frontEndHostUrl(server), response => {
+    if (response.statusCode === 200) {
+      discovery.stop();
+    }
+  });
+  request.on('error', err => {
+    console.error(
+      `Error trying to connect via ${server.protocol}`,
+      err.message
+    );
+  });
   discovery.stop();
   connectedServer = server;
 
@@ -184,7 +214,7 @@ const start = (): void => {
   });
 
   ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) =>
-    connectToServer(window, server)
+    tryToConnectToServer(window, server)
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
