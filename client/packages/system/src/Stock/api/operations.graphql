@@ -45,10 +45,15 @@ fragment Repack on RepackNode {
       id
       code
       name
+      onHold
     }
     packSize
     numberOfPacks
   }
+}
+
+fragment InvoiceRow on InvoiceNode {
+  id
 }
 
 query stockLines(
@@ -114,6 +119,15 @@ query repacksByStockLine($stockLineId: String!, $storeId: String!) {
         ...Repack
       }
       totalCount
+    }
+  }
+}
+
+mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
+  insertRepack(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      ...InvoiceRow
     }
   }
 }

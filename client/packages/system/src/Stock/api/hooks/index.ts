@@ -16,5 +16,6 @@ export const useStock = {
   repack: {
     get: Repacks.useRepack,
     list: Repacks.useRepacksByStockLine,
+    insert: Repacks.useInsertRepack,
   },
 };
