@@ -6,7 +6,9 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type StockLineRowFragment = { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } };
 
-export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: any, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null } };
+export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: any, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean } | null } };
+
+export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string };
 
 export type StockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
@@ -42,7 +44,7 @@ export type RepackQueryVariables = Types.Exact<{
 }>;
 
 
-export type RepackQuery = { __typename: 'Queries', repack: { __typename: 'NodeError' } | { __typename: 'RepackNode', id: string, datetime: any, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null } } };
+export type RepackQuery = { __typename: 'Queries', repack: { __typename: 'NodeError' } | { __typename: 'RepackNode', id: string, datetime: any, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean } | null } } };
 
 export type RepacksByStockLineQueryVariables = Types.Exact<{
   stockLineId: Types.Scalars['String'];
@@ -50,7 +52,15 @@ export type RepacksByStockLineQueryVariables = Types.Exact<{
 }>;
 
 
-export type RepacksByStockLineQuery = { __typename: 'Queries', repacksByStockLine: { __typename: 'RepackConnector', totalCount: number, nodes: Array<{ __typename: 'RepackNode', id: string, datetime: any, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null } }> } };
+export type RepacksByStockLineQuery = { __typename: 'Queries', repacksByStockLine: { __typename: 'RepackConnector', totalCount: number, nodes: Array<{ __typename: 'RepackNode', id: string, datetime: any, repackId: string, from: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string } | null }, to: { __typename: 'RepackStockLineNode', packSize: number, numberOfPacks: number, location?: { __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean } | null } }> } };
+
+export type InsertRepackMutationVariables = Types.Exact<{
+  input: Types.InsertRepackInput;
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type InsertRepackMutation = { __typename: 'Mutations', insertRepack: { __typename: 'InsertRepackError' } | { __typename: 'InvoiceNode', id: string } };
 
 export const StockLineRowFragmentDoc = gql`
     fragment StockLineRow on StockLineNode {
@@ -101,10 +111,16 @@ export const RepackFragmentDoc = gql`
       id
       code
       name
+      onHold
     }
     packSize
     numberOfPacks
   }
+}
+    `;
+export const InvoiceRowFragmentDoc = gql`
+    fragment InvoiceRow on InvoiceNode {
+  id
 }
     `;
 export const StockLinesDocument = gql`
@@ -172,6 +188,16 @@ export const RepacksByStockLineDocument = gql`
   }
 }
     ${RepackFragmentDoc}`;
+export const InsertRepackDocument = gql`
+    mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
+  insertRepack(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      ...InvoiceRow
+    }
+  }
+}
+    ${InvoiceRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -194,6 +220,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     repacksByStockLine(variables: RepacksByStockLineQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RepacksByStockLineQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RepacksByStockLineQuery>(RepacksByStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'repacksByStockLine', 'query');
+    },
+    insertRepack(variables: InsertRepackMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertRepackMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertRepackMutation>(InsertRepackDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRepack', 'mutation');
     }
   };
 }
@@ -281,5 +310,22 @@ export const mockRepackQuery = (resolver: ResponseResolver<GraphQLRequest<Repack
 export const mockRepacksByStockLineQuery = (resolver: ResponseResolver<GraphQLRequest<RepacksByStockLineQueryVariables>, GraphQLContext<RepacksByStockLineQuery>, any>) =>
   graphql.query<RepacksByStockLineQuery, RepacksByStockLineQueryVariables>(
     'repacksByStockLine',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertRepackMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ insertRepack })
+ *   )
+ * })
+ */
+export const mockInsertRepackMutation = (resolver: ResponseResolver<GraphQLRequest<InsertRepackMutationVariables>, GraphQLContext<InsertRepackMutation>, any>) =>
+  graphql.mutation<InsertRepackMutation, InsertRepackMutationVariables>(
+    'insertRepack',
     resolver
   )
