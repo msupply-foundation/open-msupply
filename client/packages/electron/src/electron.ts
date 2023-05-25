@@ -154,37 +154,27 @@ if (require('electron-squirrel-startup')) {
 // run a check to see if the server is available before attempting to connect
 const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   const lib = server.protocol === 'https' ? https : http;
-  const request = lib.get(frontEndHostUrl(server), response => {
+  const options = {
+    rejectUnauthorized: false,
+  };
+  const request = lib.get(frontEndHostUrl(server), options, response => {
     if (response.statusCode === 200) {
       connectToServer(window, server);
+      return { success: true };
     }
   });
+  // handle the error to prevent an alert in the desktop app
   request.on('error', e => {
-    // server is responding, but there is a certificate error
-    // which is expected for localhost self-signed certs
-    if (e.message === 'self signed certificate') {
-      connectToServer(window, server);
-    }
+    console.error('Error received connecting to server:', e);
+    return { success: false, error: e.message };
   });
 };
 
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
-  const request = https.get(frontEndHostUrl(server), response => {
-    if (response.statusCode === 200) {
-      discovery.stop();
-    }
-  });
-  request.on('error', err => {
-    console.error(
-      `Error trying to connect via ${server.protocol}`,
-      err.message
-    );
-  });
   discovery.stop();
   connectedServer = server;
 
   const url = getDebugHost() || frontEndHostUrl(server);
-
   window.loadURL(url);
 };
 
@@ -213,8 +203,9 @@ const start = (): void => {
     window.loadURL(`${START_URL}?autoconnect=false`);
   });
 
-  ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) =>
-    tryToConnectToServer(window, server)
+  ipcMain.handle(
+    IPC_MESSAGES.CONNECT_TO_SERVER,
+    (_event, server: FrontEndHost) => tryToConnectToServer(window, server)
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
