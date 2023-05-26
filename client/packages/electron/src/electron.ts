@@ -168,6 +168,7 @@ const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
     console.error('Error received connecting to server:', e);
     return { success: false, error: e.message };
   });
+  return { success: false };
 };
 
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
@@ -205,7 +206,7 @@ const start = (): void => {
 
   ipcMain.handle(
     IPC_MESSAGES.CONNECT_TO_SERVER,
-    (_event, server: FrontEndHost) => tryToConnectToServer(window, server)
+    async (_event, server: FrontEndHost) => tryToConnectToServer(window, server)
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);

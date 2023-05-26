@@ -131,7 +131,7 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
   connect,
 }) => {
   const { data: initStatus } = useInitialisationStatus();
-  const t = useTranslation();
+  const t = useTranslation('app');
   const { error } = useNotification();
 
   const getSiteName = () => {
@@ -140,7 +140,7 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
     return t('messages.not-initialised');
   };
 
-  const handleConnectResult = (result: ConnectionResult) => {
+  const handleConnectionResult = (result: ConnectionResult) => {
     if (result.success) return;
 
     error(t('error.connection-error'))();
@@ -151,8 +151,10 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
     <MenuItem
       onClick={() => {
         connect(server)
-          .then(result => handleConnectResult(result))
-          .catch(e => ({ success: false, error: e.message }));
+          .then(handleConnectionResult)
+          .catch(e =>
+            handleConnectionResult({ success: false, error: e.message })
+          );
       }}
       sx={{ color: 'inherit' }}
     >
