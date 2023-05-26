@@ -5,6 +5,7 @@ import {
   BasicSpinner,
   Box,
   ButtonWithIcon,
+  ConnectionResult,
   ErrorWithDetails,
   ExternalLinkIcon,
   getNativeAPI,
@@ -118,6 +119,17 @@ export const Android = () => {
     setLocalMode(mode);
   };
 
+  const handleConnectionResult = (result: ConnectionResult) => {
+    if (result.success) return;
+
+    console.error('Connecting to previous server:', result.error);
+    navigate(
+      RouteBuilder.create(AppRoute.Discovery)
+        .addPart(`?timedout=${!!connectToPreviousFailed}`)
+        .build()
+    );
+  };
+
   useEffect(() => {
     // this page is not for web users! begone!
     if (!getNativeAPI()) navigate(RouteBuilder.create(AppRoute.Login).build());
@@ -135,8 +147,11 @@ export const Android = () => {
       const localServer = servers.find(server => server.isLocal);
       if (localServer) {
         const path = !token ? 'login' : '';
-        // TODO
-        connectToServer({ ...localServer, path }).then();
+        connectToServer({ ...localServer, path })
+          .then(handleConnectionResult)
+          .catch(e =>
+            handleConnectionResult({ success: false, error: e.message })
+          );
       }
     }
   }, [mode, servers]);

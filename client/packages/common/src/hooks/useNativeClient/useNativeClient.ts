@@ -2,7 +2,6 @@ import { uniqWith } from 'lodash';
 import { useState, useEffect } from 'react';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import {
-  // frontEndHostUrl,
   getNativeAPI,
   getPreference,
   matchUniqueServer,
@@ -120,15 +119,6 @@ export const useNativeClient = ({
   useEffect(() => {
     if (!state.isDiscovering) return;
 
-    let connectToPreviousTimer: NodeJS.Timer | undefined = undefined;
-
-    if (autoconnect && !!state.previousServer) {
-      connectToPreviousTimer = setTimeout(
-        () => setState(state => ({ ...state, connectToPreviousFailed: true })),
-        DISCOVERY_TIMEOUT
-      );
-    }
-
     const timeoutTimer = setTimeout(() => {
       setState(state => ({
         ...state,
@@ -151,7 +141,6 @@ export const useNativeClient = ({
     }, DISCOVERED_SERVER_POLL);
 
     return () => {
-      clearTimeout(connectToPreviousTimer);
       clearTimeout(timeoutTimer);
       clearInterval(pollInterval);
     };
