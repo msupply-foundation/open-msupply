@@ -110,7 +110,7 @@ export const useNativeClient = ({
     if (result.isSupported) await KeepAwake.keepAwake();
   };
 
-  const handleConnectionError = (result: ConnectionResult) => {
+  const handleConnectionResult = (result: ConnectionResult) => {
     if (result.success) return;
 
     setState(state => ({ ...state, connectToPreviousFailed: true }));
@@ -173,8 +173,8 @@ export const useNativeClient = ({
 
     // this will check to see if the server is alive and if so, connect to it
     connectToServer(previousServer)
-      .then(result => handleConnectionError(result))
-      .catch(e => handleConnectionError({ success: false, error: e.message }));
+      .then(handleConnectionResult)
+      .catch(e => handleConnectionResult({ success: false, error: e.message }));
   }, [state.previousServer, autoconnect]);
 
   return {
