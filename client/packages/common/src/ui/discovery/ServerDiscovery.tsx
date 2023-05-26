@@ -37,7 +37,7 @@ export const ServerDiscovery = () => {
     connectToServer,
     startDiscovery,
     stopDiscovery,
-    connectToPreviousTimedOut,
+    connectToPreviousFailed,
     previousServer,
   } = useNativeClient({
     discovery: true,
@@ -135,7 +135,7 @@ export const ServerDiscovery = () => {
         >
           {t('discovery.body')}
         </Typography>
-        {(connectToPreviousTimedOut || isTimedOut()) && (
+        {(connectToPreviousFailed || isTimedOut()) && (
           <Box padding={2}>
             <ErrorWithDetails
               error={t('error.unable-to-connect', { server })}

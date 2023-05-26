@@ -98,7 +98,7 @@ const ModeOption = ({
 
 export const Android = () => {
   const {
-    connectToPreviousTimedOut,
+    connectToPreviousFailed,
     previousServer,
     servers,
     connectToServer,
@@ -144,15 +144,15 @@ export const Android = () => {
   useEffect(() => {
     if (
       mode === NativeMode.Client &&
-      (!previousServer?.ip || connectToPreviousTimedOut)
+      (!previousServer?.ip || connectToPreviousFailed)
     ) {
       navigate(
         RouteBuilder.create(AppRoute.Discovery)
-          .addPart(`?timedout=${!!connectToPreviousTimedOut}`)
+          .addPart(`?timedout=${!!connectToPreviousFailed}`)
           .build()
       );
     }
-  }, [mode, previousServer, connectToPreviousTimedOut]);
+  }, [mode, previousServer, connectToPreviousFailed]);
 
   if (mode === NativeMode.None)
     return (
@@ -196,7 +196,7 @@ export const Android = () => {
       </Viewport>
     );
 
-  if (mode === NativeMode.Server && connectToPreviousTimedOut)
+  if (mode === NativeMode.Server && connectToPreviousFailed)
     return (
       <Viewport>
         <Box
