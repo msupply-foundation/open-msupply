@@ -26,7 +26,7 @@ declare global {
 
 type NativeClientState = {
   // A previous server is set in local storage, but was not returned in the list of available servers
-  connectToPreviousTimedOut: boolean;
+  connectToPreviousFailed: boolean;
   connectedServer: FrontEndHost | null;
   // Indicate that server discovery has taken too long without finding server
   discoveryTimedOut: boolean;
@@ -47,7 +47,7 @@ export const useNativeClient = ({
     );
 
   const [state, setState] = useState<NativeClientState>({
-    connectToPreviousTimedOut: false,
+    connectToPreviousFailed: false,
     connectedServer: null,
     discoveryTimedOut: false,
     isDiscovering: false,
@@ -113,7 +113,7 @@ export const useNativeClient = ({
   const handleConnectionError = (result: ConnectionResult) => {
     if (result.success) return;
 
-    setState(state => ({ ...state, connectToPreviousTimedOut: true }));
+    setState(state => ({ ...state, connectToPreviousFailed: true }));
     console.error('Connecting to previous server:', result.error);
   };
 
@@ -124,8 +124,7 @@ export const useNativeClient = ({
 
     if (autoconnect && !!state.previousServer) {
       connectToPreviousTimer = setTimeout(
-        () =>
-          setState(state => ({ ...state, connectToPreviousTimedOut: true })),
+        () => setState(state => ({ ...state, connectToPreviousFailed: true })),
         DISCOVERY_TIMEOUT
       );
     }
