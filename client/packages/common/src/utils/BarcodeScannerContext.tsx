@@ -56,8 +56,7 @@ export const parseBarcodeData = (data: number[] | undefined) => {
     .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
 };
 
-export const parseResult = (content?: string): ScanResult => {
-  if (!content) return {};
+const parsePart = (content: string): ScanResult => {
   try {
     const gs1 = parseBarcode(content);
     const gtin = gs1?.parsedCodeItems?.find(item => item.ai === '01')
@@ -73,9 +72,27 @@ export const parseResult = (content?: string): ScanResult => {
       expiryDate: expiry ? Formatter.naiveDate(expiry) : undefined,
       gtin,
     };
-  } catch {
+  } catch (e) {
+    console.error(`Error parsing barcode ${content}:`, e);
     return { content };
   }
+};
+
+export const parseResult = (content?: string): ScanResult => {
+  if (!content) return {};
+
+  const result: ScanResult = { content };
+  // a data matrix result from the Capacitor barcode scanner plugin
+  // is returned in sections, separated by \x1D and needs to be parsed
+  // in sections - otherwise the serial number includes the AI characters
+  // for batch and expiry date
+  content.split('\x1D').forEach(part => {
+    const parsed = parsePart(part);
+    if (!!parsed.batch) result.batch = parsed.batch;
+    if (!!parsed.expiryDate) result.expiryDate = parsed.expiryDate;
+    if (!!parsed.gtin) result.gtin = parsed.gtin;
+  });
+  return result;
 };
 
 export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
@@ -123,7 +140,6 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             // start scanning and wait for a result
             const result = await BarcodeScannerPlugin.startScan();
             BarcodeScannerPlugin.showBackground();
-
             resolve(result.content);
             break;
           default:
@@ -211,7 +227,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const val = useMemo(
     () => ({
       isEnabled,
-      isConnected: !!scanner?.connected,
+      // Capacitor.isNativePlatform returns true if running on android or ios
+      // and we use the camera for scanning currently, no need to check for
+      // a physical device to be connected
+      isConnected: !!scanner?.connected || Capacitor.isNativePlatform(),
       isScanning,
       setScanner,
       startScan,
