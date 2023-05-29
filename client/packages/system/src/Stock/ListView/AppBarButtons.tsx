@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import {
   DownloadIcon,
   useNotification,
@@ -10,10 +10,13 @@ import {
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
-import { useStock } from '../api';
+import { StockLineRowFragment, useStock } from '../api';
 import { stockLinesToCsv } from '../../utils';
+import { EditStockLineButton } from './EditStockLineButton';
 
-export const AppBarButtonsComponent = () => {
+export const AppBarButtonsComponent: FC<{
+  selected: StockLineRowFragment | null;
+}> = ({ selected }) => {
   const { success, error } = useNotification();
   const t = useTranslation(['distribution', 'common']);
   const { fetchAsync, isLoading } = useStock.line.listAll({
@@ -34,19 +37,22 @@ export const AppBarButtonsComponent = () => {
   };
 
   return (
-    <AppBarButtonsPortal>
-      <Grid container gap={1}>
-        <LoadingButton
-          startIcon={<DownloadIcon />}
-          isLoading={isLoading}
-          variant="outlined"
-          onClick={csvExport}
-          disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.export')}
-        </LoadingButton>
-      </Grid>
-    </AppBarButtonsPortal>
+    <>
+      <AppBarButtonsPortal>
+        <Grid container gap={1}>
+          <EditStockLineButton selected={selected} />
+          <LoadingButton
+            startIcon={<DownloadIcon />}
+            isLoading={isLoading}
+            variant="outlined"
+            onClick={csvExport}
+            disabled={EnvUtils.platform === Platform.Android}
+          >
+            {t('button.export')}
+          </LoadingButton>
+        </Grid>
+      </AppBarButtonsPortal>
+    </>
   );
 };
 

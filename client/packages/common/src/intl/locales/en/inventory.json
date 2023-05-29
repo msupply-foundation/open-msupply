@@ -1,5 +1,6 @@
 {
   "button.delete-lines": "Delete selected lines",
+  "button.edit-stock-line": "Edit Stock Line",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "error.cant-save": "There was a problem saving.",
   "error.no-locations": "There are no Locations to display.",
@@ -65,7 +66,7 @@
   "messages.no-items-with-stock": "No items with stock available",
   "messages.on-hold-stock-take": "This stocktake is on hold and cannot be edited",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
-  "messages.no-repacks": "This stock line has no repacks",
+  "messages.no-repacks": "This stock line has not been repacked",
   "status.new": "New",
   "status.finalised": "Finalised",
   "stocktake.description-template": "Created by {{username}} on {{date}}",

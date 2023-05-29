@@ -8,9 +8,9 @@ import {
   NothingHere,
   useUrlQueryParams,
   DateUtils,
-  useEditModal,
+  useTableStore,
 } from '@openmsupply-client/common';
-import { StockLineEditModal, Toolbar } from '../Components';
+import { Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 
@@ -29,6 +29,7 @@ const StockListComponent: FC = () => {
   const { data, isLoading, isError } = useStock.line.list();
   const columns = useColumns<StockLineRowFragment>(
     [
+      'selectOne',
       ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
       ['itemName', { accessor: ({ rowData }) => rowData.item.name }],
       'batch',
@@ -78,21 +79,17 @@ const StockListComponent: FC = () => {
     },
     [sortBy]
   );
-  const { isOpen, entity, onClose, onOpen } =
-    useEditModal<StockLineRowFragment>();
+
+  const selectedRow = useTableStore(
+    state =>
+      data?.nodes.filter(({ id }) => state.rowState[id]?.isSelected).shift() ??
+      null
+  );
 
   return (
     <>
-      {isOpen && (
-        <StockLineEditModal
-          isOpen={isOpen}
-          onClose={onClose}
-          stockLine={entity}
-        />
-      )}
-
       <Toolbar filter={filter} />
-      <AppBarButtons />
+      <AppBarButtons selected={selectedRow} />
       <DataTable
         id="stock-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
@@ -102,7 +99,6 @@ const StockListComponent: FC = () => {
         noDataElement={<NothingHere body={t('error.no-stock')} />}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={onOpen}
         enableColumnSelection
       />
     </>
