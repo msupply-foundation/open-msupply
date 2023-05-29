@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     is_active_record_on_site, ActiveRecordCheck, IntegrationRecords, LegacyTableName,
-    PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    PullDeleteRecordTable, PullDependency, PullUpsertRecord, SyncTranslation,
 };
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANS_LINE;
@@ -87,6 +87,19 @@ pub struct LegacyTransLineRow {
 
 pub(crate) struct InvoiceLineTranslation {}
 impl SyncTranslation for InvoiceLineTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::TRANS_LINE,
+            dependencies: vec![
+                LegacyTableName::TRANSACT,
+                LegacyTableName::ITEM,
+                LegacyTableName::ITEM_LINE,
+                LegacyTableName::LOCATION,
+                LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
+            ],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,

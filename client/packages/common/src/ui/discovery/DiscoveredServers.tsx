@@ -13,13 +13,14 @@ import {
   FrontEndHost,
   useNativeClient,
   GqlProvider,
-  QueryClientProvider,
-  QueryClient,
   useInitialisationStatus,
   InitialisationStatusType,
   frontEndHostDiscoveryGraphql,
   IconButton,
   RefreshIcon,
+  ConnectionResult,
+  useNotification,
+  useMutation,
 } from '@openmsupply-client/common';
 
 type ConnectToServer = ReturnType<typeof useNativeClient>['connectToServer'];
@@ -117,19 +118,17 @@ export const DiscoveredServers = ({
 type DiscoveredServerProps = { server: FrontEndHost; connect: ConnectToServer };
 
 const DiscoveredServerWrapper: React.FC<DiscoveredServerProps> = params => (
-  <QueryClientProvider client={new QueryClient()}>
-    <GqlProvider url={frontEndHostDiscoveryGraphql(params.server)}>
-      <DiscoveredServer {...params} />
-    </GqlProvider>
-  </QueryClientProvider>
+  <GqlProvider url={frontEndHostDiscoveryGraphql(params.server)}>
+    <DiscoveredServer {...params} />
+  </GqlProvider>
 );
-
 const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
   server,
   connect,
 }) => {
   const { data: initStatus } = useInitialisationStatus();
-  const t = useTranslation();
+  const t = useTranslation('app');
+  const { error } = useNotification();
 
   const getSiteName = () => {
     if (initStatus?.status == InitialisationStatusType.Initialised)
@@ -137,13 +136,21 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
     return t('messages.not-initialised');
   };
 
+  const handleConnectionResult = async (result: ConnectionResult) => {
+    if (result.success) return;
+
+    error(t('error.connection-error'))();
+    console.error(result.error);
+  };
+
+  const { mutate: connectToServer } = useMutation(connect, {
+    onSuccess: handleConnectionResult,
+    onError: (e: Error) =>
+      handleConnectionResult({ success: false, error: e.message }),
+  });
+
   return (
-    <MenuItem
-      onClick={() => {
-        connect(server);
-      }}
-      sx={{ color: 'inherit' }}
-    >
+    <MenuItem onClick={() => connectToServer(server)} sx={{ color: 'inherit' }}>
       <Box alignItems="center" display="flex" gap={2}>
         <Box flex={0}>
           <CheckboxEmptyIcon fontSize="small" color="primary" />

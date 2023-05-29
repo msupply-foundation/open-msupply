@@ -32,6 +32,7 @@ pub enum Permission {
     // stock line
     StockLineQuery,
     StockLineMutate,
+    CreateRepack,
     // stocktake
     StocktakeQuery,
     StocktakeMutate,

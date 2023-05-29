@@ -5,7 +5,8 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -26,6 +27,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 }
 pub(crate) struct NameStoreJoinTranslation {}
 impl SyncTranslation for NameStoreJoinTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::NAME_STORE_JOIN,
+            dependencies: vec![LegacyTableName::NAME, LegacyTableName::STORE],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,

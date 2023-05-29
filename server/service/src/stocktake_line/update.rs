@@ -1,10 +1,11 @@
 use chrono::NaiveDate;
 use repository::{
-    EqualFilter, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StocktakeLine,
-    StocktakeLineRow, StocktakeLineRowRepository, StorageConnection,
+    RepositoryError, StockLine, StocktakeLine, StocktakeLineRow, StocktakeLineRowRepository,
+    StorageConnection,
 };
 
 use crate::{
+    common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
     stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
     stocktake_line::{
@@ -43,6 +44,7 @@ pub enum UpdateStocktakeLineError {
     InternalError(String),
     InvalidStore,
     StocktakeLineDoesNotExist,
+    StockLineDoesNotExist,
     LocationDoesNotExist,
     CannotEditFinalised,
     StocktakeIsLocked,
@@ -56,33 +58,31 @@ fn validate(
     store_id: &str,
     input: &UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
+    use UpdateStocktakeLineError::*;
+
     let stocktake_line = match check_stocktake_line_exist(connection, &input.id)? {
         Some(stocktake_line) => stocktake_line,
-        None => return Err(UpdateStocktakeLineError::StocktakeLineDoesNotExist),
+        None => return Err(StocktakeLineDoesNotExist),
     };
     let stocktake = match check_stocktake_exist(connection, &stocktake_line.stocktake_id)? {
         Some(stocktake) => stocktake,
-        None => {
-            return Err(UpdateStocktakeLineError::InternalError(
-                "Orphan stocktake line!".to_string(),
-            ))
-        }
+        None => return Err(InternalError("Orphan stocktake line!".to_string())),
     };
     if !check_stocktake_not_finalised(&stocktake.status) {
-        return Err(UpdateStocktakeLineError::CannotEditFinalised);
+        return Err(CannotEditFinalised);
     }
 
     if stocktake.is_locked {
-        return Err(UpdateStocktakeLineError::StocktakeIsLocked);
+        return Err(StocktakeIsLocked);
     }
 
     if !check_store_id_matches(store_id, &stocktake.store_id) {
-        return Err(UpdateStocktakeLineError::InvalidStore);
+        return Err(InvalidStore);
     }
 
     if let Some(location_id) = &input.location_id {
         if !check_location_exists(connection, location_id)? {
-            return Err(UpdateStocktakeLineError::LocationDoesNotExist);
+            return Err(LocationDoesNotExist);
         }
     }
 
@@ -92,7 +92,7 @@ fn validate(
         && input.inventory_adjustment_reason_id.is_none()
         && stocktake_reduction_amount != 0.0
     {
-        return Err(UpdateStocktakeLineError::AdjustmentReasonNotProvided);
+        return Err(AdjustmentReasonNotProvided);
     }
 
     if input.inventory_adjustment_reason_id.is_some() {
@@ -101,30 +101,26 @@ fn validate(
             input.inventory_adjustment_reason_id.clone(),
             stocktake_reduction_amount,
         )? {
-            return Err(UpdateStocktakeLineError::AdjustmentReasonNotValid);
+            return Err(AdjustmentReasonNotValid);
         }
     }
 
     if let (Some(counted_number_of_packs), Some(stock_line_id)) =
         (input.counted_number_of_packs, &stocktake_line.stock_line_id)
     {
-        let stock_line = StockLineRepository::new(connection)
-            .query_by_filter(
-                StockLineFilter::new().id(EqualFilter::equal_to(stock_line_id)),
-                Some(store_id.to_string()),
-            )?
-            .pop()
-            .ok_or_else(|| {
-                UpdateStocktakeLineError::InternalError(
-                    "Stocktake line has invalid stock line!".to_string(),
-                )
-            })?;
+        let stock_line = check_stock_line_exists(connection, store_id, stock_line_id).map_err(
+            |err| match err {
+                CommonStockLineError::DatabaseError(RepositoryError::NotFound) => {
+                    StockLineDoesNotExist
+                }
+                CommonStockLineError::StockLineDoesNotBelongToStore => InvalidStore,
+                CommonStockLineError::DatabaseError(error) => DatabaseError(error),
+            },
+        )?;
 
         if check_stock_line_reduced_below_zero(&stock_line.stock_line_row, &counted_number_of_packs)
         {
-            return Err(UpdateStocktakeLineError::StockLineReducedBelowZero(
-                stock_line.clone(),
-            ));
+            return Err(StockLineReducedBelowZero(stock_line.clone()));
         }
     }
 

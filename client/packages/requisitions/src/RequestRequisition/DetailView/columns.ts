@@ -141,8 +141,8 @@ export const useRequestColumns = () => {
       align: ColumnAlign.Right,
       accessor: ({ rowData }) =>
         formatNumber.round(
-          rowData.linkedRequisitionLine?.approvedQuantity ??
-            0 / rowData.item.defaultPackSize,
+          (rowData.linkedRequisitionLine?.approvedQuantity ?? 0) /
+            rowData.item.defaultPackSize,
           2
         ),
       sortable: false,

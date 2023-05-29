@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Typography,
   DialogButton,
@@ -29,7 +29,6 @@ import {
   allocateQuantities,
   sumAvailableQuantity,
   getAllocatedQuantity,
-  getAllocatedPacks,
 } from './utils';
 import { Draft, DraftItem, useOutbound } from '../../api';
 import { DraftOutboundLine } from '../../../types';
@@ -67,6 +66,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
+  const [isAutoAllocated, setIsAutoAllocated] = useState(false);
 
   const { mutateAsync } = useOutbound.line.save();
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
@@ -90,11 +90,15 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
   );
 
+  const onUpdateQuantity = (batchId: string, quantity: number) => {
+    updateQuantity(batchId, quantity);
+    setIsAutoAllocated(false);
+  };
+
   const onSave = async () => {
     if (!isDirty) return;
 
     await mutateAsync(draftOutboundLines);
-    console.log('draft', draft);
     if (!draft) return;
 
     const { barcode } = draft;
@@ -138,13 +142,18 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     return true;
   };
 
-  const onAllocate = (newVal: number, packSize: number | null) => {
+  const onAllocate = (
+    newVal: number,
+    packSize: number | null,
+    autoAllocated = false
+  ) => {
     const newAllocateQuantities = allocateQuantities(
       status,
       draftOutboundLines
     )(newVal, packSize);
     setIsDirty(true);
     setDraftOutboundLines(newAllocateQuantities ?? draftOutboundLines);
+    setIsAutoAllocated(autoAllocated);
   };
 
   const canAutoAllocate = !!(currentItem && draftOutboundLines.length);
@@ -196,6 +205,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           availableQuantity={sumAvailableQuantity(draftOutboundLines)}
           onChangeQuantity={onAllocate}
           canAutoAllocate={canAutoAllocate}
+          isAutoAllocated={isAutoAllocated}
         />
 
         <TableWrapper
@@ -203,10 +213,9 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           currentItem={currentItem}
           isLoading={isLoading}
           packSizeController={packSizeController}
-          updateQuantity={updateQuantity}
+          updateQuantity={onUpdateQuantity}
           draftOutboundLines={draftOutboundLines}
           allocatedQuantity={getAllocatedQuantity(draftOutboundLines)}
-          allocatedPacks={getAllocatedPacks(draftOutboundLines)}
           batch={draft?.barcode?.batch}
         />
       </Grid>
@@ -222,7 +231,6 @@ interface TableProps {
   updateQuantity: (batchId: string, updateQuantity: number) => void;
   draftOutboundLines: DraftOutboundLine[];
   allocatedQuantity: number;
-  allocatedPacks: number;
   batch?: string;
 }
 
@@ -234,7 +242,6 @@ const TableWrapper: React.FC<TableProps> = ({
   updateQuantity,
   draftOutboundLines,
   allocatedQuantity,
-  allocatedPacks,
   batch,
 }) => {
   const t = useTranslation('distribution');
@@ -275,7 +282,6 @@ const TableWrapper: React.FC<TableProps> = ({
         item={currentItem}
         batch={batch}
         allocatedQuantity={allocatedQuantity}
-        allocatedPacks={allocatedPacks}
       />
     </TableProvider>
   );

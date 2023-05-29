@@ -2,7 +2,9 @@ use chrono::NaiveDate;
 use repository::{PeriodRow, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::PERIOD;
 
@@ -26,6 +28,13 @@ pub struct LegacyPeriodRow {
 
 pub(crate) struct PeriodTranslation {}
 impl SyncTranslation for PeriodTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::PERIOD,
+            dependencies: vec![LegacyTableName::PERIOD_SCHEDULE],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
