@@ -218,7 +218,7 @@ const reduceBatchAllocation = ({
         isUpdated: numberOfPacks > 0,
       };
     });
-  return -1 * toAllocate;
+  return -toAllocate;
 };
 
 export const shouldUpdatePlaceholder = (
