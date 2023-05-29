@@ -80,7 +80,7 @@ const StockListComponent: FC = () => {
     [sortBy]
   );
 
-  const selectedRow = useTableStore(
+  const selected = useTableStore(
     state =>
       data?.nodes.filter(({ id }) => state.rowState[id]?.isSelected).shift() ??
       null
@@ -89,7 +89,7 @@ const StockListComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons selected={selectedRow} />
+      <AppBarButtons selected={selected} />
       <DataTable
         id="stock-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
