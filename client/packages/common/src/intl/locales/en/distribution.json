@@ -118,6 +118,7 @@
   "messages.saved": "Saved",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "messages.shipment-saved": "Shipment saved 🥳",
+  "messages.over-allocated": "Due to the pack sizes available a total quantity of {{quantity}} has been allocated rather than {{issueQuantity}}",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "info.no-shipment": "Finalising this requisition will prevent you from creating a shipment for it."
