@@ -5,6 +5,8 @@ import {
   AppThemeProvider,
   HashRouter,
   IntlProvider,
+  QueryClient,
+  QueryClientProvider,
   RandomLoader,
   Route,
   Routes,
@@ -18,14 +20,16 @@ const ClientHomeScreen = () => (
     <IntlProvider isElectron={true}>
       <React.Suspense fallback={<RandomLoader />}>
         <AppThemeProvider>
-          <HashRouter>
-            <Viewport>
-              <Routes>
-                <Route path="/error" element={<ErrorPage />} />
-                <Route path="/" element={<ServerDiscovery />} />
-              </Routes>
-            </Viewport>
-          </HashRouter>
+          <QueryClientProvider client={new QueryClient()}>
+            <HashRouter>
+              <Viewport>
+                <Routes>
+                  <Route path="/error" element={<ErrorPage />} />
+                  <Route path="/" element={<ServerDiscovery />} />
+                </Routes>
+              </Viewport>
+            </HashRouter>
+          </QueryClientProvider>
         </AppThemeProvider>
       </React.Suspense>
     </IntlProvider>

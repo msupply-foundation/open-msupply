@@ -13,8 +13,6 @@ import {
   FrontEndHost,
   useNativeClient,
   GqlProvider,
-  QueryClientProvider,
-  QueryClient,
   useInitialisationStatus,
   InitialisationStatusType,
   frontEndHostDiscoveryGraphql,
@@ -22,6 +20,7 @@ import {
   RefreshIcon,
   ConnectionResult,
   useNotification,
+  useMutation,
 } from '@openmsupply-client/common';
 
 type ConnectToServer = ReturnType<typeof useNativeClient>['connectToServer'];
@@ -119,11 +118,9 @@ export const DiscoveredServers = ({
 type DiscoveredServerProps = { server: FrontEndHost; connect: ConnectToServer };
 
 const DiscoveredServerWrapper: React.FC<DiscoveredServerProps> = params => (
-  <QueryClientProvider client={new QueryClient()}>
-    <GqlProvider url={frontEndHostDiscoveryGraphql(params.server)}>
-      <DiscoveredServer {...params} />
-    </GqlProvider>
-  </QueryClientProvider>
+  <GqlProvider url={frontEndHostDiscoveryGraphql(params.server)}>
+    <DiscoveredServer {...params} />
+  </GqlProvider>
 );
 
 const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
@@ -147,17 +144,14 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
     console.error(result.error);
   };
 
+  const { mutate: connectToServer } = useMutation(connect, {
+    onSuccess: handleConnectionResult,
+    onError: (e: Error) =>
+      handleConnectionResult({ success: false, error: e.message }),
+  });
+
   return (
-    <MenuItem
-      onClick={() => {
-        connect(server)
-          .then(handleConnectionResult)
-          .catch(e =>
-            handleConnectionResult({ success: false, error: e.message })
-          );
-      }}
-      sx={{ color: 'inherit' }}
-    >
+    <MenuItem onClick={() => connectToServer(server)} sx={{ color: 'inherit' }}>
       <Box alignItems="center" display="flex" gap={2}>
         <Box flex={0}>
           <CheckboxEmptyIcon fontSize="small" color="primary" />
