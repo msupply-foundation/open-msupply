@@ -16,6 +16,7 @@ import {
   NativeMode,
 } from './types';
 import { Capacitor } from '@capacitor/core';
+import { useMutation } from 'react-query';
 
 declare global {
   interface Window {
@@ -60,6 +61,21 @@ export const useNativeClient = ({
       nativeAPI?.connectToServer(server) ?? Promise.resolve({ success: false })
     );
   };
+
+  const handleConnectionResult = (result: ConnectionResult) => {
+    if (!result.success) {
+      console.error('Connecting to previous server:', result.error);
+    }
+    setState(state => ({ ...state, connectToPreviousFailed: !result.success }));
+  };
+
+  // `connectToServer` will check to see if the server is alive and if so, connect to it
+  // using `useMutation` here to handle multiple calls to `connectToServer`, though likely not be possible
+  const { mutate: connectToPrevious } = useMutation(connectToServer, {
+    onSuccess: handleConnectionResult,
+    onError: (e: Error) =>
+      handleConnectionResult({ success: false, error: e.message }),
+  });
 
   const stopDiscovery = () =>
     setState(state => ({ ...state, isDiscovering: false }));
@@ -109,13 +125,6 @@ export const useNativeClient = ({
     if (result.isSupported) await KeepAwake.keepAwake();
   };
 
-  const handleConnectionResult = (result: ConnectionResult) => {
-    if (result.success) return;
-
-    setState(state => ({ ...state, connectToPreviousFailed: true }));
-    console.error('Connecting to previous server:', result.error);
-  };
-
   useEffect(() => {
     if (!state.isDiscovering) return;
 
@@ -160,10 +169,7 @@ export const useNativeClient = ({
     if (!autoconnect) return;
     if (previousServer === null) return;
 
-    // this will check to see if the server is alive and if so, connect to it
-    connectToServer(previousServer)
-      .then(handleConnectionResult)
-      .catch(e => handleConnectionResult({ success: false, error: e.message }));
+    connectToPrevious(previousServer);
   }, [state.previousServer, autoconnect]);
 
   return {
