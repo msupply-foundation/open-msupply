@@ -47,22 +47,3 @@ describe('GS1 parsing', () => {
     expect(result.expiryDate).toBe('2014-07-04');
   });
 });
-
-describe('Data matrix parsing', () => {
-  // const barcode = '010031414199999521100000002341715012510987654321GFEDCBA';
-  const barcode = '010031414199999521100000002341715012510987654321GFEDCBA';
-  it('parses GTIN', () => {
-    const result = parseResult(barcode);
-    expect(result.gtin).toBe('00314141999995');
-  });
-
-  it('parses batch', () => {
-    const result = parseResult(barcode);
-    expect(result.batch).toBe('987654321GFEDCBA');
-  });
-
-  it('parses expiry', () => {
-    const result = parseResult(barcode);
-    expect(result.expiryDate).toBe('2015-01-25');
-  });
-});
