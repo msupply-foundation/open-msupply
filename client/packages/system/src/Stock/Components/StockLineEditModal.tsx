@@ -78,8 +78,8 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
 
   return (
     <Modal
-      width={900}
-      height={700}
+      width={700}
+      height={575}
       slideAnimation={false}
       title={t('title.stock-line-details')}
       okButton={
