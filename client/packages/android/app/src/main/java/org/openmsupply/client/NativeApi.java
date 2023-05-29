@@ -22,12 +22,15 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLSocketFactory;
 
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
@@ -244,10 +247,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         call.resolve(connectedServer == null ? null : connectedServer.data);
     }
 
-    @PluginMethod()
-    public void connectToServer(PluginCall call) {
-        FrontEndHost server = new FrontEndHost(call.getData());
-
+    private void onConnectToServer(FrontEndHost server) {
         stopServerDiscovery();
         connectedServer = server;
 
@@ -259,6 +259,37 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         this.serverUrl = url;
         // .post to run on UI thread
         webView.post(() -> webView.loadUrl(server.getConnectionUrl()));
+    }
+
+    @PluginMethod()
+    public void connectToServer(PluginCall call) throws MalformedURLException {
+        FrontEndHost server = new FrontEndHost(call.getData());
+        JSObject response = new JSObject();
+
+        try {
+            URL url = new URL(server.getConnectionUrl());
+            HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+            urlc.setRequestMethod("GET");
+            urlc.connect();
+            int status = urlc.getResponseCode();
+
+            if (status == 200) {
+                onConnectToServer(server);
+                response.put("success", true);
+            } else {
+                response.put("success", false);
+                response.put("error", "Connecting to server: response code="+ status);
+            }
+        } catch (SSLHandshakeException e) {
+            // server is running and responding with an SSL error
+            // which we will ignore, so ok to proceed
+            onConnectToServer(server);
+            response.put("success", true);
+        } catch (IOException e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+        }
+        call.resolve(response);
     }
 
     // NsdManager.DiscoveryListener
