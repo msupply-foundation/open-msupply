@@ -122,7 +122,6 @@ const DiscoveredServerWrapper: React.FC<DiscoveredServerProps> = params => (
     <DiscoveredServer {...params} />
   </GqlProvider>
 );
-
 const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
   server,
   connect,
@@ -137,7 +136,7 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
     return t('messages.not-initialised');
   };
 
-  const handleConnectionResult = (result: ConnectionResult) => {
+  const handleConnectionResult = async (result: ConnectionResult) => {
     if (result.success) return;
 
     error(t('error.connection-error'))();

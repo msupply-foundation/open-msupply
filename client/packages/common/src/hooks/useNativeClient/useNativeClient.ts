@@ -62,7 +62,7 @@ export const useNativeClient = ({
     );
   };
 
-  const handleConnectionResult = (result: ConnectionResult) => {
+  const handleConnectionResult = async (result: ConnectionResult) => {
     if (!result.success) {
       console.error('Connecting to previous server:', result.error);
     }
