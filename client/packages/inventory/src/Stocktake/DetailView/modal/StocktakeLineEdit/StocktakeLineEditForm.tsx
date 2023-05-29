@@ -5,6 +5,7 @@ import {
   Grid,
   useTranslation,
   ModalMode,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -46,6 +47,16 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
           />
         </Grid>
       </ModalRow>
+      {item && (
+        <ModalRow margin={3}>
+          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
+          <BasicTextInput
+            disabled
+            sx={{ width: 150 }}
+            value={item.unitName ?? ''}
+          />
+        </ModalRow>
+      )}
     </>
   );
 };

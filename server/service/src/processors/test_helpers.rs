@@ -1,11 +1,5 @@
-use std::{future::Future, time::Duration};
+use std::future::Future;
 use tokio::task::JoinSet;
-
-const PROCESSOR_DELAY_MILLISECONDS: u64 = 300;
-
-pub(crate) async fn delay_for_processor() {
-    tokio::time::sleep(Duration::from_millis(PROCESSOR_DELAY_MILLISECONDS)).await
-}
 
 pub(crate) async fn exec_concurrent<C, T, Fut, F>(
     context: C,

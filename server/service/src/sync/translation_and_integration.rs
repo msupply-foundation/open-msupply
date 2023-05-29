@@ -3,7 +3,7 @@ use crate::sync::translations::PullDeleteRecordTable;
 use super::{
     sync_buffer::SyncBuffer,
     translations::{
-        all_translators, IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslators,
+        IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslation, SyncTranslators,
     },
 };
 use log::warn;
@@ -68,9 +68,9 @@ impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn translate_and_integrate_sync_records(
         &self,
         sync_records: Vec<SyncBufferRow>,
+        translators: &Vec<Box<dyn SyncTranslation>>,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
         let mut result = TranslationAndIntegrationResults::new();
-        let translators = all_translators();
 
         for sync_record in sync_records {
             // Try translate
@@ -239,8 +239,6 @@ impl PullDeleteRecord {
             }
             #[cfg(all(test, feature = "integration_test"))]
             Location => LocationRowRepository::new(con).delete(id),
-            #[cfg(all(test, feature = "integration_test"))]
-            LocationMovement => LocationMovementRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             StockLine => StockLineRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]

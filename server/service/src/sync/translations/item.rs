@@ -2,7 +2,8 @@ use repository::{ItemRow, ItemRowType, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 #[allow(non_camel_case_types)]
@@ -43,6 +44,13 @@ pub(crate) fn ordered_simple_json(text: &str) -> Result<String, serde_json::Erro
 
 pub(crate) struct ItemTranslation {}
 impl SyncTranslation for ItemTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::ITEM,
+            dependencies: vec![LegacyTableName::UNIT],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

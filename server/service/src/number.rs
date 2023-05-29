@@ -28,6 +28,8 @@ pub fn next_number(
                 .find_max_invoice_number(InvoiceRowType::OutboundShipment, store_id)?,
             NumberRowType::InventoryAddition => InvoiceRowRepository::new(&connection_tx)
                 .find_max_invoice_number(InvoiceRowType::InventoryAddition, store_id)?,
+            NumberRowType::Repack => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::Repack, store_id)?,
             NumberRowType::InventoryReduction => InvoiceRowRepository::new(&connection_tx)
                 .find_max_invoice_number(InvoiceRowType::InventoryReduction, store_id)?,
             NumberRowType::RequestRequisition => RequisitionRowRepository::new(&connection_tx)
