@@ -31,6 +31,26 @@ const useCheckbox = (rowId: string) => {
   };
 };
 
+const useCheckboxOne = (rowId: string) => {
+  const selector = useCallback(
+    (state: TableStore) => {
+      return {
+        rowId,
+        isSelected: state.rowState[rowId]?.isSelected ?? false,
+        toggleOne: () => state.toggleOne(rowId),
+      };
+    },
+    [rowId]
+  );
+
+  const { isSelected, toggleOne } = useTableStore(selector);
+
+  return {
+    isSelected,
+    toggleOne,
+  };
+};
+
 export const getCheckboxSelectionColumn = <
   T extends RecordWithId
 >(): ColumnDefinition<T> => ({
@@ -68,6 +88,29 @@ export const getCheckboxSelectionColumn = <
         onClick={event => {
           event.stopPropagation();
           toggleSelected();
+        }}
+      />
+    );
+  },
+});
+
+export const getCheckboxSelectOneColumn = <
+  T extends RecordWithId
+>(): ColumnDefinition<T> => ({
+  key: GenericColumnKey.Selection,
+  sortable: false,
+  align: ColumnAlign.Right,
+  width: 60,
+  Header: () => null,
+  Cell: ({ rowData }) => {
+    const { isSelected, toggleOne } = useCheckboxOne(rowData.id);
+    return (
+      <Checkbox
+        checked={!!isSelected}
+        size="small"
+        onClick={event => {
+          event.stopPropagation();
+          toggleOne();
         }}
       />
     );

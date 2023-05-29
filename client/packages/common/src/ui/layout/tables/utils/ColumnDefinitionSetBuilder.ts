@@ -1,4 +1,7 @@
-import { getCheckboxSelectionColumn } from '../columns/CheckboxSelectionColumn';
+import {
+  getCheckboxSelectionColumn,
+  getCheckboxSelectOneColumn,
+} from '../columns/CheckboxSelectionColumn';
 import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
@@ -20,6 +23,7 @@ export type ColumnKey =
   | 'deliveredDatetime'
   | 'totalAfterTax'
   | 'comment'
+  | 'selectOne'
   | 'selection'
   | 'name'
   | 'code'
@@ -168,6 +172,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     width: 250,
   },
   selection: getCheckboxSelectionColumn(),
+  selectOne: getCheckboxSelectOneColumn(),
   code: {
     label: 'label.code',
     key: 'code',
