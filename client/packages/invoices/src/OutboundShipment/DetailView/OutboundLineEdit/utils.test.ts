@@ -72,6 +72,10 @@ const getPlaceholder = (
 });
 
 describe('allocateQuantities - standard behaviour.', () => {
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 10, packSize: 1 }]
+   * expected:     [{ numberOfPacks: 3, isUpdated: true }]
+   ********************************************************** */
   it('allocates quantity to a row', () => {
     const placeholder = getPlaceholder();
     const lineOne = createTestLine({
@@ -92,6 +96,12 @@ describe('allocateQuantities - standard behaviour.', () => {
     expect(allocate(3, 1)).toEqual(expected);
   });
 
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 1, packSize: 1 },
+   *                { availableNumberOfPacks: 1, packSize: 1 }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 1, isUpdated: true }]
+   ********************************************************** */
   it('allocates quantity spread over multiple lines', () => {
     const one = createTestLine({ id: '1' });
     const two = createTestLine({ id: '2' });
@@ -112,9 +122,39 @@ describe('allocateQuantities - standard behaviour.', () => {
 
     expect(allocated).toEqual(expected);
   });
+
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 10, packSize: 10 }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true }]
+   ********************************************************** */
+  it('rounds up to the nearest number of packs', () => {
+    const placeholder = getPlaceholder();
+    const lineOne = createTestLine({
+      availableNumberOfPacks: 10,
+      totalNumberOfPacks: 10,
+      packSize: 10,
+    });
+    const draftOutboundLines = [lineOne, placeholder];
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftOutboundLines
+    );
+
+    const expected = [
+      { ...lineOne, numberOfPacks: 1, isUpdated: true },
+      placeholder,
+    ];
+
+    expect(allocate(5, null)).toEqual(expected);
+  });
 });
 
 describe('Allocate quantities - placeholder row behaviour', () => {
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 1, packSize: 1 }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 9, isUpdated: true, itemId: 'placeholder' }]
+   ********************************************************** */
   it('allocates excess quantity to the placeholder row when the status is new', () => {
     const one = createTestLine({ id: '1' });
     const placeholder = getPlaceholder();
@@ -133,6 +173,14 @@ describe('Allocate quantities - placeholder row behaviour', () => {
     expect(allocate(10, 1)).toEqual(expected);
   });
 
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 1, packSize: 1 },
+   *                { availableNumberOfPacks: 1, packSize: 1 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 1, isUpdated: true, itemId: 'placeholder' }]
+   ********************************************************** */
   it('allocates quantity spread over multiple lines and placeholders when there is excess', () => {
     const one = createTestLine({ id: '1' });
     const two = createTestLine({ id: '2' });
@@ -155,6 +203,12 @@ describe('Allocate quantities - placeholder row behaviour', () => {
     expect(allocate(3, 1)).toEqual(expected);
   });
 
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 1, packSize: 1 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 10 / 0, isUpdated: true, itemId: 'placeholder' }]
+   ********************************************************** */
   it('does not allocate excess quantity to the placeholder row when the status is not new', () => {
     const run = (status: InvoiceNodeStatus) => {
       const one = createTestLine({ id: '1' });
@@ -192,6 +246,13 @@ describe('Allocate quantities - placeholder row behaviour', () => {
 });
 
 describe('Allocate quantities - differing pack size behaviour', () => {
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 1, packSize: 1 },
+   *                { availableNumberOfPacks: 1, packSize: 2 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 2, isUpdated: true, itemId: 'placeholder' }]
+   ********************************************************** */
   it('does not allocate any quantity to lines which are not of the pack size selected', () => {
     const one = createTestLine({ id: '1' });
     const two = createTestLine({ id: '2', packSize: 2 });
@@ -214,6 +275,16 @@ describe('Allocate quantities - differing pack size behaviour', () => {
     expect(allocate(3, 1)).toEqual(expected);
   });
 
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 1, packSize: 1 },
+   *                { availableNumberOfPacks: 1, packSize: 2 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 2, isUpdated: true, itemId: 'placeholder' }]
+   * expected 2:   [{ numberOfPacks: 0, isUpdated: true },
+   *                { numberOfPacks: 1, isUpdated: true }
+   *                { numberOfPacks: 4, isUpdated: true, itemId: 'placeholder' }]
+   ********************************************************** */
   it('after changing to a different pack size, all quantities allocated to the original pack size are removed.', () => {
     const one = createTestLine({ id: '1' });
     const two = createTestLine({ id: '2', packSize: 2 });
@@ -252,6 +323,12 @@ describe('Allocate quantities - differing pack size behaviour', () => {
 });
 
 describe('Allocating quantities - behaviour when mixing placeholders and pack sizes greater than one', () => {
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 1, packSize: 1 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 9, isUpdated: true, itemId: 'placeholder' }]
+   ********************************************************** */
   it('issues any left over quantities to the placeholder at a pack size of 1 (the number of units) when issuing to pack sizes of one', () => {
     const one = createTestLine({ id: '1' });
     const placeholder = getPlaceholder();
@@ -270,6 +347,13 @@ describe('Allocating quantities - behaviour when mixing placeholders and pack si
 
     expect(allocate(10, 1)).toEqual(expected);
   });
+
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 1, packSize: 2 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 18, isUpdated: true, itemId: 'placeholder' }]
+   ********************************************************** */
   it('issues any left over quantities to the placeholder at a pack size of 1 (the number of units) when issuing to non-one pack sizes', () => {
     const one = createTestLine({ id: '2', packSize: 2 });
     const placeholder = getPlaceholder();
@@ -311,6 +395,15 @@ describe('Allocated quantities - expiry date behaviour', () => {
     totalNumberOfPacks: 10,
   });
   const placeholder = getPlaceholder();
+
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 10, packSize: 1, expiryDate: 100000 },
+   *                { availableNumberOfPacks: 10, packSize: 1, expiryDate: 10000 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 0, isUpdated: false, expiryDate: 100000 },
+   *                { numberOfPacks: 10, isUpdated: true, expiryDate: 10000 },
+   *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
+   ********************************************************** */
   it('issues to lines with the earliest expiring invoice line', () => {
     const draftOutboundLines = [
       { ...expiringLastLine },
@@ -323,15 +416,23 @@ describe('Allocated quantities - expiry date behaviour', () => {
       draftOutboundLines
     );
 
-    const expiringLast = { ...expiringLastLine, isUpdated: true };
+    const expiringLast = { ...expiringLastLine, isUpdated: false };
     const expiringFirst = {
       ...expiringFirstLine,
       numberOfPacks: 10,
       isUpdated: true,
     };
-
     expect(allocate(10, 1)).toEqual([expiringLast, expiringFirst, placeholder]);
   });
+
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 10, packSize: 1, expiryDate: 100000 },
+   *                { availableNumberOfPacks: 10, packSize: 1, expiryDate: 10000 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 5, isUpdated: true, expiryDate: 100000 },
+   *                { numberOfPacks: 10, isUpdated: true, expiryDate: 10000 },
+   *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
+   ********************************************************** */
   it('allocates units to the first expiry batch, with left overs being assigned to later expiring lines', () => {
     const draftOutboundLines = [
       { ...expiringLastLine },
@@ -380,6 +481,14 @@ describe('Allocated quantities - behaviour for expired lines', () => {
 
   const placeholder = getPlaceholder();
 
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 10, packSize: 1, expiryDate: 100000 },
+   *                { availableNumberOfPacks: 10, packSize: 1, expiryDate: -100000 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 10, isUpdated: false, expiryDate: 100000 },
+   *                { numberOfPacks: 0, isUpdated: true, expiryDate: -100000 },
+   *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
+   ********************************************************** */
   it('does not allocate any quantity to expired lines', () => {
     const draftOutboundLines = [
       { ...expiringLastLine },
@@ -404,6 +513,12 @@ describe('Allocated quantities - behaviour for expired lines', () => {
 });
 
 describe('Allocated quantities - behaviour generally not possible through the UI', () => {
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 10, packSize: 2 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 0, isUpdated: false },
+   *                { numberOfPacks: 10, isUpdated: false, itemId: 'placeholder' }]
+   ********************************************************** */
   it('issues all quantities to the place holder when issuing to a pack size that has no available quantity', () => {
     const one = createTestLine({
       id: '1',
@@ -466,6 +581,18 @@ describe('Allocated quantities - coping with over-allocation', () => {
   });
 
   const placeholder = getPlaceholder();
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 5, packSize: 1 },
+   *                { availableNumberOfPacks: 5, packSize: 1 },
+   *                { availableNumberOfPacks: 10, packSize: 10 },
+   *                { availableNumberOfPacks: 10, packSize: 1 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 5, isUpdated: true },
+   *                { numberOfPacks: 5, isUpdated: true },
+   *                { numberOfPacks: 0, isUpdated: false },
+   *                { numberOfPacks: 2, isUpdated: true },
+   *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
+   ********************************************************** */
   it('issues to lines by expiry date without over allocating', () => {
     const draftOutboundLines = [
       { ...Line1 },
@@ -480,10 +607,10 @@ describe('Allocated quantities - coping with over-allocation', () => {
       draftOutboundLines
     );
 
-    const line1 = { ...Line1, numberOfPacks: 2, isUpdated: true };
-    const line2 = { ...Line2, numberOfPacks: 0, isUpdated: true };
-    const line3 = { ...Line3, numberOfPacks: 1, isUpdated: true };
-    const line4 = { ...Line4, numberOfPacks: 0 };
+    const line1 = { ...Line1, numberOfPacks: 5, isUpdated: true };
+    const line2 = { ...Line2, numberOfPacks: 5, isUpdated: true };
+    const line3 = { ...Line3, numberOfPacks: 0, isUpdated: false };
+    const line4 = { ...Line4, numberOfPacks: 2, isUpdated: true };
 
     expect(allocate(12, null)).toEqual([
       line1,
@@ -494,7 +621,19 @@ describe('Allocated quantities - coping with over-allocation', () => {
     ]);
   });
 
-  it('reduces previously allocated lines as needed', () => {
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 5, packSize: 1 },
+   *                { availableNumberOfPacks: 5, packSize: 1 },
+   *                { availableNumberOfPacks: 10, packSize: 10 },
+   *                { availableNumberOfPacks: 10, packSize: 10 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 2, isUpdated: true },
+   *                { numberOfPacks: 0, isUpdated: false },
+   *                { numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 0, isUpdated: false },
+   *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
+   ********************************************************** */
+  it('reduces over allocates lines as needed #1', () => {
     const draftOutboundLines = [
       { ...Line1 },
       { ...Line2 },
@@ -509,7 +648,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     );
 
     const line1 = { ...Line1, numberOfPacks: 2, isUpdated: true };
-    const line2 = { ...Line2, numberOfPacks: 0, isUpdated: true };
+    const line2 = { ...Line2, numberOfPacks: 0, isUpdated: false };
     const line3 = { ...Line3, numberOfPacks: 1, isUpdated: true };
     const line4 = { ...Line4, numberOfPacks: 0, packSize: 10 };
 
@@ -522,20 +661,70 @@ describe('Allocated quantities - coping with over-allocation', () => {
     ]);
   });
 
-  it('reduces large pack size lines too', () => {
-    const draftOutboundLines = [{ ...Line3 }, { ...Line4 }, { ...placeholder }];
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 5, packSize: 1 },
+   *                { availableNumberOfPacks: 10, packSize: 10 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 0, isUpdated: true },
+   *                { numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
+   ********************************************************** */
+  it('reduces previously allocated lines as needed #2', () => {
+    const draftOutboundLines = [
+      { ...Line1 },
+      { ...Line2, availableNumberOfPacks: 10, packSize: 10 },
+      { ...placeholder },
+    ];
 
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
       draftOutboundLines
     );
 
+    const line1 = { ...Line1 };
+    const line2 = {
+      ...Line2,
+      availableNumberOfPacks: 10,
+      packSize: 10,
+      numberOfPacks: 1,
+      isUpdated: true,
+    };
+
+    expect(allocate(8, null)).toEqual([line1, line2, placeholder]);
+  });
+
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 10, packSize: 10 },
+   *                { availableNumberOfPacks: 10, packSize: 1 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 2, isUpdated: true },
+   *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
+   ********************************************************** */
+  it('does not over allocate if not required', () => {
+    const draftOutboundLines = [{ ...Line3 }, { ...Line4 }, { ...placeholder }];
+    const allocate = allocateQuantities(
+      InvoiceNodeStatus.New,
+      draftOutboundLines
+    );
     const line1 = { ...Line3, numberOfPacks: 1, isUpdated: true };
     const line2 = { ...Line4, numberOfPacks: 2, isUpdated: true };
 
     expect(allocate(12, null)).toEqual([line1, line2, placeholder]);
   });
 
+  /* **********************************************************
+   * input lines:  [{ availableNumberOfPacks: 40, packSize: 12 },
+   *                { availableNumberOfPacks: 100, packSize: 1 },
+   *                { availableNumberOfPacks: 100, packSize: 1 },
+   *                { availableNumberOfPacks: 10, packSize: 1 },
+   *                { itemId: 'placeholder' } }]
+   * expected:     [{ numberOfPacks: 5, isUpdated: true },
+   *                { numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 0, isUpdated: false },
+   *                { numberOfPacks: 1, isUpdated: true },
+   *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
+   ********************************************************** */
   it('reduces large pack size lines, allocating to other lines', () => {
     const line1 = {
       ...Line1,
@@ -548,7 +737,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
       ...Line3,
       packSize: 1,
       availableNumberOfPacks: 100,
-      isUpdated: true,
+      isUpdated: false,
     };
     const line4 = { ...Line4 };
 
@@ -569,7 +758,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
       { ...line1, numberOfPacks: 5 },
       { ...line2, numberOfPacks: 1 },
       line3,
-      { ...line4, isUpdated: true },
+      { ...line4, isUpdated: false },
       placeholder,
     ]);
   });
