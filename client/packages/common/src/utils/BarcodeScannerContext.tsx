@@ -56,7 +56,9 @@ export const parseBarcodeData = (data: number[] | undefined) => {
     .reduce((barcode, curr) => barcode + String.fromCharCode(curr), '');
 };
 
-const parsePart = (content: string): ScanResult => {
+export const parseResult = (content?: string): ScanResult => {
+  if (!content) return {};
+
   try {
     const gs1 = parseBarcode(content);
     const gtin = gs1?.parsedCodeItems?.find(item => item.ai === '01')
@@ -76,23 +78,6 @@ const parsePart = (content: string): ScanResult => {
     console.error(`Error parsing barcode ${content}:`, e);
     return { content };
   }
-};
-
-export const parseResult = (content?: string): ScanResult => {
-  if (!content) return {};
-
-  const result: ScanResult = { content };
-  // a data matrix result from the Capacitor barcode scanner plugin
-  // is returned in sections, separated by \x1D and needs to be parsed
-  // in sections - otherwise the serial number includes the AI characters
-  // for batch and expiry date
-  content.split('\x1D').forEach(part => {
-    const parsed = parsePart(part);
-    if (!!parsed.batch) result.batch = parsed.batch;
-    if (!!parsed.expiryDate) result.expiryDate = parsed.expiryDate;
-    if (!!parsed.gtin) result.gtin = parsed.gtin;
-  });
-  return result;
 };
 
 export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
@@ -140,7 +125,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             // start scanning and wait for a result
             const result = await BarcodeScannerPlugin.startScan();
             BarcodeScannerPlugin.showBackground();
-            resolve(result.content);
+            // for data matrix codes, the result is split by a group by character
+            // only the first group is parsed, and with a \x1d at the start this group is empty
+            resolve(result.content?.replace('\x1d', ''));
             break;
           default:
             reject(new Error('Cannot find scan api'));
