@@ -1,10 +1,10 @@
 import { useQuery } from 'packages/common/src';
-import { useRepackApi } from '../utils/useRepackApi';
+import { useStockApi } from '../utils/useStockApi';
 
 export const useRepacksByStockLine = (stockLineId: string) => {
-  const api = useRepackApi();
+  const api = useStockApi();
 
-  const result = useQuery(api.keys.listByStockLine(stockLineId), () =>
+  const result = useQuery(api.keys.listRepackByStockLine(stockLineId), () =>
     api.get.repacksByStockLine(stockLineId)
   );
 

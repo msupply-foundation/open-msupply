@@ -1,5 +1,4 @@
 import { Lines } from './line';
-import { Repacks } from './repack';
 import { Utils } from './utils';
 
 export const useStock = {
@@ -14,8 +13,8 @@ export const useStock = {
     api: Utils.useStockApi,
   },
   repack: {
-    get: Repacks.useRepack,
-    list: Repacks.useRepacksByStockLine,
-    insert: Repacks.useInsertRepack,
+    get: Lines.useRepack,
+    list: Lines.useRepacksByStockLine,
+    insert: Lines.useInsertRepack,
   },
 };
