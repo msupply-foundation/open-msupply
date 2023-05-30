@@ -9,6 +9,7 @@ import {
   useDialog,
   TableProvider,
   createTableStore,
+  Grid,
 } from '@openmsupply-client/common';
 import { RepackEditForm } from './RepackEditForm';
 import { Repack, useStock } from '@openmsupply-client/system';
@@ -102,38 +103,53 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <Box display={'flex'}>
-        <Box display={'flex'} flexDirection={'column'} width={'500px'}>
-          <Box paddingBottom={2}>
-            <TableProvider createStore={createTableStore}>
-              <DataTable
-                id="repack-list"
-                columns={columns}
-                data={data?.nodes}
-                isLoading={isLoading}
-                isError={isError}
-                noDataMessage={t('messages.no-repacks')}
-                overflowX="auto"
-                onRowClick={onRowClick}
-              />
-            </TableProvider>
-          </Box>
-          <BaseButton onClick={onNewClick}>New</BaseButton>
-        </Box>
-        <Box padding={2}>
-          {displayMessage && (
-            <Box sx={{ padding: 2 }}>
-              <Typography>{t('messages.no-repack-detail')}</Typography>
+      <Box>
+        <Grid
+          container
+          paddingBottom={1}
+          alignItems="center"
+          flexDirection="column"
+        >
+          <Typography sx={{ fontWeight: 'bold' }} variant="h6">
+            {stockLine?.item.name}
+          </Typography>
+          <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+            {`${t('label.code')} : ${stockLine?.item.code}`}
+          </Typography>
+        </Grid>
+        <Box display={'flex'}>
+          <Box display={'flex'} flexDirection={'column'} width={'500px'}>
+            <Box paddingBottom={2}>
+              <TableProvider createStore={createTableStore}>
+                <DataTable
+                  id="repack-list"
+                  columns={columns}
+                  data={data?.nodes}
+                  isLoading={isLoading}
+                  isError={isError}
+                  noDataMessage={t('messages.no-repacks')}
+                  overflowX="auto"
+                  onRowClick={onRowClick}
+                />
+              </TableProvider>
             </Box>
-          )}
-          {showRepackDetail && (
-            <RepackEditForm
-              invoiceId={invoiceId}
-              onInsert={onInsert}
-              repackId={repackId}
-              stockLine={stockLine}
-            />
-          )}
+            <BaseButton onClick={onNewClick}>New</BaseButton>
+          </Box>
+          <Box padding={2}>
+            {displayMessage && (
+              <Box sx={{ padding: 2 }}>
+                <Typography>{t('messages.no-repack-detail')}</Typography>
+              </Box>
+            )}
+            {showRepackDetail && (
+              <RepackEditForm
+                invoiceId={invoiceId}
+                onInsert={onInsert}
+                repackId={repackId}
+                stockLine={stockLine}
+              />
+            )}
+          </Box>
         </Box>
       </Box>
     </Modal>
