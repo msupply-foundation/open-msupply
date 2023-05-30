@@ -21,7 +21,7 @@ use thiserror::Error;
 
 const INITIALISATION_POLL_PERIOD_SECONDS: u64 = 15;
 // 30 minutes
-const INITIALISATION_TIMEOUT_SECONDS: u64 = 30 * 60 * 60;
+const INITIALISATION_TIMEOUT_SECONDS: u64 = 30 * 60;
 
 #[derive(Error, Debug)]
 pub(crate) enum PostInitialisationError {
