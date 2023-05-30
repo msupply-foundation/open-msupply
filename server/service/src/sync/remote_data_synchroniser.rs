@@ -19,9 +19,18 @@ use repository::{
 
 use thiserror::Error;
 
+const INITIALISATION_POLL_PERIOD_SECONDS: u64 = 15;
+// 30 minutes
+const INITIALISATION_TIMEOUT_SECONDS: u64 = 30 * 60 * 60;
+
 #[derive(Error, Debug)]
-#[error(transparent)]
-pub(crate) struct PostInitialisationError(#[from] pub(crate) SyncApiError);
+pub(crate) enum PostInitialisationError {
+    #[error(transparent)]
+    SyncApiError(#[from] SyncApiError),
+    #[error("Error while waiting for initialisation")]
+    WaitForInitialisationError(#[from] WaitForSyncOperationError),
+}
+
 #[derive(Error, Debug)]
 pub(crate) enum RemotePullError {
     #[error(transparent)]
@@ -51,11 +60,11 @@ pub(crate) enum RemotePushError {
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum WaitForIntegrationError {
+pub(crate) enum WaitForSyncOperationError {
     #[error(transparent)]
     SyncApiError(#[from] SyncApiError),
-    #[error("Integration timeout was reached")]
-    IntegrationTimeoutReached,
+    #[error("Timeout was reached")]
+    TimeoutReached,
 }
 
 pub struct RemoteDataSynchroniser {
@@ -64,8 +73,36 @@ pub struct RemoteDataSynchroniser {
 
 impl RemoteDataSynchroniser {
     /// Request initialisation
+    /// TODO improve logic for initialisation check, requires central changes as per this issue:
+    ///
+    ///
+    /// This api call is blocking, and will wait while central server adds relevant records to
+    /// sync queue. If there is a connection problem while intialisaion is happenning, we don't
+    /// want to restart initialisation on next sync, thus polling is introduced.
+    /// When initialisaiton is in progress api will return sync_is_running
     pub(crate) async fn request_initialisation(&self) -> Result<(), PostInitialisationError> {
-        self.sync_api_v5.post_initialise().await?;
+        // First check if already initialisaing (by seeing if site is busy), this could have happened if
+        // there was a connection error while initialisation and polling for initialisitaion to finish
+        // or it timed out, and sync was restarted immidiately
+        let should_post_initialise =
+            self.sync_api_v5.get_site_status().await?.code == SiteStatusCodeV5::Idle;
+
+        if should_post_initialise {
+            let Err(error) = self.sync_api_v5.post_initialise().await else {
+                return Ok(())
+            };
+            // Ignore connection or unknown error. There is high chance of connection error
+            // on post_initialise end point (since it's blocking and can take awhile).
+            if !(error.is_connection() || error.is_unknown()) {
+                return Err(error.into());
+            }
+        }
+
+        self.wait_for_sync_operation(
+            INITIALISATION_POLL_PERIOD_SECONDS,
+            INITIALISATION_TIMEOUT_SECONDS,
+        )
+        .await?;
 
         Ok(())
     }
@@ -162,30 +199,30 @@ impl RemoteDataSynchroniser {
         Ok(())
     }
 
-    // Await integration
-    pub(crate) async fn wait_for_integration(
+    // Wait for sync operation
+    pub(crate) async fn wait_for_sync_operation(
         &self,
         poll_period_seconds: u64,
         timeout_seconds: u64,
-    ) -> Result<(), WaitForIntegrationError> {
+    ) -> Result<(), WaitForSyncOperationError> {
         let start = SystemTime::now();
         let poll_period = Duration::from_secs(poll_period_seconds);
         let timeout = Duration::from_secs(timeout_seconds);
-        info!("Awaiting central server integration...");
+        info!("Awaiting central server operation...");
         loop {
             tokio::time::sleep(poll_period).await;
 
             let response = self.sync_api_v5.get_site_status().await?;
 
             if response.code == SiteStatusCodeV5::Idle {
-                info!("Central server integration finished");
+                info!("Central server operation finished");
                 break;
             }
 
             let elapsed = start.elapsed().unwrap_or(timeout);
 
             if elapsed >= timeout {
-                return Err(WaitForIntegrationError::IntegrationTimeoutReached);
+                return Err(WaitForSyncOperationError::TimeoutReached);
             }
         }
 
