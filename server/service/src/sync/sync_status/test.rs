@@ -131,12 +131,23 @@ async fn sync_status() {
 /// * /final (manually called as last step)
 fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>) -> Tester {
     Tester::new(service_provider.clone())
+        // 'site_status' is called by initialisation
+        .add_test("site_status", |ctx| {
+            let response_record = SiteStatusV5 {
+                code: SiteStatusCodeV5::Idle,
+                message: String::new(),
+                data: None,
+            };
+            TestOutput {
+                new_status: ctx.current_status,
+                response: serde_json::to_string(&response_record).unwrap(),
+            }
+        })
         .add_test(
             "initialise",
             |TestInput {
                  previous_status,
                  current_status,
-                 previous_datetime,
                  now,
                  ..
              }| {
@@ -147,10 +158,9 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                     r
                 });
                 assert_eq!(current_status, new_status);
-
-                assert_between!(current_status.summary.started, previous_datetime, now);
+                assert!(current_status.summary.started < now);
                 let prepare_initial = current_status.prepare_initial.unwrap();
-                assert_between!(prepare_initial.started, previous_datetime, now);
+                assert!(prepare_initial.started < now);
                 assert!(prepare_initial.finished.is_none());
 
                 TestOutput {
