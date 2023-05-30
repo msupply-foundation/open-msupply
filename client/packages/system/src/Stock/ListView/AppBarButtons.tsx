@@ -13,6 +13,7 @@ import {
 import { StockLineRowFragment, useStock } from '../api';
 import { stockLinesToCsv } from '../../utils';
 import { EditStockLineButton } from './EditStockLineButton';
+import { RepackButton } from './RepackButton';
 
 export const AppBarButtonsComponent: FC<{
   selected: StockLineRowFragment | null;
@@ -41,6 +42,7 @@ export const AppBarButtonsComponent: FC<{
       <AppBarButtonsPortal>
         <Grid container gap={1}>
           <EditStockLineButton selected={selected} />
+          <RepackButton selected={selected} />
           <LoadingButton
             startIcon={<DownloadIcon />}
             isLoading={isLoading}
