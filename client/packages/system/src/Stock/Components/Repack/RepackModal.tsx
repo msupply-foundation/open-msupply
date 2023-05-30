@@ -57,7 +57,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const t = useTranslation('inventory');
   const { Modal } = useDialog({ isOpen, onClose });
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
-  const [repackId, setRepackId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
 
   const { data, isError, isLoading } = useStock.repack.list(
@@ -74,7 +73,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const onRowClick = (rowData: RepackFragment) => {
     setInvoiceId(rowData.id);
-    setRepackId(rowData.repackId);
     setIsNew(false);
   };
 
@@ -135,17 +133,14 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             </Box>
             <BaseButton onClick={onNewClick}>New</BaseButton>
           </Box>
-          <Box padding={2}>
+          <Box paddingLeft={3} width={'400px'}>
             {displayMessage && (
-              <Box sx={{ padding: 2 }}>
-                <Typography>{t('messages.no-repack-detail')}</Typography>
-              </Box>
+              <Typography>{t('messages.no-repack-detail')}</Typography>
             )}
             {showRepackDetail && (
               <RepackEditForm
                 invoiceId={invoiceId}
                 onInsert={onInsert}
-                repackId={repackId}
                 stockLine={stockLine}
               />
             )}

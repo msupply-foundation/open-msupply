@@ -1,8 +1,8 @@
 import { useQuery } from 'packages/common/src';
-import { useRepackApi } from '../utils/useRepackApi';
+import { useStockApi } from '../utils/useStockApi';
 
 export const useRepack = (invoiceId: string) => {
-  const api = useRepackApi();
+  const api = useStockApi();
 
   const result = useQuery(
     api.keys.repack(invoiceId),

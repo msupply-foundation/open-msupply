@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from 'packages/common/src';
-import { useRepackApi } from '../utils/useRepackApi';
+import { useStockApi } from '../utils/useStockApi';
 
 export const useInsertRepack = () => {
   const queryClient = useQueryClient();
-  const api = useRepackApi();
+  const api = useStockApi();
 
-  return useMutation(api.insert, {
+  return useMutation(api.insertRepack, {
     onSuccess: () => {
-      queryClient.invalidateQueries(api.keys.base());
+      queryClient.invalidateQueries(api.keys.list());
     },
   });
 };
