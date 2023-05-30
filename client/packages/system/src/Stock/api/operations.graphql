@@ -129,5 +129,15 @@ mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
       __typename
       ...InvoiceRow
     }
+    ... on InsertRepackError {
+      __typename
+      error {
+        description
+        ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+      }
+    }
   }
 }

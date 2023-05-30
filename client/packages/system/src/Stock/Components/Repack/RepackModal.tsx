@@ -1,0 +1,136 @@
+import React, { FC, useState } from 'react';
+import {
+  useTranslation,
+  DataTable,
+  Box,
+  BaseButton,
+  DialogButton,
+  Typography,
+  useDialog,
+  TableProvider,
+  createTableStore,
+} from '@openmsupply-client/common';
+import { RepackEditForm } from './RepackEditForm';
+import { Repack, useStock } from '@openmsupply-client/system';
+import { RepackFragment, StockLineRowFragment } from '../../api';
+import { useRepackColumns } from './column';
+
+interface RepackModalControlProps {
+  isOpen: boolean;
+  onClose: () => void;
+  stockLine: StockLineRowFragment | null;
+}
+
+interface UseDraftRepackControl {
+  onInsert: (patch: Partial<Repack>) => void;
+  onSave: () => Promise<void>;
+  isLoading: boolean;
+  draft?: Repack;
+}
+
+const useDraftRepack = (seed: Repack): UseDraftRepackControl => {
+  const [repack, setRepack] = useState<Repack>(() => ({ ...seed }));
+  const { mutate, isLoading } = useStock.repack.insert();
+
+  const onInsert = (patch: Partial<Repack>) => {
+    setRepack({ ...repack, ...patch });
+  };
+
+  const onSave = async () => mutate(repack);
+
+  return {
+    onInsert,
+    onSave,
+    isLoading,
+    draft: repack,
+  };
+};
+
+export const RepackModal: FC<RepackModalControlProps> = ({
+  isOpen,
+  onClose,
+  stockLine,
+}) => {
+  const t = useTranslation('inventory');
+  const { Modal } = useDialog({ isOpen, onClose });
+  const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
+  const [repackId, setRepackId] = useState<string | undefined>(undefined);
+  const [isNew, setIsNew] = useState<boolean>(false);
+
+  const { data, isError, isLoading } = useStock.repack.list(
+    stockLine?.id ?? ''
+  );
+  const { draft, onInsert, onSave } = useDraftRepack({
+    stockLineId: stockLine?.id,
+    newPackSize: 0,
+    numberOfPacks: 0,
+  });
+  const { columns } = useRepackColumns();
+  const displayMessage = invoiceId == undefined && !isNew;
+  const showRepackDetail = invoiceId || isNew;
+
+  const onRowClick = (rowData: RepackFragment) => {
+    setInvoiceId(rowData.id);
+    setRepackId(rowData.repackId);
+    setIsNew(false);
+  };
+
+  const onNewClick = () => {
+    setInvoiceId(undefined);
+    setIsNew(true);
+  };
+
+  return (
+    <Modal
+      width={900}
+      height={700}
+      slideAnimation={false}
+      title={t('title.repack-details')}
+      okButton={
+        <DialogButton
+          variant="ok"
+          disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
+          onClick={async () => {
+            await onSave();
+          }}
+        />
+      }
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+    >
+      <Box display={'flex'}>
+        <Box display={'flex'} flexDirection={'column'} width={'500px'}>
+          <Box paddingBottom={2}>
+            <TableProvider createStore={createTableStore}>
+              <DataTable
+                id="repack-list"
+                columns={columns}
+                data={data?.nodes}
+                isLoading={isLoading}
+                isError={isError}
+                noDataMessage={t('messages.no-repacks')}
+                overflowX="auto"
+                onRowClick={onRowClick}
+              />
+            </TableProvider>
+          </Box>
+          <BaseButton onClick={onNewClick}>New</BaseButton>
+        </Box>
+        <Box padding={2}>
+          {displayMessage && (
+            <Box sx={{ padding: 2 }}>
+              <Typography>{t('messages.no-repack-detail')}</Typography>
+            </Box>
+          )}
+          {showRepackDetail && (
+            <RepackEditForm
+              invoiceId={invoiceId}
+              onInsert={onInsert}
+              repackId={repackId}
+              stockLine={stockLine}
+            />
+          )}
+        </Box>
+      </Box>
+    </Modal>
+  );
+};
