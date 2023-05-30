@@ -9,7 +9,7 @@ use crate::sync::{
     api::{SyncApiErrorVariant, SyncErrorCodeV5},
     central_data_synchroniser::CentralPullError,
     remote_data_synchroniser::{
-        PostInitialisationError, RemotePullError, RemotePushError, WaitForIntegrationError,
+        PostInitialisationError, RemotePullError, RemotePushError, WaitForSyncOperationError,
     },
     synchroniser::SyncError,
 };
@@ -232,9 +232,14 @@ impl SyncLogError {
             // Sync Api Error
             SyncError::CentralPullError(CentralPullError::SyncApiError(error))
             | SyncError::RemotePullError(RemotePullError::SyncApiError(error))
-            | SyncError::PostInitialisationError(PostInitialisationError(error))
+            | SyncError::PostInitialisationError(PostInitialisationError::SyncApiError(error))
+            | SyncError::PostInitialisationError(
+                PostInitialisationError::WaitForInitialisationError(
+                    WaitForSyncOperationError::SyncApiError(error),
+                ),
+            )
             | SyncError::RemotePushError(RemotePushError::SyncApiError(error))
-            | SyncError::WaitForIntegrationError(WaitForIntegrationError::SyncApiError(error)) => {
+            | SyncError::WaitForIntegrationError(WaitForSyncOperationError::SyncApiError(error)) => {
                 error
             }
             // Integration timeout reached
@@ -292,7 +297,7 @@ mod test {
         api::{ParsedError, SyncApiError, SyncApiErrorVariant, SyncErrorCodeV5},
         central_data_synchroniser::CentralPullError,
         remote_data_synchroniser::{
-            PostInitialisationError, RemotePullError, RemotePushError, WaitForIntegrationError,
+            PostInitialisationError, RemotePullError, RemotePushError, WaitForSyncOperationError,
         },
         sync_status::{logger::SyncLoggerError, SyncLogError},
         synchroniser::SyncError,
@@ -339,7 +344,7 @@ mod test {
             }
         );
         // PostInitialisationError -> FailedToParseUrl
-        let sync_error = SyncError::PostInitialisationError(PostInitialisationError(
+        let sync_error = SyncError::PostInitialisationError(PostInitialisationError::SyncApiError(
             SyncApiError::new_test(parse_error().into()),
         ));
         let sync_log_error = SyncLogError::from_sync_error(&sync_error);
@@ -367,7 +372,7 @@ mod test {
         );
         // WaitForIntegrationError -> IntegrationTimeoutReached
         let sync_error =
-            SyncError::WaitForIntegrationError(WaitForIntegrationError::IntegrationTimeoutReached);
+            SyncError::WaitForIntegrationError(WaitForSyncOperationError::TimeoutReached);
         let sync_log_error = SyncLogError::from_sync_error(&sync_error);
         assert_eq!(
             sync_log_error,

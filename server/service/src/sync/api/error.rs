@@ -125,6 +125,14 @@ impl SyncApiError {
             route: "".to_string(),
         }
     }
+
+    pub(crate) fn is_connection(&self) -> bool {
+        matches!(self.source, SyncApiErrorVariant::ConnectionError(_))
+    }
+
+    pub(crate) fn is_unknown(&self) -> bool {
+        matches!(self.source, SyncApiErrorVariant::Other(_))
+    }
 }
 
 #[cfg(test)]
