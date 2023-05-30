@@ -74,7 +74,7 @@ pub struct RemoteDataSynchroniser {
 impl RemoteDataSynchroniser {
     /// Request initialisation
     /// TODO improve logic for initialisation check, requires central changes as per this issue:
-    ///
+    /// https://github.com/openmsupply/open-msupply-internal/issues/30#issuecomment-1567639141
     ///
     /// This api call is blocking, and will wait while central server adds relevant records to
     /// sync queue. If there is a connection problem while intialisaion is happenning, we don't
