@@ -26,11 +26,12 @@ interface UseDraftRepackControl {
   onSave: () => Promise<void>;
   isLoading: boolean;
   draft?: Repack;
+  isError: boolean;
 }
 
 const useDraftRepack = (seed: Repack): UseDraftRepackControl => {
   const [repack, setRepack] = useState<Repack>(() => ({ ...seed }));
-  const { mutate, isLoading } = useStock.repack.insert();
+  const { mutate, isLoading, isError } = useStock.repack.insert();
 
   const onInsert = (patch: Partial<Repack>) => {
     setRepack({ ...repack, ...patch });
@@ -43,6 +44,7 @@ const useDraftRepack = (seed: Repack): UseDraftRepackControl => {
     onSave,
     isLoading,
     draft: repack,
+    isError,
   };
 };
 
@@ -92,6 +94,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
           onClick={async () => {
             await onSave();
+            if (!isError) {
+              onClose();
+            }
           }}
         />
       }

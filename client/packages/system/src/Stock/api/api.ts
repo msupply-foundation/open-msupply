@@ -152,9 +152,14 @@ export const getRepackQueries = (sdk: Sdk, storeId: string) => ({
       },
     });
 
-    if (result.insertRepack.__typename === 'InvoiceNode') {
-      return result.insertRepack;
+    if (result?.insertRepack.__typename === 'InvoiceNode') {
+      return result?.insertRepack;
     }
+
+    if (result?.insertRepack.error) {
+      throw new Error(result.insertRepack.error.__typename);
+    }
+
     throw new Error("Can't insert repack");
   },
 });
