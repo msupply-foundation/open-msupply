@@ -56,25 +56,28 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { Modal } = useDialog({ isOpen, onClose });
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
+  const defaultRepack = {
+    stockLineId: stockLine?.id,
+    newPackSize: 0,
+    numberOfPacks: 0,
+  };
 
   const { data, isError, isLoading } = useStock.repack.list(
     stockLine?.id ?? ''
   );
-  const { draft, onInsert, onSave } = useDraftRepack({
-    stockLineId: stockLine?.id,
-    newPackSize: 0,
-    numberOfPacks: 0,
-  });
+  const { draft, onInsert, onSave } = useDraftRepack(defaultRepack);
   const { columns } = useRepackColumns();
   const displayMessage = invoiceId == undefined && !isNew;
   const showRepackDetail = invoiceId || isNew;
 
   const onRowClick = (rowData: RepackFragment) => {
+    onInsert(defaultRepack);
     setInvoiceId(rowData.id);
     setIsNew(false);
   };
 
   const onNewClick = () => {
+    onInsert(defaultRepack);
     setInvoiceId(undefined);
     setIsNew(true);
   };
@@ -114,6 +117,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
               if (errorMessage) {
                 error(errorMessage)();
               } else {
+                onInsert(defaultRepack);
                 success(t('messages.saved'))();
               }
             } catch (e) {
@@ -165,6 +169,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
                 invoiceId={invoiceId}
                 onInsert={onInsert}
                 stockLine={stockLine}
+                draft={draft}
               />
             )}
           </Box>
