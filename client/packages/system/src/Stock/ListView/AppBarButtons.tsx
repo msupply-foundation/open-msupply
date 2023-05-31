@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
   useNotification,
@@ -13,7 +13,7 @@ import {
 import { useStock } from '../api';
 import { stockLinesToCsv } from '../../utils';
 
-export const AppBarButtonsComponent: FC = () => {
+export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
   const t = useTranslation(['distribution', 'common']);
   const { fetchAsync, isLoading } = useStock.line.listAll({
@@ -34,21 +34,19 @@ export const AppBarButtonsComponent: FC = () => {
   };
 
   return (
-    <>
-      <AppBarButtonsPortal>
-        <Grid container gap={1}>
-          <LoadingButton
-            startIcon={<DownloadIcon />}
-            isLoading={isLoading}
-            variant="outlined"
-            onClick={csvExport}
-            disabled={EnvUtils.platform === Platform.Android}
-          >
-            {t('button.export')}
-          </LoadingButton>
-        </Grid>
-      </AppBarButtonsPortal>
-    </>
+    <AppBarButtonsPortal>
+      <Grid container gap={1}>
+        <LoadingButton
+          startIcon={<DownloadIcon />}
+          isLoading={isLoading}
+          variant="outlined"
+          onClick={csvExport}
+          disabled={EnvUtils.platform === Platform.Android}
+        >
+          {t('button.export')}
+        </LoadingButton>
+      </Grid>
+    </AppBarButtonsPortal>
   );
 };
 
