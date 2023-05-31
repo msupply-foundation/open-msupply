@@ -10,14 +10,10 @@ import {
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment, useStock } from '../api';
+import { useStock } from '../api';
 import { stockLinesToCsv } from '../../utils';
-import { EditStockLineButton } from './EditStockLineButton';
-import { RepackButton } from './RepackButton';
 
-export const AppBarButtonsComponent: FC<{
-  selected: StockLineRowFragment | null;
-}> = ({ selected }) => {
+export const AppBarButtonsComponent: FC = () => {
   const { success, error } = useNotification();
   const t = useTranslation(['distribution', 'common']);
   const { fetchAsync, isLoading } = useStock.line.listAll({
@@ -41,8 +37,6 @@ export const AppBarButtonsComponent: FC<{
     <>
       <AppBarButtonsPortal>
         <Grid container gap={1}>
-          <EditStockLineButton selected={selected} />
-          <RepackButton selected={selected} />
           <LoadingButton
             startIcon={<DownloadIcon />}
             isLoading={isLoading}

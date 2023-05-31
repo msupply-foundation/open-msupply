@@ -131,7 +131,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
                 />
               </TableProvider>
             </Box>
-            <BaseButton onClick={onNewClick}>New</BaseButton>
+            <Box display="flex" justifyContent="center">
+              <BaseButton onClick={onNewClick}>{t('label.new')}</BaseButton>
+            </Box>
           </Box>
           <Box paddingLeft={3} width={'400px'}>
             {displayMessage && (
