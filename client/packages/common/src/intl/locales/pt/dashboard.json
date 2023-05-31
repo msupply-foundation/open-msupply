@@ -1,1 +1,27 @@
-{}
+{
+  "button.order-more": "Pedir mais",
+  "error.failed-to-create-requisition": "Erro ao criar a requisição! {{message}}",
+  "heading.expiring-stock": "Estoque próximo ao vencimento",
+  "heading.shipments": "Remessas",
+  "heading.stock-levels": "Nível de estoque",
+  "label.expired_one": "Lote expirado",
+  "label.expired_other": "Lotes Expirados",
+  "label.expiring-soon_one": "Lote próximo a expirar",
+  "label.expiring-soon_other": "Lote próximo ao vencimento",
+  "label.inbound-not-delivered": "Remessa de saída não entregue",
+  "label.items-no-stock_one": "Item sem estoque",
+  "label.items-no-stock_other": "Item sem estoque",
+  "label.low-stock-items_other": "Itens com menos de 3 meses de estoque",
+  "label.more-than-six-months-stock-items_one": "Item com mais de 6 meses de estoque",
+  "label.more-than-six-months-stock-items_other": "Itens com mais de 6 meses de estoque",
+  "label.new": "Novo",
+  "label.not-sent": "Não foi enviado",
+  "label.this-week": "Esta semana",
+  "label.today": "Hoje",
+  "label.total-items_other": "Quantidade total de items",
+  "label.total-items_one": "Quantidade total de items",
+  "button.new-outbound-shipment": "Nova remessa de saída",
+  "inventory-management": "Administração de Inventários",
+  "label.have-not-shipped": "Não foi enviado",
+  "label.low-stock-items_one": "Item com menos de 3 meses de estoque"
+}
