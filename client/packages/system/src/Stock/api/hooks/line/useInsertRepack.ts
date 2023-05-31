@@ -7,6 +7,7 @@ export const useInsertRepack = () => {
 
   return useMutation(api.insertRepack, {
     onSuccess: () => {
+      // Stock list needs to be re-fetched to load new repacked stock line
       queryClient.invalidateQueries(api.keys.list());
     },
   });
