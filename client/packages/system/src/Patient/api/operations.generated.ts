@@ -36,6 +36,22 @@ export type PatientSearchQueryVariables = Types.Exact<{
 
 export type PatientSearchQuery = { __typename: 'Queries', patientSearch: { __typename: 'PatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', address1?: string | null, address2?: string | null, code: string, code2?: string | null, country?: string | null, dateOfBirth?: string | null, email?: string | null, firstName?: string | null, lastName?: string | null, gender?: Types.GenderType | null, id: string, name: string, phone?: string | null, website?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null } }> } };
 
+export type CentralPatientSearchQueryVariables = Types.Exact<{
+  input: Types.CentralPatientSearchInput;
+  storeId: Types.Scalars['String'];
+}>;
+
+
+export type CentralPatientSearchQuery = { __typename: 'Queries', centralPatientSearch: { __typename: 'CentralPatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'CentralPatientNode', code: string, dateOfBirth?: string | null, firstName: string, lastName: string }> } | { __typename: 'CentralPatientSearchError', error: { __typename: 'ConnectionError', description: string } } };
+
+export type LinkPatientToStoreMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  nameId: Types.Scalars['String'];
+}>;
+
+
+export type LinkPatientToStoreMutation = { __typename: 'Mutations', linkPatientToStore: { __typename: 'LinkPatientPatientToStoreError', error: { __typename: 'ConnectionError', description: string } } | { __typename: 'NameStoreJoinNode', id: string, storeId: string, nameId: string } };
+
 export type InsertPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
   input: Types.InsertPatientInput;
@@ -144,6 +160,52 @@ export const PatientSearchDocument = gql`
   }
 }
     ${PatientFragmentDoc}`;
+export const CentralPatientSearchDocument = gql`
+    query centralPatientSearch($input: CentralPatientSearchInput!, $storeId: String!) {
+  centralPatientSearch(input: $input, storeId: $storeId) {
+    ... on CentralPatientSearchConnector {
+      nodes {
+        code
+        dateOfBirth
+        firstName
+        lastName
+      }
+      totalCount
+    }
+    ... on CentralPatientSearchError {
+      __typename
+      error {
+        ... on ConnectionError {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
+}
+    `;
+export const LinkPatientToStoreDocument = gql`
+    mutation linkPatientToStore($storeId: String!, $nameId: String!) {
+  linkPatientToStore(nameId: $nameId, storeId: $storeId) {
+    ... on NameStoreJoinNode {
+      id
+      storeId
+      nameId
+    }
+    ... on LinkPatientPatientToStoreError {
+      __typename
+      error {
+        ... on ConnectionError {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
+}
+    `;
 export const InsertPatientDocument = gql`
     mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
@@ -180,6 +242,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     patientSearch(variables: PatientSearchQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientSearchQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PatientSearchQuery>(PatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientSearch', 'query');
+    },
+    centralPatientSearch(variables: CentralPatientSearchQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CentralPatientSearchQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CentralPatientSearchQuery>(CentralPatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'centralPatientSearch', 'query');
+    },
+    linkPatientToStore(variables: LinkPatientToStoreMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LinkPatientToStoreMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LinkPatientToStoreMutation>(LinkPatientToStoreDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'linkPatientToStore', 'mutation');
     },
     insertPatient(variables: InsertPatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertPatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertPatientMutation>(InsertPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPatient', 'mutation');
@@ -239,6 +307,40 @@ export const mockPatientByIdQuery = (resolver: ResponseResolver<GraphQLRequest<P
 export const mockPatientSearchQuery = (resolver: ResponseResolver<GraphQLRequest<PatientSearchQueryVariables>, GraphQLContext<PatientSearchQuery>, any>) =>
   graphql.query<PatientSearchQuery, PatientSearchQueryVariables>(
     'patientSearch',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockCentralPatientSearchQuery((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralPatientSearch })
+ *   )
+ * })
+ */
+export const mockCentralPatientSearchQuery = (resolver: ResponseResolver<GraphQLRequest<CentralPatientSearchQueryVariables>, GraphQLContext<CentralPatientSearchQuery>, any>) =>
+  graphql.query<CentralPatientSearchQuery, CentralPatientSearchQueryVariables>(
+    'centralPatientSearch',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockLinkPatientToStoreMutation((req, res, ctx) => {
+ *   const { storeId, nameId } = req.variables;
+ *   return res(
+ *     ctx.data({ linkPatientToStore })
+ *   )
+ * })
+ */
+export const mockLinkPatientToStoreMutation = (resolver: ResponseResolver<GraphQLRequest<LinkPatientToStoreMutationVariables>, GraphQLContext<LinkPatientToStoreMutation>, any>) =>
+  graphql.mutation<LinkPatientToStoreMutation, LinkPatientToStoreMutationVariables>(
+    'linkPatientToStore',
     resolver
   )
 
