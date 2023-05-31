@@ -2,6 +2,9 @@ use async_graphql::*;
 use chrono::DateTime;
 use chrono::Utc;
 use graphql_core::pagination::PaginationInput;
+use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::ContextExt;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
@@ -29,6 +32,10 @@ use mutations::undelete_document::undelete_document;
 use mutations::undelete_document::UndeleteDocumentInput;
 use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
+use service::auth::Resource;
+use service::auth::ResourceAccessRequest;
+use service::programs::patient::link_patient_to_store;
+use service::programs::patient::patient_search_central;
 use types::document::DocumentNode;
 use types::program_enrolment::ProgramEventFilterInput;
 
@@ -107,6 +114,33 @@ impl ProgramsQueries {
         input: PatientSearchInput,
     ) -> Result<PatientSearchResponse> {
         patient_search(ctx, store_id, input)
+    }
+
+    pub async fn central_patient_search(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: CentralPatientSearchInput,
+    ) -> Result<CentralPatientSearchResponse> {
+        // Note, we can't move the ctx to another async method because then it would need to be
+        // Sync. For this reason split the method as done below.
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryPatient,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let context = service_provider.basic_context()?;
+
+        let sync_settings = service_provider.settings.sync_settings(&context)?.ok_or(
+            StandardGraphqlError::InternalError("Missing sync settings".to_string()).extend(),
+        )?;
+
+        let result = patient_search_central(&sync_settings, input.to_domain()).await;
+        map_central_patient_search_result(result)
     }
 
     pub async fn program_enrolments(
@@ -212,6 +246,33 @@ impl ProgramsMutations {
         input: UpdatePatientInput,
     ) -> Result<UpdatePatientResponse> {
         update_patient(ctx, store_id, input)
+    }
+
+    pub async fn link_patient_to_store(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        name_id: String,
+    ) -> Result<LinkPatientToStoreResponse> {
+        // Note, we can't move the ctx to another async method because then it would need to be
+        // Sync. For this reason split the method as done below.
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryPatient,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let context = service_provider.basic_context()?;
+
+        let sync_settings = service_provider.settings.sync_settings(&context)?.ok_or(
+            StandardGraphqlError::InternalError("Missing sync settings".to_string()).extend(),
+        )?;
+
+        let result = link_patient_to_store(&sync_settings, &store_id, &name_id).await;
+        map_link_patient_to_store_result(result)
     }
 
     /// Enrols a patient into a program by adding a program document to the patient's documents.
