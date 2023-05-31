@@ -23,7 +23,6 @@ export interface TableStore {
   toggleExpanded: (id: string) => void;
   toggleAllExpanded: () => void;
   toggleSelected: (id: string) => void;
-  toggleOne: (id: string) => void;
   toggleAll: () => void;
   setRows: (id: string[]) => void;
   setDisabledRows: (id: string[]) => void;
@@ -230,34 +229,6 @@ export const createTableStore = () =>
         });
 
         return { ...state, rowState: { ...rowState } };
-      });
-    },
-
-    toggleOne: (id: string) => {
-      set(state => {
-        const { rowState } = state;
-
-        const newRowState: Record<string, RowState> = Object.keys(
-          rowState
-        ).reduce((newRowState, rowId) => {
-          return {
-            ...newRowState,
-            [rowId]: getRowState(state, rowId, {
-              isSelected: rowId === id ? !rowState[rowId]?.isSelected : false,
-              isFocused: rowId === id ? true : false,
-            }),
-          };
-        }, {});
-
-        const numberSelected = Object.values(newRowState).filter(
-          ({ isSelected }) => isSelected
-        ).length;
-
-        return {
-          ...state,
-          numberSelected,
-          rowState: newRowState,
-        };
       });
     },
 
