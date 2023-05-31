@@ -4,14 +4,17 @@ use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
 use crate::ListResult;
 
-pub use self::query::*;
-mod query;
-pub use self::upsert::*;
 pub mod patient_schema;
 pub mod patient_updated;
-mod upsert;
-pub use self::search::*;
+mod query;
 mod search;
+mod search_central;
+mod upsert;
+
+pub use self::query::*;
+pub use self::search::*;
+pub use self::search_central::*;
+pub use self::upsert::*;
 
 /// The default document type for a patient
 pub const PATIENT_TYPE: &str = "Patient";
