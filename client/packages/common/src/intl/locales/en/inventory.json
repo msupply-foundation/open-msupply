@@ -17,6 +17,8 @@
   "error.reduced-below-zero": "Stock line exist in new outbound shipments. The quantity cannot be reduced below zero.",
   "error.stocktake-has-stock-reduced-below-zero": "Stock take cannot be finalised because some of the stock has been used in new outbound shipments.",
   "error.unable-to-scan": "Unable to scan barcode: {{error}}",
+    "error.repack-has-stock-reduced-below-zero": "Cannot repack stock line. New number of packs exceeds stock line number of packs.",
+    "error.repack-cannot-be-fractional": "Cannot repack into a fractional pack",
   "label.add-batch": "Add batch",
   "label.add-new-line": "Add a new line",
   "label.cost-price": "Cost price",

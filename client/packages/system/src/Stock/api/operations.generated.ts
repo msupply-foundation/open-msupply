@@ -60,7 +60,7 @@ export type InsertRepackMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertRepackMutation = { __typename: 'Mutations', insertRepack: { __typename: 'InsertRepackError', error: { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string } };
+export type InsertRepackMutation = { __typename: 'Mutations', insertRepack: { __typename: 'InsertRepackError', error: { __typename: 'CannotHaveFractionalPack', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string } };
 
 export const StockLineRowFragmentDoc = gql`
     fragment StockLineRow on StockLineNode {
@@ -200,6 +200,10 @@ export const InsertRepackDocument = gql`
       error {
         description
         ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+        ... on CannotHaveFractionalPack {
           __typename
           description
         }

@@ -361,6 +361,11 @@ export type CannotEditStocktake = DeleteStocktakeErrorInterface & DeleteStocktak
   description: Scalars['String'];
 };
 
+export type CannotHaveFractionalPack = InsertRepackErrorInterface & {
+  __typename: 'CannotHaveFractionalPack';
+  description: Scalars['String'];
+};
+
 export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
   __typename: 'CannotReverseInvoiceStatus';
   description: Scalars['String'];

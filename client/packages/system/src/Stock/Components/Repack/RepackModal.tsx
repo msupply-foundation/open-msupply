@@ -10,6 +10,8 @@ import {
   TableProvider,
   createTableStore,
   Grid,
+  useNotification,
+  getErrorMessage,
 } from '@openmsupply-client/common';
 import { RepackEditForm } from './RepackEditForm';
 import { Repack, useStock } from '@openmsupply-client/system';
@@ -22,23 +24,17 @@ interface RepackModalControlProps {
   stockLine: StockLineRowFragment | null;
 }
 
-interface UseDraftRepackControl {
-  onInsert: (patch: Partial<Repack>) => void;
-  onSave: () => Promise<void>;
-  isLoading: boolean;
-  draft?: Repack;
-  isError: boolean;
-}
-
-const useDraftRepack = (seed: Repack): UseDraftRepackControl => {
+const useDraftRepack = (seed: Repack) => {
   const [repack, setRepack] = useState<Repack>(() => ({ ...seed }));
-  const { mutate, isLoading, isError } = useStock.repack.insert();
+  const { mutateAsync, isLoading, isError } = useStock.repack.insert(
+    seed.stockLineId ?? ''
+  );
 
   const onInsert = (patch: Partial<Repack>) => {
     setRepack({ ...repack, ...patch });
   };
 
-  const onSave = async () => mutate(repack);
+  const onSave = async () => await mutateAsync(repack);
 
   return {
     onInsert,
@@ -55,6 +51,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   stockLine,
 }) => {
   const t = useTranslation('inventory');
+  const { error, success } = useNotification();
+
   const { Modal } = useDialog({ isOpen, onClose });
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
@@ -81,6 +79,23 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     setIsNew(true);
   };
 
+  const mapStructuredErrors = (
+    result: Awaited<ReturnType<typeof onSave>>
+  ): string | undefined => {
+    if (result.__typename === 'InvoiceNode') {
+      return undefined;
+    }
+
+    const { error: repackError } = result;
+
+    switch (repackError.__typename) {
+      case 'StockLineReducedBelowZero':
+        return t('error.repack-has-stock-reduced-below-zero');
+      case 'CannotHaveFractionalPack':
+        return t('error.repack-cannot-be-fractional');
+    }
+  };
+
   return (
     <Modal
       width={900}
@@ -92,9 +107,17 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           variant="ok"
           disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
           onClick={async () => {
-            await onSave();
-            if (!isError) {
-              onClose();
+            try {
+              let result = await onSave();
+              let errorMessage = mapStructuredErrors(result);
+
+              if (errorMessage) {
+                error(errorMessage)();
+              } else {
+                success(t('messages.saved'))();
+              }
+            } catch (e) {
+              error(getErrorMessage(e))();
             }
           }}
         />
