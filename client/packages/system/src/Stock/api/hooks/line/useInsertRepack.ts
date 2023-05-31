@@ -9,6 +9,7 @@ export const useInsertRepack = (stockLineId: string) => {
     onSuccess: () => {
       // Stock list needs to be re-fetched to load new repacked stock line
       queryClient.invalidateQueries(api.keys.list());
+      // Repack list also needs to be re-fetched on insert to show new repack line
       queryClient.invalidateQueries(
         api.keys.listRepackByStockLine(stockLineId)
       );

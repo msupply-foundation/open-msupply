@@ -1,7 +1,7 @@
 import {
   Box,
   InputWithLabelRow,
-  PositiveNumberInput,
+  NonNegativeIntegerInput,
   TextWithLabelRow,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -52,7 +52,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
         text={
           invoiceId
             ? String(data?.to.numberOfPacks ?? '')
-            : String(stockLine?.totalNumberOfPacks ?? '')
+            : String(stockLine?.availableNumberOfPacks ?? '')
         }
         textProps={{ textAlign: 'end' }}
         labelProps={{ sx: { width: 0 } }}
@@ -71,7 +71,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
         <InputWithLabelRow
           label={t('label.new-pack-size')}
           Input={
-            <PositiveNumberInput
+            <NonNegativeIntegerInput
               onChange={newPackSize => {
                 onInsert({
                   newPackSize,
@@ -86,7 +86,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
         <InputWithLabelRow
           label={t('label.new-num-packs')}
           Input={
-            <PositiveNumberInput
+            <NonNegativeIntegerInput
               onChange={numberOfPacks => {
                 onInsert({
                   numberOfPacks,
@@ -94,6 +94,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
               }}
               width={143}
               value={draft.numberOfPacks}
+              max={stockLine?.availableNumberOfPacks ?? 0}
               disabled={!!invoiceId}
             />
           }

@@ -12,6 +12,7 @@ import {
   Grid,
   useNotification,
   getErrorMessage,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { RepackEditForm } from './RepackEditForm';
 import { Repack, useStock } from '@openmsupply-client/system';
@@ -96,6 +97,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         return t('error.repack-has-stock-reduced-below-zero');
       case 'CannotHaveFractionalPack':
         return t('error.repack-cannot-be-fractional');
+      default:
+        noOtherVariants(repackError);
     }
   };
 
@@ -111,8 +114,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
           onClick={async () => {
             try {
-              let result = await onSave();
-              let errorMessage = mapStructuredErrors(result);
+              const result = await onSave();
+              const errorMessage = mapStructuredErrors(result);
 
               if (errorMessage) {
                 error(errorMessage)();
