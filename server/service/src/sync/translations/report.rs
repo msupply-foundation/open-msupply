@@ -26,7 +26,7 @@ pub enum LegacyReportContext {
     Requisition,
     #[serde(rename = "Stock Take")]
     Stocktake,
-
+    #[serde(rename = "Repack Finalised")]
     #[serde(other)]
     Others,
 }
