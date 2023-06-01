@@ -55,6 +55,10 @@ pub struct CentralPatientNode {
 
 #[Object]
 impl CentralPatientNode {
+    pub async fn id(&self) -> &str {
+        &self.patient.id
+    }
+
     pub async fn code(&self) -> &str {
         &self.patient.code
     }
@@ -68,10 +72,7 @@ impl CentralPatientNode {
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
-        if let Ok(dob) = NaiveDate::parse_from_str(&self.patient.date_of_birth, "%Y-%m-%d") {
-            return Some(dob);
-        }
-        None
+        self.patient.date_of_birth.clone()
     }
 }
 
