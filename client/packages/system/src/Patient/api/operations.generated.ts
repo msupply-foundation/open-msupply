@@ -42,7 +42,7 @@ export type CentralPatientSearchQueryVariables = Types.Exact<{
 }>;
 
 
-export type CentralPatientSearchQuery = { __typename: 'Queries', centralPatientSearch: { __typename: 'CentralPatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'CentralPatientNode', code: string, dateOfBirth?: string | null, firstName: string, lastName: string }> } | { __typename: 'CentralPatientSearchError', error: { __typename: 'ConnectionError', description: string } } };
+export type CentralPatientSearchQuery = { __typename: 'Queries', centralPatientSearch: { __typename: 'CentralPatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'CentralPatientNode', id: string, code: string, dateOfBirth?: string | null, firstName: string, lastName: string }> } | { __typename: 'CentralPatientSearchError', error: { __typename: 'ConnectionError', description: string } } };
 
 export type LinkPatientToStoreMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String'];
@@ -163,8 +163,10 @@ export const PatientSearchDocument = gql`
 export const CentralPatientSearchDocument = gql`
     query centralPatientSearch($input: CentralPatientSearchInput!, $storeId: String!) {
   centralPatientSearch(input: $input, storeId: $storeId) {
+    __typename
     ... on CentralPatientSearchConnector {
       nodes {
+        id
         code
         dateOfBirth
         firstName
@@ -173,13 +175,11 @@ export const CentralPatientSearchDocument = gql`
       totalCount
     }
     ... on CentralPatientSearchError {
-      __typename
       error {
+        __typename
         ... on ConnectionError {
-          __typename
           description
         }
-        description
       }
     }
   }
@@ -188,19 +188,18 @@ export const CentralPatientSearchDocument = gql`
 export const LinkPatientToStoreDocument = gql`
     mutation linkPatientToStore($storeId: String!, $nameId: String!) {
   linkPatientToStore(nameId: $nameId, storeId: $storeId) {
+    __typename
     ... on NameStoreJoinNode {
       id
       storeId
       nameId
     }
     ... on LinkPatientPatientToStoreError {
-      __typename
       error {
+        __typename
         ... on ConnectionError {
-          __typename
           description
         }
-        description
       }
     }
   }

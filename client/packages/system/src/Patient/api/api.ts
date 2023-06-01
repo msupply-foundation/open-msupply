@@ -10,13 +10,13 @@ import {
   EncounterSortFieldInput,
   PaginationInput,
   CentralPatientSearchInput,
-  CentralPatientSearchResponse,
-  LinkPatientToStoreResponse,
 } from '@openmsupply-client/common';
 import {
   Sdk,
   PatientRowFragment,
   PatientFragment,
+  CentralPatientSearchQuery,
+  LinkPatientToStoreMutation,
 } from './operations.generated';
 
 export type ListParams = {
@@ -38,6 +38,12 @@ export type EncounterListParams = {
   filterBy?: FilterBy | null;
   pagination?: PaginationInput;
 };
+
+export type CentralPatientSearchResponse =
+  CentralPatientSearchQuery['centralPatientSearch'];
+
+export type LinkPatientToStoreResponse =
+  LinkPatientToStoreMutation['linkPatientToStore'];
 
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   get: {
@@ -145,7 +151,6 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not update patient');
   },
   linkPatientToStore: async (
-    storeId: string,
     nameId: string
   ): Promise<LinkPatientToStoreResponse> => {
     const result = await sdk.linkPatientToStore({

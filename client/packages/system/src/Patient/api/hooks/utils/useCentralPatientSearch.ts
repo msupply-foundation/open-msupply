@@ -4,11 +4,16 @@ import {
 } from '@openmsupply-client/common';
 import { usePatientApi } from '../utils/usePatientApi';
 
-export const useCentralPatientSearch = (params: CentralPatientSearchInput) => {
+export const useCentralPatientSearch = (
+  params: CentralPatientSearchInput,
+  enabled?: boolean
+) => {
   const api = usePatientApi();
   return {
-    ...useQuery(api.keys.centralSearch(params), () =>
-      api.get.centralSearch(params)
+    ...useQuery(
+      api.keys.centralSearch(params),
+      () => api.get.centralSearch(params),
+      { enabled }
     ),
   };
 };

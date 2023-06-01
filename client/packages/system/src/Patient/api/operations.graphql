@@ -97,8 +97,10 @@ query centralPatientSearch(
   $storeId: String!
 ) {
   centralPatientSearch(input: $input, storeId: $storeId) {
+    __typename
     ... on CentralPatientSearchConnector {
       nodes {
+        id
         code
         dateOfBirth
         firstName
@@ -107,13 +109,11 @@ query centralPatientSearch(
       totalCount
     }
     ... on CentralPatientSearchError {
-      __typename
       error {
+        __typename
         ... on ConnectionError {
-          __typename
           description
         }
-        description
       }
     }
   }
@@ -121,19 +121,18 @@ query centralPatientSearch(
 
 mutation linkPatientToStore($storeId: String!, $nameId: String!) {
   linkPatientToStore(nameId: $nameId, storeId: $storeId) {
+    __typename
     ... on NameStoreJoinNode {
       id
       storeId
       nameId
     }
     ... on LinkPatientPatientToStoreError {
-      __typename
       error {
+        __typename
         ... on ConnectionError {
-          __typename
           description
         }
-        description
       }
     }
   }

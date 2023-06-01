@@ -369,6 +369,7 @@ export type CentralPatientNode = {
   code: Scalars['String'];
   dateOfBirth?: Maybe<Scalars['NaiveDate']>;
   firstName: Scalars['String'];
+  id: Scalars['String'];
   lastName: Scalars['String'];
 };
 
