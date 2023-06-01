@@ -15,7 +15,8 @@ use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANSACT;
@@ -177,6 +178,13 @@ pub struct LegacyTransactRow {
 
 pub(crate) struct InvoiceTranslation {}
 impl SyncTranslation for InvoiceTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::TRANSACT,
+            dependencies: vec![LegacyTableName::NAME, LegacyTableName::STORE],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,

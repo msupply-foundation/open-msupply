@@ -58,6 +58,7 @@ export const parseBarcodeData = (data: number[] | undefined) => {
 
 export const parseResult = (content?: string): ScanResult => {
   if (!content) return {};
+
   try {
     const gs1 = parseBarcode(content);
     const gtin = gs1?.parsedCodeItems?.find(item => item.ai === '01')
@@ -73,7 +74,8 @@ export const parseResult = (content?: string): ScanResult => {
       expiryDate: expiry ? Formatter.naiveDate(expiry) : undefined,
       gtin,
     };
-  } catch {
+  } catch (e) {
+    console.error(`Error parsing barcode ${content}:`, e);
     return { content };
   }
 };
@@ -123,8 +125,9 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
             // start scanning and wait for a result
             const result = await BarcodeScannerPlugin.startScan();
             BarcodeScannerPlugin.showBackground();
-
-            resolve(result.content);
+            // for data matrix codes, the result is split by a group by character
+            // only the first group is parsed, and with a \x1d at the start this group is empty
+            resolve(result.content?.replace('\x1d', ''));
             break;
           default:
             reject(new Error('Cannot find scan api'));
@@ -211,7 +214,10 @@ export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   const val = useMemo(
     () => ({
       isEnabled,
-      isConnected: !!scanner?.connected,
+      // Capacitor.isNativePlatform returns true if running on android or ios
+      // and we use the camera for scanning currently, no need to check for
+      // a physical device to be connected
+      isConnected: !!scanner?.connected || Capacitor.isNativePlatform(),
       isScanning,
       setScanner,
       startScan,

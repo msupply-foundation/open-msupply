@@ -1,5 +1,5 @@
 use async_graphql::{dataloader::DataLoader, *};
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use graphql_core::{
     loader::{LocationByIdLoader, StockLineByIdLoader},
     standard_graphql_error::StandardGraphqlError,
@@ -47,8 +47,8 @@ impl RepackNode {
         &self.batch
     }
 
-    async fn datetime(&self) -> NaiveDateTime {
-        self.datetime
+    async fn datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.datetime, Utc)
     }
 
     async fn from(&self) -> &RepackStockLineNode {

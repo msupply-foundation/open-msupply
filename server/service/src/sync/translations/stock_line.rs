@@ -9,7 +9,9 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::ITEM_LINE;
 
@@ -50,6 +52,18 @@ pub struct LegacyStockLineRow {
 
 pub(crate) struct StockLineTranslation {}
 impl SyncTranslation for StockLineTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::ITEM_LINE,
+            dependencies: vec![
+                LegacyTableName::ITEM,
+                LegacyTableName::STORE,
+                LegacyTableName::LOCATION,
+                LegacyTableName::NAME,
+            ],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

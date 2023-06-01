@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   useTranslation,
   useBarcodeScannerContext,
@@ -26,6 +26,7 @@ export const AddFromScannerButtonComponent = ({
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   if (!isEnabled) return null;
 
@@ -54,6 +55,7 @@ export const AddFromScannerButtonComponent = ({
   };
 
   const handleClick = async () => {
+    buttonRef.current?.blur();
     if (isScanning) {
       stopScan();
     } else {
@@ -90,6 +92,7 @@ export const AddFromScannerButtonComponent = ({
     <Tooltip title={isConnected ? '' : t('error.scanner-not-connected')}>
       <Box>
         <ButtonWithIcon
+          ref={buttonRef}
           disabled={isDisabled || !isConnected}
           onClick={handleClick}
           Icon={

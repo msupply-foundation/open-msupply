@@ -29,6 +29,7 @@ pub(crate) mod unit;
 
 use repository::*;
 use thiserror::Error;
+use topological_sort::TopologicalSort;
 
 use super::api::{CommonSyncRecordV5, RemoteSyncRecordV5, SyncActionV5};
 
@@ -69,6 +70,37 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
+}
+
+/// Calculates the integration order based on the PullDependencies in the SyncTranslators
+pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'static str> {
+    // fill output so that tables with the least dependencies come first
+    let mut output = vec![];
+
+    let mut ts = TopologicalSort::<&str>::new();
+    for translator in translators {
+        let pull_dep = translator.pull_dependencies();
+        if pull_dep.dependencies.len() == 0 {
+            ts.insert(pull_dep.table);
+            continue;
+        }
+        for dep in pull_dep.dependencies {
+            ts.add_dependency(dep, pull_dep.table);
+        }
+    }
+
+    loop {
+        let mut next = ts.pop_all();
+        if next.len() == 0 {
+            if ts.len() != 0 {
+                panic!("Circular dependencies");
+            }
+            break;
+        }
+        output.append(&mut next);
+    }
+
+    output
 }
 
 #[allow(non_snake_case)]
@@ -223,7 +255,19 @@ impl IntegrationRecords {
     }
 }
 
+/// Pull dependency description for a SyncTranslation
+pub(crate) struct PullDependency {
+    /// The legacy table name from where data is pulled for the SyncTranslation.
+    pub table: &'static str,
+    /// List of legacy tables that need to be integrated first before the SyncTranslation can run.
+    pub dependencies: Vec<&'static str>,
+}
+
 pub(crate) trait SyncTranslation {
+    /// Returns information about which legacy tables need to be integrated first before this
+    /// translation can run.
+    fn pull_dependencies(&self) -> PullDependency;
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
