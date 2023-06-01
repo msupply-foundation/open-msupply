@@ -110,7 +110,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       title={t('title.repack-details')}
       okButton={
         <DialogButton
-          variant="ok"
+          variant="save"
           disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
           onClick={async () => {
             try {
