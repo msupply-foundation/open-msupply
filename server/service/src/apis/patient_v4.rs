@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use reqwest::{Client, Url};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 pub struct PatientApiV4 {
     server_url: Url,
@@ -57,7 +57,8 @@ pub struct PatientV4 {
     pub code: String,
     pub last: String,
     pub first: String,
-    pub date_of_birth: String,
+    #[serde(deserialize_with = "date_of_birth")]
+    pub date_of_birth: Option<NaiveDate>,
     pub r#type: String,
     pub manufacturer: bool,
     pub bill_address3: String,
@@ -185,3 +186,10 @@ impl PatientApiV4 {
         Ok(response)
     }
 }
+
+pub fn date_of_birth<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
+    let s: Option<String> = Option::deserialize(d)?;
+    Ok(s.filter(|s| s != "0000-00-00T00:00:00")
+        .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok()))
+}
+
