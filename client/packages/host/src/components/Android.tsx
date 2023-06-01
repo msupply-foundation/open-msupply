@@ -5,6 +5,7 @@ import {
   BasicSpinner,
   Box,
   ButtonWithIcon,
+  ConnectionResult,
   ErrorWithDetails,
   ExternalLinkIcon,
   getNativeAPI,
@@ -98,7 +99,7 @@ const ModeOption = ({
 
 export const Android = () => {
   const {
-    connectToPreviousTimedOut,
+    connectToPreviousFailed,
     previousServer,
     servers,
     connectToServer,
@@ -118,6 +119,17 @@ export const Android = () => {
     setLocalMode(mode);
   };
 
+  const handleConnectionResult = async (result: ConnectionResult) => {
+    if (result.success) return;
+
+    console.error('Connecting to previous server:', result.error);
+    navigate(
+      RouteBuilder.create(AppRoute.Discovery)
+        .addPart(`?timedout=${!!connectToPreviousFailed}`)
+        .build()
+    );
+  };
+
   useEffect(() => {
     // this page is not for web users! begone!
     if (!getNativeAPI()) navigate(RouteBuilder.create(AppRoute.Login).build());
@@ -135,7 +147,11 @@ export const Android = () => {
       const localServer = servers.find(server => server.isLocal);
       if (localServer) {
         const path = !token ? 'login' : '';
-        connectToServer({ ...localServer, path });
+        connectToServer({ ...localServer, path })
+          .then(handleConnectionResult)
+          .catch(e =>
+            handleConnectionResult({ success: false, error: e.message })
+          );
       }
     }
   }, [mode, servers]);
@@ -143,15 +159,15 @@ export const Android = () => {
   useEffect(() => {
     if (
       mode === NativeMode.Client &&
-      (!previousServer?.ip || connectToPreviousTimedOut)
+      (!previousServer?.ip || connectToPreviousFailed)
     ) {
       navigate(
         RouteBuilder.create(AppRoute.Discovery)
-          .addPart(`?timedout=${!!connectToPreviousTimedOut}`)
+          .addPart(`?timedout=${!!connectToPreviousFailed}`)
           .build()
       );
     }
-  }, [mode, previousServer, connectToPreviousTimedOut]);
+  }, [mode, previousServer, connectToPreviousFailed]);
 
   if (mode === NativeMode.None)
     return (
@@ -195,7 +211,7 @@ export const Android = () => {
       </Viewport>
     );
 
-  if (mode === NativeMode.Server && connectToPreviousTimedOut)
+  if (mode === NativeMode.Server && connectToPreviousFailed)
     return (
       <Viewport>
         <Box

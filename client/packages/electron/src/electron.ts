@@ -8,10 +8,13 @@ import {
   isProtocol,
   BarcodeScanner,
   ScannerType,
+  ConnectionResult,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
 import { KeyboardScanner } from './keyboardScanner/keyboardScanner';
+import https from 'https';
+import http from 'http';
 
 const SERVICE_TYPE = 'omsupply';
 const PROTOCOL_KEY = 'protocol';
@@ -149,12 +152,33 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+// run a check to see if the server is available before attempting to connect
+const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
+  return new Promise<ConnectionResult>(resolve => {
+    const lib = server.protocol === 'https' ? https : http;
+    const options = {
+      rejectUnauthorized: false,
+    };
+    const request = lib.get(frontEndHostUrl(server), options, response => {
+      if (response.statusCode === 200) {
+        connectToServer(window, server);
+        resolve({ success: true });
+      }
+      resolve({ success: false, error: `Status: ${response.statusMessage}` });
+    });
+    // handle the error to prevent an alert in the desktop app
+    request.on('error', e => {
+      console.error('Error received connecting to server:', e);
+      resolve({ success: false, error: e.message });
+    });
+  });
+};
+
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   discovery.stop();
   connectedServer = server;
 
   const url = getDebugHost() || frontEndHostUrl(server);
-
   window.loadURL(url);
 };
 
@@ -183,8 +207,9 @@ const start = (): void => {
     window.loadURL(`${START_URL}?autoconnect=false`);
   });
 
-  ipcMain.on(IPC_MESSAGES.CONNECT_TO_SERVER, (_event, server: FrontEndHost) =>
-    connectToServer(window, server)
+  ipcMain.handle(
+    IPC_MESSAGES.CONNECT_TO_SERVER,
+    async (_event, server: FrontEndHost) => tryToConnectToServer(window, server)
   );
 
   ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);

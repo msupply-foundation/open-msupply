@@ -8,8 +8,8 @@ use serde::Deserialize;
 use std::collections::HashMap;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord,
-    SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecord, PullDeleteRecordTable, PullDependency,
+    PullUpsertRecord, SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -60,6 +60,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 }
 pub(crate) struct ProgramRequisitionSettingsTranslation {}
 impl SyncTranslation for ProgramRequisitionSettingsTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::LIST_MASTER,
+            dependencies: vec![LegacyTableName::NAME_TAG, LegacyTableName::PERIOD_SCHEDULE],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,

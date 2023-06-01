@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.security.MessageDigest;
-import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -119,7 +118,7 @@ class CertWebViewClient extends ExtendedWebViewClient {
      * It needs to be checked that we know/trust the server before performing the
      * certificate validation.
      */
-    private boolean validateNonLocalCertificate(SslCertificate targetCert, NativeApi.omSupplyServer connectedServer) {
+    private boolean validateNonLocalCertificate(SslCertificate targetCert, NativeApi.FrontEndHost connectedServer) {
         // Calculate SSL fingerprint
         MessageDigest md = null;
         try {
@@ -164,7 +163,7 @@ class CertWebViewClient extends ExtendedWebViewClient {
 
         String url = error.getUrl();
         Boolean isDiscovery = url.startsWith(nativeApi.getLocalUrl());
-        NativeApi.omSupplyServer connectedServer = nativeApi.getConnectedServer();
+        NativeApi.FrontEndHost connectedServer = nativeApi.getConnectedServer();
         Boolean isConnectedToServer = connectedServer != null && url.startsWith(connectedServer.getUrl());
 
         // Default behaviour if not connected to a server or not discovery
@@ -200,7 +199,7 @@ class CertWebViewClient extends ExtendedWebViewClient {
         // will not only reload, but will open the URL in a browser tab
         // for local URLs we don't want this to happen!
         Uri url = request.getUrl();
-        if(url.toString().startsWith(this.nativeApi.getServerUrl())) {
+        if (url.toString().startsWith(nativeApi.getServerUrl())) {
             return false;
         }
 

@@ -31,15 +31,15 @@ const useDraftRepack = (seed: Repack) => {
     seed.stockLineId ?? ''
   );
 
-  const onInsert = (patch: Partial<Repack>) => {
+  const onChange = (patch: Partial<Repack>) => {
     setRepack({ ...repack, ...patch });
   };
 
-  const onSave = async () => await mutateAsync(repack);
+  const onInsert = async () => mutateAsync(repack);
 
   return {
+    onChange,
     onInsert,
-    onSave,
     isLoading,
     draft: repack,
     isError,
@@ -66,25 +66,25 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { data, isError, isLoading } = useStock.repack.list(
     stockLine?.id ?? ''
   );
-  const { draft, onInsert, onSave } = useDraftRepack(defaultRepack);
+  const { draft, onChange, onInsert } = useDraftRepack(defaultRepack);
   const { columns } = useRepackColumns();
   const displayMessage = invoiceId == undefined && !isNew;
   const showRepackDetail = invoiceId || isNew;
 
   const onRowClick = (rowData: RepackFragment) => {
-    onInsert(defaultRepack);
+    onChange(defaultRepack);
     setInvoiceId(rowData.id);
     setIsNew(false);
   };
 
   const onNewClick = () => {
-    onInsert(defaultRepack);
+    onChange(defaultRepack);
     setInvoiceId(undefined);
     setIsNew(true);
   };
 
   const mapStructuredErrors = (
-    result: Awaited<ReturnType<typeof onSave>>
+    result: Awaited<ReturnType<typeof onInsert>>
   ): string | undefined => {
     if (result.__typename === 'InvoiceNode') {
       return undefined;
@@ -114,13 +114,13 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
           onClick={async () => {
             try {
-              const result = await onSave();
+              const result = await onInsert();
               const errorMessage = mapStructuredErrors(result);
 
               if (errorMessage) {
                 error(errorMessage)();
               } else {
-                onInsert(defaultRepack);
+                onChange(defaultRepack);
                 success(t('messages.saved'))();
               }
             } catch (e) {
@@ -172,7 +172,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             {showRepackDetail && (
               <RepackEditForm
                 invoiceId={invoiceId}
-                onInsert={onInsert}
+                onChange={onChange}
                 stockLine={stockLine}
                 draft={draft}
               />

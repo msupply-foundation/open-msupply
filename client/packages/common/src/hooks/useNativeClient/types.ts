@@ -7,13 +7,17 @@ export type Preference = {
   value: string;
   error?: string;
 };
+export type ConnectionResult = {
+  success: boolean;
+  error?: string;
+};
 export interface NativeAPI {
   // Method used in polling for found servers
   discoveredServers: () => Promise<{ servers: FrontEndHost[] }>;
   // Starts server discovery (connectToServer stops server discovery)
   startServerDiscovery: () => void;
   // Asks client to connect to server (causing window to navigate to server url and stops discovery)
-  connectToServer: (server: FrontEndHost) => void;
+  connectToServer: (server: FrontEndHost) => Promise<ConnectionResult>;
   // Will return currently connected client (to display in UI)
   connectedServer: () => Promise<FrontEndHost | null>;
   goBackToDiscovery: () => void;
