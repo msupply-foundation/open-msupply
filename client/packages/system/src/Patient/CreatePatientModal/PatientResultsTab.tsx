@@ -1,8 +1,11 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   BasicSpinner,
+  Box,
   DataTable,
   GenderInput,
+  InfoTooltipIcon,
+  LoadingButton,
   Typography,
   noOtherVariants,
   useColumns,
@@ -11,9 +14,9 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
+import { FetchPatientModal } from './FetchPatientModal';
 import { usePatient } from '../api';
 import { Gender, usePatientCreateStore } from '@openmsupply-client/programs';
-import { PatientFragment } from '../api/operations.generated';
 
 const genderToGenderInput = (gender: Gender): GenderInput => {
   switch (gender) {
@@ -34,14 +37,83 @@ const genderToGenderInput = (gender: Gender): GenderInput => {
   }
 };
 
-export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
-  const { mutate, isLoading, data } = usePatient.utils.search();
-  const { setNewPatient, updatePatient } = usePatientCreateStore();
+export interface PatientColumnData {
+  id: string;
+  code?: string | null;
+  code2?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  dateOfBirth?: string | null;
+  gender?: string | null;
+  isDeceased?: boolean | null;
+  isOnCentral?: boolean;
+}
+
+export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
+  patient,
+  value,
+  active,
+}) => {
+  const [data, setData] = useState<PatientColumnData[]>([]);
+  const [fetchingPatient, setFetchingPatient] = useState<
+    PatientColumnData | undefined
+  >(undefined);
+  const searchEnabled = !!patient && active;
+  const { isLoading: isLoadingLocal, data: localSearchData } =
+    usePatient.utils.search(
+      {
+        code: patient?.code,
+        code2: patient?.code2,
+        firstName: patient?.firstName,
+        lastName: patient?.lastName,
+        dateOfBirth: patient?.dateOfBirth,
+        gender: patient?.gender
+          ? genderToGenderInput(patient?.gender)
+          : undefined,
+      },
+      searchEnabled
+    );
+  const {
+    isFetching: isLoadingCentral,
+    data: centralSearchData,
+    refetch: centralRefetch,
+  } = usePatient.utils.centralSearch(
+    {
+      code: patient?.code,
+      firstName: patient?.firstName,
+      lastName: patient?.lastName,
+      dateOfBirth: patient?.dateOfBirth,
+    },
+    searchEnabled
+  );
+  const isCentralConnectionFailure =
+    !isLoadingCentral &&
+    centralSearchData?.__typename === 'CentralPatientSearchError' &&
+    centralSearchData.error.__typename === 'ConnectionError';
+
+  useEffect(() => {
+    const patients: PatientColumnData[] = [];
+    if (localSearchData) {
+      patients.push(...localSearchData.map(node => node.patient));
+    }
+    if (
+      centralSearchData &&
+      centralSearchData.__typename === 'CentralPatientSearchConnector'
+    ) {
+      for (const node of centralSearchData.nodes) {
+        if (patients.find(p => p.id === node.id) === undefined) {
+          patients.push({ ...node, isOnCentral: true });
+        }
+      }
+    }
+    setData(patients);
+  }, [localSearchData, centralSearchData]);
+  const { setNewPatient } = usePatientCreateStore();
   const t = useTranslation('patients');
   const navigate = useNavigate();
   const { localisedDate } = useFormatDateTime();
 
-  const columns = useColumns<PatientFragment>([
+  const columns = useColumns<PatientColumnData>([
     {
       key: 'code',
       label: 'label.patient-id',
@@ -74,29 +146,11 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
     },
   ]);
 
-  useEffect(() => {
-    if (!isLoading && !!patient && !data && !!patient.canSearch) {
-      const { code, code2, firstName, lastName, dateOfBirth, gender } = patient;
-      mutate({
-        code,
-        code2,
-        firstName,
-        lastName,
-        dateOfBirth,
-        gender: gender ? genderToGenderInput(gender) : undefined,
-      });
-    }
-  }, [patient, isLoading, data]);
-
-  useEffect(() => {
-    updatePatient({ canCreate: true });
-  }, [data]);
-
-  if (!patient?.canSearch) {
+  if (!active) {
     return null;
   }
 
-  if (isLoading) {
+  if (isLoadingLocal) {
     return <BasicSpinner />;
   }
 
@@ -104,27 +158,71 @@ export const PatientResultsTab: FC<PatientPanel> = ({ patient, value }) => {
 
   return (
     <PatientPanel value={value} patient={patient}>
-      {count > 0 && (
-        <Typography component="div" style={{ fontWeight: 700 }}>
-          {t('messages.patients-found', { count })}
-        </Typography>
-      )}
+      {fetchingPatient ? (
+        <FetchPatientModal
+          patient={fetchingPatient}
+          onClose={() => setFetchingPatient(undefined)}
+        />
+      ) : null}
+      <>
+        <Box
+          display="flex"
+          flexDirection="row"
+          justifyContent="space-between"
+          marginBottom={0.5}
+        >
+          {count > 0 && (
+            <Typography
+              component="div"
+              style={{ fontWeight: 700 }}
+              alignSelf="center"
+            >
+              {t('messages.patients-found', { count })}
+            </Typography>
+          )}
+          <Box display="flex" flexDirection="row" marginLeft="auto">
+            {isCentralConnectionFailure ? (
+              <InfoTooltipIcon title={t('messages.failed-to-reach-central')} />
+            ) : null}
+            {isLoadingCentral || isCentralConnectionFailure ? (
+              <LoadingButton
+                size="small"
+                color="secondary"
+                onClick={() => centralRefetch()}
+                isLoading={isLoadingCentral}
+                variant="outlined"
+              >
+                {t('button.retry')}
+              </LoadingButton>
+            ) : null}
+          </Box>
+        </Box>
+      </>
+
       <Typography component="div" fontSize={12}>
         {t('messages.patients-create', { count })}
       </Typography>
       <DataTable
         dense
         id="create-patient-duplicates"
-        data={data?.map(node => node.patient)}
+        data={data}
         columns={columns}
         noDataMessage={t('messages.no-matching-patients')}
         onRowClick={row => {
-          setNewPatient(undefined);
-          navigate(String(row.id));
+          if (row.isOnCentral) {
+            setFetchingPatient(row);
+          } else {
+            setNewPatient(undefined);
+            navigate(String(row.id));
+          }
         }}
-        generateRowTooltip={({ firstName, lastName }) =>
-          t('messages.click-to-view', { firstName, lastName })
-        }
+        generateRowTooltip={({ firstName, lastName, isOnCentral }) => {
+          if (isOnCentral) {
+            return t('messages.click-to-fetch');
+          } else {
+            return t('messages.click-to-view', { firstName, lastName });
+          }
+        }}
       />
     </PatientPanel>
   );
