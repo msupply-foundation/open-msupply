@@ -14,10 +14,7 @@ fragment StockLineRow on StockLineNode {
   totalNumberOfPacks
   supplierName
   location {
-    code
-    id
-    name
-    onHold
+    ...LocationRow
   }
   item {
     code
@@ -27,28 +24,23 @@ fragment StockLineRow on StockLineNode {
   barcode
 }
 
+fragment RepackStockLine on RepackStockLineNode {
+  location {
+    ...LocationRow
+  }
+  packSize
+  numberOfPacks
+}
+
 fragment Repack on RepackNode {
   id
   datetime
   repackId
   from {
-    location {
-      id
-      code
-      name
-    }
-    packSize
-    numberOfPacks
+    ...RepackStockLine
   }
   to {
-    location {
-      id
-      code
-      name
-      onHold
-    }
-    packSize
-    numberOfPacks
+    ...RepackStockLine
   }
 }
 
