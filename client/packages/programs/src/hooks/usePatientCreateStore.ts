@@ -26,8 +26,6 @@ export interface CreateNewPatient {
   lastName?: string;
   dateOfBirth?: string;
   gender?: Gender;
-  canSearch?: boolean;
-  canCreate?: boolean;
 }
 
 interface CreateNewPatientState {

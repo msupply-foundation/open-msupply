@@ -53,11 +53,10 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
     onClose,
   });
   const navigate = useNavigate();
-  const { patient, setNewPatient, updatePatient } = usePatientCreateStore();
+  const { patient, setNewPatient } = usePatientCreateStore();
   const t = useTranslation('patients');
 
   const onNext = () => {
-    updatePatient({ canSearch: true });
     onChangeTab(Tabs.SearchResults);
   };
 
@@ -127,11 +126,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
       sx={{ maxWidth: '90%' }}
       okButton={
         currentTab === Tabs.SearchResults ? (
-          <DialogButton
-            variant="next"
-            disabled={!patient?.canCreate}
-            onClick={onOk}
-          />
+          <DialogButton variant="next" onClick={onOk} />
         ) : undefined
       }
       nextButton={
@@ -166,7 +161,11 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
           <TabContext value={currentTab}>
             <DetailSection title="">
               <PatientFormTab value={Tabs.Form} patient={patient} />
-              <PatientResultsTab value={Tabs.SearchResults} patient={patient} />
+              <PatientResultsTab
+                value={Tabs.SearchResults}
+                patient={patient}
+                active={currentTab === Tabs.SearchResults}
+              />
             </DetailSection>
           </TabContext>
         </Box>
