@@ -1,9 +1,14 @@
 import React from 'react';
 import { LocaleKey, useTranslation } from '@common/intl';
-import { ArrowRightIcon, CheckIcon, XCircleIcon } from '@common/icons';
+import {
+  ArrowRightIcon,
+  CheckIcon,
+  SaveIcon,
+  XCircleIcon,
+} from '@common/icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
-type DialogButtonVariant = 'cancel' | 'next' | 'ok';
+type DialogButtonVariant = 'cancel' | 'next' | 'ok' | 'save';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -40,6 +45,12 @@ const getButtonProps = (
       return {
         icon: <ArrowRightIcon />,
         labelKey: 'button.ok-and-next',
+        variant: 'contained',
+      };
+    case 'save':
+      return {
+        icon: <SaveIcon />,
+        labelKey: 'button.save',
         variant: 'contained',
       };
   }
