@@ -17,12 +17,12 @@ import React, { FC, useState } from 'react';
 interface RepackEditFormProps {
   invoiceId?: string;
   stockLine: StockLineFragment | null;
-  onInsert: (repack: Repack) => void;
+  onChange: (repack: Repack) => void;
 }
 
 export const RepackEditForm: FC<RepackEditFormProps> = ({
   invoiceId,
-  onInsert,
+  onChange,
   stockLine,
 }) => {
   const t = useTranslation('inventory');
@@ -67,7 +67,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           Input={
             <PositiveNumberInput
               onChange={newPackSize => {
-                onInsert({
+                onChange({
                   newPackSize,
                 });
               }}
@@ -81,7 +81,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           Input={
             <PositiveNumberInput
               onChange={numberOfPacks => {
-                onInsert({
+                onChange({
                   numberOfPacks,
                 });
               }}
@@ -100,7 +100,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
               width={160}
               onChange={location => {
                 setLocation(location);
-                onInsert({
+                onChange({
                   newLocationId: location?.id,
                 });
               }}

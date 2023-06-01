@@ -23,8 +23,8 @@ interface RepackModalControlProps {
 }
 
 interface UseDraftRepackControl {
-  onInsert: (patch: Partial<Repack>) => void;
-  onSave: () => Promise<void>;
+  onChange: (patch: Partial<Repack>) => void;
+  onInsert: () => Promise<void>;
   isLoading: boolean;
   draft?: Repack;
   isError: boolean;
@@ -34,15 +34,15 @@ const useDraftRepack = (seed: Repack): UseDraftRepackControl => {
   const [repack, setRepack] = useState<Repack>(() => ({ ...seed }));
   const { mutate, isLoading, isError } = useStock.repack.insert();
 
-  const onInsert = (patch: Partial<Repack>) => {
+  const onChange = (patch: Partial<Repack>) => {
     setRepack({ ...repack, ...patch });
   };
 
-  const onSave = async () => mutate(repack);
+  const onInsert = async () => mutate(repack);
 
   return {
+    onChange,
     onInsert,
-    onSave,
     isLoading,
     draft: repack,
     isError,
@@ -62,7 +62,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { data, isError, isLoading } = useStock.repack.list(
     stockLine?.id ?? ''
   );
-  const { draft, onInsert, onSave } = useDraftRepack({
+  const { draft, onChange, onInsert } = useDraftRepack({
     stockLineId: stockLine?.id,
     newPackSize: 0,
     numberOfPacks: 0,
@@ -92,7 +92,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           variant="ok"
           disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
           onClick={async () => {
-            await onSave();
+            await onInsert();
             if (!isError) {
               onClose();
             }
@@ -142,7 +142,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             {showRepackDetail && (
               <RepackEditForm
                 invoiceId={invoiceId}
-                onInsert={onInsert}
+                onChange={onChange}
                 stockLine={stockLine}
               />
             )}
