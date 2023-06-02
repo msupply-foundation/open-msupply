@@ -10,7 +10,7 @@ import {
 
 import { Sdk, SyncErrorFragment } from './operations.generated';
 
-export const getHostQueries = (sdk: Sdk) => ({
+export const getSyncQueries = (sdk: Sdk) => ({
   get: {
     displaySettings: async (input: DisplaySettingsHash) => {
       const result = await sdk.displaySettings({ input });
