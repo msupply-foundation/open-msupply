@@ -3,7 +3,9 @@ import {
   BasicSpinner,
   Box,
   DataTable,
+  DownloadIcon,
   GenderInput,
+  HomeIcon,
   InfoTooltipIcon,
   LoadingButton,
   Typography,
@@ -17,6 +19,7 @@ import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
 import { usePatient } from '../api';
 import { Gender, usePatientCreateStore } from '@openmsupply-client/programs';
+import { CentralPatientSearchResponse } from '../api/api';
 
 const genderToGenderInput = (gender: Gender): GenderInput => {
   switch (gender) {
@@ -49,6 +52,21 @@ export interface PatientColumnData {
   isOnCentral?: boolean;
 }
 
+const isConnectionError = (
+  centralSearchData: CentralPatientSearchResponse | undefined
+): boolean => {
+  if (centralSearchData?.__typename === 'CentralPatientSearchError') {
+    switch (centralSearchData.error.__typename) {
+      case 'ConnectionError': {
+        return true;
+      }
+      default:
+        noOtherVariants(centralSearchData.error.__typename);
+    }
+  }
+  return false;
+};
+
 export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   patient,
   value,
@@ -59,20 +77,23 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     PatientColumnData | undefined
   >(undefined);
   const searchEnabled = !!patient && active;
-  const { isLoading: isLoadingLocal, data: localSearchData } =
-    usePatient.utils.search(
-      {
-        code: patient?.code,
-        code2: patient?.code2,
-        firstName: patient?.firstName,
-        lastName: patient?.lastName,
-        dateOfBirth: patient?.dateOfBirth,
-        gender: patient?.gender
-          ? genderToGenderInput(patient?.gender)
-          : undefined,
-      },
-      searchEnabled
-    );
+  const {
+    isLoading: isLoadingLocal,
+    data: localSearchData,
+    refetch: localRefetch,
+  } = usePatient.utils.search(
+    {
+      code: patient?.code,
+      code2: patient?.code2,
+      firstName: patient?.firstName,
+      lastName: patient?.lastName,
+      dateOfBirth: patient?.dateOfBirth,
+      gender: patient?.gender
+        ? genderToGenderInput(patient?.gender)
+        : undefined,
+    },
+    searchEnabled
+  );
   const {
     isFetching: isLoadingCentral,
     data: centralSearchData,
@@ -87,9 +108,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     searchEnabled
   );
   const isCentralConnectionFailure =
-    !isLoadingCentral &&
-    centralSearchData?.__typename === 'CentralPatientSearchError' &&
-    centralSearchData.error.__typename === 'ConnectionError';
+    !isLoadingCentral && isConnectionError(centralSearchData);
 
   useEffect(() => {
     const patients: PatientColumnData[] = [];
@@ -144,6 +163,12 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
       key: 'isDeceased',
       label: 'label.deceased',
     },
+    {
+      key: 'isOnCentral',
+      Cell: ({ rowData }) => {
+        return rowData.isOnCentral ? <DownloadIcon /> : <HomeIcon />;
+      },
+    },
   ]);
 
   if (!active) {
@@ -161,7 +186,11 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
       {fetchingPatient ? (
         <FetchPatientModal
           patient={fetchingPatient}
-          onClose={() => setFetchingPatient(undefined)}
+          onClose={() => {
+            // refresh local list so that patient shows up to be in the current store
+            localRefetch();
+            setFetchingPatient(undefined);
+          }}
         />
       ) : null}
       <>
