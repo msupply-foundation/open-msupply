@@ -2,7 +2,7 @@ import { Sync } from './sync';
 import { Utils } from './utils';
 import { Settings } from './settings';
 
-export const useHost = {
+export const useSync = {
   settings: {
     displaySettings: Settings.useDisplaySettings,
     syncSettings: Settings.useSyncSettings,

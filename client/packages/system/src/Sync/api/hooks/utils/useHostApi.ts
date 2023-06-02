@@ -1,6 +1,6 @@
 import { useAuthContext, useGql } from '@openmsupply-client/common';
-import { getHostQueries } from '../../api';
 import { getSdk } from '../../operations.generated';
+import { getSyncQueries } from '../../api';
 
 export const useHostApi = () => {
   const keys = {
@@ -13,6 +13,6 @@ export const useHostApi = () => {
 
   const { client } = useGql();
   const { storeId } = useAuthContext();
-  const queries = getHostQueries(getSdk(client));
+  const queries = getSyncQueries(getSdk(client));
   return { ...queries, storeId, keys };
 };
