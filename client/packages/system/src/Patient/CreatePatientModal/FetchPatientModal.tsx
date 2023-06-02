@@ -1,6 +1,10 @@
 import React, { FC, useEffect, useState } from 'react';
 
 import {
+  BasicTextInput,
+  Box,
+  InputWithLabelRow,
+  Stack,
   noOtherVariants,
   useDialog,
   useIntlUtils,
@@ -8,11 +12,13 @@ import {
 } from '@openmsupply-client/common';
 import { PatientColumnData } from './PatientResultsTab';
 import {
-  BasicSpinner,
   DialogButton,
   ErrorWithDetails,
+  InlineSpinner,
+  Typography,
 } from '@common/components';
 import { usePatient } from '../api';
+import { mapSyncError, useSync } from '../../Sync';
 
 interface FetchPatientModal {
   patient: PatientColumnData;
@@ -21,52 +27,58 @@ interface FetchPatientModal {
 
 /**
  * UI Steps:
- * - Start: modal just opened
- * - Confirmed: user confirmed to fetch patient
- * - Linked: name_store_join has been created
- * - Synced: patient data has been synced
+ * - Start: modal just opened; ask user to confirm to fetch patient
+ * - Linking: name_store_join is about to be created
+ * - Syncing: syncing patient data from central
+ * - Synced: done
  */
-type Step = 'Start' | 'Confirmed' | 'Linked' | 'Synced';
+type Step = 'Start' | 'Linking' | 'Syncing' | 'Synced';
+
+const STATUS_POLLING_INTERVAL = 500;
 
 /** Fetch a patient from central */
 export const FetchPatientModal: FC<FetchPatientModal> = ({
   patient,
   onClose,
 }) => {
+  const t = useTranslation('patients');
   const { Modal, showDialog, hideDialog } = useDialog({ onClose });
   const { getLocalisedFullName } = useIntlUtils();
   const [step, setStep] = useState<Step>('Start');
-
-  const {
-    mutate: linkPatientToStore,
-    data: patientStoreLink,
-    isLoading,
-  } = usePatient.utils.linkPatientToStore();
   const [error, setError] = useState<string | undefined>(undefined);
-  const t = useTranslation('patients');
+  const { mutate: linkPatientToStore, data: patientStoreLink } =
+    usePatient.utils.linkPatientToStore();
+  const { mutateAsync: manualSync, data: manualSyncResult } =
+    useSync.sync.manualSync();
+  const { data: syncStatus } = useSync.utils.syncStatus(
+    STATUS_POLLING_INTERVAL,
+    !!manualSyncResult && step !== 'Synced'
+  );
 
   useEffect(() => {
     showDialog();
     return () => {
       setStep('Start');
+      setError(undefined);
       hideDialog();
+      onClose();
     };
   }, []);
 
   useEffect(() => {
     switch (step) {
-      case 'Confirmed':
+      case 'Linking':
         linkPatientToStore(patient.id);
         break;
-      case 'Linked': {
-        // TODO implement sync
-        setStep('Synced');
+      case 'Syncing': {
+        manualSync();
+        break;
       }
     }
   }, [patient.id, step]);
 
   useEffect(() => {
-    if (step !== 'Confirmed' || !patientStoreLink) return;
+    if (step !== 'Linking' || !patientStoreLink) return;
     if (patientStoreLink.__typename === 'LinkPatientPatientToStoreError') {
       switch (patientStoreLink.error.__typename) {
         case 'ConnectionError': {
@@ -78,24 +90,54 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
       }
       return;
     }
-    setStep('Linked');
-  }, [patientStoreLink]);
+    setStep('Syncing');
+  }, [step, patientStoreLink]);
 
+  useEffect(() => {
+    if (step !== 'Syncing' || !syncStatus) return;
+    if (syncStatus.error) {
+      const error = mapSyncError(
+        t,
+        syncStatus.error,
+        'error.unknown-sync-error'
+      );
+      setError(error.error);
+    } else if (!syncStatus.isSyncing) {
+      setStep('Synced');
+    }
+  }, [step, syncStatus]);
+
+  const message = (() => {
+    switch (step) {
+      case 'Start':
+        return t('messages.confirm-patient-retrieval', {
+          name: getLocalisedFullName(patient.firstName, patient.lastName),
+        });
+      case 'Linking':
+      case 'Syncing':
+        return t('messages.fetching-patient-data');
+      case 'Synced':
+        return t('messages.fetching-patient-data-done');
+      default:
+        return noOtherVariants(step);
+    }
+  })();
   return (
     <Modal
-      title="Retrieve patient data from central server?"
+      title={t('title.patient-retrieval-modal')}
       okButton={
         <DialogButton
-          variant={step !== 'Synced' ? 'ok' : 'next'}
+          variant={step === 'Synced' ? 'ok' : 'next'}
           onClick={() => {
             if (step === 'Start') {
-              setStep('Confirmed');
+              setStep('Linking');
             } else {
               hideDialog();
               setStep('Start');
+              onClose();
             }
           }}
-          disabled={step === 'Confirmed' || step === 'Linked'}
+          disabled={(step !== 'Start' && step !== 'Synced') || !!error}
         />
       }
       cancelButton={
@@ -107,12 +149,45 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
         />
       }
     >
-      <>
-        Patient:
-        {getLocalisedFullName(patient.firstName, patient.lastName)}
-        {isLoading ? <BasicSpinner /> : null}
-        {error ? <ErrorWithDetails error="" details={error} /> : null}
-      </>
+      <Box
+        height="100%"
+        display="flex"
+        flexDirection="column"
+        justifyContent="space-between"
+        alignItems="center"
+      >
+        <Stack alignItems="flex-start" gap={1} sx={{ paddingLeft: '20px' }}>
+          <InputWithLabelRow
+            label={t('label.patient-id')}
+            Input={<BasicTextInput value={patient.code} disabled={true} />}
+          />
+          <InputWithLabelRow
+            label={t('label.first-name')}
+            Input={<BasicTextInput value={patient.firstName} disabled={true} />}
+          />
+          <InputWithLabelRow
+            label={t('label.last-name')}
+            Input={<BasicTextInput value={patient.lastName} disabled={true} />}
+          />
+          <InputWithLabelRow
+            label={t('label.date-of-birth')}
+            Input={
+              <BasicTextInput value={patient.dateOfBirth} disabled={true} />
+            }
+          />
+        </Stack>
+
+        {error ? (
+          <ErrorWithDetails error="" details={error} />
+        ) : (
+          <>
+            {step === 'Linking' || step === 'Syncing' ? (
+              <InlineSpinner />
+            ) : null}
+            <Typography>{message}</Typography>
+          </>
+        )}
+      </Box>
     </Modal>
   );
 };
