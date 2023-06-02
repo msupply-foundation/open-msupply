@@ -47,7 +47,7 @@
   "items": "Itens",
   "loading": "Carregando…",
   "locations": "Locais",
-  "login.heading": "Simples.\nPoderosa.\nAdministração\nFarmacêutica",
+  "login.heading": "Simples.\nPoderosa.\nAdministração.\nFarmacêutica.",
   "login.store-changed": "Bem vindo ao armazém {{store}}",
   "logout": "Encerrar a sessão",
   "master-lists": "Listas Mestres",
@@ -65,7 +65,7 @@
   "stocktakes": "Inventários",
   "app": "mSupply",
   "auth.no-store-assigned": "Você não está atribuído a nenhum armazém. Por favor inicie a sessão como um usuário diferente ou contacte seu administrador.",
-  "auth.server-error": "O servidor retornou um erro a buscar os detalhes do usuário! Não é possível prosseguir, por favor contacte support@msupply.foundation.",
+  "auth.server-error": "O servidor retornou um erro a buscar os detalhes do usuário! \nNão é possível prosseguir, por favor contacte support@msupply.foundation.",
   "auth.timeout-message": "Você foi desconectado da sua sessão por inactividade. Clique em OK para retornar para a tela de início.",
   "button.open-the-menu": "Abrir o menu",
   "cmdk.goto-customer-requisition": "Ir a: Requisição de Clientes",
@@ -75,5 +75,13 @@
   "discovery.body": "Para iniciar, por favor selecione o servidor ao qual deseja conectar.\nUma vez selecionado, iremos reconectar automaticamente se o servidor estiver disponível, para que não precise fazer isso novamente.\nO ícone 🏠ao lado do servidor te indica que esse é o seu computador local.",
   "error.server-not-found": "Encontramos um problema ao buscar um servidor Open mSupply",
   "error.unable-to-save-settings": "As alterações não puderam ser salvas",
-  "initialise.body": "Para começar, vamos precisar ajustar as configurações para sincronizar com mSupply. Por favor, insira os valores e clique em Salvar.\n\nSe você não tem certeza do que inserir, contacte support@msupply.foundation."
+  "initialise.body": "Para começar, vamos precisar ajustar as configurações para sincronizar com mSupply. Por favor, insira os valores e clique em Salvar.\n\nSe você não tem certeza do que inserir, contacte support@msupply.foundation.",
+  "admin": "Administrador",
+  "cmdk.drawer-toggle": "Alternar Menu",
+  "error.integration-timeout-reached": "A integração com o servidor central atingiu o tempo limite",
+  "login.body": "Se você administra um armazém de distribuição de produtos farmacêuticos , ou é um produtor que precisa de dezenas de usuários conectados, ou uma pequena farmácia, mSupply é um parceiro valioso.",
+  "store-details": "Código do Armazém: {{code}}",
+  "suppliers": "Fornecedores",
+  "sync": "Sincronização",
+  "tools": "Ferramentas"
 }
