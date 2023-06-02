@@ -69,5 +69,6 @@
   "messages.error-deleting-locations_one": "{{count}} locais não puderam ser excluídos",
   "messages.confirm-save-stock-line": "Você gostaria de salvar as alterações dessa linha do estoque? Todas as alterações serão registradas e podem ser revistas mais tarde nessa tela.",
   "messages.no-items-with-stock": "Nenhum item com estoque disponível",
-  "stocktake.description-template": "Criado por {{username}} no dia {{date}}"
+  "stocktake.description-template": "Criado por {{username}} no dia {{date}}",
+  "messages.unlocked-description": "Isso habilitará novamente mudanças no Inventário."
 }
