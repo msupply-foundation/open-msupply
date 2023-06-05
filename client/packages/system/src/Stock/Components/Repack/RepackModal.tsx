@@ -10,6 +10,9 @@ import {
   TableProvider,
   createTableStore,
   Grid,
+  useNotification,
+  getErrorMessage,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { RepackEditForm } from './RepackEditForm';
 import { Repack, useStock } from '@openmsupply-client/system';
@@ -22,23 +25,17 @@ interface RepackModalControlProps {
   stockLine: StockLineRowFragment | null;
 }
 
-interface UseDraftRepackControl {
-  onChange: (patch: Partial<Repack>) => void;
-  onInsert: () => Promise<void>;
-  isLoading: boolean;
-  draft?: Repack;
-  isError: boolean;
-}
-
-const useDraftRepack = (seed: Repack): UseDraftRepackControl => {
+const useDraftRepack = (seed: Repack) => {
   const [repack, setRepack] = useState<Repack>(() => ({ ...seed }));
-  const { mutate, isLoading, isError } = useStock.repack.insert();
+  const { mutateAsync, isLoading, isError } = useStock.repack.insert(
+    seed.stockLineId ?? ''
+  );
 
   const onChange = (patch: Partial<Repack>) => {
     setRepack({ ...repack, ...patch });
   };
 
-  const onInsert = async () => mutate(repack);
+  const onInsert = async () => mutateAsync(repack);
 
   return {
     onChange,
@@ -55,30 +52,54 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   stockLine,
 }) => {
   const t = useTranslation('inventory');
+  const { error, success } = useNotification();
+
   const { Modal } = useDialog({ isOpen, onClose });
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
+  const defaultRepack = {
+    stockLineId: stockLine?.id,
+    newPackSize: 0,
+    numberOfPacks: 0,
+  };
 
   const { data, isError, isLoading } = useStock.repack.list(
     stockLine?.id ?? ''
   );
-  const { draft, onChange, onInsert } = useDraftRepack({
-    stockLineId: stockLine?.id,
-    newPackSize: 0,
-    numberOfPacks: 0,
-  });
+  const { draft, onChange, onInsert } = useDraftRepack(defaultRepack);
   const { columns } = useRepackColumns();
   const displayMessage = invoiceId == undefined && !isNew;
   const showRepackDetail = invoiceId || isNew;
 
   const onRowClick = (rowData: RepackFragment) => {
+    onChange(defaultRepack);
     setInvoiceId(rowData.id);
     setIsNew(false);
   };
 
   const onNewClick = () => {
+    onChange(defaultRepack);
     setInvoiceId(undefined);
     setIsNew(true);
+  };
+
+  const mapStructuredErrors = (
+    result: Awaited<ReturnType<typeof onInsert>>
+  ): string | undefined => {
+    if (result.__typename === 'InvoiceNode') {
+      return undefined;
+    }
+
+    const { error: repackError } = result;
+
+    switch (repackError.__typename) {
+      case 'StockLineReducedBelowZero':
+        return t('error.repack-has-stock-reduced-below-zero');
+      case 'CannotHaveFractionalPack':
+        return t('error.repack-cannot-be-fractional');
+      default:
+        noOtherVariants(repackError);
+    }
   };
 
   return (
@@ -89,12 +110,21 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       title={t('title.repack-details')}
       okButton={
         <DialogButton
-          variant="ok"
+          variant="save"
           disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
           onClick={async () => {
-            await onInsert();
-            if (!isError) {
-              onClose();
+            try {
+              const result = await onInsert();
+              const errorMessage = mapStructuredErrors(result);
+
+              if (errorMessage) {
+                error(errorMessage)();
+              } else {
+                onChange(defaultRepack);
+                success(t('messages.saved'))();
+              }
+            } catch (e) {
+              error(getErrorMessage(e))();
             }
           }}
         />
@@ -144,6 +174,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
                 invoiceId={invoiceId}
                 onChange={onChange}
                 stockLine={stockLine}
+                draft={draft}
               />
             )}
           </Box>

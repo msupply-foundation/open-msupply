@@ -129,6 +129,10 @@ mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
           __typename
           description
         }
+        ... on CannotHaveFractionalPack {
+          __typename
+          description
+        }
       }
     }
   }

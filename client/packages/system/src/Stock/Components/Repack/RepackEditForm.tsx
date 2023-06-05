@@ -1,7 +1,7 @@
 import {
   Box,
   InputWithLabelRow,
-  PositiveNumberInput,
+  NonNegativeIntegerInput,
   TextWithLabelRow,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -12,22 +12,28 @@ import {
   useStock,
 } from '@openmsupply-client/system';
 import { LocationSearchInput } from 'packages/system/src/Location/Components/LocationSearchInput';
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 
 interface RepackEditFormProps {
   invoiceId?: string;
   stockLine: StockLineFragment | null;
   onChange: (repack: Repack) => void;
+  draft: Repack;
 }
 
 export const RepackEditForm: FC<RepackEditFormProps> = ({
   invoiceId,
   onChange,
   stockLine,
+  draft,
 }) => {
   const t = useTranslation('inventory');
   const { data } = useStock.repack.get(invoiceId ?? '');
   const [location, setLocation] = useState<LocationRowFragment | null>(null);
+
+  useEffect(() => {
+    setLocation(null);
+  }, [data]);
 
   return (
     <Box display="flex" flexDirection="column" padding={2} gap={1}>
@@ -46,7 +52,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
         text={
           invoiceId
             ? String(data?.to.numberOfPacks ?? '')
-            : String(stockLine?.totalNumberOfPacks ?? '')
+            : String(stockLine?.availableNumberOfPacks ?? '')
         }
         textProps={{ textAlign: 'end' }}
         labelProps={{ sx: { width: 0 } }}
@@ -65,13 +71,14 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
         <InputWithLabelRow
           label={t('label.new-pack-size')}
           Input={
-            <PositiveNumberInput
+            <NonNegativeIntegerInput
               onChange={newPackSize => {
                 onChange({
                   newPackSize,
                 });
               }}
               width={143}
+              value={draft.newPackSize}
               disabled={!!invoiceId}
             />
           }
@@ -79,13 +86,15 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
         <InputWithLabelRow
           label={t('label.new-num-packs')}
           Input={
-            <PositiveNumberInput
+            <NonNegativeIntegerInput
               onChange={numberOfPacks => {
                 onChange({
                   numberOfPacks,
                 });
               }}
               width={143}
+              value={draft.numberOfPacks}
+              max={stockLine?.availableNumberOfPacks ?? 0}
               disabled={!!invoiceId}
             />
           }
