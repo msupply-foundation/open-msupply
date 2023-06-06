@@ -61,7 +61,9 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   const oneReport =
     !isLoading && data?.nodes?.length === 1 ? data.nodes[0] : null;
 
-  return !!oneReport && !disabled ? (
+  if (disabled) return <>{children}</>;
+
+  return !!oneReport ? (
     <div onClick={() => onPrint(oneReport)}>{children}</div>
   ) : (
     <PaperClickPopover
