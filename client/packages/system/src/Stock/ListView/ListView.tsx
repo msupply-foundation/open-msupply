@@ -32,7 +32,7 @@ const StockListComponent: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const { data, isLoading, isError } = useStock.line.list();
-  const [repack, setRepack] = React.useState<StockLineRowFragment | null>(null);
+  const [repackId, setRepackId] = React.useState<string | null>(null);
   const EditStockLineCell = <T extends StockLineRowFragment>({
     rowData,
     isDisabled,
@@ -53,7 +53,7 @@ const StockListComponent: FC = () => {
       onClick={e => {
         e.stopPropagation();
         repackModalController.toggleOn();
-        setRepack(rowData);
+        setRepackId(rowData.id);
       }}
     />
   );
@@ -129,7 +129,7 @@ const StockListComponent: FC = () => {
         <RepackModal
           isOpen={repackModalController.isOn}
           onClose={repackModalController.toggleOff}
-          stockLine={repack}
+          stockLine={data?.nodes.find(({ id }) => id === repackId) ?? null}
         />
       )}
       {isOpen && (
