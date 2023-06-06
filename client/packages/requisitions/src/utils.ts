@@ -66,8 +66,12 @@ export const isRequestDisabled = (request: RequestRowFragment): boolean => {
   return request.status !== RequisitionNodeStatus.Draft;
 };
 
-export const isResponseDisabled = (request: RequestRowFragment): boolean => {
-  return request.status !== RequisitionNodeStatus.New;
+export const isResponseDisabled = (response: RequestRowFragment): boolean => {
+  return (
+    response.status !== RequisitionNodeStatus.New ||
+    response.approvalStatus === RequisitionNodeApprovalStatus.Pending ||
+    response.approvalStatus === RequisitionNodeApprovalStatus.Denied
+  );
 };
 
 export const requestsToCsv = (

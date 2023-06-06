@@ -3,7 +3,9 @@ use repository::{DocumentContext, DocumentRegistryRow, StorageConnection, SyncBu
 use serde::Deserialize;
 use serde_json::Value;
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -37,6 +39,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 
 pub(crate) struct DocumentRegistryTranslation {}
 impl SyncTranslation for DocumentRegistryTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::DOCUMENT_REGISTRY,
+            dependencies: vec![LegacyTableName::FORM_SCHEMA],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

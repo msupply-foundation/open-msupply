@@ -11,7 +11,7 @@ use crate::sync::{
     api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string, translations::LegacyTableName,
 };
 
-use super::{IntegrationRecords, PullUpsertRecord, SyncTranslation};
+use super::{IntegrationRecords, PullDependency, PullUpsertRecord, SyncTranslation};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -53,6 +53,13 @@ fn match_push_table(changelog: &ChangelogRow) -> bool {
 
 pub(crate) struct DocumentTranslation {}
 impl SyncTranslation for DocumentTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::DOCUMENT,
+            dependencies: vec![LegacyTableName::NAME, LegacyTableName::FORM_SCHEMA],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _connection: &StorageConnection,

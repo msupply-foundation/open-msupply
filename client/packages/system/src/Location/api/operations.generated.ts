@@ -20,7 +20,7 @@ export type InsertLocationMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertLocationMutation = { __typename: 'Mutations', insertLocation: { __typename: 'InsertLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } | { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } };
+export type InsertLocationMutation = { __typename: 'Mutations', insertLocation: { __typename: 'InsertLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } | { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } };
 
 export type UpdateLocationMutationVariables = Types.Exact<{
   input: Types.UpdateLocationInput;
@@ -93,15 +93,10 @@ export const InsertLocationDocument = gql`
         }
       }
     }
-    ... on LocationNode {
-      id
-      name
-      code
-      onHold
-    }
+    ...LocationRow
   }
 }
-    `;
+    ${LocationRowFragmentDoc}`;
 export const UpdateLocationDocument = gql`
     mutation updateLocation($input: UpdateLocationInput!, $storeId: String!) {
   updateLocation(input: $input, storeId: $storeId) {
@@ -134,15 +129,10 @@ export const UpdateLocationDocument = gql`
         }
       }
     }
-    ... on LocationNode {
-      id
-      name
-      onHold
-      code
-    }
+    ...LocationRow
   }
 }
-    `;
+    ${LocationRowFragmentDoc}`;
 export const DeleteLocationDocument = gql`
     mutation deleteLocation($storeId: String!, $input: DeleteLocationInput!) {
   deleteLocation(storeId: $storeId, input: $input) {

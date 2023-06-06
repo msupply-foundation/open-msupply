@@ -101,7 +101,7 @@ export const ProgramDetailModal: FC = () => {
       cancelButton={<DialogButton variant="cancel" onClick={reset} />}
       okButton={
         <DialogButton
-          variant={isCreating ? 'create' : 'ok'}
+          variant={isCreating ? 'save' : 'ok'}
           disabled={!isDirty || !!validationError}
           onClick={async () => {
             await saveData();

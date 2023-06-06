@@ -1,7 +1,9 @@
 use repository::{PeriodScheduleRow, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::PERIOD_SCHEDULE;
 
@@ -19,6 +21,13 @@ pub struct LegacyPeriodScheduleRow {
 
 pub(crate) struct PeriodScheduleTranslation {}
 impl SyncTranslation for PeriodScheduleTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::PERIOD_SCHEDULE,
+            dependencies: vec![],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

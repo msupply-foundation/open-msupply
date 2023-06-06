@@ -21,6 +21,7 @@ use graphql_general::{
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
@@ -52,6 +53,7 @@ pub struct Queries(
     pub RequisitionQueries,
     pub ReportQueries,
     pub StockLineQueries,
+    pub RepackQueries,
     pub ProgramsQueries,
     pub FormSchemaQueries,
     pub ClinicianQueries,
@@ -67,6 +69,7 @@ impl Queries {
             RequisitionQueries,
             ReportQueries,
             StockLineQueries,
+            RepackQueries,
             ProgramsQueries,
             FormSchemaQueries,
             ClinicianQueries,
@@ -85,6 +88,7 @@ pub struct Mutations(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub StockLineMutations,
+    pub RepackMutations,
     pub GeneralMutations,
     pub ProgramsMutations,
     pub FormSchemaMutations,
@@ -102,6 +106,7 @@ impl Mutations {
             RequisitionMutations,
             RequisitionLineMutations,
             StockLineMutations,
+            RepackMutations,
             GeneralMutations,
             ProgramsMutations,
             FormSchemaMutations,

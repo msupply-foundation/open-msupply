@@ -12,4 +12,9 @@ export const useStock = {
   utils: {
     api: Utils.useStockApi,
   },
+  repack: {
+    get: Lines.useRepack,
+    list: Lines.useRepacksByStockLine,
+    insert: Lines.useInsertRepack,
+  },
 };

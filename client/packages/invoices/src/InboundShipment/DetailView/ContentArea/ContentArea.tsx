@@ -3,7 +3,6 @@ import {
   DataTable,
   useTranslation,
   Box,
-  Switch,
   MiniTable,
   NothingHere,
   AppSxProp,
@@ -77,24 +76,11 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
   ({ onAddItem, onRowClick }) => {
     const t = useTranslation('replenishment');
     const isDisabled = useInbound.utils.isDisabled();
-    const { columns, rows, isGrouped, toggleIsGrouped } =
-      useInbound.lines.rows();
+    const { columns, rows } = useInbound.lines.rows();
     useHighlightPlaceholderRows(rows);
 
     return (
       <Box flexDirection="column" display="flex" flex={1}>
-        {rows?.length !== 0 && (
-          <Box style={{ padding: 5, marginInlineStart: 15 }}>
-            <Switch
-              label={t('label.group-by-item')}
-              onChange={toggleIsGrouped}
-              checked={isGrouped}
-              size="small"
-              disabled={rows?.length === 0}
-              color="secondary"
-            />
-          </Box>
-        )}
         <DataTable
           id="inbound-detail"
           onRowClick={onRowClick}

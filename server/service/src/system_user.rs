@@ -7,9 +7,7 @@ pub fn create_system_user(service_provider: &ServiceProvider) -> Result<(), Repo
     let system_user = UserAccountRow {
         id: SYSTEM_USER_ID.to_string(),
         username: SYSTEM_USER_ID.to_string(),
-        hashed_password: "".to_string(),
-        email: None,
-        language: Default::default(),
+        ..UserAccountRow::default()
     };
 
     let connection = service_provider.connection()?;
