@@ -1,6 +1,7 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
+mod repack_activity_log;
 mod repack_report;
 pub(crate) struct V1_01_15;
 
@@ -11,6 +12,7 @@ impl Migration for V1_01_15 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         repack_report::migrate(connection)?;
+        repack_activity_log::migrate(connection)?;
         Ok(())
     }
 }
