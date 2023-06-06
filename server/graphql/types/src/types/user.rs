@@ -135,6 +135,19 @@ impl UserNode {
     pub async fn language(&self) -> LanguageType {
         LanguageType::from_domain(&self.user.user_row.language)
     }
+
+    pub async fn first_name(&self) -> &Option<String> {
+        &self.user.user_row.first_name
+    }
+    pub async fn last_name(&self) -> &Option<String> {
+        &self.user.user_row.last_name
+    }
+    pub async fn phone_number(&self) -> &Option<String> {
+        &self.user.user_row.phone_number
+    }
+    pub async fn job_title(&self) -> &Option<String> {
+        &self.user.user_row.job_title
+    }
 }
 
 impl LanguageType {

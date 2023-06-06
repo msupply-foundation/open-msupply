@@ -216,6 +216,7 @@ fn generate_lines_from_master_list(
                     store_id: _,
                     on_hold: _,
                     available_number_of_packs: _,
+                    barcode_id: _,
                 } = line.stock_line_row;
 
                 result.push(StocktakeLineRow {
@@ -274,6 +275,7 @@ fn generate_lines_from_location(
                 store_id: _,
                 on_hold: _,
                 available_number_of_packs: _,
+                barcode_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {
@@ -328,6 +330,7 @@ pub fn generate_lines_with_stock(
                 store_id: _,
                 on_hold: _,
                 available_number_of_packs: _,
+                barcode_id: _,
             } = line.stock_line_row;
 
             StocktakeLineRow {

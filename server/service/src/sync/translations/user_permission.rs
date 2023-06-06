@@ -4,7 +4,9 @@ use repository::{Permission, StorageConnection, SyncBufferRow, UserPermissionRow
 
 use crate::sync::{sync_serde::empty_str_as_option_string, translations::LegacyTableName};
 
-use super::{IntegrationRecords, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, PullDeleteRecordTable, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyPermission {
@@ -33,6 +35,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 
 pub(crate) struct UserPermissionTranslation {}
 impl SyncTranslation for UserPermissionTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::USER_PERMISSION,
+            dependencies: vec![LegacyTableName::STORE],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _connection: &StorageConnection,

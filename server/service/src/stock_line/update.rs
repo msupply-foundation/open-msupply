@@ -1,15 +1,18 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, DatetimeFilter, EqualFilter, LocationMovementFilter,
-    LocationMovementRepository, LocationMovementRow, LocationMovementRowRepository,
-    RepositoryError, StockLine, StockLineRow, StockLineRowRepository, StorageConnection,
+    ActivityLogType, BarcodeRow, BarcodeRowRepository, DatetimeFilter, EqualFilter,
+    LocationMovementFilter, LocationMovementRepository, LocationMovementRow,
+    LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
+    StockLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
 use crate::{
     activity_log::activity_log_stock_entry,
+    barcode::{self, BarcodeInput},
+    common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
-    stock_line::validate::{check_location_exists, check_stock_line_exists, check_store},
+    stock_line::validate::check_location_exists,
     SingleRecordError,
 };
 
@@ -24,6 +27,7 @@ pub struct UpdateStockLine {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: Option<bool>,
     pub batch: Option<String>,
+    pub barcode: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -46,8 +50,13 @@ pub fn update_stock_line(
         .connection
         .transaction_sync(|connection| {
             let existing = validate(connection, &ctx.store_id, &input)?;
-            let (new_stock_line, location_movements) =
+            let (new_stock_line, location_movements, barcode_row) =
                 generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
+
+            if let Some(barcode_row) = barcode_row {
+                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
+            }
+
             StockLineRowRepository::new(&connection).upsert_one(&new_stock_line)?;
 
             if let Some(location_movements) = location_movements {
@@ -74,18 +83,20 @@ fn validate(
 ) -> Result<StockLineRow, UpdateStockLineError> {
     use UpdateStockLineError::*;
 
-    let stock_line = check_stock_line_exists(connection, &input.id)?.ok_or(StockDoesNotExist)?;
+    let stock_line: StockLine =
+        check_stock_line_exists(connection, store_id, &input.id).map_err(|err| match err {
+            CommonStockLineError::DatabaseError(RepositoryError::NotFound) => StockDoesNotExist,
+            CommonStockLineError::StockLineDoesNotBelongToStore => StockDoesNotBelongToStore,
+            CommonStockLineError::DatabaseError(error) => DatabaseError(error),
+        })?;
 
-    if !check_store(&stock_line, store_id) {
-        return Err(StockDoesNotBelongToStore);
-    };
     if let Some(location_id) = input.location_id.clone() {
         if !check_location_exists(connection, &location_id)? {
             return Err(LocationDoesNotExist);
         }
     }
 
-    Ok(stock_line)
+    Ok(stock_line.stock_line_row)
 }
 
 fn generate(
@@ -100,8 +111,16 @@ fn generate(
         expiry_date,
         batch,
         on_hold,
+        barcode,
     }: UpdateStockLine,
-) -> Result<(StockLineRow, Option<Vec<LocationMovementRow>>), UpdateStockLineError> {
+) -> Result<
+    (
+        StockLineRow,
+        Option<Vec<LocationMovementRow>>,
+        Option<BarcodeRow>,
+    ),
+    UpdateStockLineError,
+> {
     let location_movements = if location_id != existing.location_id {
         Some(generate_location_movement(
             store_id,
@@ -113,14 +132,37 @@ fn generate(
         None
     };
 
+    let barcode_row = match &barcode {
+        // Don't generate row for empty gtin
+        Some(gtin) if gtin == "" => None,
+        Some(gtin) => Some(barcode::generate(
+            connection,
+            BarcodeInput {
+                gtin: gtin.clone(),
+                item_id: existing.item_id.clone(),
+                pack_size: Some(existing.pack_size),
+            },
+        )?),
+        None => None,
+    };
+
+    let barcode_id = match &barcode {
+        // If it'e empty gtin unlink
+        Some(gtin) if gtin == "" => None,
+        // If gtin not specified keep existing
+        None => existing.barcode_id,
+        Some(_) => barcode_row.as_ref().map(|b| b.id.clone()),
+    };
+
     existing.location_id = location_id.or(existing.location_id);
     existing.batch = batch.or(existing.batch);
     existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
     existing.expiry_date = expiry_date.or(existing.expiry_date);
     existing.on_hold = on_hold.unwrap_or(existing.on_hold);
+    existing.barcode_id = barcode_id;
 
-    Ok((existing, location_movements))
+    Ok((existing, location_movements, barcode_row))
 }
 
 fn generate_location_movement(

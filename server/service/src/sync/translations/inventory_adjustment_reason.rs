@@ -4,7 +4,8 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::INVENTORY_ADJUSTMENT_REASON;
@@ -36,6 +37,13 @@ pub struct LegacyOptionsRow {
 
 pub(crate) struct InventoryAdjustmentReasonTranslation {}
 impl SyncTranslation for InventoryAdjustmentReasonTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
+            dependencies: vec![],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

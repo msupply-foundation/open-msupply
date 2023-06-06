@@ -170,7 +170,6 @@ fn generate_response_requisition(
         sent_datetime: None,
         finalised_datetime: None,
         colour: None,
-        is_sync_update: false,
     };
 
     Ok(result)
@@ -200,7 +199,6 @@ fn generate_response_requisition_lines(
                  average_monthly_consumption,
                  snapshot_datetime,
                  comment,
-                 is_sync_update: _,
              }| RequisitionLineRow {
                 id: uuid(),
                 requisition_id: response_requisition_id.to_string(),
@@ -215,7 +213,6 @@ fn generate_response_requisition_lines(
                 supply_quantity: 0,
                 approved_quantity: 0,
                 approval_comment: None,
-                is_sync_update: false,
             },
         )
         .collect();

@@ -1,3 +1,4 @@
+use crate::sync::sync_serde::empty_str_as_option_string;
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 
@@ -49,17 +50,22 @@ pub struct LoginUserV4 {
     // permissions_spare: null,
     pub lasttime: i32,
     pub initials: String,
-    pub first_name: String,
-    pub last_name: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub first_name: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub last_name: Option<String>,
     //date_of_birth: "0000-00-00",
     pub address_1: String,
     pub address_2: String,
-    pub e_mail: String,
-    pub phone1: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub e_mail: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub phone1: Option<String>,
     pub phone2: String,
     //date_created: "2017-10-11",
     //date_left: "0000-00-00",
-    pub job_title: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub job_title: Option<String>,
     pub responsible_officer: bool,
     #[serde(rename = "Language")]
     pub language: i32,

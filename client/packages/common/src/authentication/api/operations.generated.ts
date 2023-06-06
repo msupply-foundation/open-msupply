@@ -17,7 +17,7 @@ export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: '
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } }> } } };
+export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, firstName?: string | null, lastName?: string | null, phoneNumber?: string | null, jobTitle?: string | null, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } }> } } };
 
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -91,6 +91,10 @@ export const MeDocument = gql`
       }
       username
       userId
+      firstName
+      lastName
+      phoneNumber
+      jobTitle
     }
   }
 }

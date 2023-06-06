@@ -4,7 +4,8 @@ use repository::{ReportContext, ReportRow, ReportType, StorageConnection, SyncBu
 use serde::{Deserialize, Serialize};
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -61,6 +62,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 
 pub(crate) struct ReportTranslation {}
 impl SyncTranslation for ReportTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::REPORT,
+            dependencies: vec![],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

@@ -255,6 +255,7 @@ pub fn generate_lines_and_stock_lines(
                 on_hold: false,
                 note,
                 supplier_id: Some(supplier_id.to_string()),
+                barcode_id: None,
             };
             result.push(LineAndStockLine { line, stock_line });
         }

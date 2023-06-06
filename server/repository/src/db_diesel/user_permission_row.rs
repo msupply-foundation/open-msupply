@@ -32,12 +32,14 @@ pub enum Permission {
     // stock line
     StockLineQuery,
     StockLineMutate,
+    CreateRepack,
     // stocktake
     StocktakeQuery,
     StocktakeMutate,
     // requisition
     RequisitionQuery,
     RequisitionMutate,
+    RequisitionSend,
     // outbound shipment
     OutboundShipmentQuery,
     OutboundShipmentMutate,

@@ -245,22 +245,10 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_id!(StocktakeLineRowRepository, con, record, "StocktakeLine");
             }
             Requisition(record) => {
-                check_record_by_id_ignore_is_sync_update!(
-                    RequisitionRowRepository,
-                    con,
-                    record,
-                    RequisitionRow,
-                    "Requisition"
-                );
+                check_record_by_id!(RequisitionRowRepository, con, record, "Requisition");
             }
             RequisitionLine(record) => {
-                check_record_by_id_ignore_is_sync_update!(
-                    RequisitionLineRowRepository,
-                    con,
-                    record,
-                    RequisitionLineRow,
-                    "RequisitionLine"
-                );
+                check_record_by_id!(RequisitionLineRowRepository, con, record, "RequisitionLine");
             }
             Unit(record) => {
                 check_record_by_option_id!(UnitRowRepository, con, record, "Unit");
