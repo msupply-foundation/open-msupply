@@ -17,5 +17,13 @@
   "label.today": "Hoy",
   "label.total-items_one": "Total de artículos",
   "label.total-items_other": "Cantidad total de artículos",
-  "label.items-no-stock_other": "Artículos sin inventario"
+  "label.items-no-stock_other": "Artículos sin inventario",
+  "heading.shipments": "Envíos",
+  "inventory-management": "Gestión de inventario",
+  "label.have-not-shipped": "No han sido enviados",
+  "label.inbound-not-delivered": "Entradas no entregadas",
+  "label.new": "Nuevo",
+  "label.more-than-six-months-stock-items_one": "Artículo con más de 6 meses de stock",
+  "label.more-than-six-months-stock-items_other": "Artículos con más de 6 meses de stock",
+  "label.not-sent": "No enviado"
 }
