@@ -31,7 +31,7 @@ import { SettingTextArea, TextValue } from './SettingTextArea';
 import { SyncSettings } from './SyncSettings';
 import { SiteInfo } from '../components/SiteInfo';
 import { LogFileModal } from './LogFileModal';
-import { useSync } from '@openmsupply-client/system';
+import { useHost } from '../api';
 
 export const Settings: React.FC = () => {
   const t = useTranslation('common');
@@ -39,7 +39,7 @@ export const Settings: React.FC = () => {
   const navigate = useNavigate();
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');
   const [customLogo, setCustomLogo] = useLocalStorage('/theme/logo');
-  const { mutate: updateSettings } = useSync.settings.updateDisplaySettings();
+  const { mutate: updateSettings } = useHost.settings.updateDisplaySettings();
   usePermissionCheck(UserPermission.ServerAdmin);
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;

@@ -4,9 +4,7 @@ import { Settings } from './settings';
 
 export const useSync = {
   settings: {
-    displaySettings: Settings.useDisplaySettings,
     syncSettings: Settings.useSyncSettings,
-    updateDisplaySettings: Settings.useUpdateDisplaySettings,
   },
   sync: {
     initialise: Sync.useInitialiseSite,

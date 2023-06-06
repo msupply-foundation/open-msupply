@@ -4,18 +4,12 @@ import {
   SyncSettingsInput,
   ErrorWithDetailsProps,
   SyncErrorVariant,
-  DisplaySettingsInput,
-  DisplaySettingsHash,
 } from '@openmsupply-client/common';
 
 import { Sdk, SyncErrorFragment } from './operations.generated';
 
 export const getSyncQueries = (sdk: Sdk) => ({
   get: {
-    displaySettings: async (input: DisplaySettingsHash) => {
-      const result = await sdk.displaySettings({ input });
-      return result.displaySettings;
-    },
     syncSettings: async () => {
       const result = await sdk.syncSettings();
       return result.syncSettings;
@@ -40,10 +34,6 @@ export const getSyncQueries = (sdk: Sdk) => ({
       syncSettings: cleanSyncSettings(settings),
     });
     return result?.updateSyncSettings;
-  },
-  updateDisplaySettings: async (displaySettings: DisplaySettingsInput) => {
-    const result = await sdk.updateDisplaySettings({ displaySettings });
-    return result?.updateDisplaySettings;
   },
 });
 
