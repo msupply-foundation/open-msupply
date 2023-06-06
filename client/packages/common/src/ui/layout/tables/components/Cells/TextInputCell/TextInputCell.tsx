@@ -15,7 +15,7 @@ export const TextInputCell = <T extends RecordWithId>({
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
   const updater = useDebounceCallback(column.setter, [column.setter], 500);
   const { maxLength } = column;
-  const autoFocus = rowIndex === 0 && columnIndex === 0;
+  const autoFocus = rowIndex === 0 && columnIndex === 1;
   // This enables browser autocomplete for suggesting previously entered input
   // (input needs to be wrapped in form with autoComplete="on", doesn't quite work in firefox)
   // see https://github.com/openmsupply/open-msupply/pull/305
