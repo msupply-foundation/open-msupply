@@ -13,10 +13,19 @@ import {
   getErrorMessage,
   noOtherVariants,
   ButtonWithIcon,
+  ReportContext,
+  LoadingButton,
+  PrinterIcon,
 } from '@openmsupply-client/common';
 import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
-import { Repack, useStock } from '@openmsupply-client/system';
+import {
+  Repack,
+  ReportRowFragment,
+  ReportSelector,
+  useReport,
+  useStock,
+} from '@openmsupply-client/system';
 import { RepackFragment, StockLineRowFragment } from '../../api';
 import { useRepackColumns } from './column';
 
@@ -54,8 +63,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 }) => {
   const t = useTranslation('inventory');
   const { error, success } = useNotification();
-
   const { Modal } = useDialog({ isOpen, onClose });
+
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
   const defaultRepack = {
@@ -74,6 +83,13 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const displayMessage =
     invoiceId == undefined && !isNew && !!data?.nodes.length;
   const showRepackDetail = invoiceId || isNew;
+
+  const { print, isPrinting } = useReport.utils.print();
+
+  const printReport = (report: ReportRowFragment) => {
+    if (!data) return;
+    print({ reportId: report.id, dataId: invoiceId || '' });
+  };
 
   const onRowClick = (rowData: RepackFragment) => {
     onChange(defaultRepack);
@@ -142,6 +158,23 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      reportSelector={
+        <ReportSelector
+          context={ReportContext.Repack}
+          onPrint={printReport}
+          disabled={!invoiceId}
+        >
+          <LoadingButton
+            sx={{ marginLeft: 1 }}
+            variant="outlined"
+            startIcon={<PrinterIcon />}
+            isLoading={isPrinting}
+            disabled={!invoiceId}
+          >
+            {t('button.print')}
+          </LoadingButton>
+        </ReportSelector>
+      }
     >
       <Box>
         <Grid container alignItems="center" flexDirection="column">

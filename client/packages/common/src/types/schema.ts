@@ -2663,6 +2663,7 @@ export type RepackNode = {
   datetime: Scalars['DateTime'];
   from: RepackStockLineNode;
   id: Scalars['String'];
+  invoice: InvoiceNode;
   repackId: Scalars['String'];
   to: RepackStockLineNode;
 };
@@ -2686,6 +2687,7 @@ export type ReportConnector = {
 export enum ReportContext {
   InboundShipment = 'INBOUND_SHIPMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Repack = 'REPACK',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'

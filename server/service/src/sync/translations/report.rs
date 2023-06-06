@@ -26,7 +26,8 @@ pub enum LegacyReportContext {
     Requisition,
     #[serde(rename = "Stock Take")]
     Stocktake,
-
+    #[serde(rename = "Repack Finalised")]
+    Repack,
     #[serde(other)]
     Others,
 }
@@ -79,6 +80,7 @@ impl SyncTranslation for ReportTranslation {
             LegacyReportContext::SupplierInvoice => ReportContext::InboundShipment,
             LegacyReportContext::Requisition => ReportContext::Requisition,
             LegacyReportContext::Stocktake => ReportContext::Stocktake,
+            LegacyReportContext::Repack => ReportContext::Repack,
             LegacyReportContext::Others => return Ok(None),
         };
 

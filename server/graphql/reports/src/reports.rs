@@ -37,6 +37,7 @@ pub enum ReportContext {
     Requisition,
     Stocktake,
     Resource,
+    Repack,
 }
 
 #[derive(InputObject, Clone)]
@@ -86,6 +87,7 @@ impl ReportNode {
             ReportContextDomain::Requisition => ReportContext::Requisition,
             ReportContextDomain::Stocktake => ReportContext::Stocktake,
             ReportContextDomain::Resource => ReportContext::Resource,
+            ReportContextDomain::Repack => ReportContext::Repack,
         }
     }
 }
@@ -158,6 +160,7 @@ impl ReportContext {
             ReportContext::Requisition => ReportContextDomain::Requisition,
             ReportContext::Stocktake => ReportContextDomain::Stocktake,
             ReportContext::Resource => ReportContextDomain::Resource,
+            ReportContext::Repack => ReportContextDomain::Repack,
         }
     }
 }
