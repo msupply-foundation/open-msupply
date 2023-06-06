@@ -3,7 +3,6 @@ import {
   useTranslation,
   DataTable,
   Box,
-  BaseButton,
   DialogButton,
   Typography,
   useDialog,
@@ -13,7 +12,9 @@ import {
   useNotification,
   getErrorMessage,
   noOtherVariants,
+  ButtonWithIcon,
 } from '@openmsupply-client/common';
+import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
 import { Repack, useStock } from '@openmsupply-client/system';
 import { RepackFragment, StockLineRowFragment } from '../../api';
@@ -68,7 +69,10 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   );
   const { draft, onChange, onInsert } = useDraftRepack(defaultRepack);
   const { columns } = useRepackColumns();
-  const displayMessage = invoiceId == undefined && !isNew;
+  // only display the message if there are lines to click on
+  // if there are no lines, the 'click new' message is displayed closer to the action
+  const displayMessage =
+    invoiceId == undefined && !isNew && !!data?.nodes.length;
   const showRepackDetail = invoiceId || isNew;
 
   const onRowClick = (rowData: RepackFragment) => {
@@ -137,12 +141,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <Box>
-        <Grid
-          container
-          paddingBottom={1}
-          alignItems="center"
-          flexDirection="column"
-        >
+        <Grid container alignItems="center" flexDirection="column">
           <Typography sx={{ fontWeight: 'bold' }} variant="h6">
             {stockLine?.item.name}
           </Typography>
@@ -150,9 +149,21 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             {`${t('label.code')} : ${stockLine?.item.code}`}
           </Typography>
         </Grid>
-        <Box display={'flex'}>
-          <Box display={'flex'} flexDirection={'column'} width={'500px'}>
-            <Box paddingBottom={2}>
+        <Box
+          display="flex"
+          justifyContent="flex-end"
+          paddingBottom={1}
+          marginTop={-3}
+        >
+          <ButtonWithIcon
+            label={t('label.new')}
+            Icon={<PlusCircleIcon />}
+            onClick={onNewClick}
+          />
+        </Box>
+        <Box display="flex" flexDirection="column" height={435}>
+          <Box display="flex" flexDirection="column" flex={1}>
+            <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
               <TableProvider createStore={createTableStore}>
                 <DataTable
                   id="repack-list"
@@ -166,11 +177,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
                 />
               </TableProvider>
             </Box>
-            <Box display="flex" justifyContent="center">
-              <BaseButton onClick={onNewClick}>{t('label.new')}</BaseButton>
-            </Box>
           </Box>
-          <Box paddingLeft={3} width={'400px'}>
+          <Box paddingLeft={3} paddingTop={3} flex={1}>
             {displayMessage && (
               <Typography>{t('messages.no-repack-detail')}</Typography>
             )}
