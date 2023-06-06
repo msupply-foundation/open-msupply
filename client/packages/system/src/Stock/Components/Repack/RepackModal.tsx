@@ -121,7 +121,12 @@ export const RepackModal: FC<RepackModalControlProps> = ({
                 error(errorMessage)();
               } else {
                 onChange(defaultRepack);
-                success(t('messages.saved'))();
+                if (stockLine?.totalNumberOfPacks === draft.numberOfPacks) {
+                  onClose();
+                  success(t('messages.all-packs-repacked'))();
+                } else {
+                  success(t('messages.saved'))();
+                }
               }
             } catch (e) {
               error(getErrorMessage(e))();
