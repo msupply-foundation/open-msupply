@@ -1,7 +1,7 @@
 use repository::{
-    EqualFilter, Invoice, InvoiceFilter, InvoiceLineRowRepository, InvoiceRepository,
-    InvoiceRowRepository, LocationMovementRowRepository, RepositoryError, StockLine,
-    StockLineRowRepository,
+    ActivityLogRowRepository, EqualFilter, Invoice, InvoiceFilter, InvoiceLineRowRepository,
+    InvoiceRepository, InvoiceRowRepository, LocationMovementRowRepository, RepositoryError,
+    StockLine, StockLineRowRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -43,6 +43,7 @@ pub fn insert_repack(
                 repack_invoice_lines,
                 stock_lines,
                 location_movement,
+                activity_log,
             } = generate(ctx, stock_line, input)?;
 
             let stock_line_repo = StockLineRowRepository::new(connection);
@@ -62,6 +63,8 @@ pub fn insert_repack(
             if let Some(movement) = location_movement {
                 LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
             }
+
+            ActivityLogRowRepository::new(connection).insert_one(&activity_log)?;
 
             InvoiceRepository::new(connection)
                 .query_by_filter(
