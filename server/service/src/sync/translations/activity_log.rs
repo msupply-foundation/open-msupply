@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string};
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::OM_ACTIVITY_LOG;
 
@@ -38,6 +40,13 @@ pub struct LegacyActivityLogRow {
 
 pub(crate) struct ActivityLogTranslation {}
 impl SyncTranslation for ActivityLogTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::OM_ACTIVITY_LOG,
+            dependencies: vec![LegacyTableName::STORE],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

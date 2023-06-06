@@ -207,12 +207,12 @@ export type AuthTokenResponse = AuthToken | AuthTokenError;
 
 export type BarcodeNode = {
   __typename: 'BarcodeNode';
+  gtin: Scalars['String'];
   id: Scalars['String'];
   itemId: Scalars['String'];
   manufacturerId?: Maybe<Scalars['String']>;
   packSize?: Maybe<Scalars['Int']>;
   parentId?: Maybe<Scalars['String']>;
-  value: Scalars['String'];
 };
 
 export type BarcodeResponse = BarcodeNode | NodeError;
@@ -356,6 +356,11 @@ export type CannotEditRequisition = AddFromMasterListErrorInterface & CreateRequ
 
 export type CannotEditStocktake = DeleteStocktakeErrorInterface & DeleteStocktakeLineErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'CannotEditStocktake';
+  description: Scalars['String'];
+};
+
+export type CannotHaveFractionalPack = InsertRepackErrorInterface & {
+  __typename: 'CannotHaveFractionalPack';
   description: Scalars['String'];
 };
 
@@ -1156,9 +1161,9 @@ export enum InitialisationStatusType {
 export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
 export type InsertBarcodeInput = {
+  gtin: Scalars['String'];
   itemId: Scalars['String'];
   packSize?: InputMaybe<Scalars['Int']>;
-  value: Scalars['String'];
 };
 
 export type InsertBarcodeResponse = BarcodeNode;
@@ -1449,6 +1454,24 @@ export type InsertProgramRequestRequisitionInput = {
 };
 
 export type InsertProgramRequestRequisitionResponse = InsertProgramRequestRequisitionError | RequisitionNode;
+
+export type InsertRepackError = {
+  __typename: 'InsertRepackError';
+  error: InsertRepackErrorInterface;
+};
+
+export type InsertRepackErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type InsertRepackInput = {
+  newLocationId?: InputMaybe<Scalars['String']>;
+  newPackSize: Scalars['Int'];
+  numberOfPacks: Scalars['Float'];
+  stockLineId: Scalars['String'];
+};
+
+export type InsertRepackResponse = InsertRepackError | InvoiceNode;
 
 export type InsertRequestRequisitionError = {
   __typename: 'InsertRequestRequisitionError';
@@ -1760,7 +1783,8 @@ export enum InvoiceNodeType {
   InboundShipment = 'INBOUND_SHIPMENT',
   InventoryAddition = 'INVENTORY_ADDITION',
   InventoryReduction = 'INVENTORY_REDUCTION',
-  OutboundShipment = 'OUTBOUND_SHIPMENT'
+  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Repack = 'REPACK'
 }
 
 export type InvoiceResponse = InvoiceNode | NodeError;
@@ -1995,6 +2019,7 @@ export type MasterListFilterInput = {
   existsForNameId?: InputMaybe<EqualFilterStringInput>;
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isProgram?: InputMaybe<Scalars['Boolean']>;
   name?: InputMaybe<SimpleStringFilterInput>;
 };
 
@@ -2112,6 +2137,7 @@ export type Mutations = {
    */
   insertProgramEnrolment: InsertProgramEnrolmentResponse;
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
+  insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
@@ -2375,6 +2401,12 @@ export type MutationsInsertProgramEnrolmentArgs = {
 
 export type MutationsInsertProgramRequestRequisitionArgs = {
   input: InsertProgramRequestRequisitionInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertRepackArgs = {
+  input: InsertRepackInput;
   storeId: Scalars['String'];
 };
 
@@ -3017,7 +3049,7 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   authToken: AuthTokenResponse;
-  barcodeByValue: BarcodeResponse;
+  barcodeByGtin: BarcodeResponse;
   clinicians: CliniciansResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
@@ -3067,6 +3099,8 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   refreshToken: RefreshTokenResponse;
+  repack: RepackResponse;
+  repacksByStockLine: RepackConnector;
   /** Queries a list of available reports */
   reports: ReportsResponse;
   requisition: RequisitionResponse;
@@ -3101,9 +3135,9 @@ export type QueriesAuthTokenArgs = {
 };
 
 
-export type QueriesBarcodeByValueArgs = {
+export type QueriesBarcodeByGtinArgs = {
+  gtin: Scalars['String'];
   storeId: Scalars['String'];
-  value: Scalars['String'];
 };
 
 
@@ -3300,6 +3334,18 @@ export type QueriesProgramRequisitionSettingsArgs = {
 };
 
 
+export type QueriesRepackArgs = {
+  invoiceId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesRepacksByStockLineArgs = {
+  stockLineId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
 export type QueriesReportsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -3441,6 +3487,32 @@ export type RefreshTokenErrorInterface = {
 };
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
+
+export type RepackConnector = {
+  __typename: 'RepackConnector';
+  nodes: Array<RepackNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type RepackNode = {
+  __typename: 'RepackNode';
+  batch?: Maybe<Scalars['String']>;
+  datetime: Scalars['DateTime'];
+  from: RepackStockLineNode;
+  id: Scalars['String'];
+  repackId: Scalars['String'];
+  to: RepackStockLineNode;
+};
+
+export type RepackResponse = NodeError | RepackNode;
+
+export type RepackStockLineNode = {
+  __typename: 'RepackStockLineNode';
+  location?: Maybe<LocationNode>;
+  numberOfPacks: Scalars['Float'];
+  packSize: Scalars['Int'];
+  stockLine?: Maybe<StockLineNode>;
+};
 
 export type ReportConnector = {
   __typename: 'ReportConnector';
@@ -3808,6 +3880,7 @@ export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & Updat
 export type StockLineNode = {
   __typename: 'StockLineNode';
   availableNumberOfPacks: Scalars['Float'];
+  barcode?: Maybe<Scalars['String']>;
   batch?: Maybe<Scalars['String']>;
   costPricePerPack: Scalars['Float'];
   expiryDate?: Maybe<Scalars['NaiveDate']>;
@@ -3826,7 +3899,7 @@ export type StockLineNode = {
   totalNumberOfPacks: Scalars['Float'];
 };
 
-export type StockLineReducedBelowZero = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+export type StockLineReducedBelowZero = InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'StockLineReducedBelowZero';
   description: Scalars['String'];
   stockLine: StockLineNode;
@@ -4557,6 +4630,8 @@ export type UpdateStockLineErrorInterface = {
 };
 
 export type UpdateStockLineInput = {
+  /** Empty barcode will unlink barcode from StockLine */
+  barcode?: InputMaybe<Scalars['String']>;
   batch?: InputMaybe<Scalars['String']>;
   costPricePerPack?: InputMaybe<Scalars['Float']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']>;
@@ -4652,8 +4727,12 @@ export type UserNode = {
   defaultStore?: Maybe<UserStoreNode>;
   /** The user's email address */
   email?: Maybe<Scalars['String']>;
+  firstName?: Maybe<Scalars['String']>;
+  jobTitle?: Maybe<Scalars['String']>;
   language: LanguageType;
+  lastName?: Maybe<Scalars['String']>;
   permissions: UserStorePermissionConnector;
+  phoneNumber?: Maybe<Scalars['String']>;
   stores: UserStoreConnector;
   /** Internal user id */
   userId: Scalars['String'];
@@ -4666,6 +4745,7 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',
   DocumentQuery = 'DOCUMENT_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
@@ -4680,6 +4760,7 @@ export enum UserPermission {
   Report = 'REPORT',
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
+  RequisitionSend = 'REQUISITION_SEND',
   ServerAdmin = 'SERVER_ADMIN',
   StocktakeMutate = 'STOCKTAKE_MUTATE',
   StocktakeQuery = 'STOCKTAKE_QUERY',

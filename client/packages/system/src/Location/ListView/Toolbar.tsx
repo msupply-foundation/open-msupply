@@ -104,7 +104,7 @@ export const Toolbar: FC<{
         onOk={() => setDeleteErrors([])}
       />
 
-      <DropdownMenu label="Select">
+      <DropdownMenu label={t('label.select')}>
         <DropdownMenuItem
           IconComponent={DeleteIcon}
           onClick={() => showDeleteConfirmation()}

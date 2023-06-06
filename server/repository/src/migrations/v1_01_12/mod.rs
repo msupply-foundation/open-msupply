@@ -1,6 +1,9 @@
 use super::{version::Version, Migration};
 
+mod barcode_sync;
+mod local_authorisation;
 mod location_movement_triggers;
+mod stock_line_barcode_id;
 
 use crate::StorageConnection;
 pub(crate) struct V1_01_12;
@@ -12,6 +15,9 @@ impl Migration for V1_01_12 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         location_movement_triggers::migrate(connection)?;
+        stock_line_barcode_id::migrate(connection)?;
+        local_authorisation::migrate(connection)?;
+        barcode_sync::migrate(connection)?;
         Ok(())
     }
 }

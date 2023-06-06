@@ -120,7 +120,7 @@ export const CreateEncounterModal: FC = () => {
       cancelButton={<DialogButton variant="cancel" onClick={reset} />}
       okButton={
         <DialogButton
-          variant={'create'}
+          variant={'save'}
           disabled={!canSubmit()}
           onClick={async () => {
             if (encounterRegistry !== undefined) {

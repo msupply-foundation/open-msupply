@@ -16,7 +16,7 @@ const mapRoute = (route: string): RouteMapping => {
   const inRoute = (sub: string) => new RegExp(`/${sub}/|/${sub}\$`).test(route);
   switch (true) {
     case inRoute('dashboard'):
-      return { title: 'dashboard', docs: '/dashboard/' };
+      return { title: 'dashboard', docs: '/introduction/dashboard/' };
     case inRoute('outbound-shipment'):
       return {
         title: 'outbound-shipments',

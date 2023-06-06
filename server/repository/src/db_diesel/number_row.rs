@@ -35,6 +35,7 @@ pub enum NumberRowType {
     RequestRequisition,
     ResponseRequisition,
     Stocktake,
+    Repack,
     Program(String),
 }
 
@@ -48,6 +49,7 @@ impl fmt::Display for NumberRowType {
             NumberRowType::RequestRequisition => write!(f, "REQUEST_REQUISITION"),
             NumberRowType::ResponseRequisition => write!(f, "RESPONSE_REQUISITION"),
             NumberRowType::Stocktake => write!(f, "STOCKTAKE"),
+            NumberRowType::Repack => write!(f, "REPACK"),
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
         }
     }
@@ -65,6 +67,7 @@ impl TryFrom<String> for NumberRowType {
             "REQUEST_REQUISITION" => Ok(NumberRowType::RequestRequisition),
             "RESPONSE_REQUISITION" => Ok(NumberRowType::ResponseRequisition),
             "STOCKTAKE" => Ok(NumberRowType::Stocktake),
+            "REPACK" => Ok(NumberRowType::Repack),
             _ => match s.split_once('_') {
                 Some((prefix, custom_string)) => {
                     if prefix == "PROGRAM" {
@@ -292,6 +295,12 @@ mod number_row_mapping_test {
                 assert!(
                     NumberRowType::try_from(NumberRowType::Program(s.clone()).to_string()).unwrap()
                         == NumberRowType::Program(s)
+                )
+            }
+            NumberRowType::Repack => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::Repack.to_string()).unwrap()
+                        == NumberRowType::Repack
                 )
             }
         }

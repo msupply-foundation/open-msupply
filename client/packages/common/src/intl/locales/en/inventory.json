@@ -1,5 +1,6 @@
 {
   "button.delete-lines": "Delete selected lines",
+  "button.repack": "Repack",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "error.cant-save": "There was a problem saving.",
   "error.no-locations": "There are no Locations to display.",
@@ -15,6 +16,8 @@
   "error.reduced-below-zero": "Stock line exist in new outbound shipments. The quantity cannot be reduced below zero.",
   "error.stocktake-has-stock-reduced-below-zero": "Stock take cannot be finalised because some of the stock has been used in new outbound shipments.",
   "error.unable-to-scan": "Unable to scan barcode: {{error}}",
+  "error.repack-has-stock-reduced-below-zero": "Cannot repack stock line. New number of packs exceeds stock line number of packs.",
+  "error.repack-cannot-be-fractional": "Cannot repack into a fractional pack",
   "label.add-batch": "Add batch",
   "label.add-new-line": "Add a new line",
   "label.cost-price": "Cost price",
@@ -36,6 +39,11 @@
   "label.location": "Location",
   "label.master-list": "Master List",
   "label.items-with-stock": "Items with Stock",
+  "label.new": "New",
+  "label.new-pack-size": "New Pack Size",
+  "label.new-num-packs": "New # of Packs",
+  "label.remainder-pack-size": "Remainder Pack Size",
+  "label.remainder-location": "Remainder Location",
   "message.no-supplier": "Inventory Adjustment",
   "messages.locked-description": "This will prevent further changes to the stocktake until it is unlocked.",
   "messages.unlocked-description": "This will re-enable changes to the stocktake.",
@@ -64,11 +72,14 @@
   "messages.no-items-with-stock": "No items with stock available",
   "messages.on-hold-stock-take": "This stocktake is on hold and cannot be edited",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
+  "messages.no-repacks": "This stock line has not been repacked",
+  "messages.no-repack-detail": "Select a line to view the details of a repack or click new to create a new repack",
   "status.new": "New",
   "status.finalised": "Finalised",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
   "stocktake.comment-list-template": "Created using master list '{{list}}'",
   "stocktake.comment-location-template": "Created using items in location '{{location}}'",
   "stocktake-comment-items-have-stock-template": "Created using items that have stock",
-  "title.stock-line-details": "Stock Line Details"
+  "title.stock-line-details": "Stock Line Details",
+  "title.repack-details": "Repack Details"
 }

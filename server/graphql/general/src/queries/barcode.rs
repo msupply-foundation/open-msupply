@@ -13,10 +13,10 @@ pub enum BarcodeResponse {
     Response(BarcodeNode),
 }
 
-pub fn barcode_by_value(
+pub fn barcode_by_gtin(
     ctx: &Context<'_>,
     store_id: String,
-    value: String,
+    gtin: String,
 ) -> Result<BarcodeResponse> {
     let user = validate_auth(
         ctx,
@@ -30,7 +30,7 @@ pub fn barcode_by_value(
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let barcode_option = service_provider
         .barcode_service
-        .get_barcode_by_value(&service_context, &value)
+        .get_barcode_by_gtin(&service_context, &gtin)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
     let response = match barcode_option {

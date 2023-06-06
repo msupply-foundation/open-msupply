@@ -17,7 +17,8 @@ use crate::sync::{
 };
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::REQUISITION;
@@ -166,6 +167,18 @@ pub struct LegacyRequisitionRow {
 
 pub(crate) struct RequisitionTranslation {}
 impl SyncTranslation for RequisitionTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::REQUISITION,
+            dependencies: vec![
+                LegacyTableName::STORE,
+                LegacyTableName::NAME,
+                LegacyTableName::PERIOD,
+                LegacyTableName::LIST_MASTER,
+            ],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         conn: &StorageConnection,
@@ -242,7 +255,6 @@ impl SyncTranslation for RequisitionTranslation {
             linked_requisition_id: data.linked_requisition_id,
             expected_delivery_date: data.expected_delivery_date,
             approval_status: data.approval_status.map(|s| s.to()),
-            is_sync_update: true,
             program_id,
             period_id: data.periodID,
             order_type: data.orderType,
@@ -297,7 +309,6 @@ impl SyncTranslation for RequisitionTranslation {
             linked_requisition_id,
             expected_delivery_date,
             approval_status,
-            is_sync_update: _,
             program_id,
             period_id,
             order_type,

@@ -1,5 +1,7 @@
 use super::{version::Version, Migration};
-mod is_sync_update;
+
+mod invoice_and_number_type;
+mod permission;
 
 use crate::StorageConnection;
 pub(crate) struct V1_01_13;
@@ -10,8 +12,8 @@ impl Migration for V1_01_13 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        is_sync_update::migrate(connection)?;
-
+        permission::migrate(connection)?;
+        invoice_and_number_type::migrate(connection)?;
         Ok(())
     }
 }

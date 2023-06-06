@@ -224,11 +224,7 @@ impl LoginService {
             username: user_info.user.name.to_string(),
             hashed_password: UserAccountService::hash_password(&password)
                 .map_err(UpdateUserError::PasswordHashError)?,
-            email: match user_info.user.e_mail.as_str() {
-                // TODO do this using serde
-                "" => None,
-                _ => Some(user_info.user.e_mail.to_string()),
-            },
+            email: user_info.user.e_mail,
             language: match user_info.user.language {
                 0 => Language::English,
                 1 => Language::French,
@@ -240,6 +236,10 @@ impl LoginService {
                 7 => Language::Tetum,
                 _ => Language::English,
             },
+            first_name: user_info.user.first_name,
+            last_name: user_info.user.last_name,
+            phone_number: user_info.user.phone1,
+            job_title: user_info.user.job_title,
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores
@@ -307,6 +307,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::EditStock => {
                 output.insert(Permission::StockLineMutate);
             }
+            Permissions::CreateRepacksOrSplitStock => {
+                output.insert(Permission::CreateRepack);
+            }
             // stocktake
             Permissions::CreateStocktake => {
                 output.insert(Permission::StocktakeMutate);
@@ -353,6 +356,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             }
             Permissions::CreateAndEditRequisitions => {
                 output.insert(Permission::RequisitionMutate);
+            }
+            Permissions::ConfirmInternalOrderSent => {
+                output.insert(Permission::RequisitionSend);
             }
             // reports
             Permissions::ViewReports => {

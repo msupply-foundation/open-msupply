@@ -3,7 +3,6 @@ import {
   AppBarContentPortal,
   Box,
   InputWithLabelRow,
-  BasicTextInput,
   Grid,
   DropdownMenu,
   DropdownMenuItem,
@@ -12,6 +11,8 @@ import {
   SearchBar,
   InfoPanel,
   Typography,
+  BufferedTextInput,
+  
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -76,7 +77,7 @@ export const Toolbar: FC = () => {
               <InputWithLabelRow
                 label={t('label.customer-ref')}
                 Input={
-                  <BasicTextInput
+                  <BufferedTextInput
                     disabled={isDisabled}
                     size="small"
                     sx={{ width: 250 }}

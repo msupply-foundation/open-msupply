@@ -25,7 +25,7 @@ impl StockLineReducedBelowZero {
 #[Object]
 impl StockLineReducedBelowZero {
     pub async fn description(&self) -> &'static str {
-        "Stock line exist in new outbound shipments. "
+        "Stock line reduced below zero."
     }
 
     pub async fn stock_line(&self) -> &StockLineNode {

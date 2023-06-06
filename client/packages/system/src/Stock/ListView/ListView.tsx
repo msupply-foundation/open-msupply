@@ -9,8 +9,13 @@ import {
   useUrlQueryParams,
   DateUtils,
   useEditModal,
+  IconButton,
+  CellProps,
+  useToggle,
+  StockIcon,
+  ColumnAlign,
 } from '@openmsupply-client/common';
-import { StockLineEditModal, Toolbar } from '../Components';
+import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 
@@ -27,8 +32,42 @@ const StockListComponent: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const { data, isLoading, isError } = useStock.line.list();
+  const [repack, setRepack] = React.useState<StockLineRowFragment | null>(null);
+  const EditStockLineCell = <T extends StockLineRowFragment>({
+    rowData,
+    isDisabled,
+  }: CellProps<T>): React.ReactElement<CellProps<T>> => (
+    <IconButton
+      label={t('button.repack')}
+      height="16px"
+      disabled={isDisabled}
+      icon={
+        <StockIcon
+          sx={{
+            color: 'primary.main',
+            width: '12px',
+            cursor: 'pointer',
+          }}
+        />
+      }
+      onClick={e => {
+        e.stopPropagation();
+        repackModalController.toggleOn();
+        setRepack(rowData);
+      }}
+    />
+  );
+
   const columns = useColumns<StockLineRowFragment>(
     [
+      {
+        key: 'edit',
+        label: 'label.repack',
+        Cell: EditStockLineCell,
+        maxWidth: 75,
+        sortable: false,
+        align: ColumnAlign.Center,
+      },
       ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
       ['itemName', { accessor: ({ rowData }) => rowData.item.name }],
       'batch',
@@ -78,11 +117,21 @@ const StockListComponent: FC = () => {
     },
     [sortBy]
   );
+
   const { isOpen, entity, onClose, onOpen } =
     useEditModal<StockLineRowFragment>();
 
+  const repackModalController = useToggle();
+
   return (
     <>
+      {repackModalController.isOn && (
+        <RepackModal
+          isOpen={repackModalController.isOn}
+          onClose={repackModalController.toggleOff}
+          stockLine={repack}
+        />
+      )}
       {isOpen && (
         <StockLineEditModal
           isOpen={isOpen}
@@ -90,7 +139,6 @@ const StockListComponent: FC = () => {
           stockLine={entity}
         />
       )}
-
       <Toolbar filter={filter} />
       <AppBarButtons />
       <DataTable
@@ -102,8 +150,8 @@ const StockListComponent: FC = () => {
         noDataElement={<NothingHere body={t('error.no-stock')} />}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={onOpen}
         enableColumnSelection
+        onRowClick={onOpen}
       />
     </>
   );

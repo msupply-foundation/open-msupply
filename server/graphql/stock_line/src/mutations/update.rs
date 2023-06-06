@@ -22,6 +22,8 @@ pub struct UpdateInput {
     pub expiry_date: Option<NaiveDate>,
     pub batch: Option<String>,
     pub on_hold: Option<bool>,
+    /// Empty barcode will unlink barcode from StockLine
+    pub barcode: Option<String>,
 }
 
 #[derive(Interface)]
@@ -86,6 +88,7 @@ impl UpdateInput {
             expiry_date,
             batch,
             on_hold,
+            barcode,
         } = self;
 
         ServiceInput {
@@ -96,6 +99,7 @@ impl UpdateInput {
             expiry_date,
             batch,
             on_hold,
+            barcode,
         }
     }
 }
@@ -261,6 +265,7 @@ mod test {
                     expiry_date: None,
                     batch: None,
                     on_hold: None,
+                    barcode: None,
                 }
             );
             Ok(StockLine {
@@ -268,6 +273,7 @@ mod test {
                 item_row: mock_item_a(),
                 location_row: None,
                 name_row: None,
+                barcode_row: None,
             })
         }));
 

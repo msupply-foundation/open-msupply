@@ -6,8 +6,8 @@ use util::date_now;
 use super::{prepare::PrepareProgramSettings, OrderType, ProgramSettings};
 
 // History = historic and current
-const MAX_NUMBER_OF_HISTORIC_PERIODS: usize = 3;
-const MAX_NUMBER_OF_FUTURE_PERIODS: usize = 3;
+const MAX_NUMBER_OF_HISTORIC_PERIODS: usize = 2;
+const MAX_NUMBER_OF_FUTURE_PERIODS: usize = 2;
 
 /// Map prepared program_settings, order_types, periods and requisitions_in_periods to ProgramSettings
 /// order types are mapped to program settings by program setting id
@@ -147,7 +147,7 @@ fn test_reduce_and_sort_periods() {
         .map(make_date)
         .collect();
 
-    let result: Vec<PeriodRow> = [-5, -4, -2, 2, 3, 4].iter().map(make_date).collect();
+    let result: Vec<PeriodRow> = [-4, -2, 2, 3].iter().map(make_date).collect();
 
     assert_eq!(reduce_and_sort_periods(periods), result)
 }

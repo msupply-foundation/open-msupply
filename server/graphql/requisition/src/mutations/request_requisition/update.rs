@@ -69,6 +69,16 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
         },
     )?;
 
+    if input.status == Some(UpdateRequestRequisitionStatusInput::Sent) {
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::RequisitionSend,
+                store_id: Some(store_id.to_string()),
+            },
+        )?;
+    }
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 

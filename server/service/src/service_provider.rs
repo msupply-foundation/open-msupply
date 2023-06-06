@@ -23,6 +23,7 @@ use crate::{
     missing_program::create_missing_master_list_and_program,
     name::get_names,
     processors::ProcessorsTrigger,
+    repack::{RepackService, RepackServiceTrait},
     programs::{
         encounter::{EncounterService, EncounterServiceTrait},
         patient::{PatientService, PatientServiceTrait},
@@ -73,6 +74,7 @@ pub struct ServiceProvider {
     pub item_stats_service: Box<dyn ItemStatsServiceTrait>,
     // Stock
     pub stock_line_service: Box<dyn StockLineServiceTrait>,
+    pub repack_service: Box<dyn RepackServiceTrait>,
     // Reports
     pub report_service: Box<dyn ReportServiceTrait>,
 
@@ -165,6 +167,7 @@ impl ServiceProvider {
             stock_line_service: Box::new(StockLineService {}),
             item_count_service: Box::new(ItemServiceCount {}),
             barcode_service: Box::new(BarcodeService {}),
+            repack_service: Box::new(RepackService {}),
         }
     }
 

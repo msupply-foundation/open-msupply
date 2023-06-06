@@ -14,16 +14,38 @@ fragment StockLineRow on StockLineNode {
   totalNumberOfPacks
   supplierName
   location {
-    code
-    id
-    name
-    onHold
+    ...LocationRow
   }
   item {
     code
     name
     unitName
   }
+  barcode
+}
+
+fragment RepackStockLine on RepackStockLineNode {
+  location {
+    ...LocationRow
+  }
+  packSize
+  numberOfPacks
+}
+
+fragment Repack on RepackNode {
+  id
+  datetime
+  repackId
+  from {
+    ...RepackStockLine
+  }
+  to {
+    ...RepackStockLine
+  }
+}
+
+fragment InvoiceRow on InvoiceNode {
+  id
 }
 
 query stockLines(
@@ -69,6 +91,49 @@ mutation updateStockLine($input: UpdateStockLineInput!, $storeId: String!) {
     ... on StockLineNode {
       __typename
       ...StockLineRow
+    }
+  }
+}
+
+query repack($invoiceId: String!, $storeId: String!) {
+  repack(invoiceId: $invoiceId, storeId: $storeId) {
+    ... on RepackNode {
+      __typename
+      ...Repack
+    }
+  }
+}
+
+query repacksByStockLine($stockLineId: String!, $storeId: String!) {
+  repacksByStockLine(stockLineId: $stockLineId, storeId: $storeId) {
+    ... on RepackConnector {
+      nodes {
+        ...Repack
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
+  insertRepack(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      ...InvoiceRow
+    }
+    ... on InsertRepackError {
+      __typename
+      error {
+        description
+        ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+        ... on CannotHaveFractionalPack {
+          __typename
+          description
+        }
+      }
     }
   }
 }
