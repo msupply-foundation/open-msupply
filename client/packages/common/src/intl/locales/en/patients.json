@@ -26,7 +26,7 @@
   "label.previous-encounters": "Previous Encounters",
   "label.more": "More...",
   "title.patient-retrieval-modal": "Patient Data Retrieval",
-  "messages.confirm-patient-retrieval": "Are you sure to retrieve patient data for {{name}}?",
+  "messages.confirm-patient-retrieval": "Are you sure you want to retrieve patient data for {{name}}?",
   "messages.fetching-patient-data": "Fetching patient data...",
   "messages.fetching-patient-data-done": "Fetching patient data (Done)",
   "messages.failed-to-reach-central": "Failed to reach central server",
