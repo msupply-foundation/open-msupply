@@ -468,7 +468,7 @@ fn to_legacy_status(
             _ => return None,
         },
         RequisitionRowType::Response => match status {
-            RequisitionRowStatus::New => LegacyRequisitionStatus::Cn,
+            RequisitionRowStatus::New => LegacyRequisitionStatus::Sg,
             RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
             _ => return None,
         },
