@@ -54,6 +54,7 @@ pub enum InvoiceRowType {
     #[serde(alias = "INVENTORY_ADJUSTMENT")]
     InventoryAddition,
     InventoryReduction,
+    Repack,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

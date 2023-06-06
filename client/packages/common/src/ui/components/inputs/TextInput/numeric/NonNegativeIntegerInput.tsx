@@ -15,7 +15,7 @@ export const NonNegativeIntegerInput = React.forwardRef(
       sx,
       disabled = false,
       value,
-      max = 4294967295,
+      max,
       onChange,
       ...rest
     }: NonNegativeIntegerInputProps,
@@ -30,7 +30,7 @@ export const NonNegativeIntegerInput = React.forwardRef(
         }}
         onChange={value =>
           value !== undefined
-            ? onChange(NumUtils.constrain(Math.round(value), 0, max))
+            ? onChange(NumUtils.constrain(Math.round(value), 0, max ?? 4294967295))
             : undefined
         }
         disabled={disabled}

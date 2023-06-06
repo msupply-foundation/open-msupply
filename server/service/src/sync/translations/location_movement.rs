@@ -12,7 +12,9 @@ use crate::sync::{
     },
 };
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::LOCATION_MOVEMENT;
 
@@ -50,6 +52,17 @@ pub struct LegacyLocationMovementRow {
 
 pub(crate) struct LocationMovementTranslation {}
 impl SyncTranslation for LocationMovementTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::LOCATION_MOVEMENT,
+            dependencies: vec![
+                LegacyTableName::STORE,
+                LegacyTableName::LOCATION,
+                LegacyTableName::ITEM_LINE,
+            ],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
@@ -127,17 +140,6 @@ impl SyncTranslation for LocationMovementTranslation {
             LEGACY_TABLE_NAME,
             serde_json::to_value(&legacy_row)?,
         )]))
-    }
-
-    fn try_translate_push_delete(
-        &self,
-        _: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
     }
 }
 

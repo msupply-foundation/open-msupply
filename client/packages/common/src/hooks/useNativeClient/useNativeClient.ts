@@ -8,6 +8,7 @@ import {
   setPreference,
 } from './helpers';
 import {
+  ConnectionResult,
   DISCOVERED_SERVER_POLL,
   DISCOVERY_TIMEOUT,
   FrontEndHost,
@@ -15,6 +16,7 @@ import {
   NativeMode,
 } from './types';
 import { Capacitor } from '@capacitor/core';
+import { useMutation } from 'react-query';
 
 declare global {
   interface Window {
@@ -24,7 +26,7 @@ declare global {
 
 type NativeClientState = {
   // A previous server is set in local storage, but was not returned in the list of available servers
-  connectToPreviousTimedOut: boolean;
+  connectToPreviousFailed: boolean;
   connectedServer: FrontEndHost | null;
   // Indicate that server discovery has taken too long without finding server
   discoveryTimedOut: boolean;
@@ -45,7 +47,7 @@ export const useNativeClient = ({
     );
 
   const [state, setState] = useState<NativeClientState>({
-    connectToPreviousTimedOut: false,
+    connectToPreviousFailed: false,
     connectedServer: null,
     discoveryTimedOut: false,
     isDiscovering: false,
@@ -53,10 +55,27 @@ export const useNativeClient = ({
     servers: [],
   });
 
-  const connectToServer = (server: FrontEndHost) => {
+  const connectToServer = (server: FrontEndHost): Promise<ConnectionResult> => {
     setPreference('previousServer', server);
-    nativeAPI?.connectToServer(server);
+    return (
+      nativeAPI?.connectToServer(server) ?? Promise.resolve({ success: false })
+    );
   };
+
+  const handleConnectionResult = async (result: ConnectionResult) => {
+    if (!result.success) {
+      console.error('Connecting to previous server:', result.error);
+    }
+    setState(state => ({ ...state, connectToPreviousFailed: !result.success }));
+  };
+
+  // `connectToServer` will check to see if the server is alive and if so, connect to it
+  // using `useMutation` here to handle multiple calls to `connectToServer`, though likely not be possible
+  const { mutate: connectToPrevious } = useMutation(connectToServer, {
+    onSuccess: handleConnectionResult,
+    onError: (e: Error) =>
+      handleConnectionResult({ success: false, error: e.message }),
+  });
 
   const stopDiscovery = () =>
     setState(state => ({ ...state, isDiscovering: false }));
@@ -109,16 +128,6 @@ export const useNativeClient = ({
   useEffect(() => {
     if (!state.isDiscovering) return;
 
-    let connectToPreviousTimer: NodeJS.Timer | undefined = undefined;
-
-    if (autoconnect && !!state.previousServer) {
-      connectToPreviousTimer = setTimeout(
-        () =>
-          setState(state => ({ ...state, connectToPreviousTimedOut: true })),
-        DISCOVERY_TIMEOUT
-      );
-    }
-
     const timeoutTimer = setTimeout(() => {
       setState(state => ({
         ...state,
@@ -141,7 +150,6 @@ export const useNativeClient = ({
     }, DISCOVERED_SERVER_POLL);
 
     return () => {
-      clearTimeout(connectToPreviousTimer);
       clearTimeout(timeoutTimer);
       clearInterval(pollInterval);
     };
@@ -156,18 +164,13 @@ export const useNativeClient = ({
 
   // Auto connect if autoconnect=true and server found matching previousConnectedServer
   useEffect(() => {
-    const { servers, previousServer } = state;
+    const { previousServer } = state;
     if (!nativeAPI) return;
     if (!autoconnect) return;
     if (previousServer === null) return;
 
-    const server = servers.find(server =>
-      matchUniqueServer(server, previousServer)
-    );
-    if (server) {
-      connectToServer(server);
-    }
-  }, [state.previousServer, state.servers, autoconnect]);
+    connectToPrevious(previousServer);
+  }, [state.previousServer, autoconnect]);
 
   return {
     ...state,

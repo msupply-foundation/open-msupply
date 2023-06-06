@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import {
   Grid,
@@ -12,26 +12,17 @@ import {
   usePermissionCheck,
   LocalStorage,
   useInitialisationStatus,
-  NativeMode,
-  RouteBuilder,
-  Switch,
-  useToggle,
-  BaseButton,
-  getPreference,
-  setPreference,
-  removePreference,
 } from '@openmsupply-client/common';
-import { Capacitor } from '@capacitor/core';
 import { themeOptions } from '@common/styles';
-import { AppRoute } from '@openmsupply-client/config';
 
 import { AppVersion, LanguageMenu } from '../components';
 import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
 import { SyncSettings } from './SyncSettings';
-import { SiteInfo } from '../components/SiteInfo';
-import { LogFileModal } from './LogFileModal';
 import { useHost } from '../api';
+import { SiteInfo } from '../components/SiteInfo';
+import { AndroidSettings } from './AndroidSettings';
+import { ElectronSettings } from './ElectronSettings';
 
 export const Settings: React.FC = () => {
   const t = useTranslation('common');
@@ -44,12 +35,6 @@ export const Settings: React.FC = () => {
   const customThemeEnabled =
     !!customTheme && Object.keys(customTheme).length > 0;
   const { data: initStatus } = useInitialisationStatus();
-  const [nativeMode, setNativeMode] = useState(NativeMode.None);
-  const {
-    isOn: isLogShown,
-    toggleOn: showLog,
-    toggleOff: hideLog,
-  } = useToggle();
 
   const customThemeValue = {
     enabled: customThemeEnabled,
@@ -130,62 +115,6 @@ export const Settings: React.FC = () => {
     }
   };
 
-  const toggleNativeMode = () => {
-    const mode =
-      nativeMode === NativeMode.Server ? NativeMode.Client : NativeMode.Server;
-
-    (async () => {
-      await removePreference('previousServer');
-      await setPreference('mode', mode);
-      navigate(RouteBuilder.create(AppRoute.Android).build());
-    })();
-  };
-
-  const AndroidSettings = () =>
-    Capacitor.isNativePlatform() ? (
-      <>
-        <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
-          {t('heading.settings-android')}
-        </Typography>
-        <Setting
-          title={t('label.mode')}
-          component={
-            <>
-              <Switch
-                label={t('label.client')}
-                onChange={toggleNativeMode}
-                checked={nativeMode === NativeMode.Server}
-              />
-              <Typography
-                component="div"
-                sx={{
-                  alignItems: 'center',
-                  display: 'inline-flex',
-                  fontSize: '14px',
-                  paddingLeft: 1,
-                }}
-              >
-                {t('label.server')}
-              </Typography>
-            </>
-          }
-        />
-        <Setting
-          title={t('label.server-log')}
-          component={
-            <>
-              <LogFileModal onClose={hideLog} isOpen={isLogShown} />
-              <BaseButton onClick={showLog}>View</BaseButton>
-            </>
-          }
-        />
-      </>
-    ) : null;
-
-  useEffect(() => {
-    getPreference('mode', 'none').then(setNativeMode);
-  }, []);
-
   return (
     <Grid display="flex" flexDirection="column" flex={1}>
       <Grid
@@ -218,6 +147,7 @@ export const Settings: React.FC = () => {
         />
         <SyncSettings />
         <AndroidSettings />
+        <ElectronSettings />
       </Grid>
       <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />
     </Grid>

@@ -2,6 +2,7 @@ import {
   SortBy,
   FilterBy,
   MasterListSortFieldInput,
+  FilterByWithBoolean,
 } from '@openmsupply-client/common';
 import { Sdk, MasterListRowFragment } from './operations.generated';
 
@@ -37,17 +38,17 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
     },
     listAll: async ({
       sortBy,
-      filterBy,
+      filter,
     }: {
       sortBy: SortBy<MasterListRowFragment>;
-      filterBy?: FilterBy;
+      filter?: FilterByWithBoolean;
     }) => {
       const key = masterListParser.toSort(sortBy);
       const desc = !!sortBy.isDesc;
       const result = await sdk.masterLists({
         key,
         desc,
-        filter: filterBy ?? { existsForStoreId: { equalTo: storeId } },
+        filter,
         storeId,
       });
       return result?.masterLists;

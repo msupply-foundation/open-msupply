@@ -11,7 +11,8 @@ use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::REQUISITION_LINE;
@@ -59,6 +60,13 @@ pub struct LegacyRequisitionLineRow {
 
 pub(crate) struct RequisitionLineTranslation {}
 impl SyncTranslation for RequisitionLineTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::REQUISITION_LINE,
+            dependencies: vec![LegacyTableName::REQUISITION, LegacyTableName::ITEM],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
@@ -84,7 +92,6 @@ impl SyncTranslation for RequisitionLineTranslation {
             snapshot_datetime: data.snapshot_datetime,
             approved_quantity: data.approved_quantity,
             approval_comment: data.approval_comment,
-            is_sync_update: true,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -130,7 +137,6 @@ impl SyncTranslation for RequisitionLineTranslation {
             snapshot_datetime,
             approved_quantity,
             approval_comment,
-            is_sync_update: _,
         } = RequisitionLineRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(

@@ -2,7 +2,9 @@ use repository::{FormSchemaJson, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -20,6 +22,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 
 pub(crate) struct FormSchemaTranslation {}
 impl SyncTranslation for FormSchemaTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::FORM_SCHEMA,
+            dependencies: vec![],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

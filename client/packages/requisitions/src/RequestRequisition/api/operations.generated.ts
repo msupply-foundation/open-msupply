@@ -35,6 +35,7 @@ export type RequestRowFragment = {
   theirReference?: string | null;
   type: Types.RequisitionNodeType;
   otherPartyId: string;
+  approvalStatus: Types.RequisitionNodeApprovalStatus;
   programName?: string | null;
   orderType?: string | null;
   linkedRequisition?: {
@@ -363,6 +364,7 @@ export type RequestsQuery = {
       theirReference?: string | null;
       type: Types.RequisitionNodeType;
       otherPartyId: string;
+      approvalStatus: Types.RequisitionNodeApprovalStatus;
       programName?: string | null;
       orderType?: string | null;
       linkedRequisition?: {
@@ -645,6 +647,7 @@ export const RequestRowFragmentDoc = gql`
     theirReference
     type
     otherPartyId
+    approvalStatus
     linkedRequisition {
       approvalStatus
     }

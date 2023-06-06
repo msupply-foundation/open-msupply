@@ -153,7 +153,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     getBatchColumn(update, theme),
     {
       key: 'snapshotNumberOfPacks',
-      label: 'label.num-packs',
+      label: 'label.num-stocktake-packs',
       width: 100,
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
@@ -194,7 +194,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     [
       expiryDateColumn,
       {
-        width: 120,
+        width: 140,
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],

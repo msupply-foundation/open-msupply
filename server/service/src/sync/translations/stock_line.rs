@@ -9,7 +9,9 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation};
+use super::{
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+};
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::ITEM_LINE;
 
@@ -44,10 +46,24 @@ pub struct LegacyStockLineRow {
     #[serde(rename = "name_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub supplier_id: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string", rename = "barcodeID")]
+    pub barcode_id: Option<String>,
 }
 
 pub(crate) struct StockLineTranslation {}
 impl SyncTranslation for StockLineTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::ITEM_LINE,
+            dependencies: vec![
+                LegacyTableName::ITEM,
+                LegacyTableName::STORE,
+                LegacyTableName::LOCATION,
+                LegacyTableName::NAME,
+            ],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
@@ -74,6 +90,7 @@ impl SyncTranslation for StockLineTranslation {
             on_hold: data.hold,
             note: data.note,
             supplier_id: data.supplier_id,
+            barcode_id: data.barcode_id,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -105,6 +122,7 @@ impl SyncTranslation for StockLineTranslation {
             on_hold,
             note,
             supplier_id,
+            barcode_id,
         } = StockLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
         let legacy_row = LegacyStockLineRow {
@@ -122,6 +140,7 @@ impl SyncTranslation for StockLineTranslation {
             sell_price: sell_price_per_pack,
             note,
             supplier_id,
+            barcode_id,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

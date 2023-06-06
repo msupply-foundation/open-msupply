@@ -48,6 +48,10 @@ query me {
       }
       username
       userId
+      firstName
+      lastName
+      phoneNumber
+      jobTitle
     }
   }
 }

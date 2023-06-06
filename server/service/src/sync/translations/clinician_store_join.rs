@@ -7,7 +7,7 @@ use repository::{
 
 use crate::sync::{api::RemoteSyncRecordV5, translations::LegacyTableName};
 
-use super::{IntegrationRecords, PullUpsertRecord, SyncTranslation};
+use super::{IntegrationRecords, PullDependency, PullUpsertRecord, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyClinicianStoreJoinRow {
@@ -28,6 +28,13 @@ fn match_push_table(changelog: &ChangelogRow) -> bool {
 
 pub(crate) struct ClinicianStoreJoinTranslation {}
 impl SyncTranslation for ClinicianStoreJoinTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::CLINICIAN_STORE_JOIN,
+            dependencies: vec![LegacyTableName::STORE, LegacyTableName::CLINICIAN],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _connection: &StorageConnection,

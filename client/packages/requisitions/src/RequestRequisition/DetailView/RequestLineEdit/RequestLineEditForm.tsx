@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Grid,
   InputWithLabelRow,
@@ -6,6 +6,9 @@ import {
   NonNegativeIntegerInput,
   TextArea,
   Typography,
+  Switch,
+  Box,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import {
@@ -25,14 +28,16 @@ interface RequestLineEditFormProps {
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => {
   return (
-    <Grid spacing={4} container direction="row">
-      <Grid xs={4} item>
+    <Grid spacing={4} container direction="row" paddingBottom={1}>
+      <Grid xs={6} item>
         <Typography variant="body1" fontWeight={700}>
           {label}
         </Typography>
       </Grid>
-      <Grid xs={2} item>
-        <Typography variant="body1">{value}</Typography>
+      <Grid xs={3} item>
+        <Typography variant="body1" style={{ textAlign: 'right' }}>
+          {value}
+        </Typography>
       </Grid>
     </Grid>
   );
@@ -57,6 +62,7 @@ export const RequestLineEditFormLayout = ({
       justifyContent="space-between"
       bgcolor="background.toolbar"
       padding={3}
+      paddingBottom={1}
       boxShadow={theme => theme.shadows[2]}
     >
       <Grid item xs={4}>
@@ -65,6 +71,7 @@ export const RequestLineEditFormLayout = ({
       <Grid
         item
         xs={4}
+        paddingBottom={1}
         display="flex"
         flexDirection="column"
         justifyContent="flex-end"
@@ -88,6 +95,10 @@ export const RequestLineEditForm = ({
   const t = useTranslation('replenishment');
   const formatNumber = useFormatNumber();
   const { lines } = useRequest.line.list();
+  const isPacksEnabled = !!item?.defaultPackSize;
+  const [isPacks, setIsPacks] = useState(isPacksEnabled);
+  const requestedQuantity = draftLine?.requestedQuantity ?? 0;
+  const defaultPackSize = item?.defaultPackSize ?? 0;
 
   return (
     <RequestLineEditFormLayout
@@ -110,7 +121,7 @@ export const RequestLineEditForm = ({
           />
 
           {item && item?.unitName ? (
-            <InfoRow label="Unit" value={item.unitName} />
+            <InfoRow label={t('label.unit')} value={item.unitName} />
           ) : null}
           {!!draftLine?.itemStats.averageMonthlyConsumption ? (
             <InfoRow
@@ -130,33 +141,72 @@ export const RequestLineEditForm = ({
               )}
             />
           ) : null}
+          {isPacksEnabled ? (
+            <InfoRow
+              label={t('label.default-pack-size')}
+              value={String(item.defaultPackSize)}
+            />
+          ) : null}
         </>
       }
       Middle={
         <>
+          {isPacksEnabled && (
+            <Box display="flex" justifyContent="flex-end" alignItems="center">
+              <Switch
+                label={t('label.units')}
+                checked={isPacks}
+                onChange={(_event, checked) => setIsPacks(checked)}
+                size="small"
+              />
+              <Box paddingLeft={2} paddingRight={2}>
+                {t('label.packs')}
+              </Box>
+            </Box>
+          )}
           <InputWithLabelRow
             Input={
               <NumericTextInput
-                width={150}
+                width={100}
                 value={Math.round(draftLine?.suggestedQuantity ?? 0)}
                 disabled
               />
             }
-            labelWidth="150px"
-            label={t('label.suggested-quantity', { ns: 'replenishment' })}
+            labelWidth="750px"
+            label={t('label.suggested-quantity')}
           />
           <InputWithLabelRow
             Input={
               <NonNegativeIntegerInput
                 autoFocus
-                value={draftLine?.requestedQuantity ?? 0}
-                width={150}
+                disabled={isPacks}
+                value={requestedQuantity}
+                width={100}
                 onChange={requestedQuantity => update({ requestedQuantity })}
               />
             }
-            labelWidth="150px"
-            label={t('label.order-quantity', { ns: 'replenishment' })}
+            labelWidth="750px"
+            label={t('label.order-quantity')}
           />
+          {isPacksEnabled && (
+            <InputWithLabelRow
+              Input={
+                <NonNegativeIntegerInput
+                  autoFocus
+                  disabled={!isPacks}
+                  value={NumUtils.round(requestedQuantity / defaultPackSize, 2)}
+                  width={100}
+                  onChange={quantity =>
+                    update({
+                      requestedQuantity: quantity * defaultPackSize,
+                    })
+                  }
+                />
+              }
+              labelWidth="750px"
+              label={t('label.requested-packs')}
+            />
+          )}
         </>
       }
       Right={
@@ -170,6 +220,8 @@ export const RequestLineEditForm = ({
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },
             }}
+            minRows={6}
+            maxRows={6}
           />
         </>
       }

@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 use crate::sync::api::RemoteSyncRecordV5;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -37,6 +38,13 @@ fn match_push_table(changelog: &ChangelogRow) -> bool {
 
 pub(crate) struct NameStoreJoinTranslation {}
 impl SyncTranslation for NameStoreJoinTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::NAME_STORE_JOIN,
+            dependencies: vec![LegacyTableName::NAME, LegacyTableName::STORE],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,

@@ -3,7 +3,8 @@ use repository::{MasterListNameJoinRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -20,6 +21,13 @@ fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
 
 pub(crate) struct MasterListNameJoinTranslation {}
 impl SyncTranslation for MasterListNameJoinTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::LIST_MASTER_NAME_JOIN,
+            dependencies: vec![LegacyTableName::NAME, LegacyTableName::LIST_MASTER],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,

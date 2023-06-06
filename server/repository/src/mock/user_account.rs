@@ -8,7 +8,7 @@ pub fn mock_user_account_a() -> UserAccountRow {
         username: String::from("username_a"),
         hashed_password: String::from("password_a"),
         email: Some(String::from("username_a@openmsupply.foundation")),
-        language: Default::default(),
+        ..UserAccountRow::default()
     }
 }
 
@@ -18,17 +18,7 @@ pub fn mock_user_account_b() -> UserAccountRow {
         username: String::from("username_b"),
         hashed_password: String::from("password_b"),
         email: Some(String::from("username_b@openmsupply.foundation")),
-        language: Default::default(),
-    }
-}
-
-pub fn mock_me_user() -> UserAccountRow {
-    UserAccountRow {
-        id: String::from("me"),
-        username: String::from("me"),
-        hashed_password: String::from("password"),
-        email: Some(String::from("me@openmsupply.foundation")),
-        language: Default::default(),
+        ..UserAccountRow::default()
     }
 }
 
@@ -112,7 +102,7 @@ pub fn mock_user_permission_b1() -> UserPermissionRow {
 }
 
 pub fn mock_user_accounts() -> Vec<UserAccountRow> {
-    vec![mock_user_account_a(), mock_user_account_b(), mock_me_user()]
+    vec![mock_user_account_a(), mock_user_account_b()]
 }
 
 pub fn mock_user_store_joins() -> Vec<UserStoreJoinRow> {

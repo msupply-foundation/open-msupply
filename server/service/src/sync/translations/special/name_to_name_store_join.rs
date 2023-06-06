@@ -5,7 +5,7 @@ use repository::{
 use serde::Deserialize;
 
 use crate::sync::translations::{
-    IntegrationRecords, LegacyTableName, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -24,6 +24,13 @@ pub struct PartialLegacyNameRow {
 // NOTE Translator should be removed when central server configures these properties on name_store_join
 pub(crate) struct NameToNameStoreJoinTranslation {}
 impl SyncTranslation for NameToNameStoreJoinTranslation {
+    fn pull_dependencies(&self) -> PullDependency {
+        PullDependency {
+            table: LegacyTableName::NAME,
+            dependencies: vec![],
+        }
+    }
+
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,

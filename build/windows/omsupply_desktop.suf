@@ -3124,6 +3124,7 @@ SessionVar.Set("%window_title%", sWindowTitle);</Script>
 
 	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 end
+
 </Script>
 <BookMarks count="0">
 </BookMarks>

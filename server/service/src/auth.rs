@@ -52,6 +52,7 @@ pub enum Resource {
     StockCount,
     QueryStockLine,
     MutateStockLine,
+    CreateRepack,
     // stocktake
     QueryStocktake,
     MutateStocktake,
@@ -60,6 +61,7 @@ pub enum Resource {
     MutateRequisition,
     RequisitionChart,
     RequisitionStats,
+    RequisitionSend,
     // stock take line
     InsertStocktakeLine,
     UpdateStocktakeLine,
@@ -160,6 +162,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::StockLineMutate),
         ]),
     );
+    map.insert(
+        Resource::CreateRepack,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::CreateRepack),
+        ]),
+    );
     // stocktake
     map.insert(
         Resource::QueryStocktake,
@@ -224,6 +233,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::RequisitionQuery),
+        ]),
+    );
+    map.insert(
+        Resource::RequisitionSend,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::RequisitionSend),
         ]),
     );
     // invoice
