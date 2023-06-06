@@ -191,12 +191,19 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           paddingBottom={1}
           marginTop={-3}
         >
-          <ButtonWithIcon
-            label={t('label.new')}
-            Icon={<PlusCircleIcon />}
-            onClick={onNewClick}
-          />
+          <Box flex={0}>
+            <ButtonWithIcon
+              label={t('label.new')}
+              Icon={<PlusCircleIcon />}
+              onClick={onNewClick}
+            />
+          </Box>
         </Box>
+        {displayMessage && (
+          <Box flex={1} display="flex" alignItems="flex-end">
+            <Typography>{t('messages.no-repack-detail')}</Typography>
+          </Box>
+        )}
         <Box display="flex" flexDirection="column" height={435}>
           <Box display="flex" flexDirection="column" flex={1}>
             <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
@@ -215,9 +222,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
             </Box>
           </Box>
           <Box paddingLeft={3} paddingTop={3} flex={1}>
-            {displayMessage && (
-              <Typography>{t('messages.no-repack-detail')}</Typography>
-            )}
             {showRepackDetail && (
               <RepackEditForm
                 invoiceId={invoiceId}
