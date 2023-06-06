@@ -147,7 +147,11 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       reportSelector={
-        <ReportSelector context={ReportContext.Repack} onClick={printReport}>
+        <ReportSelector
+          context={ReportContext.Repack}
+          onPrint={printReport}
+          disabled={!invoiceId}
+        >
           <LoadingButton
             sx={{ marginLeft: 1 }}
             variant="outlined"
