@@ -12,7 +12,8 @@ import { ReportRowFragment, useReport } from '../api';
 
 interface ReportSelectorProps {
   context?: ReportContext;
-  onClick: (report: ReportRowFragment) => void;
+  onPrint: (report: ReportRowFragment) => void;
+  disabled?: boolean;
 }
 
 const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
@@ -36,7 +37,8 @@ const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   context,
   children,
-  onClick,
+  onPrint,
+  disabled,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
   const { data, isLoading } = useReport.document.list(context);
@@ -47,7 +49,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
       label={report.name}
       onClick={() => {
         hide();
-        onClick(report);
+        onPrint(report);
       }}
       key={report.id}
       sx={{ textAlign: 'left', justifyContent: 'left' }}
@@ -59,8 +61,8 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   const oneReport =
     !isLoading && data?.nodes?.length === 1 ? data.nodes[0] : null;
 
-  return !!oneReport ? (
-    <div onClick={() => onClick(oneReport)}>{children}</div>
+  return !!oneReport && !disabled ? (
+    <div onClick={() => onPrint(oneReport)}>{children}</div>
   ) : (
     <PaperClickPopover
       placement="bottom"
@@ -82,7 +84,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
               display="flex"
               flexDirection="column"
             >
-              {noReports ? (
+              {noReports || disabled ? (
                 <NoReports hasPermission={hasPermission} />
               ) : (
                 reportButtons
