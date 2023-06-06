@@ -37,6 +37,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
   const { availableNumberOfPacks = 0 } = stockLine ?? {};
   const textProps = { textAlign: 'end' as 'end' | 'start', paddingRight: 3 };
   const labelProps = { sx: { width: 0 } };
+  const isNew = !invoiceId;
 
   useEffect(() => {
     setLocation(null);
@@ -47,7 +48,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
       <Divider />
       <Box display="flex">
         <Box display="flex" flexDirection="column" padding={2} gap={1} flex={1}>
-          {!invoiceId && (
+          {isNew && (
             <TextWithLabelRow
               label={t('label.packs-available')}
               text={String(availableNumberOfPacks)}
@@ -61,28 +62,26 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
             Input={
               <NonNegativeIntegerInput
                 autoFocus
-                onChange={numberOfPacks => {
+                onChange={numberOfPacks =>
                   onChange({
                     numberOfPacks,
-                  });
-                }}
+                  })
+                }
                 width={INPUT_WIDTH}
                 value={
-                  !invoiceId
-                    ? draft.numberOfPacks
-                    : data?.from.numberOfPacks ?? 0
+                  isNew ? draft.numberOfPacks : data?.from.numberOfPacks ?? 0
                 }
                 max={availableNumberOfPacks}
-                disabled={!!invoiceId}
+                disabled={!isNew}
               />
             }
           />
           <TextWithLabelRow
             label={t('label.pack-size')}
             text={
-              invoiceId
-                ? String(data?.from.packSize ?? '')
-                : String(stockLine?.packSize ?? '')
+              isNew
+                ? String(stockLine?.packSize ?? '')
+                : String(data?.from.packSize ?? '')
             }
             textProps={textProps}
             labelProps={labelProps}
@@ -90,9 +89,9 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           <TextWithLabelRow
             label={t('label.location')}
             text={
-              invoiceId
-                ? String(data?.to.location?.name ?? '-')
-                : String(stockLine?.location?.name ?? '-')
+              isNew
+                ? String(stockLine?.location?.name ?? '-')
+                : String(data?.to.location?.name ?? '-')
             }
             textProps={textProps}
             labelProps={labelProps}
@@ -113,16 +112,16 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
           paddingTop={2}
           flex={1}
         >
-          {!invoiceId && <Box height={24} />}
+          {isNew && <Box height={24} />}
           <TextWithLabelRow
             label={t('label.new-num-packs')}
             text={
-              invoiceId
-                ? String(data?.to.numberOfPacks ?? '')
-                : (
+              isNew
+                ? (
                     ((draft.numberOfPacks ?? 0) * (stockLine?.packSize ?? 0)) /
                     (draft.newPackSize || 1)
                   ).toFixed(2)
+                : String(data?.to.numberOfPacks ?? '')
             }
             textProps={textProps}
             labelProps={labelProps}
@@ -132,14 +131,14 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
             labelWidth="100%"
             Input={
               <NonNegativeIntegerInput
-                onChange={newPackSize => {
+                onChange={newPackSize =>
                   onChange({
                     newPackSize,
-                  });
-                }}
+                  })
+                }
                 width={INPUT_WIDTH}
-                value={!invoiceId ? draft.newPackSize : data?.to.packSize ?? 0}
-                disabled={!!invoiceId}
+                value={isNew ? draft.newPackSize : data?.to.packSize ?? 0}
+                disabled={!isNew}
               />
             }
           />
@@ -149,7 +148,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
             Input={
               <LocationSearchInput
                 autoFocus={false}
-                disabled={!!invoiceId}
+                disabled={!isNew}
                 value={location}
                 width={160}
                 onChange={location => {

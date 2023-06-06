@@ -131,6 +131,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
                 } else {
                   success(t('messages.saved'))();
                 }
+                // reset the 'new' state and hide the form
+                setInvoiceId(undefined);
+                setIsNew(false);
               }
             } catch (e) {
               error(getErrorMessage(e))();
