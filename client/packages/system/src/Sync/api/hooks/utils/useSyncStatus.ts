@@ -1,11 +1,11 @@
 import { useQuery } from '@openmsupply-client/common';
-import { useHostApi } from './useHostApi';
+import { useSyncApi } from './useSyncApi';
 
 export const useSyncStatus = (
   refetchInterval: number | false = false,
   enabled?: boolean
 ) => {
-  const api = useHostApi();
+  const api = useSyncApi();
 
   return useQuery(api.keys.syncStatus(), api.get.syncStatus, {
     cacheTime: 0,

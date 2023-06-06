@@ -1,8 +1,8 @@
 import { getAuthCookie, useQuery } from '@openmsupply-client/common';
-import { useHostApi } from './useHostApi';
+import { useSyncApi } from './useSyncApi';
 
 export const useSyncInfo = (refetchInterval: number | false = false) => {
-  const api = useHostApi();
+  const api = useSyncApi();
   const { token } = getAuthCookie();
 
   // manually adding the token and setting the authorization header

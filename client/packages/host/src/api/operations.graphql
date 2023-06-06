@@ -1,0 +1,27 @@
+query displaySettings($input: DisplaySettingsHash!) {
+  displaySettings(input: $input) {
+    customTheme {
+      value
+      hash
+    }
+    customLogo {
+      value
+      hash
+    }
+  }
+}
+
+mutation updateDisplaySettings($displaySettings: DisplaySettingsInput!) {
+  updateDisplaySettings(input: $displaySettings) {
+    __typename
+    ... on UpdateResult {
+      __typename
+      theme
+      logo
+    }
+    ... on UpdateDisplaySettingsError {
+      __typename
+      error
+    }
+  }
+}

@@ -11,7 +11,7 @@ import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
 import { LoginLayout } from './LoginLayout';
 import { SiteInfo } from '../SiteInfo';
-import { useSync } from '@openmsupply-client/system';
+import { useHost } from '../../api';
 
 export const Login = () => {
   const t = useTranslation('app');
@@ -20,7 +20,7 @@ export const Login = () => {
     logo: LocalStorage.getItem('/theme/logohash') ?? '',
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
-  const { data: displaySettings } = useSync.settings.displaySettings(hashInput);
+  const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
 
   const passwordRef = React.useRef(null);
   const {

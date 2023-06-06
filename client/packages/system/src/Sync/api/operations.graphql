@@ -11,19 +11,6 @@ query syncSettings {
   }
 }
 
-query displaySettings($input: DisplaySettingsHash!) {
-  displaySettings(input: $input) {
-    customTheme {
-      value
-      hash
-    }
-    customLogo {
-      value
-      hash
-    }
-  }
-}
-
 fragment SyncError on SyncErrorNode {
   __typename
   variant
@@ -50,21 +37,6 @@ mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
     }
     ... on SyncErrorNode {
       ...SyncError
-    }
-  }
-}
-
-mutation updateDisplaySettings($displaySettings: DisplaySettingsInput!) {
-  updateDisplaySettings(input: $displaySettings) {
-    __typename
-    ... on UpdateResult {
-      __typename
-      theme
-      logo
-    }
-    ... on UpdateDisplaySettingsError {
-      __typename
-      error
     }
   }
 }
