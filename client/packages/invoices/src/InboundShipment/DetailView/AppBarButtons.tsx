@@ -48,7 +48,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <AddFromMasterListButton />
         <ReportSelector
           context={ReportContext.InboundShipment}
-          onClick={printReport}
+          onPrint={printReport}
         >
           <LoadingButton
             variant="outlined"
