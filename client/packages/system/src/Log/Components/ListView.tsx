@@ -10,10 +10,7 @@ import { useFormatDateTime } from '@common/intl';
 
 import { useLog, ActivityLogRowFragment } from '../api';
 
-export const LogList: FC<{ recordId: string; eventInfo?: string }> = ({
-  recordId,
-  eventInfo,
-}) => {
+export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
   const { data, isError, isLoading } = useLog.document.listByRecord(recordId);
   const t = useTranslation();
   const { localisedTime } = useFormatDateTime();
@@ -47,8 +44,6 @@ export const LogList: FC<{ recordId: string; eventInfo?: string }> = ({
     {
       key: 'event',
       label: 'label.details',
-      accessor: ({ rowData }) =>
-        (eventInfo ? ` ${eventInfo} ` : '') + `[${rowData.event}]`,
     },
   ]);
 

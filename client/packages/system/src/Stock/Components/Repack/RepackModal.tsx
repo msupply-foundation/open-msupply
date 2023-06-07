@@ -1,28 +1,33 @@
 import React, { FC, useState } from 'react';
 import {
   useTranslation,
+  DataTable,
+  Box,
   DialogButton,
   Typography,
   useDialog,
+  TableProvider,
+  createTableStore,
   Grid,
   useNotification,
   getErrorMessage,
   noOtherVariants,
+  ButtonWithIcon,
   ReportContext,
   LoadingButton,
   PrinterIcon,
-  ModalTabs,
 } from '@openmsupply-client/common';
+import { PlusCircleIcon } from '@common/icons';
+import { RepackEditForm } from './RepackEditForm';
 import {
-  LogList,
   Repack,
   ReportRowFragment,
   ReportSelector,
   useReport,
   useStock,
 } from '@openmsupply-client/system';
-import { RepackForm } from './RepackForm';
-import { StockLineRowFragment } from '../../api';
+import { RepackFragment, StockLineRowFragment } from '../../api';
+import { useRepackColumns } from './column';
 
 interface RepackModalControlProps {
   isOpen: boolean;
@@ -51,12 +56,6 @@ const useDraftRepack = (seed: Repack) => {
   };
 };
 
-export const defaultRepack = (stockLineId?: string): Repack => ({
-  stockLineId: stockLineId ?? '',
-  newPackSize: 0,
-  numberOfPacks: 0,
-});
-
 export const RepackModal: FC<RepackModalControlProps> = ({
   isOpen,
   onClose,
@@ -68,16 +67,40 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
+  const defaultRepack = {
+    stockLineId: stockLine?.id,
+    newPackSize: 0,
+    numberOfPacks: 0,
+  };
 
-  const { draft, onChange, onInsert } = useDraftRepack(
-    defaultRepack(stockLine?.id)
+  const { data, isError, isLoading } = useStock.repack.list(
+    stockLine?.id ?? ''
   );
+  const { draft, onChange, onInsert } = useDraftRepack(defaultRepack);
+  const { columns } = useRepackColumns();
+  // only display the message if there are lines to click on
+  // if there are no lines, the 'click new' message is displayed closer to the action
+  const displayMessage =
+    invoiceId == undefined && !isNew && !!data?.nodes.length;
+  const showRepackDetail = invoiceId || isNew;
 
   const { print, isPrinting } = useReport.utils.print();
 
   const printReport = (report: ReportRowFragment) => {
-    if (!invoiceId) return;
+    if (!data) return;
     print({ reportId: report.id, dataId: invoiceId || '' });
+  };
+
+  const onRowClick = (rowData: RepackFragment) => {
+    onChange(defaultRepack);
+    setInvoiceId(rowData.id);
+    setIsNew(false);
+  };
+
+  const onNewClick = () => {
+    onChange(defaultRepack);
+    setInvoiceId(undefined);
+    setIsNew(true);
   };
 
   const mapStructuredErrors = (
@@ -99,32 +122,6 @@ export const RepackModal: FC<RepackModalControlProps> = ({
     }
   };
 
-  const tabs = [
-    {
-      Component: (
-        <RepackForm
-          draft={draft}
-          stockLine={stockLine}
-          setInvoiceId={setInvoiceId}
-          invoiceId={invoiceId}
-          onChange={onChange}
-          setIsNew={setIsNew}
-          isNew={isNew}
-        />
-      ),
-      value: 'label.details',
-    },
-    {
-      Component: (
-        <LogList
-          recordId={stockLine?.id ?? ''}
-          eventInfo={t('messages.repack-log-info')}
-        />
-      ),
-      value: 'label.log',
-    },
-  ];
-
   return (
     <Modal
       width={900}
@@ -143,7 +140,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
               if (errorMessage) {
                 error(errorMessage)();
               } else {
-                onChange(defaultRepack(stockLine?.id));
+                onChange(defaultRepack);
                 if (stockLine?.totalNumberOfPacks === draft.numberOfPacks) {
                   onClose();
                   success(t('messages.all-packs-repacked'))();
@@ -179,15 +176,63 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         </ReportSelector>
       }
     >
-      <Grid container alignItems="center" flexDirection="column">
-        <Typography sx={{ fontWeight: 'bold' }} variant="h6">
-          {stockLine?.item.name}
-        </Typography>
-        <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
-          {`${t('label.code')} : ${stockLine?.item.code}`}
-        </Typography>
-        <ModalTabs tabs={tabs} />
-      </Grid>
+      <Box>
+        <Grid container alignItems="center" flexDirection="column">
+          <Typography sx={{ fontWeight: 'bold' }} variant="h6">
+            {stockLine?.item.name}
+          </Typography>
+          <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+            {`${t('label.code')} : ${stockLine?.item.code}`}
+          </Typography>
+        </Grid>
+        <Box
+          display="flex"
+          justifyContent="flex-end"
+          paddingBottom={1}
+          marginTop={-3}
+        >
+          <Box flex={0}>
+            <ButtonWithIcon
+              label={t('label.new')}
+              Icon={<PlusCircleIcon />}
+              onClick={onNewClick}
+            />
+          </Box>
+        </Box>
+        {displayMessage && (
+          <Box flex={1} display="flex" alignItems="flex-end">
+            <Typography>{t('messages.no-repack-detail')}</Typography>
+          </Box>
+        )}
+        <Box display="flex" flexDirection="column" height={435}>
+          <Box display="flex" flexDirection="column" flex={1}>
+            <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
+              <TableProvider createStore={createTableStore}>
+                <DataTable
+                  id="repack-list"
+                  columns={columns}
+                  data={data?.nodes}
+                  isLoading={isLoading}
+                  isError={isError}
+                  noDataMessage={t('messages.no-repacks')}
+                  overflowX="auto"
+                  onRowClick={onRowClick}
+                />
+              </TableProvider>
+            </Box>
+          </Box>
+          <Box paddingLeft={3} paddingTop={3} flex={1}>
+            {showRepackDetail && (
+              <RepackEditForm
+                invoiceId={invoiceId}
+                onChange={onChange}
+                stockLine={stockLine}
+                draft={draft}
+              />
+            )}
+          </Box>
+        </Box>
+      </Box>
     </Modal>
   );
 };
