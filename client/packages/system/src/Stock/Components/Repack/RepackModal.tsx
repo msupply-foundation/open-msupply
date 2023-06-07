@@ -23,6 +23,7 @@ import {
   Repack,
   ReportRowFragment,
   ReportSelector,
+  useLog,
   useReport,
   useStock,
 } from '@openmsupply-client/system';
@@ -76,6 +77,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { data, isError, isLoading } = useStock.repack.list(
     stockLine?.id ?? ''
   );
+  const { data: logData } = useLog.document.listByRecord(stockLine?.id ?? '');
+
   const { draft, onChange, onInsert } = useDraftRepack(defaultRepack);
   const { columns } = useRepackColumns();
   // only display the message if there are lines to click on
@@ -83,6 +86,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const displayMessage =
     invoiceId == undefined && !isNew && !!data?.nodes.length;
   const showRepackDetail = invoiceId || isNew;
+  const showLogEvent = !!logData?.nodes.length;
 
   const { print, isPrinting } = useReport.utils.print();
 
@@ -181,9 +185,14 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           <Typography sx={{ fontWeight: 'bold' }} variant="h6">
             {stockLine?.item.name}
           </Typography>
-          <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+          <Typography sx={{ fontWeight: 'bold' }}>
             {`${t('label.code')} : ${stockLine?.item.code}`}
           </Typography>
+          {showLogEvent && (
+            <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+              {`${t('messages.repack-log-info')} : ${logData?.nodes[0]?.event}`}
+            </Typography>
+          )}
         </Grid>
         <Box
           display="flex"
