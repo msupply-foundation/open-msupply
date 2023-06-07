@@ -96,6 +96,7 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
+        ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogRow, ActivityLogType,
         EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType,
         InvoiceRowRepository, LocationMovement, LocationMovementFilter, LocationMovementRepository,
         LocationMovementRow, StockLineFilter, StockLineRepository, StockLineRow, StorageConnection,
@@ -542,5 +543,27 @@ mod test {
                 }
             }
         );
+
+        let activity_log = ActivityLogRepository::new(&connection)
+            .query_by_filter(
+                ActivityLogFilter::new().record_id(EqualFilter::equal_to(&new_stock.id)),
+            )
+            .unwrap()
+            .pop()
+            .unwrap();
+        assert_eq!(
+            activity_log,
+            ActivityLog {
+                activity_log_row: ActivityLogRow {
+                    id: activity_log.activity_log_row.id.clone(),
+                    store_id: Some(mock_store_a().id.clone()),
+                    user_id: Some(mock_user_account_a().id.clone()),
+                    r#type: ActivityLogType::Repack,
+                    record_id: Some(new_stock.id.clone()),
+                    datetime: activity_log.activity_log_row.datetime,
+                    event: Some(updated_stock.id),
+                }
+            }
+        )
     }
 }
