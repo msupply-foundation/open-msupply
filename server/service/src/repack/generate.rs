@@ -1,8 +1,8 @@
 use chrono::Utc;
 use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    ItemRowRepository, LocationMovementRow, NameRowRepository, NumberRowType, RepositoryError,
-    StockLineRow,
+    ActivityLogRow, ActivityLogType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
+    InvoiceRowStatus, InvoiceRowType, ItemRowRepository, LocationMovementRow, NameRowRepository,
+    NumberRowType, RepositoryError, StockLineRow,
 };
 use util::{constants::REPACK_NAME_CODE, uuid::uuid};
 
@@ -15,6 +15,7 @@ pub struct GenerateRepack {
     pub repack_invoice_lines: Vec<InvoiceLineRow>,
     pub stock_lines: Vec<StockLineRow>,
     pub location_movement: Option<LocationMovementRow>,
+    pub activity_log: ActivityLogRow,
 }
 
 struct StockLineJob {
@@ -40,13 +41,24 @@ pub fn generate(
         None
     };
 
-    let stock_lines = vec![stock_line_to_update, new_stock_line.clone()];
+    let stock_lines = vec![stock_line_to_update.clone(), new_stock_line.clone()];
+
+    let activity_log = ActivityLogRow {
+        id: uuid(),
+        r#type: ActivityLogType::Repack,
+        user_id: Some(ctx.user_id.clone()),
+        store_id: Some(ctx.store_id.clone()),
+        record_id: Some(new_stock_line.id),
+        datetime: Utc::now().naive_utc(),
+        event: Some(stock_line_to_update.id),
+    };
 
     Ok(GenerateRepack {
         repack_invoice,
         repack_invoice_lines,
         stock_lines,
         location_movement,
+        activity_log,
     })
 }
 
