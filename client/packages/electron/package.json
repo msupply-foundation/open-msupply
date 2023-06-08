@@ -7,7 +7,7 @@
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "node updateElectronVersion.js && yarn prettier --write package.json && electron-forge make"
   },
   "author": {
     "name": "mSupply Foundation"

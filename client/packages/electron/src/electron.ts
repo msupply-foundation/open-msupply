@@ -1,4 +1,12 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  MenuItemConstructorOptions,
+  shell,
+} from 'electron';
 import dnssd from 'dnssd';
 import { IPC_MESSAGES } from './shared';
 import { address as getIpAddress, isV4Format } from 'ip';
@@ -387,3 +395,107 @@ app.addListener(
     return callback(true);
   }
 );
+
+const isMac = process.platform === 'darwin';
+const appMenu: MenuItemConstructorOptions[] = isMac
+  ? [
+      {
+        label: app.name,
+        submenu: [
+          { role: 'about' },
+          { type: 'separator' },
+          { role: 'services' },
+          { type: 'separator' },
+          { role: 'hide' },
+          { role: 'hideOthers' },
+          { role: 'unhide' },
+          { type: 'separator' },
+          { role: 'quit' },
+        ],
+      },
+    ]
+  : [];
+const fileMenu: MenuItemConstructorOptions = {
+  label: 'File',
+  submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
+};
+const editMenu: MenuItemConstructorOptions = {
+  label: 'Edit',
+  submenu: [
+    { role: 'undo' },
+    { role: 'redo' },
+    { type: 'separator' },
+    { role: 'cut' },
+    { role: 'copy' },
+    { role: 'paste' },
+    ...(isMac
+      ? ([
+          { role: 'pasteAndMatchStyle' },
+          { role: 'delete' },
+          { role: 'selectAll' },
+          { type: 'separator' },
+          {
+            label: 'Speech',
+            submenu: [{ role: 'startSpeaking' }, { role: 'stopSpeaking' }],
+          },
+        ] as MenuItemConstructorOptions[])
+      : ([
+          { role: 'delete' },
+          { type: 'separator' },
+          { role: 'selectAll' },
+        ] as MenuItemConstructorOptions[])),
+  ],
+};
+const viewMenu: MenuItemConstructorOptions = {
+  label: 'View',
+  submenu: [
+    { role: 'reload' },
+    { role: 'forceReload' },
+    { role: 'toggleDevTools' },
+    { type: 'separator' },
+    { role: 'resetZoom' },
+    { role: 'zoomIn' },
+    { role: 'zoomOut' },
+    { type: 'separator' },
+    { role: 'togglefullscreen' },
+  ],
+};
+const windowMenu: MenuItemConstructorOptions = {
+  label: 'Window',
+  submenu: [
+    { role: 'minimize' },
+    { role: 'zoom' },
+    ...((isMac
+      ? [
+          { type: 'separator' },
+          { role: 'front' },
+          { type: 'separator' },
+          { role: 'window' },
+        ]
+      : [{ role: 'close' }]) as MenuItemConstructorOptions[]),
+  ],
+};
+const helpMenu: MenuItemConstructorOptions = {
+  role: 'help',
+  submenu: [
+    {
+      label: 'Documentation',
+      click: async () => {
+        await shell.openExternal(
+          'https://docs.msupply.foundation/docs/introduction/introduction/'
+        );
+      },
+    },
+    ...((isMac ? [] : [{ role: 'about' }]) as MenuItemConstructorOptions[]),
+  ],
+};
+
+const menu = Menu.buildFromTemplate([
+  ...appMenu,
+  fileMenu,
+  editMenu,
+  viewMenu,
+  windowMenu,
+  helpMenu,
+]);
+Menu.setApplicationMenu(menu);
