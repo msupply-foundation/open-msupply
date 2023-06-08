@@ -4,6 +4,8 @@ import static android.content.Context.NSD_SERVICE;
 
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -28,9 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLSocketFactory;
 
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
@@ -38,7 +38,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     public static final String OM_SUPPLY = "omSupply";
     private static final Integer DEFAULT_PORT = DiscoveryConstants.PORT;
     private static final String DEFAULT_URL = "https://localhost:" + DEFAULT_PORT + "/";
-    private static final String CONFIGURATION_GROUP = "omSupply_preferences";
+
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
@@ -442,7 +442,31 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         call.resolve(response);
     }
 
-    /** Helper class to get access to the JS FrontEndHost data */
+    @PluginMethod()
+    public void saveFile(PluginCall call) {
+        JSObject data = call.getData();
+        JSObject response = new JSObject();
+
+        String filename = data.getString("filename", LOG_FILE_NAME);
+        String content = data.getString("content");
+
+        if(content == null){
+            response.put("error", "No content");
+            response.put("success", false);
+        }else{
+            new Handler(Looper.getMainLooper())
+                    .post(
+                            () -> {
+                                new FileManager(getContext()).Save(filename, content);
+                            }
+                    );
+            response.put("success", true);
+        }
+
+        call.resolve(response);
+    }
+
+        /** Helper class to get access to the JS FrontEndHost data */
     public class FrontEndHost {
         JSObject data;
         
