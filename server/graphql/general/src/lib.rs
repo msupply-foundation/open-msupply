@@ -246,6 +246,10 @@ impl GeneralQueries {
     ) -> Result<RequisitionCounts> {
         requisition_counts(ctx, store_id)
     }
+
+    pub async fn log_file_names(&self, ctx: &Context<'_>) -> Result<Vec<String>, Error> {
+        log_file_names(ctx)
+    }
 }
 
 #[derive(Default, Clone)]
