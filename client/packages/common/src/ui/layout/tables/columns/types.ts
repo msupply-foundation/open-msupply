@@ -13,6 +13,7 @@ export interface CellProps<T extends RecordWithId> {
   isDisabled?: boolean;
   isRequired?: boolean;
   isError?: boolean;
+  isAutoFocus?: boolean;
   // Unique name for browser autocomplete (to remember previously entered values for that name)
   autocompleteName?: string;
   localisedText: TypedTFunction<LocaleKey>;
