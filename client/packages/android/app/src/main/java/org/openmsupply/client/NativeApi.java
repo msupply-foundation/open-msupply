@@ -9,6 +9,10 @@ import android.os.Looper;
 import android.util.Log;
 import android.webkit.WebView;
 
+import androidx.annotation.MainThread;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.getcapacitor.Bridge;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -443,7 +447,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     }
 
     @PluginMethod()
-    public void saveFile(PluginCall call) {
+    public void saveFile(@NonNull PluginCall call) {
         JSObject data = call.getData();
         JSObject response = new JSObject();
 
@@ -454,12 +458,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             response.put("error", "No content");
             response.put("success", false);
         }else{
-            new Handler(Looper.getMainLooper())
-                    .post(
-                            () -> {
-                                new FileManager(getContext()).Save(filename, content);
-                            }
-                    );
+            MainActivity mainActivity = (MainActivity) getActivity();
+            mainActivity.SaveFile(filename, content);
             response.put("success", true);
         }
 
