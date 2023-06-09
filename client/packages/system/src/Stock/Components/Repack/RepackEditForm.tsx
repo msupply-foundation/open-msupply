@@ -13,7 +13,7 @@ import {
   StockLineFragment,
   useStock,
 } from '@openmsupply-client/system';
-import { LocationSearchInput } from 'packages/system/src/Location/Components/LocationSearchInput';
+import { LocationSearchInput } from '../../../Location/Components/LocationSearchInput';
 import React, { FC, useEffect, useState } from 'react';
 
 const INPUT_WIDTH = 100;

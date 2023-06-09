@@ -397,29 +397,26 @@ app.addListener(
 );
 
 const isMac = process.platform === 'darwin';
-const appMenu: MenuItemConstructorOptions[] = isMac
-  ? [
-      {
-        label: app.name,
-        submenu: [
-          { role: 'about' },
-          { type: 'separator' },
-          { role: 'services' },
-          { type: 'separator' },
-          { role: 'hide' },
-          { role: 'hideOthers' },
-          { role: 'unhide' },
-          { type: 'separator' },
-          { role: 'quit' },
-        ],
-      },
-    ]
-  : [];
+const appMenu: MenuItemConstructorOptions = {
+  label: app.name,
+  submenu: [
+    { role: 'about' },
+    { type: 'separator' },
+    { role: 'services' },
+    { type: 'separator' },
+    { role: 'hide' },
+    { role: 'hideOthers' },
+    { role: 'unhide' },
+    { type: 'separator' },
+    { role: 'quit' },
+  ],
+};
 const fileMenu: MenuItemConstructorOptions = {
   label: 'File',
-  submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
+  submenu: [{ role: 'quit' }],
 };
-const editMenu: MenuItemConstructorOptions = {
+
+const editMac: MenuItemConstructorOptions = {
   label: 'Edit',
   submenu: [
     { role: 'undo' },
@@ -428,24 +425,27 @@ const editMenu: MenuItemConstructorOptions = {
     { role: 'cut' },
     { role: 'copy' },
     { role: 'paste' },
-    ...(isMac
-      ? ([
-          { role: 'pasteAndMatchStyle' },
-          { role: 'delete' },
-          { role: 'selectAll' },
-          { type: 'separator' },
-          {
-            label: 'Speech',
-            submenu: [{ role: 'startSpeaking' }, { role: 'stopSpeaking' }],
-          },
-        ] as MenuItemConstructorOptions[])
-      : ([
-          { role: 'delete' },
-          { type: 'separator' },
-          { role: 'selectAll' },
-        ] as MenuItemConstructorOptions[])),
+    { role: 'pasteAndMatchStyle' },
+    { role: 'delete' },
+    { role: 'selectAll' },
   ],
 };
+
+const editWindows: MenuItemConstructorOptions = {
+  label: 'Edit',
+  submenu: [
+    { role: 'undo' },
+    { role: 'redo' },
+    { type: 'separator' },
+    { role: 'cut' },
+    { role: 'copy' },
+    { role: 'paste' },
+    { role: 'delete' },
+    { type: 'separator' },
+    { role: 'selectAll' },
+  ],
+};
+
 const viewMenu: MenuItemConstructorOptions = {
   label: 'View',
   submenu: [
@@ -460,21 +460,6 @@ const viewMenu: MenuItemConstructorOptions = {
     { role: 'togglefullscreen' },
   ],
 };
-const windowMenu: MenuItemConstructorOptions = {
-  label: 'Window',
-  submenu: [
-    { role: 'minimize' },
-    { role: 'zoom' },
-    ...((isMac
-      ? [
-          { type: 'separator' },
-          { role: 'front' },
-          { type: 'separator' },
-          { role: 'window' },
-        ]
-      : [{ role: 'close' }]) as MenuItemConstructorOptions[]),
-  ],
-};
 const helpMenu: MenuItemConstructorOptions = {
   role: 'help',
   submenu: [
@@ -486,16 +471,15 @@ const helpMenu: MenuItemConstructorOptions = {
         );
       },
     },
-    ...((isMac ? [] : [{ role: 'about' }]) as MenuItemConstructorOptions[]),
+    { role: 'about' },
   ],
 };
 
 const menu = Menu.buildFromTemplate([
-  ...appMenu,
-  fileMenu,
-  editMenu,
+  isMac ? appMenu : fileMenu,
+  isMac ? editMac : editWindows,
   viewMenu,
-  windowMenu,
   helpMenu,
 ]);
+
 Menu.setApplicationMenu(menu);
