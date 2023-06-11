@@ -396,70 +396,41 @@ app.addListener(
   }
 );
 
-const isMac = process.platform === 'darwin';
-const appMenu: MenuItemConstructorOptions = {
-  label: app.name,
-  submenu: [
-    { role: 'about' },
-    { type: 'separator' },
-    { role: 'services' },
-    { type: 'separator' },
-    { role: 'hide' },
-    { role: 'hideOthers' },
-    { role: 'unhide' },
-    { type: 'separator' },
-    { role: 'quit' },
-  ],
-};
 const fileMenu: MenuItemConstructorOptions = {
   label: 'File',
   submenu: [{ role: 'quit' }],
 };
 
-const editMac: MenuItemConstructorOptions = {
-  label: 'Edit',
-  submenu: [
-    { role: 'undo' },
-    { role: 'redo' },
-    { type: 'separator' },
-    { role: 'cut' },
-    { role: 'copy' },
-    { role: 'paste' },
-    { role: 'pasteAndMatchStyle' },
-    { role: 'delete' },
-    { role: 'selectAll' },
-  ],
-};
+// const editMenu: MenuItemConstructorOptions = {
+//   label: 'Edit',
+//   submenu: [
+//     { role: 'undo' },
+//     { role: 'redo' },
+//     { type: 'separator' },
+//     { role: 'cut' },
+//     { role: 'copy' },
+//     { role: 'paste' },
+//     { role: 'delete' },
+//     { type: 'separator' },
+//     { role: 'selectAll' },
+//   ],
+// };
 
-const editWindows: MenuItemConstructorOptions = {
-  label: 'Edit',
-  submenu: [
-    { role: 'undo' },
-    { role: 'redo' },
-    { type: 'separator' },
-    { role: 'cut' },
-    { role: 'copy' },
-    { role: 'paste' },
-    { role: 'delete' },
-    { type: 'separator' },
-    { role: 'selectAll' },
-  ],
-};
+// const viewMenu: MenuItemConstructorOptions = {
+//   label: 'View',
+//   submenu: [
+//     { role: 'reload' },
+//     { role: 'forceReload' },
+//     { role: 'toggleDevTools' },
+//     { type: 'separator' },
+//     { role: 'resetZoom' },
+//     { role: 'zoomIn' },
+//     { role: 'zoomOut' },
+//     { type: 'separator' },
+//     { role: 'togglefullscreen' },
+//   ],
+// };
 
-const viewMenu: MenuItemConstructorOptions = {
-  label: 'View',
-  submenu: [
-    { role: 'reload' },
-    { role: 'forceReload' },
-    { role: 'toggleDevTools' },
-    { type: 'separator' },
-    { role: 'resetZoom' },
-    { role: 'zoomIn' },
-    { role: 'zoomOut' },
-    { type: 'separator' },
-    { role: 'togglefullscreen' },
-  ],
-};
 const helpMenu: MenuItemConstructorOptions = {
   role: 'help',
   submenu: [
@@ -476,9 +447,9 @@ const helpMenu: MenuItemConstructorOptions = {
 };
 
 const menu = Menu.buildFromTemplate([
-  isMac ? appMenu : fileMenu,
-  isMac ? editMac : editWindows,
-  viewMenu,
+  fileMenu,
+  // editMenu,
+  // viewMenu,
   helpMenu,
 ]);
 
