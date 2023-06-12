@@ -223,6 +223,14 @@ impl CannotEditStocktake {
     }
 }
 
+pub struct CannotHaveFractionalPack;
+#[Object]
+impl CannotHaveFractionalPack {
+    pub async fn description(&self) -> &'static str {
+        "Cannot repack to fractional packs."
+    }
+}
+
 // Common Mutation Errors
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]

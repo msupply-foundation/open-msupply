@@ -7,6 +7,7 @@ import {
   UpdateStockLineInput,
 } from '@openmsupply-client/common';
 import { getSdk, StockLineRowFragment } from './operations.generated';
+import { Repack } from '../types';
 
 export type StockApi = ReturnType<typeof getSdk>;
 
@@ -101,6 +102,24 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
       });
       return result?.stockLines;
     },
+    repack: async (invoiceId: string) => {
+      const result = await stockApi.repack({
+        storeId,
+        invoiceId,
+      });
+
+      if (result.repack.__typename === 'RepackNode') {
+        return result.repack;
+      }
+    },
+    repacksByStockLine: async (stockLineId: string) => {
+      const result = await stockApi.repacksByStockLine({
+        storeId,
+        stockLineId,
+      });
+
+      return result.repacksByStockLine;
+    },
   },
   update: async (patch: RecordPatch<StockLineRowFragment>) => {
     const result =
@@ -116,5 +135,18 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
     }
 
     throw new Error('Unable to update stock line');
+  },
+  insertRepack: async (patch: Repack) => {
+    const result = await stockApi.insertRepack({
+      storeId,
+      input: {
+        stockLineId: patch.stockLineId ?? '',
+        newPackSize: patch.newPackSize ?? 0,
+        numberOfPacks: patch.numberOfPacks ?? 0,
+        newLocationId: patch.newLocationId ?? undefined,
+      },
+    });
+
+    return result.insertRepack;
   },
 });

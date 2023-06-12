@@ -65,6 +65,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
+  Repack = 'REPACK',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
@@ -350,6 +351,11 @@ export type CannotEditRequisition = AddFromMasterListErrorInterface & CreateRequ
 
 export type CannotEditStocktake = DeleteStocktakeErrorInterface & DeleteStocktakeLineErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'CannotEditStocktake';
+  description: Scalars['String'];
+};
+
+export type CannotHaveFractionalPack = InsertRepackErrorInterface & {
+  __typename: 'CannotHaveFractionalPack';
   description: Scalars['String'];
 };
 
@@ -2363,6 +2369,8 @@ export type Queries = {
    * The refresh token is returned as a cookie
    */
   refreshToken: RefreshTokenResponse;
+  repack: RepackResponse;
+  repacksByStockLine: RepackConnector;
   /** Queries a list of available reports */
   reports: ReportsResponse;
   requisition: RequisitionResponse;
@@ -2501,6 +2509,18 @@ export type QueriesProgramRequisitionSettingsArgs = {
 };
 
 
+export type QueriesRepackArgs = {
+  invoiceId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesRepacksByStockLineArgs = {
+  stockLineId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
 export type QueriesReportsArgs = {
   filter?: InputMaybe<ReportFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -2632,6 +2652,33 @@ export type RefreshTokenErrorInterface = {
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
 
+export type RepackConnector = {
+  __typename: 'RepackConnector';
+  nodes: Array<RepackNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type RepackNode = {
+  __typename: 'RepackNode';
+  batch?: Maybe<Scalars['String']>;
+  datetime: Scalars['DateTime'];
+  from: RepackStockLineNode;
+  id: Scalars['String'];
+  invoice: InvoiceNode;
+  repackId: Scalars['String'];
+  to: RepackStockLineNode;
+};
+
+export type RepackResponse = NodeError | RepackNode;
+
+export type RepackStockLineNode = {
+  __typename: 'RepackStockLineNode';
+  location?: Maybe<LocationNode>;
+  numberOfPacks: Scalars['Float'];
+  packSize: Scalars['Int'];
+  stockLine?: Maybe<StockLineNode>;
+};
+
 export type ReportConnector = {
   __typename: 'ReportConnector';
   nodes: Array<ReportNode>;
@@ -2641,6 +2688,7 @@ export type ReportConnector = {
 export enum ReportContext {
   InboundShipment = 'INBOUND_SHIPMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Repack = 'REPACK',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'

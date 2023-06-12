@@ -1,4 +1,4 @@
-import { NativeAPI } from '@common/hooks';
+import { FileInfo, NativeAPI } from '@common/hooks';
 import { contextBridge, ipcRenderer } from 'electron';
 import { IPC_MESSAGES } from './shared';
 
@@ -27,6 +27,8 @@ const electronNativeAPI: NativeAPI = {
   setScannerType: scannerType =>
     ipcRenderer.send(IPC_MESSAGES.SET_SCANNER_TYPE, scannerType),
   getScannerType: () => ipcRenderer.invoke(IPC_MESSAGES.GET_SCANNER_TYPE),
+  saveFile: (fileInfo: FileInfo) =>
+    ipcRenderer.invoke(IPC_MESSAGES.SAVE_FILE, fileInfo),
 };
 
 contextBridge.exposeInMainWorld('electronNativeAPI', electronNativeAPI);
