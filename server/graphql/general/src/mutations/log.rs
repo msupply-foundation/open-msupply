@@ -34,7 +34,7 @@ pub fn upsert_log_level(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryLog,
+            resource: Resource::ServerAdmin,
             store_id: Some(store_id),
         },
     )?;
