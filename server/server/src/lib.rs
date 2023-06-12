@@ -94,6 +94,14 @@ pub async fn start_server(
     let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
     info!("Initialising server context..done");
 
+    // LOGGING
+    let service_context = service_provider.basic_context().unwrap();
+    let log_level = service_provider
+        .log_service
+        .log_level(&service_context)
+        .unwrap();
+    logging_init(settings.logging.clone(), None, log_level);
+
     // SET HARDWARE UUID
     info!("Setting hardware uuid..");
     #[cfg(not(target_os = "android"))]
@@ -113,7 +121,6 @@ pub async fn start_server(
 
     // CHECK SYNC STATUS
     info!("Checking sync status..");
-    let service_context = service_provider.basic_context().unwrap();
     let yaml_sync_settings = settings.sync.clone();
     let database_sync_settings = service_provider
         .settings
