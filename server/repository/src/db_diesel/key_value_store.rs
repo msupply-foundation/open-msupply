@@ -41,6 +41,8 @@ pub enum KeyValueType {
     SettingsDisplayCustomLogoHash,
     SettingsDisplayCustomTheme,
     SettingsDisplayCustomThemeHash,
+
+    LogLevel,
 }
 
 impl Default for KeyValueType {
