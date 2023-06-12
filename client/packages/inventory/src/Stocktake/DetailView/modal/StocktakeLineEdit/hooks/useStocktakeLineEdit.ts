@@ -16,7 +16,7 @@ interface useStocktakeLineEditController {
   update: (patch: RecordPatch<StocktakeLineFragment>) => void;
   addLine: () => void;
   save: () => Promise<{ errorMessages?: string[] }>;
-  isLoading: boolean;
+  isSaving: boolean;
   nextItem: ItemRowFragment | null;
 }
 
@@ -27,7 +27,8 @@ export const useStocktakeLineEdit = (
   const { id } = useStocktake.document.fields('id');
   const nextItem = useNextItem(item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
-  const { mutateAsync: upsertLines, isLoading } = useStocktake.line.save();
+  const { mutateAsync: upsertLines, isLoading: isSaving } =
+    useStocktake.line.save();
   const errorsContext = useStocktakeLineErrorContext();
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) =>
@@ -107,7 +108,7 @@ export const useStocktakeLineEdit = (
     update,
     addLine,
     save,
-    isLoading,
+    isSaving,
     nextItem,
   };
 };
