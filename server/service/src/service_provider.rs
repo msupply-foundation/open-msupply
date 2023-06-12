@@ -13,7 +13,7 @@ use crate::{
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     location::{LocationService, LocationServiceTrait},
-    log::{LogService, LogServiceTrait},
+    log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     missing_program::create_missing_master_list_and_program,
     name::get_names,

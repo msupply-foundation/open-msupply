@@ -16,6 +16,7 @@ use mutations::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
     initialise_site::{initialise_site, InitialiseSiteResponse},
+    log::{upsert_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
 };
@@ -301,6 +302,15 @@ impl GeneralMutations {
         input: BarcodeInput,
     ) -> Result<mutations::barcode::InsertResponse> {
         insert_barcode(ctx, &store_id, input)
+    }
+
+    pub async fn upsert_log_level(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: LogLevelInput,
+    ) -> Result<UpsertLogLevelResponse> {
+        upsert_log_level(ctx, store_id, input)
     }
 }
 
