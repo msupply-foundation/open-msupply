@@ -250,6 +250,10 @@ const start = (): void => {
 
   // not currently implemented in the desktop implementation
   ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
+  ipcMain.handle(IPC_MESSAGES.SAVE_FILE, async () => ({
+    success: false,
+    error: 'Not implemented',
+  }));
 
   discovery.on('serviceUp', function ({ type, port, addresses, txt }) {
     if (type?.name !== SERVICE_TYPE) return;
