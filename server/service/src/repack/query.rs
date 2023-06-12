@@ -96,6 +96,13 @@ pub fn get_repacks_by_stock_line(
         });
     }
 
+    repacks.sort_by(|a, b| {
+        b.invoice
+            .invoice_row
+            .verified_datetime
+            .cmp(&a.invoice.invoice_row.verified_datetime)
+    });
+
     Ok(repacks)
 }
 

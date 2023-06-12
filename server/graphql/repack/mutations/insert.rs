@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
+    simple_generic_errors::CannotHaveFractionalPack,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -24,6 +25,7 @@ pub struct InsertRepackInput {
 #[graphql(field(name = "description", type = "String"))]
 pub enum InsertErrorInterface {
     StockLineReducedBelowZero(StockLineReducedBelowZero),
+    CannotHaveFractionalPack(CannotHaveFractionalPack),
 }
 
 #[derive(SimpleObject)]
@@ -102,10 +104,14 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
                 StockLineReducedBelowZero::from_domain(line),
             ))
         }
+        ServiceError::CannotHaveFractionalPack => {
+            return Ok(InsertErrorInterface::CannotHaveFractionalPack(
+                CannotHaveFractionalPack {},
+            ))
+        }
         // Standard Graphql Errors
         ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
         ServiceError::NotThisStoreStockLine => BadUserInput(formatted_error),
-        ServiceError::CannotHaveFractionalPack => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::InternalError(err) => InternalError(err),

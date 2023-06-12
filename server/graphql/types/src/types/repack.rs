@@ -1,13 +1,13 @@
 use async_graphql::{dataloader::DataLoader, *};
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime, Utc};
 use graphql_core::{
-    loader::{LocationByIdLoader, StockLineByIdLoader},
+    loader::{InvoiceByIdLoader, LocationByIdLoader, StockLineByIdLoader},
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use service::repack::query::Repack;
 
-use super::{LocationNode, StockLineNode};
+use super::{InvoiceNode, LocationNode, StockLineNode};
 
 pub struct RepackNode {
     // Invoice id
@@ -39,6 +39,15 @@ impl RepackNode {
         &self.id
     }
 
+    async fn invoice(&self, ctx: &Context<'_>) -> Result<InvoiceNode> {
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+        let invoice = loader.load_one(self.id.clone()).await?.ok_or(
+            StandardGraphqlError::InternalError(format!("Cannot find invoice {}", self.id))
+                .extend(),
+        )?;
+        Ok(InvoiceNode { invoice })
+    }
+
     async fn repack_id(&self) -> &str {
         &self.repack_id
     }
@@ -47,8 +56,8 @@ impl RepackNode {
         &self.batch
     }
 
-    async fn datetime(&self) -> NaiveDateTime {
-        self.datetime
+    async fn datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.datetime, Utc)
     }
 
     async fn from(&self) -> &RepackStockLineNode {

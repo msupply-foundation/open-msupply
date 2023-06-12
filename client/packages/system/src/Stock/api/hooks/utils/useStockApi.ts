@@ -26,6 +26,9 @@ export const useStockApi = () => {
     paramList: (params: ListParams) => [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<StockLineNode>) =>
       [...keys.list(), sortBy] as const,
+    repack: (invoiceId: string) => [...keys.base(), invoiceId] as const,
+    listRepackByStockLine: (stockLineId: string) =>
+      [...keys.base(), storeId, stockLineId] as const,
   };
 
   return { ...queries, keys, storeId };

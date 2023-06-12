@@ -35,7 +35,7 @@ export const AppBarButtonsComponent = () => {
         <SupplyRequestedQuantityButton />
         <ReportSelector
           context={ReportContext.Requisition}
-          onClick={printReport}
+          onPrint={printReport}
         >
           <LoadingButton
             variant="outlined"

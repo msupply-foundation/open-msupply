@@ -50,12 +50,7 @@ mutation insertLocation($input: InsertLocationInput!, $storeId: String!) {
         }
       }
     }
-    ... on LocationNode {
-      id
-      name
-      code
-      onHold
-    }
+    ...LocationRow
   }
 }
 
@@ -90,12 +85,7 @@ mutation updateLocation($input: UpdateLocationInput!, $storeId: String!) {
         }
       }
     }
-    ... on LocationNode {
-      id
-      name
-      onHold
-      code
-    }
+    ...LocationRow
   }
 }
 

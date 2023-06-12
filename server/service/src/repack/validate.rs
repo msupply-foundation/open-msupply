@@ -19,12 +19,12 @@ pub fn validate(
         },
     )?;
 
-    if check_packs_are_fractional(input, &stock_line.stock_line_row) {
-        return Err(CannotHaveFractionalPack);
-    }
-
     if check_stock_line_reduced_to_zero(input, &stock_line.stock_line_row) {
         return Err(StockLineReducedBelowZero(stock_line));
+    }
+
+    if check_packs_are_fractional(input, &stock_line.stock_line_row) {
+        return Err(CannotHaveFractionalPack);
     }
 
     Ok(stock_line.stock_line_row)
