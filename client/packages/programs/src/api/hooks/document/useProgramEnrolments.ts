@@ -15,7 +15,7 @@ export const useProgramEnrolmentsPromise = () => {
   const api = useProgramEnrolmentApi();
 
   return {
-    ...useMutation((input: ProgramEnrolmentListParams) => {
+    ...useMutation(async (input: ProgramEnrolmentListParams) => {
       const params: ProgramEnrolmentListParams = {
         sortBy: {
           key:
@@ -25,7 +25,9 @@ export const useProgramEnrolmentsPromise = () => {
         },
         filterBy: input.filterBy,
       };
-      return api.programEnrolments(params).then(programs => ({
+      const programs = await api.programEnrolments(params);
+
+      return {
         nodes: programs.nodes.map(node => {
           // only take the latest status event
           const events = node.events
@@ -38,7 +40,7 @@ export const useProgramEnrolmentsPromise = () => {
           } as ProgramEnrolmentRowFragmentWithId;
         }),
         totalCount: programs.totalCount,
-      }));
+      };
     }),
   };
 };
