@@ -5,6 +5,7 @@ import {
   useConfirmationModal,
   Box,
   useTranslation,
+  useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -87,6 +88,8 @@ const PatientDetailView: FC = () => {
   useEffect(() => {
     return () => setNewPatient(undefined);
   }, []);
+
+  useConfirmOnLeaving(!isDirty);
 
   const save = useCallback(async () => {
     const documentName = await saveData();
