@@ -1,4 +1,4 @@
-import { useQuery } from 'packages/common/src';
+import { useQuery } from '@openmsupply-client/common';
 import { useStockApi } from '../utils/useStockApi';
 
 export const useRepack = (invoiceId: string) => {
