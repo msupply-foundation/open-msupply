@@ -282,7 +282,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                 response.put("success", true);
             } else {
                 response.put("success", false);
-                response.put("error", "Connecting to server: response code="+ status);
+                response.put("error", "Connecting to server: response code=" + status);
             }
         } catch (SSLHandshakeException e) {
             // server is running and responding with an SSL error
@@ -469,7 +469,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         /** Helper class to get access to the JS FrontEndHost data */
     public class FrontEndHost {
         JSObject data;
-        
+
         public FrontEndHost(JSObject data) {
             this.data = data;
         }
@@ -491,7 +491,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             if (data.getString("path") != null) {
                 path = "/" + data.getString("path");
             }
-            return getUrl()  + path;
+            return getUrl() + path;
         }
 
         public boolean isLocal() {
