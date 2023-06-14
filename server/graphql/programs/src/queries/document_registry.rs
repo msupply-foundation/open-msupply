@@ -55,12 +55,13 @@ pub fn document_registries(
     ctx: &Context<'_>,
     filter: Option<DocumentRegistryFilterInput>,
     sort: Option<Vec<DocumentRegistrySortInput>>,
+    store_id: String,
 ) -> Result<DocumentRegistryResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryDocumentRegistry,
-            store_id: None,
+            store_id: Some(store_id),
         },
     )?;
     let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
