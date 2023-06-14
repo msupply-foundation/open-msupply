@@ -101,7 +101,6 @@ export const Site: FC = () => {
                       .build()}
                     element={<InventoryRouter />}
                   />
-                  <Route />{' '}
                   <Route
                     path={RouteBuilder.create(AppRoute.Dispensary)
                       .addWildCard()
