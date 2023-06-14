@@ -26,9 +26,7 @@ const EncounterListComponent: FC = () => {
     pagination: { page, first, offset, onChangePage },
   } = useQueryParamsStore();
 
-  const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'startDatetime', dir: 'desc' },
-  });
+  const { queryParams } = useUrlQueryParams();
 
   const patientId = usePatient.utils.id();
   const { data, isError, isLoading } = useEncounter.document.list({
@@ -74,7 +72,10 @@ export const EncounterListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<EncounterFragmentWithStatus>({
-      initialSortBy: { key: 'startDatetime' },
+      initialSortBy: {
+        key: EncounterSortFieldInput.StartDatetime,
+        isDesc: true,
+      },
     })}
   >
     <EncounterListComponent />
