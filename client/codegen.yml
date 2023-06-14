@@ -17,7 +17,6 @@ generates:
     presetConfig:
       extension: .generated.ts
       baseTypesPath: ~@openmsupply-client/common
-      cwd: ~@openmsupply-client/common/../..
     plugins:
       - typescript-operations
       - typescript-graphql-request
