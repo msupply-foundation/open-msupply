@@ -5,11 +5,12 @@ use std::{fs, path::Path};
 use crate::{service_provider::ServiceContext, settings::Level};
 
 pub trait LogServiceTrait: Send + Sync {
-    fn get_log_file_names(&self) -> Result<Vec<String>, Error> {
-        let log_dir = Path::new("log");
+    fn get_log_file_names(&self, ctx: &ServiceContext) -> Result<Vec<String>, Error> {
+        let log_dir = self.get_log_directory(ctx)?;
+        let log_dir_path = Path::new(&log_dir);
         let mut log_file_names = Vec::new();
 
-        for entry in fs::read_dir(log_dir)? {
+        for entry in fs::read_dir(log_dir_path)? {
             let path = entry?.path();
             log_file_names.push(path.file_name().unwrap().to_string_lossy().to_string());
         }
@@ -17,16 +18,21 @@ pub trait LogServiceTrait: Send + Sync {
         Ok(log_file_names)
     }
 
-    fn get_log_content(&self, file_name: Option<String>) -> Result<(String, Vec<String>), Error> {
-        let log_dir = Path::new("log");
-        let default_log_file = "remote_server.log".to_string();
+    fn get_log_content(
+        &self,
+        ctx: &ServiceContext,
+        file_name: Option<String>,
+    ) -> Result<(String, Vec<String>), Error> {
+        let log_dir = self.get_log_directory(ctx)?;
+        let log_dir_path = Path::new(&log_dir);
+        let default_filename = self.get_log_file_name(ctx)?;
 
         let file_name = match file_name {
             Some(file_name) => file_name,
-            None => default_log_file,
+            None => default_filename,
         };
 
-        let log_file_path = log_dir.join(&file_name);
+        let log_file_path = log_dir_path.join(&file_name);
         let log_file_content = fs::read_to_string(log_file_path)?;
 
         let log_file_content = log_file_content
@@ -75,6 +81,46 @@ pub trait LogServiceTrait: Send + Sync {
         };
 
         key_value_store.set_string(KeyValueType::LogLevel, Some(log_level.to_string()))?;
+
+        Ok(())
+    }
+
+    fn get_log_directory(&self, ctx: &ServiceContext) -> Result<String, RepositoryError> {
+        let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
+
+        let log_directory = key_value_store.get_string(KeyValueType::LogDirectory)?;
+
+        Ok(log_directory.unwrap_or(Default::default()))
+    }
+
+    fn set_log_directory(
+        &self,
+        ctx: &ServiceContext,
+        log_directory: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
+
+        key_value_store.set_string(KeyValueType::LogDirectory, log_directory)?;
+
+        Ok(())
+    }
+
+    fn get_log_file_name(&self, ctx: &ServiceContext) -> Result<String, RepositoryError> {
+        let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
+
+        let log_file_name = key_value_store.get_string(KeyValueType::LogFileName)?;
+
+        Ok(log_file_name.unwrap_or(Default::default()))
+    }
+
+    fn set_log_file_name(
+        &self,
+        ctx: &ServiceContext,
+        log_file_name: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
+
+        key_value_store.set_string(KeyValueType::LogFileName, log_file_name)?;
 
         Ok(())
     }
