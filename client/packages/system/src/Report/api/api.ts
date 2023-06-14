@@ -26,8 +26,8 @@ export const getReportQueries = (sdk: Sdk, storeId: string) => ({
       args,
     }: {
       reportId: string;
-      dataId: string | undefined;
-      args: JsonData | undefined;
+      dataId?: string;
+      args?: JsonData;
     }) => {
       const format = EnvUtils.printFormat;
       const result = await sdk.printReport({

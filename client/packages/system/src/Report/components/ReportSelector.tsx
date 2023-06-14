@@ -15,7 +15,8 @@ import { JsonData } from '@openmsupply-client/programs';
 interface ReportSelectorProps {
   context?: ReportContext;
   subContext?: string;
-  onClick: (report: ReportRowFragment, args: JsonData | undefined) => void;
+  onPrint: (report: ReportRowFragment, args: JsonData | undefined) => void;
+  disabled?: boolean;
 }
 
 const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
@@ -40,7 +41,8 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   context,
   subContext,
   children,
-  onClick,
+  onPrint,
+  disabled,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
   const { data, isLoading } = useReport.document.list({ context, subContext });
@@ -56,7 +58,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
       if (report.argumentSchema) {
         setReportWithArgs(report);
       } else {
-        onClick(report, undefined);
+        onPrint(report, undefined);
       }
     },
     []
@@ -78,6 +80,8 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   const noReports = !isLoading && !data?.nodes?.length;
   const oneReport =
     !isLoading && data?.nodes?.length === 1 ? data.nodes[0] : undefined;
+
+  if (disabled) return <>{children}</>;
 
   return (
     <>
@@ -107,7 +111,20 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
                   {noReports ? (
                     <NoReports hasPermission={hasPermission} />
                   ) : (
-                    reportButtons
+                    <Box
+                      style={{
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                      }}
+                      display="flex"
+                      flexDirection="column"
+                    >
+                      {noReports ? (
+                        <NoReports hasPermission={hasPermission} />
+                      ) : (
+                        reportButtons
+                      )}
+                    </Box>
                   )}
                 </Box>
               )}
@@ -121,7 +138,7 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
       <ReportArgumentsModal
         report={reportWithArgs}
         onReset={() => setReportWithArgs(undefined)}
-        onArgumentsSelected={onClick}
+        onArgumentsSelected={onPrint}
       />
     </>
   );

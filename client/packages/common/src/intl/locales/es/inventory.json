@@ -21,7 +21,7 @@
   "label.add-new-line": "Agregar línea nueva",
   "label.cost-price": "Costo",
   "label.sell-price": "Precio",
-  "label.counted-num-of-packs": "Número de paquetes contados",
+  "label.counted-num-of-packs": "Cantidad de paquetes contados",
   "label.create-location": "Crear ubicación",
   "label.edit-location": "Editar ubicación",
   "label.group-by-item": "Agrupar por artículo",
@@ -66,5 +66,9 @@
   "error.stocktake-has-stock-reduced-below-zero": "El recuento de existencias no se puede finalizar porque algunas de las existencias se han utilizado en nuevas salidas.",
   "messages.locked-description": "Esto evitará cambios adicionales en el recuento de existencias hasta que se desbloquee.",
   "messages.click-to-return": "No se pudo encontrar una toma de inventario con ese ID. Haz clic en Aceptar para volver a la lista de tomas de inventario",
-  "messages.confirm-delete-locations_one": "Esto eliminará permanentemente 1 ubicación"
+  "messages.confirm-delete-locations_one": "Esto eliminará permanentemente 1 ubicación",
+  "error.unable-to-scan": "No es posible escanear el código de barras: {{error}}",
+  "stocktake-comment-items-have-stock-template": "Creado utilizando artículos disponibles en stock",
+  "label.items-with-stock": "Artículos con Stock",
+  "messages.no-items-with-stock": "No hay artículos disponibles en stock"
 }

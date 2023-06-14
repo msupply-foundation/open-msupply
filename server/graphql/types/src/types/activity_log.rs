@@ -47,6 +47,7 @@ pub enum ActivityLogNodeType {
     StockBatchChange,
     StockOnHold,
     StockOffHold,
+    Repack,
 }
 
 #[Object]
@@ -145,6 +146,7 @@ impl ActivityLogNodeType {
             from::StockOffHold => to::StockOffHold,
             from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
             from::RequisitionNumberAllocated => to::RequisitionNumberAllocated,
+            from::Repack => to::Repack,
         }
     }
 
@@ -177,6 +179,7 @@ impl ActivityLogNodeType {
             from::StockOffHold => to::StockOffHold,
             from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
             from::RequisitionNumberAllocated => to::RequisitionNumberAllocated,
+            from::Repack => to::Repack,
         }
     }
 }

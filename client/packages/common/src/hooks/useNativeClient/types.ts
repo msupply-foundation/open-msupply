@@ -11,6 +11,11 @@ export type ConnectionResult = {
   success: boolean;
   error?: string;
 };
+export type FileInfo = {
+  content: string;
+  filename?: string;
+};
+
 export interface NativeAPI {
   // Method used in polling for found servers
   discoveredServers: () => Promise<{ servers: FrontEndHost[] }>;
@@ -36,6 +41,9 @@ export interface NativeAPI {
   ) => void;
   setScannerType: (server: ScannerType) => void;
   getScannerType: () => Promise<ScannerType>;
+  saveFile: (
+    fileInfo: FileInfo
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 export enum NativeMode {
