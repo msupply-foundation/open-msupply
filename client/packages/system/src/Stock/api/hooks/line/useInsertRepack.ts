@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'packages/common/src';
+import { useMutation, useQueryClient } from '@openmsupply-client/common';
 import { useStockApi } from '../utils/useStockApi';
 
 export const useInsertRepack = (stockLineId: string) => {
