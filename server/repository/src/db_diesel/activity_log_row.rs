@@ -49,6 +49,7 @@ pub enum ActivityLogType {
     StockBatchChange,
     StockOnHold,
     StockOffHold,
+    Repack,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

@@ -33,8 +33,8 @@ pub fn logging_init(
 fn file_logger(settings: &LoggingSettings) -> LogConfig {
     let default_log_file = "remote_server.log".to_string();
     let default_log_dir = "log".to_string();
-    let default_max_file_count = 5;
-    let default_max_file_size = 10;
+    let default_max_file_count = 10;
+    let default_max_file_size = 1;
 
     // Note: the file_split will panic if the path separator isn't appended
     // and the path separator has to be unix-style, even on windows

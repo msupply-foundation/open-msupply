@@ -32,6 +32,8 @@ pub enum LegacyReportContext {
     #[serde(rename = "Dispensary")]
     Dispensary,
 
+    #[serde(rename = "Repack Finalised")]
+    Repack,
     #[serde(other)]
     Others,
 }
@@ -100,6 +102,7 @@ impl SyncTranslation for ReportTranslation {
             LegacyReportContext::Stocktake => ReportContext::Stocktake,
             LegacyReportContext::Patient => ReportContext::Patient,
             LegacyReportContext::Dispensary => ReportContext::Dispensary,
+            LegacyReportContext::Repack => ReportContext::Repack,
             LegacyReportContext::Others => return Ok(None),
         };
 

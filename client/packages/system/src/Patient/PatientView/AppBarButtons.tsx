@@ -39,7 +39,7 @@ export const AppBarButtons: FC<{ disabled: boolean }> = ({ disabled }) => {
           disabled={disabled}
           disableEncounterButton={disableEncounterButton}
         />
-        <ReportSelector context={ReportContext.Patient} onClick={printReport}>
+        <ReportSelector context={ReportContext.Patient} onPrint={printReport}>
           <LoadingButton
             disabled={disabled}
             variant="outlined"

@@ -65,6 +65,7 @@ export enum ActivityLogNodeType {
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
+  Repack = 'REPACK',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
@@ -3500,6 +3501,7 @@ export type RepackNode = {
   datetime: Scalars['DateTime'];
   from: RepackStockLineNode;
   id: Scalars['String'];
+  invoice: InvoiceNode;
   repackId: Scalars['String'];
   to: RepackStockLineNode;
 };
@@ -3525,6 +3527,7 @@ export enum ReportContext {
   InboundShipment = 'INBOUND_SHIPMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
+  Repack = 'REPACK',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
   Stocktake = 'STOCKTAKE'

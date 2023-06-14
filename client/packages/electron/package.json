@@ -1,13 +1,14 @@
 {
   "name": "@openmsupply-client/electron",
   "productName": "open mSupply",
-  "version": "0.0.0",
+  "//": "Version is updated from the root package.json when electron is built, see the 'make' script below",
+  "version": "1.1.15",
   "description": "Client for omSupply running on local network",
   "main": "./.webpack/main",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "node updateElectronVersion.js && yarn prettier --write package.json && electron-forge make"
   },
   "author": {
     "name": "mSupply Foundation"

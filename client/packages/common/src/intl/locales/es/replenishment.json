@@ -82,7 +82,7 @@
   "messages.shipment-saved": "Envío guardado 🥳",
   "error.soh-and-suggested-quantity-are-zero": "No hay valores de inventario a la mano o de cantidad sugerida",
   "messages.deleted-requisitions_other": "Se eliminaron {{count}} pedidos",
-  "info.automatic-shipment": "Este envío fue creado automáticamente como resultado de una salida en otro almacén. No puedes editar los detalles hasta que el estado se confirme como Entregado.",
+  "info.automatic-shipment": "Este envío fue creado automáticamente como resultado de una salida en otro almacén.",
   "label.suggested-order-quantity": "Cantidad de pedido sugerida",
   "messages.internal-order-created-on": "Orden Interna creada el {{date}}",
   "messages.confirm-inbound-status-as": "¿Confirmar estado como $t({{status}})??\nNota: cambiar desde 'Nuevo' eliminará cualquier línea con cantidad cero.",
@@ -96,5 +96,15 @@
   "messages.on-hold-confirmation": "Esto evitará cualquier cambio adicional de estado hasta que se retire la retención",
   "messages.click-to-return-to-shipments": "No se puede encontrar un envío con ese ID. Haz clic en Aceptar para volver a la lista de envíos",
   "messages.confirm-delete-shipments_one": "Esto eliminará permanentemente 1 envío",
-  "label.cant-delete-disabled": "Solo se pueden eliminar líneas cuando el estado es Nuevo"
+  "label.cant-delete-disabled": "Solo se pueden eliminar líneas cuando el estado es Nuevo",
+  "label.program": "Programar",
+  "label.order-type": "Tipo de orden",
+  "label.period": "Periodo",
+  "messages.not-configured": "No configurado",
+  "messages.period-not-available": "No hay periodos disponibles",
+  "info.automatic-shipment-no-edit": "No puedes editar los detalles hasta que el estado sea confirmado como Entregado.",
+  "info.cannot-edit-program-requisition": "No se puede editar el proveedor, el Mínimo MOS, el Máximo MOS o agregar artículos en una requisición de programa.",
+  "label.packs": "Paquetes",
+  "label.requested-packs": "Paquetes solicitados",
+  "template.requisition-sent": "Aprobado por {{name}}{{job}}. Correo electrónico: {{email}} y número de teléfono: {{phone}}."
 }
