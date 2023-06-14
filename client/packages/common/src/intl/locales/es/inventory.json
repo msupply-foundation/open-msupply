@@ -70,5 +70,18 @@
   "error.unable-to-scan": "No es posible escanear el código de barras: {{error}}",
   "stocktake-comment-items-have-stock-template": "Creado utilizando artículos disponibles en stock",
   "label.items-with-stock": "Artículos con Stock",
-  "messages.no-items-with-stock": "No hay artículos disponibles en stock"
+  "messages.no-items-with-stock": "No hay artículos disponibles en stock",
+  "label.packs-available": "Paquetes disponibles",
+  "messages.no-repacks": "Esta línea de stock no ha sido reempacada. Haz clic en \"Nuevo\" para crear un nuevo reempaque.",
+  "messages.all-packs-repacked": "Guardado. La ventana anterior se ha cerrado ya que todo en la línea de stock ha sido reempacado.",
+  "button.repack": "Reempacar",
+  "error.repack-has-stock-reduced-below-zero": "No se puede reempacar la línea de stock. El nuevo número de paquetes excede el número de paquetes de la línea de stock.",
+  "error.repack-cannot-be-fractional": "No se puede reempacar en un paquete fraccionario",
+  "label.new": "Nuevo",
+  "label.new-pack-size": "Nuevo paquete de tamaño",
+  "label.new-num-packs": "Nuevo número de paquetes",
+  "label.packs-to-repack": "Número de paquetes a reempacar",
+  "messages.no-repack-detail": "Selecciona una línea para ver los detalles de un reempaque o haz clic en \"Nuevo\" para crear un nuevo reempaque",
+  "messages.repack-log-info": "Reempacado desde la línea de stock",
+  "title.repack-details": "Detalles de reempaque"
 }
