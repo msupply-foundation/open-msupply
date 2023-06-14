@@ -96,13 +96,25 @@ pub async fn start_server(
 
     // LOGGING
     let service_context = service_provider.basic_context().unwrap();
-    let log_level = service_provider
-        .log_service
-        .get_log_level(&service_context)
-        .unwrap();
+    let log_service = &service_provider.log_service;
+    info!("Checking log settings..");
+    let log_level = log_service.get_log_level(&service_context).unwrap();
+
+    if settings.logging.is_some() {
+        log_service
+            .set_log_directory(
+                &service_context,
+                settings.logging.clone().unwrap().directory,
+            )
+            .unwrap();
+
+        log_service
+            .set_log_file_name(&service_context, settings.logging.clone().unwrap().filename)
+            .unwrap();
+    }
+
     if log_level.is_none() && settings.logging.is_some() {
-        service_provider
-            .log_service
+        log_service
             .upsert_log_level(&service_context, settings.logging.clone().unwrap().level)
             .unwrap();
     }
