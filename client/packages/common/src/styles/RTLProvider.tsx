@@ -1,9 +1,9 @@
 import React, { FC } from 'react';
-import { IntlUtils } from '@common/intl';
+import { useIntlUtils } from '@common/intl';
 import { PropsWithChildrenOnly } from '@common/types';
 
 export const RTLProvider: FC<PropsWithChildrenOnly> = props => {
-  const isRtl = IntlUtils?.useRtl();
+  const { isRtl } = useIntlUtils();
 
   return (
     <div
