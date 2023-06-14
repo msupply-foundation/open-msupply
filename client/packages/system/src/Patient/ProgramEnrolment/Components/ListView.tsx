@@ -37,14 +37,13 @@ const ProgramListComponent: FC = () => {
 
   const patientId = usePatient.utils.id();
 
-  const { data, isError, isLoading } =
-    useProgramEnrolments.document.programEnrolments({
-      sortBy: {
-        key: queryParams.sortBy.key as ProgramEnrolmentSortFieldInput,
-        isDesc: queryParams.sortBy.isDesc,
-      },
-      filterBy: { patientId: { equalTo: patientId } },
-    });
+  const { data, isError, isLoading } = useProgramEnrolments.document.list({
+    sortBy: {
+      key: queryParams.sortBy.key as ProgramEnrolmentSortFieldInput,
+      isDesc: queryParams.sortBy.isDesc,
+    },
+    filterBy: { patientId: { equalTo: patientId } },
+  });
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('patients');

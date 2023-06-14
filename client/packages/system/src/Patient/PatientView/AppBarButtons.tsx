@@ -23,13 +23,12 @@ export const AppBarButtons: FC<{ disabled: boolean }> = ({ disabled }) => {
   ) => {
     print({ reportId: report.id, dataId: patientId, args });
   };
-  const { data: enrolmentData } =
-    useProgramEnrolments.document.programEnrolments({
-      filterBy: {
-        patientId: { equalTo: patientId },
-        status: { equalTo: ProgramEnrolmentNodeStatus.Active },
-      },
-    });
+  const { data: enrolmentData } = useProgramEnrolments.document.list({
+    filterBy: {
+      patientId: { equalTo: patientId },
+      status: { equalTo: ProgramEnrolmentNodeStatus.Active },
+    },
+  });
   const disableEncounterButton = enrolmentData?.nodes?.length === 0;
 
   return (

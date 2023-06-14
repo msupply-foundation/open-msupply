@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 
-interface UrlQueryObject {
+export interface UrlQueryObject {
   [key: string]: string | number | boolean;
 }
 
