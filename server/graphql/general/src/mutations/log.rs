@@ -16,7 +16,7 @@ pub struct LogLevelInput {
 
 #[derive(SimpleObject)]
 pub struct UpsertLogLevelResponse {
-    pub success_message: String,
+    pub level: LogLevelEnum,
 }
 
 pub fn upsert_log_level(
@@ -48,7 +48,5 @@ pub fn upsert_log_level(
         .log_service
         .upsert_log_level(&service_context, level.clone())?;
 
-    Ok(UpsertLogLevelResponse {
-        success_message: format!("Log level set to {:?}", level),
-    })
+    Ok(UpsertLogLevelResponse { level: input.level })
 }
