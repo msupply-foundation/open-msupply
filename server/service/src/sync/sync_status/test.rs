@@ -128,6 +128,7 @@ async fn sync_status() {
 /// * /queued_records
 /// * /acknowledged_records (placeholder)
 /// * /site (placeholder)
+/// * /site_status (placeholder)
 /// * /final (manually called as last step)
 fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>) -> Tester {
     Tester::new(service_provider.clone())
@@ -319,7 +320,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
         })
         .add_test("site", |ctx| TestOutput {
             new_status: ctx.current_status,
-            response: r#"{"id":"abc123","siteId": 123}"#.to_string(),
+            response: r#"{"id":"abc123","siteId":123,"initialisationStatus":"new"}"#.to_string(),
         })
         .add_test(
             "final",
