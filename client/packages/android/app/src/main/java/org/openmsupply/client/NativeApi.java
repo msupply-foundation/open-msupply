@@ -120,7 +120,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                 Integer retryCount = 5;
                 while (!isServerRunning && retryCount > 0) {
                     try {
-                        URL url = new URL(localUrl);
+                        URL url = new URL(DEFAULT_URL);
                         HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
                         // actually no point - the timeout only applies when trying to find a server
                         // when using localhost it returns immediately even if the server isn't
@@ -144,7 +144,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
                 // .post to run on UI thread in the two calls below
                 if (isServerRunning) {
-                    webView.post(() -> webView.loadUrl(localUrl + "/android"));
+                    webView.post(() -> webView.loadUrl(DEFAULT_URL));
                 } else {
                     Log.e(OM_SUPPLY, "Server not running, displaying error page");
                     webView.post(() -> webView.loadData(ErrorPage.encodedHtml, "text/html", "base64"));
