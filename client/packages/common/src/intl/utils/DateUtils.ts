@@ -1,9 +1,15 @@
-import { IntlUtils, SupportedLocales } from '@common/intl';
+import { SupportedLocales, useIntlUtils } from '@common/intl';
 import {
+  addMinutes,
+  addDays,
+  addYears,
   isValid,
+  differenceInDays,
   differenceInMonths,
   differenceInMinutes,
+  differenceInYears,
   isPast,
+  isFuture,
   isThisWeek,
   isToday,
   isThisMonth,
@@ -13,6 +19,9 @@ import {
   format,
   parseISO,
   fromUnixTime,
+  startOfToday,
+  startOfDay,
+  startOfYear,
   formatRelative,
   formatDistanceToNow,
   formatRFC3339,
@@ -51,14 +60,38 @@ const formatIfValid = (
   }
 ): string => (isValid(date) ? format(date, dateFormat, options) : '');
 
+/** Adds the current time to a date object (that presumably has 00:00 as its
+ * time component) -- does not mutate input Date object
+ */
+const addCurrentTime = (date: Date | null): Date | null => {
+  if (date === null) return date;
+  const d = new Date();
+  const msSinceMidnight = d.getTime() - new Date(d).setHours(0, 0, 0, 0);
+  const newDate = new Date(date);
+  newDate.setTime(newDate.setHours(0, 0, 0, 0) + msSinceMidnight);
+  return newDate;
+};
+
+// Time constants in [ms]
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
 export const DateUtils = {
   differenceInMinutes,
+  addMinutes,
+  addDays,
+  addYears,
+  addCurrentTime,
   getDateOrNull: (date?: Date | string | null): Date | null => {
     if (!date) return null;
     if (date instanceof Date) return date;
     const maybeDate = new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
+  isPast,
+  isFuture,
   isExpired: (expiryDate: Date): boolean => isPast(expiryDate),
   isAlmostExpired: (
     expiryDate: Date,
@@ -73,6 +106,20 @@ export const DateUtils = {
   isValid,
   formatRFC3339: (date: Date | null | undefined) =>
     isValid(date) ? formatRFC3339(date as Date) : undefined,
+  age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
+  ageInDays: (date: Date | string) =>
+    differenceInDays(Date.now(), dateInputHandler(date)),
+  startOfDay,
+  startOfYear,
+
+  /** Number of milliseconds in one second, i.e. SECOND = 1000*/
+  SECOND,
+  /** Number of milliseconds in one minute */
+  MINUTE,
+  /** Number of milliseconds in one hour */
+  HOUR,
+  /** Number of milliseconds in one day */
+  DAY,
 };
 
 const getLocale = (language: SupportedLocales) => {
@@ -89,14 +136,17 @@ const getLocale = (language: SupportedLocales) => {
 };
 
 export const useFormatDateTime = () => {
-  const language = IntlUtils.useCurrentLanguage();
-  const locale = getLocale(language);
+  const { currentLanguage } = useIntlUtils();
+  const locale = getLocale(currentLanguage);
 
   const localisedDate = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'P', { locale });
 
   const localisedTime = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'p', { locale });
+
+  const localisedDateTime = (date: Date | string | number): string =>
+    format(dateInputHandler(date), 'P p', { locale });
 
   const dayMonthShort = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'dd MMM', { locale });
@@ -123,6 +173,7 @@ export const useFormatDateTime = () => {
     customDate,
     dayMonthShort,
     localisedDate,
+    localisedDateTime,
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,
