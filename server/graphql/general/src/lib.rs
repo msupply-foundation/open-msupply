@@ -259,6 +259,10 @@ impl GeneralQueries {
     ) -> Result<LogNode> {
         log_content(ctx, file_name)
     }
+
+    pub async fn log_level(&self, ctx: &Context<'_>) -> Result<LogLevelNode> {
+        log_level(ctx)
+    }
 }
 
 #[derive(Default, Clone)]
