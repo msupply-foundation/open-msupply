@@ -98,8 +98,15 @@ pub async fn start_server(
     let service_context = service_provider.basic_context().unwrap();
     let log_level = service_provider
         .log_service
-        .log_level(&service_context)
+        .get_log_level(&service_context)
         .unwrap();
+    if log_level.is_none() && settings.logging.is_some() {
+        service_provider
+            .log_service
+            .upsert_log_level(&service_context, settings.logging.clone().unwrap().level)
+            .unwrap();
+    }
+
     logging_init(settings.logging.clone(), None, log_level);
 
     // SET HARDWARE UUID
