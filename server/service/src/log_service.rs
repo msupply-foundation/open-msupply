@@ -37,7 +37,7 @@ pub trait LogServiceTrait: Send + Sync {
         Ok((file_name, log_file_content))
     }
 
-    fn log_level(&self, ctx: &ServiceContext) -> Result<Option<Level>, RepositoryError> {
+    fn get_log_level(&self, ctx: &ServiceContext) -> Result<Option<Level>, RepositoryError> {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         let log_level = key_value_store.get_string(KeyValueType::LogLevel)?;

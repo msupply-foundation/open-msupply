@@ -6,19 +6,12 @@ use service::{
     settings::Level,
 };
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum LogLevel {
-    Error,
-    Warn,
-    Info,
-    Debug,
-    Trace,
-}
+use crate::queries::LogLevelEnum;
 
 #[derive(InputObject)]
 #[graphql(name = "UpsertLogLevelInput")]
 pub struct LogLevelInput {
-    pub level: LogLevel,
+    pub level: LogLevelEnum,
 }
 
 #[derive(SimpleObject)]
@@ -40,11 +33,12 @@ pub fn upsert_log_level(
     )?;
 
     let level = match input.level {
-        LogLevel::Error => Level::Error,
-        LogLevel::Warn => Level::Warn,
-        LogLevel::Info => Level::Info,
-        LogLevel::Debug => Level::Debug,
-        LogLevel::Trace => Level::Trace,
+        LogLevelEnum::Error => Level::Error,
+        LogLevelEnum::Warn => Level::Warn,
+        LogLevelEnum::Info => Level::Info,
+        LogLevelEnum::Debug => Level::Debug,
+        LogLevelEnum::Trace => Level::Trace,
+        LogLevelEnum::Off => Level::Off,
     };
 
     let service_provider = ctx.service_provider();
