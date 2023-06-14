@@ -12,6 +12,7 @@ import {
   useDialog,
   WizardStepper,
   useTranslation,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
@@ -56,27 +57,14 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { patient, setNewPatient, updatePatient } = usePatientCreateStore();
   const t = useTranslation('patients');
 
-  const onNext = () => {
+  const onNext = useDebounceCallback(() => {
     updatePatient({ canSearch: true });
     onChangeTab(Tabs.SearchResults);
-  };
+  }, []);
 
   const onOk = () => {
     if (patient) {
       navigate(patient.id);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter') {
-      switch (currentTab) {
-        case Tabs.Form:
-          onNext();
-          break;
-        case Tabs.SearchResults:
-          onOk();
-          break;
-      }
     }
   };
 
@@ -151,13 +139,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
       slideAnimation={false}
     >
       <DetailContainer>
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="center"
-          gap={2}
-          onKeyDown={handleKeyDown}
-        >
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
           <WizardStepper
             activeStep={getActiveStep()}
             steps={patientSteps}
