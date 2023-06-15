@@ -13,6 +13,7 @@ describe('useEditModal', () => {
       mode: null,
       onClose: expect.any(Function),
       onOpen: expect.any(Function),
+      setMode: expect.any(Function),
     });
   });
 
@@ -29,6 +30,7 @@ describe('useEditModal', () => {
       mode: ModalMode.Update,
       onClose: expect.any(Function),
       onOpen: expect.any(Function),
+      setMode: expect.any(Function),
     });
   });
 
@@ -45,6 +47,7 @@ describe('useEditModal', () => {
       mode: ModalMode.Create,
       onClose: expect.any(Function),
       onOpen: expect.any(Function),
+      setMode: expect.any(Function),
     });
   });
 
@@ -62,6 +65,7 @@ describe('useEditModal', () => {
       mode: null,
       onClose: expect.any(Function),
       onOpen: expect.any(Function),
+      setMode: expect.any(Function),
     });
   });
 
@@ -79,6 +83,7 @@ describe('useEditModal', () => {
       mode: null,
       onClose: expect.any(Function),
       onOpen: expect.any(Function),
+      setMode: expect.any(Function),
     });
   });
 });
