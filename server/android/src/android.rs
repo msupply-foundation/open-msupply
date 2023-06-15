@@ -86,6 +86,7 @@ pub mod android {
         logging_init(
             settings.logging.clone(),
             Some(Box::new(|config| config.custom(AndroidLogger {}))),
+            None,
         );
         log_panics::init();
         log::info!("omSupply server starting...");

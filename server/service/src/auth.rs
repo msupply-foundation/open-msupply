@@ -75,8 +75,8 @@ pub enum Resource {
     MutateInboundShipment,
     // reporting
     Report,
-    // view/edit server setting
     QueryLog,
+    // view/edit server setting
     ServerAdmin,
     // clinician
     QueryClinician,
