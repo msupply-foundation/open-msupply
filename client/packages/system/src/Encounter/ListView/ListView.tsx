@@ -22,7 +22,12 @@ const EncounterListComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
-  const { queryParams } = useUrlQueryParams();
+  const { queryParams } = useUrlQueryParams({
+    initialSort: {
+      key: EncounterSortFieldInput.StartDatetime,
+      dir: 'desc',
+    },
+  });
   const { data, isError, isLoading } = useEncounter.document.list({
     ...queryParams,
   });
