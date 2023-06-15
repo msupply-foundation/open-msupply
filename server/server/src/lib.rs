@@ -94,6 +94,33 @@ pub async fn start_server(
     let auth = auth_data(&settings.server, token_bucket, token_secret, &certificates);
     info!("Initialising server context..done");
 
+    // LOGGING
+    let service_context = service_provider.basic_context().unwrap();
+    let log_service = &service_provider.log_service;
+    info!("Checking log settings..");
+    let log_level = log_service.get_log_level(&service_context).unwrap();
+
+    if settings.logging.is_some() {
+        log_service
+            .set_log_directory(
+                &service_context,
+                settings.logging.clone().unwrap().directory,
+            )
+            .unwrap();
+
+        log_service
+            .set_log_file_name(&service_context, settings.logging.clone().unwrap().filename)
+            .unwrap();
+    }
+
+    if log_level.is_none() && settings.logging.is_some() {
+        log_service
+            .upsert_log_level(&service_context, settings.logging.clone().unwrap().level)
+            .unwrap();
+    }
+
+    logging_init(settings.logging.clone(), None, log_level);
+
     // SET HARDWARE UUID
     info!("Setting hardware uuid..");
     #[cfg(not(target_os = "android"))]
@@ -113,7 +140,6 @@ pub async fn start_server(
 
     // CHECK SYNC STATUS
     info!("Checking sync status..");
-    let service_context = service_provider.basic_context().unwrap();
     let yaml_sync_settings = settings.sync.clone();
     let database_sync_settings = service_provider
         .settings

@@ -47,12 +47,13 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const isDisabled = useStocktake.utils.isDisabled();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
-  const { draftLines, update, addLine, isLoading, save, nextItem } =
+  const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
   const { setRowStyles } = useRowStyle();
   const { error } = useNotification();
 
   const onNext = async () => {
+    if (isSaving) return;
     const { errorMessages } = await save();
     if (errorMessages) {
       errorMessages.forEach(errorMessage => error(errorMessage)());
@@ -67,6 +68,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   };
 
   const onOk = async () => {
+    if (isSaving) return;
     const { errorMessages } = await save();
     if (errorMessages) {
       errorMessages.forEach(errorMessage => error(errorMessage)());
@@ -100,10 +102,10 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         mode={mode}
         isOpen={isOpen}
         hasNext={!!nextItem}
-        isValid={hasValidBatches}
+        isValid={hasValidBatches && !isSaving}
       >
         {(() => {
-          if (isLoading) {
+          if (isSaving) {
             return (
               <Box sx={{ height: isMediumScreen ? 350 : 450 }}>
                 <BasicSpinner messageKey="saving" />
