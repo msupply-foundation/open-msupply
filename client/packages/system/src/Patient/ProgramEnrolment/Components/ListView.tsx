@@ -28,12 +28,7 @@ const ProgramListComponent: FC = () => {
     pagination: { page, first, offset, onChangePage },
   } = useQueryParamsStore();
 
-  const { queryParams, updateSortQuery } = useUrlQueryParams({
-    initialSort: {
-      key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
-      dir: 'asc',
-    },
-  });
+  const { queryParams, updateSortQuery } = useUrlQueryParams();
 
   const patientId = usePatient.utils.id();
 
