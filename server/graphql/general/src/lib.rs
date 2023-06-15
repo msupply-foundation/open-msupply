@@ -16,6 +16,7 @@ use mutations::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
     initialise_site::{initialise_site, InitialiseSiteResponse},
+    log::{upsert_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
 };
@@ -246,6 +247,22 @@ impl GeneralQueries {
     ) -> Result<RequisitionCounts> {
         requisition_counts(ctx, store_id)
     }
+
+    pub async fn log_file_names(&self, ctx: &Context<'_>) -> Result<LogNode> {
+        log_file_names(ctx)
+    }
+
+    pub async fn log_contents(
+        &self,
+        ctx: &Context<'_>,
+        file_name: Option<String>,
+    ) -> Result<LogNode> {
+        log_content(ctx, file_name)
+    }
+
+    pub async fn log_level(&self, ctx: &Context<'_>) -> Result<LogLevelNode> {
+        log_level(ctx)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -289,6 +306,15 @@ impl GeneralMutations {
         input: BarcodeInput,
     ) -> Result<mutations::barcode::InsertResponse> {
         insert_barcode(ctx, &store_id, input)
+    }
+
+    pub async fn upsert_log_level(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: LogLevelInput,
+    ) -> Result<UpsertLogLevelResponse> {
+        upsert_log_level(ctx, store_id, input)
     }
 }
 
