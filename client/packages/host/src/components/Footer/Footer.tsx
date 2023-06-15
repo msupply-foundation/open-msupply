@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Box,
   HomeIcon,
-  IntlUtils,
+  useIntlUtils,
   styled,
   Tooltip,
   TranslateIcon,
@@ -17,7 +17,7 @@ import { LanguageSelector } from './LanguageSelector';
 export const Footer: React.FC = () => {
   const { user, store } = useAuthContext();
   const t = useTranslation('app');
-  const i18n = IntlUtils.useI18N();
+  const { currentLanguageName } = useIntlUtils();
   const PaddedCell = styled(Box)({ display: 'flex' });
   const iconStyles = { color: 'gray.main', height: '16px', width: '16px' };
   const textStyles = {
@@ -46,9 +46,7 @@ export const Footer: React.FC = () => {
         <PaddedCell>
           <TranslateIcon sx={iconStyles} />
           <Tooltip title={t('select-language', { ...store })}>
-            <Typography sx={textStyles}>
-              {IntlUtils.getLanguageName(i18n.language)}
-            </Typography>
+            <Typography sx={textStyles}>{currentLanguageName}</Typography>
           </Tooltip>
         </PaddedCell>
       </LanguageSelector>

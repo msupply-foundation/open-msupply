@@ -4,7 +4,7 @@ import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { TransitionProps } from '@mui/material/transitions';
 import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
-import { IntlUtils } from '@common/intl';
+import { useIntlUtils } from '@common/intl';
 import { SxProps, Theme } from '@mui/material';
 
 export interface ButtonProps {
@@ -105,7 +105,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
   const [open, setOpen] = React.useState(false);
   const showDialog = () => setOpen(true);
   const hideDialog = () => setOpen(false);
-  const isRtl = IntlUtils.useRtl();
+  const { isRtl } = useIntlUtils();
 
   useEffect(() => {
     if (isOpen != null) setOpen(isOpen);

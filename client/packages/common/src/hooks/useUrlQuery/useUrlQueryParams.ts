@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useUrlQuery } from './useUrlQuery';
 import { Column, useLocalStorage } from '@openmsupply-client/common';
-import { FilterController } from '../useQueryParams';
+import { FilterBy, FilterController } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
@@ -9,7 +9,7 @@ import { FilterController } from '../useQueryParams';
 export const DEFAULT_RECORDS_PER_PAGE = 20;
 
 interface UrlQueryParams {
-  filterKey?: string;
+  filterKey?: string | string[];
   initialSort?: { key: string; dir: 'desc' | 'asc' };
   filterCondition?: string;
 }
@@ -22,8 +22,13 @@ export const useUrlQueryParams = ({
   // do not coerce the filter parameter if the user enters a numeric value
   // if this is parsed as numeric, the query param changes filter=0300 to filter=300
   // which then does not match against codes, as the filter is usually a 'startsWith'
+  const skipParse = filterKey
+    ? typeof filterKey === 'string'
+      ? [filterKey]
+      : filterKey
+    : ['filter'];
   const { urlQuery, updateQuery } = useUrlQuery({
-    skipParse: [filterKey ?? 'filter'],
+    skipParse,
   });
   const [storedRowsPerPage] = useLocalStorage(
     '/pagination/rowsperpage',
@@ -38,7 +43,7 @@ export const useUrlQueryParams = ({
     if (!!urlQuery['sort']) return;
 
     const { key: sort, dir } = initialSort;
-    updateQuery({ sort, dir });
+    updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
   }, [initialSort]);
 
   const updateSortQuery = (column: Column<any>) => {
@@ -61,19 +66,26 @@ export const useUrlQueryParams = ({
     updateQuery({ [key]: value });
   };
 
+  const filterKeyArray: string[] = !filterKey
+    ? []
+    : typeof filterKey === 'string'
+    ? [filterKey]
+    : filterKey;
+
   const filter: FilterController = {
     onChangeStringFilterRule: (key: string, _, value: string) =>
       updateFilterQuery(key, value),
     onChangeDateFilterRule: () => {},
     onClearFilterRule: key => updateFilterQuery(key, ''),
-    filterBy:
-      filterKey && urlQuery[filterKey]
-        ? {
-            [filterKey]: {
-              [filterCondition]: String(urlQuery[filterKey]) ?? '',
-            },
-          }
-        : {},
+    filterBy: filterKeyArray.reduce<FilterBy>((prev, key) => {
+      const queryValue = urlQuery[key];
+      if (!queryValue) return prev;
+
+      prev[key] = {
+        [filterCondition]: String(queryValue),
+      };
+      return prev;
+    }, {}),
   };
   const queryParams = {
     page: urlQuery.page ? urlQuery.page - 1 : 0,
@@ -81,7 +93,7 @@ export const useUrlQueryParams = ({
     first: rowsPerPage,
     sortBy: {
       key: urlQuery.sort ?? initialSort?.key ?? '',
-      direction: urlQuery.dir ?? 'asc',
+      direction: urlQuery.dir ?? initialSort?.dir ?? 'asc',
       isDesc: urlQuery.dir === 'desc',
     },
     filterBy: filter.filterBy,
