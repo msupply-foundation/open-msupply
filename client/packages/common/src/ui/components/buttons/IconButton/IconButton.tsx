@@ -8,7 +8,9 @@ interface ButtonProps {
   label: string;
   width?: string;
   height?: string;
+  color?: 'primary' | 'secondary' | undefined;
   sx?: SxProps;
+  className?: string;
 }
 
 export const IconButton: React.FC<ButtonProps> = ({
@@ -18,7 +20,9 @@ export const IconButton: React.FC<ButtonProps> = ({
   label,
   width,
   height,
+  color,
   sx,
+  className,
 }) => (
   <Tooltip title={disabled ? '' : label}>
     <MuiIconButton
@@ -27,6 +31,8 @@ export const IconButton: React.FC<ButtonProps> = ({
       onClick={onClick}
       aria-label={label}
       size="small"
+      color={color}
+      className={className}
     >
       {icon}
     </MuiIconButton>
