@@ -79,7 +79,7 @@ export function Autocomplete<T>({
   inputProps,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
-  const filterOption = filterOptions ?? createFilterOptions(filterOptionConfig);
+  const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
@@ -119,7 +119,7 @@ export function Autocomplete<T>({
       disableClearable={!clearable}
       value={value}
       getOptionDisabled={getOptionDisabled}
-      filterOptions={filterOption}
+      filterOptions={filter}
       loading={loading}
       loadingText={loadingText}
       noOptionsText={noOptionsText}
