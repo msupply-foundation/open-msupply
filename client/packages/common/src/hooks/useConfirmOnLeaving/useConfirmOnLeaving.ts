@@ -48,4 +48,6 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
       unblockRef.current?.();
     };
   }, [navigator, isUnsaved]);
+
+  return { showConfirmation };
 };
