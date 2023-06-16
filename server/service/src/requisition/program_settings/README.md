@@ -2,16 +2,16 @@
 
 Requisitions that can be configured to be restricted by program with certain parameters (period schedule, item list and associated programs, etc..) are called program requisitions. 
 
-Program (HIV, Malaria, Tuberculosis etc..) usually have a separate and more structured supply chain from general stock, program stock orders are meant to be pre-planned and are prescriptive. 
+Programs (HIV, Malaria, Tuberculosis etc..) usually have a separate and more structured supply chain from general stock, program stock orders are meant to be pre-planned and are prescriptive. 
 
-We can configure program restrictions at central server, then sync these settings to remote site and restrict program orders based on these settings (in omSupply they are called **program settings**)
+We can configure program restrictions at central server, then sync these settings to remote sites and restrict program orders based on these settings (in omSupply they are called **program settings**)
 
 Different facility levels can order stock for the same program but have different configurations, i.e.
 
-Health Center will order from Regional Program Warehouse once a month (period schedule = monthly, max MOS = 1.5 month)
-Regional Program Warehouse will order from Central Program Warehouse one every 3 month (period schedule = quarterly, max MOS = 4 month)
+* Health Center will order from Regional Program Warehouse once a month (period schedule = monthly, max MOS = 1.5 month)
+* Regional Program Warehouse will order from Central Program Warehouse one every 3 month (period schedule = quarterly, max MOS = 4 month)
 
-Name tags are used to group and associated different program settings with stores
+Name tags are used to group and associate different program settings with stores
 
 ## Schema
 
@@ -31,15 +31,15 @@ erDiagram
     }
     program_requisition_order_type {
         string id
-        string prorgam_requisition)settings_id
+        string program_requisition_settings_id
         string name
-        number threadsholdMOS
-        number maxMOS
-        number maxOrderPerPeriod
+        number threshold_mos
+        number max_mos
+        number max_order_per_period
     } 
     master_list {
         string id
-        stirng name
+        string name
     }
     program {
         string name
@@ -92,27 +92,28 @@ Note: It's possible to delete program settings on central server, thus order_typ
 ### Determining available programs, order types, periods and suppliers
 The logic to calculate which program orders can be made for a given store (store A) is as follows:
 
-Find all program_requisition_settings that are linked to store A through name_tags and through master_list visibility of program's master list. This determines all available program_settings and order types for those programs in store A.
+Find all `program_requisition_settings` that are linked to store A through `name_tag` and through `master_list` visibility of program's master list. This determines all available program_settings and order types for those programs in store A.
 
-To determine available periods for order type, we look at the period schedule for a give program setting, and then do a count for periods of that period schedule that have been used by requisitions of this program, this count is compared against maxOrderPerPeriod to deduce available periods.
+To determine available periods for order type, we look at the period schedule for a give program setting, and then do a count for periods of that period schedule that have been used by requisitions of this program, this count is compared against `maxOrderPerPeriod` to deduce available periods.
 
-And suppliers that can be selected for this program requisitions are the ones that are visible in store A and also linked to the program's master list.
+And suppliers that can be selected for this program requisition are the ones that are visible in store A and also linked to the program's master list.
 
-There are hard coded constants MAX_NUMBER_OF_HISTORIC_PERIODS and MAX_NUMBER_OF_FUTURE_PERIODS that determine how many periods are usable (this is based on current date and available periods for the order type)
+There are hard coded constants `MAX_NUMBER_OF_HISTORIC_PERIODS` and `MAX_NUMBER_OF_FUTURE_PERIODS` that determine how many periods are usable (this is based on current date and available periods for the order type).
 
-### Program requisition editability
+### Program requisition edibility
 
-When program requisition is created, master list item list is used (back end will auto insert those items). Existing program requisitions is restrcited in editability of:
+When a program requisition is created, a master list item list is used (back end will auto insert those items). Existing program requisitions is restricted in edibility of:
 * Items cannot be added or deleted
 * Max MOS and Min MOS are not editable
 
-Requisition is considered a program requistion when `program_id` field is not null
+Requisition is considered a program requisition when `program_id` field is not null.
 
 ## Sync
 
-name_tags, name_tag_join, periods_schedule and periods sync normally with straight forward translation.
+`name_tag`s, `name_tag_join`, `periods_schedule` and `period`s sync normally with straight forward translation.
 
-program_requisition_settings, program_requisition_order_type and program require a complex translation that originates in `program_settings` json fields of a master list.
+`program_requisition_settings`, `program_requisition_order_type` and `program` require a complex translation that originates in `program_settings` json fields of a master list.
+
 
 The basic program configuration json data looks like this: 
 
@@ -130,4 +131,4 @@ Because we are turning json structure to a relational structure we need to decid
 
 ## Extra
 
-We calculate AMC and suggested quantity when program requisitions is created, and it's based on requisition creation date (as oppose to start_date of the period, this may need to be revised)
+We calculate AMC and suggested quantity when program requisitions is created, and it's based on requisition creation date (as oppose to start_date of the period, this may need to be revised).
