@@ -10,7 +10,7 @@ pub struct SiteInfoV5 {
     pub(crate) initialisation_status: InitialisationStatus,
 }
 
-// SITE_INITIALISATION_STATUS.4dm
+// See SITE_INITIALISATION_STATUS mSupply method
 #[derive(Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum InitialisationStatus {
