@@ -1,6 +1,7 @@
 import { useContext, useEffect, useRef } from 'react';
 import { UNSAFE_NavigationContext as NavigationContext } from 'react-router-dom';
 import { useTranslation } from '@common/intl';
+import { useToggle } from '../useToggle';
 
 const promptUser = (e: BeforeUnloadEvent) => {
   // Cancel the event
@@ -11,10 +12,15 @@ const promptUser = (e: BeforeUnloadEvent) => {
 
 // Ideally we'd use the `Prompt` component instead ( or usePrompt or useBlocker ) to prompt when navigating away using react-router
 // however, these weren't implemented in react-router-dom v6 at the time of implementation
+/** useConfirmOnLeaving is a hook that will prompt the user if they try to navigate away from,
+ *  or refresh the page, when there are unsaved changes. Be careful when using within a tab component though
+ *  these are unloaded, but the event handler is at the window level, and so doesn't care
+ * */
 export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
   const unblockRef = useRef<any>(null);
   const { navigator } = useContext(NavigationContext);
   const t = useTranslation();
+  const { isOn, toggle } = useToggle();
   const showConfirmation = (onOk: () => void) => {
     if (
       confirm(
@@ -26,8 +32,12 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
   };
 
   useEffect(() => {
-    if (isUnsaved) {
+    // note that multiple calls to addEventListener don't result in multiple event listeners being added
+    // since the method called is idempotent. However, I didn't want to rely on the implementation details
+    // so have the toggle state to ensure we only add/remove the event listener once
+    if (isUnsaved && !isOn) {
       window.addEventListener('beforeunload', promptUser, { capture: true });
+      toggle();
       const push = navigator.push;
 
       navigator.push = (...args: Parameters<typeof push>) => {
@@ -39,15 +49,25 @@ export const useConfirmOnLeaving = (isUnsaved?: boolean) => {
       return () => {
         navigator.push = push;
       };
-    } else {
+    }
+    if (!isUnsaved && isOn) {
       window.removeEventListener('beforeunload', promptUser, { capture: true });
+      toggle();
       unblockRef.current?.();
     }
-    return () => {
-      window.removeEventListener('beforeunload', promptUser, { capture: true });
+  }, [isUnsaved]);
+
+  // always remove the event listener on unmount, and don't check the toggle
+  // which would be trapped in a stale closure
+  useEffect(
+    () => () => {
+      window.removeEventListener('beforeunload', promptUser, {
+        capture: true,
+      });
       unblockRef.current?.();
-    };
-  }, [navigator, isUnsaved]);
+    },
+    []
+  );
 
   return { showConfirmation };
 };
