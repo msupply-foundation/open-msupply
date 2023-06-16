@@ -40,7 +40,7 @@ Have a very solid onboarding during training, focused on concept of packs and un
 
 *Cons:*
 
-- Ideally our UI/UX would not need to rely too much on training (it would be intuative for a range of users)
+- Ideally our UI/UX would not need to rely too much on training (it would be intuative for a range of users), maybe this one can be turned into a pro if we improve presentation ¯\_(ツ)_/¯
 - In some places like in requisition, we deal with Number of Units (so can't really deal with Number of Packs), although there has been an option added to order in packs, but that default for the item (across all stores)
 
 ### Optoin 2 - Define item variants and assign to facilities
