@@ -18,6 +18,10 @@ Although there seems to be another requirement that has evolved in an attempt to
 
 * Want to treat variations of packsizes in written form as item variant, not numbers ? (requirement to be confirmed)
 
+There is another requirement that may contradict the first one or overlap it in some way
+
+* We want to treat an item as having one or two particular pack sizes in particular facilitiy, based on functional area ? i.e. when dispensing vaccines should be trated in doses, when doing stocktake, in vials, when ordering in doses, when counting open vial wastage in both ? (requirement to be confirmed)
+
 ## Options
 
 ### Option 1 - Training + Clear and common vocabulary 
