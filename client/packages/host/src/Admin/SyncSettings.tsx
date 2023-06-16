@@ -51,6 +51,15 @@ const SyncSettingsForm = ({
   ) => setSyncSettings({ ...settings, [property]: value });
 
   const { url, username, password, intervalSeconds } = settings;
+  const onChangeSyncInterval = (seconds: number | undefined): void => {
+    if (seconds === undefined) return;
+
+    setSettings(
+      'intervalSeconds',
+      NumUtils.constrain(Math.round(seconds), 1, Number.MAX_SAFE_INTEGER)
+    );
+  };
+
   return (
     <form
       style={{ width: '100%' }}
@@ -97,18 +106,7 @@ const SyncSettingsForm = ({
         component={
           <NumericTextInput
             value={intervalSeconds}
-            onChange={seconds => {
-              if (seconds !== undefined) {
-                setSettings(
-                  'intervalSeconds',
-                  NumUtils.constrain(
-                    Math.round(seconds),
-                    1,
-                    Number.MAX_SAFE_INTEGER
-                  )
-                );
-              }
-            }}
+            onChange={onChangeSyncInterval}
             disabled={isDisabled}
           />
         }
