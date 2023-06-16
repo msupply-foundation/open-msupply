@@ -3,6 +3,7 @@ import { BasicTextInput } from '../TextInput';
 import { CloseIcon, SearchIcon } from '@common/icons';
 import { useDebounceCallback } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
+import { Box } from '@mui/material';
 import { IconButton } from '@common/components';
 import { useTranslation } from '@common/intl';
 
@@ -69,12 +70,18 @@ export const SearchBar: FC<SearchBarProps> = ({
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'flex-end',
+      }}
+    >
+      <SearchIcon
+        sx={{ color: 'gray.main', marginBottom: 1 }}
+        fontSize="small"
+      />
       <BasicTextInput
         InputProps={{
-          startAdornment: (
-            <SearchIcon sx={{ color: 'gray.main' }} fontSize="small" />
-          ),
           endAdornment: (
             <SearchBarAction
               isLoading={isLoading || loading}
@@ -90,12 +97,25 @@ export const SearchBar: FC<SearchBarProps> = ({
             '&.Mui-focused': {
               width: '360px',
             },
+
+            backgroundColor: theme => theme.palette.background.menu,
           },
         }}
         value={buffer}
         onChange={e => handleChange(e.target.value)}
-        placeholder={placeholder}
+        label={placeholder}
+        sx={{
+          '& .MuiInputLabel-root': {
+            zIndex: 100,
+            top: '4px',
+            left: '8px',
+            color: 'gray.main',
+          },
+          '& .MuiInputLabel-root.Mui-focused': {
+            color: 'secondary.main',
+          },
+        }}
       />
-    </>
+    </Box>
   );
 };

@@ -57,7 +57,7 @@ const Template: Story = () => (
 
 const NumericTemplate: Story = () => {
   const [nonNegative, setNonNegative] = useState(0);
-  const [positive, setPositive] = useState(1);
+  const [positive, setPositive] = useState<number | undefined>(1);
 
   return (
     <Grid>

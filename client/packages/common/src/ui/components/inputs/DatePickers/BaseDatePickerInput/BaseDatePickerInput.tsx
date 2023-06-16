@@ -13,8 +13,10 @@ export const BaseDatePickerInput: FC<
   Omit<DatePickerProps<Date, Date>, 'renderInput' | 'value'> & {
     onChange(date: Date): void;
     value: Date | string | null;
+    error?: string | undefined;
+    width?: number;
   }
-> = ({ disabled, onChange, value, ...props }) => {
+> = ({ disabled, onChange, value, error, width, ...props }) => {
   const theme = useAppTheme();
   const [internalValue, setInternalValue] = useState<Date | null>(null);
 
@@ -74,12 +76,14 @@ export const BaseDatePickerInput: FC<
         const textInputProps: StandardTextFieldProps = {
           ...params,
           variant: 'standard',
+          helperText: error ?? '',
+          sx: { width },
         };
         return (
           <BasicTextInput
             disabled={!!disabled}
             {...textInputProps}
-            error={isInvalid(internalValue)}
+            error={isInvalid(internalValue) || !!error}
           />
         );
       }}
