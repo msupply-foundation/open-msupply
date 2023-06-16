@@ -8,13 +8,13 @@
 
 ## Background
 
-We've noticed user's confusion in understanding pack sizes. This is especially prominent when users transition from existing systems where pack size have been concealed (i.e. multiple variants of the same item, each defining it's own pack size).
+We've noticed user's confusion in understanding pack sizes. This is especially prominent when users transition from existing systems where pack size have been concealed (i.e. multiple variants of the same item, each defining its own pack size).
 
 It seems like the core requirement is:
 
 * We want to treat an item as having one particular pack size in a particular facility (requirement to be confirmed)
 
-Although there seems to be other requirement that has evolved in an attempt to reduce the pack size confusion (or at least solutions that point to this requirement)
+Although there seems to be another requirement that has evolved in an attempt to reduce the pack size confusion (or at least solutions that point to this requirement)
 
 * Want to treat variations of packsizes in written form as item variant, not numbers ? (requirement to be confirmed)
 
@@ -41,13 +41,13 @@ Have a very solid onboarding during training, focused on concept of packs and un
 
 ### Optoin 2 - Define item variants and assign to facilities
 
-Define item variants, similar to this [spreadsheet](https://docs.google.com/spreadsheets/d/1mWZqmfQRfHlwF5i2OADaBaSWalK3FbIJpauM275xYuA/edit#gid=937944726):
+Define item variants, similar to the [Doses Vaccine Conversion 2023-04-27](https://docs.google.com/spreadsheets/d/1mWZqmfQRfHlwF5i2OADaBaSWalK3FbIJpauM275xYuA/edit#gid=937944726) spreadsheet:
 
 ![Nested units](./media/nested_units.png)
 
 Then one unit type can be associated to a facility (through name_tag).
 
-Now in that facility base unit will reflect the unit type that was chosen.
+Now in that facility the base unit will reflect the unit type that was chosen.
 
 If this conversion is done at graphql layer (back end), we have a smaller surface area to deal with (and can have generic translators for input/output, example to follow).
 
@@ -58,18 +58,18 @@ If this conversion is done at graphql layer (back end), we have a smaller surfac
 *Cons:*
 
 - Some fragility is introduced due to configuration (i.e. it maybe easy to mess things up for a facility through configurations)
-- Could cause issues if facility needs to deal with different pack size, with this solution it would lead to fractional pack size (i.e. default unit for facility is of packsize 10, but we received pack size 5, this would mean there would be fractional number of packs).
-- Need to make sure to always add this translator
+- Could cause issues if facility needs to deal with a different pack size, with this solution it would lead to fractional pack size (i.e. default unit for facility is of packsize 10, but we received pack size 5, this would mean there would be fractional number of packs).
+- Need to make sure to always add the pack size conversion translator
 
 ### Option 3 - Use names rather then packsize (through pack 'lens')
 
-I think this was the suggestion from this [spreadsheet](https://docs.google.com/spreadsheets/d/1mWZqmfQRfHlwF5i2OADaBaSWalK3FbIJpauM275xYuA/edit#gid=937944726):
+I think this was the suggestion from the [Doses Vaccine Conversion 2023-04-27](https://docs.google.com/spreadsheets/d/1mWZqmfQRfHlwF5i2OADaBaSWalK3FbIJpauM275xYuA/edit#gid=937944726) spreadsheet:
 
-Where unit types are defined, but facility is not configured to use a particular unit, they are chosen by the user (when ? not really sure but it looks like it should apply uniformly across all UI, also I am not sure how this applies to a list of items and do we store default one against facility ?)
+Where unit types are defined, but the facility is not configured to use a particular unit, the unit type is chosen by the user (when ? not really sure but it looks like it should apply uniformly across all UI, also I am not sure how this applies to a list of items and do we store default one against facility ?)
 
 *Pros:*
 
-- Generic approach that deal with quite a few use cases
+- Generic approach that deals with quite a few use cases
 
 *Cons:*
 
