@@ -78,8 +78,9 @@ impl ProgramsQueries {
         ctx: &Context<'_>,
         filter: Option<DocumentRegistryFilterInput>,
         sort: Option<Vec<DocumentRegistrySortInput>>,
+        store_id: String,
     ) -> Result<DocumentRegistryResponse> {
-        document_registries(ctx, filter, sort)
+        document_registries(ctx, filter, sort, store_id)
     }
 
     pub async fn patients(
