@@ -11,7 +11,5 @@ export const usePatients = (customQuery?: ListParams) => {
 
   const query = customQuery ?? queryParams;
 
-  return {
-    ...useQuery(api.keys.paramList(query), () => api.get.list(query)),
-  };
+  return useQuery(api.keys.paramList(query), () => api.get.list(query));
 };
