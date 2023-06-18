@@ -14,35 +14,32 @@ export type ProgramEnrolmentRowFragmentWithId = {
 export const useProgramEnrolmentsPromise = () => {
   const api = useProgramEnrolmentApi();
 
-  return {
-    ...useMutation(async (input: ProgramEnrolmentListParams) => {
-      const params: ProgramEnrolmentListParams = {
-        sortBy: {
-          key:
-            input.sortBy?.key ??
-            ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
-          isDesc: input.sortBy?.isDesc,
-        },
-        filterBy: input.filterBy,
-      };
-      const programs = await api.programEnrolments(params);
+  return useMutation(async (input: ProgramEnrolmentListParams) => {
+    const params: ProgramEnrolmentListParams = {
+      sortBy: {
+        key:
+          input.sortBy?.key ?? ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
+        isDesc: input.sortBy?.isDesc,
+      },
+      filterBy: input.filterBy,
+    };
+    const programs = await api.programEnrolments(params);
 
-      return {
-        nodes: programs.nodes.map(node => {
-          // only take the latest status event
-          const events = node.events
-            .filter(e => e.type === 'programStatus' && e.data)
-            .slice(0, 1);
-          return {
-            ...node,
-            events,
-            id: node.name,
-          } as ProgramEnrolmentRowFragmentWithId;
-        }),
-        totalCount: programs.totalCount,
-      };
-    }),
-  };
+    return {
+      nodes: programs.nodes.map(node => {
+        // only take the latest status event
+        const events = node.events
+          .filter(e => e.type === 'programStatus' && e.data)
+          .slice(0, 1);
+        return {
+          ...node,
+          events,
+          id: node.name,
+        } as ProgramEnrolmentRowFragmentWithId;
+      }),
+      totalCount: programs.totalCount,
+    };
+  });
 };
 
 export const useProgramEnrolments = (input: ProgramEnrolmentListParams) => {
@@ -56,22 +53,20 @@ export const useProgramEnrolments = (input: ProgramEnrolmentListParams) => {
     },
     filterBy: input.filterBy,
   };
-  return {
-    ...useQuery(api.keys.list(params), () =>
-      api.programEnrolments(params).then(programs => ({
-        nodes: programs.nodes.map(node => {
-          // only take the latest status event
-          const events = node.events
-            .filter(e => e.type === 'programStatus' && e.data)
-            .slice(0, 1);
-          return {
-            ...node,
-            events,
-            id: node.name,
-          } as ProgramEnrolmentRowFragmentWithId;
-        }),
-        totalCount: programs.totalCount,
-      }))
-    ),
-  };
+  return useQuery(api.keys.list(params), () =>
+    api.programEnrolments(params).then(programs => ({
+      nodes: programs.nodes.map(node => {
+        // only take the latest status event
+        const events = node.events
+          .filter(e => e.type === 'programStatus' && e.data)
+          .slice(0, 1);
+        return {
+          ...node,
+          events,
+          id: node.name,
+        } as ProgramEnrolmentRowFragmentWithId;
+      }),
+      totalCount: programs.totalCount,
+    }))
+  );
 };

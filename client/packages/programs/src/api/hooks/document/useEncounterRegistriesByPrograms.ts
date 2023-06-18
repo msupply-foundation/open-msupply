@@ -18,31 +18,29 @@ export const useEncounterRegistriesByPrograms = (
   const programIds = programs
     .map(it => it.document.documentRegistry?.id)
     .filter((it): it is string => !!it);
-  return {
-    ...useQuery(api.keys.registriesByParents(programIds), () =>
-      api.get
-        .documentRegistries({
-          filter: {
-            parentId: {
-              equalAny: programIds,
-            },
+  return useQuery(api.keys.registriesByParents(programIds), () =>
+    api.get
+      .documentRegistries({
+        filter: {
+          parentId: {
+            equalAny: programIds,
           },
-        })
-        .then(result =>
-          result.nodes
-            .map(encounter => {
-              const program = programs.find(
-                p => p.document?.documentRegistry?.id === encounter.parentId
-              );
-              if (!program) return undefined;
-              const entry: EncounterRegistryByProgram = {
-                program,
-                encounter,
-              };
-              return entry;
-            })
-            .filter((it): it is EncounterRegistryByProgram => !!it)
-        )
-    ),
-  };
+        },
+      })
+      .then(result =>
+        result.nodes
+          .map(encounter => {
+            const program = programs.find(
+              p => p.document?.documentRegistry?.id === encounter.parentId
+            );
+            if (!program) return undefined;
+            const entry: EncounterRegistryByProgram = {
+              program,
+              encounter,
+            };
+            return entry;
+          })
+          .filter((it): it is EncounterRegistryByProgram => !!it)
+      )
+  );
 };
