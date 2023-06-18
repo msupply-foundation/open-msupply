@@ -23,4 +23,4 @@ server = { path = "../server", default-features = false, features = [
 ] }
 tokio = { version = "1.17.0", features = ["macros"] }
 android_logger = { version = "0.13.0" }
-fast_log = { version = "1.5" }
+simple-log = { version = "1.6" }
