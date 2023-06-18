@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter, Result};
+
 use log::LevelFilter;
 use repository::database_settings::DatabaseSettings;
 
@@ -71,6 +73,20 @@ impl From<Level> for LevelFilter {
             Level::Debug => LevelFilter::Debug,
             Level::Trace => LevelFilter::Trace,
         }
+    }
+}
+
+impl Display for Level {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let level = match self {
+            Level::Off => "off",
+            Level::Error => "error",
+            Level::Warn => "warn",
+            Level::Info => "info",
+            Level::Debug => "debug",
+            Level::Trace => "trace",
+        };
+        write!(f, "{}", level)
     }
 }
 
