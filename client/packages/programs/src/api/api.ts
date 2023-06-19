@@ -194,11 +194,12 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
   },
 });
 
-export const getDocumentRegistryQueries = (sdk: Sdk) => ({
+export const getDocumentRegistryQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     byDocType: async (type: string): Promise<DocumentRegistryFragment[]> => {
       const result = await sdk.documentRegistries({
         filter: { documentType: { equalTo: type } },
+        storeId,
       });
       const entries = result?.documentRegistries;
 
@@ -212,6 +213,7 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
     ): Promise<DocumentRegistryFragment[]> => {
       const result = await sdk.documentRegistries({
         filter: { context: { equalTo: context } },
+        storeId,
       });
       const entries = result?.documentRegistries;
 
@@ -235,6 +237,7 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
             DocumentRegistrySortFieldInput.DocumentType,
           desc: sortBy?.isDesc ?? false,
         },
+        storeId,
       });
 
       return result?.documentRegistries;
@@ -257,6 +260,7 @@ export const getDocumentRegistryQueries = (sdk: Sdk) => ({
             DocumentRegistrySortFieldInput.DocumentType,
           desc: sortBy?.isDesc ?? false,
         },
+        storeId,
       });
 
       return result?.documentRegistries;

@@ -56,8 +56,9 @@ query documents(
 query documentRegistries(
   $filter: DocumentRegistryFilterInput
   $sort: DocumentRegistrySortInput
+  $storeId: String!
 ) {
-  documentRegistries(filter: $filter, sort: $sort) {
+  documentRegistries(filter: $filter, sort: $sort, storeId: $storeId) {
     ... on DocumentRegistryConnector {
       __typename
       nodes {
@@ -78,8 +79,9 @@ fragment DocumentRegistryWithChildren on DocumentRegistryNode {
 query documentRegistriesWithChildren(
   $filter: DocumentRegistryFilterInput
   $sort: DocumentRegistrySortInput
+  $storeId: String!
 ) {
-  documentRegistries(sort: $sort, filter: $filter) {
+  documentRegistries(sort: $sort, filter: $filter, storeId: $storeId) {
     ... on DocumentRegistryConnector {
       __typename
       totalCount
