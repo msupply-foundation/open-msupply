@@ -6,7 +6,7 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
-    DocumentContext, DocumentRegistryConfig, DocumentRegistryRow, FormSchemaRow,
+    DocumentRegistryConfig, DocumentRegistryRow, DocumentRegistryType, FormSchemaRow,
 };
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
@@ -19,14 +19,15 @@ use diesel::{
 pub struct DocumentRegistryFilter {
     pub id: Option<EqualFilter<String>>,
     pub document_type: Option<EqualFilter<String>>,
-    pub context: Option<EqualFilter<DocumentContext>>,
+    pub document_context: Option<EqualFilter<String>>,
+    pub r#type: Option<EqualFilter<DocumentRegistryType>>,
     pub parent_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
 pub enum DocumentRegistrySortField {
     DocumentType,
-    Context,
+    Type,
 }
 
 pub type DocumentRegistrySort = Sort<DocumentRegistrySortField>;
@@ -40,7 +41,8 @@ pub struct DocumentRegistry {
     pub id: String,
     pub parent_id: Option<String>,
     pub document_type: String,
-    pub context: DocumentContext,
+    pub document_context: String,
+    pub r#type: DocumentRegistryType,
     pub name: Option<String>,
     pub form_schema_id: String,
     pub json_schema: serde_json::Value,
@@ -81,8 +83,8 @@ impl<'a> DocumentRegistryRepository<'a> {
                 DocumentRegistrySortField::DocumentType => {
                     apply_sort_no_case!(query, sort, document_registry_dsl::document_type)
                 }
-                DocumentRegistrySortField::Context => {
-                    apply_sort!(query, sort, document_registry_dsl::context)
+                DocumentRegistrySortField::Type => {
+                    apply_sort!(query, sort, document_registry_dsl::type_)
                 }
             }
         } else {
@@ -118,7 +120,12 @@ fn create_filtered_query(filter: Option<DocumentRegistryFilter>) -> BoxedDocRegi
             filter.document_type,
             document_registry_dsl::document_type
         );
-        apply_equal_filter!(query, filter.context, document_registry_dsl::context);
+        apply_equal_filter!(
+            query,
+            filter.document_context,
+            document_registry_dsl::document_context
+        );
+        apply_equal_filter!(query, filter.r#type, document_registry_dsl::type_);
         apply_equal_filter!(query, filter.parent_id, document_registry_dsl::parent_id);
     }
 
@@ -130,7 +137,8 @@ impl DocumentRegistryFilter {
         DocumentRegistryFilter {
             id: None,
             document_type: None,
-            context: None,
+            document_context: None,
+            r#type: None,
             parent_id: None,
         }
     }
@@ -145,8 +153,13 @@ impl DocumentRegistryFilter {
         self
     }
 
-    pub fn context(mut self, filter: EqualFilter<DocumentContext>) -> Self {
-        self.context = Some(filter);
+    pub fn document_context(mut self, filter: EqualFilter<String>) -> Self {
+        self.document_context = Some(filter);
+        self
+    }
+
+    pub fn context(mut self, filter: EqualFilter<DocumentRegistryType>) -> Self {
+        self.r#type = Some(filter);
         self
     }
 
@@ -157,7 +170,19 @@ impl DocumentRegistryFilter {
 }
 
 fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, RepositoryError> {
-    let (row, form_schema) = data;
+    let (
+        DocumentRegistryRow {
+            id,
+            r#type,
+            document_type,
+            document_context,
+            name,
+            parent_id,
+            form_schema_id: _,
+            config,
+        },
+        form_schema,
+    ) = data;
     let json_schema =
         serde_json::from_str(&form_schema.json_schema).map_err(|err| RepositoryError::DBError {
             msg: "Invalid json schema".to_string(),
@@ -168,7 +193,7 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
             msg: "Invalid ui schema".to_string(),
             extra: format!("{}", err),
         })?;
-    let config = if let Some(config) = row.config {
+    let config = if let Some(config) = config {
         let config = serde_json::from_str(&config).map_err(|err| RepositoryError::DBError {
             msg: "Invalid document config".to_string(),
             extra: format!("{}", err),
@@ -179,11 +204,12 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
     };
 
     Ok(DocumentRegistry {
-        id: row.id,
-        parent_id: row.parent_id,
-        document_type: row.document_type,
-        context: row.context,
-        name: row.name,
+        id,
+        parent_id,
+        document_type,
+        document_context,
+        r#type,
+        name,
         form_schema_id: form_schema.id,
         json_schema,
         ui_schema_type: form_schema.r#type,
@@ -192,8 +218,8 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
     })
 }
 
-impl DocumentContext {
-    pub fn equal_to(&self) -> EqualFilter<DocumentContext> {
+impl DocumentRegistryType {
+    pub fn equal_to(&self) -> EqualFilter<DocumentRegistryType> {
         EqualFilter {
             equal_to: Some(self.clone()),
             not_equal_to: None,
