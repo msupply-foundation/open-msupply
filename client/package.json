@@ -1,7 +1,7 @@
 {
   "name": "openmsupply-client",
   "//": "Version is shared between client and remote server and is located in repo root package.json",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "sideEffects": false,
   "private": true,
   "scripts": {
@@ -20,7 +20,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "//": "The sed command here is a temporary workaround to fix an issue in graphql-codegen",
-    "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema && cd ../client && graphql-codegen --config codegen.yml && find . -type f -name 'operations.generated.ts' -exec perl -i -pe 's/graphql-request\\/dist\\/types\\.dom/graphql-request\\/src\\/types\\.dom/g' {} \\;",
+    "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema && cd ../client && graphql-codegen --config codegen.yml",
     "android:run": "npx cap run android",
     "android:build:server": "yarn build && lerna run --scope @openmsupply-client/android build:server --stream",
     "android:build:debug": "yarn build && lerna run --scope @openmsupply-client/android build:debug --stream",

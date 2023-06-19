@@ -37,6 +37,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
             on_hold: true,
             note: Some("some remote sync test note".to_string()),
             supplier_id: Some(new_site_properties.name_id.clone()),
+            barcode_id: None,
         };
 
         let location_movement_row = LocationMovementRow {

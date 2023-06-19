@@ -70,7 +70,7 @@ export const Footer: FC<FooterProps> = ({
               color="secondary"
               disabled={!isDirty || !!validationError}
               isLoading={isSaving}
-              onClick={() => showSaveConfirmation()}
+              onClick={showSaveConfirmation}
             >
               {createDoc ? t('button.create') : t('button.save')}
             </LoadingButton>

@@ -149,4 +149,3 @@ select * from list_master_name_join limit 1
 * Optional nullable inputs (on update mutations) (theirReference, comment, expiryDate and batch), wont' be set to null if null is provided
 * Can't set expiryDate to null. This also included if stock line is change on invoice line (to a stock line with null expiryDate, invoice line will still show previous stock line expiry date)
 
-

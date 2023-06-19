@@ -14,7 +14,7 @@
   "error.stocktake-not-found": "Inventaire introuvable",
   "label.add-new-line": "Ajouter une ligne",
   "label.cant-delete-disabled": "Il n'est possible de supprimer des lignes que lorsque le statut est 'Nouvel(le)'",
-  "label.counted-num-of-packs": "Stock Physique (boites)",
+  "label.counted-num-of-packs": "Nombre de boites comptées pendant l'inventaire (stock physique)",
   "label.create-location": "Créer un emplacement",
   "label.edit-location": "Éditer un emplacement",
   "label.group-by-item": "Grouper par article",

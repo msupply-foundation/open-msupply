@@ -1,4 +1,12 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  MenuItemConstructorOptions,
+  shell,
+} from 'electron';
 import dnssd from 'dnssd';
 import { IPC_MESSAGES } from './shared';
 import { address as getIpAddress, isV4Format } from 'ip';
@@ -250,6 +258,10 @@ const start = (): void => {
 
   // not currently implemented in the desktop implementation
   ipcMain.on(IPC_MESSAGES.READ_LOG, () => 'Not implemented');
+  ipcMain.handle(IPC_MESSAGES.SAVE_FILE, async () => ({
+    success: false,
+    error: 'Not implemented',
+  }));
 
   discovery.on('serviceUp', function ({ type, port, addresses, txt }) {
     if (type?.name !== SERVICE_TYPE) return;
@@ -387,3 +399,62 @@ app.addListener(
     return callback(true);
   }
 );
+
+const fileMenu: MenuItemConstructorOptions = {
+  label: 'File',
+  submenu: [{ role: 'quit' }],
+};
+
+// const editMenu: MenuItemConstructorOptions = {
+//   label: 'Edit',
+//   submenu: [
+//     { role: 'undo' },
+//     { role: 'redo' },
+//     { type: 'separator' },
+//     { role: 'cut' },
+//     { role: 'copy' },
+//     { role: 'paste' },
+//     { role: 'delete' },
+//     { type: 'separator' },
+//     { role: 'selectAll' },
+//   ],
+// };
+
+// const viewMenu: MenuItemConstructorOptions = {
+//   label: 'View',
+//   submenu: [
+//     { role: 'reload' },
+//     { role: 'forceReload' },
+//     { role: 'toggleDevTools' },
+//     { type: 'separator' },
+//     { role: 'resetZoom' },
+//     { role: 'zoomIn' },
+//     { role: 'zoomOut' },
+//     { type: 'separator' },
+//     { role: 'togglefullscreen' },
+//   ],
+// };
+
+const helpMenu: MenuItemConstructorOptions = {
+  role: 'help',
+  submenu: [
+    {
+      label: 'Documentation',
+      click: async () => {
+        await shell.openExternal(
+          'https://docs.msupply.foundation/docs/introduction/introduction/'
+        );
+      },
+    },
+    { role: 'about' },
+  ],
+};
+
+const menu = Menu.buildFromTemplate([
+  fileMenu,
+  // editMenu,
+  // viewMenu,
+  helpMenu,
+]);
+
+Menu.setApplicationMenu(menu);

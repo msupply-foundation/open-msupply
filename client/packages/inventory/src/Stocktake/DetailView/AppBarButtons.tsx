@@ -48,7 +48,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem(true)}
         />
-        <ReportSelector context={ReportContext.Stocktake} onClick={printReport}>
+        <ReportSelector context={ReportContext.Stocktake} onPrint={printReport}>
           <LoadingButton
             variant="outlined"
             startIcon={<PrinterIcon />}

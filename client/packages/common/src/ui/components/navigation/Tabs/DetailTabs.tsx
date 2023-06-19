@@ -1,7 +1,12 @@
 import React, { FC, ReactNode, useState, useEffect } from 'react';
 import TabContext from '@mui/lab/TabContext';
 import { Box } from '@mui/material';
-import { useDetailPanelStore, useDrawer } from '@common/hooks';
+import {
+  UrlQueryObject,
+  UrlQuerySort,
+  useDetailPanelStore,
+  useDrawer,
+} from '@common/hooks';
 import { LocaleKey, useTranslation } from '@common/intl';
 import { debounce } from '@common/utils';
 import { AppBarTabsPortal } from '../../portals';
@@ -12,6 +17,7 @@ import { useUrlQuery } from '@common/hooks';
 export type TabDefinition = {
   Component: ReactNode;
   value: string;
+  sort?: UrlQuerySort;
 };
 interface DetailTabsProps {
   tabs: TabDefinition[];
@@ -35,7 +41,12 @@ export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
   }, [detailPanelOpen, drawerOpen]);
 
   const onChange = (_: React.SyntheticEvent, tab: string) => {
-    updateQuery({ tab });
+    const tabDefinition = tabs.find(({ value }) => value === tab);
+    const sort = tabDefinition?.sort;
+    const query: UrlQueryObject = sort
+      ? { tab, sort: sort.key, dir: sort.dir }
+      : { tab };
+    updateQuery(query);
   };
 
   const isValidTab = (tab?: string) =>

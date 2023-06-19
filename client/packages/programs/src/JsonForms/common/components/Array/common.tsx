@@ -171,7 +171,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
   if (zErrors)
     return (
       <Box display="flex" justifyContent="flex-end">
-        <Typography color="red">{zErrors}</Typography>
+        <Typography color="error">{zErrors}</Typography>
       </Box>
     );
 

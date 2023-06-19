@@ -13,7 +13,7 @@ use super::{
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
-        WaitForIntegrationError,
+        WaitForSyncOperationError,
     },
     settings::{SyncSettings, SYNC_VERSION},
     sync_buffer::SyncBuffer,
@@ -43,7 +43,7 @@ pub(crate) enum SyncError {
     #[error("Error while pushing remote records")]
     RemotePushError(#[from] RemotePushError),
     #[error("Error while awaiting remote record integration")]
-    WaitForIntegrationError(#[from] WaitForIntegrationError),
+    WaitForIntegrationError(#[from] WaitForSyncOperationError),
     #[error("Error while pulling central records")]
     CentralPullError(#[from] CentralPullError),
     #[error("Error while pulling remote records")]
@@ -163,7 +163,10 @@ impl Synchroniser {
                 .push(&ctx.connection, batch_size.remote_push, logger)
                 .await?;
             self.remote
-                .wait_for_integration(INTEGRATION_POLL_PERIOD_SECONDS, INTEGRATION_TIMEOUT_SECONDS)
+                .wait_for_sync_operation(
+                    INTEGRATION_POLL_PERIOD_SECONDS,
+                    INTEGRATION_TIMEOUT_SECONDS,
+                )
                 .await?;
         }
         logger.done_step(SyncStep::Push)?;

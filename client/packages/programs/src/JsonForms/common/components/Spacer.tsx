@@ -31,8 +31,8 @@ const UIComponent = ({ uischema, errors, visible }: ControlProps) => {
   if (error)
     return (
       <>
-        <Divider margin={margin} color="red" />
-        <Typography color="red">
+        <Divider margin={margin} color="error" />
+        <Typography color="error">
           {errors} {zErrors}
         </Typography>
       </>

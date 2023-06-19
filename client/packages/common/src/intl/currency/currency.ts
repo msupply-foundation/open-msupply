@@ -125,13 +125,13 @@ const currencyOptions = {
 };
 
 export const useCurrency = (dp?: number) => {
-  const { currentLanguage } = useIntlUtils();
-  const options = currencyOptions[currentLanguage];
+  const { currentLanguage: language } = useIntlUtils();
+  const options = currencyOptions[language];
   const precision = dp ?? options.precision;
   return {
     c: (value: currency.Any) => currency(value, { ...options, precision }),
     options,
-    language: currentLanguage,
+    language,
   };
 };
 

@@ -6,9 +6,7 @@ export const usePatientSearch = (
   enabled?: boolean
 ) => {
   const api = usePatientApi();
-  return {
-    ...useQuery(api.keys.search(params), () => api.get.search(params), {
-      enabled,
-    }),
-  };
+  return useQuery(api.keys.search(params), () => api.get.search(params), {
+    enabled,
+  });
 };
