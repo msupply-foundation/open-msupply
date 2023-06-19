@@ -8,9 +8,13 @@ import { FilterBy, FilterController } from '../useQueryParams';
 
 export const DEFAULT_RECORDS_PER_PAGE = 20;
 
+export interface UrlQuerySort {
+  key: string;
+  dir: 'desc' | 'asc';
+}
 interface UrlQueryParams {
   filterKey?: string | string[];
-  initialSort?: { key: string; dir: 'desc' | 'asc' };
+  initialSort?: UrlQuerySort;
   filterCondition?: string;
 }
 

@@ -1,7 +1,7 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/src/types.dom';
+import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw';

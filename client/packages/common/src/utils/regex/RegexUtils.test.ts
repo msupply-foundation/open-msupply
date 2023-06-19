@@ -79,3 +79,36 @@ describe('String matching for object properties', () => {
     expect(RegexUtils.escapeChars('about[ ]time')).toBe('about\\[ \\]time');
   });
 });
+
+describe('formatTemplateString', () => {
+  it('formats the string as expected', () => {
+    expect(
+      RegexUtils.formatTemplateString('Hello ${name}', { name: 'world' })
+    ).toBe('Hello world');
+  });
+
+  it('extracts nested properties', () => {
+    expect(
+      RegexUtils.formatTemplateString('My name is ${user.name}', {
+        user: { name: 'Frodo' },
+      })
+    ).toBe('My name is Frodo');
+  });
+
+  it('formats with the default value if required', () => {
+    expect(
+      RegexUtils.formatTemplateString('Hello ${name}', { nom: 'world' })
+    ).toBe('Hello Not found');
+  });
+
+  it('handles undefined', () => {
+    expect(
+      RegexUtils.formatTemplateString('Hello ${name}', { name: undefined })
+    ).toBe('Hello Not found');
+  });
+  it('handles blanks', () => {
+    expect(RegexUtils.formatTemplateString('Hello ${name}', { name: '' })).toBe(
+      'Hello '
+    );
+  });
+});

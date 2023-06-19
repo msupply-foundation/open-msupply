@@ -1,7 +1,7 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/src/types.dom';
+import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean } };

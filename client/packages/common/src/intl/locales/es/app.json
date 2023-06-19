@@ -1,6 +1,6 @@
 {
   "auth.unauthenticated-message": "Actualmente no ha iniciado sesión. Haga clic en OK para volver a la pantalla de inicio de sesión.",
-  "auth.server-error": "¡El servidor ha devuelto un error al obtener los detalles del usuario!\nNo se puede continuar, por favor póngase en contacto con soporte.",
+  "auth.server-error": "¡El servidor ha devuelto un error al obtener los detalles del usuario!\nNo se puede continuar, por favor póngase en contacto con support@msupply.foundation.",
   "auth.no-store-assigned": "No está asignado a ningún almacén. Inicie sesión como un usuario diferente o comuníquese con su administrador.",
   "app": "mSupply",
   "auth.alert-title": "Error de autenticación",
@@ -73,7 +73,7 @@
   "internal-order": "Ordenes Internas",
   "items": "Artículos",
   "label.site": "Sitio:",
-  "loading": "Cargando...",
+  "loading": "Cargando…",
   "locations": "Ubicaciones",
   "login.body": "Ya sea que maneje un almacén de distribución de productos farmacéuticos, sea un fabricante que necesite docenas de usuarios conectados o una pequeña dispensa, mSupply es un socio valioso.",
   "login.store-changed": "Bienvenido al almacén {{store}}",
@@ -84,8 +84,8 @@
   "outbound-shipments": "Salidas",
   "replenishment": "Rebastecimiento",
   "reports": "Reportes",
-  "saving": "Guardando...",
-  "searching": "Buscando...",
+  "saving": "Guardando…",
+  "searching": "Buscando…",
   "select-store": "Seleccionar Almacén",
   "error.sync-api-incompatible": "La versión de API de sincronización no es compatible"
 }

@@ -19,6 +19,7 @@ use crate::{
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     location::{LocationService, LocationServiceTrait},
+    log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     missing_program::create_missing_master_list_and_program,
     name::get_names,
@@ -101,6 +102,8 @@ pub struct ServiceProvider {
     pub display_settings_service: Box<dyn DisplaySettingsServiceTrait>,
     // Barcodes
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
+    // Log
+    pub log_service: Box<dyn LogServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -168,6 +171,7 @@ impl ServiceProvider {
             item_count_service: Box::new(ItemServiceCount {}),
             barcode_service: Box::new(BarcodeService {}),
             repack_service: Box::new(RepackService {}),
+            log_service: Box::new(LogService {}),
         }
     }
 

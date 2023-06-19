@@ -22,6 +22,7 @@ pub mod invoice_line;
 pub mod item;
 pub mod item_stats;
 pub mod location;
+pub mod log_service;
 pub mod login;
 pub mod master_list;
 pub mod missing_program;

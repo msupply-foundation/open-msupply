@@ -23,13 +23,12 @@ export const AppBarButtons: FC<{ disabled: boolean }> = ({ disabled }) => {
   ) => {
     print({ reportId: report.id, dataId: patientId, args });
   };
-  const { data: enrolmentData } =
-    useProgramEnrolments.document.programEnrolments({
-      filterBy: {
-        patientId: { equalTo: patientId },
-        status: { equalTo: ProgramEnrolmentNodeStatus.Active },
-      },
-    });
+  const { data: enrolmentData } = useProgramEnrolments.document.list({
+    filterBy: {
+      patientId: { equalTo: patientId },
+      status: { equalTo: ProgramEnrolmentNodeStatus.Active },
+    },
+  });
   const disableEncounterButton = enrolmentData?.nodes?.length === 0;
 
   return (
@@ -39,7 +38,7 @@ export const AppBarButtons: FC<{ disabled: boolean }> = ({ disabled }) => {
           disabled={disabled}
           disableEncounterButton={disableEncounterButton}
         />
-        <ReportSelector context={ReportContext.Patient} onClick={printReport}>
+        <ReportSelector context={ReportContext.Patient} onPrint={printReport}>
           <LoadingButton
             disabled={disabled}
             variant="outlined"

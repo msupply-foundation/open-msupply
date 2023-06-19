@@ -96,6 +96,7 @@ const authControl = {
   token: '',
   userHasPermission: (_permission: UserPermission) => false,
 };
+
 const AuthContext = createContext<AuthControl>(authControl);
 const { Provider } = AuthContext;
 
