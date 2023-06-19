@@ -9,14 +9,15 @@ use graphql_core::{
     ContextExt,
 };
 
-use crate::types::document_registry::{DocumentRegistryNode, DocumentRegistryNodeContext};
+use crate::types::document_registry::{DocumentRegistryNode, DocumentRegistryTypeNode};
 
 #[derive(InputObject)]
 pub struct InsertDocumentRegistryInput {
     pub id: String,
     pub parent_id: Option<String>,
     pub document_type: String,
-    pub context: DocumentRegistryNodeContext,
+    pub document_context: String,
+    pub r#type: DocumentRegistryTypeNode,
     pub name: Option<String>,
     pub form_schema_id: String,
 }
@@ -84,7 +85,8 @@ fn to_domain(
         id,
         parent_id,
         document_type,
-        context,
+        document_context,
+        r#type,
         name,
         form_schema_id,
     }: InsertDocumentRegistryInput,
@@ -93,7 +95,8 @@ fn to_domain(
         id,
         parent_id,
         document_type,
-        context: context.to_domain(),
+        document_context,
+        r#type: r#type.to_domain(),
         name,
         form_schema_id,
     }

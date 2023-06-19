@@ -1,6 +1,6 @@
 use repository::{
-    DocumentContext, DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository,
-    DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchemaRowRepository,
+    DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryRow,
+    DocumentRegistryRowRepository, DocumentRegistryType, EqualFilter, FormSchemaRowRepository,
     Pagination, RepositoryError,
 };
 
@@ -20,7 +20,8 @@ pub struct InsertDocumentRegistry {
     pub id: String,
     pub parent_id: Option<String>,
     pub document_type: String,
-    pub context: DocumentContext,
+    pub document_context: String,
+    pub r#type: DocumentRegistryType,
     pub name: Option<String>,
     pub form_schema_id: String,
 }
@@ -56,14 +57,25 @@ pub fn insert(
     Ok(result)
 }
 
-fn generate(input: InsertDocumentRegistry) -> DocumentRegistryRow {
+fn generate(
+    InsertDocumentRegistry {
+        id,
+        parent_id,
+        document_type,
+        document_context,
+        r#type,
+        name,
+        form_schema_id,
+    }: InsertDocumentRegistry,
+) -> DocumentRegistryRow {
     DocumentRegistryRow {
-        id: input.id,
-        document_type: input.document_type,
-        context: input.context,
-        name: input.name,
-        parent_id: input.parent_id,
-        form_schema_id: Some(input.form_schema_id),
+        id,
+        r#type,
+        document_type,
+        document_context,
+        name,
+        parent_id,
+        form_schema_id: Some(form_schema_id),
         config: None,
     }
 }
@@ -95,12 +107,12 @@ fn validate_unique_patient_entry(
     ctx: &ServiceContext,
     input: &InsertDocumentRegistry,
 ) -> Result<bool, RepositoryError> {
-    if input.context != DocumentContext::Patient {
+    if input.r#type != DocumentRegistryType::Patient {
         return Ok(true);
     }
     let repo = DocumentRegistryRepository::new(&ctx.connection);
     let result = repo.count(Some(
-        DocumentRegistryFilter::new().context(DocumentContext::Patient.equal_to()),
+        DocumentRegistryFilter::new().context(DocumentRegistryType::Patient.equal_to()),
     ))?;
     Ok(result == 0)
 }

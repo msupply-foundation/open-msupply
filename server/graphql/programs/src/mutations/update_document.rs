@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use repository::{
-    DocumentContext, DocumentRegistryFilter, DocumentRegistryRepository, DocumentStatus,
+    DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryType, DocumentStatus,
     EqualFilter, StorageConnection,
 };
 use service::{
@@ -114,14 +114,14 @@ fn validate_document_type(
         DocumentRegistryFilter::new().document_type(EqualFilter::equal_to(&input.r#type)),
     )?;
     for entry in entries {
-        match entry.context {
-            DocumentContext::Program => {
+        match entry.r#type {
+            DocumentRegistryType::ProgramEnrolment => {
                 return Err(StandardGraphqlError::BadUserInput(
                     "Programs need to be updated through the matching endpoint".to_string(),
                 )
                 .extend())
             }
-            DocumentContext::Encounter => {
+            DocumentRegistryType::Encounter => {
                 return Err(StandardGraphqlError::BadUserInput(
                     "Encounters need to be updated through the matching endpoint".to_string(),
                 )
@@ -194,7 +194,7 @@ mod graphql {
 
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
-        DocumentContext, DocumentRegistryRow, DocumentRegistryRowRepository,
+        DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
         FormSchemaRowRepository,
     };
     use serde_json::json;
@@ -260,8 +260,9 @@ mod graphql {
         DocumentRegistryRowRepository::new(&con)
             .upsert_one(&DocumentRegistryRow {
                 id: "someid".to_string(),
-                document_type: "TestProgram".to_string(),
-                context: DocumentContext::Program,
+                document_type: "TestProgramEnrolment".to_string(),
+                document_context: "TestProgram".to_string(),
+                r#type: DocumentRegistryType::ProgramEnrolment,
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id),
@@ -271,7 +272,7 @@ mod graphql {
         let query = r#"mutation MyMutation($data: JSON!, $storeId: String!) {
             updateDocument(input: {
                 name: \"test_doc\", parents: [], author: \"me\", timestamp: \"2022-07-21T22:34:45.963Z\",
-                data: $data, type: \"TestProgram\" }, storeId: $storeId) {
+                data: $data, type: \"TestProgramEnrolment\" }, storeId: $storeId) {
               ... on DocumentNode {
                 id
                 name
@@ -314,7 +315,8 @@ mod graphql {
             .upsert_one(&DocumentRegistryRow {
                 id: "someid".to_string(),
                 document_type: "TestEncounter".to_string(),
-                context: DocumentContext::Encounter,
+                document_context: "TestProgram".to_string(),
+                r#type: DocumentRegistryType::Encounter,
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id),

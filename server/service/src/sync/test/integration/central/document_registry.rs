@@ -29,8 +29,9 @@ impl SyncRecordTester for DocumentRegistryTester {
 
         let doc_registry1 = DocumentRegistryRow {
             id: uuid(),
+            context: DocumentContext::ProgramEnrolment,
             document_type: "TestProgram".to_string(),
-            context: DocumentContext::Program,
+            document_context: "TestProgram".to_string(),
             name: Some("Some name".to_string()),
             parent_id: None,
             form_schema_id: Some(form_row1.id.clone()),
@@ -38,8 +39,9 @@ impl SyncRecordTester for DocumentRegistryTester {
         };
         let doc_registry_json1 = json!({
             "ID": doc_registry1.id,
+            "type": "PROGRAM_ENROLMENT",
             "document_type": "TestProgram",
-            "context": "PROGRAM",
+            "document_context": "TestProgram",
             "name": "Some name",
             "form_schema_ID": form_row1.id,
             "config": "{}",
