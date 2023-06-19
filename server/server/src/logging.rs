@@ -1,21 +1,16 @@
 use std::env;
 
 use service::settings::{Level, LogMode, LoggingSettings};
-use simple_log::{LogConfig, LogConfigBuilder};
+use simple_log::LogConfigBuilder;
 
-pub fn logging_init(
-    settings: Option<LoggingSettings>,
-    apply_config: Option<Box<dyn Fn(LogConfig) -> LogConfig>>,
-    level: Option<Level>,
-    update: bool,
-) {
+pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>, update: bool) {
     let settings = settings.unwrap_or(LoggingSettings::new(
         LogMode::Console,
         service::settings::Level::Info,
     ));
 
     let log_level = level.unwrap_or(settings.level.clone());
-    let mut config = match settings.mode {
+    let config = match settings.mode {
         LogMode::File => file_logger(&settings)
             .level(log_level.to_string())
             .output_file()
@@ -30,10 +25,6 @@ pub fn logging_init(
             .output_file()
             .build(),
     };
-
-    if let Some(apply_config) = apply_config {
-        config = apply_config(config);
-    }
 
     if update {
         simple_log::update_log_conf(config).expect("Unable to update logger");
