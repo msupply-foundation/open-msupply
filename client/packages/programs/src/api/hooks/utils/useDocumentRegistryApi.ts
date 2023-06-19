@@ -22,7 +22,7 @@ export const useDocumentRegistryApi = () => {
       [...keys.base(), 'registriesByParents', ...programs] as const,
   };
   const { client } = useGql();
-  const queries = getDocumentRegistryQueries(getSdk(client));
+  const queries = getDocumentRegistryQueries(getSdk(client), storeId);
 
   return { ...queries, keys };
 };
