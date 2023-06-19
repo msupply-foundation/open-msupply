@@ -119,7 +119,7 @@ pub async fn start_server(
             .unwrap();
     }
 
-    logging_init(settings.logging.clone(), None, log_level);
+    logging_init(settings.logging.clone(), None, log_level, true);
 
     // SET HARDWARE UUID
     info!("Setting hardware uuid..");

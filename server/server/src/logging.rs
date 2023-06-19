@@ -7,6 +7,7 @@ pub fn logging_init(
     settings: Option<LoggingSettings>,
     apply_config: Option<Box<dyn Fn(LogConfig) -> LogConfig>>,
     level: Option<Level>,
+    update: bool,
 ) {
     let settings = settings.unwrap_or(LoggingSettings::new(
         LogMode::Console,
@@ -34,7 +35,11 @@ pub fn logging_init(
         config = apply_config(config);
     }
 
-    simple_log::new(config).expect("Unable to initialise logger");
+    if update {
+        simple_log::update_log_conf(config).expect("Unable to update logger");
+    } else {
+        simple_log::new(config).expect("Unable to initialise logger");
+    }
 }
 
 fn file_logger(settings: &LoggingSettings) -> LogConfigBuilder {
