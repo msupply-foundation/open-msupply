@@ -6,6 +6,7 @@ use crate::{
     apis::patient_v4::{
         NameStoreJoinParamsV4, NameStoreJoinV2, PatientApiV4, PatientParamsV4, PatientV4,
     },
+    service_provider::{ServiceContext, ServiceProvider},
     sync::settings::SyncSettings,
 };
 
@@ -73,10 +74,15 @@ pub struct NameStoreJoin {
 
 /// Creates a name_store_join for the patient
 pub async fn link_patient_to_store(
-    sync_settings: &SyncSettings,
+    service_provider: &ServiceProvider,
+    context: ServiceContext,
     store_id: &str,
     name_id: &str,
-) -> Result<NameStoreJoin, CentralPatientRequestError> {
+) -> Result<(NameStoreJoin, ServiceContext), CentralPatientRequestError> {
+    let sync_settings = service_provider.settings.sync_settings(&context)?.ok_or(
+        CentralPatientRequestError::InternalError("Missing sync settings".to_string()),
+    )?;
+
     let central_server_url = Url::parse(&sync_settings.url).map_err(|err| {
         CentralPatientRequestError::InternalError(format!(
             "Failed to parse central server url: {}",
@@ -106,11 +112,14 @@ pub async fn link_patient_to_store(
         })
         .await
         .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
-    Ok(NameStoreJoin {
-        id,
-        name_id,
-        store_id,
-    })
+    Ok((
+        NameStoreJoin {
+            id,
+            name_id,
+            store_id,
+        },
+        context,
+    ))
 }
 
 impl From<RepositoryError> for CentralPatientRequestError {
