@@ -26,53 +26,17 @@ pub struct PatientParamsV4 {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct PatientInsurance {
-    #[serde(rename = "ID")]
-    pub id: String,
-    #[serde(rename = "insuranceProviderID")]
-    pub insurance_provider_id: String,
-    #[serde(rename = "nameID")]
-    pub name_id: String,
-    #[serde(rename = "isActive")]
-    pub is_active: String,
-    #[serde(rename = "policyNumberFamily")]
-    pub policy_number_family: String,
-    #[serde(rename = "policyNumberPerson")]
-    pub policy_number_person: String,
-    pub r#type: String,
-    #[serde(rename = "discountRate")]
-    pub discount_rate: String,
-    #[serde(rename = "expiryDate")]
-    pub expiry_date: String,
-    #[serde(rename = "policyNumberFull")]
-    pub policy_number_full: String,
-    #[serde(rename = "enteredByID")]
-    pub entered_by_id: String,
-}
-
-#[derive(Clone, Debug, Deserialize)]
 pub struct PatientV4 {
     #[serde(rename = "ID")]
     pub id: String,
     pub name: String,
     pub phone: String,
-    pub customer: bool,
-    pub bill_address1: String,
-    pub supplier: bool,
     pub email: String,
     pub code: String,
     pub last: String,
     pub first: String,
     #[serde(deserialize_with = "date_of_birth")]
     pub date_of_birth: Option<NaiveDate>,
-    pub r#type: String,
-    pub manufacturer: bool,
-    pub bill_address3: String,
-    pub bill_address4: String,
-    pub bill_postal_zip_code: String,
-    pub supplying_store_id: String,
-    #[serde(rename = "nameInsuranceJoin")]
-    pub name_insurance_join: Vec<PatientInsurance>,
 }
 
 #[derive(Clone, Debug, Serialize)]
