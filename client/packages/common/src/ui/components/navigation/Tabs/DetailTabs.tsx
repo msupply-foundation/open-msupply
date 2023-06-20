@@ -3,6 +3,8 @@ import TabContext from '@mui/lab/TabContext';
 import { Box } from '@mui/material';
 import {
   useConfirmOnLeaving,
+  UrlQueryObject,
+  UrlQuerySort,
   useDetailPanelStore,
   useDrawer,
 } from '@common/hooks';
@@ -17,6 +19,7 @@ export type TabDefinition = {
   Component: ReactNode;
   value: string;
   confirmOnLeaving?: boolean;
+  sort?: UrlQuerySort;
 };
 interface DetailTabsProps {
   tabs: TabDefinition[];
@@ -46,11 +49,15 @@ export const DetailTabs: FC<DetailTabsProps> = ({
 
   const onChange = (_: React.SyntheticEvent, tab: string) => {
     const tabDefinition = tabs.find(({ value }) => value === currentTab);
+    const sort = tabDefinition?.sort;
+    const query: UrlQueryObject = sort
+      ? { tab, sort: sort.key, dir: sort.dir }
+      : { tab };
 
     if (!!tabDefinition?.confirmOnLeaving && requiresConfirmation(currentTab)) {
-      showConfirmation(() => updateQuery({ tab }));
+      showConfirmation(() => updateQuery(query));
     } else {
-      updateQuery({ tab });
+      updateQuery(query);
     }
   };
 

@@ -110,7 +110,7 @@ export const SearchWithDocumentSource = (
           {!error ? (
             displayElement
           ) : (
-            <Typography color="red">{error}</Typography>
+            <Typography color="error">{error}</Typography>
           )}
         </Box>
       }

@@ -51,7 +51,7 @@ pub enum LogMode {
     File,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Clone, Debug)]
 pub enum Level {
     Off,
     Error,

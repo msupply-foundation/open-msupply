@@ -17,7 +17,7 @@ export const LanguageSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation('app');
   const username = useUserName();
 
-  const { languageOptions, currentLanguage, changeLanguage, setUserLocale } =
+  const { changeLanguage, currentLanguage, languageOptions, setUserLocale } =
     useIntlUtils();
 
   const languageButtons = languageOptions.map(l => (

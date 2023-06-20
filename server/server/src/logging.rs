@@ -6,11 +6,12 @@ use fast_log::{
     Config as LogConfig,
 };
 use log::LevelFilter;
-use service::settings::{LogMode, LoggingSettings};
+use service::settings::{Level, LogMode, LoggingSettings};
 
 pub fn logging_init(
     settings: Option<LoggingSettings>,
     apply_config: Option<Box<dyn Fn(LogConfig) -> LogConfig>>,
+    level: Option<Level>,
 ) {
     let settings = settings.unwrap_or(LoggingSettings::new(
         LogMode::Console,
@@ -26,15 +27,17 @@ pub fn logging_init(
         config = apply_config(config);
     }
 
-    fast_log::init(config.level(LevelFilter::from(settings.level.clone())))
+    let log_level = level.unwrap_or(settings.level.clone());
+
+    fast_log::init(config.level(LevelFilter::from(log_level)))
         .expect("Unable to initialise logger");
 }
 
 fn file_logger(settings: &LoggingSettings) -> LogConfig {
     let default_log_file = "remote_server.log".to_string();
     let default_log_dir = "log".to_string();
-    let default_max_file_count = 5;
-    let default_max_file_size = 10;
+    let default_max_file_count = 10;
+    let default_max_file_size = 1;
 
     // Note: the file_split will panic if the path separator isn't appended
     // and the path separator has to be unix-style, even on windows

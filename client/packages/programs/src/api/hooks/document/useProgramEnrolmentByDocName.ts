@@ -6,11 +6,9 @@ export const useProgramEnrolmentByDocName = (
 ) => {
   const api = useProgramEnrolmentApi();
 
-  return {
-    ...useQuery(
+  return useQuery(
       api.keys.byDocName(documentName ?? ''),
       () => api.byDocName(documentName ?? ''),
       { enabled: !!documentName }
-    ),
-  };
+    );
 };

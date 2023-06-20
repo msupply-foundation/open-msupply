@@ -1,7 +1,7 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/src/types.dom';
+import * as Dom from 'graphql-request/dist/types.dom';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type DocumentRegistryFragment = { __typename: 'DocumentRegistryNode', id: string, documentType: string, context: Types.DocumentRegistryNodeContext, name?: string | null, parentId?: string | null, formSchemaId: string, jsonSchema: any, uiSchemaType: string, uiSchema: any };
@@ -29,6 +29,7 @@ export type DocumentsQuery = { __typename: 'Queries', documents: { __typename: '
 export type DocumentRegistriesQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.DocumentRegistryFilterInput>;
   sort?: Types.InputMaybe<Types.DocumentRegistrySortInput>;
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -39,6 +40,7 @@ export type DocumentRegistryWithChildrenFragment = { __typename: 'DocumentRegist
 export type DocumentRegistriesWithChildrenQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.DocumentRegistryFilterInput>;
   sort?: Types.InputMaybe<Types.DocumentRegistrySortInput>;
+  storeId: Types.Scalars['String'];
 }>;
 
 
@@ -416,8 +418,8 @@ export const DocumentsDocument = gql`
 }
     ${DocumentFragmentDoc}`;
 export const DocumentRegistriesDocument = gql`
-    query documentRegistries($filter: DocumentRegistryFilterInput, $sort: DocumentRegistrySortInput) {
-  documentRegistries(filter: $filter, sort: $sort) {
+    query documentRegistries($filter: DocumentRegistryFilterInput, $sort: DocumentRegistrySortInput, $storeId: String!) {
+  documentRegistries(filter: $filter, sort: $sort, storeId: $storeId) {
     ... on DocumentRegistryConnector {
       __typename
       nodes {
@@ -429,8 +431,8 @@ export const DocumentRegistriesDocument = gql`
 }
     ${DocumentRegistryFragmentDoc}`;
 export const DocumentRegistriesWithChildrenDocument = gql`
-    query documentRegistriesWithChildren($filter: DocumentRegistryFilterInput, $sort: DocumentRegistrySortInput) {
-  documentRegistries(sort: $sort, filter: $filter) {
+    query documentRegistriesWithChildren($filter: DocumentRegistryFilterInput, $sort: DocumentRegistrySortInput, $storeId: String!) {
+  documentRegistries(sort: $sort, filter: $filter, storeId: $storeId) {
     ... on DocumentRegistryConnector {
       __typename
       totalCount
@@ -706,10 +708,10 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     documents(variables: DocumentsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentsQuery>(DocumentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documents', 'query');
     },
-    documentRegistries(variables?: DocumentRegistriesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesQuery> {
+    documentRegistries(variables: DocumentRegistriesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesQuery>(DocumentRegistriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistries', 'query');
     },
-    documentRegistriesWithChildren(variables?: DocumentRegistriesWithChildrenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesWithChildrenQuery> {
+    documentRegistriesWithChildren(variables: DocumentRegistriesWithChildrenQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DocumentRegistriesWithChildrenQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DocumentRegistriesWithChildrenQuery>(DocumentRegistriesWithChildrenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'documentRegistriesWithChildren', 'query');
     },
     getDocumentHistory(variables: GetDocumentHistoryQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<GetDocumentHistoryQuery> {
@@ -806,7 +808,7 @@ export const mockDocumentsQuery = (resolver: ResponseResolver<GraphQLRequest<Doc
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockDocumentRegistriesQuery((req, res, ctx) => {
- *   const { filter, sort } = req.variables;
+ *   const { filter, sort, storeId } = req.variables;
  *   return res(
  *     ctx.data({ documentRegistries })
  *   )
@@ -823,7 +825,7 @@ export const mockDocumentRegistriesQuery = (resolver: ResponseResolver<GraphQLRe
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockDocumentRegistriesWithChildrenQuery((req, res, ctx) => {
- *   const { filter, sort } = req.variables;
+ *   const { filter, sort, storeId } = req.variables;
  *   return res(
  *     ctx.data({ documentRegistries })
  *   )

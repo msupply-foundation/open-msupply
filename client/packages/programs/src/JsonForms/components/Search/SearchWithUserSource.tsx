@@ -147,7 +147,7 @@ export const SearchWithUserSource = (
                 />
               </>
             ) : (
-              <Typography color="red">{error}</Typography>
+              <Typography color="error">{error}</Typography>
             )}
           </Box>
         )

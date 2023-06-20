@@ -1,8 +1,9 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogRow, ChangelogTableName, ProgramRowRepository, RequisitionRow,
-    RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter, InvoiceRepository,
+    ProgramRowRepository, RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -319,6 +320,11 @@ impl SyncTranslation for RequisitionTranslation {
                 changelog.record_id
             )))?;
 
+        let has_outbound_shipment = InvoiceRepository::new(&connection)
+            .query_by_filter(InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&id)))?
+            .len()
+            > 0;
+
         let legacy_row = LegacyRequisitionRow {
             ID: id.clone(),
             user_id,
@@ -326,10 +332,12 @@ impl SyncTranslation for RequisitionTranslation {
             name_ID: name_id,
             store_ID: store_id.clone(),
             r#type: to_legacy_type(&r#type),
-            status: to_legacy_status(&r#type, &status).ok_or(anyhow::Error::msg(format!(
-                "Unexpected row requisition status {:?} (type: {:?}), row id:{}",
-                status, r#type, changelog.record_id
-            )))?,
+            status: to_legacy_status(&r#type, &status, has_outbound_shipment).ok_or(
+                anyhow::Error::msg(format!(
+                    "Unexpected row requisition status {:?} (type: {:?}), row id:{}",
+                    status, r#type, changelog.record_id
+                )),
+            )?,
             om_status: Some(status),
             date_entered: date_from_date_time(&created_datetime),
             created_datetime: Some(created_datetime),
@@ -459,6 +467,7 @@ fn from_legacy_status(
 fn to_legacy_status(
     r#type: &RequisitionRowType,
     status: &RequisitionRowStatus,
+    has_outbound_shipment: bool,
 ) -> Option<LegacyRequisitionStatus> {
     let status = match r#type {
         RequisitionRowType::Request => match status {
@@ -468,7 +477,8 @@ fn to_legacy_status(
             _ => return None,
         },
         RequisitionRowType::Response => match status {
-            RequisitionRowStatus::New => LegacyRequisitionStatus::Cn,
+            RequisitionRowStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
+            RequisitionRowStatus::New => LegacyRequisitionStatus::Sg,
             RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
             _ => return None,
         },

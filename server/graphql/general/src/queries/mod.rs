@@ -38,6 +38,8 @@ pub mod requisition_counts;
 pub mod store_preference;
 pub use self::barcode::*;
 pub use self::requisition_counts::*;
+pub mod log;
+pub use self::log::*;
 
 #[cfg(test)]
 mod tests;

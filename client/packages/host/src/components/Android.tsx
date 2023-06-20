@@ -23,6 +23,15 @@ import { useTranslation } from '@common/intl';
 import Viewport from './Viewport';
 import { LoginIcon } from './Login/LoginIcon';
 
+const DEFAULT_LOCAL_SERVER = {
+  protocol: 'https' as 'https' | 'http',
+  port: 8000,
+  ip: '127.0.0.1',
+  clientVersion: '',
+  hardwareId: '',
+  isLocal: true,
+};
+
 const Heading = ({ text }: { text: string }) => (
   <Typography
     component="div"
@@ -101,7 +110,6 @@ export const Android = () => {
   const {
     connectToPreviousFailed,
     previousServer,
-    servers,
     connectToServer,
     advertiseService,
   } = useNativeClient({
@@ -139,22 +147,14 @@ export const Android = () => {
   useEffect(() => {
     if (mode === NativeMode.Server) {
       advertiseService();
+      const path = !token ? 'login' : '';
+      connectToServer({ ...DEFAULT_LOCAL_SERVER, path })
+        .then(handleConnectionResult)
+        .catch(e =>
+          handleConnectionResult({ success: false, error: e.message })
+        );
     }
   }, [mode]);
-
-  useEffect(() => {
-    if (mode === NativeMode.Server) {
-      const localServer = servers.find(server => server.isLocal);
-      if (localServer) {
-        const path = !token ? 'login' : '';
-        connectToServer({ ...localServer, path })
-          .then(handleConnectionResult)
-          .catch(e =>
-            handleConnectionResult({ success: false, error: e.message })
-          );
-      }
-    }
-  }, [mode, servers]);
 
   useEffect(() => {
     if (

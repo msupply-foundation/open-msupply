@@ -7,6 +7,7 @@ import {
   useUrlQueryParams,
   useNavigate,
   createQueryParamsStore,
+  EncounterSortFieldInput,
 } from '@openmsupply-client/common';
 import { useEncounterListColumns } from './columns';
 import {
@@ -22,7 +23,10 @@ const EncounterListComponent: FC = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams();
   const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'startDatetime', dir: 'desc' },
+    initialSort: {
+      key: EncounterSortFieldInput.StartDatetime,
+      dir: 'desc',
+    },
   });
   const { data, isError, isLoading } = useEncounter.document.list({
     ...queryParams,
@@ -58,7 +62,10 @@ export const EncounterListView: FC = () => (
   <TableProvider
     createStore={createTableStore}
     queryParamsStore={createQueryParamsStore<EncounterFragment>({
-      initialSortBy: { key: 'startDatetime' },
+      initialSortBy: {
+        key: EncounterSortFieldInput.StartDatetime,
+        isDesc: true,
+      },
     })}
   >
     <EncounterListComponent />

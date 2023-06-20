@@ -12,8 +12,8 @@ import { JsonData } from '@openmsupply-client/programs';
 
 type PrintReportParams = {
   reportId: string;
-  dataId: string | undefined;
-  args: JsonData | undefined;
+  dataId?: string;
+  args?: JsonData;
 };
 
 const setClose = (frame: HTMLIFrameElement) => () => {
