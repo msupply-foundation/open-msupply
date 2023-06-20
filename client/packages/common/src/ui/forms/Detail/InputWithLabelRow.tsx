@@ -25,7 +25,7 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   sx,
   label,
   labelWidthPercentage = 40,
-  inputAlignment,
+  inputAlignment = 'end',
   inputProps,
   Input = <BasicTextInput {...inputProps} />,
   DisabledInput = <BasicTextInput {...inputProps} />,
@@ -35,6 +35,7 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   const isDisabled = inputProps?.disabled;
   const labelFlexBasis = `${labelWidthPercentage}%`;
   const inputFlexBasis = `${100 - labelWidthPercentage}%`;
+  const justify = `flex-${inputAlignment}`;
 
   return (
     <Box display="flex" alignItems="center" gap={1} sx={{ ...sx }}>
@@ -43,11 +44,7 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
           {labelWithPunctuation(label)}
         </FormLabel>
       </Box>
-      <Box
-        flexBasis={inputFlexBasis}
-        justifyContent={inputAlignment ? `flex-${inputAlignment}` : 'flex-end'}
-        display="flex"
-      >
+      <Box flexBasis={inputFlexBasis} justifyContent={justify} display="flex">
         {!isDisabled ? Input : DisabledInput}
       </Box>
     </Box>

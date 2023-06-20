@@ -26,6 +26,7 @@ pub enum ReportContext {
     Resource,
     Patient,
     Dispensary,
+    Repack,
 }
 
 table! {

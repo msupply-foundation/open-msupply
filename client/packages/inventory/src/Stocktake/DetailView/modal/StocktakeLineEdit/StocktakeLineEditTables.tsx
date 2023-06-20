@@ -15,6 +15,7 @@ import {
   Theme,
   useTheme,
   useTableStore,
+  CellProps,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -50,6 +51,14 @@ const useDisableStocktakeRows = (rows?: DraftStocktakeLine[]) => {
   }, [rows]);
 };
 
+const BatchInputCell = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  isAutoFocus,
+  ...props
+}: CellProps<DraftStocktakeLine>): JSX.Element => (
+  <TextInputCell {...props} isAutoFocus={props.rowIndex === 0} />
+);
+
 const getBatchColumn = (
   setter: DraftLineSetter,
   theme: Theme
@@ -60,7 +69,7 @@ const getBatchColumn = (
       width: 150,
       maxWidth: 150,
       maxLength: 50,
-      Cell: TextInputCell,
+      Cell: BatchInputCell,
       setter: patch => setter({ ...patch, countThisLine: true }),
       backgroundColor: alpha(theme.palette.background.menu, 0.4),
       accessor: ({ rowData }) => rowData.batch || '',

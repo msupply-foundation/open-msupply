@@ -3,7 +3,6 @@ import {
   useTranslation,
   DataTable,
   Box,
-  BaseButton,
   DialogButton,
   Typography,
   useDialog,
@@ -13,9 +12,21 @@ import {
   useNotification,
   getErrorMessage,
   noOtherVariants,
+  ButtonWithIcon,
+  ReportContext,
+  LoadingButton,
+  PrinterIcon,
 } from '@openmsupply-client/common';
+import { PlusCircleIcon } from '@common/icons';
 import { RepackEditForm } from './RepackEditForm';
-import { Repack, useStock } from '@openmsupply-client/system';
+import {
+  Repack,
+  ReportRowFragment,
+  ReportSelector,
+  useLog,
+  useReport,
+  useStock,
+} from '@openmsupply-client/system';
 import { RepackFragment, StockLineRowFragment } from '../../api';
 import { useRepackColumns } from './column';
 
@@ -53,8 +64,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
 }) => {
   const t = useTranslation('inventory');
   const { error, success } = useNotification();
-
   const { Modal } = useDialog({ isOpen, onClose });
+
   const [invoiceId, setInvoiceId] = useState<string | undefined>(undefined);
   const [isNew, setIsNew] = useState<boolean>(false);
   const defaultRepack = {
@@ -66,10 +77,23 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { data, isError, isLoading } = useStock.repack.list(
     stockLine?.id ?? ''
   );
+  const { data: logData } = useLog.document.listByRecord(stockLine?.id ?? '');
+
   const { draft, onChange, onInsert } = useDraftRepack(defaultRepack);
   const { columns } = useRepackColumns();
-  const displayMessage = invoiceId == undefined && !isNew;
+  // only display the message if there are lines to click on
+  // if there are no lines, the 'click new' message is displayed closer to the action
+  const displayMessage =
+    invoiceId == undefined && !isNew && !!data?.nodes.length;
   const showRepackDetail = invoiceId || isNew;
+  const showLogEvent = !!logData?.nodes.length;
+
+  const { print, isPrinting } = useReport.utils.print();
+
+  const printReport = (report: ReportRowFragment) => {
+    if (!data) return;
+    print({ reportId: report.id, dataId: invoiceId || '' });
+  };
 
   const onRowClick = (rowData: RepackFragment) => {
     onChange(defaultRepack);
@@ -121,7 +145,15 @@ export const RepackModal: FC<RepackModalControlProps> = ({
                 error(errorMessage)();
               } else {
                 onChange(defaultRepack);
-                success(t('messages.saved'))();
+                if (stockLine?.totalNumberOfPacks === draft.numberOfPacks) {
+                  onClose();
+                  success(t('messages.all-packs-repacked'))();
+                } else {
+                  success(t('messages.saved'))();
+                }
+                // reset the 'new' state and hide the form
+                setInvoiceId(undefined);
+                setIsNew(false);
               }
             } catch (e) {
               error(getErrorMessage(e))();
@@ -130,24 +162,60 @@ export const RepackModal: FC<RepackModalControlProps> = ({
         />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+      reportSelector={
+        <ReportSelector
+          context={ReportContext.Repack}
+          onPrint={printReport}
+          disabled={!invoiceId}
+        >
+          <LoadingButton
+            sx={{ marginLeft: 1 }}
+            variant="outlined"
+            startIcon={<PrinterIcon />}
+            isLoading={isPrinting}
+            disabled={!invoiceId}
+          >
+            {t('button.print')}
+          </LoadingButton>
+        </ReportSelector>
+      }
     >
       <Box>
-        <Grid
-          container
-          paddingBottom={1}
-          alignItems="center"
-          flexDirection="column"
-        >
+        <Grid container alignItems="center" flexDirection="column">
           <Typography sx={{ fontWeight: 'bold' }} variant="h6">
             {stockLine?.item.name}
           </Typography>
-          <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+          <Typography sx={{ fontWeight: 'bold' }}>
             {`${t('label.code')} : ${stockLine?.item.code}`}
           </Typography>
+          {showLogEvent && (
+            <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+              {`${t('messages.repack-log-info')} : ${logData?.nodes[0]?.event}`}
+            </Typography>
+          )}
         </Grid>
-        <Box display={'flex'}>
-          <Box display={'flex'} flexDirection={'column'} width={'500px'}>
-            <Box paddingBottom={2}>
+        <Box
+          display="flex"
+          justifyContent="flex-end"
+          paddingBottom={1}
+          marginTop={-3}
+        >
+          <Box flex={0}>
+            <ButtonWithIcon
+              label={t('label.new')}
+              Icon={<PlusCircleIcon />}
+              onClick={onNewClick}
+            />
+          </Box>
+        </Box>
+        {displayMessage && (
+          <Box flex={1} display="flex" alignItems="flex-end">
+            <Typography>{t('messages.no-repack-detail')}</Typography>
+          </Box>
+        )}
+        <Box display="flex" flexDirection="column" height={435}>
+          <Box display="flex" flexDirection="column" flex={1}>
+            <Box sx={{ maxHeight: 260, overflowY: 'auto' }}>
               <TableProvider createStore={createTableStore}>
                 <DataTable
                   id="repack-list"
@@ -161,14 +229,8 @@ export const RepackModal: FC<RepackModalControlProps> = ({
                 />
               </TableProvider>
             </Box>
-            <Box display="flex" justifyContent="center">
-              <BaseButton onClick={onNewClick}>{t('label.new')}</BaseButton>
-            </Box>
           </Box>
-          <Box paddingLeft={3} width={'400px'}>
-            {displayMessage && (
-              <Typography>{t('messages.no-repack-detail')}</Typography>
-            )}
+          <Box paddingLeft={3} paddingTop={3} flex={1}>
             {showRepackDetail && (
               <RepackEditForm
                 invoiceId={invoiceId}

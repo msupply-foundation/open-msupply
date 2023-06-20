@@ -75,8 +75,8 @@ pub enum Resource {
     MutateInboundShipment,
     // reporting
     Report,
-    // view/edit server setting
     QueryLog,
+    // view/edit server setting
     ServerAdmin,
     // clinician
     QueryClinician,
@@ -306,7 +306,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::QueryDocumentRegistry,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentQuery, CapabilityTag::DocumentType),
+        PermissionDSL::And(vec![
+            PermissionDSL::HasDynamicPermission(
+                Permission::DocumentQuery,
+                CapabilityTag::DocumentType,
+            ),
+            PermissionDSL::HasStoreAccess,
+        ]),
     );
     map.insert(
         Resource::MutateDocumentRegistry,

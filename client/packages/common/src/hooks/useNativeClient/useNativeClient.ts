@@ -11,6 +11,7 @@ import {
   ConnectionResult,
   DISCOVERED_SERVER_POLL,
   DISCOVERY_TIMEOUT,
+  FileInfo,
   FrontEndHost,
   NativeAPI,
   NativeMode,
@@ -125,6 +126,17 @@ export const useNativeClient = ({
     if (result.isSupported) await KeepAwake.keepAwake();
   };
 
+  const saveFile = async (fileInfo: FileInfo) => {
+    const result = await nativeAPI?.saveFile(fileInfo);
+
+    if (!result) {
+      console.error('No result from nativeAPI.saveFile');
+      return;
+    }
+
+    return result;
+  };
+
   useEffect(() => {
     if (!state.isDiscovering) return;
 
@@ -183,5 +195,6 @@ export const useNativeClient = ({
     readLog,
     keepAwake,
     allowSleep,
+    saveFile,
   };
 };

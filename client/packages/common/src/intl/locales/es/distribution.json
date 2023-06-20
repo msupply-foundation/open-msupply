@@ -111,5 +111,16 @@
   "messages.service-charges-description": "El monto total de los cargos de servicio. El monto de impuesto calculado es una tasa de impuesto efectiva que utiliza el impuesto total pagado sobre el subtotal de todos los cargos de servicio.",
   "messages.on-hold-confirmation": "Esto evitará cualquier cambio adicional de estado hasta que se retire la retención",
   "messages.click-to-return-to-shipments": "No se puede encontrar un envío con ese ID. Haz clic en Aceptar para volver a la lista de envíos",
-  "messages.create-outbound-from-requisition": "¿Estás seguro de que quieres crear un envío de salida desde esta solicitud de compra del cliente?"
+  "messages.create-outbound-from-requisition": "¿Estás seguro de que quieres crear un envío de salida desde esta solicitud de compra del cliente?",
+  "messages.supply-to-approved": "¿Estás seguro de que deseas establecer la cantidad de suministro como aprobada para todas las líneas?",
+  "messages.over-allocated": "Debido a los tamaños de paquete disponibles, se ha asignado una cantidad total de {{quantity}} en lugar de {{issueQuantity}}",
+  "button.stop": "Detener",
+  "error.no-matching-item": "No se encontraron elementos coincidentes",
+  "error.unable-to-save-barcode": "No es posible guardar el código de barras para este artículo: {{error}}",
+  "error.unable-to-start-scanning": "No se puede iniciar el escaneo: {{error}}",
+  "button.supply-to-approved": "Suministro aprobado",
+  "heading.supply-to-approved": "Establecer el suministro como aprobado",
+  "messages.confirm-status-as": "¿Confirmar estado como $t({{status}})?",
+  "messages.could-not-save": "No se pudo guardar",
+  "messages.saved": "Guardado"
 }

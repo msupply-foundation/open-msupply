@@ -1,4 +1,3 @@
-
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { EnvUtils } from '@common/utils';
 import { LanguageType } from '../../types/schema';
@@ -120,15 +119,14 @@ const parseLanguage = (language?: string) => {
 };
 
 /** Function to return a person's full name formatted for the current locale.
- * Default will just be "{{firstName}} {{lastName}}"*/
+ * Default will just be "{{firstName}} {{lastName}}" */
 const getFullName = (
   language: string,
   firstName: StringOrEmpty,
   lastName: StringOrEmpty
 ): string => {
   switch (language) {
-    // Add cases as required, for now all supported languages use the same
-    // format
+    // Add cases as required, for now all supported languages use the same format
     default:
       return `${firstName ?? ''} ${lastName ?? ''}`.trim();
   }

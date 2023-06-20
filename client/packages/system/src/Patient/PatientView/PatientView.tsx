@@ -5,6 +5,8 @@ import {
   useConfirmationModal,
   Box,
   useTranslation,
+  EncounterSortFieldInput,
+  ProgramEnrolmentSortFieldInput,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -135,7 +137,7 @@ const PatientDetailView = ({
 export const PatientView = () => {
   const { current, setCreationModal, reset } = usePatientModalStore();
   const patientId = usePatient.utils.id();
-  const { data } = useProgramEnrolments.document.programEnrolments({
+  const { data } = useProgramEnrolments.document.list({
     filterBy: { patientId: { equalTo: patientId } },
   });
   const { patient: createNewPatient } = usePatientCreateStore();
@@ -161,10 +163,18 @@ export const PatientView = () => {
     {
       Component: <ProgramListView />,
       value: 'Programs',
+      sort: {
+        key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
     },
     {
       Component: <EncounterListView />,
       value: 'Encounters',
+      sort: {
+        key: EncounterSortFieldInput.StartDatetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
     },
   ];
 

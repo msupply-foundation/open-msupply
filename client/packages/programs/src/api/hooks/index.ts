@@ -60,7 +60,7 @@ export const useEncounter = {
 
 export const useProgramEnrolments = {
   document: {
-    programEnrolments: Document.useProgramEnrolments,
+    list: Document.useProgramEnrolments,
     programEnrolmentsPromise: Document.useProgramEnrolmentsPromise,
     byDocName: Document.useProgramEnrolmentByDocName,
     insert: Document.useInsertProgramEnrolment,

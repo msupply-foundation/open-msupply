@@ -11,6 +11,8 @@ pub(crate) struct SiteStatusV5 {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) enum SiteStatusCodeV5 {
+    #[serde(rename = "sync_is_running")]
+    SyncIsRunning,
     #[serde(rename = "integration_in_progress")]
     IntegrationInProgress,
     #[serde(rename = "idle")]

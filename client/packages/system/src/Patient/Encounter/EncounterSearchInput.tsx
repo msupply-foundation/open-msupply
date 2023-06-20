@@ -43,7 +43,7 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
 }) => {
   const patientId = usePatient.utils.id();
   const { data: enrolmentData, isLoading: isEnrolmentDataLoading } =
-    useProgramEnrolments.document.programEnrolments({
+    useProgramEnrolments.document.list({
       filterBy: {
         patientId: { equalTo: patientId },
         status: { equalTo: ProgramEnrolmentNodeStatus.Active },

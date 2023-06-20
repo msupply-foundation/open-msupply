@@ -13,8 +13,15 @@ export const LogFileModal = ({
 }) => {
   const t = useTranslation('common');
   const { Modal } = useDialog({ isOpen });
-  const { readLog } = useNativeClient();
-  const [logText, setLogText] = useState<string>('');
+  const { readLog, saveFile } = useNativeClient();
+  const [logText, setLogText] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const saveLog = async () => {
+    setIsSaving(true);
+    await saveFile({ content: logText, filename: 'exported_log.txt' });
+    setIsSaving(false);
+  };
 
   useEffect(() => {
     readLog().then(setLogText);
@@ -24,6 +31,13 @@ export const LogFileModal = ({
     <Modal
       title={t('heading.server-log')}
       okButton={<DialogButton variant="ok" onClick={onClose} />}
+      cancelButton={
+        <DialogButton
+          variant="save"
+          onClick={saveLog}
+          disabled={!logText || isSaving}
+        />
+      }
       width={950}
     >
       {logText ? (
