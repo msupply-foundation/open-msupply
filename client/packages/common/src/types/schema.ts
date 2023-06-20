@@ -2049,6 +2049,26 @@ export type LocationSortInput = {
 
 export type LocationsResponse = LocationConnector;
 
+export enum LogLevelEnum {
+  Debug = 'DEBUG',
+  Error = 'ERROR',
+  Info = 'INFO',
+  Off = 'OFF',
+  Trace = 'TRACE',
+  Warn = 'WARN'
+}
+
+export type LogLevelNode = {
+  __typename: 'LogLevelNode';
+  level: LogLevelEnum;
+};
+
+export type LogNode = {
+  __typename: 'LogNode';
+  fileContent?: Maybe<Array<Scalars['String']>>;
+  fileNames?: Maybe<Array<Scalars['String']>>;
+};
+
 export type Logout = {
   __typename: 'Logout';
   /** User id of the logged out user */
@@ -2221,6 +2241,7 @@ export type Mutations = {
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
+  upsertLogLevel: UpsertLogLevelResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -2632,6 +2653,12 @@ export type MutationsUpdateStocktakeLineArgs = {
 
 export type MutationsUpdateSyncSettingsArgs = {
   input: SyncSettingsInput;
+};
+
+
+export type MutationsUpsertLogLevelArgs = {
+  input: UpsertLogLevelInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -3138,6 +3165,9 @@ export type Queries = {
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
+  logContents: LogNode;
+  logFileNames: LogNode;
+  logLevel: LogLevelNode;
   logout: LogoutResponse;
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
@@ -3241,6 +3271,7 @@ export type QueriesDocumentHistoryArgs = {
 export type QueriesDocumentRegistriesArgs = {
   filter?: InputMaybe<DocumentRegistryFilterInput>;
   sort?: InputMaybe<Array<DocumentRegistrySortInput>>;
+  storeId: Scalars['String'];
 };
 
 
@@ -3327,6 +3358,11 @@ export type QueriesLocationsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<LocationSortInput>>;
   storeId: Scalars['String'];
+};
+
+
+export type QueriesLogContentsArgs = {
+  fileName?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -4780,6 +4816,15 @@ export enum UpdateStocktakeStatusInput {
 }
 
 export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
+
+export type UpsertLogLevelInput = {
+  level: LogLevelEnum;
+};
+
+export type UpsertLogLevelResponse = {
+  __typename: 'UpsertLogLevelResponse';
+  level: LogLevelEnum;
+};
 
 export type UseSuggestedQuantityError = {
   __typename: 'UseSuggestedQuantityError';
