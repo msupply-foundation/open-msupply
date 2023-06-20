@@ -1,6 +1,5 @@
 use std::fmt::{Display, Formatter, Result};
 
-use log::LevelFilter;
 use repository::database_settings::DatabaseSettings;
 
 use crate::sync::settings::SyncSettings;
@@ -61,19 +60,6 @@ pub enum Level {
     Info,
     Debug,
     Trace,
-}
-
-impl From<Level> for LevelFilter {
-    fn from(level: Level) -> Self {
-        match level {
-            Level::Off => LevelFilter::Off,
-            Level::Error => LevelFilter::Error,
-            Level::Warn => LevelFilter::Warn,
-            Level::Info => LevelFilter::Info,
-            Level::Debug => LevelFilter::Debug,
-            Level::Trace => LevelFilter::Trace,
-        }
-    }
 }
 
 impl Display for Level {
