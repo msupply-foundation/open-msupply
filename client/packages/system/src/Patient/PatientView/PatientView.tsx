@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   DetailTabs,
   DetailViewSkeleton,
@@ -48,7 +48,11 @@ const useUpsertPatient = (): SaveDocumentMutation => {
   };
 };
 
-const PatientDetailView: FC = () => {
+const PatientDetailView = ({
+  onEdit,
+}: {
+  onEdit: (isDirty: boolean) => void;
+}) => {
   const t = useTranslation('patients');
   const { documentName, setDocumentName } = usePatientStore();
   const { patient, setNewPatient } = usePatientCreateStore();
@@ -105,6 +109,10 @@ const PatientDetailView: FC = () => {
     }
   }, [currentPatient]);
 
+  useEffect(() => {
+    onEdit(isDirty);
+  }, [isDirty]);
+
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: save,
     message: t('messages.confirm-save-generic'),
@@ -126,7 +134,7 @@ const PatientDetailView: FC = () => {
   );
 };
 
-export const PatientView: FC = () => {
+export const PatientView = () => {
   const { current, setCreationModal, reset } = usePatientModalStore();
   const patientId = usePatient.utils.id();
   const { data } = useProgramEnrolments.document.list({
@@ -135,6 +143,11 @@ export const PatientView: FC = () => {
   const { patient: createNewPatient } = usePatientCreateStore();
   const { setCurrentPatient } = usePatientStore();
   const { data: currentPatient } = usePatient.document.get(patientId);
+  const [isDirtyPatient, setIsDirtyPatient] = useState(false);
+
+  const requiresConfirmation = (tab: string) => {
+    return tab === 'Details' && isDirtyPatient;
+  };
 
   useEffect(() => {
     if (!currentPatient) return;
@@ -143,8 +156,9 @@ export const PatientView: FC = () => {
 
   const tabs = [
     {
-      Component: <PatientDetailView />,
+      Component: <PatientDetailView onEdit={setIsDirtyPatient} />,
       value: 'Details',
+      confirmOnLeaving: isDirtyPatient,
     },
     {
       Component: <ProgramListView />,
@@ -195,7 +209,11 @@ export const PatientView: FC = () => {
       <AppBarButtons disabled={!!createNewPatient} />
       <PatientSummary />
       {/* Only show tabs for saved patients */}
-      {!!createNewPatient ? <PatientDetailView /> : <DetailTabs tabs={tabs} />}
+      {!!createNewPatient ? (
+        <PatientDetailView onEdit={setIsDirtyPatient} />
+      ) : (
+        <DetailTabs tabs={tabs} requiresConfirmation={requiresConfirmation} />
+      )}
     </React.Suspense>
   );
 };

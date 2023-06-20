@@ -195,7 +195,7 @@ export const useJsonForms = (
         additionalRenderers={additionalRenderers}
         config={{
           documentName: docName,
-          patientId
+          patientId,
         }}
       />
     ),

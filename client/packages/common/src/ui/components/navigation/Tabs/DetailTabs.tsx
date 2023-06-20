@@ -2,6 +2,7 @@ import React, { FC, ReactNode, useState, useEffect } from 'react';
 import TabContext from '@mui/lab/TabContext';
 import { Box } from '@mui/material';
 import {
+  useConfirmOnLeaving,
   UrlQueryObject,
   UrlQuerySort,
   useDetailPanelStore,
@@ -17,12 +18,17 @@ import { useUrlQuery } from '@common/hooks';
 export type TabDefinition = {
   Component: ReactNode;
   value: string;
+  confirmOnLeaving?: boolean;
   sort?: UrlQuerySort;
 };
 interface DetailTabsProps {
   tabs: TabDefinition[];
+  requiresConfirmation?: (tab: string) => boolean;
 }
-export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
+export const DetailTabs: FC<DetailTabsProps> = ({
+  tabs,
+  requiresConfirmation = () => false,
+}) => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation('common');
@@ -32,6 +38,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
   // expanded. See issue #777 for more detail.
   const { isOpen: detailPanelOpen } = useDetailPanelStore();
   const { isOpen: drawerOpen } = useDrawer();
+  const { showConfirmation } = useConfirmOnLeaving(false);
   const handleResize = debounce(
     () => window.dispatchEvent(new Event('resize')),
     100
@@ -41,12 +48,18 @@ export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
   }, [detailPanelOpen, drawerOpen]);
 
   const onChange = (_: React.SyntheticEvent, tab: string) => {
+    const tabConfirm = tabs.find(({ value }) => value === currentTab);
     const tabDefinition = tabs.find(({ value }) => value === tab);
     const sort = tabDefinition?.sort;
     const query: UrlQueryObject = sort
       ? { tab, sort: sort.key, dir: sort.dir }
       : { tab };
-    updateQuery(query);
+
+    if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
+      showConfirmation(() => updateQuery(query));
+    } else {
+      updateQuery(query);
+    }
   };
 
   const isValidTab = (tab?: string) =>
@@ -54,7 +67,9 @@ export const DetailTabs: FC<DetailTabsProps> = ({ tabs }) => {
 
   useEffect(() => {
     const tab = urlQuery['tab'];
-    if (isValidTab(tab)) setCurrentTab(tab);
+    if (isValidTab(tab)) {
+      setCurrentTab(tab);
+    }
   }, [urlQuery]);
 
   return (
