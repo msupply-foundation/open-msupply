@@ -33,6 +33,7 @@ app_data/
 
 # operational logfiles
 **/*.log
+**/*.gz
 
 # report builder server credentials
 report_builder/config.yaml

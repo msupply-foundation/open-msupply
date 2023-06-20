@@ -19,11 +19,7 @@ pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>, upd
             .level(log_level.to_string())
             .output_console()
             .build(),
-        LogMode::All => file_logger(&settings)
-            .level(log_level.to_string())
-            .output_console()
-            .output_file()
-            .build(),
+        LogMode::All => file_logger(&settings).level(log_level.to_string()).build(),
     };
 
     if update {
