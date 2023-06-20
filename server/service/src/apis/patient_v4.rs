@@ -5,6 +5,11 @@ use serde::{Deserialize, Deserializer, Serialize};
 pub struct PatientApiV4 {
     server_url: Url,
     client: Client,
+    /// Username to authenticate with the central server. For the backend this is usually the site
+    /// name.
+    username: String,
+    /// For example, the site password which is also used for sync.
+    password_sha256: String,
 }
 
 #[derive(Serialize)]
@@ -97,23 +102,26 @@ pub enum PatientV4Error {
 }
 
 impl PatientApiV4 {
-    pub fn new(client: Client, server_url: Url) -> Self {
-        PatientApiV4 { server_url, client }
+    pub fn new(client: Client, server_url: Url, username: &str, password_sha256: &str) -> Self {
+        PatientApiV4 {
+            server_url,
+            client,
+            username: username.to_string(),
+            password_sha256: password_sha256.to_string(),
+        }
     }
 
     /// Creates a name_store_join.
     /// Requires the sync site credentials for authentication.
     pub async fn name_store_join(
         &self,
-        site_name: &str,
-        password_sha256: &str,
         body: NameStoreJoinParamsV4,
     ) -> Result<NameStoreJoinV2, PatientV4Error> {
         let response = self
             .client
             .post(self.server_url.join("/api/v4/name_store_join").unwrap())
             .json(&body)
-            .basic_auth(site_name, Some(password_sha256))
+            .basic_auth(&self.username, Some(&self.password_sha256))
             .send()
             .await
             .map_err(|e| PatientV4Error::ConnectionError(e))?
@@ -126,16 +134,11 @@ impl PatientApiV4 {
         Ok(serde_json::from_str(&response).map_err(|err| PatientV4Error::InvalidResponse(err))?)
     }
 
-    pub async fn patient(
-        &self,
-        username: &str,
-        password_sha256: &str,
-        params: PatientParamsV4,
-    ) -> Result<Vec<PatientV4>, PatientV4Error> {
+    pub async fn patient(&self, params: PatientParamsV4) -> Result<Vec<PatientV4>, PatientV4Error> {
         let response = self
             .client
             .get(self.server_url.join("/api/v4/patient").unwrap())
-            .basic_auth(username, Some(password_sha256))
+            .basic_auth(&self.username, Some(&self.password_sha256))
             .query(&params)
             .send()
             .await

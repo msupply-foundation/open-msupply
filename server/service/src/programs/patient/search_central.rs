@@ -32,7 +32,12 @@ pub async fn patient_search_central(
         .build()
         .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
 
-    let api = PatientApiV4::new(client, central_server_url.clone());
+    let api = PatientApiV4::new(
+        client,
+        central_server_url.clone(),
+        &sync_settings.username,
+        &sync_settings.password_sha256,
+    );
 
     let PatientSearch {
         code,
@@ -43,21 +48,17 @@ pub async fn patient_search_central(
         gender: _,
     } = params;
     let patients = api
-        .patient(
-            &sync_settings.username,
-            &sync_settings.password_sha256,
-            PatientParamsV4 {
-                limit: None,
-                offset: None,
-                first_name,
-                last_name,
-                dob: date_of_birth,
-                policy_number: None,
-                barcode: None,
-                is_deleted: Some(false),
-                code,
-            },
-        )
+        .patient(PatientParamsV4 {
+            limit: None,
+            offset: None,
+            first_name,
+            last_name,
+            dob: date_of_birth,
+            policy_number: None,
+            barcode: None,
+            is_deleted: Some(false),
+            code,
+        })
         .await
         .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
     Ok(patients)
@@ -86,7 +87,12 @@ pub async fn link_patient_to_store(
         .build()
         .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
 
-    let api = PatientApiV4::new(client, central_server_url.clone());
+    let api = PatientApiV4::new(
+        client,
+        central_server_url.clone(),
+        &sync_settings.username,
+        &sync_settings.password_sha256,
+    );
 
     let NameStoreJoinV2 {
         id,
@@ -94,14 +100,10 @@ pub async fn link_patient_to_store(
         store_id,
         inactive: _,
     } = api
-        .name_store_join(
-            &sync_settings.username,
-            &sync_settings.password_sha256,
-            NameStoreJoinParamsV4 {
-                name_id: name_id.to_string(),
-                store_id: store_id.to_string(),
-            },
-        )
+        .name_store_join(NameStoreJoinParamsV4 {
+            name_id: name_id.to_string(),
+            store_id: store_id.to_string(),
+        })
         .await
         .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
     Ok(NameStoreJoin {
