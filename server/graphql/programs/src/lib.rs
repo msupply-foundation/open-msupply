@@ -34,7 +34,6 @@ use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
-use service::programs::patient::link_patient_to_store;
 use service::programs::patient::patient_search_central;
 use types::document::DocumentNode;
 use types::program_enrolment::ProgramEventFilterInput;
@@ -255,25 +254,7 @@ impl ProgramsMutations {
         store_id: String,
         name_id: String,
     ) -> Result<LinkPatientToStoreResponse> {
-        // Note, we can't move the ctx to another async method because then it would need to be
-        // Sync. For this reason split the method as done below.
-        validate_auth(
-            ctx,
-            &ResourceAccessRequest {
-                resource: Resource::QueryPatient,
-                store_id: Some(store_id.clone()),
-            },
-        )?;
-
-        let service_provider = ctx.service_provider();
-        let context = service_provider.basic_context()?;
-
-        let sync_settings = service_provider.settings.sync_settings(&context)?.ok_or(
-            StandardGraphqlError::InternalError("Missing sync settings".to_string()).extend(),
-        )?;
-
-        let result = link_patient_to_store(&sync_settings, &store_id, &name_id).await;
-        map_link_patient_to_store_result(result)
+        link_patient_to_store(ctx, &store_id, &name_id).await
     }
 
     /// Enrols a patient into a program by adding a program document to the patient's documents.
