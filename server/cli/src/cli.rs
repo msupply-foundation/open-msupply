@@ -154,7 +154,7 @@ fn set_server_is_initialised(ctx: &ServiceContext) -> anyhow::Result<()> {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     simple_log::new(LogConfigBuilder::builder().output_console().build())
-        .expect("Problem initializing logger");
+        .expect("Unable to initialise logger");
 
     let args = Args::parse();
 
