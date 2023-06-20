@@ -21,9 +21,9 @@ export const BaseDatePickerInput: FC<
   const [internalValue, setInternalValue] = useState<Date | null>(null);
 
   useEffect(() => {
-    // This sets the internal state from parent when first loading (i.e. when
-    // the internal date is still empty)
-    if (value && internalValue === null)
+    // This sets the internal state from parent on first load (when internal
+    // date is empty) or when value has changed and internal date needs updating
+    if (value && (internalValue !== value || internalValue === null))
       setInternalValue(DateUtils.getDateOrNull(value));
   }, [value]);
 
