@@ -17,4 +17,6 @@ CREATE TABLE document_registry (
     parent_id TEXT REFERENCES document_registry(id),
     form_schema_id TEXT REFERENCES form_schema(id),
     config Text
-)
+);
+
+ALTER TABLE program_event ADD document_context TEXT NOT NULL;

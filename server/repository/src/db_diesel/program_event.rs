@@ -17,6 +17,7 @@ pub struct ProgramEventFilter {
     pub active_end_datetime: Option<DatetimeFilter>,
     pub patient_id: Option<EqualFilter<String>>,
     pub document_type: Option<EqualFilter<String>>,
+    pub document_context: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<String>>,
 }
@@ -29,6 +30,7 @@ impl ProgramEventFilter {
             active_end_datetime: None,
             patient_id: None,
             document_type: None,
+            document_context: None,
             document_name: None,
             r#type: None,
         }
@@ -56,6 +58,11 @@ impl ProgramEventFilter {
 
     pub fn document_type(mut self, filter: EqualFilter<String>) -> Self {
         self.document_type = Some(filter);
+        self
+    }
+
+    pub fn document_context(mut self, filter: EqualFilter<String>) -> Self {
+        self.document_context = Some(filter);
         self
     }
 
@@ -101,6 +108,11 @@ macro_rules! apply_filters {
             );
             apply_equal_filter!($query, f.patient_id, program_event_dsl::patient_id);
             apply_equal_filter!($query, f.document_type, program_event_dsl::document_type);
+            apply_equal_filter!(
+                $query,
+                f.document_context,
+                program_event_dsl::document_context
+            );
             apply_equal_filter!($query, f.document_name, program_event_dsl::document_name);
             apply_equal_filter!($query, f.r#type, program_event_dsl::type_);
         }
