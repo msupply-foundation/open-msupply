@@ -7,6 +7,7 @@ pub struct PatientApiV4 {
     client: Client,
 }
 
+#[derive(Serialize)]
 pub struct PatientParamsV4 {
     pub limit: Option<u32>,
     pub offset: Option<u32>,
@@ -131,51 +132,11 @@ impl PatientApiV4 {
         password_sha256: &str,
         params: PatientParamsV4,
     ) -> Result<Vec<PatientV4>, PatientV4Error> {
-        let PatientParamsV4 {
-            limit,
-            offset,
-            first_name,
-            last_name,
-            dob,
-            policy_number,
-            barcode,
-            is_deleted,
-            code,
-        } = params;
-        let mut query = vec![];
-        if let Some(limit) = limit {
-            query.push(("limit".to_string(), format!("{}", limit)))
-        }
-        if let Some(offset) = offset {
-            query.push(("offset".to_string(), format!("{}", offset)))
-        }
-        if let Some(first_name) = first_name {
-            query.push(("first_name".to_string(), first_name))
-        }
-        if let Some(last_name) = last_name {
-            query.push(("last_name".to_string(), last_name))
-        }
-        if let Some(dob) = dob {
-            query.push(("dob".to_string(), dob.format("%d%m%Y").to_string()))
-        }
-        if let Some(policy_number) = policy_number {
-            query.push(("policy_number".to_string(), policy_number))
-        }
-        if let Some(barcode) = barcode {
-            query.push(("barcode".to_string(), barcode))
-        }
-        if let Some(is_deleted) = is_deleted {
-            query.push(("is_deleted".to_string(), format!("{}", is_deleted)))
-        }
-        if let Some(code) = code {
-            query.push(("code".to_string(), code))
-        }
-
         let response = self
             .client
             .get(self.server_url.join("/api/v4/patient").unwrap())
             .basic_auth(username, Some(password_sha256))
-            .query(&query)
+            .query(&params)
             .send()
             .await
             .map_err(|e| PatientV4Error::ConnectionError(e))?
@@ -192,4 +153,3 @@ pub fn date_of_birth<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate
     Ok(s.filter(|s| s != "0000-00-00T00:00:00")
         .and_then(|s| NaiveDate::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok()))
 }
-
