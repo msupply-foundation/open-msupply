@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use reqwest::{Client, Url};
+use reqwest::{Client, StatusCode, Url};
 use serde::{Deserialize, Deserializer, Serialize};
 
 pub struct PatientApiV4 {
@@ -124,14 +124,15 @@ impl PatientApiV4 {
             .basic_auth(&self.username, Some(&self.password_sha256))
             .send()
             .await
-            .map_err(|e| PatientV4Error::ConnectionError(e))?
-            .text()
-            .await
             .map_err(|e| PatientV4Error::ConnectionError(e))?;
-        if response == "Authentication failed" {
+
+        if response.status() == StatusCode::UNAUTHORIZED {
             return Err(PatientV4Error::AuthenticationFailed);
         }
-        Ok(serde_json::from_str(&response).map_err(|err| PatientV4Error::InvalidResponse(err))?)
+        Ok(response
+            .json()
+            .await
+            .map_err(|e| PatientV4Error::ConnectionError(e))?)
     }
 
     pub async fn patient(&self, params: PatientParamsV4) -> Result<Vec<PatientV4>, PatientV4Error> {
@@ -142,12 +143,15 @@ impl PatientApiV4 {
             .query(&params)
             .send()
             .await
-            .map_err(|e| PatientV4Error::ConnectionError(e))?
-            .json()
-            .await
             .map_err(|e| PatientV4Error::ConnectionError(e))?;
 
-        Ok(response)
+        if response.status() == StatusCode::UNAUTHORIZED {
+            return Err(PatientV4Error::AuthenticationFailed);
+        }
+        Ok(response
+            .json()
+            .await
+            .map_err(|e| PatientV4Error::ConnectionError(e))?)
     }
 }
 
