@@ -48,13 +48,14 @@ export const DetailTabs: FC<DetailTabsProps> = ({
   }, [detailPanelOpen, drawerOpen]);
 
   const onChange = (_: React.SyntheticEvent, tab: string) => {
-    const tabDefinition = tabs.find(({ value }) => value === currentTab);
+    const tabConfirm = tabs.find(({ value }) => value === currentTab);
+    const tabDefinition = tabs.find(({ value }) => value === tab);
     const sort = tabDefinition?.sort;
     const query: UrlQueryObject = sort
       ? { tab, sort: sort.key, dir: sort.dir }
       : { tab };
 
-    if (!!tabDefinition?.confirmOnLeaving && requiresConfirmation(currentTab)) {
+    if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
       showConfirmation(() => updateQuery(query));
     } else {
       updateQuery(query);
