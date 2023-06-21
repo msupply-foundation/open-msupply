@@ -29,7 +29,16 @@ export const getEncounterOptionRenderer =
     return (
       <DefaultAutocompleteItemOption {...props} key={props.id}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
-          <Typography>{name}</Typography>
+          <Typography
+            sx={{
+              color:
+                node.program.status === ProgramEnrolmentNodeStatus.Active
+                  ? 'black'
+                  : 'red',
+            }}
+          >
+            {name}
+          </Typography>
         </Box>
       </DefaultAutocompleteItemOption>
     );
@@ -46,7 +55,6 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
     useProgramEnrolments.document.list({
       filterBy: {
         patientId: { equalTo: patientId },
-        status: { equalTo: ProgramEnrolmentNodeStatus.Active },
       },
     });
   const { data: encounterData, isLoading: isEncounterLoading } =
