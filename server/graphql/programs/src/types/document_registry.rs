@@ -13,7 +13,7 @@ pub struct DocumentRegistryConnector {
 }
 
 pub struct DocumentRegistryNode {
-    pub allowed_docs: Vec<String>,
+    pub allowed_ctx: Vec<String>,
     pub document_registry: DocumentRegistry,
 }
 
@@ -77,7 +77,7 @@ impl DocumentRegistryNode {
         let loader = ctx.get_loader::<DataLoader<DocumentRegistryChildrenLoader>>();
         let children = loader
             .load_one(DocumentRegistryLoaderInput::new(
-                &self.allowed_docs,
+                &self.allowed_ctx,
                 &self.document_registry.id,
             ))
             .await?
@@ -85,7 +85,7 @@ impl DocumentRegistryNode {
         Ok(children
             .into_iter()
             .map(|document_registry| DocumentRegistryNode {
-                allowed_docs: self.allowed_docs.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
                 document_registry,
             })
             .collect())

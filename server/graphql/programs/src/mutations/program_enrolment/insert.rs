@@ -39,7 +39,7 @@ pub fn insert_program_enrolment(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
@@ -57,7 +57,7 @@ pub fn insert_program_enrolment(
                 patient_id: input.patient_id,
                 r#type: input.r#type,
             },
-            allowed_docs.clone(),
+            allowed_ctx.clone(),
         ) {
         Ok(document) => document,
         Err(error) => {
@@ -87,6 +87,9 @@ pub fn insert_program_enrolment(
                 UpsertProgramEnrolmentError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
+                UpsertProgramEnrolmentError::DocumentTypeDoesNotExit => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
             };
             return Err(std_err.extend());
         }
@@ -96,8 +99,8 @@ pub fn insert_program_enrolment(
         .program_enrolment_service
         .program_enrolment(
             &service_context,
-            ProgramEnrolmentFilter::new().program(EqualFilter::equal_to(&document.r#type)),
-            allowed_docs.clone(),
+            ProgramEnrolmentFilter::new().context(EqualFilter::equal_to(&document.r#type)),
+            allowed_ctx.clone(),
         )?
         .ok_or(
             StandardGraphqlError::InternalError("Program enrolment went missing".to_string())
@@ -107,7 +110,7 @@ pub fn insert_program_enrolment(
         ProgramEnrolmentNode {
             store_id,
             program_row,
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
         },
     ))
 }

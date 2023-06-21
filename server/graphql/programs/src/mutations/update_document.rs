@@ -78,16 +78,16 @@ pub fn update_document(
     validate_document_type(&context.connection, &input)?;
 
     // Move this after validate_document_type to make the tests happy (test don't have permissions)
-    // TODO make allowed_docs optional if debug_no_access_control is set?
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    // TODO make allowed_ctx optional if debug_no_access_control is set?
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let response = match service_provider.document_service.update_document(
         &context,
         input_to_raw_document(input),
-        allowed_docs,
+        allowed_ctx,
     ) {
         Ok(document) => UpdateDocumentResponse::Response(DocumentNode {
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
             document,
         }),
         Err(error) => UpdateDocumentResponse::Error(UpdateDocumentError {
@@ -183,7 +183,7 @@ fn input_to_raw_document(
         form_schema_id: schema_id,
         status: DocumentStatus::Active,
         owner_name_id: patient_id,
-        context: Some(r#type),
+        context: r#type,
     }
 }
 

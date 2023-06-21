@@ -9,11 +9,11 @@ use super::IdPair;
 
 pub type ProgramEnrolmentLoaderInput = IdPair<Vec<String>>;
 impl ProgramEnrolmentLoaderInput {
-    pub fn new(patient_id: &str, program: &str, allowed_docs: Vec<String>) -> Self {
+    pub fn new(patient_id: &str, program: &str, allowed_ctx: Vec<String>) -> Self {
         ProgramEnrolmentLoaderInput {
             primary_id: patient_id.to_string(),
             secondary_id: program.to_string(),
-            payload: allowed_docs,
+            payload: allowed_ctx,
         }
     }
 }
@@ -37,7 +37,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
     ) -> Result<HashMap<ProgramEnrolmentLoaderInput, Self::Value>, Self::Error> {
         let service_context = self.service_provider.basic_context()?;
 
-        // allowed_docs -> Vec<(patient_id, program)>
+        // allowed_ctx -> Vec<(patient_id, program)>
         let mut map = HashMap::<Vec<String>, Vec<(String, String)>>::new();
         for item in inputs {
             let entry = map.entry(item.payload.clone()).or_insert(vec![]);
@@ -45,7 +45,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
         }
         let mut out = HashMap::<ProgramEnrolmentLoaderInput, Self::Value>::new();
 
-        for (allowed_docs, patient_program_list) in map.into_iter() {
+        for (allowed_ctx, patient_program_list) in map.into_iter() {
             let program_to_patients_map = patient_program_list.into_iter().fold(
                 HashMap::<String, Vec<String>>::new(),
                 |mut prev, (patient_id, program)| {
@@ -64,10 +64,10 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
                         None,
                         Some(
                             ProgramEnrolmentFilter::new()
-                                .program(EqualFilter::equal_to(&program))
+                                .context(EqualFilter::equal_to(&program))
                                 .patient_id(EqualFilter::equal_any(patient_id)),
                         ),
-                        allowed_docs.clone(),
+                        allowed_ctx.clone(),
                     )?;
 
                 for entry in entries.into_iter() {
@@ -75,7 +75,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
                         ProgramEnrolmentLoaderInput::new(
                             &entry.patient_id,
                             &program,
-                            allowed_docs.clone(),
+                            allowed_ctx.clone(),
                         ),
                         entry,
                     );

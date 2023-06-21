@@ -9,14 +9,14 @@ use std::hash::Hasher;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DocumentRegistryLoaderInput {
-    pub allowed_docs: Vec<String>,
+    pub allowed_ctx: Vec<String>,
     pub key: String,
 }
 
 impl DocumentRegistryLoaderInput {
-    pub fn new(allowed_docs: &Vec<String>, key: &String) -> Self {
+    pub fn new(allowed_ctx: &Vec<String>, key: &String) -> Self {
         DocumentRegistryLoaderInput {
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
             key: key.clone(),
         }
     }
@@ -24,7 +24,7 @@ impl DocumentRegistryLoaderInput {
 
 impl std::hash::Hash for DocumentRegistryLoaderInput {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.allowed_docs.hash(state);
+        self.allowed_ctx.hash(state);
         self.key.hash(state);
     }
 }
@@ -47,20 +47,20 @@ impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryLoader {
 
         let mut map = HashMap::<Vec<String>, Vec<String>>::new();
         for item in document_types {
-            let entry = map.entry(item.allowed_docs.clone()).or_insert(vec![]);
+            let entry = map.entry(item.allowed_ctx.clone()).or_insert(vec![]);
             entry.push(item.key.clone())
         }
         let mut out = HashMap::<DocumentRegistryLoaderInput, Self::Value>::new();
 
-        for (allowed_docs, document_types) in map.into_iter() {
+        for (allowed_ctx, document_types) in map.into_iter() {
             let entries = self
                 .service_provider
                 .document_registry_service
-                .get_entries_by_doc_type(&ctx, document_types.to_vec(), &allowed_docs)?;
+                .get_entries_by_doc_type(&ctx, document_types.to_vec(), &allowed_ctx)?;
 
             for entry in entries.into_iter() {
                 out.insert(
-                    DocumentRegistryLoaderInput::new(&allowed_docs, &entry.document_type),
+                    DocumentRegistryLoaderInput::new(&allowed_ctx, &entry.document_type),
                     entry,
                 );
             }
@@ -87,16 +87,16 @@ impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryChildrenLoader {
 
         let mut map = HashMap::<Vec<String>, Vec<String>>::new();
         for item in document_ids {
-            let entry = map.entry(item.allowed_docs.clone()).or_insert(vec![]);
+            let entry = map.entry(item.allowed_ctx.clone()).or_insert(vec![]);
             entry.push(item.key.clone())
         }
         let mut out = HashMap::<DocumentRegistryLoaderInput, Self::Value>::new();
 
-        for (allowed_docs, document_ids) in map.into_iter() {
+        for (allowed_ctx, document_ids) in map.into_iter() {
             let children = self
                 .service_provider
                 .document_registry_service
-                .get_children(&ctx, &document_ids, &allowed_docs)?;
+                .get_children(&ctx, &document_ids, &allowed_ctx)?;
 
             for child in children {
                 let parent_id = child.parent_id.clone().ok_or(RepositoryError::DBError {
@@ -104,7 +104,7 @@ impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryChildrenLoader {
                     extra: "".to_string(),
                 })?;
                 let entry = out
-                    .entry(DocumentRegistryLoaderInput::new(&allowed_docs, &parent_id))
+                    .entry(DocumentRegistryLoaderInput::new(&allowed_ctx, &parent_id))
                     .or_insert(vec![]);
                 entry.push(child);
             }

@@ -42,7 +42,7 @@ pub fn insert_encounter(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
@@ -55,11 +55,11 @@ pub fn insert_encounter(
             data: input.data,
             schema_id: input.schema_id,
             patient_id: input.patient_id,
-            program: input.program_type,
+            context: input.program_type,
             r#type: input.r#type,
             event_datetime: Utc::now(),
         },
-        allowed_docs.clone(),
+        allowed_ctx.clone(),
     ) {
         Ok(document) => document,
         Err(error) => {
@@ -96,7 +96,7 @@ pub fn insert_encounter(
         .encounter(
             &service_context,
             EncounterFilter::new().document_name(EqualFilter::equal_to(&document.name)),
-            allowed_docs.clone(),
+            allowed_ctx.clone(),
         )?
         .ok_or(
             StandardGraphqlError::InternalError("Encounter went missing".to_string()).extend(),
@@ -105,6 +105,6 @@ pub fn insert_encounter(
     Ok(InsertEncounterResponse::Response(EncounterNode {
         store_id,
         encounter_row,
-        allowed_docs: allowed_docs.clone(),
+        allowed_ctx: allowed_ctx.clone(),
     }))
 }
