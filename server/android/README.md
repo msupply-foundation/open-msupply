@@ -33,5 +33,5 @@ See [mobile app readme](../../client/packages/mobile/README.md) for further desc
 
 ## Log files on Android
 
-Go to `browse files` in `Android Studio`, then navigate to `data/org.openmsupply.client/files/(log_name).log` to view logs.
+Go to `browse files` in `Android Studio`, then navigate to `data/org.openmsupply.client/files/(log_name).log` to view log, logs that have exceeded the max file size is compressed and saved as a `.gz` zip.
 Alternatively when using an emulator, navigate to `data/user/0/org.openmsupply.client/files/(log_name).log`.
