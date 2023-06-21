@@ -13,8 +13,9 @@ use serde::{Deserialize, Serialize};
 table! {
     program_enrolment (id) {
         id -> Text,
-        program -> Text,
+        document_type -> Text,
         document_name -> Text,
+        context -> Text,
         patient_id -> Text,
         enrolment_datetime -> Timestamp,
         program_enrolment_id -> Nullable<Text>,
@@ -41,10 +42,12 @@ pub enum ProgramEnrolmentStatus {
 pub struct ProgramEnrolmentRow {
     /// The row id
     pub id: String,
-    /// The program the patient is enrolled in.
-    pub program: String,
+    /// The program document type
+    pub document_type: String,
     /// The program document name
     pub document_name: String,
+    /// The document context for the associated document
+    pub context: String,
     /// The patient this program belongs to
     pub patient_id: String,
     /// Time when the patient has been enrolled to this program
@@ -58,7 +61,8 @@ impl Default for ProgramEnrolmentRow {
     fn default() -> Self {
         Self {
             id: Default::default(),
-            program: Default::default(),
+            document_type: Default::default(),
+            context: Default::default(),
             document_name: Default::default(),
             patient_id: Default::default(),
             enrolment_datetime: Default::default(),

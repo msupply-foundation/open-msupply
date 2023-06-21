@@ -19,7 +19,7 @@ pub fn document_a() -> Document {
         data: mock_form_schema_simple().json_schema,
         status: DocumentStatus::Active,
         owner_name_id: None,
-        context: None,
+        context: "Context".to_string(),
     }
 }
 

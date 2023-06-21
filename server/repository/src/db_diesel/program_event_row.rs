@@ -48,7 +48,7 @@ pub struct ProgramEventRow {
     /// document.
     /// However, the status of a specific encounter is tied to a specific document.
     pub document_name: Option<String>,
-    /// The type the event, e.g. stat
+    /// The type of the event data
     #[column_name = "type_"]
     pub r#type: String,
     /// The event data

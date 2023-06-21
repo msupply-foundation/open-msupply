@@ -19,4 +19,27 @@ CREATE TABLE document_registry (
     config Text
 );
 
+ALTER TABLE document DROP COLUMN context CASCADE;
+ALTER TABLE document ADD context TEXT NOT NULL;
+
+-- recreate the view which has bee deleted by CASCADE
+CREATE VIEW latest_document AS
+SELECT d.*
+FROM (
+      SELECT name, MAX(datetime) AS datetime
+      FROM document
+      GROUP BY name
+) grouped
+INNER JOIN document d
+ON d.name = grouped.name AND d.datetime = grouped.datetime;
+
+ALTER TABLE program_enrolment DROP COLUMN program CASCADE;
+ALTER TABLE program_enrolment ADD context TEXT NOT NULL;
+ALTER TABLE program_enrolment ADD document_type TEXT NOT NULL;
+
+ALTER TABLE encounter DROP COLUMN type CASCADE;
+ALTER TABLE encounter ADD document_type TEXT NOT NULL;
+ALTER TABLE encounter DROP COLUMN program CASCADE;
+ALTER TABLE encounter ADD context TEXT NOT NULL;
+
 ALTER TABLE program_event ADD document_context TEXT NOT NULL;

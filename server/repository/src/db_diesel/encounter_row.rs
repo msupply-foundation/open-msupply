@@ -20,10 +20,10 @@ pub enum EncounterStatus {
 table! {
     encounter (id) {
         id -> Text,
-        #[sql_name = "type"] type_ -> Text,
+        document_type -> Text,
         document_name -> Text,
+        context -> Text,
         patient_id -> Text,
-        program -> Text,
         created_datetime -> Timestamp,
         start_datetime -> Timestamp,
         end_datetime -> Nullable<Timestamp>,
@@ -38,13 +38,12 @@ table! {
 #[table_name = "encounter"]
 pub struct EncounterRow {
     pub id: String,
-    /// The type of the encounter, same as the matching encounter document type.
-    #[column_name = "type_"]
-    pub r#type: String,
+    pub document_type: String,
     /// The encounter document name
     pub document_name: String,
+    /// The document context for the associated document
+    pub context: String,
     pub patient_id: String,
-    pub program: String,
     pub created_datetime: NaiveDateTime,
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,

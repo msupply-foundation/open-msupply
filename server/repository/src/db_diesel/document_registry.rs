@@ -158,7 +158,7 @@ impl DocumentRegistryFilter {
         self
     }
 
-    pub fn context(mut self, filter: EqualFilter<DocumentRegistryType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<DocumentRegistryType>) -> Self {
         self.r#type = Some(filter);
         self
     }

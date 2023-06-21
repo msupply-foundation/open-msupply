@@ -11,4 +11,16 @@ CREATE TABLE document_registry (
     config Text
 );
 
+ALTER TABLE document DROP COLUMN context;
+ALTER TABLE document ADD context TEXT NOT NULL;
+
+ALTER TABLE program_enrolment DROP COLUMN program;
+ALTER TABLE program_enrolment ADD context TEXT NOT NULL;
+ALTER TABLE program_enrolment ADD document_type TEXT NOT NULL;
+
+ALTER TABLE encounter DROP COLUMN type;
+ALTER TABLE encounter ADD document_type TEXT NOT NULL; 
+ALTER TABLE encounter DROP COLUMN program;
+ALTER TABLE encounter ADD context TEXT NOT NULL;
+
 ALTER TABLE program_event ADD document_context TEXT NOT NULL;
