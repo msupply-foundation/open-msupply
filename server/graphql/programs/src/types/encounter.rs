@@ -23,7 +23,7 @@ use super::{
 pub struct EncounterNode {
     pub store_id: String,
     pub encounter_row: EncounterRow,
-    pub allowed_docs: Vec<String>,
+    pub allowed_ctx: Vec<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -71,6 +71,7 @@ impl EncounterEventFilterInput {
             document_type: None,
             document_name: None,
             r#type: self.r#type.clone().map(EqualFilter::from),
+            document_context: None,
         }
     }
 }
@@ -119,7 +120,7 @@ impl EncounterNode {
     }
 
     pub async fn program(&self) -> &str {
-        &self.encounter_row.program
+        &self.encounter_row.context
     }
 
     /// Returns the matching program enrolment for the patient of this encounter
@@ -132,25 +133,25 @@ impl EncounterNode {
         let result = loader
             .load_one(ProgramEnrolmentLoaderInput::new(
                 &self.encounter_row.patient_id,
-                &self.encounter_row.program,
-                self.allowed_docs.clone(),
+                &self.encounter_row.context,
+                self.allowed_ctx.clone(),
             ))
             .await?
             .map(|program_row| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
                 program_row,
-                allowed_docs: self.allowed_docs.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
             })
             .ok_or(Error::new(format!(
                 "Failed to load program enrolment: {}",
-                self.encounter_row.program
+                self.encounter_row.context
             )))?;
 
         Ok(Some(result))
     }
 
     pub async fn r#type(&self) -> &str {
-        &self.encounter_row.r#type
+        &self.encounter_row.document_type
     }
 
     pub async fn name(&self) -> &str {
@@ -186,7 +187,7 @@ impl EncounterNode {
             .load_one(self.encounter_row.document_name.clone())
             .await?
             .map(|document| DocumentNode {
-                allowed_docs: self.allowed_docs.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
                 document,
             })
             .ok_or(Error::new("Program without document"))?;
@@ -207,7 +208,7 @@ impl EncounterNode {
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
             .patient_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
-            .document_type(EqualFilter::equal_to(&self.encounter_row.r#type));
+            .document_type(EqualFilter::equal_to(&self.encounter_row.document_type));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
             program_filter = program_filter
                 .document_name(EqualFilter::equal_to(&self.encounter_row.document_name))

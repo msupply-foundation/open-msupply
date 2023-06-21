@@ -27,7 +27,7 @@ pub fn delete_document(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -38,7 +38,7 @@ pub fn delete_document(
         DocumentDelete {
             id: input.id.clone(),
         },
-        &allowed_docs,
+        &allowed_ctx,
     ) {
         Ok(_) => DeleteDocumentResponse::Response(GenericDeleteResponse(input.id)),
         Err(error) => {

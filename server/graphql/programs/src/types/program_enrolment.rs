@@ -31,6 +31,7 @@ impl ProgramEventFilterInput {
             document_type: self.document_type.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
             r#type: self.r#type.map(EqualFilter::from),
+            document_context: None,
         }
     }
 }
@@ -72,14 +73,14 @@ impl ProgramEnrolmentNodeStatus {
 pub struct ProgramEnrolmentNode {
     pub store_id: String,
     pub program_row: ProgramEnrolmentRow,
-    pub allowed_docs: Vec<String>,
+    pub allowed_ctx: Vec<String>,
 }
 
 #[Object]
 impl ProgramEnrolmentNode {
     /// The program type
     pub async fn program(&self) -> &str {
-        &self.program_row.program
+        &self.program_row.context
     }
 
     /// The program document name
@@ -111,7 +112,7 @@ impl ProgramEnrolmentNode {
             .load_one(self.program_row.document_name.clone())
             .await?
             .map(|document| DocumentNode {
-                allowed_docs: self.allowed_docs.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
                 document,
             })
             .ok_or(Error::new("Program without document"))?;
@@ -133,7 +134,7 @@ impl ProgramEnrolmentNode {
             .map(|f| f.to_domain_filter())
             .unwrap_or(EncounterFilter::new())
             .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .program(EqualFilter::equal_to(&self.program_row.program));
+            .program(EqualFilter::equal_to(&self.program_row.context));
 
         let entries = ctx
             .service_provider()
@@ -143,14 +144,14 @@ impl ProgramEnrolmentNode {
                 page.map(PaginationOption::from),
                 Some(filter),
                 sort.map(EncounterSortInput::to_domain),
-                self.allowed_docs.clone(),
+                self.allowed_ctx.clone(),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
         let nodes = entries
             .rows
             .into_iter()
             .map(|row| EncounterNode {
-                allowed_docs: self.allowed_docs.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
                 store_id: self.store_id.clone(),
                 encounter_row: row,
             })
@@ -173,7 +174,7 @@ impl ProgramEnrolmentNode {
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
             .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .document_type(EqualFilter::equal_to(&self.program_row.program));
+            .document_type(EqualFilter::equal_to(&self.program_row.context));
         let entries = ctx
             .service_provider()
             .program_event_service

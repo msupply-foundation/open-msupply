@@ -65,7 +65,7 @@ pub fn document_registries(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -81,7 +81,7 @@ pub fn document_registries(
             Some(filter),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
-            &allowed_docs,
+            &allowed_ctx,
         )
         .map_err(|err| {
             let formatted_err = format! {"{:?}", err};
@@ -93,7 +93,7 @@ pub fn document_registries(
             nodes: entries
                 .into_iter()
                 .map(|document_registry| DocumentRegistryNode {
-                    allowed_docs: allowed_docs.clone(),
+                    allowed_ctx: allowed_ctx.clone(),
                     document_registry,
                 })
                 .collect(),

@@ -38,7 +38,7 @@ pub fn insert_document_registry(
             store_id: None,
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -46,10 +46,10 @@ pub fn insert_document_registry(
     let response = match service_provider.document_registry_service.insert(
         &context,
         to_domain(input),
-        &allowed_docs,
+        &allowed_ctx,
     ) {
         Ok(document_registry) => InsertDocumentResponse::Response(DocumentRegistryNode {
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
             document_registry,
         }),
         Err(error) => {
