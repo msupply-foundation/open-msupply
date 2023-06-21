@@ -3,6 +3,8 @@ use std::env;
 use service::settings::{Level, LogMode, LoggingSettings};
 use simple_log::LogConfigBuilder;
 
+// Can use log4rs to extend logging functionality beyond what is available in current
+// log crate since simple-log is based on log4rs.
 pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>, update: bool) {
     let settings = settings.unwrap_or(LoggingSettings::new(
         LogMode::Console,
