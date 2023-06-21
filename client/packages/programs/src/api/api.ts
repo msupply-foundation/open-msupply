@@ -3,8 +3,8 @@ import {
   ClinicianSortFieldInput,
   DocumentRegistryFilterInput,
   DocumentRegistryNode,
-  DocumentRegistryNodeContext,
   DocumentRegistrySortFieldInput,
+  DocumentRegistryTypeNode,
   EncounterSortFieldInput,
   InsertEncounterInput,
   InsertProgramEnrolmentInput,
@@ -208,11 +208,11 @@ export const getDocumentRegistryQueries = (sdk: Sdk, storeId: string) => ({
       }
       throw new Error('Error querying document registry by type');
     },
-    byDocContext: async (
-      context: DocumentRegistryNodeContext
+    byRegistryType: async (
+      context: DocumentRegistryTypeNode
     ): Promise<DocumentRegistryFragment[]> => {
       const result = await sdk.documentRegistries({
-        filter: { context: { equalTo: context } },
+        filter: { documentContext: { equalTo: context } },
         storeId,
       });
       const entries = result?.documentRegistries;
@@ -250,8 +250,8 @@ export const getDocumentRegistryQueries = (sdk: Sdk, storeId: string) => ({
     }> => {
       const result = await sdk.documentRegistriesWithChildren({
         filter: {
-          context: {
-            equalTo: DocumentRegistryNodeContext.Program,
+          type: {
+            equalTo: DocumentRegistryTypeNode.ProgramEnrolment,
           },
         },
         sort: {

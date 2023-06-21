@@ -4,7 +4,6 @@ import {
   DetailSection,
   Box,
   FnUtils,
-  DocumentRegistryNodeContext,
   TabContext,
   useTabs,
   DialogButton,
@@ -13,6 +12,7 @@ import {
   WizardStepper,
   useTranslation,
   useDebounceCallback,
+  DocumentRegistryTypeNode,
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
@@ -43,8 +43,8 @@ const newPatient = (
 
 export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { data: documentRegistryResponse } =
-    useDocumentRegistry.get.documentRegistryByContext(
-      DocumentRegistryNodeContext.Patient
+    useDocumentRegistry.get.documentRegistryByRegistryType(
+      DocumentRegistryTypeNode.Patient
     );
   const [documentRegistry, setDocumentRegistry] = useState<
     DocumentRegistryFragment | undefined

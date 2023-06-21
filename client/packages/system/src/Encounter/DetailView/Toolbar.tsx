@@ -59,7 +59,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const [clinician, setClinician] =
     useState<ClinicianAutocompleteOption | null>();
   const { data: programDocument } =
-    useDocumentRegistry.get.documentRegistryByType(encounter?.program);
+    useDocumentRegistry.get.documentRegistryByDocType(encounter?.program);
 
   useEffect(() => {
     setStatus(encounter.status ?? undefined);

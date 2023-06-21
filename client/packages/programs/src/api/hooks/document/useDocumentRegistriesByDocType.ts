@@ -2,7 +2,10 @@ import { useQuery } from '@openmsupply-client/common';
 
 import { useDocumentRegistryApi } from '../utils/useDocumentRegistryApi';
 
-export const useDocumentRegistryByType = (type: string, enabled?: boolean) => {
+export const useDocumentRegistryByDocType = (
+  type: string,
+  enabled?: boolean
+) => {
   const api = useDocumentRegistryApi();
 
   return useQuery(
