@@ -137,14 +137,15 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        EqualFilter, FormSchemaRowRepository,
+        DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType, EqualFilter,
+        FormSchemaRowRepository,
     };
     use util::inline_init;
 
     use crate::{
         programs::patient::{
             patient_schema::{ContactDetails, Gender, SchemaPatient},
-            PatientFilter, UpdatePatient,
+            PatientFilter, UpdatePatient, PATIENT_TYPE,
         },
         service_provider::ServiceProvider,
     };
@@ -166,6 +167,20 @@ mod test {
         let schema = mock_form_schema_empty();
         FormSchemaRowRepository::new(&ctx.connection)
             .upsert_one(&schema)
+            .unwrap();
+
+        let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
+        registry_repo
+            .upsert_one(&DocumentRegistryRow {
+                id: "patient_id".to_string(),
+                r#type: DocumentRegistryType::Patient,
+                document_type: PATIENT_TYPE.to_string(),
+                document_context: "Patient".to_string(),
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id.clone()),
+                config: None,
+            })
             .unwrap();
 
         let contact_details = ContactDetails {

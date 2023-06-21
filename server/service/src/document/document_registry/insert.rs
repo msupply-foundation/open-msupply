@@ -29,13 +29,13 @@ pub struct InsertDocumentRegistry {
 pub fn insert(
     ctx: &ServiceContext,
     input: InsertDocumentRegistry,
-    allowed_docs: &[String],
+    allowed_ctx: &[String],
 ) -> Result<DocumentRegistry, InsertDocRegistryError> {
     let result = ctx
         .connection
         .transaction_sync(
             |connection| -> Result<DocumentRegistry, InsertDocRegistryError> {
-                validate(ctx, &input, allowed_docs)?;
+                validate(ctx, &input, allowed_ctx)?;
                 let id = input.id.clone();
                 let data = generate(input);
                 DocumentRegistryRowRepository::new(&connection).upsert_one(&data)?;
@@ -83,9 +83,9 @@ fn generate(
 fn validate(
     ctx: &ServiceContext,
     input: &InsertDocumentRegistry,
-    allowed_docs: &[String],
+    allowed_ctx: &[String],
 ) -> Result<(), InsertDocRegistryError> {
-    if !allowed_docs.contains(&input.document_type) {
+    if !allowed_ctx.contains(&input.document_type) {
         return Err(InsertDocRegistryError::NotAllowedToMutateDocument);
     }
     if !validate_unique_patient_entry(ctx, input)? {
@@ -112,7 +112,7 @@ fn validate_unique_patient_entry(
     }
     let repo = DocumentRegistryRepository::new(&ctx.connection);
     let result = repo.count(Some(
-        DocumentRegistryFilter::new().context(DocumentRegistryType::Patient.equal_to()),
+        DocumentRegistryFilter::new().r#type(DocumentRegistryType::Patient.equal_to()),
     ))?;
     Ok(result == 0)
 }

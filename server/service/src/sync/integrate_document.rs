@@ -66,8 +66,8 @@ fn update_program_enrolment(
 }
 
 fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), RepositoryError> {
-    let (Some(patient_id), Some(program)) = (&document.owner_name_id, &document.context) else {
-        return Err(RepositoryError::as_db_error("Document owner id and context expected", ""));
+    let Some(patient_id) = &document.owner_name_id else {
+        return Err(RepositoryError::as_db_error("Document owner id expected", ""));
     };
 
     let encounter = validate_encounter_schema(&document.data).map_err(|err| {
@@ -82,7 +82,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
     update_encounter_row(
         con,
         &patient_id,
-        &program,
+        &document.context,
         document,
         encounter,
         clinician_id,

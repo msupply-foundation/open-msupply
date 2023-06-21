@@ -1,7 +1,8 @@
 use chrono::Utc;
 use repository::{
-    Document, DocumentFilter, DocumentRepository, DocumentStatus, Pagination, RepositoryError,
-    StringFilter, TransactionError,
+    Document, DocumentFilter, DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository,
+    DocumentRegistryType, DocumentRepository, DocumentStatus, EqualFilter, Pagination,
+    RepositoryError, StringFilter, TransactionError,
 };
 
 use crate::{
@@ -22,6 +23,7 @@ pub enum UpsertProgramEnrolmentError {
     /// Each patient can only be enrolled in a program once
     ProgramExists,
     InvalidDataSchema(Vec<String>),
+    DocumentTypeDoesNotExit,
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -41,18 +43,18 @@ pub fn upsert_program_enrolment(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: UpsertProgramEnrolment,
-    allowed_docs: Vec<String>,
+    allowed_ctx: Vec<String>,
 ) -> Result<Document, UpsertProgramEnrolmentError> {
     let program_document = ctx
         .connection
         .transaction_sync(|_| {
             let patient_id = input.patient_id.clone();
-            let schema_program = validate(ctx, service_provider, &input)?;
-            let doc = generate(user_id, input)?;
+            let (schema_program, registry) = validate(ctx, service_provider, &input)?;
+            let doc = generate(user_id, input, registry)?;
 
             let document = service_provider
                 .document_service
-                .update_document(ctx, doc, &allowed_docs)
+                .update_document(ctx, doc, &allowed_ctx)
                 .map_err(|err| match err {
                     DocumentInsertError::NotAllowedToMutateDocument => {
                         UpsertProgramEnrolmentError::NotAllowedToMutateDocument
@@ -96,7 +98,11 @@ impl From<RepositoryError> for UpsertProgramEnrolmentError {
     }
 }
 
-fn generate(user_id: &str, input: UpsertProgramEnrolment) -> Result<RawDocument, RepositoryError> {
+fn generate(
+    user_id: &str,
+    input: UpsertProgramEnrolment,
+    registry: DocumentRegistry,
+) -> Result<RawDocument, RepositoryError> {
     Ok(RawDocument {
         name: patient_doc_name(&input.patient_id, &input.r#type),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
@@ -107,7 +113,7 @@ fn generate(user_id: &str, input: UpsertProgramEnrolment) -> Result<RawDocument,
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(input.patient_id),
-        context: Some(input.r#type),
+        context: registry.document_context,
     })
 }
 
@@ -140,23 +146,40 @@ fn validate_program_not_exists(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     patient_id: &str,
-    program: &str,
+    document_type: &str,
 ) -> Result<bool, RepositoryError> {
-    let patient_name = patient_doc_name(patient_id, program);
+    let patient_name = patient_doc_name(patient_id, document_type);
     let existing_document = service_provider
         .document_service
         .document(ctx, &patient_name, None)?;
     Ok(existing_document.is_none())
 }
 
+fn validate_document_type(
+    ctx: &ServiceContext,
+    document_type: &str,
+) -> Result<Option<DocumentRegistry>, RepositoryError> {
+    let mut entry = DocumentRegistryRepository::new(&ctx.connection).query_by_filter(
+        DocumentRegistryFilter::new()
+            .r#type(DocumentRegistryType::ProgramEnrolment.equal_to())
+            .document_type(EqualFilter::equal_to(document_type)),
+    )?;
+    Ok(entry.pop())
+}
+
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     input: &UpsertProgramEnrolment,
-) -> Result<SchemaProgramEnrolment, UpsertProgramEnrolmentError> {
+) -> Result<(SchemaProgramEnrolment, DocumentRegistry), UpsertProgramEnrolmentError> {
     if !validate_patient_exists(ctx, &input.patient_id)? {
         return Err(UpsertProgramEnrolmentError::InvalidPatientId);
     }
+
+    let document_registry = match validate_document_type(ctx, &input.r#type)? {
+        Some(document_registry) => document_registry,
+        None => return Err(UpsertProgramEnrolmentError::DocumentTypeDoesNotExit),
+    };
 
     let program = validate_program_schema(input).map_err(|err| {
         UpsertProgramEnrolmentError::InvalidDataSchema(vec![format!(
@@ -171,7 +194,7 @@ fn validate(
         }
     }
 
-    Ok(program)
+    Ok((program, document_registry))
 }
 
 #[cfg(test)]
@@ -180,15 +203,16 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentFilter, DocumentRepository, FormSchemaRowRepository, Pagination,
-        ProgramEnrolmentRepository, StringFilter,
+        DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
+        DocumentRepository, FormSchemaRowRepository, Pagination, ProgramEnrolmentRepository,
+        StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
 
     use crate::{
         programs::{
-            patient::{patient_doc_name, test::mock_patient_1, UpdatePatient},
+            patient::{patient_doc_name, test::mock_patient_1, UpdatePatient, PATIENT_TYPE},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
@@ -216,6 +240,32 @@ mod test {
         FormSchemaRowRepository::new(&ctx.connection)
             .upsert_one(&schema)
             .unwrap();
+        let program_type = "ProgramType".to_string();
+        let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
+        registry_repo
+            .upsert_one(&DocumentRegistryRow {
+                id: "patient_id".to_string(),
+                r#type: DocumentRegistryType::Patient,
+                document_type: PATIENT_TYPE.to_string(),
+                document_context: "Patient".to_string(),
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id.clone()),
+                config: None,
+            })
+            .unwrap();
+        registry_repo
+            .upsert_one(&DocumentRegistryRow {
+                id: "program_enrolment_id".to_string(),
+                r#type: DocumentRegistryType::ProgramEnrolment,
+                document_type: program_type.to_string(),
+                document_context: program_type.to_string(),
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id.clone()),
+                config: None,
+            })
+            .unwrap();
 
         let service = &service_provider.program_enrolment_service;
 
@@ -230,7 +280,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: None,
                     patient_id: "some_id".to_string(),
-                    r#type: "SomeType".to_string(),
+                    r#type: program_type.clone(),
                 },
                 vec!["WrongType".to_string()],
             )
@@ -249,9 +299,9 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: None,
                     patient_id: "some_id".to_string(),
-                    r#type: "SomeType".to_string(),
+                    r#type: program_type.clone(),
                 },
-                vec!["SomeType".to_string()],
+                vec![program_type.clone()],
             )
             .err()
             .unwrap();
@@ -283,9 +333,9 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: None,
                     patient_id: "some_id".to_string(),
-                    r#type: "SomeType".to_string(),
+                    r#type: program_type.clone(),
                 },
-                vec!["SomeType".to_string()],
+                vec![program_type.clone()],
             )
             .err()
             .unwrap();
@@ -297,7 +347,7 @@ mod test {
             v.enrolment_datetime = Utc::now().with_nanosecond(0).unwrap().to_rfc3339();
             v.program_enrolment_id = Some("patient id 1".to_string());
         });
-        let program_type = "ProgramType".to_string();
+
         service
             .upsert_program_enrolment(
                 &ctx,
@@ -389,7 +439,7 @@ mod test {
             .find_one_by_type_and_patient(&program_type, &patient.id)
             .unwrap()
             .unwrap();
-        assert_eq!(program_type, found_program.program);
+        assert_eq!(program_type, found_program.context);
         assert_eq!(
             program.enrolment_datetime,
             DateTime::<Utc>::from_utc(found_program.enrolment_datetime, Utc).to_rfc3339()

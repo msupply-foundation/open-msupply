@@ -33,8 +33,7 @@ pub enum InsertEncounterError {
 
 pub struct InsertEncounter {
     pub patient_id: String,
-    /// The program type
-    pub program: String,
+    pub context: String,
     pub r#type: String,
     pub data: serde_json::Value,
     pub schema_id: String,
@@ -46,21 +45,21 @@ pub fn insert_encounter(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: InsertEncounter,
-    allowed_docs: Vec<String>,
+    allowed_ctx: Vec<String>,
 ) -> Result<Document, InsertEncounterError> {
     let patient = ctx
         .connection
         .transaction_sync(|_| {
             let (encounter, clinician) = validate(ctx, &input)?;
             let patient_id = input.patient_id.clone();
-            let program = input.program.clone();
+            let context = input.context.clone();
             let event_datetime = input.event_datetime;
             let doc = generate(user_id, input, event_datetime)?;
             let encounter_start_datetime = encounter.start_datetime;
 
             let document = service_provider
                 .document_service
-                .update_document(ctx, doc, &allowed_docs)
+                .update_document(ctx, doc, &allowed_ctx)
                 .map_err(|err| match err {
                     DocumentInsertError::NotAllowedToMutateDocument => {
                         InsertEncounterError::NotAllowedToMutateDocument
@@ -88,7 +87,7 @@ pub fn insert_encounter(
                 update_encounter_row(
                     &ctx.connection,
                     &patient_id,
-                    &program,
+                    &context,
                     &document,
                     encounter,
                     clinician.map(|c| c.id),
@@ -101,7 +100,7 @@ pub fn insert_encounter(
                     encounter_start_datetime,
                     None,
                     &document,
-                    &allowed_docs,
+                    &allowed_ctx,
                 )
                 .map_err(|err| match err {
                     UpdateProgramDocumentError::DatabaseError(err) => {
@@ -141,7 +140,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(input.patient_id),
-        context: Some(input.program),
+        context: input.context,
     })
 }
 
@@ -165,7 +164,7 @@ fn validate(
     ctx: &ServiceContext,
     input: &InsertEncounter,
 ) -> Result<(ValidatedSchemaEncounter, Option<ClinicianRow>), InsertEncounterError> {
-    if !validate_patient_program_exists(ctx, &input.patient_id, &input.program)? {
+    if !validate_patient_program_exists(ctx, &input.patient_id, &input.context)? {
         return Err(InsertEncounterError::InvalidPatientOrProgram);
     }
 
@@ -198,7 +197,8 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
+        DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType, EncounterFilter,
+        EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
     use util::inline_init;
@@ -209,7 +209,7 @@ mod test {
                 encounter_schema::{EncounterStatus, SchemaEncounter},
                 InsertEncounter,
             },
-            patient::{test::mock_patient_1, UpdatePatient},
+            patient::{test::mock_patient_1, UpdatePatient, PATIENT_TYPE},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
@@ -238,6 +238,33 @@ mod test {
             .upsert_one(&schema)
             .unwrap();
 
+        let program_type = "ProgramType".to_string();
+        let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
+        registry_repo
+            .upsert_one(&DocumentRegistryRow {
+                id: "patient_id".to_string(),
+                r#type: DocumentRegistryType::Patient,
+                document_type: PATIENT_TYPE.to_string(),
+                document_context: "Patient".to_string(),
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id.clone()),
+                config: None,
+            })
+            .unwrap();
+        registry_repo
+            .upsert_one(&DocumentRegistryRow {
+                id: "program_enrolment_id".to_string(),
+                r#type: DocumentRegistryType::ProgramEnrolment,
+                document_type: program_type.to_string(),
+                document_context: "TestProgramEnrolment".to_string(),
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id.clone()),
+                config: None,
+            })
+            .unwrap();
+
         // insert patient and program
         let patient = mock_patient_1();
         service_provider
@@ -257,7 +284,7 @@ mod test {
         let program = inline_init(|v: &mut SchemaProgramEnrolment| {
             v.enrolment_datetime = Utc::now().to_rfc3339();
         });
-        let program_type = "ProgramType".to_string();
+
         service_provider
             .program_enrolment_service
             .upsert_program_enrolment(
@@ -289,7 +316,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
                     r#type: "SomeType".to_string(),
-                    program: program_type.clone(),
+                    context: program_type.clone(),
                     event_datetime: Utc::now(),
                 },
                 vec!["WrongType".to_string()],
@@ -309,7 +336,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: "some_id".to_string(),
                     r#type: "SomeType".to_string(),
-                    program: program_type.clone(),
+                    context: program_type.clone(),
                     event_datetime: Utc::now(),
                 },
                 vec!["SomeType".to_string()],
@@ -327,7 +354,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
                     r#type: "SomeType".to_string(),
-                    program: "invalid".to_string(),
+                    context: "invalid".to_string(),
                     event_datetime: Utc::now(),
                 },
                 vec!["SomeType".to_string()],
@@ -347,7 +374,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
                     r#type: "SomeType".to_string(),
-                    program: program_type.clone(),
+                    context: program_type.clone(),
                     event_datetime: Utc::now(),
                 },
                 vec!["SomeType".to_string()],
@@ -373,7 +400,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
                     r#type: "SomeType".to_string(),
-                    program: program_type.clone(),
+                    context: program_type.clone(),
                     event_datetime: Utc::now(),
                 },
                 vec!["SomeType".to_string()],

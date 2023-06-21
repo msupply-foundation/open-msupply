@@ -41,7 +41,7 @@ pub fn update_encounter(
     service_provider: &ServiceProvider,
     user_id: &str,
     input: UpdateEncounter,
-    allowed_docs: Vec<String>,
+    allowed_ctx: Vec<String>,
 ) -> Result<Document, UpdateEncounterError> {
     let patient = ctx
         .connection
@@ -53,7 +53,7 @@ pub fn update_encounter(
 
             let document = service_provider
                 .document_service
-                .update_document(ctx, doc, &allowed_docs)
+                .update_document(ctx, doc, &allowed_ctx)
                 .map_err(|err| match err {
                     DocumentInsertError::NotAllowedToMutateDocument => {
                         UpdateEncounterError::NotAllowedToMutateDocument
@@ -79,7 +79,7 @@ pub fn update_encounter(
                 update_encounter_row(
                     &ctx.connection,
                     &existing_encounter_row.patient_id,
-                    &existing_encounter_row.program,
+                    &existing_encounter_row.context,
                     &document,
                     encounter,
                     clinician_row.map(|c| c.id),
@@ -92,7 +92,7 @@ pub fn update_encounter(
                     encounter_start_datetime,
                     Some(existing_encounter_row.start_datetime),
                     &document,
-                    &allowed_docs,
+                    &allowed_ctx,
                 )
                 .map_err(|err| match err {
                     UpdateProgramDocumentError::DatabaseError(err) => {
@@ -201,7 +201,8 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
+        DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType, EncounterFilter,
+        EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
     use util::inline_init;
@@ -212,7 +213,7 @@ mod test {
                 encounter_schema::{EncounterStatus, SchemaEncounter},
                 InsertEncounter, UpdateEncounter,
             },
-            patient::{test::mock_patient_1, UpdatePatient},
+            patient::{test::mock_patient_1, UpdatePatient, PATIENT_TYPE},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
@@ -240,6 +241,33 @@ mod test {
         FormSchemaRowRepository::new(&ctx.connection)
             .upsert_one(&schema)
             .unwrap();
+        let program_type = "ProgramType".to_string();
+
+        let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
+        registry_repo
+            .upsert_one(&DocumentRegistryRow {
+                id: "patient_id".to_string(),
+                r#type: DocumentRegistryType::Patient,
+                document_type: PATIENT_TYPE.to_string(),
+                document_context: "Patient".to_string(),
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id.clone()),
+                config: None,
+            })
+            .unwrap();
+        registry_repo
+            .upsert_one(&DocumentRegistryRow {
+                id: "program_enrolment_id".to_string(),
+                r#type: DocumentRegistryType::ProgramEnrolment,
+                document_type: program_type.to_string(),
+                document_context: "TestProgramEnrolment".to_string(),
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id.clone()),
+                config: None,
+            })
+            .unwrap();
 
         // insert patient, program and initial encounter
         let patient = mock_patient_1();
@@ -260,7 +288,7 @@ mod test {
         let program = inline_init(|v: &mut SchemaProgramEnrolment| {
             v.enrolment_datetime = Utc::now().to_rfc3339();
         });
-        let program_type = "ProgramType".to_string();
+
         service_provider
             .program_enrolment_service
             .upsert_program_enrolment(
@@ -294,7 +322,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
                     r#type: "TestEncounterType".to_string(),
-                    program: program_type.clone(),
+                    context: program_type.clone(),
                     event_datetime: Utc::now(),
                 },
                 vec!["TestEncounterType".to_string()],
