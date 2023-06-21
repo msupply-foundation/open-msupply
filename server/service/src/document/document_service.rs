@@ -84,12 +84,13 @@ pub trait DocumentServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         name: &str,
-        allowed_docs: Option<&[String]>,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<Option<Document>, RepositoryError> {
         let mut filter = DocumentFilter::new().name(StringFilter::equal_to(name));
-        if let Some(allowed_docs) = allowed_docs {
-            filter = filter.r#type(EqualFilter::default().restrict_results(allowed_docs));
+        if let Some(allowed_ctx) = allowed_ctx {
+            filter = filter.context(EqualFilter::default().restrict_results(allowed_ctx));
         }
+
         Ok(DocumentRepository::new(&ctx.connection)
             .query(Pagination::one(), Some(filter), None)?
             .pop())
@@ -101,15 +102,15 @@ pub trait DocumentServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<DocumentFilter>,
         sort: Option<DocumentSort>,
-        allowed_docs: Option<&[String]>,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<Document>, ListError> {
         let mut filter = filter.unwrap_or(DocumentFilter::new());
-        if let Some(allowed_docs) = allowed_docs {
-            filter.r#type = Some(
+        if let Some(allowed_ctx) = allowed_ctx {
+            filter.context = Some(
                 filter
-                    .r#type
+                    .context
                     .unwrap_or_default()
-                    .restrict_results(allowed_docs),
+                    .restrict_results(allowed_ctx),
             );
         }
         let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
@@ -124,11 +125,11 @@ pub trait DocumentServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         name: &str,
-        allowed_docs: &[String],
+        allowed_ctx: &[String],
     ) -> Result<Vec<Document>, DocumentHistoryError> {
         let filter = DocumentFilter::new()
             .name(StringFilter::equal_to(name))
-            .r#type(EqualFilter::default().restrict_results(allowed_docs));
+            .context(EqualFilter::default().restrict_results(allowed_ctx));
 
         let repo = DocumentRepository::new(&ctx.connection);
         let docs = repo.document_history(Some(filter))?;
@@ -139,12 +140,12 @@ pub trait DocumentServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         doc: RawDocument,
-        allowed_docs: &[String],
+        allowed_ctx: &[String],
     ) -> Result<Document, DocumentInsertError> {
         let document = ctx
             .connection
             .transaction_sync(|con| {
-                if !allowed_docs.contains(&doc.r#type) {
+                if !allowed_ctx.contains(&doc.r#type) {
                     return Err(DocumentInsertError::NotAllowedToMutateDocument);
                 }
                 let validator = json_validator(con, &doc)?;
@@ -167,11 +168,11 @@ pub trait DocumentServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         user_id: &str,
         input: DocumentDelete,
-        allowed_docs: &[String],
+        allowed_ctx: &[String],
     ) -> Result<(), DocumentDeleteError> {
         ctx.connection
             .transaction_sync(|con| {
-                let current_document = validate_document_delete(con, &input.id, allowed_docs)?;
+                let current_document = validate_document_delete(con, &input.id, allowed_ctx)?;
                 let document = generate_deleted_document(current_document, user_id)?;
 
                 match DocumentRepository::new(con).insert(&document, false) {
@@ -188,12 +189,12 @@ pub trait DocumentServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         user_id: &str,
         input: DocumentUndelete,
-        allowed_docs: &[String],
+        allowed_ctx: &[String],
     ) -> Result<Document, DocumentUndeleteError> {
         let document = ctx
             .connection
             .transaction_sync(|con| {
-                let parent_doc = validate_document_undelete(con, &input.id, allowed_docs)?;
+                let parent_doc = validate_document_undelete(con, &input.id, allowed_ctx)?;
                 let document = generate_undeleted_document(&input.id, parent_doc, user_id)?;
 
                 match DocumentRepository::new(con).insert(&document, false) {
@@ -262,7 +263,7 @@ fn validate_parents(
 fn validate_document_delete(
     connection: &StorageConnection,
     id: &str,
-    allowed_docs: &[String],
+    allowed_ctx: &[String],
 ) -> Result<Document, DocumentDeleteError> {
     let doc = match DocumentRepository::new(connection).find_one_by_id(id)? {
         Some(doc) => {
@@ -276,7 +277,7 @@ fn validate_document_delete(
             return Err(DocumentDeleteError::DocumentNotFound);
         }
     };
-    if !allowed_docs.contains(&doc.r#type) {
+    if !allowed_ctx.contains(&doc.r#type) {
         return Err(DocumentDeleteError::NotAllowedToMutateDocument);
     }
     Ok(doc)
@@ -285,7 +286,7 @@ fn validate_document_delete(
 fn validate_document_undelete(
     connection: &StorageConnection,
     id: &str,
-    allowed_docs: &[String],
+    allowed_ctx: &[String],
 ) -> Result<Document, DocumentUndeleteError> {
     let doc = match DocumentRepository::new(connection).find_one_by_id(id)? {
         Some(doc) => {
@@ -299,7 +300,7 @@ fn validate_document_undelete(
             return Err(DocumentUndeleteError::DocumentNotFound);
         }
     };
-    if !allowed_docs.contains(&doc.r#type) {
+    if !allowed_ctx.contains(&doc.r#type) {
         return Err(DocumentUndeleteError::NotAllowedToMutateDocument);
     }
 
@@ -332,7 +333,7 @@ fn generate_deleted_document(
         form_schema_id: current_document.form_schema_id,
         status: DocumentStatus::Deleted,
         owner_name_id: None,
-        context: None,
+        context: current_document.context.clone(),
     }
     .finalise()
     .map_err(|err| DocumentDeleteError::InternalError(err))?;
@@ -422,7 +423,7 @@ mod document_service_test {
                 form_schema_id: None,
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: None,
+                context: "ctx".to_string(),
             },
             &vec!["Wrong type".to_string()],
         );
@@ -450,7 +451,7 @@ mod document_service_test {
                     form_schema_id: None,
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: None,
+                    context: "ctx".to_string(),
                 },
                 &vec!["test_data".to_string()],
             )
@@ -476,7 +477,7 @@ mod document_service_test {
                 form_schema_id: None,
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: None,
+                context: "ctx".to_string(),
             },
             &vec!["test_data".to_string()],
         );
@@ -501,7 +502,7 @@ mod document_service_test {
                     form_schema_id: None,
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: None,
+                    context: "ctx".to_string(),
                 },
                 &vec!["test_data".to_string()],
             )
@@ -530,7 +531,7 @@ mod document_service_test {
                     form_schema_id: None,
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: None,
+                    context: "ctx".to_string(),
                 },
                 &vec!["test_data2".to_string()],
             )
@@ -574,7 +575,7 @@ mod document_service_test {
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: None,
+                    context: "ctx".to_string(),
                 },
                 &vec!["test_data".to_string()],
             )
@@ -600,7 +601,7 @@ mod document_service_test {
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: None,
+                context: "ctx".to_string(),
             },
             &vec!["test_data".to_string()],
         );
@@ -629,7 +630,7 @@ mod document_service_test {
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: None,
+                context: "ctx".to_string(),
             },
             &vec!["test_data".to_string()],
         );
@@ -659,7 +660,7 @@ mod document_service_test {
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: None,
+                    context: "ctx".to_string(),
                 },
                 &vec!["test_data".to_string()],
             )

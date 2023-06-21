@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::{IntegrationRecords, PullUpsertRecord},
 };
-use repository::{DocumentContext, DocumentRegistryRow, FormSchemaJson};
+use repository::{DocumentRegistryRow, DocumentRegistryType, FormSchemaJson};
 use serde_json::json;
 use util::uuid::uuid;
 
@@ -29,7 +29,7 @@ impl SyncRecordTester for DocumentRegistryTester {
 
         let doc_registry1 = DocumentRegistryRow {
             id: uuid(),
-            context: DocumentContext::ProgramEnrolment,
+            r#type: DocumentRegistryType::ProgramEnrolment,
             document_type: "TestProgram".to_string(),
             document_context: "TestProgram".to_string(),
             name: Some("Some name".to_string()),

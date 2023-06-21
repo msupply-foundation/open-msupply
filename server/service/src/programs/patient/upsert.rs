@@ -1,5 +1,6 @@
 use chrono::Utc;
 use repository::{
+    DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryType,
     DocumentStatus, EqualFilter, NameFilter, NameRepository, RepositoryError, TransactionError,
 };
 
@@ -22,6 +23,7 @@ pub enum UpdatePatientError {
     PatientExists,
     InvalidDataSchema(Vec<String>),
     PatientDoesNotBelongToStore,
+    PatientDocumentRegistryDoesNotExit,
     DataSchemaDoesNotExist,
     InternalError(String),
     DatabaseError(RepositoryError),
@@ -44,9 +46,9 @@ pub fn upsert_patient(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let patient = validate(ctx, service_provider, store_id, &input)?;
+            let (patient, registry) = validate(ctx, service_provider, store_id, &input)?;
             let patient_id = patient.id.clone();
-            let doc = generate(user_id, &patient, input)?;
+            let doc = generate(user_id, &patient, registry, input)?;
             let doc_timestamp = doc.datetime.clone();
 
             // Update the name first because the doc is referring the name id
@@ -111,6 +113,7 @@ impl From<RepositoryError> for UpdatePatientError {
 fn generate(
     user_id: &str,
     patient: &SchemaPatient,
+    registry: DocumentRegistry,
     input: UpdatePatient,
 ) -> Result<RawDocument, RepositoryError> {
     Ok(RawDocument {
@@ -123,7 +126,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(patient.id.clone()),
-        context: None,
+        context: registry.document_context,
     })
 }
 
@@ -171,16 +174,33 @@ fn patient_belongs_to_store(
     Ok(name.is_visible())
 }
 
+fn validate_document_type(
+    ctx: &ServiceContext,
+    document_type: &str,
+) -> Result<Option<DocumentRegistry>, RepositoryError> {
+    let mut entry = DocumentRegistryRepository::new(&ctx.connection).query_by_filter(
+        DocumentRegistryFilter::new()
+            .r#type(DocumentRegistryType::Patient.equal_to())
+            .document_type(EqualFilter::equal_to(document_type)),
+    )?;
+    Ok(entry.pop())
+}
+
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     store_id: &str,
     input: &UpdatePatient,
-) -> Result<SchemaPatient, UpdatePatientError> {
+) -> Result<(SchemaPatient, DocumentRegistry), UpdatePatientError> {
     let patient = validate_patient_schema(input)?;
     if !validate_patient_id(&patient) {
         return Err(UpdatePatientError::InvalidPatientId);
     }
+
+    let document_registry = match validate_document_type(ctx, PATIENT_TYPE)? {
+        Some(document_registry) => document_registry,
+        None => return Err(UpdatePatientError::PatientDocumentRegistryDoesNotExit),
+    };
 
     if input.parent.is_none() {
         if !validate_patient_not_exists(ctx, service_provider, &patient.id)? {
@@ -191,7 +211,7 @@ fn validate(
     if input.parent.is_some() && !patient_belongs_to_store(ctx, store_id, &patient.id)? {
         return Err(UpdatePatientError::PatientDoesNotBelongToStore);
     }
-    Ok(patient)
+    Ok((patient, document_registry))
 }
 
 #[cfg(test)]
@@ -199,8 +219,9 @@ pub mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentFilter, DocumentRepository, EqualFilter, FormSchemaRowRepository, NameFilter,
-        NameRepository, NameStoreJoinFilter, NameStoreJoinRepository, Pagination, StringFilter,
+        DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
+        DocumentRepository, EqualFilter, FormSchemaRowRepository, NameFilter, NameRepository,
+        NameStoreJoinFilter, NameStoreJoinRepository, Pagination, StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
@@ -209,7 +230,7 @@ pub mod test {
         programs::patient::{
             main_patient_doc_name,
             patient_schema::{ContactDetails, Gender, SchemaPatient},
-            upsert,
+            upsert, PATIENT_TYPE,
         },
         service_provider::ServiceProvider,
     };
@@ -261,6 +282,20 @@ pub mod test {
         let schema = mock_form_schema_empty();
         FormSchemaRowRepository::new(&ctx.connection)
             .upsert_one(&schema)
+            .unwrap();
+
+        let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
+        registry_repo
+            .upsert_one(&DocumentRegistryRow {
+                id: "patient_id".to_string(),
+                r#type: DocumentRegistryType::Patient,
+                document_type: PATIENT_TYPE.to_string(),
+                document_context: "Patient".to_string(),
+                name: None,
+                parent_id: None,
+                form_schema_id: Some(schema.id.clone()),
+                config: None,
+            })
             .unwrap();
 
         let patient = mock_patient_1();
