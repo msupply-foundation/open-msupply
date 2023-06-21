@@ -25,7 +25,7 @@ Users browse to the client app on the configured server port from a web browser,
 
 In diagrammatic form this looks like the image below:
 
-![omSupply Architecture drawio](./architecture.drawio.svg)
+![omSupply Architecture drawio](./doc/architecture.drawio.svg)
 
 There are also several ancilliary applications as noted, which are available to be run (cli applications) or hosted (storybook) separately.
 
@@ -46,4 +46,14 @@ Continue incrementing the test version as builds are done.
 
 If you want to build your own branch, anything such as `v1.0.4-PR123-t1` will work great.
 
+#### Demo builds
 
+You can build a demo app for MacOS through actions: Run new workflow [from here](https://github.com/openmsupply/open-msupply/actions/workflows/build-mac-demo.yaml), this can take up to an hour
+
+![Mac Buid Dispatch](./doc/mac_demo_workflow_dispatch.png)
+
+Once the binary is compiled it should be available in the Artifacts of the action run: Find the [workflow run here](https://github.com/openmsupply/open-msupply/actions), then look at the Artifacts for that workflow run
+
+![Mac Build Artifact](./doc/mac_demo_artifact.png)
+
+[Further info](./build/mac/README.md)
