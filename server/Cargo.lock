@@ -4088,6 +4088,7 @@ dependencies = [
  "serde 1.0.137",
  "serde_json",
  "serde_yaml",
+ "simple-log",
  "tera",
  "thiserror",
  "tokio",

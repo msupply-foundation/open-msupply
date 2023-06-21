@@ -77,7 +77,7 @@ pub trait LogServiceTrait: Send + Sync {
         Ok(level)
     }
 
-    fn upsert_log_level(
+    fn update_log_level(
         &self,
         ctx: &ServiceContext,
         log_level: Level,
@@ -94,6 +94,7 @@ pub trait LogServiceTrait: Send + Sync {
         };
 
         key_value_store.set_string(KeyValueType::LogLevel, Some(log_level.to_string()))?;
+        simple_log::update_log_level(log_level).expect("Couldn't update log level");
 
         Ok(())
     }

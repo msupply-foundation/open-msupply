@@ -64,7 +64,7 @@ pub mod android {
             ),
         };
 
-        logging_init(settings.logging.clone(), None, false);
+        logging_init(settings.logging.clone(), None);
         log_panics::init();
         log::info!("omSupply server starting...");
 

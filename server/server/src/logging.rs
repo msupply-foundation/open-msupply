@@ -5,7 +5,7 @@ use simple_log::LogConfigBuilder;
 
 // Can use log4rs to extend logging functionality beyond what is available in current
 // log crate since simple-log is based on log4rs.
-pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>, update: bool) {
+pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>) {
     let settings = settings.unwrap_or(LoggingSettings::new(
         LogMode::Console,
         service::settings::Level::Info,
@@ -24,11 +24,7 @@ pub fn logging_init(settings: Option<LoggingSettings>, level: Option<Level>, upd
         LogMode::All => file_logger(&settings).level(log_level.to_string()).build(),
     };
 
-    if update {
-        simple_log::update_log_conf(config).expect("Unable to update logger");
-    } else {
-        simple_log::new(config).expect("Unable to initialise logger");
-    }
+    simple_log::new(config).expect("Unable to initialise logger");
 }
 
 fn file_logger(settings: &LoggingSettings) -> LogConfigBuilder {
