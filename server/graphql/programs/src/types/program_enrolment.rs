@@ -79,7 +79,11 @@ pub struct ProgramEnrolmentNode {
 #[Object]
 impl ProgramEnrolmentNode {
     /// The program type
-    pub async fn program(&self) -> &str {
+    pub async fn r#type(&self) -> &str {
+        &self.program_row.document_type
+    }
+
+    pub async fn context(&self) -> &str {
         &self.program_row.context
     }
 
@@ -134,7 +138,7 @@ impl ProgramEnrolmentNode {
             .map(|f| f.to_domain_filter())
             .unwrap_or(EncounterFilter::new())
             .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .program(EqualFilter::equal_to(&self.program_row.context));
+            .context(EqualFilter::equal_to(&self.program_row.context));
 
         let entries = ctx
             .service_provider()

@@ -242,6 +242,7 @@ mod test {
             .upsert_one(&schema)
             .unwrap();
         let program_type = "ProgramType".to_string();
+        let encounter_type = "EncounterType".to_string();
 
         let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
         registry_repo
@@ -258,12 +259,24 @@ mod test {
             .unwrap();
         registry_repo
             .upsert_one(&DocumentRegistryRow {
-                id: "program_enrolment_id".to_string(),
+                id: "program_enrolment_rego_id".to_string(),
                 r#type: DocumentRegistryType::ProgramEnrolment,
                 document_type: program_type.to_string(),
                 document_context: "TestProgramEnrolment".to_string(),
                 name: None,
                 parent_id: None,
+                form_schema_id: Some(schema.id.clone()),
+                config: None,
+            })
+            .unwrap();
+        registry_repo
+            .upsert_one(&DocumentRegistryRow {
+                id: "encounter_rego_id".to_string(),
+                r#type: DocumentRegistryType::Encounter,
+                document_type: encounter_type.to_string(),
+                document_context: "TestProgramEnrolment".to_string(),
+                name: None,
+                parent_id: Some("program_enrolment_rego_id".to_string()),
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
             })
@@ -302,7 +315,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: program_type.clone(),
                 },
-                vec![program_type.clone()],
+                vec!["TestProgramEnrolment".to_string()],
             )
             .unwrap();
         let service = &service_provider.encounter_service;
@@ -311,7 +324,6 @@ mod test {
             e.start_datetime = Utc::now().to_rfc3339();
             e.status = Some(EncounterStatus::Pending);
         });
-        let program_type = "ProgramType".to_string();
         let initial_encounter = service
             .insert_encounter(
                 &ctx,
@@ -321,11 +333,10 @@ mod test {
                     data: serde_json::to_value(encounter.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     patient_id: patient.id.clone(),
-                    r#type: "TestEncounterType".to_string(),
-                    context: program_type.clone(),
+                    r#type: encounter_type.to_string(),
                     event_datetime: Utc::now(),
                 },
-                vec!["TestEncounterType".to_string()],
+                vec!["TestProgramEnrolment".to_string()],
             )
             .unwrap();
 
@@ -354,12 +365,12 @@ mod test {
                 &service_provider,
                 "user",
                 UpdateEncounter {
-                    r#type: "TestEncounterType".to_string(),
+                    r#type: encounter_type.to_string(),
                     data: json!({"enrolment_datetime": true}),
                     schema_id: schema.id.clone(),
                     parent: "invalid".to_string(),
                 },
-                vec!["TestEncounterType".to_string()],
+                vec!["TestProgramEnrolment".to_string()],
             )
             .err()
             .unwrap();
@@ -372,12 +383,12 @@ mod test {
                 &service_provider,
                 "user",
                 UpdateEncounter {
-                    r#type: "TestEncounterType".to_string(),
+                    r#type: encounter_type.to_string(),
                     data: json!({"encounter_datetime": true}),
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
                 },
-                vec!["TestEncounterType".to_string()],
+                vec!["TestProgramEnrolment".to_string()],
             )
             .err()
             .unwrap();
@@ -395,12 +406,12 @@ mod test {
                 &service_provider,
                 "user",
                 UpdateEncounter {
-                    r#type: "TestEncounterType".to_string(),
+                    r#type: encounter_type.to_string(),
                     data: serde_json::to_value(encounter.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
                 },
-                vec!["TestEncounterType".to_string()],
+                vec!["TestProgramEnrolment".to_string()],
             )
             .unwrap();
         let found = service_provider

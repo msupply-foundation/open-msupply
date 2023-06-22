@@ -38,6 +38,7 @@ table! {
 #[table_name = "encounter"]
 pub struct EncounterRow {
     pub id: String,
+    /// Encounter document type
     pub document_type: String,
     /// The encounter document name
     pub document_name: String,

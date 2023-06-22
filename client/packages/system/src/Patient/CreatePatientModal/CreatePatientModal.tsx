@@ -43,9 +43,10 @@ const newPatient = (
 
 export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { data: documentRegistryResponse } =
-    useDocumentRegistry.get.documentRegistryByRegistryType(
-      DocumentRegistryTypeNode.Patient
-    );
+    useDocumentRegistry.get.documentRegistries({
+      filter: { type: { equalTo: DocumentRegistryTypeNode.Patient } },
+    });
+
   const [documentRegistry, setDocumentRegistry] = useState<
     DocumentRegistryFragment | undefined
   >();
@@ -87,8 +88,8 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   };
 
   useEffect(() => {
-    if (documentRegistryResponse?.[0]) {
-      setDocumentRegistry(documentRegistryResponse?.[0]);
+    if (documentRegistryResponse?.nodes?.[0]) {
+      setDocumentRegistry(documentRegistryResponse.nodes?.[0]);
     }
   }, [documentRegistryResponse]);
 

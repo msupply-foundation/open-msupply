@@ -180,6 +180,7 @@ fragment EncounterDocumentRegistry on DocumentRegistryNode {
 
 fragment Encounter on EncounterNode {
   id
+  context
   type
   name
   status
@@ -195,7 +196,6 @@ fragment Encounter on EncounterNode {
     firstName
     lastName
   }
-  program
   createdDatetime
   startDatetime
   endDatetime
@@ -262,7 +262,6 @@ fragment EncounterRow on EncounterNode {
       name
     }
   }
-  program
   startDatetime
   endDatetime
   status
@@ -324,7 +323,7 @@ mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
 
 # program enrolment without document data but with events
 fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
-  program
+  type
   programEnrolmentId
   patientId
   name
@@ -365,7 +364,7 @@ query programEnrolments(
 
 # program enrolment with document
 fragment ProgramEnrolment on ProgramEnrolmentNode {
-  program
+  type
   programEnrolmentId
   patientId
   name

@@ -70,9 +70,10 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         return Err(RepositoryError::as_db_error("Document owner id expected", ""));
     };
 
-    let encounter = validate_encounter_schema(&document.data).map_err(|err| {
-        RepositoryError::as_db_error(&format!("Invalid encounter data: {}", err), "")
-    })?;
+    let encounter: crate::programs::encounter::validate_misc::ValidatedSchemaEncounter =
+        validate_encounter_schema(&document.data).map_err(|err| {
+            RepositoryError::as_db_error(&format!("Invalid encounter data: {}", err), "")
+        })?;
 
     let clinician_id = encounter
         .encounter

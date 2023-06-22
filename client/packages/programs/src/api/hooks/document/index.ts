@@ -24,8 +24,6 @@ import { useUpsertEncounter } from './useUpsertEncounter';
 import { useClinicians } from './useClinicians';
 import { useProgramEvents } from './useProgramEvents';
 import { useFormSchemaByType } from './useFormSchemaByType';
-import { useDocumentRegistryByDocType } from './useDocumentRegistriesByDocType';
-import { useDocumentRegistryByRegistryType } from './useDocumentRegistryByRegistryType';
 import { useDocumentRegistries } from './useDocumentRegistries';
 import { useEncounterByDocName } from './useEncounterByDocName';
 import { useProgramEnrolmentByDocName } from './useProgramEnrolmentByDocName';
@@ -36,8 +34,6 @@ export const Document = {
   useDocumentHistory,
 
   useDocumentRegistries,
-  useDocumentRegistryByRegistryType,
-  useDocumentRegistryByDocType,
   useProgramRegistries,
   useEncounterRegistriesByPrograms,
 
