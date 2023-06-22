@@ -5,7 +5,6 @@ import {
   LoadingButton,
   PrinterIcon,
   useTranslation,
-  ProgramEnrolmentNodeStatus,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { AddButton } from './AddButton';
@@ -26,7 +25,6 @@ export const AppBarButtons: FC<{ disabled: boolean }> = ({ disabled }) => {
   const { data: enrolmentData } = useProgramEnrolments.document.list({
     filterBy: {
       patientId: { equalTo: patientId },
-      status: { equalTo: ProgramEnrolmentNodeStatus.Active },
     },
   });
   const disableEncounterButton = enrolmentData?.nodes?.length === 0;
