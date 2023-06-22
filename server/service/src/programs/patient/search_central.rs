@@ -78,7 +78,7 @@ pub async fn link_patient_to_store(
     context: ServiceContext,
     store_id: &str,
     name_id: &str,
-) -> Result<(NameStoreJoin, ServiceContext), CentralPatientRequestError> {
+) -> Result<NameStoreJoin, CentralPatientRequestError> {
     let sync_settings = service_provider.settings.sync_settings(&context)?.ok_or(
         CentralPatientRequestError::InternalError("Missing sync settings".to_string()),
     )?;
@@ -112,14 +112,11 @@ pub async fn link_patient_to_store(
         })
         .await
         .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{:?}", err)))?;
-    Ok((
-        NameStoreJoin {
-            id,
-            name_id,
-            store_id,
-        },
-        context,
-    ))
+    Ok(NameStoreJoin {
+        id,
+        name_id,
+        store_id,
+    })
 }
 
 impl From<RepositoryError> for CentralPatientRequestError {

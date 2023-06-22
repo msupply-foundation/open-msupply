@@ -5,7 +5,6 @@ use service::programs::patient::link_patient_to_store as link_patient_to_store_s
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::{CentralPatientRequestError, NameStoreJoin},
-    service_provider::ServiceContext,
 };
 
 use super::ConnectionError;
@@ -69,10 +68,10 @@ pub async fn link_patient_to_store(
 }
 
 fn map_result(
-    result: Result<(NameStoreJoin, ServiceContext), CentralPatientRequestError>,
+    result: Result<NameStoreJoin, CentralPatientRequestError>,
 ) -> Result<LinkPatientToStoreResponse> {
     match result {
-        Ok((name_store_join, _)) => Ok(LinkPatientToStoreResponse::Response(NameStoreJoinNode {
+        Ok(name_store_join) => Ok(LinkPatientToStoreResponse::Response(NameStoreJoinNode {
             name_store_join,
         })),
         Err(err) => {
