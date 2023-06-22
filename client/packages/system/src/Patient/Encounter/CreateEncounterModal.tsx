@@ -14,7 +14,6 @@ import {
   useNotification,
   useAuthContext,
   DatePickerInput,
-  ProgramEnrolmentNodeStatus,
 } from '@openmsupply-client/common';
 import { DateUtils, useIntlUtils, useTranslation } from '@common/intl';
 import {
@@ -22,7 +21,6 @@ import {
   PatientModal,
   usePatientModalStore,
   useEncounter,
-  useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -57,13 +55,6 @@ export const CreateEncounterModal: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const [startDateTimeError, setStartDateTimeError] = useState(false);
-
-  const { data } = useProgramEnrolments.document.list({
-    filterBy: {
-      patientId: { equalTo: patientId },
-      status: { notEqualTo: ProgramEnrolmentNodeStatus.Active },
-    },
-  });
 
   const handleSave = useEncounter.document.upsert(
     patientId,
@@ -154,11 +145,6 @@ export const CreateEncounterModal: FC = () => {
     >
       <React.Suspense fallback={<div />}>
         <Stack alignItems="flex-start" gap={1} sx={{ paddingLeft: '20px' }}>
-          {!!data && (
-            <Typography color={'error'} paddingBottom={1}>
-              {t('messages.inactive-programs')}
-            </Typography>
-          )}
           <InputWithLabelRow
             label={t('label.encounter')}
             Input={
