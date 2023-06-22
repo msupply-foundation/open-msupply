@@ -82,6 +82,10 @@ impl EncounterNode {
         &self.encounter_row.id
     }
 
+    pub async fn context(&self) -> &str {
+        &self.encounter_row.context
+    }
+
     pub async fn patient_id(&self) -> &str {
         &self.encounter_row.patient_id
     }
@@ -117,10 +121,6 @@ impl EncounterNode {
             )))?;
 
         Ok(Some(result))
-    }
-
-    pub async fn program(&self) -> &str {
-        &self.encounter_row.context
     }
 
     /// Returns the matching program enrolment for the patient of this encounter

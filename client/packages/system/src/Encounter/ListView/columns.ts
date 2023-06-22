@@ -10,6 +10,7 @@ import {
   ProgramEventFragment,
   EncounterRowFragment,
   useDocumentRegistry,
+  DocumentRegistryFragment,
 } from '@openmsupply-client/programs';
 
 export const encounterEventCellValue = (events: ProgramEventFragment[]) => {
@@ -32,6 +33,17 @@ export const useEncounterListColumns = ({
   const { data: documentRegistries } =
     useDocumentRegistry.get.documentRegistries();
   includePatient;
+  // document type -> parent
+  const documentRegistryParentMap =
+    documentRegistries?.nodes?.reduce((prev, cur) => {
+      if (!cur.parentId) return prev;
+      const parent = documentRegistries?.nodes.find(
+        it => it.id === cur.parentId
+      );
+      if (parent) prev.set(cur.documentType, parent);
+      return prev;
+    }, new Map<string, DocumentRegistryFragment>()) ??
+    new Map<string, DocumentRegistryFragment>();
 
   const columnList: ColumnDescription<EncounterRowFragment>[] = [
     {
@@ -43,11 +55,8 @@ export const useEncounterListColumns = ({
     {
       key: 'program',
       label: 'label.program',
-      accessor: ({ rowData }) => {
-        return documentRegistries?.nodes?.find(
-          node => node.documentType === rowData.program
-        )?.name;
-      },
+      accessor: ({ rowData }) =>
+        documentRegistryParentMap.get(rowData.type)?.name,
     },
     {
       key: 'startDatetime',

@@ -55,11 +55,6 @@ impl EncounterFilter {
         self
     }
 
-    pub fn program(mut self, filter: EqualFilter<String>) -> Self {
-        self.context = Some(filter);
-        self
-    }
-
     pub fn document_name(mut self, filter: EqualFilter<String>) -> Self {
         self.document_name = Some(filter);
         self

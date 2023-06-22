@@ -145,7 +145,7 @@ pub trait DocumentServiceTrait: Sync + Send {
         let document = ctx
             .connection
             .transaction_sync(|con| {
-                if !allowed_ctx.contains(&doc.r#type) {
+                if !allowed_ctx.contains(&doc.context) {
                     return Err(DocumentInsertError::NotAllowedToMutateDocument);
                 }
                 let validator = json_validator(con, &doc)?;
@@ -451,9 +451,9 @@ mod document_service_test {
                     form_schema_id: None,
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "ctx".to_string(),
+                    context: "test_ctx".to_string(),
                 },
-                &vec!["test_data".to_string()],
+                &vec!["test_ctx".to_string()],
             )
             .unwrap();
         let found = service.document(&context, doc_name, None).unwrap().unwrap();
@@ -477,9 +477,9 @@ mod document_service_test {
                 form_schema_id: None,
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: "ctx".to_string(),
+                context: "test_ctx".to_string(),
             },
-            &vec!["test_data".to_string()],
+            &vec!["test_ctx".to_string()],
         );
         assert!(matches!(result, Err(DocumentInsertError::InvalidParent(_))));
 
@@ -502,9 +502,9 @@ mod document_service_test {
                     form_schema_id: None,
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "ctx".to_string(),
+                    context: "test_ctx".to_string(),
                 },
-                &vec!["test_data".to_string()],
+                &vec!["test_ctx".to_string()],
             )
             .unwrap();
         assert_eq!(v2.parent_ids[0], v1.id);
@@ -531,9 +531,9 @@ mod document_service_test {
                     form_schema_id: None,
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "ctx".to_string(),
+                    context: "test_ctx2".to_string(),
                 },
-                &vec!["test_data2".to_string()],
+                &vec!["test_ctx2".to_string()],
             )
             .unwrap();
         // should still find the correct document
@@ -575,9 +575,9 @@ mod document_service_test {
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "ctx".to_string(),
+                    context: "test_ctx".to_string(),
                 },
-                &vec!["test_data".to_string()],
+                &vec!["test_ctx".to_string()],
             )
             .unwrap();
 
@@ -601,9 +601,9 @@ mod document_service_test {
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: "ctx".to_string(),
+                context: "test_ctx".to_string(),
             },
-            &vec!["test_data".to_string()],
+            &vec!["test_ctx".to_string()],
         );
         assert!(matches!(
             result,
@@ -630,9 +630,9 @@ mod document_service_test {
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: "ctx".to_string(),
+                context: "test_ctx".to_string(),
             },
-            &vec!["test_data".to_string()],
+            &vec!["test_ctx".to_string()],
         );
         assert!(matches!(
             result,
@@ -660,9 +660,9 @@ mod document_service_test {
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "ctx".to_string(),
+                    context: "test_ctx".to_string(),
                 },
-                &vec!["test_data".to_string()],
+                &vec!["test_ctx".to_string()],
             )
             .unwrap();
     }

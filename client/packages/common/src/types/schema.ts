@@ -917,6 +917,7 @@ export type EncounterFilterInput = {
 export type EncounterNode = {
   __typename: 'EncounterNode';
   clinician?: Maybe<ClinicianNode>;
+  context: Scalars['String'];
   createdDatetime: Scalars['DateTime'];
   /** The encounter document */
   document: DocumentNode;
@@ -926,7 +927,6 @@ export type EncounterNode = {
   name: Scalars['String'];
   patient: NameNode;
   patientId: Scalars['String'];
-  program: Scalars['String'];
   /** Returns the matching program enrolment for the patient of this encounter */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   startDatetime: Scalars['DateTime'];
@@ -1187,8 +1187,6 @@ export type InsertEncounterInput = {
   /** Encounter document data */
   data: Scalars['JSON'];
   patientId: Scalars['String'];
-  /** The program type */
-  programType: Scalars['String'];
   /** The schema id used for the encounter data */
   schemaId: Scalars['String'];
   /** The encounter type */
@@ -2957,6 +2955,7 @@ export type ProgramEnrolmentFilterInput = {
 
 export type ProgramEnrolmentNode = {
   __typename: 'ProgramEnrolmentNode';
+  context: Scalars['String'];
   /** The encounter document */
   document: DocumentNode;
   /** The program document */
@@ -2966,10 +2965,10 @@ export type ProgramEnrolmentNode = {
   /** The program document name */
   name: Scalars['String'];
   patientId: Scalars['String'];
-  /** The program type */
-  program: Scalars['String'];
   programEnrolmentId?: Maybe<Scalars['String']>;
   status: ProgramEnrolmentNodeStatus;
+  /** The program type */
+  type: Scalars['String'];
 };
 
 

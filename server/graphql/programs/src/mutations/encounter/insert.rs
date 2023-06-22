@@ -21,8 +21,6 @@ pub struct InsertEncounterInput {
     pub data: serde_json::Value,
     /// The schema id used for the encounter data
     pub schema_id: String,
-    /// The program type
-    pub program_type: String,
 }
 
 #[derive(Union)]
@@ -55,7 +53,6 @@ pub fn insert_encounter(
             data: input.data,
             schema_id: input.schema_id,
             patient_id: input.patient_id,
-            context: input.program_type,
             r#type: input.r#type,
             event_datetime: Utc::now(),
         },
@@ -68,7 +65,10 @@ pub fn insert_encounter(
                 InsertEncounterError::NotAllowedToMutateDocument => {
                     StandardGraphqlError::Forbidden(formatted_error)
                 }
-                InsertEncounterError::InvalidPatientOrProgram => {
+                InsertEncounterError::InvalidEncounterType => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                InsertEncounterError::PatientIsNotEnrolled => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 InsertEncounterError::InvalidClinicianId => {
