@@ -90,9 +90,9 @@ async fn migration_1_00_06() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code, store_mode)
+        (id, name_id, site_id, code)
         VALUES 
-        ('store_id', 'name_id', 1, '', 'STORE');
+        ('store_id', 'name_id', 1, '');
     "#
     )
     .unwrap();
