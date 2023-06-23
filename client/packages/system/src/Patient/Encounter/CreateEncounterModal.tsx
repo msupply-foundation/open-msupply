@@ -72,6 +72,7 @@ export const CreateEncounterModal: FC = () => {
   const { Modal } = useDialog({
     isOpen: current === PatientModal.Encounter,
     onClose: reset,
+    disableBackdrop: true,
   });
 
   const onChangeEncounter = (entry: EncounterRegistryByProgram) => {

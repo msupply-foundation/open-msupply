@@ -63,6 +63,7 @@ export const ProgramDetailModal: FC = () => {
   const { Modal } = useDialog({
     isOpen: current === PatientModal.Program,
     onClose: reset,
+    disableBackdrop: true,
   });
 
   const isCreating = document?.name === undefined;

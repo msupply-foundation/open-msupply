@@ -52,6 +52,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { currentTab, onChangeTab } = useTabs(Tabs.Form);
   const { Modal, showDialog, hideDialog } = useDialog({
     onClose,
+    disableBackdrop: true,
   });
   const navigate = useNavigate();
   const { patient, setNewPatient, updatePatient } = usePatientCreateStore();
