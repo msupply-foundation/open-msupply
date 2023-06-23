@@ -54,7 +54,6 @@ pub enum LogMode {
 
 #[derive(serde::Deserialize, Clone, Debug)]
 pub enum Level {
-    Off,
     Error,
     Warn,
     Info,
@@ -65,7 +64,6 @@ pub enum Level {
 impl Display for Level {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let level = match self {
-            Level::Off => "off",
             Level::Error => "error",
             Level::Warn => "warn",
             Level::Info => "info",
