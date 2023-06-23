@@ -117,9 +117,9 @@ async fn migration_1_00_08() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code, store_mode)
+        (id, name_id, site_id, code)
         VALUES 
-        ('store1_id', 'name_id', 1, '', 'STORE');
+        ('store1_id', 'name_id', 1, '');
     "#
     )
     .unwrap();
@@ -128,9 +128,9 @@ async fn migration_1_00_08() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code, store_mode)
+        (id, name_id, site_id, code)
         VALUES 
-        ('store2_id', 'name_id', 1, '', 'STORE');
+        ('store2_id', 'name_id', 1, '');
     "#
     )
     .unwrap();
@@ -139,9 +139,9 @@ async fn migration_1_00_08() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code, store_mode) 
+        (id, name_id, site_id, code) 
         VALUES 
-        ('store3_id', 'name_id', 1, '', 'STORE');
+        ('store3_id', 'name_id', 1, '');
     "#
     )
     .unwrap();
