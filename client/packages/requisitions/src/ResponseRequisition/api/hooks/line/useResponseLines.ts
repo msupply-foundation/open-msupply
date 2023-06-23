@@ -3,9 +3,7 @@ import {
   SortController,
   SortUtils,
   Column,
-  RegexUtils,
-  useUrlQuery,
-  ItemNode
+  ItemUtils,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment } from '../../operations.generated';
 import { useResponseColumns } from '../../../DetailView/columns';
@@ -20,28 +18,10 @@ interface UseResponseLinesController
   onChangeSortBy: any;
 }
 
-const useItemFilter = () => {
-  // const { urlQuery, updateQuery } = useUrlQuery();
-  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['codeOrName'] });
-  return {
-    itemFilter: urlQuery.codeOrName ?? '',
-    setItemFilter: (itemFilter: string) =>
-      updateQuery({ codeOrName: itemFilter }),
-  };
-};
-
-const matchItem = (itemFilter: string, { name, code }: Partial<ItemNode>) => {
-  const filter = RegexUtils.escapeChars(itemFilter);
-  return (
-    RegexUtils.includes(filter, name ?? '') ||
-    RegexUtils.includes(filter, code ?? '')
-  );
-};
-
 export const useResponseLines = (): UseResponseLinesController => {
   const { lines } = useResponseFields('lines');
   const { columns, onChangeSortBy, sortBy } = useResponseColumns();
-  const { itemFilter, setItemFilter } = useItemFilter();
+  const { itemFilter, setItemFilter } = ItemUtils.itemFilter();
 
   const sorted = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
@@ -51,9 +31,9 @@ export const useResponseLines = (): UseResponseLinesController => {
           SortUtils.getColumnSorter(getSortValue, !!sortBy.isDesc)
         )
       : lines?.nodes;
-    return sortedLines.filter(
-      item => matchItem(itemFilter, item.item)
-    )
+    return sortedLines.filter(item =>
+      ItemUtils.matchItem(itemFilter, item.item)
+    );
   }, [sortBy.key, sortBy.isDesc, lines, itemFilter]);
 
   return {
