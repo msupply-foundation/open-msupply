@@ -1,31 +1,13 @@
 import { useMemo } from 'react';
 import {
   ItemNode,
-  RegexUtils,
+  ItemUtils,
   SortUtils,
-  useUrlQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns } from '../../../DetailView';
 import { useStocktakeLines } from './useStocktakeLines';
 import { useStocktakeItems } from './useStocktakeItems';
-
-const useItemFilter = () => {
-  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['codeOrName'] });
-  return {
-    itemFilter: urlQuery.codeOrName ?? '',
-    setItemFilter: (itemFilter: string) =>
-      updateQuery({ codeOrName: itemFilter }),
-  };
-};
-
-const matchItem = (itemFilter: string, { name, code }: Partial<ItemNode>) => {
-  const filter = RegexUtils.escapeChars(itemFilter);
-  return (
-    RegexUtils.includes(filter, name ?? '') ||
-    RegexUtils.includes(filter, code ?? '')
-  );
-};
 
 export const useStocktakeRows = (isGrouped = true) => {
   const {
@@ -34,7 +16,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'desc' } });
   const { data: lines } = useStocktakeLines();
   const { data: items } = useStocktakeItems();
-  const { itemFilter, setItemFilter } = useItemFilter();
+  const { itemFilter, setItemFilter } = ItemUtils.itemFilter();
   const columns = useStocktakeColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
@@ -49,7 +31,7 @@ export const useStocktakeRows = (isGrouped = true) => {
     );
     return items
       ?.filter(item => {
-        return matchItem(itemFilter, item.item as ItemNode);
+        return ItemUtils.matchItem(itemFilter, item.item as ItemNode);
       })
       ?.sort(sorter);
   }, [items, sortBy.key, sortBy.isDesc, itemFilter]);
@@ -63,7 +45,7 @@ export const useStocktakeRows = (isGrouped = true) => {
     );
     return lines
       ?.filter(line => {
-        return matchItem(itemFilter, line.item);
+        return ItemUtils.matchItem(itemFilter, line.item);
       })
       ?.sort(sorter);
   }, [lines, sortBy.key, sortBy.isDesc, itemFilter]);
