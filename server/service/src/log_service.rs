@@ -63,7 +63,6 @@ pub trait LogServiceTrait: Send + Sync {
 
         let level = match log_level {
             Some(log_level) => match log_level.as_str() {
-                "off" => Some(Level::Off),
                 "error" => Some(Level::Error),
                 "warn" => Some(Level::Warn),
                 "info" => Some(Level::Info),
@@ -85,7 +84,6 @@ pub trait LogServiceTrait: Send + Sync {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         let log_level = match log_level {
-            Level::Off => "off",
             Level::Error => "error",
             Level::Warn => "warn",
             Level::Info => "info",

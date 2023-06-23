@@ -38,7 +38,6 @@ pub fn update_log_level(
         LogLevelEnum::Info => Level::Info,
         LogLevelEnum::Debug => Level::Debug,
         LogLevelEnum::Trace => Level::Trace,
-        LogLevelEnum::Off => Level::Off,
     };
 
     let service_provider = ctx.service_provider();

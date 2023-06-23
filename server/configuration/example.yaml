@@ -31,7 +31,7 @@
 # logging:
 ##   one of: All | Console | File
 #   mode: Console
-##   one of:  Off | Error | Warn | Info (default) | Debug | Trace
+##   one of:  Error | Warn | Info (default) | Debug | Trace
 #   level: Info
 #   directory: log
 #   filename: remote_server.log
