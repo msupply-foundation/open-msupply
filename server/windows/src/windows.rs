@@ -66,10 +66,7 @@ mod omsupply_service {
             }
         };
         logging_init(settings.logging.clone(), None);
-
-        panic::set_hook(Box::new(|panic_info| {
-            error!("panic occurred {:?}", panic_info);
-        }));
+        log_panics::init();
 
         if let Err(_e) = run_service(settings) {
             error!("Unable to start service");

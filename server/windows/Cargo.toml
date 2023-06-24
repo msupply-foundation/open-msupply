@@ -23,5 +23,6 @@ log = "0.4.14"
 server = { path = "../server", default-features = false }
 service = { path = "../service" }
 tokio = { version = "1.17.0", features = ["macros"] }
+log-panics = { version = "2", features = ["with-backtrace"] }
 windows-service = "0.5.0"
 eventlog = "0.2.2"
