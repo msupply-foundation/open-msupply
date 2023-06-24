@@ -3,6 +3,7 @@ use std::{future::Future, sync::Arc};
 use crate::service_provider::ServiceProvider;
 
 use super::{settings::SyncSettings, synchroniser::Synchroniser};
+use log::info;
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
@@ -50,19 +51,25 @@ impl SynchroniserDriver {
         loop {
             // Need to check is_initialsed from database on every iteration, since it could have been updated
             if is_initialised(&service_provider) {
+                info!("Before select");
                 tokio::select! {
                     // Wait for trigger
                     Some(_) = self.receiver.recv() => {},
                     // OR wait for SyncSettings.interval_seconds
                     _ = async {
+                              info!("Before figuring out sleep");
                         // Need to get interval_seconds from database on every iteration, since it could have been updated
                         let sync_settings = get_sync_settings(&service_provider);
                         let duration = Duration::from_secs(sync_settings.interval_seconds);
+                                      info!("Before sleep");
                         tokio::time::sleep(duration).await;
                      } => {},
-                    else => break,
+                    else => {
+                                    info!("Exist loop because of else ?");
+                        break},
                 };
             } else {
+                info!("If not initialised");
                 // If not initialised just wait for manual trigger
                 if self.receiver.recv().await.is_none() {
                     break;
@@ -70,7 +77,9 @@ impl SynchroniserDriver {
             }
 
             self.sync(service_provider.clone()).await;
+            info!("After sync");
         }
+        info!("Exist loop");
     }
 
     pub async fn sync(&self, service_provider: Arc<ServiceProvider>) {
