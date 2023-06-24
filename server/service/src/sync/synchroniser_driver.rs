@@ -53,21 +53,25 @@ impl SynchroniserDriver {
             if is_initialised(&service_provider) {
                 info!("Before select");
                 tokio::select! {
-                    // Wait for trigger
-                    Some(_) = self.receiver.recv() => {},
-                    // OR wait for SyncSettings.interval_seconds
-                    _ = async {
-                              info!("Before figuring out sleep");
-                        // Need to get interval_seconds from database on every iteration, since it could have been updated
-                        let sync_settings = get_sync_settings(&service_provider);
-                        let duration = Duration::from_secs(sync_settings.interval_seconds);
-                                      info!("Before sleep");
-                        tokio::time::sleep(duration).await;
-                     } => {},
-                    else => {
-                                    info!("Exist loop because of else ?");
-                        break},
-                };
+                                   // Wait for trigger
+                                   Some(_) = self.receiver.recv() => {
+                info!("Manually triggered");
+
+                                   },
+                                   // OR wait for SyncSettings.interval_seconds
+                                   _ = async {
+                                             info!("Before figuring out sleep");
+                                       // Need to get interval_seconds from database on every iteration, since it could have been updated
+                                       let sync_settings = get_sync_settings(&service_provider);
+                                       let duration = Duration::from_secs(sync_settings.interval_seconds);
+                                                     info!("Before sleep {}", duration.as_secs());
+                                       tokio::time::sleep(duration).await;
+                                                        info!("After sleep");
+                                    } => {},
+                                   else => {
+                                                   info!("Exist loop because of else ?");
+                                       break},
+                               };
             } else {
                 info!("If not initialised");
                 // If not initialised just wait for manual trigger
@@ -76,6 +80,7 @@ impl SynchroniserDriver {
                 }
             }
 
+            info!("Before sync");
             self.sync(service_provider.clone()).await;
             info!("After sync");
         }
