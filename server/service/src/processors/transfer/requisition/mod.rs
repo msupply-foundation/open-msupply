@@ -108,7 +108,16 @@ pub(crate) fn process_requisition_transfers(
                     get_requisition_and_linked_requisition(&ctx.connection, &log.record_id)
                         .map_err(Error::GetRequisitionAndLinkedRequisitionError)?
                 }
-                ChangelogAction::Delete => continue,
+                ChangelogAction::Delete => {
+                    // Temporary BUG FIX !!
+                    key_value_store_repo
+                        .set_i64(
+                            KeyValueType::RequisitionTransferProcessorCursor,
+                            Some(log.cursor + 1),
+                        )
+                        .map_err(Error::DatabaseError)?;
+                    continue;
+                }
             };
 
             let record = RequisitionTransferProcessorRecord {
