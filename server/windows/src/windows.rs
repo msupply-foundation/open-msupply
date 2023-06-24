@@ -134,7 +134,7 @@ mod omsupply_service {
             ServiceControlAccept::STOP,
         )?;
 
-        <::actix_web::rt::System>::new().block_on(async {
+        <::actix_web::rt::System>::new().block_on(async move {
             if let Err(e) = start_server(settings, shutdown_rx).await {
                 error!("Error! {:#?}", e);
             }

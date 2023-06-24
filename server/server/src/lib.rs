@@ -280,7 +280,7 @@ pub async fn start_server(
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result)
     };
-
+    info!("Stopping");
     server_handle.stop(true).await;
 
     Ok(())
