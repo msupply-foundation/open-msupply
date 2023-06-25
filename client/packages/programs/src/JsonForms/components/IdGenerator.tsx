@@ -356,6 +356,7 @@ const UIComponent = (props: ControlProps) => {
       id = nextId;
       if (finished) break;
     }
+    onChange(id);
     setCustomError(undefined);
     handleChange(path, id);
   }, [options, path, core?.data, handleChange]);
