@@ -14,6 +14,7 @@ import {
   useNotification,
   useAuthContext,
   DatePickerInput,
+  TextArea,
 } from '@openmsupply-client/common';
 import { DateUtils, useIntlUtils, useTranslation } from '@common/intl';
 import {
@@ -21,6 +22,7 @@ import {
   PatientModal,
   usePatientModalStore,
   useEncounter,
+  NoteSchema,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -30,6 +32,7 @@ import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
 } from '../../Clinician';
+
 interface Encounter {
   status?: EncounterNodeStatus;
   createdDatetime: string;
@@ -38,6 +41,7 @@ interface Encounter {
   endDatetime?: string;
   clinician?: Clinician;
   location?: { storeId?: string };
+  notes?: NoteSchema[];
 }
 
 export const CreateEncounterModal: FC = () => {
@@ -55,6 +59,7 @@ export const CreateEncounterModal: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const [startDateTimeError, setStartDateTimeError] = useState(false);
+  const [note] = useState<NoteSchema | undefined>(undefined);
 
   const handleSave = useEncounter.document.upsert(
     patientId,
@@ -67,6 +72,7 @@ export const CreateEncounterModal: FC = () => {
     setEncounterRegistry(undefined);
     setDraft(undefined);
     setDataError(false);
+    setNote(undefined);
   };
 
   const { Modal } = useDialog({
@@ -109,6 +115,10 @@ export const CreateEncounterModal: FC = () => {
     }
     const clinician = option.value;
     setDraft({ ...currentOrNewDraft(), clinician });
+  };
+
+  const setNote = (notes: NoteSchema[] | undefined): void => {
+    setDraft({ ...currentOrNewDraft(), notes });
   };
 
   const canSubmit = () =>
@@ -183,6 +193,29 @@ export const CreateEncounterModal: FC = () => {
                       )}
                       clinicianValue={draft?.clinician}
                       width={250}
+                    />
+                  }
+                />
+                <InputWithLabelRow
+                  label={t('label.visit-notes')}
+                  Input={
+                    <TextArea
+                      InputProps={{
+                        sx: {
+                          backgroundColor: 'background.drawer',
+                        },
+                      }}
+                      value={note}
+                      onChange={e => {
+                        setNote([
+                          {
+                            authorId: user?.id,
+                            authorName: user?.name,
+                            created: new Date().toISOString(),
+                            text: e.target.value,
+                          },
+                        ]);
+                      }}
                     />
                   }
                 />
