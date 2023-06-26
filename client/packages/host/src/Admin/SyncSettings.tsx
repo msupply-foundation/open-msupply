@@ -15,9 +15,8 @@ import {
   Typography,
   useNotification,
 } from '@openmsupply-client/common';
-import { useHost } from '../api/hooks';
 import { Setting } from './Setting';
-import { mapSyncError } from '../api/api';
+import { useSync, mapSyncError } from '@openmsupply-client/system';
 
 const isValid = (syncSettings: SyncSettingsInput | null) => {
   if (!syncSettings) return false;
@@ -154,8 +153,8 @@ const useUpdateSyncSettingsState = () => {
 
 export const SyncSettings = ({}) => {
   const t = useTranslation('app');
-  const { data, isError } = useHost.settings.syncSettings();
-  const { mutateAsync: update } = useHost.sync.update();
+  const { data, isError } = useSync.settings.syncSettings();
+  const { mutateAsync: update } = useSync.sync.update();
   const {
     syncSettings,
     error,

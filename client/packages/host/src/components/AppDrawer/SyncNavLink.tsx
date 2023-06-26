@@ -7,15 +7,15 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { useHost } from '../../api/hooks';
 import { getBadgeProps } from '../../utils';
+import { useSync } from '@openmsupply-client/system';
 
 const POLLING_INTERVAL_IN_MILLISECONDS = 60 * 1000;
 
 export const SyncNavLink = () => {
   const t = useTranslation('app');
   const theme = useTheme();
-  const { syncStatus, numberOfRecordsInPushQueue } = useHost.utils.syncInfo(
+  const { syncStatus, numberOfRecordsInPushQueue } = useSync.utils.syncInfo(
     POLLING_INTERVAL_IN_MILLISECONDS
   );
 

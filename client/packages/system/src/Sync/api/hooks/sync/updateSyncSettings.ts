@@ -1,7 +1,7 @@
 import { useMutation } from '@openmsupply-client/common';
-import { useHostApi } from '../utils/useHostApi';
+import { useSyncApi } from '../utils/useSyncApi';
 
 export const useUpdateSyncSettings = () => {
-  const api = useHostApi();
+  const api = useSyncApi();
   return useMutation(api.update);
 };

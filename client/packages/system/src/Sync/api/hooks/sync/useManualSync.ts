@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@openmsupply-client/common';
-import { useHostApi } from '../utils/useHostApi';
+import { useSyncApi } from '../utils/useSyncApi';
 
 export const useManualSync = () => {
-  const api = useHostApi();
+  const api = useSyncApi();
   const queryClient = useQueryClient();
 
   return useMutation(api.manualSync, {

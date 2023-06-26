@@ -8,8 +8,7 @@ import {
   useInitialisationStatus,
   useNativeClient,
 } from '@openmsupply-client/common';
-import { useHost } from '../../api/hooks';
-import { mapSyncError } from '../../api/api';
+import { useSync, mapSyncError } from '@openmsupply-client/system';
 
 const STATUS_POLLING_INTERVAL = 500;
 const DEFAULT_SYNC_INTERVAL_IN_SECONDS = 300;
@@ -91,14 +90,14 @@ export const useInitialiseForm = () => {
     setUsername,
   } = state;
   const t = useTranslation('app');
-  const { mutateAsync: initialise } = useHost.sync.initialise();
-  const { mutateAsync: manualSync } = useHost.sync.manualSync();
+  const { mutateAsync: initialise } = useSync.sync.initialise();
+  const { mutateAsync: manualSync } = useSync.sync.manualSync();
   // Both initialisationStatus and syncStatus are polled because we want to navigate
   // to login when initialisation is finished, but syncStatus will be behind auth after
   // initialisation has finished, whereas syncStatus is always an open API
   const { data: initStatus } = useInitialisationStatus(refetchInterval);
-  const { data: syncStatus } = useHost.utils.syncStatus(refetchInterval);
-  const { data: syncSettings } = useHost.settings.syncSettings();
+  const { data: syncStatus } = useSync.utils.syncStatus(refetchInterval);
+  const { data: syncSettings } = useSync.settings.syncSettings();
   const { allowSleep, keepAwake } = useNativeClient();
 
   const onInitialise = async () => {
