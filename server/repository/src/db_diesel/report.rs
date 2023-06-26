@@ -18,15 +18,7 @@ use util::inline_init;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Report {
-    pub id: String,
-    pub name: String,
-    pub r#type: ReportType,
-    /// The template format depends on the report type
-    pub template: String,
-    /// Used to store the report context
-    pub context: ReportContext,
-    pub comment: Option<String>,
-    pub sub_context: Option<String>,
+    pub report_row: ReportRow,
     pub argument_schema: Option<FormSchema>,
 }
 
@@ -87,6 +79,8 @@ impl ReportType {
     }
 }
 
+type ReportJoin = (ReportRow, Option<FormSchemaRow>);
+
 pub struct ReportRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -125,7 +119,7 @@ impl<'a> ReportRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<(ReportRow, Option<FormSchemaRow>)>(&self.connection.connection)?;
+            .load::<ReportJoin>(&self.connection.connection)?;
 
         result
             .into_iter()
@@ -162,30 +156,10 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
 }
 
 fn map_report_row_join_to_report(
-    result: (ReportRow, Option<FormSchemaRow>),
+    (report_row, argument_schema): ReportJoin,
 ) -> Result<Report, RepositoryError> {
-    let ReportRow {
-        id,
-        name,
-        r#type,
-        template,
-        context,
-        comment,
-        sub_context,
-        argument_schema_id: _,
-    } = result.0;
-    let argument_schema = match result.1 {
-        Some(s) => Some(schema_from_row(s)?),
-        None => None,
-    };
     Ok(Report {
-        id,
-        name,
-        r#type,
-        template,
-        context,
-        comment,
-        sub_context,
-        argument_schema,
+        report_row,
+        argument_schema: argument_schema.map(|s| schema_from_row(s)).transpose()?,
     })
 }

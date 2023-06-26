@@ -77,20 +77,20 @@ pub struct ReportNode {
 #[Object]
 impl ReportNode {
     pub async fn id(&self) -> &str {
-        &self.row.id
+        &self.row.report_row.id
     }
 
     /// Human readable name of the report
     pub async fn name(&self) -> &str {
-        &self.row.name
+        &self.row.report_row.name
     }
 
     pub async fn context(&self) -> ReportContext {
-        ReportContext::from_domain(&self.row.context)
+        ReportContext::from_domain(&self.row.report_row.context)
     }
 
     pub async fn sub_context(&self) -> &Option<String> {
-        &self.row.sub_context
+        &self.row.report_row.sub_context
     }
 
     pub async fn argument_schema(&self) -> Option<FormSchemaNode> {
