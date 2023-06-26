@@ -9,6 +9,7 @@ pub fn mock_name_store_join_a() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: false,
+        is_sync_update: false,
     }
 }
 
@@ -19,6 +20,7 @@ pub fn mock_name_store_join_b() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: true,
         name_is_supplier: false,
+        is_sync_update: false,
     }
 }
 
@@ -29,6 +31,7 @@ pub fn mock_name_store_join_c() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: false,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -39,6 +42,7 @@ pub fn mock_name_store_join_d() -> NameStoreJoinRow {
         store_id: String::from("store_a"),
         name_is_customer: false,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -49,6 +53,29 @@ pub fn mock_name_store_join_e() -> NameStoreJoinRow {
         store_id: String::from("store_c"),
         name_is_customer: false,
         name_is_supplier: true,
+        is_sync_update: false,
+    }
+}
+
+pub fn mock_patient_store_join() -> NameStoreJoinRow {
+    NameStoreJoinRow {
+        id: String::from("mock_patient_store_join"),
+        name_id: String::from("testId"),
+        store_id: String::from("store_a"),
+        name_is_customer: true,
+        name_is_supplier: true,
+        is_sync_update: false,
+    }
+}
+
+pub fn mock_patient_store_join_b() -> NameStoreJoinRow {
+    NameStoreJoinRow {
+        id: String::from("mock_patient_store_join_b"),
+        name_id: String::from("patient2"),
+        store_id: String::from("store_a"),
+        name_is_customer: true,
+        name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -59,6 +86,7 @@ pub fn name_store_join_program_a() -> NameStoreJoinRow {
         name_id: mock_name_store_a().id,
         name_is_customer: true,
         name_is_supplier: false,
+        is_sync_update: false,
     }
 }
 
@@ -69,6 +97,7 @@ pub fn name_store_join_program_b() -> NameStoreJoinRow {
         name_id: mock_name_store_b().id,
         name_is_customer: false,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -79,6 +108,7 @@ pub fn name_store_join_program_a_name_a() -> NameStoreJoinRow {
         name_id: mock_name_a().id,
         name_is_customer: false,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -89,6 +119,8 @@ pub fn mock_name_store_joins() -> Vec<NameStoreJoinRow> {
         mock_name_store_join_c(),
         mock_name_store_join_d(),
         mock_name_store_join_e(),
+        mock_patient_store_join(),
+        mock_patient_store_join_b(),
         name_store_join_program_a(),
         name_store_join_program_b(),
         name_store_join_program_a_name_a(),

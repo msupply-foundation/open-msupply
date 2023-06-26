@@ -1,4 +1,4 @@
-use crate::sync::translations::PullDeleteRecordTable;
+use crate::sync::{integrate_document::upsert_document, translations::PullDeleteRecordTable};
 
 use super::{
     sync_buffer::SyncBuffer,
@@ -9,6 +9,7 @@ use super::{
 use log::warn;
 use repository::*;
 use std::collections::HashMap;
+
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
     sync_buffer: &'a SyncBuffer<'a>,
@@ -170,6 +171,7 @@ impl PullUpsertRecord {
     pub(crate) fn upsert(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         use PullUpsertRecord::*;
         match self {
+            UserPermission(record) => UserPermissionRowRepository::new(con).upsert_one(record),
             Name(record) => NameRowRepository::new(con).upsert_one(record),
             NameTag(record) => NameTagRowRepository::new(con).upsert_one(record),
             NameTagJoin(record) => NameTagJoinRepository::new(con).upsert_one(record),
@@ -207,6 +209,13 @@ impl PullUpsertRecord {
             }
             StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
             Barcode(record) => BarcodeRowRepository::new(con).sync_upsert_one(record),
+            Clinician(record) => ClinicianRowRepository::new(con).upsert_one(record),
+            ClinicianStoreJoin(record) => {
+                ClinicianStoreJoinRowRepository::new(con).upsert_one(record)
+            }
+            FormSchema(record) => FormSchemaRowRepository::new(con).upsert_one(record),
+            DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
+            Document(record) => upsert_document(con, record, false),
         }
     }
 }
@@ -216,6 +225,7 @@ impl PullDeleteRecord {
         use PullDeleteRecordTable::*;
         let id = &self.id;
         match self.table {
+            UserPermission => UserPermissionRowRepository::new(con).delete(id),
             Name => NameRowRepository::new(con).delete(id),
             NameTagJoin => NameTagJoinRepository::new(con).delete(id),
             Unit => UnitRowRepository::new(con).delete(id),

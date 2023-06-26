@@ -183,6 +183,12 @@ export type AllocateOutboundShipmentUnallocatedLineResponseWithId = {
   response: AllocateOutboundShipmentUnallocatedLineResponse;
 };
 
+export type AllocateProgramNumberInput = {
+  numberName: Scalars['String'];
+};
+
+export type AllocateProgramNumberResponse = NumberNode;
+
 export type AuthToken = {
   __typename: 'AuthToken';
   /** Bearer token */
@@ -364,6 +370,64 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShi
   description: Scalars['String'];
 };
 
+export type ClinicianConnector = {
+  __typename: 'ClinicianConnector';
+  nodes: Array<ClinicianNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ClinicianFilterInput = {
+  address1?: InputMaybe<SimpleStringFilterInput>;
+  address2?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<SimpleStringFilterInput>;
+  email?: InputMaybe<SimpleStringFilterInput>;
+  firstName?: InputMaybe<SimpleStringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  initials?: InputMaybe<SimpleStringFilterInput>;
+  lastName?: InputMaybe<SimpleStringFilterInput>;
+  mobile?: InputMaybe<SimpleStringFilterInput>;
+  phone?: InputMaybe<SimpleStringFilterInput>;
+};
+
+export type ClinicianNode = {
+  __typename: 'ClinicianNode';
+  address1?: Maybe<Scalars['String']>;
+  address2?: Maybe<Scalars['String']>;
+  code: Scalars['String'];
+  email?: Maybe<Scalars['String']>;
+  firstName?: Maybe<Scalars['String']>;
+  gender?: Maybe<GenderType>;
+  id: Scalars['String'];
+  initials: Scalars['String'];
+  lastName: Scalars['String'];
+  mobile?: Maybe<Scalars['String']>;
+  phone?: Maybe<Scalars['String']>;
+};
+
+export enum ClinicianSortFieldInput {
+  Address1 = 'address1',
+  Address2 = 'address2',
+  Code = 'code',
+  Email = 'email',
+  FirstName = 'firstName',
+  Initials = 'initials',
+  LastName = 'lastName',
+  Mobile = 'mobile',
+  Phone = 'phone'
+}
+
+export type ClinicianSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: ClinicianSortFieldInput;
+};
+
+export type CliniciansResponse = ClinicianConnector;
+
 export type ConsumptionHistoryConnector = {
   __typename: 'ConsumptionHistoryConnector';
   nodes: Array<ConsumptionHistoryNode>;
@@ -418,6 +482,12 @@ export type DatetimeFilterInput = {
   beforeOrEqualTo?: InputMaybe<Scalars['DateTime']>;
   equalTo?: InputMaybe<Scalars['DateTime']>;
 };
+
+export type DeleteDocumentInput = {
+  id: Scalars['String'];
+};
+
+export type DeleteDocumentResponse = DeleteResponse;
 
 export type DeleteErrorInterface = {
   description: Scalars['String'];
@@ -688,6 +758,214 @@ export type DisplaySettingsNode = {
   customTheme?: Maybe<DisplaySettingNode>;
 };
 
+export type DocumentConnector = {
+  __typename: 'DocumentConnector';
+  nodes: Array<DocumentNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type DocumentFilterInput = {
+  context?: InputMaybe<EqualFilterStringInput>;
+  /**
+   * 	This filter makes it possible to search the raw text json data.
+   * Be beware of potential performance issues.
+   */
+  data?: InputMaybe<SimpleStringFilterInput>;
+  datetime?: InputMaybe<DatetimeFilterInput>;
+  name?: InputMaybe<EqualFilterStringInput>;
+  owner?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type DocumentHistoryResponse = DocumentConnector;
+
+export type DocumentNode = {
+  __typename: 'DocumentNode';
+  data: Scalars['JSON'];
+  documentRegistry?: Maybe<DocumentRegistryNode>;
+  id: Scalars['String'];
+  name: Scalars['String'];
+  parents: Array<Scalars['String']>;
+  schema?: Maybe<JsonschemaNode>;
+  timestamp: Scalars['DateTime'];
+  type: Scalars['String'];
+  user: UserNode;
+  userId: Scalars['String'];
+};
+
+export type DocumentRegistryConnector = {
+  __typename: 'DocumentRegistryConnector';
+  nodes: Array<DocumentRegistryNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type DocumentRegistryFilterInput = {
+  context?: InputMaybe<EqualFilterDocumentRegistryContextInput>;
+  documentType?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  parentId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type DocumentRegistryNode = {
+  __typename: 'DocumentRegistryNode';
+  children: Array<DocumentRegistryNode>;
+  context: DocumentRegistryNodeContext;
+  documentType: Scalars['String'];
+  formSchemaId: Scalars['String'];
+  id: Scalars['String'];
+  jsonSchema: Scalars['JSON'];
+  name?: Maybe<Scalars['String']>;
+  parentId?: Maybe<Scalars['String']>;
+  uiSchema: Scalars['JSON'];
+  uiSchemaType: Scalars['String'];
+};
+
+export enum DocumentRegistryNodeContext {
+  Custom = 'CUSTOM',
+  Encounter = 'ENCOUNTER',
+  Patient = 'PATIENT',
+  Program = 'PROGRAM'
+}
+
+export type DocumentRegistryResponse = DocumentRegistryConnector;
+
+export enum DocumentRegistrySortFieldInput {
+  Context = 'context',
+  DocumentType = 'documentType'
+}
+
+export type DocumentRegistrySortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: DocumentRegistrySortFieldInput;
+};
+
+export type DocumentResponse = DocumentConnector;
+
+export enum DocumentSortFieldInput {
+  Context = 'context',
+  Datetime = 'datetime',
+  Name = 'name',
+  Owner = 'owner',
+  Type = 'type'
+}
+
+export type DocumentSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: DocumentSortFieldInput;
+};
+
+export type EncounterConnector = {
+  __typename: 'EncounterConnector';
+  nodes: Array<EncounterNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type EncounterEventFilterInput = {
+  /**
+   * 	Only include events that are for the current encounter, i.e. have matching encounter type
+   * and matching encounter name of the current encounter. If not set all events with matching
+   * encounter type are returned.
+   */
+  isCurrentEncounter?: InputMaybe<Scalars['Boolean']>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type EncounterFieldsConnector = {
+  __typename: 'EncounterFieldsConnector';
+  nodes: Array<EncounterFieldsNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type EncounterFieldsInput = {
+  fields: Array<Scalars['String']>;
+};
+
+export type EncounterFieldsNode = {
+  __typename: 'EncounterFieldsNode';
+  encounter: EncounterNode;
+  fields: Array<Scalars['JSON']>;
+};
+
+export type EncounterFieldsResponse = EncounterFieldsConnector;
+
+export type EncounterFilterInput = {
+  clinicianId?: InputMaybe<EqualFilterStringInput>;
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  documentData?: InputMaybe<SimpleStringFilterInput>;
+  documentName?: InputMaybe<EqualFilterStringInput>;
+  endDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  patientId?: InputMaybe<EqualFilterStringInput>;
+  program?: InputMaybe<EqualFilterStringInput>;
+  startDatetime?: InputMaybe<DatetimeFilterInput>;
+  status?: InputMaybe<EqualFilterEncounterStatusInput>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type EncounterNode = {
+  __typename: 'EncounterNode';
+  clinician?: Maybe<ClinicianNode>;
+  createdDatetime: Scalars['DateTime'];
+  /** The encounter document */
+  document: DocumentNode;
+  endDatetime?: Maybe<Scalars['DateTime']>;
+  events: Array<ProgramEventNode>;
+  id: Scalars['String'];
+  name: Scalars['String'];
+  patient: NameNode;
+  patientId: Scalars['String'];
+  program: Scalars['String'];
+  /** Returns the matching program enrolment for the patient of this encounter */
+  programEnrolment?: Maybe<ProgramEnrolmentNode>;
+  startDatetime: Scalars['DateTime'];
+  status?: Maybe<EncounterNodeStatus>;
+  type: Scalars['String'];
+};
+
+
+export type EncounterNodeEventsArgs = {
+  at?: InputMaybe<Scalars['DateTime']>;
+  filter?: InputMaybe<EncounterEventFilterInput>;
+};
+
+export enum EncounterNodeStatus {
+  Cancelled = 'CANCELLED',
+  Pending = 'PENDING',
+  Visited = 'VISITED'
+}
+
+export type EncounterResponse = EncounterConnector;
+
+export enum EncounterSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  EndDatetime = 'endDatetime',
+  PatientId = 'patientId',
+  Program = 'program',
+  StartDatetime = 'startDatetime',
+  Status = 'status',
+  Type = 'type'
+}
+
+export type EncounterSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: EncounterSortFieldInput;
+};
+
 export type EqualFilterActivityLogTypeInput = {
   equalAny?: InputMaybe<Array<ActivityLogNodeType>>;
   equalTo?: InputMaybe<ActivityLogNodeType>;
@@ -698,6 +976,24 @@ export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
   equalTo?: InputMaybe<Scalars['Int']>;
   notEqualTo?: InputMaybe<Scalars['Int']>;
+};
+
+export type EqualFilterDocumentRegistryContextInput = {
+  equalAny?: InputMaybe<Array<DocumentRegistryNodeContext>>;
+  equalTo?: InputMaybe<DocumentRegistryNodeContext>;
+  notEqualTo?: InputMaybe<DocumentRegistryNodeContext>;
+};
+
+export type EqualFilterEncounterStatusInput = {
+  equalAny?: InputMaybe<Array<EncounterNodeStatus>>;
+  equalTo?: InputMaybe<EncounterNodeStatus>;
+  notEqualTo?: InputMaybe<EncounterNodeStatus>;
+};
+
+export type EqualFilterGenderInput = {
+  equalAny?: InputMaybe<Array<GenderInput>>;
+  equalTo?: InputMaybe<GenderInput>;
+  notEqualTo?: InputMaybe<GenderInput>;
 };
 
 export type EqualFilterInventoryAdjustmentReasonTypeInput = {
@@ -728,6 +1024,12 @@ export type EqualFilterNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']>>;
   equalTo?: InputMaybe<Scalars['Int']>;
   notEqualTo?: InputMaybe<Scalars['Int']>;
+};
+
+export type EqualFilterProgramEnrolmentStatusInput = {
+  equalAny?: InputMaybe<Array<ProgramEnrolmentNodeStatus>>;
+  equalTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
+  notEqualTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
 };
 
 export type EqualFilterReportContextInput = {
@@ -787,6 +1089,19 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteIn
   key: ForeignKey;
 };
 
+export type FormSchemaFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type FormSchemaNode = {
+  __typename: 'FormSchemaNode';
+  id: Scalars['String'];
+  jsonSchema: Scalars['JSON'];
+  type: Scalars['String'];
+  uiSchema: Scalars['JSON'];
+};
+
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
@@ -799,10 +1114,24 @@ export type FullSyncStatusNode = {
   summary: SyncStatusNode;
 };
 
+export enum GenderInput {
+  Female = 'FEMALE',
+  Male = 'MALE',
+  NonBinary = 'NON_BINARY',
+  TransgenderFemale = 'TRANSGENDER_FEMALE',
+  TransgenderFemaleHormone = 'TRANSGENDER_FEMALE_HORMONE',
+  TransgenderFemaleSurgical = 'TRANSGENDER_FEMALE_SURGICAL',
+  TransgenderMale = 'TRANSGENDER_MALE',
+  TransgenderMaleHormone = 'TRANSGENDER_MALE_HORMONE',
+  TransgenderMaleSurgical = 'TRANSGENDER_MALE_SURGICAL',
+  Unknown = 'UNKNOWN'
+}
+
 export enum GenderType {
   Female = 'FEMALE',
   Male = 'MALE',
   NonBinary = 'NON_BINARY',
+  Transgender = 'TRANSGENDER',
   TransgenderFemale = 'TRANSGENDER_FEMALE',
   TransgenderFemaleHormone = 'TRANSGENDER_FEMALE_HORMONE',
   TransgenderFemaleSurgical = 'TRANSGENDER_FEMALE_SURGICAL',
@@ -840,9 +1169,43 @@ export type InsertBarcodeInput = {
 
 export type InsertBarcodeResponse = BarcodeNode;
 
+export type InsertDocumentRegistryInput = {
+  context: DocumentRegistryNodeContext;
+  documentType: Scalars['String'];
+  formSchemaId: Scalars['String'];
+  id: Scalars['String'];
+  name?: InputMaybe<Scalars['String']>;
+  parentId?: InputMaybe<Scalars['String']>;
+};
+
+export type InsertDocumentResponse = DocumentRegistryNode;
+
+export type InsertEncounterInput = {
+  /** Encounter document data */
+  data: Scalars['JSON'];
+  patientId: Scalars['String'];
+  /** The program type */
+  programType: Scalars['String'];
+  /** The schema id used for the encounter data */
+  schemaId: Scalars['String'];
+  /** The encounter type */
+  type: Scalars['String'];
+};
+
+export type InsertEncounterResponse = EncounterNode;
+
 export type InsertErrorInterface = {
   description: Scalars['String'];
 };
+
+export type InsertFormSchemaInput = {
+  id: Scalars['String'];
+  jsonSchema: Scalars['JSON'];
+  type: Scalars['String'];
+  uiSchema: Scalars['JSON'];
+};
+
+export type InsertFormSchemaResponse = FormSchemaNode;
 
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
@@ -1048,6 +1411,27 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   id: Scalars['String'];
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
+
+export type InsertPatientInput = {
+  /** Patient document data */
+  data: Scalars['JSON'];
+  /** The schema id used for the patient data */
+  schemaId: Scalars['String'];
+};
+
+export type InsertPatientResponse = PatientNode;
+
+export type InsertProgramEnrolmentInput = {
+  /** Program document data */
+  data: Scalars['JSON'];
+  patientId: Scalars['String'];
+  /** The schema id used for the program data */
+  schemaId: Scalars['String'];
+  /** The program type */
+  type: Scalars['String'];
+};
+
+export type InsertProgramEnrolmentResponse = ProgramEnrolmentNode;
 
 export type InsertProgramRequestRequisitionError = {
   __typename: 'InsertProgramRequestRequisitionError';
@@ -1542,6 +1926,12 @@ export type ItemStatsNode = {
 
 export type ItemsResponse = ItemConnector;
 
+export type JsonschemaNode = {
+  __typename: 'JsonschemaNode';
+  id: Scalars['String'];
+  jsonSchema: Scalars['JSON'];
+};
+
 export enum LanguageType {
   English = 'ENGLISH',
   French = 'FRENCH',
@@ -1608,6 +1998,26 @@ export type LocationSortInput = {
 };
 
 export type LocationsResponse = LocationConnector;
+
+export enum LogLevelEnum {
+  Debug = 'DEBUG',
+  Error = 'ERROR',
+  Info = 'INFO',
+  Off = 'OFF',
+  Trace = 'TRACE',
+  Warn = 'WARN'
+}
+
+export type LogLevelNode = {
+  __typename: 'LogLevelNode';
+  level: LogLevelEnum;
+};
+
+export type LogNode = {
+  __typename: 'LogNode';
+  fileContent?: Maybe<Array<Scalars['String']>>;
+  fileNames?: Maybe<Array<Scalars['String']>>;
+};
 
 export type Logout = {
   __typename: 'Logout';
@@ -1689,6 +2099,12 @@ export type MaxOrdersReachedForPeriod = InsertProgramRequestRequisitionErrorInte
   description: Scalars['String'];
 };
 
+export type MergeRequiredError = UpdateDocumentErrorInterface & {
+  __typename: 'MergeRequiredError';
+  autoMerge?: Maybe<RawDocumentNode>;
+  description: Scalars['String'];
+};
+
 export type Mutations = {
   __typename: 'Mutations';
   /** Add requisition lines from master item master list */
@@ -1697,6 +2113,7 @@ export type Mutations = {
   /** Add invoice lines from master item master list */
   addToOutboundShipmentFromMasterList: AddToOutboundShipmentFromMasterListResponse;
   allocateOutboundShipmentUnallocatedLine: AllocateOutboundShipmentUnallocatedLineResponse;
+  allocateProgramNumber: AllocateProgramNumberResponse;
   batchInboundShipment: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
@@ -1708,6 +2125,7 @@ export type Mutations = {
    * lines quantity (placeholder and filled) for requisitionLine.item
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
+  deleteDocument: DeleteDocumentResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
@@ -1722,6 +2140,9 @@ export type Mutations = {
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
   insertBarcode: InsertBarcodeResponse;
+  insertDocumentRegistry: InsertDocumentResponse;
+  insertEncounter: InsertEncounterResponse;
+  insertFormSchema: InsertFormSchemaResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
@@ -1730,6 +2151,12 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  insertPatient: InsertPatientResponse;
+  /**
+   * Enrols a patient into a program by adding a program document to the patient's documents.
+   * Every patient can only have one program document of each program type.
+   */
+  insertProgramEnrolment: InsertProgramEnrolmentResponse;
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
@@ -1739,7 +2166,10 @@ export type Mutations = {
   manualSync: Scalars['String'];
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
+  undeleteDocument: UndeleteDocumentResponse;
   updateDisplaySettings: UpdateDisplaySettingsResponse;
+  updateDocument: UpdateDocumentResponse;
+  updateEncounter: UpdateEncounterResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -1749,6 +2179,9 @@ export type Mutations = {
   updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
+  updatePatient: UpdatePatientResponse;
+  /** Updates an existing program document belonging to a patient. */
+  updateProgramEnrolment: UpdateProgramEnrolmentResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -1757,6 +2190,7 @@ export type Mutations = {
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
+  upsertLogLevel: UpsertLogLevelResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -1782,6 +2216,12 @@ export type MutationsAddToOutboundShipmentFromMasterListArgs = {
 
 export type MutationsAllocateOutboundShipmentUnallocatedLineArgs = {
   lineId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsAllocateProgramNumberArgs = {
+  input: AllocateProgramNumberInput;
   storeId: Scalars['String'];
 };
 
@@ -1812,6 +2252,12 @@ export type MutationsBatchStocktakeArgs = {
 
 export type MutationsCreateRequisitionShipmentArgs = {
   input: CreateRequisitionShipmentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsDeleteDocumentArgs = {
+  input: DeleteDocumentInput;
   storeId: Scalars['String'];
 };
 
@@ -1899,6 +2345,22 @@ export type MutationsInsertBarcodeArgs = {
 };
 
 
+export type MutationsInsertDocumentRegistryArgs = {
+  input: InsertDocumentRegistryInput;
+};
+
+
+export type MutationsInsertEncounterArgs = {
+  input: InsertEncounterInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertFormSchemaArgs = {
+  input: InsertFormSchemaInput;
+};
+
+
 export type MutationsInsertInboundShipmentArgs = {
   input: InsertInboundShipmentInput;
   storeId: Scalars['String'];
@@ -1947,6 +2409,18 @@ export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
 };
 
 
+export type MutationsInsertPatientArgs = {
+  input: InsertPatientInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertProgramEnrolmentArgs = {
+  input: InsertProgramEnrolmentInput;
+  storeId: Scalars['String'];
+};
+
+
 export type MutationsInsertProgramRequestRequisitionArgs = {
   input: InsertProgramRequestRequisitionInput;
   storeId: Scalars['String'];
@@ -1989,8 +2463,26 @@ export type MutationsSupplyRequestedQuantityArgs = {
 };
 
 
+export type MutationsUndeleteDocumentArgs = {
+  input: UndeleteDocumentInput;
+  storeId: Scalars['String'];
+};
+
+
 export type MutationsUpdateDisplaySettingsArgs = {
   input: DisplaySettingsInput;
+};
+
+
+export type MutationsUpdateDocumentArgs = {
+  input: UpdateDocumentInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateEncounterArgs = {
+  input: UpdateEncounterInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -2048,6 +2540,18 @@ export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
 };
 
 
+export type MutationsUpdatePatientArgs = {
+  input: UpdatePatientInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsUpdateProgramEnrolmentArgs = {
+  input: UpdateProgramEnrolmentInput;
+  storeId: Scalars['String'];
+};
+
+
 export type MutationsUpdateRequestRequisitionArgs = {
   input: UpdateRequestRequisitionInput;
   storeId: Scalars['String'];
@@ -2095,6 +2599,12 @@ export type MutationsUpdateSyncSettingsArgs = {
 };
 
 
+export type MutationsUpsertLogLevelArgs = {
+  input: UpsertLogLevelInput;
+  storeId: Scalars['String'];
+};
+
+
 export type MutationsUseSuggestedQuantityArgs = {
   input: UseSuggestedQuantityInput;
   storeId: Scalars['String'];
@@ -2107,9 +2617,17 @@ export type NameConnector = {
 };
 
 export type NameFilterInput = {
+  address1?: InputMaybe<SimpleStringFilterInput>;
+  address2?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by code */
   code?: InputMaybe<SimpleStringFilterInput>;
+  country?: InputMaybe<SimpleStringFilterInput>;
+  dateOfBirth?: InputMaybe<DateFilterInput>;
+  email?: InputMaybe<SimpleStringFilterInput>;
+  firstName?: InputMaybe<SimpleStringFilterInput>;
+  gender?: InputMaybe<EqualFilterGenderInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  identifier?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']>;
   /** Is this name a store */
@@ -2124,8 +2642,12 @@ export type NameFilterInput = {
   isSystemName?: InputMaybe<Scalars['Boolean']>;
   /** Visibility in current store (based on store_id parameter and existence of name_store_join record) */
   isVisible?: InputMaybe<Scalars['Boolean']>;
+  lastName?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by name */
   name?: InputMaybe<SimpleStringFilterInput>;
+  /** Filter by national health number */
+  nationalHealthNumber?: InputMaybe<SimpleStringFilterInput>;
+  phone?: InputMaybe<SimpleStringFilterInput>;
   /** Code of the store if store is linked to name */
   storeCode?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by the name type */
@@ -2141,6 +2663,7 @@ export type NameNode = {
   comment?: Maybe<Scalars['String']>;
   country?: Maybe<Scalars['String']>;
   createdDatetime?: Maybe<Scalars['DateTime']>;
+  dateOfBirth?: Maybe<Scalars['NaiveDate']>;
   email?: Maybe<Scalars['String']>;
   firstName?: Maybe<Scalars['String']>;
   gender?: Maybe<GenderType>;
@@ -2229,6 +2752,11 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
   description: Scalars['String'];
 };
 
+export type NumberNode = {
+  __typename: 'NumberNode';
+  number: Scalars['Int'];
+};
+
 export type OtherPartyNotACustomer = InsertErrorInterface & UpdateNameErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String'];
@@ -2261,6 +2789,108 @@ export type PaginationInput = {
   first?: InputMaybe<Scalars['Int']>;
   /** First returned item is at the `offset` position in the full list */
   offset?: InputMaybe<Scalars['Int']>;
+};
+
+export type PatientConnector = {
+  __typename: 'PatientConnector';
+  nodes: Array<PatientNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type PatientFilterInput = {
+  address1?: InputMaybe<SimpleStringFilterInput>;
+  address2?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<SimpleStringFilterInput>;
+  code2?: InputMaybe<SimpleStringFilterInput>;
+  country?: InputMaybe<SimpleStringFilterInput>;
+  dateOfBirth?: InputMaybe<DateFilterInput>;
+  email?: InputMaybe<SimpleStringFilterInput>;
+  firstName?: InputMaybe<SimpleStringFilterInput>;
+  gender?: InputMaybe<EqualFilterGenderInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  identifier?: InputMaybe<SimpleStringFilterInput>;
+  isVisible?: InputMaybe<Scalars['Boolean']>;
+  lastName?: InputMaybe<SimpleStringFilterInput>;
+  phone?: InputMaybe<SimpleStringFilterInput>;
+};
+
+export type PatientNode = {
+  __typename: 'PatientNode';
+  address1?: Maybe<Scalars['String']>;
+  address2?: Maybe<Scalars['String']>;
+  age?: Maybe<Scalars['Int']>;
+  code: Scalars['String'];
+  code2?: Maybe<Scalars['String']>;
+  country?: Maybe<Scalars['String']>;
+  dateOfBirth?: Maybe<Scalars['NaiveDate']>;
+  document?: Maybe<DocumentNode>;
+  email?: Maybe<Scalars['String']>;
+  firstName?: Maybe<Scalars['String']>;
+  gender?: Maybe<GenderType>;
+  id: Scalars['String'];
+  isDeceased: Scalars['Boolean'];
+  lastName?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
+  phone?: Maybe<Scalars['String']>;
+  programEnrolments: Array<ProgramEnrolmentNode>;
+  website?: Maybe<Scalars['String']>;
+};
+
+
+export type PatientNodeProgramEnrolmentsArgs = {
+  filter?: InputMaybe<ProgramEnrolmentFilterInput>;
+};
+
+export type PatientResponse = PatientConnector;
+
+export type PatientSearchConnector = {
+  __typename: 'PatientSearchConnector';
+  nodes: Array<PatientSearchNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type PatientSearchInput = {
+  /** Patient code */
+  code?: InputMaybe<Scalars['String']>;
+  /** Secondary patient code */
+  code2?: InputMaybe<Scalars['String']>;
+  dateOfBirth?: InputMaybe<Scalars['NaiveDate']>;
+  firstName?: InputMaybe<Scalars['String']>;
+  gender?: InputMaybe<GenderInput>;
+  lastName?: InputMaybe<Scalars['String']>;
+};
+
+export type PatientSearchNode = {
+  __typename: 'PatientSearchNode';
+  patient: PatientNode;
+  score: Scalars['Float'];
+};
+
+export type PatientSearchResponse = PatientSearchConnector;
+
+export enum PatientSortFieldInput {
+  Address1 = 'address1',
+  Address2 = 'address2',
+  Code = 'code',
+  Code2 = 'code2',
+  Country = 'country',
+  DateOfBirth = 'dateOfBirth',
+  Email = 'email',
+  FirstName = 'firstName',
+  Gender = 'gender',
+  LastName = 'lastName',
+  Name = 'name',
+  Phone = 'phone'
+}
+
+export type PatientSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: PatientSortFieldInput;
 };
 
 export type PeriodNode = {
@@ -2307,6 +2937,121 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
+export type ProgramEnrolmentConnector = {
+  __typename: 'ProgramEnrolmentConnector';
+  nodes: Array<ProgramEnrolmentNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ProgramEnrolmentFilterInput = {
+  documentName?: InputMaybe<EqualFilterStringInput>;
+  enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
+  patientId?: InputMaybe<EqualFilterStringInput>;
+  program?: InputMaybe<EqualFilterStringInput>;
+  programEnrolmentId?: InputMaybe<EqualFilterStringInput>;
+  status?: InputMaybe<EqualFilterProgramEnrolmentStatusInput>;
+};
+
+export type ProgramEnrolmentNode = {
+  __typename: 'ProgramEnrolmentNode';
+  /** The encounter document */
+  document: DocumentNode;
+  /** The program document */
+  encounters: EncounterConnector;
+  enrolmentDatetime: Scalars['DateTime'];
+  events: Array<ProgramEventNode>;
+  /** The program document name */
+  name: Scalars['String'];
+  patientId: Scalars['String'];
+  /** The program type */
+  program: Scalars['String'];
+  programEnrolmentId?: Maybe<Scalars['String']>;
+  status: ProgramEnrolmentNodeStatus;
+};
+
+
+export type ProgramEnrolmentNodeEncountersArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
+};
+
+
+export type ProgramEnrolmentNodeEventsArgs = {
+  at?: InputMaybe<Scalars['DateTime']>;
+  filter?: InputMaybe<ProgramEventFilterInput>;
+};
+
+export enum ProgramEnrolmentNodeStatus {
+  Active = 'ACTIVE',
+  OptedOut = 'OPTED_OUT',
+  Paused = 'PAUSED',
+  TransferredOut = 'TRANSFERRED_OUT'
+}
+
+export type ProgramEnrolmentResponse = ProgramEnrolmentConnector;
+
+export enum ProgramEnrolmentSortFieldInput {
+  EnrolmentDatetime = 'enrolmentDatetime',
+  PatientId = 'patientId',
+  ProgramEnrolmentId = 'programEnrolmentId',
+  Status = 'status',
+  Type = 'type'
+}
+
+export type ProgramEnrolmentSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: ProgramEnrolmentSortFieldInput;
+};
+
+export type ProgramEventConnector = {
+  __typename: 'ProgramEventConnector';
+  nodes: Array<ProgramEventNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type ProgramEventFilterInput = {
+  documentName?: InputMaybe<EqualFilterStringInput>;
+  documentType?: InputMaybe<EqualFilterStringInput>;
+  /** The event type */
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type ProgramEventNode = {
+  __typename: 'ProgramEventNode';
+  activeDatetime: Scalars['DateTime'];
+  data?: Maybe<Scalars['String']>;
+  datetime: Scalars['DateTime'];
+  documentName?: Maybe<Scalars['String']>;
+  documentType: Scalars['String'];
+  patientId?: Maybe<Scalars['String']>;
+  type: Scalars['String'];
+};
+
+export type ProgramEventResponse = ProgramEventConnector;
+
+export enum ProgramEventSortFieldInput {
+  Datetime = 'datetime',
+  DocumentName = 'documentName',
+  DocumentType = 'documentType',
+  Type = 'type'
+}
+
+export type ProgramEventSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']>;
+  /** Sort query result by `key` */
+  key: ProgramEventSortFieldInput;
+};
+
 export type ProgramRequisitionOrderTypeNode = {
   __typename: 'ProgramRequisitionOrderTypeNode';
   availablePeriods: Array<PeriodNode>;
@@ -2333,7 +3078,15 @@ export type Queries = {
    */
   authToken: AuthTokenResponse;
   barcodeByGtin: BarcodeResponse;
+  clinicians: CliniciansResponse;
   displaySettings: DisplaySettingsNode;
+  document?: Maybe<DocumentNode>;
+  documentHistory: DocumentHistoryResponse;
+  documentRegistries: DocumentRegistryResponse;
+  documents: DocumentResponse;
+  encounterFields: EncounterFieldsResponse;
+  encounters: EncounterResponse;
+  formSchema?: Maybe<FormSchemaNode>;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
@@ -2347,6 +3100,9 @@ export type Queries = {
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
+  logContents: LogNode;
+  logFileNames: LogNode;
+  logLevel: LogLevelNode;
   logout: LogoutResponse;
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
@@ -2354,6 +3110,9 @@ export type Queries = {
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int'];
+  patient?: Maybe<PatientNode>;
+  patientSearch: PatientSearchResponse;
+  patients: PatientResponse;
   /**
    * Creates a printed report.
    *
@@ -2363,6 +3122,8 @@ export type Queries = {
    */
   printReport: PrintReportResponse;
   printReportDefinition: PrintReportResponse;
+  programEnrolments: ProgramEnrolmentResponse;
+  programEvents: ProgramEventResponse;
   programRequisitionSettings: Array<ProgramRequisitionSettingNode>;
   /**
    * Retrieves a new auth bearer and refresh token
@@ -2411,8 +3172,65 @@ export type QueriesBarcodeByGtinArgs = {
 };
 
 
+export type QueriesCliniciansArgs = {
+  filter?: InputMaybe<ClinicianFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
 export type QueriesDisplaySettingsArgs = {
   input: DisplaySettingsHash;
+};
+
+
+export type QueriesDocumentArgs = {
+  name: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesDocumentHistoryArgs = {
+  name: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesDocumentRegistriesArgs = {
+  filter?: InputMaybe<DocumentRegistryFilterInput>;
+  sort?: InputMaybe<Array<DocumentRegistrySortInput>>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesDocumentsArgs = {
+  filter?: InputMaybe<DocumentFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<DocumentSortInput>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesEncounterFieldsArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
+  input: EncounterFieldsInput;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesEncountersArgs = {
+  filter?: InputMaybe<EncounterFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<EncounterSortInput>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesFormSchemaArgs = {
+  filter?: InputMaybe<FormSchemaFilterInput>;
 };
 
 
@@ -2472,6 +3290,11 @@ export type QueriesLocationsArgs = {
 };
 
 
+export type QueriesLogContentsArgs = {
+  fileName?: InputMaybe<Scalars['String']>;
+};
+
+
 export type QueriesMasterListsArgs = {
   filter?: InputMaybe<MasterListFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -2488,8 +3311,29 @@ export type QueriesNamesArgs = {
 };
 
 
+export type QueriesPatientArgs = {
+  patientId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesPatientSearchArgs = {
+  input: PatientSearchInput;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesPatientsArgs = {
+  filter?: InputMaybe<PatientFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PatientSortInput>>;
+  storeId: Scalars['String'];
+};
+
+
 export type QueriesPrintReportArgs = {
-  dataId: Scalars['String'];
+  arguments?: InputMaybe<Scalars['JSON']>;
+  dataId?: InputMaybe<Scalars['String']>;
   format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String'];
   storeId: Scalars['String'];
@@ -2497,9 +3341,27 @@ export type QueriesPrintReportArgs = {
 
 
 export type QueriesPrintReportDefinitionArgs = {
-  dataId: Scalars['String'];
+  arguments?: InputMaybe<Scalars['JSON']>;
+  dataId?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
   report: Scalars['JSON'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesProgramEnrolmentsArgs = {
+  filter?: InputMaybe<ProgramEnrolmentFilterInput>;
+  sort?: InputMaybe<ProgramEnrolmentSortInput>;
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesProgramEventsArgs = {
+  at?: InputMaybe<Scalars['DateTime']>;
+  filter?: InputMaybe<ProgramEventFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  patientId: Scalars['String'];
+  sort?: InputMaybe<ProgramEventSortInput>;
   storeId: Scalars['String'];
 };
 
@@ -2620,6 +3482,17 @@ export type QueriesStoresArgs = {
   sort?: InputMaybe<Array<StoreSortInput>>;
 };
 
+export type RawDocumentNode = {
+  __typename: 'RawDocumentNode';
+  author: Scalars['String'];
+  data: Scalars['String'];
+  name: Scalars['String'];
+  parents: Array<Scalars['String']>;
+  schemaId?: Maybe<Scalars['String']>;
+  timestamp: Scalars['DateTime'];
+  type: Scalars['String'];
+};
+
 export type RecordAlreadyExist = InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String'];
@@ -2686,8 +3559,10 @@ export type ReportConnector = {
 };
 
 export enum ReportContext {
+  Dispensary = 'DISPENSARY',
   InboundShipment = 'INBOUND_SHIPMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Patient = 'PATIENT',
   Repack = 'REPACK',
   Requisition = 'REQUISITION',
   Resource = 'RESOURCE',
@@ -2698,14 +3573,17 @@ export type ReportFilterInput = {
   context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<SimpleStringFilterInput>;
+  subContext?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type ReportNode = {
   __typename: 'ReportNode';
+  argumentSchema?: Maybe<FormSchemaNode>;
   context: ReportContext;
   id: Scalars['String'];
   /** Human readable name of the report */
   name: Scalars['String'];
+  subContext?: Maybe<Scalars['String']>;
 };
 
 export enum ReportSortFieldInput {
@@ -2969,6 +3847,8 @@ export type ResponseStoreStatsNode = {
 export type SimpleStringFilterInput = {
   /** Search term must be an exact match (case sensitive) */
   equalTo?: InputMaybe<Scalars['String']>;
+  /** Search term must be an exact match, but case insensitive */
+  insensitiveEqualTo?: InputMaybe<Scalars['String']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']>;
 };
@@ -3209,6 +4089,11 @@ export type StoreFilterInput = {
   siteId?: InputMaybe<EqualFilterNumberInput>;
 };
 
+export enum StoreModeNodeType {
+  Dispensary = 'DISPENSARY',
+  Store = 'STORE'
+}
+
 export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String'];
@@ -3353,6 +4238,12 @@ export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUna
   description: Scalars['String'];
 };
 
+export type UndeleteDocumentInput = {
+  id: Scalars['String'];
+};
+
+export type UndeleteDocumentResponse = DocumentNode;
+
 export enum UniqueValueKey {
   Code = 'code'
 }
@@ -3369,6 +4260,41 @@ export type UpdateDisplaySettingsError = {
 };
 
 export type UpdateDisplaySettingsResponse = UpdateDisplaySettingsError | UpdateResult;
+
+export type UpdateDocumentError = {
+  __typename: 'UpdateDocumentError';
+  error: UpdateDocumentErrorInterface;
+};
+
+export type UpdateDocumentErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type UpdateDocumentInput = {
+  author: Scalars['String'];
+  data: Scalars['JSON'];
+  name: Scalars['String'];
+  parents: Array<Scalars['String']>;
+  patientId?: InputMaybe<Scalars['String']>;
+  schemaId?: InputMaybe<Scalars['String']>;
+  timestamp: Scalars['DateTime'];
+  type: Scalars['String'];
+};
+
+export type UpdateDocumentResponse = DocumentNode | UpdateDocumentError;
+
+export type UpdateEncounterInput = {
+  /** Encounter document data */
+  data: Scalars['JSON'];
+  /** The document id of the encounter document which should be updated */
+  parent: Scalars['String'];
+  /** The schema id used for the counter data */
+  schemaId: Scalars['String'];
+  /** The encounter type */
+  type: Scalars['String'];
+};
+
+export type UpdateEncounterResponse = EncounterNode;
 
 export type UpdateErrorInterface = {
   description: Scalars['String'];
@@ -3608,6 +4534,29 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
   response: UpdateOutboundShipmentUnallocatedLineResponse;
 };
 
+export type UpdatePatientInput = {
+  /** Patient document data */
+  data: Scalars['JSON'];
+  parent: Scalars['String'];
+  /** The schema id used for the patient data */
+  schemaId: Scalars['String'];
+};
+
+export type UpdatePatientResponse = PatientNode;
+
+export type UpdateProgramEnrolmentInput = {
+  /** Program document data */
+  data: Scalars['JSON'];
+  parent: Scalars['String'];
+  patientId: Scalars['String'];
+  /** The schema id used for the program data */
+  schemaId: Scalars['String'];
+  /** The program type */
+  type: Scalars['String'];
+};
+
+export type UpdateProgramEnrolmentResponse = ProgramEnrolmentNode;
+
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';
   error: UpdateRequestRequisitionErrorInterface;
@@ -3797,6 +4746,15 @@ export enum UpdateStocktakeStatusInput {
 
 export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
 
+export type UpsertLogLevelInput = {
+  level: LogLevelEnum;
+};
+
+export type UpsertLogLevelResponse = {
+  __typename: 'UpsertLogLevelResponse';
+  level: LogLevelEnum;
+};
+
 export type UseSuggestedQuantityError = {
   __typename: 'UseSuggestedQuantityError';
   error: UseSuggestedQuantityErrorInterface;
@@ -3836,6 +4794,8 @@ export type UserNodePermissionsArgs = {
 
 export enum UserPermission {
   CreateRepack = 'CREATE_REPACK',
+  DocumentMutate = 'DOCUMENT_MUTATE',
+  DocumentQuery = 'DOCUMENT_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   ItemMutate = 'ITEM_MUTATE',
@@ -3843,6 +4803,8 @@ export enum UserPermission {
   LogQuery = 'LOG_QUERY',
   OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',
   OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
+  PatientMutate = 'PATIENT_MUTATE',
+  PatientQuery = 'PATIENT_QUERY',
   Report = 'REPORT',
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
@@ -3869,6 +4831,7 @@ export type UserStoreNode = {
   id: Scalars['String'];
   name: Scalars['String'];
   preferences: StorePreferenceNode;
+  storeMode: StoreModeNodeType;
 };
 
 export type UserStorePermissionConnector = {

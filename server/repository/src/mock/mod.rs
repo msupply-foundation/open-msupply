@@ -3,6 +3,8 @@ use std::{collections::HashMap, ops::Index, vec};
 mod activity_log;
 mod barcode;
 pub mod common;
+mod document;
+mod form_schema;
 mod full_invoice;
 mod full_master_list;
 mod invoice;
@@ -43,6 +45,8 @@ mod user_account;
 
 pub use barcode::*;
 use common::*;
+pub use document::*;
+pub use form_schema::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
 pub use invoice::*;
@@ -79,13 +83,14 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository,
-    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, ItemRow, KeyValueStoreRepository, KeyValueStoreRow,
-    LocationRow, LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
-    MasterListRow, MasterListRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow,
-    NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository,
-    PeriodScheduleRow, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
+    ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, Document,
+    DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
+    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
+    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
+    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
+    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
+    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
+    PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
@@ -128,6 +133,8 @@ pub struct MockData {
     pub requisition_lines: Vec<RequisitionLineRow>,
     pub stocktakes: Vec<StocktakeRow>,
     pub stocktake_lines: Vec<StocktakeLineRow>,
+    pub form_schemas: Vec<FormSchema>,
+    pub documents: Vec<Document>,
     pub sync_buffer_rows: Vec<SyncBufferRow>,
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
@@ -179,6 +186,9 @@ pub struct MockDataInserts {
     pub requisition_lines: bool,
     pub stocktakes: bool,
     pub stocktake_lines: bool,
+    pub logs: bool,
+    pub form_schemas: bool,
+    pub documents: bool,
     pub sync_buffer_rows: bool,
     pub key_value_store_rows: bool,
     pub activity_logs: bool,
@@ -217,6 +227,9 @@ impl MockDataInserts {
             requisition_lines: true,
             stocktakes: true,
             stocktake_lines: true,
+            logs: true,
+            form_schemas: true,
+            documents: true,
             sync_buffer_rows: true,
             key_value_store_rows: true,
             activity_logs: true,
@@ -373,6 +386,16 @@ impl MockDataInserts {
         self
     }
 
+    pub fn form_schemas(mut self) -> Self {
+        self.form_schemas = true;
+        self
+    }
+
+    pub fn documents(mut self) -> Self {
+        self.documents = true;
+        self
+    }
+
     pub fn program_requisition_settings(mut self) -> Self {
         self.program_requisition_settings = true;
         self
@@ -439,6 +462,8 @@ fn all_mock_data() -> MockDataCollection {
             numbers: mock_numbers(),
             stocktakes: mock_stocktake_data(),
             stocktake_lines: mock_stocktake_line_data(),
+            form_schemas: mock_form_schemas(),
+            documents: mock_documents(),
             activity_logs: mock_activity_logs(),
             programs: mock_programs(),
             program_requisition_settings: mock_program_requisition_settings(),
@@ -698,6 +723,19 @@ pub fn insert_mock_data(
             }
         }
 
+        if inserts.form_schemas {
+            for row in &mock_data.form_schemas {
+                let repo = FormSchemaRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.documents {
+            for row in &mock_data.documents {
+                let repo = DocumentRepository::new(connection);
+                repo.insert(row, false).unwrap();
+            }
+        }
         if inserts.sync_logs {
             for row in &mock_data.sync_logs {
                 let repo = SyncLogRowRepository::new(connection);
@@ -776,6 +814,8 @@ impl MockData {
             mut stocktake_lines,
             user_store_joins: _,
             user_permissions: _,
+            mut form_schemas,
+            mut documents,
             sync_buffer_rows: _,
             mut key_value_store_rows,
             mut activity_logs,
@@ -811,6 +851,8 @@ impl MockData {
         self.stocktake_lines.append(&mut stocktake_lines);
         self.name_store_joins.append(&mut name_store_joins);
         self.stock_lines.append(&mut stock_lines);
+        self.form_schemas.append(&mut form_schemas);
+        self.documents.append(&mut documents);
         self.key_value_store_rows.append(&mut key_value_store_rows);
         self.activity_logs.append(&mut activity_logs);
         self.sync_logs.append(&mut sync_logs);

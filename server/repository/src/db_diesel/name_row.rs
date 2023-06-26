@@ -1,6 +1,6 @@
 use super::{name_row::name::dsl::*, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, EqualFilter};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -35,6 +35,9 @@ table! {
         is_donor -> Bool,
         on_hold -> Bool,
         created_datetime -> Nullable<Timestamp>,
+        is_deceased -> Bool,
+        national_health_number -> Nullable<Text>,
+        is_sync_update -> Bool,
     }
 }
 
@@ -44,6 +47,7 @@ table! {
 pub enum Gender {
     Female,
     Male,
+    Transgender,
     TransgenderMale,
     TransgenderMaleHormone,
     TransgenderMaleSurgical,
@@ -52,6 +56,19 @@ pub enum Gender {
     TransgenderFemaleSurgical,
     Unknown,
     NonBinary,
+}
+
+impl Gender {
+    pub fn equal_to(&self) -> EqualFilter<Gender> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            equal_any_or_null: None,
+            is_null: None,
+        }
+    }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -112,6 +129,10 @@ pub struct NameRow {
     pub on_hold: bool,
 
     pub created_datetime: Option<NaiveDateTime>,
+
+    pub is_deceased: bool,
+    pub national_health_number: Option<String>,
+    pub is_sync_update: bool,
 }
 
 pub struct NameRowRepository<'a> {

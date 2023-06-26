@@ -52,6 +52,7 @@ pub fn mock_name_1_join() -> NameStoreJoinRow {
         store_id: mock_test_name_query_store_2().id,
         name_is_customer: false,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -60,6 +61,7 @@ pub fn mock_name_2() -> NameRow {
         r.id = "name2".to_string();
         r.name = "name_2".to_string();
         r.code = "code2".to_string();
+        r.national_health_number = Some("nhn2".to_string());
     })
 }
 
@@ -70,6 +72,7 @@ pub fn mock_name_2_join() -> NameStoreJoinRow {
         store_id: mock_test_name_query_store_1().id,
         name_is_customer: true,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -88,6 +91,7 @@ pub fn mock_name_3_join() -> NameStoreJoinRow {
         store_id: mock_test_name_query_store_1().id,
         name_is_customer: true,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }
 
@@ -98,6 +102,7 @@ pub fn mock_name_3_join2() -> NameStoreJoinRow {
         store_id: mock_test_name_query_store_2().id,
         name_is_customer: false,
         name_is_supplier: false,
+        is_sync_update: false,
     }
 }
 
@@ -116,5 +121,6 @@ pub fn name_a_umlaut_join() -> NameStoreJoinRow {
         store_id: mock_test_name_query_store_1().id,
         name_is_customer: true,
         name_is_supplier: true,
+        is_sync_update: false,
     }
 }

@@ -2,6 +2,7 @@ fragment UserStoreNode on UserStoreNode {
   code
   id
   name
+  storeMode
   preferences {
     id
     responseRequisitionRequiresAuthorisation

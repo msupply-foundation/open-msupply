@@ -106,7 +106,7 @@ async fn migration_1_00_08() {
         &connection,
         r#"
         INSERT INTO name 
-        (id, type, is_customer, is_supplier, code, name) 
+        (id, type, is_customer, is_supplier, code, name)
         VALUES 
         ('name_id', 'STORE', false, false, '', '');
     "#
@@ -117,7 +117,7 @@ async fn migration_1_00_08() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code) 
+        (id, name_id, site_id, code)
         VALUES 
         ('store1_id', 'name_id', 1, '');
     "#
@@ -128,7 +128,7 @@ async fn migration_1_00_08() {
         &connection,
         r#"
         INSERT INTO store 
-        (id, name_id, site_id, code) 
+        (id, name_id, site_id, code)
         VALUES 
         ('store2_id', 'name_id', 1, '');
     "#

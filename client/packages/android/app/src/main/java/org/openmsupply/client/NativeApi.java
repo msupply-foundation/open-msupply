@@ -383,6 +383,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         }
     }
 
+
     private String parseAttribute(NsdServiceInfo serviceInfo, String name) {
         byte[] attributeBytes = serviceInfo.getAttributes().get(name);
         if (attributeBytes == null) {

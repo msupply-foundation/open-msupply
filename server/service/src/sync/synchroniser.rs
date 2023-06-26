@@ -141,6 +141,7 @@ impl Synchroniser {
 
         // Remote data was initialised
         let is_initialised = sync_status_service.is_initialised(ctx)?;
+
         // Initialisation request was sent and successfully processed
         let is_sync_queue_initialised = sync_status_service.is_sync_queue_initialised(ctx)?;
 

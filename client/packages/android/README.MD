@@ -111,7 +111,7 @@ When adding plugins - add them to the android package; if they are not here, the
 [info] Found 1 Cordova plugin for android:
        cordova-plugin-printer@0.8.0
 ```
-
+       
 with the new plugin showing up under the Cordova or Capacitor plugins sections.
 If you require the plugin to be used in other packages, then you can also install in the root, or in individual packages, to make it available for use elsewhere.
 

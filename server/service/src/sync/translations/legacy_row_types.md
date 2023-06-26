@@ -180,6 +180,7 @@ pub struct LegacyNameRow {
     maximum_credit: i64,
     nationality_ID: String,
     created_date: String,
+    isDeceased: bool
 }
 ```
 

@@ -33,6 +33,10 @@ pub enum UserPermission {
     LogQuery,
     StockLineMutate,
     ItemMutate,
+    PatientQuery,
+    PatientMutate,
+    DocumentQuery,
+    DocumentMutate,
 }
 
 #[Object]
@@ -93,6 +97,10 @@ impl UserPermission {
             Permission::LogQuery => UserPermission::LogQuery,
             Permission::StockLineMutate => UserPermission::StockLineMutate,
             Permission::ItemMutate => UserPermission::ItemMutate,
+            Permission::PatientQuery => UserPermission::PatientQuery,
+            Permission::PatientMutate => UserPermission::PatientMutate,
+            Permission::DocumentQuery => UserPermission::DocumentQuery,
+            Permission::DocumentMutate => UserPermission::DocumentMutate,
         }
     }
 
@@ -116,6 +124,10 @@ impl UserPermission {
             UserPermission::LogQuery => Permission::LogQuery,
             UserPermission::StockLineMutate => Permission::StockLineMutate,
             UserPermission::ItemMutate => Permission::ItemMutate,
+            UserPermission::PatientQuery => Permission::PatientQuery,
+            UserPermission::PatientMutate => Permission::PatientMutate,
+            UserPermission::DocumentQuery => Permission::DocumentQuery,
+            UserPermission::DocumentMutate => Permission::DocumentMutate,
         }
     }
 }

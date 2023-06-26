@@ -85,7 +85,12 @@
   "stock": "View Stock",
   "stocktakes": "Stocktakes",
   "store-details": "Store code: {{code}}",
+  "encounter": "Encounters",
+  "patients": "Patients",
+  "dispensary": "Dispensary",
+  "programs": "Programs",
   "suppliers": "Suppliers",
   "sync": "Sync",
-  "tools": "Tools"
+  "tools": "Tools",
+  "cmdk.goto-patients": "Go to: Patients"
 }

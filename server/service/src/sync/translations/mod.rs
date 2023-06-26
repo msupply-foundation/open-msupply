@@ -1,5 +1,10 @@
 pub(crate) mod activity_log;
 pub(crate) mod barcode;
+pub(crate) mod clinician;
+pub(crate) mod clinician_store_join;
+pub(crate) mod document;
+pub(crate) mod document_registry;
+pub(crate) mod form_schema;
 pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
@@ -26,6 +31,7 @@ pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
 pub(crate) mod unit;
+pub(crate) mod user_permission;
 
 use repository::*;
 use thiserror::Error;
@@ -53,6 +59,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(report::ReportTranslation {}),
         Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
         Box::new(store_preference::StorePreferenceTranslation {}),
+        Box::new(form_schema::FormSchemaTranslation {}),
+        Box::new(document_registry::DocumentRegistryTranslation {}),
         // Remote
         Box::new(location::LocationTranslation {}),
         Box::new(location_movement::LocationMovementTranslation {}),
@@ -65,8 +73,12 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(requisition_line::RequisitionLineTranslation {}),
         Box::new(activity_log::ActivityLogTranslation {}),
         Box::new(barcode::BarcodeTranslation {}),
+        Box::new(clinician::ClinicianTranslation {}),
+        Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
+        Box::new(user_permission::UserPermissionTranslation {}),
+        Box::new(document::DocumentTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
@@ -117,6 +129,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const REPORT: &str = "report";
     pub(crate) const INVENTORY_ADJUSTMENT_REASON: &str = "options";
     pub(crate) const STORE_PREFERENCE: &str = "pref";
+    pub(crate) const FORM_SCHEMA: &str = "form_schema";
     pub(crate) const PERIOD_SCHEDULE: &str = "periodSchedule";
     pub(crate) const PERIOD: &str = "period";
     pub(crate) const BARCODE: &str = "barcode";
@@ -134,10 +147,16 @@ pub(crate) mod LegacyTableName {
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
     pub(crate) const NAME_TAG_JOIN: &str = "name_tag_join";
+    pub(crate) const CLINICIAN: &str = "clinician";
+    pub(crate) const CLINICIAN_STORE_JOIN: &str = "clinician_store_join";
+    pub(crate) const USER_PERMISSION: &str = "om_user_permission";
+    pub(crate) const DOCUMENT: &str = "om_document";
+    pub(crate) const DOCUMENT_REGISTRY: &str = "om_document_registry";
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub(crate) enum PullUpsertRecord {
+    UserPermission(UserPermissionRow),
     Unit(UnitRow),
     Name(NameRow),
     NameTag(NameTagRow),
@@ -167,6 +186,11 @@ pub(crate) enum PullUpsertRecord {
     InventoryAdjustmentReason(InventoryAdjustmentReasonRow),
     StorePreference(StorePreferenceRow),
     Barcode(BarcodeRow),
+    Clinician(ClinicianRow),
+    ClinicianStoreJoin(ClinicianStoreJoinRow),
+    FormSchema(FormSchemaJson),
+    Document(Document),
+    DocumentRegistry(DocumentRegistryRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -178,6 +202,7 @@ pub(crate) struct PullDeleteRecord {
 #[derive(Debug, PartialEq, Clone)]
 pub(crate) enum PullDeleteRecordTable {
     // Central
+    UserPermission,
     Unit,
     Item,
     Store,

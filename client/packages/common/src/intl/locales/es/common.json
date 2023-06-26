@@ -189,7 +189,6 @@
   "link.copy-to-clipboard": "Copiar al Portapapeles",
   "log.invoice-created": "Envío creado",
   "log.user-logged-in": "Inicio de sesión de usuario",
-  "log.invoic-deleted": "Envío eliminado",
   "log.invoice-status-allocated": "Envío asignado",
   "log.invoice-status-picked": "Envío recogido",
   "log.invoice-status-shipped": "Envío despachado",

@@ -1,14 +1,18 @@
 use super::{
     name_row::{name, name::dsl as name_dsl},
     name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
+    program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
     store_row::{store, store::dsl as store_dsl},
     DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    diesel_macros::{
+        apply_date_filter, apply_equal_filter, apply_simple_string_filter,
+        apply_simple_string_or_filter, apply_sort_no_case,
+    },
     repository_error::RepositoryError,
-    EqualFilter, NameType, Pagination, SimpleStringFilter, Sort,
+    DateFilter, EqualFilter, Gender, NameType, Pagination, SimpleStringFilter, Sort,
 };
 
 use diesel::{
@@ -30,6 +34,7 @@ pub struct NameFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<SimpleStringFilter>,
     pub code: Option<SimpleStringFilter>,
+    pub national_health_number: Option<SimpleStringFilter>,
     pub is_customer: Option<bool>,
     pub is_supplier: Option<bool>,
     pub is_store: Option<bool>,
@@ -37,6 +42,23 @@ pub struct NameFilter {
     pub is_visible: Option<bool>,
     pub is_system_name: Option<bool>,
     pub r#type: Option<EqualFilter<NameType>>,
+
+    pub first_name: Option<SimpleStringFilter>,
+    pub last_name: Option<SimpleStringFilter>,
+    pub gender: Option<EqualFilter<Gender>>,
+    pub date_of_birth: Option<DateFilter>,
+    pub phone: Option<SimpleStringFilter>,
+    pub address1: Option<SimpleStringFilter>,
+    pub address2: Option<SimpleStringFilter>,
+    pub country: Option<SimpleStringFilter>,
+    pub email: Option<SimpleStringFilter>,
+
+    /// Filter for any identifier associated with a name entry.
+    /// Currently:
+    /// - name::code
+    /// - name::national_health_number
+    /// - program_enrolment::program_enrolment_id
+    pub identifier: Option<SimpleStringFilter>,
 }
 
 impl EqualFilter<NameType> {
@@ -49,6 +71,16 @@ impl EqualFilter<NameType> {
 pub enum NameSortField {
     Name,
     Code,
+    FirstName,
+    LastName,
+    Gender,
+    DateOfBirth,
+    Phone,
+    Address1,
+    Address2,
+    Country,
+    Email,
+    NationalHealthNumber,
 }
 
 pub type NameSort = Sort<NameSortField>;
@@ -107,6 +139,20 @@ impl<'a> NameRepository<'a> {
                 NameSortField::Code => {
                     apply_sort_no_case!(query, sort, name_dsl::code);
                 }
+                NameSortField::FirstName => apply_sort_no_case!(query, sort, name_dsl::first_name),
+                NameSortField::LastName => apply_sort_no_case!(query, sort, name_dsl::last_name),
+                NameSortField::Gender => apply_sort_no_case!(query, sort, name_dsl::gender),
+                NameSortField::DateOfBirth => {
+                    apply_sort_no_case!(query, sort, name_dsl::date_of_birth)
+                }
+                NameSortField::Phone => apply_sort_no_case!(query, sort, name_dsl::phone),
+                NameSortField::Address1 => apply_sort_no_case!(query, sort, name_dsl::address1),
+                NameSortField::Address2 => apply_sort_no_case!(query, sort, name_dsl::address2),
+                NameSortField::Country => apply_sort_no_case!(query, sort, name_dsl::country),
+                NameSortField::Email => apply_sort_no_case!(query, sort, name_dsl::email),
+                NameSortField::NationalHealthNumber => {
+                    apply_sort_no_case!(query, sort, name_dsl::national_health_number)
+                }
             }
         } else {
             query = query.order(name_dsl::id.asc())
@@ -137,7 +183,7 @@ impl<'a> NameRepository<'a> {
                     .eq(name_dsl::id)
                     .and(name_store_join_dsl::store_id.eq(store_id.clone()))), // if the name is visible to the `store_id` passed into this function, attach its `name store_join` information
             )
-            .left_join(store_dsl::store)
+            .left_join(store_dsl::store.on(store_dsl::name_id.eq(name_dsl::id)))
             .into_boxed();
 
         if let Some(f) = filter {
@@ -145,6 +191,7 @@ impl<'a> NameRepository<'a> {
                 id,
                 name,
                 code,
+                national_health_number,
                 is_customer,
                 is_supplier,
                 is_store,
@@ -152,13 +199,58 @@ impl<'a> NameRepository<'a> {
                 is_visible,
                 is_system_name,
                 r#type,
+                first_name,
+                last_name,
+                gender,
+                date_of_birth,
+                phone,
+                address1,
+                address2,
+                country,
+                email,
+                identifier,
             } = f;
+
+            // or filters need to be applied first
+            if identifier.is_some() {
+                apply_simple_string_filter!(query, identifier.clone(), name_dsl::code);
+                apply_simple_string_or_filter!(
+                    query,
+                    identifier.clone(),
+                    name_dsl::national_health_number
+                );
+
+                let mut sub_query = program_enrolment_dsl::program_enrolment
+                    .select(program_enrolment_dsl::patient_id)
+                    .into_boxed();
+                apply_simple_string_filter!(
+                    sub_query,
+                    identifier,
+                    program_enrolment_dsl::program_enrolment_id
+                );
+                query = query.or_filter(name_dsl::id.eq_any(sub_query))
+            }
 
             apply_equal_filter!(query, id, name_dsl::id);
             apply_simple_string_filter!(query, code, name_dsl::code);
+            apply_simple_string_filter!(
+                query,
+                national_health_number,
+                name_dsl::national_health_number
+            );
             apply_simple_string_filter!(query, name, name_dsl::name_);
             apply_simple_string_filter!(query, store_code, store_dsl::code);
             apply_equal_filter!(query, r#type, name_dsl::type_);
+
+            apply_simple_string_filter!(query, first_name, name_dsl::first_name);
+            apply_simple_string_filter!(query, last_name, name_dsl::last_name);
+            apply_equal_filter!(query, gender, name_dsl::gender);
+            apply_date_filter!(query, date_of_birth, name_dsl::date_of_birth);
+            apply_simple_string_filter!(query, phone, name_dsl::phone);
+            apply_simple_string_filter!(query, address1, name_dsl::address1);
+            apply_simple_string_filter!(query, address2, name_dsl::address2);
+            apply_simple_string_filter!(query, country, name_dsl::country);
+            apply_simple_string_filter!(query, email, name_dsl::email);
 
             if let Some(is_customer) = is_customer {
                 query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
@@ -208,9 +300,14 @@ type StoreIdEqualToStr = Eq<name_store_join_dsl::store_id, String>;
 type OnNameStoreJoinToNameJoin =
     OnClauseWrapper<name_store_join::table, And<NameIdEqualToId, StoreIdEqualToStr>>;
 
+// store_dsl::id.eq(store_id))
+type StoreNameIdEqualToId = Eq<store_dsl::name_id, name_dsl::id>;
+// store.on(id.eq(store_id))
+type OnStoreJoinToNameStoreJoin = OnClauseWrapper<store::table, StoreNameIdEqualToId>;
+
 type BoxedNameQuery = IntoBoxed<
     'static,
-    LeftJoin<LeftJoin<name::table, OnNameStoreJoinToNameJoin>, store::table>,
+    LeftJoin<LeftJoin<name::table, OnNameStoreJoinToNameJoin>, OnStoreJoinToNameStoreJoin>,
     DBType,
 >;
 
@@ -226,6 +323,11 @@ impl NameFilter {
 
     pub fn code(mut self, filter: SimpleStringFilter) -> Self {
         self.code = Some(filter);
+        self
+    }
+
+    pub fn national_health_number(mut self, filter: SimpleStringFilter) -> Self {
+        self.national_health_number = Some(filter);
         self
     }
 
@@ -269,6 +371,11 @@ impl NameFilter {
         self.r#type = Some(filter);
         self
     }
+
+    pub fn identifier(mut self, filter: SimpleStringFilter) -> Self {
+        self.identifier = Some(filter);
+        self
+    }
 }
 
 impl Name {
@@ -304,14 +411,29 @@ impl Name {
     }
 }
 
+impl NameType {
+    pub fn equal_to(&self) -> EqualFilter<NameType> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            equal_any_or_null: None,
+            is_null: None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use chrono::Utc;
     use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
     use crate::{
-        mock::MockDataInserts,
         mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
+        mock::{mock_name_2, MockDataInserts},
         test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination,
+        ProgramEnrolmentRow, ProgramEnrolmentRowRepository, ProgramEnrolmentStatus,
         SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
@@ -371,7 +493,7 @@ mod tests {
             queries.len()
         );
 
-        // .query, no pagenation (default)
+        // .query, no pagination (default)
         assert_eq!(
             repository
                 .query(store_id, Pagination::new(), None, None)
@@ -380,7 +502,7 @@ mod tests {
             default_page_size
         );
 
-        // .query, pagenation (offset 10)
+        // .query, pagination (offset 10)
         let result = repository
             .query(
                 store_id,
@@ -399,7 +521,7 @@ mod tests {
             queries[10 + default_page_size - 1]
         );
 
-        // .query, pagenation (first 10)
+        // .query, pagination (first 10)
         let result = repository
             .query(
                 store_id,
@@ -414,7 +536,7 @@ mod tests {
         assert_eq!(result.len(), 10);
         assert_eq!(*result.last().unwrap(), queries[9]);
 
-        // .query, pagenation (offset 150, first 90) <- more then records in table
+        // .query, pagination (offset 150, first 90) <- more then records in table
         let result = repository
             .query(
                 store_id,
@@ -610,6 +732,70 @@ mod tests {
             .unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(result.get(0).unwrap().name_row.id, mock_name_1().id);
+
+        // Test identifier
+
+        ProgramEnrolmentRowRepository::new(&connection)
+            .upsert_one(&ProgramEnrolmentRow {
+                id: util::uuid::uuid(),
+                document_name: "doc_name".to_string(),
+                patient_id: mock_name_2().id,
+                program: "ProgramType".to_string(),
+                enrolment_datetime: Utc::now().naive_utc(),
+                program_enrolment_id: Some("program_enrolment_id".to_string()),
+                status: ProgramEnrolmentStatus::Active,
+            })
+            .unwrap();
+        let result = repo
+            .query_by_filter(
+                &store_id,
+                NameFilter::new().identifier(SimpleStringFilter::equal_to("code2")),
+            )
+            .unwrap();
+        assert_eq!(result.get(0).unwrap().name_row.id, mock_name_2().id);
+        let result = repo
+            .query_by_filter(
+                &store_id,
+                NameFilter::new().identifier(SimpleStringFilter::equal_to("nhn2")),
+            )
+            .unwrap();
+        assert_eq!(result.get(0).unwrap().name_row.id, mock_name_2().id);
+        let result = repo
+            .query_by_filter(
+                &store_id,
+                NameFilter::new().identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+            )
+            .unwrap();
+        assert_eq!(result.get(0).unwrap().name_row.id, mock_name_2().id);
+        let result = repo
+            .query_by_filter(
+                &store_id,
+                NameFilter::new()
+                    .code(SimpleStringFilter::equal_to("code2"))
+                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+            )
+            .unwrap();
+        assert_eq!(result.get(0).unwrap().name_row.id, mock_name_2().id);
+        // no result when having an `AND code is "does not exist"` clause
+        let result = repo
+            .query_by_filter(
+                &store_id,
+                NameFilter::new()
+                    .code(SimpleStringFilter::equal_to("code does not exist"))
+                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+        let result = repo
+            .query_by_filter(
+                &store_id,
+                NameFilter::new()
+                    .identifier(SimpleStringFilter::equal_to("identifier does not exist")),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+
+        //mock_name_2().id
 
         // Test sort
 

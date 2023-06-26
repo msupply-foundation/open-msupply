@@ -72,6 +72,7 @@ client
 │  ├─ host
 │  ├─ inventory
 │  ├─ invoices
+│  ├─ programs
 │  ├─ requisitions
 │  └─ system
 ```
@@ -173,7 +174,6 @@ and you will see the keys being referenced in other hooks, like so:
   const api = useOutboundApi();
   useQuery(api.keys.paramList(queryParams), ...
 ```
-
 
 where the file `hooks/index.ts` has something like this in it:
 

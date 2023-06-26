@@ -83,6 +83,11 @@ impl ItemFilter {
         self.is_visible = Some(value);
         self
     }
+
+    pub fn code_or_name(mut self, filter: SimpleStringFilter) -> Self {
+        self.code_or_name = Some(filter);
+        self
+    }
 }
 
 type ItemAndMasterList = (ItemRow, Option<UnitRow>);
@@ -147,10 +152,17 @@ impl<'a> ItemRepository<'a> {
             query = query.order(item_dsl::id.asc())
         }
 
-        let result = query
+        let final_query = query
             .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<ItemAndMasterList>(&self.connection.connection)?;
+            .limit(pagination.limit as i64);
+
+        // Debug diesel query
+        // println!(
+        //    "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
+
+        let result = final_query.load::<ItemAndMasterList>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -175,11 +187,16 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             code_or_name,
         } = f;
 
+        // or filter need to be applied before and filters
+        if code_or_name.is_some() {
+            apply_simple_string_filter!(query, code_or_name.clone(), item_dsl::code);
+            apply_simple_string_or_filter!(query, code_or_name, item_dsl::name);
+        }
+
         apply_equal_filter!(query, id, item_dsl::id);
         apply_simple_string_filter!(query, code, item_dsl::code);
         apply_simple_string_filter!(query, name, item_dsl::name);
         apply_equal_filter!(query, r#type, item_dsl::type_);
-        apply_simple_string_or_filter!(query, code_or_name, item_dsl::code, item_dsl::name);
 
         let visible_item_ids = master_list_line_dsl::master_list_line
             .select(master_list_line_dsl::item_id)
@@ -222,11 +239,11 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::MockDataInserts, test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow,
-        ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
-        MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
-        StoreRowRepository, DEFAULT_PAGINATION_LIMIT,
+        mock::{mock_item_b, MockDataInserts},
+        test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemRowType,
+        MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRepository,
+        MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
+        Pagination, SimpleStringFilter, StoreRow, StoreRowRepository, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -352,23 +369,60 @@ mod tests {
         let results = item_query_repository
             .query(
                 Pagination::new(),
-                Some(ItemFilter {
-                    id: Some(EqualFilter::equal_any(vec![
-                        "item_b".to_string(),
-                        "item_c".to_string(),
-                    ])),
-                    name: None,
-                    code: None,
-                    // query invisible rows
-                    is_visible: Some(false),
-                    r#type: None,
-                    code_or_name: None,
-                }),
+                Some(
+                    ItemFilter::new()
+                        .id(EqualFilter::equal_any(vec![
+                            "item_b".to_string(),
+                            "item_c".to_string(),
+                        ]))
+                        // query invisible rows
+                        .is_visible(false),
+                ),
                 None,
                 Some("store_a".to_string()),
             )
             .unwrap();
         assert_eq!(results.len(), 2);
+
+        // test code_or_name
+        let results = item_query_repository
+            .query(
+                Pagination::new(),
+                Some(
+                    ItemFilter::new()
+                        .code_or_name(SimpleStringFilter::equal_to(&mock_item_b().name)),
+                ),
+                None,
+                Some("store_a".to_string()),
+            )
+            .unwrap();
+        assert_eq!(results[0].item_row.id, mock_item_b().id);
+        let results = item_query_repository
+            .query(
+                Pagination::new(),
+                Some(
+                    ItemFilter::new()
+                        .code_or_name(SimpleStringFilter::equal_to(&mock_item_b().code)),
+                ),
+                None,
+                Some("store_a".to_string()),
+            )
+            .unwrap();
+        assert_eq!(results[0].item_row.id, mock_item_b().id);
+        // no result when having an `AND code is "does not exist"` clause
+        let results = item_query_repository
+            .query(
+                Pagination::new(),
+                Some(
+                    ItemFilter::new()
+                        .code(SimpleStringFilter::equal_to("does not exist"))
+                        .code_or_name(SimpleStringFilter::equal_to(&mock_item_b().name)),
+                ),
+                None,
+                Some("store_a".to_string()),
+            )
+            .unwrap();
+        assert_eq!(results.len(), 0);
     }
 
     // TODO not sure where this fits, seems like this unit test has a lot of dependencies
@@ -518,14 +572,8 @@ mod tests {
         let results = item_query_repository
             .query(
                 Pagination::new(),
-                Some(ItemFilter {
-                    id: None,
-                    name: None,
-                    code: None,
-                    is_visible: Some(false),
-                    r#type: None,
-                    code_or_name: None,
-                }),
+                // query invisible rows
+                Some(ItemFilter::new().is_visible(false)),
                 None,
                 Some("name1_store".to_string()),
             )
@@ -535,14 +583,7 @@ mod tests {
         let results = item_query_repository
             .query(
                 Pagination::new(),
-                Some(ItemFilter {
-                    id: None,
-                    name: None,
-                    code: None,
-                    is_visible: Some(true),
-                    r#type: None,
-                    code_or_name: None,
-                }),
+                Some(ItemFilter::new().is_visible(true)),
                 None,
                 Some("name1_store".to_string()),
             )

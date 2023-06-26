@@ -170,7 +170,6 @@
   "label.settings-central-site-id": "Serveur central Site ID",
   "button.initialise": "Initialiser",
   "log.requisition-created": "Réquisition créée",
-  "log.invoic-deleted": "Livraison supprimée",
   "log.stocktake-deleted": "Inventaire supprimé",
   "messages.cant-delete-generic": "Vous ne pouvez pas supprimer le ou les articles articles sélectionnés",
   "button.retry": "Réessayer",
