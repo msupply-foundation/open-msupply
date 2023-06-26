@@ -3,7 +3,7 @@ import {
   SortController,
   SortUtils,
   Column,
-  ItemUtils,
+  useItemUtils,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment } from '../../operations.generated';
 import { useResponseColumns } from '../../../DetailView/columns';
@@ -21,7 +21,7 @@ interface UseResponseLinesController
 export const useResponseLines = (): UseResponseLinesController => {
   const { lines } = useResponseFields('lines');
   const { columns, onChangeSortBy, sortBy } = useResponseColumns();
-  const { itemFilter, setItemFilter } = ItemUtils.itemFilter();
+  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
 
   const sorted = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
@@ -31,9 +31,7 @@ export const useResponseLines = (): UseResponseLinesController => {
           SortUtils.getColumnSorter(getSortValue, !!sortBy.isDesc)
         )
       : lines?.nodes;
-    return sortedLines.filter(item =>
-      ItemUtils.matchItem(itemFilter, item.item)
-    );
+    return sortedLines.filter(item => matchItem(itemFilter, item.item));
   }, [sortBy.key, sortBy.isDesc, lines, itemFilter]);
 
   return {

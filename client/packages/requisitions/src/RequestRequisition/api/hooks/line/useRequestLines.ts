@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
-import { SortUtils, ItemUtils } from '@openmsupply-client/common';
+import { SortUtils, useItemUtils } from '@openmsupply-client/common';
 import { useRequestColumns } from '../../../DetailView/columns';
 import { useHideOverStocked } from '../index';
 import { useRequestFields } from '../document/useRequestFields';
 
 export const useRequestLines = () => {
   const { on } = useHideOverStocked();
-  const { itemFilter, setItemFilter } = ItemUtils.itemFilter();
+  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
   const { columns, onChangeSortBy, sortBy } = useRequestColumns();
   const { lines, minMonthsOfStock } = useRequestFields([
     'lines',
@@ -27,10 +27,10 @@ export const useRequestLines = () => {
         item =>
           item.itemStats.availableStockOnHand <
             item.itemStats.averageMonthlyConsumption * minMonthsOfStock &&
-          ItemUtils.matchItem(itemFilter, item.item)
+          matchItem(itemFilter, item.item)
       );
     } else {
-      return sorted.filter(item => ItemUtils.matchItem(itemFilter, item.item));
+      return sorted.filter(item => matchItem(itemFilter, item.item));
     }
   }, [sortBy.key, sortBy.isDesc, lines, on, minMonthsOfStock, itemFilter]);
 
