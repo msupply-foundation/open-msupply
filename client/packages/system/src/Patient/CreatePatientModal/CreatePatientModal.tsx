@@ -119,7 +119,11 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
       }
       nextButton={
         currentTab !== Tabs.SearchResults ? (
-          <DialogButton variant="next" onClick={onNext} />
+          <DialogButton
+            variant="next"
+            onClick={onNext}
+            disabled={!patient?.firstName && !patient?.lastName}
+          />
         ) : undefined
       }
       cancelButton={
