@@ -1,6 +1,7 @@
 export * from './Item';
 export * from './Log';
 export * from './Stock';
+export * from './Sync';
 export * from './Name';
 export * from './Location';
 export * from './Store';

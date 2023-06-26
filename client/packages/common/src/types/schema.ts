@@ -370,6 +370,40 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShi
   description: Scalars['String'];
 };
 
+export type CentralPatientNode = {
+  __typename: 'CentralPatientNode';
+  code: Scalars['String'];
+  dateOfBirth?: Maybe<Scalars['NaiveDate']>;
+  firstName: Scalars['String'];
+  id: Scalars['String'];
+  lastName: Scalars['String'];
+};
+
+export type CentralPatientSearchConnector = {
+  __typename: 'CentralPatientSearchConnector';
+  nodes: Array<CentralPatientNode>;
+  totalCount: Scalars['Int'];
+};
+
+export type CentralPatientSearchError = {
+  __typename: 'CentralPatientSearchError';
+  error: CentralPatientSearchErrorInterface;
+};
+
+export type CentralPatientSearchErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type CentralPatientSearchInput = {
+  /** Patient code */
+  code?: InputMaybe<Scalars['String']>;
+  dateOfBirth?: InputMaybe<Scalars['NaiveDate']>;
+  firstName?: InputMaybe<Scalars['String']>;
+  lastName?: InputMaybe<Scalars['String']>;
+};
+
+export type CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError;
+
 export type ClinicianConnector = {
   __typename: 'ClinicianConnector';
   nodes: Array<ClinicianNode>;
@@ -427,6 +461,11 @@ export type ClinicianSortInput = {
 };
 
 export type CliniciansResponse = ClinicianConnector;
+
+export type ConnectionError = CentralPatientSearchErrorInterface & LinkPatientPatientToStoreErrorInterface & {
+  __typename: 'ConnectionError';
+  description: Scalars['String'];
+};
 
 export type ConsumptionHistoryConnector = {
   __typename: 'ConsumptionHistoryConnector';
@@ -1943,6 +1982,17 @@ export enum LanguageType {
   Tetum = 'TETUM'
 }
 
+export type LinkPatientPatientToStoreError = {
+  __typename: 'LinkPatientPatientToStoreError';
+  error: LinkPatientPatientToStoreErrorInterface;
+};
+
+export type LinkPatientPatientToStoreErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type LinkPatientToStoreResponse = LinkPatientPatientToStoreError | NameStoreJoinNode;
+
 export type LocationConnector = {
   __typename: 'LocationConnector';
   nodes: Array<LocationNode>;
@@ -2163,6 +2213,7 @@ export type Mutations = {
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
+  linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String'];
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
@@ -2457,6 +2508,12 @@ export type MutationsInsertStocktakeLineArgs = {
 };
 
 
+export type MutationsLinkPatientToStoreArgs = {
+  nameId: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
 export type MutationsSupplyRequestedQuantityArgs = {
   input: SupplyRequestedQuantityInput;
   storeId: Scalars['String'];
@@ -2706,6 +2763,13 @@ export type NameSortInput = {
   desc?: InputMaybe<Scalars['Boolean']>;
   /** Sort query result by `key` */
   key: NameSortFieldInput;
+};
+
+export type NameStoreJoinNode = {
+  __typename: 'NameStoreJoinNode';
+  id: Scalars['String'];
+  nameId: Scalars['String'];
+  storeId: Scalars['String'];
 };
 
 export type NamesResponse = NameConnector;
@@ -3078,6 +3142,7 @@ export type Queries = {
    */
   authToken: AuthTokenResponse;
   barcodeByGtin: BarcodeResponse;
+  centralPatientSearch: CentralPatientSearchResponse;
   clinicians: CliniciansResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
@@ -3168,6 +3233,12 @@ export type QueriesAuthTokenArgs = {
 
 export type QueriesBarcodeByGtinArgs = {
   gtin: Scalars['String'];
+  storeId: Scalars['String'];
+};
+
+
+export type QueriesCentralPatientSearchArgs = {
+  input: CentralPatientSearchInput;
   storeId: Scalars['String'];
 };
 

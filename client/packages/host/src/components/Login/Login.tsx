@@ -7,11 +7,11 @@ import {
   LocalStorage,
   ErrorWithDetails,
 } from '@openmsupply-client/common';
-import { useHost } from '../../api/hooks';
 import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
 import { LoginLayout } from './LoginLayout';
 import { SiteInfo } from '../SiteInfo';
+import { useHost } from '../../api';
 
 export const Login = () => {
   const t = useTranslation('app');

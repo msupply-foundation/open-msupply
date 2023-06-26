@@ -92,6 +92,52 @@ query patientSearch($input: PatientSearchInput!, $storeId: String!) {
   }
 }
 
+query centralPatientSearch(
+  $input: CentralPatientSearchInput!
+  $storeId: String!
+) {
+  centralPatientSearch(input: $input, storeId: $storeId) {
+    __typename
+    ... on CentralPatientSearchConnector {
+      nodes {
+        id
+        code
+        dateOfBirth
+        firstName
+        lastName
+      }
+      totalCount
+    }
+    ... on CentralPatientSearchError {
+      error {
+        __typename
+        ... on ConnectionError {
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation linkPatientToStore($storeId: String!, $nameId: String!) {
+  linkPatientToStore(nameId: $nameId, storeId: $storeId) {
+    __typename
+    ... on NameStoreJoinNode {
+      id
+      storeId
+      nameId
+    }
+    ... on LinkPatientPatientToStoreError {
+      error {
+        __typename
+        ... on ConnectionError {
+          description
+        }
+      }
+    }
+  }
+}
+
 mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {

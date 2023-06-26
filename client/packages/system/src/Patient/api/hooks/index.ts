@@ -7,6 +7,8 @@ export const usePatient = {
     /** Get the patient id from the url */
     id: Utils.usePatientId,
     search: Utils.usePatientSearch,
+    centralSearch: Utils.useCentralPatientSearch,
+    linkPatientToStore: Utils.useLinkPatientToStore,
   },
   document: {
     get: Document.usePatient,

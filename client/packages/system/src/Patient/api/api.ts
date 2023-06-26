@@ -9,11 +9,14 @@ import {
   SortRule,
   EncounterSortFieldInput,
   PaginationInput,
+  CentralPatientSearchInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
   PatientRowFragment,
   PatientFragment,
+  CentralPatientSearchQuery,
+  LinkPatientToStoreMutation,
 } from './operations.generated';
 
 export type ListParams = {
@@ -35,6 +38,12 @@ export type EncounterListParams = {
   filterBy?: FilterBy | null;
   pagination?: PaginationInput;
 };
+
+export type CentralPatientSearchResponse =
+  CentralPatientSearchQuery['centralPatientSearch'];
+
+export type LinkPatientToStoreResponse =
+  LinkPatientToStoreMutation['linkPatientToStore'];
 
 export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   get: {
@@ -102,6 +111,15 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Could not search for patients');
     },
+    centralSearch: async (
+      input: CentralPatientSearchInput
+    ): Promise<CentralPatientSearchResponse> => {
+      const result = await sdk.centralPatientSearch({
+        storeId,
+        input,
+      });
+      return result.centralPatientSearch;
+    },
   },
   insertPatient: async (
     input: InsertPatientInput
@@ -131,5 +149,14 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not update patient');
+  },
+  linkPatientToStore: async (
+    nameId: string
+  ): Promise<LinkPatientToStoreResponse> => {
+    const result = await sdk.linkPatientToStore({
+      storeId,
+      nameId,
+    });
+    return result.linkPatientToStore;
   },
 });
