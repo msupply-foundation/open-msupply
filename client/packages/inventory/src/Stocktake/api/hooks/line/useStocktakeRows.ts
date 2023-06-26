@@ -1,31 +1,13 @@
 import { useMemo } from 'react';
 import {
   ItemNode,
-  RegexUtils,
   SortUtils,
-  useUrlQuery,
+  useItemUtils,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns } from '../../../DetailView';
 import { useStocktakeLines } from './useStocktakeLines';
 import { useStocktakeItems } from './useStocktakeItems';
-
-const useItemFilter = () => {
-  const { urlQuery, updateQuery } = useUrlQuery({ skipParse: ['codeOrName'] });
-  return {
-    itemFilter: urlQuery.codeOrName ?? '',
-    setItemFilter: (itemFilter: string) =>
-      updateQuery({ codeOrName: itemFilter }),
-  };
-};
-
-const matchItem = (itemFilter: string, { name, code }: Partial<ItemNode>) => {
-  const filter = RegexUtils.escapeChars(itemFilter);
-  return (
-    RegexUtils.includes(filter, name ?? '') ||
-    RegexUtils.includes(filter, code ?? '')
-  );
-};
 
 export const useStocktakeRows = (isGrouped = true) => {
   const {
@@ -34,7 +16,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'desc' } });
   const { data: lines } = useStocktakeLines();
   const { data: items } = useStocktakeItems();
-  const { itemFilter, setItemFilter } = useItemFilter();
+  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
   const columns = useStocktakeColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
