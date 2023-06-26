@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import {
   ItemNode,
-  ItemUtils,
   SortUtils,
+  useItemUtils,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns } from '../../../DetailView';
@@ -16,7 +16,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'desc' } });
   const { data: lines } = useStocktakeLines();
   const { data: items } = useStocktakeItems();
-  const { itemFilter, setItemFilter } = ItemUtils.itemFilter();
+  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
   const columns = useStocktakeColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
@@ -31,7 +31,7 @@ export const useStocktakeRows = (isGrouped = true) => {
     );
     return items
       ?.filter(item => {
-        return ItemUtils.matchItem(itemFilter, item.item as ItemNode);
+        return matchItem(itemFilter, item.item as ItemNode);
       })
       ?.sort(sorter);
   }, [items, sortBy.key, sortBy.isDesc, itemFilter]);
@@ -45,7 +45,7 @@ export const useStocktakeRows = (isGrouped = true) => {
     );
     return lines
       ?.filter(line => {
-        return ItemUtils.matchItem(itemFilter, line.item);
+        return matchItem(itemFilter, line.item);
       })
       ?.sort(sorter);
   }, [lines, sortBy.key, sortBy.isDesc, itemFilter]);
