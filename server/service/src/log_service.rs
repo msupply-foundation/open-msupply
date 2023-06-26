@@ -1,6 +1,11 @@
 use anyhow::Error;
+use flate2::read::GzDecoder;
 use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
-use std::{fs, path::Path};
+use std::{
+    fs::{self, File},
+    io::Read,
+    path::Path,
+};
 
 use crate::{service_provider::ServiceContext, settings::Level};
 
@@ -31,9 +36,17 @@ pub trait LogServiceTrait: Send + Sync {
             Some(file_name) => file_name,
             None => default_filename,
         };
-
         let log_file_path = log_dir_path.join(&file_name);
-        let log_file_content = fs::read_to_string(log_file_path)?;
+
+        let log_file_content = if file_name.ends_with(".gz") {
+            let mut decompressed: String = Default::default();
+            let mut decoder = GzDecoder::new(File::open(log_file_path)?);
+            decoder.read_to_string(&mut decompressed)?;
+
+            decompressed
+        } else {
+            fs::read_to_string(log_file_path)?
+        };
 
         let log_file_content = log_file_content
             .split("\n")
@@ -50,7 +63,6 @@ pub trait LogServiceTrait: Send + Sync {
 
         let level = match log_level {
             Some(log_level) => match log_level.as_str() {
-                "off" => Some(Level::Off),
                 "error" => Some(Level::Error),
                 "warn" => Some(Level::Warn),
                 "info" => Some(Level::Info),
@@ -64,7 +76,7 @@ pub trait LogServiceTrait: Send + Sync {
         Ok(level)
     }
 
-    fn upsert_log_level(
+    fn update_log_level(
         &self,
         ctx: &ServiceContext,
         log_level: Level,
@@ -72,7 +84,6 @@ pub trait LogServiceTrait: Send + Sync {
         let key_value_store = KeyValueStoreRepository::new(&ctx.connection);
 
         let log_level = match log_level {
-            Level::Off => "off",
             Level::Error => "error",
             Level::Warn => "warn",
             Level::Info => "info",
@@ -81,6 +92,7 @@ pub trait LogServiceTrait: Send + Sync {
         };
 
         key_value_store.set_string(KeyValueType::LogLevel, Some(log_level.to_string()))?;
+        simple_log::update_log_level(log_level).expect("Couldn't update log level");
 
         Ok(())
     }

@@ -2,7 +2,7 @@ use super::*;
 
 impl SyncApiV5 {
     // Initialize remote sync queue.
-    // Should only be called on initial sync or when re-initializing an existing data file.
+    // Should only be called on initial sync or when re-initialising an existing data file.
     pub(crate) async fn post_initialise(&self) -> Result<RemoteSyncBatchV5, SyncApiError> {
         let route = "/sync/v5/initialise";
         let response = self.do_empty_post(route).await?;

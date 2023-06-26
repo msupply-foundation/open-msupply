@@ -294,5 +294,6 @@
   "label.current": "Actual",
   "label.default-pack-size": "Estándar de Desempeño de Entrega",
   "label.detect-scanners": "Detectar",
-  "button.scan": "Escanear"
+  "button.scan": "Escanear",
+  "label.repack": "Reempacar"
 }

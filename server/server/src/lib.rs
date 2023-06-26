@@ -115,11 +115,9 @@ pub async fn start_server(
 
     if log_level.is_none() && settings.logging.is_some() {
         log_service
-            .upsert_log_level(&service_context, settings.logging.clone().unwrap().level)
+            .update_log_level(&service_context, settings.logging.clone().unwrap().level)
             .unwrap();
     }
-
-    logging_init(settings.logging.clone(), None, log_level);
 
     // SET HARDWARE UUID
     info!("Setting hardware uuid..");
