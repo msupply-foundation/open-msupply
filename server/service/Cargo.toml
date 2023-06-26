@@ -32,14 +32,16 @@ tera = "1"
 tokio = { version = "1.17.0", features = ["macros", "sync", "time"] }
 headless_chrome = "1.0.5"
 pretty_assertions = "1.3.0"
+flate2 = "1.0.26"
+simple-log = { version = "1.6" }
 
 [dev-dependencies]
 actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
 httpmock = "0.6.6"
 rand = "0.8.5"
-actix-web = { version= "4.0.1" } 
-tokio = {version = "1.21.1", features = ["macros","rt-multi-thread", "time" ]}
+actix-web = { version = "4.0.1" }
+tokio = { version = "1.21.1", features = ["macros", "rt-multi-thread", "time"] }
 
 [features]
 default = ["sqlite"]

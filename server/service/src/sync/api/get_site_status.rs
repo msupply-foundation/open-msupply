@@ -10,12 +10,11 @@ pub(crate) struct SiteStatusV5 {
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub(crate) enum SiteStatusCodeV5 {
-    #[serde(rename = "sync_is_running")]
     SyncIsRunning,
-    #[serde(rename = "integration_in_progress")]
     IntegrationInProgress,
-    #[serde(rename = "idle")]
+    InitialisationInProgress,
     Idle,
 }
 
@@ -70,7 +69,7 @@ mod test {
 
         let mock_server = MockServer::start();
         let url = mock_server.base_url();
-
+        // Integration in progress
         let mock = mock_server.mock(|when, then| {
             when.method(GET).path("/sync/v5/site_status");
             then.status(200).body(
@@ -93,6 +92,36 @@ mod test {
             SiteStatusV5 {
                 code: SiteStatusCodeV5::IntegrationInProgress,
                 message: "Integration in progress".to_string(),
+                data: None
+            }
+        );
+
+        let mock_server = MockServer::start();
+        let url = mock_server.base_url();
+
+        // Initialisation in progress
+        let mock = mock_server.mock(|when, then| {
+            when.method(GET).path("/sync/v5/site_status");
+            then.status(200).body(
+                r#"{
+                    "code": "initialisation_in_progress",
+                    "message": "Initialisation in progress",
+                    "data": null
+                }"#,
+            );
+        });
+
+        let result = create_api(&url, "", "").get_site_status().await;
+
+        mock.assert();
+
+        assert_matches!(result, Ok(_));
+
+        assert_eq!(
+            result.unwrap(),
+            SiteStatusV5 {
+                code: SiteStatusCodeV5::InitialisationInProgress,
+                message: "Initialisation in progress".to_string(),
                 data: None
             }
         );

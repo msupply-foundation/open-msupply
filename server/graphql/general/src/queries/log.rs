@@ -22,7 +22,6 @@ impl LogNode {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum LogLevelEnum {
-    Off,
     Error,
     Warn,
     Info,
@@ -91,7 +90,6 @@ pub fn log_level(ctx: &Context<'_>) -> Result<LogLevelNode> {
                 Level::Info => LogLevelEnum::Info,
                 Level::Debug => LogLevelEnum::Debug,
                 Level::Trace => LogLevelEnum::Trace,
-                Level::Off => LogLevelEnum::Off,
             },
             None => LogLevelEnum::Info,
         },

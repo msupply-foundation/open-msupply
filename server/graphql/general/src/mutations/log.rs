@@ -19,7 +19,7 @@ pub struct UpsertLogLevelResponse {
     pub level: LogLevelEnum,
 }
 
-pub fn upsert_log_level(
+pub fn update_log_level(
     ctx: &Context<'_>,
     store_id: String,
     input: LogLevelInput,
@@ -38,7 +38,6 @@ pub fn upsert_log_level(
         LogLevelEnum::Info => Level::Info,
         LogLevelEnum::Debug => Level::Debug,
         LogLevelEnum::Trace => Level::Trace,
-        LogLevelEnum::Off => Level::Off,
     };
 
     let service_provider = ctx.service_provider();
@@ -46,7 +45,7 @@ pub fn upsert_log_level(
 
     service_provider
         .log_service
-        .upsert_log_level(&service_context, level.clone())?;
+        .update_log_level(&service_context, level.clone())?;
 
     Ok(UpsertLogLevelResponse { level: input.level })
 }
