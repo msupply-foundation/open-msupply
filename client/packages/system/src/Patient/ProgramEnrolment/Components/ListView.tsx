@@ -20,7 +20,7 @@ import {
 import { usePatient } from '../../api';
 import { getStatusTranslation } from '../utils';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
-import { getAdditionalInformationColumn } from 'packages/system/src/Encounter/ListView/AdditionalInformationColumn';
+import { getAdditionalInformationColumn } from '@openmsupply-client/system';
 
 const ProgramListComponent: FC = () => {
   const {
