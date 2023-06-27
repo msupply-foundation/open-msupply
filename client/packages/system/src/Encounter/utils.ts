@@ -1,5 +1,10 @@
 import { useMemo } from 'react';
-import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
+import {
+  DateUtils,
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
+} from '@common/intl';
 import { EncounterNodeStatus } from '@common/types';
 import { EncounterRowFragment } from '@openmsupply-client/programs';
 import { noOtherVariants } from '@openmsupply-client/common';
@@ -27,7 +32,7 @@ export type EncounterFragmentWithStatus = {
 export const useEncounterFragmentWithStatus = (
   nodes?: EncounterRowFragment[]
 ): EncounterFragmentWithStatus[] | undefined => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   return useMemo(
     () =>
       nodes?.map(node => ({
@@ -38,4 +43,14 @@ export const useEncounterFragmentWithStatus = (
       })),
     [nodes]
   );
+};
+
+export const useLogicalStatus = (startDate: Date) => {
+  const t = useTranslation();
+
+  if (DateUtils.isPast(startDate)) {
+    return `${t('label.appointment')} ${t('label.encounter-status-missed')}`;
+  } else if (DateUtils.isFuture(startDate)) {
+    return `${t('label.appointment')} ${t('label.encounter-status-scheduled')}`;
+  }
 };

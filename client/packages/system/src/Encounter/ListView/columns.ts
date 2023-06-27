@@ -7,15 +7,10 @@ import {
 } from '@openmsupply-client/common';
 import { useFormatDateTime } from '@common/intl';
 import {
-  ProgramEventFragment,
   EncounterRowFragment,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
-
-export const encounterEventCellValue = (events: ProgramEventFragment[]) => {
-  // just take the name of the first event
-  return events[0]?.data ?? '';
-};
+import { getAdditionalInformationColumn } from './AdditionalInformationColumn';
 
 interface useEncounterListColumnsProps {
   onChangeSortBy: (column: Column<any>) => void;
@@ -77,13 +72,7 @@ export const useEncounterListColumns = ({
       label: 'label.patient',
       accessor: ({ rowData }) => rowData?.patient?.name,
     });
-  columnList.push({
-    key: 'events',
-    label: 'label.additional-info',
-    sortable: false,
-    formatter: events =>
-      encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
-  });
+  columnList.push(getAdditionalInformationColumn(true));
   columnList.push({
     key: 'effectiveStatus',
     label: 'label.status',
