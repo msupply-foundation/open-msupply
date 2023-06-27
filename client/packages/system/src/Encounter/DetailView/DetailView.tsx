@@ -102,7 +102,6 @@ export const DetailView: FC = () => {
         </span>
       );
 
-      setAppointmentStatus(undefined);
       if (encounter.status === EncounterNodeStatus.Pending) {
         const date = new Date(encounter.startDatetime);
         const status = useLogicalStatus(date, t);
