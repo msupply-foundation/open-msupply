@@ -6,6 +6,7 @@ import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidat
 import { SearchWithUserSource } from './SearchWithUserSource';
 import { SearchWithDocumentSource } from './SearchWithDocumentSource';
 import { QueryValues } from './useSearchQueries';
+import { SearchWithPatientContactSource } from './SearchWithPatientContactSource';
 
 const UserOptions = z.object({
   /**
@@ -48,10 +49,29 @@ const DocumentOptions = z.object({
   saveFields: z.array(z.string()).optional(),
 });
 
-const Options = z.discriminatedUnion('source', [DocumentOptions, UserOptions]);
+const PatientContactOptions = z.object({
+  /**
+   * Source of the search data -- looks up the first contact from the patient contact list using
+   * with has the matching `category`.
+   */
+  source: z.literal('patientContact'),
+
+  /**
+   * The contact category, e.g. NextOfKin
+   */
+  category: z.string(),
+  displayString: z.string().optional(),
+});
+
+const Options = z.discriminatedUnion('source', [
+  DocumentOptions,
+  UserOptions,
+  PatientContactOptions,
+]);
 
 export type UserOptions = z.infer<typeof UserOptions>;
 export type DocumentOptions = z.infer<typeof DocumentOptions>;
+export type PatientContactOptions = z.infer<typeof PatientContactOptions>;
 
 export const searchTester = rankWith(10, uiTypeIs('Search'));
 
@@ -68,6 +88,10 @@ const UIComponent = (props: ControlProps) => {
       return <SearchWithUserSource {...childProps} options={options} />;
     case 'document':
       return <SearchWithDocumentSource {...childProps} options={options} />;
+    case 'patientContact':
+      return (
+        <SearchWithPatientContactSource {...childProps} options={options} />
+      );
     default:
       return null;
   }
