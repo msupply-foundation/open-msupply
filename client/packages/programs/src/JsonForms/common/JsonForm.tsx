@@ -43,6 +43,8 @@ import {
   ConditionalSelect,
   spacerTester,
   Spacer,
+  keyedItemArrayTester,
+  KeyedItemArray,
 } from './components';
 import {
   AccordionGroup,
@@ -174,6 +176,7 @@ const renderers = [
   { tester: datetimeTester, renderer: DateTime },
   { tester: arrayTester, renderer: ArrayControl },
   { tester: firstItemArrayTester, renderer: FirstItemArray },
+  { tester: keyedItemArrayTester, renderer: KeyedItemArray },
   { tester: categorizationTabLayoutTester, renderer: CategorizationTabLayout },
   { tester: autocompleteTester, renderer: Autocomplete },
   { tester: conditionalSelectTester, renderer: ConditionalSelect },
