@@ -5,6 +5,7 @@ import {
   ColumnDefinition,
   ColumnDescription,
   EncounterNodeStatus,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useLogicalStatus } from '../utils';
 import {
@@ -16,6 +17,7 @@ export const eventCellValue = (
   rowData: EncounterRowFragment | ProgramEnrolmentRowFragmentWithId,
   singleEncounter: boolean
 ) => {
+  const t = useTranslation();
   let additionalInfo = [];
 
   if (!!rowData?.events[0]) {
@@ -24,7 +26,7 @@ export const eventCellValue = (
 
   if (singleEncounter && rowData?.status === EncounterNodeStatus.Pending) {
     const startDate = new Date(rowData?.startDatetime);
-    additionalInfo.push(useLogicalStatus(startDate));
+    additionalInfo.push(useLogicalStatus(startDate, t));
   }
 
   return additionalInfo;
@@ -40,6 +42,8 @@ export const getAdditionalInformationColumn = <
   sortable: false,
   Cell: ({ rowData }) => {
     const additionalInfo = eventCellValue(rowData, singleEncounter);
+
+    if (!additionalInfo[0]) return null;
 
     return (
       <Box
