@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   useTranslation,
   DetailViewSkeleton,
@@ -10,6 +10,7 @@ import {
   useFormatDateTime,
   Breadcrumb,
   useIntlUtils,
+  EncounterNodeStatus,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -21,6 +22,7 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
+import { useLogicalStatus } from '../utils';
 
 export const DetailView: FC = () => {
   const t = useTranslation('patients');
@@ -29,6 +31,9 @@ export const DetailView: FC = () => {
   const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
   const dateFormat = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
+  const [appointmentStatus, setAppointmentStatus] = useState<
+    string | undefined
+  >(undefined);
 
   const {
     data: encounter,
@@ -76,7 +81,7 @@ export const DetailView: FC = () => {
   useEffect(() => fetchEncounter(), [id]);
 
   useEffect(() => {
-    if (encounter)
+    if (encounter) {
       setSuffix(
         <span key="patient-encounter">
           <Breadcrumb
@@ -96,6 +101,14 @@ export const DetailView: FC = () => {
           } - ${dateFormat.localisedDate(encounter.startDatetime)}`}</span>
         </span>
       );
+
+      setAppointmentStatus(undefined);
+      if (encounter.status === EncounterNodeStatus.Pending) {
+        const date = new Date(encounter.startDatetime);
+        const status = useLogicalStatus(date, t);
+        setAppointmentStatus(status);
+      }
+    }
   }, [encounter]);
 
   if (!isSuccess && !isError) return <DetailViewSkeleton />;
@@ -103,7 +116,7 @@ export const DetailView: FC = () => {
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
-      <AppBarButtons />
+      <AppBarButtons status={appointmentStatus} />
       {encounter && (
         <Toolbar onChange={updateEncounter} encounter={encounter} />
       )}
