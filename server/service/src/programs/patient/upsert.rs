@@ -176,12 +176,11 @@ fn patient_belongs_to_store(
 
 fn validate_document_type(
     ctx: &ServiceContext,
-    document_type: &str,
 ) -> Result<Option<DocumentRegistry>, RepositoryError> {
     let mut entry = DocumentRegistryRepository::new(&ctx.connection).query_by_filter(
         DocumentRegistryFilter::new()
             .r#type(DocumentRegistryType::Patient.equal_to())
-            .document_type(EqualFilter::equal_to(document_type)),
+            .document_type(EqualFilter::equal_to(PATIENT_TYPE)),
     )?;
     Ok(entry.pop())
 }
@@ -197,7 +196,7 @@ fn validate(
         return Err(UpdatePatientError::InvalidPatientId);
     }
 
-    let document_registry = match validate_document_type(ctx, PATIENT_TYPE)? {
+    let document_registry = match validate_document_type(ctx)? {
         Some(document_registry) => document_registry,
         None => return Err(UpdatePatientError::PatientDocumentRegistryDoesNotExit),
     };
