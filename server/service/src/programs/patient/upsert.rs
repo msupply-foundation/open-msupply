@@ -255,7 +255,7 @@ pub mod test {
         inline_init(|p: &mut SchemaPatient| {
             p.id = "updatePatientId1".to_string();
             p.code = Some("national_id".to_string());
-            p.contact_details = vec![contact_details.clone()];
+            p.contact_details = Some(vec![contact_details.clone()]);
             p.date_of_birth = Some("2000-03-04".to_string());
             p.first_name = Some("firstname".to_string());
             p.last_name = Some("lastname".to_string());
