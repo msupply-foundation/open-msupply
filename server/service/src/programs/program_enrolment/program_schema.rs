@@ -16,6 +16,8 @@ impl Default for SchemaProgramEnrolment {
             program_enrolment_id: Default::default(),
             status: SchemaProgramEnrolmentStatus::Active,
             notes: Default::default(),
+            contacts: Default::default(),
+            extension: Default::default(),
         }
     }
 }
