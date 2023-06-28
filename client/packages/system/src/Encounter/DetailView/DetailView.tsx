@@ -31,9 +31,9 @@ export const DetailView: FC = () => {
   const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);
   const dateFormat = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
-  const [appointmentStatus, setAppointmentStatus] = useState<
-    string | undefined
-  >(undefined);
+  const [logicalStatus, setLogicalStatus] = useState<string | undefined>(
+    undefined
+  );
 
   const {
     data: encounter,
@@ -105,7 +105,7 @@ export const DetailView: FC = () => {
       if (encounter.status === EncounterNodeStatus.Pending) {
         const date = new Date(encounter.startDatetime);
         const status = useLogicalStatus(date, t);
-        setAppointmentStatus(status);
+        setLogicalStatus(status);
       }
     }
   }, [encounter]);
@@ -115,7 +115,7 @@ export const DetailView: FC = () => {
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
-      <AppBarButtons status={appointmentStatus} />
+      <AppBarButtons logicalStatus={logicalStatus} />
       {encounter && (
         <Toolbar onChange={updateEncounter} encounter={encounter} />
       )}

@@ -7,18 +7,20 @@ import {
 } from '@openmsupply-client/common';
 
 interface AppBarButtonsProp {
-  status?: string | null;
+  logicalStatus?: string | null;
 }
 
-export const AppBarButtonsComponent: FC<AppBarButtonsProp> = ({ status }) => {
+export const AppBarButtonsComponent: FC<AppBarButtonsProp> = ({
+  logicalStatus,
+}) => {
   const { OpenButton } = useDetailPanel();
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        {!!status && (
+        {!!logicalStatus && (
           <Typography color={'secondary.main'} padding={1} fontWeight={'bold'}>
-            {status}
+            {logicalStatus}
           </Typography>
         )}
         {OpenButton}

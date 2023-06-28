@@ -52,8 +52,8 @@ export const useLogicalStatus = (
   if (DateUtils.isToday(startDate)) {
     return undefined;
   } else if (DateUtils.isPast(startDate)) {
-    return `${t('label.appointment')} ${t('label.encounter-status-missed')}`;
+    return `${t('label.encounter')} ${t('label.encounter-status-missed')}`;
   } else if (DateUtils.isFuture(startDate)) {
-    return `${t('label.appointment')} ${t('label.encounter-status-scheduled')}`;
+    return `${t('label.encounter')} ${t('label.encounter-status-scheduled')}`;
   }
 };
