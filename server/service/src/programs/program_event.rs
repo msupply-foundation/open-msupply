@@ -151,7 +151,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         patient_id: String,
         datetime: NaiveDateTime,
-        document_context: &str,
+        context: &str,
         events: Vec<EventInput>,
     ) -> Result<(), RepositoryError> {
         let result = ctx
@@ -261,7 +261,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                             patient_id: Some(patient_id.clone()),
                             document_type: target.document_type.clone(),
                             document_name: target.document_name.clone(),
-                            document_context: document_context.to_string(),
+                            context: context.to_string(),
                             r#type: target.r#type.clone(),
                             data: it.name,
                         })

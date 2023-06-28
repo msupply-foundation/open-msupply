@@ -64,9 +64,9 @@ pub fn program_events(
         .unwrap_or(ProgramEventFilter::new())
         .patient_id(EqualFilter::equal_to(&patient_id));
     // restrict query results to allowed entries
-    filter.document_context = Some(
+    filter.context = Some(
         filter
-            .document_context
+            .context
             .unwrap_or_default()
             .restrict_results(&allowed_ctx),
     );
