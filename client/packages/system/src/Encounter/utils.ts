@@ -46,14 +46,12 @@ export const useEncounterFragmentWithStatus = (
 };
 
 export const useLogicalStatus = (
-  startDate: Date,
+  startDatetime: Date,
   t: ReturnType<typeof useTranslation>
 ): string | undefined => {
-  if (DateUtils.isToday(startDate)) {
-    return undefined;
-  } else if (DateUtils.isPast(startDate)) {
+  if (DateUtils.differenceInMinutes(startDatetime, new Date()) < 0) {
     return `${t('label.encounter')} ${t('label.encounter-status-missed')}`;
-  } else if (DateUtils.isFuture(startDate)) {
+  } else if (DateUtils.differenceInMinutes(startDatetime, new Date()) > 0) {
     return `${t('label.encounter')} ${t('label.encounter-status-scheduled')}`;
   }
 };

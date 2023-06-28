@@ -103,8 +103,8 @@ export const DetailView: FC = () => {
       );
 
       if (encounter.status === EncounterNodeStatus.Pending) {
-        const date = new Date(encounter.startDatetime);
-        const status = useLogicalStatus(date, t);
+        const datetime = new Date(encounter.startDatetime);
+        const status = useLogicalStatus(datetime, t);
         setLogicalStatus(status);
       }
     }
