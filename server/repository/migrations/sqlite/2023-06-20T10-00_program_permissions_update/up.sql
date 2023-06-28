@@ -23,4 +23,4 @@ ALTER TABLE encounter ADD document_type TEXT NOT NULL;
 ALTER TABLE encounter DROP COLUMN program;
 ALTER TABLE encounter ADD context TEXT NOT NULL;
 
-ALTER TABLE program_event ADD document_context TEXT NOT NULL;
+ALTER TABLE program_event ADD context TEXT NOT NULL;

@@ -31,7 +31,7 @@ impl ProgramEventFilterInput {
             document_type: self.document_type.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
             r#type: self.r#type.map(EqualFilter::from),
-            document_context: None,
+            context: None,
         }
     }
 }
