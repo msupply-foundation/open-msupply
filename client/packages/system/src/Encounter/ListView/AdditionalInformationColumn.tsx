@@ -25,8 +25,8 @@ export const eventCellValue = (
   }
 
   if (singleEncounter && rowData?.status === EncounterNodeStatus.Pending) {
-    const startDate = new Date(rowData?.startDatetime);
-    additionalInfo.push(useLogicalStatus(startDate, t));
+    const startDatetime = new Date(rowData?.startDatetime);
+    additionalInfo.push(useLogicalStatus(startDatetime, t));
   }
 
   return additionalInfo;
