@@ -240,7 +240,7 @@ mod test {
         FormSchemaRowRepository::new(&ctx.connection)
             .upsert_one(&schema)
             .unwrap();
-        let program_type = "ProgramType".to_string();
+        let enrolment_doc_type = "ProgramEnrolmentType".to_string();
         let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
         registry_repo
             .upsert_one(&DocumentRegistryRow {
@@ -258,8 +258,8 @@ mod test {
             .upsert_one(&DocumentRegistryRow {
                 id: "program_enrolment_id".to_string(),
                 r#type: DocumentRegistryType::ProgramEnrolment,
-                document_type: program_type.to_string(),
-                document_context: program_type.to_string(),
+                document_type: enrolment_doc_type.to_string(),
+                document_context: enrolment_doc_type.to_string(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
@@ -280,7 +280,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: None,
                     patient_id: "some_id".to_string(),
-                    r#type: program_type.clone(),
+                    r#type: enrolment_doc_type.clone(),
                 },
                 vec!["WrongType".to_string()],
             )
@@ -299,9 +299,9 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: None,
                     patient_id: "some_id".to_string(),
-                    r#type: program_type.clone(),
+                    r#type: enrolment_doc_type.clone(),
                 },
-                vec![program_type.clone()],
+                vec![enrolment_doc_type.clone()],
             )
             .err()
             .unwrap();
@@ -333,9 +333,9 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: None,
                     patient_id: "some_id".to_string(),
-                    r#type: program_type.clone(),
+                    r#type: enrolment_doc_type.clone(),
                 },
-                vec![program_type.clone()],
+                vec![enrolment_doc_type.clone()],
             )
             .err()
             .unwrap();
@@ -358,9 +358,9 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: None,
                     patient_id: patient.id.clone(),
-                    r#type: program_type.clone(),
+                    r#type: enrolment_doc_type.clone(),
                 },
-                vec![program_type.clone()],
+                vec![enrolment_doc_type.clone()],
             )
             .unwrap();
 
@@ -372,12 +372,12 @@ mod test {
                     "user",
                     UpsertProgramEnrolment {
                         patient_id: patient.id.clone(),
-                        r#type: program_type.clone(),
+                        r#type: enrolment_doc_type.clone(),
                         data: serde_json::to_value(program.clone()).unwrap(),
                         schema_id: schema.id.clone(),
                         parent: None
                     },
-                    vec![program_type.clone()]
+                    vec![enrolment_doc_type.clone()]
                 )
                 .err()
                 .unwrap(),
@@ -392,12 +392,12 @@ mod test {
                     "user",
                     UpsertProgramEnrolment {
                         patient_id: patient.id.clone(),
-                        r#type: program_type.clone(),
+                        r#type: enrolment_doc_type.clone(),
                         data: serde_json::to_value(program.clone()).unwrap(),
                         schema_id: schema.id.clone(),
                         parent: Some("invalid".to_string()),
                     },
-                    vec![program_type.clone()]
+                    vec![enrolment_doc_type.clone()]
                 )
                 .err()
                 .unwrap(),
@@ -411,7 +411,7 @@ mod test {
                 Some(
                     DocumentFilter::new().name(StringFilter::equal_to(&patient_doc_name(
                         &patient.id,
-                        &program_type,
+                        &enrolment_doc_type,
                     ))),
                 ),
                 None,
@@ -426,20 +426,20 @@ mod test {
                 "user",
                 UpsertProgramEnrolment {
                     patient_id: patient.id.clone(),
-                    r#type: program_type.clone(),
+                    r#type: enrolment_doc_type.clone(),
                     data: serde_json::to_value(program.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: Some(v0.id),
                 },
-                vec![program_type.clone()],
+                vec![enrolment_doc_type.clone()],
             )
             .unwrap();
         // Test program has been written to the programs table
         let found_program = ProgramEnrolmentRepository::new(&ctx.connection)
-            .find_one_by_type_and_patient(&program_type, &patient.id)
+            .find_one_by_type_and_patient(&enrolment_doc_type, &patient.id)
             .unwrap()
             .unwrap();
-        assert_eq!(program_type, found_program.context);
+        assert_eq!(enrolment_doc_type, found_program.context);
         assert_eq!(
             program.enrolment_datetime,
             DateTime::<Utc>::from_utc(found_program.enrolment_datetime, Utc).to_rfc3339()

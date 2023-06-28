@@ -267,7 +267,7 @@ mod test {
             .upsert_one(&schema)
             .unwrap();
 
-        let program_type = "ProgramType".to_string();
+        let enrolment_doc_type = "ProgramEnrolmentType".to_string();
         let encounter_type = "EncounterType".to_string();
 
         let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
@@ -287,7 +287,7 @@ mod test {
             .upsert_one(&DocumentRegistryRow {
                 id: "program_enrolment_rego_id".to_string(),
                 r#type: DocumentRegistryType::ProgramEnrolment,
-                document_type: program_type.to_string(),
+                document_type: enrolment_doc_type.to_string(),
                 document_context: "TestProgramEnrolment".to_string(),
                 name: None,
                 parent_id: None,
@@ -339,7 +339,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: None,
                     patient_id: patient.id.clone(),
-                    r#type: program_type.clone(),
+                    r#type: enrolment_doc_type.clone(),
                 },
                 vec!["TestProgramEnrolment".to_string()],
             )
