@@ -99,7 +99,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     onClose,
     isOpen,
     animationTimeout = 500,
-    disableBackdrop = false,
+    disableBackdrop = true,
     disableEscapeKey = false,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
