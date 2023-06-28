@@ -164,7 +164,6 @@
   "label.encounter-type": "Type",
   "label.encounter-start": "Start",
   "label.encounter-end": "End",
-  "label.appointment": "Appointment",
   "label.encounter-status-pending": "Pending",
   "label.encounter-status-visited": "Visited",
   "label.encounter-status-cancelled": "Cancelled",
