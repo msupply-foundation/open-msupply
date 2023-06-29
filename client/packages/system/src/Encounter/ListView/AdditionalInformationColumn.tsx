@@ -5,6 +5,7 @@ import {
   ColumnDefinition,
   ColumnDescription,
   EncounterNodeStatus,
+  RecordWithId,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useLogicalStatus } from '../utils';
@@ -13,10 +14,7 @@ import {
   ProgramEnrolmentRowFragmentWithId,
 } from 'packages/programs/src';
 
-export const eventCellValue = (
-  rowData: EncounterRowFragment | ProgramEnrolmentRowFragmentWithId,
-  singleEncounter: boolean
-) => {
+export const getEncounterEventCell = (rowData: EncounterRowFragment) => {
   const t = useTranslation();
   let additionalInfo = [];
 
@@ -24,7 +22,7 @@ export const eventCellValue = (
     additionalInfo.push(rowData.events[0].data ?? '');
   }
 
-  if (singleEncounter && rowData?.status === EncounterNodeStatus.Pending) {
+  if (rowData?.status === EncounterNodeStatus.Pending) {
     const startDatetime = new Date(rowData?.startDatetime);
     additionalInfo.push(useLogicalStatus(startDatetime, t));
   }
@@ -32,16 +30,26 @@ export const eventCellValue = (
   return additionalInfo;
 };
 
-export const getAdditionalInformationColumn = <
-  T extends EncounterRowFragment | ProgramEnrolmentRowFragmentWithId
->(
-  singleEncounter: boolean
+export const getProgramEventCell = (
+  rowData: ProgramEnrolmentRowFragmentWithId
+) => {
+  let additionalInfo = [];
+
+  if (!!rowData?.events[0]) {
+    additionalInfo.push(rowData.events[0].data ?? '');
+  }
+
+  return additionalInfo;
+};
+
+export const getAdditionalInformationColumn = <T extends RecordWithId>(
+  accessor: (rowData: T) => (string | undefined)[]
 ): ColumnDefinition<T> | ColumnDescription<T> => ({
   label: 'label.additional-info',
   key: 'events',
   sortable: false,
   Cell: ({ rowData }) => {
-    const additionalInfo = eventCellValue(rowData, singleEncounter);
+    const additionalInfo = accessor(rowData);
 
     if (!additionalInfo[0]) return null;
 
