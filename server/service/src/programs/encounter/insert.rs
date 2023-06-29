@@ -1,14 +1,14 @@
 use chrono::{DateTime, Utc};
 use repository::{
-    ClinicianRow, Document, DocumentFilter, DocumentRegistry, DocumentRegistryFilter,
-    DocumentRegistryRepository, DocumentRepository, DocumentStatus, EqualFilter, Pagination,
-    RepositoryError, StringFilter, TransactionError,
+    ClinicianRow, Document, DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository,
+    DocumentStatus, EqualFilter, ProgramEnrolmentFilter, ProgramEnrolmentRepository,
+    ProgramEnrolmentRow, RepositoryError, TransactionError,
 };
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
     programs::{
-        patient::{patient_doc_name, patient_doc_name_with_id},
+        patient::patient_doc_name_with_id,
         update_program_document::{update_program_events, UpdateProgramDocumentError},
     },
     service_provider::{ServiceContext, ServiceProvider},
@@ -129,7 +129,7 @@ fn generate(
     user_id: &str,
     input: InsertEncounter,
     event_datetime: DateTime<Utc>,
-    program_enrolment: Document,
+    program_enrolment: ProgramEnrolmentRow,
 ) -> Result<RawDocument, RepositoryError> {
     let encounter_name = Utc::now().to_rfc3339();
     Ok(RawDocument {
@@ -163,33 +163,27 @@ fn validate_patient_program_exists(
     ctx: &ServiceContext,
     patient_id: &str,
     encounter_registry: DocumentRegistry,
-) -> Result<Option<Document>, RepositoryError> {
-    let Some(enrolment_registry_id) = encounter_registry.parent_id else {
-        return Ok(None);
-    };
-    let Some(enrolment_enrolment_registry) = DocumentRegistryRepository::new(&ctx.connection)
+) -> Result<Option<ProgramEnrolmentRow>, RepositoryError> {
+    Ok(ProgramEnrolmentRepository::new(&ctx.connection)
         .query_by_filter(
-            DocumentRegistryFilter::new().id(EqualFilter::equal_to(&enrolment_registry_id)),
+            ProgramEnrolmentFilter::new()
+                .patient_id(EqualFilter::equal_to(patient_id))
+                .context(EqualFilter::equal_to(&encounter_registry.document_context)),
         )?
-        .pop() else {
-        return Ok(None);
-    };
-
-    let doc_name = patient_doc_name(patient_id, &enrolment_enrolment_registry.document_type);
-    let document = DocumentRepository::new(&ctx.connection)
-        .query(
-            Pagination::one(),
-            Some(DocumentFilter::new().name(StringFilter::equal_to(&doc_name))),
-            None,
-        )?
-        .pop();
-    Ok(document)
+        .pop())
 }
 
 fn validate(
     ctx: &ServiceContext,
     input: &InsertEncounter,
-) -> Result<(ValidatedSchemaEncounter, Document, Option<ClinicianRow>), InsertEncounterError> {
+) -> Result<
+    (
+        ValidatedSchemaEncounter,
+        ProgramEnrolmentRow,
+        Option<ClinicianRow>,
+    ),
+    InsertEncounterError,
+> {
     let Some(encounter_registry) = validate_encounter_registry(ctx, &input.r#type)? else {
         return Err(InsertEncounterError::InvalidEncounterType);
     };
