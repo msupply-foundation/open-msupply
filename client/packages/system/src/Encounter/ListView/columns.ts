@@ -10,7 +10,10 @@ import {
   EncounterRowFragment,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
-import { getAdditionalInformationColumn } from './AdditionalInformationColumn';
+import {
+  getAdditionalInformationColumn,
+  getEncounterEventCell,
+} from './AdditionalInformationColumn';
 
 interface useEncounterListColumnsProps {
   onChangeSortBy: (column: Column<any>) => void;
@@ -72,7 +75,7 @@ export const useEncounterListColumns = ({
       label: 'label.patient',
       accessor: ({ rowData }) => rowData?.patient?.name,
     });
-  columnList.push(getAdditionalInformationColumn(true));
+  columnList.push(getAdditionalInformationColumn(getEncounterEventCell));
   columnList.push({
     key: 'effectiveStatus',
     label: 'label.status',

@@ -20,7 +20,10 @@ import {
 import { usePatient } from '../../api';
 import { getStatusTranslation } from '../utils';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
-import { getAdditionalInformationColumn } from '@openmsupply-client/system';
+import {
+  getAdditionalInformationColumn,
+  getProgramEventCell,
+} from '@openmsupply-client/system';
 
 const ProgramListComponent: FC = () => {
   const {
@@ -55,7 +58,7 @@ const ProgramListComponent: FC = () => {
         key: 'programEnrolmentId',
         label: 'label.enrolment-patient-id',
       },
-      getAdditionalInformationColumn(false),
+      getAdditionalInformationColumn(getProgramEventCell),
       {
         key: 'status',
         label: 'label.program-status',
