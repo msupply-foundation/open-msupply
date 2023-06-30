@@ -2,56 +2,22 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { Typography } from '@common/components';
 import {
+  ColumnDataAccessor,
   ColumnDefinition,
   ColumnDescription,
-  EncounterNodeStatus,
   RecordWithId,
-  useTranslation,
 } from '@openmsupply-client/common';
-import { useLogicalStatus } from '../utils';
-import {
-  EncounterRowFragment,
-  ProgramEnrolmentRowFragmentWithId,
-} from 'packages/programs/src';
-
-export const getEncounterEventCell = (rowData: EncounterRowFragment) => {
-  const t = useTranslation();
-  let additionalInfo = [];
-
-  if (!!rowData?.events[0]) {
-    additionalInfo.push(rowData.events[0].data ?? '');
-  }
-
-  if (rowData?.status === EncounterNodeStatus.Pending) {
-    const startDatetime = new Date(rowData?.startDatetime);
-    additionalInfo.push(useLogicalStatus(startDatetime, t));
-  }
-
-  return additionalInfo;
-};
-
-export const getProgramEventCell = (
-  rowData: ProgramEnrolmentRowFragmentWithId
-) => {
-  let additionalInfo = [];
-
-  if (!!rowData?.events[0]) {
-    additionalInfo.push(rowData.events[0].data ?? '');
-  }
-
-  return additionalInfo;
-};
 
 export const getAdditionalInformationColumn = <T extends RecordWithId>(
-  accessor: (rowData: T) => (string | undefined)[]
+  accessor: ColumnDataAccessor<T>
 ): ColumnDefinition<T> | ColumnDescription<T> => ({
   label: 'label.additional-info',
   key: 'events',
   sortable: false,
   Cell: ({ rowData }) => {
-    const additionalInfo = accessor(rowData);
+    const additionalInfo = accessor({ rowData }) as string[];
 
-    if (!additionalInfo[0]) return null;
+    if (!additionalInfo) return null;
 
     return (
       <Box
