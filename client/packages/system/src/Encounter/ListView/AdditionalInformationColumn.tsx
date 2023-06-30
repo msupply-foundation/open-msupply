@@ -17,7 +17,7 @@ export const getAdditionalInformationColumn = <T extends RecordWithId>(
   Cell: ({ rowData }) => {
     const additionalInfo = accessor({ rowData }) as string[];
 
-    if (!additionalInfo) return null;
+    if (additionalInfo.length === 0) return null;
 
     return (
       <Box
