@@ -10,6 +10,7 @@ import {
   useTranslation,
   ProgramEnrolmentSortFieldInput,
   useUrlQueryParams,
+  ColumnDataAccessor,
 } from '@openmsupply-client/common';
 import {
   PatientModal,
@@ -20,10 +21,19 @@ import {
 import { usePatient } from '../../api';
 import { getStatusTranslation } from '../utils';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
-import {
-  getAdditionalInformationColumn,
-  getProgramEventCell,
-} from '@openmsupply-client/system';
+import { getAdditionalInformationColumn } from '@openmsupply-client/system';
+
+const programAdditionalInfoAccessor: ColumnDataAccessor<
+  ProgramEnrolmentRowFragmentWithId
+> = ({ rowData }): string[] => {
+  const additionalInfo = [];
+
+  if (rowData?.events[0]?.data) {
+    additionalInfo.push(rowData.events[0].data);
+  }
+
+  return additionalInfo;
+};
 
 const ProgramListComponent: FC = () => {
   const {
@@ -58,7 +68,7 @@ const ProgramListComponent: FC = () => {
         key: 'programEnrolmentId',
         label: 'label.enrolment-patient-id',
       },
-      getAdditionalInformationColumn(getProgramEventCell),
+      getAdditionalInformationColumn(programAdditionalInfoAccessor),
       {
         key: 'status',
         label: 'label.program-status',
