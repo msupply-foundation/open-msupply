@@ -2,15 +2,27 @@ import React, { FC } from 'react';
 import {
   AppBarButtonsPortal,
   Grid,
+  Typography,
   useDetailPanel,
 } from '@openmsupply-client/common';
 
-export const AppBarButtonsComponent: FC = () => {
+interface AppBarButtonsProp {
+  logicalStatus?: string | null;
+}
+
+export const AppBarButtonsComponent: FC<AppBarButtonsProp> = ({
+  logicalStatus,
+}) => {
   const { OpenButton } = useDetailPanel();
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        {!!logicalStatus && (
+          <Typography color={'secondary.main'} padding={1} fontWeight={'bold'}>
+            {logicalStatus}
+          </Typography>
+        )}
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>
