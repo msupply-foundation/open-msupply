@@ -4,24 +4,43 @@ import {
   Column,
   ColumnDescription,
   SortBy,
+  ColumnDataAccessor,
+  EncounterNodeStatus,
 } from '@openmsupply-client/common';
-import { useFormatDateTime } from '@common/intl';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
-  ProgramEventFragment,
   EncounterRowFragment,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
-
-export const encounterEventCellValue = (events: ProgramEventFragment[]) => {
-  // just take the name of the first event
-  return events[0]?.data ?? '';
-};
+import { getAdditionalInformationColumn } from './AdditionalInformationColumn';
+import { useLogicalStatus } from '../utils';
 
 interface useEncounterListColumnsProps {
   onChangeSortBy: (column: Column<any>) => void;
   sortBy: SortBy<EncounterRowFragment>;
   includePatient?: boolean;
 }
+
+export const encounterAdditionalInfoAccessor: ColumnDataAccessor<
+  EncounterRowFragment
+> = ({ rowData }): string[] => {
+  const t = useTranslation();
+  const additionalInfo = [];
+
+  if (rowData?.events[0]?.data) {
+    additionalInfo.push(rowData.events[0].data);
+  }
+
+  if (rowData?.status === EncounterNodeStatus.Pending) {
+    const startDatetime = new Date(rowData?.startDatetime);
+    const status = useLogicalStatus(startDatetime, t);
+    if (status) {
+      additionalInfo.push(status);
+    }
+  }
+
+  return additionalInfo;
+};
 
 export const useEncounterListColumns = ({
   onChangeSortBy,
@@ -77,13 +96,9 @@ export const useEncounterListColumns = ({
       label: 'label.patient',
       accessor: ({ rowData }) => rowData?.patient?.name,
     });
-  columnList.push({
-    key: 'events',
-    label: 'label.additional-info',
-    sortable: false,
-    formatter: events =>
-      encounterEventCellValue((events as ProgramEventFragment[]) ?? []),
-  });
+  columnList.push(
+    getAdditionalInformationColumn(encounterAdditionalInfoAccessor)
+  );
   columnList.push({
     key: 'effectiveStatus',
     label: 'label.status',
