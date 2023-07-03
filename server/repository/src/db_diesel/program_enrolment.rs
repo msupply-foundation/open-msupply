@@ -17,6 +17,7 @@ pub struct ProgramEnrolmentFilter {
     pub enrolment_datetime: Option<DatetimeFilter>,
     pub program_enrolment_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<ProgramEnrolmentStatus>>,
+    pub document_type: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
     pub context: Option<EqualFilter<String>>,
 }
@@ -29,6 +30,7 @@ impl ProgramEnrolmentFilter {
             enrolment_datetime: None,
             program_enrolment_id: None,
             status: None,
+            document_type: None,
             document_name: None,
         }
     }
@@ -58,6 +60,11 @@ impl ProgramEnrolmentFilter {
         self
     }
 
+    pub fn document_type(mut self, filter: EqualFilter<String>) -> Self {
+        self.document_type = Some(filter);
+        self
+    }
+
     pub fn document_name(mut self, filter: EqualFilter<String>) -> Self {
         self.document_name = Some(filter);
         self
@@ -81,17 +88,27 @@ type BoxedProgramEnrolmentQuery = IntoBoxed<'static, program_enrolment::table, D
 fn create_filtered_query<'a>(filter: Option<ProgramEnrolmentFilter>) -> BoxedProgramEnrolmentQuery {
     let mut query = program_dsl::program_enrolment.into_boxed();
 
-    if let Some(f) = filter {
-        apply_equal_filter!(query, f.patient_id, program_dsl::patient_id);
-        apply_equal_filter!(query, f.context, program_dsl::context);
-        apply_date_time_filter!(query, f.enrolment_datetime, program_dsl::enrolment_datetime);
+    if let Some(ProgramEnrolmentFilter {
+        patient_id,
+        enrolment_datetime,
+        program_enrolment_id,
+        status,
+        document_type,
+        document_name,
+        context,
+    }) = filter
+    {
+        apply_equal_filter!(query, patient_id, program_dsl::patient_id);
+        apply_equal_filter!(query, context, program_dsl::context);
+        apply_date_time_filter!(query, enrolment_datetime, program_dsl::enrolment_datetime);
         apply_equal_filter!(
             query,
-            f.program_enrolment_id,
+            program_enrolment_id,
             program_dsl::program_enrolment_id
         );
-        apply_equal_filter!(query, f.status, program_dsl::status);
-        apply_equal_filter!(query, f.document_name, program_dsl::document_name);
+        apply_equal_filter!(query, status, program_dsl::status);
+        apply_equal_filter!(query, document_type, program_dsl::document_type);
+        apply_equal_filter!(query, document_name, program_dsl::document_name);
     }
     query
 }

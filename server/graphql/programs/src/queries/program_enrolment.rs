@@ -65,7 +65,6 @@ pub struct ProgramEnrolmentFilterInput {
 impl ProgramEnrolmentFilterInput {
     pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
         ProgramEnrolmentFilter {
-            context: self.program.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
             enrolment_datetime: self.enrolment_datetime.map(DatetimeFilter::from),
             program_enrolment_id: self.program_enrolment_id.map(EqualFilter::from),
@@ -73,6 +72,8 @@ impl ProgramEnrolmentFilterInput {
                 .status
                 .map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
             document_name: self.document_name.map(EqualFilter::from),
+            document_type: self.program.map(EqualFilter::from),
+            context: None,
         }
     }
 }
