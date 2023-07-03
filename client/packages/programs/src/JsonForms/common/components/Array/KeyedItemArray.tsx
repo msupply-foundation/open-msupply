@@ -68,10 +68,10 @@ const KeyedItemArrayComponent: ComponentType<
   useEffect(() => {
     if (!options) return;
     const arrayData = data ?? [];
-    const elementIndex = arrayData.findIndex(it => {
-      if (!it || typeof it !== 'object' || Array.isArray(it)) return;
+    const elementIndex = arrayData.findIndex(item => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return;
 
-      return it[options.keyField] === options.keyValue;
+      return item[options.keyField] === options.keyValue;
     });
     if (elementIndex >= 0) {
       // Only set the index when the entry exists otherwise the renderer might overwrite the object
