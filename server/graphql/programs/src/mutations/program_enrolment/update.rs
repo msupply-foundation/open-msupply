@@ -100,7 +100,7 @@ pub fn update_program_enrolment(
         .program_enrolment_service
         .program_enrolment(
             &service_context,
-            ProgramEnrolmentFilter::new().context(EqualFilter::equal_to(&document.r#type)),
+            ProgramEnrolmentFilter::new().context(EqualFilter::equal_to(&document.context)),
             allowed_ctx.clone(),
         )?
         .ok_or(
