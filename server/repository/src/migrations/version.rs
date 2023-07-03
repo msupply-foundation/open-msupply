@@ -90,7 +90,7 @@ impl PartialOrd for Version {
         }
 
         if self.minor != other.minor {
-            return Some(self.major.cmp(&other.minor));
+            return Some(self.minor.cmp(&other.minor));
         }
 
         if self.patch != other.patch {
