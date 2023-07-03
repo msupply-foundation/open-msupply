@@ -50,6 +50,7 @@ const DocumentOptions = z.object({
 });
 
 const PatientContactOptions = z.object({
+  /*
    * Source of the search data -- looks up the first contact from the patient contact list using
    * the matching `category`.
    */
