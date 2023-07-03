@@ -40,8 +40,7 @@ struct LegacyDocumentRow {
     #[serde(rename = "owner_name_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub owner_name_id: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub context: Option<String>,
+    pub context: String,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -56,7 +55,12 @@ impl SyncTranslation for DocumentTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::DOCUMENT,
-            dependencies: vec![LegacyTableName::NAME, LegacyTableName::FORM_SCHEMA],
+            dependencies: vec![
+                LegacyTableName::NAME,
+                LegacyTableName::FORM_SCHEMA,
+                // DocumentRegistry is needed in `upsert_document()`
+                LegacyTableName::DOCUMENT_REGISTRY,
+            ],
         }
     }
 

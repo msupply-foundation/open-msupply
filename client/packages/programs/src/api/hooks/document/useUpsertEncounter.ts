@@ -11,7 +11,6 @@ export type UpsertEncounterMutation = (
 
 export const useUpsertEncounter = (
   patientId: string,
-  programType: string,
   type: string
 ): UpsertEncounterMutation => {
   const { mutateAsync: insertEncounter } = useInsertEncounter();
@@ -23,7 +22,6 @@ export const useUpsertEncounter = (
         schemaId: formSchemaId,
         patientId,
         type,
-        programType,
       });
       return result;
     } else {
@@ -40,10 +38,9 @@ export const useUpsertEncounter = (
 
 export const useUpsertEncounterDocument = (
   patientId: string,
-  programType: string,
   type: string
 ): SaveDocumentMutation => {
-  const upsert = useUpsertEncounter(patientId, programType, type);
+  const upsert = useUpsertEncounter(patientId, type);
   return async (jsonData: unknown, formSchemaId: string, parent?: string) => {
     const result = await upsert(jsonData, formSchemaId, parent);
     return result.document;

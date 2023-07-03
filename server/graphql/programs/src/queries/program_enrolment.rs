@@ -65,7 +65,7 @@ pub struct ProgramEnrolmentFilterInput {
 impl ProgramEnrolmentFilterInput {
     pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
         ProgramEnrolmentFilter {
-            program: self.program.map(EqualFilter::from),
+            context: self.program.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
             enrolment_datetime: self.enrolment_datetime.map(DatetimeFilter::from),
             program_enrolment_id: self.program_enrolment_id.map(EqualFilter::from),
@@ -90,7 +90,7 @@ pub fn program_enrolments(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -102,13 +102,13 @@ pub fn program_enrolments(
             Pagination::all(),
             sort.map(ProgramEnrolmentSortInput::to_domain),
             filter.map(|f| f.to_domain_filter()),
-            allowed_docs.clone(),
+            allowed_ctx.clone(),
         )?
         .into_iter()
         .map(|program_row| ProgramEnrolmentNode {
             store_id: store_id.clone(),
             program_row,
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
         })
         .collect();
 

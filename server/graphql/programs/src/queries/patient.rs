@@ -27,7 +27,7 @@ use super::ProgramEnrolmentFilterInput;
 pub struct PatientNode {
     pub store_id: String,
     pub patient: Patient,
-    pub allowed_docs: Vec<String>,
+    pub allowed_ctx: Vec<String>,
 }
 
 #[Object]
@@ -111,7 +111,7 @@ impl PatientNode {
             .await?
             .map(|document| DocumentNode {
                 document,
-                allowed_docs: self.allowed_docs.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
             });
 
         Ok(result)
@@ -136,14 +136,14 @@ impl PatientNode {
                 Pagination::all(),
                 None,
                 Some(filter),
-                self.allowed_docs.clone(),
+                self.allowed_ctx.clone(),
             )?;
         Ok(entries
             .into_iter()
             .map(|program_row| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
                 program_row,
-                allowed_docs: self.allowed_docs.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
             })
             .collect())
     }
@@ -277,7 +277,7 @@ pub fn patients(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -296,7 +296,7 @@ pub fn patients(
         .map(|patient| PatientNode {
             store_id: store_id.clone(),
             patient,
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
         })
         .collect();
     Ok(PatientResponse::Response(PatientConnector {
@@ -317,7 +317,7 @@ pub fn patient(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -336,7 +336,7 @@ pub fn patient(
         .map(|patient| PatientNode {
             store_id: store_id.clone(),
             patient,
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
         });
 
     Ok(node)

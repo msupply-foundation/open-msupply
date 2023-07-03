@@ -365,7 +365,6 @@ impl NameFilter {
         self.is_customer = Some(value);
         self
     }
-    
 
     pub fn r#type(mut self, filter: EqualFilter<NameType>) -> Self {
         self.r#type = Some(filter);
@@ -740,7 +739,8 @@ mod tests {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
                 patient_id: mock_name_2().id,
-                program: "ProgramType".to_string(),
+                document_type: "ProgramType".to_string(),
+                context: "ProgramType".to_string(),
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
                 status: ProgramEnrolmentStatus::Active,

@@ -151,17 +151,19 @@ mod tests {
 
         assert_matches!(
             error,
-            SyncError::PostInitialisationError(PostInitialisationError(SyncApiError {
-                source: SyncApiErrorVariant::ParsedError {
-                    status: StatusCode::CONFLICT,
-                    source: ParsedError {
-                        code: SyncErrorCodeV5::ApiVersionIncompatible,
-                        data: Some(_),
-                        ..
-                    }
-                },
-                ..
-            }))
+            SyncError::PostInitialisationError(PostInitialisationError::SyncApiError(
+                SyncApiError {
+                    source: SyncApiErrorVariant::ParsedError {
+                        status: StatusCode::CONFLICT,
+                        source: ParsedError {
+                            code: SyncErrorCodeV5::ApiVersionIncompatible,
+                            data: Some(_),
+                            ..
+                        }
+                    },
+                    ..
+                }
+            ))
         );
     }
 
