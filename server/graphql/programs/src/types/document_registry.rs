@@ -3,7 +3,7 @@ use graphql_core::{
     loader::{DocumentRegistryChildrenLoader, DocumentRegistryLoaderInput},
     ContextExt,
 };
-use repository::{DocumentContext, DocumentRegistry};
+use repository::{DocumentRegistry, DocumentRegistryType};
 use serde::Serialize;
 
 #[derive(SimpleObject)]
@@ -13,15 +13,15 @@ pub struct DocumentRegistryConnector {
 }
 
 pub struct DocumentRegistryNode {
-    pub allowed_docs: Vec<String>,
+    pub allowed_ctx: Vec<String>,
     pub document_registry: DocumentRegistry,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum DocumentRegistryNodeContext {
+pub enum DocumentRegistryTypeNode {
     Patient,
-    Program,
+    ProgramEnrolment,
     Encounter,
     Custom,
 }
@@ -36,12 +36,16 @@ impl DocumentRegistryNode {
         &self.document_registry.document_type
     }
 
-    pub async fn context(&self) -> DocumentRegistryNodeContext {
-        match self.document_registry.context {
-            DocumentContext::Patient => DocumentRegistryNodeContext::Patient,
-            DocumentContext::Program => DocumentRegistryNodeContext::Program,
-            DocumentContext::Encounter => DocumentRegistryNodeContext::Encounter,
-            DocumentContext::Custom => DocumentRegistryNodeContext::Custom,
+    pub async fn document_context(&self) -> &str {
+        &self.document_registry.document_context
+    }
+
+    pub async fn r#type(&self) -> DocumentRegistryTypeNode {
+        match self.document_registry.r#type {
+            DocumentRegistryType::Patient => DocumentRegistryTypeNode::Patient,
+            DocumentRegistryType::ProgramEnrolment => DocumentRegistryTypeNode::ProgramEnrolment,
+            DocumentRegistryType::Encounter => DocumentRegistryTypeNode::Encounter,
+            DocumentRegistryType::Custom => DocumentRegistryTypeNode::Custom,
         }
     }
 
@@ -73,7 +77,7 @@ impl DocumentRegistryNode {
         let loader = ctx.get_loader::<DataLoader<DocumentRegistryChildrenLoader>>();
         let children = loader
             .load_one(DocumentRegistryLoaderInput::new(
-                &self.allowed_docs,
+                &self.allowed_ctx,
                 &self.document_registry.id,
             ))
             .await?
@@ -81,20 +85,20 @@ impl DocumentRegistryNode {
         Ok(children
             .into_iter()
             .map(|document_registry| DocumentRegistryNode {
-                allowed_docs: self.allowed_docs.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
                 document_registry,
             })
             .collect())
     }
 }
 
-impl DocumentRegistryNodeContext {
-    pub fn to_domain(self) -> DocumentContext {
+impl DocumentRegistryTypeNode {
+    pub fn to_domain(self) -> DocumentRegistryType {
         match self {
-            DocumentRegistryNodeContext::Patient => DocumentContext::Patient,
-            DocumentRegistryNodeContext::Program => DocumentContext::Program,
-            DocumentRegistryNodeContext::Encounter => DocumentContext::Encounter,
-            DocumentRegistryNodeContext::Custom => DocumentContext::Custom,
+            DocumentRegistryTypeNode::Patient => DocumentRegistryType::Patient,
+            DocumentRegistryTypeNode::ProgramEnrolment => DocumentRegistryType::ProgramEnrolment,
+            DocumentRegistryTypeNode::Encounter => DocumentRegistryType::Encounter,
+            DocumentRegistryTypeNode::Custom => DocumentRegistryType::Custom,
         }
     }
 }

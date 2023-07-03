@@ -129,7 +129,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       input,
     });
 
-    if (result.insertPatient.__typename === 'PatientNode') {
+    if (result.insertPatient?.__typename === 'PatientNode') {
       return result.insertPatient;
     }
 

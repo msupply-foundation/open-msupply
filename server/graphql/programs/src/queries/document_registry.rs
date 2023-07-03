@@ -12,29 +12,30 @@ use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
 use crate::types::document_registry::{
-    DocumentRegistryConnector, DocumentRegistryNode, DocumentRegistryNodeContext,
+    DocumentRegistryConnector, DocumentRegistryNode, DocumentRegistryTypeNode,
 };
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterDocumentRegistryContextInput {
-    pub equal_to: Option<DocumentRegistryNodeContext>,
-    pub equal_any: Option<Vec<DocumentRegistryNodeContext>>,
-    pub not_equal_to: Option<DocumentRegistryNodeContext>,
+pub struct EqualFilterDocumentRegistryTypeInput {
+    pub equal_to: Option<DocumentRegistryTypeNode>,
+    pub equal_any: Option<Vec<DocumentRegistryTypeNode>>,
+    pub not_equal_to: Option<DocumentRegistryTypeNode>,
 }
 
 #[derive(InputObject, Clone)]
 pub struct DocumentRegistryFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub r#type: Option<EqualFilterDocumentRegistryTypeInput>,
     pub document_type: Option<EqualFilterStringInput>,
-    pub context: Option<EqualFilterDocumentRegistryContextInput>,
+    pub document_context: Option<EqualFilterStringInput>,
     pub parent_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum DocumentRegistrySortFieldInput {
+    Type,
     DocumentType,
-    Context,
 }
 
 #[derive(InputObject)]
@@ -64,7 +65,7 @@ pub fn document_registries(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -80,7 +81,7 @@ pub fn document_registries(
             Some(filter),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
-            &allowed_docs,
+            &allowed_ctx,
         )
         .map_err(|err| {
             let formatted_err = format! {"{:?}", err};
@@ -92,7 +93,7 @@ pub fn document_registries(
             nodes: entries
                 .into_iter()
                 .map(|document_registry| DocumentRegistryNode {
-                    allowed_docs: allowed_docs.clone(),
+                    allowed_ctx: allowed_ctx.clone(),
                     document_registry,
                 })
                 .collect(),
@@ -102,13 +103,19 @@ pub fn document_registries(
 
 impl DocumentRegistryFilterInput {
     pub fn to_domain(self) -> DocumentRegistryFilter {
+        let DocumentRegistryFilterInput {
+            id,
+            r#type,
+            document_type,
+            document_context,
+            parent_id,
+        } = self;
         DocumentRegistryFilter {
-            id: self.id.map(EqualFilter::from),
-            document_type: self.document_type.map(EqualFilter::from),
-            context: self
-                .context
-                .map(|t| map_filter!(t, DocumentRegistryNodeContext::to_domain)),
-            parent_id: self.parent_id.map(EqualFilter::from),
+            id: id.map(EqualFilter::from),
+            document_type: document_type.map(EqualFilter::from),
+            document_context: document_context.map(EqualFilter::from),
+            r#type: r#type.map(|t| map_filter!(t, DocumentRegistryTypeNode::to_domain)),
+            parent_id: parent_id.map(EqualFilter::from),
         }
     }
 }
@@ -116,7 +123,7 @@ impl DocumentRegistryFilterInput {
 impl DocumentRegistrySortInput {
     pub fn to_domain(self) -> DocumentRegistrySort {
         let key = match self.key {
-            DocumentRegistrySortFieldInput::Context => DocumentRegistrySortField::Context,
+            DocumentRegistrySortFieldInput::Type => DocumentRegistrySortField::Type,
             DocumentRegistrySortFieldInput::DocumentType => DocumentRegistrySortField::DocumentType,
         };
 
