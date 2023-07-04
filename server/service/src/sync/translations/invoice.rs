@@ -331,7 +331,11 @@ impl SyncTranslation for InvoiceTranslation {
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
             tax,
-            mode: TransactMode::Store,
+            mode: if r#type == InvoiceRowType::Dispensary {
+                TransactMode::Dispensary
+            } else {
+                TransactMode::Store
+            },
             transport_reference,
             created_datetime: Some(created_datetime),
             allocated_datetime,
@@ -458,13 +462,11 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
         }
         InvoiceRowType::Dispensary => match data.status {
             LegacyTransactStatus::Cn => {
-                mapping.allocated_datetime = confirm_datetime.clone();
                 mapping.picked_datetime = confirm_datetime;
             }
             LegacyTransactStatus::Fn => {
-                mapping.allocated_datetime = confirm_datetime.clone();
                 mapping.picked_datetime = confirm_datetime.clone();
-                mapping.shipped_datetime = confirm_datetime;
+                mapping.verified_datetime = confirm_datetime;
             }
             _ => {}
         },
