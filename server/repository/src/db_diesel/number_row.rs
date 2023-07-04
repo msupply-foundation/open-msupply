@@ -36,6 +36,7 @@ pub enum NumberRowType {
     ResponseRequisition,
     Stocktake,
     Repack,
+    Prescription,
     Program(String),
 }
 
@@ -50,6 +51,7 @@ impl fmt::Display for NumberRowType {
             NumberRowType::ResponseRequisition => write!(f, "RESPONSE_REQUISITION"),
             NumberRowType::Stocktake => write!(f, "STOCKTAKE"),
             NumberRowType::Repack => write!(f, "REPACK"),
+            NumberRowType::Prescription => write!(f, "PRESCRIPTION"),
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
         }
     }
@@ -270,6 +272,12 @@ mod number_row_mapping_test {
                 assert!(
                     NumberRowType::try_from(NumberRowType::InventoryReduction.to_string()).unwrap()
                         == NumberRowType::InventoryReduction
+                )
+            }
+            NumberRowType::Prescription => {
+                assert!(
+                    NumberRowType::try_from(NumberRowType::Prescription.to_string()).unwrap()
+                        == NumberRowType::Prescription
                 )
             }
             NumberRowType::RequestRequisition => {
