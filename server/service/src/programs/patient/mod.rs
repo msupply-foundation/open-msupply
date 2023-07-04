@@ -1,4 +1,5 @@
 use repository::{PaginationOption, RepositoryError};
+use repository::{Patient, PatientFilter, PatientSort};
 
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
