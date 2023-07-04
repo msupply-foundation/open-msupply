@@ -5,7 +5,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     use crate::migrations::sql;
     sql!(
         r#"
-            ALTER TYPE invoice_type ADD VALUE 'DISPENSARY';
+            ALTER TYPE invoice_type ADD VALUE 'PRESCRIPTION';
         "#,
     )?;
 

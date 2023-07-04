@@ -331,7 +331,7 @@ impl SyncTranslation for InvoiceTranslation {
             confirm_date: confirm_datetime.0,
             confirm_time: confirm_datetime.1,
             tax,
-            mode: if r#type == InvoiceRowType::Dispensary {
+            mode: if r#type == InvoiceRowType::Prescription {
                 TransactMode::Dispensary
             } else {
                 TransactMode::Store
@@ -381,7 +381,7 @@ fn invoice_type(
     }
     if mode == TransactMode::Dispensary {
         return match _type {
-            LegacyTransactType::Ci => Some(InvoiceRowType::Dispensary),
+            LegacyTransactType::Ci => Some(InvoiceRowType::Prescription),
             _ => return None,
         };
     }
@@ -460,7 +460,7 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
                 _ => {}
             }
         }
-        InvoiceRowType::Dispensary => match data.status {
+        InvoiceRowType::Prescription => match data.status {
             LegacyTransactStatus::Cn => {
                 mapping.picked_datetime = confirm_datetime;
             }
@@ -505,7 +505,7 @@ fn to_legacy_confirm_time(
     let datetime = match r#type {
         InvoiceRowType::OutboundShipment => picked_datetime,
         InvoiceRowType::InboundShipment => delivered_datetime,
-        InvoiceRowType::Dispensary => picked_datetime,
+        InvoiceRowType::Prescription => picked_datetime,
         InvoiceRowType::InventoryAddition
         | InvoiceRowType::InventoryReduction
         | InvoiceRowType::Repack => verified_datetime,
@@ -524,7 +524,7 @@ fn invoice_status(
 ) -> Option<InvoiceRowStatus> {
     let status = match invoice_type {
         // prescription
-        InvoiceRowType::Dispensary => match data.status {
+        InvoiceRowType::Prescription => match data.status {
             LegacyTransactStatus::Nw => InvoiceRowStatus::New,
             LegacyTransactStatus::Sg => InvoiceRowStatus::New,
             LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
@@ -565,7 +565,7 @@ fn legacy_invoice_type(_type: &InvoiceRowType) -> Option<LegacyTransactType> {
         InvoiceRowType::OutboundShipment => LegacyTransactType::Ci,
         InvoiceRowType::InboundShipment => LegacyTransactType::Si,
         // prescription
-        InvoiceRowType::Dispensary => LegacyTransactType::Ci,
+        InvoiceRowType::Prescription => LegacyTransactType::Ci,
         // Inventory Adjustment
         InvoiceRowType::InventoryAddition => LegacyTransactType::Si,
         InvoiceRowType::InventoryReduction => LegacyTransactType::Sc,
@@ -595,7 +595,7 @@ fn legacy_invoice_status(
             InvoiceRowStatus::Delivered => LegacyTransactStatus::Cn,
             InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
         },
-        InvoiceRowType::Dispensary => match status {
+        InvoiceRowType::Prescription => match status {
             InvoiceRowStatus::New => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Allocated => LegacyTransactStatus::Cn,
             InvoiceRowStatus::Picked => LegacyTransactStatus::Cn,

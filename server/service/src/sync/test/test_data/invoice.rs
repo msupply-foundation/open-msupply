@@ -912,13 +912,13 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
     }
 }
 
-const DISPENSARY_1: (&'static str, &'static str) = (
-    "dispensary_1",
+const PRESCRIPTION_1: (&'static str, &'static str) = (
+    "prescription_1",
     r#"{
       "Colour": 0,
       "Date_order_received": "0000-00-00",
       "Date_order_written": "2021-07-30",
-      "ID": "dispensary_1",
+      "ID": "prescription_1",
       "amount_outstanding": 0,
       "arrival_date_actual": "0000-00-00",
       "arrival_date_estimated": "0000-00-00",
@@ -995,18 +995,18 @@ const DISPENSARY_1: (&'static str, &'static str) = (
       "om_transport_reference": ""
   }"#,
 );
-fn dispensary_1_pull_record() -> TestSyncPullRecord {
+fn prescription_1_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
         LegacyTableName::TRANSACT,
-        DISPENSARY_1,
+        PRESCRIPTION_1,
         PullUpsertRecord::Invoice(InvoiceRow {
-            id: DISPENSARY_1.0.to_string(),
+            id: PRESCRIPTION_1.0.to_string(),
             user_id: None,
             store_id: "store_b".to_string(),
             name_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
             invoice_number: 1,
-            r#type: InvoiceRowType::Dispensary,
+            r#type: InvoiceRowType::Prescription,
             status: InvoiceRowStatus::Picked,
             on_hold: false,
             comment: None,
@@ -1035,12 +1035,12 @@ fn dispensary_1_pull_record() -> TestSyncPullRecord {
         }),
     )
 }
-fn dispensary_1_push_record() -> TestSyncPushRecord {
+fn prescription_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         table_name: LegacyTableName::TRANSACT.to_string(),
-        record_id: DISPENSARY_1.0.to_string(),
+        record_id: PRESCRIPTION_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
-            ID: DISPENSARY_1.0.to_string(),
+            ID: PRESCRIPTION_1.0.to_string(),
             user_id: None,
             name_ID: "name_store_a".to_string(),
             store_ID: "store_b".to_string(),
@@ -1056,7 +1056,7 @@ fn dispensary_1_push_record() -> TestSyncPushRecord {
             entry_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
             entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             ship_date: None,
-            arrival_date_actual: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+            arrival_date_actual: None,
             confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
             confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             mode: TransactMode::Dispensary,
@@ -1077,8 +1077,8 @@ fn dispensary_1_push_record() -> TestSyncPushRecord {
             shipped_datetime: None,
             delivered_datetime: None,
             verified_datetime: None,
-            om_status: Some(InvoiceRowStatus::Delivered),
-            om_type: Some(InvoiceRowType::InboundShipment),
+            om_status: Some(InvoiceRowStatus::Picked),
+            om_type: Some(InvoiceRowType::Prescription),
             om_colour: None,
             tax: Some(0.0),
         }),
@@ -1092,7 +1092,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
         transact_om_fields_pull_record(),
         inventory_addition_pull_record(),
         inventory_reduction_pull_record(),
-        dispensary_1_pull_record(),
+        prescription_1_pull_record(),
     ]
 }
 
@@ -1111,6 +1111,6 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
         transact_om_fields_push_record(),
         inventory_addition_push_record(),
         inventory_reduction_push_record(),
-        dispensary_1_push_record(),
+        prescription_1_push_record(),
     ]
 }
