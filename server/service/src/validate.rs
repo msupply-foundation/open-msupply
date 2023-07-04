@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, Name, NameFilter, NameRepository, RepositoryError, StorageConnection,
+    EqualFilter, Name, NameFilter, NameRepository, NameType, RepositoryError, StorageConnection,
     StoreRowRepository,
 };
 
@@ -26,6 +26,7 @@ pub enum OtherPartyErrors {
 pub enum CheckOtherPartyType {
     Customer,
     Supplier,
+    Patient,
 }
 
 pub fn get_other_party(
@@ -61,6 +62,12 @@ pub fn check_other_party(
 
         CheckOtherPartyType::Supplier => {
             if !other_party.is_supplier() {
+                return Err(OtherPartyErrors::TypeMismatched);
+            }
+        }
+
+        CheckOtherPartyType::Patient => {
+            if other_party.name_row.r#type != NameType::Patient {
                 return Err(OtherPartyErrors::TypeMismatched);
             }
         }
