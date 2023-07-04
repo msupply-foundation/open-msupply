@@ -45,7 +45,7 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
             InvoiceRowStatus::Picked => false,
             InvoiceRowStatus::Verified => false,
         },
-        InvoiceRowType::Dispensary => match status {
+        InvoiceRowType::Prescription => match status {
             InvoiceRowStatus::New => true,
             InvoiceRowStatus::Allocated => true,
             InvoiceRowStatus::Picked => true,
