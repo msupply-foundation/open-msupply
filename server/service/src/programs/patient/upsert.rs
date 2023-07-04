@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryType,
-    DocumentStatus, EqualFilter, NameFilter, NameRepository, RepositoryError, TransactionError,
+    DocumentStatus, EqualFilter, PatientRepository, RepositoryError, TransactionError,
 };
 
 use crate::{
@@ -165,13 +165,13 @@ fn patient_belongs_to_store(
     store_id: &str,
     patient_id: &str,
 ) -> Result<bool, UpdatePatientError> {
-    let name = NameRepository::new(&ctx.connection)
+    let patient = PatientRepository::new(&ctx.connection)
         .query_one(
             store_id,
-            NameFilter::new().id(EqualFilter::equal_to(patient_id)),
+            PatientFilter::new().id(EqualFilter::equal_to(patient_id)),
         )?
         .unwrap_or_default();
-    Ok(name.is_visible())
+    Ok(patient.is_visible())
 }
 
 fn validate_document_type(
@@ -219,8 +219,8 @@ pub mod test {
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
         DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
-        DocumentRepository, EqualFilter, FormSchemaRowRepository, NameFilter, NameRepository,
-        NameStoreJoinFilter, NameStoreJoinRepository, Pagination, StringFilter,
+        DocumentRepository, EqualFilter, FormSchemaRowRepository, NameStoreJoinFilter,
+        NameStoreJoinRepository, Pagination, PatientFilter, PatientRepository, StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
@@ -318,10 +318,10 @@ pub mod test {
         matches!(err, UpdatePatientError::InvalidDataSchema(_));
 
         // success insert
-        assert!(NameRepository::new(&ctx.connection)
+        assert!(PatientRepository::new(&ctx.connection)
             .query_by_filter(
                 "store_a",
-                NameFilter::new().id(EqualFilter::equal_to(&patient.id)),
+                PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
             )
             .unwrap()
             .pop()
@@ -339,10 +339,10 @@ pub mod test {
                 },
             )
             .unwrap();
-        NameRepository::new(&ctx.connection)
+        PatientRepository::new(&ctx.connection)
             .query_by_filter(
                 "store_a",
-                NameFilter::new().id(EqualFilter::equal_to(&patient.id)),
+                PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
             )
             .unwrap()
             .pop()

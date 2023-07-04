@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    EqualFilter, Gender, NameFilter, NameRepository, NameRow, NameRowRepository,
-    NameStoreJoinRepository, NameStoreJoinRow, NameType, StorageConnection,
+    EqualFilter, Gender, NameRow, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
+    NameType, PatientFilter, PatientRepository, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
@@ -17,14 +17,12 @@ pub fn create_patient_name_store_join(
     store_id: &str,
     name_id: &str,
 ) -> Result<(), UpdatePatientError> {
-    let name_repo = NameRepository::new(con);
-    let name = name_repo.query_one(
+    let patient_repo = PatientRepository::new(con);
+    let patient = patient_repo.query_one(
         store_id,
-        NameFilter::new()
-            .is_customer(true)
-            .id(EqualFilter::equal_to(name_id)),
+        PatientFilter::new().id(EqualFilter::equal_to(name_id)),
     )?;
-    if name.is_none() {
+    if patient.is_none() {
         // add name store join
         let name_store_join_repo = NameStoreJoinRepository::new(con);
         name_store_join_repo.upsert_one(&NameStoreJoinRow {

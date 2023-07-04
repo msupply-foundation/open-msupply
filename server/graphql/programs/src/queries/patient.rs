@@ -11,13 +11,11 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::GenderType;
 use repository::{
-    DateFilter, EqualFilter, Pagination, PaginationOption, ProgramEnrolmentFilter,
-    SimpleStringFilter,
+    DateFilter, EqualFilter, Pagination, PaginationOption, Patient, PatientFilter, PatientSort,
+    PatientSortField, ProgramEnrolmentFilter, SimpleStringFilter,
 };
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
-use service::programs::patient::{
-    main_patient_doc_name, Patient, PatientFilter, PatientSort, PatientSortField,
-};
+use service::programs::patient::main_patient_doc_name;
 
 use crate::types::document::DocumentNode;
 use crate::types::program_enrolment::ProgramEnrolmentNode;
@@ -163,6 +161,7 @@ pub enum PatientResponse {
 #[derive(InputObject, Clone)]
 pub struct PatientFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub name: Option<SimpleStringFilterInput>,
     pub code: Option<SimpleStringFilterInput>,
     pub code_2: Option<SimpleStringFilterInput>,
     pub first_name: Option<SimpleStringFilterInput>,
@@ -182,6 +181,7 @@ impl PatientFilterInput {
     fn to_domain(self) -> PatientFilter {
         let PatientFilterInput {
             id,
+            name,
             code,
             code_2,
             first_name,
@@ -198,6 +198,7 @@ impl PatientFilterInput {
         } = self;
         PatientFilter {
             id: id.map(EqualFilter::from),
+            name: name.map(SimpleStringFilter::from),
             code: code.map(SimpleStringFilter::from),
             code_2: code_2.map(SimpleStringFilter::from),
             first_name: first_name.map(SimpleStringFilter::from),
