@@ -91,7 +91,9 @@ pub fn check_invoice_status(
     Ok(())
 }
 
-pub struct InvoiceDoesNotExist;
+pub enum InvoiceAlreadyExistsError {
+    InvoiceAlreadyExists,
+}
 
 pub fn check_invoice_exists(
     id: &str,
@@ -103,5 +105,18 @@ pub fn check_invoice_exists(
         Ok(invoice_row) => Ok(Some(invoice_row)),
         Err(RepositoryError::NotFound) => Ok(None),
         Err(error) => Err(error),
+    }
+}
+
+pub fn check_invoice_does_not_exists(
+    id: &str,
+    connection: &StorageConnection,
+) -> Result<(), InvoiceAlreadyExistsError> {
+    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
+
+    if let Err(RepositoryError::NotFound) = &result {
+        Ok(())
+    } else {
+        Err(InvoiceAlreadyExistsError::InvoiceAlreadyExists)
     }
 }
