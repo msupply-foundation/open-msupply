@@ -6,6 +6,12 @@ import {
 } from '@openmsupply-client/common';
 import React from 'react';
 
+/**
+ * Displays a list of labels in a table cell.
+ *
+ * This expects that the data accessor returns a list of string for a given table row.
+ */
+
 export const ChipTableCell = <T extends RecordWithId>({
   rowData,
   column,
