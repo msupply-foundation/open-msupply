@@ -21,10 +21,11 @@ import {
 import { usePatient } from '../../api';
 import { getStatusTranslation } from '../utils';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
-import { getAdditionalInformationColumn } from '@openmsupply-client/system';
+import { ChipTableCell } from '@openmsupply-client/system';
 
 const programAdditionalInfoAccessor: ColumnDataAccessor<
-  ProgramEnrolmentRowFragmentWithId
+  ProgramEnrolmentRowFragmentWithId,
+  string[]
 > = ({ rowData }): string[] => {
   const additionalInfo = [];
 
@@ -68,7 +69,14 @@ const ProgramListComponent: FC = () => {
         key: 'programEnrolmentId',
         label: 'label.enrolment-patient-id',
       },
-      getAdditionalInformationColumn(programAdditionalInfoAccessor),
+      {
+        label: 'label.additional-info',
+        key: 'events',
+        sortable: false,
+        accessor: programAdditionalInfoAccessor,
+        Cell: ChipTableCell,
+        minWidth: 400,
+      },
       {
         key: 'status',
         label: 'label.program-status',
