@@ -14,7 +14,6 @@ import {
 import {
   Sdk,
   PatientRowFragment,
-  PatientFragment,
   CentralPatientSearchQuery,
   LinkPatientToStoreMutation,
 } from './operations.generated';
@@ -99,7 +98,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     },
     search: async (
       input: PatientSearchInput
-    ): Promise<{ score: number; patient: PatientFragment }[]> => {
+    ): Promise<{ score: number; patient: PatientRowFragment }[]> => {
       const result = await sdk.patientSearch({
         storeId,
         input,
