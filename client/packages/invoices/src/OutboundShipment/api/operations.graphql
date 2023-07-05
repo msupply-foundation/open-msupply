@@ -571,7 +571,7 @@ mutation upsertOutboundShipment(
     insertOutboundShipmentLines {
       id
       response {
-        ... on InsertOutboundShipmentLineError {
+        ... on InsertInvoiceLineError {
           __typename
           error {
             description

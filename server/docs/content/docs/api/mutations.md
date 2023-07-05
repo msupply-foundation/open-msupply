@@ -33,7 +33,7 @@ type InsertOutboundShipmentInput {
     lines: [InsertOutboundShipmentLineInput]
 }
 
-type InsertOutboundShipmentLineInput {
+type InsertInvoiceLineInput {
     clientId: String
     id: String
     itemId: String
@@ -46,7 +46,6 @@ type InsertOutboundShipmentLineInput {
 [InsertOutboundShipmentLineInput](/docs/api/mutations/#customer-invoice-line-insert)
 
 #### Outbound Shipment Update
-
 
 ```graphql
 query {
@@ -75,7 +74,7 @@ type UpsertOutboundShipmentLineInput {
 [InsertOutboundShipmentLineInput](/docs/api/mutations/#customer-invoice-line-insert)
 [UpdateOutboundShipmentLineInput](/docs/api/mutations/#customer-invoice-line-update)
 
-Invoice lines that previously existed but are missing in `lines` list will be deleted. 
+Invoice lines that previously existed but are missing in `lines` list will be deleted.
 
 {TODO we can expand this query to also have `deletedLines`, `partialLines`, if and when needed}
 
@@ -95,6 +94,7 @@ All other fields are translated directly to snake case equivalent.
 On Insertion `created_datetime` is set.
 
 On status change the datetime fields are set:
+
 - `confirm_datetime` is set when the status is changed to `confirmed`
 - `finalised_datetime` is set when the status is changed to `finalised`
 
@@ -141,7 +141,7 @@ Base table: `invoice_line`
 
 All fields are translated directly to snake case equivalent.
 
-`invoice_id` set as id of parent 
+`invoice_id` set as id of parent
 
 `stock_line` links on `stock_line.id` -> `invoice_line.stock_line_id`
 
@@ -187,7 +187,7 @@ type InsertInboundShipmentLineInput {
     sellPricePerPack: Float!
     # GraphQL Validation >= 0
     costPricePerPack: Float!
-    expiryDate: Date 
+    expiryDate: Date
     # GraphQL Validation >= 0
     numberOfPacks: Number!
 }
@@ -223,7 +223,7 @@ type UpsertInboundShipmentLineInput {
     sellPricePerPack: Float
     # GraphQL Validation >= 0
     costPricePerPack: Float
-    expiryDate: Date 
+    expiryDate: Date
     # GraphQL Validation >= 0
     numberOfPacks: Number
 }
@@ -232,7 +232,7 @@ type UpsertInboundShipmentLineInput {
 [InsertInboundShipmentLineInput](/docs/api/mutations/#supplier-invoice-line-insert)
 [UpdateInboundShipmentLineInput](/docs/api/mutations/#supplier-invoice-line-update)
 
-_{TODO we can expand this query to also have `deletedInvoiceLines`, `partialInvoiceLines`, if and when needed}_           
+_{TODO we can expand this query to also have `deletedInvoiceLines`, `partialInvoiceLines`, if and when needed}_
 
 <details>
 <summary>IMPLEMENTATION DETAILS</summary>
@@ -248,6 +248,7 @@ All other fields are translated directly to snake case equivalent.
 `store_id` to be set as current logged in store in session _{TODO can this be broken, if user is switched, and goes to an existing tab and looks at another invoice?}_
 
 On status change the datetime fields are set:
+
 - `confirm_datetime` is set when the status is changed to `confirmed`
 - `finalised_datetime` is set when the status is changed to `finalised`
 
@@ -270,11 +271,11 @@ type InsertInboundShipmentLineInput = {
     sellPricePerPack: Float!
     # GraphQL Validation >= 0
     costPricePerPack: Float!
-    expiryDate: Date 
+    expiryDate: Date
     # GraphQL Validation >= 0
     numberOfPacks: Number!
 }
-```       
+```
 
 #### Inbound Shipment Line Update
 
@@ -317,12 +318,12 @@ All fields are translated directly to snake case equivalent.
 
 Stock line is created when invoice changes to `CONFIRMED` as per [InvoiceStatus implementation details](/docs/api/types/#enum-invoicestatus)
 
-`stock_line`.`store_id` is set to currently logged in store 
+`stock_line`.`store_id` is set to currently logged in store
 
 During confirmation and any further subsequent change will result in:
 
-* invoice_line.`number_of_pack` -> stock_line.`available_number_of_packs`, `total_number_of_packs`
-* invoice_line.`pack_size`, `batch`, `expiry`, `sell_price_per_pack`, `cost_price_per_pack`, `item_id` -> to stock_line fields with the same name
+- invoice_line.`number_of_pack` -> stock_line.`available_number_of_packs`, `total_number_of_packs`
+- invoice_line.`pack_size`, `batch`, `expiry`, `sell_price_per_pack`, `cost_price_per_pack`, `item_id` -> to stock_line fields with the same name
 
 When stock in inbound shipment is reserved by another invoice, `invoice_line` becomes not editable.
 

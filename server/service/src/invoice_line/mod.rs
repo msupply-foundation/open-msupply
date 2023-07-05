@@ -24,6 +24,9 @@ use self::outbound_shipment_service_line::*;
 pub mod outbound_shipment_unallocated_line;
 use self::outbound_shipment_unallocated_line::*;
 
+pub mod common_insert_line;
+use self::common_insert_line::*;
+
 pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_line(
         &self,
@@ -45,8 +48,8 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn insert_outbound_shipment_line(
         &self,
         ctx: &ServiceContext,
-        input: InsertOutboundShipmentLine,
-    ) -> Result<InvoiceLine, InsertOutboundShipmentLineError> {
+        input: InsertInvoiceLine,
+    ) -> Result<InvoiceLine, InsertInvoiceLineError> {
         insert_outbound_shipment_line(ctx, input)
     }
 
