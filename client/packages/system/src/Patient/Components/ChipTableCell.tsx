@@ -1,9 +1,4 @@
-import {
-  Box,
-  CellProps,
-  RecordWithId,
-  Typography,
-} from '@openmsupply-client/common';
+import { Box, CellProps, Chip, RecordWithId } from '@openmsupply-client/common';
 import React from 'react';
 
 /**
@@ -31,24 +26,15 @@ export const ChipTableCell = <T extends RecordWithId>({
       }}
     >
       {items.map((item, index) => (
-        <Box
-          sx={{
-            padding: 0.5,
-          }}
+        <Chip
           key={index}
-        >
-          <Typography
-            sx={{
-              fontSize: 12,
-              border: 1,
-              borderRadius: 15,
-              padding: 0.5,
-              backgroundColor: 'background.drawer',
-            }}
-          >
-            {item}
-          </Typography>
-        </Box>
+          label={item}
+          variant="outlined"
+          size="small"
+          sx={{
+            fontSize: 11,
+          }}
+        />
       ))}
     </Box>
   );
