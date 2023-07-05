@@ -101,3 +101,207 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 
     Err(graphql_error.extend())
 }
+
+#[cfg(test)]
+mod test {
+    use async_graphql::EmptyMutation;
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+    };
+    use repository::{
+        mock::{mock_patient, mock_prescription_a, mock_store_a, MockDataInserts},
+        Invoice, StorageConnectionManager,
+    };
+    use serde_json::json;
+    use service::{
+        invoice::{
+            prescription::{
+                InsertPrescription as ServiceInput, InsertPrescriptionError as ServiceError,
+            },
+            InvoiceServiceTrait,
+        },
+        service_provider::{ServiceContext, ServiceProvider},
+    };
+
+    use crate::InvoiceMutations;
+
+    type InsertMethod = dyn Fn(ServiceInput) -> Result<Invoice, ServiceError> + Sync + Send;
+
+    pub struct TestService(pub Box<InsertMethod>);
+
+    impl InvoiceServiceTrait for TestService {
+        fn insert_prescription(
+            &self,
+            _: &ServiceContext,
+            input: ServiceInput,
+        ) -> Result<Invoice, ServiceError> {
+            self.0(input)
+        }
+    }
+
+    fn service_provider(
+        test_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        service_provider.invoice_service = Box::new(test_service);
+        service_provider
+    }
+
+    fn empty_variables() -> serde_json::Value {
+        json!({
+            "input": {
+                "id": "n/a",
+                "patientId": "n/a"
+          },
+          "storeId": "n/a"
+        })
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_insert_prescription_errors() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            EmptyMutation,
+            InvoiceMutations,
+            "test_graphql_insert_prescription_errors",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let mutation = r#"
+        mutation ($input: InsertPrescriptionInput!, $storeId: String) {
+            insertPrescription(storeId: $storeId, input: $input) {
+              ... on InsertPrescriptionError {
+                error {
+                  __typename
+                }
+              }
+            }
+          }
+        "#;
+
+        // OtherPartyNotASupplier
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotAPatient)));
+
+        let expected = json!({
+            "insertPrescription": {
+              "error": {
+                "__typename": "OtherPartyNotAPatient"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // OtherPartyNotVisible
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyNotVisible)));
+
+        let expected = json!({
+            "insertPrescription": {
+              "error": {
+                "__typename": "OtherPartyNotVisible"
+              }
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        // InvoiceAlreadyExists
+        let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceAlreadyExists)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        //OtherPartyDoesNotExist
+        let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyDoesNotExist)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_insert_prescription_success() {
+        let (_, _, connection_manager, settings) = setup_graphl_test(
+            EmptyMutation,
+            InvoiceMutations,
+            "test_graphql_insert_prescription_success",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let mutation = r#"
+        mutation ($storeId: String, $input: InsertPrescriptionInput!) {
+            insertPrescription(storeId: $storeId, input: $input) {
+                ... on InvoiceNode {
+                    id
+                }
+            }
+          }
+        "#;
+
+        // Success
+        let test_service = TestService(Box::new(|input| {
+            assert_eq!(
+                input,
+                ServiceInput {
+                    id: "id input".to_string(),
+                    patient_id: "patient input".to_string(),
+                }
+            );
+            Ok(Invoice {
+                invoice_row: mock_prescription_a(),
+                name_row: mock_patient(),
+                store_row: mock_store_a(),
+            })
+        }));
+
+        let variables = json!({
+            "input": {
+                "id": "id input",
+                "patientId": "patient input"
+            },
+            "storeId": "store_a"
+        });
+
+        let expected = json!({
+            "insertPrescription": {
+                "id": mock_prescription_a().id
+            }
+          }
+        );
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(variables),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+}
