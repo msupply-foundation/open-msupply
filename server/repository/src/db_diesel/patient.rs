@@ -87,8 +87,9 @@ impl<'a> PatientRepository<'a> {
         &self,
         store_id: &str,
         filter: Option<PatientFilter>,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<i64, RepositoryError> {
-        let query = Self::create_filtered_query(store_id.to_string(), filter);
+        let query = Self::create_filtered_query(store_id.to_string(), filter, allowed_ctx);
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -97,16 +98,18 @@ impl<'a> PatientRepository<'a> {
         &self,
         store_id: &str,
         filter: PatientFilter,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<Vec<Patient>, RepositoryError> {
-        self.query(store_id, Pagination::new(), Some(filter), None)
+        self.query(store_id, Pagination::new(), Some(filter), None, allowed_ctx)
     }
 
     pub fn query_one(
         &self,
         store_id: &str,
         filter: PatientFilter,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<Option<Patient>, RepositoryError> {
-        Ok(self.query_by_filter(store_id, filter)?.pop())
+        Ok(self.query_by_filter(store_id, filter, allowed_ctx)?.pop())
     }
 
     pub fn query(
@@ -115,8 +118,9 @@ impl<'a> PatientRepository<'a> {
         pagination: Pagination,
         filter: Option<PatientFilter>,
         sort: Option<PatientSort>,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<Vec<Patient>, RepositoryError> {
-        let mut query = Self::create_filtered_query(store_id.to_string(), filter);
+        let mut query = Self::create_filtered_query(store_id.to_string(), filter, allowed_ctx);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -168,6 +172,7 @@ impl<'a> PatientRepository<'a> {
     pub fn create_filtered_query(
         store_id: String,
         filter: Option<PatientFilter>,
+        allowed_ctx: Option<&[String]>,
     ) -> BoxedNameQuery {
         let mut query = name_dsl::name
             .left_join(
@@ -214,6 +219,13 @@ impl<'a> PatientRepository<'a> {
                     identifier,
                     program_enrolment_dsl::program_enrolment_id
                 );
+                if let Some(allowed_ctx) = allowed_ctx {
+                    apply_equal_filter!(
+                        sub_query,
+                        Some(EqualFilter::default().restrict_results(allowed_ctx)),
+                        program_enrolment_dsl::context
+                    );
+                }
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
             }
 
@@ -394,6 +406,7 @@ mod tests {
             .query_by_filter(
                 &store_id,
                 PatientFilter::new().identifier(SimpleStringFilter::equal_to("code2")),
+                None,
             )
             .unwrap();
         assert_eq!(result.get(0), None);
@@ -411,6 +424,7 @@ mod tests {
             .query_by_filter(
                 &store_id,
                 PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
+                None,
             )
             .unwrap();
         assert_eq!(result.get(0), None);
@@ -430,6 +444,7 @@ mod tests {
             .query_by_filter(
                 &store_id,
                 PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
+                None,
             )
             .unwrap();
         assert_eq!(result.get(0), None);
@@ -448,6 +463,7 @@ mod tests {
             .query_by_filter(
                 &store_id,
                 PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
+                None,
             )
             .unwrap();
         result.get(0).unwrap();
@@ -500,6 +516,7 @@ mod tests {
             .query_by_filter(
                 &store_id,
                 PatientFilter::new().identifier(SimpleStringFilter::equal_to("codePatient")),
+                None,
             )
             .unwrap();
         assert_eq!(result.get(0).unwrap().name_row.id, patient_row.id);
@@ -507,6 +524,7 @@ mod tests {
             .query_by_filter(
                 &store_id,
                 PatientFilter::new().identifier(SimpleStringFilter::equal_to("nhnPatient")),
+                None,
             )
             .unwrap();
         assert_eq!(result.get(0).unwrap().name_row.id, patient_row.id);
@@ -515,6 +533,7 @@ mod tests {
                 &store_id,
                 PatientFilter::new()
                     .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+                None,
             )
             .unwrap();
         assert_eq!(result.get(0).unwrap().name_row.id, patient_row.id);
@@ -524,6 +543,7 @@ mod tests {
                 PatientFilter::new()
                     .code(SimpleStringFilter::equal_to("codePatient"))
                     .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+                None,
             )
             .unwrap();
         assert_eq!(result.get(0).unwrap().name_row.id, patient_row.id);
@@ -534,6 +554,7 @@ mod tests {
                 PatientFilter::new()
                     .code(SimpleStringFilter::equal_to("code does not exist"))
                     .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 0);
@@ -542,8 +563,72 @@ mod tests {
                 &store_id,
                 PatientFilter::new()
                     .identifier(SimpleStringFilter::equal_to("identifier does not exist")),
+                None,
             )
             .unwrap();
         assert_eq!(result.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_program_enrolment_id_allowed_ctx() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_patient_program_enrolment_id_allowed_ctx",
+            MockDataInserts::none().names().stores().name_store_joins(),
+        )
+        .await;
+        let repo = PatientRepository::new(&connection);
+        let store_id = &mock_test_name_query_store_1().id;
+
+        // add name and name_store_join
+        let name_row_repo = NameRowRepository::new(&connection);
+        let patient_row = inline_init(|row: &mut NameRow| {
+            row.id = "patient_1".to_string();
+            row.r#type = NameType::Patient;
+            row.code = "codePatient".to_string();
+            row.national_health_number = Some("nhnPatient".to_string());
+        });
+        name_row_repo.upsert_one(&patient_row).unwrap();
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one(&NameStoreJoinRow {
+                id: "name_store_join_patient_id".to_string(),
+                name_id: patient_row.id.clone(),
+                store_id: store_id.clone(),
+                name_is_customer: true,
+                name_is_supplier: false,
+                is_sync_update: false,
+            })
+            .unwrap();
+
+        // Searching by program enrolment id requires correct context access
+        ProgramEnrolmentRowRepository::new(&connection)
+            .upsert_one(&ProgramEnrolmentRow {
+                id: util::uuid::uuid(),
+                document_name: "doc_name".to_string(),
+                patient_id: patient_row.id.clone(),
+                document_type: "ProgramType".to_string(),
+                context: "ProgramType".to_string(),
+                enrolment_datetime: Utc::now().naive_utc(),
+                program_enrolment_id: Some("program_enrolment_id".to_string()),
+                status: ProgramEnrolmentStatus::Active,
+            })
+            .unwrap();
+        let result = repo
+            .query_by_filter(
+                &store_id,
+                PatientFilter::new()
+                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+                Some(&["WrongContext".to_string()]),
+            )
+            .unwrap();
+        assert!(result.is_empty());
+        let result = repo
+            .query_by_filter(
+                &store_id,
+                PatientFilter::new()
+                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+                Some(&["ProgramType".to_string()]),
+            )
+            .unwrap();
+        assert!(!result.is_empty());
     }
 }
