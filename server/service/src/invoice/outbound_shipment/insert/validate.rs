@@ -15,6 +15,7 @@ pub fn validate(
     use InsertOutboundShipmentError::*;
     check_invoice_does_not_exists(&input.id, connection).map_err(|e| match e {
         InvoiceAlreadyExistsError::InvoiceAlreadyExists => InvoiceAlreadyExists,
+        InvoiceAlreadyExistsError::RepositoryError(err) => DatabaseError(err),
     })?;
 
     let other_party = check_other_party(
