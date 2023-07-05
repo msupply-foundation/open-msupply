@@ -208,6 +208,7 @@ mod graphql {
                 country,
                 email,
                 identifier,
+                is_patient: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
