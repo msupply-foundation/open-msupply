@@ -46,6 +46,9 @@ pub enum Permission {
     // inbound shipment
     InboundShipmentQuery,
     InboundShipmentMutate,
+    // Prescription
+    PrescriptionQuery,
+    PrescriptionMutate,
     // reporting
     Report,
     // log
