@@ -23,7 +23,7 @@ pub fn generate(
         user_id: Some(user_id.to_string()),
         name_id: patient_id,
         name_store_id: patient.store_id().map(|id| id.to_string()),
-        r#type: InvoiceRowType::OutboundShipment,
+        r#type: InvoiceRowType::Prescription,
         invoice_number: next_number(connection, &NumberRowType::Prescription, store_id)?,
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
