@@ -69,7 +69,13 @@ pub fn patient_search(
 
     let result: Vec<PatientSearchNode> = service_provider
         .patient_service
-        .patient_search(&context, service_provider, &store_id, input.to_domain())?
+        .patient_search(
+            &context,
+            service_provider,
+            &store_id,
+            input.to_domain(),
+            Some(&allowed_ctx),
+        )?
         .into_iter()
         .map(|p| PatientSearchNode {
             patient: PatientNode {

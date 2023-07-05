@@ -91,6 +91,7 @@ pub fn upsert_patient(
                     None,
                     Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
                     None,
+                    None,
                 )
                 .map_err(|err| UpdatePatientError::DatabaseError(err))?
                 .rows
@@ -169,6 +170,7 @@ fn patient_belongs_to_store(
         .query_one(
             store_id,
             PatientFilter::new().id(EqualFilter::equal_to(patient_id)),
+            None,
         )?
         .unwrap_or_default();
     Ok(patient.is_visible())
@@ -322,6 +324,7 @@ pub mod test {
             .query_by_filter(
                 "store_a",
                 PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
+                None,
             )
             .unwrap()
             .pop()
@@ -343,6 +346,7 @@ pub mod test {
             .query_by_filter(
                 "store_a",
                 PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
+                None,
             )
             .unwrap()
             .pop()

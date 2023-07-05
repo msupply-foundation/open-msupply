@@ -21,6 +21,7 @@ pub fn create_patient_name_store_join(
     let patient = patient_repo.query_one(
         store_id,
         PatientFilter::new().id(EqualFilter::equal_to(name_id)),
+        None,
     )?;
     if patient.is_none() {
         // add name store join
@@ -224,6 +225,7 @@ mod test {
                 "store_a",
                 None,
                 Some(PatientFilter::new().id(EqualFilter::equal_to(&patient.id))),
+                None,
                 None,
             )
             .unwrap()
