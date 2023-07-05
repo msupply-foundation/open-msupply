@@ -93,6 +93,7 @@ pub fn check_invoice_status(
 
 pub enum InvoiceAlreadyExistsError {
     InvoiceAlreadyExists,
+    RepositoryError(RepositoryError),
 }
 
 pub fn check_invoice_exists(
@@ -116,6 +117,8 @@ pub fn check_invoice_does_not_exists(
 
     if let Err(RepositoryError::NotFound) = &result {
         Ok(())
+    } else if let Err(err) = result {
+        Err(InvoiceAlreadyExistsError::RepositoryError(err.into()))
     } else {
         Err(InvoiceAlreadyExistsError::InvoiceAlreadyExists)
     }
