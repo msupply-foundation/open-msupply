@@ -6,7 +6,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
     sql!(
         connection,
-        r#"ALTER TYPE number_type ADD VALUE 'PRESCRIPTION';"#
+        r#"ALTER TYPE number_type ADD VALUE 'PRESCRIPTION';
+        ALTER TYPE permission_type ADD VALUE 'PRESCRIPTION_QUERY';
+        ALTER TYPE permission_type ADD VALUE 'PRESCRIPTION_MUTATE';
+        "#
     )?;
 
     Ok(())
