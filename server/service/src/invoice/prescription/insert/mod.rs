@@ -74,3 +74,207 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_patient, mock_patient_linked_to_store_join, mock_patient_not_linked_to_store,
+            mock_prescription_a, mock_store_a, mock_store_linked_to_patient, mock_user_account_a,
+            MockData, MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+        InvoiceRowRepository, NameRow, NameStoreJoinRow, NameType,
+    };
+    use util::{inline_edit, inline_init};
+
+    use crate::{invoice::prescription::InsertPrescription, service_provider::ServiceProvider};
+
+    use super::InsertPrescriptionError;
+
+    type ServiceError = InsertPrescriptionError;
+
+    #[actix_rt::test]
+    async fn insert_prescription_errors() {
+        fn not_visible() -> NameRow {
+            inline_init(|r: &mut NameRow| {
+                r.id = "not_visible".to_string();
+            })
+        }
+
+        fn not_a_patient() -> NameRow {
+            inline_init(|r: &mut NameRow| {
+                r.id = "not_a_patient".to_string();
+            })
+        }
+
+        fn not_a_patient_join() -> NameStoreJoinRow {
+            inline_init(|r: &mut NameStoreJoinRow| {
+                r.id = "not_a_patient_join".to_string();
+                r.name_id = not_a_patient().id;
+                r.store_id = mock_store_a().id;
+                r.name_is_supplier = false;
+            })
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_prescription_errors",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.names = vec![not_visible(), not_a_patient()];
+                r.name_store_joins = vec![not_a_patient_join()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        //InvoiceAlreadyExists
+        assert_eq!(
+            service.insert_prescription(
+                &context,
+                inline_init(|r: &mut InsertPrescription| {
+                    r.id = mock_prescription_a().id.clone();
+                    r.patient_id = mock_patient().id.clone();
+                })
+            ),
+            Err(ServiceError::InvoiceAlreadyExists)
+        );
+        // OtherPartyDoesNotExist
+        assert_eq!(
+            service.insert_prescription(
+                &context,
+                inline_init(|r: &mut InsertPrescription| {
+                    r.id = "new_id".to_string();
+                    r.patient_id = "invalid".to_string();
+                })
+            ),
+            Err(ServiceError::OtherPartyDoesNotExist)
+        );
+        // OtherPartyNotVisible
+        assert_eq!(
+            service.insert_prescription(
+                &context,
+                inline_init(|r: &mut InsertPrescription| {
+                    r.id = "new_id".to_string();
+                    r.patient_id = not_visible().id;
+                })
+            ),
+            Err(ServiceError::OtherPartyNotVisible)
+        );
+        // OtherPartyNotAPatient
+        assert_eq!(
+            service.insert_prescription(
+                &context,
+                inline_init(|r: &mut InsertPrescription| {
+                    r.id = "new_id".to_string();
+                    r.patient_id = not_a_patient().id;
+                })
+            ),
+            Err(ServiceError::OtherPartyNotAPatient)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn insert_prescription_success() {
+        fn patient() -> NameRow {
+            inline_init(|r: &mut NameRow| {
+                r.id = "patient".to_string();
+                r.r#type = NameType::Patient;
+            })
+        }
+
+        fn patient_join() -> NameStoreJoinRow {
+            inline_init(|r: &mut NameStoreJoinRow| {
+                r.id = "patient_join".to_string();
+                r.name_id = patient().id;
+                r.store_id = mock_store_a().id;
+                r.name_is_customer = true;
+            })
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_prescription_success",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.names = vec![patient()];
+                r.name_store_joins = vec![patient_join()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // Success
+        service
+            .insert_prescription(
+                &context,
+                inline_init(|r: &mut InsertPrescription| {
+                    r.id = "new_id".to_string();
+                    r.patient_id = patient().id;
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("new_id")
+            .unwrap();
+
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.name_id = patient().id;
+                u.user_id = Some(mock_user_account_a().id);
+                u
+            })
+        );
+
+        // Test success name_store_id linked to store
+        service
+            .insert_prescription(
+                &context,
+                inline_init(|r: &mut InsertPrescription| {
+                    r.id = "test_name_store_id_linked".to_string();
+                    r.patient_id = mock_patient_linked_to_store_join().name_id.clone();
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("test_name_store_id_linked")
+            .unwrap();
+
+        assert_eq!(
+            invoice,
+            inline_edit(&invoice, |mut u| {
+                u.name_store_id = Some(mock_store_linked_to_patient().id.clone());
+                u
+            })
+        );
+
+        //Test success name_store_id, not linked to store
+        service
+            .insert_prescription(
+                &context,
+                inline_init(|r: &mut InsertPrescription| {
+                    r.id = "test_name_store_id_not_linked".to_string();
+                    r.patient_id = mock_patient_not_linked_to_store().id.clone();
+                }),
+            )
+            .unwrap();
+
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id("test_name_store_id_not_linked")
+            .unwrap();
+
+        assert_eq!(invoice.name_store_id, None);
+    }
+}
