@@ -2220,6 +2220,7 @@ export type Mutations = {
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
   insertPatient: InsertPatientResponse;
   insertPrescription: InsertPrescriptionResponse;
+  insertPrescriptionLine: InsertInvoiceLineResponse;
   /**
    * Enrols a patient into a program by adding a program document to the patient's documents.
    * Every patient can only have one program document of each program type.
@@ -2490,6 +2491,12 @@ export type MutationsInsertPrescriptionArgs = {
 };
 
 
+export type MutationsInsertPrescriptionLineArgs = {
+  input: InsertInvoiceLineInput;
+  storeId: Scalars['String'];
+};
+
+
 export type MutationsInsertProgramEnrolmentArgs = {
   input: InsertProgramEnrolmentInput;
   storeId: Scalars['String'];
@@ -2711,6 +2718,7 @@ export type NameFilterInput = {
   identifier?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']>;
+  isPatient?: InputMaybe<Scalars['Boolean']>;
   /** Is this name a store */
   isStore?: InputMaybe<Scalars['Boolean']>;
   /** Filter by supplier property */
@@ -4905,6 +4913,8 @@ export enum UserPermission {
   OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
   PatientMutate = 'PATIENT_MUTATE',
   PatientQuery = 'PATIENT_QUERY',
+  PrescriptionMutate = 'PRESCRIPTION_MUTATE',
+  PrescriptionQuery = 'PRESCRIPTION_QUERY',
   Report = 'REPORT',
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
