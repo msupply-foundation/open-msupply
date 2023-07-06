@@ -183,9 +183,7 @@ async fn stock_on_deleted_requisitions() {
         .unwrap();
 
     // 1 second delay, to allow processor_task to finish
-    let sleep_task = tokio::spawn(async {
-        tokio::time::sleep(Duration::from_secs(1)).await;
-    });
+    let sleep_task = tokio::time::sleep(Duration::from_secs(1));
     let service_provider_closure = service_provider.clone();
     let trigger_and_wait = tokio::spawn(async move {
         let ctx = service_provider_closure.basic_context().unwrap();
