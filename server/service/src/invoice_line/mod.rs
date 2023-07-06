@@ -24,9 +24,6 @@ use self::outbound_shipment_service_line::*;
 pub mod outbound_shipment_unallocated_line;
 use self::outbound_shipment_unallocated_line::*;
 
-pub mod prescription_line;
-use self::prescription_line::*;
-
 pub mod common_insert_line;
 use self::common_insert_line::*;
 
@@ -175,15 +172,6 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         line_id: String,
     ) -> Result<AllocateLineResult, AllocateOutboundShipmentUnallocatedLineError> {
         allocate_outbound_shipment_unallocated_line(ctx, line_id)
-    }
-
-    // Prescription
-    fn insert_prescription_line(
-        &self,
-        ctx: &ServiceContext,
-        input: InsertInvoiceLine,
-    ) -> Result<InvoiceLine, InsertInvoiceLineError> {
-        insert_prescription_line(ctx, input)
     }
 }
 
