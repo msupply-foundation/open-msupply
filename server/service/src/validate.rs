@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, Name, NameFilter, NameRepository, NameType, RepositoryError, StorageConnection,
+    EqualFilter, Name, NameFilter, NameRepository, RepositoryError, StorageConnection,
     StoreRowRepository,
 };
 
@@ -67,7 +67,7 @@ pub fn check_other_party(
         }
 
         CheckOtherPartyType::Patient => {
-            if other_party.name_row.r#type != NameType::Patient {
+            if !other_party.is_patient() {
                 return Err(OtherPartyErrors::TypeMismatched);
             }
         }
