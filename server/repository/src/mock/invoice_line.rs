@@ -1,6 +1,9 @@
-use crate::{InvoiceLineRow, InvoiceLineRowType};
+use crate::{mock::mock_prescription_a, InvoiceLineRow, InvoiceLineRowType};
 
 use chrono::NaiveDate;
+use util::inline_init;
+
+use super::mock_stock_line_si_d;
 
 pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
     let mock_outbound_shipment_a_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
@@ -411,6 +414,51 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
     ]
 }
 
+pub fn mock_prescription_a_invoice_line_a() -> InvoiceLineRow {
+    inline_init(|l: &mut InvoiceLineRow| {
+        l.id = "prescription_a_invoice_line_a".to_string();
+        l.invoice_id = mock_prescription_a().id;
+        l.item_id = "item_a".to_string();
+        l.item_code = "item_a_code".to_string();
+        l.stock_line_id = Some(mock_stock_line_si_d()[0].id.clone());
+        l.batch = Some("item_a_si_d_siline_a".to_string());
+        l.pack_size = 1;
+        l.cost_price_per_pack = 1.0;
+        l.sell_price_per_pack = 2.0;
+        l.number_of_packs = 5.0;
+        l.total_before_tax = 10.0;
+        l.total_after_tax = 10.0;
+        l.r#type = InvoiceLineRowType::StockOut
+    })
+}
+
+pub fn mock_prescription_a_invoice_line_b() -> InvoiceLineRow {
+    inline_init(|l: &mut InvoiceLineRow| {
+        l.id = "prescription_a_invoice_line_a".to_string();
+        l.invoice_id = mock_prescription_a().id;
+        l.item_id = "item_b".to_string();
+        l.item_code = "item_b_code".to_string();
+        l.stock_line_id = Some("stock_line_si_d_siline_b".to_string());
+        l.pack_size = 1;
+        l.cost_price_per_pack = 3.0;
+        l.sell_price_per_pack = 5.0;
+        l.number_of_packs = 10.0;
+        l.total_before_tax = 50.0;
+        l.total_after_tax = 50.0;
+        l.r#type = InvoiceLineRowType::StockOut
+    })
+}
+
+pub fn mock_prescription_a_invoice_lines() -> Vec<InvoiceLineRow> {
+    let mock_prescription_a_invoice_line_a = mock_prescription_a_invoice_line_a();
+    let mock_prescription_a_invoice_line_b = mock_prescription_a_invoice_line_b();
+
+    vec![
+        mock_prescription_a_invoice_line_a,
+        mock_prescription_a_invoice_line_b,
+    ]
+}
+
 pub fn mock_outbound_shipment_invoice_lines() -> Vec<InvoiceLineRow> {
     let mut mock_outbound_shipment_invoice_lines = Vec::new();
 
@@ -419,6 +467,7 @@ pub fn mock_outbound_shipment_invoice_lines() -> Vec<InvoiceLineRow> {
     mock_outbound_shipment_invoice_lines.extend(mock_outbound_shipment_c_invoice_lines());
     mock_outbound_shipment_invoice_lines.extend(mock_outbound_shipment_d_invoice_lines());
     mock_outbound_shipment_invoice_lines.extend(mock_outbound_shipment_no_stock_line());
+    mock_outbound_shipment_invoice_lines.extend(mock_prescription_a_invoice_lines());
 
     mock_outbound_shipment_invoice_lines
 }
