@@ -573,6 +573,7 @@ fn generate(
         requisition_id: None,
         linked_invoice_id: None,
         tax: None,
+        clinician_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {
