@@ -182,7 +182,7 @@ fn generate_line(
         number_of_packs,
         total_before_tax,
         tax: _,
-        note: _,
+        note,
     }: InsertInvoiceLine,
     ItemRow {
         name: item_name,
@@ -196,7 +196,7 @@ fn generate_line(
         batch,
         expiry_date,
         location_id,
-        note,
+        note: _,
         ..
     }: StockLineRow,
     InvoiceRow { tax, .. }: InvoiceRow,
