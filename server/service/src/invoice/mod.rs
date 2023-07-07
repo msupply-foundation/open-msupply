@@ -18,11 +18,11 @@ use self::outbound_shipment::*;
 pub mod inbound_shipment;
 use self::inbound_shipment::*;
 
-pub mod prescription;
-use self::prescription::*;
-
 pub mod validate;
 pub use self::validate::*;
+
+pub mod prescription;
+pub use self::prescription::*;
 
 pub mod common;
 

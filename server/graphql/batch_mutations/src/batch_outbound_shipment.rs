@@ -2,7 +2,7 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::ContextExt;
 use graphql_invoice::mutations::outbound_shipment;
-use graphql_invoice_line::mutations::{common_insert, outbound_shipment_line};
+use graphql_invoice_line::mutations::outbound_shipment_line;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::outbound_shipment::*;
@@ -25,7 +25,7 @@ use crate::{to_standard_error, VecOrNone};
 ))]
 #[graphql(concrete(
     name = "InsertOutboundShipmentLineResponseWithId",
-    params(common_insert::InsertResponse)
+    params(outbound_shipment_line::line::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateOutboundShipmentLineResponseWithId",
@@ -72,7 +72,8 @@ type ServiceInput = BatchOutboundShipment;
 type ServiceResult = BatchOutboundShipmentResult;
 
 type InsertShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::InsertResponse>>>;
-type InsertLinesResponse = Option<Vec<MutationWithId<common_insert::InsertResponse>>>;
+type InsertLinesResponse =
+    Option<Vec<MutationWithId<outbound_shipment_line::line::InsertResponse>>>;
 type UpdateLinesResponse =
     Option<Vec<MutationWithId<outbound_shipment_line::line::UpdateResponse>>>;
 type DeleteLinesResponse =
@@ -116,7 +117,7 @@ pub struct BatchResponse {
 #[graphql(name = "BatchOutboundShipmentInput")]
 pub struct BatchInput {
     pub insert_outbound_shipments: Option<Vec<outbound_shipment::InsertInput>>,
-    pub insert_outbound_shipment_lines: Option<Vec<common_insert::InsertInvoiceLineInput>>,
+    pub insert_outbound_shipment_lines: Option<Vec<outbound_shipment_line::line::InsertInput>>,
     pub update_outbound_shipment_lines: Option<Vec<outbound_shipment_line::line::UpdateInput>>,
     pub delete_outbound_shipment_lines: Option<Vec<outbound_shipment_line::line::DeleteInput>>,
     pub insert_outbound_shipment_service_lines:
@@ -300,10 +301,13 @@ fn map_delete_shipments(responses: DeleteShipmentsResult) -> Result<DeleteShipme
 fn map_insert_lines(responses: InsertLinesResult) -> Result<InsertLinesResponse> {
     let mut result = Vec::new();
     for response in responses {
-        let mapped_response = match common_insert::map_response(response.result) {
-            Ok(response) => response,
-            Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
-        };
+        let mapped_response =
+            match outbound_shipment_line::line::insert::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
         result.push(MutationWithId {
             id: response.input.id.clone(),
             response: mapped_response,
@@ -593,7 +597,7 @@ mod test {
               insertOutboundShipmentLines {
                 id
                 response {
-                  ... on InsertInvoiceLineError {
+                  ... on InsertOutboundShipmentLineError {
                     error {
                       __typename
                     }
