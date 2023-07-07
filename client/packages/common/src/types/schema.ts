@@ -1460,6 +1460,22 @@ export type InsertPatientInput = {
 
 export type InsertPatientResponse = PatientNode;
 
+export type InsertPrescriptionError = {
+  __typename: 'InsertPrescriptionError';
+  error: InsertPrescriptionErrorInterface;
+};
+
+export type InsertPrescriptionErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type InsertPrescriptionInput = {
+  id: Scalars['String'];
+  patientId: Scalars['String'];
+};
+
+export type InsertPrescriptionResponse = InsertPrescriptionError | InvoiceNode;
+
 export type InsertProgramEnrolmentInput = {
   /** Program document data */
   data: Scalars['JSON'];
@@ -2827,12 +2843,17 @@ export type OtherPartyNotACustomer = InsertErrorInterface & UpdateNameErrorInter
   description: Scalars['String'];
 };
 
+export type OtherPartyNotAPatient = InsertPrescriptionErrorInterface & {
+  __typename: 'OtherPartyNotAPatient';
+  description: Scalars['String'];
+};
+
 export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String'];
 };
@@ -3155,6 +3176,7 @@ export type Queries = {
   formSchema?: Maybe<FormSchemaNode>;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
+  insertPrescription: InsertPrescriptionResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -3303,6 +3325,12 @@ export type QueriesEncountersArgs = {
 
 export type QueriesFormSchemaArgs = {
   filter?: InputMaybe<FormSchemaFilterInput>;
+};
+
+
+export type QueriesInsertPrescriptionArgs = {
+  input: InsertPrescriptionInput;
+  storeId: Scalars['String'];
 };
 
 
