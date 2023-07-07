@@ -154,6 +154,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
     ) -> Result<Invoice, InsertPrescriptionError> {
         insert_prescription(ctx, input)
     }
+
+    fn update_prescription(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdatePrescription,
+    ) -> Result<Invoice, UpdatePrescriptionError> {
+        update_prescription(ctx, input)
+    }
 }
 
 pub struct InvoiceService;
