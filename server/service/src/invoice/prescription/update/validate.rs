@@ -2,6 +2,7 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_status_change,
     check_store,
 };
+use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 use repository::{ClinicianRow, ClinicianRowRepository, EqualFilter, RepositoryError};
 use repository::{
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
@@ -35,6 +36,21 @@ pub fn validate(
     let status_changed = check_status_change(&invoice, patch.full_status());
     if status_changed {
         check_can_change_status_to_picked(connection, &invoice, patch.full_status())?;
+    }
+
+    if let Some(patient_id) = &patch.patient_id {
+        check_other_party(
+            connection,
+            store_id,
+            &patient_id,
+            CheckOtherPartyType::Patient,
+        )
+        .map_err(|e| match e {
+            OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
+            OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
+            OtherPartyErrors::TypeMismatched => OtherPartyNotAPatient,
+            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+        })?;
     }
 
     Ok((invoice, status_changed))
