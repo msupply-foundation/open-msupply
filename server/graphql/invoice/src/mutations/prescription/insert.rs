@@ -93,6 +93,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             ))
         }
         // Standard Graphql Errors
+        ServiceError::NotAPerscription => BadUserInput(formatted_error),
         ServiceError::InvoiceAlreadyExists => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
