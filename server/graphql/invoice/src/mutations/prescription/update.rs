@@ -68,7 +68,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
 pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<UpdateResponse> {
     let result = match from {
-        Ok(invoice_line) => UpdateResponse::Response(InvoiceNode::from_domain(invoice_line)),
+        Ok(invoice) => UpdateResponse::Response(InvoiceNode::from_domain(invoice)),
         Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
         }),
