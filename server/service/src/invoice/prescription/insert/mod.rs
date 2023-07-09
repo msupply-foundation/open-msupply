@@ -19,6 +19,7 @@ pub struct InsertPrescription {
 #[derive(Debug, PartialEq)]
 pub enum InsertPrescriptionError {
     InvoiceAlreadyExists,
+    NotAPerscription,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
