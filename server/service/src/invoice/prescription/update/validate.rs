@@ -1,6 +1,6 @@
 use crate::invoice::{
-    check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
-    check_status_change, check_store, InvoiceRowStatusError,
+    check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_status_change,
+    check_store,
 };
 use repository::{ClinicianRow, ClinicianRowRepository, EqualFilter, RepositoryError};
 use repository::{
