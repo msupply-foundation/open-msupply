@@ -39,6 +39,10 @@ pub enum UpdatePrescriptionError {
     NotThisStoreInvoice,
     ClinicianDoesNotExist,
     CanOnlyChangeToPickedWhenNoUnallocatedLines(Vec<InvoiceLine>),
+    // Name validation
+    OtherPartyDoesNotExist,
+    OtherPartyNotVisible,
+    OtherPartyNotAPatient,
     // Internal
     UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
