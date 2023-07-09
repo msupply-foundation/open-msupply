@@ -1,12 +1,13 @@
 use repository::{
     Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
-    RepositoryError, StockLineRowRepository, TransactionError,
+    RepositoryError, StockLineRowRepository,
 };
 
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::query::get_invoice,
     service_provider::ServiceContext,
+    WithDBError,
 };
 
 mod generate;
@@ -21,6 +22,7 @@ pub enum UpdatePrescriptionStatus {
     Picked,
     Verified,
 }
+
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct UpdatePrescription {
     pub id: String,
@@ -136,16 +138,14 @@ impl From<RepositoryError> for UpdatePrescriptionError {
     }
 }
 
-impl From<TransactionError<UpdatePrescriptionError>> for UpdatePrescriptionError {
-    fn from(error: TransactionError<UpdatePrescriptionError>) -> Self {
-        match error {
-            TransactionError::Transaction { msg, level } => {
-                UpdatePrescriptionError::DatabaseError(RepositoryError::TransactionError {
-                    msg,
-                    level,
-                })
-            }
-            TransactionError::Inner(e) => e,
+impl<ERR> From<WithDBError<ERR>> for UpdatePrescriptionError
+where
+    ERR: Into<UpdatePrescriptionError>,
+{
+    fn from(result: WithDBError<ERR>) -> Self {
+        match result {
+            WithDBError::DatabaseError(error) => error.into(),
+            WithDBError::Error(error) => error.into(),
         }
     }
 }
