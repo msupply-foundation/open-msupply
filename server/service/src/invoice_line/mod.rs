@@ -30,6 +30,9 @@ use self::prescription_line::*;
 pub mod common_insert_line;
 use self::common_insert_line::*;
 
+pub mod common_insert_update;
+use self::common_insert_update::*;
+
 pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_line(
         &self,
@@ -59,8 +62,8 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn update_outbound_shipment_line(
         &self,
         ctx: &ServiceContext,
-        input: UpdateOutboundShipmentLine,
-    ) -> Result<InvoiceLine, UpdateOutboundShipmentLineError> {
+        input: UpdateInvoiceLine,
+    ) -> Result<InvoiceLine, UpdateInvoiceLineError> {
         update_outbound_shipment_line(ctx, input)
     }
 
@@ -184,6 +187,14 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         input: InsertInvoiceLine,
     ) -> Result<InvoiceLine, InsertInvoiceLineError> {
         insert_prescription_line(ctx, input)
+    }
+
+    fn update_prescription_line(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateInvoiceLine,
+    ) -> Result<InvoiceLine, UpdateInvoiceLineError> {
+        update_prescription_line(ctx, input)
     }
 }
 

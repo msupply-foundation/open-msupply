@@ -518,10 +518,8 @@ mod test {
         },
         invoice_line::{
             common_insert_line::{InsertInvoiceLine, InsertInvoiceLineError},
-            outbound_shipment_line::{
-                DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
-                UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError,
-            },
+            common_insert_update::{UpdateInvoiceLine, UpdateInvoiceLineError},
+            outbound_shipment_line::{DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError},
             outbound_shipment_service_line::{
                 DeleteOutboundShipmentServiceLineError, InsertOutboundShipmentServiceLine,
                 InsertOutboundShipmentServiceLineError, UpdateOutboundShipmentServiceLine,
@@ -888,10 +886,10 @@ mod test {
                     result: Err(InsertInvoiceLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateOutboundShipmentLine| {
+                    input: inline_init(|input: &mut UpdateInvoiceLine| {
                         input.id = "id3".to_string()
                     }),
-                    result: Err(UpdateOutboundShipmentLineError::LineDoesNotExist {}),
+                    result: Err(UpdateInvoiceLineError::LineDoesNotExist {}),
                 }],
                 delete_line: vec![InputWithResult {
                     input: inline_init(|input: &mut DeleteOutboundShipmentLine| {
@@ -1038,7 +1036,7 @@ mod test {
                 insert_shipment: vec![],
                 insert_line: vec![],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateOutboundShipmentLine| {
+                    input: inline_init(|input: &mut UpdateInvoiceLine| {
                         input.id = "id3".to_string()
                     }),
                     result: Ok(inline_init(|input: &mut InvoiceLine| {

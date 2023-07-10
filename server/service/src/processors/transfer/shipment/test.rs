@@ -15,7 +15,7 @@ use crate::{
         inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
         outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
     },
-    invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine,
+    invoice_line::common_insert_update::UpdateInvoiceLine,
     processors::test_helpers::exec_concurrent,
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
@@ -495,7 +495,7 @@ impl ShipmentTransferTester {
             .invoice_line_service
             .update_outbound_shipment_line(
                 &ctx,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateInvoiceLine| {
                     r.id = self.outbound_shipment_line2.id.clone();
                     r.number_of_packs = Some(21.0)
                 }),

@@ -12,7 +12,7 @@ use util::{
 
 use crate::invoice_line::{
     common_insert_line::InsertInvoiceLine,
-    outbound_shipment_line::UpdateOutboundShipmentLine,
+    common_insert_update::UpdateInvoiceLine,
     outbound_shipment_unallocated_line::{
         DeleteOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLine,
     },
@@ -20,7 +20,7 @@ use crate::invoice_line::{
 
 #[derive(Default)]
 pub struct GenerateOutput {
-    pub update_lines: Vec<UpdateOutboundShipmentLine>,
+    pub update_lines: Vec<UpdateInvoiceLine>,
     pub insert_lines: Vec<InsertInvoiceLine>,
     pub update_unallocated_line: Option<UpdateOutboundShipmentUnallocatedLine>,
     pub delete_unallocated_line: Option<DeleteOutboundShipmentUnallocatedLine>,
@@ -167,13 +167,13 @@ fn try_allocate_existing_line(
     number_of_packs_to_add: f64,
     stock_line_id: &str,
     allocated_lines: &Vec<InvoiceLine>,
-) -> Option<UpdateOutboundShipmentLine> {
+) -> Option<UpdateInvoiceLine> {
     allocated_lines
         .iter()
         .find(|line| line.invoice_line_row.stock_line_id == Some(stock_line_id.to_string()))
         .map(|line| {
             let line_row = line.invoice_line_row.clone();
-            UpdateOutboundShipmentLine {
+            UpdateInvoiceLine {
                 id: line_row.id,
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
                 item_id: None,
