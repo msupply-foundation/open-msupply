@@ -43,6 +43,7 @@ pub enum PatientSortField {
 
 pub type PatientSort = Sort<PatientSortField>;
 
+#[derive(Clone)]
 pub struct Patient {
     pub name_row: NameRow,
 }

@@ -8,7 +8,7 @@ use service::{
     usize_to_u32,
 };
 
-use super::PatientNode;
+use crate::types::patient::PatientNode;
 
 #[derive(InputObject, Clone)]
 pub struct PatientSearchInput {
