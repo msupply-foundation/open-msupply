@@ -36,6 +36,7 @@ use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::programs::patient::patient_search_central;
 use types::document::DocumentNode;
+use types::patient::PatientNode;
 use types::program_enrolment::ProgramEventFilterInput;
 
 mod mutations;
@@ -153,17 +154,30 @@ impl ProgramsQueries {
         program_enrolments(ctx, store_id, sort, filter)
     }
 
-    pub async fn program_events(
+    /// Returns active program events at a given date time.
+    /// This can also be achieved by using the program_events endpoint with the filter:
+    /// `active_start_datetime <= at && active_end_datetime + 1 >= at`
+    pub async fn active_program_events(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        patient_id: String,
         at: Option<DateTime<Utc>>,
         page: Option<PaginationInput>,
         sort: Option<ProgramEventSortInput>,
         filter: Option<ProgramEventFilterInput>,
     ) -> Result<ProgramEventResponse> {
-        program_events(ctx, store_id, patient_id, at, page, sort, filter)
+        active_program_events(ctx, store_id, at, page, sort, filter)
+    }
+
+    pub async fn program_events(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
+        filter: Option<ProgramEventFilterInput>,
+    ) -> Result<ProgramEventResponse> {
+        program_events(ctx, store_id, page, sort, filter)
     }
 
     pub async fn encounters(

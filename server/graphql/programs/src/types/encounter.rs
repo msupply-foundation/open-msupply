@@ -195,7 +195,7 @@ impl EncounterNode {
         Ok(result)
     }
 
-    pub async fn events(
+    pub async fn active_program_events(
         &self,
         ctx: &Context<'_>,
         at: Option<DateTime<Utc>>,
@@ -231,7 +231,11 @@ impl EncounterNode {
         Ok(entries
             .rows
             .into_iter()
-            .map(|row| ProgramEventNode { row })
+            .map(|row| ProgramEventNode {
+                store_id: self.store_id.clone(),
+                row,
+                allowed_ctx: self.allowed_ctx.clone(),
+            })
             .collect())
     }
 }

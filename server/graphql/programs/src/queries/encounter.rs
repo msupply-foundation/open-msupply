@@ -58,13 +58,14 @@ pub struct EncounterFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
+    /// The program name
     pub program: Option<EqualFilterStringInput>,
-    pub document_name: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub start_datetime: Option<DatetimeFilterInput>,
     pub end_datetime: Option<DatetimeFilterInput>,
     pub status: Option<EqualFilterEncounterStatusInput>,
     pub clinician_id: Option<EqualFilterStringInput>,
+    pub document_name: Option<EqualFilterStringInput>,
     pub document_data: Option<SimpleStringFilterInput>,
 }
 
@@ -72,10 +73,8 @@ impl EncounterFilterInput {
     pub fn to_domain_filter(self) -> EncounterFilter {
         EncounterFilter {
             id: self.id.map(EqualFilter::from),
-            document_type: self.r#type.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
             context: self.program.map(EqualFilter::from),
-            document_name: self.document_name.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             start_datetime: self.start_datetime.map(DatetimeFilter::from),
             status: self
@@ -83,6 +82,8 @@ impl EncounterFilterInput {
                 .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
             end_datetime: self.end_datetime.map(DatetimeFilter::from),
             clinician_id: self.clinician_id.map(EqualFilter::from),
+            document_type: self.r#type.map(EqualFilter::from),
+            document_name: self.document_name.map(EqualFilter::from),
             document_data: self.document_data.map(SimpleStringFilter::from),
         }
     }

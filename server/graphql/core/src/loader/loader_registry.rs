@@ -253,6 +253,12 @@ pub async fn get_loaders(
     loaders.insert(doc_registry_loader);
     loaders.insert(doc_registry_children_loader);
     loaders.insert(DataLoader::new(
+        PatientLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
         ClinicianLoader {
             service_provider: service_provider.clone(),
         },
