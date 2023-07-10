@@ -180,6 +180,7 @@ fn try_allocate_existing_line(
                 stock_line_id: None,
                 total_before_tax: None,
                 tax: None,
+                note: None,
             }
         })
 }
