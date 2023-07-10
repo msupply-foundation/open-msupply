@@ -12,22 +12,44 @@ We've noticed user's confusion in understanding pack sizes. This is especially p
 
 It seems like the core requirements are:
 
-**1. Ability to treat an item as having one particular pack size in a particular facility (requirement to be confirmed)**
+**1. Ability to treat an item as having one particular pack size in a particular facility**
 
 A couple of examples of this:
 * **1.a** Lower level facility deals with millilitres (inpatient -> directly administer oral dose vai syringe to a patient) and and warehouse deals with bottles. Although it's possible to work around this by either recording consumption at lower level by bottles (not as accurate or efficient, when should they order next bottle ?) or by having base units as millilitre and large pack size at warehouse (manual conversion at the time order arrives, since we deal with base unit in order, it's much easier to comprehend 50 bottles vs 50000 mililitres)
 * **1.b** Different facility levels deal with different base unit where facilities are not centrally managed (they are independent). For example warehouse deals with cartons and lower level facility deals with blisters (since requirement usually come from central level, and lower level facilities are independent, base unit in the system was configured as carton)
 
-**2. Vaccine with varying number of doses per vial (requirement to be confirmed)**
+**2. Vaccine with varying number of doses per vial**
 
 It sounds like we've only come accross this with covid vaccines (and in places where multiple options of covid vaccines were available), for other vaccines there seems to be a standard of doses per vial. Since we currently set doses for item only this is problematic. Could create multiple items but then, may have issues with quantification (measuring consumption across multiple items)
 
-**3. Ability to treat an item as having varying base pack size in different UI area (requirement to be confirmed)**
+**3. Ability to treat an item as having varying base pack size in different UI area**
 
 * **3.a** At a hospital, vaccines are dispensed in doses, counted and discarded (stocktake) in vials, ordered in doses and open vial wastage is recorded in doses.
 * **3.b** In the warehouse, shipments are in vials but quantification and outgoing orders are in doses, incoming orders may need to be in vials (i.e. request to supply 100 vials of 10 rather then 1000 doses)
 
+**4. Reduce confusion with units, pack size, quantity (units) and quantity (packs)**
+
+It's been noted that even after training, we've obeserved confusion when users deal with packs, leading to incorrect data entry. 
+
+**5. Donor reporting in a particular pack size**
+
+Donors would like all countries to have a common pack size for item when reporting
+
+**Extra**
+
 For this KDD it's very important to consider implementation effort now and in the future, since it will would touch core functional area.
+
+**Requirement Conclusion**
+
+In general, there is agreement that some UI areas may lead to confusion, be it due to inconsistencies (in naming and how these columns/field appear in UI) but also due to confusion of the packs concept (although pharmacists and warehouse personnel are aware of this concept, there is still some congitive load which increases room for error). This is for **Requirement 4**
+
+Although treating an item as having one particular pack size can be benificial in some cases, there is already provision for this (to some extend), we already treat batch as having one particular pack size, and with repacks we can split stock to the desired pack size and it's treated as that pack size for remaining operations (issue and stocktake), it's also very possible to have more then one pack size for the same item at a facility (so a slight contradiciton to **Requirement 1.a**). However there is a gap, when stock is ordered, it's always in base unit. This is for ordering bit of **Requirement 1.a**
+
+It looks like for vaccines with different doses per vial, we can use different items, since this case only appiled to Covid 19 vaccines and it looks like in those cases we do want to treat them as seperate items (even for the same manufacturer, vaccines targeting different age groups for example would have different doses, as per [this site](https://www.health.gov.au/our-work/covid-19-vaccines/advice-for-providers/clinical-guidance/doses-and-administration)). We did consider adding a requirement for consolidation of these items for quantification, however it does look like a very specific use case for vaccines (and in fact for Covid 19 vaccine only). So it seems that **Requirement 2.** would need to be considered in isolation
+
+As for **Requirement 3.**, although it could be benificial, the wider team didn't really expressed this as being important. If proposed Options deals with this use case it would be a bonus, but not essential
+
+Note, that **Requirement 1.a** should also meet **Requirement 5.** since requisitions are oftern consider the reporting tools (RnR forms, Report and Requisition)
 
 ## Options
 
@@ -38,6 +60,8 @@ Very clear language (used uniformly across all of the UI), i.e.:
 Number of units (vs quantity or total)
 
 Number of packs (vs Pack Qty etc..)
+
+In all UI areas where this concept appears, we should display it the same (same number of column, in the same order, maybe even with a border grouping them).
 
 Have a very solid onboarding during training, focused on concept of packs and units (as the first training task). Showing scenarior where it's important to deal with different packs at the same facility. And explaining the glossary terms that are used in the system and how they relate to these concepts.
 
@@ -83,22 +107,30 @@ A few comment suggesting that user should also have an option to select which pa
 
 I think this was the suggestion from the [Doses Vaccine Conversion 2023-04-27](https://docs.google.com/spreadsheets/d/1mWZqmfQRfHlwF5i2OADaBaSWalK3FbIJpauM275xYuA/edit#gid=937944726) spreadsheet:
 
-Where unit types are defined, but the facility is not configured to use a particular unit, the unit type is chosen by the user (when ? not really sure but it looks like it should apply uniformly across all UI, also I am not sure how this applies to a list of items and do we store default one against facility ?)
+Define unit types (pack variations) for item centrally, by number of packs and name, i.e.
+
+Display pack size in defined variations (if variations are defined and there is a match with pack size).
+
+Allow changing to different unit/pack with drop down in some areas (record choice in browser app data)
+
+I think this is what @adamdewey was going for, I had to look up all UI areas and see how this would look, for reference see 'Andrei' [sheet here](https://app.diagrams.net/#G1wEOEYFte4lq9iYDzmeXHcL7ys-4fZZ1I) and [diagram here](https://app.diagrams.net/#G1wEOEYFte4lq9iYDzmeXHcL7ys-4fZZ1I)
+
+![Pack Lens](./media/pack_lens.png)
 
 *Pros:*
 
-- Generic approach that deals with quite a few use cases
+- Generic approach that deals with most use cases, can even go below pack size one (with fractional pack size, for doses and **Requirement 1.b**)
 
 *Cons:*
 
-- Not sure if it deals directly with original confusion of having the same item in different variant at the same facility (different pack sizes)
-- Would require quite a lot of front end changes (it's a bit overwhelming to think about the number of changes, this indicates that it maybe too difficult to do safely at this stage)
-- Existing user may need to be retrained
-- High chance of fractional number of packs, when switching between child <-> parent units or when there is variation of pack sizes that a facility deals with
+- Quite a few changes
+- Existing user would need some training (but that's only if configurations are introduced)
+- Would need to deal with fractional number of packs more often
 
 ## Decision
 
-Still, leaning towards Option 2, to me it's the only one that justifies effort now and in the future for the benifit. See `extra` section for infor about requirement **2**
+I am now recommending Option 3, I like the general idea even though it touches quite a few UI areas (there would be more UI areas affected in the future if it's not done now). I estimate 2 weeks of work for option 3 (1 week for configuration 1 week for enforcing them in UI, would suggest we do central configurations in omSupply, as per this idea 'todo add central server configuration with omSupply, parallel sync server' idea)
+Option 1 would also be good if we are able to `group` packs/units columns and fields as showm in Option 3, and use existing default pack size for item for internal orders.
 
 ## Extra
 
