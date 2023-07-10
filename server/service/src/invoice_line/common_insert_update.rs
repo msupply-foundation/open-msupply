@@ -30,6 +30,7 @@ pub struct UpdateInvoiceLine {
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
+    pub note: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

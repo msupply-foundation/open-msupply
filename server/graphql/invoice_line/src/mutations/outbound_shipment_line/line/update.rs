@@ -109,6 +109,7 @@ impl UpdateInput {
                     percentage: tax.percentage,
                 })
             }),
+            note: None,
         }
     }
 }
@@ -588,7 +589,8 @@ mod test {
                     total_before_tax: Some(1.0),
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(1.0),
-                    })
+                    }),
+                    note: None,
                 }
             );
             Ok(InvoiceLine {

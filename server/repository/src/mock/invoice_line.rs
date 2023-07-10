@@ -3,7 +3,7 @@ use crate::{mock::mock_prescription_a, InvoiceLineRow, InvoiceLineRowType};
 use chrono::NaiveDate;
 use util::inline_init;
 
-use super::{mock_prescription_verified, mock_stock_line_si_d};
+use super::mock_stock_line_si_d;
 
 pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
     let mock_outbound_shipment_a_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
