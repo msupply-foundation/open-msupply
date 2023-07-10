@@ -10,7 +10,7 @@ export const useProgramEvents = (
 
   return useQuery(
     api.keys.list(params),
-    () => api.programEvents(params),
+    () => api.activeProgramEvents(params),
     // Don't refetch when the edit modal opens, for example. But, don't cache
     // data when this query is inactive. For example, when navigating away from
     // the page and back again, refetch.

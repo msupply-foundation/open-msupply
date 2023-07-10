@@ -273,7 +273,7 @@ fragment EncounterRow on EncounterNode {
     lastName
     name
   }
-  events(at: $eventTime, filter: { isCurrentEncounter: true }) {
+  activeProgramEvents(at: $eventTime, filter: { isCurrentEncounter: true }) {
     ...ProgramEvent
   }
 }
@@ -335,7 +335,7 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
       name
     }
   }
-  events(at: $eventTime) {
+  activeProgramEvents(at: $eventTime) {
     ...ProgramEvent
   }
 }
@@ -372,21 +372,6 @@ fragment ProgramEnrolment on ProgramEnrolmentNode {
   status
   document {
     ...Document
-  }
-}
-
-query programEnrolmentById($storeId: String!, $programId: String!) {
-  programEnrolments(
-    storeId: $storeId
-    filter: { id: { equalTo: $programId } }
-  ) {
-    ... on ProgramEnrolmentConnector {
-      __typename
-      nodes {
-        ...ProgramEnrolment
-      }
-      totalCount
-    }
   }
 }
 
@@ -479,16 +464,14 @@ query formSchema($filter: FormSchemaFilterInput) {
   }
 }
 
-query programEvents(
+query activeProgramEvents(
   $at: String
-  $patientId: String!
   $storeId: String!
   $filter: ProgramEventFilterInput
   $page: PaginationInput
 ) {
-  programEvents(
+  activeProgramEvents(
     at: $at
-    patientId: $patientId
     storeId: $storeId
     filter: $filter
     page: $page
