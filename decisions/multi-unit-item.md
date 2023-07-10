@@ -127,6 +127,10 @@ I think this is what @adamdewey was going for, I had to look up all UI areas and
 - Existing user would need some training (but that's only if configurations are introduced)
 - Would need to deal with fractional number of packs more often
 
+*Extra:*
+
+We may want to display total in units in more places then outbound shipment, for example as a guide when doing a stock take, this can be done quite easily in drop downs (since we have more screen real estate then) or maybe on hover or info icon on the lines
+
 ## Decision
 
 I am now recommending Option 3, I like the general idea even though it touches quite a few UI areas (there would be more UI areas affected in the future if it's not done now). I estimate 2 weeks of work for option 3 (1 week for configuration 1 week for enforcing them in UI, would suggest we do central configurations in omSupply, as per this idea 'todo add central server configuration with omSupply, parallel sync server' idea)
