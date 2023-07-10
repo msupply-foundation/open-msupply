@@ -10,8 +10,8 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::outbound_shipment_line::{
-    UpdateOutboundShipmentLine as ServiceInput, UpdateOutboundShipmentLineError as ServiceError,
+use service::invoice_line::common_insert_update::{
+    UpdateInvoiceLine as ServiceInput, UpdateInvoiceLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
 
@@ -169,6 +169,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
+        ServiceError::NotAPrescription => BadUserInput(formatted_error),
         ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
         ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
@@ -197,9 +198,8 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            outbound_shipment_line::{
-                UpdateOutboundShipmentLine as ServiceInput,
-                UpdateOutboundShipmentLineError as ServiceError,
+            common_insert_update::{
+                UpdateInvoiceLine as ServiceInput, UpdateInvoiceLineError as ServiceError,
             },
             InvoiceLineServiceTrait, ShipmentTaxUpdate,
         },

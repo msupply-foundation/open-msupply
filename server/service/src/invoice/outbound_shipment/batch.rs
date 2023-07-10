@@ -3,11 +3,11 @@ use repository::{Invoice, InvoiceLine, RepositoryError};
 use crate::{
     invoice_line::{
         common_insert_line::{InsertInvoiceLine, InsertInvoiceLineError},
+        common_insert_update::{UpdateInvoiceLine, UpdateInvoiceLineError},
         outbound_shipment_line::{
             delete_outbound_shipment_line, insert_outbound_shipment_line,
             update_outbound_shipment_line, DeleteOutboundShipmentLine,
-            DeleteOutboundShipmentLineError, UpdateOutboundShipmentLine,
-            UpdateOutboundShipmentLineError,
+            DeleteOutboundShipmentLineError,
         },
         outbound_shipment_service_line::{
             delete_outbound_shipment_service_line, insert_outbound_shipment_service_line,
@@ -38,7 +38,7 @@ use super::{
 pub struct BatchOutboundShipment {
     pub insert_shipment: Option<Vec<InsertOutboundShipment>>,
     pub insert_line: Option<Vec<InsertInvoiceLine>>,
-    pub update_line: Option<Vec<UpdateOutboundShipmentLine>>,
+    pub update_line: Option<Vec<UpdateInvoiceLine>>,
     pub delete_line: Option<Vec<DeleteOutboundShipmentLine>>,
     pub insert_service_line: Option<Vec<InsertOutboundShipmentServiceLine>>,
     pub update_service_line: Option<Vec<UpdateOutboundShipmentServiceLine>>,
@@ -56,12 +56,8 @@ pub type InsertShipmentsResult =
     Vec<InputWithResult<InsertOutboundShipment, Result<Invoice, InsertOutboundShipmentError>>>;
 pub type InsertLinesResult =
     Vec<InputWithResult<InsertInvoiceLine, Result<InvoiceLine, InsertInvoiceLineError>>>;
-pub type UpdateLinesResult = Vec<
-    InputWithResult<
-        UpdateOutboundShipmentLine,
-        Result<InvoiceLine, UpdateOutboundShipmentLineError>,
-    >,
->;
+pub type UpdateLinesResult =
+    Vec<InputWithResult<UpdateInvoiceLine, Result<InvoiceLine, UpdateInvoiceLineError>>>;
 pub type DeleteLinesResult = Vec<
     InputWithResult<DeleteOutboundShipmentLine, Result<String, DeleteOutboundShipmentLineError>>,
 >;
