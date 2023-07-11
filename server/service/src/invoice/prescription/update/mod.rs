@@ -99,9 +99,6 @@ pub fn update_prescription(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_shipment_transfer_processors();
-
     Ok(invoice)
 }
 
