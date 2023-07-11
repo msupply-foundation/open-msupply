@@ -45,6 +45,14 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
             InvoiceRowStatus::Picked => false,
             InvoiceRowStatus::Verified => false,
         },
+        InvoiceRowType::Prescription => match status {
+            InvoiceRowStatus::New => true,
+            InvoiceRowStatus::Allocated => true,
+            InvoiceRowStatus::Picked => true,
+            InvoiceRowStatus::Shipped => false,
+            InvoiceRowStatus::Delivered => false,
+            InvoiceRowStatus::Verified => false,
+        },
         InvoiceRowType::InventoryAddition
         | InvoiceRowType::InventoryReduction
         | InvoiceRowType::Repack => false,
