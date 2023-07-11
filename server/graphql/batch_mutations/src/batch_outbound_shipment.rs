@@ -518,7 +518,7 @@ mod test {
         },
         invoice_line::{
             common_insert_line::{InsertInvoiceLine, InsertInvoiceLineError},
-            common_insert_update::{UpdateInvoiceLine, UpdateInvoiceLineError},
+            common_update_line::{UpdateInvoiceLine, UpdateInvoiceLineError},
             outbound_shipment_line::{DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError},
             outbound_shipment_service_line::{
                 DeleteOutboundShipmentServiceLineError, InsertOutboundShipmentServiceLine,

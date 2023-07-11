@@ -15,7 +15,7 @@ use crate::{
         inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
         outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
     },
-    invoice_line::common_insert_update::UpdateInvoiceLine,
+    invoice_line::common_update_line::UpdateInvoiceLine,
     processors::test_helpers::exec_concurrent,
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
