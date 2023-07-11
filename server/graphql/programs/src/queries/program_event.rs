@@ -57,18 +57,18 @@ pub fn program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let mut filter = filter
         .map(|f| f.to_domain())
         .unwrap_or(ProgramEventFilter::new())
         .patient_id(EqualFilter::equal_to(&patient_id));
     // restrict query results to allowed entries
-    filter.document_type = Some(
+    filter.context = Some(
         filter
-            .document_type
+            .context
             .unwrap_or_default()
-            .restrict_results(&allowed_docs),
+            .restrict_results(&allowed_ctx),
     );
 
     let service_provider = ctx.service_provider();

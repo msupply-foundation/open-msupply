@@ -28,7 +28,7 @@ pub fn undelete_document(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -39,10 +39,10 @@ pub fn undelete_document(
         DocumentUndelete {
             id: input.id.clone(),
         },
-        allowed_docs,
+        allowed_ctx,
     ) {
         Ok(document) => UndeleteDocumentResponse::Response(DocumentNode {
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
             document,
         }),
         Err(error) => {

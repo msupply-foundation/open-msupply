@@ -26,14 +26,14 @@ pub fn document_history(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
     let documents = service_provider
         .document_service
-        .document_history(&context, &document_name, &allowed_docs)
+        .document_history(&context, &document_name, &allowed_ctx)
         .map_err(|err| {
             let formated_err = format! {"{:?}", err};
             let error = match err {
@@ -49,7 +49,7 @@ pub fn document_history(
         nodes: documents
             .into_iter()
             .map(|document| DocumentNode {
-                allowed_docs: allowed_docs.clone(),
+                allowed_ctx: allowed_ctx.clone(),
                 document,
             })
             .collect(),

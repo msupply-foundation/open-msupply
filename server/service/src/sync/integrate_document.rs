@@ -28,11 +28,13 @@ pub(crate) fn upsert_document(
         return Ok(());
     };
 
-    match registry.context {
-        repository::DocumentContext::Patient => update_patient(con, document)?,
-        repository::DocumentContext::Program => update_program_enrolment(con, document)?,
-        repository::DocumentContext::Encounter => update_encounter(con, document)?,
-        repository::DocumentContext::Custom => {}
+    match registry.r#type {
+        repository::DocumentRegistryType::Patient => update_patient(con, document)?,
+        repository::DocumentRegistryType::ProgramEnrolment => {
+            update_program_enrolment(con, document)?
+        }
+        repository::DocumentRegistryType::Encounter => update_encounter(con, document)?,
+        repository::DocumentRegistryType::Custom => {}
     };
     Ok(())
 }
@@ -64,13 +66,14 @@ fn update_program_enrolment(
 }
 
 fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), RepositoryError> {
-    let (Some(patient_id), Some(program)) = (&document.owner_name_id, &document.context) else {
-        return Err(RepositoryError::as_db_error("Document owner id and context expected", ""));
+    let Some(patient_id) = &document.owner_name_id else {
+        return Err(RepositoryError::as_db_error("Document owner id expected", ""));
     };
 
-    let encounter = validate_encounter_schema(&document.data).map_err(|err| {
-        RepositoryError::as_db_error(&format!("Invalid encounter data: {}", err), "")
-    })?;
+    let encounter: crate::programs::encounter::validate_misc::ValidatedSchemaEncounter =
+        validate_encounter_schema(&document.data).map_err(|err| {
+            RepositoryError::as_db_error(&format!("Invalid encounter data: {}", err), "")
+        })?;
 
     let clinician_id = encounter
         .encounter
@@ -80,7 +83,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
     update_encounter_row(
         con,
         &patient_id,
-        &program,
+        &document.context,
         document,
         encounter,
         clinician_id,

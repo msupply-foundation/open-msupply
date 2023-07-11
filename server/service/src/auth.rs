@@ -18,7 +18,7 @@ use crate::{
 #[derive(Debug, Clone, Eq, Hash, PartialEq)]
 pub enum CapabilityTag {
     /// Tags the list of capabilities to access documents by type
-    DocumentType,
+    ContextType,
 }
 
 #[derive(Debug, Clone)]
@@ -305,31 +305,25 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // TODO add permissions from central
     map.insert(
         Resource::QueryDocument,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentQuery, CapabilityTag::DocumentType),
+        PermissionDSL::HasDynamicPermission(Permission::DocumentQuery, CapabilityTag::ContextType),
     );
     map.insert(
         Resource::MutateDocument,
-        PermissionDSL::HasDynamicPermission(
-            Permission::DocumentMutate,
-            CapabilityTag::DocumentType,
-        ),
+        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate, CapabilityTag::ContextType),
     );
     map.insert(
         Resource::QueryDocumentRegistry,
         PermissionDSL::And(vec![
             PermissionDSL::HasDynamicPermission(
                 Permission::DocumentQuery,
-                CapabilityTag::DocumentType,
+                CapabilityTag::ContextType,
             ),
             PermissionDSL::HasStoreAccess,
         ]),
     );
     map.insert(
         Resource::MutateDocumentRegistry,
-        PermissionDSL::HasDynamicPermission(
-            Permission::DocumentMutate,
-            CapabilityTag::DocumentType,
-        ),
+        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate, CapabilityTag::ContextType),
     );
     map.insert(
         Resource::QueryJsonSchema,
@@ -348,7 +342,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::PatientQuery),
             PermissionDSL::HasDynamicPermission(
                 Permission::DocumentQuery,
-                CapabilityTag::DocumentType,
+                CapabilityTag::ContextType,
             ),
         ]),
     );
@@ -360,7 +354,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             // permission to read the related doc types when reading the mutated patient
             PermissionDSL::HasDynamicPermission(
                 Permission::DocumentQuery,
-                CapabilityTag::DocumentType,
+                CapabilityTag::ContextType,
             ),
         ]),
     );
@@ -370,7 +364,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasDynamicPermission(
                 Permission::DocumentQuery,
-                CapabilityTag::DocumentType,
+                CapabilityTag::ContextType,
             ),
         ]),
     );
@@ -380,7 +374,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasDynamicPermission(
                 Permission::DocumentQuery,
-                CapabilityTag::DocumentType,
+                CapabilityTag::ContextType,
             ),
         ]),
     );
@@ -390,7 +384,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasDynamicPermission(
                 Permission::DocumentMutate,
-                CapabilityTag::DocumentType,
+                CapabilityTag::ContextType,
             ),
         ]),
     );
@@ -400,7 +394,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasDynamicPermission(
                 Permission::DocumentMutate,
-                CapabilityTag::DocumentType,
+                CapabilityTag::ContextType,
             ),
         ]),
     );

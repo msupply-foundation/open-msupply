@@ -179,7 +179,8 @@ const NoteOptions = z
 export const noteTester = rankWith(5, uiTypeIs('Note'));
 
 const NoteComponent = (props: ControlProps) => {
-  const { data, handleChange, path, errors, uischema, config, enabled } = props;
+  const { handleChange, path, errors, uischema, config, enabled } = props;
+  const noteData: NoteSchema | undefined = props.data;
   const { localisedDateTime } = useFormatDateTime();
   const { errors: zErrors, options } = useZodOptionsValidation(
     NoteOptions,
@@ -187,24 +188,29 @@ const NoteComponent = (props: ControlProps) => {
   );
   const error = !!errors || !!zErrors;
   const handleNoteChange = (text: string | undefined) => {
+    if (text === noteData?.text) return;
+
     const authorId = config.user?.id;
     // TO-DO: Use full name for Author name once available in database
     const authorName = config.user?.name;
-    const created = data?.created ?? new Date().toISOString();
-    if (text)
-      handleChange(
-        path,
-        error
-          ? undefined
-          : ({
-              text,
-              authorId,
-              authorName,
-              created,
-            } as NoteSchema)
-      );
+    const created = noteData?.created ?? new Date().toISOString();
+
+    handleChange(
+      path,
+      error
+        ? undefined
+        : ({
+            text,
+            authorId,
+            authorName,
+            created,
+          } as NoteSchema)
+    );
   };
-  const { text, onChange } = useDebouncedTextInput(data.text, handleNoteChange);
+  const { text, onChange } = useDebouncedTextInput(
+    noteData?.text,
+    handleNoteChange
+  );
   const [editMode, setEditMode] = useState(!text);
 
   const t = useTranslation('common');
@@ -221,9 +227,9 @@ const NoteComponent = (props: ControlProps) => {
     color: 'gray.dark',
   };
 
-  const signature = data.created && (
+  const signature = noteData?.created && (
     <Typography sx={authorStyle}>
-      {`${data.authorName} (${localisedDateTime(data.created)})`}
+      {`${noteData?.authorName} (${localisedDateTime(noteData?.created)})`}
     </Typography>
   );
 
@@ -264,7 +270,9 @@ const NoteComponent = (props: ControlProps) => {
     </div>
   ) : (
     <div>
-      <Typography style={{ whiteSpace: 'pre-wrap' }}>{data.text}</Typography>
+      <Typography style={{ whiteSpace: 'pre-wrap' }}>
+        {noteData?.text}
+      </Typography>
       {enabled && (
         <div
           style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}

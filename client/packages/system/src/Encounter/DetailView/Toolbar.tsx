@@ -17,6 +17,7 @@ import {
   TypedTFunction,
   Option,
   useIntlUtils,
+  DocumentRegistryTypeNode,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -58,8 +59,13 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const { getLocalisedFullName } = useIntlUtils();
   const [clinician, setClinician] =
     useState<ClinicianAutocompleteOption | null>();
-  const { data: programDocument } =
-    useDocumentRegistry.get.documentRegistryByType(encounter?.program);
+  const { data: programEnrolmentRegistry } =
+    useDocumentRegistry.get.documentRegistries({
+      filter: {
+        type: { equalTo: DocumentRegistryTypeNode.ProgramEnrolment },
+        documentContext: { equalTo: encounter?.context },
+      },
+    });
 
   useEffect(() => {
     setStatus(encounter.status ?? undefined);
@@ -132,7 +138,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                 Input={
                   <BasicTextInput
                     disabled
-                    value={programDocument?.[0]?.name ?? ''}
+                    value={programEnrolmentRegistry?.nodes?.[0]?.name ?? ''}
                   />
                 }
               />

@@ -44,7 +44,6 @@ export const DetailView: FC = () => {
 
   const handleSave = useEncounter.document.upsert(
     encounter?.patient.id ?? '',
-    encounter?.program ?? '',
     encounter?.type ?? ''
   );
 

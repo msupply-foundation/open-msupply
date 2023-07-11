@@ -30,8 +30,6 @@ export const useDocument = {
 export const useDocumentRegistry = {
   get: {
     documentRegistries: Document.useDocumentRegistries,
-    documentRegistryByContext: Document.useDocumentRegistryByContext,
-    documentRegistryByType: Document.useDocumentRegistryByType,
     programRegistries: Document.useProgramRegistries,
     encounterRegistriesByPrograms: Document.useEncounterRegistriesByPrograms,
   },
