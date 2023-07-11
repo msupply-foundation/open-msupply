@@ -1349,6 +1349,11 @@ export type InsertLocationInput = {
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
 
+export enum InsertOutTypeNode {
+  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Prescription = 'PRESCRIPTION'
+}
+
 export type InsertOutboundShipmentError = {
   __typename: 'InsertOutboundShipmentError';
   error: InsertErrorInterface;
@@ -1382,6 +1387,7 @@ export type InsertOutboundShipmentLineInput = {
   stockLineId: Scalars['String'];
   tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
+  type?: InputMaybe<InsertOutTypeNode>;
 };
 
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode;
@@ -2218,6 +2224,7 @@ export type Mutations = {
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
   insertPatient: InsertPatientResponse;
+  insertPrescription: InsertPrescriptionResponse;
   /**
    * Enrols a patient into a program by adding a program document to the patient's documents.
    * Every patient can only have one program document of each program type.
@@ -2478,6 +2485,12 @@ export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
 
 export type MutationsInsertPatientArgs = {
   input: InsertPatientInput;
+  storeId: Scalars['String'];
+};
+
+
+export type MutationsInsertPrescriptionArgs = {
+  input: InsertPrescriptionInput;
   storeId: Scalars['String'];
 };
 

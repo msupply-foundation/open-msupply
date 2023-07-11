@@ -15,7 +15,7 @@ use crate::invoice_line::{
     outbound_shipment_unallocated_line::{
         DeleteOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLine,
     },
-    stock_out_line::InsertOutInvoiceLine,
+    stock_out_line::{InsertOutInvoiceLine, InsertOutType},
 };
 
 #[derive(Default)]
@@ -153,6 +153,7 @@ fn generate_new_line(
     let stock_line_row = &stock_line.stock_line_row;
     InsertOutInvoiceLine {
         id: uuid::uuid(),
+        r#type: Some(InsertOutType::OutboundShipment),
         invoice_id: invoice_id.to_string(),
         item_id: stock_line_row.item_id.clone(),
         stock_line_id: stock_line_row.id.clone(),

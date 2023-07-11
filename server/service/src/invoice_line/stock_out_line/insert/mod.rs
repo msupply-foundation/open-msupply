@@ -11,6 +11,7 @@ use validate::validate;
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct InsertOutInvoiceLine {
     pub id: String,
+    pub r#type: Option<InsertOutType>,
     pub invoice_id: String,
     pub item_id: String,
     pub stock_line_id: String,
@@ -21,10 +22,26 @@ pub struct InsertOutInvoiceLine {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum InsertOutType {
+    OutboundShipment,
+    Prescription,
+}
+
+impl InsertOutType {
+    pub fn to_domain(&self) -> InvoiceRowType {
+        match self {
+            InsertOutType::OutboundShipment => InvoiceRowType::OutboundShipment,
+            InsertOutType::Prescription => InvoiceRowType::Prescription,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum InsertOutInvoiceLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
+    NoInvoiceType,
     NotAnOutboundShipment,
     NotAPrescription,
     NotThisStoreInvoice,
@@ -68,12 +85,7 @@ pub fn insert_stock_out_line(
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice, batch) = validate(
-                &input,
-                &ctx.store_id,
-                &connection,
-                InvoiceRowType::OutboundShipment,
-            )?;
+            let (item, invoice, batch) = validate(&input, &ctx.store_id, &connection)?;
             let (new_line, update_batch) = generate(input, item, batch, invoice)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(&connection).upsert_one(&update_batch)?;
