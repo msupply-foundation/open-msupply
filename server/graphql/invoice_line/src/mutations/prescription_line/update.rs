@@ -9,7 +9,7 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::common_insert_update::{
+use service::invoice_line::common_update_line::{
     UpdateInvoiceLine as ServiceInput, UpdateInvoiceLineError as ServiceError,
 };
 
@@ -193,7 +193,7 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            common_insert_update::{
+            common_update_line::{
                 UpdateInvoiceLine as ServiceInput, UpdateInvoiceLineError as ServiceError,
             },
             InvoiceLineServiceTrait,

@@ -30,8 +30,8 @@ use self::prescription_line::*;
 pub mod common_insert_line;
 use self::common_insert_line::*;
 
-pub mod common_insert_update;
-use self::common_insert_update::*;
+pub mod common_update_line;
+use self::common_update_line::*;
 
 pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_line(

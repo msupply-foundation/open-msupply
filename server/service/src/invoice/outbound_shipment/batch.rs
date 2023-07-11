@@ -3,7 +3,7 @@ use repository::{Invoice, InvoiceLine, RepositoryError};
 use crate::{
     invoice_line::{
         common_insert_line::{InsertInvoiceLine, InsertInvoiceLineError},
-        common_insert_update::{UpdateInvoiceLine, UpdateInvoiceLineError},
+        common_update_line::{UpdateInvoiceLine, UpdateInvoiceLineError},
         outbound_shipment_line::{
             delete_outbound_shipment_line, insert_outbound_shipment_line,
             update_outbound_shipment_line, DeleteOutboundShipmentLine,

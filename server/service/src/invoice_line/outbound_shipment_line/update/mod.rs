@@ -1,6 +1,6 @@
 use crate::{
     invoice_line::{
-        common_insert_update::{generate, validate, UpdateInvoiceLine, UpdateInvoiceLineError},
+        common_update_line::{generate, validate, UpdateInvoiceLine, UpdateInvoiceLineError},
         query::get_invoice_line,
     },
     service_provider::ServiceContext,
@@ -58,7 +58,7 @@ mod test {
 
     use crate::{
         invoice::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
-        invoice_line::common_insert_update::{
+        invoice_line::common_update_line::{
             UpdateInvoiceLine, UpdateInvoiceLineError as ServiceError,
         },
         service_provider::ServiceProvider,
