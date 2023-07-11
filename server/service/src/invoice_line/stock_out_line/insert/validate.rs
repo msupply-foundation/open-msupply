@@ -17,7 +17,6 @@ pub fn validate(
     input: &InsertOutInvoiceLine,
     store_id: &str,
     connection: &StorageConnection,
-    r#type: InvoiceRowType,
 ) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertOutInvoiceLineError> {
     use InsertOutInvoiceLineError::*;
 
@@ -51,12 +50,16 @@ pub fn validate(
         return Err(StockLineAlreadyExistsInInvoice(unique_stock.unwrap().id));
     }
 
-    if !check_invoice_type(&invoice, r#type.clone()) {
-        if r#type == InvoiceRowType::OutboundShipment {
-            return Err(NotAnOutboundShipment);
-        } else if r#type == InvoiceRowType::Prescription {
-            return Err(NotAPrescription);
+    if let Some(r#type) = &input.r#type {
+        if !check_invoice_type(&invoice, r#type.to_domain()) {
+            if r#type.to_domain() == InvoiceRowType::OutboundShipment {
+                return Err(NotAnOutboundShipment);
+            } else if r#type.to_domain() == InvoiceRowType::Prescription {
+                return Err(NotAPrescription);
+            }
         }
+    } else {
+        return Err(NoInvoiceType);
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);

@@ -40,6 +40,7 @@ fn generate_batch_update(
 fn generate_line(
     InsertOutInvoiceLine {
         id,
+        r#type: _,
         invoice_id,
         item_id,
         stock_line_id,

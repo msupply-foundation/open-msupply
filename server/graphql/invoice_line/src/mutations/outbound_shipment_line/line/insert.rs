@@ -5,10 +5,11 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceLineNode;
 
+use ::serde::Serialize;
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_out_line::{
-    InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError,
+    InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError, InsertOutType,
 };
 
 use super::{
@@ -16,10 +17,27 @@ use super::{
     StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum InsertOutTypeNode {
+    OutboundShipment,
+    Prescription,
+}
+
+impl InsertOutTypeNode {
+    pub fn to_domain(self) -> InsertOutType {
+        match self {
+            InsertOutTypeNode::OutboundShipment => InsertOutType::OutboundShipment,
+            InsertOutTypeNode::Prescription => InsertOutType::Prescription,
+        }
+    }
+}
+
 #[derive(InputObject)]
 #[graphql(name = "InsertOutboundShipmentLineInput")]
 pub struct InsertInput {
     pub id: String,
+    pub r#type: Option<InsertOutTypeNode>,
     pub invoice_id: String,
     pub item_id: String,
     pub stock_line_id: String,
@@ -88,6 +106,7 @@ impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
         let InsertInput {
             id,
+            r#type,
             invoice_id,
             item_id,
             stock_line_id,
@@ -98,6 +117,7 @@ impl InsertInput {
 
         ServiceInput {
             id,
+            r#type: r#type.map(|r#type| r#type.to_domain()),
             invoice_id,
             item_id,
             stock_line_id,
@@ -158,6 +178,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+        ServiceError::NoInvoiceType => BadUserInput(formatted_error),
         ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
         ServiceError::NotAPrescription => BadUserInput(formatted_error),
         ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
@@ -189,6 +210,7 @@ mod test {
         invoice_line::{
             stock_out_line::{
                 InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError,
+                InsertOutType,
             },
             InvoiceLineServiceTrait,
         },
@@ -570,6 +592,7 @@ mod test {
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
+                    r#type: None,
                     tax: Some(5.0),
                     note: None,
                 }
@@ -590,7 +613,7 @@ mod test {
                 "stockLineId": "stock line input",
                 "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
-                "tax": 5.0,
+                "tax": 5.0
             },
             "storeId": "store_a"
         });

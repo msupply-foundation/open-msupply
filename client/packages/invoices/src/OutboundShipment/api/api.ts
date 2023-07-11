@@ -14,6 +14,7 @@ import {
   InvoiceLineNodeType,
   InvoiceSortFieldInput,
   UpdateOutboundShipmentNameInput,
+  InsertOutTypeNode,
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../types';
 import { get, isA } from '../../utils';
@@ -103,6 +104,7 @@ const outboundParsers = {
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
       totalBeforeTax: get.stockLineSubtotal(line),
+      type: InsertOutTypeNode.OutboundShipment,
     };
   },
   toUpdateLine: (line: DraftOutboundLine): UpdateOutboundShipmentLineInput => {
