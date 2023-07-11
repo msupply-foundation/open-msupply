@@ -8,7 +8,7 @@ use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_out_line::{
-    InsertInvoiceLine as ServiceInput, InsertInvoiceLineError as ServiceError,
+    InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError,
 };
 
 use super::{
@@ -188,7 +188,7 @@ mod test {
     use service::{
         invoice_line::{
             stock_out_line::{
-                InsertInvoiceLine as ServiceInput, InsertInvoiceLineError as ServiceError,
+                InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError,
             },
             InvoiceLineServiceTrait,
         },
