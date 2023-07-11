@@ -521,7 +521,6 @@ mod test {
             InvoiceServiceTrait,
         },
         invoice_line::{
-            common_insert_line::{InsertInvoiceLine, InsertInvoiceLineError},
             outbound_shipment_line::{
                 DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
                 UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError,
@@ -537,6 +536,7 @@ mod test {
                 InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
                 UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
             },
+            stock_out_line::{InsertInvoiceLine, InsertInvoiceLineError},
         },
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,

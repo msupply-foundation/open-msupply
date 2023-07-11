@@ -2,12 +2,10 @@ use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
     invoice_line::{
-        common_insert_line::{InsertInvoiceLine, InsertInvoiceLineError},
         outbound_shipment_line::{
-            delete_outbound_shipment_line, insert_outbound_shipment_line,
-            update_outbound_shipment_line, DeleteOutboundShipmentLine,
-            DeleteOutboundShipmentLineError, UpdateOutboundShipmentLine,
-            UpdateOutboundShipmentLineError,
+            delete_outbound_shipment_line, update_outbound_shipment_line,
+            DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
+            UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError,
         },
         outbound_shipment_service_line::{
             delete_outbound_shipment_service_line, insert_outbound_shipment_service_line,
@@ -23,6 +21,7 @@ use crate::{
             InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
             UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
         },
+        stock_out_line::{insert_stock_out_line, InsertInvoiceLine, InsertInvoiceLineError},
     },
     service_provider::ServiceContext,
     BatchMutationsProcessor, InputWithResult, WithDBError,
@@ -152,7 +151,7 @@ pub fn batch_outbound_shipment(
             // Normal Line
 
             let (has_errors, result) =
-                mutations_processor.do_mutations(input.insert_line, insert_outbound_shipment_line);
+                mutations_processor.do_mutations(input.insert_line, insert_stock_out_line);
             results.insert_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -283,7 +282,7 @@ mod test {
         invoice::outbound_shipment::{
             BatchOutboundShipment, DeleteOutboundShipmentError, InsertOutboundShipment,
         },
-        invoice_line::common_insert_line::InsertInvoiceLine,
+        invoice_line::stock_out_line::InsertInvoiceLine,
         service_provider::ServiceProvider,
         InputWithResult,
     };

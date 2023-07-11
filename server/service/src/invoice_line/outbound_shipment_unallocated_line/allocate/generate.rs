@@ -11,11 +11,11 @@ use util::{
 };
 
 use crate::invoice_line::{
-    common_insert_line::InsertInvoiceLine,
     outbound_shipment_line::UpdateOutboundShipmentLine,
     outbound_shipment_unallocated_line::{
         DeleteOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLine,
     },
+    stock_out_line::InsertInvoiceLine,
 };
 
 #[derive(Default)]
