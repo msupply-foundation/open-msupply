@@ -7,7 +7,7 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::common_insert_line::{
+use service::invoice_line::stock_out_line::{
     InsertInvoiceLine as ServiceInput, InsertInvoiceLineError as ServiceError,
 };
 
@@ -56,7 +56,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(
         service_provider
             .invoice_line_service
-            .insert_outbound_shipment_line(&service_context, input.to_domain()),
+            .insert_stock_out_line(&service_context, input.to_domain()),
     )
 }
 
@@ -187,7 +187,7 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            common_insert_line::{
+            stock_out_line::{
                 InsertInvoiceLine as ServiceInput, InsertInvoiceLineError as ServiceError,
             },
             InvoiceLineServiceTrait,
@@ -202,7 +202,7 @@ mod test {
     pub struct TestService(pub Box<InsertLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn insert_outbound_shipment_line(
+        fn insert_stock_out_line(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
