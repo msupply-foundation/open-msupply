@@ -32,6 +32,9 @@ export const useDeleteConfirmation = <T>({
   } = messages;
   const t = useTranslation('common');
   const { success, info } = useNotification();
+  const cannotDeleteSnack = info(
+    cantDelete || t('messages.cant-delete-generic')
+  );
 
   const showConfirmation = useConfirmationModal({
     onConfirm: async () => {
@@ -45,7 +48,10 @@ export const useDeleteConfirmation = <T>({
           const successSnack = success(deletedMessage);
           successSnack();
         })
-        .catch(err => console.log(err.message));
+        .catch(err => {
+          cannotDeleteSnack();
+          console.log(err.message);
+        });
     },
     message: confirmMessage || t('messages.confirm-delete-generic'),
     title: confirmTitle || t('heading.are-you-sure'),
@@ -55,9 +61,6 @@ export const useDeleteConfirmation = <T>({
     const numberSelected = selectedRows.length || 0;
     if (selectedRows && numberSelected > 0) {
       if (!canDelete) {
-        const cannotDeleteSnack = info(
-          cantDelete || t('messages.cant-delete-generic')
-        );
         cannotDeleteSnack();
       } else showConfirmation();
     } else {

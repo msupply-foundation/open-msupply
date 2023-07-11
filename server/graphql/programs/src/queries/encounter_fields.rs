@@ -23,7 +23,7 @@ pub struct EncounterFieldsNode {
     pub store_id: String,
     pub encounter_fields_result: EncounterFieldsResult,
 
-    allowed_docs: Vec<String>,
+    allowed_ctx: Vec<String>,
 }
 
 #[derive(SimpleObject)]
@@ -43,7 +43,7 @@ impl EncounterFieldsNode {
         EncounterNode {
             store_id: self.store_id.clone(),
             encounter_row: self.encounter_fields_result.row.clone(),
-            allowed_docs: self.allowed_docs.clone(),
+            allowed_ctx: self.allowed_ctx.clone(),
         }
     }
 
@@ -67,7 +67,7 @@ pub fn encounter_fields(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -82,7 +82,7 @@ pub fn encounter_fields(
             page.map(PaginationOption::from),
             filter.map(|f| f.to_domain_filter()),
             sort.map(EncounterSortInput::to_domain),
-            allowed_docs.clone(),
+            allowed_ctx.clone(),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -92,7 +92,7 @@ pub fn encounter_fields(
         .map(|encounter_fields| EncounterFieldsNode {
             store_id: store_id.clone(),
             encounter_fields_result: encounter_fields,
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
         })
         .collect();
 
