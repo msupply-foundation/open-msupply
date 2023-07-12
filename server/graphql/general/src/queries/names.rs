@@ -88,6 +88,7 @@ pub struct NameFilterInput {
     pub is_customer: Option<bool>,
     /// Filter by supplier property
     pub is_supplier: Option<bool>,
+    pub is_patient: Option<bool>,
     /// Is this name a store
     pub is_store: Option<bool>,
     /// Code of the store if store is linked to name
@@ -179,6 +180,7 @@ impl NameFilterInput {
             address2,
             country,
             email,
+            is_patient,
         } = self;
 
         NameFilter {
@@ -197,6 +199,7 @@ impl NameFilterInput {
             address2: address2.map(SimpleStringFilter::from),
             country: country.map(SimpleStringFilter::from),
             email: email.map(SimpleStringFilter::from),
+            is_patient,
         }
     }
 }
