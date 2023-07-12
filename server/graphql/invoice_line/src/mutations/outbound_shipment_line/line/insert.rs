@@ -177,14 +177,13 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::NoInvoiceType => BadUserInput(formatted_error),
-        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
-        ServiceError::NotAPrescription => BadUserInput(formatted_error),
-        ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
-        ServiceError::ItemNotFound => BadUserInput(formatted_error),
-        ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice
+        | ServiceError::NoInvoiceType
+        | ServiceError::InvoiceTypeDoesNotMatch
+        | ServiceError::LineAlreadyExists
+        | ServiceError::NumberOfPacksBelowOne
+        | ServiceError::ItemNotFound
+        | ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
     };
@@ -210,7 +209,6 @@ mod test {
         invoice_line::{
             stock_out_line::{
                 InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError,
-                InsertOutType,
             },
             InvoiceLineServiceTrait,
         },
@@ -460,18 +458,6 @@ mod test {
 
         //NotThisStoreInvoice
         let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreInvoice)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnOutboundShipment)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

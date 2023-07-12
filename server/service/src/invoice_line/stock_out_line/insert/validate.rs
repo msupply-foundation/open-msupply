@@ -1,4 +1,4 @@
-use repository::{InvoiceRow, InvoiceRowType, ItemRow, StockLineRow, StorageConnection};
+use repository::{InvoiceRow, ItemRow, StockLineRow, StorageConnection};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -52,11 +52,7 @@ pub fn validate(
 
     if let Some(r#type) = &input.r#type {
         if !check_invoice_type(&invoice, r#type.to_domain()) {
-            if r#type.to_domain() == InvoiceRowType::OutboundShipment {
-                return Err(NotAnOutboundShipment);
-            } else if r#type.to_domain() == InvoiceRowType::Prescription {
-                return Err(NotAPrescription);
-            }
+            return Err(InvoiceTypeDoesNotMatch);
         }
     } else {
         return Err(NoInvoiceType);
