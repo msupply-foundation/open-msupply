@@ -80,8 +80,8 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_patient, mock_patient_not_linked_to_store, mock_prescription_a, mock_store_a,
-            mock_store_linked_to_patient, mock_user_account_a, MockData, MockDataInserts,
+            mock_patient, mock_prescription_a, mock_store_a, mock_user_account_a, MockData,
+            MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceRowRepository, NameRow, NameStoreJoinRow, NameType,
