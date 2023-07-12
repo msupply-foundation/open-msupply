@@ -48,7 +48,7 @@ impl SyncRecordTester for DocumentRecordTester {
             form_schema_id: Some(schema_id),
             status: DocumentStatus::Active,
             owner_name_id: Some(patient_name_id),
-            context: Some("program".to_string()),
+            context: "program".to_string(),
         };
 
         result.push(TestStepData {

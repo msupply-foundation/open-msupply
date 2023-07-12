@@ -72,9 +72,9 @@ impl EncounterFilterInput {
     pub fn to_domain_filter(self) -> EncounterFilter {
         EncounterFilter {
             id: self.id.map(EqualFilter::from),
-            r#type: self.r#type.map(EqualFilter::from),
+            document_type: self.r#type.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
-            program: self.program.map(EqualFilter::from),
+            context: self.program.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             start_datetime: self.start_datetime.map(DatetimeFilter::from),
@@ -102,7 +102,7 @@ pub fn encounters(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -114,7 +114,7 @@ pub fn encounters(
             page.map(PaginationOption::from),
             filter.map(|f| f.to_domain_filter()),
             sort.map(EncounterSortInput::to_domain),
-            allowed_docs.clone(),
+            allowed_ctx.clone(),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
     let nodes = result
@@ -123,7 +123,7 @@ pub fn encounters(
         .map(|encounter_row| EncounterNode {
             store_id: store_id.clone(),
             encounter_row,
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
         })
         .collect();
 
@@ -136,9 +136,9 @@ pub fn encounters(
 impl EncounterSortInput {
     pub fn to_domain(self) -> EncounterSort {
         let key = match self.key {
-            EncounterSortFieldInput::Type => EncounterSortField::Type,
+            EncounterSortFieldInput::Type => EncounterSortField::DocumentType,
             EncounterSortFieldInput::PatientId => EncounterSortField::PatientId,
-            EncounterSortFieldInput::Program => EncounterSortField::Program,
+            EncounterSortFieldInput::Program => EncounterSortField::Context,
             EncounterSortFieldInput::CreatedDatetime => EncounterSortField::CreatedDatetime,
             EncounterSortFieldInput::StartDatetime => EncounterSortField::StartDatetime,
             EncounterSortFieldInput::EndDatetime => EncounterSortField::EndDatetime,

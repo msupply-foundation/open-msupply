@@ -839,38 +839,33 @@ export type DocumentRegistryConnector = {
 };
 
 export type DocumentRegistryFilterInput = {
-  context?: InputMaybe<EqualFilterDocumentRegistryContextInput>;
+  documentContext?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   parentId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterDocumentRegistryTypeInput>;
 };
 
 export type DocumentRegistryNode = {
   __typename: 'DocumentRegistryNode';
   children: Array<DocumentRegistryNode>;
-  context: DocumentRegistryNodeContext;
+  documentContext: Scalars['String'];
   documentType: Scalars['String'];
   formSchemaId: Scalars['String'];
   id: Scalars['String'];
   jsonSchema: Scalars['JSON'];
   name?: Maybe<Scalars['String']>;
   parentId?: Maybe<Scalars['String']>;
+  type: DocumentRegistryTypeNode;
   uiSchema: Scalars['JSON'];
   uiSchemaType: Scalars['String'];
 };
 
-export enum DocumentRegistryNodeContext {
-  Custom = 'CUSTOM',
-  Encounter = 'ENCOUNTER',
-  Patient = 'PATIENT',
-  Program = 'PROGRAM'
-}
-
 export type DocumentRegistryResponse = DocumentRegistryConnector;
 
 export enum DocumentRegistrySortFieldInput {
-  Context = 'context',
-  DocumentType = 'documentType'
+  DocumentType = 'documentType',
+  Type = 'type'
 }
 
 export type DocumentRegistrySortInput = {
@@ -882,6 +877,13 @@ export type DocumentRegistrySortInput = {
   /** Sort query result by `key` */
   key: DocumentRegistrySortFieldInput;
 };
+
+export enum DocumentRegistryTypeNode {
+  Custom = 'CUSTOM',
+  Encounter = 'ENCOUNTER',
+  Patient = 'PATIENT',
+  ProgramEnrolment = 'PROGRAM_ENROLMENT'
+}
 
 export type DocumentResponse = DocumentConnector;
 
@@ -954,6 +956,7 @@ export type EncounterFilterInput = {
 export type EncounterNode = {
   __typename: 'EncounterNode';
   clinician?: Maybe<ClinicianNode>;
+  context: Scalars['String'];
   createdDatetime: Scalars['DateTime'];
   /** The encounter document */
   document: DocumentNode;
@@ -963,7 +966,6 @@ export type EncounterNode = {
   name: Scalars['String'];
   patient: NameNode;
   patientId: Scalars['String'];
-  program: Scalars['String'];
   /** Returns the matching program enrolment for the patient of this encounter */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   startDatetime: Scalars['DateTime'];
@@ -1017,10 +1019,10 @@ export type EqualFilterBigNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']>;
 };
 
-export type EqualFilterDocumentRegistryContextInput = {
-  equalAny?: InputMaybe<Array<DocumentRegistryNodeContext>>;
-  equalTo?: InputMaybe<DocumentRegistryNodeContext>;
-  notEqualTo?: InputMaybe<DocumentRegistryNodeContext>;
+export type EqualFilterDocumentRegistryTypeInput = {
+  equalAny?: InputMaybe<Array<DocumentRegistryTypeNode>>;
+  equalTo?: InputMaybe<DocumentRegistryTypeNode>;
+  notEqualTo?: InputMaybe<DocumentRegistryTypeNode>;
 };
 
 export type EqualFilterEncounterStatusInput = {
@@ -1209,12 +1211,13 @@ export type InsertBarcodeInput = {
 export type InsertBarcodeResponse = BarcodeNode;
 
 export type InsertDocumentRegistryInput = {
-  context: DocumentRegistryNodeContext;
+  documentContext: Scalars['String'];
   documentType: Scalars['String'];
   formSchemaId: Scalars['String'];
   id: Scalars['String'];
   name?: InputMaybe<Scalars['String']>;
   parentId?: InputMaybe<Scalars['String']>;
+  type: DocumentRegistryTypeNode;
 };
 
 export type InsertDocumentResponse = DocumentRegistryNode;
@@ -1223,8 +1226,6 @@ export type InsertEncounterInput = {
   /** Encounter document data */
   data: Scalars['JSON'];
   patientId: Scalars['String'];
-  /** The program type */
-  programType: Scalars['String'];
   /** The schema id used for the encounter data */
   schemaId: Scalars['String'];
   /** The encounter type */
@@ -1349,11 +1350,6 @@ export type InsertLocationInput = {
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
 
-export enum InsertOutTypeNode {
-  OutboundShipment = 'OUTBOUND_SHIPMENT',
-  Prescription = 'PRESCRIPTION'
-}
-
 export type InsertOutboundShipmentError = {
   __typename: 'InsertOutboundShipmentError';
   error: InsertErrorInterface;
@@ -1387,7 +1383,6 @@ export type InsertOutboundShipmentLineInput = {
   stockLineId: Scalars['String'];
   tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
-  type?: InputMaybe<InsertOutTypeNode>;
 };
 
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode;
@@ -3082,6 +3077,7 @@ export type ProgramEnrolmentFilterInput = {
 
 export type ProgramEnrolmentNode = {
   __typename: 'ProgramEnrolmentNode';
+  context: Scalars['String'];
   /** The encounter document */
   document: DocumentNode;
   /** The program document */
@@ -3091,10 +3087,10 @@ export type ProgramEnrolmentNode = {
   /** The program document name */
   name: Scalars['String'];
   patientId: Scalars['String'];
-  /** The program type */
-  program: Scalars['String'];
   programEnrolmentId?: Maybe<Scalars['String']>;
   status: ProgramEnrolmentNodeStatus;
+  /** The program type */
+  type: Scalars['String'];
 };
 
 

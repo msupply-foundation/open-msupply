@@ -18,14 +18,14 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         filter: Option<DocumentRegistryFilter>,
         sort: Option<DocumentRegistrySort>,
-        allowed_doc_types: &[String],
+        allowed_ctx: &[String],
     ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
         let mut filter = filter.unwrap_or(DocumentRegistryFilter::new());
-        filter.document_type = Some(
+        filter.document_context = Some(
             filter
-                .document_type
+                .document_context
                 .unwrap_or_default()
-                .restrict_results(allowed_doc_types),
+                .restrict_results(allowed_ctx),
         );
 
         let repo = DocumentRegistryRepository::new(&ctx.connection);
@@ -36,15 +36,15 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         types: Vec<String>,
-        allowed_doc_types: &[String],
+        allowed_ctx: &[String],
     ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
         let repo = DocumentRegistryRepository::new(&ctx.connection);
         Ok(repo.query(
             Pagination::new(),
             Some(
-                DocumentRegistryFilter::new().document_type(
-                    EqualFilter::equal_any(types).restrict_results(allowed_doc_types),
-                ),
+                DocumentRegistryFilter::new()
+                    .document_context(EqualFilter::default().restrict_results(allowed_ctx))
+                    .document_type(EqualFilter::equal_any(types)),
             ),
             None,
         )?)
@@ -54,14 +54,14 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         parent_ids: &[String],
-        allowed_doc_types: &[String],
+        allowed_ctx: &[String],
     ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
         let repo = DocumentRegistryRepository::new(&ctx.connection);
         Ok(repo.query(
             Pagination::new(),
             Some(
                 DocumentRegistryFilter::new()
-                    .document_type(EqualFilter::default().restrict_results(allowed_doc_types))
+                    .document_context(EqualFilter::default().restrict_results(allowed_ctx))
                     .parent_id(EqualFilter::equal_any(parent_ids.to_vec())),
             ),
             None,
@@ -72,9 +72,9 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: InsertDocumentRegistry,
-        allowed_doc_types: &[String],
+        allowed_ctx: &[String],
     ) -> Result<DocumentRegistry, InsertDocRegistryError> {
-        insert(ctx, input, allowed_doc_types)
+        insert(ctx, input, allowed_ctx)
     }
 }
 
