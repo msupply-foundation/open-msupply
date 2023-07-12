@@ -72,7 +72,6 @@ pub fn patient_search(
         .patient_search(
             &context,
             service_provider,
-            &store_id,
             input.to_domain(),
             Some(&allowed_ctx),
         )?

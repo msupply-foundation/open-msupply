@@ -32,6 +32,7 @@ import FormLabel from '@mui/material/FormLabel';
 import Button from '@mui/material/Button';
 import Hidden from '@mui/material/Hidden';
 import Autocomplete from '@mui/material/Autocomplete';
+import Chip from '@mui/material/Chip';
 
 export * from './portals';
 export * from './inputs';
@@ -54,6 +55,7 @@ export {
   Autocomplete as AutocompleteMui,
   Button,
   CircularProgress,
+  Chip,
   Collapse,
   Fab,
   Hidden,

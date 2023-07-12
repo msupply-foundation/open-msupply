@@ -90,7 +90,7 @@ impl PartialOrd for Version {
         }
 
         if self.minor != other.minor {
-            return Some(self.major.cmp(&other.minor));
+            return Some(self.minor.cmp(&other.minor));
         }
 
         if self.patch != other.patch {
@@ -158,7 +158,7 @@ mod test {
     #[test]
     fn comparing_versions() {
         assert!(Version::from_str("10.11.01") > Version::from_str("01.11.2"));
-        assert!(Version::from_str("10.10.03") < Version::from_str("10.11.02"));
+        assert!(Version::from_str("12.10.03") < Version::from_str("12.11.02"));
         assert!(Version::from_str("10.11.01") < Version::from_str("10.11.2"));
 
         assert_eq!(
