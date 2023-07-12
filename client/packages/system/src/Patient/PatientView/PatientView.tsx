@@ -186,7 +186,7 @@ export const PatientView = () => {
       {current === PatientModal.Encounter ? <CreateEncounterModal /> : null}
       {current === PatientModal.ProgramSearch ? (
         <ProgramSearchModal
-          disabledPrograms={data?.nodes?.map(enrolment => enrolment.program)}
+          disabledPrograms={data?.nodes?.map(enrolment => enrolment.type)}
           open={true}
           onClose={reset}
           onChange={async documentRegistry => {
