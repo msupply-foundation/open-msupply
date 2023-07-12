@@ -1,9 +1,9 @@
 use chrono::Utc;
 
-use repository::{EqualFilter, InvoiceLineFilter, InvoiceLineRepository, RepositoryError};
-use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, StockLineRow,
-    StorageConnection,
+use repository::{InvoiceRow, InvoiceRowStatus, StockLineRow, StorageConnection};
+
+use crate::invoice::common::{
+    generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
 };
 
 use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatus};
@@ -11,7 +11,6 @@ use super::{UpdatePrescription, UpdatePrescriptionError, UpdatePrescriptionStatu
 pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
     pub(crate) update_invoice: InvoiceRow,
-    pub(crate) unallocated_lines_to_trim: Option<Vec<InvoiceLineRow>>,
 }
 
 pub(crate) fn generate(
@@ -42,21 +41,24 @@ pub(crate) fn generate(
     }
 
     let batches_to_update = if should_update_batches_total_number_of_packs {
-        Some(generate_batches_total_number_of_packs_update(
-            &update_invoice.id,
-            connection,
-        )?)
+        Some(
+            generate_batches_total_number_of_packs_update(&update_invoice.id, connection).map_err(
+                |e| match e {
+                    InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(line) => {
+                        UpdatePrescriptionError::InvoiceLineHasNoStockLine(line)
+                    }
+                    InvoiceLineHasNoStockLine::DatabaseError(e) => {
+                        UpdatePrescriptionError::DatabaseError(e)
+                    }
+                },
+            )?,
+        )
     } else {
         None
     };
 
     Ok(GenerateResult {
         batches_to_update,
-        unallocated_lines_to_trim: unallocated_lines_to_trim(
-            connection,
-            &existing_invoice,
-            &input_status,
-        )?,
         update_invoice,
     })
 }
@@ -74,38 +76,6 @@ fn should_update_batches_total_number_of_packs(
     } else {
         false
     }
-}
-
-fn unallocated_lines_to_trim(
-    connection: &StorageConnection,
-    invoice: &InvoiceRow,
-    status: &Option<UpdatePrescriptionStatus>,
-) -> Result<Option<Vec<InvoiceLineRow>>, RepositoryError> {
-    if invoice.status != InvoiceRowStatus::New {
-        return Ok(None);
-    }
-
-    let new_invoice_status = match UpdatePrescriptionStatus::full_status_option(status) {
-        Some(new_invoice_status) => new_invoice_status,
-        None => return Ok(None),
-    };
-
-    if new_invoice_status == InvoiceRowStatus::New {
-        return Ok(None);
-    }
-
-    let lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(&invoice.id))
-            .r#type(InvoiceLineRowType::UnallocatedStock.equal_to()),
-    )?;
-
-    if lines.is_empty() {
-        return Ok(None);
-    }
-
-    let invoice_line_rows = lines.into_iter().map(|l| l.invoice_line_row).collect();
-    return Ok(Some(invoice_line_rows));
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePrescriptionStatus>) {
@@ -134,29 +104,4 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePresc
         }
         _ => {}
     }
-}
-
-// Returns a list of stock lines that need to be updated
-fn generate_batches_total_number_of_packs_update(
-    invoice_id: &str,
-    connection: &StorageConnection,
-) -> Result<Vec<StockLineRow>, UpdatePrescriptionError> {
-    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id))
-            .r#type(InvoiceLineRowType::StockOut.equal_to()),
-    )?;
-
-    let mut result = Vec::new();
-    for invoice_line in invoice_lines {
-        let invoice_line_row = invoice_line.invoice_line_row;
-        let mut stock_line = invoice_line.stock_line_option.ok_or(
-            UpdatePrescriptionError::InvoiceLineHasNoStockLine(invoice_line_row.id.to_owned()),
-        )?;
-
-        stock_line.total_number_of_packs =
-            stock_line.total_number_of_packs - invoice_line_row.number_of_packs;
-        result.push(stock_line);
-    }
-    Ok(result)
 }

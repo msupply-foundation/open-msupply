@@ -128,15 +128,6 @@ fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
             ))
         }
 
-        ServiceError::CanOnlyChangeToPickedWhenNoUnallocatedLines(lines) => {
-            return Ok(
-                UpdatePrescriptionErrorInterface::CanOnlyChangeToPickedWhenNoUnallocatedLines(
-                    CanOnlyChangeToPickedWhenNoUnallocatedLines(InvoiceLineConnector::from_vec(
-                        lines,
-                    )),
-                ),
-            )
-        }
         ServiceError::OtherPartyNotAPatient => {
             return Ok(UpdatePrescriptionErrorInterface::OtherPartyNotAPatient(
                 OtherPartyNotAPatient,
@@ -148,13 +139,13 @@ fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotAPrescription => BadUserInput(formatted_error),
-        ServiceError::ClinicianDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
-        ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
-        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::NotAPrescription
+        | ServiceError::ClinicianDoesNotExist
+        | ServiceError::NotThisStoreInvoice
+        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_)
+        | ServiceError::InvoiceLineHasNoStockLine(_)
+        | ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())

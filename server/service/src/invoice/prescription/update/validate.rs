@@ -3,11 +3,8 @@ use crate::invoice::{
     check_store,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use repository::{ClinicianRow, ClinicianRowRepository, EqualFilter, RepositoryError};
-use repository::{
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
-    InvoiceRowType, StorageConnection,
-};
+use repository::{ClinicianRowRepository, RepositoryError};
+use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
 
 use super::{UpdatePrescription, UpdatePrescriptionError};
 
@@ -28,15 +25,11 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceRowType::Prescription) {
         return Err(NotAPrescription);
     }
-    if let Some(clinician_id) = &patch.clinician_id {
-        check_clinician_exists(connection, clinician_id)?.ok_or(ClinicianDoesNotExist)?;
+    if !check_clinician_exists(connection, &patch.clinician_id)? {
+        return Err(ClinicianDoesNotExist);
     }
-
     // Status check
     let status_changed = check_status_change(&invoice, patch.full_status());
-    if status_changed {
-        check_can_change_status_to_picked(connection, &invoice, patch.full_status())?;
-    }
 
     if let Some(patient_id) = &patch.patient_id {
         check_other_party(
@@ -58,47 +51,14 @@ pub fn validate(
 
 fn check_clinician_exists(
     connection: &StorageConnection,
-    clinician_id: &String,
-) -> Result<Option<ClinicianRow>, RepositoryError> {
-    let result = ClinicianRowRepository::new(connection).find_one_by_id(&clinician_id);
-
-    match result {
-        Ok(clinician_row) => Ok(clinician_row),
-        Err(RepositoryError::NotFound) => Ok(None),
-        Err(error) => Err(error),
-    }
-}
-
-fn check_can_change_status_to_picked(
-    connection: &StorageConnection,
-    invoice_row: &InvoiceRow,
-    status_option: Option<InvoiceRowStatus>,
-) -> Result<(), UpdatePrescriptionError> {
-    if invoice_row.status != InvoiceRowStatus::New {
-        return Ok(());
+    clinician_id: &Option<String>,
+) -> Result<bool, RepositoryError> {
+    let result = match clinician_id {
+        None => true,
+        Some(clinician_id) => ClinicianRowRepository::new(connection)
+            .find_one_by_id(&clinician_id)?
+            .is_some(),
     };
 
-    if let Some(new_status) = status_option {
-        if new_status == InvoiceRowStatus::New {
-            return Ok(());
-        }
-
-        let repository = InvoiceLineRepository::new(connection);
-        let unallocated_lines = repository.query_by_filter(
-            InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(&invoice_row.id))
-                .r#type(InvoiceLineRowType::UnallocatedStock.equal_to())
-                .number_of_packs(EqualFilter::not_equal_to_f64(0.0)),
-        )?;
-
-        if unallocated_lines.len() > 0 {
-            return Err(
-                UpdatePrescriptionError::CanOnlyChangeToPickedWhenNoUnallocatedLines(
-                    unallocated_lines,
-                ),
-            );
-        }
-    }
-
-    Ok(())
+    Ok(result)
 }
