@@ -4,7 +4,7 @@ use crate::{
             update_outbound_shipment_line, UpdateOutboundShipmentLine,
             UpdateOutboundShipmentLineError,
         },
-        stock_out_line::{insert_stock_out_line, InsertOutInvoiceLine, InsertOutInvoiceLineError},
+        stock_out_line::{insert_stock_out_line, InsertStockOutLine, InsertStockOutLineError},
         validate::check_line_exists_option,
     },
     service_provider::ServiceContext,
@@ -39,7 +39,7 @@ pub enum AllocateOutboundShipmentUnallocatedLineError {
     LineIsNotUnallocatedLine,
     // TODO NotThisStoreInvoice,
     // Internal
-    InsertOutboundShipmentLine(InputWithError<InsertOutInvoiceLine, InsertOutInvoiceLineError>),
+    InsertOutboundShipmentLine(InputWithError<InsertStockOutLine, InsertStockOutLineError>),
     UpdateOutboundShipmentLine(
         InputWithError<UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError>,
     ),

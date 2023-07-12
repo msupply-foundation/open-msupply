@@ -9,18 +9,17 @@ use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 
 use crate::mutations::outbound_shipment_line::line::{
-    InsertOutTypeNode, LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
+    LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
     StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
 use service::invoice_line::stock_out_line::{
-    InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError,
+    InsertOutType, InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError,
 };
 
 #[derive(InputObject)]
 #[graphql(name = "InsertPrescriptionLineInput")]
 pub struct InsertInput {
     pub id: String,
-    pub r#type: Option<InsertOutTypeNode>,
     pub invoice_id: String,
     pub item_id: String,
     pub stock_line_id: String,
@@ -133,16 +132,16 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::NoInvoiceType => BadUserInput(formatted_error),
-        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
-        ServiceError::NotAPrescription => BadUserInput(formatted_error),
-        ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
-        ServiceError::ItemNotFound => BadUserInput(formatted_error),
-        ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
+        ServiceError::NotThisStoreInvoice
+        | ServiceError::NoInvoiceType
+        | ServiceError::InvoiceTypeDoesNotMatch
+        | ServiceError::LineAlreadyExists
+        | ServiceError::NumberOfPacksBelowOne
+        | ServiceError::ItemNotFound
+        | ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -152,7 +151,6 @@ impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
         let InsertInput {
             id,
-            r#type,
             invoice_id,
             item_id,
             stock_line_id,
@@ -163,7 +161,7 @@ impl InsertInput {
 
         ServiceInput {
             id,
-            r#type: r#type.map(|r#type| r#type.to_domain()),
+            r#type: Some(InsertOutType::Prescription),
             invoice_id,
             item_id,
             stock_line_id,
@@ -191,8 +189,9 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            stock_out_line::InsertOutInvoiceLine as ServiceInput,
-            stock_out_line::InsertOutInvoiceLineError as ServiceError, InvoiceLineServiceTrait,
+            stock_out_line::InsertStockOutLineError as ServiceError,
+            stock_out_line::{InsertOutType, InsertStockOutLine as ServiceInput},
+            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -451,18 +450,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NotAPrescription
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAPrescription)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //LineAlreadyExists
         let test_service = TestService(Box::new(|_| Err(ServiceError::LineAlreadyExists)));
         let expected_message = "Bad user input";
@@ -568,7 +555,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "new id".to_string(),
-                    r#type: None,
+                    r#type: Some(InsertOutType::Prescription),
                     invoice_id: "invoice input".to_string(),
                     item_id: "item input".to_string(),
                     stock_line_id: "stock line input".to_string(),

@@ -15,30 +15,14 @@ fragment PatientRow on PatientNode {
     type
   }
   isDeceased
-}
-
-fragment Patient on PatientNode {
-  address1
-  address2
-  code
-  code2
-  country
-  dateOfBirth
-  document {
-    data
-    id
-    name
-    type
+  programEnrolments {
+    programEnrolmentId
+    document {
+      documentRegistry {
+        name
+      }
+    }
   }
-  email
-  firstName
-  lastName
-  gender
-  id
-  name
-  phone
-  website
-  isDeceased
 }
 
 query patients(
@@ -70,7 +54,7 @@ query patientById($storeId: String!, $nameId: String!) {
     ... on PatientConnector {
       __typename
       nodes {
-        ...Patient
+        ...PatientRow
       }
       totalCount
     }
@@ -84,7 +68,7 @@ query patientSearch($input: PatientSearchInput!, $storeId: String!) {
       nodes {
         score
         patient {
-          ...Patient
+          ...PatientRow
         }
       }
       totalCount

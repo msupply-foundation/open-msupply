@@ -39,7 +39,7 @@ const useDebouncedValue = <T>(value: T, wait = 500): T => {
  *
  */
 export const useDebouncedTextInput = (
-  data: string,
+  data: string | undefined,
   handleChange: (value: string | undefined) => void
 ) => {
   // current text from user input

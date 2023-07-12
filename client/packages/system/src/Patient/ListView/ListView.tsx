@@ -12,11 +12,25 @@ import {
   useTranslation,
   useUrlQueryParams,
   ReadOnlyCheckboxCell,
+  ColumnDataAccessor,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import { Toolbar } from './Toolbar';
 import { usePatientStore } from '@openmsupply-client/programs';
+import { ChipTableCell } from '../Components';
+
+const programEnrolmentLabelAccessor: ColumnDataAccessor<
+  PatientRowFragment,
+  string[]
+> = ({ rowData }): string[] => {
+  return rowData.programEnrolments.map(it => {
+    const programEnrolmentId = it.programEnrolmentId
+      ? ` (${it.programEnrolmentId})`
+      : '';
+    return `${it.document.documentRegistry?.name}${programEnrolmentId}`;
+  });
+};
 
 const PatientListComponent: FC = () => {
   const {
@@ -59,6 +73,14 @@ const PatientListComponent: FC = () => {
         width: 175,
         formatter: dateString =>
           dateString ? localisedDate((dateString as string) || '') : '',
+      },
+      {
+        label: 'label.program-enrolments',
+        key: 'programEnrolments',
+        sortable: false,
+        accessor: programEnrolmentLabelAccessor,
+        Cell: ChipTableCell,
+        maxWidth: 250,
       },
       {
         key: 'isDeceased',

@@ -10,7 +10,7 @@ use super::{encounter_schema, validate_misc::ValidatedSchemaEncounter};
 pub(crate) fn update_encounter_row(
     con: &StorageConnection,
     patient_id: &str,
-    program: &str,
+    document_context: &str,
     doc: &Document,
     validated_encounter: ValidatedSchemaEncounter,
     clinician_id: Option<String>,
@@ -35,10 +35,10 @@ pub(crate) fn update_encounter_row(
     };
     let row = EncounterRow {
         id,
-        r#type: doc.r#type.clone(),
+        document_type: doc.r#type.clone(),
         document_name: doc.name.clone(),
         patient_id: patient_id.to_string(),
-        program: program.to_string(),
+        context: document_context.to_string(),
         created_datetime: validated_encounter.created_datetime,
         start_datetime: validated_encounter.start_datetime,
         end_datetime: validated_encounter.end_datetime,
