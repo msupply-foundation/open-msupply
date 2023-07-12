@@ -72,7 +72,7 @@ fn generate(
         id,
         r#type,
         document_type,
-        document_context,
+        document_context_id: document_context,
         name,
         parent_id,
         form_schema_id: Some(form_schema_id),
@@ -85,7 +85,7 @@ fn validate(
     input: &InsertDocumentRegistry,
     allowed_ctx: &[String],
 ) -> Result<(), InsertDocRegistryError> {
-    if !allowed_ctx.contains(&input.document_type) {
+    if !allowed_ctx.contains(&input.document_context) {
         return Err(InsertDocRegistryError::NotAllowedToMutateDocument);
     }
     if !validate_unique_patient_entry(ctx, input)? {

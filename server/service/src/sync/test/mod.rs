@@ -280,6 +280,7 @@ pub(crate) async fn check_records_against_database(
             }
 
             Period(record) => check_record_by_id!(PeriodRowRepository, con, record, "Period"),
+            Context(record) => check_record_by_id!(ContextRowRepository, con, record, "Context"),
             Program(record) => check_record_by_id!(ProgramRowRepository, con, record, "Program"),
             ProgramRequisitionSettings(record) => check_record_by_id!(
                 ProgramRequisitionSettingsRowRepository,

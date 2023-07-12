@@ -183,6 +183,7 @@ impl PullUpsertRecord {
             MasterListNameJoin(record) => MasterListNameJoinRepository::new(con).upsert_one(record),
             PeriodSchedule(record) => PeriodScheduleRowRepository::new(con).upsert_one(record),
             Period(record) => PeriodRowRepository::new(con).upsert_one(record),
+            Context(record) => ContextRowRepository::new(con).upsert_one(record),
             Program(record) => ProgramRowRepository::new(con).upsert_one(record),
             ProgramRequisitionSettings(record) => {
                 ProgramRequisitionSettingsRowRepository::new(con).upsert_one(record)

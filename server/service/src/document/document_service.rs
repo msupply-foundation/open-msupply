@@ -145,7 +145,7 @@ pub trait DocumentServiceTrait: Sync + Send {
         let document = ctx
             .connection
             .transaction_sync(|con| {
-                if !allowed_ctx.contains(&doc.context) {
+                if !allowed_ctx.contains(&doc.context_id) {
                     return Err(DocumentInsertError::NotAllowedToMutateDocument);
                 }
                 let validator = json_validator(con, &doc)?;
@@ -277,7 +277,7 @@ fn validate_document_delete(
             return Err(DocumentDeleteError::DocumentNotFound);
         }
     };
-    if !allowed_ctx.contains(&doc.r#type) {
+    if !allowed_ctx.contains(&doc.context_id) {
         return Err(DocumentDeleteError::NotAllowedToMutateDocument);
     }
     Ok(doc)
@@ -300,7 +300,7 @@ fn validate_document_undelete(
             return Err(DocumentUndeleteError::DocumentNotFound);
         }
     };
-    if !allowed_ctx.contains(&doc.r#type) {
+    if !allowed_ctx.contains(&doc.context_id) {
         return Err(DocumentUndeleteError::NotAllowedToMutateDocument);
     }
 
@@ -333,7 +333,7 @@ fn generate_deleted_document(
         form_schema_id: current_document.form_schema_id,
         status: DocumentStatus::Deleted,
         owner_name_id: None,
-        context: current_document.context.clone(),
+        context_id: current_document.context_id.clone(),
     }
     .finalise()
     .map_err(|err| DocumentDeleteError::InternalError(err))?;
@@ -356,7 +356,7 @@ fn generate_undeleted_document(
         form_schema_id: deleted_document_parent.form_schema_id,
         status: DocumentStatus::Active,
         owner_name_id: deleted_document_parent.owner_name_id,
-        context: deleted_document_parent.context,
+        context_id: deleted_document_parent.context_id,
     }
     .finalise()
     .map_err(|err| DocumentUndeleteError::InternalError(err))?;
@@ -381,7 +381,10 @@ fn insert_document(
 mod document_service_test {
     use chrono::{DateTime, NaiveDateTime, Utc};
     use repository::{
-        mock::{document_a, mock_form_schema_empty, mock_form_schema_simple, MockDataInserts},
+        mock::{
+            context_program_a, document_a, mock_form_schema_empty, mock_form_schema_simple,
+            MockDataInserts,
+        },
         test_db::setup_all,
         DocumentStatus,
     };
@@ -395,7 +398,7 @@ mod document_service_test {
     async fn test_document_updates() {
         let (_, _, connection_manager, _) = setup_all(
             "test_document_updates",
-            MockDataInserts::none().form_schemas(),
+            MockDataInserts::none().form_schemas().contexts(),
         )
         .await;
 
@@ -404,6 +407,7 @@ mod document_service_test {
         let service = service_provider.document_service;
 
         let doc_name = "test/doc2";
+        let doc_context = context_program_a().id;
 
         // NotAllowedToMutateDocument
         let result = service.update_document(
@@ -423,7 +427,7 @@ mod document_service_test {
                 form_schema_id: None,
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: "ctx".to_string(),
+                context_id: doc_context.clone(),
             },
             &vec!["Wrong type".to_string()],
         );
@@ -451,9 +455,9 @@ mod document_service_test {
                     form_schema_id: None,
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "test_ctx".to_string(),
+                    context_id: doc_context.clone(),
                 },
-                &vec!["test_ctx".to_string()],
+                &vec![doc_context.clone()],
             )
             .unwrap();
         let found = service.document(&context, doc_name, None).unwrap().unwrap();
@@ -477,9 +481,9 @@ mod document_service_test {
                 form_schema_id: None,
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: "test_ctx".to_string(),
+                context_id: doc_context.clone(),
             },
-            &vec!["test_ctx".to_string()],
+            &vec![doc_context.clone()],
         );
         assert!(matches!(result, Err(DocumentInsertError::InvalidParent(_))));
 
@@ -502,9 +506,9 @@ mod document_service_test {
                     form_schema_id: None,
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "test_ctx".to_string(),
+                    context_id: doc_context.clone(),
                 },
-                &vec!["test_ctx".to_string()],
+                &vec![doc_context.clone()],
             )
             .unwrap();
         assert_eq!(v2.parent_ids[0], v1.id);
@@ -531,9 +535,9 @@ mod document_service_test {
                     form_schema_id: None,
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "test_ctx2".to_string(),
+                    context_id: doc_context.clone(),
                 },
-                &vec!["test_ctx2".to_string()],
+                &vec![doc_context.clone()],
             )
             .unwrap();
         // should still find the correct document
@@ -545,7 +549,7 @@ mod document_service_test {
     async fn test_document_schema_validation() {
         let (_, _, connection_manager, _) = setup_all(
             "document_schema_validation",
-            MockDataInserts::none().form_schemas(),
+            MockDataInserts::none().form_schemas().contexts(),
         )
         .await;
 
@@ -553,6 +557,7 @@ mod document_service_test {
         let context = service_provider.basic_context().unwrap();
 
         let service = service_provider.document_service;
+        let doc_context = context_program_a().id;
 
         // empty schema accepts all data
         let schema = mock_form_schema_empty();
@@ -575,9 +580,9 @@ mod document_service_test {
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "test_ctx".to_string(),
+                    context_id: doc_context.clone(),
                 },
-                &vec!["test_ctx".to_string()],
+                &vec![doc_context.clone()],
             )
             .unwrap();
 
@@ -601,9 +606,9 @@ mod document_service_test {
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: "test_ctx".to_string(),
+                context_id: doc_context.clone(),
             },
-            &vec!["test_ctx".to_string()],
+            &vec![doc_context.clone()],
         );
         assert!(matches!(
             result,
@@ -630,9 +635,9 @@ mod document_service_test {
                 form_schema_id: Some(schema.id),
                 status: DocumentStatus::Active,
                 owner_name_id: None,
-                context: "test_ctx".to_string(),
+                context_id: doc_context.clone(),
             },
-            &vec!["test_ctx".to_string()],
+            &vec![doc_context.clone()],
         );
         assert!(matches!(
             result,
@@ -660,17 +665,23 @@ mod document_service_test {
                     form_schema_id: Some(schema.id),
                     status: DocumentStatus::Active,
                     owner_name_id: None,
-                    context: "test_ctx".to_string(),
+                    context_id: doc_context.clone(),
                 },
-                &vec!["test_ctx".to_string()],
+                &vec![doc_context.clone()],
             )
             .unwrap();
     }
 
     #[actix_rt::test]
     async fn test_document_deletion() {
-        let (_, _, connection_manager, _) =
-            setup_all("document_deletion", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "document_deletion",
+            MockDataInserts::none()
+                .form_schemas()
+                .contexts()
+                .documents(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "");
         let context = service_provider.basic_context().unwrap();
@@ -684,7 +695,7 @@ mod document_service_test {
             DocumentDelete {
                 id: "invalid".to_string(),
             },
-            &vec!["SomeType".to_string()],
+            &vec![document_a().context_id],
         );
         assert_eq!(
             invalid_doc_deletion,
@@ -712,7 +723,7 @@ mod document_service_test {
                 DocumentDelete {
                     id: document_a().id,
                 },
-                &vec![document_a().r#type],
+                &vec![document_a().context_id],
             )
             .unwrap();
         let document = service
@@ -729,7 +740,7 @@ mod document_service_test {
             DocumentDelete {
                 id: document.id.clone(),
             },
-            &vec![document.r#type.clone()],
+            &vec![document.context_id.clone()],
         );
         assert_eq!(
             deleted_doc,
@@ -755,7 +766,7 @@ mod document_service_test {
                 &context,
                 "",
                 DocumentUndelete { id: document.id },
-                &vec![document.r#type.clone()],
+                &vec![document_a().context_id],
             )
             .unwrap();
         let undeleted_document = service
@@ -772,7 +783,7 @@ mod document_service_test {
             DocumentUndelete {
                 id: undeleted_document.id,
             },
-            &vec![document.r#type.clone()],
+            &vec![undeleted_document.context_id],
         );
         assert_eq!(
             undelete_active_document,

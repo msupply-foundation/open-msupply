@@ -67,7 +67,7 @@ pub fn mock_user_permission_a1() -> UserPermissionRow {
         user_id: "user_account_a".to_string(),
         store_id: Some("store_a".to_string()),
         permission: Permission::StocktakeMutate,
-        context: None,
+        context_id: None,
     }
 }
 
@@ -77,7 +77,7 @@ pub fn mock_user_permission_a2() -> UserPermissionRow {
         user_id: "user_account_a".to_string(),
         store_id: Some("store_a".to_string()),
         permission: Permission::RequisitionQuery,
-        context: None,
+        context_id: None,
     }
 }
 
@@ -87,7 +87,7 @@ pub fn mock_user_permission_a3() -> UserPermissionRow {
         user_id: "user_account_a".to_string(),
         store_id: Some("store_a".to_string()),
         permission: Permission::DocumentQuery,
-        context: Some("program".to_string()),
+        context_id: Some("program_a".to_string()),
     }
 }
 
@@ -97,7 +97,7 @@ pub fn mock_user_permission_b1() -> UserPermissionRow {
         user_id: "user_account_b".to_string(),
         store_id: Some("store_a".to_string()),
         permission: Permission::OutboundShipmentQuery,
-        context: None,
+        context_id: None,
     }
 }
 
