@@ -1492,7 +1492,6 @@ export type InsertPrescriptionLineInput = {
   numberOfPacks: Scalars['Float'];
   stockLineId: Scalars['String'];
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
-  type?: InputMaybe<InsertOutTypeNode>;
 };
 
 export type InsertPrescriptionLineResponse = InsertPrescriptionLineError | InvoiceLineNode;
