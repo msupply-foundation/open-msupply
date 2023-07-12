@@ -256,7 +256,7 @@ export type BatchOutboundShipmentInput = {
   deleteOutboundShipmentServiceLines?: InputMaybe<Array<DeleteOutboundShipmentServiceLineInput>>;
   deleteOutboundShipmentUnallocatedLines?: InputMaybe<Array<DeleteOutboundShipmentUnallocatedLineInput>>;
   deleteOutboundShipments?: InputMaybe<Array<Scalars['String']>>;
-  insertOutboundShipmentLines?: InputMaybe<Array<InsertInvoiceLineInput>>;
+  insertOutboundShipmentLines?: InputMaybe<Array<InsertOutboundShipmentLineInput>>;
   insertOutboundShipmentServiceLines?: InputMaybe<Array<InsertOutboundShipmentServiceLineInput>>;
   insertOutboundShipmentUnallocatedLines?: InputMaybe<Array<InsertOutboundShipmentUnallocatedLineInput>>;
   insertOutboundShipments?: InputMaybe<Array<InsertOutboundShipmentInput>>;
@@ -345,7 +345,7 @@ export type CannotDeleteRequisitionWithLines = DeleteRequestRequisitionErrorInte
   description: Scalars['String'];
 };
 
-export type CannotEditInvoice = AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertInvoiceLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
+export type CannotEditInvoice = AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & {
   __typename: 'CannotEditInvoice';
   description: Scalars['String'];
 };
@@ -1122,7 +1122,7 @@ export enum ForeignKey {
   StockLineId = 'stockLineId'
 }
 
-export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertInvoiceLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
+export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & InsertInboundShipmentLineErrorInterface & InsertInboundShipmentServiceLineErrorInterface & InsertOutboundShipmentLineErrorInterface & InsertOutboundShipmentServiceLineErrorInterface & InsertOutboundShipmentUnallocatedLineErrorInterface & InsertRequestRequisitionLineErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionLineErrorInterface & {
   __typename: 'ForeignKeyError';
   description: Scalars['String'];
   key: ForeignKey;
@@ -1331,28 +1331,6 @@ export type InsertInboundShipmentServiceLineResponseWithId = {
   response: InsertInboundShipmentServiceLineResponse;
 };
 
-export type InsertInvoiceLineError = {
-  __typename: 'InsertInvoiceLineError';
-  error: InsertInvoiceLineErrorInterface;
-};
-
-export type InsertInvoiceLineErrorInterface = {
-  description: Scalars['String'];
-};
-
-export type InsertInvoiceLineInput = {
-  id: Scalars['String'];
-  invoiceId: Scalars['String'];
-  itemId: Scalars['String'];
-  note?: InputMaybe<Scalars['String']>;
-  numberOfPacks: Scalars['Float'];
-  stockLineId: Scalars['String'];
-  tax?: InputMaybe<Scalars['Float']>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']>;
-};
-
-export type InsertInvoiceLineResponse = InsertInvoiceLineError | InvoiceLineNode;
-
 export type InsertLocationError = {
   __typename: 'InsertLocationError';
   error: InsertLocationErrorInterface;
@@ -1371,6 +1349,11 @@ export type InsertLocationInput = {
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
 
+export enum InsertOutTypeNode {
+  OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Prescription = 'PRESCRIPTION'
+}
+
 export type InsertOutboundShipmentError = {
   __typename: 'InsertOutboundShipmentError';
   error: InsertErrorInterface;
@@ -1387,10 +1370,32 @@ export type InsertOutboundShipmentInput = {
   theirReference?: InputMaybe<Scalars['String']>;
 };
 
+export type InsertOutboundShipmentLineError = {
+  __typename: 'InsertOutboundShipmentLineError';
+  error: InsertOutboundShipmentLineErrorInterface;
+};
+
+export type InsertOutboundShipmentLineErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type InsertOutboundShipmentLineInput = {
+  id: Scalars['String'];
+  invoiceId: Scalars['String'];
+  itemId: Scalars['String'];
+  numberOfPacks: Scalars['Float'];
+  stockLineId: Scalars['String'];
+  tax?: InputMaybe<Scalars['Float']>;
+  totalBeforeTax?: InputMaybe<Scalars['Float']>;
+  type?: InputMaybe<InsertOutTypeNode>;
+};
+
+export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode;
+
 export type InsertOutboundShipmentLineResponseWithId = {
   __typename: 'InsertOutboundShipmentLineResponseWithId';
   id: Scalars['String'];
-  response: InsertInvoiceLineResponse;
+  response: InsertOutboundShipmentLineResponse;
 };
 
 export type InsertOutboundShipmentResponse = InsertOutboundShipmentError | InvoiceNode | NodeError;
@@ -2031,7 +2036,7 @@ export type LocationInUse = DeleteLocationErrorInterface & {
   stockLines: StockLineConnector;
 };
 
-export type LocationIsOnHold = InsertInvoiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
+export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'LocationIsOnHold';
   description: Scalars['String'];
 };
@@ -2045,7 +2050,7 @@ export type LocationNode = {
   stock: StockLineConnector;
 };
 
-export type LocationNotFound = InsertInvoiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
+export type LocationNotFound = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'LocationNotFound';
   description: Scalars['String'];
 };
@@ -2215,7 +2220,7 @@ export type Mutations = {
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
   insertLocation: InsertLocationResponse;
   insertOutboundShipment: InsertOutboundShipmentResponse;
-  insertOutboundShipmentLine: InsertInvoiceLineResponse;
+  insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
   insertPatient: InsertPatientResponse;
@@ -2462,7 +2467,7 @@ export type MutationsInsertOutboundShipmentArgs = {
 
 
 export type MutationsInsertOutboundShipmentLineArgs = {
-  input: InsertInvoiceLineInput;
+  input: InsertOutboundShipmentLineInput;
   storeId: Scalars['String'];
 };
 
@@ -2836,7 +2841,7 @@ export type NotAnOutboundShipmentError = UpdateErrorInterface & UpdateNameErrorI
   description: Scalars['String'];
 };
 
-export type NotEnoughStockForReduction = InsertInvoiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
+export type NotEnoughStockForReduction = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'NotEnoughStockForReduction';
   batch: StockLineResponse;
   description: Scalars['String'];
@@ -3191,6 +3196,7 @@ export type Queries = {
   formSchema?: Maybe<FormSchemaNode>;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
+  insertPrescription: InsertPrescriptionResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -3339,6 +3345,12 @@ export type QueriesEncountersArgs = {
 
 export type QueriesFormSchemaArgs = {
   filter?: InputMaybe<FormSchemaFilterInput>;
+};
+
+
+export type QueriesInsertPrescriptionArgs = {
+  input: InsertPrescriptionInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -3996,7 +4008,7 @@ export type StockEvolutionOptionsInput = {
   numberOfProjectedDataPoints?: InputMaybe<Scalars['Int']>;
 };
 
-export type StockLineAlreadyExistsInInvoice = InsertInvoiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
+export type StockLineAlreadyExistsInInvoice = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'StockLineAlreadyExistsInInvoice';
   description: Scalars['String'];
   line: InvoiceLineNode;
@@ -4019,7 +4031,7 @@ export type StockLineFilterInput = {
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
 
-export type StockLineIsOnHold = InsertInvoiceLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
+export type StockLineIsOnHold = InsertOutboundShipmentLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & {
   __typename: 'StockLineIsOnHold';
   description: Scalars['String'];
 };
