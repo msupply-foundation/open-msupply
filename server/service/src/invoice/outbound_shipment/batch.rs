@@ -282,7 +282,7 @@ mod test {
         invoice::outbound_shipment::{
             BatchOutboundShipment, DeleteOutboundShipmentError, InsertOutboundShipment,
         },
-        invoice_line::stock_out_line::InsertOutInvoiceLine,
+        invoice_line::stock_out_line::{InsertOutInvoiceLine, InsertOutType},
         service_provider::ServiceProvider,
         InputWithResult,
     };
@@ -307,6 +307,7 @@ mod test {
             })]),
             insert_line: Some(vec![inline_init(|input: &mut InsertOutInvoiceLine| {
                 input.invoice_id = "new_id".to_string();
+                input.r#type = Some(InsertOutType::OutboundShipment);
                 input.id = "new_line_id".to_string();
                 input.item_id = mock_item_a().id;
                 input.stock_line_id = mock_stock_line_a().id;

@@ -115,7 +115,7 @@ mod test {
         invoice::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
         invoice_line::{
             stock_out_line::InsertOutInvoiceLine,
-            stock_out_line::InsertOutInvoiceLineError as ServiceError,
+            stock_out_line::{InsertOutInvoiceLineError as ServiceError, InsertOutType},
         },
         service_provider::ServiceProvider,
     };
@@ -137,6 +137,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -151,6 +152,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound shipment line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
+
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -167,6 +170,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound shipment line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = "new invoice id".to_string();
                     r.item_id = mock_item_b_lines()[0].item_id.clone();
                     r.number_of_packs = 1.0;
@@ -182,6 +186,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = "invalid".to_string();
                     r.number_of_packs = 1.0;
                 }),
@@ -195,6 +200,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -210,6 +216,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -227,6 +234,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -244,6 +252,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -261,6 +270,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -280,6 +290,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -300,6 +311,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -343,6 +355,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -394,6 +407,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new allocated invoice line".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -434,6 +448,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutInvoiceLine| {
                     r.id = "new picked invoice line".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();
