@@ -37,7 +37,7 @@ impl DocumentRegistryNode {
     }
 
     pub async fn document_context(&self) -> &str {
-        &self.document_registry.document_context
+        &self.document_registry.document_context_id
     }
 
     pub async fn r#type(&self) -> DocumentRegistryTypeNode {

@@ -113,7 +113,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(input.patient_id),
-        context: registry.document_context,
+        context_id: registry.document_context_id,
     })
 }
 
@@ -201,11 +201,11 @@ fn validate(
 mod test {
     use chrono::{DateTime, Timelike, Utc};
     use repository::{
-        mock::{mock_form_schema_empty, MockDataInserts},
+        mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
         DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
         DocumentRepository, FormSchemaRowRepository, Pagination, ProgramEnrolmentRepository,
-        StringFilter,
+        StringFilter, PATIENT_CONTEXT_ID,
     };
     use serde_json::json;
     use util::inline_init;
@@ -228,7 +228,8 @@ mod test {
                 .names()
                 .stores()
                 .form_schemas()
-                .name_store_joins(),
+                .name_store_joins()
+                .contexts(),
         )
         .await;
 
@@ -241,13 +242,14 @@ mod test {
             .upsert_one(&schema)
             .unwrap();
         let enrolment_doc_type = "ProgramEnrolmentType".to_string();
+        let program_context = context_program_a().id;
         let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "patient_id".to_string(),
                 r#type: DocumentRegistryType::Patient,
                 document_type: PATIENT_TYPE.to_string(),
-                document_context: "Patient".to_string(),
+                document_context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
@@ -259,7 +261,7 @@ mod test {
                 id: "program_enrolment_id".to_string(),
                 r#type: DocumentRegistryType::ProgramEnrolment,
                 document_type: enrolment_doc_type.to_string(),
-                document_context: enrolment_doc_type.to_string(),
+                document_context_id: program_context.to_string(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
@@ -301,7 +303,7 @@ mod test {
                     patient_id: "some_id".to_string(),
                     r#type: enrolment_doc_type.clone(),
                 },
-                vec![enrolment_doc_type.clone()],
+                vec![program_context.clone()],
             )
             .err()
             .unwrap();
@@ -335,7 +337,7 @@ mod test {
                     patient_id: "some_id".to_string(),
                     r#type: enrolment_doc_type.clone(),
                 },
-                vec![enrolment_doc_type.clone()],
+                vec![program_context.clone()],
             )
             .err()
             .unwrap();
@@ -360,7 +362,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: enrolment_doc_type.clone(),
                 },
-                vec![enrolment_doc_type.clone()],
+                vec![program_context.clone()],
             )
             .unwrap();
 
@@ -377,7 +379,7 @@ mod test {
                         schema_id: schema.id.clone(),
                         parent: None
                     },
-                    vec![enrolment_doc_type.clone()]
+                    vec![program_context.clone()]
                 )
                 .err()
                 .unwrap(),
@@ -397,7 +399,7 @@ mod test {
                         schema_id: schema.id.clone(),
                         parent: Some("invalid".to_string()),
                     },
-                    vec![enrolment_doc_type.clone()]
+                    vec![program_context.clone()]
                 )
                 .err()
                 .unwrap(),
@@ -431,7 +433,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: Some(v0.id),
                 },
-                vec![enrolment_doc_type.clone()],
+                vec![program_context.clone()],
             )
             .unwrap();
         // Test program has been written to the programs table
@@ -439,7 +441,7 @@ mod test {
             .find_one_by_type_and_patient(&enrolment_doc_type, &patient.id)
             .unwrap()
             .unwrap();
-        assert_eq!(enrolment_doc_type, found_program.context);
+        assert_eq!(program_context, found_program.context);
         assert_eq!(
             program.enrolment_datetime,
             DateTime::<Utc>::from_utc(found_program.enrolment_datetime, Utc).to_rfc3339()

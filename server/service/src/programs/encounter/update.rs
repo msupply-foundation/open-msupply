@@ -130,7 +130,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: existing.status,
         owner_name_id: existing.owner_name_id,
-        context: existing.context,
+        context_id: existing.context_id,
     })
 }
 
@@ -199,10 +199,10 @@ fn validate(
 mod test {
     use chrono::Utc;
     use repository::{
-        mock::{mock_form_schema_empty, MockDataInserts},
+        mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
         DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType, EncounterFilter,
-        EncounterRepository, EqualFilter, FormSchemaRowRepository,
+        EncounterRepository, EqualFilter, FormSchemaRowRepository, PATIENT_CONTEXT_ID,
     };
     use serde_json::json;
     use util::inline_init;
@@ -228,6 +228,7 @@ mod test {
             MockDataInserts::none()
                 .names()
                 .stores()
+                .contexts()
                 .form_schemas()
                 .name_store_joins(),
         )
@@ -243,6 +244,7 @@ mod test {
             .unwrap();
         let enrolment_doc_type = "ProgramEnrolmentType".to_string();
         let encounter_type = "EncounterType".to_string();
+        let program_context = context_program_a().id;
 
         let registry_repo = DocumentRegistryRowRepository::new(&ctx.connection);
         registry_repo
@@ -250,7 +252,7 @@ mod test {
                 id: "patient_id".to_string(),
                 r#type: DocumentRegistryType::Patient,
                 document_type: PATIENT_TYPE.to_string(),
-                document_context: "Patient".to_string(),
+                document_context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
@@ -262,7 +264,7 @@ mod test {
                 id: "program_enrolment_rego_id".to_string(),
                 r#type: DocumentRegistryType::ProgramEnrolment,
                 document_type: enrolment_doc_type.to_string(),
-                document_context: "TestProgramEnrolment".to_string(),
+                document_context_id: program_context.clone(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
@@ -274,7 +276,7 @@ mod test {
                 id: "encounter_rego_id".to_string(),
                 r#type: DocumentRegistryType::Encounter,
                 document_type: encounter_type.to_string(),
-                document_context: "TestProgramEnrolment".to_string(),
+                document_context_id: program_context.clone(),
                 name: None,
                 parent_id: Some("program_enrolment_rego_id".to_string()),
                 form_schema_id: Some(schema.id.clone()),
@@ -315,7 +317,7 @@ mod test {
                     patient_id: patient.id.clone(),
                     r#type: enrolment_doc_type.clone(),
                 },
-                vec!["TestProgramEnrolment".to_string()],
+                vec![program_context.clone()],
             )
             .unwrap();
         let service = &service_provider.encounter_service;
@@ -336,7 +338,7 @@ mod test {
                     r#type: encounter_type.to_string(),
                     event_datetime: Utc::now(),
                 },
-                vec!["TestProgramEnrolment".to_string()],
+                vec![program_context.clone()],
             )
             .unwrap();
 
@@ -370,7 +372,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: "invalid".to_string(),
                 },
-                vec!["TestProgramEnrolment".to_string()],
+                vec![program_context.clone()],
             )
             .err()
             .unwrap();
@@ -388,7 +390,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
                 },
-                vec!["TestProgramEnrolment".to_string()],
+                vec![program_context.clone()],
             )
             .err()
             .unwrap();
@@ -411,7 +413,7 @@ mod test {
                     schema_id: schema.id.clone(),
                     parent: initial_encounter.id.clone(),
                 },
-                vec!["TestProgramEnrolment".to_string()],
+                vec![program_context.clone()],
             )
             .unwrap();
         let found = service_provider

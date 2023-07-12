@@ -83,7 +83,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
     update_encounter_row(
         con,
         &patient_id,
-        &document.context,
+        &document.context_id,
         document,
         encounter,
         clinician_id,

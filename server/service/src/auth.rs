@@ -561,7 +561,7 @@ fn validate_resource_permissions(
             }
             let mut contexts = user_permissions
                 .into_iter()
-                .filter_map(|p| p.context.clone())
+                .filter_map(|p| p.context_id.clone())
                 .collect::<Vec<_>>();
 
             capabilities.append(&mut contexts);
@@ -755,7 +755,7 @@ mod validate_resource_permissions_test {
             user_id: user_id.to_string(),
             permission: Permission::ServerAdmin,
             store_id: None,
-            context: None,
+            context_id: None,
         }];
         let validation_result = validate_resource_permissions(
             user_id,
@@ -811,7 +811,7 @@ mod validate_resource_permissions_test {
             user_id: user_id.to_string(),
             permission: Permission::StocktakeMutate,
             store_id: Some(store_id.to_string()),
-            context: None,
+            context_id: None,
         }];
         let required_permissions = PermissionDSL::And(vec![
             PermissionDSL::HasPermission(Permission::ServerAdmin),
@@ -833,14 +833,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::ServerAdmin,
                 store_id: None,
-                context: None,
+                context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
         ];
         let required_permissions = PermissionDSL::And(vec![
@@ -870,14 +870,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StoreAccess,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
         ];
         let validation_result = validate_resource_permissions(
@@ -901,7 +901,7 @@ mod validate_resource_permissions_test {
             user_id: user_id.to_string(),
             permission: Permission::ServerAdmin,
             store_id: None,
-            context: None,
+            context_id: None,
         }];
         let validation_result = validate_resource_permissions(
             user_id,
@@ -926,14 +926,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StoreAccess,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
         ];
         let validation_result = validate_resource_permissions(
@@ -951,14 +951,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::ServerAdmin,
                 store_id: None,
-                context: None,
+                context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StoreAccess,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
         ];
         let validation_result = validate_resource_permissions(
@@ -1060,7 +1060,7 @@ mod permission_validation_test {
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
                 permission: Permission::InboundShipmentMutate,
-                context: None,
+                context_id: None,
             })
             .unwrap();
         assert!(service
@@ -1082,7 +1082,7 @@ mod permission_validation_test {
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
                 permission: Permission::StocktakeQuery,
-                context: None,
+                context_id: None,
             })
             .unwrap();
         assert!(service
@@ -1148,14 +1148,14 @@ mod permission_validation_test {
                     user_id: user().id,
                     store_id: Some(store().id),
                     permission: Permission::RequisitionMutate,
-                    context: None,
+                    context_id: None,
                 },
                 UserPermissionRow {
                     id: "permission_store_access".to_string(),
                     user_id: user().id,
                     store_id: Some(store().id),
                     permission: Permission::StoreAccess,
-                    context: None,
+                    context_id: None,
                 },
             ]
         }

@@ -21,7 +21,7 @@ table! {
         id -> Text,
         #[sql_name = "type"] type_ -> crate::DocumentRegistryTypeMapping,
         document_type -> Text,
-        document_context -> Text,
+        document_context_id -> Text,
         name -> Nullable<Text>,
         parent_id -> Nullable<Text>,
         form_schema_id -> Nullable<Text>,
@@ -38,7 +38,7 @@ pub struct DocumentRegistryRow {
     pub r#type: DocumentRegistryType,
     pub document_type: String,
     /// The context of the document, e.g. the program id
-    pub document_context: String,
+    pub document_context_id: String,
     pub name: Option<String>,
     pub parent_id: Option<String>,
     pub form_schema_id: Option<String>,

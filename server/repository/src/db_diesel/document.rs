@@ -29,7 +29,7 @@ table! {
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
-        context -> Text,
+        context_id -> Text,
         is_sync_update -> Bool,
     }
 }
@@ -47,7 +47,7 @@ table! {
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
-        context -> Text,
+        context_id -> Text,
         is_sync_update -> Bool,
     }
 }
@@ -90,7 +90,7 @@ pub struct DocumentRow {
     /// For example, the patient who owns the document
     pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
-    pub context: String,
+    pub context_id: String,
     pub is_sync_update: bool,
 }
 
@@ -113,7 +113,7 @@ pub struct Document {
     pub form_schema_id: Option<String>,
     pub status: DocumentStatus,
     pub owner_name_id: Option<String>,
-    pub context: String,
+    pub context_id: String,
 }
 
 #[derive(Clone)]
@@ -198,7 +198,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
         apply_equal_filter!(query, r#type, latest_document::dsl::type_);
         apply_date_time_filter!(query, datetime, latest_document::dsl::datetime);
         apply_equal_filter!(query, owner, latest_document::dsl::owner_name_id);
-        apply_equal_filter!(query, context, latest_document::dsl::context);
+        apply_equal_filter!(query, context, latest_document::dsl::context_id);
         apply_simple_string_filter!(query, data, latest_document::dsl::data);
     }
     query
@@ -261,7 +261,7 @@ impl<'a> DocumentRepository<'a> {
                     apply_sort!(query, sort, latest_document::dsl::owner_name_id)
                 }
                 DocumentSortField::Context => {
-                    apply_sort!(query, sort, latest_document::dsl::context)
+                    apply_sort!(query, sort, latest_document::dsl::context_id)
                 }
                 DocumentSortField::Datetime => {
                     apply_sort!(query, sort, latest_document::dsl::datetime)
@@ -306,7 +306,7 @@ impl<'a> DocumentRepository<'a> {
             apply_equal_filter!(query, r#type, document::dsl::type_);
             apply_date_time_filter!(query, datetime, document::dsl::datetime);
             apply_equal_filter!(query, owner, document::dsl::owner_name_id);
-            apply_equal_filter!(query, context, document::dsl::context);
+            apply_equal_filter!(query, context, document::dsl::context_id);
             apply_simple_string_filter!(query, data, document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query
@@ -334,7 +334,7 @@ impl DocumentRow {
             form_schema_id,
             status,
             owner_name_id,
-            context,
+            context_id,
             is_sync_update: _,
         } = self;
 
@@ -360,7 +360,7 @@ impl DocumentRow {
             form_schema_id,
             status,
             owner_name_id,
-            context,
+            context_id,
         };
 
         Ok(document)
@@ -389,7 +389,7 @@ impl Document {
             form_schema_id: self.form_schema_id.clone(),
             status: self.status.to_owned(),
             owner_name_id: self.owner_name_id.to_owned(),
-            context: self.context.to_owned(),
+            context_id: self.context_id.to_owned(),
             is_sync_update,
         })
     }

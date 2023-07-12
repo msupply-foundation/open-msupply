@@ -138,7 +138,7 @@ mod test {
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
         DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType, EqualFilter,
-        FormSchemaRowRepository,
+        FormSchemaRowRepository, PATIENT_CONTEXT_ID,
     };
     use util::inline_init;
 
@@ -175,7 +175,7 @@ mod test {
                 id: "patient_id".to_string(),
                 r#type: DocumentRegistryType::Patient,
                 document_type: PATIENT_TYPE.to_string(),
-                document_context: "Patient".to_string(),
+                document_context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),

@@ -5,7 +5,7 @@ use crate::sync::{
     translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
 };
 
-use repository::{Permission, UserPermissionRow};
+use repository::{ContextRow, Permission, UserPermissionRow};
 use serde_json::json;
 use util::uuid::uuid;
 
@@ -17,19 +17,31 @@ impl SyncRecordTester for UserPermissionTester {
         // STEP 1 - insert
         let store_id = new_site_properties.store_id.clone();
 
+        let context = ContextRow {
+            id: "some context".to_string(),
+            name: "".to_string(),
+        };
+        let context_json = json!({
+            "ID": context.id.clone(),
+            "description": context.name.clone(),
+            "isProgram": true,
+            "code": "",
+            "note": "",
+            "programSettings": { "storeTags": {} },
+        });
         let user_permission_row_1 = UserPermissionRow {
             id: uuid(),
             user_id: "test_user".to_string(),
             store_id: Some(store_id.clone()),
             permission: Permission::DocumentMutate,
-            context: Some("some program".to_string()),
+            context_id: Some(context.id.clone()),
         };
         let user_permission_row_1_json = json!({
             "ID": user_permission_row_1.id,
             "user_ID": user_permission_row_1.user_id,
             "store_ID": user_permission_row_1.store_id,
             "permission": "DocumentMutate",
-            "context_ID": user_permission_row_1.context
+            "context_ID": user_permission_row_1.context_id
         });
 
         let user_permission_row_2 = UserPermissionRow {
@@ -37,18 +49,19 @@ impl SyncRecordTester for UserPermissionTester {
             user_id: "test_user".to_string(),
             store_id: Some(store_id),
             permission: Permission::DocumentQuery,
-            context: Some("some program".to_string()),
+            context_id: Some(context.id.clone()),
         };
         let user_permission_row_2_json = json!({
             "ID": user_permission_row_2.id,
             "user_ID": user_permission_row_2.user_id,
             "store_ID": user_permission_row_2.store_id,
             "permission": "DocumentQuery",
-            "context_ID": user_permission_row_2.context
+            "context_ID": user_permission_row_2.context_id,
         });
 
         result.push(TestStepData {
             central_upsert: json!({
+                "list_master": [context_json],
                 "om_user_permission": [user_permission_row_1_json, user_permission_row_2_json],
             }),
             central_delete: json!({}),

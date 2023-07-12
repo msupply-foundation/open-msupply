@@ -99,7 +99,7 @@ impl SyncTranslation for DocumentTranslation {
                 LegacyDocumentStatus::Deleted => DocumentStatus::Deleted,
             },
             owner_name_id,
-            context,
+            context_id: context,
         };
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::Document(result),
@@ -132,7 +132,7 @@ impl SyncTranslation for DocumentTranslation {
             form_schema_id,
             status,
             owner_name_id,
-            context,
+            context_id,
             is_sync_update: _,
         } = document.to_row(false)?;
 
@@ -150,7 +150,7 @@ impl SyncTranslation for DocumentTranslation {
                 DocumentStatus::Deleted => LegacyDocumentStatus::Deleted,
             },
             owner_name_id,
-            context,
+            context: context_id,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

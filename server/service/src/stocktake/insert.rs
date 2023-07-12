@@ -737,6 +737,7 @@ mod test {
                 .stores()
                 .name_store_joins()
                 .user_accounts()
+                .contexts()
                 .user_permissions()
                 .user_store_joins()
                 .items()

@@ -183,7 +183,7 @@ fn input_to_raw_document(
         form_schema_id: schema_id,
         status: DocumentStatus::Active,
         owner_name_id: patient_id,
-        context: r#type,
+        context_id: r#type,
     }
 }
 
@@ -193,7 +193,7 @@ mod graphql {
     use graphql_core::test_helpers::setup_graphl_test;
 
     use repository::{
-        mock::{mock_form_schema_empty, MockDataInserts},
+        mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
         DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
         FormSchemaRowRepository,
     };
@@ -248,6 +248,7 @@ mod graphql {
             MockDataInserts::none()
                 .names()
                 .stores()
+                .contexts()
                 .user_permissions()
                 .user_accounts(),
         )
@@ -261,7 +262,7 @@ mod graphql {
             .upsert_one(&DocumentRegistryRow {
                 id: "someid".to_string(),
                 document_type: "TestProgramEnrolment".to_string(),
-                document_context: "TestProgram".to_string(),
+                document_context_id: context_program_a().id,
                 r#type: DocumentRegistryType::ProgramEnrolment,
                 name: None,
                 parent_id: None,
@@ -303,7 +304,7 @@ mod graphql {
             ProgramsQueries,
             ProgramsMutations,
             "test_encounter_update_not_allowed",
-            MockDataInserts::none().names().stores(),
+            MockDataInserts::none().names().stores().contexts(),
         )
         .await;
 
@@ -315,7 +316,7 @@ mod graphql {
             .upsert_one(&DocumentRegistryRow {
                 id: "someid".to_string(),
                 document_type: "TestEncounter".to_string(),
-                document_context: "TestProgram".to_string(),
+                document_context_id: context_program_a().id,
                 r#type: DocumentRegistryType::Encounter,
                 name: None,
                 parent_id: None,
