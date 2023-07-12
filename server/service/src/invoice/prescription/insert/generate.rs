@@ -22,7 +22,7 @@ pub fn generate(
         id,
         user_id: Some(user_id.to_string()),
         name_id: patient_id,
-        name_store_id: patient.store_id().map(|id| id.to_string()),
+        name_store_id: None,
         r#type: InvoiceRowType::Prescription,
         invoice_number: next_number(connection, &NumberRowType::Prescription, store_id)?,
         store_id: store_id.to_string(),
