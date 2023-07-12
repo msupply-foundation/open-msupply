@@ -1,6 +1,5 @@
 use crate::invoice::{check_invoice_does_not_exists, InvoiceAlreadyExistsError};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use repository::Name;
 use repository::StorageConnection;
 
 use super::{InsertPrescription, InsertPrescriptionError};
@@ -9,14 +8,14 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &InsertPrescription,
-) -> Result<Name, InsertPrescriptionError> {
+) -> Result<(), InsertPrescriptionError> {
     use InsertPrescriptionError::*;
     check_invoice_does_not_exists(&input.id, connection).map_err(|e| match e {
         InvoiceAlreadyExistsError::InvoiceAlreadyExists => InvoiceAlreadyExists,
         InvoiceAlreadyExistsError::RepositoryError(err) => DatabaseError(err),
     })?;
 
-    let other_party = check_other_party(
+    check_other_party(
         connection,
         store_id,
         &input.patient_id,
@@ -29,5 +28,5 @@ pub fn validate(
         OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
     })?;
 
-    Ok(other_party)
+    Ok(())
 }
