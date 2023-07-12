@@ -485,7 +485,7 @@ mod test {
         service
             .insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new prescription line id".to_string();
                     r.r#type = Some(InsertOutType::Prescription);
                     r.invoice_id = mock_prescription_a().id;
