@@ -210,7 +210,6 @@ mod test {
         invoice_line::{
             stock_out_line::{
                 InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError,
-                InsertOutType,
             },
             InvoiceLineServiceTrait,
         },
