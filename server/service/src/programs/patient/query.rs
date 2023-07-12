@@ -138,6 +138,7 @@ impl PatientFilter {
             country,
             email,
             identifier,
+            is_patient: None,
         }
     }
 }

@@ -18,6 +18,9 @@ use self::outbound_shipment::*;
 pub mod inbound_shipment;
 use self::inbound_shipment::*;
 
+pub mod prescription;
+use self::prescription::*;
+
 pub mod validate;
 pub use self::validate::*;
 
@@ -142,6 +145,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: common::AddToShipmentFromMasterListInput,
     ) -> Result<Vec<InvoiceLine>, inbound_shipment::AddToInboundShipmentFromMasterListError> {
         inbound_shipment::add_from_master_list(ctx, input)
+    }
+
+    fn insert_prescription(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertPrescription,
+    ) -> Result<Invoice, InsertPrescriptionError> {
+        insert_prescription(ctx, input)
     }
 }
 
