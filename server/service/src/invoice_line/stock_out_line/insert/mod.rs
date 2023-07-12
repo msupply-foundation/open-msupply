@@ -101,9 +101,9 @@ mod test {
     use repository::{
         mock::{
             mock_item_a, mock_item_b, mock_item_b_lines, mock_outbound_shipment_a_invoice_lines,
-            mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines, mock_stock_line_a,
-            mock_stock_line_location_is_on_hold, mock_stock_line_on_hold, mock_stock_line_si_d,
-            mock_store_b, mock_store_c, MockDataInserts,
+            mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines, mock_prescription_a,
+            mock_stock_line_a, mock_stock_line_location_is_on_hold, mock_stock_line_on_hold,
+            mock_stock_line_si_d, mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRow, InvoiceLineRowRepository, StockLineRowRepository,
@@ -337,7 +337,7 @@ mod test {
         };
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
+        let mut context = service_provider
             .context(mock_store_c().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_line_service;
@@ -473,6 +473,48 @@ mod test {
         assert_eq!(
             expected_total_stock,
             stock_line_for_invoice_line(&picked_outbound_line).total_number_of_packs
-        )
+        );
+
+        // Prescription
+        context.store_id = mock_store_a().id;
+        let available_number_of_packs = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&mock_stock_line_si_d()[0].id.clone())
+            .unwrap()
+            .available_number_of_packs;
+
+        service
+            .insert_stock_out_line(
+                &context,
+                inline_init(|r: &mut InsertStockOutLine| {
+                    r.id = "new prescription line id".to_string();
+                    r.r#type = Some(InsertOutType::Prescription);
+                    r.invoice_id = mock_prescription_a().id;
+                    r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
+                    r.item_id = mock_stock_line_si_d()[0].item_id.clone();
+                    r.number_of_packs = 1.0;
+                    r.total_before_tax = Some(1.0);
+                }),
+            )
+            .unwrap();
+        let new_prescription_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new prescription line id")
+            .unwrap();
+        let expected_available_stock =
+            available_number_of_packs - new_prescription_line.number_of_packs;
+
+        assert_eq!(
+            new_prescription_line,
+            inline_edit(&new_prescription_line, |mut u| {
+                u.id = "new prescription line id".to_string();
+                u.item_id = mock_item_a().id.clone();
+                u.pack_size = 1;
+                u.number_of_packs = 1.0;
+                u
+            })
+        );
+        assert_eq!(
+            expected_available_stock,
+            stock_line_for_invoice_line(&new_prescription_line).available_number_of_packs
+        );
     }
 }
