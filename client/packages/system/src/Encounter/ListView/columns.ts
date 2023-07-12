@@ -13,8 +13,8 @@ import {
   useDocumentRegistry,
   DocumentRegistryFragment,
 } from '@openmsupply-client/programs';
-import { getAdditionalInformationColumn } from './AdditionalInformationColumn';
 import { useLogicalStatus } from '../utils';
+import { ChipTableCell } from '../../Patient';
 
 interface useEncounterListColumnsProps {
   onChangeSortBy: (column: Column<any>) => void;
@@ -23,7 +23,8 @@ interface useEncounterListColumnsProps {
 }
 
 export const encounterAdditionalInfoAccessor: ColumnDataAccessor<
-  EncounterRowFragment
+  EncounterRowFragment,
+  string[]
 > = ({ rowData }): string[] => {
   const t = useTranslation();
   const additionalInfo = [];
@@ -105,9 +106,14 @@ export const useEncounterListColumns = ({
       label: 'label.patient',
       accessor: ({ rowData }) => rowData?.patient?.name,
     });
-  columnList.push(
-    getAdditionalInformationColumn(encounterAdditionalInfoAccessor)
-  );
+  columnList.push({
+    label: 'label.additional-info',
+    key: 'events',
+    sortable: false,
+    accessor: encounterAdditionalInfoAccessor,
+    Cell: ChipTableCell,
+    minWidth: 400,
+  });
   columnList.push({
     key: 'effectiveStatus',
     label: 'label.status',

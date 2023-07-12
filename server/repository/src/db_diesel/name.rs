@@ -32,6 +32,7 @@ pub struct NameFilter {
     pub code: Option<SimpleStringFilter>,
     pub is_customer: Option<bool>,
     pub is_supplier: Option<bool>,
+    pub is_patient: Option<bool>,
     pub is_store: Option<bool>,
     pub store_code: Option<SimpleStringFilter>,
     pub is_visible: Option<bool>,
@@ -173,6 +174,7 @@ impl<'a> NameRepository<'a> {
                 address2,
                 country,
                 email,
+                is_patient,
             } = f;
 
             apply_equal_filter!(query, id, name_dsl::id);
@@ -194,6 +196,12 @@ impl<'a> NameRepository<'a> {
             if let Some(is_supplier) = is_supplier {
                 query = query.filter(name_store_join_dsl::name_is_supplier.eq(is_supplier));
             }
+
+            query = match is_patient {
+                Some(true) => query.filter(name_dsl::type_.eq(NameType::Patient)),
+                Some(false) => query.filter(name_dsl::type_.ne(NameType::Patient)),
+                None => query,
+            };
 
             query = match is_visible {
                 Some(true) => query.filter(name_store_join_dsl::id.is_not_null()),
@@ -297,6 +305,11 @@ impl NameFilter {
         self
     }
 
+    pub fn is_patient(mut self, value: bool) -> Self {
+        self.is_patient = Some(value);
+        self
+    }
+
     pub fn r#type(mut self, filter: EqualFilter<NameType>) -> Self {
         self.r#type = Some(filter);
         self
@@ -316,6 +329,10 @@ impl Name {
             .as_ref()
             .map(|name_store_join_row| name_store_join_row.name_is_supplier)
             .unwrap_or(false)
+    }
+
+    pub fn is_patient(&self) -> bool {
+        self.name_row.r#type == NameType::Patient
     }
 
     pub fn is_visible(&self) -> bool {
