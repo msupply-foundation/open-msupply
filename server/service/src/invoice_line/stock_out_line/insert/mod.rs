@@ -1,49 +1,48 @@
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
-use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError, StockLineRowRepository};
+use repository::{
+    InvoiceLine, InvoiceLineRowRepository, InvoiceRowType, RepositoryError, StockLineRowRepository,
+};
 
 mod generate;
-mod validate;
-
 use generate::generate;
+mod validate;
 use validate::validate;
+
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct InsertOutboundShipmentLine {
+pub struct InsertStockOutLine {
     pub id: String,
+    pub r#type: Option<InsertOutType>,
     pub invoice_id: String,
     pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
     pub tax: Option<f64>,
-}
-
-type OutError = InsertOutboundShipmentLineError;
-
-pub fn insert_outbound_shipment_line(
-    ctx: &ServiceContext,
-    input: InsertOutboundShipmentLine,
-) -> Result<InvoiceLine, OutError> {
-    let new_line = ctx
-        .connection
-        .transaction_sync(|connection| {
-            let (item, invoice, batch) = validate(&input, &ctx.store_id, &connection)?;
-            let (new_line, update_batch) = generate(input, item, batch, invoice)?;
-            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
-            StockLineRowRepository::new(&connection).upsert_one(&update_batch)?;
-            get_invoice_line(ctx, &new_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
-                .ok_or(OutError::NewlyCreatedLineDoesNotExist)
-        })
-        .map_err(|error| error.to_inner_error())?;
-    Ok(new_line)
+    pub note: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum InsertOutboundShipmentLineError {
+pub enum InsertOutType {
+    OutboundShipment,
+    Prescription,
+}
+
+impl InsertOutType {
+    pub fn to_domain(&self) -> InvoiceRowType {
+        match self {
+            InsertOutType::OutboundShipment => InvoiceRowType::OutboundShipment,
+            InsertOutType::Prescription => InvoiceRowType::Prescription,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum InsertStockOutLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
-    NotAnOutboundShipment,
+    NoInvoiceType,
+    InvoiceTypeDoesNotMatch,
     NotThisStoreInvoice,
     CannotEditFinalised,
     ItemNotFound,
@@ -58,15 +57,15 @@ pub enum InsertOutboundShipmentLineError {
     ReductionBelowZero { stock_line_id: String },
 }
 
-impl From<RepositoryError> for InsertOutboundShipmentLineError {
+impl From<RepositoryError> for InsertStockOutLineError {
     fn from(error: RepositoryError) -> Self {
-        InsertOutboundShipmentLineError::DatabaseError(error)
+        InsertStockOutLineError::DatabaseError(error)
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for InsertOutboundShipmentLineError
+impl<ERR> From<WithDBError<ERR>> for InsertStockOutLineError
 where
-    ERR: Into<InsertOutboundShipmentLineError>,
+    ERR: Into<InsertStockOutLineError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {
@@ -74,6 +73,27 @@ where
             WithDBError::Error(error) => error.into(),
         }
     }
+}
+
+type OutError = InsertStockOutLineError;
+
+pub fn insert_stock_out_line(
+    ctx: &ServiceContext,
+    input: InsertStockOutLine,
+) -> Result<InvoiceLine, OutError> {
+    let new_line = ctx
+        .connection
+        .transaction_sync(|connection| {
+            let (item, invoice, batch) = validate(&input, &ctx.store_id, &connection)?;
+            let (new_line, update_batch) = generate(input, item, batch, invoice)?;
+            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
+            StockLineRowRepository::new(&connection).upsert_one(&update_batch)?;
+            get_invoice_line(ctx, &new_line.id)
+                .map_err(|error| OutError::DatabaseError(error))?
+                .ok_or(OutError::NewlyCreatedLineDoesNotExist)
+        })
+        .map_err(|error| error.to_inner_error())?;
+    Ok(new_line)
 }
 
 #[cfg(test)]
@@ -92,19 +112,17 @@ mod test {
 
     use crate::{
         invoice::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
-        invoice_line::outbound_shipment_line::{
-            insert::InsertOutboundShipmentLine, InsertOutboundShipmentLineError as ServiceError,
+        invoice_line::{
+            stock_out_line::InsertStockOutLine,
+            stock_out_line::{InsertOutType, InsertStockOutLineError as ServiceError},
         },
         service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
-    async fn insert_outbound_shipment_line_errors() {
-        let (_, _, connection_manager, _) = setup_all(
-            "insert_outbound_shipment_line_errors",
-            MockDataInserts::all(),
-        )
-        .await;
+    async fn insert_stock_out_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("insert_stock_out_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
@@ -114,10 +132,11 @@ mod test {
 
         // LineAlreadyExists
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -128,10 +147,12 @@ mod test {
 
         // ItemNotFound
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound shipment line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
+
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -144,10 +165,11 @@ mod test {
 
         // InvoiceDoesNotExist
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound shipment line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = "new invoice id".to_string();
                     r.item_id = mock_item_b_lines()[0].item_id.clone();
                     r.number_of_packs = 1.0;
@@ -159,10 +181,11 @@ mod test {
 
         // StockLineNotFound
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = "invalid".to_string();
                     r.number_of_packs = 1.0;
                 }),
@@ -172,10 +195,11 @@ mod test {
 
         // NumberOfPacksBelowOne
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -187,10 +211,11 @@ mod test {
 
         // LocationIsOnHold
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -204,10 +229,11 @@ mod test {
 
         // ItemDoesNotMatchStockLine
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -221,10 +247,11 @@ mod test {
 
         // BatchIsOnHold
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -238,10 +265,11 @@ mod test {
 
         //StockLineAlreadyExistsInInvoice
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -257,10 +285,11 @@ mod test {
 
         // ReductionBelowZero
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -277,10 +306,11 @@ mod test {
         // NotThisStoreInvoice
         context.store_id = mock_store_c().id;
         assert_eq!(
-            service.insert_outbound_shipment_line(
+            service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -291,17 +321,12 @@ mod test {
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
-
-        //TODO: NewlyCreatedLineDoesNotExist
     }
 
     #[actix_rt::test]
-    async fn insert_outbound_shipment_line_success() {
-        let (_, connection, connection_manager, _) = setup_all(
-            "insert_outbound_shipment_line_success",
-            MockDataInserts::all(),
-        )
-        .await;
+    async fn insert_stock_out_line_success() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_stock_out_line_success", MockDataInserts::all()).await;
 
         // helpers to compare total
         let stock_line_for_invoice_line = |invoice_line: &InvoiceLineRow| {
@@ -325,10 +350,11 @@ mod test {
             .available_number_of_packs;
 
         service
-            .insert_outbound_shipment_line(
+            .insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -376,10 +402,11 @@ mod test {
             )
             .unwrap();
         service
-            .insert_outbound_shipment_line(
+            .insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new allocated invoice line".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();
@@ -416,10 +443,11 @@ mod test {
             )
             .unwrap();
         service
-            .insert_outbound_shipment_line(
+            .insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutboundShipmentLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new picked invoice line".to_string();
+                    r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();

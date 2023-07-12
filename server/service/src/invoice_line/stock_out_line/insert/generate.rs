@@ -1,16 +1,17 @@
-use crate::invoice::common::calculate_total_after_tax;
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
 
-use super::{InsertOutboundShipmentLine, InsertOutboundShipmentLineError};
+use crate::invoice::common::calculate_total_after_tax;
+
+use super::{InsertStockOutLine, InsertStockOutLineError};
 
 pub fn generate(
-    input: InsertOutboundShipmentLine,
+    input: InsertStockOutLine,
     item_row: ItemRow,
     batch: StockLineRow,
     invoice: InvoiceRow,
-) -> Result<(InvoiceLineRow, StockLineRow), InsertOutboundShipmentLineError> {
+) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
     let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Picked;
 
     let update_batch = generate_batch_update(&input, batch.clone(), adjust_total_number_of_packs);
@@ -20,7 +21,7 @@ pub fn generate(
 }
 
 fn generate_batch_update(
-    input: &InsertOutboundShipmentLine,
+    input: &InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
 ) -> StockLineRow {
@@ -37,15 +38,17 @@ fn generate_batch_update(
 }
 
 fn generate_line(
-    InsertOutboundShipmentLine {
+    InsertStockOutLine {
         id,
+        r#type: _,
         invoice_id,
         item_id,
         stock_line_id,
         number_of_packs,
         total_before_tax,
         tax: _,
-    }: InsertOutboundShipmentLine,
+        note,
+    }: InsertStockOutLine,
     ItemRow {
         name: item_name,
         code: item_code,
@@ -58,7 +61,7 @@ fn generate_line(
         batch,
         expiry_date,
         location_id,
-        note,
+        note: _,
         ..
     }: StockLineRow,
     InvoiceRow { tax, .. }: InvoiceRow,

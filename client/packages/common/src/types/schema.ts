@@ -1461,6 +1461,22 @@ export type InsertPatientInput = {
 
 export type InsertPatientResponse = PatientNode;
 
+export type InsertPrescriptionError = {
+  __typename: 'InsertPrescriptionError';
+  error: InsertPrescriptionErrorInterface;
+};
+
+export type InsertPrescriptionErrorInterface = {
+  description: Scalars['String'];
+};
+
+export type InsertPrescriptionInput = {
+  id: Scalars['String'];
+  patientId: Scalars['String'];
+};
+
+export type InsertPrescriptionResponse = InsertPrescriptionError | InvoiceNode;
+
 export type InsertProgramEnrolmentInput = {
   /** Program document data */
   data: Scalars['JSON'];
@@ -1825,6 +1841,7 @@ export enum InvoiceNodeType {
   InventoryAddition = 'INVENTORY_ADDITION',
   InventoryReduction = 'INVENTORY_REDUCTION',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
+  Prescription = 'PRESCRIPTION',
   Repack = 'REPACK'
 }
 
@@ -2054,7 +2071,6 @@ export enum LogLevelEnum {
   Debug = 'DEBUG',
   Error = 'ERROR',
   Info = 'INFO',
-  Off = 'OFF',
   Trace = 'TRACE',
   Warn = 'WARN'
 }
@@ -2203,6 +2219,7 @@ export type Mutations = {
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
   insertPatient: InsertPatientResponse;
+  insertPrescription: InsertPrescriptionResponse;
   /**
    * Enrols a patient into a program by adding a program document to the patient's documents.
    * Every patient can only have one program document of each program type.
@@ -2226,6 +2243,7 @@ export type Mutations = {
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateLocation: UpdateLocationResponse;
+  updateLogLevel: UpsertLogLevelResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
   updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
@@ -2242,7 +2260,6 @@ export type Mutations = {
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
-  upsertLogLevel: UpsertLogLevelResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -2467,6 +2484,12 @@ export type MutationsInsertPatientArgs = {
 };
 
 
+export type MutationsInsertPrescriptionArgs = {
+  input: InsertPrescriptionInput;
+  storeId: Scalars['String'];
+};
+
+
 export type MutationsInsertProgramEnrolmentArgs = {
   input: InsertProgramEnrolmentInput;
   storeId: Scalars['String'];
@@ -2568,6 +2591,12 @@ export type MutationsUpdateLocationArgs = {
 };
 
 
+export type MutationsUpdateLogLevelArgs = {
+  input: UpsertLogLevelInput;
+  storeId: Scalars['String'];
+};
+
+
 export type MutationsUpdateOutboundShipmentArgs = {
   input: UpdateOutboundShipmentInput;
   storeId: Scalars['String'];
@@ -2657,12 +2686,6 @@ export type MutationsUpdateSyncSettingsArgs = {
 };
 
 
-export type MutationsUpsertLogLevelArgs = {
-  input: UpsertLogLevelInput;
-  storeId: Scalars['String'];
-};
-
-
 export type MutationsUseSuggestedQuantityArgs = {
   input: UseSuggestedQuantityInput;
   storeId: Scalars['String'];
@@ -2688,6 +2711,7 @@ export type NameFilterInput = {
   identifier?: InputMaybe<SimpleStringFilterInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']>;
+  isPatient?: InputMaybe<Scalars['Boolean']>;
   /** Is this name a store */
   isStore?: InputMaybe<Scalars['Boolean']>;
   /** Filter by supplier property */
@@ -2827,12 +2851,17 @@ export type OtherPartyNotACustomer = InsertErrorInterface & UpdateNameErrorInter
   description: Scalars['String'];
 };
 
+export type OtherPartyNotAPatient = InsertPrescriptionErrorInterface & {
+  __typename: 'OtherPartyNotAPatient';
+  description: Scalars['String'];
+};
+
 export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String'];
 };
@@ -3156,6 +3185,7 @@ export type Queries = {
   formSchema?: Maybe<FormSchemaNode>;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
+  insertPrescription: InsertPrescriptionResponse;
   inventoryAdjustmentReasons: InventoryAdjustmentReasonResponse;
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
@@ -3304,6 +3334,12 @@ export type QueriesEncountersArgs = {
 
 export type QueriesFormSchemaArgs = {
   filter?: InputMaybe<FormSchemaFilterInput>;
+};
+
+
+export type QueriesInsertPrescriptionArgs = {
+  input: InsertPrescriptionInput;
+  storeId: Scalars['String'];
 };
 
 
@@ -4878,6 +4914,8 @@ export enum UserPermission {
   OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
   PatientMutate = 'PATIENT_MUTATE',
   PatientQuery = 'PATIENT_QUERY',
+  PrescriptionMutate = 'PRESCRIPTION_MUTATE',
+  PrescriptionQuery = 'PRESCRIPTION_QUERY',
   Report = 'REPORT',
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',

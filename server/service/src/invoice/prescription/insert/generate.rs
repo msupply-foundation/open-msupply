@@ -1,8 +1,7 @@
 use chrono::Utc;
 
 use repository::{
-    InvoiceRow, InvoiceRowStatus, InvoiceRowType, Name, NumberRowType, RepositoryError,
-    StorageConnection,
+    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
 };
 
 use crate::number::next_number;
@@ -14,7 +13,6 @@ pub fn generate(
     store_id: &str,
     user_id: &str,
     InsertPrescription { id, patient_id }: InsertPrescription,
-    patient: Name,
 ) -> Result<InvoiceRow, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
 

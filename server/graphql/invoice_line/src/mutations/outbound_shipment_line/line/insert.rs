@@ -7,8 +7,8 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::outbound_shipment_line::{
-    InsertOutboundShipmentLine as ServiceInput, InsertOutboundShipmentLineError as ServiceError,
+use service::invoice_line::stock_out_line::{
+    InsertOutType, InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError,
 };
 
 use super::{
@@ -56,7 +56,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(
         service_provider
             .invoice_line_service
-            .insert_outbound_shipment_line(&service_context, input.to_domain()),
+            .insert_stock_out_line(&service_context, input.to_domain()),
     )
 }
 
@@ -98,12 +98,14 @@ impl InsertInput {
 
         ServiceInput {
             id,
+            r#type: Some(InsertOutType::OutboundShipment),
             invoice_id,
             item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
             tax,
+            note: None,
         }
     }
 }
@@ -156,12 +158,13 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
-        ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
-        ServiceError::ItemNotFound => BadUserInput(formatted_error),
-        ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
+        ServiceError::NotThisStoreInvoice
+        | ServiceError::NoInvoiceType
+        | ServiceError::InvoiceTypeDoesNotMatch
+        | ServiceError::LineAlreadyExists
+        | ServiceError::NumberOfPacksBelowOne
+        | ServiceError::ItemNotFound
+        | ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
     };
@@ -185,9 +188,9 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            outbound_shipment_line::{
-                InsertOutboundShipmentLine as ServiceInput,
-                InsertOutboundShipmentLineError as ServiceError,
+            stock_out_line::{
+                InsertOutType, InsertStockOutLine as ServiceInput,
+                InsertStockOutLineError as ServiceError,
             },
             InvoiceLineServiceTrait,
         },
@@ -201,7 +204,7 @@ mod test {
     pub struct TestService(pub Box<InsertLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn insert_outbound_shipment_line(
+        fn insert_stock_out_line(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -447,18 +450,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnOutboundShipment)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //LineAlreadyExists
         let test_service = TestService(Box::new(|_| Err(ServiceError::LineAlreadyExists)));
         let expected_message = "Bad user input";
@@ -569,7 +560,9 @@ mod test {
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
+                    r#type: Some(InsertOutType::OutboundShipment),
                     tax: Some(5.0),
+                    note: None,
                 }
             );
             Ok(InvoiceLine {
@@ -588,7 +581,7 @@ mod test {
                 "stockLineId": "stock line input",
                 "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
-                "tax": 5.0,
+                "tax": 5.0
             },
             "storeId": "store_a"
         });

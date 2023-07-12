@@ -38,8 +38,8 @@ pub fn insert_prescription(
     let invoice = ctx
         .connection
         .transaction_sync(|connection| {
-            let patient = validate(connection, &ctx.store_id, &input)?;
-            let new_invoice = generate(connection, &ctx.store_id, &ctx.user_id, input, patient)?;
+            validate(connection, &ctx.store_id, &input)?;
+            let new_invoice = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
 
             activity_log_entry(
