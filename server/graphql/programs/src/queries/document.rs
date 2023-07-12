@@ -78,16 +78,16 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
             store_id: Some(store_id),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
     let node = service_provider
         .document_service
-        .document(&context, &name, Some(&allowed_docs))?
+        .document(&context, &name, Some(&allowed_ctx))?
         .map(|document| DocumentNode {
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
             document,
         });
 
@@ -108,7 +108,7 @@ pub fn documents(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -122,7 +122,7 @@ pub fn documents(
             page.map(PaginationOption::from),
             filter,
             sort.map(DocumentSortInput::to_domain),
-            Some(&allowed_docs),
+            Some(&allowed_ctx),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -132,7 +132,7 @@ pub fn documents(
             .rows
             .into_iter()
             .map(|document| DocumentNode {
-                allowed_docs: allowed_docs.clone(),
+                allowed_ctx: allowed_ctx.clone(),
                 document,
             })
             .collect(),

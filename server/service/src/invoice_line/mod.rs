@@ -48,8 +48,8 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn insert_stock_out_line(
         &self,
         ctx: &ServiceContext,
-        input: InsertOutInvoiceLine,
-    ) -> Result<InvoiceLine, InsertOutInvoiceLineError> {
+        input: InsertStockOutLine,
+    ) -> Result<InvoiceLine, InsertStockOutLineError> {
         insert_stock_out_line(ctx, input)
     }
 

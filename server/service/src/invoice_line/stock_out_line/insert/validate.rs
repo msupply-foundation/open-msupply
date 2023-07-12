@@ -1,4 +1,4 @@
-use repository::{InvoiceRow, InvoiceRowType, ItemRow, StockLineRow, StorageConnection};
+use repository::{InvoiceRow, ItemRow, StockLineRow, StorageConnection};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -11,14 +11,14 @@ use crate::{
     },
 };
 
-use super::{InsertOutInvoiceLine, InsertOutInvoiceLineError};
+use super::{InsertStockOutLine, InsertStockOutLineError};
 
 pub fn validate(
-    input: &InsertOutInvoiceLine,
+    input: &InsertStockOutLine,
     store_id: &str,
     connection: &StorageConnection,
-) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertOutInvoiceLineError> {
-    use InsertOutInvoiceLineError::*;
+) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertStockOutLineError> {
+    use InsertStockOutLineError::*;
 
     if !check_line_does_not_exist(connection, &input.id)? {
         return Err(LineAlreadyExists);
@@ -52,11 +52,7 @@ pub fn validate(
 
     if let Some(r#type) = &input.r#type {
         if !check_invoice_type(&invoice, r#type.to_domain()) {
-            if r#type.to_domain() == InvoiceRowType::OutboundShipment {
-                return Err(NotAnOutboundShipment);
-            } else if r#type.to_domain() == InvoiceRowType::Prescription {
-                return Err(NotAPrescription);
-            }
+            return Err(InvoiceTypeDoesNotMatch);
         }
     } else {
         return Err(NoInvoiceType);
@@ -77,11 +73,11 @@ pub fn validate(
 }
 
 fn check_reduction_below_zero(
-    input: &InsertOutInvoiceLine,
+    input: &InsertStockOutLine,
     batch: &StockLineRow,
-) -> Result<(), InsertOutInvoiceLineError> {
+) -> Result<(), InsertStockOutLineError> {
     if batch.available_number_of_packs < input.number_of_packs {
-        Err(InsertOutInvoiceLineError::ReductionBelowZero {
+        Err(InsertStockOutLineError::ReductionBelowZero {
             stock_line_id: batch.id.clone(),
         })
     } else {

@@ -98,7 +98,7 @@ const UIComponent = (props: ControlProps) => {
           <Box flex={0}>
             <NonNegativeIntegerInput
               value={age}
-              sx={{ width: 50 }}
+              sx={{ width: 65 }}
               onChange={onChangeAge}
             />
           </Box>
