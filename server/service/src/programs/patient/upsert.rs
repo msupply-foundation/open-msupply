@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
     DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryType,
-    DocumentStatus, EqualFilter, PatientRepository, RepositoryError, TransactionError,
+    DocumentStatus, EqualFilter, RepositoryError, TransactionError,
 };
 
 use crate::{
@@ -22,7 +22,6 @@ pub enum UpdatePatientError {
     InvalidParentId,
     PatientExists,
     InvalidDataSchema(Vec<String>),
-    PatientDoesNotBelongToStore,
     PatientDocumentRegistryDoesNotExit,
     DataSchemaDoesNotExist,
     InternalError(String),
@@ -46,7 +45,7 @@ pub fn upsert_patient(
     let patient = ctx
         .connection
         .transaction_sync(|_| {
-            let (patient, registry) = validate(ctx, service_provider, store_id, &input)?;
+            let (patient, registry) = validate(ctx, service_provider, &input)?;
             let patient_id = patient.id.clone();
             let doc = generate(user_id, &patient, registry, input)?;
             let doc_timestamp = doc.datetime.clone();
@@ -87,7 +86,6 @@ pub fn upsert_patient(
                 .patient_service
                 .get_patients(
                     ctx,
-                    store_id,
                     None,
                     Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
                     None,
@@ -160,20 +158,6 @@ fn validate_patient_not_exists(
     Ok(existing_document.is_none())
 }
 
-fn patient_belongs_to_store(
-    ctx: &ServiceContext,
-    store_id: &str,
-    patient_id: &str,
-) -> Result<bool, UpdatePatientError> {
-    let patient = PatientRepository::new(&ctx.connection)
-        .query_one(
-            store_id,
-            PatientFilter::new().id(EqualFilter::equal_to(patient_id)),
-        )?
-        .unwrap_or_default();
-    Ok(patient.is_visible())
-}
-
 fn validate_document_type(
     ctx: &ServiceContext,
 ) -> Result<Option<DocumentRegistry>, RepositoryError> {
@@ -188,7 +172,6 @@ fn validate_document_type(
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    store_id: &str,
     input: &UpdatePatient,
 ) -> Result<(SchemaPatient, DocumentRegistry), UpdatePatientError> {
     let patient = validate_patient_schema(input)?;
@@ -207,9 +190,6 @@ fn validate(
         }
     }
 
-    if input.parent.is_some() && !patient_belongs_to_store(ctx, store_id, &patient.id)? {
-        return Err(UpdatePatientError::PatientDoesNotBelongToStore);
-    }
     Ok((patient, document_registry))
 }
 
@@ -219,8 +199,8 @@ pub mod test {
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
         DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
-        DocumentRepository, EqualFilter, FormSchemaRowRepository, NameStoreJoinFilter,
-        NameStoreJoinRepository, Pagination, PatientFilter, PatientRepository, StringFilter,
+        DocumentRepository, EqualFilter, FormSchemaRowRepository, Pagination, PatientFilter,
+        PatientRepository, StringFilter,
     };
     use serde_json::json;
     use util::inline_init;
@@ -319,14 +299,11 @@ pub mod test {
 
         // success insert
         assert!(PatientRepository::new(&ctx.connection)
-            .query_by_filter(
-                "store_a",
-                PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
-            )
+            .query_by_filter(PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),)
             .unwrap()
             .pop()
             .is_none());
-        let inserted_patient = service
+        service
             .upsert_patient(
                 &ctx,
                 &service_provider,
@@ -340,35 +317,10 @@ pub mod test {
             )
             .unwrap();
         PatientRepository::new(&ctx.connection)
-            .query_by_filter(
-                "store_a",
-                PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
-            )
+            .query_by_filter(PatientFilter::new().id(EqualFilter::equal_to(&patient.id)))
             .unwrap()
             .pop()
             .unwrap();
-        NameStoreJoinRepository::new(&ctx.connection)
-            .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&patient.id)))
-            .unwrap()
-            .pop()
-            .unwrap();
-
-        // PatientDoesNotBelongToStore
-        let err = service
-            .upsert_patient(
-                &ctx,
-                &service_provider,
-                "store_b",
-                "user",
-                upsert::UpdatePatient {
-                    data: serde_json::to_value(patient.clone()).unwrap(),
-                    schema_id: schema.id.clone(),
-                    parent: Some(inserted_patient.name_row.id),
-                },
-            )
-            .err()
-            .unwrap();
-        matches!(err, UpdatePatientError::PatientDoesNotBelongToStore);
 
         assert_eq!(
             service

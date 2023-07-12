@@ -38,12 +38,11 @@ pub trait PatientServiceTrait: Sync + Send {
     fn get_patients(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         pagination: Option<PaginationOption>,
         filter: Option<PatientFilter>,
         sort: Option<PatientSort>,
     ) -> Result<ListResult<Patient>, RepositoryError> {
-        get_patients(ctx, store_id, pagination, filter, sort)
+        get_patients(ctx, pagination, filter, sort)
     }
 
     fn upsert_patient(
@@ -61,10 +60,9 @@ pub trait PatientServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
-        store_id: &str,
         input: PatientSearch,
     ) -> Result<Vec<PatientSearchResult>, RepositoryError> {
-        patient_search(ctx, service_provider, store_id, input)
+        patient_search(ctx, service_provider, input)
     }
 }
 
