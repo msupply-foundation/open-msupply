@@ -383,6 +383,21 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
     })
 }
 
+pub fn mock_prescription_a() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("prescription_a");
+        r.name_id = String::from("testId");
+        r.store_id = String::from("store_a");
+        r.invoice_number = 1;
+        r.r#type = InvoiceRowType::Prescription;
+        r.status = InvoiceRowStatus::New;
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(21, 30, 0, 0)
+            .unwrap();
+    })
+}
+
 pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
     vec![
         mock_outbound_shipment_a(),
@@ -396,6 +411,7 @@ pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
         mock_new_outbound_shipment_no_lines(),
         mock_new_outbound_shipment_no_stockline(),
         mock_outbound_shipment_on_hold(),
+        mock_prescription_a(),
     ]
 }
 

@@ -31,81 +31,77 @@ pub struct PatientNode {
 #[Object]
 impl PatientNode {
     pub async fn id(&self) -> &str {
-        &self.patient.name_row.id
+        &self.patient.id
     }
 
     pub async fn name(&self) -> &str {
-        &self.patient.name_row.name
+        &self.patient.name
     }
 
     pub async fn code(&self) -> &str {
-        &self.patient.name_row.code
+        &self.patient.code
     }
 
     pub async fn code_2(&self) -> &Option<String> {
-        &self.patient.name_row.national_health_number
+        &self.patient.national_health_number
     }
 
     pub async fn first_name(&self) -> Option<String> {
-        self.patient.name_row.first_name.clone()
+        self.patient.first_name.clone()
     }
 
     pub async fn last_name(&self) -> Option<String> {
-        self.patient.name_row.last_name.clone()
+        self.patient.last_name.clone()
     }
 
     pub async fn gender(&self) -> Option<GenderType> {
-        self.patient
-            .name_row
-            .gender
-            .as_ref()
-            .map(GenderType::from_domain)
+        self.patient.gender.as_ref().map(GenderType::from_domain)
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
-        self.patient.name_row.date_of_birth.clone()
+        self.patient.date_of_birth.clone()
     }
 
     pub async fn age(&self) -> Option<i64> {
-        self.patient.name_row.date_of_birth.clone().map(|dob| {
+        self.patient.date_of_birth.clone().map(|dob| {
             let diff = Local::now().naive_utc().date().signed_duration_since(dob);
             diff.num_days() / 365
         })
     }
 
     pub async fn phone(&self) -> Option<String> {
-        self.patient.name_row.phone.clone()
+        self.patient.phone.clone()
     }
 
     pub async fn country(&self) -> Option<String> {
-        self.patient.name_row.country.clone()
+        self.patient.country.clone()
     }
 
     pub async fn address1(&self) -> Option<String> {
-        self.patient.name_row.address1.clone()
+        self.patient.address1.clone()
     }
 
     pub async fn address2(&self) -> Option<String> {
-        self.patient.name_row.address2.clone()
+        self.patient.address2.clone()
     }
 
     pub async fn email(&self) -> Option<String> {
-        self.patient.name_row.email.clone()
+        self.patient.email.clone()
     }
 
     pub async fn website(&self) -> Option<String> {
-        self.patient.name_row.website.clone()
+        self.patient.website.clone()
     }
 
     pub async fn is_deceased(&self) -> bool {
-        self.patient.name_row.is_deceased
+        self.patient.is_deceased
     }
 
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(main_patient_doc_name(&self.patient.name_row.id))
+            .load_one(main_patient_doc_name(&self.patient.id))
             .await?
             .map(|document| DocumentNode {
                 document,
@@ -124,7 +120,7 @@ impl PatientNode {
         let filter = filter
             .map(|f| f.to_domain_filter())
             .unwrap_or(ProgramEnrolmentFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.patient.name_row.id));
+            .patient_id(EqualFilter::equal_to(&self.patient.id));
 
         let entries = ctx
             .service_provider()
@@ -173,7 +169,6 @@ pub struct PatientFilterInput {
     pub address2: Option<SimpleStringFilterInput>,
     pub country: Option<SimpleStringFilterInput>,
     pub email: Option<SimpleStringFilterInput>,
-    pub is_visible: Option<bool>,
     pub identifier: Option<SimpleStringFilterInput>,
 }
 
@@ -193,7 +188,6 @@ impl PatientFilterInput {
             address2,
             country,
             email,
-            is_visible,
             identifier,
         } = self;
         PatientFilter {
@@ -210,7 +204,6 @@ impl PatientFilterInput {
             address2: address2.map(SimpleStringFilter::from),
             country: country.map(SimpleStringFilter::from),
             email: email.map(SimpleStringFilter::from),
-            is_visible,
             identifier: identifier.map(SimpleStringFilter::from),
         }
     }
@@ -285,7 +278,6 @@ pub fn patients(
 
     let patients = service_provider.patient_service.get_patients(
         &context,
-        &store_id,
         page.map(PaginationOption::from),
         filter.map(PatientFilterInput::to_domain),
         sort.and_then(|mut sort_list| sort_list.pop())
@@ -328,7 +320,6 @@ pub fn patient(
         .patient_service
         .get_patients(
             &context,
-            &store_id,
             None,
             Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
             None,

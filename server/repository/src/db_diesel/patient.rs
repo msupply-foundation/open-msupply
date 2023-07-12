@@ -1,9 +1,7 @@
 use super::{
     name_row::{name, name::dsl as name_dsl},
-    name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
     program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
-    store_row::{store, store::dsl as store_dsl},
-    DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
+    DBType, NameRow, StorageConnection,
 };
 
 use crate::{
@@ -15,18 +13,9 @@ use crate::{
     DateFilter, EqualFilter, Gender, NameType, Pagination, SimpleStringFilter, Sort,
 };
 
-use diesel::{
-    dsl::{And, Eq, IntoBoxed, LeftJoin},
-    prelude::*,
-    query_source::joins::OnClauseWrapper,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
-#[derive(PartialEq, Debug, Clone, Default)]
-pub struct Patient {
-    pub name_row: NameRow,
-    pub name_store_join_row: Option<NameStoreJoinRow>,
-    pub store_row: Option<StoreRow>,
-}
+pub type Patient = NameRow;
 
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct PatientFilter {
@@ -43,8 +32,6 @@ pub struct PatientFilter {
     pub address2: Option<SimpleStringFilter>,
     pub country: Option<SimpleStringFilter>,
     pub email: Option<SimpleStringFilter>,
-
-    pub is_visible: Option<bool>,
 
     /// Filter for any identifier associated with a name entry.
     /// Currently:
@@ -72,8 +59,6 @@ pub enum PatientSortField {
 
 pub type PatientSort = Sort<PatientSortField>;
 
-type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>, Option<StoreRow>);
-
 pub struct PatientRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -85,42 +70,38 @@ impl<'a> PatientRepository<'a> {
 
     pub fn count(
         &self,
-        store_id: &str,
         filter: Option<PatientFilter>,
         allowed_ctx: Option<&[String]>,
     ) -> Result<i64, RepositoryError> {
-        let query = Self::create_filtered_query(store_id.to_string(), filter, allowed_ctx);
+        let query = Self::create_filtered_query(filter, allowed_ctx);
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
     pub fn query_by_filter(
         &self,
-        store_id: &str,
         filter: PatientFilter,
         allowed_ctx: Option<&[String]>,
     ) -> Result<Vec<Patient>, RepositoryError> {
-        self.query(store_id, Pagination::new(), Some(filter), None, allowed_ctx)
+        self.query(Pagination::new(), Some(filter), None, allowed_ctx)
     }
 
     pub fn query_one(
         &self,
-        store_id: &str,
         filter: PatientFilter,
         allowed_ctx: Option<&[String]>,
     ) -> Result<Option<Patient>, RepositoryError> {
-        Ok(self.query_by_filter(store_id, filter, allowed_ctx)?.pop())
+        Ok(self.query_by_filter(filter, allowed_ctx)?.pop())
     }
 
     pub fn query(
         &self,
-        store_id: &str,
         pagination: Pagination,
         filter: Option<PatientFilter>,
         sort: Option<PatientSort>,
         allowed_ctx: Option<&[String]>,
     ) -> Result<Vec<Patient>, RepositoryError> {
-        let mut query = Self::create_filtered_query(store_id.to_string(), filter, allowed_ctx);
+        let mut query = Self::create_filtered_query(filter, allowed_ctx);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -161,27 +142,19 @@ impl<'a> PatientRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<NameAndNameStoreJoin>(&self.connection.connection)?;
+        let result = final_query.load::<NameRow>(&self.connection.connection)?;
 
-        Ok(result.into_iter().map(Patient::from_join).collect())
+        Ok(result)
     }
 
     /// Returns a list of names left joined to name_store_join (for name_store_joins matching store_id parameter)
     /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
     /// but it's considered invisible in subseqent filters.
     pub fn create_filtered_query(
-        store_id: String,
         filter: Option<PatientFilter>,
         allowed_ctx: Option<&[String]>,
     ) -> BoxedNameQuery {
-        let mut query = name_dsl::name
-            .left_join(
-                name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_id
-                    .eq(name_dsl::id)
-                    .and(name_store_join_dsl::store_id.eq(store_id.clone()))), // if the name is visible to the `store_id` passed into this function, attach its `name store_join` information
-            )
-            .left_join(store_dsl::store.on(store_dsl::name_id.eq(name_dsl::id)))
-            .into_boxed();
+        let mut query = name_dsl::name.into_boxed();
 
         if let Some(f) = filter {
             let PatientFilter {
@@ -198,7 +171,6 @@ impl<'a> PatientRepository<'a> {
                 address2,
                 country,
                 email,
-                is_visible,
                 identifier,
             } = f;
 
@@ -247,15 +219,6 @@ impl<'a> PatientRepository<'a> {
             apply_simple_string_filter!(query, address2, name_dsl::address2);
             apply_simple_string_filter!(query, country, name_dsl::country);
             apply_simple_string_filter!(query, email, name_dsl::email);
-
-            // patients are always customers in the name_store_join
-            query = query.filter(name_store_join_dsl::name_is_customer.eq(true));
-
-            query = match is_visible {
-                Some(true) => query.filter(name_store_join_dsl::id.is_not_null()),
-                Some(false) => query.filter(name_store_join_dsl::id.is_null()),
-                None => query,
-            };
         };
 
         apply_equal_filter!(
@@ -267,38 +230,7 @@ impl<'a> PatientRepository<'a> {
     }
 }
 
-impl Patient {
-    pub fn from_join((name_row, name_store_join_row, store_row): NameAndNameStoreJoin) -> Patient {
-        Patient {
-            name_row,
-            name_store_join_row,
-            store_row,
-        }
-    }
-
-    pub fn is_visible(&self) -> bool {
-        self.name_store_join_row.is_some()
-    }
-}
-
-// name_store_join_dsl::name_id.eq(name_dsl::id)
-type NameIdEqualToId = Eq<name_store_join_dsl::name_id, name_dsl::id>;
-// name_store_join_dsl::store_id.eq(store_id)
-type StoreIdEqualToStr = Eq<name_store_join_dsl::store_id, String>;
-// name_store_join_dsl::name_id.eq(name_dsl::id).and(name_store_join_dsl::store_id.eq(store_id))
-type OnNameStoreJoinToNameJoin =
-    OnClauseWrapper<name_store_join::table, And<NameIdEqualToId, StoreIdEqualToStr>>;
-
-// store_dsl::id.eq(store_id))
-type StoreNameIdEqualToId = Eq<store_dsl::name_id, name_dsl::id>;
-// store.on(id.eq(store_id))
-type OnStoreJoinToNameStoreJoin = OnClauseWrapper<store::table, StoreNameIdEqualToId>;
-
-type BoxedNameQuery = IntoBoxed<
-    'static,
-    LeftJoin<LeftJoin<name::table, OnNameStoreJoinToNameJoin>, OnStoreJoinToNameStoreJoin>,
-    DBType,
->;
+type BoxedNameQuery = IntoBoxed<'static, name::table, DBType>;
 
 impl PatientFilter {
     pub fn new() -> PatientFilter {
@@ -372,11 +304,6 @@ impl PatientFilter {
         self.email = Some(filter);
         self
     }
-
-    pub fn is_visible(mut self, value: bool) -> Self {
-        self.is_visible = Some(value);
-        self
-    }
 }
 
 #[cfg(test)]
@@ -385,10 +312,9 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::{mock_test_name_query_store_1, MockDataInserts},
-        test_db, EqualFilter, NameRow, NameRowRepository, NameStoreJoinRepository,
-        NameStoreJoinRow, NameType, PatientFilter, PatientRepository, ProgramEnrolmentRow,
-        ProgramEnrolmentRowRepository, ProgramEnrolmentStatus, SimpleStringFilter,
+        mock::MockDataInserts, test_db, EqualFilter, NameRow, NameRowRepository, NameType,
+        PatientFilter, PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
+        ProgramEnrolmentStatus, SimpleStringFilter,
     };
 
     #[actix_rt::test]
@@ -399,12 +325,9 @@ mod tests {
         )
         .await;
         let repo = PatientRepository::new(&connection);
-        let store_id = &mock_test_name_query_store_1().id;
-
         // Make sure we don't return names that are not patients
         let result = repo
             .query_by_filter(
-                &store_id,
                 PatientFilter::new().identifier(SimpleStringFilter::equal_to("code2")),
                 None,
             )
@@ -419,49 +342,9 @@ mod tests {
             row.national_health_number = Some("nhnPatient".to_string());
         });
         name_row_repo.upsert_one(&patient_row).unwrap();
-        // Not able to query patient without name store join
-        let result = repo
-            .query_by_filter(
-                &store_id,
-                PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
-                None,
-            )
-            .unwrap();
-        assert_eq!(result.get(0), None);
 
-        // Not able to query patient when name store join is not a customer
-        NameStoreJoinRepository::new(&connection)
-            .upsert_one(&NameStoreJoinRow {
-                id: "name_store_join_patient_id".to_string(),
-                name_id: patient_row.id.clone(),
-                store_id: store_id.clone(),
-                name_is_customer: false,
-                name_is_supplier: false,
-                is_sync_update: false,
-            })
-            .unwrap();
         let result = repo
             .query_by_filter(
-                &store_id,
-                PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
-                None,
-            )
-            .unwrap();
-        assert_eq!(result.get(0), None);
-
-        NameStoreJoinRepository::new(&connection)
-            .upsert_one(&NameStoreJoinRow {
-                id: "name_store_join_patient_id".to_string(),
-                name_id: patient_row.id.clone(),
-                store_id: store_id.clone(),
-                name_is_customer: true,
-                name_is_supplier: false,
-                is_sync_update: false,
-            })
-            .unwrap();
-        let result = repo
-            .query_by_filter(
-                &store_id,
                 PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
                 None,
             )
@@ -477,7 +360,6 @@ mod tests {
         )
         .await;
         let repo = PatientRepository::new(&connection);
-        let store_id = &mock_test_name_query_store_1().id;
 
         // add name and name_store_join
         let name_row_repo = NameRowRepository::new(&connection);
@@ -488,16 +370,6 @@ mod tests {
             row.national_health_number = Some("nhnPatient".to_string());
         });
         name_row_repo.upsert_one(&patient_row).unwrap();
-        NameStoreJoinRepository::new(&connection)
-            .upsert_one(&NameStoreJoinRow {
-                id: "name_store_join_patient_id".to_string(),
-                name_id: patient_row.id.clone(),
-                store_id: store_id.clone(),
-                name_is_customer: true,
-                name_is_supplier: false,
-                is_sync_update: false,
-            })
-            .unwrap();
 
         // Test identifier search
         ProgramEnrolmentRowRepository::new(&connection)
@@ -514,43 +386,38 @@ mod tests {
             .unwrap();
         let result = repo
             .query_by_filter(
-                &store_id,
                 PatientFilter::new().identifier(SimpleStringFilter::equal_to("codePatient")),
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().name_row.id, patient_row.id);
+        assert_eq!(result.get(0).unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
-                &store_id,
                 PatientFilter::new().identifier(SimpleStringFilter::equal_to("nhnPatient")),
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().name_row.id, patient_row.id);
+        assert_eq!(result.get(0).unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
-                &store_id,
                 PatientFilter::new()
                     .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().name_row.id, patient_row.id);
+        assert_eq!(result.get(0).unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
-                &store_id,
                 PatientFilter::new()
                     .code(SimpleStringFilter::equal_to("codePatient"))
                     .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().name_row.id, patient_row.id);
+        assert_eq!(result.get(0).unwrap().id, patient_row.id);
         // no result when having an `AND code is "does not exist"` clause
         let result = repo
             .query_by_filter(
-                &store_id,
                 PatientFilter::new()
                     .code(SimpleStringFilter::equal_to("code does not exist"))
                     .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
@@ -560,7 +427,6 @@ mod tests {
         assert_eq!(result.len(), 0);
         let result = repo
             .query_by_filter(
-                &store_id,
                 PatientFilter::new()
                     .identifier(SimpleStringFilter::equal_to("identifier does not exist")),
                 None,
@@ -577,7 +443,6 @@ mod tests {
         )
         .await;
         let repo = PatientRepository::new(&connection);
-        let store_id = &mock_test_name_query_store_1().id;
 
         // add name and name_store_join
         let name_row_repo = NameRowRepository::new(&connection);
@@ -588,16 +453,6 @@ mod tests {
             row.national_health_number = Some("nhnPatient".to_string());
         });
         name_row_repo.upsert_one(&patient_row).unwrap();
-        NameStoreJoinRepository::new(&connection)
-            .upsert_one(&NameStoreJoinRow {
-                id: "name_store_join_patient_id".to_string(),
-                name_id: patient_row.id.clone(),
-                store_id: store_id.clone(),
-                name_is_customer: true,
-                name_is_supplier: false,
-                is_sync_update: false,
-            })
-            .unwrap();
 
         // Searching by program enrolment id requires correct context access
         ProgramEnrolmentRowRepository::new(&connection)
@@ -614,7 +469,6 @@ mod tests {
             .unwrap();
         let result = repo
             .query_by_filter(
-                &store_id,
                 PatientFilter::new()
                     .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
                 Some(&["WrongContext".to_string()]),
@@ -623,7 +477,6 @@ mod tests {
         assert!(result.is_empty());
         let result = repo
             .query_by_filter(
-                &store_id,
                 PatientFilter::new()
                     .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
                 Some(&["ProgramType".to_string()]),
