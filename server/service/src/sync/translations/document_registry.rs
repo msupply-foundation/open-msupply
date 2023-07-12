@@ -1,5 +1,5 @@
 use crate::sync::sync_serde::empty_str_as_option_string;
-use repository::{DocumentContext, DocumentRegistryRow, StorageConnection, SyncBufferRow};
+use repository::{DocumentRegistryRow, DocumentRegistryType, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -9,9 +9,9 @@ use super::{
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-enum LegacyDocumentContext {
+enum LegacyDocumentType {
     Patient,
-    Program,
+    ProgramEnrolment,
     Encounter,
     Custom,
 }
@@ -21,8 +21,9 @@ enum LegacyDocumentContext {
 struct LegacyDocumentRegistryRow {
     #[serde(rename = "ID")]
     pub id: String,
+    pub r#type: LegacyDocumentType,
     pub document_type: String,
-    pub context: LegacyDocumentContext,
+    pub document_context: String,
     pub name: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "parent_ID")]
@@ -58,7 +59,8 @@ impl SyncTranslation for DocumentRegistryTranslation {
         let LegacyDocumentRegistryRow {
             id,
             document_type,
-            context,
+            document_context,
+            r#type,
             name,
             parent_id,
             form_schema_id,
@@ -72,11 +74,12 @@ impl SyncTranslation for DocumentRegistryTranslation {
         let result = DocumentRegistryRow {
             id,
             document_type,
-            context: match context {
-                LegacyDocumentContext::Patient => DocumentContext::Patient,
-                LegacyDocumentContext::Program => DocumentContext::Program,
-                LegacyDocumentContext::Encounter => DocumentContext::Encounter,
-                LegacyDocumentContext::Custom => DocumentContext::Custom,
+            document_context,
+            r#type: match r#type {
+                LegacyDocumentType::Patient => DocumentRegistryType::Patient,
+                LegacyDocumentType::ProgramEnrolment => DocumentRegistryType::ProgramEnrolment,
+                LegacyDocumentType::Encounter => DocumentRegistryType::Encounter,
+                LegacyDocumentType::Custom => DocumentRegistryType::Custom,
             },
             name,
             parent_id,

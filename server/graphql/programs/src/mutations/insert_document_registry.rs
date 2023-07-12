@@ -9,14 +9,15 @@ use graphql_core::{
     ContextExt,
 };
 
-use crate::types::document_registry::{DocumentRegistryNode, DocumentRegistryNodeContext};
+use crate::types::document_registry::{DocumentRegistryNode, DocumentRegistryTypeNode};
 
 #[derive(InputObject)]
 pub struct InsertDocumentRegistryInput {
     pub id: String,
     pub parent_id: Option<String>,
     pub document_type: String,
-    pub context: DocumentRegistryNodeContext,
+    pub document_context: String,
+    pub r#type: DocumentRegistryTypeNode,
     pub name: Option<String>,
     pub form_schema_id: String,
 }
@@ -37,7 +38,7 @@ pub fn insert_document_registry(
             store_id: None,
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -45,10 +46,10 @@ pub fn insert_document_registry(
     let response = match service_provider.document_registry_service.insert(
         &context,
         to_domain(input),
-        &allowed_docs,
+        &allowed_ctx,
     ) {
         Ok(document_registry) => InsertDocumentResponse::Response(DocumentRegistryNode {
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
             document_registry,
         }),
         Err(error) => {
@@ -84,7 +85,8 @@ fn to_domain(
         id,
         parent_id,
         document_type,
-        context,
+        document_context,
+        r#type,
         name,
         form_schema_id,
     }: InsertDocumentRegistryInput,
@@ -93,7 +95,8 @@ fn to_domain(
         id,
         parent_id,
         document_type,
-        context: context.to_domain(),
+        document_context,
+        r#type: r#type.to_domain(),
         name,
         form_schema_id,
     }

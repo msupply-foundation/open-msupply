@@ -20,10 +20,8 @@ impl Default for SchemaPatient {
             date_of_birth: Default::default(),
             date_of_birth_is_estimated: Default::default(),
             date_of_death: Default::default(),
-            family: Default::default(),
             first_name: Default::default(),
             gender: Default::default(),
-            health_center: Default::default(),
             id: Default::default(),
             is_deceased: Default::default(),
             last_name: Default::default(),
@@ -31,6 +29,9 @@ impl Default for SchemaPatient {
             notes: Default::default(),
             passport_number: Default::default(),
             socio_economics: Default::default(),
+            marital_status: Default::default(),
+            contacts: Default::default(),
+            extension: Default::default(),
         }
     }
 }
