@@ -9,7 +9,7 @@ mod validate;
 use validate::validate;
 
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct InsertOutInvoiceLine {
+pub struct InsertStockOutLine {
     pub id: String,
     pub r#type: Option<InsertOutType>,
     pub invoice_id: String,
@@ -37,13 +37,12 @@ impl InsertOutType {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum InsertOutInvoiceLineError {
+pub enum InsertStockOutLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
     NoInvoiceType,
-    NotAnOutboundShipment,
-    NotAPrescription,
+    InvoiceTypeDoesNotMatch,
     NotThisStoreInvoice,
     CannotEditFinalised,
     ItemNotFound,
@@ -58,15 +57,15 @@ pub enum InsertOutInvoiceLineError {
     ReductionBelowZero { stock_line_id: String },
 }
 
-impl From<RepositoryError> for InsertOutInvoiceLineError {
+impl From<RepositoryError> for InsertStockOutLineError {
     fn from(error: RepositoryError) -> Self {
-        InsertOutInvoiceLineError::DatabaseError(error)
+        InsertStockOutLineError::DatabaseError(error)
     }
 }
 
-impl<ERR> From<WithDBError<ERR>> for InsertOutInvoiceLineError
+impl<ERR> From<WithDBError<ERR>> for InsertStockOutLineError
 where
-    ERR: Into<InsertOutInvoiceLineError>,
+    ERR: Into<InsertStockOutLineError>,
 {
     fn from(result: WithDBError<ERR>) -> Self {
         match result {
@@ -76,11 +75,11 @@ where
     }
 }
 
-type OutError = InsertOutInvoiceLineError;
+type OutError = InsertStockOutLineError;
 
 pub fn insert_stock_out_line(
     ctx: &ServiceContext,
-    input: InsertOutInvoiceLine,
+    input: InsertStockOutLine,
 ) -> Result<InvoiceLine, OutError> {
     let new_line = ctx
         .connection
@@ -114,8 +113,8 @@ mod test {
     use crate::{
         invoice::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
         invoice_line::{
-            stock_out_line::InsertOutInvoiceLine,
-            stock_out_line::{InsertOutInvoiceLineError as ServiceError, InsertOutType},
+            stock_out_line::InsertStockOutLine,
+            stock_out_line::{InsertOutType, InsertStockOutLineError as ServiceError},
         },
         service_provider::ServiceProvider,
     };
@@ -135,7 +134,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -150,7 +149,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound shipment line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
 
@@ -168,7 +167,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound shipment line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = "new invoice id".to_string();
@@ -184,7 +183,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = "invalid".to_string();
@@ -198,7 +197,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -214,7 +213,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -232,7 +231,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -250,7 +249,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -268,7 +267,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -288,7 +287,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -309,7 +308,7 @@ mod test {
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
@@ -353,7 +352,7 @@ mod test {
         service
             .insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
@@ -405,7 +404,7 @@ mod test {
         service
             .insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new allocated invoice line".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]
@@ -446,7 +445,7 @@ mod test {
         service
             .insert_stock_out_line(
                 &context,
-                inline_init(|r: &mut InsertOutInvoiceLine| {
+                inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new picked invoice line".to_string();
                     r.r#type = Some(InsertOutType::OutboundShipment);
                     r.invoice_id = mock_outbound_shipment_c_invoice_lines()[0]

@@ -3,8 +3,8 @@ import {
   ClinicianSortFieldInput,
   DocumentRegistryFilterInput,
   DocumentRegistryNode,
-  DocumentRegistryNodeContext,
   DocumentRegistrySortFieldInput,
+  DocumentRegistryTypeNode,
   EncounterSortFieldInput,
   InsertEncounterInput,
   InsertProgramEnrolmentInput,
@@ -171,7 +171,7 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
       input,
     });
 
-    if (result.insertEncounter.__typename === 'EncounterNode') {
+    if (result?.insertEncounter.__typename === 'EncounterNode') {
       return result.insertEncounter;
     }
 
@@ -186,7 +186,7 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
       input,
     });
 
-    if (result.updateEncounter.__typename === 'EncounterNode') {
+    if (result?.updateEncounter.__typename === 'EncounterNode') {
       return result.updateEncounter;
     }
 
@@ -196,32 +196,6 @@ export const getEncounterQueries = (sdk: Sdk, storeId: string) => ({
 
 export const getDocumentRegistryQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    byDocType: async (type: string): Promise<DocumentRegistryFragment[]> => {
-      const result = await sdk.documentRegistries({
-        filter: { documentType: { equalTo: type } },
-        storeId,
-      });
-      const entries = result?.documentRegistries;
-
-      if (entries?.__typename === 'DocumentRegistryConnector') {
-        return entries.nodes;
-      }
-      throw new Error('Error querying document registry by type');
-    },
-    byDocContext: async (
-      context: DocumentRegistryNodeContext
-    ): Promise<DocumentRegistryFragment[]> => {
-      const result = await sdk.documentRegistries({
-        filter: { context: { equalTo: context } },
-        storeId,
-      });
-      const entries = result?.documentRegistries;
-
-      if (entries?.__typename === 'DocumentRegistryConnector') {
-        return entries.nodes;
-      }
-      throw new Error('Error querying document registry by context');
-    },
     documentRegistries: async ({
       sortBy,
       filter,
@@ -250,8 +224,8 @@ export const getDocumentRegistryQueries = (sdk: Sdk, storeId: string) => ({
     }> => {
       const result = await sdk.documentRegistriesWithChildren({
         filter: {
-          context: {
-            equalTo: DocumentRegistryNodeContext.Program,
+          type: {
+            equalTo: DocumentRegistryTypeNode.ProgramEnrolment,
           },
         },
         sort: {

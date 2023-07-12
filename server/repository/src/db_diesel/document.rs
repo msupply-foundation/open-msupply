@@ -29,7 +29,7 @@ table! {
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
-        context -> Nullable<Text>,
+        context -> Text,
         is_sync_update -> Bool,
     }
 }
@@ -47,7 +47,7 @@ table! {
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
-        context -> Nullable<Text>,
+        context -> Text,
         is_sync_update -> Bool,
     }
 }
@@ -90,7 +90,7 @@ pub struct DocumentRow {
     /// For example, the patient who owns the document
     pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
-    pub context: Option<String>,
+    pub context: String,
     pub is_sync_update: bool,
 }
 
@@ -113,7 +113,7 @@ pub struct Document {
     pub form_schema_id: Option<String>,
     pub status: DocumentStatus,
     pub owner_name_id: Option<String>,
-    pub context: Option<String>,
+    pub context: String,
 }
 
 #[derive(Clone)]
@@ -154,12 +154,12 @@ impl DocumentFilter {
     }
 
     pub fn owner(mut self, filter: EqualFilter<String>) -> Self {
-        self.r#type = Some(filter);
+        self.owner = Some(filter);
         self
     }
 
     pub fn context(mut self, filter: EqualFilter<String>) -> Self {
-        self.r#type = Some(filter);
+        self.context = Some(filter);
         self
     }
 
@@ -270,6 +270,9 @@ impl<'a> DocumentRepository<'a> {
         } else {
             query = query.order(latest_document::dsl::datetime.desc())
         }
+
+        // Debug diesel query
+        //println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let rows: Vec<DocumentRow> = query
             .offset(pagination.offset as i64)

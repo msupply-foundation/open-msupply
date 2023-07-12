@@ -98,32 +98,12 @@
     "DrugAllergy": {
       "properties": {
         "description": {
-          "description": "Description of the allergy",
+          "description": "Description of the allergy.",
           "type": "string"
         },
         "drug": {
           "description": "The drug name",
           "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "Family": {
-      "properties": {
-        "caregiver": {
-          "$ref": "#/definitions/RelatedPerson"
-        },
-        "maritalStatus": {
-          "$ref": "#/definitions/MaritalStatus",
-          "description": "125680007 Marital Status"
-        },
-        "mother": {
-          "$ref": "#/definitions/RelatedPerson",
-          "description": "Mother (if infant)"
-        },
-        "nextOfKin": {
-          "$ref": "#/definitions/RelatedPerson",
-          "description": "Patient's next of kin 184142008 Patient's next of kin"
         }
       },
       "type": "object"
@@ -139,19 +119,6 @@
         "NON_BINARY"
       ],
       "type": "string"
-    },
-    "HealthCenter": {
-      "properties": {
-        "id": {
-          "description": "Health Center Code",
-          "type": "string"
-        },
-        "name": {
-          "description": "Health Center Name",
-          "type": "string"
-        }
-      },
-      "type": "object"
     },
     "MaritalStatus": {
       "enum": [
@@ -183,7 +150,7 @@
           "type": "string"
         }
       },
-      "required": ["text", "created", "authorId", "authorName"],
+      "required": ["text"],
       "type": "object"
     },
     "Patient": {
@@ -209,6 +176,12 @@
           },
           "type": "array"
         },
+        "contacts": {
+          "items": {
+            "$ref": "#/definitions/RelatedPerson"
+          },
+          "type": "array"
+        },
         "dateOfBirth": {
           "description": "184099003 Date of birth",
           "format": "date",
@@ -223,8 +196,8 @@
           "format": "date",
           "type": "string"
         },
-        "family": {
-          "$ref": "#/definitions/Family"
+        "extension": {
+          "type": "object"
         },
         "firstName": {
           "type": "string"
@@ -232,10 +205,6 @@
         "gender": {
           "$ref": "#/definitions/Gender",
           "description": "394744001 Gender unspecified"
-        },
-        "healthCenter": {
-          "$ref": "#/definitions/HealthCenter",
-          "description": "Health Center"
         },
         "id": {
           "description": "Medical record number\n\n398225001",
@@ -248,6 +217,10 @@
         "lastName": {
           "description": "184096005 Patient Surname",
           "type": "string"
+        },
+        "maritalStatus": {
+          "$ref": "#/definitions/MaritalStatus",
+          "description": "125680007 Marital Status"
         },
         "middleName": {
           "type": "string"
@@ -266,7 +239,7 @@
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails", "id"],
+      "required": ["id"],
       "type": "object"
     },
     "RelatedPerson": {
@@ -274,6 +247,10 @@
         "birthPlace": {
           "$ref": "#/definitions/Address",
           "description": "Place of birth"
+        },
+        "category": {
+          "description": "Can be used to group or mark a person entry. For example, nextOfKin | caregiver | mother",
+          "type": "string"
         },
         "code": {
           "description": "Patient code, e.g. national id or other patient identifier",
@@ -336,14 +313,13 @@
           "type": "string"
         },
         "relationship": {
-          "description": "Relationship with patient",
+          "description": "Relationship with the patient, e.g. mother, brother, cousin, friend...",
           "type": "string"
         },
         "socioEconomics": {
           "$ref": "#/definitions/SocioEconomics"
         }
       },
-      "required": ["contactDetails"],
       "type": "object"
     },
     "SocioEconomics": {

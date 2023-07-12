@@ -13,7 +13,7 @@ use service::document::raw_document::RawDocument;
 use super::document_registry::DocumentRegistryNode;
 
 pub struct DocumentNode {
-    pub allowed_docs: Vec<String>,
+    pub allowed_ctx: Vec<String>,
     pub document: Document,
 }
 
@@ -82,13 +82,13 @@ impl DocumentNode {
         let loader = ctx.get_loader::<DataLoader<DocumentRegistryLoader>>();
         let document_registry = loader
             .load_one(DocumentRegistryLoaderInput::new(
-                &self.allowed_docs,
+                &self.allowed_ctx,
                 &self.document.r#type,
             ))
             .await?;
         Ok(
             document_registry.map(|document_registry| DocumentRegistryNode {
-                allowed_docs: self.allowed_docs.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
                 document_registry,
             }),
         )

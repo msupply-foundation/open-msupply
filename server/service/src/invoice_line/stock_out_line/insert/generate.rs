@@ -4,14 +4,14 @@ use repository::{
 
 use crate::invoice::common::calculate_total_after_tax;
 
-use super::{InsertOutInvoiceLine, InsertOutInvoiceLineError};
+use super::{InsertStockOutLine, InsertStockOutLineError};
 
 pub fn generate(
-    input: InsertOutInvoiceLine,
+    input: InsertStockOutLine,
     item_row: ItemRow,
     batch: StockLineRow,
     invoice: InvoiceRow,
-) -> Result<(InvoiceLineRow, StockLineRow), InsertOutInvoiceLineError> {
+) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
     let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Picked;
 
     let update_batch = generate_batch_update(&input, batch.clone(), adjust_total_number_of_packs);
@@ -21,7 +21,7 @@ pub fn generate(
 }
 
 fn generate_batch_update(
-    input: &InsertOutInvoiceLine,
+    input: &InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
 ) -> StockLineRow {
@@ -38,7 +38,7 @@ fn generate_batch_update(
 }
 
 fn generate_line(
-    InsertOutInvoiceLine {
+    InsertStockOutLine {
         id,
         r#type: _,
         invoice_id,
@@ -48,7 +48,7 @@ fn generate_line(
         total_before_tax,
         tax: _,
         note,
-    }: InsertOutInvoiceLine,
+    }: InsertStockOutLine,
     ItemRow {
         name: item_name,
         code: item_code,

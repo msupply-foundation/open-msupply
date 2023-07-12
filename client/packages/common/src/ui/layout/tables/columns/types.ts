@@ -38,9 +38,9 @@ export enum ColumnAlign {
   Center = 'center',
 }
 
-export type ColumnDataAccessor<T extends RecordWithId> = (params: {
+export type ColumnDataAccessor<T extends RecordWithId, R = unknown> = (params: {
   rowData: T;
-}) => unknown;
+}) => R;
 
 export type Translators = {
   t: ReturnType<typeof useTranslation>;
