@@ -222,6 +222,7 @@ mod test {
                 None,
                 Some(PatientFilter::new().id(EqualFilter::equal_to(&patient.id))),
                 None,
+                None,
             )
             .unwrap()
             .rows

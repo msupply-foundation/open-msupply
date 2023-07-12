@@ -11,14 +11,15 @@ pub fn get_patients(
     pagination: Option<PaginationOption>,
     filter: Option<PatientFilter>,
     sort: Option<PatientSort>,
+    allowed_ctx: Option<&[String]>,
 ) -> Result<ListResult<Patient>, RepositoryError> {
     let pagination = get_default_pagination_unlimited(pagination);
     let repository = PatientRepository::new(&ctx.connection);
 
-    let rows = repository.query(pagination, filter.clone(), sort)?;
+    let rows = repository.query(pagination, filter.clone(), sort, allowed_ctx)?;
 
     Ok(ListResult {
         rows,
-        count: i64_to_u32(repository.count(filter)?),
+        count: i64_to_u32(repository.count(filter, allowed_ctx)?),
     })
 }

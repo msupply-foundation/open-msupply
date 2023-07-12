@@ -89,6 +89,7 @@ pub fn upsert_patient(
                     None,
                     Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
                     None,
+                    None,
                 )
                 .map_err(|err| UpdatePatientError::DatabaseError(err))?
                 .rows
@@ -299,7 +300,10 @@ pub mod test {
 
         // success insert
         assert!(PatientRepository::new(&ctx.connection)
-            .query_by_filter(PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),)
+            .query_by_filter(
+                PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
+                None
+            )
             .unwrap()
             .pop()
             .is_none());
@@ -317,7 +321,10 @@ pub mod test {
             )
             .unwrap();
         PatientRepository::new(&ctx.connection)
-            .query_by_filter(PatientFilter::new().id(EqualFilter::equal_to(&patient.id)))
+            .query_by_filter(
+                PatientFilter::new().id(EqualFilter::equal_to(&patient.id)),
+                None,
+            )
             .unwrap()
             .pop()
             .unwrap();
