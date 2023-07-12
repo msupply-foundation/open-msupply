@@ -14,7 +14,6 @@ pub fn generate(
     store_id: &str,
     user_id: &str,
     InsertPrescription { id, patient_id }: InsertPrescription,
-    patient: Name,
 ) -> Result<InvoiceRow, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
 
