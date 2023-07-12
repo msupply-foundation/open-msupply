@@ -1,13 +1,11 @@
 use repository::{
-    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
-    RepositoryError, StockLineRowRepository,
+    Invoice, InvoiceRowRepository, InvoiceRowStatus, RepositoryError, StockLineRowRepository,
 };
 
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::query::get_invoice,
     service_provider::ServiceContext,
-    WithDBError,
 };
 
 mod generate;
@@ -40,7 +38,6 @@ pub enum UpdatePrescriptionError {
     NotAPrescription,
     NotThisStoreInvoice,
     ClinicianDoesNotExist,
-    CanOnlyChangeToPickedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -65,22 +62,14 @@ pub fn update_prescription(
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
-                unallocated_lines_to_trim,
             } = generate(invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
-            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
 
             if let Some(stock_lines) = batches_to_update {
                 let repository = StockLineRowRepository::new(connection);
                 for stock_line in stock_lines {
                     repository.upsert_one(&stock_line)?;
-                }
-            }
-
-            if let Some(lines) = unallocated_lines_to_trim {
-                for line in lines {
-                    invoice_line_repo.delete(&line.id)?;
                 }
             }
 
@@ -132,18 +121,6 @@ impl UpdatePrescription {
 impl From<RepositoryError> for UpdatePrescriptionError {
     fn from(error: RepositoryError) -> Self {
         UpdatePrescriptionError::DatabaseError(error)
-    }
-}
-
-impl<ERR> From<WithDBError<ERR>> for UpdatePrescriptionError
-where
-    ERR: Into<UpdatePrescriptionError>,
-{
-    fn from(result: WithDBError<ERR>) -> Self {
-        match result {
-            WithDBError::DatabaseError(error) => error.into(),
-            WithDBError::Error(error) => error.into(),
-        }
     }
 }
 

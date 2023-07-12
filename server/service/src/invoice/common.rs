@@ -1,6 +1,7 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRow, MasterList,
-    MasterListFilter, MasterListRepository, RepositoryError, StorageConnection,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType,
+    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, RepositoryError, StockLineRow,
+    StorageConnection,
 };
 use util::inline_edit;
 
@@ -65,4 +66,36 @@ pub fn check_master_list_for_store(
             .exists_for_store_id(EqualFilter::equal_to(store_id)),
     )?;
     Ok(rows.pop())
+}
+
+pub enum InvoiceLineHasNoStockLine {
+    InvoiceLineHasNoStockLine(String),
+    DatabaseError(RepositoryError),
+}
+
+// Returns a list of stock lines that need to be updated
+pub fn generate_batches_total_number_of_packs_update(
+    invoice_id: &str,
+    connection: &StorageConnection,
+) -> Result<Vec<StockLineRow>, InvoiceLineHasNoStockLine> {
+    let invoice_lines = InvoiceLineRepository::new(connection)
+        .query_by_filter(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(invoice_id))
+                .r#type(InvoiceLineRowType::StockOut.equal_to()),
+        )
+        .map_err(|err| InvoiceLineHasNoStockLine::DatabaseError(err))?;
+
+    let mut result = Vec::new();
+    for invoice_line in invoice_lines {
+        let invoice_line_row = invoice_line.invoice_line_row;
+        let mut stock_line = invoice_line.stock_line_option.ok_or(
+            InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(invoice_line_row.id.to_owned()),
+        )?;
+
+        stock_line.total_number_of_packs =
+            stock_line.total_number_of_packs - invoice_line_row.number_of_packs;
+        result.push(stock_line);
+    }
+    Ok(result)
 }

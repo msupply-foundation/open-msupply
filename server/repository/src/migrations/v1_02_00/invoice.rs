@@ -7,6 +7,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"
             ALTER TYPE invoice_type ADD VALUE 'PRESCRIPTION';
+            ALTER TABLE invoice ADD clinician_id TEXT REFERENCES clinician(id);
         "#,
     )?;
 
