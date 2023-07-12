@@ -1349,11 +1349,6 @@ export type InsertLocationInput = {
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
 
-export enum InsertOutTypeNode {
-  OutboundShipment = 'OUTBOUND_SHIPMENT',
-  Prescription = 'PRESCRIPTION'
-}
-
 export type InsertOutboundShipmentError = {
   __typename: 'InsertOutboundShipmentError';
   error: InsertErrorInterface;
@@ -1387,7 +1382,6 @@ export type InsertOutboundShipmentLineInput = {
   stockLineId: Scalars['String'];
   tax?: InputMaybe<Scalars['Float']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']>;
-  type?: InputMaybe<InsertOutTypeNode>;
 };
 
 export type InsertOutboundShipmentLineResponse = InsertOutboundShipmentLineError | InvoiceLineNode;

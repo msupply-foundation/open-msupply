@@ -21,7 +21,7 @@ use crate::{
             InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
             UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
         },
-        stock_out_line::{insert_stock_out_line, InsertOutInvoiceLine, InsertOutInvoiceLineError},
+        stock_out_line::{insert_stock_out_line, InsertStockOutLine, InsertStockOutLineError},
     },
     service_provider::ServiceContext,
     BatchMutationsProcessor, InputWithResult, WithDBError,
@@ -36,7 +36,7 @@ use super::{
 #[derive(Clone, Debug)]
 pub struct BatchOutboundShipment {
     pub insert_shipment: Option<Vec<InsertOutboundShipment>>,
-    pub insert_line: Option<Vec<InsertOutInvoiceLine>>,
+    pub insert_line: Option<Vec<InsertStockOutLine>>,
     pub update_line: Option<Vec<UpdateOutboundShipmentLine>>,
     pub delete_line: Option<Vec<DeleteOutboundShipmentLine>>,
     pub insert_service_line: Option<Vec<InsertOutboundShipmentServiceLine>>,
@@ -54,7 +54,7 @@ pub struct BatchOutboundShipment {
 pub type InsertShipmentsResult =
     Vec<InputWithResult<InsertOutboundShipment, Result<Invoice, InsertOutboundShipmentError>>>;
 pub type InsertLinesResult =
-    Vec<InputWithResult<InsertOutInvoiceLine, Result<InvoiceLine, InsertOutInvoiceLineError>>>;
+    Vec<InputWithResult<InsertStockOutLine, Result<InvoiceLine, InsertStockOutLineError>>>;
 pub type UpdateLinesResult = Vec<
     InputWithResult<
         UpdateOutboundShipmentLine,
@@ -282,7 +282,7 @@ mod test {
         invoice::outbound_shipment::{
             BatchOutboundShipment, DeleteOutboundShipmentError, InsertOutboundShipment,
         },
-        invoice_line::stock_out_line::{InsertOutInvoiceLine, InsertOutType},
+        invoice_line::stock_out_line::{InsertOutType, InsertStockOutLine},
         service_provider::ServiceProvider,
         InputWithResult,
     };
@@ -305,7 +305,7 @@ mod test {
                 input.id = "new_id".to_string();
                 input.other_party_id = mock_name_store_b().id;
             })]),
-            insert_line: Some(vec![inline_init(|input: &mut InsertOutInvoiceLine| {
+            insert_line: Some(vec![inline_init(|input: &mut InsertStockOutLine| {
                 input.invoice_id = "new_id".to_string();
                 input.r#type = Some(InsertOutType::OutboundShipment);
                 input.id = "new_line_id".to_string();

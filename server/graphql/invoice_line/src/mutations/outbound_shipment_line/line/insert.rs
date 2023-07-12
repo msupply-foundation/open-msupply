@@ -5,11 +5,10 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::InvoiceLineNode;
 
-use ::serde::Serialize;
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_out_line::{
-    InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError, InsertOutType,
+    InsertOutType, InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError,
 };
 
 use super::{
@@ -17,27 +16,10 @@ use super::{
     StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum InsertOutTypeNode {
-    OutboundShipment,
-    Prescription,
-}
-
-impl InsertOutTypeNode {
-    pub fn to_domain(self) -> InsertOutType {
-        match self {
-            InsertOutTypeNode::OutboundShipment => InsertOutType::OutboundShipment,
-            InsertOutTypeNode::Prescription => InsertOutType::Prescription,
-        }
-    }
-}
-
 #[derive(InputObject)]
 #[graphql(name = "InsertOutboundShipmentLineInput")]
 pub struct InsertInput {
     pub id: String,
-    pub r#type: Option<InsertOutTypeNode>,
     pub invoice_id: String,
     pub item_id: String,
     pub stock_line_id: String,
@@ -106,7 +88,6 @@ impl InsertInput {
     pub fn to_domain(self) -> ServiceInput {
         let InsertInput {
             id,
-            r#type,
             invoice_id,
             item_id,
             stock_line_id,
@@ -117,7 +98,7 @@ impl InsertInput {
 
         ServiceInput {
             id,
-            r#type: r#type.map(|r#type| r#type.to_domain()),
+            r#type: Some(InsertOutType::OutboundShipment),
             invoice_id,
             item_id,
             stock_line_id,
@@ -208,7 +189,8 @@ mod test {
     use service::{
         invoice_line::{
             stock_out_line::{
-                InsertOutInvoiceLine as ServiceInput, InsertOutInvoiceLineError as ServiceError,
+                InsertOutType, InsertStockOutLine as ServiceInput,
+                InsertStockOutLineError as ServiceError,
             },
             InvoiceLineServiceTrait,
         },
@@ -578,7 +560,7 @@ mod test {
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
-                    r#type: None,
+                    r#type: Some(InsertOutType::OutboundShipment),
                     tax: Some(5.0),
                     note: None,
                 }

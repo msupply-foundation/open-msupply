@@ -536,7 +536,7 @@ mod test {
                 InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
                 UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
             },
-            stock_out_line::{InsertOutInvoiceLine, InsertOutInvoiceLineError},
+            stock_out_line::{InsertStockOutLine, InsertStockOutLineError},
         },
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
@@ -886,10 +886,10 @@ mod test {
                     result: Err(InsertOutboundShipmentError::OtherPartyNotACustomer),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertOutInvoiceLine| {
+                    input: inline_init(|input: &mut InsertStockOutLine| {
                         input.id = "id2".to_string()
                     }),
-                    result: Err(InsertOutInvoiceLineError::InvoiceDoesNotExist {}),
+                    result: Err(InsertStockOutLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![InputWithResult {
                     input: inline_init(|input: &mut UpdateOutboundShipmentLine| {
@@ -977,10 +977,10 @@ mod test {
                     result: Err(InsertOutboundShipmentError::OtherPartyNotACustomer),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertOutInvoiceLine| {
+                    input: inline_init(|input: &mut InsertStockOutLine| {
                         input.id = "id2".to_string()
                     }),
-                    result: Err(InsertOutInvoiceLineError::InvoiceDoesNotExist {}),
+                    result: Err(InsertStockOutLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![],
                 delete_line: vec![],
