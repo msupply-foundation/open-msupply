@@ -11,14 +11,14 @@ use crate::{
     },
 };
 
-use super::{InsertOutInvoiceLine, InsertOutInvoiceLineError};
+use super::{InsertStockOutLine, InsertStockOutLineError};
 
 pub fn validate(
-    input: &InsertOutInvoiceLine,
+    input: &InsertStockOutLine,
     store_id: &str,
     connection: &StorageConnection,
-) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertOutInvoiceLineError> {
-    use InsertOutInvoiceLineError::*;
+) -> Result<(ItemRow, InvoiceRow, StockLineRow), InsertStockOutLineError> {
+    use InsertStockOutLineError::*;
 
     if !check_line_does_not_exist(connection, &input.id)? {
         return Err(LineAlreadyExists);
@@ -73,11 +73,11 @@ pub fn validate(
 }
 
 fn check_reduction_below_zero(
-    input: &InsertOutInvoiceLine,
+    input: &InsertStockOutLine,
     batch: &StockLineRow,
-) -> Result<(), InsertOutInvoiceLineError> {
+) -> Result<(), InsertStockOutLineError> {
     if batch.available_number_of_packs < input.number_of_packs {
-        Err(InsertOutInvoiceLineError::ReductionBelowZero {
+        Err(InsertStockOutLineError::ReductionBelowZero {
             stock_line_id: batch.id.clone(),
         })
     } else {
