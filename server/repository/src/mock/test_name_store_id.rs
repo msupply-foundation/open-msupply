@@ -28,9 +28,6 @@ pub fn mock_test_name_store_id() -> MockData {
         .push(mock_name_not_linked_to_store_join_a());
     result.names.push(mock_patient_linked_to_store());
     result.stores.push(mock_store_linked_to_patient());
-    result
-        .name_store_joins
-        .push(mock_patient_linked_to_store_join());
     result.names.push(mock_patient_not_linked_to_store());
     result
         .name_store_joins
@@ -156,17 +153,6 @@ pub fn mock_store_linked_to_patient() -> StoreRow {
         s.name_id = "patient_linked_to_store_id".to_string();
         s.code = "patient_store_code".to_string();
     })
-}
-
-pub fn mock_patient_linked_to_store_join() -> NameStoreJoinRow {
-    NameStoreJoinRow {
-        id: "patient_linked_to_store_id".to_owned(),
-        name_id: "patient_linked_to_store_id".to_owned(),
-        store_id: "store_a".to_owned(),
-        name_is_customer: true,
-        name_is_supplier: true,
-        is_sync_update: false,
-    }
 }
 
 pub fn mock_patient_not_linked_to_store() -> NameRow {

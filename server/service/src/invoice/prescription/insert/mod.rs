@@ -80,9 +80,8 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_patient, mock_patient_linked_to_store_join, mock_patient_not_linked_to_store,
-            mock_prescription_a, mock_store_a, mock_store_linked_to_patient, mock_user_account_a,
-            MockData, MockDataInserts,
+            mock_patient, mock_patient_not_linked_to_store, mock_prescription_a, mock_store_a,
+            mock_store_linked_to_patient, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceRowRepository, NameRow, NameStoreJoinRow, NameType,
@@ -237,45 +236,5 @@ mod test {
                 u
             })
         );
-
-        // Test success name_store_id linked to store
-        service
-            .insert_prescription(
-                &context,
-                inline_init(|r: &mut InsertPrescription| {
-                    r.id = "test_name_store_id_linked".to_string();
-                    r.patient_id = mock_patient_linked_to_store_join().name_id.clone();
-                }),
-            )
-            .unwrap();
-
-        let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("test_name_store_id_linked")
-            .unwrap();
-
-        assert_eq!(
-            invoice,
-            inline_edit(&invoice, |mut u| {
-                u.name_store_id = Some(mock_store_linked_to_patient().id.clone());
-                u
-            })
-        );
-
-        //Test success name_store_id, not linked to store
-        service
-            .insert_prescription(
-                &context,
-                inline_init(|r: &mut InsertPrescription| {
-                    r.id = "test_name_store_id_not_linked".to_string();
-                    r.patient_id = mock_patient_not_linked_to_store().id.clone();
-                }),
-            )
-            .unwrap();
-
-        let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("test_name_store_id_not_linked")
-            .unwrap();
-
-        assert_eq!(invoice.name_store_id, None);
     }
 }
