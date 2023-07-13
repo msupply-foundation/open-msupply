@@ -24,6 +24,9 @@ use self::outbound_shipment_service_line::*;
 pub mod outbound_shipment_unallocated_line;
 use self::outbound_shipment_unallocated_line::*;
 
+pub mod prescription_line;
+use self::prescription_line::*;
+
 pub mod stock_out_line;
 use self::stock_out_line::*;
 
