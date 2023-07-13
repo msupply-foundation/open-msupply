@@ -81,9 +81,6 @@ pub fn update_patient(
                 UpdatePatientError::InvalidParentId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpdatePatientError::PatientDoesNotBelongToStore => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
                 UpdatePatientError::PatientDocumentRegistryDoesNotExit => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }

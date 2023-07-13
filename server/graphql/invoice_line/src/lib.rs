@@ -1,5 +1,5 @@
 pub mod mutations;
-use self::mutations::{inbound_shipment_line, outbound_shipment_line};
+use self::mutations::{inbound_shipment_line, outbound_shipment_line, prescription_line};
 use async_graphql::*;
 
 #[derive(Default, Clone)]
@@ -152,5 +152,14 @@ impl InvoiceLineMutations {
         input: inbound_shipment_line::service_line::DeleteInput,
     ) -> Result<inbound_shipment_line::service_line::DeleteResponse> {
         inbound_shipment_line::service_line::delete(ctx, &store_id, input)
+    }
+
+    async fn insert_prescription_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: prescription_line::InsertInput,
+    ) -> Result<prescription_line::InsertResponse> {
+        prescription_line::insert(ctx, &store_id, input)
     }
 }

@@ -21,6 +21,9 @@ use self::inbound_shipment::*;
 pub mod validate;
 pub use self::validate::*;
 
+pub mod prescription;
+pub use self::prescription::*;
+
 pub mod common;
 
 pub trait InvoiceServiceTrait: Sync + Send {
@@ -142,6 +145,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: common::AddToShipmentFromMasterListInput,
     ) -> Result<Vec<InvoiceLine>, inbound_shipment::AddToInboundShipmentFromMasterListError> {
         inbound_shipment::add_from_master_list(ctx, input)
+    }
+
+    fn insert_prescription(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertPrescription,
+    ) -> Result<Invoice, InsertPrescriptionError> {
+        insert_prescription(ctx, input)
     }
 }
 

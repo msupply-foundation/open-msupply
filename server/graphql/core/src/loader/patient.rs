@@ -1,10 +1,7 @@
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
-use repository::EqualFilter;
-use service::{
-    programs::patient::{Patient, PatientFilter},
-    service_provider::ServiceProvider,
-};
+use repository::{EqualFilter, Patient, PatientFilter};
+use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
 use crate::standard_graphql_error::StandardGraphqlError;
@@ -53,14 +50,14 @@ impl Loader<PatientLoaderInput> for PatientLoader {
                 .patient_service
                 .get_patients(
                     &service_context,
-                    &store_id,
                     None, // TODO this needs to be ALL without limit
                     Some(PatientFilter::new().id(EqualFilter::equal_any(patient_ids))),
+                    None,
                     None,
                 )
                 .map_err(|err| StandardGraphqlError::InternalError(format!("{:?}", err)))?;
             for name in names.rows {
-                output.insert(PatientLoaderInput::new(&store_id, &name.name_row.id), name);
+                output.insert(PatientLoaderInput::new(&store_id, &name.id), name);
             }
         }
         Ok(output)

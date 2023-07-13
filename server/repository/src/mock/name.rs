@@ -112,6 +112,7 @@ pub fn mock_patient() -> NameRow {
         r.name = String::from("testId");
         r.code = String::from("testId");
         r.is_customer = true;
+        r.r#type = NameType::Patient;
     })
 }
 
