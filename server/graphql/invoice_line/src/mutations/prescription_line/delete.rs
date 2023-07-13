@@ -12,19 +12,19 @@ use service::invoice_line::stock_out_line::{
 };
 
 #[derive(InputObject)]
-#[graphql(name = "DeleteOutboundShipmentLineInput")]
+#[graphql(name = "DeletePrescriptionLineInput")]
 pub struct DeleteInput {
     pub id: String,
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "DeleteOutboundShipmentLineError")]
+#[graphql(name = "DeletePrescriptionLineError")]
 pub struct DeleteError {
     pub error: DeleteErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "DeleteOutboundShipmentLineResponse")]
+#[graphql(name = "DeletePrescriptionLineResponse")]
 pub enum DeleteResponse {
     Error(DeleteError),
     Response(GenericDeleteResponse),
@@ -34,7 +34,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateOutboundShipment,
+            resource: Resource::MutatePrescription,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -61,7 +61,7 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
 }
 
 #[derive(Interface)]
-#[graphql(name = "DeleteOutboundShipmentLineErrorInterface")]
+#[graphql(name = "DeletePrescriptionErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
@@ -74,7 +74,7 @@ impl DeleteInput {
         let DeleteInput { id } = self;
         ServiceInput {
             id,
-            r#type: Some(StockOutType::OutboundShipment),
+            r#type: Some(StockOutType::Prescription),
         }
     }
 }
@@ -163,19 +163,19 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_delete_outbound_line_errors() {
+    async fn test_graphql_delete_prescription_errors() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceLineMutations,
-            "test_graphql_delete_outbound_line_errors",
+            "test_graphql_delete_prescription_errors",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: DeleteOutboundShipmentLineInput!) {
-            deleteOutboundShipmentLine(input: $input, storeId: \"store_a\") {
-                ... on DeleteOutboundShipmentLineError {
+        mutation ($input: DeletePrescriptionLineInput!) {
+            deletePrescriptionLine(input: $input, storeId: \"store_a\") {
+                ... on DeletePrescriptionLineError {
                     error {
                         __typename
                     }
@@ -188,7 +188,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::LineDoesNotExist)));
 
         let expected = json!({
-            "deleteOutboundShipmentLine": {
+            "deletePrescriptionLine": {
               "error": {
                 "__typename": "RecordNotFound"
               }
@@ -208,7 +208,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditInvoice)));
 
         let expected = json!({
-            "deleteOutboundShipmentLine": {
+            "deletePrescriptionLine": {
               "error": {
                 "__typename": "CannotEditInvoice"
               }
@@ -228,7 +228,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
-            "deleteOutboundShipmentLine": {
+            "deletePrescriptionLine": {
               "error": {
                 "__typename": "ForeignKeyError"
               }
@@ -288,18 +288,18 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_delete_outbound_line_success() {
+    async fn test_graphql_delete_prescription_line_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceLineMutations,
-            "test_graphql_delete_outbound_line",
+            "test_graphql_delete_prescription_line",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($storeId: String, $input: DeleteOutboundShipmentLineInput!) {
-            deleteOutboundShipmentLine(storeId: $storeId, input: $input) {
+        mutation ($storeId: String, $input: DeletePrescriptionLineInput!) {
+            deletePrescriptionLine(storeId: $storeId, input: $input) {
                 ... on DeleteResponse {
                     id
                 }
@@ -313,7 +313,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
-                    r#type: Some(StockOutType::OutboundShipment)
+                    r#type: Some(StockOutType::Prescription)
                 }
             );
             Ok("deleted id".to_owned())
@@ -327,7 +327,7 @@ mod test {
         });
 
         let expected = json!({
-            "deleteOutboundShipmentLine": {
+            "deletePrescriptionLine": {
                 "id": "deleted id"
             }
           }

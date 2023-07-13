@@ -1,6 +1,4 @@
-use crate::{
-    invoice_line::DeleteOutboundShipmentLine, service_provider::ServiceContext, WithDBError,
-};
+use crate::{invoice_line::DeleteStockOutLine, service_provider::ServiceContext, WithDBError};
 use repository::{InvoiceLineRowRepository, RepositoryError};
 
 mod validate;
@@ -11,7 +9,7 @@ type OutError = DeleteOutboundShipmentServiceLineError;
 
 pub fn delete_outbound_shipment_service_line(
     ctx: &ServiceContext,
-    input: DeleteOutboundShipmentLine,
+    input: DeleteStockOutLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
@@ -68,8 +66,7 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        invoice_line::outbound_shipment_line::DeleteOutboundShipmentLine,
-        service_provider::ServiceProvider,
+        invoice_line::stock_out_line::DeleteStockOutLine, service_provider::ServiceProvider,
     };
 
     use super::DeleteOutboundShipmentServiceLineError;
@@ -94,7 +91,7 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
+                inline_init(|r: &mut DeleteStockOutLine| {
                     r.id = "invalid".to_string();
                 }),
             ),
@@ -105,7 +102,7 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
+                inline_init(|r: &mut DeleteStockOutLine| {
                     r.id = mock_draft_inbound_service_line().id;
                 }),
             ),
@@ -116,7 +113,7 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
+                inline_init(|r: &mut DeleteStockOutLine| {
                     r.id = mock_draft_outbound_shipped_service_line().id;
                 }),
             ),
@@ -128,7 +125,7 @@ mod test {
         assert_eq!(
             service.delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
+                inline_init(|r: &mut DeleteStockOutLine| {
                     r.id = mock_draft_outbound_service_line().id;
                 }),
             ),
@@ -153,7 +150,7 @@ mod test {
         service
             .delete_outbound_shipment_service_line(
                 &context,
-                inline_init(|r: &mut DeleteOutboundShipmentLine| {
+                inline_init(|r: &mut DeleteStockOutLine| {
                     r.id = mock_draft_outbound_service_line().id;
                 }),
             )
