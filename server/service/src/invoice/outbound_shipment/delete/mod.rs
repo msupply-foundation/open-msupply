@@ -117,7 +117,7 @@ mod test {
     };
 
     use crate::{
-        invoice::outbound_shipment::DeleteOutboundShipmentError as ServiceError,
+        invoice::outbound_shipment::delete::DeleteOutboundShipmentError as ServiceError,
         service_provider::ServiceProvider,
     };
 

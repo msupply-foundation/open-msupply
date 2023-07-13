@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::simple_generic_errors::InternalError;
-use repository::{Barcode, BarcodeRow};
+use repository::{barcode::Barcode, BarcodeRow};
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]

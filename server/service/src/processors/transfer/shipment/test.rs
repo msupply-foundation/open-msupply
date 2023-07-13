@@ -13,7 +13,7 @@ use util::{inline_edit, inline_init, uuid::uuid};
 use crate::{
     invoice::{
         inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
-        outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
+        outbound_shipment::update::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
     },
     invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine,
     processors::test_helpers::exec_concurrent,

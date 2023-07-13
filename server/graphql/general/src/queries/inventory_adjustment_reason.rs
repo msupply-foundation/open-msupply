@@ -8,8 +8,11 @@ use graphql_core::{
 };
 use graphql_types::types::{InventoryAdjustmentReasonConnector, InventoryAdjustmentReasonNodeType};
 use repository::{
-    EqualFilter, InventoryAdjustmentReasonFilter, InventoryAdjustmentReasonSort,
-    InventoryAdjustmentReasonSortField, PaginationOption,
+    inventory_adjustment_reason::{
+        InventoryAdjustmentReasonFilter, InventoryAdjustmentReasonSort,
+        InventoryAdjustmentReasonSortField,
+    },
+    EqualFilter, PaginationOption,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -17,7 +20,7 @@ use service::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::InventoryAdjustmentReasonSortField")]
+#[graphql(remote = "repository::inventory_adjustment_reason::InventoryAdjustmentReasonSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum InventoryAdjustmentReasonSortFieldInput {
     Id,
