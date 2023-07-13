@@ -912,6 +912,179 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
     }
 }
 
+const PRESCRIPTION_1: (&'static str, &'static str) = (
+    "prescription_1",
+    r#"{
+      "Colour": 0,
+      "Date_order_received": "0000-00-00",
+      "Date_order_written": "2021-07-30",
+      "ID": "prescription_1",
+      "amount_outstanding": 0,
+      "arrival_date_actual": "0000-00-00",
+      "arrival_date_estimated": "0000-00-00",
+      "authorisationStatus": "",
+      "budget_period_ID": "",
+      "category2_ID": "",
+      "category_ID": "",
+      "comment": "",
+      "confirm_date": "2021-07-30",
+      "confirm_time": 47046,
+      "contact_id": "",
+      "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+      "currency_rate": 1,
+      "custom_data": null,
+      "diagnosis_ID": "",
+      "donor_default_id": "",
+      "encounter_id": "",
+      "entry_date": "2021-07-30",
+      "entry_time": 47046,
+      "export_batch": 0,
+      "foreign_currency_total": 0,
+      "goodsReceivedConfirmation": null,
+      "goods_received_ID": "",
+      "hold": false,
+      "insuranceDiscountAmount": 0,
+      "insuranceDiscountRate": 0,
+      "internalData": null,
+      "invoice_num": 1,
+      "invoice_printed_date": "0000-00-00",
+      "is_authorised": false,
+      "is_cancellation": false,
+      "lastModifiedAt": 1627607293,
+      "linked_goods_received_ID": "",
+      "linked_transaction_id": "",
+      "local_charge_distributed": 0,
+      "mode": "dispensary",
+      "mwks_sequence_num": 0,
+      "nameInsuranceJoinID": "",
+      "name_ID": "name_store_a",
+      "number_of_cartons": 0,
+      "optionID": "",
+      "original_PO_ID": "",
+      "paymentTypeID": "",
+      "pickslip_printed_date": "0000-00-00",
+      "prescriber_ID": "",
+      "requisition_ID": "",
+      "responsible_officer_ID": "",
+      "service_descrip": "",
+      "service_price": 0,
+      "ship_date": "0000-00-00",
+      "ship_method_ID": "",
+      "ship_method_comment": "",
+      "status": "cn",
+      "store_ID": "store_b",
+      "subtotal": 0,
+      "supplier_charge_fc": 0,
+      "tax": 0,
+      "their_ref": "",
+      "total": 0,
+      "type": "ci",
+      "user1": "",
+      "user2": "",
+      "user3": "",
+      "user4": "",
+      "user_ID": "",
+      "wardID": "",
+      "waybill_number": "",
+      "om_allocated_datetime": "",
+      "om_picked_datetime": null,
+      "om_shipped_datetime": "",
+      "om_delivered_datetime": "",
+      "om_verified_datetime": "",
+      "om_created_datetime": "",
+      "om_transport_reference": ""
+  }"#,
+);
+fn prescription_1_pull_record() -> TestSyncPullRecord {
+    TestSyncPullRecord::new_pull_upsert(
+        LegacyTableName::TRANSACT,
+        PRESCRIPTION_1,
+        PullUpsertRecord::Invoice(InvoiceRow {
+            id: PRESCRIPTION_1.0.to_string(),
+            user_id: None,
+            store_id: "store_b".to_string(),
+            name_id: "name_store_a".to_string(),
+            name_store_id: Some("store_a".to_string()),
+            invoice_number: 1,
+            r#type: InvoiceRowType::Prescription,
+            status: InvoiceRowStatus::Picked,
+            on_hold: false,
+            comment: None,
+            their_reference: None,
+            transport_reference: None,
+            created_datetime: NaiveDate::from_ymd_opt(2021, 7, 30)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
+            allocated_datetime: None,
+            picked_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046),
+            ),
+            shipped_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
+            colour: None,
+            requisition_id: None,
+            linked_invoice_id: None,
+            tax: Some(0.0),
+        }),
+    )
+}
+fn prescription_1_push_record() -> TestSyncPushRecord {
+    TestSyncPushRecord {
+        table_name: LegacyTableName::TRANSACT.to_string(),
+        record_id: PRESCRIPTION_1.0.to_string(),
+        push_data: json!(LegacyTransactRow {
+            ID: PRESCRIPTION_1.0.to_string(),
+            user_id: None,
+            name_ID: "name_store_a".to_string(),
+            store_ID: "store_b".to_string(),
+            invoice_num: 1,
+            _type: LegacyTransactType::Ci,
+            status: LegacyTransactStatus::Cn,
+            hold: false,
+            comment: None,
+            their_ref: None,
+            transport_reference: None,
+            requisition_ID: None,
+            linked_transaction_id: None,
+            entry_date: NaiveDate::from_ymd_opt(2021, 7, 30).unwrap(),
+            entry_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+            ship_date: None,
+            arrival_date_actual: None,
+            confirm_date: Some(NaiveDate::from_ymd_opt(2021, 7, 30).unwrap()),
+            confirm_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+            mode: TransactMode::Dispensary,
+            created_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_hms_opt(13, 4, 6)
+                    .unwrap()
+            ),
+            allocated_datetime: None,
+            picked_datetime: Some(
+                NaiveDate::from_ymd_opt(2021, 7, 30)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046)
+            ),
+            shipped_datetime: None,
+            delivered_datetime: None,
+            verified_datetime: None,
+            om_status: Some(InvoiceRowStatus::Picked),
+            om_type: Some(InvoiceRowType::Prescription),
+            om_colour: None,
+            tax: Some(0.0),
+        }),
+    }
+}
+
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         transact_1_pull_record(),
@@ -919,6 +1092,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
         transact_om_fields_pull_record(),
         inventory_addition_pull_record(),
         inventory_reduction_pull_record(),
+        prescription_1_pull_record(),
     ]
 }
 
@@ -937,5 +1111,6 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
         transact_om_fields_push_record(),
         inventory_addition_push_record(),
         inventory_reduction_push_record(),
+        prescription_1_push_record(),
     ]
 }

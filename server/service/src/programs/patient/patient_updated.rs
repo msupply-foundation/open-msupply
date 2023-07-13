@@ -1,7 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    EqualFilter, Gender, NameFilter, NameRepository, NameRow, NameRowRepository,
-    NameStoreJoinRepository, NameStoreJoinRow, NameType, StorageConnection,
+    EqualFilter, Gender, NameRow, NameRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
+    NameStoreJoinRow, NameType, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
@@ -17,14 +17,10 @@ pub fn create_patient_name_store_join(
     store_id: &str,
     name_id: &str,
 ) -> Result<(), UpdatePatientError> {
-    let name_repo = NameRepository::new(con);
-    let name = name_repo.query_one(
-        store_id,
-        NameFilter::new()
-            .is_customer(true)
-            .id(EqualFilter::equal_to(name_id)),
-    )?;
-    if name.is_none() {
+    let name_store_join = NameStoreJoinRepository::new(con)
+        .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(name_id)))?
+        .pop();
+    if name_store_join.is_none() {
         // add name store join
         let name_store_join_repo = NameStoreJoinRepository::new(con);
         name_store_join_repo.upsert_one(&NameStoreJoinRow {
@@ -223,30 +219,27 @@ mod test {
         let found_patient = service
             .get_patients(
                 &ctx,
-                "store_a",
                 None,
                 Some(PatientFilter::new().id(EqualFilter::equal_to(&patient.id))),
+                None,
                 None,
             )
             .unwrap()
             .rows
             .pop()
             .unwrap();
-        assert_eq!(found_patient.name_row.first_name, patient.first_name);
-        assert_eq!(found_patient.name_row.last_name, patient.last_name);
+        assert_eq!(found_patient.first_name, patient.first_name);
+        assert_eq!(found_patient.last_name, patient.last_name);
         assert_eq!(
-            found_patient
-                .name_row
-                .date_of_birth
-                .map(|date| date.to_string()),
+            found_patient.date_of_birth.map(|date| date.to_string()),
             patient.date_of_birth
         );
-        assert_eq!(found_patient.name_row.phone, contact_details.mobile);
-        assert_eq!(found_patient.name_row.email, contact_details.email);
-        assert_eq!(found_patient.name_row.website, contact_details.website);
-        assert_eq!(found_patient.name_row.address1, contact_details.address_1);
-        assert_eq!(found_patient.name_row.address2, contact_details.address_2);
-        assert_eq!(found_patient.name_row.country, contact_details.country);
+        assert_eq!(found_patient.phone, contact_details.mobile);
+        assert_eq!(found_patient.email, contact_details.email);
+        assert_eq!(found_patient.website, contact_details.website);
+        assert_eq!(found_patient.address1, contact_details.address_1);
+        assert_eq!(found_patient.address2, contact_details.address_2);
+        assert_eq!(found_patient.country, contact_details.country);
 
         // test additional fields (custom schemas are allowed to have additional fields)
         let mut patient = serde_json::to_value(patient.clone()).unwrap();

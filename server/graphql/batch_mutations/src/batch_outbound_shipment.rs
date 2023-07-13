@@ -523,7 +523,6 @@ mod test {
         invoice_line::{
             outbound_shipment_line::{
                 DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
-                InsertOutboundShipmentLine, InsertOutboundShipmentLineError,
                 UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError,
             },
             outbound_shipment_service_line::{
@@ -537,6 +536,7 @@ mod test {
                 InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
                 UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
             },
+            stock_out_line::{InsertStockOutLine, InsertStockOutLineError},
         },
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
@@ -886,10 +886,10 @@ mod test {
                     result: Err(InsertOutboundShipmentError::OtherPartyNotACustomer),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertOutboundShipmentLine| {
+                    input: inline_init(|input: &mut InsertStockOutLine| {
                         input.id = "id2".to_string()
                     }),
-                    result: Err(InsertOutboundShipmentLineError::InvoiceDoesNotExist {}),
+                    result: Err(InsertStockOutLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![InputWithResult {
                     input: inline_init(|input: &mut UpdateOutboundShipmentLine| {
@@ -977,10 +977,10 @@ mod test {
                     result: Err(InsertOutboundShipmentError::OtherPartyNotACustomer),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertOutboundShipmentLine| {
+                    input: inline_init(|input: &mut InsertStockOutLine| {
                         input.id = "id2".to_string()
                     }),
-                    result: Err(InsertOutboundShipmentLineError::InvoiceDoesNotExist {}),
+                    result: Err(InsertStockOutLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![],
                 delete_line: vec![],

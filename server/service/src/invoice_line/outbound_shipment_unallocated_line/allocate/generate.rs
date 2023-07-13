@@ -11,16 +11,17 @@ use util::{
 };
 
 use crate::invoice_line::{
-    outbound_shipment_line::{InsertOutboundShipmentLine, UpdateOutboundShipmentLine},
+    outbound_shipment_line::UpdateOutboundShipmentLine,
     outbound_shipment_unallocated_line::{
         DeleteOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLine,
     },
+    stock_out_line::{InsertOutType, InsertStockOutLine},
 };
 
 #[derive(Default)]
 pub struct GenerateOutput {
     pub update_lines: Vec<UpdateOutboundShipmentLine>,
-    pub insert_lines: Vec<InsertOutboundShipmentLine>,
+    pub insert_lines: Vec<InsertStockOutLine>,
     pub update_unallocated_line: Option<UpdateOutboundShipmentUnallocatedLine>,
     pub delete_unallocated_line: Option<DeleteOutboundShipmentUnallocatedLine>,
     pub skipped_expired_stock_lines: Vec<StockLine>,
@@ -148,16 +149,18 @@ fn generate_new_line(
     invoice_id: &str,
     packs_to_allocate: f64,
     stock_line: &StockLine,
-) -> InsertOutboundShipmentLine {
+) -> InsertStockOutLine {
     let stock_line_row = &stock_line.stock_line_row;
-    InsertOutboundShipmentLine {
+    InsertStockOutLine {
         id: uuid::uuid(),
+        r#type: Some(InsertOutType::OutboundShipment),
         invoice_id: invoice_id.to_string(),
         item_id: stock_line_row.item_id.clone(),
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
         total_before_tax: None,
         tax: None,
+        note: None,
     }
 }
 

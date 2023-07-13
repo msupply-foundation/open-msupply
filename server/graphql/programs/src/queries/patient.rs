@@ -6,9 +6,11 @@ use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
-use repository::{DateFilter, EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{
+    DateFilter, EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField,
+    SimpleStringFilter,
+};
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
-use service::programs::patient::{PatientFilter, PatientSort, PatientSortField};
 
 use crate::types::patient::PatientNode;
 
@@ -26,6 +28,7 @@ pub enum PatientResponse {
 #[derive(InputObject, Clone)]
 pub struct PatientFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub name: Option<SimpleStringFilterInput>,
     pub code: Option<SimpleStringFilterInput>,
     pub code_2: Option<SimpleStringFilterInput>,
     pub first_name: Option<SimpleStringFilterInput>,
@@ -37,7 +40,6 @@ pub struct PatientFilterInput {
     pub address2: Option<SimpleStringFilterInput>,
     pub country: Option<SimpleStringFilterInput>,
     pub email: Option<SimpleStringFilterInput>,
-    pub is_visible: Option<bool>,
     pub identifier: Option<SimpleStringFilterInput>,
 }
 
@@ -45,6 +47,7 @@ impl PatientFilterInput {
     fn to_domain(self) -> PatientFilter {
         let PatientFilterInput {
             id,
+            name,
             code,
             code_2,
             first_name,
@@ -56,11 +59,11 @@ impl PatientFilterInput {
             address2,
             country,
             email,
-            is_visible,
             identifier,
         } = self;
         PatientFilter {
             id: id.map(EqualFilter::from),
+            name: name.map(SimpleStringFilter::from),
             code: code.map(SimpleStringFilter::from),
             code_2: code_2.map(SimpleStringFilter::from),
             first_name: first_name.map(SimpleStringFilter::from),
@@ -72,7 +75,6 @@ impl PatientFilterInput {
             address2: address2.map(SimpleStringFilter::from),
             country: country.map(SimpleStringFilter::from),
             email: email.map(SimpleStringFilter::from),
-            is_visible,
             identifier: identifier.map(SimpleStringFilter::from),
         }
     }
@@ -147,11 +149,11 @@ pub fn patients(
 
     let patients = service_provider.patient_service.get_patients(
         &context,
-        &store_id,
         page.map(PaginationOption::from),
         filter.map(PatientFilterInput::to_domain),
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
+        Some(&allowed_ctx),
     )?;
     let nodes: Vec<PatientNode> = patients
         .rows
@@ -189,10 +191,10 @@ pub fn patient(
         .patient_service
         .get_patients(
             &context,
-            &store_id,
             None,
             Some(PatientFilter::new().id(EqualFilter::equal_to(&patient_id))),
             None,
+            Some(&allowed_ctx),
         )?
         .rows
         .pop()

@@ -7,7 +7,7 @@ mod invoice_queries;
 use self::invoice_queries::*;
 
 pub mod mutations;
-use self::mutations::{inbound_shipment, outbound_shipment};
+use self::mutations::{inbound_shipment, outbound_shipment, prescription};
 
 #[cfg(test)]
 mod query_tests;
@@ -46,6 +46,15 @@ impl InvoiceQueries {
         sort: Option<Vec<InvoiceSortInput>>,
     ) -> Result<InvoicesResponse> {
         get_invoices(ctx, store_id, page, filter, sort)
+    }
+
+    async fn insert_prescription(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: prescription::InsertInput,
+    ) -> Result<prescription::InsertResponse> {
+        prescription::insert(ctx, &store_id, input)
     }
 }
 
@@ -134,5 +143,14 @@ impl InvoiceMutations {
         input: AddToShipmentFromMasterListInput,
     ) -> Result<inbound_shipment::AddFromMasterListResponse> {
         inbound_shipment::add_from_master_list(ctx, &store_id, input)
+    }
+
+    async fn insert_prescription(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: prescription::InsertInput,
+    ) -> Result<prescription::InsertResponse> {
+        prescription::insert(ctx, &store_id, input)
     }
 }
