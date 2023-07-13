@@ -24,14 +24,8 @@ use self::outbound_shipment_service_line::*;
 pub mod outbound_shipment_unallocated_line;
 use self::outbound_shipment_unallocated_line::*;
 
-pub mod prescription_line;
-use self::prescription_line::*;
-
 pub mod stock_out_line;
 use self::stock_out_line::*;
-
-pub mod common_update_line;
-use self::common_update_line::*;
 
 pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_line(
@@ -59,12 +53,12 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         insert_stock_out_line(ctx, input)
     }
 
-    fn update_outbound_shipment_line(
+    fn update_stock_out_line(
         &self,
         ctx: &ServiceContext,
-        input: UpdateInvoiceLine,
-    ) -> Result<InvoiceLine, UpdateInvoiceLineError> {
-        update_outbound_shipment_line(ctx, input)
+        input: UpdateStockOutLine,
+    ) -> Result<InvoiceLine, UpdateStockOutLineError> {
+        update_stock_out_line(ctx, input)
     }
 
     fn delete_outbound_shipment_line(
@@ -179,15 +173,6 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         line_id: String,
     ) -> Result<AllocateLineResult, AllocateOutboundShipmentUnallocatedLineError> {
         allocate_outbound_shipment_unallocated_line(ctx, line_id)
-    }
-
-    // Prescription
-    fn update_prescription_line(
-        &self,
-        ctx: &ServiceContext,
-        input: UpdateInvoiceLine,
-    ) -> Result<InvoiceLine, UpdateInvoiceLineError> {
-        update_prescription_line(ctx, input)
     }
 }
 

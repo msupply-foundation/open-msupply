@@ -2,10 +2,9 @@ use repository::{Invoice, InvoiceLine, RepositoryError};
 
 use crate::{
     invoice_line::{
-        common_update_line::{UpdateInvoiceLine, UpdateInvoiceLineError},
         outbound_shipment_line::{
-            delete_outbound_shipment_line, update_outbound_shipment_line,
-            DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
+            delete_outbound_shipment_line, DeleteOutboundShipmentLine,
+            DeleteOutboundShipmentLineError,
         },
         outbound_shipment_service_line::{
             delete_outbound_shipment_service_line, insert_outbound_shipment_service_line,
@@ -21,7 +20,10 @@ use crate::{
             InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
             UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
         },
-        stock_out_line::{insert_stock_out_line, InsertStockOutLine, InsertStockOutLineError},
+        stock_out_line::{
+            insert_stock_out_line, update_stock_out_line, InsertStockOutLine,
+            InsertStockOutLineError, UpdateStockOutLine, UpdateStockOutLineError,
+        },
     },
     service_provider::ServiceContext,
     BatchMutationsProcessor, InputWithResult, WithDBError,
@@ -37,7 +39,7 @@ use super::{
 pub struct BatchOutboundShipment {
     pub insert_shipment: Option<Vec<InsertOutboundShipment>>,
     pub insert_line: Option<Vec<InsertStockOutLine>>,
-    pub update_line: Option<Vec<UpdateInvoiceLine>>,
+    pub update_line: Option<Vec<UpdateStockOutLine>>,
     pub delete_line: Option<Vec<DeleteOutboundShipmentLine>>,
     pub insert_service_line: Option<Vec<InsertOutboundShipmentServiceLine>>,
     pub update_service_line: Option<Vec<UpdateOutboundShipmentServiceLine>>,
@@ -56,7 +58,7 @@ pub type InsertShipmentsResult =
 pub type InsertLinesResult =
     Vec<InputWithResult<InsertStockOutLine, Result<InvoiceLine, InsertStockOutLineError>>>;
 pub type UpdateLinesResult =
-    Vec<InputWithResult<UpdateInvoiceLine, Result<InvoiceLine, UpdateInvoiceLineError>>>;
+    Vec<InputWithResult<UpdateStockOutLine, Result<InvoiceLine, UpdateStockOutLineError>>>;
 pub type DeleteLinesResult = Vec<
     InputWithResult<DeleteOutboundShipmentLine, Result<String, DeleteOutboundShipmentLineError>>,
 >;
@@ -154,7 +156,7 @@ pub fn batch_outbound_shipment(
             }
 
             let (has_errors, result) =
-                mutations_processor.do_mutations(input.update_line, update_outbound_shipment_line);
+                mutations_processor.do_mutations(input.update_line, update_stock_out_line);
             results.update_line = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
@@ -278,7 +280,7 @@ mod test {
         invoice::outbound_shipment::{
             BatchOutboundShipment, DeleteOutboundShipmentError, InsertOutboundShipment,
         },
-        invoice_line::stock_out_line::{InsertOutType, InsertStockOutLine},
+        invoice_line::stock_out_line::{InsertStockOutLine, StockOutType},
         service_provider::ServiceProvider,
         InputWithResult,
     };
@@ -303,7 +305,7 @@ mod test {
             })]),
             insert_line: Some(vec![inline_init(|input: &mut InsertStockOutLine| {
                 input.invoice_id = "new_id".to_string();
-                input.r#type = Some(InsertOutType::OutboundShipment);
+                input.r#type = Some(StockOutType::OutboundShipment);
                 input.id = "new_line_id".to_string();
                 input.item_id = mock_item_a().id;
                 input.stock_line_id = mock_stock_line_a().id;

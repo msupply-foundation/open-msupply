@@ -13,7 +13,7 @@ use crate::mutations::outbound_shipment_line::line::{
     StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
 use service::invoice_line::stock_out_line::{
-    InsertOutType, InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError,
+    InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError, StockOutType,
 };
 
 #[derive(InputObject)]
@@ -161,7 +161,7 @@ impl InsertInput {
 
         ServiceInput {
             id,
-            r#type: Some(InsertOutType::Prescription),
+            r#type: Some(StockOutType::Prescription),
             invoice_id,
             item_id,
             stock_line_id,
@@ -190,7 +190,7 @@ mod test {
     use service::{
         invoice_line::{
             stock_out_line::InsertStockOutLineError as ServiceError,
-            stock_out_line::{InsertOutType, InsertStockOutLine as ServiceInput},
+            stock_out_line::{InsertStockOutLine as ServiceInput, StockOutType},
             InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -555,7 +555,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "new id".to_string(),
-                    r#type: Some(InsertOutType::Prescription),
+                    r#type: Some(StockOutType::Prescription),
                     invoice_id: "invoice input".to_string(),
                     item_id: "item input".to_string(),
                     stock_line_id: "stock line input".to_string(),
