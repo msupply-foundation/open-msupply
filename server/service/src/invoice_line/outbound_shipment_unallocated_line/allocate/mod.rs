@@ -1,8 +1,9 @@
 use crate::{
     invoice_line::{
-        common_update_line::{UpdateInvoiceLine, UpdateInvoiceLineError},
-        outbound_shipment_line::update_outbound_shipment_line,
-        stock_out_line::{insert_stock_out_line, InsertStockOutLine, InsertStockOutLineError},
+        stock_out_line::{
+            insert_stock_out_line, update_stock_out_line, InsertStockOutLine,
+            InsertStockOutLineError, UpdateStockOutLine, UpdateStockOutLineError,
+        },
         validate::check_line_exists_option,
     },
     service_provider::ServiceContext,
@@ -38,7 +39,7 @@ pub enum AllocateOutboundShipmentUnallocatedLineError {
     // TODO NotThisStoreInvoice,
     // Internal
     InsertOutboundShipmentLine(InputWithError<InsertStockOutLine, InsertStockOutLineError>),
-    UpdateOutboundShipmentLine(InputWithError<UpdateInvoiceLine, UpdateInvoiceLineError>),
+    UpdateOutboundShipmentLine(InputWithError<UpdateStockOutLine, UpdateStockOutLineError>),
     DeleteOutboundShipmentUnallocatedLine(
         InputWithError<
             DeleteOutboundShipmentUnallocatedLine,
@@ -72,74 +73,74 @@ pub fn allocate_outbound_shipment_unallocated_line(
     ctx: &ServiceContext,
     line_id: String,
 ) -> Result<ServiceResult, OutError> {
-    let line =
-        ctx.connection
-            .transaction_sync(|connection| {
-                let unallocated_line = validate(connection, &line_id)?;
-                let GenerateOutput {
-                    update_lines,
-                    insert_lines,
-                    update_unallocated_line,
-                    delete_unallocated_line,
-                    skipped_expired_stock_lines,
-                    skipped_on_hold_stock_lines,
-                    issued_expiring_soon_stock_lines,
-                } = generate(&connection, &ctx.store_id, unallocated_line)?;
+    let line = ctx
+        .connection
+        .transaction_sync(|connection| {
+            let unallocated_line = validate(connection, &line_id)?;
+            let GenerateOutput {
+                update_lines,
+                insert_lines,
+                update_unallocated_line,
+                delete_unallocated_line,
+                skipped_expired_stock_lines,
+                skipped_on_hold_stock_lines,
+                issued_expiring_soon_stock_lines,
+            } = generate(&connection, &ctx.store_id, unallocated_line)?;
 
-                let mut result = ServiceResult {
-                    inserts: vec![],
-                    deletes: vec![],
-                    updates: vec![],
-                    skipped_expired_stock_lines,
-                    skipped_on_hold_stock_lines,
-                    issued_expiring_soon_stock_lines,
-                };
+            let mut result = ServiceResult {
+                inserts: vec![],
+                deletes: vec![],
+                updates: vec![],
+                skipped_expired_stock_lines,
+                skipped_on_hold_stock_lines,
+                issued_expiring_soon_stock_lines,
+            };
 
-                for input in update_lines.into_iter() {
-                    result.updates.push(
-                        update_outbound_shipment_line(ctx, input.clone()).map_err(|error| {
-                            OutError::UpdateOutboundShipmentLine(InputWithError { input, error })
-                        })?,
-                    );
-                }
+            for input in update_lines.into_iter() {
+                result
+                    .updates
+                    .push(update_stock_out_line(ctx, input.clone()).map_err(|error| {
+                        OutError::UpdateOutboundShipmentLine(InputWithError { input, error })
+                    })?);
+            }
 
-                for input in insert_lines.into_iter() {
-                    result
-                        .inserts
-                        .push(insert_stock_out_line(ctx, input.clone()).map_err(|error| {
-                            OutError::InsertOutboundShipmentLine(InputWithError { input, error })
-                        })?);
-                }
+            for input in insert_lines.into_iter() {
+                result
+                    .inserts
+                    .push(insert_stock_out_line(ctx, input.clone()).map_err(|error| {
+                        OutError::InsertOutboundShipmentLine(InputWithError { input, error })
+                    })?);
+            }
 
-                if let Some(input) = update_unallocated_line {
-                    result.updates.push(
-                        update_outbound_shipment_unallocated_line(ctx, input.clone()).map_err(
-                            |error| {
-                                OutError::UpdateOutboundShipmentUnallocatedLine(InputWithError {
-                                    input,
-                                    error,
-                                })
-                            },
-                        )?,
-                    );
-                }
+            if let Some(input) = update_unallocated_line {
+                result.updates.push(
+                    update_outbound_shipment_unallocated_line(ctx, input.clone()).map_err(
+                        |error| {
+                            OutError::UpdateOutboundShipmentUnallocatedLine(InputWithError {
+                                input,
+                                error,
+                            })
+                        },
+                    )?,
+                );
+            }
 
-                if let Some(input) = delete_unallocated_line {
-                    result.deletes.push(
-                        delete_outbound_shipment_unallocated_line(ctx, input.clone()).map_err(
-                            |error| {
-                                OutError::DeleteOutboundShipmentUnallocatedLine(InputWithError {
-                                    input,
-                                    error,
-                                })
-                            },
-                        )?,
-                    );
-                }
+            if let Some(input) = delete_unallocated_line {
+                result.deletes.push(
+                    delete_outbound_shipment_unallocated_line(ctx, input.clone()).map_err(
+                        |error| {
+                            OutError::DeleteOutboundShipmentUnallocatedLine(InputWithError {
+                                input,
+                                error,
+                            })
+                        },
+                    )?,
+                );
+            }
 
-                Ok(result) as Result<ServiceResult, OutError>
-            })
-            .map_err(|error| error.to_inner_error())?;
+            Ok(result) as Result<ServiceResult, OutError>
+        })
+        .map_err(|error| error.to_inner_error())?;
     Ok(line)
 }
 

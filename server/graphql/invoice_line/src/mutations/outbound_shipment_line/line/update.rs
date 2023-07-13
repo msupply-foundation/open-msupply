@@ -10,8 +10,8 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::common_update_line::{
-    UpdateInvoiceLine as ServiceInput, UpdateInvoiceLineError as ServiceError,
+use service::invoice_line::stock_out_line::{
+    StockOutType, UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
 
@@ -46,7 +46,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     map_response(
         service_provider
             .invoice_line_service
-            .update_outbound_shipment_line(&service_context, input.to_domain()),
+            .update_stock_out_line(&service_context, input.to_domain()),
     )
 }
 
@@ -100,6 +100,7 @@ impl UpdateInput {
         } = self;
         ServiceInput {
             id,
+            r#type: Some(StockOutType::OutboundShipment),
             item_id,
             stock_line_id,
             number_of_packs,
@@ -168,16 +169,17 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
-        ServiceError::NotAPrescription => BadUserInput(formatted_error),
-        ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
-        ServiceError::ItemNotFound => BadUserInput(formatted_error),
-        ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
-        ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
-        ServiceError::LineDoesNotReferenceStockLine => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
+        ServiceError::NotThisStoreInvoice
+        | ServiceError::InvoiceTypeDoesNotMatch
+        | ServiceError::NoInvoiceType
+        | ServiceError::NumberOfPacksBelowOne
+        | ServiceError::ItemNotFound
+        | ServiceError::ItemDoesNotMatchStockLine
+        | ServiceError::NotThisInvoiceLine(_)
+        | ServiceError::LineDoesNotReferenceStockLine => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::UpdatedLineDoesNotExist => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -199,8 +201,9 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            common_update_line::{
-                UpdateInvoiceLine as ServiceInput, UpdateInvoiceLineError as ServiceError,
+            stock_out_line::{
+                StockOutType, UpdateStockOutLine as ServiceInput,
+                UpdateStockOutLineError as ServiceError,
             },
             InvoiceLineServiceTrait, ShipmentTaxUpdate,
         },
@@ -214,7 +217,7 @@ mod test {
     pub struct TestService(pub Box<InsertLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn update_outbound_shipment_line(
+        fn update_stock_out_line(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -462,18 +465,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnOutboundShipment)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //NumberOfPacksBelowOne
         let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
         let expected_message = "Bad user input";
@@ -583,6 +574,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
+                    r#type: Some(StockOutType::OutboundShipment),
                     item_id: Some("item_id input".to_string()),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
