@@ -521,7 +521,6 @@ mod test {
             InvoiceServiceTrait,
         },
         invoice_line::{
-            outbound_shipment_line::{DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError},
             outbound_shipment_service_line::{
                 DeleteOutboundShipmentServiceLineError, InsertOutboundShipmentServiceLine,
                 InsertOutboundShipmentServiceLineError, UpdateOutboundShipmentServiceLine,
@@ -534,8 +533,8 @@ mod test {
                 UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
             },
             stock_out_line::{
-                InsertStockOutLine, InsertStockOutLineError, StockOutType, UpdateStockOutLine,
-                UpdateStockOutLineError,
+                DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
+                InsertStockOutLineError, StockOutType, UpdateStockOutLine, UpdateStockOutLineError,
             },
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -898,10 +897,10 @@ mod test {
                     result: Err(UpdateStockOutLineError::LineDoesNotExist {}),
                 }],
                 delete_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteOutboundShipmentLine| {
+                    input: inline_init(|input: &mut DeleteStockOutLine| {
                         input.id = "id4".to_string()
                     }),
-                    result: Err(DeleteOutboundShipmentLineError::LineDoesNotExist {}),
+                    result: Err(DeleteStockOutLineError::LineDoesNotExist {}),
                 }],
 
                 insert_service_line: vec![InputWithResult {
@@ -917,7 +916,7 @@ mod test {
                     result: Err(UpdateOutboundShipmentServiceLineError::LineDoesNotExist {}),
                 }],
                 delete_service_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteOutboundShipmentLine| {
+                    input: inline_init(|input: &mut DeleteStockOutLine| {
                         input.id = "id7".to_string()
                     }),
                     result: Err(DeleteOutboundShipmentServiceLineError::LineDoesNotExist {}),
