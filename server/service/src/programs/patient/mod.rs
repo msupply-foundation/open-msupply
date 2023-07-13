@@ -1,4 +1,5 @@
 use repository::{PaginationOption, RepositoryError};
+use repository::{Patient, PatientFilter, PatientSort};
 
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
@@ -37,12 +38,12 @@ pub trait PatientServiceTrait: Sync + Send {
     fn get_patients(
         &self,
         ctx: &ServiceContext,
-        store_id: &str,
         pagination: Option<PaginationOption>,
         filter: Option<PatientFilter>,
         sort: Option<PatientSort>,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<Patient>, RepositoryError> {
-        get_patients(ctx, store_id, pagination, filter, sort)
+        get_patients(ctx, pagination, filter, sort, allowed_ctx)
     }
 
     fn upsert_patient(
@@ -60,10 +61,10 @@ pub trait PatientServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
-        store_id: &str,
         input: PatientSearch,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<Vec<PatientSearchResult>, RepositoryError> {
-        patient_search(ctx, service_provider, store_id, input)
+        patient_search(ctx, service_provider, input, allowed_ctx)
     }
 }
 
