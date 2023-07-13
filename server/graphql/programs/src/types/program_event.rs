@@ -2,7 +2,7 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 
 use graphql_core::{
-    loader::{DocumentLoader, PatientLoader, PatientLoaderInput},
+    loader::{DocumentLoader, PatientLoader},
     ContextExt,
 };
 use repository::ProgramEventRow;
@@ -28,7 +28,7 @@ impl ProgramEventNode {
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(PatientLoaderInput::new(&self.store_id, patient_id))
+            .load_one(patient_id.clone())
             .await?
             .map(|patient| PatientNode {
                 store_id: self.store_id.clone(),
