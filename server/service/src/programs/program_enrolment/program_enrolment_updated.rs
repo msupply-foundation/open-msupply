@@ -41,7 +41,8 @@ pub(crate) fn update_program_enrolment_row(
 
     let program_row = ProgramEnrolmentRow {
         id,
-        program: document.r#type.clone(),
+        document_type: document.r#type.clone(),
+        context: document.context.clone(),
         document_name: document.name.clone(),
         patient_id: patient_id.to_string(),
         enrolment_datetime,

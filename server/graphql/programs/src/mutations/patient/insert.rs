@@ -35,7 +35,7 @@ pub fn insert_patient(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
@@ -54,7 +54,7 @@ pub fn insert_patient(
         Ok(patient) => Ok(InsertPatientResponse::Response(PatientNode {
             store_id,
             patient,
-            allowed_docs: allowed_docs.clone(),
+            allowed_ctx: allowed_ctx.clone(),
         })),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
@@ -81,6 +81,9 @@ pub fn insert_patient(
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 UpdatePatientError::PatientDoesNotBelongToStore => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
+                UpdatePatientError::PatientDocumentRegistryDoesNotExit => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
             };

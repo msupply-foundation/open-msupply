@@ -16,11 +16,11 @@ fn extract_events(
     service_provider: &ServiceProvider,
     base_time: NaiveDateTime,
     doc: &Document,
-    allowed_docs: &[String],
+    allowed_ctx: &[String],
 ) -> Result<Vec<EventInput>, UpdateProgramDocumentError> {
     let Some(registry_entries) = service_provider
         .document_registry_service
-        .get_entries_by_doc_type(ctx, vec![doc.r#type.clone()], allowed_docs)?
+        .get_entries_by_doc_type(ctx, vec![doc.r#type.clone()], allowed_ctx)?
         .pop() else { return Ok(vec![])};
 
     let Some(config) = registry_entries.config else {
@@ -122,9 +122,9 @@ pub fn update_program_events(
     base_time: NaiveDateTime,
     previous_base_time: Option<NaiveDateTime>,
     doc: &Document,
-    allowed_docs: &[String],
+    allowed_ctx: &[String],
 ) -> Result<(), UpdateProgramDocumentError> {
-    let event_inputs = extract_events(ctx, service_provider, base_time, &doc, allowed_docs)?;
+    let event_inputs = extract_events(ctx, service_provider, base_time, &doc, allowed_ctx)?;
     if let Some(previous_base_time) = previous_base_time {
         // the base time has changed, remove all events for the old base time
         // Example of the problem, if the previous_base_time was accidentally set a year
@@ -135,6 +135,7 @@ pub fn update_program_events(
                 ctx,
                 patient_id.to_string(),
                 previous_base_time,
+                &doc.context,
                 vec![],
             )?;
         }
@@ -143,6 +144,7 @@ pub fn update_program_events(
         ctx,
         patient_id.to_string(),
         base_time,
+        &doc.context,
         event_inputs,
     )?;
     Ok(())

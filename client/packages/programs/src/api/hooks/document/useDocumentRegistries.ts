@@ -1,15 +1,18 @@
-import { useQuery } from '@openmsupply-client/common';
+import {
+  DocumentRegistrySortFieldInput,
+  useQuery,
+} from '@openmsupply-client/common';
 import { DocumentRegistryParams } from '../../api';
 
 import { useDocumentRegistryApi } from '../utils/useDocumentRegistryApi';
 
-export const useDocumentRegistries = () => {
+export const useDocumentRegistries = (params?: DocumentRegistryParams) => {
   const api = useDocumentRegistryApi();
-  const params: DocumentRegistryParams = {
-    sortBy: { key: 'context', direction: 'asc' },
+  const queryParams: DocumentRegistryParams = params ?? {
+    sortBy: { key: DocumentRegistrySortFieldInput.Type, direction: 'asc' },
   };
 
-  return useQuery(api.keys.documentRegistries(params), () =>
-    api.get.documentRegistries(params)
+  return useQuery(api.keys.documentRegistries(queryParams), () =>
+    api.get.documentRegistries(queryParams)
   );
 };

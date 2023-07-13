@@ -1,8 +1,8 @@
 use crate::{
     invoice_line::{
-        common_insert_line::{InsertInvoiceLine, InsertInvoiceLineError},
         common_update_line::{UpdateInvoiceLine, UpdateInvoiceLineError},
-        outbound_shipment_line::{insert_outbound_shipment_line, update_outbound_shipment_line},
+        outbound_shipment_line::update_outbound_shipment_line,
+        stock_out_line::{insert_stock_out_line, InsertStockOutLine, InsertStockOutLineError},
         validate::check_line_exists_option,
     },
     service_provider::ServiceContext,
@@ -37,7 +37,7 @@ pub enum AllocateOutboundShipmentUnallocatedLineError {
     LineIsNotUnallocatedLine,
     // TODO NotThisStoreInvoice,
     // Internal
-    InsertOutboundShipmentLine(InputWithError<InsertInvoiceLine, InsertInvoiceLineError>),
+    InsertOutboundShipmentLine(InputWithError<InsertStockOutLine, InsertStockOutLineError>),
     UpdateOutboundShipmentLine(InputWithError<UpdateInvoiceLine, UpdateInvoiceLineError>),
     DeleteOutboundShipmentUnallocatedLine(
         InputWithError<
@@ -104,11 +104,11 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 }
 
                 for input in insert_lines.into_iter() {
-                    result.inserts.push(
-                        insert_outbound_shipment_line(ctx, input.clone()).map_err(|error| {
+                    result
+                        .inserts
+                        .push(insert_stock_out_line(ctx, input.clone()).map_err(|error| {
                             OutError::InsertOutboundShipmentLine(InputWithError { input, error })
-                        })?,
-                    );
+                        })?);
                 }
 
                 if let Some(input) = update_unallocated_line {

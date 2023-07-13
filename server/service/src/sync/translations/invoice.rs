@@ -70,7 +70,7 @@ pub enum LegacyTransactStatus {
     Others,
 }
 
-#[derive(Deserialize, Serialize, PartialEq, Eq, Clone)]
+#[derive(Deserialize, Serialize, PartialEq, Eq, Clone, Debug)]
 pub enum TransactMode {
     #[serde(rename = "store")]
     Store,
@@ -211,9 +211,10 @@ impl SyncTranslation for InvoiceTranslation {
             .find_one_by_name_id(&data.name_ID)?
             .map(|store_row| store_row.id);
 
-        let invoice_type = invoice_type(&data._type, &name, data.mode.clone()).ok_or(
-            anyhow::Error::msg(format!("Unsupported invoice type: {:?}", data._type)),
-        )?;
+        let invoice_type = invoice_type(&data, &name).ok_or(anyhow::Error::msg(format!(
+            "Unsupported invoice type: {:?} for {:?} mode",
+            data._type, data.mode
+        )))?;
         let invoice_status = invoice_status(&invoice_type, &data).ok_or(anyhow::Error::msg(
             format!("Unsupported invoice type: {:?}", data._type),
         ))?;
@@ -372,25 +373,21 @@ impl SyncTranslation for InvoiceTranslation {
     }
 }
 
-fn invoice_type(
-    _type: &LegacyTransactType,
-    name: &NameRow,
-    mode: TransactMode,
-) -> Option<InvoiceRowType> {
+fn invoice_type(data: &LegacyTransactRow, name: &NameRow) -> Option<InvoiceRowType> {
     if name.code == INVENTORY_ADJUSTMENT_NAME_CODE {
-        return match _type {
+        return match data._type {
             LegacyTransactType::Si => Some(InvoiceRowType::InventoryAddition),
             LegacyTransactType::Sc => Some(InvoiceRowType::InventoryReduction),
             _ => return None,
         };
     }
-    if mode == TransactMode::Dispensary {
-        return match _type {
+    if data.mode == TransactMode::Dispensary {
+        return match data._type {
             LegacyTransactType::Ci => Some(InvoiceRowType::Prescription),
             _ => return None,
         };
     }
-    match _type {
+    match data._type {
         LegacyTransactType::Si => Some(InvoiceRowType::InboundShipment),
         LegacyTransactType::Ci => Some(InvoiceRowType::OutboundShipment),
         LegacyTransactType::Sr => Some(InvoiceRowType::Repack),
