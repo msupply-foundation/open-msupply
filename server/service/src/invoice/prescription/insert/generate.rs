@@ -40,6 +40,7 @@ pub fn generate(
         verified_datetime: None,
         linked_invoice_id: None,
         requisition_id: None,
+        clinician_id: None,
     };
 
     Ok(result)
