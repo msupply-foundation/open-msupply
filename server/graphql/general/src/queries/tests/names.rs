@@ -1,7 +1,6 @@
 mod graphql {
 
     use async_graphql::EmptyMutation;
-    use chrono::NaiveDate;
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
@@ -10,8 +9,8 @@ mod graphql {
             mock_name_a, mock_name_linked_to_store, mock_name_not_linked_to_store,
             mock_store_linked_to_name, MockDataInserts,
         },
-        DateFilter, EqualFilter, Gender, Name, NameFilter, NameSort, NameSortField, NameType,
-        PaginationOption, SimpleStringFilter, StorageConnectionManager,
+        EqualFilter, Name, NameFilter, NameSort, NameSortField, NameType, PaginationOption,
+        SimpleStringFilter, StorageConnectionManager,
     };
     use serde_json::json;
     use service::{
@@ -115,9 +114,6 @@ mod graphql {
             "code": {
                 "equalTo": "code equal to"
             },
-            "nationalHealthNumber": {
-              "equalTo": "national_health_number equal to"
-            },
             "isCustomer": true,
             "isSupplier": false,
             "isStore": true,
@@ -127,18 +123,6 @@ mod graphql {
             "isVisible": false,
             "isSystemName": true,
             "type": { "equalTo": "STORE" },
-            "firstName": {
-              "equalTo": "first"
-            },
-            "lastName": {
-              "equalTo": "last"
-            },
-            "gender": {
-              "equalTo": "FEMALE"
-            },
-            "dateOfBirth": {
-              "equalTo": "2000-02-28"
-            },
             "phone": {
               "equalTo": "01234"
             },
@@ -154,9 +138,6 @@ mod graphql {
             "email": {
               "equalTo": "email"
             },
-            "identifier": {
-              "equalTo": "identifier"
-            }
           }
         });
 
@@ -190,7 +171,6 @@ mod graphql {
                 id,
                 name,
                 code,
-                national_health_number,
                 is_customer,
                 is_supplier,
                 is_store,
@@ -198,28 +178,19 @@ mod graphql {
                 is_visible,
                 is_system_name,
                 r#type,
-                first_name,
-                last_name,
-                gender,
-                date_of_birth,
+
                 phone,
                 address1,
                 address2,
                 country,
                 email,
-                identifier,
                 is_patient: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
             assert_eq!(name, Some(SimpleStringFilter::like("name like")));
             assert_eq!(code, Some(SimpleStringFilter::equal_to("code equal to")));
-            assert_eq!(
-                national_health_number,
-                Some(SimpleStringFilter::equal_to(
-                    "national_health_number equal to"
-                ))
-            );
+
             assert_eq!(is_customer, Some(true));
             assert_eq!(is_supplier, Some(false));
             assert_eq!(is_store, Some(true));
@@ -233,22 +204,12 @@ mod graphql {
                 r#type,
                 Some(EqualFilter::equal_to_name_type(&NameType::Store))
             );
-            assert_eq!(first_name, Some(SimpleStringFilter::equal_to("first")));
-            assert_eq!(last_name, Some(SimpleStringFilter::equal_to("last")));
-            assert_eq!(gender, Some(Gender::Female.equal_to()));
-            assert_eq!(
-                date_of_birth,
-                Some(DateFilter::equal_to(
-                    NaiveDate::from_ymd_opt(2000, 02, 28).unwrap()
-                ))
-            );
+
             assert_eq!(phone, Some(SimpleStringFilter::equal_to("01234")));
             assert_eq!(address1, Some(SimpleStringFilter::equal_to("address1")));
             assert_eq!(address2, Some(SimpleStringFilter::equal_to("address2")));
             assert_eq!(country, Some(SimpleStringFilter::equal_to("country")));
             assert_eq!(email, Some(SimpleStringFilter::equal_to("email")));
-
-            assert_eq!(identifier, Some(SimpleStringFilter::equal_to("identifier")));
 
             Ok(ListResult {
                 rows: vec![Name {
