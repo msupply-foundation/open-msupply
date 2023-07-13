@@ -9,7 +9,7 @@ import {
   UpdateOutboundShipmentInput,
   InvoiceNodeStatus,
   UpdateOutboundShipmentStatusInput,
-  InsertInvoiceLineInput,
+  InsertOutboundShipmentLineInput,
   UpdateOutboundShipmentLineInput,
   InvoiceLineNodeType,
   InvoiceSortFieldInput,
@@ -95,7 +95,7 @@ const outboundParsers = {
     id: patch.id,
     otherPartyId: patch.otherPartyId,
   }),
-  toInsertLine: (line: DraftOutboundLine): InsertInvoiceLineInput => {
+  toInsertLine: (line: DraftOutboundLine): InsertOutboundShipmentLineInput => {
     return {
       id: line.id,
       itemId: line.item.id,

@@ -9,9 +9,9 @@ use diesel_derive_enum::DbEnum;
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum DocumentContext {
+pub enum DocumentRegistryType {
     Patient,
-    Program,
+    ProgramEnrolment,
     Encounter,
     Custom,
 }
@@ -19,8 +19,9 @@ pub enum DocumentContext {
 table! {
     document_registry (id) {
         id -> Text,
+        #[sql_name = "type"] type_ -> crate::DocumentRegistryTypeMapping,
         document_type -> Text,
-        context -> crate::DocumentContextMapping,
+        document_context -> Text,
         name -> Nullable<Text>,
         parent_id -> Nullable<Text>,
         form_schema_id -> Nullable<Text>,
@@ -32,8 +33,12 @@ table! {
 #[table_name = "document_registry"]
 pub struct DocumentRegistryRow {
     pub id: String,
+    /// The type of the document registry row, e.g. Patient or ProgramEnrolment.
+    #[column_name = "type_"]
+    pub r#type: DocumentRegistryType,
     pub document_type: String,
-    pub context: DocumentContext,
+    /// The context of the document, e.g. the program id
+    pub document_context: String,
     pub name: Option<String>,
     pub parent_id: Option<String>,
     pub form_schema_id: Option<String>,

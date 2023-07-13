@@ -1,17 +1,47 @@
 use async_graphql::*;
 
-use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
+use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
+use graphql_types::types::InvoiceLineNode;
 
+use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::invoice_line::stock_out_line::{
+    InsertOutType, InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError,
+};
 
-use crate::mutations::common_insert::{map_response, InsertInvoiceLineInput, InsertResponse};
+use super::{
+    LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
+    StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
+};
 
-pub fn insert(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: InsertInvoiceLineInput,
-) -> Result<InsertResponse> {
+#[derive(InputObject)]
+#[graphql(name = "InsertOutboundShipmentLineInput")]
+pub struct InsertInput {
+    pub id: String,
+    pub invoice_id: String,
+    pub item_id: String,
+    pub stock_line_id: String,
+    pub number_of_packs: f64,
+    pub total_before_tax: Option<f64>,
+    pub tax: Option<f64>,
+}
+
+#[derive(SimpleObject)]
+#[graphql(name = "InsertOutboundShipmentLineError")]
+pub struct InsertError {
+    pub error: InsertErrorInterface,
+}
+
+#[derive(Union)]
+#[graphql(name = "InsertOutboundShipmentLineResponse")]
+pub enum InsertResponse {
+    Error(InsertError),
+    Response(InvoiceLineNode),
+}
+
+pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -26,8 +56,120 @@ pub fn insert(
     map_response(
         service_provider
             .invoice_line_service
-            .insert_outbound_shipment_line(&service_context, input.to_domain()),
+            .insert_stock_out_line(&service_context, input.to_domain()),
     )
+}
+
+pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<InsertResponse> {
+    let result = match from {
+        Ok(invoice_line) => InsertResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
+        Err(error) => InsertResponse::Error(InsertError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
+}
+
+#[derive(Interface)]
+#[graphql(name = "InsertOutboundShipmentLineErrorInterface")]
+#[graphql(field(name = "description", type = "&str"))]
+pub enum InsertErrorInterface {
+    ForeignKeyError(ForeignKeyError),
+    CannotEditInvoice(CannotEditInvoice),
+    StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
+    NotEnoughStockForReduction(NotEnoughStockForReduction),
+    LocationIsOnHold(LocationIsOnHold),
+    LocationNotFound(LocationNotFound),
+    StockLineIsOnHold(StockLineIsOnHold),
+}
+
+impl InsertInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let InsertInput {
+            id,
+            invoice_id,
+            item_id,
+            stock_line_id,
+            number_of_packs,
+            total_before_tax,
+            tax,
+        } = self;
+
+        ServiceInput {
+            id,
+            r#type: Some(InsertOutType::OutboundShipment),
+            invoice_id,
+            item_id,
+            stock_line_id,
+            number_of_packs,
+            total_before_tax,
+            tax,
+            note: None,
+        }
+    }
+}
+
+fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::InvoiceId,
+            )))
+        }
+        ServiceError::CannotEditFinalised => {
+            return Ok(InsertErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+        ServiceError::StockLineNotFound => {
+            return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::StockLineId,
+            )))
+        }
+        ServiceError::LocationIsOnHold => {
+            return Ok(InsertErrorInterface::LocationIsOnHold(LocationIsOnHold {}))
+        }
+        ServiceError::LocationNotFound => {
+            return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::LocationId,
+            )))
+        }
+        ServiceError::StockLineAlreadyExistsInInvoice(line_id) => {
+            return Ok(InsertErrorInterface::StockLineAlreadyExistsInInvoice(
+                StockLineAlreadyExistsInInvoice(line_id),
+            ))
+        }
+        ServiceError::BatchIsOnHold => {
+            return Ok(InsertErrorInterface::StockLineIsOnHold(
+                StockLineIsOnHold {},
+            ))
+        }
+        ServiceError::ReductionBelowZero { stock_line_id } => {
+            return Ok(InsertErrorInterface::NotEnoughStockForReduction(
+                NotEnoughStockForReduction {
+                    stock_line_id,
+                    line_id: None,
+                },
+            ))
+        }
+        // Standard Graphql Errors
+        ServiceError::NotThisStoreInvoice
+        | ServiceError::NoInvoiceType
+        | ServiceError::InvoiceTypeDoesNotMatch
+        | ServiceError::LineAlreadyExists
+        | ServiceError::NumberOfPacksBelowOne
+        | ServiceError::ItemNotFound
+        | ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
 
 #[cfg(test)]
@@ -46,8 +188,10 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            common_insert_line::InsertInvoiceLine as ServiceInput,
-            common_insert_line::InsertInvoiceLineError as ServiceError, InvoiceLineServiceTrait,
+            stock_out_line::{
+                InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError, InsertOutType,
+            },
+            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
     };
@@ -59,7 +203,7 @@ mod test {
     pub struct TestService(pub Box<InsertLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn insert_outbound_shipment_line(
+        fn insert_stock_out_line(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -102,9 +246,9 @@ mod test {
         .await;
 
         let mutation = r#"
-        mutation ($input: InsertInvoiceLineInput!) {
+        mutation ($input: InsertOutboundShipmentLineInput!) {
             insertOutboundShipmentLine(input: $input, storeId: \"store_a\") {
-                ... on InsertInvoiceLineError {
+                ... on InsertOutboundShipmentLineError {
                     error {
                         __typename
                     }
@@ -305,18 +449,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnOutboundShipment)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //LineAlreadyExists
         let test_service = TestService(Box::new(|_| Err(ServiceError::LineAlreadyExists)));
         let expected_message = "Bad user input";
@@ -405,7 +537,7 @@ mod test {
         .await;
 
         let mutation = r#"
-        mutation ($input: InsertInvoiceLineInput!) {
+        mutation ($input: InsertOutboundShipmentLineInput!) {
             insertOutboundShipmentLine(input: $input, storeId: \"store_a\") {
                 ... on InvoiceLineNode {
                     id
@@ -427,6 +559,7 @@ mod test {
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
+                    r#type: Some(InsertOutType::OutboundShipment),
                     tax: Some(5.0),
                     note: None,
                 }
@@ -447,7 +580,7 @@ mod test {
                 "stockLineId": "stock line input",
                 "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
-                "tax": 5.0,
+                "tax": 5.0
             },
             "storeId": "store_a"
         });

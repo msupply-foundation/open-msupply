@@ -62,7 +62,7 @@ pub fn patient_search(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_docs = user.capabilities(CapabilityTag::DocumentType);
+    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -75,7 +75,7 @@ pub fn patient_search(
             patient: PatientNode {
                 store_id: store_id.clone(),
                 patient: p.patient,
-                allowed_docs: allowed_docs.clone(),
+                allowed_ctx: allowed_ctx.clone(),
             },
             score: p.score,
         })
