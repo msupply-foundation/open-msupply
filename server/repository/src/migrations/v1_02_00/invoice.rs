@@ -1,8 +1,9 @@
 use crate::StorageConnection;
 
-#[cfg(feature = "postgres")]
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     use crate::migrations::sql;
+
+    #[cfg(feature = "postgres")]
     sql!(
         connection,
         r#"
@@ -10,10 +11,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#,
     )?;
 
-    Ok(())
-}
+    sql!(
+        connection,
+        r#"
+        ALTER TABLE invoice ADD clinician_id TEXT REFERENCES clinician(id);
+        "#
+    )?;
 
-#[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(_connection: &StorageConnection) -> anyhow::Result<()> {
     Ok(())
 }

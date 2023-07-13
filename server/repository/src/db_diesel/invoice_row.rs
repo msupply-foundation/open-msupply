@@ -1,6 +1,6 @@
 use super::{
-    invoice_row::invoice::dsl::*, name_row::name, store_row::store, user_row::user_account,
-    StorageConnection,
+    clinician_row::clinician, invoice_row::invoice::dsl::*, name_row::name, store_row::store,
+    user_row::user_account, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -36,12 +36,14 @@ table! {
         requisition_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
         tax -> Nullable<Double>,
+        clinician_id -> Nullable<Text>,
     }
 }
 
 joinable!(invoice -> name (name_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
+joinable!(invoice -> clinician (clinician_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -97,6 +99,7 @@ pub struct InvoiceRow {
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
     pub tax: Option<f64>,
+    pub clinician_id: Option<String>,
 }
 
 impl Default for InvoiceRow {
@@ -125,6 +128,7 @@ impl Default for InvoiceRow {
             requisition_id: Default::default(),
             linked_invoice_id: Default::default(),
             tax: Default::default(),
+            clinician_id: Default::default(),
         }
     }
 }
