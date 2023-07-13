@@ -5,7 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::BarcodeNode;
-use repository::Barcode;
+use repository::barcode::Barcode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     barcode::InsertBarcodeError as ServiceError,

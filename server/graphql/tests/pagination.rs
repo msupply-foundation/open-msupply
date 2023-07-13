@@ -6,7 +6,9 @@ mod pagination_test {
     use graphql_location::LocationQueries;
     use repository::PaginationOption;
     use repository::{
-        mock::MockDataInserts, Location, LocationFilter, LocationSort, StorageConnectionManager,
+        location::{Location, LocationFilter, LocationSort},
+        mock::MockDataInserts,
+        StorageConnectionManager,
     };
     use serde_json::json;
 

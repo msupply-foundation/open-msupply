@@ -28,9 +28,9 @@ use crate::{
 };
 
 use super::{
-    delete_outbound_shipment, insert_outbound_shipment, update_outbound_shipment,
-    DeleteOutboundShipmentError, InsertOutboundShipment, InsertOutboundShipmentError,
-    UpdateOutboundShipment, UpdateOutboundShipmentError,
+    delete::{delete_outbound_shipment, DeleteOutboundShipmentError},
+    insert::{insert_outbound_shipment, InsertOutboundShipment, InsertOutboundShipmentError},
+    update::{update_outbound_shipment, UpdateOutboundShipment, UpdateOutboundShipmentError},
 };
 
 #[derive(Clone, Debug)]
@@ -280,7 +280,8 @@ mod test {
 
     use crate::{
         invoice::outbound_shipment::{
-            BatchOutboundShipment, DeleteOutboundShipmentError, InsertOutboundShipment,
+            delete::DeleteOutboundShipmentError, insert::InsertOutboundShipment,
+            BatchOutboundShipment,
         },
         invoice_line::stock_out_line::{InsertOutType, InsertStockOutLine},
         service_provider::ServiceProvider,
