@@ -18,11 +18,7 @@ import { useReport, ReportRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
 import { ReportArgumentsModal } from '../components/ReportArgumentsModal';
 
-type PrintingDialogProps = { isPrinting: boolean };
-const PrintingDialog: React.FC<PrintingDialogProps> = (
-  props: PrintingDialogProps
-) => {
-  const { isPrinting } = props;
+const PrintingDialog: React.FC<{ isPrinting: boolean }> = ({ isPrinting }) => {
   const { Modal, showDialog, hideDialog } = useDialog();
 
   useEffect(() => {
