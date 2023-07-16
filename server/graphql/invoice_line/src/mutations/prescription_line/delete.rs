@@ -61,7 +61,7 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
 }
 
 #[derive(Interface)]
-#[graphql(name = "DeletePrescriptionErrorInterface")]
+#[graphql(name = "DeletePrescriptionLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
