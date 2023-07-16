@@ -41,7 +41,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         get_invoice_lines(ctx, filter)
     }
 
-    // Stock out
+    // Stock out: Outbound/Prescription
     fn insert_stock_out_line(
         &self,
         ctx: &ServiceContext,
