@@ -12,6 +12,7 @@ import {
   BaseButton,
   useDialog,
   BasicSpinner,
+  useDebouncedValue,
 } from '@openmsupply-client/common';
 import { JsonData } from '@openmsupply-client/programs';
 import { useReport, ReportRowFragment } from '../api';
@@ -84,6 +85,8 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
   >();
   const { print, isPrinting } = useReport.utils.print();
 
+  const debouncedIsPrinting = useDebouncedValue(isPrinting, 300);
+
   const columns = useColumns<ReportRowFragment>(
     [
       'name',
@@ -152,7 +155,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
         onReset={() => setReportWithArgs(undefined)}
         onArgumentsSelected={printReport}
       />
-      <PrintingDialog isPrinting={isPrinting} />
+      <PrintingDialog isPrinting={debouncedIsPrinting && isPrinting} />
     </>
   );
 };
