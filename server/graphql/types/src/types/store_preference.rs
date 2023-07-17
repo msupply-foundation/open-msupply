@@ -26,6 +26,10 @@ impl StorePreferenceNode {
             .store_preference
             .request_requisition_requires_authorisation
     }
+
+    pub async fn om_program_module(&self) -> &bool {
+        &self.store_preference.om_program_module
+    }
 }
 
 impl StorePreferenceNode {
