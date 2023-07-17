@@ -17,6 +17,7 @@ table! {
         pack_to_one -> Bool,
         response_requisition_requires_authorisation -> Bool,
         request_requisition_requires_authorisation -> Bool,
+        om_program_module -> Bool,
     }
 }
 
@@ -41,6 +42,7 @@ pub struct StorePreferenceRow {
     pub pack_to_one: bool,
     pub response_requisition_requires_authorisation: bool,
     pub request_requisition_requires_authorisation: bool,
+    pub om_program_module: bool,
 }
 
 impl Default for StorePreferenceRow {
@@ -51,6 +53,7 @@ impl Default for StorePreferenceRow {
             pack_to_one: Default::default(),
             response_requisition_requires_authorisation: Default::default(),
             request_requisition_requires_authorisation: Default::default(),
+            om_program_module: Default::default(),
         }
     }
 }
