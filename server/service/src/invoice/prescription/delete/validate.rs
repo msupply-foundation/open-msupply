@@ -19,7 +19,7 @@ pub fn validate(
         return Err(CannotEditFinalised);
     }
     if !check_invoice_type(&invoice, InvoiceRowType::Prescription) {
-        return Err(NotAPrescription);
+        return Err(NotAPrescriptionInvoice);
     }
 
     Ok(invoice)

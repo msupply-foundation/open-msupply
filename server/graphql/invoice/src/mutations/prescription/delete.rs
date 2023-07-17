@@ -79,7 +79,7 @@ fn map_error(error: ServiceError) -> Result<DeletePrescriptionErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice | ServiceError::NotAPrescription => {
+        ServiceError::NotThisStoreInvoice | ServiceError::NotAPrescriptionInvoice => {
             BadUserInput(formatted_error)
         }
         ServiceError::DatabaseError(_) | ServiceError::LineDeleteError { .. } => {
@@ -152,7 +152,7 @@ mod graphql {
         );
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
-        // NotAPrescription
+        // NotAPrescriptionInvoice
         let variables = Some(json!({
           "id": "inbound_shipment_c"
         }));

@@ -67,7 +67,7 @@ pub enum DeletePrescriptionError {
         line_id: String,
         error: DeleteStockOutLineError,
     },
-    NotAPrescription,
+    NotAPrescriptionInvoice,
 }
 
 impl From<RepositoryError> for DeletePrescriptionError {
@@ -109,10 +109,10 @@ mod test {
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
-        // NotAPrescription
+        // NotAPrescriptionInvoice
         assert_eq!(
             service.delete_prescription(&context, mock_inbound_shipment_c().id),
-            Err(ServiceError::NotAPrescription)
+            Err(ServiceError::NotAPrescriptionInvoice)
         );
 
         // CannotEditFinalised
