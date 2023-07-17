@@ -93,8 +93,9 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice_line::outbound_shipment_line::delete::DeleteOutboundShipmentLine,
-        invoice_line::outbound_shipment_line::DeleteOutboundShipmentLineError as ServiceError,
+        invoice_line::outbound_shipment_line::delete::{
+            DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError as ServiceError,
+        },
         service_provider::ServiceProvider,
     };
 

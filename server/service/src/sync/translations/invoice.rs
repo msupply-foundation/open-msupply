@@ -99,6 +99,8 @@ pub struct LegacyTransactRow {
     pub comment: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub their_ref: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub prescriber_ID: Option<String>,
 
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
@@ -231,6 +233,7 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
+            clinician_id: data.prescriber_ID,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -300,6 +303,7 @@ impl SyncTranslation for InvoiceTranslation {
             linked_invoice_id,
             transport_reference,
             tax,
+            clinician_id,
         } = invoice_row;
 
         let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
@@ -347,6 +351,7 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
+            prescriber_ID: clinician_id,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

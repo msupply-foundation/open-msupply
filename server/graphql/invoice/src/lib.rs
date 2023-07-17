@@ -52,9 +52,9 @@ impl InvoiceQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: prescription::InsertInput,
-    ) -> Result<prescription::InsertResponse> {
-        prescription::insert(ctx, &store_id, input)
+        input: prescription::insert::InsertInput,
+    ) -> Result<prescription::insert::InsertResponse> {
+        prescription::insert::insert(ctx, &store_id, input)
     }
 }
 
@@ -149,8 +149,17 @@ impl InvoiceMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: prescription::InsertInput,
-    ) -> Result<prescription::InsertResponse> {
-        prescription::insert(ctx, &store_id, input)
+        input: prescription::insert::InsertInput,
+    ) -> Result<prescription::insert::InsertResponse> {
+        prescription::insert::insert(ctx, &store_id, input)
+    }
+
+    async fn update_prescription(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: prescription::UpdateInput,
+    ) -> Result<prescription::UpdateResponse> {
+        prescription::update(ctx, &store_id, input)
     }
 }

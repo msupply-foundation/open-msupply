@@ -7,7 +7,7 @@ use graphql_core::ContextExt;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::outbound_shipment_line::{
+use service::invoice_line::outbound_shipment_line::delete::{
     DeleteOutboundShipmentLine as ServiceInput, DeleteOutboundShipmentLineError as ServiceError,
 };
 
@@ -116,7 +116,7 @@ mod test {
 
     use service::{
         invoice_line::{
-            outbound_shipment_line::{
+            outbound_shipment_line::delete::{
                 DeleteOutboundShipmentLine as ServiceInput,
                 DeleteOutboundShipmentLineError as ServiceError,
             },

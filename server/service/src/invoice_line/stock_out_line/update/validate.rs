@@ -1,25 +1,28 @@
+use repository::{InvoiceLineRow, InvoiceRow, ItemRow, StorageConnection};
+
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
-        check_unique_stock_line,
-        outbound_shipment_line::LocationIsOnHoldError,
+        outbound_shipment_line::validate::{
+            check_batch_exists, check_batch_on_hold, check_item_matches_batch,
+            check_location_on_hold, check_unique_stock_line, LocationIsOnHoldError,
+        },
+        stock_out_line::BatchPair,
         validate::{
             check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
             check_number_of_packs,
         },
     },
 };
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
 
-use super::{BatchPair, UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError};
+use super::{UpdateStockOutLine, UpdateStockOutLineError};
 
 pub fn validate(
-    input: &UpdateOutboundShipmentLine,
+    input: &UpdateStockOutLine,
     store_id: &str,
     connection: &StorageConnection,
-) -> Result<(InvoiceLineRow, ItemRow, BatchPair, InvoiceRow), UpdateOutboundShipmentLineError> {
-    use UpdateOutboundShipmentLineError::*;
+) -> Result<(InvoiceLineRow, ItemRow, BatchPair, InvoiceRow), UpdateStockOutLineError> {
+    use UpdateStockOutLineError::*;
 
     let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
     let invoice = check_invoice_exists(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
@@ -36,10 +39,12 @@ pub fn validate(
         return Err(StockLineAlreadyExistsInInvoice(unique_stock.unwrap().id));
     }
 
-    // check batch belongs to store
-
-    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
-        return Err(NotAnOutboundShipment);
+    if let Some(r#type) = &input.r#type {
+        if !check_invoice_type(&invoice, r#type.to_domain()) {
+            return Err(InvoiceTypeDoesNotMatch);
+        }
+    } else {
+        return Err(NoInvoiceType);
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
@@ -70,16 +75,16 @@ pub fn validate(
 }
 
 fn check_reduction_below_zero(
-    input: &UpdateOutboundShipmentLine,
+    input: &UpdateStockOutLine,
     line: &InvoiceLineRow,
     batch_pair: &BatchPair,
-) -> Result<(), UpdateOutboundShipmentLineError> {
+) -> Result<(), UpdateStockOutLineError> {
     // If previous batch is present, this means we are adjust new batch thus:
     // - check full number of pack in invoice
     let reduction = batch_pair.get_main_batch_reduction(input, line);
 
     if batch_pair.main_batch.available_number_of_packs < reduction {
-        Err(UpdateOutboundShipmentLineError::ReductionBelowZero {
+        Err(UpdateStockOutLineError::ReductionBelowZero {
             stock_line_id: batch_pair.main_batch.id.clone(),
             line_id: line.id.clone(),
         })
@@ -92,22 +97,24 @@ fn check_item_option(
     item_id: Option<String>,
     invoice_line: &InvoiceLineRow,
     connection: &StorageConnection,
-) -> Result<ItemRow, UpdateOutboundShipmentLineError> {
+) -> Result<ItemRow, UpdateStockOutLineError> {
     if let Some(item_id) = item_id {
-        Ok(check_item_exists(connection, &item_id)?
-            .ok_or(UpdateOutboundShipmentLineError::ItemNotFound)?)
+        Ok(
+            check_item_exists(connection, &item_id)?
+                .ok_or(UpdateStockOutLineError::ItemNotFound)?,
+        )
     } else {
         Ok(check_item_exists(connection, &invoice_line.item_id)?
-            .ok_or(UpdateOutboundShipmentLineError::ItemNotFound)?)
+            .ok_or(UpdateStockOutLineError::ItemNotFound)?)
     }
 }
 
 fn check_batch_exists_option(
-    input: &UpdateOutboundShipmentLine,
+    input: &UpdateStockOutLine,
     existing_line: &InvoiceLineRow,
     connection: &StorageConnection,
-) -> Result<BatchPair, UpdateOutboundShipmentLineError> {
-    use UpdateOutboundShipmentLineError::*;
+) -> Result<BatchPair, UpdateStockOutLineError> {
+    use UpdateStockOutLineError::*;
 
     let previous_batch = if let Some(batch_id) = &existing_line.stock_line_id {
         // Should always be found due to contraints on database
