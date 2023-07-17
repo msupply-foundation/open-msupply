@@ -85,6 +85,8 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
   >();
   const { print, isPrinting } = useReport.utils.print();
 
+  // Wait a little bit before showing the modal, e.g. when the report prints very quickly, don't
+  // show the modal.
   const debouncedIsPrinting = useDebouncedValue(isPrinting, 300);
 
   const columns = useColumns<ReportRowFragment>(
