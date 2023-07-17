@@ -1,47 +1,35 @@
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
-use graphql_core::ContextExt;
-
+use graphql_core::{
+    simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound},
+    ContextExt,
+};
 use graphql_types::types::InvoiceLineNode;
+
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::invoice_line::stock_out_line::{
+    StockOutType, UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
+};
 
 use crate::mutations::outbound_shipment_line::line::{
     LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
     StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
-use service::invoice_line::stock_out_line::{
-    InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError, StockOutType,
-};
 
 #[derive(InputObject)]
-#[graphql(name = "InsertPrescriptionLineInput")]
-pub struct InsertInput {
+#[graphql(name = "UpdatePrescriptionLineInput")]
+pub struct UpdateInput {
     pub id: String,
-    pub invoice_id: String,
-    pub item_id: String,
-    pub stock_line_id: String,
-    pub number_of_packs: f64,
+    pub item_id: Option<String>,
+    pub stock_line_id: Option<String>,
+    pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub note: Option<String>,
 }
 
-#[derive(SimpleObject)]
-#[graphql(name = "InsertPrescriptionLineError")]
-pub struct InsertError {
-    pub error: InsertErrorInterface,
-}
-
-#[derive(Union)]
-#[graphql(name = "InsertPrescriptionLineResponse")]
-pub enum InsertResponse {
-    Error(InsertError),
-    Response(InvoiceLineNode),
-}
-
-pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
+pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -56,14 +44,14 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     map_response(
         service_provider
             .invoice_line_service
-            .insert_stock_out_line(&service_context, input.to_domain()),
+            .update_stock_out_line(&service_context, input.to_domain()),
     )
 }
 
-pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<InsertResponse> {
+pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<UpdateResponse> {
     let result = match from {
-        Ok(invoice_line) => InsertResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
-        Err(error) => InsertResponse::Error(InsertError {
+        Ok(invoice_line) => UpdateResponse::Response(InvoiceLineNode::from_domain(invoice_line)),
+        Err(error) => UpdateResponse::Error(UpdateError {
             error: map_error(error)?,
         }),
     };
@@ -71,106 +59,124 @@ pub fn map_response(from: Result<InvoiceLine, ServiceError>) -> Result<InsertRes
     Ok(result)
 }
 
+#[derive(SimpleObject)]
+#[graphql(name = "UpdatePrescriptionLineError")]
+pub struct UpdateError {
+    pub error: UpdateErrorInterface,
+}
+
+#[derive(Union)]
+#[graphql(name = "UpdatePrescriptionLineResponse")]
+pub enum UpdateResponse {
+    Error(UpdateError),
+    Response(InvoiceLineNode),
+}
+
 #[derive(Interface)]
-#[graphql(name = "InsertPrescriptionLineErrorInterface")]
+#[graphql(name = "UpdatePrescriptionLineErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum InsertErrorInterface {
+pub enum UpdateErrorInterface {
     ForeignKeyError(ForeignKeyError),
+    RecordNotFound(RecordNotFound),
     CannotEditInvoice(CannotEditInvoice),
     StockLineAlreadyExistsInInvoice(StockLineAlreadyExistsInInvoice),
-    NotEnoughStockForReduction(NotEnoughStockForReduction),
     LocationIsOnHold(LocationIsOnHold),
     LocationNotFound(LocationNotFound),
     StockLineIsOnHold(StockLineIsOnHold),
+    NotEnoughStockForReduction(NotEnoughStockForReduction),
 }
 
-fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
-    use StandardGraphqlError::*;
-    let formatted_error = format!("{:#?}", error);
-
-    let graphql_error = match error {
-        // Structured Errors
-        ServiceError::InvoiceDoesNotExist => {
-            return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
-                ForeignKey::InvoiceId,
-            )))
-        }
-        ServiceError::CannotEditFinalised => {
-            return Ok(InsertErrorInterface::CannotEditInvoice(
-                CannotEditInvoice {},
-            ))
-        }
-        ServiceError::StockLineNotFound => {
-            return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
-                ForeignKey::StockLineId,
-            )))
-        }
-        ServiceError::LocationIsOnHold => {
-            return Ok(InsertErrorInterface::LocationIsOnHold(LocationIsOnHold {}))
-        }
-        ServiceError::LocationNotFound => {
-            return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
-                ForeignKey::LocationId,
-            )))
-        }
-        ServiceError::StockLineAlreadyExistsInInvoice(line_id) => {
-            return Ok(InsertErrorInterface::StockLineAlreadyExistsInInvoice(
-                StockLineAlreadyExistsInInvoice(line_id),
-            ))
-        }
-        ServiceError::BatchIsOnHold => {
-            return Ok(InsertErrorInterface::StockLineIsOnHold(
-                StockLineIsOnHold {},
-            ))
-        }
-        ServiceError::ReductionBelowZero { stock_line_id } => {
-            return Ok(InsertErrorInterface::NotEnoughStockForReduction(
-                NotEnoughStockForReduction {
-                    stock_line_id,
-                    line_id: None,
-                },
-            ))
-        }
-        // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice
-        | ServiceError::NoInvoiceType
-        | ServiceError::InvoiceTypeDoesNotMatch
-        | ServiceError::LineAlreadyExists
-        | ServiceError::NumberOfPacksBelowOne
-        | ServiceError::ItemNotFound
-        | ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
-            InternalError(formatted_error)
-        }
-    };
-
-    Err(graphql_error.extend())
-}
-
-impl InsertInput {
+impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
-        let InsertInput {
+        let UpdateInput {
             id,
-            invoice_id,
             item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
             note,
         } = self;
-
         ServiceInput {
             id,
             r#type: Some(StockOutType::Prescription),
-            invoice_id,
             item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
             tax: None,
-            note,
+            note: note,
         }
     }
+}
+
+fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::InvoiceDoesNotExist => {
+            return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::InvoiceId,
+            )))
+        }
+        ServiceError::CannotEditFinalised => {
+            return Ok(UpdateErrorInterface::CannotEditInvoice(
+                CannotEditInvoice {},
+            ))
+        }
+        ServiceError::StockLineNotFound => {
+            return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::StockLineId,
+            )))
+        }
+        ServiceError::LocationIsOnHold => {
+            return Ok(UpdateErrorInterface::LocationIsOnHold(LocationIsOnHold {}))
+        }
+        ServiceError::LocationNotFound => {
+            return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
+                ForeignKey::LocationId,
+            )))
+        }
+        ServiceError::StockLineAlreadyExistsInInvoice(line_id) => {
+            return Ok(UpdateErrorInterface::StockLineAlreadyExistsInInvoice(
+                StockLineAlreadyExistsInInvoice(line_id),
+            ))
+        }
+        ServiceError::BatchIsOnHold => {
+            return Ok(UpdateErrorInterface::StockLineIsOnHold(
+                StockLineIsOnHold {},
+            ))
+        }
+        ServiceError::LineDoesNotExist => {
+            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
+        }
+        ServiceError::ReductionBelowZero {
+            stock_line_id,
+            line_id,
+        } => {
+            return Ok(UpdateErrorInterface::NotEnoughStockForReduction(
+                NotEnoughStockForReduction {
+                    stock_line_id,
+                    line_id: Some(line_id),
+                },
+            ))
+        }
+        // Standard Graphql Errors
+        ServiceError::NotThisStoreInvoice
+        | ServiceError::InvoiceTypeDoesNotMatch
+        | ServiceError::NoInvoiceType
+        | ServiceError::NumberOfPacksBelowOne
+        | ServiceError::ItemNotFound
+        | ServiceError::ItemDoesNotMatchStockLine
+        | ServiceError::NotThisInvoiceLine(_)
+        | ServiceError::LineDoesNotReferenceStockLine => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) | ServiceError::UpdatedLineDoesNotExist => {
+            InternalError(formatted_error)
+        }
+    };
+
+    Err(graphql_error.extend())
 }
 
 #[cfg(test)]
@@ -189,8 +195,9 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            stock_out_line::InsertStockOutLineError as ServiceError,
-            stock_out_line::{InsertStockOutLine as ServiceInput, StockOutType},
+            stock_out_line::{
+                UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError, StockOutType,
+            },
             InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -203,7 +210,7 @@ mod test {
     pub struct TestService(pub Box<InsertLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn insert_stock_out_line(
+        fn update_stock_out_line(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -225,31 +232,29 @@ mod test {
         json!({
           "input": {
             "id": "n/a",
-            "invoiceId": "n/a",
             "itemId": "n/a",
             "stockLineId": "n/a",
             "numberOfPacks": 0,
-            "stockLineId": "n/a",
             "totalBeforeTax": 0,
-            "note": "n/a",
+            "note": "n/a"
           }
         })
     }
 
     #[actix_rt::test]
-    async fn test_graphql_insert_prescription_line_errors() {
+    async fn test_graphql_update_prescription_errors() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceLineMutations,
-            "test_graphql_insert_prescription_line_errors",
+            "test_graphql_update_prescription_errors",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: InsertPrescriptionLineInput!) {
-            insertPrescriptionLine(input: $input, storeId: \"store_a\") {
-                ... on InsertPrescriptionLineError {
+        mutation ($input: UpdatePrescriptionLineInput!) {
+            updatePrescriptionLine(input: $input, storeId: \"store_a\") {
+                ... on UpdatePrescriptionLineError {
                     error {
                         __typename
                     }
@@ -262,9 +267,9 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::InvoiceDoesNotExist)));
 
         let expected = json!({
-            "insertPrescriptionLine": {
+            "updatePrescriptionLine": {
               "error": {
-                "__typename": "ForeignKeyError"
+                "__typename": "ForeignKeyError",
               }
             }
           }
@@ -278,13 +283,13 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //CannotEditInvoice
+        //CannotEditFinalised
         let test_service = TestService(Box::new(|_| Err(ServiceError::CannotEditFinalised)));
 
         let expected = json!({
-            "insertPrescriptionLine" : {
+            "updatePrescriptionLine" : {
                 "error": {
-                    "__typename": "CannotEditInvoice"
+                    "__typename": "CannotEditInvoice",
                 }
             }
         });
@@ -301,9 +306,9 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::StockLineNotFound)));
 
         let expected = json!({
-            "insertPrescriptionLine" : {
+            "updatePrescriptionLine" : {
                 "error": {
-                    "__typename": "ForeignKeyError"
+                    "__typename": "ForeignKeyError",
                 }
             }
         });
@@ -316,13 +321,13 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //LocationIsOnHold
+        //LocationOnHold
         let test_service = TestService(Box::new(|_| Err(ServiceError::LocationIsOnHold)));
 
         let expected = json!({
-            "insertPrescriptionLine" : {
+            "updatePrescriptionLine" : {
                 "error": {
-                    "__typename": "LocationIsOnHold"
+                    "__typename": "LocationIsOnHold",
                 }
             }
         });
@@ -339,28 +344,9 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::LocationNotFound)));
 
         let expected = json!({
-            "insertPrescriptionLine" : {
+            "updatePrescriptionLine" : {
                 "error": {
-                    "__typename": "ForeignKeyError"
-                }
-            }
-        });
-
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &Some(empty_variables()),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //LocationNotFound
-        let test_service = TestService(Box::new(|_| Err(ServiceError::LocationNotFound)));
-
-        let expected = json!({
-            "insertPrescriptionLine" : {
-                "error": {
-                    "__typename": "ForeignKeyError"
+                    "__typename": "ForeignKeyError",
                 }
             }
         });
@@ -376,14 +362,14 @@ mod test {
         //StockLineAlreadyExistsInInvoice
         let test_service = TestService(Box::new(|_| {
             Err(ServiceError::StockLineAlreadyExistsInInvoice(
-                "stock line exists".to_string(),
+                "stock line already exists".to_string(),
             ))
         }));
 
         let expected = json!({
-            "insertPrescriptionLine" : {
+            "updatePrescriptionLine" : {
                 "error": {
-                    "__typename": "StockLineAlreadyExistsInInvoice"
+                    "__typename": "StockLineAlreadyExistsInInvoice",
                 }
             }
         });
@@ -400,9 +386,9 @@ mod test {
         let test_service = TestService(Box::new(|_| Err(ServiceError::BatchIsOnHold)));
 
         let expected = json!({
-            "insertPrescriptionLine" : {
+            "updatePrescriptionLine" : {
                 "error": {
-                    "__typename": "StockLineIsOnHold"
+                    "__typename": "StockLineIsOnHold",
                 }
             }
         });
@@ -415,17 +401,37 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NotEnoughStockForReduction
+        //LineDoesNotExist
+        let test_service = TestService(Box::new(|_| Err(ServiceError::LineDoesNotExist)));
+
+        let expected = json!({
+            "updatePrescriptionLine" : {
+                "error": {
+                    "__typename": "RecordNotFound",
+                }
+            }
+        });
+
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &Some(empty_variables()),
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        //ReductionBelowZero
         let test_service = TestService(Box::new(|_| {
             Err(ServiceError::ReductionBelowZero {
-                stock_line_id: "stock line id".to_string(),
+                stock_line_id: "stock_line_a".to_string(),
+                line_id: "line_a".to_string(),
             })
         }));
 
         let expected = json!({
-            "insertPrescriptionLine" : {
+            "updatePrescriptionLine" : {
                 "error": {
-                    "__typename": "NotEnoughStockForReduction"
+                    "__typename": "NotEnoughStockForReduction",
                 }
             }
         });
@@ -440,18 +446,6 @@ mod test {
 
         //NotThisStoreInvoice
         let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreInvoice)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //LineAlreadyExists
-        let test_service = TestService(Box::new(|_| Err(ServiceError::LineAlreadyExists)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -498,11 +492,13 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //DatabaseError
+        //NotThisInvoiceLine
         let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::DatabaseError(RepositoryError::NotFound))
+            Err(ServiceError::NotThisInvoiceLine(
+                "not this invoice line".to_string(),
+            ))
         }));
-        let expected_message = "Internal error";
+        let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
             &mutation,
@@ -512,9 +508,25 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NewlyCreatedLineDoesNotExist
+        //LineDoesNotReferenceStockLine
         let test_service = TestService(Box::new(|_| {
-            Err(ServiceError::NewlyCreatedLineDoesNotExist)
+            Err(ServiceError::LineDoesNotReferenceStockLine)
+        }));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        //DatabaseError
+        let test_service = TestService(Box::new(|_| {
+            Err(ServiceError::DatabaseError(
+                RepositoryError::UniqueViolation("row already exists".to_string()),
+            ))
         }));
         let expected_message = "Internal error";
         assert_standard_graphql_error!(
@@ -528,22 +540,20 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_insert_prescription_line_success() {
+    async fn test_graphql_update_prescription_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
             InvoiceLineMutations,
-            "test_graphql_insert_prescription_line_success",
+            "test_graphql_update_prescription_success",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: InsertPrescriptionLineInput!) {
-            insertPrescriptionLine(input: $input, storeId: \"store_a\") {
+        mutation ($storeId: String, $input: UpdatePrescriptionLineInput!) {
+            updatePrescriptionLine(storeId: $storeId, input: $input) {
                 ... on InvoiceLineNode {
                     id
-                    invoiceId
-                    itemName
                 }
             }
           }
@@ -554,40 +564,39 @@ mod test {
             assert_eq!(
                 input,
                 ServiceInput {
-                    id: "new id".to_string(),
+                    id: "id input".to_string(),
                     r#type: Some(StockOutType::Prescription),
-                    invoice_id: "invoice input".to_string(),
-                    item_id: "item input".to_string(),
-                    stock_line_id: "stock line input".to_string(),
-                    number_of_packs: 1.0,
-                    total_before_tax: Some(1.1),
-                    note: None,
+                    item_id: Some("item_id input".to_string()),
+                    stock_line_id: Some("stock_line_id input".to_string()),
+                    number_of_packs: Some(1.0),
+                    total_before_tax: Some(1.0),
+                    note: Some("some note".to_string()),
                     tax: None,
                 }
             );
             Ok(InvoiceLine {
-                invoice_line_row: mock_prescription_a_invoice_lines()[0].clone(),
                 invoice_row: mock_prescription_a(),
+                invoice_line_row: mock_prescription_a_invoice_lines()[0].clone(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })
         }));
 
         let variables = json!({
-            "input": {
-                "id": "new id",
-                "invoiceId": "invoice input",
-                "itemId": "item input",
-                "stockLineId": "stock line input",
-                "numberOfPacks": 1.0,
-                "totalBeforeTax": 1.1,
-            },
-            "storeId": "store_a"
+          "input": {
+            "id": "id input",
+            "itemId": "item_id input",
+            "stockLineId": "stock_line_id input",
+            "numberOfPacks": 1.0,
+            "totalBeforeTax": 1.0,
+            "note": "some note"
+          },
+          "storeId": "store_a"
         });
 
         let expected = json!({
-            "insertPrescriptionLine": {
-                "id": mock_prescription_a_invoice_lines()[0].id
+            "updatePrescriptionLine": {
+                "id": mock_prescription_a_invoice_lines()[0].id,
             }
           }
         );

@@ -11,16 +11,15 @@ use util::{
 };
 
 use crate::invoice_line::{
-    outbound_shipment_line::UpdateOutboundShipmentLine,
     outbound_shipment_unallocated_line::{
         DeleteOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLine,
     },
-    stock_out_line::{InsertOutType, InsertStockOutLine},
+    stock_out_line::{InsertStockOutLine, StockOutType, UpdateStockOutLine},
 };
 
 #[derive(Default)]
 pub struct GenerateOutput {
-    pub update_lines: Vec<UpdateOutboundShipmentLine>,
+    pub update_lines: Vec<UpdateStockOutLine>,
     pub insert_lines: Vec<InsertStockOutLine>,
     pub update_unallocated_line: Option<UpdateOutboundShipmentUnallocatedLine>,
     pub delete_unallocated_line: Option<DeleteOutboundShipmentUnallocatedLine>,
@@ -153,7 +152,7 @@ fn generate_new_line(
     let stock_line_row = &stock_line.stock_line_row;
     InsertStockOutLine {
         id: uuid::uuid(),
-        r#type: Some(InsertOutType::OutboundShipment),
+        r#type: Some(StockOutType::OutboundShipment),
         invoice_id: invoice_id.to_string(),
         item_id: stock_line_row.item_id.clone(),
         stock_line_id: stock_line_row.id.clone(),
@@ -168,19 +167,21 @@ fn try_allocate_existing_line(
     number_of_packs_to_add: f64,
     stock_line_id: &str,
     allocated_lines: &Vec<InvoiceLine>,
-) -> Option<UpdateOutboundShipmentLine> {
+) -> Option<UpdateStockOutLine> {
     allocated_lines
         .iter()
         .find(|line| line.invoice_line_row.stock_line_id == Some(stock_line_id.to_string()))
         .map(|line| {
             let line_row = line.invoice_line_row.clone();
-            UpdateOutboundShipmentLine {
+            UpdateStockOutLine {
                 id: line_row.id,
+                r#type: Some(StockOutType::OutboundShipment),
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
                 item_id: None,
                 stock_line_id: None,
                 total_before_tax: None,
                 tax: None,
+                note: None,
             }
         })
 }

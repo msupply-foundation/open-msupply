@@ -53,12 +53,12 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         insert_stock_out_line(ctx, input)
     }
 
-    fn update_outbound_shipment_line(
+    fn update_stock_out_line(
         &self,
         ctx: &ServiceContext,
-        input: UpdateOutboundShipmentLine,
-    ) -> Result<InvoiceLine, UpdateOutboundShipmentLineError> {
-        update_outbound_shipment_line(ctx, input)
+        input: UpdateStockOutLine,
+    ) -> Result<InvoiceLine, UpdateStockOutLineError> {
+        update_stock_out_line(ctx, input)
     }
 
     fn delete_outbound_shipment_line(

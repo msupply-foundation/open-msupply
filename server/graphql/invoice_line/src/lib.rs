@@ -162,4 +162,13 @@ impl InvoiceLineMutations {
     ) -> Result<prescription_line::InsertResponse> {
         prescription_line::insert(ctx, &store_id, input)
     }
+
+    async fn update_prescription_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: prescription_line::update::UpdateInput,
+    ) -> Result<prescription_line::update::UpdateResponse> {
+        prescription_line::update(ctx, &store_id, input)
+    }
 }

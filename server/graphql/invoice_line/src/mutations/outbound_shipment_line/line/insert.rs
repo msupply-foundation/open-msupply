@@ -8,7 +8,7 @@ use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::stock_out_line::{
-    InsertOutType, InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError,
+    InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError, StockOutType,
 };
 
 use super::{
@@ -98,7 +98,7 @@ impl InsertInput {
 
         ServiceInput {
             id,
-            r#type: Some(InsertOutType::OutboundShipment),
+            r#type: Some(StockOutType::OutboundShipment),
             invoice_id,
             item_id,
             stock_line_id,
@@ -189,7 +189,8 @@ mod test {
     use service::{
         invoice_line::{
             stock_out_line::{
-                InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError, InsertOutType,
+                InsertStockOutLine as ServiceInput, InsertStockOutLineError as ServiceError,
+                StockOutType,
             },
             InvoiceLineServiceTrait,
         },
@@ -559,7 +560,7 @@ mod test {
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
-                    r#type: Some(InsertOutType::OutboundShipment),
+                    r#type: Some(StockOutType::OutboundShipment),
                     tax: Some(5.0),
                     note: None,
                 }

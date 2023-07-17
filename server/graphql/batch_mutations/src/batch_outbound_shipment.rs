@@ -521,10 +521,7 @@ mod test {
             InvoiceServiceTrait,
         },
         invoice_line::{
-            outbound_shipment_line::{
-                DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
-                UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError,
-            },
+            outbound_shipment_line::{DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError},
             outbound_shipment_service_line::{
                 DeleteOutboundShipmentServiceLineError, InsertOutboundShipmentServiceLine,
                 InsertOutboundShipmentServiceLineError, UpdateOutboundShipmentServiceLine,
@@ -536,7 +533,10 @@ mod test {
                 InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
                 UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
             },
-            stock_out_line::{InsertStockOutLine, InsertStockOutLineError},
+            stock_out_line::{
+                InsertStockOutLine, InsertStockOutLineError, StockOutType, UpdateStockOutLine,
+                UpdateStockOutLineError,
+            },
         },
         service_provider::{ServiceContext, ServiceProvider},
         InputWithResult,
@@ -892,10 +892,10 @@ mod test {
                     result: Err(InsertStockOutLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateOutboundShipmentLine| {
+                    input: inline_init(|input: &mut UpdateStockOutLine| {
                         input.id = "id3".to_string()
                     }),
-                    result: Err(UpdateOutboundShipmentLineError::LineDoesNotExist {}),
+                    result: Err(UpdateStockOutLineError::LineDoesNotExist {}),
                 }],
                 delete_line: vec![InputWithResult {
                     input: inline_init(|input: &mut DeleteOutboundShipmentLine| {
@@ -1042,8 +1042,9 @@ mod test {
                 insert_shipment: vec![],
                 insert_line: vec![],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateOutboundShipmentLine| {
-                        input.id = "id3".to_string()
+                    input: inline_init(|input: &mut UpdateStockOutLine| {
+                        input.id = "id3".to_string();
+                        input.r#type = Some(StockOutType::OutboundShipment)
                     }),
                     result: Ok(inline_init(|input: &mut InvoiceLine| {
                         input.invoice_line_row.id = "id3".to_string()
