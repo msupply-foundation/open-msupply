@@ -132,6 +132,7 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
+            clinician_id: None,
         }),
     )
 }
@@ -181,6 +182,7 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::InboundShipment),
             om_colour: None,
             tax: Some(0.0),
+            prescriber_ID: None,
         }),
     }
 }
@@ -293,6 +295,7 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
+            clinician_id: None,
         }),
     )
 }
@@ -337,6 +340,7 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::OutboundShipment),
             om_colour: None,
             tax: Some(0.0),
+            prescriber_ID: None,
         }),
     }
 }
@@ -483,6 +487,7 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
+            clinician_id: None,
         }),
     )
 }
@@ -552,6 +557,7 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::InventoryAddition),
             om_colour: Some("SomeColour".to_string()),
             tax: Some(0.0),
+            prescriber_ID: None,
         }),
     }
 }
@@ -680,6 +686,7 @@ fn inventory_addition_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             colour: None,
+            clinician_id: None,
         }),
     )
 }
@@ -730,6 +737,7 @@ fn inventory_addition_push_record() -> TestSyncPushRecord {
             transport_reference: None,
             requisition_ID: None,
             linked_transaction_id: None,
+            prescriber_ID: None
         }),
     }
 }
@@ -858,6 +866,7 @@ fn inventory_reduction_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             colour: None,
+            clinician_id: None,
         }),
     )
 }
@@ -908,6 +917,7 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
             transport_reference: None,
             requisition_ID: None,
             linked_transaction_id: None,
+            prescriber_ID: None,
         }),
     }
 }
@@ -1032,6 +1042,7 @@ fn prescription_1_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
+            clinician_id: None,
         }),
     )
 }
@@ -1081,6 +1092,7 @@ fn prescription_1_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::Prescription),
             om_colour: None,
             tax: Some(0.0),
+            prescriber_ID: None
         }),
     }
 }

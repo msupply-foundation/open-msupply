@@ -1,33 +1,63 @@
-use crate::{
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
-    WithDBError,
-};
 use repository::{
     InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLineRow,
     StockLineRowRepository,
 };
 
-mod generate;
-mod validate;
+use crate::{
+    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
+    service_provider::ServiceContext,
+};
 
+mod generate;
 use generate::generate;
+mod validate;
 use validate::validate;
+
+use super::StockOutType;
+
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct UpdateOutboundShipmentLine {
+pub struct UpdateStockOutLine {
     pub id: String,
+    pub r#type: Option<StockOutType>,
     pub item_id: Option<String>,
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<f64>,
     pub total_before_tax: Option<f64>,
     pub tax: Option<ShipmentTaxUpdate>,
+    pub note: Option<String>,
 }
 
-type OutError = UpdateOutboundShipmentLineError;
+#[derive(Clone, Debug, PartialEq)]
+pub enum UpdateStockOutLineError {
+    LineDoesNotExist,
+    DatabaseError(RepositoryError),
+    InvoiceDoesNotExist,
+    InvoiceTypeDoesNotMatch,
+    NoInvoiceType,
+    NotThisStoreInvoice,
+    NotThisInvoiceLine(String),
+    CannotEditFinalised,
+    ItemNotFound,
+    StockLineNotFound,
+    NumberOfPacksBelowOne,
+    ItemDoesNotMatchStockLine,
+    LocationIsOnHold,
+    LocationNotFound,
+    LineDoesNotReferenceStockLine,
+    BatchIsOnHold,
+    UpdatedLineDoesNotExist,
+    StockLineAlreadyExistsInInvoice(String),
+    ReductionBelowZero {
+        stock_line_id: String,
+        line_id: String,
+    },
+}
 
-pub fn update_outbound_shipment_line(
+type OutError = UpdateStockOutLineError;
+
+pub fn update_stock_out_line(
     ctx: &ServiceContext,
-    input: UpdateOutboundShipmentLine,
+    input: UpdateStockOutLine,
 ) -> Result<InvoiceLine, OutError> {
     let updated_line = ctx
         .connection
@@ -50,7 +80,9 @@ pub fn update_outbound_shipment_line(
         .map_err(|error| error.to_inner_error())?;
     Ok(updated_line)
 }
-/// During outbound shipment line update, stock line may change thus validation and updates need to apply to both batches
+
+/// During outbound shipment line / prescription line update, stock line may change thus
+/// validation and updates need to apply to both batches
 pub struct BatchPair {
     /// Main batch to be updated
     pub main_batch: StockLineRow,
@@ -62,7 +94,7 @@ impl BatchPair {
     /// Calculate reduction amount to apply to main batch
     pub fn get_main_batch_reduction(
         &self,
-        input: &UpdateOutboundShipmentLine,
+        input: &UpdateStockOutLine,
         existing_line: &InvoiceLineRow,
     ) -> f64 {
         // Previous batch exists, this mean new batch was requested means:
@@ -84,46 +116,9 @@ impl BatchPair {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum UpdateOutboundShipmentLineError {
-    LineDoesNotExist,
-    DatabaseError(RepositoryError),
-    InvoiceDoesNotExist,
-    NotAnOutboundShipment,
-    NotThisStoreInvoice,
-    NotThisInvoiceLine(String),
-    CannotEditFinalised,
-    ItemNotFound,
-    StockLineNotFound,
-    NumberOfPacksBelowOne,
-    ItemDoesNotMatchStockLine,
-    LocationIsOnHold,
-    LocationNotFound,
-    LineDoesNotReferenceStockLine,
-    BatchIsOnHold,
-    UpdatedLineDoesNotExist,
-    StockLineAlreadyExistsInInvoice(String),
-    ReductionBelowZero {
-        stock_line_id: String,
-        line_id: String,
-    },
-}
-
-impl From<RepositoryError> for UpdateOutboundShipmentLineError {
+impl From<RepositoryError> for UpdateStockOutLineError {
     fn from(error: RepositoryError) -> Self {
-        UpdateOutboundShipmentLineError::DatabaseError(error)
-    }
-}
-
-impl<ERR> From<WithDBError<ERR>> for UpdateOutboundShipmentLineError
-where
-    ERR: Into<UpdateOutboundShipmentLineError>,
-{
-    fn from(result: WithDBError<ERR>) -> Self {
-        match result {
-            WithDBError::DatabaseError(error) => error.into(),
-            WithDBError::Error(error) => error.into(),
-        }
+        UpdateStockOutLineError::DatabaseError(error)
     }
 }
 
@@ -131,10 +126,10 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_inbound_shipment_a_invoice_lines, mock_item_b, mock_item_b_lines,
-            mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_b_invoice_lines,
-            mock_outbound_shipment_c, mock_outbound_shipment_c_invoice_lines,
-            mock_outbound_shipment_no_stock_line, mock_stock_line_a, mock_stock_line_b,
+            mock_item_b, mock_item_b_lines, mock_outbound_shipment_a_invoice_lines,
+            mock_outbound_shipment_b_invoice_lines, mock_outbound_shipment_c,
+            mock_outbound_shipment_c_invoice_lines, mock_outbound_shipment_no_stock_line,
+            mock_prescription_a_invoice_lines, mock_stock_line_a, mock_stock_line_b,
             mock_stock_line_location_is_on_hold, mock_stock_line_on_hold, mock_store_a,
             mock_store_b, mock_store_c, MockDataInserts,
         },
@@ -147,19 +142,16 @@ mod test {
         invoice::outbound_shipment::update::{
             UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
-        invoice_line::outbound_shipment_line::{
-            update::UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError as ServiceError,
+        invoice_line::stock_out_line::{
+            StockOutType, UpdateStockOutLine, UpdateStockOutLineError as ServiceError,
         },
         service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
-    async fn update_outbound_shipment_line_errors() {
-        let (_, _, connection_manager, _) = setup_all(
-            "update_outbound_shipment_line_errors",
-            MockDataInserts::all(),
-        )
-        .await;
+    async fn update_stock_out_line_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("update_stock_out_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
@@ -169,10 +161,11 @@ mod test {
 
         // LineDoesNotExist
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = "invalid".to_string();
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::LineDoesNotExist)
@@ -180,34 +173,38 @@ mod test {
 
         // NotThisStoreInvoice
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(10.0);
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
 
-        // NotAnOutboundShipment
+        // InvoiceTypeDoesNotMatch
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
-                    r.id = mock_inbound_shipment_a_invoice_lines()[0].id.clone();
+                inline_init(|r: &mut UpdateStockOutLine| {
+                    r.id = mock_prescription_a_invoice_lines()[0].id.clone();
+                    r.number_of_packs = Some(10.0);
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
-            Err(ServiceError::NotAnOutboundShipment)
+            Err(ServiceError::InvoiceTypeDoesNotMatch)
         );
 
         context.store_id = mock_store_c().id;
         // CannotEditFinalised
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_b_invoice_lines()[0].id.clone();
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::CannotEditFinalised)
@@ -215,10 +212,11 @@ mod test {
 
         // LineDoesNotReferenceStockLine
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_no_stock_line()[0].id.clone();
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::LineDoesNotReferenceStockLine)
@@ -227,11 +225,12 @@ mod test {
         context.store_id = mock_store_b().id;
         // ItemNotFound
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some("invalid".to_string());
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::ItemNotFound)
@@ -239,11 +238,12 @@ mod test {
 
         // StockLineNotFound
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some("invalid".to_string());
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::StockLineNotFound)
@@ -251,11 +251,12 @@ mod test {
 
         // NumberOfPacksBelowOne
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(0.0);
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::NumberOfPacksBelowOne)
@@ -263,12 +264,13 @@ mod test {
 
         // ItemDoesNotMatchStockLine
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_b().id.clone());
                     r.stock_line_id = Some(mock_stock_line_a().id.clone());
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::ItemDoesNotMatchStockLine)
@@ -276,12 +278,13 @@ mod test {
 
         // LocationIsOnHold
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_stock_line_location_is_on_hold()[0].item_id.clone());
                     r.stock_line_id = Some(mock_stock_line_location_is_on_hold()[0].id.clone());
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::LocationIsOnHold)
@@ -289,12 +292,13 @@ mod test {
 
         // BatchIsOnHold
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_stock_line_on_hold()[0].id.clone());
                     r.item_id = Some(mock_stock_line_on_hold()[0].item_id.clone());
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::BatchIsOnHold)
@@ -302,11 +306,12 @@ mod test {
 
         // ReductionBelowZero
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(100.0);
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::ReductionBelowZero {
@@ -320,28 +325,24 @@ mod test {
 
         // StockLineAlreadyExistsInInvoice
         assert_eq!(
-            service.update_outbound_shipment_line(
+            service.update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_item_b_lines()[0].id.clone());
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
             Err(ServiceError::StockLineAlreadyExistsInInvoice(
                 mock_outbound_shipment_a_invoice_lines()[1].id.clone()
             ))
         );
-
-        //TODO InvoiceDoesNotExist
     }
 
     #[actix_rt::test]
-    async fn update_outbound_shipment_line_success() {
-        let (_, connection, connection_manager, _) = setup_all(
-            "update_outbound_shipment_line_success",
-            MockDataInserts::all(),
-        )
-        .await;
+    async fn update_stock_out_line_success() {
+        let (_, connection, connection_manager, _) =
+            setup_all("update_stock_out_line_success", MockDataInserts::all()).await;
 
         // helpers to compare total
         let stock_line_for_invoice_line = |invoice_line: &InvoiceLineRow| {
@@ -375,12 +376,13 @@ mod test {
             .unwrap();
 
         service
-            .update_outbound_shipment_line(
+            .update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(2.0);
                     r.total_before_tax = Some(18.00);
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             )
             .unwrap();
@@ -435,13 +437,14 @@ mod test {
             )
             .unwrap();
         service
-            .update_outbound_shipment_line(
+            .update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_stock_line_b().id.clone());
                     r.number_of_packs = Some(2.0);
                     r.total_before_tax = Some(10.99);
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             )
             .unwrap();
@@ -477,12 +480,13 @@ mod test {
 
         context.store_id = mock_store_b().id;
         service
-            .update_outbound_shipment_line(
+            .update_stock_out_line(
                 &context,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.number_of_packs = Some(15.0);
                     r.total_before_tax = Some(10.99);
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             )
             .unwrap();

@@ -177,6 +177,7 @@ fn generate_inbound_shipment(
         allocated_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
+        clinician_id: None,
     };
 
     Ok(result)

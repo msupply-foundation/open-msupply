@@ -10,7 +10,10 @@ use repository::{
     StorageConnection,
 };
 
-use crate::invoice::common::calculate_total_after_tax;
+use crate::invoice::common::{
+    calculate_total_after_tax, generate_batches_total_number_of_packs_update,
+    InvoiceLineHasNoStockLine,
+};
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
 
@@ -58,10 +61,18 @@ pub(crate) fn generate(
     }
 
     let batches_to_update = if should_update_batches_total_number_of_packs {
-        Some(generate_batches_total_number_of_packs_update(
-            &update_invoice.id,
-            connection,
-        )?)
+        Some(
+            generate_batches_total_number_of_packs_update(&update_invoice.id, connection).map_err(
+                |e| match e {
+                    InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(line) => {
+                        UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(line)
+                    }
+                    InvoiceLineHasNoStockLine::DatabaseError(e) => {
+                        UpdateOutboundShipmentError::DatabaseError(e)
+                    }
+                },
+            )?,
+        )
     } else {
         None
     };
@@ -194,31 +205,6 @@ fn set_new_status_datetime(
         }
         _ => {}
     }
-}
-
-// Returns a list of stock lines that need to be updated
-fn generate_batches_total_number_of_packs_update(
-    invoice_id: &str,
-    connection: &StorageConnection,
-) -> Result<Vec<StockLineRow>, UpdateOutboundShipmentError> {
-    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id))
-            .r#type(InvoiceLineRowType::StockOut.equal_to()),
-    )?;
-
-    let mut result = Vec::new();
-    for invoice_line in invoice_lines {
-        let invoice_line_row = invoice_line.invoice_line_row;
-        let mut stock_line = invoice_line.stock_line_option.ok_or(
-            UpdateOutboundShipmentError::InvoiceLineHasNoStockLine(invoice_line_row.id.to_owned()),
-        )?;
-
-        stock_line.total_number_of_packs =
-            stock_line.total_number_of_packs - invoice_line_row.number_of_packs;
-        result.push(stock_line);
-    }
-    Ok(result)
 }
 
 fn generate_tax_update_for_lines(
