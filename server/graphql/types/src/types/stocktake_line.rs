@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::{Location, StocktakeLine};
+use repository::{location::Location, StocktakeLine};
 use service::{i32_to_u32, usize_to_u32};
 
 use graphql_core::{

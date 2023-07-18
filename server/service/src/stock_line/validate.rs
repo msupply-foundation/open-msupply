@@ -1,5 +1,6 @@
 use repository::{
-    EqualFilter, LocationFilter, LocationRepository, RepositoryError, StorageConnection,
+    location::{LocationFilter, LocationRepository},
+    EqualFilter, RepositoryError, StorageConnection,
 };
 
 pub fn check_location_exists(

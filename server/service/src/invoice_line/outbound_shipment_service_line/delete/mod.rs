@@ -1,5 +1,6 @@
 use crate::{
-    invoice_line::DeleteOutboundShipmentLine, service_provider::ServiceContext, WithDBError,
+    invoice_line::outbound_shipment_line::delete::DeleteOutboundShipmentLine,
+    service_provider::ServiceContext, WithDBError,
 };
 use repository::{InvoiceLineRowRepository, RepositoryError};
 
@@ -68,7 +69,7 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        invoice_line::outbound_shipment_line::DeleteOutboundShipmentLine,
+        invoice_line::outbound_shipment_line::delete::DeleteOutboundShipmentLine,
         service_provider::ServiceProvider,
     };
 

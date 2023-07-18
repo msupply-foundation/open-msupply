@@ -7,7 +7,7 @@ use validate::validate;
 use crate::{
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
-    invoice_line::outbound_shipment_line::{
+    invoice_line::outbound_shipment_line::delete::{
         delete_outbound_shipment_line, DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
     },
     service_provider::ServiceContext,
@@ -117,7 +117,7 @@ mod test {
     };
 
     use crate::{
-        invoice::outbound_shipment::DeleteOutboundShipmentError as ServiceError,
+        invoice::outbound_shipment::delete::DeleteOutboundShipmentError as ServiceError,
         service_provider::ServiceProvider,
     };
 

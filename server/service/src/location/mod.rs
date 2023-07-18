@@ -7,8 +7,8 @@ use self::{
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
+use repository::location::{Location, LocationFilter, LocationSort};
 use repository::PaginationOption;
-use repository::{Location, LocationFilter, LocationSort};
 
 pub mod delete;
 pub mod insert;

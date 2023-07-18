@@ -16,7 +16,7 @@ pub mod inbound_shipment_service_line;
 use self::inbound_shipment_service_line::*;
 
 pub mod outbound_shipment_line;
-use self::outbound_shipment_line::*;
+use self::outbound_shipment_line::delete::*;
 
 pub mod outbound_shipment_service_line;
 use self::outbound_shipment_service_line::*;

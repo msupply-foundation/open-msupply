@@ -108,7 +108,9 @@ mod test {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
-    use repository::{mock::MockDataInserts, Location, LocationRow, StorageConnectionManager};
+    use repository::{
+        location::Location, mock::MockDataInserts, LocationRow, StorageConnectionManager,
+    };
     use serde_json::json;
 
     use service::{

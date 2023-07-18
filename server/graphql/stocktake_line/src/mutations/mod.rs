@@ -1,12 +1,9 @@
-pub mod insert;
 use async_graphql::Object;
-pub use insert::*;
 
 pub mod delete;
-pub use delete::*;
-
+pub mod insert;
 pub mod update;
-pub use update::*;
+
 pub struct AdjustmentReasonNotProvided;
 
 #[Object]

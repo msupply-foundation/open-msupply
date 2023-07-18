@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{EqualFilter, LocationFilter, PaginationOption};
+use repository::{location::LocationFilter, EqualFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -101,8 +101,9 @@ mod test {
     use graphql_core::test_helpers::setup_graphl_test;
     use repository::mock::mock_locations;
     use repository::{
-        mock::MockDataInserts, Location, LocationFilter, LocationRow, LocationSort,
-        LocationSortField, StorageConnectionManager,
+        location::{Location, LocationFilter, LocationSort, LocationSortField},
+        mock::MockDataInserts,
+        LocationRow, StorageConnectionManager,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
