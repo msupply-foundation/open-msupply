@@ -23,7 +23,6 @@ const usePreviousHeight = (
   const { data: currentEncounter } = useEncounter.document.byId(encounterId);
   const { data: events } = useProgramEvents.document.list(
     {
-      // at: beforeDate,
       filter: {
         patientId: { equalTo: currentEncounter?.patient?.id ?? '' },
         type: {
@@ -58,12 +57,11 @@ const UIComponent = (props: ControlProps) => {
   useEffect(() => {
     if (!height || !weight) return;
 
-    const h = height;
     const w = NumUtils.parseString(weight);
 
     if (!handleChange || !w) return;
 
-    const bmi = w && h ? round(w / (h * h)) : undefined;
+    const bmi = round(w / height ** 2);
     handleChange(composePaths(path, 'bodyMassIndex'), bmi);
   }, [height, weight]);
 
