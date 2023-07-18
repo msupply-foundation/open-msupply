@@ -6,6 +6,7 @@ import {
   Box,
   ButtonWithIcon,
   ConnectionResult,
+  DEFAULT_LOCAL_SERVER,
   ErrorWithDetails,
   ExternalLinkIcon,
   getNativeAPI,
@@ -22,15 +23,6 @@ import {
 import { useTranslation } from '@common/intl';
 import Viewport from './Viewport';
 import { LoginIcon } from './Login/LoginIcon';
-
-const DEFAULT_LOCAL_SERVER = {
-  protocol: 'https' as 'https' | 'http',
-  port: 8000,
-  ip: '127.0.0.1',
-  clientVersion: '',
-  hardwareId: '',
-  isLocal: true,
-};
 
 const Heading = ({ text }: { text: string }) => (
   <Typography
