@@ -27,6 +27,9 @@ import {
 } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
 
+import defaultPatientSchema from './DefaultPatientSchema.json';
+import defaultPatientUISchema from './DefaultPatientUISchema.json';
+
 const useUpsertPatient = (): SaveDocumentMutation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
   const { mutateAsync: updatePatient } = usePatient.document.update();
@@ -93,17 +96,13 @@ const PatientDetailView = ({
         },
         isCreating: true,
       };
-    } else if (
-      !!patientRegistry &&
-      !!currentPatient &&
-      !currentPatient.document
-    ) {
+    } else if (!!currentPatient && !currentPatient.document) {
       // no document associated with the patient; use data from the Name row
       return {
         schema: {
-          formSchemaId: patientRegistry.formSchemaId,
-          jsonSchema: patientRegistry.jsonSchema,
-          uiSchema: patientRegistry.uiSchema,
+          formSchemaId: patientRegistry?.formSchemaId,
+          jsonSchema: patientRegistry?.jsonSchema ?? defaultPatientSchema,
+          uiSchema: patientRegistry?.uiSchema ?? defaultPatientUISchema,
         },
         data: {
           id: currentPatient.id,
