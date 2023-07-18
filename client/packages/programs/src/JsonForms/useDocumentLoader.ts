@@ -1,30 +1,17 @@
 import {
   useDocument,
-  DocumentRegistryFragment,
+  FormInputData,
+  SchemaData,
 } from '@openmsupply-client/programs';
 import { useEffect, useState } from 'react';
-import { JsonData, JsonSchema, UISchemaElement } from './common';
-
-export interface DocumentRegistry {
-  formSchemaId: string;
-  jsonSchema: JsonSchema;
-  uiSchema: UISchemaElement;
-}
-
-/**
- * Information required to create a new document
- */
-export interface CreateDocument {
-  data: JsonData;
-  documentRegistry: DocumentRegistryFragment;
-}
+import { JsonData } from './common';
 
 export interface DocumentDataResponse {
   isLoading: boolean;
   error?: string;
   documentId?: string;
   data?: JsonData;
-  documentRegistry?: DocumentRegistry;
+  schema?: SchemaData;
 }
 
 // eslint-disable-next-line valid-jsdoc
@@ -36,12 +23,12 @@ export interface DocumentDataResponse {
  */
 export const useDocumentLoader = (
   docName: string | undefined,
-  createDoc?: CreateDocument
+  createDoc?: FormInputData
 ): DocumentDataResponse => {
   const [error, setError] = useState<string | undefined>();
   // the current document id (undefined if its a new document)
   const [documentId, setDocumentId] = useState<string | undefined>();
-  const [documentRegistry, setDocumentRegistry] = useState<DocumentRegistry>({
+  const [schema, setSchema] = useState<SchemaData>({
     formSchemaId: '',
     jsonSchema: {},
     uiSchema: { type: 'VerticalLayout' },
@@ -77,14 +64,14 @@ export const useDocumentLoader = (
     } else if (!documentRegistry.uiSchema) {
       setError('No UI Schema');
     } else {
-      setDocumentRegistry(documentRegistry);
+      setSchema(documentRegistry);
     }
   }, [databaseResponse]);
 
   // user createDoc if there is one
   useEffect(() => {
     if (createDoc) {
-      setDocumentRegistry(createDoc.documentRegistry);
+      setSchema(createDoc.schema);
     }
   }, [createDoc]);
 
@@ -93,6 +80,6 @@ export const useDocumentLoader = (
     error,
     documentId,
     data: createDoc?.data ?? databaseResponse?.data,
-    documentRegistry,
+    schema,
   };
 };
