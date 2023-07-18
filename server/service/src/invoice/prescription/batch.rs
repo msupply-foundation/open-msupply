@@ -176,7 +176,7 @@ mod test {
             result.delete_prescription,
             vec![InputWithResult {
                 input: delete_shipment_input,
-                result: Err(DeletePrescriptionError::NotAPrescription {})
+                result: Err(DeletePrescriptionError::NotAPrescriptionInvoice {})
             }]
         );
 

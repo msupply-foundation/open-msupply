@@ -13,7 +13,7 @@ use crate::{to_standard_error, VecOrNone};
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "InsertPrescriptionResponseWithId",
-    params(prescription::InsertResponse)
+    params(prescription::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdatePrescriptionResponseWithId",
@@ -25,7 +25,7 @@ use crate::{to_standard_error, VecOrNone};
 ))]
 #[graphql(concrete(
     name = "InsertPrescriptionLineResponseWithId",
-    params(prescription_line::InsertResponse)
+    params(prescription_line::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdatePrescriptionLineResponseWithId",
@@ -44,8 +44,9 @@ pub struct MutationWithId<T: OutputType> {
 type ServiceInput = BatchPrescription;
 type ServiceResult = BatchPrescriptionResult;
 
-type InsertPrescriptionsResponse = Option<Vec<MutationWithId<prescription::InsertResponse>>>;
-type InsertLinesResponse = Option<Vec<MutationWithId<prescription_line::InsertResponse>>>;
+type InsertPrescriptionsResponse =
+    Option<Vec<MutationWithId<prescription::insert::InsertResponse>>>;
+type InsertLinesResponse = Option<Vec<MutationWithId<prescription_line::insert::InsertResponse>>>;
 type UpdateLinesResponse = Option<Vec<MutationWithId<prescription_line::UpdateResponse>>>;
 type DeleteLinesResponse = Option<Vec<MutationWithId<prescription_line::DeleteResponse>>>;
 type UpdatePrescriptionsResponse = Option<Vec<MutationWithId<prescription::UpdateResponse>>>;
@@ -65,8 +66,8 @@ pub struct BatchResponse {
 #[derive(InputObject)]
 #[graphql(name = "BatchPrescriptionInput")]
 pub struct BatchInput {
-    pub insert_prescriptions: Option<Vec<prescription::InsertInput>>,
-    pub insert_prescription_lines: Option<Vec<prescription_line::InsertInput>>,
+    pub insert_prescriptions: Option<Vec<prescription::insert::InsertInput>>,
+    pub insert_prescription_lines: Option<Vec<prescription_line::insert::InsertInput>>,
     pub update_prescription_lines: Option<Vec<prescription_line::UpdateInput>>,
     pub delete_prescription_lines: Option<Vec<prescription_line::DeleteInput>>,
     pub update_prescriptions: Option<Vec<prescription::UpdateInput>>,
@@ -526,7 +527,7 @@ mod test {
                 update_prescription: vec![],
                 delete_prescription: vec![InputWithResult {
                     input: "id12".to_string(),
-                    result: Err(DeletePrescriptionError::NotAPrescription {}),
+                    result: Err(DeletePrescriptionError::NotAPrescriptionInvoice {}),
                 }],
             })
         }));
