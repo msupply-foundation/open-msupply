@@ -93,11 +93,13 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   );
   const onEditStockLine = (key: string, value: number, packSize: number) => {
     onChange(key, value, packSize);
-    if (placeholderRow && shouldUpdatePlaceholder(value, placeholderRow))
+    if (placeholderRow && shouldUpdatePlaceholder(value, placeholderRow)) {
       // if a stock line has been allocated
-      // and the placeholder row is a generated one with a zero value,
-      // this allows removal of the placeholder row
+      // and the placeholder row is a generated one,
+      // remove the placeholder row
       placeholderRow.isUpdated = true;
+      placeholderRow.numberOfPacks = 0;
+    }
   };
   const unit = item?.unitName ?? t('label.unit');
 

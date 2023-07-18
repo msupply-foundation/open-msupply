@@ -117,9 +117,9 @@ export const allocateQuantities =
       );
       const placeholder = newDraftOutboundLines[placeholderIdx];
       const oldPlaceholder = draftOutboundLines[placeholderIdx];
+      // remove if the oldPlaceholder.numberOfPacks is non-zero and the new placeholder.numberOfPacks is zero
       const placeholderRemoved =
-        (oldPlaceholder?.numberOfPacks ?? 0 > 0) &&
-        placeholder?.numberOfPacks === 0;
+        oldPlaceholder?.numberOfPacks && placeholder?.numberOfPacks === 0;
 
       // the isUpdated flag must be set in order to delete the placeholder row
       if (placeholderRemoved) {
@@ -234,4 +234,4 @@ const reduceBatchAllocation = ({
 export const shouldUpdatePlaceholder = (
   quantity: number,
   placeholder: DraftOutboundLine
-) => quantity > 0 && placeholder.numberOfPacks === 0 && !placeholder.isCreated;
+) => quantity > 0 && !placeholder.isCreated;
