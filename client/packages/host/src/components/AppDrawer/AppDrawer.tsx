@@ -22,7 +22,6 @@ import {
   useLocation,
   EnvUtils,
   UserPermission,
-  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -196,7 +195,7 @@ export const AppDrawer: React.FC = () => {
           <ReplenishmentNav />
           <CatalogueNav />
           <InventoryNav />
-          <DispensaryNav visible={store?.storeMode === StoreModeNodeType.Dispensary}/>
+          <DispensaryNav store={store} />
 
           {/* <AppNavLink
             to={AppRoute.Tools}

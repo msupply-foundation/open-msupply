@@ -14,7 +14,7 @@ use service::invoice_line::stock_out_line::{
 };
 
 use crate::mutations::outbound_shipment_line::line::{
-    LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
+    self, LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
     StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
 
@@ -25,7 +25,6 @@ pub struct UpdateInput {
     pub item_id: Option<String>,
     pub stock_line_id: Option<String>,
     pub number_of_packs: Option<f64>,
-    pub total_before_tax: Option<f64>,
     pub note: Option<String>,
 }
 
@@ -93,7 +92,6 @@ impl UpdateInput {
             item_id,
             stock_line_id,
             number_of_packs,
-            total_before_tax,
             note,
         } = self;
         ServiceInput {
@@ -102,56 +100,56 @@ impl UpdateInput {
             item_id,
             stock_line_id,
             number_of_packs,
-            total_before_tax,
+            total_before_tax: None,
             tax: None,
-            note: note,
+            note,
         }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
-    use StandardGraphqlError::*;
+    use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::InvoiceDoesNotExist => {
+        InvoiceDoesNotExist => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
             )))
         }
-        ServiceError::CannotEditFinalised => {
+        CannotEditFinalised => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
         }
-        ServiceError::StockLineNotFound => {
+        StockLineNotFound => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::StockLineId,
             )))
         }
-        ServiceError::LocationIsOnHold => {
-            return Ok(UpdateErrorInterface::LocationIsOnHold(LocationIsOnHold {}))
+        LocationIsOnHold => {
+            return Ok(UpdateErrorInterface::LocationIsOnHold(
+                line::LocationIsOnHold {},
+            ))
         }
-        ServiceError::LocationNotFound => {
+        LocationNotFound => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::LocationId,
             )))
         }
-        ServiceError::StockLineAlreadyExistsInInvoice(line_id) => {
+        StockLineAlreadyExistsInInvoice(line_id) => {
             return Ok(UpdateErrorInterface::StockLineAlreadyExistsInInvoice(
-                StockLineAlreadyExistsInInvoice(line_id),
+                line::StockLineAlreadyExistsInInvoice(line_id),
             ))
         }
-        ServiceError::BatchIsOnHold => {
+        BatchIsOnHold => {
             return Ok(UpdateErrorInterface::StockLineIsOnHold(
                 StockLineIsOnHold {},
             ))
         }
-        ServiceError::LineDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
-        }
-        ServiceError::ReductionBelowZero {
+        LineDoesNotExist => return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {})),
+        ReductionBelowZero {
             stock_line_id,
             line_id,
         } => {
@@ -163,16 +161,16 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice
-        | ServiceError::InvoiceTypeDoesNotMatch
-        | ServiceError::NoInvoiceType
-        | ServiceError::NumberOfPacksBelowOne
-        | ServiceError::ItemNotFound
-        | ServiceError::ItemDoesNotMatchStockLine
-        | ServiceError::NotThisInvoiceLine(_)
-        | ServiceError::LineDoesNotReferenceStockLine => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) | ServiceError::UpdatedLineDoesNotExist => {
-            InternalError(formatted_error)
+        NotThisStoreInvoice
+        | InvoiceTypeDoesNotMatch
+        | NoInvoiceType
+        | NumberOfPacksBelowOne
+        | ItemNotFound
+        | ItemDoesNotMatchStockLine
+        | NotThisInvoiceLine(_)
+        | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
+        DatabaseError(_) | UpdatedLineDoesNotExist => {
+            StandardGraphqlError::InternalError(formatted_error)
         }
     };
 
@@ -196,7 +194,8 @@ mod test {
     use service::{
         invoice_line::{
             stock_out_line::{
-                UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError, StockOutType,
+                StockOutType, UpdateStockOutLine as ServiceInput,
+                UpdateStockOutLineError as ServiceError,
             },
             InvoiceLineServiceTrait,
         },
@@ -235,7 +234,6 @@ mod test {
             "itemId": "n/a",
             "stockLineId": "n/a",
             "numberOfPacks": 0,
-            "totalBeforeTax": 0,
             "note": "n/a"
           }
         })
@@ -569,8 +567,8 @@ mod test {
                     item_id: Some("item_id input".to_string()),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
-                    total_before_tax: Some(1.0),
                     note: Some("some note".to_string()),
+                    total_before_tax: None,
                     tax: None,
                 }
             );
@@ -588,7 +586,6 @@ mod test {
             "itemId": "item_id input",
             "stockLineId": "stock_line_id input",
             "numberOfPacks": 1.0,
-            "totalBeforeTax": 1.0,
             "note": "some note"
           },
           "storeId": "store_a"
