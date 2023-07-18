@@ -8,7 +8,7 @@ use service::{
     programs::patient::{UpdatePatient, UpdatePatientError},
 };
 
-use crate::queries::PatientNode;
+use crate::types::patient::PatientNode;
 
 #[derive(InputObject)]
 pub struct UpdatePatientInput {

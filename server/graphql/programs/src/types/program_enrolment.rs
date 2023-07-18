@@ -1,12 +1,15 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::EqualFilterStringInput, loader::DocumentLoader, pagination::PaginationInput,
-    standard_graphql_error::StandardGraphqlError, ContextExt,
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    loader::DocumentLoader,
+    pagination::PaginationInput,
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
 };
 use repository::{
-    EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow, ProgramEnrolmentStatus,
-    ProgramEventFilter, ProgramEventSortField, Sort,
+    DatetimeFilter, EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow,
+    ProgramEnrolmentStatus, ProgramEventFilter, ProgramEventSortField, Sort,
 };
 
 use crate::queries::{EncounterConnector, EncounterFilterInput, EncounterSortInput};
@@ -15,22 +18,33 @@ use super::{document::DocumentNode, encounter::EncounterNode, program_event::Pro
 
 #[derive(InputObject, Clone)]
 pub struct ProgramEventFilterInput {
+    pub patient_id: Option<EqualFilterStringInput>,
     pub document_type: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
     /// The event type
     pub r#type: Option<EqualFilterStringInput>,
+    pub active_start_datetime: Option<DatetimeFilterInput>,
+    pub active_end_datetime: Option<DatetimeFilterInput>,
 }
 
 impl ProgramEventFilterInput {
     pub fn to_domain(self) -> ProgramEventFilter {
+        let ProgramEventFilterInput {
+            patient_id,
+            document_type,
+            document_name,
+            r#type,
+            active_start_datetime,
+            active_end_datetime,
+        } = self;
         ProgramEventFilter {
+            patient_id: patient_id.map(EqualFilter::from),
+            active_start_datetime: active_start_datetime.map(DatetimeFilter::from),
+            active_end_datetime: active_end_datetime.map(DatetimeFilter::from),
+            document_type: document_type.map(EqualFilter::from),
+            document_name: document_name.map(EqualFilter::from),
+            r#type: r#type.map(EqualFilter::from),
             datetime: None,
-            active_start_datetime: None,
-            active_end_datetime: None,
-            patient_id: None,
-            document_type: self.document_type.map(EqualFilter::from),
-            document_name: self.document_name.map(EqualFilter::from),
-            r#type: self.r#type.map(EqualFilter::from),
             context: None,
         }
     }
@@ -166,7 +180,7 @@ impl ProgramEnrolmentNode {
         })
     }
 
-    pub async fn events(
+    pub async fn active_program_events(
         &self,
         ctx: &Context<'_>,
         at: Option<DateTime<Utc>>,
@@ -178,7 +192,7 @@ impl ProgramEnrolmentNode {
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
             .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .document_type(EqualFilter::equal_to(&self.program_row.context));
+            .document_type(EqualFilter::equal_to(&self.program_row.document_type));
         let entries = ctx
             .service_provider()
             .program_event_service
@@ -197,7 +211,11 @@ impl ProgramEnrolmentNode {
         Ok(entries
             .rows
             .into_iter()
-            .map(|row| ProgramEventNode { row })
+            .map(|row| ProgramEventNode {
+                store_id: self.store_id.clone(),
+                row,
+                allowed_ctx: self.allowed_ctx.clone(),
+            })
             .collect())
     }
 }

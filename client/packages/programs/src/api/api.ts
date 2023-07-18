@@ -375,32 +375,29 @@ export const getFormSchemaQueries = (sdk: Sdk) => ({
 });
 
 export type ProgramEventParams = {
-  patientId: string;
   at?: Date;
   filter?: ProgramEventFilterInput;
   page?: PaginationInput;
 };
 
 export const getProgramEventQueries = (sdk: Sdk, storeId: string) => ({
-  programEvents: async ({
+  activeProgramEvents: async ({
     at,
-    patientId,
     filter,
     page,
   }: ProgramEventParams): Promise<{
     nodes: ProgramEventNode[];
     totalCount: number;
   }> => {
-    const result = await sdk.programEvents({
+    const result = await sdk.activeProgramEvents({
       storeId,
-      patientId,
       at: at?.toISOString(),
       filter,
       page,
     });
 
-    if (result.programEvents.__typename === 'ProgramEventConnector') {
-      return result.programEvents;
+    if (result.activeProgramEvents.__typename === 'ProgramEventConnector') {
+      return result.activeProgramEvents;
     }
     throw new Error('Error querying program events');
   },
