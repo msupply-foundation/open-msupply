@@ -113,6 +113,7 @@ When adding plugins - add them to the android package; if they are not here, the
 ```
        
 with the new plugin showing up under the Cordova or Capacitor plugins sections.
+Also, add the plugin to `onPageStarted` in `ExtendedWebViewClient` - see the other plugins for details.
 If you require the plugin to be used in other packages, then you can also install in the root, or in individual packages, to make it available for use elsewhere.
 
 You can check the plugins using `npx cap ls` or the configuration generally with `npx cap doctor`
