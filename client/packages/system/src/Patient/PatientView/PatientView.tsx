@@ -213,9 +213,7 @@ export const PatientView = () => {
       {/* Only show tabs if program module is on and patient is saved.
       TODO: Prescription tab? - would need tab refactoring since also seems useful in programs
       */}
-      {!!createNewPatient ? (
-        <PatientDetailView onEdit={setIsDirtyPatient} />
-      ) : store?.preferences.omProgramModule ? (
+      {!createNewPatient && store?.preferences.omProgramModule ? (
         <DetailTabs tabs={tabs} requiresConfirmation={requiresConfirmation} />
       ) : (
         <PatientDetailView onEdit={setIsDirtyPatient} />
