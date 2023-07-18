@@ -348,7 +348,8 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
           ({ type, isCreated, isUpdated, numberOfPacks }) =>
             !isCreated &&
             isUpdated &&
-            type === InvoiceLineNodeType.StockOut &&
+            (type === InvoiceLineNodeType.StockOut ||
+              type === InvoiceLineNodeType.UnallocatedStock) &&
             numberOfPacks === 0
         )
         .map(outboundParsers.toDeleteLine),
