@@ -167,6 +167,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
     ) -> Result<Invoice, UpdatePrescriptionError> {
         update_prescription(ctx, input)
     }
+
+    fn delete_prescription(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<String, DeletePrescriptionError> {
+        delete_prescription(ctx, id)
+    }
 }
 
 pub struct InvoiceService;

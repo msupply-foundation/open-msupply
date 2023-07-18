@@ -139,7 +139,7 @@ fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotAPrescription
+        ServiceError::NotAPrescriptionInvoice
         | ServiceError::ClinicianDoesNotExist
         | ServiceError::NotThisStoreInvoice
         | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
@@ -324,8 +324,8 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // NotAPrescription
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAPrescription)));
+        // NotAPrescriptionInvoice
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAPrescriptionInvoice)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

@@ -171,4 +171,13 @@ impl InvoiceLineMutations {
     ) -> Result<prescription_line::update::UpdateResponse> {
         prescription_line::update(ctx, &store_id, input)
     }
+
+    async fn delete_prescription_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: prescription_line::delete::DeleteInput,
+    ) -> Result<prescription_line::delete::DeleteResponse> {
+        prescription_line::delete(ctx, &store_id, input)
+    }
 }
