@@ -13,6 +13,8 @@ import {
   useUrlQueryParams,
   ReadOnlyCheckboxCell,
   ColumnDataAccessor,
+  useAuthContext,
+  ColumnDescription,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -39,6 +41,8 @@ const PatientListComponent: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({ filterKey: ['firstName', 'lastName', 'identifier'] });
+  const { store } = useAuthContext();
+
   const { setDocumentName } = usePatientStore();
   const { data, isError, isLoading } = usePatient.document.list();
   const pagination = { page, first, offset };
@@ -51,47 +55,56 @@ const PatientListComponent: FC = () => {
     onOk: () => {},
   });
 
+  const columnDefinitions: ColumnDescription<PatientRowFragment>[] = [
+    { key: 'code', label: 'label.patient-id' },
+    { key: 'code2', label: 'label.patient-nuic' },
+    {
+      key: 'firstName',
+      label: 'label.first-name',
+    },
+    {
+      key: 'lastName',
+      label: 'label.last-name',
+    },
+    {
+      key: 'gender',
+      label: 'label.gender',
+    },
+    {
+      key: 'dateOfBirth',
+      label: 'label.date-of-birth',
+      width: 175,
+      formatter: dateString =>
+        dateString ? localisedDate((dateString as string) || '') : '',
+    },
+  ];
+
+  if (store?.preferences.omProgramModule) {
+    columnDefinitions.push({
+      label: 'label.program-enrolments',
+      key: 'programEnrolments',
+      sortable: false,
+      accessor: programEnrolmentLabelAccessor,
+      Cell: ChipTableCell,
+      maxWidth: 250,
+    });
+  }
+
+  columnDefinitions.push({
+    key: 'isDeceased',
+    label: 'label.deceased',
+    align: ColumnAlign.Right,
+    Cell: ReadOnlyCheckboxCell,
+    sortable: false,
+  });
+
   const columns = useColumns<PatientRowFragment>(
-    [
-      { key: 'code', label: 'label.patient-id' },
-      { key: 'code2', label: 'label.patient-nuic' },
-      {
-        key: 'firstName',
-        label: 'label.first-name',
-      },
-      {
-        key: 'lastName',
-        label: 'label.last-name',
-      },
-      {
-        key: 'gender',
-        label: 'label.gender',
-      },
-      {
-        key: 'dateOfBirth',
-        label: 'label.date-of-birth',
-        width: 175,
-        formatter: dateString =>
-          dateString ? localisedDate((dateString as string) || '') : '',
-      },
-      {
-        label: 'label.program-enrolments',
-        key: 'programEnrolments',
-        sortable: false,
-        accessor: programEnrolmentLabelAccessor,
-        Cell: ChipTableCell,
-        maxWidth: 250,
-      },
-      {
-        key: 'isDeceased',
-        label: 'label.deceased',
-        align: ColumnAlign.Right,
-        Cell: ReadOnlyCheckboxCell,
-        sortable: false,
-      },
-    ],
-    { onChangeSortBy: updateSortQuery, sortBy },
-    [sortBy]
+    columnDefinitions,
+    {
+      onChangeSortBy: updateSortQuery,
+      sortBy,
+    },
+    [updateSortQuery, sortBy]
   );
 
   return (

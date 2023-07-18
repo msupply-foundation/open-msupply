@@ -8,6 +8,7 @@ fragment UserStoreNode on UserStoreNode {
     responseRequisitionRequiresAuthorisation
     requestRequisitionRequiresAuthorisation
     packToOne
+    omProgramModule
   }
 }
 
