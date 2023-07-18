@@ -1,8 +1,8 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
     ActivityLogType, BarcodeRow, BarcodeRowRepository, DatetimeFilter, EqualFilter,
-    LocationMovementFilter, LocationMovementRepository, LocationMovementRow,
-    LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
+    LocationMovementRow, LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
     StockLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;

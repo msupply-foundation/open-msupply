@@ -139,7 +139,9 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
+        invoice::outbound_shipment::update::{
+            UpdateOutboundShipment, UpdateOutboundShipmentStatus,
+        },
         invoice_line::stock_out_line::{
             StockOutType, UpdateStockOutLine, UpdateStockOutLineError as ServiceError,
         },

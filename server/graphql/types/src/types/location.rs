@@ -5,7 +5,8 @@ use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
 use repository::{
-    EqualFilter, Location, LocationFilter, LocationRow, LocationSort, LocationSortField,
+    location::{Location, LocationFilter, LocationSort, LocationSortField},
+    EqualFilter, LocationRow,
 };
 use service::{usize_to_u32, ListResult};
 

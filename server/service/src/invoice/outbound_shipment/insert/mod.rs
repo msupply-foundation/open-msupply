@@ -99,7 +99,8 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice::outbound_shipment::InsertOutboundShipment, service_provider::ServiceProvider,
+        invoice::outbound_shipment::insert::InsertOutboundShipment,
+        service_provider::ServiceProvider,
     };
 
     use super::InsertOutboundShipmentError;

@@ -182,8 +182,8 @@ mod test {
     use util::{assert_matches, inline_edit, inline_init};
 
     use crate::{
-        invoice::outbound_shipment::{
-            update::UpdateOutboundShipmentStatus, UpdateOutboundShipment,
+        invoice::outbound_shipment::update::{
+            UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
         invoice_line::ShipmentTaxUpdate,
         service_provider::ServiceProvider,

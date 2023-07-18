@@ -14,7 +14,7 @@ use service::invoice::prescription::{
     UpdatePrescriptionStatus,
 };
 
-use crate::mutations::outbound_shipment::InvoiceIsNotEditable;
+use crate::mutations::outbound_shipment::error::InvoiceIsNotEditable;
 
 #[derive(InputObject)]
 #[graphql(name = "UpdatePrescriptionInput")]

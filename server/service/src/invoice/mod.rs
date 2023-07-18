@@ -10,10 +10,15 @@ use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
 pub mod query;
+use self::outbound_shipment::batch_outbound_shipment;
+use self::outbound_shipment::BatchOutboundShipment;
+use self::outbound_shipment::BatchOutboundShipmentResult;
+use self::outbound_shipment::UpdateOutboundShipmentName;
+use self::outbound_shipment::UpdateOutboundShipmentNameError;
 use self::query::*;
 
 pub mod outbound_shipment;
-use self::outbound_shipment::*;
+use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
 
 pub mod inbound_shipment;
 use self::inbound_shipment::*;

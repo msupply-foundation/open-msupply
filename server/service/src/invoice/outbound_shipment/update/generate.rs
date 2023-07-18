@@ -1,8 +1,9 @@
 use chrono::Utc;
 
 use repository::{
-    DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementFilter,
-    LocationMovementRepository, LocationMovementRow, RepositoryError,
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
+    DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow,
+    RepositoryError,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, StockLineRow,

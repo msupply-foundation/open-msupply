@@ -3,7 +3,7 @@ use repository::{InvoiceLineRow, InvoiceRow, ItemRow, StorageConnection};
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        outbound_shipment_line::{
+        outbound_shipment_line::validate::{
             check_batch_exists, check_batch_on_hold, check_item_matches_batch,
             check_location_on_hold, check_unique_stock_line, LocationIsOnHoldError,
         },
