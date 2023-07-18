@@ -152,8 +152,10 @@ const UIComponent = (props: ControlProps) => {
 
   const { data: events } = useProgramEvents.document.list({
     at: datetime ?? undefined,
-    patientId: patientId ?? '',
     filter: {
+      patientId: {
+        equalTo: patientId,
+      },
       type: {
         equalTo: options?.eventType,
       },
