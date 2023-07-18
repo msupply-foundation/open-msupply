@@ -1,4 +1,4 @@
-use super::{InvoiceIsNotEditable, NotAnOutboundShipmentError};
+use super::error::{InvoiceIsNotEditable, NotAnOutboundShipmentError};
 use async_graphql::*;
 
 use graphql_core::{

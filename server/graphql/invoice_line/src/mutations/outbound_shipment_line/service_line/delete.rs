@@ -9,7 +9,9 @@ use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::stock_out_line::{DeleteStockOutLine as ServiceInput, StockOutType};
+use service::invoice_line::stock_out_line::{
+    delete::DeleteStockOutLine as ServiceInput, StockOutType,
+};
 
 #[derive(InputObject)]
 #[graphql(name = "DeleteOutboundShipmentServiceLineInput")]
@@ -120,8 +122,8 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            outbound_shipment_service_line::DeleteOutboundShipmentServiceLineError as ServiceError,
-            stock_out_line::{DeleteStockOutLine as ServiceInput, StockOutType},
+            outbound_shipment_service_line::delete::DeleteOutboundShipmentServiceLineError as ServiceError,
+            stock_out_line::{delete::DeleteStockOutLine as ServiceInput, StockOutType},
             InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},

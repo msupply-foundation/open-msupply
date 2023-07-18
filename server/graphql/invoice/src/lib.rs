@@ -52,9 +52,9 @@ impl InvoiceQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: prescription::InsertInput,
-    ) -> Result<prescription::InsertResponse> {
-        prescription::insert(ctx, &store_id, input)
+        input: prescription::insert::InsertInput,
+    ) -> Result<prescription::insert::InsertResponse> {
+        prescription::insert::insert(ctx, &store_id, input)
     }
 }
 
@@ -67,27 +67,27 @@ impl InvoiceMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: outbound_shipment::InsertInput,
-    ) -> Result<outbound_shipment::InsertResponse> {
-        outbound_shipment::insert(ctx, &store_id, input)
+        input: outbound_shipment::insert::InsertInput,
+    ) -> Result<outbound_shipment::insert::InsertResponse> {
+        outbound_shipment::insert::insert(ctx, &store_id, input)
     }
 
     async fn update_outbound_shipment(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: outbound_shipment::UpdateInput,
-    ) -> Result<outbound_shipment::UpdateResponse> {
-        outbound_shipment::update(ctx, &store_id, input)
+        input: outbound_shipment::update::UpdateInput,
+    ) -> Result<outbound_shipment::update::UpdateResponse> {
+        outbound_shipment::update::update(ctx, &store_id, input)
     }
 
     async fn update_outbound_shipment_name(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: outbound_shipment::UpdateNameInput,
-    ) -> Result<outbound_shipment::UpdateNameResponse> {
-        outbound_shipment::update_name(ctx, &store_id, input)
+        input: outbound_shipment::update_name::UpdateNameInput,
+    ) -> Result<outbound_shipment::update_name::UpdateNameResponse> {
+        outbound_shipment::update_name::update_name(ctx, &store_id, input)
     }
 
     async fn delete_outbound_shipment(
@@ -95,35 +95,35 @@ impl InvoiceMutations {
         ctx: &Context<'_>,
         store_id: String,
         id: String,
-    ) -> Result<outbound_shipment::DeleteResponse> {
-        outbound_shipment::delete(ctx, &store_id, id)
+    ) -> Result<outbound_shipment::delete::DeleteResponse> {
+        outbound_shipment::delete::delete(ctx, &store_id, id)
     }
 
     async fn insert_inbound_shipment(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: inbound_shipment::InsertInput,
-    ) -> Result<inbound_shipment::InsertResponse> {
-        inbound_shipment::insert(ctx, &store_id, input)
+        input: inbound_shipment::insert::InsertInput,
+    ) -> Result<inbound_shipment::insert::InsertResponse> {
+        inbound_shipment::insert::insert(ctx, &store_id, input)
     }
 
     async fn update_inbound_shipment(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: inbound_shipment::UpdateInput,
-    ) -> Result<inbound_shipment::UpdateResponse> {
-        inbound_shipment::update(ctx, &store_id, input)
+        input: inbound_shipment::update::UpdateInput,
+    ) -> Result<inbound_shipment::update::UpdateResponse> {
+        inbound_shipment::update::update(ctx, &store_id, input)
     }
 
     async fn delete_inbound_shipment(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: inbound_shipment::DeleteInput,
-    ) -> Result<inbound_shipment::DeleteResponse> {
-        inbound_shipment::delete(ctx, &store_id, input)
+        input: inbound_shipment::delete::DeleteInput,
+    ) -> Result<inbound_shipment::delete::DeleteResponse> {
+        inbound_shipment::delete::delete(ctx, &store_id, input)
     }
 
     /// Add invoice lines from master item master list
@@ -149,9 +149,9 @@ impl InvoiceMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: prescription::InsertInput,
-    ) -> Result<prescription::InsertResponse> {
-        prescription::insert(ctx, &store_id, input)
+        input: prescription::insert::InsertInput,
+    ) -> Result<prescription::insert::InsertResponse> {
+        prescription::insert::insert(ctx, &store_id, input)
     }
 
     async fn update_prescription(

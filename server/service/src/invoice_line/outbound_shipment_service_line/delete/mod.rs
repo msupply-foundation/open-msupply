@@ -66,7 +66,7 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        invoice_line::stock_out_line::DeleteStockOutLine, service_provider::ServiceProvider,
+        invoice_line::stock_out_line::delete::DeleteStockOutLine, service_provider::ServiceProvider,
     };
 
     use super::DeleteOutboundShipmentServiceLineError;

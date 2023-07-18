@@ -326,6 +326,7 @@
   "messages.no-scanners-found": "No scanners found",
   "messages.scanner-connected": "Connected",
   "messages.scanner-disconnected": "Not connected",
+  "messages.fetching-report-data": "Fetching report data...",
   "placeholder.filter-by-status": "Filter by status",
   "placeholder.filter-items": "Filter items",
   "placeholder.search-by-name": "Search by name",

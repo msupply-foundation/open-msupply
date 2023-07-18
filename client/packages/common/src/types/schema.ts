@@ -953,6 +953,7 @@ export type EncounterFilterInput = {
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
+  /** The program name */
   program?: InputMaybe<EqualFilterStringInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterEncounterStatusInput>;
@@ -961,13 +962,13 @@ export type EncounterFilterInput = {
 
 export type EncounterNode = {
   __typename: 'EncounterNode';
+  activeProgramEvents: Array<ProgramEventNode>;
   clinician?: Maybe<ClinicianNode>;
   context: Scalars['String'];
   createdDatetime: Scalars['DateTime'];
   /** The encounter document */
   document: DocumentNode;
   endDatetime?: Maybe<Scalars['DateTime']>;
-  events: Array<ProgramEventNode>;
   id: Scalars['String'];
   name: Scalars['String'];
   patient: NameNode;
@@ -980,7 +981,7 @@ export type EncounterNode = {
 };
 
 
-export type EncounterNodeEventsArgs = {
+export type EncounterNodeActiveProgramEventsArgs = {
   at?: InputMaybe<Scalars['DateTime']>;
   filter?: InputMaybe<EncounterEventFilterInput>;
 };
@@ -3082,20 +3083,23 @@ export type ProgramEnrolmentFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   enrolmentDatetime?: InputMaybe<DatetimeFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
+  /** The program name */
   program?: InputMaybe<EqualFilterStringInput>;
   programEnrolmentId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterProgramEnrolmentStatusInput>;
+  /** Same as program enrolment document type */
+  type?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type ProgramEnrolmentNode = {
   __typename: 'ProgramEnrolmentNode';
+  activeProgramEvents: Array<ProgramEventNode>;
   context: Scalars['String'];
   /** The encounter document */
   document: DocumentNode;
   /** The program document */
   encounters: EncounterConnector;
   enrolmentDatetime: Scalars['DateTime'];
-  events: Array<ProgramEventNode>;
   /** The program document name */
   name: Scalars['String'];
   patientId: Scalars['String'];
@@ -3106,16 +3110,16 @@ export type ProgramEnrolmentNode = {
 };
 
 
+export type ProgramEnrolmentNodeActiveProgramEventsArgs = {
+  at?: InputMaybe<Scalars['DateTime']>;
+  filter?: InputMaybe<ProgramEventFilterInput>;
+};
+
+
 export type ProgramEnrolmentNodeEncountersArgs = {
   filter?: InputMaybe<EncounterFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<EncounterSortInput>;
-};
-
-
-export type ProgramEnrolmentNodeEventsArgs = {
-  at?: InputMaybe<Scalars['DateTime']>;
-  filter?: InputMaybe<ProgramEventFilterInput>;
 };
 
 export enum ProgramEnrolmentNodeStatus {
@@ -3152,8 +3156,11 @@ export type ProgramEventConnector = {
 };
 
 export type ProgramEventFilterInput = {
+  activeEndDatetime?: InputMaybe<DatetimeFilterInput>;
+  activeStartDatetime?: InputMaybe<DatetimeFilterInput>;
   documentName?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
+  patientId?: InputMaybe<EqualFilterStringInput>;
   /** The event type */
   type?: InputMaybe<EqualFilterStringInput>;
 };
@@ -3163,8 +3170,11 @@ export type ProgramEventNode = {
   activeDatetime: Scalars['DateTime'];
   data?: Maybe<Scalars['String']>;
   datetime: Scalars['DateTime'];
+  /** The document associated with the document_name */
+  document?: Maybe<DocumentNode>;
   documentName?: Maybe<Scalars['String']>;
   documentType: Scalars['String'];
+  patient?: Maybe<PatientNode>;
   patientId?: Maybe<Scalars['String']>;
   type: Scalars['String'];
 };
@@ -3206,6 +3216,12 @@ export type ProgramRequisitionSettingNode = {
 
 export type Queries = {
   __typename: 'Queries';
+  /**
+   * Returns active program events at a given date time.
+   * This can also be achieved by using the program_events endpoint with the filter:
+   * `active_start_datetime <= at && active_end_datetime + 1 >= at`
+   */
+  activeProgramEvents: ProgramEventResponse;
   activityLogs: ActivityLogResponse;
   apiVersion: Scalars['String'];
   /**
@@ -3288,6 +3304,15 @@ export type Queries = {
   storePreferences: StorePreferenceNode;
   stores: StoresResponse;
   syncSettings?: Maybe<SyncSettingsNode>;
+};
+
+
+export type QueriesActiveProgramEventsArgs = {
+  at?: InputMaybe<Scalars['DateTime']>;
+  filter?: InputMaybe<ProgramEventFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ProgramEventSortInput>;
+  storeId: Scalars['String'];
 };
 
 
@@ -3507,10 +3532,8 @@ export type QueriesProgramEnrolmentsArgs = {
 
 
 export type QueriesProgramEventsArgs = {
-  at?: InputMaybe<Scalars['DateTime']>;
   filter?: InputMaybe<ProgramEventFilterInput>;
   page?: InputMaybe<PaginationInput>;
-  patientId: Scalars['String'];
   sort?: InputMaybe<ProgramEventSortInput>;
   storeId: Scalars['String'];
 };

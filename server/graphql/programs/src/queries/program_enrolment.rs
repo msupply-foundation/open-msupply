@@ -55,25 +55,35 @@ pub struct EqualFilterProgramEnrolmentStatusInput {
 
 #[derive(InputObject, Clone)]
 pub struct ProgramEnrolmentFilterInput {
-    pub program: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
     pub enrolment_datetime: Option<DatetimeFilterInput>,
     pub program_enrolment_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterProgramEnrolmentStatusInput>,
+    /// Same as program enrolment document type
+    pub r#type: Option<EqualFilterStringInput>,
+    /// The program name
+    pub program: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
 }
 impl ProgramEnrolmentFilterInput {
     pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
+        let ProgramEnrolmentFilterInput {
+            patient_id,
+            enrolment_datetime,
+            program_enrolment_id,
+            status,
+            r#type,
+            program,
+            document_name,
+        } = self;
         ProgramEnrolmentFilter {
-            patient_id: self.patient_id.map(EqualFilter::from),
-            enrolment_datetime: self.enrolment_datetime.map(DatetimeFilter::from),
-            program_enrolment_id: self.program_enrolment_id.map(EqualFilter::from),
-            status: self
-                .status
-                .map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
-            document_name: self.document_name.map(EqualFilter::from),
-            document_type: self.program.map(EqualFilter::from),
-            context: None,
+            patient_id: patient_id.map(EqualFilter::from),
+            enrolment_datetime: enrolment_datetime.map(DatetimeFilter::from),
+            program_enrolment_id: program_enrolment_id.map(EqualFilter::from),
+            status: status.map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
+            document_name: document_name.map(EqualFilter::from),
+            document_type: r#type.map(EqualFilter::from),
+            context: program.map(EqualFilter::from),
         }
     }
 }

@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod query {
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, LocationFilter, LocationSortField,
+        location::{LocationFilter, LocationSortField},
+        mock::MockDataInserts,
+        test_db::setup_all,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
 
