@@ -33,6 +33,8 @@ pub struct LegacyPrefData {
     pub response_requisition_requires_authorisation: bool,
     #[serde(rename = "includeRequisitionsInSuppliersRemoteAuthorisationProcesses")]
     pub request_requisition_requires_authorisation: bool,
+    #[serde(rename = "omSupplyUsesProgramModule")]
+    pub om_program_module: bool,
 }
 
 pub(crate) struct StorePreferenceTranslation {}
@@ -65,6 +67,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             pack_to_one,
             response_requisition_requires_authorisation,
             request_requisition_requires_authorisation,
+            om_program_module,
         } = data;
 
         let result = StorePreferenceRow {
@@ -73,6 +76,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             pack_to_one,
             response_requisition_requires_authorisation,
             request_requisition_requires_authorisation,
+            om_program_module,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(

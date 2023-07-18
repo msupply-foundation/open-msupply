@@ -5,6 +5,7 @@ import {
   LoadingButton,
   PrinterIcon,
   useTranslation,
+  UserStoreNodeFragment,
 } from '@openmsupply-client/common';
 import React, { FC } from 'react';
 import { AddButton } from './AddButton';
@@ -12,7 +13,10 @@ import { ReportRowFragment, ReportSelector, useReport } from '../../Report';
 import { usePatient } from '../api';
 import { JsonData, useProgramEnrolments } from '@openmsupply-client/programs';
 
-export const AppBarButtons: FC<{ disabled: boolean }> = ({ disabled }) => {
+export const AppBarButtons: FC<{
+  disabled: boolean;
+  store?: UserStoreNodeFragment;
+}> = ({ disabled, store }) => {
   const t = useTranslation('common');
   const { print, isPrinting } = useReport.utils.print();
   const patientId = usePatient.utils.id();
@@ -28,14 +32,17 @@ export const AppBarButtons: FC<{ disabled: boolean }> = ({ disabled }) => {
     },
   });
   const disableEncounterButton = enrolmentData?.nodes?.length === 0;
+  if (!store?.preferences.omProgramModule) return null;
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <AddButton
-          disabled={disabled}
-          disableEncounterButton={disableEncounterButton}
-        />
+        {store?.preferences.omProgramModule && (
+          <AddButton
+            disabled={disabled}
+            disableEncounterButton={disableEncounterButton}
+          />
+        )}
         <ReportSelector context={ReportContext.Patient} onPrint={printReport}>
           <LoadingButton
             disabled={disabled}
