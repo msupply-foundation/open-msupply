@@ -8,7 +8,8 @@ use crate::{
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
     invoice_line::stock_out_line::{
-        delete_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError, StockOutType,
+        delete::{delete_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError},
+        StockOutType,
     },
     service_provider::ServiceContext,
     WithDBError,
@@ -118,7 +119,7 @@ mod test {
     };
 
     use crate::{
-        invoice::outbound_shipment::DeleteOutboundShipmentError as ServiceError,
+        invoice::outbound_shipment::delete::DeleteOutboundShipmentError as ServiceError,
         service_provider::ServiceProvider,
     };
 

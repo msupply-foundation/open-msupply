@@ -17,60 +17,63 @@ type ServiceResult = BatchInboundShipmentResult;
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "InsertInboundShipmentResponseWithId",
-    params(inbound_shipment::InsertResponse)
+    params(inbound_shipment::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateInboundShipmentResponseWithId",
-    params(inbound_shipment::UpdateResponse)
+    params(inbound_shipment::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteInboundShipmentResponseWithId",
-    params(inbound_shipment::DeleteResponse)
+    params(inbound_shipment::delete::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "InsertInboundShipmentLineResponseWithId",
-    params(inbound_shipment_line::line::InsertResponse)
+    params(inbound_shipment_line::line::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateInboundShipmentLineResponseWithId",
-    params(inbound_shipment_line::line::UpdateResponse)
+    params(inbound_shipment_line::line::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteInboundShipmentLineResponseWithId",
-    params(inbound_shipment_line::line::DeleteResponse)
+    params(inbound_shipment_line::line::delete::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "InsertInboundShipmentServiceLineResponseWithId",
-    params(inbound_shipment_line::service_line::InsertResponse)
+    params(inbound_shipment_line::service_line::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateInboundShipmentServiceLineResponseWithId",
-    params(inbound_shipment_line::service_line::UpdateResponse)
+    params(inbound_shipment_line::service_line::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteInboundShipmentServiceLineResponseWithId",
-    params(inbound_shipment_line::service_line::DeleteResponse)
+    params(inbound_shipment_line::service_line::delete::DeleteResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,
 }
 
-type InsertShipmentsResponse = Option<Vec<MutationWithId<inbound_shipment::InsertResponse>>>;
+type InsertShipmentsResponse =
+    Option<Vec<MutationWithId<inbound_shipment::insert::InsertResponse>>>;
 type InsertShipmentLinesResponse =
-    Option<Vec<MutationWithId<inbound_shipment_line::line::InsertResponse>>>;
+    Option<Vec<MutationWithId<inbound_shipment_line::line::insert::InsertResponse>>>;
 type UpdateShipmentLinesResponse =
-    Option<Vec<MutationWithId<inbound_shipment_line::line::UpdateResponse>>>;
+    Option<Vec<MutationWithId<inbound_shipment_line::line::update::UpdateResponse>>>;
 type DeleteShipmentLinesResponse =
-    Option<Vec<MutationWithId<inbound_shipment_line::line::DeleteResponse>>>;
+    Option<Vec<MutationWithId<inbound_shipment_line::line::delete::DeleteResponse>>>;
 type InsertShipmentServiceLinesResponse =
-    Option<Vec<MutationWithId<inbound_shipment_line::service_line::InsertResponse>>>;
+    Option<Vec<MutationWithId<inbound_shipment_line::service_line::insert::InsertResponse>>>;
 type UpdateShipmentServiceLinesResponse =
-    Option<Vec<MutationWithId<inbound_shipment_line::service_line::UpdateResponse>>>;
+    Option<Vec<MutationWithId<inbound_shipment_line::service_line::update::UpdateResponse>>>;
 type DeleteShipmentServiceLinesResponse =
-    Option<Vec<MutationWithId<inbound_shipment_line::service_line::DeleteResponse>>>;
-type UpdateShipmentsResponse = Option<Vec<MutationWithId<inbound_shipment::UpdateResponse>>>;
-type DeleteShipmentsResponse = Option<Vec<MutationWithId<inbound_shipment::DeleteResponse>>>;
+    Option<Vec<MutationWithId<inbound_shipment_line::service_line::delete::DeleteResponse>>>;
+type UpdateShipmentsResponse =
+    Option<Vec<MutationWithId<inbound_shipment::update::UpdateResponse>>>;
+type DeleteShipmentsResponse =
+    Option<Vec<MutationWithId<inbound_shipment::delete::DeleteResponse>>>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchInboundShipmentResponse")]
@@ -89,18 +92,21 @@ pub struct BatchResponse {
 #[derive(InputObject)]
 #[graphql(name = "BatchInboundShipmentInput")]
 pub struct BatchInput {
-    pub insert_inbound_shipments: Option<Vec<inbound_shipment::InsertInput>>,
-    pub insert_inbound_shipment_lines: Option<Vec<inbound_shipment_line::line::InsertInput>>,
-    pub update_inbound_shipment_lines: Option<Vec<inbound_shipment_line::line::UpdateInput>>,
-    pub delete_inbound_shipment_lines: Option<Vec<inbound_shipment_line::line::DeleteInput>>,
+    pub insert_inbound_shipments: Option<Vec<inbound_shipment::insert::InsertInput>>,
+    pub insert_inbound_shipment_lines:
+        Option<Vec<inbound_shipment_line::line::insert::InsertInput>>,
+    pub update_inbound_shipment_lines:
+        Option<Vec<inbound_shipment_line::line::update::UpdateInput>>,
+    pub delete_inbound_shipment_lines:
+        Option<Vec<inbound_shipment_line::line::delete::DeleteInput>>,
     pub insert_inbound_shipment_service_lines:
-        Option<Vec<inbound_shipment_line::service_line::InsertInput>>,
+        Option<Vec<inbound_shipment_line::service_line::insert::InsertInput>>,
     pub update_inbound_shipment_service_lines:
-        Option<Vec<inbound_shipment_line::service_line::UpdateInput>>,
+        Option<Vec<inbound_shipment_line::service_line::update::UpdateInput>>,
     pub delete_inbound_shipment_service_lines:
-        Option<Vec<inbound_shipment_line::service_line::DeleteInput>>,
-    pub update_inbound_shipments: Option<Vec<inbound_shipment::UpdateInput>>,
-    pub delete_inbound_shipments: Option<Vec<inbound_shipment::DeleteInput>>,
+        Option<Vec<inbound_shipment_line::service_line::delete::DeleteInput>>,
+    pub update_inbound_shipments: Option<Vec<inbound_shipment::update::UpdateInput>>,
+    pub delete_inbound_shipments: Option<Vec<inbound_shipment::delete::DeleteInput>>,
     pub continue_on_error: Option<bool>,
 }
 

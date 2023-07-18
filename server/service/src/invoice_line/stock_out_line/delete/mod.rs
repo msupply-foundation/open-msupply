@@ -84,8 +84,10 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice_line::stock_out_line::DeleteStockOutLine,
-        invoice_line::stock_out_line::{DeleteStockOutLineError as ServiceError, StockOutType},
+        invoice_line::stock_out_line::{
+            delete::{DeleteStockOutLine, DeleteStockOutLineError as ServiceError},
+            StockOutType,
+        },
         service_provider::ServiceProvider,
     };
 

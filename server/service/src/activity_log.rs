@@ -1,8 +1,8 @@
 use chrono::Utc;
 use repository::{
-    ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogRow,
-    ActivityLogRowRepository, ActivityLogSort, ActivityLogType, InvoiceRowStatus,
-    StorageConnection, StorageConnectionManager,
+    activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogSort},
+    ActivityLogRow, ActivityLogRowRepository, ActivityLogType, InvoiceRowStatus, StorageConnection,
+    StorageConnectionManager,
 };
 use repository::{PaginationOption, RepositoryError};
 use util::constants::SYSTEM_USER_ID;
@@ -110,7 +110,9 @@ pub fn log_type_from_invoice_status(status: &InvoiceRowStatus) -> ActivityLogTyp
 #[cfg(test)]
 mod test {
     use crate::{
-        invoice::outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
+        invoice::outbound_shipment::update::{
+            UpdateOutboundShipment, UpdateOutboundShipmentStatus,
+        },
         test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
     use repository::{

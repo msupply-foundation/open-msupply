@@ -1,5 +1,3 @@
-use super::{CannotChangeStatusOfInvoiceOnHold, InvoiceIsNotEditable, NotAnOutboundShipmentError};
-
 use async_graphql::*;
 use graphql_core::generic_inputs::TaxInput;
 use graphql_core::simple_generic_errors::{CannotReverseInvoiceStatus, NodeError, RecordNotFound};
@@ -9,11 +7,15 @@ use graphql_types::types::{InvoiceLineConnector, InvoiceNode};
 
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::outbound_shipment::{
+use service::invoice::outbound_shipment::update::{
     UpdateOutboundShipment as ServiceInput, UpdateOutboundShipmentError as ServiceError,
     UpdateOutboundShipmentStatus,
 };
 use service::invoice_line::ShipmentTaxUpdate;
+
+use super::error::{
+    CannotChangeStatusOfInvoiceOnHold, InvoiceIsNotEditable, NotAnOutboundShipmentError,
+};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateOutboundShipmentInput")]

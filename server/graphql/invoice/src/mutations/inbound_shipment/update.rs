@@ -1,4 +1,4 @@
-use crate::mutations::outbound_shipment::CannotChangeStatusOfInvoiceOnHold;
+use crate::mutations::outbound_shipment::error::CannotChangeStatusOfInvoiceOnHold;
 use async_graphql::*;
 
 use graphql_core::generic_inputs::TaxInput;
