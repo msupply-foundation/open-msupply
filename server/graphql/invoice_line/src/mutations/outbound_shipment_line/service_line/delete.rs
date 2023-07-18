@@ -122,7 +122,7 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            outbound_shipment_service_line::delete::DeleteOutboundShipmentServiceLineError as ServiceError,
+            outbound_shipment_service_line::DeleteOutboundShipmentServiceLineError as ServiceError,
             stock_out_line::{delete::DeleteStockOutLine as ServiceInput, StockOutType},
             InvoiceLineServiceTrait,
         },

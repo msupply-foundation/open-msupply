@@ -7,8 +7,9 @@ use graphql_core::ContextExt;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::stock_out_line::delete::{
-    DeleteStockOutLine as ServiceInput, DeleteStockOutLineError as ServiceError, StockOutType,
+use service::invoice_line::stock_out_line::{
+    delete::{DeleteStockOutLine as ServiceInput, DeleteStockOutLineError as ServiceError},
+    StockOutType,
 };
 
 #[derive(InputObject)]
@@ -120,8 +121,10 @@ mod test {
 
     use service::{
         invoice_line::{
-            stock_out_line::delete::{
-                DeleteStockOutLine as ServiceInput, DeleteStockOutLineError as ServiceError,
+            stock_out_line::{
+                delete::{
+                    DeleteStockOutLine as ServiceInput, DeleteStockOutLineError as ServiceError,
+                },
                 StockOutType,
             },
             InvoiceLineServiceTrait,
