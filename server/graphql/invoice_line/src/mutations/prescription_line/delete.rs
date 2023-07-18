@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound,
+    self, CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound,
 };
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -80,30 +80,27 @@ impl DeleteInput {
 }
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
-    use StandardGraphqlError::*;
+    use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::LineDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
-        }
-        ServiceError::CannotEditInvoice => {
+        LineDoesNotExist => return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {})),
+        CannotEditInvoice => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
-                CannotEditInvoice {},
+                simple_generic_errors::CannotEditInvoice {},
             ))
         }
-        ServiceError::InvoiceDoesNotExist => {
+        InvoiceDoesNotExist => {
             return Ok(DeleteErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
             )))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisInvoiceLine(_)
-        | ServiceError::InvoiceTypeDoesNotMatch
-        | ServiceError::NoInvoiceType
-        | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        NotThisInvoiceLine(_) | InvoiceTypeDoesNotMatch | NoInvoiceType | NotThisStoreInvoice => {
+            StandardGraphqlError::BadUserInput(formatted_error)
+        }
+        DatabaseError(_) => StandardGraphqlError::InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
