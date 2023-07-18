@@ -37,10 +37,12 @@ export const AppBarButtons: FC<{
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <AddButton
-          disabled={disabled}
-          disableEncounterButton={disableEncounterButton}
-        />
+        {store?.preferences.omProgramModule && (
+          <AddButton
+            disabled={disabled}
+            disableEncounterButton={disableEncounterButton}
+          />
+        )}
         <ReportSelector context={ReportContext.Patient} onPrint={printReport}>
           <LoadingButton
             disabled={disabled}
