@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
+use graphql_core::simple_generic_errors::{self, CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 
@@ -9,7 +9,7 @@ use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 
 use crate::mutations::outbound_shipment_line::line::{
-    LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
+    self, LocationIsOnHold, LocationNotFound, NotEnoughStockForReduction,
     StockLineAlreadyExistsInInvoice, StockLineIsOnHold,
 };
 use service::invoice_line::stock_out_line::{
@@ -85,45 +85,47 @@ pub enum InsertErrorInterface {
 }
 
 fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
-    use StandardGraphqlError::*;
+    use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::InvoiceDoesNotExist => {
+        InvoiceDoesNotExist => {
             return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
             )))
         }
-        ServiceError::CannotEditFinalised => {
+        CannotEditFinalised => {
             return Ok(InsertErrorInterface::CannotEditInvoice(
-                CannotEditInvoice {},
+                simple_generic_errors::CannotEditInvoice {},
             ))
         }
-        ServiceError::StockLineNotFound => {
+        StockLineNotFound => {
             return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::StockLineId,
             )))
         }
-        ServiceError::LocationIsOnHold => {
-            return Ok(InsertErrorInterface::LocationIsOnHold(LocationIsOnHold {}))
+        LocationIsOnHold => {
+            return Ok(InsertErrorInterface::LocationIsOnHold(
+                line::LocationIsOnHold {},
+            ))
         }
-        ServiceError::LocationNotFound => {
+        LocationNotFound => {
             return Ok(InsertErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::LocationId,
             )))
         }
-        ServiceError::StockLineAlreadyExistsInInvoice(line_id) => {
+        StockLineAlreadyExistsInInvoice(line_id) => {
             return Ok(InsertErrorInterface::StockLineAlreadyExistsInInvoice(
-                StockLineAlreadyExistsInInvoice(line_id),
+                line::StockLineAlreadyExistsInInvoice(line_id),
             ))
         }
-        ServiceError::BatchIsOnHold => {
+        BatchIsOnHold => {
             return Ok(InsertErrorInterface::StockLineIsOnHold(
                 StockLineIsOnHold {},
             ))
         }
-        ServiceError::ReductionBelowZero { stock_line_id } => {
+        ReductionBelowZero { stock_line_id } => {
             return Ok(InsertErrorInterface::NotEnoughStockForReduction(
                 NotEnoughStockForReduction {
                     stock_line_id,
@@ -132,15 +134,15 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice
-        | ServiceError::NoInvoiceType
-        | ServiceError::InvoiceTypeDoesNotMatch
-        | ServiceError::LineAlreadyExists
-        | ServiceError::NumberOfPacksBelowOne
-        | ServiceError::ItemNotFound
-        | ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) | ServiceError::NewlyCreatedLineDoesNotExist => {
-            InternalError(formatted_error)
+        NotThisStoreInvoice
+        | NoInvoiceType
+        | InvoiceTypeDoesNotMatch
+        | LineAlreadyExists
+        | NumberOfPacksBelowOne
+        | ItemNotFound
+        | ItemDoesNotMatchStockLine => StandardGraphqlError::BadUserInput(formatted_error),
+        DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
+            StandardGraphqlError::InternalError(formatted_error)
         }
     };
 

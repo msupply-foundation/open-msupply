@@ -23,7 +23,7 @@ pub fn validate(
         return Err(InvoiceIsNotEditable);
     }
     if !check_invoice_type(&invoice, InvoiceRowType::Prescription) {
-        return Err(NotAPrescription);
+        return Err(NotAPrescriptionInvoice);
     }
     if !check_clinician_exists(connection, &patch.clinician_id)? {
         return Err(ClinicianDoesNotExist);

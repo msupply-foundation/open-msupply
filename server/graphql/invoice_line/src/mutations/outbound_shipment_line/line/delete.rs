@@ -1,14 +1,15 @@
 use async_graphql::*;
 use graphql_core::simple_generic_errors::{
-    CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound,
+    self, CannotEditInvoice, ForeignKey, ForeignKeyError, RecordNotFound,
 };
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::outbound_shipment_line::delete::{
-    DeleteOutboundShipmentLine as ServiceInput, DeleteOutboundShipmentLineError as ServiceError,
+use service::invoice_line::stock_out_line::{
+    delete::{DeleteStockOutLine as ServiceInput, DeleteStockOutLineError as ServiceError},
+    StockOutType,
 };
 
 #[derive(InputObject)]
@@ -45,7 +46,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     map_response(
         service_provider
             .invoice_line_service
-            .delete_outbound_shipment_line(&service_context, input.to_domain()),
+            .delete_stock_out_line(&service_context, input.to_domain()),
     )
 }
 
@@ -72,34 +73,35 @@ pub enum DeleteErrorInterface {
 impl DeleteInput {
     pub fn to_domain(self) -> ServiceInput {
         let DeleteInput { id } = self;
-        ServiceInput { id }
+        ServiceInput {
+            id,
+            r#type: Some(StockOutType::OutboundShipment),
+        }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
-    use StandardGraphqlError::*;
+    use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::LineDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
-        }
-        ServiceError::CannotEditInvoice => {
+        LineDoesNotExist => return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {})),
+        CannotEditInvoice => {
             return Ok(DeleteErrorInterface::CannotEditInvoice(
-                CannotEditInvoice {},
+                simple_generic_errors::CannotEditInvoice {},
             ))
         }
-        ServiceError::InvoiceDoesNotExist => {
+        InvoiceDoesNotExist => {
             return Ok(DeleteErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
             )))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
-        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        NotThisInvoiceLine(_) | InvoiceTypeDoesNotMatch | NoInvoiceType | NotThisStoreInvoice => {
+            StandardGraphqlError::BadUserInput(formatted_error)
+        }
+        DatabaseError(_) => StandardGraphqlError::InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -116,9 +118,11 @@ mod test {
 
     use service::{
         invoice_line::{
-            outbound_shipment_line::delete::{
-                DeleteOutboundShipmentLine as ServiceInput,
-                DeleteOutboundShipmentLineError as ServiceError,
+            stock_out_line::{
+                delete::{
+                    DeleteStockOutLine as ServiceInput, DeleteStockOutLineError as ServiceError,
+                },
+                StockOutType,
             },
             InvoiceLineServiceTrait,
         },
@@ -132,7 +136,7 @@ mod test {
     pub struct TestService(pub Box<DeleteLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn delete_outbound_shipment_line(
+        fn delete_stock_out_line(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -254,18 +258,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnOutboundShipment)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //NotThisStoreInvoice
         let test_service = TestService(Box::new(|_| Err(ServiceError::NotThisStoreInvoice)));
         let expected_message = "Bad user input";
@@ -321,6 +313,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
+                    r#type: Some(StockOutType::OutboundShipment)
                 }
             );
             Ok("deleted id".to_owned())
