@@ -15,9 +15,11 @@ import { PatientSummary } from './PatientSummary';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
 import { CreateEncounterModal, EncounterListView } from '../Encounter';
 import {
+  FormInputData,
   PatientModal,
   ProgramSearchModal,
   SaveDocumentMutation,
+  useDocumentRegistry,
   useJsonForms,
   usePatientModalStore,
   usePatientStore,
@@ -63,11 +65,19 @@ const PatientDetailView = ({
   const patientId = usePatient.utils.id();
   const { data: currentPatient } = usePatient.document.get(patientId);
 
+  const { data: patientRegistries } =
+    useDocumentRegistry.get.documentRegistries({
+      filter: {
+        documentType: { equalTo: 'Patient' },
+      },
+    });
+  const patientRegistry = patientRegistries?.nodes[0];
+
   // we have to memo createDoc to avoid an infinite render loop
-  const createDoc = useMemo(() => {
+  const inputData = useMemo<FormInputData | undefined>(() => {
     if (createNewPatient) {
       return {
-        documentRegistry: createNewPatient.documentRegistry,
+        schema: createNewPatient.documentRegistry,
         data: {
           id: createNewPatient.id,
           code: createNewPatient.code,
@@ -81,9 +91,37 @@ const PatientDetailView = ({
           socioEconomics: {},
           isDeceased: false,
         },
+        isCreating: true,
+      };
+    } else if (
+      !!patientRegistry &&
+      !!currentPatient &&
+      !currentPatient.document
+    ) {
+      // no document associated with the patient; use data from the Name row
+      return {
+        schema: {
+          formSchemaId: patientRegistry.formSchemaId,
+          jsonSchema: patientRegistry.jsonSchema,
+          uiSchema: patientRegistry.uiSchema,
+        },
+        data: {
+          id: currentPatient.id,
+          code: currentPatient.code,
+          code2: currentPatient.code2 ?? undefined,
+          firstName: currentPatient.firstName ?? undefined,
+          lastName: currentPatient.lastName ?? undefined,
+          gender: currentPatient.gender ?? undefined,
+          dateOfBirth: currentPatient.dateOfBirth ?? undefined,
+          addresses: [],
+          contactDetails: [],
+          socioEconomics: {},
+          isDeceased: false,
+        },
+        isCreating: false,
       };
     } else return undefined;
-  }, [createNewPatient]);
+  }, [createNewPatient, currentPatient, patientRegistry]);
 
   const handleSave = useUpsertPatient();
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
@@ -91,7 +129,7 @@ const PatientDetailView = ({
       createNewPatient ? undefined : documentName,
       patientId,
       { handleSave },
-      createDoc
+      inputData
     );
 
   useEffect(() => {
@@ -131,7 +169,7 @@ const PatientDetailView = ({
         isSaving={isSaving}
         isDirty={isDirty}
         validationError={validationError}
-        createDoc={createDoc}
+        inputData={inputData}
         showSaveConfirmation={showSaveConfirmation}
       />
     </Box>
@@ -202,7 +240,8 @@ export const PatientView = () => {
                 enrolmentDatetime: new Date().toISOString(),
                 status: 'ACTIVE',
               },
-              documentRegistry,
+              schema: documentRegistry,
+              isCreating: true,
             };
             setCreationModal(
               PatientModal.Program,
