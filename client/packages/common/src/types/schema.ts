@@ -4357,6 +4357,7 @@ export type StoreNodeNameArgs = {
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String'];
+  omProgramModule: Scalars['Boolean'];
   packToOne: Scalars['Boolean'];
   requestRequisitionRequiresAuthorisation: Scalars['Boolean'];
   responseRequisitionRequiresAuthorisation: Scalars['Boolean'];
