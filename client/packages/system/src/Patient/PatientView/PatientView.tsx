@@ -19,7 +19,6 @@ import {
   ProgramSearchModal,
   SaveDocumentMutation,
   useJsonForms,
-  usePatientCreateStore,
   usePatientModalStore,
   usePatientStore,
   useProgramEnrolments,
@@ -55,24 +54,28 @@ const PatientDetailView = ({
   onEdit: (isDirty: boolean) => void;
 }) => {
   const t = useTranslation('patients');
-  const { documentName, setDocumentName } = usePatientStore();
-  const { patient, setNewPatient } = usePatientCreateStore();
+  const {
+    documentName,
+    setDocumentName,
+    createNewPatient,
+    setCreateNewPatient,
+  } = usePatientStore();
   const patientId = usePatient.utils.id();
   const { data: currentPatient } = usePatient.document.get(patientId);
 
   // we have to memo createDoc to avoid an infinite render loop
   const createDoc = useMemo(() => {
-    if (patient) {
+    if (createNewPatient) {
       return {
-        documentRegistry: patient.documentRegistry,
+        documentRegistry: createNewPatient.documentRegistry,
         data: {
-          id: patient.id,
-          code: patient.code,
-          code2: patient.code2,
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          gender: patient.gender,
-          dateOfBirth: patient.dateOfBirth,
+          id: createNewPatient.id,
+          code: createNewPatient.code,
+          code2: createNewPatient.code2,
+          firstName: createNewPatient.firstName,
+          lastName: createNewPatient.lastName,
+          gender: createNewPatient.gender,
+          dateOfBirth: createNewPatient.dateOfBirth,
           addresses: [],
           contactDetails: [],
           socioEconomics: {},
@@ -80,19 +83,19 @@ const PatientDetailView = ({
         },
       };
     } else return undefined;
-  }, [patient]);
+  }, [createNewPatient]);
 
   const handleSave = useUpsertPatient();
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
     useJsonForms(
-      patient ? undefined : documentName,
+      createNewPatient ? undefined : documentName,
       patientId,
       { handleSave },
       createDoc
     );
 
   useEffect(() => {
-    return () => setNewPatient(undefined);
+    return () => setCreateNewPatient(undefined);
   }, []);
 
   const save = useCallback(async () => {
@@ -100,7 +103,7 @@ const PatientDetailView = ({
     if (documentName) {
       setDocumentName(documentName);
       // patient has been created => unset the create request data
-      setNewPatient(undefined);
+      setCreateNewPatient(undefined);
     }
   }, [saveData]);
 
@@ -135,14 +138,16 @@ const PatientDetailView = ({
   );
 };
 
+/**
+ * Main patient view containing patient details and program tabs
+ */
 export const PatientView = () => {
   const { current, setCreationModal, reset } = usePatientModalStore();
   const patientId = usePatient.utils.id();
   const { data } = useProgramEnrolments.document.list({
     filterBy: { patientId: { equalTo: patientId } },
   });
-  const { patient: createNewPatient } = usePatientCreateStore();
-  const { setCurrentPatient } = usePatientStore();
+  const { setCurrentPatient, createNewPatient } = usePatientStore();
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
   const { store } = useAuthContext();
