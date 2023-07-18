@@ -16,10 +16,6 @@ export type Preference = {
   value: string;
   error?: string;
 };
-export type ConnectionResult = {
-  success: boolean;
-  error?: string;
-};
 export type FileInfo = {
   content: string;
   filename?: string;
@@ -31,7 +27,7 @@ export interface NativeAPI {
   // Starts server discovery (connectToServer stops server discovery)
   startServerDiscovery: () => void;
   // Asks client to connect to server (causing window to navigate to server url and stops discovery)
-  connectToServer: (server: FrontEndHost) => Promise<ConnectionResult>;
+  connectToServer: (server: FrontEndHost) => Promise<void>;
   // Will return currently connected client (to display in UI)
   connectedServer: () => Promise<FrontEndHost | null>;
   goBackToDiscovery: () => void;

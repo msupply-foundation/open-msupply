@@ -16,7 +16,6 @@ import {
   isProtocol,
   BarcodeScanner,
   ScannerType,
-  ConnectionResult,
 } from '@openmsupply-client/common/src/hooks/useNativeClient';
 import HID from 'node-hid';
 import ElectronStore from 'electron-store';
@@ -162,7 +161,7 @@ if (require('electron-squirrel-startup')) {
 
 // run a check to see if the server is available before attempting to connect
 const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
-  return new Promise<ConnectionResult>(resolve => {
+  return new Promise<void>((resolve, reject) => {
     const lib = server.protocol === 'https' ? https : http;
     const options = {
       rejectUnauthorized: false,
@@ -170,15 +169,12 @@ const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
     const request = lib.get(frontEndHostUrl(server), options, response => {
       if (response.statusCode === 200) {
         connectToServer(window, server);
-        resolve({ success: true });
+        resolve();
       }
-      resolve({ success: false, error: `Status: ${response.statusMessage}` });
+      reject(`Status: ${response.statusMessage}`);
     });
     // handle the error to prevent an alert in the desktop app
-    request.on('error', e => {
-      console.error('Error received connecting to server:', e);
-      resolve({ success: false, error: e.message });
-    });
+    request.on('error', reject);
   });
 };
 

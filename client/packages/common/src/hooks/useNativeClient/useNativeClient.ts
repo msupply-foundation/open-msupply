@@ -1,5 +1,5 @@
 import { uniqWith } from 'lodash';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import {
   getNativeAPI,
@@ -8,7 +8,6 @@ import {
   setPreference,
 } from './helpers';
 import {
-  ConnectionResult,
   DISCOVERED_SERVER_POLL,
   DISCOVERY_TIMEOUT,
   FileInfo,
@@ -17,7 +16,7 @@ import {
   NativeMode,
 } from './types';
 import { Capacitor } from '@capacitor/core';
-import { useMutation } from 'react-query';
+import { usePartialState } from '../../utils/types';
 
 declare global {
   interface Window {
@@ -47,36 +46,21 @@ export const useNativeClient = ({
       setState(state => ({ ...state, mode }))
     );
 
-  const [state, setState] = useState<NativeClientState>({
-    connectToPreviousFailed: false,
-    connectedServer: null,
-    discoveryTimedOut: false,
-    isDiscovering: false,
-    previousServer: null,
-    servers: [],
-  });
+  const { state, setState, setPartialState } =
+    usePartialState<NativeClientState>({
+      connectToPreviousFailed: false,
+      connectedServer: null,
+      discoveryTimedOut: false,
+      isDiscovering: false,
+      previousServer: null,
+      servers: [],
+    });
 
-  const connectToServer = (server: FrontEndHost): Promise<ConnectionResult> => {
+  const connectToServer = async (server: FrontEndHost): Promise<void> => {
+    await nativeAPI?.connectToServer(server);
+    // Set previous server only if connected succesfully
     setPreference('previousServer', server);
-    return (
-      nativeAPI?.connectToServer(server) ?? Promise.resolve({ success: false })
-    );
   };
-
-  const handleConnectionResult = async (result: ConnectionResult) => {
-    if (!result.success) {
-      console.error('Connecting to previous server:', result.error);
-    }
-    setState(state => ({ ...state, connectToPreviousFailed: !result.success }));
-  };
-
-  // `connectToServer` will check to see if the server is alive and if so, connect to it
-  // using `useMutation` here to handle multiple calls to `connectToServer`, though likely not be possible
-  const { mutate: connectToPrevious } = useMutation(connectToServer, {
-    onSuccess: handleConnectionResult,
-    onError: (e: Error) =>
-      handleConnectionResult({ success: false, error: e.message }),
-  });
 
   const stopDiscovery = () =>
     setState(state => ({ ...state, isDiscovering: false }));
@@ -181,7 +165,19 @@ export const useNativeClient = ({
     if (!autoconnect) return;
     if (previousServer === null) return;
 
-    connectToPrevious(previousServer);
+    // Connect to previous server
+    connectToServer(previousServer)
+      .then(() =>
+        setPartialState({
+          connectToPreviousFailed: true,
+        })
+      )
+      .catch(e => {
+        console.error(e);
+        setPartialState({
+          connectToPreviousFailed: false,
+        });
+      });
   }, [state.previousServer, autoconnect]);
 
   return {

@@ -5,7 +5,6 @@ import {
   BasicSpinner,
   Box,
   ButtonWithIcon,
-  ConnectionResult,
   DEFAULT_LOCAL_SERVER,
   ErrorWithDetails,
   ExternalLinkIcon,
@@ -119,17 +118,6 @@ export const Android = () => {
     setLocalMode(mode);
   };
 
-  const handleConnectionResult = async (result: ConnectionResult) => {
-    if (result.success) return;
-
-    console.error('Connecting to previous server:', result.error);
-    navigate(
-      RouteBuilder.create(AppRoute.Discovery)
-        .addPart(`?timedout=${!!connectToPreviousFailed}`)
-        .build()
-    );
-  };
-
   useEffect(() => {
     // this page is not for web users! begone!
     if (!getNativeAPI()) navigate(RouteBuilder.create(AppRoute.Login).build());
@@ -140,11 +128,14 @@ export const Android = () => {
     if (mode === NativeMode.Server) {
       advertiseService();
       const path = !token ? 'login' : '';
-      connectToServer({ ...DEFAULT_LOCAL_SERVER, path })
-        .then(handleConnectionResult)
-        .catch(e =>
-          handleConnectionResult({ success: false, error: e.message })
+      connectToServer({ ...DEFAULT_LOCAL_SERVER, path }).catch(e => {
+        console.error('Connecting to previous server:', e);
+        navigate(
+          RouteBuilder.create(AppRoute.Discovery)
+            .addPart(`?timedout=${!!connectToPreviousFailed}`)
+            .build()
         );
+      });
     }
   }, [mode]);
 

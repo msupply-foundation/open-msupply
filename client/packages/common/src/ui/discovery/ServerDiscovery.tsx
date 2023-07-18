@@ -35,7 +35,6 @@ export const ServerDiscovery = () => {
   const {
     servers,
     discoveryTimedOut,
-    connectToServer,
     startDiscovery,
     stopDiscovery,
     connectToPreviousFailed,
@@ -148,7 +147,6 @@ export const ServerDiscovery = () => {
           <Box display="flex" flex={1} justifyContent="center">
             <DiscoveredServers
               servers={servers}
-              connect={connectToServer}
               discoveryTimedOut={discoveryTimedOut}
               discover={discover}
             />

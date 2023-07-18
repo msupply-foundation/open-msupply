@@ -18,9 +18,7 @@ import {
   frontEndHostDiscoveryGraphql,
   IconButton,
   RefreshIcon,
-  ConnectionResult,
   useNotification,
-  useMutation,
   NativeMode,
   useAuthContext,
   DEFAULT_LOCAL_SERVER,
@@ -32,14 +30,12 @@ type ConnectToServer = ReturnType<typeof useNativeClient>['connectToServer'];
 
 type DiscoverServersProps = {
   servers: FrontEndHost[];
-  connect: ConnectToServer;
   discoveryTimedOut: boolean;
   discover: () => void;
 };
 
 export const DiscoveredServers = ({
   servers,
-  connect,
   discoveryTimedOut,
   discover,
 }: DiscoverServersProps) => {
@@ -48,19 +44,20 @@ export const DiscoveredServers = ({
   const { token } = useAuthContext();
   const { error } = useNotification();
 
-  const handleConnectionResult = async (result: ConnectionResult) => {
-    if (result.success) return;
-
-    error(t('error.unable-to-connect', { server: '' }))();
+  const connectToServerWithErrorToast = async (server: FrontEndHost) => {
+    try {
+      await connectToServer(server);
+    } catch (e) {
+      console.error(e);
+      error(t('error.connection-error'))();
+    }
   };
 
-  const useServerMode = () => {
+  const useServerMode = async () => {
     setMode(NativeMode.Server);
     advertiseService();
     const path = !token ? 'login' : '';
-    connectToServer({ ...DEFAULT_LOCAL_SERVER, path })
-      .then(handleConnectionResult)
-      .catch(e => handleConnectionResult({ success: false, error: e.message }));
+    await connectToServerWithErrorToast({ ...DEFAULT_LOCAL_SERVER, path });
   };
 
   if (discoveryTimedOut)
@@ -150,7 +147,7 @@ export const DiscoveredServers = ({
           <DiscoveredServerWrapper
             key={`${server.hardwareId}${server.port}`}
             server={{ ...server, path: 'login' }}
-            connect={connect}
+            connect={connectToServerWithErrorToast}
           />
         ))}
       </MenuList>
@@ -171,7 +168,6 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
 }) => {
   const { data: initStatus } = useInitialisationStatus();
   const t = useTranslation('app');
-  const { error } = useNotification();
 
   const getSiteName = () => {
     if (initStatus?.status == InitialisationStatusType.Initialised)
@@ -179,21 +175,8 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
     return t('messages.not-initialised');
   };
 
-  const handleConnectionResult = async (result: ConnectionResult) => {
-    if (result.success) return;
-
-    error(t('error.connection-error'))();
-    console.error(result.error);
-  };
-
-  const { mutate: connectToServer } = useMutation(connect, {
-    onSuccess: handleConnectionResult,
-    onError: (e: Error) =>
-      handleConnectionResult({ success: false, error: e.message }),
-  });
-
   return (
-    <MenuItem onClick={() => connectToServer(server)} sx={{ color: 'inherit' }}>
+    <MenuItem onClick={() => connect(server)} sx={{ color: 'inherit' }}>
       <Box alignItems="center" display="flex" gap={2}>
         <Box flex={0}>
           <CheckboxEmptyIcon fontSize="small" color="primary" />

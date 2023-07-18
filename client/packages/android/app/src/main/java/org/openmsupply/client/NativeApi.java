@@ -270,6 +270,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         FrontEndHost server = new FrontEndHost(call.getData());
         JSObject response = new JSObject();
 
+        // Each branch must resolve or reject
         try {
             URL url = new URL(server.getConnectionUrl());
             HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
@@ -279,21 +280,18 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
             if (status == 200) {
                 onConnectToServer(server);
-                response.put("success", true);
+                call.resolve();
             } else {
-                response.put("success", false);
-                response.put("error", "Connecting to server: response code=" + status);
+                call.reject( "Connecting to server: response code=" + status);
             }
         } catch (SSLHandshakeException e) {
             // server is running and responding with an SSL error
             // which we will ignore, so ok to proceed
             onConnectToServer(server);
-            response.put("success", true);
+            call.resolve();
         } catch (IOException e) {
-            response.put("success", false);
-            response.put("error", e.getMessage());
+            call.reject(e.getMessage());
         }
-        call.resolve(response);
     }
 
     // NsdManager.DiscoveryListener
