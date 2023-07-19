@@ -54,7 +54,7 @@ pub fn insert_program_enrolment(
                 data: input.data,
                 schema_id: input.schema_id,
                 parent: None,
-                patient_id: input.patient_id,
+                patient_id: input.patient_id.clone(),
                 r#type: input.r#type,
             },
             allowed_ctx.clone(),
@@ -99,7 +99,9 @@ pub fn insert_program_enrolment(
         .program_enrolment_service
         .program_enrolment(
             &service_context,
-            ProgramEnrolmentFilter::new().context(EqualFilter::equal_to(&document.context_id)),
+            ProgramEnrolmentFilter::new()
+                .patient_id(EqualFilter::equal_to(&input.patient_id))
+                .context(EqualFilter::equal_to(&document.context_id)),
             allowed_ctx.clone(),
         )?
         .ok_or(
