@@ -26,6 +26,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ALTER TABLE document ADD COLUMN context_id TEXT REFERENCES context(id);
             ALTER TABLE document DROP COLUMN context;
 
+            ALTER TABLE program_event ADD COLUMN context_id TEXT REFERENCES context(id);
+            ALTER TABLE program_event DROP COLUMN context;
+
             ALTER TABLE document_registry ADD COLUMN context_id TEXT REFERENCES context(id);
             ALTER TABLE document_registry DROP COLUMN document_context;
 
@@ -40,6 +43,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
         ALTER TABLE document RENAME COLUMN context TO context_id;
         ALTER TABLE document ADD CONSTRAINT document_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
+
+        ALTER TABLE program_event RENAME COLUMN context TO context_id;
+        ALTER TABLE program_event ADD CONSTRAINT program_event_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
 
         -- Seems like that in postgres you need to recreate the view to make the new column visible...
         DROP VIEW latest_document;

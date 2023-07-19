@@ -59,9 +59,9 @@ pub fn program_events(
         .map(|f| f.to_domain())
         .unwrap_or(ProgramEventFilter::new());
     // restrict query results to allowed entries
-    filter.context = Some(
+    filter.context_id = Some(
         filter
-            .context
+            .context_id
             .unwrap_or_default()
             .restrict_results(&allowed_ctx),
     );
@@ -116,9 +116,9 @@ pub fn active_program_events(
         .map(|f| f.to_domain())
         .unwrap_or(ProgramEventFilter::new());
     // restrict query results to allowed entries
-    filter.context = Some(
+    filter.context_id = Some(
         filter
-            .context
+            .context_id
             .unwrap_or_default()
             .restrict_results(&allowed_ctx),
     );
