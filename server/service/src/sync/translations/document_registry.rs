@@ -43,7 +43,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::DOCUMENT_REGISTRY,
-            dependencies: vec![LegacyTableName::FORM_SCHEMA],
+            dependencies: vec![LegacyTableName::FORM_SCHEMA, LegacyTableName::LIST_MASTER],
         }
     }
 
