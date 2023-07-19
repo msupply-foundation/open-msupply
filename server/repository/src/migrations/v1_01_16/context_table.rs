@@ -24,15 +24,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"
             ALTER TABLE document ADD COLUMN context_id TEXT REFERENCES context(id);
-            UPDATE document SET context_id = context;
             ALTER TABLE document DROP COLUMN context;
 
             ALTER TABLE document_registry ADD COLUMN context_id TEXT REFERENCES context(id);
-            UPDATE document_registry SET context_id = document_context;
             ALTER TABLE document_registry DROP COLUMN document_context;
 
             ALTER TABLE user_permission ADD COLUMN context_id TEXT REFERENCES context(id);
-            UPDATE user_permission SET context_id = context;
             ALTER TABLE user_permission DROP COLUMN context;
             "#
     )?;
