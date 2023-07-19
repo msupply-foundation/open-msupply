@@ -113,7 +113,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(input.patient_id),
-        context_id: registry.document_context_id,
+        context_id: registry.context_id,
     })
 }
 
@@ -249,7 +249,7 @@ mod test {
                 id: "patient_id".to_string(),
                 r#type: DocumentRegistryType::Patient,
                 document_type: PATIENT_TYPE.to_string(),
-                document_context_id: PATIENT_CONTEXT_ID.to_string(),
+                context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
@@ -261,7 +261,7 @@ mod test {
                 id: "program_enrolment_id".to_string(),
                 r#type: DocumentRegistryType::ProgramEnrolment,
                 document_type: enrolment_doc_type.to_string(),
-                document_context_id: program_context.to_string(),
+                context_id: program_context.to_string(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),

@@ -74,7 +74,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
         let result = DocumentRegistryRow {
             id,
             document_type,
-            document_context_id: document_context,
+            context_id: document_context,
             r#type: match r#type {
                 LegacyDocumentType::Patient => DocumentRegistryType::Patient,
                 LegacyDocumentType::ProgramEnrolment => DocumentRegistryType::ProgramEnrolment,

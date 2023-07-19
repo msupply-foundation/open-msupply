@@ -43,7 +43,7 @@ impl SyncRecordTester for DocumentRegistryTester {
             id: uuid(),
             r#type: DocumentRegistryType::ProgramEnrolment,
             document_type: "TestProgram".to_string(),
-            document_context_id: context.id.clone(),
+            context_id: context.id.clone(),
             name: Some("Some name".to_string()),
             parent_id: None,
             form_schema_id: Some(form_row1.id.clone()),
