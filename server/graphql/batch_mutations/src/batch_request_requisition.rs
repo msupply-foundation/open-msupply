@@ -19,23 +19,23 @@ type ServiceInput = BatchRequestRequisition;
 ))]
 #[graphql(concrete(
     name = "UpdateRequestRequisitionResponseWithId",
-    params(request_requisition::UpdateResponse)
+    params(request_requisition::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteRequestRequisitionResponseWithId",
-    params(request_requisition::DeleteResponse)
+    params(request_requisition::delete::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "InsertRequestRequisitionLineResponseWithId",
-    params(request_requisition_line::InsertResponse)
+    params(request_requisition_line::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateRequestRequisitionLineResponseWithId",
-    params(request_requisition_line::UpdateResponse)
+    params(request_requisition_line::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteRequestRequisitionLineResponseWithId",
-    params(request_requisition_line::DeleteResponse)
+    params(request_requisition_line::delete::DeleteResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
@@ -45,13 +45,15 @@ pub struct MutationWithId<T: OutputType> {
 type InsertRequisitionsResponse =
     Option<Vec<MutationWithId<request_requisition::insert::InsertResponse>>>;
 type InsertRequisitionLinesResponse =
-    Option<Vec<MutationWithId<request_requisition_line::InsertResponse>>>;
+    Option<Vec<MutationWithId<request_requisition_line::insert::InsertResponse>>>;
 type UpdateRequisitionLinesResponse =
-    Option<Vec<MutationWithId<request_requisition_line::UpdateResponse>>>;
+    Option<Vec<MutationWithId<request_requisition_line::update::UpdateResponse>>>;
 type DeleteRequisitionLinesResponse =
-    Option<Vec<MutationWithId<request_requisition_line::DeleteResponse>>>;
-type UpdateRequisitionsResponse = Option<Vec<MutationWithId<request_requisition::UpdateResponse>>>;
-type DeleteRequisitionsResponse = Option<Vec<MutationWithId<request_requisition::DeleteResponse>>>;
+    Option<Vec<MutationWithId<request_requisition_line::delete::DeleteResponse>>>;
+type UpdateRequisitionsResponse =
+    Option<Vec<MutationWithId<request_requisition::update::UpdateResponse>>>;
+type DeleteRequisitionsResponse =
+    Option<Vec<MutationWithId<request_requisition::delete::DeleteResponse>>>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchRequestRequisitionResponse")]
@@ -68,11 +70,14 @@ pub struct BatchResponse {
 #[graphql(name = "BatchRequestRequisitionInput")]
 pub struct BatchInput {
     pub insert_request_requisitions: Option<Vec<request_requisition::insert::InsertInput>>,
-    pub insert_request_requisition_lines: Option<Vec<request_requisition_line::InsertInput>>,
-    pub update_request_requisition_lines: Option<Vec<request_requisition_line::UpdateInput>>,
-    pub delete_request_requisition_lines: Option<Vec<request_requisition_line::DeleteInput>>,
-    pub update_request_requisitions: Option<Vec<request_requisition::UpdateInput>>,
-    pub delete_request_requisitions: Option<Vec<request_requisition::DeleteInput>>,
+    pub insert_request_requisition_lines:
+        Option<Vec<request_requisition_line::insert::InsertInput>>,
+    pub update_request_requisition_lines:
+        Option<Vec<request_requisition_line::update::UpdateInput>>,
+    pub delete_request_requisition_lines:
+        Option<Vec<request_requisition_line::delete::DeleteInput>>,
+    pub update_request_requisitions: Option<Vec<request_requisition::update::UpdateInput>>,
+    pub delete_request_requisitions: Option<Vec<request_requisition::delete::DeleteInput>>,
     pub continue_on_error: Option<bool>,
 }
 

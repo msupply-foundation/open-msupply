@@ -1,6 +1,7 @@
 use repository::{
-    ActivityLogFilter, ActivityLogRepository, ActivityLogRow, EqualFilter, InvoiceLine,
-    InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, Name,
+    activity_log::{ActivityLogFilter, ActivityLogRepository},
+    ActivityLogRow, EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
+    InvoiceLineRow, Name,
 };
 use repository::{InvoiceRow, StorageConnection};
 use util::uuid::uuid;

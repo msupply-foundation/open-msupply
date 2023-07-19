@@ -45,6 +45,7 @@ pub fn generate(
         colour: None,
         linked_invoice_id: None,
         tax: None,
+        clinician_id: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fullfilments)?;

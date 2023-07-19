@@ -90,16 +90,17 @@ impl From<RepositoryError> for InsertRepackError {
 mod test {
     use crate::service_provider::ServiceProvider;
     use repository::{
+        activity_log::{ActivityLog, ActivityLogFilter, ActivityLogRepository},
+        location_movement::{LocationMovement, LocationMovementFilter, LocationMovementRepository},
         mock::{
             mock_item_b_lines, mock_location_1, mock_stock_line_a, mock_stock_line_b,
             mock_stock_line_ci_c, mock_stock_line_si_d, mock_store_a, mock_user_account_a,
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        ActivityLog, ActivityLogFilter, ActivityLogRepository, ActivityLogRow, ActivityLogType,
-        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType,
-        InvoiceRowRepository, LocationMovement, LocationMovementFilter, LocationMovementRepository,
-        LocationMovementRow, StockLineFilter, StockLineRepository, StockLineRow, StorageConnection,
+        ActivityLogRow, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRepository,
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRowRepository, LocationMovementRow,
+        StockLineFilter, StockLineRepository, StockLineRow, StorageConnection,
     };
     use util::{inline_edit, inline_init};
 

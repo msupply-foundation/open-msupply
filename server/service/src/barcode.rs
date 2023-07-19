@@ -1,6 +1,7 @@
 use repository::{
-    Barcode, BarcodeFilter, BarcodeRepository, BarcodeRow, BarcodeRowRepository, BarcodeSort,
-    EqualFilter, PaginationOption, RepositoryError, StorageConnection, StorageConnectionManager,
+    barcode::{Barcode, BarcodeFilter, BarcodeRepository, BarcodeSort},
+    BarcodeRow, BarcodeRowRepository, EqualFilter, PaginationOption, RepositoryError,
+    StorageConnection, StorageConnectionManager,
 };
 use util::uuid::uuid;
 

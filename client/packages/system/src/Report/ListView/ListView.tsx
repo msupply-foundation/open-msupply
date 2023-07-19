@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   TableProvider,
   DataTable,
@@ -10,27 +10,45 @@ import {
   ReportContext,
   PrinterIcon,
   BaseButton,
+  useDialog,
+  BasicSpinner,
+  useDebouncedValue,
 } from '@openmsupply-client/common';
 import { JsonData } from '@openmsupply-client/programs';
 import { useReport, ReportRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
 import { ReportArgumentsModal } from '../components/ReportArgumentsModal';
 
+const PrintingDialog: React.FC<{ isPrinting: boolean }> = ({ isPrinting }) => {
+  const { Modal, showDialog, hideDialog } = useDialog();
+
+  useEffect(() => {
+    if (isPrinting) {
+      showDialog();
+    } else {
+      hideDialog();
+    }
+  }, [isPrinting]);
+
+  return (
+    <Modal title="" height={200}>
+      <BasicSpinner messageKey="messages.fetching-report-data"></BasicSpinner>
+    </Modal>
+  );
+};
+
 const PrintButton = ({
   report,
-  setArguments,
+  onReportSelected,
+  isPrinting,
 }: {
   report: ReportRowFragment;
-  setArguments: (report?: ReportRowFragment) => void;
+  onReportSelected: (report?: ReportRowFragment) => void;
+  isPrinting: boolean;
 }) => {
   const t = useTranslation();
-  const { print } = useReport.utils.print();
   const onClick = () => {
-    if (report.argumentSchema) {
-      setArguments(report);
-    } else {
-      print({ reportId: report.id, dataId: '', args: undefined });
-    }
+    onReportSelected(report);
   };
 
   return (
@@ -38,6 +56,7 @@ const PrintButton = ({
       onClick={onClick}
       startIcon={<PrinterIcon />}
       sx={{ margin: 1 }}
+      disabled={isPrinting}
     >
       {t('button.print')}
     </BaseButton>
@@ -64,7 +83,11 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
-  const { print } = useReport.utils.print();
+  const { print, isPrinting } = useReport.utils.print();
+
+  // Wait a little bit before showing the modal, e.g. when the report prints very quickly, don't
+  // show the modal.
+  const debouncedIsPrinting = useDebouncedValue(isPrinting, 300);
 
   const columns = useColumns<ReportRowFragment>(
     [
@@ -78,7 +101,11 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
       },
       {
         Cell: ({ rowData }) => (
-          <PrintButton setArguments={onReportSelected} report={rowData} />
+          <PrintButton
+            onReportSelected={onReportSelected}
+            report={rowData}
+            isPrinting={isPrinting}
+          />
         ),
         key: 'print',
         width: 150,
@@ -130,6 +157,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
         onReset={() => setReportWithArgs(undefined)}
         onArgumentsSelected={printReport}
       />
+      <PrintingDialog isPrinting={debouncedIsPrinting && isPrinting} />
     </>
   );
 };

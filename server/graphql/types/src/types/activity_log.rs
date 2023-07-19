@@ -5,7 +5,7 @@ use graphql_core::{
     loader::{StoreByIdLoader, UserLoader},
     ContextExt,
 };
-use repository::{unknown_user, ActivityLog, ActivityLogRow, ActivityLogType};
+use repository::{activity_log::ActivityLog, unknown_user, ActivityLogRow, ActivityLogType};
 use service::ListResult;
 
 use super::{StoreNode, UserNode};

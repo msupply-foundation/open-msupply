@@ -333,12 +333,15 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // customer invoices
             Permissions::ViewCustomerInvoices => {
                 output.insert(Permission::OutboundShipmentQuery);
+                output.insert(Permission::PrescriptionQuery);
             }
             Permissions::CreateCustomerInvoices => {
                 output.insert(Permission::OutboundShipmentMutate);
+                output.insert(Permission::PrescriptionMutate);
             }
             Permissions::EditCustomerInvoices => {
                 output.insert(Permission::OutboundShipmentMutate);
+                output.insert(Permission::PrescriptionMutate);
             }
             // supplier invoices
             Permissions::ViewSupplierInvoices => {

@@ -10,16 +10,24 @@ use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
 pub mod query;
+use self::outbound_shipment::batch_outbound_shipment;
+use self::outbound_shipment::BatchOutboundShipment;
+use self::outbound_shipment::BatchOutboundShipmentResult;
+use self::outbound_shipment::UpdateOutboundShipmentName;
+use self::outbound_shipment::UpdateOutboundShipmentNameError;
 use self::query::*;
 
 pub mod outbound_shipment;
-use self::outbound_shipment::*;
+use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
 
 pub mod inbound_shipment;
 use self::inbound_shipment::*;
 
 pub mod validate;
 pub use self::validate::*;
+
+pub mod prescription;
+pub use self::prescription::*;
 
 pub mod common;
 
@@ -142,6 +150,38 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: common::AddToShipmentFromMasterListInput,
     ) -> Result<Vec<InvoiceLine>, inbound_shipment::AddToInboundShipmentFromMasterListError> {
         inbound_shipment::add_from_master_list(ctx, input)
+    }
+
+    fn insert_prescription(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertPrescription,
+    ) -> Result<Invoice, InsertPrescriptionError> {
+        insert_prescription(ctx, input)
+    }
+
+    fn update_prescription(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdatePrescription,
+    ) -> Result<Invoice, UpdatePrescriptionError> {
+        update_prescription(ctx, input)
+    }
+
+    fn delete_prescription(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<String, DeletePrescriptionError> {
+        delete_prescription(ctx, id)
+    }
+
+    fn batch_prescription(
+        &self,
+        ctx: &ServiceContext,
+        input: BatchPrescription,
+    ) -> Result<BatchPrescriptionResult, RepositoryError> {
+        batch_prescription(ctx, input)
     }
 }
 

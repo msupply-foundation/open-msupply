@@ -3,7 +3,9 @@ mod query {
     use repository::mock::mock_store_a;
     use repository::EqualFilter;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, Location, LocationFilter, LocationRepository,
+        location::{Location, LocationFilter, LocationRepository},
+        mock::MockDataInserts,
+        test_db::setup_all,
         LocationRow,
     };
 

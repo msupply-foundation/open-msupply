@@ -1,4 +1,4 @@
-use crate::{service_provider::ServiceContext, WithDBError};
+use crate::service_provider::ServiceContext;
 use repository::{
     InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
     StockLineRowRepository,
@@ -7,16 +7,19 @@ use repository::{
 mod validate;
 
 use validate::validate;
+
+use super::StockOutType;
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct DeleteOutboundShipmentLine {
+pub struct DeleteStockOutLine {
     pub id: String,
+    pub r#type: Option<StockOutType>,
 }
 
-type OutError = DeleteOutboundShipmentLineError;
+type OutError = DeleteStockOutLineError;
 
-pub fn delete_outbound_shipment_line(
+pub fn delete_stock_out_line(
     ctx: &ServiceContext,
-    input: DeleteOutboundShipmentLine,
+    input: DeleteStockOutLine,
 ) -> Result<String, OutError> {
     let line_id = ctx
         .connection
@@ -48,31 +51,20 @@ pub fn delete_outbound_shipment_line(
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum DeleteOutboundShipmentLineError {
+pub enum DeleteStockOutLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
-    NotAnOutboundShipment,
+    InvoiceTypeDoesNotMatch,
+    NoInvoiceType,
     NotThisStoreInvoice,
     CannotEditInvoice,
     NotThisInvoiceLine(String),
 }
 
-impl From<RepositoryError> for DeleteOutboundShipmentLineError {
+impl From<RepositoryError> for DeleteStockOutLineError {
     fn from(error: RepositoryError) -> Self {
-        DeleteOutboundShipmentLineError::DatabaseError(error)
-    }
-}
-
-impl<ERR> From<WithDBError<ERR>> for DeleteOutboundShipmentLineError
-where
-    ERR: Into<DeleteOutboundShipmentLineError>,
-{
-    fn from(result: WithDBError<ERR>) -> Self {
-        match result {
-            WithDBError::DatabaseError(error) => error.into(),
-            WithDBError::Error(error) => error.into(),
-        }
+        DeleteStockOutLineError::DatabaseError(error)
     }
 }
 
@@ -81,10 +73,9 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_inbound_shipment_a_invoice_lines, mock_outbound_shipment_a_invoice_lines,
-            mock_outbound_shipment_b_invoice_lines, mock_outbound_shipment_c_invoice_lines,
-            mock_outbound_shipment_no_lines, mock_store_a, mock_store_b, mock_store_c, MockData,
-            MockDataInserts,
+            mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_b_invoice_lines,
+            mock_outbound_shipment_c_invoice_lines, mock_outbound_shipment_no_lines, mock_store_a,
+            mock_store_b, mock_store_c, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
@@ -93,18 +84,17 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice_line::outbound_shipment_line::delete::DeleteOutboundShipmentLine,
-        invoice_line::outbound_shipment_line::DeleteOutboundShipmentLineError as ServiceError,
+        invoice_line::stock_out_line::{
+            delete::{DeleteStockOutLine, DeleteStockOutLineError as ServiceError},
+            StockOutType,
+        },
         service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
-    async fn delete_inbound_shipment_line_errors() {
-        let (_, _, connection_manager, _) = setup_all(
-            "delete_outbound_shipment_line_errors",
-            MockDataInserts::all(),
-        )
-        .await;
+    async fn delete_stock_out_line_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("delete_stock_out_line_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
@@ -114,48 +104,64 @@ mod test {
 
         // LineDoesNotExist
         assert_eq!(
-            service.delete_outbound_shipment_line(
+            service.delete_stock_out_line(
                 &context,
-                DeleteOutboundShipmentLine {
+                DeleteStockOutLine {
                     id: "invalid".to_owned(),
+                    r#type: Some(StockOutType::OutboundShipment)
                 },
             ),
             Err(ServiceError::LineDoesNotExist)
         );
 
         // NotThisStoreInvoice
+        context.store_id = mock_store_a().id;
         assert_eq!(
-            service.delete_outbound_shipment_line(
+            service.delete_stock_out_line(
                 &context,
-                DeleteOutboundShipmentLine {
-                    id: mock_outbound_shipment_c_invoice_lines()[0].id.clone()
+                DeleteStockOutLine {
+                    id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
+                    r#type: Some(StockOutType::OutboundShipment)
                 }
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
 
-        // NotAnOutboundShipment
-        context.store_id = mock_store_a().id;
-        assert_eq!(
-            service.delete_outbound_shipment_line(
-                &context,
-                DeleteOutboundShipmentLine {
-                    id: mock_inbound_shipment_a_invoice_lines()[0].id.clone(),
-                },
-            ),
-            Err(ServiceError::NotAnOutboundShipment)
-        );
-
         // CannotEditInvoice
         context.store_id = mock_store_c().id;
         assert_eq!(
-            service.delete_outbound_shipment_line(
+            service.delete_stock_out_line(
                 &context,
-                DeleteOutboundShipmentLine {
+                DeleteStockOutLine {
                     id: mock_outbound_shipment_b_invoice_lines()[1].id.clone(),
+                    r#type: Some(StockOutType::OutboundShipment)
                 },
             ),
             Err(ServiceError::CannotEditInvoice)
+        );
+
+        // InvoiceTypeDoesNotMatch
+        assert_eq!(
+            service.delete_stock_out_line(
+                &context,
+                DeleteStockOutLine {
+                    id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
+                    r#type: Some(StockOutType::Prescription)
+                },
+            ),
+            Err(ServiceError::InvoiceTypeDoesNotMatch)
+        );
+
+        // NoInvoiceType
+        assert_eq!(
+            service.delete_stock_out_line(
+                &context,
+                DeleteStockOutLine {
+                    id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
+                    r#type: None,
+                },
+            ),
+            Err(ServiceError::NoInvoiceType)
         );
     }
 
@@ -222,10 +228,11 @@ mod test {
             stock_line.available_number_of_packs + invoice_line.number_of_packs;
 
         let invoice_line_id = service
-            .delete_outbound_shipment_line(
+            .delete_stock_out_line(
                 &context,
-                DeleteOutboundShipmentLine {
+                DeleteStockOutLine {
                     id: mock_outbound_shipment_a_invoice_lines()[0].id.clone(),
+                    r#type: Some(StockOutType::OutboundShipment),
                 },
             )
             .unwrap();
@@ -256,10 +263,11 @@ mod test {
 
         context.store_id = mock_store_c().id;
         service
-            .delete_outbound_shipment_line(
+            .delete_stock_out_line(
                 &context,
-                DeleteOutboundShipmentLine {
+                DeleteStockOutLine {
                     id: mock_outbound_shipment_c_invoice_lines()[0].id.clone(),
+                    r#type: Some(StockOutType::OutboundShipment),
                 },
             )
             .unwrap();
@@ -283,10 +291,11 @@ mod test {
             stock_line.available_number_of_packs + invoice_line.number_of_packs;
 
         service
-            .delete_outbound_shipment_line(
+            .delete_stock_out_line(
                 &context,
-                DeleteOutboundShipmentLine {
+                DeleteStockOutLine {
                     id: outbound_shipment_lines().id,
+                    r#type: Some(StockOutType::OutboundShipment),
                 },
             )
             .unwrap();

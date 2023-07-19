@@ -13,55 +13,55 @@ use crate::{to_standard_error, VecOrNone};
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "InsertOutboundShipmentResponseWithId",
-    params(outbound_shipment::InsertResponse)
+    params(outbound_shipment::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateOutboundShipmentResponseWithId",
-    params(outbound_shipment::UpdateResponse)
+    params(outbound_shipment::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteOutboundShipmentResponseWithId",
-    params(outbound_shipment::DeleteResponse)
+    params(outbound_shipment::delete::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "InsertOutboundShipmentLineResponseWithId",
-    params(outbound_shipment_line::line::InsertResponse)
+    params(outbound_shipment_line::line::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateOutboundShipmentLineResponseWithId",
-    params(outbound_shipment_line::line::UpdateResponse)
+    params(outbound_shipment_line::line::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteOutboundShipmentLineResponseWithId",
-    params(outbound_shipment_line::line::DeleteResponse)
+    params(outbound_shipment_line::line::delete::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "InsertOutboundShipmentServiceLineResponseWithId",
-    params(outbound_shipment_line::service_line::InsertResponse)
+    params(outbound_shipment_line::service_line::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateOutboundShipmentServiceLineResponseWithId",
-    params(outbound_shipment_line::service_line::UpdateResponse)
+    params(outbound_shipment_line::service_line::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteOutboundShipmentServiceLineResponseWithId",
-    params(outbound_shipment_line::service_line::DeleteResponse)
+    params(outbound_shipment_line::service_line::delete::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "InsertOutboundShipmentUnallocatedLineResponseWithId",
-    params(outbound_shipment_line::unallocated_line::InsertResponse)
+    params(outbound_shipment_line::unallocated_line::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateOutboundShipmentUnallocatedLineResponseWithId",
-    params(outbound_shipment_line::unallocated_line::UpdateResponse)
+    params(outbound_shipment_line::unallocated_line::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteOutboundShipmentUnallocatedLineResponseWithId",
-    params(outbound_shipment_line::unallocated_line::DeleteResponse)
+    params(outbound_shipment_line::unallocated_line::delete::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "AllocateOutboundShipmentUnallocatedLineResponseWithId",
-    params(outbound_shipment_line::unallocated_line::AllocateResponse)
+    params(outbound_shipment_line::unallocated_line::allocate::AllocateResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
@@ -71,29 +71,33 @@ pub struct MutationWithId<T: OutputType> {
 type ServiceInput = BatchOutboundShipment;
 type ServiceResult = BatchOutboundShipmentResult;
 
-type InsertShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::InsertResponse>>>;
+type InsertShipmentsResponse =
+    Option<Vec<MutationWithId<outbound_shipment::insert::InsertResponse>>>;
 type InsertLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::line::InsertResponse>>>;
+    Option<Vec<MutationWithId<outbound_shipment_line::line::insert::InsertResponse>>>;
 type UpdateLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::line::UpdateResponse>>>;
+    Option<Vec<MutationWithId<outbound_shipment_line::line::update::UpdateResponse>>>;
 type DeleteLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::line::DeleteResponse>>>;
+    Option<Vec<MutationWithId<outbound_shipment_line::line::delete::DeleteResponse>>>;
 type InsertServiceLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::service_line::InsertResponse>>>;
+    Option<Vec<MutationWithId<outbound_shipment_line::service_line::insert::InsertResponse>>>;
 type UpdateServiceLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::service_line::UpdateResponse>>>;
+    Option<Vec<MutationWithId<outbound_shipment_line::service_line::update::UpdateResponse>>>;
 type DeleteServiceLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::service_line::DeleteResponse>>>;
+    Option<Vec<MutationWithId<outbound_shipment_line::service_line::delete::DeleteResponse>>>;
 type InsertUnallocatedLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::InsertResponse>>>;
+    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::insert::InsertResponse>>>;
 type UpdateUnallocatedLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::UpdateResponse>>>;
+    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::update::UpdateResponse>>>;
 type DeleteUnallocatedLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::DeleteResponse>>>;
-type AllocateLinesResponse =
-    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::AllocateResponse>>>;
-type UpdateShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::UpdateResponse>>>;
-type DeleteShipmentsResponse = Option<Vec<MutationWithId<outbound_shipment::DeleteResponse>>>;
+    Option<Vec<MutationWithId<outbound_shipment_line::unallocated_line::delete::DeleteResponse>>>;
+type AllocateLinesResponse = Option<
+    Vec<MutationWithId<outbound_shipment_line::unallocated_line::allocate::AllocateResponse>>,
+>;
+type UpdateShipmentsResponse =
+    Option<Vec<MutationWithId<outbound_shipment::update::UpdateResponse>>>;
+type DeleteShipmentsResponse =
+    Option<Vec<MutationWithId<outbound_shipment::delete::DeleteResponse>>>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchOutboundShipmentResponse")]
@@ -116,24 +120,27 @@ pub struct BatchResponse {
 #[derive(InputObject)]
 #[graphql(name = "BatchOutboundShipmentInput")]
 pub struct BatchInput {
-    pub insert_outbound_shipments: Option<Vec<outbound_shipment::InsertInput>>,
-    pub insert_outbound_shipment_lines: Option<Vec<outbound_shipment_line::line::InsertInput>>,
-    pub update_outbound_shipment_lines: Option<Vec<outbound_shipment_line::line::UpdateInput>>,
-    pub delete_outbound_shipment_lines: Option<Vec<outbound_shipment_line::line::DeleteInput>>,
+    pub insert_outbound_shipments: Option<Vec<outbound_shipment::insert::InsertInput>>,
+    pub insert_outbound_shipment_lines:
+        Option<Vec<outbound_shipment_line::line::insert::InsertInput>>,
+    pub update_outbound_shipment_lines:
+        Option<Vec<outbound_shipment_line::line::update::UpdateInput>>,
+    pub delete_outbound_shipment_lines:
+        Option<Vec<outbound_shipment_line::line::delete::DeleteInput>>,
     pub insert_outbound_shipment_service_lines:
-        Option<Vec<outbound_shipment_line::service_line::InsertInput>>,
+        Option<Vec<outbound_shipment_line::service_line::insert::InsertInput>>,
     pub update_outbound_shipment_service_lines:
-        Option<Vec<outbound_shipment_line::service_line::UpdateInput>>,
+        Option<Vec<outbound_shipment_line::service_line::update::UpdateInput>>,
     pub delete_outbound_shipment_service_lines:
-        Option<Vec<outbound_shipment_line::service_line::DeleteInput>>,
+        Option<Vec<outbound_shipment_line::service_line::delete::DeleteInput>>,
     pub insert_outbound_shipment_unallocated_lines:
-        Option<Vec<outbound_shipment_line::unallocated_line::InsertInput>>,
+        Option<Vec<outbound_shipment_line::unallocated_line::insert::InsertInput>>,
     pub update_outbound_shipment_unallocated_lines:
-        Option<Vec<outbound_shipment_line::unallocated_line::UpdateInput>>,
+        Option<Vec<outbound_shipment_line::unallocated_line::update::UpdateInput>>,
     pub delete_outbound_shipment_unallocated_lines:
-        Option<Vec<outbound_shipment_line::unallocated_line::DeleteInput>>,
+        Option<Vec<outbound_shipment_line::unallocated_line::delete::DeleteInput>>,
     pub allocated_outbound_shipment_unallocated_lines: Option<Vec<String>>,
-    pub update_outbound_shipments: Option<Vec<outbound_shipment::UpdateInput>>,
+    pub update_outbound_shipments: Option<Vec<outbound_shipment::update::UpdateInput>>,
     pub delete_outbound_shipments: Option<Vec<String>>,
     pub continue_on_error: Option<bool>,
 }
@@ -514,18 +521,14 @@ mod test {
     use service::{
         invoice::{
             outbound_shipment::{
-                BatchOutboundShipment, BatchOutboundShipmentResult, DeleteOutboundShipmentError,
-                InsertOutboundShipment, InsertOutboundShipmentError, UpdateOutboundShipment,
-                UpdateOutboundShipmentError,
+                delete::DeleteOutboundShipmentError,
+                insert::{InsertOutboundShipment, InsertOutboundShipmentError},
+                update::{UpdateOutboundShipment, UpdateOutboundShipmentError},
+                BatchOutboundShipment, BatchOutboundShipmentResult,
             },
             InvoiceServiceTrait,
         },
         invoice_line::{
-            outbound_shipment_line::{
-                DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
-                InsertOutboundShipmentLine, InsertOutboundShipmentLineError,
-                UpdateOutboundShipmentLine, UpdateOutboundShipmentLineError,
-            },
             outbound_shipment_service_line::{
                 DeleteOutboundShipmentServiceLineError, InsertOutboundShipmentServiceLine,
                 InsertOutboundShipmentServiceLineError, UpdateOutboundShipmentServiceLine,
@@ -536,6 +539,10 @@ mod test {
                 DeleteOutboundShipmentUnallocatedLine, DeleteOutboundShipmentUnallocatedLineError,
                 InsertOutboundShipmentUnallocatedLine, InsertOutboundShipmentUnallocatedLineError,
                 UpdateOutboundShipmentUnallocatedLine, UpdateOutboundShipmentUnallocatedLineError,
+            },
+            stock_out_line::{
+                DeleteStockOutLine, DeleteStockOutLineError, InsertStockOutLine,
+                InsertStockOutLineError, StockOutType, UpdateStockOutLine, UpdateStockOutLineError,
             },
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -886,22 +893,22 @@ mod test {
                     result: Err(InsertOutboundShipmentError::OtherPartyNotACustomer),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertOutboundShipmentLine| {
+                    input: inline_init(|input: &mut InsertStockOutLine| {
                         input.id = "id2".to_string()
                     }),
-                    result: Err(InsertOutboundShipmentLineError::InvoiceDoesNotExist {}),
+                    result: Err(InsertStockOutLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateOutboundShipmentLine| {
+                    input: inline_init(|input: &mut UpdateStockOutLine| {
                         input.id = "id3".to_string()
                     }),
-                    result: Err(UpdateOutboundShipmentLineError::LineDoesNotExist {}),
+                    result: Err(UpdateStockOutLineError::LineDoesNotExist {}),
                 }],
                 delete_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteOutboundShipmentLine| {
+                    input: inline_init(|input: &mut DeleteStockOutLine| {
                         input.id = "id4".to_string()
                     }),
-                    result: Err(DeleteOutboundShipmentLineError::LineDoesNotExist {}),
+                    result: Err(DeleteStockOutLineError::LineDoesNotExist {}),
                 }],
 
                 insert_service_line: vec![InputWithResult {
@@ -917,7 +924,7 @@ mod test {
                     result: Err(UpdateOutboundShipmentServiceLineError::LineDoesNotExist {}),
                 }],
                 delete_service_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut DeleteOutboundShipmentLine| {
+                    input: inline_init(|input: &mut DeleteStockOutLine| {
                         input.id = "id7".to_string()
                     }),
                     result: Err(DeleteOutboundShipmentServiceLineError::LineDoesNotExist {}),
@@ -977,10 +984,10 @@ mod test {
                     result: Err(InsertOutboundShipmentError::OtherPartyNotACustomer),
                 }],
                 insert_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut InsertOutboundShipmentLine| {
+                    input: inline_init(|input: &mut InsertStockOutLine| {
                         input.id = "id2".to_string()
                     }),
-                    result: Err(InsertOutboundShipmentLineError::InvoiceDoesNotExist {}),
+                    result: Err(InsertStockOutLineError::InvoiceDoesNotExist {}),
                 }],
                 update_line: vec![],
                 delete_line: vec![],
@@ -1042,8 +1049,9 @@ mod test {
                 insert_shipment: vec![],
                 insert_line: vec![],
                 update_line: vec![InputWithResult {
-                    input: inline_init(|input: &mut UpdateOutboundShipmentLine| {
-                        input.id = "id3".to_string()
+                    input: inline_init(|input: &mut UpdateStockOutLine| {
+                        input.id = "id3".to_string();
+                        input.r#type = Some(StockOutType::OutboundShipment)
                     }),
                     result: Ok(inline_init(|input: &mut InvoiceLine| {
                         input.invoice_line_row.id = "id3".to_string()

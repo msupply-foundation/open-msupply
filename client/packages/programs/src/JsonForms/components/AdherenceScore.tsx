@@ -81,8 +81,8 @@ const usePreviousCountFromEvent = (
   const { data: events } = useProgramEvents.document.list(
     {
       at: beforeDate,
-      patientId: currentEncounter?.patient?.id ?? '',
       filter: {
+        patientId: { equalTo: currentEncounter?.patient?.id ?? '' },
         type: {
           equalTo: encounterEventType,
         },

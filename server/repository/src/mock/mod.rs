@@ -85,7 +85,8 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ContextRow,
+    ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
+    ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
     ContextRowRepository, Document, DocumentRepository, FormSchema, FormSchemaRowRepository,
     InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceRow, ItemRow, KeyValueStoreRepository, KeyValueStoreRow,
@@ -148,6 +149,8 @@ pub struct MockData {
     pub programs: Vec<ProgramRow>,
     pub program_order_types: Vec<ProgramRequisitionOrderTypeRow>,
     pub barcodes: Vec<BarcodeRow>,
+    pub clinicians: Vec<ClinicianRow>,
+    pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
 }
 
@@ -201,6 +204,8 @@ pub struct MockDataInserts {
     pub programs: bool,
     pub program_requisition_settings: bool,
     pub program_order_types: bool,
+    pub clinicians: bool,
+    pub clinician_store_joins: bool,
     pub contexts: bool,
 }
 
@@ -243,6 +248,8 @@ impl MockDataInserts {
             programs: true,
             program_requisition_settings: true,
             program_order_types: true,
+            clinicians: true,
+            clinician_store_joins: true,
             contexts: true,
         }
     }
@@ -408,6 +415,16 @@ impl MockDataInserts {
 
     pub fn program_order_types(mut self) -> Self {
         self.program_order_types = true;
+        self
+    }
+
+    pub fn clinicians(mut self) -> Self {
+        self.clinicians = true;
+        self
+    }
+
+    pub fn clinician_store_joins(mut self) -> Self {
+        self.clinician_store_joins = true;
         self
     }
 
@@ -802,6 +819,20 @@ pub fn insert_mock_data(
                 repo.upsert_one(&row).unwrap();
             }
         }
+
+        if inserts.clinicians {
+            let repo = ClinicianRowRepository::new(connection);
+            for row in &mock_data.clinicians {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.clinician_store_joins {
+            let repo = ClinicianStoreJoinRowRepository::new(connection);
+            for row in &mock_data.clinician_store_joins {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -846,6 +877,8 @@ impl MockData {
             mut master_list_name_joins,
             mut program_order_types,
             mut barcodes,
+            mut clinicians,
+            mut clinician_store_joins,
             mut contexts,
         } = other;
 
@@ -886,6 +919,9 @@ impl MockData {
             .append(&mut master_list_name_joins);
         self.program_order_types.append(&mut program_order_types);
         self.barcodes.append(&mut barcodes);
+        self.clinicians.append(&mut clinicians);
+        self.clinician_store_joins
+            .append(&mut clinician_store_joins);
         self.contexts.append(&mut contexts);
 
         self

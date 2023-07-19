@@ -176,11 +176,11 @@ impl<'a> RefreshDatesRepository<'a> {
 
         let adjustment = Duration::days(days_difference);
 
-        for mut timestamp in all_date_values.timestamps.iter_mut() {
+        for timestamp in all_date_values.timestamps.iter_mut() {
             timestamp.0.dt = timestamp.0.dt + adjustment
         }
 
-        for mut date in all_date_values.dates.iter_mut() {
+        for date in all_date_values.dates.iter_mut() {
             date.0.d = date.0.d + adjustment
         }
 

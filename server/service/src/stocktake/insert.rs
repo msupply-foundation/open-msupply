@@ -1,10 +1,10 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, LocationFilter, LocationRepository, MasterListFilter,
-    MasterListLineFilter, MasterListLineRepository, MasterListRepository, NumberRowType,
-    RepositoryError, StockLineFilter, StockLineRepository, StockLineRow, Stocktake,
-    StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
-    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    location::{LocationFilter, LocationRepository},
+    ActivityLogType, EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+    MasterListRepository, NumberRowType, RepositoryError, StockLineFilter, StockLineRepository,
+    StockLineRow, Stocktake, StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository,
+    StocktakeRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 

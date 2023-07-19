@@ -111,24 +111,34 @@ export const allocateQuantities =
       });
     }
 
-    if (status === InvoiceNodeStatus.New && toAllocate > 0) {
+    if (status === InvoiceNodeStatus.New) {
       const placeholderIdx = newDraftOutboundLines.findIndex(
         ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
       );
       const placeholder = newDraftOutboundLines[placeholderIdx];
+      const oldPlaceholder = draftOutboundLines[placeholderIdx];
+      // remove if the oldPlaceholder.numberOfPacks is non-zero and the new placeholder.numberOfPacks is zero
+      const placeholderRemoved =
+        oldPlaceholder?.numberOfPacks && placeholder?.numberOfPacks === 0;
 
-      if (!placeholder) throw new Error('No placeholder within item editing');
-
-      // stock has been allocated, and the auto generated placeholder is no longer required
-      if (shouldUpdatePlaceholder(newValue, placeholder))
+      // the isUpdated flag must be set in order to delete the placeholder row
+      if (placeholderRemoved) {
         placeholder.isUpdated = true;
+      }
 
-      newDraftOutboundLines[placeholderIdx] = {
-        ...placeholder,
-        numberOfPacks: placeholder.numberOfPacks + toAllocate,
-      };
+      if (toAllocate > 0) {
+        if (!placeholder) throw new Error('No placeholder within item editing');
+
+        // stock has been allocated, and the auto generated placeholder is no longer required
+        if (shouldUpdatePlaceholder(newValue, placeholder))
+          placeholder.isUpdated = true;
+
+        newDraftOutboundLines[placeholderIdx] = {
+          ...placeholder,
+          numberOfPacks: placeholder.numberOfPacks + toAllocate,
+        };
+      }
     }
-
     return newDraftOutboundLines;
   };
 
@@ -224,4 +234,4 @@ const reduceBatchAllocation = ({
 export const shouldUpdatePlaceholder = (
   quantity: number,
   placeholder: DraftOutboundLine
-) => quantity > 0 && placeholder.numberOfPacks === 0 && !placeholder.isCreated;
+) => quantity > 0 && !placeholder.isCreated;

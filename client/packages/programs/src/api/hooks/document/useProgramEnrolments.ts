@@ -28,7 +28,7 @@ export const useProgramEnrolmentsPromise = () => {
     return {
       nodes: programs.nodes.map(node => {
         // only take the latest status event
-        const events = node.events
+        const events = node.activeProgramEvents
           .filter(e => e.type === 'programStatus' && e.data)
           .slice(0, 1);
         return {
@@ -57,7 +57,7 @@ export const useProgramEnrolments = (input: ProgramEnrolmentListParams) => {
     api.programEnrolments(params).then(programs => ({
       nodes: programs.nodes.map(node => {
         // only take the latest status event
-        const events = node.events
+        const events = node.activeProgramEvents
           .filter(e => e.type === 'programStatus' && e.data)
           .slice(0, 1);
         return {
