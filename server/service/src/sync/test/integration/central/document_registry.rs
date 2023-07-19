@@ -18,7 +18,7 @@ impl SyncRecordTester for DocumentRegistryTester {
             id: "some context".to_string(),
             name: "".to_string(),
         };
-        let context_json = json!({
+        let master_list_json = json!({
             "ID": context.id.clone(),
             "description": context.name.clone(),
             "isProgram": true,
@@ -61,7 +61,7 @@ impl SyncRecordTester for DocumentRegistryTester {
 
         result.push(TestStepData {
             central_upsert: json!({
-                "list_master": [context_json],
+                "list_master": [master_list_json],
                 "form_schema": [form_json1],
                 "om_document_registry": [doc_registry_json1],
             }),
