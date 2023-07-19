@@ -262,7 +262,7 @@ mod graphql {
             .upsert_one(&DocumentRegistryRow {
                 id: "someid".to_string(),
                 document_type: "TestProgramEnrolment".to_string(),
-                document_context_id: context_program_a().id,
+                context_id: context_program_a().id,
                 r#type: DocumentRegistryType::ProgramEnrolment,
                 name: None,
                 parent_id: None,
@@ -316,7 +316,7 @@ mod graphql {
             .upsert_one(&DocumentRegistryRow {
                 id: "someid".to_string(),
                 document_type: "TestEncounter".to_string(),
-                document_context_id: context_program_a().id,
+                context_id: context_program_a().id,
                 r#type: DocumentRegistryType::Encounter,
                 name: None,
                 parent_id: None,

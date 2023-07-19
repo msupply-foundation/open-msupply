@@ -41,7 +41,7 @@ pub struct DocumentRegistry {
     pub id: String,
     pub parent_id: Option<String>,
     pub document_type: String,
-    pub document_context_id: String,
+    pub context_id: String,
     pub r#type: DocumentRegistryType,
     pub name: Option<String>,
     pub form_schema_id: String,
@@ -123,7 +123,7 @@ fn create_filtered_query(filter: Option<DocumentRegistryFilter>) -> BoxedDocRegi
         apply_equal_filter!(
             query,
             filter.document_context,
-            document_registry_dsl::document_context_id
+            document_registry_dsl::context_id
         );
         apply_equal_filter!(query, filter.r#type, document_registry_dsl::type_);
         apply_equal_filter!(query, filter.parent_id, document_registry_dsl::parent_id);
@@ -175,7 +175,7 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
             id,
             r#type,
             document_type,
-            document_context_id: document_context,
+            context_id: document_context,
             name,
             parent_id,
             form_schema_id: _,
@@ -207,7 +207,7 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
         id,
         parent_id,
         document_type,
-        document_context_id: document_context,
+        context_id: document_context,
         r#type,
         name,
         form_schema_id: form_schema.id,

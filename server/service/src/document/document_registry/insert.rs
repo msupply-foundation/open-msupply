@@ -72,7 +72,7 @@ fn generate(
         id,
         r#type,
         document_type,
-        document_context_id: document_context,
+        context_id: document_context,
         name,
         parent_id,
         form_schema_id: Some(form_schema_id),

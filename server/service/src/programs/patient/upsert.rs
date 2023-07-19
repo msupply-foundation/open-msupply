@@ -125,7 +125,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(patient.id.clone()),
-        context_id: registry.document_context_id,
+        context_id: registry.context_id,
     })
 }
 
@@ -201,7 +201,7 @@ pub mod test {
         test_db::setup_all,
         DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
         DocumentRepository, EqualFilter, FormSchemaRowRepository, Pagination, PatientFilter,
-        PatientRepository, StringFilter,
+        PatientRepository, StringFilter, PATIENT_CONTEXT_ID,
     };
     use serde_json::json;
     use util::inline_init;
@@ -270,7 +270,7 @@ pub mod test {
                 id: "patient_id".to_string(),
                 r#type: DocumentRegistryType::Patient,
                 document_type: PATIENT_TYPE.to_string(),
-                document_context_id: PATIENT_CONTEXT_ID.to_string(),
+                context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),

@@ -168,9 +168,7 @@ fn validate_patient_program_exists(
         .query_by_filter(
             ProgramEnrolmentFilter::new()
                 .patient_id(EqualFilter::equal_to(patient_id))
-                .context(EqualFilter::equal_to(
-                    &encounter_registry.document_context_id,
-                )),
+                .context(EqualFilter::equal_to(&encounter_registry.context_id)),
         )?
         .pop())
 }
@@ -274,7 +272,7 @@ mod test {
                 id: "patient_id".to_string(),
                 r#type: DocumentRegistryType::Patient,
                 document_type: PATIENT_TYPE.to_string(),
-                document_context_id: PATIENT_CONTEXT_ID.to_string(),
+                context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
@@ -286,7 +284,7 @@ mod test {
                 id: "program_enrolment_rego_id".to_string(),
                 r#type: DocumentRegistryType::ProgramEnrolment,
                 document_type: enrolment_doc_type.to_string(),
-                document_context_id: program_context.clone(),
+                context_id: program_context.clone(),
                 name: None,
                 parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
@@ -298,7 +296,7 @@ mod test {
                 id: "encounter_rego_id".to_string(),
                 r#type: DocumentRegistryType::Encounter,
                 document_type: encounter_type.to_string(),
-                document_context_id: program_context.clone(),
+                context_id: program_context.clone(),
                 name: None,
                 parent_id: Some("program_enrolment_rego_id".to_string()),
                 form_schema_id: Some(schema.id.clone()),
