@@ -13,7 +13,7 @@ import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIc
 import { Theme } from '@common/styles';
 import { DiscoveredServers } from './DiscoveredServers';
 
-// TODO should this be disabled if native client doesn't exist ? (since it's navigatable from host)
+// TODO should this be disabled if native client doesn't exist ? (since it's navigable from host)
 
 // When discovery is opened, by default, useNativeClient will try to connect to previously connected server
 // if ?autoconnect=false url parameter is present, auto connection will be disabled, this is useful when navigating
@@ -21,7 +21,7 @@ import { DiscoveredServers } from './DiscoveredServers';
 const isAutoconnect = () => {
   const url = new URL(window.location.href);
   const params = new URLSearchParams(url.search);
-  // autoconnect deafults to true
+  // autoconnect defaults to true
   return params.get('autoconnect') !== 'false';
 };
 
