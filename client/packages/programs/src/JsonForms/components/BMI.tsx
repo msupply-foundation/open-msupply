@@ -6,8 +6,12 @@ import {
   uiTypeIs,
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
-import { DetailInputWithLabelRow, NumUtils } from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH, useZodOptionsValidation } from '../common';
+import {
+  DetailInputWithLabelRow,
+  NumUtils,
+  ObjUtils,
+} from '@openmsupply-client/common';
+import { FORM_LABEL_WIDTH, JsonData, useZodOptionsValidation } from '../common';
 import { z } from 'zod';
 import { useEncounter, useProgramEvents } from '../../api';
 
@@ -27,7 +31,7 @@ const Options = z
 type Options = z.infer<typeof Options>;
 
 const usePreviousHeight = (
-  formData: any | undefined,
+  formData: JsonData | undefined,
   eventType: string | undefined
 ) => {
   // fetch current encounter
@@ -51,7 +55,8 @@ const usePreviousHeight = (
     !!currentEncounter && !!eventType
   );
 
-  if (formData && formData.height) return formData.height;
+  if (ObjUtils.isObject(formData) && formData['height'])
+    return Number.parseFloat(formData['height'] as string);
 
   const event = events?.nodes[0];
   if (event?.data === undefined || event?.data === null) {
