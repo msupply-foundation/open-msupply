@@ -26,6 +26,7 @@ pub enum OtherPartyErrors {
 pub enum CheckOtherPartyType {
     Customer,
     Supplier,
+    Patient,
 }
 
 pub fn get_other_party(
@@ -61,6 +62,12 @@ pub fn check_other_party(
 
         CheckOtherPartyType::Supplier => {
             if !other_party.is_supplier() {
+                return Err(OtherPartyErrors::TypeMismatched);
+            }
+        }
+
+        CheckOtherPartyType::Patient => {
+            if !other_party.is_patient() {
                 return Err(OtherPartyErrors::TypeMismatched);
             }
         }

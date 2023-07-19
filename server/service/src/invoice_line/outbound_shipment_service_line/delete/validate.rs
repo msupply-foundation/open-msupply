@@ -1,8 +1,8 @@
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
+        stock_out_line::delete::DeleteStockOutLine,
         validate::{check_line_belongs_to_invoice, check_line_exists_option},
-        DeleteOutboundShipmentLine,
     },
 };
 use repository::{InvoiceLineRow, InvoiceRowType, StorageConnection};
@@ -10,7 +10,7 @@ use repository::{InvoiceLineRow, InvoiceRowType, StorageConnection};
 use super::DeleteOutboundShipmentServiceLineError;
 
 pub fn validate(
-    input: &DeleteOutboundShipmentLine,
+    input: &DeleteStockOutLine,
     store_id: &str,
     connection: &StorageConnection,
 ) -> Result<InvoiceLineRow, DeleteOutboundShipmentServiceLineError> {

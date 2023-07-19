@@ -29,8 +29,8 @@ const programAdditionalInfoAccessor: ColumnDataAccessor<
 > = ({ rowData }): string[] => {
   const additionalInfo = [];
 
-  if (rowData?.events[0]?.data) {
-    additionalInfo.push(rowData.events[0].data);
+  if (rowData?.activeProgramEvents[0]?.data) {
+    additionalInfo.push(rowData.activeProgramEvents[0].data);
   }
 
   return additionalInfo;

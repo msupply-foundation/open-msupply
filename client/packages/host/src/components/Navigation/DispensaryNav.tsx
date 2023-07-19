@@ -7,19 +7,23 @@ import {
   RouteBuilder,
   AppNavLink,
   AppNavSection,
+  UserStoreNodeFragment,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useNestedNav } from './useNestedNav';
 
 export interface DispensaryNavProps {
-  visible?: boolean;
+  store?: UserStoreNodeFragment;
 }
 
-export const DispensaryNav: FC<DispensaryNavProps> = ({ visible = false }) => {
+export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
   const { isActive } = useNestedNav(
     RouteBuilder.create(AppRoute.Dispensary).addWildCard().build()
   );
   const t = useTranslation('app');
+  const visible = store?.storeMode === StoreModeNodeType.Dispensary;
+  const isProgramModule = store?.preferences.omProgramModule;
 
   return (
     <AppNavSection isActive={visible} to={AppRoute.Dispensary}>
@@ -42,7 +46,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ visible = false }) => {
             text={t('patients')}
           />
           <AppNavLink
-            visible={visible}
+            visible={isProgramModule}
             end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Encounter)
@@ -50,7 +54,7 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ visible = false }) => {
             text={t('encounter')}
           />
           <AppNavLink
-            visible={visible}
+            visible={isProgramModule}
             end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Reports)

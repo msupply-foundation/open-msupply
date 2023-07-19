@@ -10,8 +10,8 @@ use graphql_types::types::InvoiceLineNode;
 
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice_line::outbound_shipment_line::{
-    UpdateOutboundShipmentLine as ServiceInput, UpdateOutboundShipmentLineError as ServiceError,
+use service::invoice_line::stock_out_line::{
+    StockOutType, UpdateStockOutLine as ServiceInput, UpdateStockOutLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
 
@@ -46,7 +46,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     map_response(
         service_provider
             .invoice_line_service
-            .update_outbound_shipment_line(&service_context, input.to_domain()),
+            .update_stock_out_line(&service_context, input.to_domain()),
     )
 }
 
@@ -100,6 +100,7 @@ impl UpdateInput {
         } = self;
         ServiceInput {
             id,
+            r#type: Some(StockOutType::OutboundShipment),
             item_id,
             stock_line_id,
             number_of_packs,
@@ -109,53 +110,54 @@ impl UpdateInput {
                     percentage: tax.percentage,
                 })
             }),
+            note: None,
         }
     }
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
-    use StandardGraphqlError::*;
+    use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::InvoiceDoesNotExist => {
+        InvoiceDoesNotExist => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
             )))
         }
-        ServiceError::CannotEditFinalised => {
+        CannotEditFinalised => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
         }
-        ServiceError::StockLineNotFound => {
+        StockLineNotFound => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::StockLineId,
             )))
         }
-        ServiceError::LocationIsOnHold => {
-            return Ok(UpdateErrorInterface::LocationIsOnHold(LocationIsOnHold {}))
+        LocationIsOnHold => {
+            return Ok(UpdateErrorInterface::LocationIsOnHold(
+                super::LocationIsOnHold {},
+            ))
         }
-        ServiceError::LocationNotFound => {
+        LocationNotFound => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::LocationId,
             )))
         }
-        ServiceError::StockLineAlreadyExistsInInvoice(line_id) => {
+        StockLineAlreadyExistsInInvoice(line_id) => {
             return Ok(UpdateErrorInterface::StockLineAlreadyExistsInInvoice(
-                StockLineAlreadyExistsInInvoice(line_id),
+                super::StockLineAlreadyExistsInInvoice(line_id),
             ))
         }
-        ServiceError::BatchIsOnHold => {
+        BatchIsOnHold => {
             return Ok(UpdateErrorInterface::StockLineIsOnHold(
                 StockLineIsOnHold {},
             ))
         }
-        ServiceError::LineDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
-        }
-        ServiceError::ReductionBelowZero {
+        LineDoesNotExist => return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {})),
+        ReductionBelowZero {
             stock_line_id,
             line_id,
         } => {
@@ -167,15 +169,17 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::NotAnOutboundShipment => BadUserInput(formatted_error),
-        ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
-        ServiceError::ItemNotFound => BadUserInput(formatted_error),
-        ServiceError::ItemDoesNotMatchStockLine => BadUserInput(formatted_error),
-        ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
-        ServiceError::LineDoesNotReferenceStockLine => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::UpdatedLineDoesNotExist => InternalError(formatted_error),
+        NotThisStoreInvoice
+        | InvoiceTypeDoesNotMatch
+        | NoInvoiceType
+        | NumberOfPacksBelowOne
+        | ItemNotFound
+        | ItemDoesNotMatchStockLine
+        | NotThisInvoiceLine(_)
+        | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
+        DatabaseError(_) | UpdatedLineDoesNotExist => {
+            StandardGraphqlError::InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
@@ -197,9 +201,9 @@ mod test {
     use serde_json::json;
     use service::{
         invoice_line::{
-            outbound_shipment_line::{
-                UpdateOutboundShipmentLine as ServiceInput,
-                UpdateOutboundShipmentLineError as ServiceError,
+            stock_out_line::{
+                StockOutType, UpdateStockOutLine as ServiceInput,
+                UpdateStockOutLineError as ServiceError,
             },
             InvoiceLineServiceTrait, ShipmentTaxUpdate,
         },
@@ -213,7 +217,7 @@ mod test {
     pub struct TestService(pub Box<InsertLineMethod>);
 
     impl InvoiceLineServiceTrait for TestService {
-        fn update_outbound_shipment_line(
+        fn update_stock_out_line(
             &self,
             _: &ServiceContext,
             input: ServiceInput,
@@ -461,18 +465,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //NotAnOutboundShipment
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NotAnOutboundShipment)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //NumberOfPacksBelowOne
         let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
         let expected_message = "Bad user input";
@@ -582,13 +574,15 @@ mod test {
                 input,
                 ServiceInput {
                     id: "id input".to_string(),
+                    r#type: Some(StockOutType::OutboundShipment),
                     item_id: Some("item_id input".to_string()),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
                     total_before_tax: Some(1.0),
                     tax: Some(ShipmentTaxUpdate {
                         percentage: Some(1.0),
-                    })
+                    }),
+                    note: None,
                 }
             );
             Ok(InvoiceLine {

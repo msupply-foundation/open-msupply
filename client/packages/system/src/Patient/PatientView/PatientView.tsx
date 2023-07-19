@@ -7,6 +7,7 @@ import {
   useTranslation,
   EncounterSortFieldInput,
   ProgramEnrolmentSortFieldInput,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -144,6 +145,7 @@ export const PatientView = () => {
   const { setCurrentPatient } = usePatientStore();
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
+  const { store } = useAuthContext();
 
   const requiresConfirmation = (tab: string) => {
     return tab === 'Details' && isDirtyPatient;
@@ -206,13 +208,15 @@ export const PatientView = () => {
           }}
         />
       ) : null}
-      <AppBarButtons disabled={!!createNewPatient} />
+      <AppBarButtons disabled={!!createNewPatient} store={store} />
       <PatientSummary />
-      {/* Only show tabs for saved patients */}
-      {!!createNewPatient ? (
-        <PatientDetailView onEdit={setIsDirtyPatient} />
-      ) : (
+      {/* Only show tabs if program module is on and patient is saved.
+      TODO: Prescription tab? - would need tab refactoring since also seems useful in programs
+      */}
+      {!createNewPatient && store?.preferences.omProgramModule ? (
         <DetailTabs tabs={tabs} requiresConfirmation={requiresConfirmation} />
+      ) : (
+        <PatientDetailView onEdit={setIsDirtyPatient} />
       )}
     </React.Suspense>
   );

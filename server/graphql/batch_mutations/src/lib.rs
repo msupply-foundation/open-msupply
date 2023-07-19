@@ -1,5 +1,6 @@
 mod batch_inbound_shipment;
 mod batch_outbound_shipment;
+mod batch_prescription;
 mod batch_request_requisition;
 mod batch_stocktake;
 use async_graphql::*;
@@ -43,6 +44,15 @@ impl BatchMutations {
         input: batch_stocktake::BatchInput,
     ) -> Result<batch_stocktake::BatchResponse> {
         batch_stocktake::batch(ctx, &store_id, input)
+    }
+
+    async fn batch_prescription(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: batch_prescription::BatchInput,
+    ) -> Result<batch_prescription::BatchResponse> {
+        batch_prescription::batch(ctx, &store_id, input)
     }
 }
 

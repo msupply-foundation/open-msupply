@@ -1,7 +1,9 @@
 use repository::{
-    InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
-    InventoryAdjustmentReasonRepository, InventoryAdjustmentReasonSort, PaginationOption,
-    StorageConnectionManager,
+    inventory_adjustment_reason::{
+        InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
+        InventoryAdjustmentReasonRepository, InventoryAdjustmentReasonSort,
+    },
+    PaginationOption, StorageConnectionManager,
 };
 
 use crate::{get_default_pagination, i64_to_u32, ListError, ListResult};
