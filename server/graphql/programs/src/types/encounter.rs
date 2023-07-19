@@ -71,7 +71,7 @@ impl EncounterEventFilterInput {
             document_type: None,
             document_name: None,
             r#type: self.r#type.clone().map(EqualFilter::from),
-            context: None,
+            context_id: None,
         }
     }
 }

@@ -45,7 +45,7 @@ impl ProgramEventFilterInput {
             document_name: document_name.map(EqualFilter::from),
             r#type: r#type.map(EqualFilter::from),
             datetime: None,
-            context: None,
+            context_id: None,
         }
     }
 }
