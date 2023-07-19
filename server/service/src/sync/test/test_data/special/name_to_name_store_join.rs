@@ -135,7 +135,6 @@ pub fn name_store_join1() -> NameStoreJoinRow {
         store_id: store().id,
         name_is_customer: false,
         name_is_supplier: true,
-        is_sync_update: false,
     }
 }
 
@@ -146,7 +145,6 @@ pub fn name_store_join2() -> NameStoreJoinRow {
         store_id: store().id,
         name_is_customer: false,
         name_is_supplier: false,
-        is_sync_update: false,
     }
 }
 
@@ -157,7 +155,6 @@ pub fn name_store_join3() -> NameStoreJoinRow {
         store_id: store().id,
         name_is_customer: true,
         name_is_supplier: true,
-        is_sync_update: false,
     }
 }
 
