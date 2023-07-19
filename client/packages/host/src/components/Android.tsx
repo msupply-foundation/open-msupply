@@ -6,7 +6,6 @@ import {
   Box,
   ButtonWithIcon,
   ConnectionResult,
-  DEFAULT_LOCAL_SERVER,
   ErrorWithDetails,
   ExternalLinkIcon,
   getNativeAPI,
@@ -16,7 +15,6 @@ import {
   Stack,
   Theme,
   Typography,
-  useAuthContext,
   useNativeClient,
   useNavigate,
 } from '@openmsupply-client/common';
@@ -99,20 +97,14 @@ const ModeOption = ({
 );
 
 export const Android = () => {
-  const {
-    connectToPreviousFailed,
-    previousServer,
-    connectToServer,
-    advertiseService,
-  } = useNativeClient({
+  const { connectToPreviousFailed, previousServer } = useNativeClient({
     discovery: true,
     autoconnect: true,
   });
   const t = useTranslation('app');
   const navigate = useNavigate();
-  const { token } = useAuthContext();
   const [mode, setLocalMode] = useState(NativeMode.None);
-  const { setMode } = useNativeClient();
+  const { setMode, setServerMode } = useNativeClient();
 
   const handleSetMode = (mode: NativeMode) => {
     setMode(mode);
@@ -138,13 +130,7 @@ export const Android = () => {
 
   useEffect(() => {
     if (mode === NativeMode.Server) {
-      advertiseService();
-      const path = !token ? 'login' : '';
-      connectToServer({ ...DEFAULT_LOCAL_SERVER, path })
-        .then(handleConnectionResult)
-        .catch(e =>
-          handleConnectionResult({ success: false, error: e.message })
-        );
+      setServerMode(handleConnectionResult);
     }
   }, [mode]);
 

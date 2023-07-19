@@ -21,9 +21,6 @@ import {
   ConnectionResult,
   useNotification,
   useMutation,
-  NativeMode,
-  useAuthContext,
-  DEFAULT_LOCAL_SERVER,
   ExternalLinkIcon,
   ButtonWithIcon,
 } from '@openmsupply-client/common';
@@ -44,8 +41,7 @@ export const DiscoveredServers = ({
   discover,
 }: DiscoverServersProps) => {
   const t = useTranslation('app');
-  const { advertiseService, connectToServer, setMode } = useNativeClient();
-  const { token } = useAuthContext();
+  const { setServerMode } = useNativeClient();
   const { error } = useNotification();
 
   const handleConnectionResult = async (result: ConnectionResult) => {
@@ -55,12 +51,7 @@ export const DiscoveredServers = ({
   };
 
   const useServerMode = () => {
-    setMode(NativeMode.Server);
-    advertiseService();
-    const path = !token ? 'login' : '';
-    connectToServer({ ...DEFAULT_LOCAL_SERVER, path })
-      .then(handleConnectionResult)
-      .catch(e => handleConnectionResult({ success: false, error: e.message }));
+    setServerMode(handleConnectionResult);
   };
 
   if (discoveryTimedOut)
