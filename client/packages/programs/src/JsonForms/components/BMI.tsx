@@ -7,12 +7,24 @@ import {
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { DetailInputWithLabelRow, NumUtils } from '@openmsupply-client/common';
-import { FORM_LABEL_WIDTH } from '../common';
+import { FORM_LABEL_WIDTH, useZodOptionsValidation } from '../common';
+import { z } from 'zod';
 import { useEncounter, useProgramEvents } from '../../api';
 
 export const bmiTester = rankWith(10, uiTypeIs('BMI'));
 
 const round = (value: number) => Math.round(value * 100) / 100;
+
+const Options = z
+  .object({
+    /**
+     * Event type to check for "height" value. If not provided, it will always
+     * retrieve from "height" property of current form data.
+     */
+    eventType: z.string().optional(),
+  })
+  .strict();
+type Options = z.infer<typeof Options>;
 
 const usePreviousHeight = (
   formData: any | undefined,
@@ -26,7 +38,7 @@ const usePreviousHeight = (
       filter: {
         patientId: { equalTo: currentEncounter?.patient?.id ?? '' },
         type: {
-          equalTo: 'physicalExaminationHeight',
+          equalTo: eventType,
         },
         documentType: {
           equalTo: currentEncounter?.type,
@@ -49,10 +61,10 @@ const usePreviousHeight = (
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { data, handleChange, label, path } = props;
+  const { data, handleChange, label, path, uischema } = props;
   const { weight } = data ?? {};
-
-  const height = usePreviousHeight(data, 'physicalExaminationHeight');
+  const { options } = useZodOptionsValidation(Options, uischema.options);
+  const height = usePreviousHeight(data, options?.eventType);
 
   useEffect(() => {
     if (!height || !weight) return;
