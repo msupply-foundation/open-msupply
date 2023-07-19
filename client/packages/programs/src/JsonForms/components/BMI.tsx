@@ -7,9 +7,13 @@ import {
 } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
+  BasicTextInput,
+  Box,
   DetailInputWithLabelRow,
   NumUtils,
   ObjUtils,
+  Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, JsonData, useZodOptionsValidation } from '../common';
 import { z } from 'zod';
@@ -33,7 +37,7 @@ type Options = z.infer<typeof Options>;
 const usePreviousHeight = (
   formData: JsonData | undefined,
   eventType: string | undefined
-) => {
+): { source: 'previous' | 'form' | undefined; height: number | undefined } => {
   // fetch current encounter
   const encounterId = useEncounter.utils.idFromUrl();
   const { data: currentEncounter } = useEncounter.document.byId(encounterId);
@@ -56,20 +60,24 @@ const usePreviousHeight = (
   );
 
   if (ObjUtils.isObject(formData) && formData['height'])
-    return Number.parseFloat(formData['height'] as string);
+    return {
+      height: Number.parseFloat(formData['height'] as string),
+      source: 'form',
+    };
 
   const event = events?.nodes[0];
   if (event?.data === undefined || event?.data === null) {
-    return undefined;
+    return { height: undefined, source: undefined };
   }
-  return Number.parseFloat(event.data);
+  return { height: Number.parseFloat(event.data), source: 'previous' };
 };
 
 const UIComponent = (props: ControlProps) => {
+  const t = useTranslation('programs');
   const { data, handleChange, label, path, uischema } = props;
   const { weight } = data ?? {};
   const { options } = useZodOptionsValidation(Options, uischema.options);
-  const height = usePreviousHeight(data, options?.eventType);
+  const { height, source } = usePreviousHeight(data, options?.eventType);
 
   useEffect(() => {
     if (!height || !weight) return;
@@ -89,13 +97,28 @@ const UIComponent = (props: ControlProps) => {
   return (
     <DetailInputWithLabelRow
       label={label}
-      inputProps={{
-        value: data?.bodyMassIndex ?? '',
-        sx: { margin: 0.5, width: '100px' },
-        disabled: true,
-      }}
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"
+      Input={
+        <Box
+          flexBasis={'100%'}
+          display="flex"
+          alignItems="center"
+          // gap={FORM_GAP}
+        >
+          <BasicTextInput
+            disabled
+            value={data?.bodyMassIndex ?? ''}
+            sx={{ margin: 0.5, width: '90px' }}
+            textAlign="right"
+          />
+          {weight && source === 'previous' && (
+            <Typography sx={{ maxWidth: 150, fontSize: '75%' }}>
+              ({t('label.bmi-prev-height-message', { height })})
+            </Typography>
+          )}
+        </Box>
+      }
     />
   );
 };
