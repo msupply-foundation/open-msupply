@@ -4842,7 +4842,6 @@ export type UpdatePrescriptionLineInput = {
   note?: InputMaybe<Scalars['String']>;
   numberOfPacks?: InputMaybe<Scalars['Float']>;
   stockLineId?: InputMaybe<Scalars['String']>;
-  totalBeforeTax?: InputMaybe<Scalars['Float']>;
 };
 
 export type UpdatePrescriptionLineResponse = InvoiceLineNode | UpdatePrescriptionLineError;
