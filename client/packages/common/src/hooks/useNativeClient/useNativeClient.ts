@@ -178,7 +178,6 @@ export const useNativeClient = ({
     if (Capacitor.isNativePlatform()) {
       App.removeAllListeners();
       App.addListener('backButton', ({ canGoBack }) => {
-        console.log('back!', canGoBack);
         if (canGoBack) navigate(-1);
       });
     }
