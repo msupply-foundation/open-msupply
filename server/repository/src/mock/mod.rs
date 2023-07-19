@@ -750,7 +750,7 @@ pub fn insert_mock_data(
         if inserts.documents {
             for row in &mock_data.documents {
                 let repo = DocumentRepository::new(connection);
-                repo.insert(row, false).unwrap();
+                repo.insert(row).unwrap();
             }
         }
         if inserts.sync_logs {
