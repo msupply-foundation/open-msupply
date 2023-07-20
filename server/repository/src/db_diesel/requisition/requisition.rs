@@ -7,8 +7,7 @@ use crate::{
     db_diesel::{
         name_row::{name, name::dsl as name_dsl},
         period::period::{self, dsl as period_dsl},
-        program_requisition::program,
-        program_requisition::program::dsl as program_dsl,
+        program_requisition::program_row::program::{self, dsl as program_dsl},
         store_row::{store, store::dsl as store_dsl},
     },
     diesel_macros::{

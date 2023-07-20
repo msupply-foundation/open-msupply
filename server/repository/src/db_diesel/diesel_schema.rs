@@ -1,5 +1,3 @@
-use crate::program;
-
 use super::{
     barcode_row::barcode, invoice_line::invoice_stats, invoice_line_row::invoice_line,
     invoice_row::invoice, item_row::item, location_row::location,
@@ -8,7 +6,7 @@ use super::{
     name_tag_join::name_tag_join, period::period,
     program_requisition::program_requisition_order_type_row::program_requisition_order_type,
     program_requisition::program_requisition_settings_row::program_requisition_settings,
-    requisition_line_row::requisition_line, requisition_row::requisition,
+    program_row::program, requisition_line_row::requisition_line, requisition_row::requisition,
     stock_line_row::stock_line, stocktake_line_row::stocktake_line, stocktake_row::stocktake,
     store_row::store, unit_row::unit, user_row::user_account,
 };
