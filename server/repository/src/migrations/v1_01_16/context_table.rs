@@ -34,6 +34,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             ALTER TABLE user_permission ADD COLUMN context_id TEXT REFERENCES context(id);
             ALTER TABLE user_permission DROP COLUMN context;
+
+            ALTER TABLE program_enrolment ADD COLUMN program_id TEXT REFERENCES program(id);
+            ALTER TABLE program_enrolment DROP COLUMN context;
             "#
     )?;
 
@@ -65,6 +68,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
         ALTER TABLE user_permission RENAME COLUMN context TO context_id;
         ALTER TABLE user_permission ADD CONSTRAINT user_permission_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
+
+        ALTER TABLE program_enrolment RENAME COLUMN context TO program_id;
+        ALTER TABLE program_enrolment ADD CONSTRAINT program_enrolment_program_id_fkey FOREIGN KEY (program_id) REFERENCES program(id);
         "#
     )?;
 

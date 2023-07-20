@@ -226,11 +226,14 @@ mod test {
         let (_, _, connection_manager, _) = setup_all(
             "test_encounter_update",
             MockDataInserts::none()
+                .units()
+                .items()
                 .names()
                 .stores()
+                .name_store_joins()
+                .full_master_list()
                 .contexts()
-                .form_schemas()
-                .name_store_joins(),
+                .programs(),
         )
         .await;
 

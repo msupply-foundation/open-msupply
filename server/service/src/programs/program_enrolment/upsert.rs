@@ -2,7 +2,7 @@ use chrono::Utc;
 use repository::{
     Document, DocumentFilter, DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository,
     DocumentRegistryType, DocumentRepository, DocumentStatus, EqualFilter, Pagination,
-    RepositoryError, StringFilter, TransactionError,
+    ProgramFilter, ProgramRepository, ProgramRow, RepositoryError, StringFilter, TransactionError,
 };
 
 use crate::{
@@ -21,7 +21,8 @@ pub enum UpsertProgramEnrolmentError {
     InvalidPatientId,
     InvalidParentId,
     /// Each patient can only be enrolled in a program once
-    ProgramExists,
+    ProgramEnrolmentExists,
+    ProgramDoesNotExist,
     InvalidDataSchema(Vec<String>),
     DocumentTypeDoesNotExit,
     DataSchemaDoesNotExist,
@@ -49,7 +50,7 @@ pub fn upsert_program_enrolment(
         .connection
         .transaction_sync(|_| {
             let patient_id = input.patient_id.clone();
-            let (schema_program, registry) = validate(ctx, service_provider, &input)?;
+            let (schema_program, registry, program_row) = validate(ctx, service_provider, &input)?;
             let doc = generate(user_id, input, registry)?;
 
             let document = service_provider
@@ -84,6 +85,7 @@ pub fn upsert_program_enrolment(
                     &patient_id,
                     &document,
                     schema_program,
+                    program_row,
                 )?;
             };
             Ok(document)
@@ -167,11 +169,19 @@ fn validate_document_type(
     Ok(entry.pop())
 }
 
+fn validate_program(
+    ctx: &ServiceContext,
+    context_id: &str,
+) -> Result<Option<ProgramRow>, RepositoryError> {
+    ProgramRepository::new(&ctx.connection)
+        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(context_id)))
+}
+
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     input: &UpsertProgramEnrolment,
-) -> Result<(SchemaProgramEnrolment, DocumentRegistry), UpsertProgramEnrolmentError> {
+) -> Result<(SchemaProgramEnrolment, DocumentRegistry, ProgramRow), UpsertProgramEnrolmentError> {
     if !validate_patient_exists(ctx, &input.patient_id)? {
         return Err(UpsertProgramEnrolmentError::InvalidPatientId);
     }
@@ -181,7 +191,12 @@ fn validate(
         None => return Err(UpsertProgramEnrolmentError::DocumentTypeDoesNotExit),
     };
 
-    let program = validate_program_schema(input).map_err(|err| {
+    let program_row = match validate_program(ctx, &document_registry.context_id)? {
+        Some(program_row) => program_row,
+        None => return Err(UpsertProgramEnrolmentError::ProgramDoesNotExist),
+    };
+
+    let program_enrolment_json = validate_program_schema(input).map_err(|err| {
         UpsertProgramEnrolmentError::InvalidDataSchema(vec![format!(
             "Invalid program data: {}",
             err
@@ -190,11 +205,11 @@ fn validate(
 
     if input.parent.is_none() {
         if !validate_program_not_exists(ctx, service_provider, &input.patient_id, &input.r#type)? {
-            return Err(UpsertProgramEnrolmentError::ProgramExists);
+            return Err(UpsertProgramEnrolmentError::ProgramEnrolmentExists);
         }
     }
 
-    Ok((program, document_registry))
+    Ok((program_enrolment_json, document_registry, program_row))
 }
 
 #[cfg(test)]
@@ -225,11 +240,14 @@ mod test {
         let (_, _, connection_manager, _) = setup_all(
             "test_program_upsert",
             MockDataInserts::none()
+                .units()
+                .items()
                 .names()
                 .stores()
-                .form_schemas()
                 .name_store_joins()
-                .contexts(),
+                .full_master_list()
+                .contexts()
+                .programs(),
         )
         .await;
 
@@ -383,7 +401,7 @@ mod test {
                 )
                 .err()
                 .unwrap(),
-            UpsertProgramEnrolmentError::ProgramExists,
+            UpsertProgramEnrolmentError::ProgramEnrolmentExists,
         );
 
         assert_eq!(
@@ -441,14 +459,14 @@ mod test {
             .find_one_by_type_and_patient(&enrolment_doc_type, &patient.id)
             .unwrap()
             .unwrap();
-        assert_eq!(program_context, found_program.context);
+        assert_eq!(program_context, found_program.1.context_id.unwrap());
         assert_eq!(
             program.enrolment_datetime,
-            DateTime::<Utc>::from_utc(found_program.enrolment_datetime, Utc).to_rfc3339()
+            DateTime::<Utc>::from_utc(found_program.0.enrolment_datetime, Utc).to_rfc3339()
         );
         assert_eq!(
             program.program_enrolment_id,
-            found_program.program_enrolment_id
+            found_program.0.program_enrolment_id
         );
     }
 }

@@ -83,7 +83,8 @@ impl ProgramEnrolmentFilterInput {
             status: status.map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
             document_name: document_name.map(EqualFilter::from),
             document_type: r#type.map(EqualFilter::from),
-            context: program.map(EqualFilter::from),
+            program_id: program.map(EqualFilter::from),
+            context_id: None,
         }
     }
 }
@@ -118,7 +119,7 @@ pub fn program_enrolments(
         .into_iter()
         .map(|program_row| ProgramEnrolmentNode {
             store_id: store_id.clone(),
-            program_row,
+            program_enrolment: program_row,
             allowed_ctx: allowed_ctx.clone(),
         })
         .collect();

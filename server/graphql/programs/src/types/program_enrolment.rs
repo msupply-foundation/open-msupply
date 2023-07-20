@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow,
+    DatetimeFilter, EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolment,
     ProgramEnrolmentStatus, ProgramEventFilter, ProgramEventSortField, Sort,
 };
 
@@ -86,7 +86,7 @@ impl ProgramEnrolmentNodeStatus {
 
 pub struct ProgramEnrolmentNode {
     pub store_id: String,
-    pub program_row: ProgramEnrolmentRow,
+    pub program_enrolment: ProgramEnrolment,
     pub allowed_ctx: Vec<String>,
 }
 
@@ -94,32 +94,32 @@ pub struct ProgramEnrolmentNode {
 impl ProgramEnrolmentNode {
     /// The program type
     pub async fn r#type(&self) -> &str {
-        &self.program_row.document_type
+        &self.program_enrolment.0.document_type
     }
 
-    pub async fn context(&self) -> &str {
-        &self.program_row.context
+    pub async fn context(&self) -> String {
+        self.program_enrolment.1.context_id.clone().unwrap()
     }
 
     /// The program document name
     pub async fn name(&self) -> &str {
-        &self.program_row.document_name
+        &self.program_enrolment.0.document_name
     }
 
     pub async fn patient_id(&self) -> &str {
-        &self.program_row.patient_id
+        &self.program_enrolment.0.patient_id
     }
 
     pub async fn enrolment_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.program_row.enrolment_datetime, Utc)
+        DateTime::<Utc>::from_utc(self.program_enrolment.0.enrolment_datetime, Utc)
     }
 
     pub async fn program_enrolment_id(&self) -> &Option<String> {
-        &self.program_row.program_enrolment_id
+        &self.program_enrolment.0.program_enrolment_id
     }
 
     pub async fn status(&self) -> ProgramEnrolmentNodeStatus {
-        ProgramEnrolmentNodeStatus::from_domain(&self.program_row.status)
+        ProgramEnrolmentNodeStatus::from_domain(&self.program_enrolment.0.status)
     }
 
     /// The encounter document
@@ -127,7 +127,7 @@ impl ProgramEnrolmentNode {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(self.program_row.document_name.clone())
+            .load_one(self.program_enrolment.0.document_name.clone())
             .await?
             .map(|document| DocumentNode {
                 allowed_ctx: self.allowed_ctx.clone(),
@@ -151,8 +151,10 @@ impl ProgramEnrolmentNode {
         let filter = filter
             .map(|f| f.to_domain_filter())
             .unwrap_or(EncounterFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .context(EqualFilter::equal_to(&self.program_row.context));
+            .patient_id(EqualFilter::equal_to(&self.program_enrolment.0.patient_id))
+            .context(EqualFilter::equal_to(
+                &self.program_enrolment.1.context_id.clone().unwrap(),
+            ));
 
         let entries = ctx
             .service_provider()
@@ -191,8 +193,10 @@ impl ProgramEnrolmentNode {
         let filter = filter
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .document_type(EqualFilter::equal_to(&self.program_row.document_type));
+            .patient_id(EqualFilter::equal_to(&self.program_enrolment.0.patient_id))
+            .document_type(EqualFilter::equal_to(
+                &self.program_enrolment.0.document_type,
+            ));
         let entries = ctx
             .service_provider()
             .program_event_service
