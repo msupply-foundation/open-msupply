@@ -82,8 +82,8 @@ impl EncounterNode {
         &self.encounter.0.id
     }
 
-    pub async fn context(&self) -> String {
-        self.encounter.1.context_id.clone().unwrap()
+    pub async fn context(&self) -> &str {
+        &self.encounter.1.context_id
     }
 
     pub async fn program_id(&self) -> &str {

@@ -346,7 +346,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -367,7 +367,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -390,7 +390,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -409,7 +409,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
                     document_type: "DocType2".to_string(),
@@ -445,7 +445,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -466,7 +466,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -502,7 +502,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
@@ -534,7 +534,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
@@ -569,7 +569,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
@@ -612,7 +612,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
@@ -638,7 +638,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![],
             )
             .unwrap();
@@ -669,7 +669,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
@@ -693,7 +693,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
@@ -723,7 +723,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
-                &mock_program_a().context_id.unwrap(),
+                &mock_program_a().context_id,
                 vec![],
             )
             .unwrap();
