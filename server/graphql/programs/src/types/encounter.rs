@@ -137,9 +137,9 @@ impl EncounterNode {
                 self.allowed_ctx.clone(),
             ))
             .await?
-            .map(|program_row| ProgramEnrolmentNode {
+            .map(|program_enrolment| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
-                program_row,
+                program_enrolment,
                 allowed_ctx: self.allowed_ctx.clone(),
             })
             .ok_or(Error::new(format!(

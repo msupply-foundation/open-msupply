@@ -73,7 +73,7 @@ pub fn update_program_enrolment(
                 UpsertProgramEnrolmentError::InvalidParentId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertProgramEnrolmentError::ProgramExists => {
+                UpsertProgramEnrolmentError::ProgramEnrolmentExists => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 UpsertProgramEnrolmentError::InvalidDataSchema(_) => {
@@ -91,6 +91,9 @@ pub fn update_program_enrolment(
                 UpsertProgramEnrolmentError::DocumentTypeDoesNotExit => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                UpsertProgramEnrolmentError::ProgramDoesNotExist => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
             };
             return Err(std_err.extend());
         }
@@ -102,7 +105,7 @@ pub fn update_program_enrolment(
             &service_context,
             ProgramEnrolmentFilter::new()
                 .patient_id(EqualFilter::equal_to(&input.patient_id))
-                .context(EqualFilter::equal_to(&document.context_id)),
+                .context_id(EqualFilter::equal_to(&document.context_id)),
             allowed_ctx.clone(),
         )?
         .ok_or(
@@ -112,7 +115,7 @@ pub fn update_program_enrolment(
     Ok(UpdateProgramEnrolmentResponse::Response(
         ProgramEnrolmentNode {
             store_id,
-            program_row,
+            program_enrolment: program_row,
             allowed_ctx: allowed_ctx.clone(),
         },
     ))

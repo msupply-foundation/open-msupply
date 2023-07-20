@@ -1,6 +1,7 @@
 use super::{
     name_row::{name, name::dsl as name_dsl},
     program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
+    program_row::{program, program::dsl as program_dsl},
     DBType, NameRow, StorageConnection,
 };
 
@@ -184,6 +185,7 @@ impl<'a> PatientRepository<'a> {
                 );
 
                 let mut sub_query = program_enrolment_dsl::program_enrolment
+                    .inner_join(program::table)
                     .select(program_enrolment_dsl::patient_id)
                     .into_boxed();
                 apply_simple_string_filter!(
@@ -195,7 +197,7 @@ impl<'a> PatientRepository<'a> {
                     apply_equal_filter!(
                         sub_query,
                         Some(EqualFilter::default().restrict_results(allowed_ctx)),
-                        program_enrolment_dsl::context
+                        program_dsl::context_id
                     );
                 }
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
@@ -312,8 +314,9 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::MockDataInserts, test_db, EqualFilter, NameRow, NameRowRepository, NameType,
-        PatientFilter, PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
+        mock::{mock_program_a, MockDataInserts},
+        test_db, EqualFilter, NameRow, NameRowRepository, NameType, PatientFilter,
+        PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
         ProgramEnrolmentStatus, SimpleStringFilter,
     };
 
@@ -356,7 +359,15 @@ mod tests {
     async fn test_patient_identifier_query() {
         let (_, connection, _, _) = test_db::setup_all(
             "patient_identifier_query",
-            MockDataInserts::none().names().stores().name_store_joins(),
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_list()
+                .contexts()
+                .programs(),
         )
         .await;
         let repo = PatientRepository::new(&connection);
@@ -378,7 +389,7 @@ mod tests {
                 document_name: "doc_name".to_string(),
                 patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
-                context: "ProgramType".to_string(),
+                program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
                 status: ProgramEnrolmentStatus::Active,
@@ -439,7 +450,15 @@ mod tests {
     async fn test_patient_program_enrolment_id_allowed_ctx() {
         let (_, connection, _, _) = test_db::setup_all(
             "test_patient_program_enrolment_id_allowed_ctx",
-            MockDataInserts::none().names().stores().name_store_joins(),
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_list()
+                .contexts()
+                .programs(),
         )
         .await;
         let repo = PatientRepository::new(&connection);
@@ -461,7 +480,7 @@ mod tests {
                 document_name: "doc_name".to_string(),
                 patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
-                context: "ProgramType".to_string(),
+                program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
                 status: ProgramEnrolmentStatus::Active,
@@ -479,7 +498,7 @@ mod tests {
             .query_by_filter(
                 PatientFilter::new()
                     .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
-                Some(&["ProgramType".to_string()]),
+                Some(&[mock_program_a().id]),
             )
             .unwrap();
         assert!(!result.is_empty());

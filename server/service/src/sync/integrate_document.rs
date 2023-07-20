@@ -1,6 +1,6 @@
 use repository::{
     Document, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRepository, EqualFilter,
-    RepositoryError, StorageConnection,
+    ProgramFilter, ProgramRepository, RepositoryError, StorageConnection,
 };
 
 use crate::programs::{
@@ -60,7 +60,10 @@ fn update_program_enrolment(
         .map_err(|err| {
         RepositoryError::as_db_error(&format!("Invalid program enrolment data: {}", err), "")
     })?;
-    update_program_enrolment_row(con, patient_id, document, program_enrolment)
+    let program_row = ProgramRepository::new(con)
+        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
+    update_program_enrolment_row(con, patient_id, document, program_enrolment, program_row)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())
 }
