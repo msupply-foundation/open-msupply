@@ -21,6 +21,8 @@ import {
   ConnectionResult,
   useNotification,
   useMutation,
+  ExternalLinkIcon,
+  ButtonWithIcon,
 } from '@openmsupply-client/common';
 
 type ConnectToServer = ReturnType<typeof useNativeClient>['connectToServer'];
@@ -39,6 +41,18 @@ export const DiscoveredServers = ({
   discover,
 }: DiscoverServersProps) => {
   const t = useTranslation('app');
+  const { setServerMode } = useNativeClient();
+  const { error } = useNotification();
+
+  const handleConnectionResult = async (result: ConnectionResult) => {
+    if (result.success) return;
+
+    error(t('error.unable-to-connect', { server: '' }))();
+  };
+
+  const useServerMode = () => {
+    setServerMode(handleConnectionResult);
+  };
 
   if (discoveryTimedOut)
     return (
@@ -46,6 +60,7 @@ export const DiscoveredServers = ({
         display="flex"
         sx={{ color: 'error.main' }}
         justifyContent="center"
+        alignItems="center"
         flexDirection="column"
       >
         <Box display="flex" gap={1}>
@@ -60,6 +75,25 @@ export const DiscoveredServers = ({
               icon={<RefreshIcon color="primary" fontSize="small" />}
               onClick={discover}
               label={t('button.refresh')}
+            />
+          </Box>
+        </Box>
+        <Box
+          paddingTop={4}
+          alignItems="center"
+          flexDirection="column"
+          display="flex"
+        >
+          <Box>
+            <Typography display="inline-flex">
+              {t('discovery.use-server-mode')}
+            </Typography>
+          </Box>
+          <Box padding={2}>
+            <ButtonWithIcon
+              Icon={<ExternalLinkIcon fontStyle="small" />}
+              onClick={useServerMode}
+              label={t('label.server')}
             />
           </Box>
         </Box>
