@@ -1,4 +1,4 @@
-use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError, TransactionError};
+use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError};
 
 pub mod validate;
 
@@ -8,19 +8,17 @@ use crate::{
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
     invoice_line::stock_out_line::{
-        delete::{delete_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError},
-        StockOutType,
+        delete_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError, StockOutType,
     },
     service_provider::ServiceContext,
-    WithDBError,
 };
 
-type OutError = DeleteOutboundShipmentError;
+type OutError = DeletePrescriptionError;
 
-pub fn delete_outbound_shipment(
+pub fn delete_prescription(
     ctx: &ServiceContext,
     id: String,
-) -> Result<String, DeleteOutboundShipmentError> {
+) -> Result<String, DeletePrescriptionError> {
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
@@ -32,7 +30,7 @@ pub fn delete_outbound_shipment(
                     ctx,
                     DeleteStockOutLine {
                         id: line.invoice_line_row.id.clone(),
-                        r#type: Some(StockOutType::OutboundShipment),
+                        r#type: Some(StockOutType::Prescription),
                     },
                 )
                 .map_err(|error| OutError::LineDeleteError {
@@ -55,15 +53,12 @@ pub fn delete_outbound_shipment(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    ctx.processors_trigger
-        .trigger_shipment_transfer_processors();
-
     Ok(invoice_id)
 }
 
 #[derive(Debug, PartialEq, Clone)]
 
-pub enum DeleteOutboundShipmentError {
+pub enum DeletePrescriptionError {
     InvoiceDoesNotExist,
     DatabaseError(RepositoryError),
     NotThisStoreInvoice,
@@ -72,38 +67,12 @@ pub enum DeleteOutboundShipmentError {
         line_id: String,
         error: DeleteStockOutLineError,
     },
-    NotAnOutboundShipment,
+    NotAPrescriptionInvoice,
 }
 
-impl From<RepositoryError> for DeleteOutboundShipmentError {
+impl From<RepositoryError> for DeletePrescriptionError {
     fn from(error: RepositoryError) -> Self {
-        DeleteOutboundShipmentError::DatabaseError(error)
-    }
-}
-
-impl From<TransactionError<DeleteOutboundShipmentError>> for DeleteOutboundShipmentError {
-    fn from(error: TransactionError<DeleteOutboundShipmentError>) -> Self {
-        match error {
-            TransactionError::Transaction { msg, level } => {
-                DeleteOutboundShipmentError::DatabaseError(RepositoryError::TransactionError {
-                    msg,
-                    level,
-                })
-            }
-            TransactionError::Inner(e) => e,
-        }
-    }
-}
-
-impl<ERR> From<WithDBError<ERR>> for DeleteOutboundShipmentError
-where
-    ERR: Into<DeleteOutboundShipmentError>,
-{
-    fn from(result: WithDBError<ERR>) -> Self {
-        match result {
-            WithDBError::DatabaseError(error) => error.into(),
-            WithDBError::Error(error) => error.into(),
-        }
+        DeletePrescriptionError::DatabaseError(error)
     }
 }
 
@@ -111,22 +80,22 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_inbound_shipment_c, mock_outbound_shipment_b, mock_outbound_shipment_c,
-            mock_store_a, mock_store_c, MockDataInserts,
+            mock_inbound_shipment_c, mock_prescription_a, mock_prescription_verified, mock_store_a,
+            mock_store_c, MockDataInserts,
         },
         test_db::setup_all,
         InvoiceRowRepository,
     };
 
     use crate::{
-        invoice::outbound_shipment::delete::DeleteOutboundShipmentError as ServiceError,
+        invoice::prescription::delete::DeletePrescriptionError as ServiceError,
         service_provider::ServiceProvider,
     };
 
     #[actix_rt::test]
-    async fn delete_outbound_shipment_errors() {
+    async fn delete_prescription_errors() {
         let (_, _, connection_manager, _) =
-            setup_all("delete_outbound_shipment_errors", MockDataInserts::all()).await;
+            setup_all("delete_prescription_errors", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
@@ -136,43 +105,43 @@ mod test {
 
         // InvoiceDoesNotExist
         assert_eq!(
-            service.delete_outbound_shipment(&context, "invalid".to_string()),
+            service.delete_prescription(&context, "invalid".to_string()),
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
-        //NotAnOutboundShipment
+        // NotAPrescriptionInvoice
         assert_eq!(
-            service.delete_outbound_shipment(&context, mock_inbound_shipment_c().id),
-            Err(ServiceError::NotAnOutboundShipment)
+            service.delete_prescription(&context, mock_inbound_shipment_c().id),
+            Err(ServiceError::NotAPrescriptionInvoice)
         );
 
-        //NotThisStoreInvoice
+        // CannotEditFinalised
         assert_eq!(
-            service.delete_outbound_shipment(&context, mock_outbound_shipment_b().id),
-            Err(ServiceError::NotThisStoreInvoice)
+            service.delete_prescription(&context, mock_prescription_verified().id),
+            Err(ServiceError::CannotEditFinalised)
         );
 
-        //CannotEditFinalised
+        // NotThisStoreInvoice
         context.store_id = mock_store_c().id;
         assert_eq!(
-            service.delete_outbound_shipment(&context, mock_outbound_shipment_b().id),
-            Err(ServiceError::CannotEditFinalised)
+            service.delete_prescription(&context, mock_prescription_a().id),
+            Err(ServiceError::NotThisStoreInvoice)
         );
     }
 
     #[actix_rt::test]
-    async fn delete_outbound_shipment_success() {
+    async fn delete_prescription_success() {
         let (_, connection, connection_manager, _) =
-            setup_all("delete_outbound_shipment_success", MockDataInserts::all()).await;
+            setup_all("delete_prescription_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_c().id, "".to_string())
+            .context(mock_store_a().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_service;
 
         let invoice_id = service
-            .delete_outbound_shipment(&context, mock_outbound_shipment_c().id)
+            .delete_prescription(&context, mock_prescription_a().id)
             .unwrap();
 
         //test entry has been deleted

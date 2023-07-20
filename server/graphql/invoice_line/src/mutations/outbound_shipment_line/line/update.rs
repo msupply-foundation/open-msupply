@@ -116,48 +116,48 @@ impl UpdateInput {
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
-    use StandardGraphqlError::*;
+    use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::InvoiceDoesNotExist => {
+        InvoiceDoesNotExist => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::InvoiceId,
             )))
         }
-        ServiceError::CannotEditFinalised => {
+        CannotEditFinalised => {
             return Ok(UpdateErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
         }
-        ServiceError::StockLineNotFound => {
+        StockLineNotFound => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::StockLineId,
             )))
         }
-        ServiceError::LocationIsOnHold => {
-            return Ok(UpdateErrorInterface::LocationIsOnHold(LocationIsOnHold {}))
+        LocationIsOnHold => {
+            return Ok(UpdateErrorInterface::LocationIsOnHold(
+                super::LocationIsOnHold {},
+            ))
         }
-        ServiceError::LocationNotFound => {
+        LocationNotFound => {
             return Ok(UpdateErrorInterface::ForeignKeyError(ForeignKeyError(
                 ForeignKey::LocationId,
             )))
         }
-        ServiceError::StockLineAlreadyExistsInInvoice(line_id) => {
+        StockLineAlreadyExistsInInvoice(line_id) => {
             return Ok(UpdateErrorInterface::StockLineAlreadyExistsInInvoice(
-                StockLineAlreadyExistsInInvoice(line_id),
+                super::StockLineAlreadyExistsInInvoice(line_id),
             ))
         }
-        ServiceError::BatchIsOnHold => {
+        BatchIsOnHold => {
             return Ok(UpdateErrorInterface::StockLineIsOnHold(
                 StockLineIsOnHold {},
             ))
         }
-        ServiceError::LineDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
-        }
-        ServiceError::ReductionBelowZero {
+        LineDoesNotExist => return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {})),
+        ReductionBelowZero {
             stock_line_id,
             line_id,
         } => {
@@ -169,16 +169,16 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
             ))
         }
         // Standard Graphql Errors
-        ServiceError::NotThisStoreInvoice
-        | ServiceError::InvoiceTypeDoesNotMatch
-        | ServiceError::NoInvoiceType
-        | ServiceError::NumberOfPacksBelowOne
-        | ServiceError::ItemNotFound
-        | ServiceError::ItemDoesNotMatchStockLine
-        | ServiceError::NotThisInvoiceLine(_)
-        | ServiceError::LineDoesNotReferenceStockLine => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) | ServiceError::UpdatedLineDoesNotExist => {
-            InternalError(formatted_error)
+        NotThisStoreInvoice
+        | InvoiceTypeDoesNotMatch
+        | NoInvoiceType
+        | NumberOfPacksBelowOne
+        | ItemNotFound
+        | ItemDoesNotMatchStockLine
+        | NotThisInvoiceLine(_)
+        | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
+        DatabaseError(_) | UpdatedLineDoesNotExist => {
+            StandardGraphqlError::InternalError(formatted_error)
         }
     };
 
