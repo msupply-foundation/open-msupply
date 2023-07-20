@@ -23,7 +23,7 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController }) => {
   const { success, error } = useNotification();
   const { mutate: onCreate } = usePrescription.document.insert();
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('distribution');
   const { data, isLoading } = usePrescription.document.list();
 
   const csvExport = async () => {
