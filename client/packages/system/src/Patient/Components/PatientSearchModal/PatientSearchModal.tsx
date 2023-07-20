@@ -14,7 +14,9 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
   onClose,
   onChange,
 }) => {
-  const { data, isLoading } = usePatient.document.list();
+  const { data, isLoading } = usePatient.document.list({
+    sortBy: { key: 'name', direction: 'asc' },
+  });
   const t = useTranslation('app');
   const PatientOptionRenderer = getPatientOptionRenderer();
 
