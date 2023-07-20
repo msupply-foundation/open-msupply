@@ -23,6 +23,12 @@ export const bmiTester = rankWith(10, uiTypeIs('BMI'));
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
+/**
+ * The BMI component assumes there is a `weight` and `height` property in the
+ * current scope and calculates the BMI from these to values. If the `weight`
+ * value but not the `height` value is specified, the height value can be looked
+ * up from a program event (see `eventType` config).
+ */
 const Options = z
   .object({
     /**
@@ -41,6 +47,10 @@ const usePreviousHeight = (
   // fetch current encounter
   const encounterId = useEncounter.utils.idFromUrl();
   const { data: currentEncounter } = useEncounter.document.byId(encounterId);
+
+  const formDataExists = ObjUtils.isObject(formData);
+  const shouldFetchEvent =
+    formDataExists && !formData['height'] && !!formData['weight'];
   const { data: events } = useProgramEvents.document.list(
     {
       filter: {
@@ -56,10 +66,10 @@ const usePreviousHeight = (
         first: 1,
       },
     },
-    !!currentEncounter && !!eventType
+    !!currentEncounter && !!eventType && shouldFetchEvent
   );
 
-  if (ObjUtils.isObject(formData) && formData['height'])
+  if (formDataExists && formData['height'])
     return {
       height: Number.parseFloat(formData['height'] as string),
       source: 'form',
