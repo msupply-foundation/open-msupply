@@ -92,5 +92,6 @@
   "suppliers": "Suppliers",
   "sync": "Sync",
   "tools": "Tools",
-  "cmdk.goto-patients": "Go to: Patients"
+  "cmdk.goto-patients": "Go to: Patients",
+  "prescription": "Prescriptions"
 }
