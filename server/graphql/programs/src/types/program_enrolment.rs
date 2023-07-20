@@ -170,10 +170,10 @@ impl ProgramEnrolmentNode {
         let nodes = entries
             .rows
             .into_iter()
-            .map(|row| EncounterNode {
+            .map(|encounter| EncounterNode {
                 allowed_ctx: self.allowed_ctx.clone(),
                 store_id: self.store_id.clone(),
-                encounter_row: row,
+                encounter,
             })
             .collect();
         Ok(EncounterConnector {

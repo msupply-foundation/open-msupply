@@ -104,7 +104,7 @@ pub fn insert_encounter(
 
     Ok(InsertEncounterResponse::Response(EncounterNode {
         store_id,
-        encounter_row,
+        encounter: encounter_row,
         allowed_ctx: allowed_ctx.clone(),
     }))
 }

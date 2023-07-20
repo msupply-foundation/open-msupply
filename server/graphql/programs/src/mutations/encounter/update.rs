@@ -90,7 +90,7 @@ pub fn update_encounter(
         }
     };
 
-    let encounter_row = service_provider
+    let encounter = service_provider
         .encounter_service
         .encounter(
             &service_context,
@@ -103,7 +103,7 @@ pub fn update_encounter(
 
     Ok(UpdateEncounterResponse::Response(EncounterNode {
         store_id,
-        encounter_row,
+        encounter,
         allowed_ctx: allowed_ctx.clone(),
     }))
 }
