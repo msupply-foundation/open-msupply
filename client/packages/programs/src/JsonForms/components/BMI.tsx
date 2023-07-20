@@ -25,7 +25,7 @@ const round = (value: number) => Math.round(value * 100) / 100;
 
 /**
  * The BMI component assumes there is a `weight` and `height` property in the
- * current scope and calculates the BMI from these to values. If the `weight`
+ * current scope and calculates the BMI from these two values. If the `weight`
  * value but not the `height` value is specified, the height value can be looked
  * up from a program event (see `eventType` config).
  */
