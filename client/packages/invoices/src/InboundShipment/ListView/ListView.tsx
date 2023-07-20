@@ -15,13 +15,15 @@ import {
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { getStatusTranslator, isInboundDisabled } from '../../utils';
+import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { useInbound, InboundRowFragment } from '../api';
 
 const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
   const { setDisabledRows } = useTableStore();
   useEffect(() => {
-    const disabledRows = rows?.filter(isInboundDisabled).map(({ id }) => id);
+    const disabledRows = rows
+      ?.filter(isInboundListItemDisabled)
+      .map(({ id }) => id);
     if (disabledRows) setDisabledRows(disabledRows);
   }, [rows]);
 };

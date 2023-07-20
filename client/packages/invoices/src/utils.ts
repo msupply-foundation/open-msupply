@@ -127,6 +127,16 @@ export const isPrescriptionDisabled = (
   return prescription.status === InvoiceNodeStatus.Verified;
 };
 
+export const isInboundListItemDisabled = (
+  inbound: InboundRowFragment
+): boolean => {
+  const isManuallyCreated = !inbound.linkedShipment?.id;
+  return isManuallyCreated
+    ? inbound.status === InvoiceNodeStatus.Verified
+    : inbound.status === InvoiceNodeStatus.Picked ||
+        inbound.status === InvoiceNodeStatus.Verified;
+};
+
 export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
 
