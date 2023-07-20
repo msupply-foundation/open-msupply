@@ -53,9 +53,8 @@ pub fn insert_encounter(
         .transaction_sync(|_| {
             let (encounter, program_enrolment, clinician) = validate(ctx, &input)?;
             let patient_id = input.patient_id.clone();
-            let context_id = program_enrolment.1.context_id.clone().unwrap();
             let event_datetime = input.event_datetime;
-            let doc = generate(user_id, input, event_datetime, program_enrolment.1)?;
+            let doc = generate(user_id, input, event_datetime, &program_enrolment.1)?;
             let encounter_start_datetime = encounter.start_datetime;
 
             let document = service_provider
@@ -88,10 +87,10 @@ pub fn insert_encounter(
                 update_encounter_row(
                     &ctx.connection,
                     &patient_id,
-                    &context_id,
                     &document,
                     encounter,
                     clinician.map(|c| c.id),
+                    program_enrolment.1,
                 )?;
 
                 update_program_events(
@@ -129,7 +128,7 @@ fn generate(
     user_id: &str,
     input: InsertEncounter,
     event_datetime: DateTime<Utc>,
-    program_row: ProgramRow,
+    program_row: &ProgramRow,
 ) -> Result<RawDocument, RepositoryError> {
     let encounter_name = Utc::now().to_rfc3339();
     Ok(RawDocument {
@@ -142,7 +141,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(input.patient_id),
-        context_id: program_row.context_id.unwrap(),
+        context_id: program_row.context_id.clone().unwrap(),
     })
 }
 

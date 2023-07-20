@@ -78,19 +78,19 @@ pub fn update_encounter(
             {
                 update_encounter_row(
                     &ctx.connection,
-                    &existing_encounter_row.patient_id,
-                    &existing_encounter_row.context,
+                    &existing_encounter_row.0.patient_id,
                     &document,
                     encounter,
                     clinician_row.map(|c| c.id),
+                    existing_encounter_row.1,
                 )?;
 
                 update_program_events(
                     ctx,
                     service_provider,
-                    &existing_encounter_row.patient_id,
+                    &existing_encounter_row.0.patient_id,
                     encounter_start_datetime,
-                    Some(existing_encounter_row.start_datetime),
+                    Some(existing_encounter_row.0.start_datetime),
                     &document,
                     &allowed_ctx,
                 )
@@ -434,6 +434,6 @@ mod test {
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(row.status, Some(repository::EncounterStatus::Visited));
+        assert_eq!(row.0.status, Some(repository::EncounterStatus::Visited));
     }
 }

@@ -1,6 +1,7 @@
 use super::{
     document::{latest_document, latest_document::dsl as latest_document_dsl},
     encounter_row::encounter::{self, dsl as encounter_dsl},
+    program_row::{program, program::dsl as program_dsl},
     StorageConnection,
 };
 
@@ -8,11 +9,11 @@ use crate::{
     diesel_macros::{
         apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
     },
-    DBType, DatetimeFilter, EncounterRow, EncounterStatus, EqualFilter, Pagination,
+    DBType, DatetimeFilter, EncounterRow, EncounterStatus, EqualFilter, Pagination, ProgramRow,
     RepositoryError, SimpleStringFilter, Sort,
 };
 
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
 
 #[derive(Clone, Default)]
 pub struct EncounterFilter {
@@ -20,6 +21,7 @@ pub struct EncounterFilter {
     pub document_type: Option<EqualFilter<String>>,
     pub patient_id: Option<EqualFilter<String>>,
     pub context: Option<EqualFilter<String>>,
+    pub program_id: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub start_datetime: Option<DatetimeFilter>,
@@ -47,6 +49,11 @@ impl EncounterFilter {
 
     pub fn context(mut self, filter: EqualFilter<String>) -> Self {
         self.context = Some(filter);
+        self
+    }
+
+    pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.program_id = Some(filter);
         self
     }
 
@@ -101,14 +108,16 @@ pub enum EncounterSortField {
     Status,
 }
 
-pub type Encounter = EncounterRow;
+pub type Encounter = (EncounterRow, ProgramRow);
 
 pub type EncounterSort = Sort<EncounterSortField>;
 
-type BoxedProgramQuery = IntoBoxed<'static, encounter::table, DBType>;
+type BoxedProgramQuery = IntoBoxed<'static, InnerJoin<encounter::table, program::table>, DBType>;
 
 fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQuery {
-    let mut query = encounter_dsl::encounter.into_boxed();
+    let mut query = encounter_dsl::encounter
+        .inner_join(program_dsl::program)
+        .into_boxed();
 
     if let Some(f) = filter {
         let EncounterFilter {
@@ -116,6 +125,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             document_type,
             patient_id,
             context,
+            program_id,
             document_name: name,
             created_datetime,
             start_datetime,
@@ -128,7 +138,8 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
         apply_equal_filter!(query, id, encounter_dsl::id);
         apply_equal_filter!(query, document_type, encounter_dsl::document_type);
         apply_equal_filter!(query, patient_id, encounter_dsl::patient_id);
-        apply_equal_filter!(query, context, encounter_dsl::context);
+        apply_equal_filter!(query, context, program_dsl::context_id);
+        apply_equal_filter!(query, program_id, encounter_dsl::program_id);
         apply_equal_filter!(query, name, encounter_dsl::document_name);
         apply_date_time_filter!(query, created_datetime, encounter_dsl::created_datetime);
         apply_date_time_filter!(query, start_datetime, encounter_dsl::start_datetime);
@@ -186,7 +197,7 @@ impl<'a> EncounterRepository<'a> {
                     apply_sort!(query, sort, encounter_dsl::patient_id)
                 }
                 EncounterSortField::Context => {
-                    apply_sort!(query, sort, encounter_dsl::context)
+                    apply_sort!(query, sort, program_dsl::context_id)
                 }
                 EncounterSortField::CreatedDatetime => {
                     apply_sort!(query, sort, encounter_dsl::created_datetime)

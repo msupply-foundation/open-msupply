@@ -74,7 +74,7 @@ impl EncounterFilterInput {
         EncounterFilter {
             id: self.id.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
-            context: self.program.map(EqualFilter::from),
+            program_id: self.program.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             start_datetime: self.start_datetime.map(DatetimeFilter::from),
             status: self
@@ -85,6 +85,7 @@ impl EncounterFilterInput {
             document_type: self.r#type.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
             document_data: self.document_data.map(SimpleStringFilter::from),
+            context: None,
         }
     }
 }
@@ -121,9 +122,9 @@ pub fn encounters(
     let nodes = result
         .rows
         .into_iter()
-        .map(|encounter_row| EncounterNode {
+        .map(|encounter| EncounterNode {
             store_id: store_id.clone(),
-            encounter_row,
+            encounter,
             allowed_ctx: allowed_ctx.clone(),
         })
         .collect();

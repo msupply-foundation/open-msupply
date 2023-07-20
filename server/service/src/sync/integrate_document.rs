@@ -83,13 +83,16 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         .clinician
         .as_ref()
         .and_then(|c| c.id.clone());
+    let program_row = ProgramRepository::new(con)
+        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_encounter_row(
         con,
         &patient_id,
-        &document.context_id,
         document,
         encounter,
         clinician_id,
+        program_row,
     )
     .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())

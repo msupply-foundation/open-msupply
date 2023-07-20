@@ -42,7 +42,7 @@ impl EncounterFieldsNode {
     pub async fn encounter(&self) -> EncounterNode {
         EncounterNode {
             store_id: self.store_id.clone(),
-            encounter_row: self.encounter_fields_result.row.clone(),
+            encounter: self.encounter_fields_result.row.clone(),
             allowed_ctx: self.allowed_ctx.clone(),
         }
     }
