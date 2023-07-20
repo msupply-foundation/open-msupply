@@ -40,7 +40,7 @@ const Options = z
   .strict();
 type Options = z.infer<typeof Options>;
 
-const usePreviousHeight = (
+const useHeight = (
   formData: JsonData | undefined,
   eventType: string | undefined
 ): { source: 'previous' | 'form' | undefined; height: number | undefined } => {
@@ -87,7 +87,7 @@ const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
   const { weight } = data ?? {};
   const { options } = useZodOptionsValidation(Options, uischema.options);
-  const { height, source } = usePreviousHeight(data, options?.eventType);
+  const { height, source } = useHeight(data, options?.eventType);
 
   useEffect(() => {
     if (!height || !weight) return;
