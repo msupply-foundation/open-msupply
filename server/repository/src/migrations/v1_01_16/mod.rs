@@ -1,7 +1,6 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
-mod context_table;
 mod key_value_store_update;
 
 pub(crate) struct V1_01_16;
@@ -13,7 +12,6 @@ impl Migration for V1_01_16 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         key_value_store_update::migrate(connection)?;
-        context_table::migrate(connection)?;
         Ok(())
     }
 }
