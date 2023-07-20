@@ -75,6 +75,7 @@
   "filename.responses": "requisitions",
   "filename.stock": "stock",
   "filename.stocktakes": "stocktakes",
+  "filename.prescriptions": "Prescriptions",
   "heading.404": "Feeling lost?",
   "heading.actions": "Actions",
   "heading.add-item": "Add Item",
