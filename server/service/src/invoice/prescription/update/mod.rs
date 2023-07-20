@@ -35,7 +35,7 @@ pub struct UpdatePrescription {
 pub enum UpdatePrescriptionError {
     InvoiceDoesNotExist,
     InvoiceIsNotEditable,
-    NotAPrescription,
+    NotAPrescriptionInvoice,
     NotThisStoreInvoice,
     ClinicianDoesNotExist,
     // Name validation
@@ -218,13 +218,13 @@ mod test {
             ),
             Err(ServiceError::InvoiceIsNotEditable)
         );
-        // NotAPrescription
+        // NotAPrescriptionInvoice
         assert_eq!(
             service.update_prescription(
                 &context,
                 inline_init(|r: &mut UpdatePrescription| { r.id = mock_inbound_shipment_a().id })
             ),
-            Err(ServiceError::NotAPrescription)
+            Err(ServiceError::NotAPrescriptionInvoice)
         );
 
         // InvoiceLineHasNoStockLine

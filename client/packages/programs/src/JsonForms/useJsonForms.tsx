@@ -5,10 +5,13 @@ import {
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { JsonData, JsonForm } from './common';
-import { DocumentRegistryFragment } from '@openmsupply-client/programs';
 import { useDocumentLoader } from './useDocumentLoader';
 import _ from 'lodash';
-import { JsonFormsRendererRegistryEntry } from '@jsonforms/core';
+import {
+  JsonFormsRendererRegistryEntry,
+  JsonSchema,
+  UISchemaElement,
+} from '@jsonforms/core';
 import {
   EncounterLineChart,
   encounterLineChartTester,
@@ -71,12 +74,20 @@ interface JsonFormOptions {
   handleSave?: SaveDocumentMutation;
 }
 
+export interface SchemaData {
+  formSchemaId?: string;
+  jsonSchema: JsonSchema;
+  uiSchema: UISchemaElement;
+}
+
 /**
  * Information required to create a new document
  */
-export interface CreateDocument {
+export interface FormInputData {
   data: JsonData;
-  documentRegistry: DocumentRegistryFragment;
+  schema: SchemaData;
+  /** Indicates if data is newly created, i.e. if the data isDirty */
+  isCreating: boolean;
 }
 
 const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
@@ -97,23 +108,26 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
 
 /**
  * @param docName the document name (if the document already exist)
- * @param createDoc the initial data of of the document if the the document doesn't exist yet
+ * @param inputData the initial data of of the document, e.g. if the the document doesn't exist yet
+ * or if there isn't a document.
  */
 
 export const useJsonForms = (
   docName: string | undefined,
   patientId: string | undefined,
   options: JsonFormOptions = {},
-  createDoc?: CreateDocument
+  inputData?: FormInputData
 ) => {
   const {
     data: loadedData,
     isLoading,
     documentId,
-    documentRegistry,
+    schema,
     error,
-  } = useDocumentLoader(docName, createDoc);
-  const [initialData, setInitialData] = useState(loadedData);
+  } = useDocumentLoader(docName, inputData);
+  const [initialData, setInitialData] = useState<JsonData | undefined>(
+    loadedData
+  );
   useEffect(() => {
     setInitialData(loadedData);
   }, [loadedData]);
@@ -138,7 +152,7 @@ export const useJsonForms = (
     try {
       const result = await options.handleSave?.(
         data,
-        documentRegistry?.formSchemaId ?? '',
+        schema?.formSchemaId ?? '',
         documentId
       );
 
@@ -169,13 +183,13 @@ export const useJsonForms = (
       isSaving ||
       isLoading ||
       // document doesn't exist yet; always set the isDirty flag
-      !!createDoc ||
+      !!inputData?.isCreating ||
       !isEqualIgnoreUndefined(initialData, data);
     setIsDirty(dirty);
     if (data === undefined) {
       setData(initialData);
     }
-  }, [initialData, data, isSaving, isLoading, createDoc]);
+  }, [initialData, data, isSaving, isLoading, inputData]);
 
   useEffect(() => {
     setData(initialData);
@@ -186,8 +200,8 @@ export const useJsonForms = (
     JsonForm: (
       <JsonForm
         data={data}
-        jsonSchema={documentRegistry?.jsonSchema ?? {}}
-        uiSchema={documentRegistry?.uiSchema ?? { type: 'Control' }}
+        jsonSchema={schema?.jsonSchema ?? {}}
+        uiSchema={schema?.uiSchema ?? { type: 'Control' }}
         isError={!!error}
         isLoading={isLoading}
         setError={setValidationError}

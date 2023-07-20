@@ -15,9 +15,6 @@ use self::inbound_shipment_line::*;
 pub mod inbound_shipment_service_line;
 use self::inbound_shipment_service_line::*;
 
-pub mod outbound_shipment_line;
-use self::outbound_shipment_line::delete::*;
-
 pub mod outbound_shipment_service_line;
 use self::outbound_shipment_service_line::*;
 
@@ -44,7 +41,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         get_invoice_lines(ctx, filter)
     }
 
-    // Stock out
+    // Stock out: Outbound/Prescription
     fn insert_stock_out_line(
         &self,
         ctx: &ServiceContext,
@@ -61,12 +58,12 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         update_stock_out_line(ctx, input)
     }
 
-    fn delete_outbound_shipment_line(
+    fn delete_stock_out_line(
         &self,
         ctx: &ServiceContext,
-        input: DeleteOutboundShipmentLine,
-    ) -> Result<String, DeleteOutboundShipmentLineError> {
-        delete_outbound_shipment_line(ctx, input)
+        input: DeleteStockOutLine,
+    ) -> Result<String, DeleteStockOutLineError> {
+        delete_stock_out_line(ctx, input)
     }
 
     // Inbound
@@ -138,7 +135,7 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn delete_outbound_shipment_service_line(
         &self,
         ctx: &ServiceContext,
-        input: DeleteOutboundShipmentLine,
+        input: DeleteStockOutLine,
     ) -> Result<String, DeleteOutboundShipmentServiceLineError> {
         delete_outbound_shipment_service_line(ctx, input)
     }

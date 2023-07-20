@@ -64,7 +64,8 @@ const STORE_PREFERENCE_1: (&'static str, &'static str) = (
         "monthsUnderstock": 4,
         "monthsItemsExpire": 2,
         "boxPrefix": "",
-        "boxPercentageSpace": 0
+        "boxPercentageSpace": 0,
+        "omSupplyUsesProgramModule": true
     }
 }"#,
 );
@@ -129,7 +130,8 @@ const STORE_PREFERENCE_2: (&'static str, &'static str) = (
         "monthsUnderstock": 3,
         "monthsItemsExpire": 3,
         "boxPrefix": "",
-        "boxPercentageSpace": 0
+        "boxPercentageSpace": 0,
+        "omSupplyUsesProgramModule": false
     }
 }"#,
 );
@@ -145,6 +147,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 pack_to_one: true,
                 response_requisition_requires_authorisation: true,
                 request_requisition_requires_authorisation: false,
+                om_program_module: true,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -156,6 +159,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 pack_to_one: false,
                 response_requisition_requires_authorisation: false,
                 request_requisition_requires_authorisation: true,
+                om_program_module: false,
             }),
         ),
     ]

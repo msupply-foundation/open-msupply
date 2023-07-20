@@ -1,4 +1,7 @@
-pub(crate) mod insert;
+pub mod insert;
 
-pub(crate) mod update;
-pub(crate) use self::update::*;
+pub mod update;
+pub use self::update::*;
+
+pub mod delete;
+pub use self::delete::*;

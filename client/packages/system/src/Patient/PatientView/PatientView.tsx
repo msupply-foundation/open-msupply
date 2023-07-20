@@ -7,6 +7,7 @@ import {
   useTranslation,
   EncounterSortFieldInput,
   ProgramEnrolmentSortFieldInput,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -14,11 +15,12 @@ import { PatientSummary } from './PatientSummary';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
 import { CreateEncounterModal, EncounterListView } from '../Encounter';
 import {
+  FormInputData,
   PatientModal,
   ProgramSearchModal,
   SaveDocumentMutation,
+  useDocumentRegistry,
   useJsonForms,
-  usePatientCreateStore,
   usePatientModalStore,
   usePatientStore,
   useProgramEnrolments,
@@ -54,44 +56,84 @@ const PatientDetailView = ({
   onEdit: (isDirty: boolean) => void;
 }) => {
   const t = useTranslation('patients');
-  const { documentName, setDocumentName } = usePatientStore();
-  const { patient, setNewPatient } = usePatientCreateStore();
+  const {
+    documentName,
+    setDocumentName,
+    createNewPatient,
+    setCreateNewPatient,
+  } = usePatientStore();
   const patientId = usePatient.utils.id();
   const { data: currentPatient } = usePatient.document.get(patientId);
 
+  const { data: patientRegistries } =
+    useDocumentRegistry.get.documentRegistries({
+      filter: {
+        documentType: { equalTo: 'Patient' },
+      },
+    });
+  const patientRegistry = patientRegistries?.nodes[0];
+
   // we have to memo createDoc to avoid an infinite render loop
-  const createDoc = useMemo(() => {
-    if (patient) {
+  const inputData = useMemo<FormInputData | undefined>(() => {
+    if (createNewPatient) {
       return {
-        documentRegistry: patient.documentRegistry,
+        schema: createNewPatient.documentRegistry,
         data: {
-          id: patient.id,
-          code: patient.code,
-          code2: patient.code2,
-          firstName: patient.firstName,
-          lastName: patient.lastName,
-          gender: patient.gender,
-          dateOfBirth: patient.dateOfBirth,
+          id: createNewPatient.id,
+          code: createNewPatient.code,
+          code2: createNewPatient.code2,
+          firstName: createNewPatient.firstName,
+          lastName: createNewPatient.lastName,
+          gender: createNewPatient.gender,
+          dateOfBirth: createNewPatient.dateOfBirth,
           addresses: [],
           contactDetails: [],
           socioEconomics: {},
           isDeceased: false,
         },
+        isCreating: true,
+      };
+    } else if (
+      !!patientRegistry &&
+      !!currentPatient &&
+      !currentPatient.document
+    ) {
+      // no document associated with the patient; use data from the Name row
+      return {
+        schema: {
+          formSchemaId: patientRegistry.formSchemaId,
+          jsonSchema: patientRegistry.jsonSchema,
+          uiSchema: patientRegistry.uiSchema,
+        },
+        data: {
+          id: currentPatient.id,
+          code: currentPatient.code,
+          code2: currentPatient.code2 ?? undefined,
+          firstName: currentPatient.firstName ?? undefined,
+          lastName: currentPatient.lastName ?? undefined,
+          gender: currentPatient.gender ?? undefined,
+          dateOfBirth: currentPatient.dateOfBirth ?? undefined,
+          addresses: [],
+          contactDetails: [],
+          socioEconomics: {},
+          isDeceased: false,
+        },
+        isCreating: false,
       };
     } else return undefined;
-  }, [patient]);
+  }, [createNewPatient, currentPatient, patientRegistry]);
 
   const handleSave = useUpsertPatient();
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
     useJsonForms(
-      patient ? undefined : documentName,
+      createNewPatient ? undefined : documentName,
       patientId,
       { handleSave },
-      createDoc
+      inputData
     );
 
   useEffect(() => {
-    return () => setNewPatient(undefined);
+    return () => setCreateNewPatient(undefined);
   }, []);
 
   const save = useCallback(async () => {
@@ -99,7 +141,7 @@ const PatientDetailView = ({
     if (documentName) {
       setDocumentName(documentName);
       // patient has been created => unset the create request data
-      setNewPatient(undefined);
+      setCreateNewPatient(undefined);
     }
   }, [saveData]);
 
@@ -127,23 +169,26 @@ const PatientDetailView = ({
         isSaving={isSaving}
         isDirty={isDirty}
         validationError={validationError}
-        createDoc={createDoc}
+        inputData={inputData}
         showSaveConfirmation={showSaveConfirmation}
       />
     </Box>
   );
 };
 
+/**
+ * Main patient view containing patient details and program tabs
+ */
 export const PatientView = () => {
   const { current, setCreationModal, reset } = usePatientModalStore();
   const patientId = usePatient.utils.id();
   const { data } = useProgramEnrolments.document.list({
     filterBy: { patientId: { equalTo: patientId } },
   });
-  const { patient: createNewPatient } = usePatientCreateStore();
-  const { setCurrentPatient } = usePatientStore();
+  const { setCurrentPatient, createNewPatient } = usePatientStore();
   const { data: currentPatient } = usePatient.document.get(patientId);
   const [isDirtyPatient, setIsDirtyPatient] = useState(false);
+  const { store } = useAuthContext();
 
   const requiresConfirmation = (tab: string) => {
     return tab === 'Details' && isDirtyPatient;
@@ -195,7 +240,8 @@ export const PatientView = () => {
                 enrolmentDatetime: new Date().toISOString(),
                 status: 'ACTIVE',
               },
-              documentRegistry,
+              schema: documentRegistry,
+              isCreating: true,
             };
             setCreationModal(
               PatientModal.Program,
@@ -206,13 +252,15 @@ export const PatientView = () => {
           }}
         />
       ) : null}
-      <AppBarButtons disabled={!!createNewPatient} />
+      <AppBarButtons disabled={!!createNewPatient} store={store} />
       <PatientSummary />
-      {/* Only show tabs for saved patients */}
-      {!!createNewPatient ? (
-        <PatientDetailView onEdit={setIsDirtyPatient} />
-      ) : (
+      {/* Only show tabs if program module is on and patient is saved.
+      TODO: Prescription tab? - would need tab refactoring since also seems useful in programs
+      */}
+      {!createNewPatient && store?.preferences.omProgramModule ? (
         <DetailTabs tabs={tabs} requiresConfirmation={requiresConfirmation} />
+      ) : (
+        <PatientDetailView onEdit={setIsDirtyPatient} />
       )}
     </React.Suspense>
   );
