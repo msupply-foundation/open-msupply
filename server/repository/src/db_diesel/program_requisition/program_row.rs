@@ -12,7 +12,7 @@ table! {
         id -> Text,
         master_list_id -> Text,
         name -> Text,
-        context_id -> Nullable<Text>,
+        context_id -> Text,
     }
 }
 
@@ -25,7 +25,7 @@ pub struct ProgramRow {
     pub id: String, // Master list id
     pub master_list_id: String,
     pub name: String,
-    pub context_id: Option<String>,
+    pub context_id: String,
 }
 
 pub struct ProgramRowRepository<'a> {

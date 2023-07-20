@@ -193,7 +193,7 @@ fn generate_requisition_program(
         id: master_list.id.clone(),
         master_list_id: master_list.id.clone(),
         name: master_list.description.clone(),
-        context_id: Some(context_row.id.clone()),
+        context_id: context_row.id.clone(),
     };
 
     let mut program_requisition_settings_rows = Vec::new();

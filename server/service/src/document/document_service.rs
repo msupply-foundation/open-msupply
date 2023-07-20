@@ -740,7 +740,7 @@ mod document_service_test {
             DocumentDelete {
                 id: document.id.clone(),
             },
-            &vec![document.context_id.clone()],
+            &vec![document.context_id],
         );
         assert_eq!(
             deleted_doc,

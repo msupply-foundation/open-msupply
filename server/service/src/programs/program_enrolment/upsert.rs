@@ -459,7 +459,7 @@ mod test {
             .find_one_by_type_and_patient(&enrolment_doc_type, &patient.id)
             .unwrap()
             .unwrap();
-        assert_eq!(program_context, found_program.1.context_id.unwrap());
+        assert_eq!(program_context, found_program.1.context_id);
         assert_eq!(
             program.enrolment_datetime,
             DateTime::<Utc>::from_utc(found_program.0.enrolment_datetime, Utc).to_rfc3339()

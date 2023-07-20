@@ -141,7 +141,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(input.patient_id),
-        context_id: program_row.context_id.clone().unwrap(),
+        context_id: program_row.context_id.clone(),
     })
 }
 
