@@ -12,19 +12,19 @@ import {
   FilterOptionsState,
   RegexUtils,
 } from '@openmsupply-client/common';
-import { DocumentRegistryWithChildrenFragment } from '../api/operations.generated';
+import { DocumentRegistryFragment } from '../api/operations.generated';
 import { useDocumentRegistry } from '../api';
 
 const filterByName = (
-  options: DocumentRegistryWithChildrenFragment[],
-  state: FilterOptionsState<DocumentRegistryWithChildrenFragment>
+  options: DocumentRegistryFragment[],
+  state: FilterOptionsState<DocumentRegistryFragment>
 ) =>
   options.filter(option =>
     RegexUtils.matchObjectProperties(state.inputValue, option, ['name'])
   );
 
 const getProgramOptionRenderer =
-  (): AutocompleteOptionRenderer<DocumentRegistryWithChildrenFragment> =>
+  (): AutocompleteOptionRenderer<DocumentRegistryFragment> =>
   (props, program) => {
     const name = program.name;
     return (
@@ -51,7 +51,7 @@ interface ProgramSearchProps {
   disabledPrograms?: string[];
   open: boolean;
   onClose: () => void;
-  onChange: (name: DocumentRegistryWithChildrenFragment) => void;
+  onChange: (name: DocumentRegistryFragment) => void;
 }
 
 const ProgramSearchComponent: FC<ProgramSearchProps> = ({
@@ -65,23 +65,18 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
   const ProgramOptionRenderer = getProgramOptionRenderer();
 
   return (
-    <ListSearch<DocumentRegistryWithChildrenFragment>
+    <ListSearch<DocumentRegistryFragment>
       loading={isLoading}
       open={open}
       options={data?.nodes ?? []}
       onClose={onClose}
       title={t('programs')}
       renderOption={ProgramOptionRenderer}
-      getOptionLabel={(option: DocumentRegistryWithChildrenFragment) =>
-        option.name ?? ''
-      }
+      getOptionLabel={(option: DocumentRegistryFragment) => option.name ?? ''}
       filterOptions={filterByName}
       onChange={(
         _,
-        name:
-          | DocumentRegistryWithChildrenFragment
-          | DocumentRegistryWithChildrenFragment[]
-          | null
+        name: DocumentRegistryFragment | DocumentRegistryFragment[] | null
       ) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
@@ -94,7 +89,7 @@ const ProgramSearchComponent: FC<ProgramSearchProps> = ({
 
 export const ProgramSearchModal: FC<ProgramSearchProps> = props => (
   <QueryParamsProvider
-    createStore={createQueryParamsStore<DocumentRegistryWithChildrenFragment>({
+    createStore={createQueryParamsStore<DocumentRegistryFragment>({
       initialSortBy: { key: 'documentType' },
     })}
   >

@@ -63,7 +63,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
     useDocumentRegistry.get.documentRegistries({
       filter: {
         type: { equalTo: DocumentRegistryTypeNode.ProgramEnrolment },
-        documentContext: { equalTo: encounter?.context },
+        contextId: { equalTo: encounter?.contextId },
       },
     });
 
