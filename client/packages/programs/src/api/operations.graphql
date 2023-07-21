@@ -3,9 +3,8 @@ fragment DocumentRegistry on DocumentRegistryNode {
   id
   type
   documentType
-  documentContext
+  contextId
   name
-  parentId
   formSchemaId
   jsonSchema
   uiSchemaType
@@ -66,30 +65,6 @@ query documentRegistries(
         ...DocumentRegistry
       }
       totalCount
-    }
-  }
-}
-
-fragment DocumentRegistryWithChildren on DocumentRegistryNode {
-  ...DocumentRegistry
-  children {
-    ...DocumentRegistry
-  }
-}
-
-query documentRegistriesWithChildren(
-  $filter: DocumentRegistryFilterInput
-  $sort: DocumentRegistrySortInput
-  $storeId: String!
-) {
-  documentRegistries(sort: $sort, filter: $filter, storeId: $storeId) {
-    ... on DocumentRegistryConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        ...DocumentRegistryWithChildren
-      }
     }
   }
 }
@@ -165,22 +140,18 @@ query encounterFields(
 fragment EncounterDocumentRegistry on DocumentRegistryNode {
   type
   documentType
-  documentContext
+  contextId
   formSchemaId
   id
   jsonSchema
   name
-  parentId
   uiSchema
   uiSchemaType
-  children {
-    id
-  }
 }
 
 fragment Encounter on EncounterNode {
   id
-  context
+  contextId
   type
   name
   status
@@ -262,6 +233,7 @@ fragment EncounterRow on EncounterNode {
       name
     }
   }
+  contextId
   startDatetime
   endDatetime
   status
@@ -326,6 +298,7 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   type
   programEnrolmentId
   patientId
+  contextId
   name
   enrolmentDatetime
   status
