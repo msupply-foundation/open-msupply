@@ -1,8 +1,4 @@
-use async_graphql::{dataloader::DataLoader, *};
-use graphql_core::{
-    loader::{DocumentRegistryChildrenLoader, DocumentRegistryLoaderInput},
-    ContextExt,
-};
+use async_graphql::*;
 use repository::{DocumentRegistry, DocumentRegistryType};
 use serde::Serialize;
 
@@ -36,7 +32,7 @@ impl DocumentRegistryNode {
         &self.document_registry.document_type
     }
 
-    pub async fn document_context(&self) -> &str {
+    pub async fn context_id(&self) -> &str {
         &self.document_registry.context_id
     }
 
@@ -53,10 +49,6 @@ impl DocumentRegistryNode {
         &self.document_registry.name
     }
 
-    pub async fn parent_id(&self) -> &Option<String> {
-        &self.document_registry.parent_id
-    }
-
     pub async fn form_schema_id(&self) -> &str {
         &self.document_registry.form_schema_id
     }
@@ -71,24 +63,6 @@ impl DocumentRegistryNode {
 
     pub async fn ui_schema(&self) -> &serde_json::Value {
         &self.document_registry.ui_schema
-    }
-
-    pub async fn children(&self, ctx: &Context<'_>) -> Result<Vec<DocumentRegistryNode>> {
-        let loader = ctx.get_loader::<DataLoader<DocumentRegistryChildrenLoader>>();
-        let children = loader
-            .load_one(DocumentRegistryLoaderInput::new(
-                &self.allowed_ctx,
-                &self.document_registry.id,
-            ))
-            .await?
-            .unwrap_or(vec![]);
-        Ok(children
-            .into_iter()
-            .map(|document_registry| DocumentRegistryNode {
-                allowed_ctx: self.allowed_ctx.clone(),
-                document_registry,
-            })
-            .collect())
     }
 }
 

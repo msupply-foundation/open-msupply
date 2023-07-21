@@ -45,7 +45,6 @@ impl SyncRecordTester for DocumentRegistryTester {
             document_type: "TestProgram".to_string(),
             context_id: context.id.clone(),
             name: Some("Some name".to_string()),
-            parent_id: None,
             form_schema_id: Some(form_row1.id.clone()),
             config: Some("{}".to_string()),
         };

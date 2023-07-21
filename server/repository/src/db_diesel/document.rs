@@ -122,7 +122,7 @@ pub struct DocumentFilter {
     pub r#type: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
     pub owner: Option<EqualFilter<String>>,
-    pub context: Option<EqualFilter<String>>,
+    pub context_id: Option<EqualFilter<String>>,
     pub data: Option<SimpleStringFilter>,
 }
 
@@ -134,7 +134,7 @@ impl DocumentFilter {
             datetime: None,
             data: None,
             owner: None,
-            context: None,
+            context_id: None,
         }
     }
 
@@ -158,8 +158,8 @@ impl DocumentFilter {
         self
     }
 
-    pub fn context(mut self, filter: EqualFilter<String>) -> Self {
-        self.context = Some(filter);
+    pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.context_id = Some(filter);
         self
     }
 
@@ -190,7 +190,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
             r#type,
             datetime,
             owner,
-            context,
+            context_id: context,
             data,
         } = f;
 
@@ -298,7 +298,7 @@ impl<'a> DocumentRepository<'a> {
                 r#type,
                 datetime,
                 owner,
-                context,
+                context_id: context,
                 data,
             } = f;
 

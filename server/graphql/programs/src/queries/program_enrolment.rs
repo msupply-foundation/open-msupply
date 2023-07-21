@@ -61,8 +61,8 @@ pub struct ProgramEnrolmentFilterInput {
     pub status: Option<EqualFilterProgramEnrolmentStatusInput>,
     /// Same as program enrolment document type
     pub r#type: Option<EqualFilterStringInput>,
-    /// The program name
-    pub program: Option<EqualFilterStringInput>,
+    /// The program id
+    pub program_id: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
 }
 impl ProgramEnrolmentFilterInput {
@@ -73,7 +73,7 @@ impl ProgramEnrolmentFilterInput {
             program_enrolment_id,
             status,
             r#type,
-            program,
+            program_id,
             document_name,
         } = self;
         ProgramEnrolmentFilter {
@@ -83,7 +83,7 @@ impl ProgramEnrolmentFilterInput {
             status: status.map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
             document_name: document_name.map(EqualFilter::from),
             document_type: r#type.map(EqualFilter::from),
-            program_id: program.map(EqualFilter::from),
+            program_id: program_id.map(EqualFilter::from),
             context_id: None,
         }
     }

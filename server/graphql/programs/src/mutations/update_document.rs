@@ -265,7 +265,6 @@ mod graphql {
                 context_id: context_program_a().id,
                 r#type: DocumentRegistryType::ProgramEnrolment,
                 name: None,
-                parent_id: None,
                 form_schema_id: Some(schema.id),
                 config: None,
             })
@@ -319,7 +318,6 @@ mod graphql {
                 context_id: context_program_a().id,
                 r#type: DocumentRegistryType::Encounter,
                 name: None,
-                parent_id: None,
                 form_schema_id: Some(schema.id),
                 config: None,
             })

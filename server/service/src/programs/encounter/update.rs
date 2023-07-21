@@ -257,7 +257,6 @@ mod test {
                 document_type: PATIENT_TYPE.to_string(),
                 context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
-                parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
             })
@@ -269,7 +268,6 @@ mod test {
                 document_type: enrolment_doc_type.to_string(),
                 context_id: program_context.clone(),
                 name: None,
-                parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
             })
@@ -281,7 +279,6 @@ mod test {
                 document_type: encounter_type.to_string(),
                 context_id: program_context.clone(),
                 name: None,
-                parent_id: Some("program_enrolment_rego_id".to_string()),
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
             })

@@ -19,9 +19,9 @@ pub(crate) fn encounters(
 ) -> Result<ListResult<Encounter>, ListError> {
     // restrict query results to allowed entries
     let mut filter = filter.unwrap_or(EncounterFilter::new());
-    filter.context = Some(
+    filter.context_id = Some(
         filter
-            .context
+            .context_id
             .unwrap_or_default()
             .restrict_results(&allowed_ctx),
     );
@@ -40,9 +40,9 @@ pub(crate) fn encounter(
     allowed_ctx: Vec<String>,
 ) -> Result<Option<Encounter>, RepositoryError> {
     // restrict query results to allowed entries
-    filter.context = Some(
+    filter.context_id = Some(
         filter
-            .context
+            .context_id
             .unwrap_or_default()
             .restrict_results(&allowed_ctx),
     );
