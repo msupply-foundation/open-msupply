@@ -31,7 +31,7 @@ const useDisablePrescriptionRows = (rows?: PrescriptionRowFragment[]) => {
 
 const PrescriptionListViewComponent: FC = () => {
   const { mutate: onUpdate } = usePrescription.document.update();
-  const t = useTranslation('distribution');
+  const t = useTranslation('dispensary');
   const {
     updateSortQuery,
     updatePaginationQuery,

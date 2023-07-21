@@ -128,7 +128,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     setData(patients);
   }, [localSearchData, centralSearchData]);
   const { setCreateNewPatient } = usePatientStore();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const navigate = useNavigate();
   const { localisedDate } = useFormatDateTime();
 

@@ -23,7 +23,7 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController }) => {
   const { success, error } = useNotification();
   const { mutate: onCreate } = usePrescription.document.insert();
-  const t = useTranslation('distribution');
+  const t = useTranslation('dispensary');
   const { data, isLoading } = usePrescription.document.list();
 
   const csvExport = async () => {
@@ -57,7 +57,7 @@ export const AppBarButtonsComponent: FC<{
               });
             } catch (e) {
               const errorSnack = error(
-                'Failed to create prescription! ' + (e as Error).message
+                t('error.failed-to-create-prescription') + (e as Error).message
               );
               errorSnack();
             }
