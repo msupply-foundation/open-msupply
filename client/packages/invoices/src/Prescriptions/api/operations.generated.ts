@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type PrescriptionRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number } };
 
-export type InvoicesQueryVariables = Types.Exact<{
+export type PrescriptionsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']>;
   key: Types.InvoiceSortFieldInput;
@@ -16,7 +16,7 @@ export type InvoicesQueryVariables = Types.Exact<{
 }>;
 
 
-export type InvoicesQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number } }> } };
+export type PrescriptionsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number } }> } };
 
 export type PrescriptionByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int'];
@@ -71,8 +71,8 @@ export const PrescriptionRowFragmentDoc = gql`
   }
 }
     `;
-export const InvoicesDocument = gql`
-    query invoices($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
+export const PrescriptionsDocument = gql`
+    query prescriptions($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
@@ -212,8 +212,8 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    invoices(variables: InvoicesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoicesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InvoicesQuery>(InvoicesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoices', 'query');
+    prescriptions(variables: PrescriptionsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PrescriptionsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionsQuery>(PrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptions', 'query');
     },
     prescriptionByNumber(variables: PrescriptionByNumberQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PrescriptionByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PrescriptionByNumberQuery>(PrescriptionByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'prescriptionByNumber', 'query');
@@ -235,16 +235,16 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockInvoicesQuery((req, res, ctx) => {
+ * mockPrescriptionsQuery((req, res, ctx) => {
  *   const { first, offset, key, desc, filter, storeId } = req.variables;
  *   return res(
  *     ctx.data({ invoices })
  *   )
  * })
  */
-export const mockInvoicesQuery = (resolver: ResponseResolver<GraphQLRequest<InvoicesQueryVariables>, GraphQLContext<InvoicesQuery>, any>) =>
-  graphql.query<InvoicesQuery, InvoicesQueryVariables>(
-    'invoices',
+export const mockPrescriptionsQuery = (resolver: ResponseResolver<GraphQLRequest<PrescriptionsQueryVariables>, GraphQLContext<PrescriptionsQuery>, any>) =>
+  graphql.query<PrescriptionsQuery, PrescriptionsQueryVariables>(
+    'prescriptions',
     resolver
   )
 

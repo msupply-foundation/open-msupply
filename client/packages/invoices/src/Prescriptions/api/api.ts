@@ -87,7 +87,7 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
         ...filterBy,
         type: { equalTo: InvoiceNodeType.Prescription },
       };
-      const result = await sdk.invoices({
+      const result = await sdk.prescriptions({
         first,
         offset,
         key: prescriptionParsers.toSortField(sortBy),
