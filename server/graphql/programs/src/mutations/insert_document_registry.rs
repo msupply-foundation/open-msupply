@@ -14,9 +14,8 @@ use crate::types::document_registry::{DocumentRegistryNode, DocumentRegistryType
 #[derive(InputObject)]
 pub struct InsertDocumentRegistryInput {
     pub id: String,
-    pub parent_id: Option<String>,
     pub document_type: String,
-    pub document_context: String,
+    pub context_id: String,
     pub r#type: DocumentRegistryTypeNode,
     pub name: Option<String>,
     pub form_schema_id: String,
@@ -61,9 +60,6 @@ pub fn insert_document_registry(
                 InsertDocRegistryError::OnlyOnePatientEntryAllowed => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                InsertDocRegistryError::InvalidParent => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
                 InsertDocRegistryError::DataSchemaDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
@@ -83,9 +79,8 @@ pub fn insert_document_registry(
 fn to_domain(
     InsertDocumentRegistryInput {
         id,
-        parent_id,
         document_type,
-        document_context,
+        context_id,
         r#type,
         name,
         form_schema_id,
@@ -93,9 +88,8 @@ fn to_domain(
 ) -> InsertDocumentRegistry {
     InsertDocumentRegistry {
         id,
-        parent_id,
         document_type,
-        document_context,
+        context_id,
         r#type: r#type.to_domain(),
         name,
         form_schema_id,

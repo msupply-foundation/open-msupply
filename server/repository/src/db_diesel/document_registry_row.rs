@@ -23,7 +23,6 @@ table! {
         document_type -> Text,
         context_id -> Text,
         name -> Nullable<Text>,
-        parent_id -> Nullable<Text>,
         form_schema_id -> Nullable<Text>,
         config -> Nullable<Text>,
     }
@@ -40,7 +39,6 @@ pub struct DocumentRegistryRow {
     /// The context of the document, e.g. the program id
     pub context_id: String,
     pub name: Option<String>,
-    pub parent_id: Option<String>,
     pub form_schema_id: Option<String>,
     pub config: Option<String>,
 }

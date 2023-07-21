@@ -27,8 +27,7 @@ pub struct DocumentRegistryFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterDocumentRegistryTypeInput>,
     pub document_type: Option<EqualFilterStringInput>,
-    pub document_context: Option<EqualFilterStringInput>,
-    pub parent_id: Option<EqualFilterStringInput>,
+    pub context_id: Option<EqualFilterStringInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -107,15 +106,13 @@ impl DocumentRegistryFilterInput {
             id,
             r#type,
             document_type,
-            document_context,
-            parent_id,
+            context_id,
         } = self;
         DocumentRegistryFilter {
             id: id.map(EqualFilter::from),
             document_type: document_type.map(EqualFilter::from),
-            document_context: document_context.map(EqualFilter::from),
+            context_id: context_id.map(EqualFilter::from),
             r#type: r#type.map(|t| map_filter!(t, DocumentRegistryTypeNode::to_domain)),
-            parent_id: parent_id.map(EqualFilter::from),
         }
     }
 }

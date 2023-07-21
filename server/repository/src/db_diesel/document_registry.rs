@@ -19,9 +19,8 @@ use diesel::{
 pub struct DocumentRegistryFilter {
     pub id: Option<EqualFilter<String>>,
     pub document_type: Option<EqualFilter<String>>,
-    pub document_context: Option<EqualFilter<String>>,
+    pub context_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<DocumentRegistryType>>,
-    pub parent_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -39,7 +38,6 @@ pub struct DocumentRegistryRepository<'a> {
 #[derive(Debug, PartialEq, Clone)]
 pub struct DocumentRegistry {
     pub id: String,
-    pub parent_id: Option<String>,
     pub document_type: String,
     pub context_id: String,
     pub r#type: DocumentRegistryType,
@@ -120,13 +118,8 @@ fn create_filtered_query(filter: Option<DocumentRegistryFilter>) -> BoxedDocRegi
             filter.document_type,
             document_registry_dsl::document_type
         );
-        apply_equal_filter!(
-            query,
-            filter.document_context,
-            document_registry_dsl::context_id
-        );
+        apply_equal_filter!(query, filter.context_id, document_registry_dsl::context_id);
         apply_equal_filter!(query, filter.r#type, document_registry_dsl::type_);
-        apply_equal_filter!(query, filter.parent_id, document_registry_dsl::parent_id);
     }
 
     query
@@ -137,9 +130,8 @@ impl DocumentRegistryFilter {
         DocumentRegistryFilter {
             id: None,
             document_type: None,
-            document_context: None,
+            context_id: None,
             r#type: None,
-            parent_id: None,
         }
     }
 
@@ -153,18 +145,13 @@ impl DocumentRegistryFilter {
         self
     }
 
-    pub fn document_context(mut self, filter: EqualFilter<String>) -> Self {
-        self.document_context = Some(filter);
+    pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.context_id = Some(filter);
         self
     }
 
     pub fn r#type(mut self, filter: EqualFilter<DocumentRegistryType>) -> Self {
         self.r#type = Some(filter);
-        self
-    }
-
-    pub fn parent_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.parent_id = Some(filter);
         self
     }
 }
@@ -175,9 +162,8 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
             id,
             r#type,
             document_type,
-            context_id: document_context,
+            context_id,
             name,
-            parent_id,
             form_schema_id: _,
             config,
         },
@@ -205,9 +191,8 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
 
     Ok(DocumentRegistry {
         id,
-        parent_id,
         document_type,
-        context_id: document_context,
+        context_id,
         r#type,
         name,
         form_schema_id: form_schema.id,

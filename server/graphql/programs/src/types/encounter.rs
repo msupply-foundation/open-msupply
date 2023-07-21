@@ -82,7 +82,7 @@ impl EncounterNode {
         &self.encounter.0.id
     }
 
-    pub async fn context(&self) -> &str {
+    pub async fn context_id(&self) -> &str {
         &self.encounter.1.context_id
     }
 
