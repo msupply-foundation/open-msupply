@@ -14,7 +14,7 @@ import {
 import { OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { DraftOutboundLine, InboundItem } from './types';
-import { PrescriptionRowFragment } from './Dispensary/api';
+import { PrescriptionRowFragment } from './Prescriptions/api';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
