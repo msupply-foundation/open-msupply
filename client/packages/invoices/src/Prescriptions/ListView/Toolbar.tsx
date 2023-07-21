@@ -13,7 +13,7 @@ import { PrescriptionRowFragment, usePrescription } from '../api';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation();
 
   const onDelete = usePrescription.document.delete();
 

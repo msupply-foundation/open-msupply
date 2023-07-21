@@ -15,7 +15,7 @@ export const usePrescriptionDelete = () => {
   const { data: rows } = usePrescriptions();
   const api = usePrescriptionApi();
   const { mutateAsync } = useMutation(api.delete);
-  const t = useTranslation('distribution');
+  const t = useTranslation('dispensary');
 
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -37,10 +37,10 @@ export const usePrescriptionDelete = () => {
     deleteAction,
     canDelete: selectedRows.every(canDeleteInvoice),
     messages: {
-      confirmMessage: t('messages.confirm-delete-shipments', {
+      confirmMessage: t('messages.confirm-delete-prescriptions', {
         count: selectedRows.length,
       }),
-      deleteSuccess: t('messages.deleted-shipments', {
+      deleteSuccess: t('messages.deleted-prescriptions', {
         count: selectedRows.length,
       }),
     },

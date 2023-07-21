@@ -28,6 +28,7 @@
   "button.select-a-color": "Select a colour",
   "button.try-again": "Try again",
   "button.view": "View",
+  "button.delete-lines": "Delete selected lines",
   "description.average-monthly-consumption": "Average Monthly Consumption",
   "description.customer-reference": "Customer reference",
   "description.customer-soh": "Customer Stock on Hand",
