@@ -17,7 +17,7 @@ fragment PrescriptionRow on InvoiceNode {
   }
 }
 
-query invoices(
+query prescriptions(
   $first: Int
   $offset: Int
   $key: InvoiceSortFieldInput!
