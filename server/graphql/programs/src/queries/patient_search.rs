@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::GenderInput;
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     programs::patient::PatientSearch,
     usize_to_u32,
 };
@@ -62,7 +62,7 @@ pub fn patient_search(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

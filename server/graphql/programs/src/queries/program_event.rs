@@ -6,7 +6,7 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{PaginationOption, ProgramEventFilter, ProgramEventSort, ProgramEventSortField};
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 
 use crate::types::{program_enrolment::ProgramEventFilterInput, program_event::ProgramEventNode};
 
@@ -53,7 +53,7 @@ pub fn program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let mut filter = filter
         .map(|f| f.to_domain())
@@ -110,7 +110,7 @@ pub fn active_program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let mut filter = filter
         .map(|f| f.to_domain())

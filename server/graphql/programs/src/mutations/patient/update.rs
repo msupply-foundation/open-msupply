@@ -4,7 +4,7 @@ use graphql_core::{
     ContextExt,
 };
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     programs::patient::{UpdatePatient, UpdatePatientError},
 };
 
@@ -36,7 +36,7 @@ pub fn update_patient(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;

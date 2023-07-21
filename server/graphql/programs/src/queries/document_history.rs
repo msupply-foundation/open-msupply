@@ -3,7 +3,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::document::document_service::DocumentHistoryError;
 use service::usize_to_u32;
 
@@ -26,7 +26,7 @@ pub fn document_history(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

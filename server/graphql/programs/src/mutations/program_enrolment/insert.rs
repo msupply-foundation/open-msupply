@@ -5,7 +5,7 @@ use graphql_core::{
 };
 use repository::{EqualFilter, ProgramEnrolmentFilter};
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     programs::program_enrolment::{UpsertProgramEnrolment, UpsertProgramEnrolmentError},
 };
 
@@ -39,7 +39,7 @@ pub fn insert_program_enrolment(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;

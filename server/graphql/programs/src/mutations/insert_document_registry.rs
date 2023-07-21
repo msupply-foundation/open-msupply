@@ -1,6 +1,6 @@
 use async_graphql::*;
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     document::document_registry::{InsertDocRegistryError, InsertDocumentRegistry},
 };
 
@@ -37,7 +37,7 @@ pub fn insert_document_registry(
             store_id: None,
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
