@@ -6,7 +6,7 @@ import {
   ListView as InboundShipmentListView,
   DetailView as InboundShipmentDetailView,
 } from './InboundShipment';
-import { PrescriptionListView } from './Dispensary';
+import { PrescriptionListView } from './Prescriptions';
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
