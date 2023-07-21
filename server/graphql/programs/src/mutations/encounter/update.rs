@@ -5,7 +5,7 @@ use graphql_core::{
 };
 use repository::{EncounterFilter, EqualFilter};
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     programs::encounter::{UpdateEncounter, UpdateEncounterError},
 };
 
@@ -40,7 +40,7 @@ pub fn update_encounter(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;

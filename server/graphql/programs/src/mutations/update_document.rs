@@ -5,7 +5,7 @@ use repository::{
     EqualFilter, StorageConnection,
 };
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     document::{document_service::DocumentInsertError, raw_document::RawDocument},
     programs::patient::PATIENT_TYPE,
 };
@@ -79,7 +79,7 @@ pub fn update_document(
 
     // Move this after validate_document_type to make the tests happy (test don't have permissions)
     // TODO make allowed_ctx optional if debug_no_access_control is set?
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let response = match service_provider.document_service.update_document(
         &context,

@@ -9,7 +9,7 @@ use repository::{
     DatetimeFilter, DocumentFilter, DocumentSort, DocumentSortField, EqualFilter, PaginationOption,
     SimpleStringFilter,
 };
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 
 use crate::types::document::{DocumentConnector, DocumentNode};
 
@@ -78,7 +78,7 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
             store_id: Some(store_id),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -108,7 +108,7 @@ pub fn documents(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
