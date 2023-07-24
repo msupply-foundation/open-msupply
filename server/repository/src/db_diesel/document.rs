@@ -3,13 +3,9 @@ use super::StorageConnection;
 use crate::db_diesel::form_schema_row::form_schema;
 use crate::db_diesel::name_row::name;
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
-    apply_string_filter,
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
 };
-use crate::{
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, SimpleStringFilter, Sort,
-    StringFilter,
-};
+use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::helper_types::IntoBoxed;
@@ -123,7 +119,7 @@ pub struct DocumentFilter {
     pub datetime: Option<DatetimeFilter>,
     pub owner: Option<EqualFilter<String>>,
     pub context: Option<EqualFilter<String>>,
-    pub data: Option<SimpleStringFilter>,
+    pub data: Option<StringFilter>,
 }
 
 impl DocumentFilter {
@@ -163,7 +159,7 @@ impl DocumentFilter {
         self
     }
 
-    pub fn data(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn data(mut self, filter: StringFilter) -> Self {
         self.data = Some(filter);
         self
     }
@@ -199,7 +195,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
         apply_date_time_filter!(query, datetime, latest_document::dsl::datetime);
         apply_equal_filter!(query, owner, latest_document::dsl::owner_name_id);
         apply_equal_filter!(query, context, latest_document::dsl::context);
-        apply_simple_string_filter!(query, data, latest_document::dsl::data);
+        apply_string_filter!(query, data, latest_document::dsl::data);
     }
     query
 }
@@ -307,7 +303,7 @@ impl<'a> DocumentRepository<'a> {
             apply_date_time_filter!(query, datetime, document::dsl::datetime);
             apply_equal_filter!(query, owner, document::dsl::owner_name_id);
             apply_equal_filter!(query, context, document::dsl::context);
-            apply_simple_string_filter!(query, data, document::dsl::data);
+            apply_string_filter!(query, data, document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query
             .order(document::dsl::datetime.desc())

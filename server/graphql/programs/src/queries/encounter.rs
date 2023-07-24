@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -8,7 +8,7 @@ use graphql_core::{
 };
 use repository::{
     DatetimeFilter, EncounterFilter, EncounterSort, EncounterSortField, EqualFilter,
-    PaginationOption, SimpleStringFilter,
+    PaginationOption, StringFilter,
 };
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 
@@ -66,7 +66,7 @@ pub struct EncounterFilterInput {
     pub status: Option<EqualFilterEncounterStatusInput>,
     pub clinician_id: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
-    pub document_data: Option<SimpleStringFilterInput>,
+    pub document_data: Option<StringFilterInput>,
 }
 
 impl EncounterFilterInput {
@@ -84,7 +84,7 @@ impl EncounterFilterInput {
             clinician_id: self.clinician_id.map(EqualFilter::from),
             document_type: self.r#type.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
-            document_data: self.document_data.map(SimpleStringFilter::from),
+            document_data: self.document_data.map(StringFilter::from),
         }
     }
 }

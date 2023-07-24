@@ -1,40 +1,7 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use util::inline_init;
 
-#[derive(Clone, PartialEq, Debug)]
-pub struct SimpleStringFilter {
-    pub equal_to: Option<String>,
-    pub insensitive_equal_to: Option<String>,
-    pub like: Option<String>,
-}
-
-impl SimpleStringFilter {
-    pub fn equal_to(value: &str) -> Self {
-        SimpleStringFilter {
-            equal_to: Some(value.to_owned()),
-            insensitive_equal_to: None,
-            like: None,
-        }
-    }
-
-    pub fn like(value: &str) -> Self {
-        SimpleStringFilter {
-            equal_to: None,
-            insensitive_equal_to: None,
-            like: Some(value.to_owned()),
-        }
-    }
-
-    pub fn insensitive_equal_to(value: &str) -> Self {
-        SimpleStringFilter {
-            equal_to: None,
-            insensitive_equal_to: Some(value.to_owned()),
-            like: None,
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct StringFilter {
     pub equal_to: Option<String>,
     pub not_equal_to: Option<String>,
