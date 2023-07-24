@@ -113,19 +113,36 @@ macro_rules! apply_string_filter_method {
 /// Example expand, when called with:
 ///
 /// ```
-/// apply_string_filter!(query, filter.comment, invoice_dsl::comment)
+/// apply_string_filter!(query, code, clinician_dsl::code)
 /// ```
 ///
 /// ```
-/// if let Some(string_filter) = filter.comment {
-///     if let Some(value) = equal_filter.equal_to {
-///         query = query.filter(invoice_dsl::comment.eq(value));
-///     }
-///
-///     if let Some(value) = equal_filter.like {
-///         query = query.filter(invoice_dsl::comment.like(format!("%{}%", value)));
-///     }
-/// }
+//  if let Some(code) = filter_field {
+//     if let Some(value) = filter.equal_to {
+//         query = query.filter(clinician_dsl::code.eq(value));
+//     }
+//     if let Some(value) = filter.not_equal_to {
+//         query = query.filter(clinician_dsl::code.ne(value));
+//     }
+//     if let Some(value) = filter.equal_any {
+//         query = query.filter(clinician_dsl::code.eq_any(value));
+//     }
+//     if let Some(value) = filter.not_equal_all {
+//         query = query.filter(clinician_dsl::code.ne_all(value));
+//     }
+//     if let Some(value) = filter.like {
+//         // in sqlite like is case insensitive (but on only works with ASCII chars)
+//         query = query.filter(clinician_dsl::code.like(format!("%{}%", value)));
+//     }
+//     if let Some(value) = filter.starts_with {
+//         // in sqlite like is case insensitive (but on only works with ASCII chars)
+//         query = query.filter(clinician_dsl::code.like(format!("{}%", value)));
+//     }
+//     if let Some(value) = filter.ends_with {
+//         // in sqlite like is case insensitive (but on only works with ASCII chars)
+//         query = query.filter(clinician_dsl::code.like(format!("%{}", value)));
+//     }
+// }
 /// ```
 macro_rules! apply_string_filter {
     ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
@@ -143,19 +160,36 @@ macro_rules! apply_string_filter {
 /// Example expand, when called with:
 ///
 /// ```
-/// apply_string_or_filter!(query, filter.comment, invoice_dsl::comment)
+/// apply_string_or_filter!(query, code, clinician_dsl::code)
 /// ```
 ///
 /// ```
-/// if let Some(string_filter) = filter.comment {
-///     if let Some(value) = equal_filter.equal_to {
-///         query = query.or_filter(invoice_dsl::comment.eq(value));
-///     }
-///
-///     if let Some(value) = equal_filter.like {
-///         query = query.or_filter(invoice_dsl::comment.like(format!("%{}%", value)));
-///     }
-/// }
+//  if let Some(code) = filter_field {
+//     if let Some(value) = filter.equal_to {
+//         query = query.or_filter(clinician_dsl::code.eq(value));
+//     }
+//     if let Some(value) = filter.not_equal_to {
+//         query = query.or_filter(clinician_dsl::code.ne(value));
+//     }
+//     if let Some(value) = filter.equal_any {
+//         query = query.or_filter(clinician_dsl::code.eq_any(value));
+//     }
+//     if let Some(value) = filter.not_equal_all {
+//         query = query.or_filter(clinician_dsl::code.ne_all(value));
+//     }
+//     if let Some(value) = filter.like {
+//         // in sqlite like is case insensitive (but on only works with ASCII chars)
+//         query = query.or_filter(clinician_dsl::code.like(format!("%{}%", value)));
+//     }
+//     if let Some(value) = filter.starts_with {
+//         // in sqlite like is case insensitive (but on only works with ASCII chars)
+//         query = query.or_filter(clinician_dsl::code.like(format!("{}%", value)));
+//     }
+//     if let Some(value) = filter.ends_with {
+//         // in sqlite like is case insensitive (but on only works with ASCII chars)
+//         query = query.or_filter(clinician_dsl::code.like(format!("%{}", value)));
+//     }
+// }
 /// ```
 macro_rules! apply_string_or_filter {
     ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
