@@ -1,13 +1,13 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{
-    DatetimeFilterInput, EqualFilterStringInput, SimpleStringFilterInput,
+    DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use repository::{
     DatetimeFilter, DocumentFilter, DocumentSort, DocumentSortField, EqualFilter, PaginationOption,
-    SimpleStringFilter,
+    StringFilter,
 };
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 
@@ -27,7 +27,7 @@ pub struct DocumentFilterInput {
     pub context: Option<EqualFilterStringInput>,
     /// This filter makes it possible to search the raw text json data.
     /// Be beware of potential performance issues.
-    pub data: Option<SimpleStringFilterInput>,
+    pub data: Option<StringFilterInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -65,7 +65,7 @@ impl DocumentFilterInput {
             datetime: self.datetime.map(DatetimeFilter::from),
             owner: self.owner.map(EqualFilter::from),
             context: self.context.map(EqualFilter::from),
-            data: self.data.map(SimpleStringFilter::from),
+            data: self.data.map(StringFilter::from),
         }
     }
 }

@@ -1,8 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{
-        DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
-        SimpleStringFilterInput,
+        DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput,
     },
     map_filter,
     pagination::PaginationInput,
@@ -13,7 +12,7 @@ use graphql_core::{
 use graphql_types::types::{InvoiceConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType};
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceFilter, InvoiceSort, InvoiceSortField, PaginationOption,
-    SimpleStringFilter,
+    StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -74,14 +73,14 @@ pub struct InvoiceFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name_id: Option<EqualFilterStringInput>,
     pub invoice_number: Option<EqualFilterBigNumberInput>,
-    pub other_party_name: Option<SimpleStringFilterInput>,
+    pub other_party_name: Option<StringFilterInput>,
     pub other_party_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub user_id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterInvoiceTypeInput>,
     pub status: Option<EqualFilterInvoiceStatusInput>,
     pub on_hold: Option<bool>,
-    pub comment: Option<SimpleStringFilterInput>,
+    pub comment: Option<StringFilterInput>,
     pub their_reference: Option<EqualFilterStringInput>,
     pub transport_reference: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
@@ -202,7 +201,7 @@ impl InvoiceFilterInput {
             id: self.id.map(EqualFilter::from),
             invoice_number: self.invoice_number.map(EqualFilter::from),
             name_id: self.other_party_id.map(EqualFilter::from),
-            name: self.other_party_name.map(SimpleStringFilter::from),
+            name: self.other_party_name.map(StringFilter::from),
             store_id: self.store_id.map(EqualFilter::from),
             user_id: self.user_id.map(EqualFilter::from),
             r#type: self
@@ -212,7 +211,7 @@ impl InvoiceFilterInput {
                 .status
                 .map(|t| map_filter!(t, InvoiceNodeStatus::to_domain)),
             on_hold: self.on_hold,
-            comment: self.comment.map(SimpleStringFilter::from),
+            comment: self.comment.map(StringFilter::from),
             their_reference: self.their_reference.map(EqualFilter::from),
             transport_reference: self.transport_reference.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),

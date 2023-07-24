@@ -1,6 +1,6 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -8,7 +8,7 @@ use graphql_core::{
 use graphql_types::types::ClinicianNode;
 use repository::{
     Clinician, ClinicianFilter, ClinicianSort, ClinicianSortField, EqualFilter, PaginationOption,
-    SimpleStringFilter,
+    StringFilter,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -42,15 +42,15 @@ pub struct ClinicianSortInput {
 pub struct ClinicianFilterInput {
     pub id: Option<EqualFilterStringInput>,
 
-    pub code: Option<SimpleStringFilterInput>,
-    pub first_name: Option<SimpleStringFilterInput>,
-    pub last_name: Option<SimpleStringFilterInput>,
-    pub initials: Option<SimpleStringFilterInput>,
-    pub address1: Option<SimpleStringFilterInput>,
-    pub address2: Option<SimpleStringFilterInput>,
-    pub phone: Option<SimpleStringFilterInput>,
-    pub mobile: Option<SimpleStringFilterInput>,
-    pub email: Option<SimpleStringFilterInput>,
+    pub code: Option<StringFilterInput>,
+    pub first_name: Option<StringFilterInput>,
+    pub last_name: Option<StringFilterInput>,
+    pub initials: Option<StringFilterInput>,
+    pub address1: Option<StringFilterInput>,
+    pub address2: Option<StringFilterInput>,
+    pub phone: Option<StringFilterInput>,
+    pub mobile: Option<StringFilterInput>,
+    pub email: Option<StringFilterInput>,
 }
 
 #[derive(SimpleObject)]
@@ -118,15 +118,15 @@ impl ClinicianFilterInput {
 
         ClinicianFilter {
             id: id.map(EqualFilter::from),
-            code: code.map(SimpleStringFilter::from),
-            first_name: first_name.map(SimpleStringFilter::from),
-            last_name: last_name.map(SimpleStringFilter::from),
-            initials: initials.map(SimpleStringFilter::from),
-            address1: address1.map(SimpleStringFilter::from),
-            address2: address2.map(SimpleStringFilter::from),
-            phone: phone.map(SimpleStringFilter::from),
-            mobile: mobile.map(SimpleStringFilter::from),
-            email: email.map(SimpleStringFilter::from),
+            code: code.map(StringFilter::from),
+            first_name: first_name.map(StringFilter::from),
+            last_name: last_name.map(StringFilter::from),
+            initials: initials.map(StringFilter::from),
+            address1: address1.map(StringFilter::from),
+            address2: address2.map(StringFilter::from),
+            phone: phone.map(StringFilter::from),
+            mobile: mobile.map(StringFilter::from),
+            email: email.map(StringFilter::from),
         }
     }
 }

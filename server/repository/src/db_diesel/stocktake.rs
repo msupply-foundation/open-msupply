@@ -5,11 +5,11 @@ use super::{
 
 use crate::{
     diesel_macros::{
-        apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_simple_string_filter,
-        apply_sort, apply_sort_no_case,
+        apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
+        apply_sort_no_case, apply_string_filter,
     },
-    DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, RepositoryError,
-    SimpleStringFilter, Sort,
+    DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -20,8 +20,8 @@ pub struct StocktakeFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub user_id: Option<EqualFilter<String>>,
     pub stocktake_number: Option<EqualFilter<i64>>,
-    pub comment: Option<SimpleStringFilter>,
-    pub description: Option<SimpleStringFilter>,
+    pub comment: Option<StringFilter>,
+    pub description: Option<StringFilter>,
     pub status: Option<EqualFilter<StocktakeStatus>>,
     pub created_datetime: Option<DatetimeFilter>,
     pub stocktake_date: Option<DateFilter>,
@@ -66,12 +66,12 @@ impl StocktakeFilter {
         self
     }
 
-    pub fn comment(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn comment(mut self, filter: StringFilter) -> Self {
         self.comment = Some(filter);
         self
     }
 
-    pub fn description(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn description(mut self, filter: StringFilter) -> Self {
         self.description = Some(filter);
         self
     }
@@ -126,8 +126,8 @@ fn create_filtered_query<'a>(filter: Option<StocktakeFilter>) -> BoxedStocktakeQ
         apply_equal_filter!(query, f.store_id, stocktake::store_id);
         apply_equal_filter!(query, f.user_id, stocktake::user_id);
         apply_equal_filter!(query, f.stocktake_number, stocktake::stocktake_number);
-        apply_simple_string_filter!(query, f.comment, stocktake::comment);
-        apply_simple_string_filter!(query, f.description, stocktake::description);
+        apply_string_filter!(query, f.comment, stocktake::comment);
+        apply_string_filter!(query, f.description, stocktake::description);
 
         if let Some(value) = f.status {
             if let Some(eq) = value.equal_to {
