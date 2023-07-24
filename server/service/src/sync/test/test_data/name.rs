@@ -136,7 +136,6 @@ fn name_1() -> TestSyncPullRecord {
             on_hold: true,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
-            is_sync_update: true,
             created_datetime: Some(
                 NaiveDate::from_ymd_opt(2022, 05, 22)
                     .unwrap()
@@ -274,7 +273,6 @@ fn name_2() -> TestSyncPullRecord {
             created_datetime: None,
             is_deceased: false,
             national_health_number: None,
-            is_sync_update: true,
         }),
     )
 }
@@ -406,7 +404,6 @@ fn name_3() -> TestSyncPullRecord {
             created_datetime: None,
             is_deceased: false,
             national_health_number: Some("NHN002".to_string()),
-            is_sync_update: true,
         }),
     )
 }
@@ -544,7 +541,6 @@ fn name_4() -> TestSyncPullRecord {
             ),
             is_deceased: true,
             national_health_number: Some("NHN003".to_string()),
-            is_sync_update: true,
         }),
     )
 }
