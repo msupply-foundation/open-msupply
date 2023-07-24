@@ -1,11 +1,13 @@
 #[cfg(test)]
 mod tests {
     use crate::sync::test::integration::remote::{
-        activity_log::ActivityLogRecordTester, invoice::InvoiceRecordTester,
+        activity_log::ActivityLogRecordTester, clinician::ClinicianRecordTester,
+        document::DocumentRecordTester, invoice::InvoiceRecordTester,
         location::LocationRecordTester, location_movement::LocationMovementRecordTester,
+        patient_name_and_store_and_name_store_join::PatientNameAndStoreAndNameStoreJoinTester,
         program_requisition::ProgramRequisitionTester, requisition::RequisitionRecordTester,
         stock_line::StockLineRecordTester, stocktake::StocktakeRecordTester,
-        test_remote_sync_record,
+        test_remote_sync_record, user_permission::UserPermissionTester,
     };
 
     #[actix_rt::test]
@@ -46,5 +48,29 @@ mod tests {
     #[actix_rt::test]
     async fn intergration_sync_program_requisition() {
         test_remote_sync_record("program_requisition", &ProgramRequisitionTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_clinician() {
+        test_remote_sync_record("clinician", &ClinicianRecordTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_patient_name() {
+        test_remote_sync_record(
+            "patient_store_and_join",
+            &PatientNameAndStoreAndNameStoreJoinTester,
+        )
+        .await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_user_permission() {
+        test_remote_sync_record("user_permission", &UserPermissionTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_remote_document() {
+        test_remote_sync_record("document", &DocumentRecordTester).await;
     }
 }

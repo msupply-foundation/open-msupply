@@ -276,7 +276,7 @@ impl LoginService {
 
         let service = UserAccountService::new(&service_ctx.connection);
         service
-            .upsert_user(user, stores_permissions)
+            .upsert_user(user.clone(), stores_permissions)
             .map_err(|e| UpdateUserError::DatabaseError(e))?;
         Ok(())
     }
@@ -333,12 +333,15 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // customer invoices
             Permissions::ViewCustomerInvoices => {
                 output.insert(Permission::OutboundShipmentQuery);
+                output.insert(Permission::PrescriptionQuery);
             }
             Permissions::CreateCustomerInvoices => {
                 output.insert(Permission::OutboundShipmentMutate);
+                output.insert(Permission::PrescriptionMutate);
             }
             Permissions::EditCustomerInvoices => {
                 output.insert(Permission::OutboundShipmentMutate);
+                output.insert(Permission::PrescriptionMutate);
             }
             // supplier invoices
             Permissions::ViewSupplierInvoices => {
@@ -367,6 +370,11 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // log
             Permissions::ViewLog => {
                 output.insert(Permission::LogQuery);
+            }
+            // patient
+            Permissions::EditPatientDetails => {
+                output.insert(Permission::PatientMutate);
+                output.insert(Permission::PatientQuery);
             }
             // items
             Permissions::EditItems => {

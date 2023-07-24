@@ -10,8 +10,10 @@ use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
+use graphql_clinician::ClinicianQueries;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
+use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::{
     DiscoveryQueries, GeneralMutations, GeneralQueries, InitialisationMutations,
     InitialisationQueries,
@@ -20,6 +22,7 @@ use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
+use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
@@ -51,6 +54,9 @@ pub struct Queries(
     pub ReportQueries,
     pub StockLineQueries,
     pub RepackQueries,
+    pub ProgramsQueries,
+    pub FormSchemaQueries,
+    pub ClinicianQueries,
 );
 
 impl Queries {
@@ -64,6 +70,9 @@ impl Queries {
             ReportQueries,
             StockLineQueries,
             RepackQueries,
+            ProgramsQueries,
+            FormSchemaQueries,
+            ClinicianQueries,
         )
     }
 }
@@ -81,6 +90,8 @@ pub struct Mutations(
     pub StockLineMutations,
     pub RepackMutations,
     pub GeneralMutations,
+    pub ProgramsMutations,
+    pub FormSchemaMutations,
 );
 
 impl Mutations {
@@ -97,6 +108,8 @@ impl Mutations {
             StockLineMutations,
             RepackMutations,
             GeneralMutations,
+            ProgramsMutations,
+            FormSchemaMutations,
         )
     }
 }

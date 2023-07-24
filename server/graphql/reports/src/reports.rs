@@ -2,14 +2,15 @@ use ::serde::Serialize;
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
     standard_graphql_error::validate_auth,
 };
 use graphql_core::{map_filter, ContextExt};
+use graphql_types::types::FormSchemaNode;
 use repository::{
-    EqualFilter, PaginationOption, ReportContext as ReportContextDomain, ReportFilter, ReportRow,
-    ReportSort, ReportSortField, SimpleStringFilter,
+    EqualFilter, PaginationOption, Report, ReportContext as ReportContextDomain, ReportFilter,
+    ReportSort, ReportSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -37,6 +38,8 @@ pub enum ReportContext {
     Requisition,
     Stocktake,
     Resource,
+    Patient,
+    Dispensary,
     Repack,
 }
 
@@ -50,8 +53,9 @@ pub struct EqualFilterReportContextInput {
 #[derive(InputObject, Clone)]
 pub struct ReportFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub name: Option<SimpleStringFilterInput>,
+    pub name: Option<StringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
+    pub sub_context: Option<EqualFilterStringInput>,
 }
 
 #[derive(Union)]
@@ -67,28 +71,33 @@ pub struct ReportConnector {
 
 #[derive(PartialEq, Debug)]
 pub struct ReportNode {
-    row: ReportRow,
+    row: Report,
 }
 
 #[Object]
 impl ReportNode {
     pub async fn id(&self) -> &str {
-        &self.row.id
+        &self.row.report_row.id
     }
 
     /// Human readable name of the report
     pub async fn name(&self) -> &str {
-        &self.row.name
+        &self.row.report_row.name
     }
+
     pub async fn context(&self) -> ReportContext {
-        match self.row.context {
-            ReportContextDomain::InboundShipment => ReportContext::InboundShipment,
-            ReportContextDomain::OutboundShipment => ReportContext::OutboundShipment,
-            ReportContextDomain::Requisition => ReportContext::Requisition,
-            ReportContextDomain::Stocktake => ReportContext::Stocktake,
-            ReportContextDomain::Resource => ReportContext::Resource,
-            ReportContextDomain::Repack => ReportContext::Repack,
-        }
+        ReportContext::from_domain(&self.row.report_row.context)
+    }
+
+    pub async fn sub_context(&self) -> &Option<String> {
+        &self.row.report_row.sub_context
+    }
+
+    pub async fn argument_schema(&self) -> Option<FormSchemaNode> {
+        self.row
+            .argument_schema
+            .clone()
+            .map(|schema| FormSchemaNode { schema })
     }
 }
 
@@ -130,11 +139,12 @@ impl ReportFilterInput {
     pub fn to_domain(self) -> ReportFilter {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
-            name: self.name.map(SimpleStringFilter::from),
+            name: self.name.map(StringFilter::from),
             r#type: None,
             context: self
                 .context
                 .map(|t| map_filter!(t, ReportContext::to_domain)),
+            sub_context: self.sub_context.map(EqualFilter::from),
         }
     }
 }
@@ -160,7 +170,22 @@ impl ReportContext {
             ReportContext::Requisition => ReportContextDomain::Requisition,
             ReportContext::Stocktake => ReportContextDomain::Stocktake,
             ReportContext::Resource => ReportContextDomain::Resource,
+            ReportContext::Patient => ReportContextDomain::Patient,
+            ReportContext::Dispensary => ReportContextDomain::Dispensary,
             ReportContext::Repack => ReportContextDomain::Repack,
+        }
+    }
+
+    pub fn from_domain(context: &ReportContextDomain) -> ReportContext {
+        match context {
+            ReportContextDomain::InboundShipment => ReportContext::InboundShipment,
+            ReportContextDomain::OutboundShipment => ReportContext::OutboundShipment,
+            ReportContextDomain::Requisition => ReportContext::Requisition,
+            ReportContextDomain::Stocktake => ReportContext::Stocktake,
+            ReportContextDomain::Resource => ReportContext::Resource,
+            ReportContextDomain::Patient => ReportContext::Patient,
+            ReportContextDomain::Dispensary => ReportContext::Dispensary,
+            ReportContextDomain::Repack => ReportContext::Repack,
         }
     }
 }

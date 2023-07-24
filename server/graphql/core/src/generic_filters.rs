@@ -1,21 +1,26 @@
 use async_graphql::{InputObject, InputType};
 use chrono::{DateTime, NaiveDate, Utc};
-use repository::{DateFilter, DatetimeFilter, EqualFilter, SimpleStringFilter};
+use repository::{DateFilter, DatetimeFilter, EqualFilter, StringFilter};
 
 // simple string filter
 #[derive(InputObject, Clone)]
-pub struct SimpleStringFilterInput {
+pub struct StringFilterInput {
     /// Search term must be an exact match (case sensitive)
     equal_to: Option<String>,
     /// Search term must be included in search candidate (case insensitive)
     like: Option<String>,
 }
 
-impl From<SimpleStringFilterInput> for SimpleStringFilter {
-    fn from(f: SimpleStringFilterInput) -> Self {
-        SimpleStringFilter {
+impl From<StringFilterInput> for StringFilter {
+    fn from(f: StringFilterInput) -> Self {
+        StringFilter {
             equal_to: f.equal_to,
             like: f.like,
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            starts_with: None,
+            ends_with: None,
         }
     }
 }

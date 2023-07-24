@@ -7,7 +7,7 @@ use actix_web::{
 use chrono::{NaiveDateTime, Utc};
 use repository::{
     mock::{insert_extra_mock_data, mock_store_a, mock_store_b, MockData, MockDataInserts},
-    KeyValueStoreRow, KeyValueType, LocationRow,
+    ChangelogRepository, KeyValueStoreRow, KeyValueType, LocationRow,
 };
 use tokio::sync::Mutex;
 use util::{assert_matches, inline_edit, inline_init};
@@ -83,7 +83,8 @@ async fn sync_status() {
     );
 
     // Test PUSH and ERROR
-
+    // Clear change log
+    ChangelogRepository::new(&connection).drop_all().unwrap();
     // Insert some location rows to be pushed
     insert_extra_mock_data(
         &connection,
@@ -128,6 +129,7 @@ async fn sync_status() {
 /// * /queued_records
 /// * /acknowledged_records (placeholder)
 /// * /site (placeholder)
+/// * /site_status (placeholder)
 /// * /final (manually called as last step)
 fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>) -> Tester {
     Tester::new(service_provider.clone())
@@ -319,7 +321,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
         })
         .add_test("site", |ctx| TestOutput {
             new_status: ctx.current_status,
-            response: r#"{"id":"abc123","siteId": 123}"#.to_string(),
+            response: r#"{"id":"abc123","siteId":123,"initialisationStatus":"new"}"#.to_string(),
         })
         .add_test(
             "final",

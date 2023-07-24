@@ -1,4 +1,6 @@
-use super::{report_row::report::dsl as report_dsl, StorageConnection};
+use super::{
+    form_schema_row::form_schema, report_row::report::dsl as report_dsl, StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
@@ -22,6 +24,8 @@ pub enum ReportContext {
     /// Not an actual report but a resource entry used by other reports, e.g. to provide footers or
     /// logos
     Resource,
+    Patient,
+    Dispensary,
     Repack,
 }
 
@@ -33,8 +37,14 @@ table! {
       template -> Text,
       context -> crate::db_diesel::report_row::ReportContextMapping,
       comment -> Nullable<Text>,
+      sub_context -> Nullable<Text>,
+      argument_schema_id -> Nullable<Text>,
   }
 }
+
+joinable!(report -> form_schema (argument_schema_id));
+
+allow_tables_to_appear_in_same_query!(report, form_schema);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
 #[table_name = "report"]
@@ -48,6 +58,8 @@ pub struct ReportRow {
     /// Used to store the report context
     pub context: ReportContext,
     pub comment: Option<String>,
+    pub sub_context: Option<String>,
+    pub argument_schema_id: Option<String>,
 }
 
 impl Default for ReportRow {
@@ -59,6 +71,8 @@ impl Default for ReportRow {
             template: Default::default(),
             context: ReportContext::InboundShipment,
             comment: Default::default(),
+            sub_context: Default::default(),
+            argument_schema_id: Default::default(),
         }
     }
 }

@@ -27,6 +27,7 @@ export const PositiveNumberInputCell = <T extends RecordWithId>({
       error={isError}
       value={buffer}
       onChange={newValue => {
+        if (newValue === undefined) return;
         setBuffer(newValue.toString());
         updater({ ...rowData, [column.key]: newValue });
       }}

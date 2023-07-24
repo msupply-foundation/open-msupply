@@ -6,7 +6,7 @@ import { useRegisterActions, useBreadcrumbs } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { UrlPart } from '@common/hooks';
 
-const Breadcrumb = styled(Link)({
+export const Breadcrumb = styled(Link)({
   color: 'inherit',
   fontWeight: 'bold',
   textDecoration: 'none',
@@ -40,8 +40,16 @@ export const Breadcrumbs = ({
       : t(part.key);
 
   const crumbs = urlParts.map((part, index) => {
-    if (index === urlParts.length - 1) {
-      return <span key={part.key}>{suffix ?? parseTitle(part)}</span>;
+    const isLastPart = index === urlParts.length - 1;
+    if (isLastPart) {
+      switch (true) {
+        case !suffix:
+          return <span key={part.key}>{parseTitle(part)}</span>;
+        case typeof suffix === 'string':
+          return <span key={part.key}>{suffix}</span>;
+        default:
+          return suffix;
+      }
     }
 
     return (

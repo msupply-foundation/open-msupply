@@ -3,6 +3,7 @@ use super::{name_row::name, store_row::store::dsl as store_dsl, StorageConnectio
 use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 
 table! {
     store (id) {
@@ -11,7 +12,16 @@ table! {
         code -> Text,
         site_id -> Integer,
         logo -> Nullable<Text>,
+        store_mode -> crate::db_diesel::store_row::StoreModeMapping,
     }
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(test, derive(strum::EnumIter))]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum StoreMode {
+    Store,
+    Dispensary,
 }
 
 joinable!(store -> name (name_id));
@@ -24,6 +34,13 @@ pub struct StoreRow {
     pub code: String,
     pub site_id: i32,
     pub logo: Option<String>,
+    pub store_mode: StoreMode,
+}
+
+impl Default for StoreMode {
+    fn default() -> Self {
+        Self::Store
+    }
 }
 
 pub struct StoreRowRepository<'a> {

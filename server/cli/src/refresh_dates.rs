@@ -17,6 +17,14 @@ struct TableAndFieldName {
 
 fn get_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
+        ("document", "datetime"),
+        ("program_enrolment", "enrolment_datetime"),
+        ("program_event", "datetime"),
+        ("program_event", "active_start_datetime"),
+        ("program_event", "active_end_datetime"),
+        ("encounter", "created_datetime"),
+        ("encounter", "start_datetime"),
+        ("encounter", "end_datetime"),
         ("name", "created_datetime"),
         ("invoice", "created_datetime"),
         ("invoice", "shipped_datetime"),
@@ -168,11 +176,11 @@ impl<'a> RefreshDatesRepository<'a> {
 
         let adjustment = Duration::days(days_difference);
 
-        for mut timestamp in all_date_values.timestamps.iter_mut() {
+        for timestamp in all_date_values.timestamps.iter_mut() {
             timestamp.0.dt = timestamp.0.dt + adjustment
         }
 
-        for mut date in all_date_values.dates.iter_mut() {
+        for date in all_date_values.dates.iter_mut() {
             date.0.d = date.0.d + adjustment
         }
 

@@ -9,6 +9,7 @@ mod v1_01_12;
 mod v1_01_13;
 mod v1_01_14;
 mod v1_01_15;
+mod v1_02_00;
 mod version;
 pub(crate) use self::types::*;
 use self::v1_00_04::V1_00_04;
@@ -50,7 +51,7 @@ pub enum MigrationError {
     DatabaseError(#[from] RepositoryError),
 }
 
-// TODO logging
+// TODO: logging
 pub fn migrate(
     connection: &StorageConnection,
     to_version: Option<Version>,
@@ -74,6 +75,7 @@ pub fn migrate(
         Box::new(v1_01_13::V1_01_13),
         Box::new(v1_01_14::V1_01_14),
         Box::new(v1_01_15::V1_01_15),
+        Box::new(v1_02_00::V1_02_00),
     ];
 
     // Historic diesel migrations

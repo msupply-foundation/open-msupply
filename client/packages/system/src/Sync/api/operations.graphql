@@ -1,0 +1,99 @@
+fragment SyncSettings on SyncSettingsNode {
+  __typename
+  intervalSeconds
+  url
+  username
+}
+
+query syncSettings {
+  syncSettings {
+    ...SyncSettings
+  }
+}
+
+fragment SyncError on SyncErrorNode {
+  __typename
+  variant
+  fullError
+}
+
+mutation initialiseSite($syncSettings: SyncSettingsInput!) {
+  initialiseSite(input: $syncSettings) {
+    __typename
+    ... on SyncSettingsNode {
+      ...SyncSettings
+    }
+    ... on SyncErrorNode {
+      ...SyncError
+    }
+  }
+}
+
+mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
+  updateSyncSettings(input: $syncSettings) {
+    __typename
+    ... on SyncSettingsNode {
+      ...SyncSettings
+    }
+    ... on SyncErrorNode {
+      ...SyncError
+    }
+  }
+}
+
+fragment SyncStatus on SyncStatusNode {
+  __typename
+  finished
+  started
+}
+
+fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
+  __typename
+  finished
+  started
+  done
+  total
+}
+
+fragment FullSyncStatus on FullSyncStatusNode {
+  __typename
+  error {
+    ...SyncError
+  }
+  integration {
+    ...SyncStatus
+  }
+  isSyncing
+  prepareInitial {
+    ...SyncStatus
+  }
+  pullCentral {
+    ...SyncStatusWithProgress
+  }
+  pullRemote {
+    ...SyncStatusWithProgress
+  }
+  push {
+    ...SyncStatusWithProgress
+  }
+  summary {
+    ...SyncStatus
+  }
+}
+
+query syncInfo {
+  syncStatus: latestSyncStatus {
+    ...FullSyncStatus
+  }
+  numberOfRecordsInPushQueue
+}
+
+query syncStatus {
+  syncStatus: latestSyncStatus {
+    ...FullSyncStatus
+  }
+}
+
+mutation manualSync {
+  manualSync
+}

@@ -1,13 +1,13 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
     ActivityLogType, DatetimeFilter, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository,
     InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-    ItemRowRepository, LocationMovementFilter, LocationMovementRepository, LocationMovementRow,
-    LocationMovementRowRepository, NameRowRepository, NumberRowType, RepositoryError, StockLine,
-    StockLineFilter, StockLineRepository, StockLineRow, StockLineRowRepository, Stocktake,
-    StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
-    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
-    StorageConnection,
+    ItemRowRepository, LocationMovementRow, LocationMovementRowRepository, NameRowRepository,
+    NumberRowType, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
+    StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
+    StocktakeStatus, StorageConnection,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
@@ -573,6 +573,7 @@ fn generate(
         requisition_id: None,
         linked_invoice_id: None,
         tax: None,
+        clinician_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

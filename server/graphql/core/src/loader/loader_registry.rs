@@ -1,4 +1,4 @@
-use super::*;
+use super::{json_schema::JsonSchemaLoader, *};
 use crate::loader::{ItemLoader, StoreByIdLoader, UserLoader};
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
@@ -196,6 +196,34 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
+    let schema_loader = DataLoader::new(
+        JsonSchemaLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let document_loader = DataLoader::new(
+        DocumentLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let doc_registry_loader = DataLoader::new(
+        DocumentRegistryLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let doc_registry_children_loader = DataLoader::new(
+        DocumentRegistryChildrenLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    );
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -220,6 +248,28 @@ pub async fn get_loaders(
     loaders.insert(name_row_loader);
     loaders.insert(inventory_adjustment_reason_loader);
     loaders.insert(stock_on_hand);
+    loaders.insert(document_loader);
+    loaders.insert(schema_loader);
+    loaders.insert(doc_registry_loader);
+    loaders.insert(doc_registry_children_loader);
+    loaders.insert(DataLoader::new(
+        PatientLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ClinicianLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        ProgramEnrolmentLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
 
     loaders
 }

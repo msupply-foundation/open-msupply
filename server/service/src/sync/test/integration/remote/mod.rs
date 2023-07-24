@@ -1,12 +1,16 @@
 pub(crate) mod activity_log;
+pub(crate) mod clinician;
+pub(crate) mod document;
 pub(crate) mod invoice;
 pub(crate) mod location;
 pub(crate) mod location_movement;
+pub(crate) mod patient_name_and_store_and_name_store_join;
 pub(crate) mod program_requisition;
 pub(crate) mod requisition;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 mod test;
+pub(crate) mod user_permission;
 
 use repository::{ChangelogRepository, InvoiceRowType, NameRowRepository, StorageConnection};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -74,7 +78,6 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         replace_system_name_ids(&mut integration_records, &previous_connection);
 
         // Integrate
-
         {
             let changelog_repo = ChangelogRepository::new(&previous_connection);
             let cursor = changelog_repo.latest_cursor().unwrap();
@@ -94,6 +97,7 @@ async fn test_remote_sync_record(identifier: &str, tester: &dyn SyncRecordTester
         previous_connection = connection;
         previous_synchroniser = synchroniser;
         previous_synchroniser.sync().await.unwrap();
+
         // Confirm records have synced back correctly
         check_records_against_database(&previous_connection, integration_records).await;
     }

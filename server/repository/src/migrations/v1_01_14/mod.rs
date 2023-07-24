@@ -1,6 +1,7 @@
 use super::{version::Version, Migration};
 
 mod barcode_changelog;
+mod is_sync_update;
 
 use crate::StorageConnection;
 pub(crate) struct V1_01_14;
@@ -11,6 +12,7 @@ impl Migration for V1_01_14 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        is_sync_update::migrate(connection)?;
         barcode_changelog::migrate(connection)?;
         Ok(())
     }

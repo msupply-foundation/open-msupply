@@ -3,10 +3,21 @@ use serde::Deserialize;
 use super::*;
 
 #[derive(Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SiteInfoV5 {
     pub(crate) id: String,
-    #[serde(rename = "siteId")]
     pub(crate) site_id: i32,
+    pub(crate) initialisation_status: InitialisationStatus,
+}
+
+// See SITE_INITIALISATION_STATUS mSupply method
+#[derive(Debug, PartialEq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum InitialisationStatus {
+    New,
+    Started,
+    Completed,
+    Error,
 }
 
 impl SyncApiV5 {
@@ -39,8 +50,9 @@ mod test {
                     "id": "abc123",
                     "siteId": 123,
                     "code": "s123",
-                    "name": "Site 123"
-            }"#,
+                    "name": "Site 123",
+                    "initialisationStatus": "new"
+                }"#,
             );
         });
 
@@ -55,6 +67,7 @@ mod test {
             SiteInfoV5 {
                 id: "abc123".to_string(),
                 site_id: 123,
+                initialisation_status: InitialisationStatus::New,
             }
         );
     }

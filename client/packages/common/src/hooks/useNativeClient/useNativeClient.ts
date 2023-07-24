@@ -9,6 +9,7 @@ import {
 } from './helpers';
 import {
   ConnectionResult,
+  DEFAULT_LOCAL_SERVER,
   DISCOVERED_SERVER_POLL,
   DISCOVERY_TIMEOUT,
   FileInfo,
@@ -17,7 +18,10 @@ import {
   NativeMode,
 } from './types';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 import { useMutation } from 'react-query';
+import { useNavigate } from 'react-router-dom';
+import { useAuthContext } from '../../authentication';
 
 declare global {
   interface Window {
@@ -41,6 +45,8 @@ export const useNativeClient = ({
   discovery,
 }: { discovery?: boolean; autoconnect?: boolean } = {}) => {
   const nativeAPI = getNativeAPI();
+  const navigate = useNavigate();
+  const { token } = useAuthContext();
 
   const setMode = (mode: NativeMode) =>
     setPreference('mode', mode).then(() =>
@@ -112,7 +118,7 @@ export const useNativeClient = ({
 
   const allowSleep = async () => {
     // Currently only supported on native platforms via capacitor
-    if (!Capacitor.isNativePlatform) return;
+    if (!Capacitor.isNativePlatform()) return;
 
     const result = await KeepAwake.isSupported();
     if (result.isSupported) await KeepAwake.allowSleep();
@@ -120,7 +126,7 @@ export const useNativeClient = ({
 
   const keepAwake = async () => {
     // Currently only supported on native platforms via capacitor
-    if (!Capacitor.isNativePlatform) return;
+    if (!Capacitor.isNativePlatform()) return;
 
     const result = await KeepAwake.isSupported();
     if (result.isSupported) await KeepAwake.keepAwake();
@@ -135,6 +141,20 @@ export const useNativeClient = ({
     }
 
     return result;
+  };
+  const advertiseService = nativeAPI?.advertiseService ?? (() => {});
+
+  const setServerMode = (
+    handleConnectionResult: (result: ConnectionResult) => void
+  ) => {
+    advertiseService();
+    // on first load, the login status is not checked correctly in the native app
+    // and users are shown the dashboard even if they are not logged in
+    // here we check the token and if invalid redirect to login
+    const path = !token ? 'login' : '';
+    connectToServer({ ...DEFAULT_LOCAL_SERVER, path })
+      .then(handleConnectionResult)
+      .catch(e => handleConnectionResult({ success: false, error: e.message }));
   };
 
   useEffect(() => {
@@ -172,6 +192,18 @@ export const useNativeClient = ({
     getPreference('previousServer', '').then(server => {
       if (!!server) setState(state => ({ ...state, previousServer: server }));
     });
+    if (Capacitor.isNativePlatform()) {
+      App.removeAllListeners();
+      App.addListener('backButton', ({ canGoBack }) => {
+        if (canGoBack) navigate(-1);
+      });
+    }
+
+    return () => {
+      if (Capacitor.isNativePlatform()) {
+        App.removeAllListeners();
+      }
+    };
   }, []);
 
   // Auto connect if autoconnect=true and server found matching previousConnectedServer
@@ -188,7 +220,7 @@ export const useNativeClient = ({
     ...state,
     connectToServer,
     goBackToDiscovery: nativeAPI?.goBackToDiscovery ?? (() => {}),
-    advertiseService: nativeAPI?.advertiseService ?? (() => {}),
+    advertiseService,
     startDiscovery,
     stopDiscovery,
     setMode,
@@ -196,5 +228,6 @@ export const useNativeClient = ({
     keepAwake,
     allowSleep,
     saveFile,
+    setServerMode,
   };
 };

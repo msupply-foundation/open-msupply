@@ -2,6 +2,7 @@ use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
     auth::{AuthService, AuthServiceTrait},
     barcode::{BarcodeService, BarcodeServiceTrait},
+    clinician::{ClinicianService, ClinicianServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
@@ -9,15 +10,27 @@ use crate::{
         stock_expiry_count::{StockExpiryCountServiceTrait, StockExpiryServiceCount},
     },
     display_settings_service::{DisplaySettingsService, DisplaySettingsServiceTrait},
+    document::{
+        document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait},
+        document_service::{DocumentService, DocumentServiceTrait},
+        form_schema_service::{FormSchemaService, FormSchemaServiceTrait},
+    },
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     location::{LocationService, LocationServiceTrait},
+    log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     missing_program::create_missing_master_list_and_program,
     name::get_names,
     processors::ProcessorsTrigger,
     repack::{RepackService, RepackServiceTrait},
+    programs::{
+        encounter::{EncounterService, EncounterServiceTrait},
+        patient::{PatientService, PatientServiceTrait},
+        program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
+        program_event::{ProgramEventService, ProgramEventServiceTrait},
+    },
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
@@ -52,6 +65,7 @@ pub struct ServiceProvider {
     pub requisition_service: Box<dyn RequisitionServiceTrait>,
     pub requisition_line_service: Box<dyn RequisitionLineServiceTrait>,
     pub general_service: Box<dyn GeneralServiceTrait>,
+    pub clinician_service: Box<dyn ClinicianServiceTrait>,
     // Dashboard:
     pub invoice_count_service: Box<dyn InvoiceCountServiceTrait>,
     pub stock_expiry_count_service: Box<dyn StockExpiryCountServiceTrait>,
@@ -64,6 +78,16 @@ pub struct ServiceProvider {
     pub repack_service: Box<dyn RepackServiceTrait>,
     // Reports
     pub report_service: Box<dyn ReportServiceTrait>,
+
+    // Document
+    pub document_service: Box<dyn DocumentServiceTrait>,
+    pub document_registry_service: Box<dyn DocumentRegistryServiceTrait>,
+    pub form_schema_service: Box<dyn FormSchemaServiceTrait>,
+    pub patient_service: Box<dyn PatientServiceTrait>,
+    pub program_enrolment_service: Box<dyn ProgramEnrolmentServiceTrait>,
+    pub encounter_service: Box<dyn EncounterServiceTrait>,
+    pub program_event_service: Box<dyn ProgramEventServiceTrait>,
+
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
     // App Data Service
@@ -78,6 +102,8 @@ pub struct ServiceProvider {
     pub display_settings_service: Box<dyn DisplaySettingsServiceTrait>,
     // Barcodes
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
+    // Log
+    pub log_service: Box<dyn LogServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -123,9 +149,17 @@ impl ServiceProvider {
             requisition_service: Box::new(RequisitionService {}),
             requisition_line_service: Box::new(RequisitionLineService {}),
             item_stats_service: Box::new(ItemStatsService {}),
+            clinician_service: Box::new(ClinicianService {}),
             general_service: Box::new(GeneralService {}),
             report_service: Box::new(ReportService {}),
             settings: Box::new(SettingsService),
+            document_service: Box::new(DocumentService {}),
+            document_registry_service: Box::new(DocumentRegistryService {}),
+            form_schema_service: Box::new(FormSchemaService {}),
+            patient_service: Box::new(PatientService {}),
+            program_enrolment_service: Box::new(ProgramEnrolmentService {}),
+            program_event_service: Box::new(ProgramEventService {}),
+            encounter_service: Box::new(EncounterService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
             site_info_service: Box::new(SiteInfoService),
             sync_status_service: Box::new(SyncStatusService),
@@ -137,6 +171,7 @@ impl ServiceProvider {
             item_count_service: Box::new(ItemServiceCount {}),
             barcode_service: Box::new(BarcodeService {}),
             repack_service: Box::new(RepackService {}),
+            log_service: Box::new(LogService {}),
         }
     }
 

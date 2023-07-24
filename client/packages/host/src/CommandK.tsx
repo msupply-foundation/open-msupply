@@ -16,6 +16,7 @@ import {
   PropsWithChildrenOnly,
   useAuthContext,
   UserPermission,
+  StoreModeNodeType,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -83,7 +84,7 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation('app');
-  const { logout, userHasPermission } = useAuthContext();
+  const { store, logout, userHasPermission } = useAuthContext();
 
   const actions = [
     {
@@ -251,6 +252,21 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
       shortcut: ['a'],
       keywords: 'admin',
       perform: () => navigate(RouteBuilder.create(AppRoute.Admin).build()),
+    });
+  }
+
+  if (store?.storeMode === StoreModeNodeType.Dispensary) {
+    actions.push({
+      id: 'navigation:patients',
+      name: `${t('cmdk.goto-patients')} (p)`,
+      keywords: 'patient',
+      shortcut: ['p'],
+      perform: () =>
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Patients)
+            .build()
+        ),
     });
   }
 

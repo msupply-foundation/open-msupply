@@ -38,6 +38,7 @@ Only data that needs to be present on central server site is a new sync site:
 `
   * Under server check `Start web server ..`, change port from 0 and `Start Web Server`
 * In Synchronisation window add site and add store to that site
+* Reset the hardware id for the used site (SYNC_SITE_NAME): `special` -> `Synchronisation` -> reset id for the site
 
 `IMPORTANT` make sure to run `syncV5API_test_enable` method (and if you restart the data file have to re-run this method)
 

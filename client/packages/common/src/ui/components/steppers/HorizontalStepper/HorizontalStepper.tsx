@@ -28,6 +28,7 @@ export type StepperColour = 'primary' | 'secondary';
 interface StepperProps {
   steps: StepDefinition[];
   colour?: StepperColour;
+  nowrap?: boolean;
 }
 
 type PaletteColour = Omit<PaletteColor, 'contrastText'> & { error: string };
@@ -138,16 +139,19 @@ const getAnimationStyles = (colour: StepperColour) => {
 const getLabelStyle = (
   colour: StepperColour,
   completed?: boolean,
-  error?: boolean
+  error?: boolean,
+  nowrap?: boolean
 ) => {
+  let color = `${colour}.light`;
   switch (true) {
     case !!error:
-      return { color: 'error.main' };
+      color = 'error.main';
+      break;
     case !!completed:
-      return { color: `${colour}.dark` };
-    default:
-      return { color: `${colour}.light` };
+      color = `${colour}.dark`;
+      break;
   }
+  return nowrap ? { color, whiteSpace: 'nowrap' } : { color };
 };
 
 const usePaletteColour = (colour: StepperColour): PaletteColour => {
@@ -182,6 +186,7 @@ const getTestId = (step: StepDefinition) => {
 export const HorizontalStepper: FC<StepperProps> = ({
   colour = 'secondary',
   steps,
+  nowrap = false,
 }) => {
   const paletteColour = usePaletteColour(colour);
   const StyledConnector = getConnector(paletteColour);
@@ -223,7 +228,7 @@ export const HorizontalStepper: FC<StepperProps> = ({
                   justifyContent="center"
                 >
                   <Typography
-                    sx={getLabelStyle(colour, completed, error)}
+                    sx={getLabelStyle(colour, completed, error, nowrap)}
                     variant="body2"
                     fontSize="12px"
                   >

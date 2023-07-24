@@ -3,7 +3,7 @@ import { StandardTextFieldProps } from '@mui/material';
 import { BasicTextInput } from '../BasicTextInput';
 export interface NumericTextInputProps
   extends Omit<StandardTextFieldProps, 'onChange'> {
-  onChange?: (value: number) => void;
+  onChange?: (value: number | undefined) => void;
   width?: number;
 }
 
@@ -17,6 +17,10 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       }}
       InputProps={InputProps}
       onChange={e => {
+        if (e.target.value === '' && !!onChange) {
+          onChange(undefined);
+          return;
+        }
         const parsed = Number(e.target.value);
         if (!Number.isNaN(parsed) && !!onChange) onChange(parsed);
       }}

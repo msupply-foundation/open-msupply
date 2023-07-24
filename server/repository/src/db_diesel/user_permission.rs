@@ -19,6 +19,7 @@ pub struct UserPermissionFilter {
     pub user_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub permission: Option<EqualFilter<Permission>>,
+    pub has_context: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -101,12 +102,19 @@ fn create_filtered_query(filter: Option<UserPermissionFilter>) -> BoxedUserPermi
             user_id,
             store_id,
             permission,
+            has_context,
         } = f;
 
         apply_equal_filter!(query, id, user_permission_dsl::id);
         apply_equal_filter!(query, user_id, user_permission_dsl::user_id);
         apply_equal_filter!(query, store_id, user_permission_dsl::store_id);
         apply_equal_filter!(query, permission, user_permission_dsl::permission);
+
+        query = match has_context {
+            Some(true) => query.filter(user_permission_dsl::context.is_not_null()),
+            Some(false) => query.filter(user_permission_dsl::context.is_null()),
+            None => query,
+        };
     }
 
     query
@@ -134,6 +142,11 @@ impl UserPermissionFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn has_context(mut self, has_context: bool) -> Self {
+        self.has_context = Some(has_context);
         self
     }
 }

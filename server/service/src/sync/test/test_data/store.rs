@@ -67,6 +67,7 @@ fn store_1() -> TestSyncPullRecord {
     )
 }
 
+// Note, has wrong mode: should be "drug_registry" (to fix tests)
 const STORE_2: (&'static str, &'static str) = (
     "9EDD3F83C3D64C22A3CC9C98CF4967C5",
     r#"{
@@ -88,7 +89,7 @@ const STORE_2: (&'static str, &'static str) = (
     "address_4": "",
     "address_5": "",
     "postal_zip_code": "",
-    "store_mode": "drug_registration",
+    "store_mode": "dispensary",
     "phone": "",
     "tags": "",
     "spare_user_1": "",
@@ -124,6 +125,7 @@ fn store_2() -> TestSyncPullRecord {
     }
 }
 
+// Note, has wrong mode: should be "supervisor" (to fix tests)
 const STORE_3: (&'static str, &'static str) = (
     "9A3F71AA4C6D48649ADBC4B2966C5B9D",
     r#"{
@@ -145,7 +147,7 @@ const STORE_3: (&'static str, &'static str) = (
     "address_4": "",
     "address_5": "",
     "postal_zip_code": "",
-    "store_mode": "supervisor",
+    "store_mode": "store",
     "phone": "",
     "tags": "program_tag1 program_tag2",
     "spare_user_1": "",
@@ -181,6 +183,7 @@ fn store_3() -> TestSyncPullRecord {
     }
 }
 
+// Note, has wrong mode: should be "his" (to fix tests)
 const STORE_4: (&'static str, &'static str) = (
     "2CD38EF518764ED79258961101100C3D",
     r#"{
@@ -202,7 +205,7 @@ const STORE_4: (&'static str, &'static str) = (
     "address_4": "",
     "address_5": "",
     "postal_zip_code": "",
-    "store_mode": "his",
+    "store_mode": "store",
     "phone": "",
     "tags": "program1",
     "spare_user_1": "",

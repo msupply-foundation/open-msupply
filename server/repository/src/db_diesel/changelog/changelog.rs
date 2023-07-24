@@ -54,6 +54,11 @@ pub enum ChangelogTableName {
     ActivityLog,
     InventoryAdjustmentReason,
     Barcode,
+    Clinician,
+    ClinicianStoreJoin,
+    Name,
+    NameStoreJoin,
+    Document,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
@@ -130,6 +135,12 @@ impl<'a> ChangelogRepository<'a> {
             .select(diesel::dsl::max(changelog::dsl::cursor))
             .first::<Option<i64>>(&self.connection.connection)?;
         Ok(result.unwrap_or(0) as u64)
+    }
+
+    // Drop all change logs (for tests), can't set test flag as it's used in another crate
+    pub fn drop_all(&self) -> Result<(), RepositoryError> {
+        diesel::delete(changelog::dsl::changelog).execute(&self.connection.connection)?;
+        Ok(())
     }
 
     // Needed for tests, when is_sync_update needs to be reset when records were inserted via

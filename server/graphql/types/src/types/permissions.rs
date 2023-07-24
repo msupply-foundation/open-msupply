@@ -29,10 +29,16 @@ pub enum UserPermission {
     OutboundShipmentMutate,
     InboundShipmentQuery,
     InboundShipmentMutate,
+    PrescriptionQuery,
+    PrescriptionMutate,
     Report,
     LogQuery,
     StockLineMutate,
     ItemMutate,
+    PatientQuery,
+    PatientMutate,
+    DocumentQuery,
+    DocumentMutate,
 }
 
 #[Object]
@@ -89,10 +95,16 @@ impl UserPermission {
             Permission::OutboundShipmentMutate => UserPermission::OutboundShipmentMutate,
             Permission::InboundShipmentQuery => UserPermission::InboundShipmentQuery,
             Permission::InboundShipmentMutate => UserPermission::InboundShipmentMutate,
+            Permission::PrescriptionQuery => UserPermission::PrescriptionQuery,
+            Permission::PrescriptionMutate => UserPermission::PrescriptionMutate,
             Permission::Report => UserPermission::Report,
             Permission::LogQuery => UserPermission::LogQuery,
             Permission::StockLineMutate => UserPermission::StockLineMutate,
             Permission::ItemMutate => UserPermission::ItemMutate,
+            Permission::PatientQuery => UserPermission::PatientQuery,
+            Permission::PatientMutate => UserPermission::PatientMutate,
+            Permission::DocumentQuery => UserPermission::DocumentQuery,
+            Permission::DocumentMutate => UserPermission::DocumentMutate,
         }
     }
 
@@ -112,10 +124,16 @@ impl UserPermission {
             UserPermission::OutboundShipmentMutate => Permission::OutboundShipmentMutate,
             UserPermission::InboundShipmentQuery => Permission::InboundShipmentQuery,
             UserPermission::InboundShipmentMutate => Permission::InboundShipmentMutate,
+            UserPermission::PrescriptionQuery => Permission::PrescriptionQuery,
+            UserPermission::PrescriptionMutate => Permission::PrescriptionMutate,
             UserPermission::Report => Permission::Report,
             UserPermission::LogQuery => Permission::LogQuery,
             UserPermission::StockLineMutate => Permission::StockLineMutate,
             UserPermission::ItemMutate => Permission::ItemMutate,
+            UserPermission::PatientQuery => Permission::PatientQuery,
+            UserPermission::PatientMutate => Permission::PatientMutate,
+            UserPermission::DocumentQuery => Permission::DocumentQuery,
+            UserPermission::DocumentMutate => Permission::DocumentMutate,
         }
     }
 }

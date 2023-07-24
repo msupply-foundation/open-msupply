@@ -8,6 +8,10 @@
     "classpath": "com.getcapacitor.community.keepawake.KeepAwakePlugin"
   },
   {
+    "pkg": "@capacitor/app",
+    "classpath": "com.capacitorjs.plugins.app.AppPlugin"
+  },
+  {
     "pkg": "@capacitor/keyboard",
     "classpath": "com.capacitorjs.plugins.keyboard.KeyboardPlugin"
   },

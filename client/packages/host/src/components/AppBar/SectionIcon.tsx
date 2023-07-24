@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  CustomersIcon,
   ListIcon,
   LocaleKey,
   matchPath,
@@ -37,6 +38,8 @@ const getIcon = (section?: AppRoute) => {
       return <SettingsIcon color="primary" fontSize="small" />;
     case AppRoute.Sync:
       return <RadioIcon color="primary" fontSize="small" />;
+    case AppRoute.Dispensary:
+      return <CustomersIcon color="primary" fontSize="small" />;
     default:
       return undefined;
   }
@@ -51,6 +54,7 @@ const getSection = (): Section | undefined => {
     AppRoute.Reports,
     AppRoute.Admin,
     AppRoute.Sync,
+    AppRoute.Dispensary,
   ];
   const location = useLocation();
 

@@ -1,3 +1,5 @@
+mod document_registry;
+mod form_schema;
 mod inventory_adjustment_reason;
 mod master_list;
 mod name_and_store_and_name_store_join;
@@ -6,8 +8,6 @@ mod report;
 mod test;
 mod unit_and_item;
 
-use util::uuid::uuid;
-
 use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTester};
 use crate::sync::test::{
     check_records_against_database,
@@ -15,10 +15,6 @@ use crate::sync::test::{
         central_server_configurations::SiteConfiguration, init_test_context, SyncIntegrationContext,
     },
 };
-
-fn small_uuid() -> String {
-    uuid().split("-").next().unwrap().to_string()
-}
 
 /// Updates central server with data specified from each step of tester
 /// Synchronises after each step and checks against step data
@@ -97,6 +93,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
             synchroniser,
             ..
         } = init_test_context(&sync_settings, &inner_identifier).await;
+
         synchroniser.sync().await.unwrap();
         check_records_against_database(&connection, step_data.integration_records).await;
     }

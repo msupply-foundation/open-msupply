@@ -13,15 +13,16 @@ export const BaseDatePickerInput: FC<
   Omit<DatePickerProps<Date, Date>, 'renderInput' | 'value'> & {
     onChange(date: Date): void;
     value: Date | string | null;
+    error?: string | undefined;
+    width?: number;
   }
-> = ({ disabled, onChange, value, ...props }) => {
+> = ({ disabled, onChange, value, error, width, ...props }) => {
   const theme = useAppTheme();
   const [internalValue, setInternalValue] = useState<Date | null>(null);
 
   useEffect(() => {
-    // This sets the internal state from parent when first loading (i.e. when
-    // the internal date is still empty)
-    if (value && internalValue === null)
+    // This sets the internal state from parent when value has changed and internal date needs updating
+    if (value && internalValue?.toString() !== value.toString())
       setInternalValue(DateUtils.getDateOrNull(value));
   }, [value]);
 
@@ -74,12 +75,14 @@ export const BaseDatePickerInput: FC<
         const textInputProps: StandardTextFieldProps = {
           ...params,
           variant: 'standard',
+          helperText: error ?? '',
+          sx: { width },
         };
         return (
           <BasicTextInput
             disabled={!!disabled}
             {...textInputProps}
-            error={isInvalid(internalValue)}
+            error={isInvalid(internalValue) || !!error}
           />
         );
       }}

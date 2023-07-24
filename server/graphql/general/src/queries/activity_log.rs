@@ -7,7 +7,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{ActivityLogConnector, ActivityLogNodeType};
-use repository::{ActivityLogFilter, ActivityLogSort, ActivityLogSortField};
+use repository::activity_log::{ActivityLogFilter, ActivityLogSort, ActivityLogSortField};
 use repository::{EqualFilter, PaginationOption};
 use service::{
     activity_log::get_activity_logs,
@@ -15,7 +15,7 @@ use service::{
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(remote = "repository::ActivityLogSortField")]
+#[graphql(remote = "repository::activity_log::ActivityLogSortField")]
 #[graphql(rename_items = "camelCase")]
 pub enum ActivityLogSortFieldInput {
     Id,

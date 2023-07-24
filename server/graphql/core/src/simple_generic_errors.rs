@@ -298,6 +298,14 @@ impl OtherPartyNotACustomer {
     }
 }
 
+pub struct OtherPartyNotAPatient;
+#[Object]
+impl OtherPartyNotAPatient {
+    pub async fn description(&self) -> &'static str {
+        "Other party name is not a patient"
+    }
+}
+
 pub struct OtherPartyNotVisible;
 
 #[Object]

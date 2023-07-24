@@ -1,10 +1,5 @@
 import React, { FC } from 'react';
 import {
-  FullSyncStatusFragment,
-  SyncStatusFragment,
-  SyncStatusWithProgressFragment,
-} from '../../api/operations.generated';
-import {
   LocaleKey,
   TypedTFunction,
   useTranslation,
@@ -15,7 +10,12 @@ import {
   StepDefinition,
   StepperColour,
 } from '@openmsupply-client/common';
-import { mapSyncError } from '../../api/api';
+import {
+  FullSyncStatusFragment,
+  SyncStatusFragment,
+  SyncStatusWithProgressFragment,
+  mapSyncError,
+} from '@openmsupply-client/system';
 
 type SyncStatus = FullSyncStatusFragment | null;
 

@@ -5,12 +5,13 @@ use crate::sync::{
     translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
 };
 use chrono::NaiveDate;
-use repository::{NameRow, NameStoreJoinRow, NameType, StoreRow};
+use repository::{NameRow, NameStoreJoinRow, NameType, StoreMode, StoreRow};
 
 use serde_json::json;
-use util::{inline_init, merge_json, uuid::uuid};
-
-use super::small_uuid;
+use util::{
+    inline_init, merge_json,
+    uuid::{small_uuid, uuid},
+};
 
 pub(crate) struct NameAndStoreAndNameStoreJoinTester;
 
@@ -44,6 +45,9 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             created_datetime: NaiveDate::from_ymd_opt(2022, 05, 22)
                 .unwrap()
                 .and_hms_opt(0, 0, 0),
+            is_deceased: false,
+            national_health_number: None,
+            is_sync_update: true,
         };
         let name_json1 = json!({
             "ID": name_row1.id,
@@ -66,7 +70,9 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "manufacturer": true,
             "donor": true,
             "hold": true,
-            "created_date": "2022-05-22"
+            "created_date": "2022-05-22",
+            "is_deceased": false,
+            "national_health_number": ""
         });
 
         let name_row2 = inline_init(|r: &mut NameRow| {
@@ -74,6 +80,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             r.r#type = NameType::Facility;
             r.is_customer = true;
             r.is_supplier = false;
+            r.is_sync_update = true;
         });
         let mut name_json2 = json!({
             "ID": name_row2.id,
@@ -88,6 +95,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             code: small_uuid(),
             site_id: new_site_properties.site_id as i32,
             logo: None,
+            store_mode: StoreMode::Store,
         };
         let store_json = json!({
             "ID": store_row.id,
@@ -115,6 +123,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             store_id: new_site_properties.store_id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
+            is_sync_update: true,
         };
         let name_store_join_json1 = json!({
             "ID": name_store_join_row1.id,
@@ -129,6 +138,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             store_id: store_row.id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
+            is_sync_update: true,
         };
         let name_store_join_json2 = json!({
             "ID": name_store_join_row2.id,

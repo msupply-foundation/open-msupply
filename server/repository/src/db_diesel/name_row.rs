@@ -1,6 +1,6 @@
 use super::{name_row::name::dsl::*, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, EqualFilter};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -35,6 +35,16 @@ table! {
         is_donor -> Bool,
         on_hold -> Bool,
         created_datetime -> Nullable<Timestamp>,
+        is_deceased -> Bool,
+        national_health_number -> Nullable<Text>,
+    }
+}
+
+table! {
+    #[sql_name = "name"]
+    name_is_sync_update (id) {
+        id -> Text,
+        is_sync_update -> Bool,
     }
 }
 
@@ -44,6 +54,7 @@ table! {
 pub enum Gender {
     Female,
     Male,
+    Transgender,
     TransgenderMale,
     TransgenderMaleHormone,
     TransgenderMaleSurgical,
@@ -52,6 +63,19 @@ pub enum Gender {
     TransgenderFemaleSurgical,
     Unknown,
     NonBinary,
+}
+
+impl Gender {
+    pub fn equal_to(&self) -> EqualFilter<Gender> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            equal_any_or_null: None,
+            is_null: None,
+        }
+    }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -112,6 +136,9 @@ pub struct NameRow {
     pub on_hold: bool,
 
     pub created_datetime: Option<NaiveDateTime>,
+
+    pub is_deceased: bool,
+    pub national_health_number: Option<String>,
 }
 
 pub struct NameRowRepository<'a> {
@@ -124,7 +151,7 @@ impl<'a> NameRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name)
             .values(name_row)
             .on_conflict(id)
@@ -135,10 +162,28 @@ impl<'a> NameRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name)
             .values(name_row)
             .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    fn toggle_is_sync_update(
+        &self,
+        name_id: &str,
+        is_sync_update: bool,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(name_is_sync_update::table.find(name_id))
+            .set(name_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
+            .execute(&self.connection.connection)?;
+
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
@@ -175,5 +220,69 @@ impl<'a> NameRowRepository<'a> {
             .filter(id.eq_any(ids))
             .load(&self.connection.connection)?;
         Ok(result)
+    }
+
+    pub fn sync_upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        self.toggle_is_sync_update(&row.id, true)?;
+
+        Ok(())
+    }
+
+    #[cfg(test)]
+    fn find_is_sync_update_by_id(&self, name_id: &str) -> Result<Option<bool>, RepositoryError> {
+        let result = name_is_sync_update::table
+            .find(name_id)
+            .select(name_is_sync_update::dsl::is_sync_update)
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use util::uuid::uuid;
+
+    use crate::{mock::MockDataInserts, test_db::setup_all, NameRow, NameRowRepository};
+
+    #[actix_rt::test]
+    async fn name_is_sync_update() {
+        let (_, connection, _, _) = setup_all(
+            "name_is_sync_update",
+            MockDataInserts::none().items().units(),
+        )
+        .await;
+
+        let repo = NameRowRepository::new(&connection);
+
+        // Two rows, to make sure is_sync_update update only affects one row
+        let row = NameRow {
+            id: uuid(),
+            ..Default::default()
+        };
+        let row2 = NameRow {
+            id: uuid(),
+            ..Default::default()
+        };
+
+        // First insert
+        repo.upsert_one(&row).unwrap();
+        repo.upsert_one(&row2).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+
+        // Synchronisation upsert
+        repo.sync_upsert_one(&row).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+
+        // Normal upsert
+        repo.upsert_one(&row).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
     }
 }

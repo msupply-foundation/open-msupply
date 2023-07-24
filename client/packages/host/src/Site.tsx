@@ -28,6 +28,7 @@ import {
   DistributionRouter,
   ReplenishmentRouter,
   InventoryRouter,
+  DispensaryRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
@@ -101,6 +102,12 @@ export const Site: FC = () => {
                     element={<InventoryRouter />}
                   />
                   <Route
+                    path={RouteBuilder.create(AppRoute.Dispensary)
+                      .addWildCard()
+                      .build()}
+                    element={<DispensaryRouter />}
+                  />
+                  <Route
                     path={RouteBuilder.create(AppRoute.Admin)
                       .addWildCard()
                       .build()}
@@ -112,7 +119,6 @@ export const Site: FC = () => {
                       .build()}
                     element={<Sync />}
                   />
-
                   <Route
                     path="/"
                     element={

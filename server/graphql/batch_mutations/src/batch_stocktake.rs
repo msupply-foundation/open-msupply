@@ -15,39 +15,42 @@ type ServiceInput = BatchStocktake;
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "InsertStocktakeResponseWithId",
-    params(stocktake::InsertResponse)
+    params(stocktake::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateStocktakeResponseWithId",
-    params(stocktake::UpdateResponse)
+    params(stocktake::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteStocktakeResponseWithId",
-    params(stocktake::DeleteResponse)
+    params(stocktake::delete::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "InsertStocktakeLineResponseWithId",
-    params(stocktake_line::InsertResponse)
+    params(stocktake_line::insert::InsertResponse)
 ))]
 #[graphql(concrete(
     name = "UpdateStocktakeLineResponseWithId",
-    params(stocktake_line::UpdateResponse)
+    params(stocktake_line::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeleteStocktakeLineResponseWithId",
-    params(stocktake_line::DeleteResponse)
+    params(stocktake_line::delete::DeleteResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,
 }
 
-type InsertStocktakesResponse = Option<Vec<MutationWithId<stocktake::InsertResponse>>>;
-type InsertStocktakeLinesResponse = Option<Vec<MutationWithId<stocktake_line::InsertResponse>>>;
-type UpdateStocktakeLinesResponse = Option<Vec<MutationWithId<stocktake_line::UpdateResponse>>>;
-type DeleteStocktakeLinesResponse = Option<Vec<MutationWithId<stocktake_line::DeleteResponse>>>;
-type UpdateStocktakesResponse = Option<Vec<MutationWithId<stocktake::UpdateResponse>>>;
-type DeleteStocktakesResponse = Option<Vec<MutationWithId<stocktake::DeleteResponse>>>;
+type InsertStocktakesResponse = Option<Vec<MutationWithId<stocktake::insert::InsertResponse>>>;
+type InsertStocktakeLinesResponse =
+    Option<Vec<MutationWithId<stocktake_line::insert::InsertResponse>>>;
+type UpdateStocktakeLinesResponse =
+    Option<Vec<MutationWithId<stocktake_line::update::UpdateResponse>>>;
+type DeleteStocktakeLinesResponse =
+    Option<Vec<MutationWithId<stocktake_line::delete::DeleteResponse>>>;
+type UpdateStocktakesResponse = Option<Vec<MutationWithId<stocktake::update::UpdateResponse>>>;
+type DeleteStocktakesResponse = Option<Vec<MutationWithId<stocktake::delete::DeleteResponse>>>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchStocktakeResponse")]
@@ -63,12 +66,12 @@ pub struct BatchResponse {
 #[derive(InputObject)]
 #[graphql(name = "BatchStocktakeInput")]
 pub struct BatchInput {
-    pub insert_stocktakes: Option<Vec<stocktake::InsertInput>>,
-    pub insert_stocktake_lines: Option<Vec<stocktake_line::InsertInput>>,
-    pub update_stocktake_lines: Option<Vec<stocktake_line::UpdateInput>>,
-    pub delete_stocktake_lines: Option<Vec<stocktake_line::DeleteInput>>,
-    pub update_stocktakes: Option<Vec<stocktake::UpdateInput>>,
-    pub delete_stocktakes: Option<Vec<stocktake::DeleteInput>>,
+    pub insert_stocktakes: Option<Vec<stocktake::insert::InsertInput>>,
+    pub insert_stocktake_lines: Option<Vec<stocktake_line::insert::InsertInput>>,
+    pub update_stocktake_lines: Option<Vec<stocktake_line::update::UpdateInput>>,
+    pub delete_stocktake_lines: Option<Vec<stocktake_line::delete::DeleteInput>>,
+    pub update_stocktakes: Option<Vec<stocktake::update::UpdateInput>>,
+    pub delete_stocktakes: Option<Vec<stocktake::delete::DeleteInput>>,
     pub continue_on_error: Option<bool>,
 }
 

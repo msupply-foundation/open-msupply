@@ -13,9 +13,9 @@ use util::{inline_edit, inline_init, uuid::uuid};
 use crate::{
     invoice::{
         inbound_shipment::{UpdateInboundShipment, UpdateInboundShipmentStatus},
-        outbound_shipment::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
+        outbound_shipment::update::{UpdateOutboundShipment, UpdateOutboundShipmentStatus},
     },
-    invoice_line::outbound_shipment_line::UpdateOutboundShipmentLine,
+    invoice_line::stock_out_line::{StockOutType, UpdateStockOutLine},
     processors::test_helpers::exec_concurrent,
     requisition::request_requisition::{UpdateRequestRequisition, UpdateRequestRequisitionStatus},
     service_provider::ServiceProvider,
@@ -493,11 +493,12 @@ impl ShipmentTransferTester {
 
         self.outbound_shipment_line2 = service_provider
             .invoice_line_service
-            .update_outbound_shipment_line(
+            .update_stock_out_line(
                 &ctx,
-                inline_init(|r: &mut UpdateOutboundShipmentLine| {
+                inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = self.outbound_shipment_line2.id.clone();
-                    r.number_of_packs = Some(21.0)
+                    r.number_of_packs = Some(21.0);
+                    r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             )
             .unwrap()

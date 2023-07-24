@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren } from 'react';
+import React, { FC, PropsWithChildren, useCallback, useState } from 'react';
 import { Box, ReportContext, Typography } from '@openmsupply-client/common';
 import { AlertIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
@@ -9,10 +9,13 @@ import {
   usePaperClickPopover,
 } from '@common/components';
 import { ReportRowFragment, useReport } from '../api';
+import { ReportArgumentsModal } from './ReportArgumentsModal';
+import { JsonData } from '@openmsupply-client/programs';
 
 interface ReportSelectorProps {
   context?: ReportContext;
-  onPrint: (report: ReportRowFragment) => void;
+  subContext?: string;
+  onPrint: (report: ReportRowFragment, args: JsonData | undefined) => void;
   disabled?: boolean;
 }
 
@@ -36,20 +39,37 @@ const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
 
 export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   context,
+  subContext,
   children,
   onPrint,
   disabled,
 }) => {
   const { hide, PaperClickPopover } = usePaperClickPopover();
-  const { data, isLoading } = useReport.document.list(context);
+  const { data, isLoading } = useReport.document.list({ context, subContext });
   const t = useTranslation('app');
+  const [reportWithArgs, setReportWithArgs] = useState<
+    ReportRowFragment | undefined
+  >();
+  const onReportSelected = useCallback(
+    (report: ReportRowFragment | undefined) => {
+      if (report === undefined) {
+        return;
+      }
+      if (report.argumentSchema) {
+        setReportWithArgs(report);
+      } else {
+        onPrint(report, undefined);
+      }
+    },
+    []
+  );
 
   const reportButtons = data?.nodes?.map(report => (
     <FlatButton
       label={report.name}
       onClick={() => {
         hide();
-        onPrint(report);
+        onReportSelected(report);
       }}
       key={report.id}
       sx={{ textAlign: 'left', justifyContent: 'left' }}
@@ -59,44 +79,67 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   const hasPermission = !isLoading && data !== undefined;
   const noReports = !isLoading && !data?.nodes?.length;
   const oneReport =
-    !isLoading && data?.nodes?.length === 1 ? data.nodes[0] : null;
+    !isLoading && data?.nodes?.length === 1 ? data.nodes[0] : undefined;
 
   if (disabled) return <>{children}</>;
 
-  return !!oneReport ? (
-    <div onClick={() => onPrint(oneReport)}>{children}</div>
-  ) : (
-    <PaperClickPopover
-      placement="bottom"
-      width={350}
-      Content={
-        <PaperPopoverSection
-          label={t('select-report')}
-          labelStyle={{ width: '100%' }}
-          alignItems="center"
-        >
-          {isLoading ? (
-            <CircularProgress size={12} />
-          ) : (
-            <Box
-              style={{
-                maxHeight: '200px',
-                overflowY: 'auto',
-              }}
-              display="flex"
-              flexDirection="column"
+  return (
+    <>
+      {!!oneReport ? (
+        <div onClick={() => onReportSelected(oneReport)}>{children}</div>
+      ) : (
+        <PaperClickPopover
+          placement="bottom"
+          width={350}
+          Content={
+            <PaperPopoverSection
+              label={t('select-report')}
+              labelStyle={{ width: '100%' }}
+              alignItems="center"
             >
-              {noReports || disabled ? (
-                <NoReports hasPermission={hasPermission} />
+              {isLoading ? (
+                <CircularProgress size={12} />
               ) : (
-                reportButtons
+                <Box
+                  style={{
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                  }}
+                  display="flex"
+                  flexDirection="column"
+                >
+                  {noReports ? (
+                    <NoReports hasPermission={hasPermission} />
+                  ) : (
+                    <Box
+                      style={{
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                      }}
+                      display="flex"
+                      flexDirection="column"
+                    >
+                      {noReports ? (
+                        <NoReports hasPermission={hasPermission} />
+                      ) : (
+                        reportButtons
+                      )}
+                    </Box>
+                  )}
+                </Box>
               )}
-            </Box>
-          )}
-        </PaperPopoverSection>
-      }
-    >
-      {children}
-    </PaperClickPopover>
+            </PaperPopoverSection>
+          }
+        >
+          {children}
+        </PaperClickPopover>
+      )}
+
+      <ReportArgumentsModal
+        report={reportWithArgs}
+        onReset={() => setReportWithArgs(undefined)}
+        onArgumentsSelected={onPrint}
+      />
+    </>
   );
 };

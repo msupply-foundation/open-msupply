@@ -54,7 +54,8 @@ pub async fn print_report(
     ctx: &Context<'_>,
     store_id: String,
     report_id: String,
-    data_id: String,
+    data_id: Option<String>,
+    arguments: Option<serde_json::Value>,
     format: Option<PrintFormat>,
 ) -> Result<PrintReportResponse> {
     let user = validate_auth(
@@ -81,7 +82,7 @@ pub async fn print_report(
     let query = resolved_report.query.clone();
 
     // fetch data required for the report
-    let result = fetch_data(ctx, query, &store_id, &data_id)
+    let result = fetch_data(ctx, query, &store_id, data_id, arguments.clone())
         .await
         .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)))?;
     let report_data = match result {
@@ -100,6 +101,7 @@ pub async fn print_report(
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
+        arguments,
         format,
     ) {
         Ok(file_id) => file_id,
@@ -118,7 +120,8 @@ pub async fn print_report_definition(
     store_id: String,
     name: Option<String>,
     report: serde_json::Value,
-    data_id: String,
+    data_id: Option<String>,
+    arguments: Option<serde_json::Value>,
 ) -> Result<PrintReportResponse> {
     let user = validate_auth(
         ctx,
@@ -150,7 +153,7 @@ pub async fn print_report_definition(
     let query = resolved_report.query.clone();
 
     // fetch data required for the report
-    let result = fetch_data(ctx, query, &store_id, &data_id)
+    let result = fetch_data(ctx, query, &store_id, data_id, arguments.clone())
         .await
         .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)))?;
     let report_data = match result {
@@ -169,6 +172,7 @@ pub async fn print_report_definition(
         &ctx.get_settings().server.base_dir,
         &resolved_report,
         report_data,
+        arguments,
         None,
     ) {
         Ok(file_id) => file_id,
@@ -191,11 +195,12 @@ async fn fetch_data(
     ctx: &Context<'_>,
     query: GraphQlQuery,
     store_id: &str,
-    data_id: &str,
+    data_id: Option<String>,
+    arguments: Option<serde_json::Value>,
 ) -> anyhow::Result<FetchResult> {
     let user_data = ctx.data_unchecked::<RequestUserData>().clone();
     let self_requester = ctx.self_request().unwrap();
-    let variables = serde_json::from_value(query.query_variables(store_id, data_id))?;
+    let variables = serde_json::from_value(query.query_variables(store_id, data_id, arguments))?;
     let request = Request::new(query.query).variables(variables);
     let response = self_requester.call(request, user_data).await;
     if !response.errors.is_empty() {

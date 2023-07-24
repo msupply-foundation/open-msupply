@@ -63,6 +63,12 @@ pub use self::response_requisition_stats::*;
 pub mod inventory_adjustment_reason;
 pub use self::inventory_adjustment_reason::*;
 
+pub mod json_schema;
+pub use self::json_schema::*;
+
+pub mod clinician;
+pub use self::clinician::*;
+
 pub mod barcode;
 pub use self::barcode::*;
 

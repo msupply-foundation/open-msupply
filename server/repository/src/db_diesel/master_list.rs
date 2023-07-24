@@ -8,11 +8,11 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
 };
 
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
+use crate::{EqualFilter, Pagination, Sort, StringFilter};
 
 use diesel::prelude::*;
 
@@ -25,10 +25,10 @@ pub struct MasterListRepository<'a> {
 #[derive(Clone, Debug, PartialEq)]
 pub struct MasterListFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
-    pub code: Option<SimpleStringFilter>,
-    pub description: Option<SimpleStringFilter>,
-    pub exists_for_name: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
+    pub description: Option<StringFilter>,
+    pub exists_for_name: Option<StringFilter>,
     pub exists_for_name_id: Option<EqualFilter<String>>,
     pub exists_for_store_id: Option<EqualFilter<String>>,
     pub is_program: Option<bool>,
@@ -66,9 +66,9 @@ impl<'a> MasterListRepository<'a> {
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, master_list_dsl::id);
-            apply_simple_string_filter!(query, f.name, master_list_dsl::name);
-            apply_simple_string_filter!(query, f.code, master_list_dsl::code);
-            apply_simple_string_filter!(query, f.description, master_list_dsl::description);
+            apply_string_filter!(query, f.name, master_list_dsl::name);
+            apply_string_filter!(query, f.code, master_list_dsl::code);
+            apply_string_filter!(query, f.description, master_list_dsl::description);
 
             // Result master list should be unique, which would need extra logic if we were to join
             // name table through master_list_name_join, thus use a sub query to restrict the resulting
@@ -83,7 +83,7 @@ impl<'a> MasterListRepository<'a> {
                     .left_join(name_dsl::name.left_join(store_dsl::store))
                     .into_boxed();
 
-                apply_simple_string_filter!(name_join_query, f.exists_for_name, name_dsl::name_);
+                apply_string_filter!(name_join_query, f.exists_for_name, name_dsl::name_);
                 apply_equal_filter!(name_join_query, f.exists_for_name_id, name_dsl::id);
                 apply_equal_filter!(name_join_query, f.exists_for_store_id, store_dsl::id);
 
@@ -162,22 +162,22 @@ impl MasterListFilter {
         self
     }
 
-    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
 
-    pub fn description(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn description(mut self, filter: StringFilter) -> Self {
         self.description = Some(filter);
         self
     }
 
-    pub fn exists_for_name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn exists_for_name(mut self, filter: StringFilter) -> Self {
         self.exists_for_name = Some(filter);
         self
     }

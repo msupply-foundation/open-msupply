@@ -5,6 +5,7 @@ import { styled } from '@mui/material/styles';
 import { LocaleKey, useTranslation } from '@common/intl';
 
 interface BasicSpinnerProps {
+  inline?: boolean;
   messageKey?: LocaleKey;
 }
 
@@ -13,7 +14,6 @@ const Container = styled(Box)({
   alignItems: 'center',
   justifyContent: 'center',
   flexDirection: 'column',
-  position: 'fixed',
   top: 0,
   left: 0,
   width: '100%',
@@ -28,10 +28,11 @@ const StyledText = styled(Typography)(({ theme }) => ({
 
 export const BasicSpinner: FC<BasicSpinnerProps> = ({
   messageKey = 'loading',
+  inline = false,
 }) => {
   const t = useTranslation('app');
   return (
-    <Container>
+    <Container style={inline ? {} : { position: 'fixed' }}>
       <CircularProgress />
       <StyledText>{t(messageKey)}</StyledText>
     </Container>

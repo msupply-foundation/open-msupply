@@ -1,6 +1,7 @@
 use async_graphql::*;
 use repository::{
-    InventoryAdjustmentReason, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType,
+    inventory_adjustment_reason::InventoryAdjustmentReason, InventoryAdjustmentReasonRow,
+    InventoryAdjustmentReasonType,
 };
 use service::ListResult;
 

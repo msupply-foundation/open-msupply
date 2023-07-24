@@ -182,8 +182,8 @@ mod test {
     use util::{assert_matches, inline_edit, inline_init};
 
     use crate::{
-        invoice::outbound_shipment::{
-            update::UpdateOutboundShipmentStatus, UpdateOutboundShipment,
+        invoice::outbound_shipment::update::{
+            UpdateOutboundShipment, UpdateOutboundShipmentStatus,
         },
         invoice_line::ShipmentTaxUpdate,
         service_provider::ServiceProvider,
@@ -524,25 +524,7 @@ mod test {
                 }),
             )
             .unwrap();
-
-        let log = ActivityLogRowRepository::new(&connection)
-            .find_many_by_record_id(&mock_outbound_shipment_c().id)
-            .unwrap()
-            .into_iter()
-            .find(|l| l.r#type == ActivityLogType::InvoiceStatusPicked)
-            .unwrap();
         assert_stock_line_totals(&invoice_lines, &expected_stock_line_totals);
-        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusPicked);
-
-        service
-            .update_outbound_shipment(
-                &context,
-                inline_init(|r: &mut UpdateOutboundShipment| {
-                    r.id = mock_outbound_shipment_c().id;
-                    r.comment = Some("Some comment".to_string());
-                }),
-            )
-            .unwrap();
 
         let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_outbound_shipment_c().id)

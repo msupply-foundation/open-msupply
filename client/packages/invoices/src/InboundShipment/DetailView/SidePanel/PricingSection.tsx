@@ -91,6 +91,7 @@ export const PricingSectionComponent = () => {
           </PanelLabel>
           <PanelField>
             <IconButton
+              disabled={isDisabled}
               icon={<EditIcon style={{ fontSize: 16, fill: 'none' }} />}
               label={t('label.edit')}
               onClick={serviceLineModal.toggleOn}

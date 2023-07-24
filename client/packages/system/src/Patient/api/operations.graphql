@@ -1,0 +1,141 @@
+fragment PatientRow on PatientNode {
+  id
+  code
+  code2
+  firstName
+  lastName
+  name
+  dateOfBirth
+  gender
+  email
+  document {
+    data
+    id
+    name
+    type
+  }
+  isDeceased
+  programEnrolments {
+    programEnrolmentId
+    document {
+      documentRegistry {
+        name
+      }
+    }
+  }
+}
+
+query patients(
+  $storeId: String!
+  $key: PatientSortFieldInput!
+  $desc: Boolean
+  $first: Int
+  $offset: Int
+  $filter: PatientFilterInput
+) {
+  patients(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on PatientConnector {
+      __typename
+      nodes {
+        ...PatientRow
+      }
+      totalCount
+    }
+  }
+}
+
+query patientById($storeId: String!, $nameId: String!) {
+  patients(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+    ... on PatientConnector {
+      __typename
+      nodes {
+        ...PatientRow
+      }
+      totalCount
+    }
+  }
+}
+
+query patientSearch($input: PatientSearchInput!, $storeId: String!) {
+  patientSearch(input: $input, storeId: $storeId) {
+    ... on PatientSearchConnector {
+      __typename
+      nodes {
+        score
+        patient {
+          ...PatientRow
+        }
+      }
+      totalCount
+    }
+  }
+}
+
+query centralPatientSearch(
+  $input: CentralPatientSearchInput!
+  $storeId: String!
+) {
+  centralPatientSearch(input: $input, storeId: $storeId) {
+    __typename
+    ... on CentralPatientSearchConnector {
+      nodes {
+        id
+        code
+        dateOfBirth
+        firstName
+        lastName
+      }
+      totalCount
+    }
+    ... on CentralPatientSearchError {
+      error {
+        __typename
+        ... on ConnectionError {
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation linkPatientToStore($storeId: String!, $nameId: String!) {
+  linkPatientToStore(nameId: $nameId, storeId: $storeId) {
+    __typename
+    ... on NameStoreJoinNode {
+      id
+      storeId
+      nameId
+    }
+    ... on LinkPatientPatientToStoreError {
+      error {
+        __typename
+        ... on ConnectionError {
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
+  insertPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
+    }
+  }
+}
+
+mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
+  updatePatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
+    }
+  }
+}
