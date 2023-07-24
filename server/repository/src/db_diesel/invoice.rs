@@ -8,11 +8,10 @@ use super::{
 };
 
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
-    apply_sort_no_case,
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
 };
 
-use crate::{DatetimeFilter, EqualFilter, Pagination, SimpleStringFilter, Sort};
+use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
@@ -31,13 +30,13 @@ pub struct InvoiceFilter {
     pub id: Option<EqualFilter<String>>,
     pub invoice_number: Option<EqualFilter<i64>>,
     pub name_id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
     pub store_id: Option<EqualFilter<String>>,
     pub user_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InvoiceRowType>>,
     pub status: Option<EqualFilter<InvoiceRowStatus>>,
     pub on_hold: Option<bool>,
-    pub comment: Option<SimpleStringFilter>,
+    pub comment: Option<StringFilter>,
     pub their_reference: Option<EqualFilter<String>>,
     pub transport_reference: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
@@ -214,11 +213,11 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
         apply_equal_filter!(query, id, invoice_dsl::id);
         apply_equal_filter!(query, invoice_number, invoice_dsl::invoice_number);
         apply_equal_filter!(query, name_id, invoice_dsl::name_id);
-        apply_simple_string_filter!(query, name, name_dsl::name_);
+        apply_string_filter!(query, name, name_dsl::name_);
         apply_equal_filter!(query, store_id, invoice_dsl::store_id);
         apply_equal_filter!(query, their_reference, invoice_dsl::their_reference);
         apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
-        apply_simple_string_filter!(query, comment, invoice_dsl::comment);
+        apply_string_filter!(query, comment, invoice_dsl::comment);
         apply_equal_filter!(query, linked_invoice_id, invoice_dsl::linked_invoice_id);
         apply_equal_filter!(query, user_id, invoice_dsl::user_id);
         apply_equal_filter!(query, transport_reference, invoice_dsl::transport_reference);
@@ -372,7 +371,7 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }

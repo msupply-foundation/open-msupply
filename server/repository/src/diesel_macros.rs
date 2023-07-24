@@ -48,104 +48,63 @@ macro_rules! apply_equal_filter {
 }
 
 #[cfg(not(feature = "postgres"))]
-macro_rules! apply_string_filter {
-    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
-        if let Some(filter) = $filter_field {
-            if let Some(value) = filter.equal_to {
-                $query = $query.filter($dsl_field.eq(value));
-            }
-            if let Some(value) = filter.not_equal_to {
-                $query = $query.filter($dsl_field.ne(value));
-            }
-            if let Some(value) = filter.equal_any {
-                $query = $query.filter($dsl_field.eq_any(value));
-            }
-            if let Some(value) = filter.not_equal_all {
-                $query = $query.filter($dsl_field.ne_all(value));
-            }
-            if let Some(value) = filter.like {
-                // in sqlite like is case insensitive (but on only works with ASCII chars)
-                $query = $query.filter($dsl_field.like(format!("%{}%", value)));
-            }
-            if let Some(value) = filter.starts_with {
-                // in sqlite like is case insensitive (but on only works with ASCII chars)
-                $query = $query.filter($dsl_field.like(format!("{}%", value)));
-            }
-            if let Some(value) = filter.ends_with {
-                // in sqlite like is case insensitive (but on only works with ASCII chars)
-                $query = $query.filter($dsl_field.like(format!("%{}", value)));
-            }
-        }
-    }};
-}
-#[cfg(feature = "postgres")]
-macro_rules! apply_string_filter {
-    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
-        if let Some(filter) = $filter_field {
-            if let Some(value) = filter.equal_to {
-                $query = $query.filter($dsl_field.eq(value));
-            }
-            if let Some(value) = filter.not_equal_to {
-                $query = $query.filter($dsl_field.ne(value));
-            }
-            if let Some(value) = filter.equal_any {
-                $query = $query.filter($dsl_field.eq_any(value));
-            }
-            if let Some(value) = filter.not_equal_all {
-                $query = $query.filter($dsl_field.ne_all(value));
-            }
-            if let Some(value) = filter.like {
-                // Use case insensitive like
-                $query = $query.filter($dsl_field.ilike(format!("%{}%", value)));
-            }
-            if let Some(value) = filter.starts_with {
-                // Use case insensitive like
-                $query = $query.filter($dsl_field.ilike(format!("{}%", value)));
-            }
-            if let Some(value) = filter.ends_with {
-                // Use case insensitive like
-                $query = $query.filter($dsl_field.ilike(format!("%{}", value)));
-            }
-        }
-    }};
-}
-
-#[cfg(not(feature = "postgres"))]
-#[macro_export]
-macro_rules! apply_simple_string_filter_method {
+macro_rules! apply_string_filter_method {
     ($query:ident, $filter_method:ident, $filter_field:expr, $dsl_field:expr ) => {{
-        if let Some(string_filter) = $filter_field {
-            if let Some(value) = string_filter.equal_to {
+        if let Some(filter) = $filter_field {
+            if let Some(value) = filter.equal_to {
                 $query = $query.$filter_method($dsl_field.eq(value));
             }
-
-            if let Some(value) = string_filter.insensitive_equal_to {
-                $query = $query.$filter_method($dsl_field.like(value.replace("%", "")));
+            if let Some(value) = filter.not_equal_to {
+                $query = $query.$filter_method($dsl_field.ne(value));
             }
-
-            if let Some(value) = string_filter.like {
+            if let Some(value) = filter.equal_any {
+                $query = $query.$filter_method($dsl_field.eq_any(value));
+            }
+            if let Some(value) = filter.not_equal_all {
+                $query = $query.$filter_method($dsl_field.ne_all(value));
+            }
+            if let Some(value) = filter.like {
                 // in sqlite like is case insensitive (but on only works with ASCII chars)
                 $query = $query.$filter_method($dsl_field.like(format!("%{}%", value)));
             }
+            if let Some(value) = filter.starts_with {
+                // in sqlite like is case insensitive (but on only works with ASCII chars)
+                $query = $query.$filter_method($dsl_field.like(format!("{}%", value)));
+            }
+            if let Some(value) = filter.ends_with {
+                // in sqlite like is case insensitive (but on only works with ASCII chars)
+                $query = $query.$filter_method($dsl_field.like(format!("%{}", value)));
+            }
         }
     }};
 }
 #[cfg(feature = "postgres")]
-#[macro_export]
-macro_rules! apply_simple_string_filter_method {
-    ($query:ident, $filter_method:ident, $filter_field:expr, $dsl_field:expr ) => {{
-        if let Some(string_filter) = $filter_field {
-            if let Some(value) = string_filter.equal_to {
+macro_rules! apply_string_filter_method {
+    ($query:ident,  $filter_method:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        if let Some(filter) = $filter_field {
+            if let Some(value) = filter.equal_to {
                 $query = $query.$filter_method($dsl_field.eq(value));
             }
-
-            if let Some(value) = string_filter.insensitive_equal_to {
-                $query = $query.$filter_method($dsl_field.ilike(value.replace("%", "")));
+            if let Some(value) = filter.not_equal_to {
+                $query = $query.$filter_method($dsl_field.ne(value));
             }
-
-            if let Some(value) = string_filter.like {
+            if let Some(value) = filter.equal_any {
+                $query = $query.$filter_method($dsl_field.eq_any(value));
+            }
+            if let Some(value) = filter.not_equal_all {
+                $query = $query.$filter_method($dsl_field.ne_all(value));
+            }
+            if let Some(value) = filter.like {
                 // Use case insensitive like
                 $query = $query.$filter_method($dsl_field.ilike(format!("%{}%", value)));
+            }
+            if let Some(value) = filter.starts_with {
+                // Use case insensitive like
+                $query = $query.$filter_method($dsl_field.ilike(format!("{}%", value)));
+            }
+            if let Some(value) = filter.ends_with {
+                // Use case insensitive like
+                $query = $query.$filter_method($dsl_field.ilike(format!("%{}", value)));
             }
         }
     }};
@@ -154,7 +113,7 @@ macro_rules! apply_simple_string_filter_method {
 /// Example expand, when called with:
 ///
 /// ```
-/// apply_simple_string_filter!(query, filter.comment, invoice_dsl::comment)
+/// apply_string_filter!(query, filter.comment, invoice_dsl::comment)
 /// ```
 ///
 /// ```
@@ -168,9 +127,14 @@ macro_rules! apply_simple_string_filter_method {
 ///     }
 /// }
 /// ```
-macro_rules! apply_simple_string_filter {
+macro_rules! apply_string_filter {
     ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
-        $crate::apply_simple_string_filter_method!($query, filter, $filter_field, $dsl_field);
+        crate::diesel_macros::apply_string_filter_method!(
+            $query,
+            filter,
+            $filter_field,
+            $dsl_field
+        );
     }};
 }
 
@@ -179,7 +143,7 @@ macro_rules! apply_simple_string_filter {
 /// Example expand, when called with:
 ///
 /// ```
-/// apply_simple_string_or_filter!(query, filter.comment, invoice_dsl::comment)
+/// apply_string_or_filter!(query, filter.comment, invoice_dsl::comment)
 /// ```
 ///
 /// ```
@@ -193,9 +157,14 @@ macro_rules! apply_simple_string_filter {
 ///     }
 /// }
 /// ```
-macro_rules! apply_simple_string_or_filter {
+macro_rules! apply_string_or_filter {
     ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
-        $crate::apply_simple_string_filter_method!($query, or_filter, $filter_field, $dsl_field);
+        crate::diesel_macros::apply_string_filter_method!(
+            $query,
+            or_filter,
+            $filter_field,
+            $dsl_field
+        );
     }};
 }
 
@@ -360,10 +329,10 @@ macro_rules! apply_sort_asc_nulls_first {
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
-pub(crate) use apply_simple_string_filter;
-pub(crate) use apply_simple_string_or_filter;
 pub(crate) use apply_sort;
 pub(crate) use apply_sort_asc_nulls_first;
 pub(crate) use apply_sort_asc_nulls_last;
 pub(crate) use apply_sort_no_case;
 pub(crate) use apply_string_filter;
+pub(crate) use apply_string_filter_method;
+pub(crate) use apply_string_or_filter;
