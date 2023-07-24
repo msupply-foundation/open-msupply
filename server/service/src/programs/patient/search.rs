@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{DateFilter, EqualFilter, Gender, RepositoryError, SimpleStringFilter};
+use repository::{DateFilter, EqualFilter, Gender, RepositoryError, StringFilter};
 
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
@@ -37,16 +37,16 @@ pub fn patient_search(
     } = input;
 
     if let Some(code) = code {
-        filter = filter.code(SimpleStringFilter::equal_to(&code));
+        filter = filter.code(StringFilter::equal_to(&code));
     }
     if let Some(code_2) = code_2 {
-        filter = filter.code_2(SimpleStringFilter::equal_to(&code_2));
+        filter = filter.code_2(StringFilter::equal_to(&code_2));
     }
     if let Some(first_name) = first_name {
-        filter = filter.first_name(SimpleStringFilter::insensitive_equal_to(&first_name));
+        filter = filter.first_name(StringFilter::like(&first_name));
     }
     if let Some(last_name) = last_name {
-        filter = filter.last_name(SimpleStringFilter::insensitive_equal_to(&last_name));
+        filter = filter.last_name(StringFilter::like(&last_name));
     }
     if let Some(date_of_birth) = date_of_birth {
         filter = filter.date_of_birth(DateFilter::equal_to(date_of_birth));

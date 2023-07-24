@@ -9,9 +9,9 @@ use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     schema_from_row, FormSchema, FormSchemaRow,
 };
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
+use crate::{EqualFilter, Pagination, Sort, StringFilter};
 
-use crate::{diesel_macros::apply_simple_string_filter, DBType, RepositoryError};
+use crate::{diesel_macros::apply_string_filter, DBType, RepositoryError};
 
 use diesel::{dsl::IntoBoxed, helper_types::LeftJoin, prelude::*};
 use util::inline_init;
@@ -25,7 +25,7 @@ pub struct Report {
 #[derive(Debug, Clone, Default)]
 pub struct ReportFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
     pub r#type: Option<EqualFilter<ReportType>>,
     pub context: Option<EqualFilter<ReportContext>>,
     pub sub_context: Option<EqualFilter<String>>,
@@ -49,7 +49,7 @@ impl ReportFilter {
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
@@ -146,7 +146,7 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
         } = f;
 
         apply_equal_filter!(query, id, report_dsl::id);
-        apply_simple_string_filter!(query, name, report_dsl::name);
+        apply_string_filter!(query, name, report_dsl::name);
         apply_equal_filter!(query, r#type, report_dsl::type_);
         apply_equal_filter!(query, context, report_dsl::context);
         apply_equal_filter!(query, sub_context, report_dsl::sub_context);

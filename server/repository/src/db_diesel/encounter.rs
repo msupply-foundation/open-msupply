@@ -1,15 +1,13 @@
 use super::{
-    document::{latest_document, latest_document::dsl as latest_document_dsl},
+    document::latest_document::dsl as latest_document_dsl,
     encounter_row::encounter::{self, dsl as encounter_dsl},
     StorageConnection,
 };
 
 use crate::{
-    diesel_macros::{
-        apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
-    },
-    DBType, DatetimeFilter, EncounterRow, EncounterStatus, EqualFilter, Pagination,
-    RepositoryError, SimpleStringFilter, Sort,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
+    latest_document, DBType, DatetimeFilter, EncounterRow, EncounterStatus, EqualFilter,
+    Pagination, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -27,7 +25,7 @@ pub struct EncounterFilter {
     pub status: Option<EqualFilter<EncounterStatus>>,
     pub clinician_id: Option<EqualFilter<String>>,
     /// Filter by encounter data
-    pub document_data: Option<SimpleStringFilter>,
+    pub document_data: Option<StringFilter>,
 }
 
 impl EncounterFilter {
@@ -85,7 +83,7 @@ impl EncounterFilter {
         self
     }
 
-    pub fn document_data(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn document_data(mut self, filter: StringFilter) -> Self {
         self.document_data = Some(filter);
         self
     }
@@ -140,7 +138,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             let mut sub_query = latest_document_dsl::latest_document
                 .select(latest_document_dsl::name)
                 .into_boxed();
-            apply_simple_string_filter!(sub_query, document_data, latest_document::data);
+            apply_string_filter!(sub_query, document_data, latest_document::data);
             query = query.filter(encounter_dsl::document_name.eq_any(sub_query));
         }
     }

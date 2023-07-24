@@ -14,7 +14,7 @@ use crate::{
     },
     repository_error::RepositoryError,
     BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, NameRow, Pagination,
-    SimpleStringFilter, Sort,
+    Sort, StringFilter,
 };
 
 use diesel::{
@@ -44,7 +44,7 @@ pub enum StockLineSortField {
 #[derive(Debug, Clone)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
-    pub item_code_or_name: Option<SimpleStringFilter>,
+    pub item_code_or_name: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
     pub is_available: Option<bool>,
