@@ -1,5 +1,5 @@
 use async_graphql::*;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 use repository::{Gender, Name, NameRow, NameType};
 
@@ -49,6 +49,7 @@ impl NameNodeType {
 pub enum GenderType {
     Female,
     Male,
+    Transgender,
     TransgenderMale,
     TransgenderMaleHormone,
     TransgenderMaleSurgical,
@@ -63,6 +64,7 @@ impl GenderType {
         match gender {
             Gender::Female => GenderType::Female,
             Gender::Male => GenderType::Male,
+            Gender::Transgender => GenderType::Transgender,
             Gender::TransgenderMale => GenderType::TransgenderMale,
             Gender::TransgenderMaleHormone => GenderType::TransgenderMaleHormone,
             Gender::TransgenderMaleSurgical => GenderType::TransgenderMaleSurgical,
@@ -125,9 +127,11 @@ impl NameNode {
     pub async fn first_name(&self) -> &Option<String> {
         &self.row().first_name
     }
+
     pub async fn last_name(&self) -> &Option<String> {
         &self.row().last_name
     }
+
     pub async fn gender(&self) -> Option<GenderType> {
         self.row().gender.as_ref().map(GenderType::from_domain)
     }
@@ -180,6 +184,10 @@ impl NameNode {
         self.row()
             .created_datetime
             .map(|datetime| DateTime::<Utc>::from_utc(datetime, Utc))
+    }
+
+    pub async fn date_of_birth(&self) -> Option<NaiveDate> {
+        self.row().date_of_birth
     }
 }
 
@@ -235,6 +243,7 @@ mod test {
                     name: Name {
                         name_row: inline_init(|r: &mut NameRow| {
                             r.r#type = NameType::Patient;
+                            r.code = "some code".to_string();
                             r.first_name = Some("first_name".to_string());
                             r.last_name = Some("last_name".to_string());
                             r.gender = Some(Gender::Female);
@@ -254,7 +263,8 @@ mod test {
                                     .unwrap()
                                     .and_hms_opt(12, 07, 12)
                                     .unwrap(),
-                            )
+                            );
+                            r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 05, 15).unwrap());
                         }),
                         name_store_join_row: None,
                         store_row: None,
@@ -267,6 +277,7 @@ mod test {
             "testQuery": {
                 "__typename": "NameNode",
                 "type": "PATIENT",
+                "code": "some code",
                 "firstName": "first_name",
                 "lastName": "last_name",
                 "gender": "FEMALE",
@@ -282,6 +293,7 @@ mod test {
                 "address1": "address1",
                 "address2": "address2",
                 "createdDatetime": "2022-05-18T12:07:12+00:00",
+                "dateOfBirth": "1995-05-15",
             }
         }
         );
@@ -289,8 +301,9 @@ mod test {
         let query = r#"
         query {
             testQuery {
-                __typename
-            type
+               __typename
+               type
+               code
                firstName
                lastName
                gender
@@ -306,6 +319,7 @@ mod test {
                isDonor
                createdDatetime
                isOnHold
+               dateOfBirth
             }
         }
         "#;

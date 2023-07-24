@@ -30,10 +30,17 @@ module.exports = {
   plugins: ['react', , '@typescript-eslint'],
   rules: {
     camelcase: ['error', { allow: ['_ONLY_FOR_TESTING'] }],
-    'require-jsdoc': 0,
+    'require-jsdoc': 'off',
+    'valid-jsdoc': 'off',
     'react/display-name': 'off',
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': 'error',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      {
+        argsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+      },
+    ],
     'react/prop-types': 'off',
     '@typescript-eslint/no-empty-function': 'off',
     'spaced-comment': [

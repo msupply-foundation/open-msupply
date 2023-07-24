@@ -21,7 +21,9 @@ const REPORT_1: (&'static str, &'static str) = (
         "editor": "omsupply",
         "orientation": "",
         "disabled": false,
-        "template": "template data"
+        "template": "template data",
+        "sub_context": "",
+        "form_schema_ID": ""
     }"#,
 );
 
@@ -36,6 +38,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             template: "template data".to_string(),
             context: ReportContext::Stocktake,
             comment: Some("Test comment".to_string()),
+            sub_context: None,
+            argument_schema_id: None,
         }),
     )]
 }

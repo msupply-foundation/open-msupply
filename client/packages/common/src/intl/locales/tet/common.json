@@ -203,7 +203,7 @@
   "label.website": "Sitio",
   "log.invoice-created": "Remessa kria ona",
   "log.user-logged-in": "Ujuáriu tama ona",
-  "log.invoic-deleted": "Remessa hamos ona",
+  "log.invoice-deleted": "Remessa hamos ona",
   "log.invoice-status-picked": "Remessa ne'ebe hili ona",
   "log.invoice-status-shipped": "Remessa manda ona",
   "log.invoice-status-delivered": "Remessa entrega ona",

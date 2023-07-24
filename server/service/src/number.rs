@@ -32,6 +32,8 @@ pub fn next_number(
                 .find_max_invoice_number(InvoiceRowType::Repack, store_id)?,
             NumberRowType::InventoryReduction => InvoiceRowRepository::new(&connection_tx)
                 .find_max_invoice_number(InvoiceRowType::InventoryReduction, store_id)?,
+            NumberRowType::Prescription => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::Prescription, store_id)?,
             NumberRowType::RequestRequisition => RequisitionRowRepository::new(&connection_tx)
                 .find_max_requisition_number(RequisitionRowType::Request, store_id)?,
             NumberRowType::ResponseRequisition => RequisitionRowRepository::new(&connection_tx)

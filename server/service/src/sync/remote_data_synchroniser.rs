@@ -73,19 +73,18 @@ pub struct RemoteDataSynchroniser {
 
 impl RemoteDataSynchroniser {
     /// Request initialisation
-    /// TODO improve logic for initialisation check, requires central changes as per this issue:
-    /// https://github.com/openmsupply/open-msupply-internal/issues/30#issuecomment-1567639141
-    ///
-    /// This api call is blocking, and will wait while central server adds relevant records to
-    /// sync queue. If there is a connection problem while intialisaion is happenning, we don't
-    /// want to restart initialisation on next sync, thus polling is introduced.
-    /// When initialisaiton is in progress api will return sync_is_running
+    /// This api call is blocking, and will wait while central server adds relevant records to sync queue.
+    /// If there is a connection problem while initialisation is happening, we don't want to restart initialisation on next sync
+    /// thus polling and a check for initialisation status was introduced. When initialisation is in progress,
+    /// api will return `initialisation_in_progress` and `get_site_info` will return `initialisationStatus` = `started`
     pub(crate) async fn request_initialisation(&self) -> Result<(), PostInitialisationError> {
-        // First check if already initialisaing (by seeing if site is busy), this could have happened if
-        // there was a connection error while initialisation and polling for initialisitaion to finish
-        // or it timed out, and sync was restarted immidiately
-        let should_post_initialise =
-            self.sync_api_v5.get_site_status().await?.code == SiteStatusCodeV5::Idle;
+        // First check if already initialising
+        let initialisation_status = self
+            .sync_api_v5
+            .get_site_info()
+            .await?
+            .initialisation_status;
+        let should_post_initialise = initialisation_status != InitialisationStatus::Started;
 
         if should_post_initialise {
             let Err(error) = self.sync_api_v5.post_initialise().await else {
@@ -97,7 +96,7 @@ impl RemoteDataSynchroniser {
                 return Err(error.into());
             }
         }
-
+        // Wait for initialisation to finish
         self.wait_for_sync_operation(
             INITIALISATION_POLL_PERIOD_SECONDS,
             INITIALISATION_TIMEOUT_SECONDS,

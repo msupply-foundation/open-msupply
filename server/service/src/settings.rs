@@ -1,4 +1,5 @@
-use log::LevelFilter;
+use std::fmt::{Display, Formatter, Result};
+
 use repository::database_settings::DatabaseSettings;
 
 use crate::sync::settings::SyncSettings;
@@ -51,9 +52,8 @@ pub enum LogMode {
     File,
 }
 
-#[derive(serde::Deserialize, Clone)]
+#[derive(serde::Deserialize, Clone, Debug)]
 pub enum Level {
-    Off,
     Error,
     Warn,
     Info,
@@ -61,16 +61,16 @@ pub enum Level {
     Trace,
 }
 
-impl From<Level> for LevelFilter {
-    fn from(level: Level) -> Self {
-        match level {
-            Level::Off => LevelFilter::Off,
-            Level::Error => LevelFilter::Error,
-            Level::Warn => LevelFilter::Warn,
-            Level::Info => LevelFilter::Info,
-            Level::Debug => LevelFilter::Debug,
-            Level::Trace => LevelFilter::Trace,
-        }
+impl Display for Level {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let level = match self {
+            Level::Error => "error",
+            Level::Warn => "warn",
+            Level::Info => "info",
+            Level::Debug => "debug",
+            Level::Trace => "trace",
+        };
+        write!(f, "{}", level)
     }
 }
 

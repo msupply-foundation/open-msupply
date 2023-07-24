@@ -1,6 +1,7 @@
 pub mod mutations;
 use async_graphql::Context;
 use async_graphql::*;
+use mutations::{delete::*, insert::*, update::*};
 
 #[derive(Default, Clone)]
 pub struct StocktakeLineMutations;
@@ -11,26 +12,26 @@ impl StocktakeLineMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: mutations::InsertInput,
-    ) -> Result<mutations::InsertResponse> {
-        mutations::insert(ctx, &store_id, input)
+        input: InsertInput,
+    ) -> Result<InsertResponse> {
+        insert(ctx, &store_id, input)
     }
 
     async fn update_stocktake_line(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: mutations::UpdateInput,
-    ) -> Result<mutations::UpdateResponse> {
-        mutations::update(ctx, &store_id, input)
+        input: UpdateInput,
+    ) -> Result<UpdateResponse> {
+        update(ctx, &store_id, input)
     }
 
     async fn delete_stocktake_line(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: mutations::DeleteInput,
-    ) -> Result<mutations::DeleteResponse> {
-        mutations::delete(ctx, &store_id, input)
+        input: DeleteInput,
+    ) -> Result<DeleteResponse> {
+        delete(ctx, &store_id, input)
     }
 }

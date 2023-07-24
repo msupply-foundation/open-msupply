@@ -2,6 +2,15 @@ import { IpcRendererEvent } from 'electron';
 export const DISCOVERY_TIMEOUT = 7000;
 export const DISCOVERED_SERVER_POLL = 2000;
 
+export const DEFAULT_LOCAL_SERVER = {
+  protocol: 'https' as 'https' | 'http',
+  port: 8000,
+  ip: '127.0.0.1',
+  clientVersion: '',
+  hardwareId: '',
+  isLocal: true,
+};
+
 export type Preference = {
   key: string;
   value: string;

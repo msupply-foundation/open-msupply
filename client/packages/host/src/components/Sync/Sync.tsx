@@ -11,17 +11,17 @@ import {
   useNativeClient,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useHost } from '../../api/hooks';
+import { useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
 
 const STATUS_POLLING_INTERVAL = 1000;
 
-const useSync = () => {
+const useHostSync = () => {
   // Polling whenever Sync page is opened
-  const { syncStatus, numberOfRecordsInPushQueue } = useHost.utils.syncInfo(
+  const { syncStatus, numberOfRecordsInPushQueue } = useSync.utils.syncInfo(
     STATUS_POLLING_INTERVAL
   );
-  const { mutateAsync: manualSync } = useHost.sync.manualSync();
+  const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
 
   // true by default to wait for first syncStatus api result
@@ -69,7 +69,7 @@ export const Sync: React.FC = () => {
     numberOfRecordsInPushQueue,
     isLoading,
     onManualSync,
-  } = useSync();
+  } = useHostSync();
 
   const formattedLatestSyncDate = latestSyncDate ? (
     <Grid display="flex" container gap={1}>

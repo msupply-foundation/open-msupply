@@ -19,7 +19,7 @@ import { AppVersion, LanguageMenu } from '../components';
 import { Setting } from './Setting';
 import { SettingTextArea, TextValue } from './SettingTextArea';
 import { SyncSettings } from './SyncSettings';
-import { useHost } from '../api/hooks';
+import { useHost } from '../api';
 import { SiteInfo } from '../components/SiteInfo';
 import { AndroidSettings } from './AndroidSettings';
 import { ElectronSettings } from './ElectronSettings';

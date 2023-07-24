@@ -1,14 +1,15 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{NameNode, NameNodeType};
-use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{EqualFilter, Gender, PaginationOption, StringFilter};
 use repository::{Name, NameFilter, NameSort, NameSortField};
+use serde::Serialize;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     ListResult,
@@ -31,20 +32,67 @@ pub struct NameSortInput {
 }
 
 #[derive(InputObject, Clone)]
+pub struct EqualFilterNameTypeInput {
+    pub equal_to: Option<NameNodeType>,
+    pub equal_any: Option<Vec<NameNodeType>>,
+    pub not_equal_to: Option<NameNodeType>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum GenderInput {
+    Female,
+    Male,
+    TransgenderMale,
+    TransgenderMaleHormone,
+    TransgenderMaleSurgical,
+    TransgenderFemale,
+    TransgenderFemaleHormone,
+    TransgenderFemaleSurgical,
+    Unknown,
+    NonBinary,
+}
+
+impl GenderInput {
+    pub fn to_domain(self) -> Gender {
+        match self {
+            GenderInput::Female => Gender::Female,
+            GenderInput::Male => Gender::Male,
+            GenderInput::TransgenderMale => Gender::TransgenderMale,
+            GenderInput::TransgenderMaleHormone => Gender::TransgenderMaleHormone,
+            GenderInput::TransgenderMaleSurgical => Gender::TransgenderMaleSurgical,
+            GenderInput::TransgenderFemale => Gender::TransgenderFemale,
+            GenderInput::TransgenderFemaleHormone => Gender::TransgenderFemaleHormone,
+            GenderInput::TransgenderFemaleSurgical => Gender::TransgenderFemaleSurgical,
+            GenderInput::Unknown => Gender::Unknown,
+            GenderInput::NonBinary => Gender::NonBinary,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterGenderInput {
+    pub equal_to: Option<GenderInput>,
+    pub equal_any: Option<Vec<GenderInput>>,
+    pub not_equal_to: Option<GenderInput>,
+}
+
+#[derive(InputObject, Clone)]
 pub struct NameFilterInput {
     pub id: Option<EqualFilterStringInput>,
     /// Filter by name
-    pub name: Option<SimpleStringFilterInput>,
+    pub name: Option<StringFilterInput>,
     /// Filter by code
-    pub code: Option<SimpleStringFilterInput>,
+    pub code: Option<StringFilterInput>,
     /// Filter by customer property
     pub is_customer: Option<bool>,
     /// Filter by supplier property
     pub is_supplier: Option<bool>,
+    pub is_patient: Option<bool>,
     /// Is this name a store
     pub is_store: Option<bool>,
     /// Code of the store if store is linked to name
-    pub store_code: Option<SimpleStringFilterInput>,
+    pub store_code: Option<StringFilterInput>,
     /// Visibility in current store (based on store_id parameter and existence of name_store_join record)
     pub is_visible: Option<bool>,
     /// Show system names (defaults to false)
@@ -53,6 +101,12 @@ pub struct NameFilterInput {
     pub is_system_name: Option<bool>,
     /// Filter by the name type
     pub r#type: Option<EqualFilterTypeInput>,
+
+    pub phone: Option<StringFilterInput>,
+    pub address1: Option<StringFilterInput>,
+    pub address2: Option<StringFilterInput>,
+    pub country: Option<StringFilterInput>,
+    pub email: Option<StringFilterInput>,
 }
 
 #[derive(SimpleObject)]
@@ -121,19 +175,31 @@ impl NameFilterInput {
             is_visible,
             is_system_name,
             r#type,
+            phone,
+            address1,
+            address2,
+            country,
+            email,
+            is_patient,
         } = self;
 
         NameFilter {
             id: id.map(EqualFilter::from),
-            name: name.map(SimpleStringFilter::from),
-            code: code.map(SimpleStringFilter::from),
-            store_code: store_code.map(SimpleStringFilter::from),
+            name: name.map(StringFilter::from),
+            code: code.map(StringFilter::from),
+            store_code: store_code.map(StringFilter::from),
             is_customer,
             is_supplier,
             is_store,
             is_visible,
             is_system_name: is_system_name.or(Some(false)),
             r#type: r#type.map(|t| map_filter!(t, NameNodeType::to_domain)),
+            phone: phone.map(StringFilter::from),
+            address1: address1.map(StringFilter::from),
+            address2: address2.map(StringFilter::from),
+            country: country.map(StringFilter::from),
+            email: email.map(StringFilter::from),
+            is_patient,
         }
     }
 }

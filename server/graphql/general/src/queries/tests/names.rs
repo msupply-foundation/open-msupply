@@ -10,7 +10,7 @@ mod graphql {
             mock_store_linked_to_name, MockDataInserts,
         },
         EqualFilter, Name, NameFilter, NameSort, NameSortField, NameType, PaginationOption,
-        SimpleStringFilter, StorageConnectionManager,
+        StorageConnectionManager, StringFilter,
     };
     use serde_json::json;
     use service::{
@@ -123,6 +123,21 @@ mod graphql {
             "isVisible": false,
             "isSystemName": true,
             "type": { "equalTo": "STORE" },
+            "phone": {
+              "equalTo": "01234"
+            },
+            "address1": {
+              "equalTo": "address1"
+            },
+            "address2": {
+              "equalTo": "address2"
+            },
+            "country": {
+              "equalTo": "country"
+            },
+            "email": {
+              "equalTo": "email"
+            },
           }
         });
 
@@ -131,7 +146,7 @@ mod graphql {
                   "nodes": [{
                       "id": mock_name_a().id,
                   }],
-                  "totalCount": 1
+                  "totalCount": 1 as i32
               }
           }
         );
@@ -163,24 +178,35 @@ mod graphql {
                 is_visible,
                 is_system_name,
                 r#type,
+
+                phone,
+                address1,
+                address2,
+                country,
+                email,
+                is_patient: _,
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
-            assert_eq!(name, Some(SimpleStringFilter::like("name like")));
-            assert_eq!(code, Some(SimpleStringFilter::equal_to("code equal to")));
+            assert_eq!(name, Some(StringFilter::like("name like")));
+            assert_eq!(code, Some(StringFilter::equal_to("code equal to")));
+
             assert_eq!(is_customer, Some(true));
             assert_eq!(is_supplier, Some(false));
             assert_eq!(is_store, Some(true));
-            assert_eq!(
-                store_code,
-                Some(SimpleStringFilter::like("store code like"))
-            );
+            assert_eq!(store_code, Some(StringFilter::like("store code like")));
             assert_eq!(is_visible, Some(false));
             assert_eq!(is_system_name, Some(true));
             assert_eq!(
                 r#type,
                 Some(EqualFilter::equal_to_name_type(&NameType::Store))
             );
+
+            assert_eq!(phone, Some(StringFilter::equal_to("01234")));
+            assert_eq!(address1, Some(StringFilter::equal_to("address1")));
+            assert_eq!(address2, Some(StringFilter::equal_to("address2")));
+            assert_eq!(country, Some(StringFilter::equal_to("country")));
+            assert_eq!(email, Some(StringFilter::equal_to("email")));
 
             Ok(ListResult {
                 rows: vec![Name {

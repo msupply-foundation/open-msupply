@@ -7,13 +7,8 @@ use graphql_types::types::InvoiceLineNode;
 use graphql_types::types::StockLineResponse;
 
 pub mod delete;
-pub use self::delete::*;
-
 pub mod insert;
-pub use self::insert::*;
-
 pub mod update;
-pub use self::update::*;
 
 pub struct StockLineDoesNotBelongToCurrentStore;
 #[Object]

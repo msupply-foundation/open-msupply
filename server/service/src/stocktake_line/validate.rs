@@ -1,9 +1,10 @@
 use repository::{
-    EqualFilter, InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
-    InventoryAdjustmentReasonRepository, InventoryAdjustmentReasonType, StockLineRow,
-};
-use repository::{
-    LocationFilter, LocationRepository, RepositoryError, StocktakeLineRow,
+    inventory_adjustment_reason::{
+        InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
+        InventoryAdjustmentReasonRepository,
+    },
+    location::{LocationFilter, LocationRepository},
+    EqualFilter, InventoryAdjustmentReasonType, RepositoryError, StockLineRow, StocktakeLineRow,
     StocktakeLineRowRepository, StorageConnection,
 };
 

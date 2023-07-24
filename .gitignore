@@ -1,2 +1,7 @@
 .DS_Store
+# common location for local config file containing connection credentials
+server/report_builder/config.yaml
 .vscode/*
+
+# Temp export files
+server/data

@@ -51,6 +51,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
+            clinician_id: None,
             // Tax on invoice/transact is not nullable in mSupply
             tax: Some(0.0),
         };

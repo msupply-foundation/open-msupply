@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::{
-    Location, LocationRow, LocationRowRepository, RepositoryError, StorageConnection,
+    location::Location, LocationRow, LocationRowRepository, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]

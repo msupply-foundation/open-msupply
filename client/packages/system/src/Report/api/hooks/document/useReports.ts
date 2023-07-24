@@ -1,17 +1,37 @@
 import { useQuery, ReportContext } from '@openmsupply-client/common';
+import { ReportListParams } from '../../api';
 import { useReportApi } from '../utils/useReportApi';
 
-export const useReports = (context?: ReportContext) => {
+export const useReports = ({
+  context,
+  subContext,
+  queryParams,
+}: {
+  context?: ReportContext;
+  subContext?: string;
+  queryParams?: ReportListParams;
+}) => {
   const api = useReportApi();
-  const filterBy = context ? { context: { equalTo: context } } : null;
-  const queryParams = {
-    filterBy,
-    sortBy: { key: 'name', isDesc: false, direction: 'asc' as 'asc' | 'desc' },
-    offset: 0,
+  const filterBy =
+    context || subContext
+      ? {
+          context: context ? { equalTo: context } : null,
+          subContext: subContext ? { equalTo: subContext } : null,
+        }
+      : null;
+  const queryParameters = {
+    filterBy: { ...queryParams?.filterBy, ...filterBy },
+    sortBy: queryParams?.sortBy || {
+      key: 'name',
+      isDesc: false,
+      direction: 'asc' as 'asc' | 'desc',
+    },
+    offset: queryParams?.offset || 0,
   };
+
   return useQuery(
-    api.keys.paramList(queryParams),
-    async () => api.get.list(queryParams),
+    api.keys.paramList(queryParameters),
+    async () => api.get.list(queryParameters),
     {
       onError: (e: Error) => {
         if (/HasPermission\(Report\)/.test(e.message)) return null;

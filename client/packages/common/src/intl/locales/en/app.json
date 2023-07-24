@@ -34,6 +34,7 @@
   "discovery.heading": "Welcome",
   "discovery.select-server": "Available servers",
   "discovery.sub-heading": "to open mSupply!",
+  "discovery.use-server-mode": "Note: You are currently using the client mode. To change to the local server mode click the button below.",
   "distribution": "Distribution",
   "docs": "Docs",
   "error.sync-api-incompatible": "Sync api version is not compatible",
@@ -85,7 +86,12 @@
   "stock": "View Stock",
   "stocktakes": "Stocktakes",
   "store-details": "Store code: {{code}}",
+  "encounter": "Encounters",
+  "patients": "Patients",
+  "dispensary": "Dispensary",
+  "programs": "Programs",
   "suppliers": "Suppliers",
   "sync": "Sync",
-  "tools": "Tools"
+  "tools": "Tools",
+  "cmdk.goto-patients": "Go to: Patients"
 }

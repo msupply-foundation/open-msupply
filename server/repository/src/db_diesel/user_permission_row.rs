@@ -46,12 +46,20 @@ pub enum Permission {
     // inbound shipment
     InboundShipmentQuery,
     InboundShipmentMutate,
+    // Prescription
+    PrescriptionQuery,
+    PrescriptionMutate,
     // reporting
     Report,
     // log
     LogQuery,
     // items
     ItemMutate,
+    PatientQuery,
+    PatientMutate,
+    // Document
+    DocumentQuery,
+    DocumentMutate,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
@@ -108,6 +116,12 @@ impl<'a> UserPermissionRowRepository<'a> {
             user_permission_dsl::user_permission.filter(user_permission_dsl::user_id.eq(user_id)),
         )
         .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(user_permission_dsl::user_permission.filter(user_permission_dsl::id.eq(id)))
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 }

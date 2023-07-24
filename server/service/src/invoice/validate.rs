@@ -45,6 +45,14 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
             InvoiceRowStatus::Picked => false,
             InvoiceRowStatus::Verified => false,
         },
+        InvoiceRowType::Prescription => match status {
+            InvoiceRowStatus::New => true,
+            InvoiceRowStatus::Allocated => true,
+            InvoiceRowStatus::Picked => true,
+            InvoiceRowStatus::Shipped => false,
+            InvoiceRowStatus::Delivered => false,
+            InvoiceRowStatus::Verified => false,
+        },
         InvoiceRowType::InventoryAddition
         | InvoiceRowType::InventoryReduction
         | InvoiceRowType::Repack => false,
@@ -83,7 +91,10 @@ pub fn check_invoice_status(
     Ok(())
 }
 
-pub struct InvoiceDoesNotExist;
+pub enum InvoiceAlreadyExistsError {
+    InvoiceAlreadyExists,
+    RepositoryError(RepositoryError),
+}
 
 pub fn check_invoice_exists(
     id: &str,
@@ -95,5 +106,20 @@ pub fn check_invoice_exists(
         Ok(invoice_row) => Ok(Some(invoice_row)),
         Err(RepositoryError::NotFound) => Ok(None),
         Err(error) => Err(error),
+    }
+}
+
+pub fn check_invoice_does_not_exists(
+    id: &str,
+    connection: &StorageConnection,
+) -> Result<(), InvoiceAlreadyExistsError> {
+    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
+
+    if let Err(RepositoryError::NotFound) = &result {
+        Ok(())
+    } else if let Err(err) = result {
+        Err(InvoiceAlreadyExistsError::RepositoryError(err.into()))
+    } else {
+        Err(InvoiceAlreadyExistsError::InvoiceAlreadyExists)
     }
 }

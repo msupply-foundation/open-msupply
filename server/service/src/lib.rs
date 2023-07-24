@@ -11,15 +11,18 @@ pub mod app_data;
 pub mod auth;
 pub mod auth_data;
 pub mod barcode;
+pub mod clinician;
 mod common_stock;
 pub mod dashboard;
 pub mod display_settings_service;
 pub mod inventory_adjustment_reason;
+pub mod document;
 pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod item_stats;
 pub mod location;
+pub mod log_service;
 pub mod login;
 pub mod master_list;
 pub mod missing_program;
@@ -27,6 +30,7 @@ pub mod name;
 pub mod number;
 pub mod permission;
 pub mod processors;
+pub mod programs;
 pub mod repack;
 pub mod report;
 pub mod requisition;
@@ -177,6 +181,19 @@ impl<'a> BatchMutationsProcessor<'a> {
 }
 
 // Pagination helpers
+
+pub fn get_default_pagination_unlimited(pagination_option: Option<PaginationOption>) -> Pagination {
+    match pagination_option {
+        Some(pagination) => Pagination {
+            offset: pagination.offset.unwrap_or(0),
+            limit: pagination.limit.unwrap_or(DEFAULT_PAGINATION_LIMIT),
+        },
+        None => Pagination {
+            offset: 0,
+            limit: DEFAULT_PAGINATION_LIMIT,
+        },
+    }
+}
 
 pub fn get_default_pagination(
     pagination_option: Option<PaginationOption>,

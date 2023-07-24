@@ -3,6 +3,7 @@ pub(crate) mod test;
 
 pub mod api;
 pub(crate) mod central_data_synchroniser;
+mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
 pub mod site_info;

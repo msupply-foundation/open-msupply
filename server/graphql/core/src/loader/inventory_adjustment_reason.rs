@@ -1,6 +1,9 @@
 use repository::{
-    EqualFilter, InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
-    InventoryAdjustmentReasonRepository,
+    inventory_adjustment_reason::{
+        InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
+        InventoryAdjustmentReasonRepository,
+    },
+    EqualFilter,
 };
 use repository::{RepositoryError, StorageConnectionManager};
 

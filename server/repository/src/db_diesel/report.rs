@@ -1,24 +1,34 @@
 use super::{
+    form_schema_row,
+    form_schema_row::form_schema::dsl as form_schema_dsl,
     report_row::{report, report::dsl as report_dsl},
     ReportContext, ReportRow, ReportType, StorageConnection,
 };
 
-use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
-use crate::{EqualFilter, Pagination, SimpleStringFilter, Sort};
+use crate::{
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    schema_from_row, FormSchema, FormSchemaRow,
+};
+use crate::{EqualFilter, Pagination, Sort, StringFilter};
 
-use crate::{diesel_macros::apply_simple_string_filter, DBType, RepositoryError};
+use crate::{diesel_macros::apply_string_filter, DBType, RepositoryError};
 
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{dsl::IntoBoxed, helper_types::LeftJoin, prelude::*};
 use util::inline_init;
 
-pub type Report = ReportRow;
+#[derive(Debug, Clone, PartialEq)]
+pub struct Report {
+    pub report_row: ReportRow,
+    pub argument_schema: Option<FormSchema>,
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct ReportFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
     pub r#type: Option<EqualFilter<ReportType>>,
     pub context: Option<EqualFilter<ReportContext>>,
+    pub sub_context: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -39,7 +49,7 @@ impl ReportFilter {
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
@@ -68,6 +78,8 @@ impl ReportType {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
     }
 }
+
+type ReportJoin = (ReportRow, Option<FormSchemaRow>);
 
 pub struct ReportRepository<'a> {
     connection: &'a StorageConnection,
@@ -107,16 +119,22 @@ impl<'a> ReportRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<Report>(&self.connection.connection)?;
+            .load::<ReportJoin>(&self.connection.connection)?;
 
-        Ok(result)
+        result
+            .into_iter()
+            .map(|r| map_report_row_join_to_report(r))
+            .collect::<Result<Vec<Report>, RepositoryError>>()
     }
 }
 
-type BoxedStoreQuery = IntoBoxed<'static, report::table, DBType>;
+type BoxedStoreQuery =
+    IntoBoxed<'static, LeftJoin<report::table, form_schema_row::form_schema::table>, DBType>;
 
 fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
-    let mut query = report_dsl::report.into_boxed();
+    let mut query = report_dsl::report
+        .left_join(form_schema_dsl::form_schema)
+        .into_boxed();
 
     if let Some(f) = filter {
         let ReportFilter {
@@ -124,13 +142,24 @@ fn create_filtered_query(filter: Option<ReportFilter>) -> BoxedStoreQuery {
             name,
             r#type,
             context,
+            sub_context,
         } = f;
 
         apply_equal_filter!(query, id, report_dsl::id);
-        apply_simple_string_filter!(query, name, report_dsl::name);
+        apply_string_filter!(query, name, report_dsl::name);
         apply_equal_filter!(query, r#type, report_dsl::type_);
         apply_equal_filter!(query, context, report_dsl::context);
+        apply_equal_filter!(query, sub_context, report_dsl::sub_context);
     }
 
     query
+}
+
+fn map_report_row_join_to_report(
+    (report_row, argument_schema): ReportJoin,
+) -> Result<Report, RepositoryError> {
+    Ok(Report {
+        report_row,
+        argument_schema: argument_schema.map(|s| schema_from_row(s)).transpose()?,
+    })
 }

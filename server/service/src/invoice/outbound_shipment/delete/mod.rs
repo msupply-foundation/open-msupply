@@ -7,8 +7,9 @@ use validate::validate;
 use crate::{
     activity_log::activity_log_entry,
     invoice::common::get_lines_for_invoice,
-    invoice_line::outbound_shipment_line::{
-        delete_outbound_shipment_line, DeleteOutboundShipmentLine, DeleteOutboundShipmentLineError,
+    invoice_line::stock_out_line::{
+        delete::{delete_stock_out_line, DeleteStockOutLine, DeleteStockOutLineError},
+        StockOutType,
     },
     service_provider::ServiceContext,
     WithDBError,
@@ -27,13 +28,14 @@ pub fn delete_outbound_shipment(
 
             let lines = get_lines_for_invoice(connection, &id)?;
             for line in lines {
-                delete_outbound_shipment_line(
+                delete_stock_out_line(
                     ctx,
-                    DeleteOutboundShipmentLine {
+                    DeleteStockOutLine {
                         id: line.invoice_line_row.id.clone(),
+                        r#type: Some(StockOutType::OutboundShipment),
                     },
                 )
-                .map_err(|error| DeleteOutboundShipmentError::LineDeleteError {
+                .map_err(|error| OutError::LineDeleteError {
                     line_id: line.invoice_line_row.id,
                     error,
                 })?;
@@ -68,7 +70,7 @@ pub enum DeleteOutboundShipmentError {
     CannotEditFinalised,
     LineDeleteError {
         line_id: String,
-        error: DeleteOutboundShipmentLineError,
+        error: DeleteStockOutLineError,
     },
     NotAnOutboundShipment,
 }
@@ -117,7 +119,7 @@ mod test {
     };
 
     use crate::{
-        invoice::outbound_shipment::DeleteOutboundShipmentError as ServiceError,
+        invoice::outbound_shipment::delete::DeleteOutboundShipmentError as ServiceError,
         service_provider::ServiceProvider,
     };
 

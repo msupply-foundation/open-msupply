@@ -6,4 +6,5 @@ export * from './Select';
 export * from './SearchBar';
 export * from './CurrencyInput';
 export * from './DatePickers';
+export * from './TimePickers';
 export * from './Switch';

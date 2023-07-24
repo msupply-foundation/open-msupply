@@ -1,10 +1,8 @@
-use crate::fast_log::Config;
 use anyhow::anyhow;
 use async_graphql::EmptySubscription;
 use chrono::Utc;
 use clap::StructOpt;
 use cli::RefreshDatesRepository;
-use fast_log;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 use repository::{
@@ -25,6 +23,7 @@ use service::{
     },
     token_bucket::TokenBucket,
 };
+use simple_log::LogConfigBuilder;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -154,7 +153,9 @@ fn set_server_is_initialised(ctx: &ServiceContext) -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    fast_log::init(Config::new().console())?;
+    simple_log::new(LogConfigBuilder::builder().output_console().build())
+        .expect("Unable to initialise logger");
+
     let args = Args::parse();
 
     let settings: Settings =
