@@ -1,4 +1,4 @@
-use crate::sync::{integrate_document::upsert_document, translations::PullDeleteRecordTable};
+use crate::sync::{integrate_document::sync_upsert_document, translations::PullDeleteRecordTable};
 
 use super::{
     sync_buffer::SyncBuffer,
@@ -172,7 +172,7 @@ impl PullUpsertRecord {
         use PullUpsertRecord::*;
         match self {
             UserPermission(record) => UserPermissionRowRepository::new(con).upsert_one(record),
-            Name(record) => NameRowRepository::new(con).upsert_one(record),
+            Name(record) => NameRowRepository::new(con).sync_upsert_one(record),
             NameTag(record) => NameTagRowRepository::new(con).upsert_one(record),
             NameTagJoin(record) => NameTagJoinRepository::new(con).upsert_one(record),
             Unit(record) => UnitRowRepository::new(con).upsert_one(record),
@@ -194,7 +194,7 @@ impl PullUpsertRecord {
             Location(record) => LocationRowRepository::new(con).upsert_one(record),
             LocationMovement(record) => LocationMovementRowRepository::new(con).upsert_one(record),
             StockLine(record) => StockLineRowRepository::new(con).upsert_one(record),
-            NameStoreJoin(record) => NameStoreJoinRepository::new(con).upsert_one(record),
+            NameStoreJoin(record) => NameStoreJoinRepository::new(con).sync_upsert_one(record),
             Invoice(record) => InvoiceRowRepository::new(con).upsert_one(record),
             InvoiceLine(record) => InvoiceLineRowRepository::new(con).upsert_one(record),
             Stocktake(record) => StocktakeRowRepository::new(con).upsert_one(record),
@@ -209,13 +209,13 @@ impl PullUpsertRecord {
             }
             StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
             Barcode(record) => BarcodeRowRepository::new(con).sync_upsert_one(record),
-            Clinician(record) => ClinicianRowRepository::new(con).upsert_one(record),
+            Clinician(record) => ClinicianRowRepository::new(con).sync_upsert_one(record),
             ClinicianStoreJoin(record) => {
-                ClinicianStoreJoinRowRepository::new(con).upsert_one(record)
+                ClinicianStoreJoinRowRepository::new(con).sync_upsert_one(record)
             }
             FormSchema(record) => FormSchemaRowRepository::new(con).upsert_one(record),
             DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
-            Document(record) => upsert_document(con, record, false),
+            Document(record) => sync_upsert_document(con, record),
         }
     }
 }
