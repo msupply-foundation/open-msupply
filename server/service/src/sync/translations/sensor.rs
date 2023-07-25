@@ -1,8 +1,7 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
-        empty_str_as_option_string, naive_time, zero_date_as_option,
+        date_option_to_isostring, naive_time, zero_date_as_option,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -93,8 +92,8 @@ impl SyncTranslation for SensorTranslation {
             battery_level,
             log_interval,
             is_active,
-            last_connection_date,
-            last_connection_time,
+            last_connection_date: _,
+            last_connection_time: _,
         } = deserialised_row;
 
         let result = SensorRow {

@@ -26,7 +26,8 @@ pub struct SensorFilter {
 #[derive(PartialEq, Debug)]
 pub enum SensorSortField {
     Id,
-    Sensor,
+    Serial,
+    Name,
 }
 
 pub type SensorSort = Sort<SensorSortField>;
@@ -61,10 +62,10 @@ impl<'a> SensorRepository<'a> {
                 SensorSortField::Id => {
                     apply_sort_no_case!(query, sort, sensor_dsl::id)
                 }
-                SensorSortField::Sensor => {
+                SensorSortField::Serial => {
                     apply_sort_no_case!(query, sort, sensor_dsl::serial)
                 }
-                SensorSortField::Sensor => {
+                SensorSortField::Name => {
                     apply_sort_no_case!(query, sort, sensor_dsl::name)
                 }
             }
