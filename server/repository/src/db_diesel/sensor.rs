@@ -21,6 +21,8 @@ pub struct SensorFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<EqualFilter<String>>,
     pub serial: Option<EqualFilter<String>>,
+    pub is_active: Option<bool>,
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -91,6 +93,12 @@ fn create_filtered_query(filter: Option<SensorFilter>) -> BoxedLogQuery {
         apply_equal_filter!(query, filter.id, sensor_dsl::id);
         apply_equal_filter!(query, filter.name, sensor_dsl::name);
         apply_equal_filter!(query, filter.serial, sensor_dsl::serial);
+
+        if let Some(value) = filter.is_active {
+            query = query.filter(sensor_dsl::is_active.eq(value));
+        }
+
+        apply_equal_filter!(query, filter.store_id, sensor_dsl::store_id);
     }
 
     query
@@ -106,6 +114,8 @@ impl SensorFilter {
             id: None,
             name: None,
             serial: None,
+            is_active: None,
+            store_id: None,
         }
     }
 
@@ -124,4 +134,13 @@ impl SensorFilter {
         self
     }
 
+    pub fn is_active(mut self, filter: bool) -> Self {
+        self.is_active = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
 }

@@ -56,7 +56,7 @@ mod report;
 mod report_row;
 mod requisition;
 mod requisition_line;
-mod sensor;
+pub mod sensor;
 mod sensor_row;
 mod stock_line;
 mod stock_line_row;
