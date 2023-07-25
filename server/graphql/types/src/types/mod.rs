@@ -21,6 +21,9 @@ pub use self::stock_line::*;
 pub mod location;
 pub use self::location::*;
 
+pub mod sensor;
+pub use self::sensor::*;
+
 pub mod master_list;
 pub use self::master_list::*;
 
