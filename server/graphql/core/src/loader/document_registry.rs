@@ -56,7 +56,11 @@ impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryLoader {
             let entries = self
                 .service_provider
                 .document_registry_service
-                .get_entries_by_doc_type(&ctx, document_types.to_vec(), &allowed_ctx)?;
+                .get_entries_by_doc_type(
+                    &ctx.connection,
+                    document_types.to_vec(),
+                    Some(&allowed_ctx),
+                )?;
 
             for entry in entries.into_iter() {
                 out.insert(

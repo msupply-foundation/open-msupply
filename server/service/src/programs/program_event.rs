@@ -148,14 +148,13 @@ pub trait ProgramEventServiceTrait: Sync + Send {
     /// same time.
     fn upsert_events(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         patient_id: String,
         datetime: NaiveDateTime,
         context_id: &str,
         events: Vec<EventInput>,
     ) -> Result<(), RepositoryError> {
-        let result = ctx
-            .connection
+        let result = connection
             .transaction_sync(|con| -> Result<(), RepositoryError> {
                 // TODO do we need to lock rows in case events are updated concurrently?
 
@@ -343,7 +342,7 @@ mod test {
         //          10
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -364,7 +363,7 @@ mod test {
         //          10         20-------->30
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -387,7 +386,7 @@ mod test {
         //                           25-------->35
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -406,7 +405,7 @@ mod test {
         // add an event for different type (should show up in results together with existing)
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -442,7 +441,7 @@ mod test {
         //          10
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -463,7 +462,7 @@ mod test {
         //     5     10
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -499,7 +498,7 @@ mod test {
         //           10------->20
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -531,7 +530,7 @@ mod test {
         //           10--------------->30
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -566,7 +565,7 @@ mod test {
         //                        25------------->40
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -609,7 +608,7 @@ mod test {
 
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -635,7 +634,7 @@ mod test {
 
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -666,7 +665,7 @@ mod test {
         //                        25------------->40
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -690,7 +689,7 @@ mod test {
             .unwrap();
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
@@ -720,7 +719,7 @@ mod test {
         // remove G2 -> G2 should become active again
         service
             .upsert_events(
-                &ctx,
+                &ctx.connection,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
