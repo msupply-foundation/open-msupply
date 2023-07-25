@@ -59,6 +59,7 @@ pub enum ChangelogTableName {
     Name,
     NameStoreJoin,
     Document,
+    Sensor,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
