@@ -1,6 +1,7 @@
 use repository::{
-    Document, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRepository, EqualFilter,
-    ProgramFilter, ProgramRepository, RepositoryError, StorageConnection,
+    Document, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRepository,
+    EncounterFilter, EncounterRepository, EqualFilter, ProgramFilter, ProgramRepository,
+    RepositoryError, StorageConnection,
 };
 
 use crate::programs::{
@@ -10,6 +11,7 @@ use crate::programs::{
     patient::{patient_schema::SchemaPatient, patient_updated::update_patient_row},
     program_enrolment::program_enrolment_updated::update_program_enrolment_row,
     program_enrolment::program_schema::SchemaProgramEnrolment,
+    update_program_document::update_program_events,
 };
 
 pub(crate) fn upsert_document(
@@ -77,6 +79,12 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         validate_encounter_schema(&document.data).map_err(|err| {
             RepositoryError::as_db_error(&format!("Invalid encounter data: {}", err), "")
         })?;
+    let encounter_start_time = encounter.start_datetime;
+    let existing_encounter = EncounterRepository::new(con)
+        .query_by_filter(
+            EncounterFilter::new().document_name(EqualFilter::equal_to(&document.name)),
+        )?
+        .pop();
 
     let clinician_id = encounter
         .encounter
@@ -93,6 +101,16 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         encounter,
         clinician_id,
         program_row,
+    )
+    .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
+
+    update_program_events(
+        con,
+        &patient_id,
+        encounter_start_time,
+        existing_encounter.map(|(existing, _)| existing.start_datetime),
+        &document,
+        None,
     )
     .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())

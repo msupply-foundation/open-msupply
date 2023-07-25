@@ -94,13 +94,12 @@ pub fn insert_encounter(
                 )?;
 
                 update_program_events(
-                    ctx,
-                    service_provider,
+                    &ctx.connection,
                     &patient_id,
                     encounter_start_datetime,
                     None,
                     &document,
-                    &allowed_ctx,
+                    Some(&allowed_ctx),
                 )
                 .map_err(|err| match err {
                     UpdateProgramDocumentError::DatabaseError(err) => {
