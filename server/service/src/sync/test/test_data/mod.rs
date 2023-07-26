@@ -59,6 +59,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullReco
 pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncPullRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut location::test_pull_upsert_records());
+    test_records.append(&mut sensor::test_pull_upsert_records());
     test_records.append(&mut location_movement::test_pull_upsert_records());
     test_records.append(&mut requisition_line::test_pull_upsert_records());
     test_records.append(&mut requisition::test_pull_upsert_records());
@@ -105,6 +106,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut name::test_push_records());
     test_records.append(&mut location::test_push_records());
+    test_records.append(&mut sensor::test_push_records());
     test_records.append(&mut location_movement::test_push_records());
     test_records.append(&mut requisition_line::test_push_records());
     test_records.append(&mut requisition::test_push_records());

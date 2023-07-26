@@ -88,17 +88,8 @@ impl<'a> SensorRowRepository<'a> {
         Ok(())
     }
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
-        diesel::update(sensor_is_sync_update::table.find(id))
-            .set(sensor_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
-
-        Ok(())
-    }
-
     pub fn upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
@@ -110,6 +101,18 @@ impl<'a> SensorRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SensorRow>, RepositoryError> {
+        Ok(sensor_dsl::sensor
+            .filter(sensor_dsl::id.eq_any(ids))
+            .load(&self.connection.connection)?)
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(sensor_dsl::sensor.filter(sensor_dsl::id.eq(id)))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
     //pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
     //    let result = barcode_dsl::barcode
     //        .filter(barcode_dsl::item_id.eq(item_id))
@@ -117,22 +120,6 @@ impl<'a> SensorRowRepository<'a> {
     //    Ok(result)
     //}
 
-    pub fn sync_upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
-        self._upsert_one(row)?;
-        self.toggle_is_sync_update(&row.id, true)?;
-
-        Ok(())
-    }
-
-    #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = sensor_is_sync_update::table
-            .find(id)
-            .select(sensor_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
-            .optional()?;
-        Ok(result)
-    }
 }
 
 #[cfg(test)]
@@ -161,38 +148,5 @@ mod test {
             r.is_active = true;
         })
     }
-
-    #[actix_rt::test]
-    async fn sensor_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
-            "Sensor_is_sync_update",
-            MockDataInserts::none().stores().locations(),
-        )
-        .await;
-
-        let repo = SensorRowRepository::new(&connection);
-
-        // Two rows, to make sure is_sync_update update only affects one row
-        let row = mock_sensor_row_1();
-        let row2 = mock_sensor_row_2();
-
-        // First insert
-        repo.upsert_one(&row).unwrap();
-        repo.upsert_one(&row2).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Synchronisation upsert
-        repo.sync_upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-
-        // Normal upsert
-        repo.upsert_one(&row).unwrap();
-
-        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
-        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
-    }
+ 
 }

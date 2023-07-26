@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 mod invoice;
+mod sensor;
 mod log_settings;
 mod number_and_permission_type;
 mod store_preference;
@@ -17,6 +18,7 @@ impl Migration for V1_02_00 {
         invoice::migrate(connection)?;
         number_and_permission_type::migrate(connection)?;
         store_preference::migrate(connection)?;
+        sensor::migrate(connection)?;
         Ok(())
     }
 }
