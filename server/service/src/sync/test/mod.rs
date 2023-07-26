@@ -174,6 +174,9 @@ pub(crate) async fn check_records_against_database(
             UserPermission(record) => {
                 check_record_by_id!(UserPermissionRowRepository, con, record, "UserPermisson")
             }
+            Sensor(record) => {
+                check_record_by_id!(SensorRowRepository, con, record, "Sensor");
+            }
             Location(record) => {
                 check_record_by_id!(LocationRowRepository, con, record, "Location");
             }

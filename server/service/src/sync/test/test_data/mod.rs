@@ -23,6 +23,7 @@ pub(crate) mod program_requisition_settings;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
+pub(crate) mod sensor;
 pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
