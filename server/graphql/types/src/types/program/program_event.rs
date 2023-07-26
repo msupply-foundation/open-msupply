@@ -5,9 +5,43 @@ use graphql_core::{
     loader::{DocumentLoader, PatientLoader},
     ContextExt,
 };
-use repository::ProgramEventRow;
+use repository::{ProgramEventRow, ProgramEventSort, ProgramEventSortField};
 
 use super::{document::DocumentNode, patient::PatientNode};
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum ProgramEventSortFieldInput {
+    Datetime,
+    DocumentType,
+    DocumentName,
+    Type,
+}
+
+#[derive(InputObject)]
+pub struct ProgramEventSortInput {
+    /// Sort query result by `key`
+    key: ProgramEventSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+impl ProgramEventSortInput {
+    pub fn to_domain(self) -> ProgramEventSort {
+        let key = match self.key {
+            ProgramEventSortFieldInput::Datetime => ProgramEventSortField::Datetime,
+            ProgramEventSortFieldInput::DocumentType => ProgramEventSortField::DocumentType,
+            ProgramEventSortFieldInput::DocumentName => ProgramEventSortField::DocumentName,
+            ProgramEventSortFieldInput::Type => ProgramEventSortField::Type,
+        };
+
+        ProgramEventSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
 
 pub struct ProgramEventNode {
     pub store_id: String,

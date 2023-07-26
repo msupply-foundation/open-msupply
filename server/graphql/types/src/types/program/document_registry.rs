@@ -1,10 +1,46 @@
 use async_graphql::{dataloader::DataLoader, *};
 use graphql_core::{
+    generic_filters::EqualFilterStringInput,
     loader::{DocumentRegistryChildrenLoader, DocumentRegistryLoaderInput},
-    ContextExt,
+    map_filter, ContextExt,
 };
-use repository::{DocumentRegistry, DocumentRegistryType};
+use repository::{
+    DocumentRegistry, DocumentRegistryFilter, DocumentRegistrySort, DocumentRegistrySortField,
+    DocumentRegistryType, EqualFilter,
+};
 use serde::Serialize;
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterDocumentRegistryTypeInput {
+    pub equal_to: Option<DocumentRegistryTypeNode>,
+    pub equal_any: Option<Vec<DocumentRegistryTypeNode>>,
+    pub not_equal_to: Option<DocumentRegistryTypeNode>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct DocumentRegistryFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub r#type: Option<EqualFilterDocumentRegistryTypeInput>,
+    pub document_type: Option<EqualFilterStringInput>,
+    pub document_context: Option<EqualFilterStringInput>,
+    pub parent_id: Option<EqualFilterStringInput>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum DocumentRegistrySortFieldInput {
+    Type,
+    DocumentType,
+}
+
+#[derive(InputObject)]
+pub struct DocumentRegistrySortInput {
+    /// Sort query result by `key`
+    key: DocumentRegistrySortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
 
 #[derive(SimpleObject)]
 pub struct DocumentRegistryConnector {
@@ -99,6 +135,39 @@ impl DocumentRegistryTypeNode {
             DocumentRegistryTypeNode::ProgramEnrolment => DocumentRegistryType::ProgramEnrolment,
             DocumentRegistryTypeNode::Encounter => DocumentRegistryType::Encounter,
             DocumentRegistryTypeNode::Custom => DocumentRegistryType::Custom,
+        }
+    }
+}
+
+impl DocumentRegistryFilterInput {
+    pub fn to_domain(self) -> DocumentRegistryFilter {
+        let DocumentRegistryFilterInput {
+            id,
+            r#type,
+            document_type,
+            document_context,
+            parent_id,
+        } = self;
+        DocumentRegistryFilter {
+            id: id.map(EqualFilter::from),
+            document_type: document_type.map(EqualFilter::from),
+            document_context: document_context.map(EqualFilter::from),
+            r#type: r#type.map(|t| map_filter!(t, DocumentRegistryTypeNode::to_domain)),
+            parent_id: parent_id.map(EqualFilter::from),
+        }
+    }
+}
+
+impl DocumentRegistrySortInput {
+    pub fn to_domain(self) -> DocumentRegistrySort {
+        let key = match self.key {
+            DocumentRegistrySortFieldInput::Type => DocumentRegistrySortField::Type,
+            DocumentRegistrySortFieldInput::DocumentType => DocumentRegistrySortField::DocumentType,
+        };
+
+        DocumentRegistrySort {
+            key,
+            desc: self.desc,
         }
     }
 }
