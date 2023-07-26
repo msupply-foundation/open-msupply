@@ -49,6 +49,7 @@ export const Toolbar: FC = () => {
   ]);
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
+  const isTransfer = !!shipment?.linkedShipment?.id;
 
   if (!data) return null;
 
@@ -68,7 +69,7 @@ export const Toolbar: FC = () => {
                 label={t('label.supplier-name')}
                 Input={
                   <SupplierSearchInput
-                    disabled={isDisabled}
+                    disabled={isDisabled || isTransfer}
                     value={otherParty}
                     onChange={name => {
                       update({ otherParty: name });
