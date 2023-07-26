@@ -265,7 +265,7 @@ impl MockDataInserts {
 
     pub fn user_permissions(mut self) -> Self {
         self.user_permissions = true;
-        self
+        self.stores()
     }
 
     pub fn names(mut self) -> Self {
@@ -280,7 +280,7 @@ impl MockDataInserts {
 
     pub fn name_tag_joins(mut self) -> Self {
         self.name_tag_joins = true;
-        self
+        self.names().name_tags()
     }
 
     pub fn period_schedules(mut self) -> Self {
@@ -290,17 +290,17 @@ impl MockDataInserts {
 
     pub fn periods(mut self) -> Self {
         self.periods = true;
-        self
+        self.period_schedules()
     }
 
     pub fn numbers(mut self) -> Self {
         self.numbers = true;
-        self
+        self.stores()
     }
 
     pub fn stores(mut self) -> Self {
         self.stores = true;
-        self
+        self.names()
     }
 
     pub fn units(mut self) -> Self {
@@ -310,22 +310,24 @@ impl MockDataInserts {
 
     pub fn items(mut self) -> Self {
         self.items = true;
-        self
+        self.units()
     }
 
     pub fn locations(mut self) -> Self {
         self.locations = true;
-        self
+        self.stores()
     }
 
     pub fn name_store_joins(mut self) -> Self {
         self.name_store_joins = true;
-        self
+        self.names().stores()
     }
 
     pub fn invoices(mut self) -> Self {
         self.invoices = true;
-        self
+        self.name_store_joins()
+            .clinician_store_joins()
+            .invoice_lines()
     }
 
     pub fn full_requisitions(mut self) -> Self {
@@ -335,7 +337,7 @@ impl MockDataInserts {
 
     pub fn stock_lines(mut self) -> Self {
         self.stock_lines = true;
-        self
+        self.items().locations().barcodes()
     }
 
     pub fn invoice_lines(mut self) -> Self {
@@ -355,12 +357,16 @@ impl MockDataInserts {
 
     pub fn stocktakes(mut self) -> Self {
         self.stocktakes = true;
-        self
+        self.stocktake_lines()
+            .locations()
+            .items()
+            .barcodes()
+            .invoices()
     }
 
     pub fn stocktake_lines(mut self) -> Self {
         self.stocktake_lines = true;
-        self
+        self.stock_lines()
     }
 
     pub fn key_value_store_rows(mut self) -> Self {
@@ -420,7 +426,7 @@ impl MockDataInserts {
 
     pub fn clinician_store_joins(mut self) -> Self {
         self.clinician_store_joins = true;
-        self
+        self.clinicians().stores()
     }
 }
 
