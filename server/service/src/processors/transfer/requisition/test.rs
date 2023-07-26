@@ -24,7 +24,6 @@ use crate::{
 /// See same site transfer diagram in README.md for example of how
 /// changelog is upserted and processed by the same instance of triggered processor
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
-#[cfg(not(feature = "memory"))]
 async fn requisition_transfer() {
     let site_id = 25;
     let request_store_name = inline_init(|r: &mut NameRow| {

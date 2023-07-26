@@ -26,7 +26,6 @@ use crate::{
 /// See same site transfer diagram in requisition README.md for example of how
 /// changelog is upserted and processed by the same instance of triggered processor
 #[tokio::test(flavor = "multi_thread", worker_threads = 3)]
-#[cfg(not(feature = "memory"))]
 async fn invoice_transfers() {
     let site_id = 25;
     let outbound_store_name = inline_init(|r: &mut NameRow| {
