@@ -5,6 +5,18 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
+use graphql_types::types::document::DocumentFilterInput;
+use graphql_types::types::document::DocumentNode;
+use graphql_types::types::document::DocumentSortInput;
+use graphql_types::types::document_registry::DocumentRegistryFilterInput;
+use graphql_types::types::document_registry::DocumentRegistrySortInput;
+use graphql_types::types::encounter::EncounterFilterInput;
+use graphql_types::types::encounter::EncounterSortInput;
+use graphql_types::types::patient::PatientNode;
+use graphql_types::types::program_enrolment::ProgramEnrolmentFilterInput;
+use graphql_types::types::program_enrolment::ProgramEnrolmentSortInput;
+use graphql_types::types::program_enrolment::ProgramEventFilterInput;
+use graphql_types::types::program_event::ProgramEventSortInput;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
@@ -35,16 +47,11 @@ use mutations::update_document::*;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::programs::patient::patient_search_central;
-use types::document::DocumentNode;
-use types::patient::PatientNode;
-use types::program_enrolment::ProgramEventFilterInput;
 
 mod mutations;
 
 mod queries;
 use self::queries::*;
-
-mod types;
 
 #[derive(Default, Clone)]
 pub struct ProgramsQueries;

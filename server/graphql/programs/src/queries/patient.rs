@@ -4,13 +4,12 @@ use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
+use graphql_types::types::patient::PatientNode;
 use repository::{
     DateFilter, EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField,
     StringFilter,
 };
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
-
-use crate::types::patient::PatientNode;
 
 #[derive(SimpleObject)]
 pub struct PatientConnector {

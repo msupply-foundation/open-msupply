@@ -1,10 +1,9 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_types::types::document::DocumentNode;
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::document::document_service::{DocumentUndelete, DocumentUndeleteError};
-
-use crate::types::document::DocumentNode;
 
 #[derive(InputObject)]
 pub struct UndeleteDocumentInput {
