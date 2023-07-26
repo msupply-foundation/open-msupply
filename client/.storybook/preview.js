@@ -1,6 +1,5 @@
 import React from 'react';
-import '@fontsource/inter/variable.css';
-// import "@fontsource/inter/variable-italic.css"; // Italic variant: not currently used
+import '@fontsource-variable/inter';
 import { CssBaseline } from '@mui/material';
 import { initializeWorker, mswDecorator } from 'msw-storybook-addon';
 import { StoryProvider, TestingRouterContext } from '@common/utils';
