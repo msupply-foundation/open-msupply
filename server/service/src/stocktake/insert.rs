@@ -417,7 +417,7 @@ mod test {
     #[actix_rt::test]
     async fn insert_stocktake() {
         let (_, connection, connection_manager, _) =
-            setup_all("insert_stocktake", MockDataInserts::all()).await;
+            setup_all("insert_stocktake", MockDataInserts::none().stocktakes()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
@@ -497,8 +497,11 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_stocktake_with_master_list() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_stocktake_with_master_list", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_stocktake_with_master_list",
+            MockDataInserts::none().stocktakes().full_master_list(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
@@ -619,8 +622,11 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_stocktake_with_location() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_stocktake_with_location", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_stocktake_with_location",
+            MockDataInserts::none().stocktakes(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider

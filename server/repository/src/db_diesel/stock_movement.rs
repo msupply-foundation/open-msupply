@@ -164,7 +164,7 @@ mod test {
 
         let (_, connection, _, _) = setup_all_with_data(
             "stock_movement_repository",
-            MockDataInserts::all(),
+            MockDataInserts::none().names().items(),
             inline_init(|r: &mut MockData| {
                 r.names = vec![name()];
                 r.stores = vec![store()];

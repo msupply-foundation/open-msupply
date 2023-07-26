@@ -280,7 +280,7 @@ mod stocktake_line_test {
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "update_stocktake_line",
-            MockDataInserts::all(),
+            MockDataInserts::none().stocktakes(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![outbound_shipment()];
                 r.invoice_lines = vec![outbound_shipment_line()];

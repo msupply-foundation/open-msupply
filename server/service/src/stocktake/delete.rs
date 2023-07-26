@@ -116,7 +116,7 @@ mod stocktake_test {
     #[actix_rt::test]
     async fn delete_stocktake() {
         let (_, _, connection_manager, _) =
-            setup_all("delete_stocktake", MockDataInserts::all()).await;
+            setup_all("delete_stocktake", MockDataInserts::none().stocktakes()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider

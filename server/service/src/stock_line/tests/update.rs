@@ -13,8 +13,11 @@ mod test {
 
     #[actix_rt::test]
     async fn update_stock_line_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("update_stock_line_errors", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "update_stock_line_errors",
+            MockDataInserts::none().stock_lines(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
@@ -61,8 +64,11 @@ mod test {
 
     #[actix_rt::test]
     async fn update_stock_line_success() {
-        let (_, connection, connection_manager, _) =
-            setup_all("update_stock_line_success", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stock_line_success",
+            MockDataInserts::none().stock_lines(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider

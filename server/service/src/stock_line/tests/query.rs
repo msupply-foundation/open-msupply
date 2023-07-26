@@ -11,8 +11,11 @@ mod query {
 
     #[actix_rt::test]
     async fn stock_line_service_pagination() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_stock_line_service_pagination", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "test_stock_line_service_pagination",
+            MockDataInserts::none().stock_lines(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
@@ -49,8 +52,11 @@ mod query {
 
     #[actix_rt::test]
     async fn stock_line_service_single_record() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_stock_line_single_record", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "test_stock_line_single_record",
+            MockDataInserts::none().stock_lines(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         let context = service_provider.basic_context().unwrap();
@@ -71,8 +77,11 @@ mod query {
 
     #[actix_rt::test]
     async fn stock_line_service_filter() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_stock_line_filter", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "test_stock_line_filter",
+            MockDataInserts::none().stock_lines(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
@@ -128,8 +137,11 @@ mod query {
 
     #[actix_rt::test]
     async fn stock_line_service_sort() {
-        let (mock_data, _, connection_manager, _) =
-            setup_all("test_stock_line_sort", MockDataInserts::all()).await;
+        let (mock_data, _, connection_manager, _) = setup_all(
+            "test_stock_line_sort",
+            MockDataInserts::none().stock_lines(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();

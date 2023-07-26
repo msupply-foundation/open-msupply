@@ -761,7 +761,7 @@ mod test {
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_stocktake",
-            MockDataInserts::all(),
+            MockDataInserts::none().stocktakes(),
             inline_init(|r: &mut MockData| {
                 r.stocktakes = vec![mock_stocktake_existing_line()];
                 r.stocktake_lines = vec![mock_stocktake_line_existing_line()];

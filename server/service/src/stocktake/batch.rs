@@ -127,8 +127,11 @@ mod test {
 
     #[actix_rt::test]
     async fn batch_stocktake_service() {
-        let (_, connection, connection_manager, _) =
-            setup_all("batch_stocktake_service", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "batch_stocktake_service",
+            MockDataInserts::none().stocktakes(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
