@@ -491,6 +491,7 @@ mod test {
                 invoice_row: mock_inbound_shipment_c(),
                 name_row: mock_name_store_a(),
                 store_row: mock_store_a(),
+                clinician_row: None,
             })
         }));
 
