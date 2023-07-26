@@ -19,6 +19,7 @@ mod period_and_period_schedule;
 mod program;
 mod program_order_types;
 mod program_requisition_settings;
+mod sensor;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
@@ -61,6 +62,7 @@ pub use period_and_period_schedule::*;
 pub use program::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
+pub use sensor::*;
 pub use stock_line::*;
 pub use stocktake::*;
 pub use stocktake_line::*;
@@ -94,7 +96,8 @@ use crate::{
     PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, 
+    SensorRow, SensorRowRepository, StockLineRowRepository,
     StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
     SyncLogRow, SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
@@ -120,6 +123,7 @@ pub struct MockData {
     pub units: Vec<UnitRow>,
     pub items: Vec<ItemRow>,
     pub locations: Vec<LocationRow>,
+    pub sensors: Vec<SensorRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
     pub full_requisitions: Vec<FullMockRequisition>,
     pub invoices: Vec<InvoiceRow>,
@@ -177,6 +181,7 @@ pub struct MockDataInserts {
     pub units: bool,
     pub items: bool,
     pub locations: bool,
+    pub sensors: bool,
     pub name_store_joins: bool,
     pub full_requisitions: bool,
     pub invoices: bool,
@@ -220,6 +225,7 @@ impl MockDataInserts {
             units: true,
             items: true,
             locations: true,
+            sensors: true,
             name_store_joins: true,
             full_requisitions: true,
             invoices: true,
@@ -315,6 +321,11 @@ impl MockDataInserts {
 
     pub fn locations(mut self) -> Self {
         self.locations = true;
+        self
+    }
+
+    pub fn sensors(mut self) -> Self {
+        self.sensors = true;
         self
     }
 
@@ -470,6 +481,7 @@ fn all_mock_data() -> MockDataCollection {
             units: mock_units(),
             items: mock_items(),
             locations: mock_locations(),
+            sensors: mock_sensors(),
             name_store_joins: mock_name_store_joins(),
             invoices: mock_invoices(),
             stock_lines: mock_stock_lines(),
@@ -624,6 +636,13 @@ pub fn insert_mock_data(
         if inserts.locations {
             let repo = LocationRowRepository::new(connection);
             for row in &mock_data.locations {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.sensors {
+            let repo = SensorRowRepository::new(connection);
+            for row in &mock_data.sensors {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -831,6 +850,7 @@ impl MockData {
             mut units,
             mut items,
             mut locations,
+            mut sensors,
             mut name_store_joins,
             mut full_requisitions,
             mut invoices,
@@ -872,6 +892,7 @@ impl MockData {
         self.units.append(&mut units);
         self.items.append(&mut items);
         self.locations.append(&mut locations);
+        self.sensors.append(&mut sensors);
         self.full_requisitions.append(&mut full_requisitions);
         self.invoices.append(&mut invoices);
         self.invoice_lines.append(&mut invoice_lines);
