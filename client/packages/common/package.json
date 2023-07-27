@@ -55,7 +55,6 @@
     "@types/css-mediaquery": "^0.1.1",
     "@types/dompurify": "^3.0.0",
     "@types/js-cookie": "^3.0.1",
-    "@types/material-ui": "^0.21.12",
     "@types/uuid": "^9.0.1",
     "css-mediaquery": "^0.1.2"
   }

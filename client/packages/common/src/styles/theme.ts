@@ -190,16 +190,16 @@ export const themeOptions = {
   },
   typography: {
     body1: {
-      fontFamily: 'InterVariable',
+      fontFamily: 'Inter Variable',
       fontSize: 14,
       lineHeight: 1.71,
       color: '#1c1c28',
     },
     body2: { color: '#555770', fontSize: 12, fontWeight: 500 },
-    fontFamily: 'InterVariable',
+    fontFamily: 'Inter Variable',
     th: { color: '#1c1c28', fontSize: 14, fontWeight: 700 },
     h6: {
-      fontFamily: 'InterVariable',
+      fontFamily: 'Inter Variable',
       fontSize: 16,
       color: '#555770',
     },
