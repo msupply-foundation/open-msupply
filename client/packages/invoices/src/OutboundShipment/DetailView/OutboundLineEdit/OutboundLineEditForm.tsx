@@ -20,7 +20,8 @@ import {
   ItemRowFragment,
 } from '@openmsupply-client/system';
 import { PackSizeController } from './hooks';
-import { DraftItem, useOutbound } from '../../api';
+import { useOutbound } from '../../api';
+import { DraftItem } from 'packages/invoices/src';
 
 interface OutboundLineEditFormProps {
   allocatedQuantity: number;

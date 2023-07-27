@@ -9,9 +9,9 @@ import {
 } from '@openmsupply-client/common';
 import { DraftOutboundLine } from '../../../types';
 import { PackSizeController, useOutboundLineEditRows } from './hooks';
-import { DraftItem } from '../../api';
 import { useOutboundLineEditColumns } from './columns';
 import { shouldUpdatePlaceholder } from './utils';
+import { DraftItem } from 'packages/invoices/src';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
