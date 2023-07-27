@@ -115,6 +115,7 @@ mod test {
     };
 
     use crate::SensorQueries;
+    use chrono::{NaiveDate, Duration};
 
     type GetSensors = dyn Fn(
             Option<PaginationOption>,
@@ -252,7 +253,7 @@ mod test {
     #[actix_rt::test]
     async fn test_graphql_locations_inputs() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
-            sensorQueries,
+            SensorQueries,
             EmptyMutation,
             "test_graphql_sensor_inputs",
             MockDataInserts::all(),
@@ -371,11 +372,11 @@ mod test {
 
         let count_store_a = mock_sensors()
             .iter()
-            .filter(|v| v.store_id == "store_a")
+            .filter(|v| v.store_id == Some("store_a".to_string()))
             .count();
         let count_store_b = mock_sensors()
             .iter()
-            .filter(|v| v.store_id == "store_b")
+            .filter(|v| v.store_id == Some("store_b".to_string()))
             .count();
         assert!(count_store_a != count_store_b);
 

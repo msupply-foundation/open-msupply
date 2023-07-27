@@ -131,7 +131,7 @@ mod test {
 
     use service::{
         sensor::{
-            delete::{DeleteSensor, DeleteSensorError, SensorInUse},
+            delete::{DeleteSensor, DeleteSensorError},// , SensorInUse},
             SensorServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
@@ -221,17 +221,17 @@ mod test {
         );
 
         // Sensor in use
-        let mutation = r#"
-        mutation ($input: DeleteSensorInput!) {
-            deleteSensor(input: $input, storeId: \"store_a\") {
-              ... on DeleteSensorError {
-                error {
-                  __typename
-                }
-              }
-            }
-          }
-        "#;
+        //let mutation = r#"
+        //mutation ($input: DeleteSensorInput!) {
+        //    deleteSensor(input: $input, storeId: \"store_a\") {
+        //      ... on DeleteSensorError {
+        //        error {
+        //          __typename
+        //        }
+        //      }
+        //    }
+        //  }
+        //"#;
 
         //pub fn successfull_invoice_line() -> InvoiceLine {
         //    InvoiceLine {
