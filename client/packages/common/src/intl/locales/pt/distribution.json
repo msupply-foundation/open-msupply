@@ -5,7 +5,6 @@
   "button.add-item": "Adicionar item",
   "button.allocate": "Atribuir",
   "button.new-outbound-shipment": "Nova remessa de saída",
-  "button.save-and-confirm-status": "Confirmar {{status}}",
   "button.new-shipment": "Novo Envio",
   "button.create-shipment": "Criar envio",
   "button.supply-to-requested": "Fornecimento solicitado",

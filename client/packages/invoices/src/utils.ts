@@ -45,6 +45,12 @@ export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
   [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Verified,
 };
 
+export const prescriptionStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Verified,
+];
+
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
@@ -72,6 +78,16 @@ export const getNextInboundStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
   const nextStatus = nextStatusMap[currentStatus];
+  return nextStatus ?? null;
+};
+
+export const getNextPrescriptionStatus = (
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus | null => {
+  const currentStatusIdx = prescriptionStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = prescriptionStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 

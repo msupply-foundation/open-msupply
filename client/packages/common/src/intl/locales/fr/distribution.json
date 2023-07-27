@@ -9,7 +9,6 @@
   "button.new-outbound-shipment": "Nouvelle Livraison sortante",
   "button.supply-to-requested": "Quantité demandée",
   "button.new-shipment": "Nouvelle livraison",
-  "button.save-and-confirm-status": "Confirmer {{status}}",
   "button.select-a-color": "Choisir une couleur",
   "error.failed-to-create-outbound": "Échec lors de la création de la livraison sortante",
   "error.failed-to-save-service-charges": "Échec lors de la sauvegardes des frais de service",

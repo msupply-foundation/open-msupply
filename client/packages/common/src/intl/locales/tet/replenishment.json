@@ -8,7 +8,6 @@
   "messages.confirm-delete-shipment-lines_one": "Ne'e sei hamos permanenti remessa lina 1",
   "button.add-from-master-list": "Aumenta husi Master List",
   "button.new-shipment": "Remessa Foun",
-  "button.save-and-confirm-status": "Konfirma {{estatus}}",
   "error.shipment-not-found": "Remessa la hetan",
   "heading.are-you-sure": "Ita Certeza Ona?",
   "heading.related-documents": "Dokumentus Relevantes",

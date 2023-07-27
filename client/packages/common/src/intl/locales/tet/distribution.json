@@ -10,7 +10,6 @@
   "button.supply-to-requested": "Distribui kuantidade pedidu",
   "label.allocated": "Aloka Ona",
   "button.new-shipment": "Remessa Foun",
-  "button.save-and-confirm-status": "Konfirma {{estatus}}",
   "button.select-a-color": "Hili kor ida",
   "error.failed-to-create-outbound": "Problema ho kria remessa ba sasan sai",
   "error.failed-to-save-service-charges": "Problema ho salva cobrancas serbisu nian",

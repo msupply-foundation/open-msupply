@@ -15,7 +15,6 @@
   "button.create-shipment": "Crear envío",
   "button.supply-to-requested": "Suministro solicitado",
   "button.new-shipment": "Nuevo envío",
-  "button.save-and-confirm-status": "Confirmar {{status}}",
   "error.failed-to-save-service-charges": "Fallo al guardar los cargos de servicio",
   "error.no-outbound-items": "No se han agregado artículos a este envío.",
   "error.no-outbound-shipments": "No hay salidas para mostrar.",
