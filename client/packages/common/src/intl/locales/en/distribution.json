@@ -8,7 +8,6 @@
   "button.supply-to-requested": "Supply requested",
   "button.supply-to-approved": "Supply approved",
   "button.new-shipment": "New Shipment",
-  "button.save-and-confirm-status": "Confirm {{status}}",
   "button.select-a-color": "Select a colour",
   "button.stop": "Stop",
   "error.failed-to-create-outbound": "Failed to create Outbound Shipment",
