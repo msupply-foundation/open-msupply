@@ -5,15 +5,19 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::document_registry::{
+    DocumentRegistryConnector, DocumentRegistryNode, DocumentRegistryTypeNode,
+};
 use repository::{
     DocumentRegistryFilter, DocumentRegistrySort, DocumentRegistrySortField, EqualFilter,
 };
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
-use crate::types::document_registry::{
-    DocumentRegistryConnector, DocumentRegistryNode, DocumentRegistryTypeNode,
-};
+#[derive(Union)]
+pub enum DocumentRegistryResponse {
+    Response(DocumentRegistryConnector),
+}
 
 #[derive(InputObject, Clone)]
 pub struct EqualFilterDocumentRegistryTypeInput {
@@ -45,11 +49,6 @@ pub struct DocumentRegistrySortInput {
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
-}
-
-#[derive(Union)]
-pub enum DocumentRegistryResponse {
-    Response(DocumentRegistryConnector),
 }
 
 pub fn document_registries(

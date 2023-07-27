@@ -1,9 +1,10 @@
 use super::{
+    clinician_row::{clinician, clinician::dsl as clinician_dsl},
     invoice_line_row::invoice_line::dsl as invoice_line_dsl,
     invoice_row::{invoice, invoice::dsl as invoice_dsl},
     name_row::{name, name::dsl as name_dsl},
     store_row::{store, store::dsl as store_dsl},
-    DBType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, RepositoryError,
+    ClinicianRow, DBType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, RepositoryError,
     StorageConnection, StoreRow,
 };
 
@@ -14,7 +15,7 @@ use crate::diesel_macros::{
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 use util::inline_init;
@@ -24,6 +25,7 @@ pub struct Invoice {
     pub invoice_row: InvoiceRow,
     pub name_row: NameRow,
     pub store_row: StoreRow,
+    pub clinician_row: Option<ClinicianRow>,
 }
 #[derive(Clone, Default)]
 pub struct InvoiceFilter {
@@ -73,7 +75,7 @@ pub struct InvoiceRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-type InvoiceJoin = (InvoiceRow, NameRow, StoreRow);
+type InvoiceJoin = (InvoiceRow, NameRow, StoreRow, Option<ClinicianRow>);
 
 impl<'a> InvoiceRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -163,25 +165,31 @@ impl<'a> InvoiceRepository<'a> {
             .filter(invoice_dsl::id.eq(record_id))
             .inner_join(name_dsl::name)
             .inner_join(store_dsl::store)
+            .left_join(clinician_dsl::clinician)
             .first::<InvoiceJoin>(&self.connection.connection)?)
     }
 }
 
-fn to_domain((invoice_row, name_row, store_row): InvoiceJoin) -> Invoice {
+fn to_domain((invoice_row, name_row, store_row, clinician_row): InvoiceJoin) -> Invoice {
     Invoice {
         invoice_row,
         name_row,
         store_row,
+        clinician_row,
     }
 }
 
-type BoxedInvoiceQuery =
-    IntoBoxed<'static, InnerJoin<InnerJoin<invoice::table, name::table>, store::table>, DBType>;
+type BoxedInvoiceQuery = IntoBoxed<
+    'static,
+    LeftJoin<InnerJoin<InnerJoin<invoice::table, name::table>, store::table>, clinician::table>,
+    DBType,
+>;
 
 fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
     let mut query = invoice_dsl::invoice
         .inner_join(name_dsl::name)
         .inner_join(store_dsl::store)
+        .left_join(clinician_dsl::clinician)
         .into_boxed();
 
     if let Some(f) = filter {
