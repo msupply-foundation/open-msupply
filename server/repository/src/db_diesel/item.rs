@@ -15,11 +15,11 @@ use diesel::{
 
 use crate::{
     diesel_macros::{
-        apply_equal_filter, apply_simple_string_filter, apply_simple_string_or_filter, apply_sort,
-        apply_sort_no_case,
+        apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
+        apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    EqualFilter, Pagination, SimpleStringFilter, Sort,
+    EqualFilter, Pagination, Sort, StringFilter,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -39,12 +39,12 @@ pub type ItemSort = Sort<ItemSortField>;
 #[derive(Clone)]
 pub struct ItemFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
-    pub code: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
     pub r#type: Option<EqualFilter<ItemRowType>>,
     /// If true it only returns ItemAndMasterList that have a name join row
     pub is_visible: Option<bool>,
-    pub code_or_name: Option<SimpleStringFilter>,
+    pub code_or_name: Option<StringFilter>,
 }
 
 impl ItemFilter {
@@ -64,12 +64,12 @@ impl ItemFilter {
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
 
-    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
         self
     }
@@ -84,7 +84,7 @@ impl ItemFilter {
         self
     }
 
-    pub fn code_or_name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn code_or_name(mut self, filter: StringFilter) -> Self {
         self.code_or_name = Some(filter);
         self
     }
@@ -189,13 +189,13 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
 
         // or filter need to be applied before and filters
         if code_or_name.is_some() {
-            apply_simple_string_filter!(query, code_or_name.clone(), item_dsl::code);
-            apply_simple_string_or_filter!(query, code_or_name, item_dsl::name);
+            apply_string_filter!(query, code_or_name.clone(), item_dsl::code);
+            apply_string_or_filter!(query, code_or_name, item_dsl::name);
         }
 
         apply_equal_filter!(query, id, item_dsl::id);
-        apply_simple_string_filter!(query, code, item_dsl::code);
-        apply_simple_string_filter!(query, name, item_dsl::name);
+        apply_string_filter!(query, code, item_dsl::code);
+        apply_string_filter!(query, name, item_dsl::name);
         apply_equal_filter!(query, r#type, item_dsl::type_);
 
         let visible_item_ids = master_list_line_dsl::master_list_line
@@ -243,7 +243,7 @@ mod tests {
         test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemRowType,
         MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRepository,
         MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-        Pagination, SimpleStringFilter, StoreRow, StoreRowRepository, DEFAULT_PAGINATION_LIMIT,
+        Pagination, StoreRow, StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -388,10 +388,7 @@ mod tests {
         let results = item_query_repository
             .query(
                 Pagination::new(),
-                Some(
-                    ItemFilter::new()
-                        .code_or_name(SimpleStringFilter::equal_to(&mock_item_b().name)),
-                ),
+                Some(ItemFilter::new().code_or_name(StringFilter::equal_to(&mock_item_b().name))),
                 None,
                 Some("store_a".to_string()),
             )
@@ -400,10 +397,7 @@ mod tests {
         let results = item_query_repository
             .query(
                 Pagination::new(),
-                Some(
-                    ItemFilter::new()
-                        .code_or_name(SimpleStringFilter::equal_to(&mock_item_b().code)),
-                ),
+                Some(ItemFilter::new().code_or_name(StringFilter::equal_to(&mock_item_b().code))),
                 None,
                 Some("store_a".to_string()),
             )
@@ -415,8 +409,8 @@ mod tests {
                 Pagination::new(),
                 Some(
                     ItemFilter::new()
-                        .code(SimpleStringFilter::equal_to("does not exist"))
-                        .code_or_name(SimpleStringFilter::equal_to(&mock_item_b().name)),
+                        .code(StringFilter::equal_to("does not exist"))
+                        .code_or_name(StringFilter::equal_to(&mock_item_b().name)),
                 ),
                 None,
                 Some("store_a".to_string()),

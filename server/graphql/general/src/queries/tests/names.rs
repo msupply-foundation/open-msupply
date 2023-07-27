@@ -10,7 +10,7 @@ mod graphql {
             mock_store_linked_to_name, MockDataInserts,
         },
         EqualFilter, Name, NameFilter, NameSort, NameSortField, NameType, PaginationOption,
-        SimpleStringFilter, StorageConnectionManager,
+        StorageConnectionManager, StringFilter,
     };
     use serde_json::json;
     use service::{
@@ -188,16 +188,13 @@ mod graphql {
             } = filter.unwrap();
 
             assert_eq!(id, Some(EqualFilter::not_equal_to("id_not_equal_to")));
-            assert_eq!(name, Some(SimpleStringFilter::like("name like")));
-            assert_eq!(code, Some(SimpleStringFilter::equal_to("code equal to")));
+            assert_eq!(name, Some(StringFilter::like("name like")));
+            assert_eq!(code, Some(StringFilter::equal_to("code equal to")));
 
             assert_eq!(is_customer, Some(true));
             assert_eq!(is_supplier, Some(false));
             assert_eq!(is_store, Some(true));
-            assert_eq!(
-                store_code,
-                Some(SimpleStringFilter::like("store code like"))
-            );
+            assert_eq!(store_code, Some(StringFilter::like("store code like")));
             assert_eq!(is_visible, Some(false));
             assert_eq!(is_system_name, Some(true));
             assert_eq!(
@@ -205,11 +202,11 @@ mod graphql {
                 Some(EqualFilter::equal_to_name_type(&NameType::Store))
             );
 
-            assert_eq!(phone, Some(SimpleStringFilter::equal_to("01234")));
-            assert_eq!(address1, Some(SimpleStringFilter::equal_to("address1")));
-            assert_eq!(address2, Some(SimpleStringFilter::equal_to("address2")));
-            assert_eq!(country, Some(SimpleStringFilter::equal_to("country")));
-            assert_eq!(email, Some(SimpleStringFilter::equal_to("email")));
+            assert_eq!(phone, Some(StringFilter::equal_to("01234")));
+            assert_eq!(address1, Some(StringFilter::equal_to("address1")));
+            assert_eq!(address2, Some(StringFilter::equal_to("address2")));
+            assert_eq!(country, Some(StringFilter::equal_to("country")));
+            assert_eq!(email, Some(StringFilter::equal_to("email")));
 
             Ok(ListResult {
                 rows: vec![Name {

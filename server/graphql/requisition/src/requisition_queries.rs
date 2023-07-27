@@ -2,7 +2,7 @@ use async_graphql::*;
 use graphql_core::{
     generic_filters::{
         DateFilterInput, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
-        SimpleStringFilterInput,
+        StringFilterInput,
     },
     map_filter,
     pagination::PaginationInput,
@@ -13,7 +13,7 @@ use graphql_core::{
 use graphql_types::types::{
     RequisitionConnector, RequisitionNode, RequisitionNodeStatus, RequisitionNodeType,
 };
-use repository::{DateFilter, DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{DateFilter, DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
 use repository::{RequisitionFilter, RequisitionSort, RequisitionSortField};
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -69,11 +69,11 @@ pub struct RequisitionFilterInput {
     pub sent_datetime: Option<DatetimeFilterInput>,
     pub finalised_datetime: Option<DatetimeFilterInput>,
     pub expected_delivery_date: Option<DateFilterInput>,
-    pub other_party_name: Option<SimpleStringFilterInput>,
+    pub other_party_name: Option<StringFilterInput>,
     pub other_party_id: Option<EqualFilterStringInput>,
     pub colour: Option<EqualFilterStringInput>,
-    pub their_reference: Option<SimpleStringFilterInput>,
-    pub comment: Option<SimpleStringFilterInput>,
+    pub their_reference: Option<StringFilterInput>,
+    pub comment: Option<StringFilterInput>,
     pub order_type: Option<EqualFilterStringInput>,
 }
 
@@ -231,11 +231,11 @@ impl RequisitionFilterInput {
             sent_datetime: self.sent_datetime.map(DatetimeFilter::from),
             finalised_datetime: self.finalised_datetime.map(DatetimeFilter::from),
             expected_delivery_date: self.expected_delivery_date.map(DateFilter::from),
-            name: self.other_party_name.map(SimpleStringFilter::from),
+            name: self.other_party_name.map(StringFilter::from),
             name_id: self.other_party_id.map(EqualFilter::from),
             colour: self.colour.map(EqualFilter::from),
-            their_reference: self.their_reference.map(SimpleStringFilter::from),
-            comment: self.comment.map(SimpleStringFilter::from),
+            their_reference: self.their_reference.map(StringFilter::from),
+            comment: self.comment.map(StringFilter::from),
             linked_requisition_id: None,
             store_id: None,
             order_type: self.order_type.map(EqualFilter::from),

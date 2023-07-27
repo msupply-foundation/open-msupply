@@ -2,7 +2,7 @@ use ::serde::Serialize;
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
     standard_graphql_error::validate_auth,
 };
@@ -10,7 +10,7 @@ use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::FormSchemaNode;
 use repository::{
     EqualFilter, PaginationOption, Report, ReportContext as ReportContextDomain, ReportFilter,
-    ReportSort, ReportSortField, SimpleStringFilter,
+    ReportSort, ReportSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -53,7 +53,7 @@ pub struct EqualFilterReportContextInput {
 #[derive(InputObject, Clone)]
 pub struct ReportFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub name: Option<SimpleStringFilterInput>,
+    pub name: Option<StringFilterInput>,
     pub context: Option<EqualFilterReportContextInput>,
     pub sub_context: Option<EqualFilterStringInput>,
 }
@@ -139,7 +139,7 @@ impl ReportFilterInput {
     pub fn to_domain(self) -> ReportFilter {
         ReportFilter {
             id: self.id.map(EqualFilter::from),
-            name: self.name.map(SimpleStringFilter::from),
+            name: self.name.map(StringFilter::from),
             r#type: None,
             context: self
                 .context

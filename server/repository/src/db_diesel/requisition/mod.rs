@@ -1,6 +1,6 @@
 use util::inline_init;
 
-use crate::{DateFilter, DatetimeFilter, EqualFilter, SimpleStringFilter, Sort};
+use crate::{DateFilter, DatetimeFilter, EqualFilter, Sort, StringFilter};
 
 mod requisition;
 pub mod requisition_row;
@@ -20,10 +20,10 @@ pub struct RequisitionFilter {
     pub finalised_datetime: Option<DatetimeFilter>,
     pub expected_delivery_date: Option<DateFilter>,
     pub name_id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
     pub colour: Option<EqualFilter<String>>,
-    pub their_reference: Option<SimpleStringFilter>,
-    pub comment: Option<SimpleStringFilter>,
+    pub their_reference: Option<StringFilter>,
+    pub comment: Option<StringFilter>,
     pub store_id: Option<EqualFilter<String>>,
     pub linked_requisition_id: Option<EqualFilter<String>>,
     pub order_type: Option<EqualFilter<String>>,
@@ -81,7 +81,7 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
@@ -91,7 +91,7 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn comment(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn comment(mut self, filter: StringFilter) -> Self {
         self.comment = Some(filter);
         self
     }
@@ -146,7 +146,7 @@ impl RequisitionFilter {
         self
     }
 
-    pub fn their_reference(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn their_reference(mut self, filter: StringFilter) -> Self {
         self.their_reference = Some(filter);
         self
     }
