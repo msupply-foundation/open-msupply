@@ -270,3 +270,41 @@ mutation deletePrescriptions(
     }
   }
 }
+
+mutation deletePrescriptionLines(
+  $storeId: String!
+  $deletePrescriptionLines: [DeletePrescriptionLineInput!]!
+) {
+  batchPrescription(
+    storeId: $storeId
+    input: { deletePrescriptionLines: $deletePrescriptionLines }
+  ) {
+    deletePrescriptionLines {
+      id
+      response {
+        ... on DeletePrescriptionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}

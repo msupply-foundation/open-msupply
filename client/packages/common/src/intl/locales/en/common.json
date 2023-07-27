@@ -10,6 +10,7 @@
   "button.cancel": "Cancel",
   "button.close": "Close",
   "button.create-a-new-one": "Create a new one",
+  "button.delete-lines": "Delete selected lines",
   "button.initialise": "Initialise",
   "button.export": "Export",
   "button.language": "Language",

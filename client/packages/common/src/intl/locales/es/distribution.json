@@ -13,7 +13,6 @@
   "button.add-item": "Agregar Artículo",
   "button.allocate": "Asignar",
   "button.create-shipment": "Crear envío",
-  "button.delete-lines": "Eliminar líneas seleccionadas",
   "button.supply-to-requested": "Suministro solicitado",
   "button.new-shipment": "Nuevo envío",
   "button.save-and-confirm-status": "Confirmar {{status}}",
