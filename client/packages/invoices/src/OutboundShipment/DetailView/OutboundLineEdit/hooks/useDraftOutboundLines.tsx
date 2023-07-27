@@ -10,11 +10,12 @@ import {
 import { useStockLines } from '@openmsupply-client/system';
 import { DraftOutboundLine } from '../../../../types';
 import { issueStock } from '../utils';
-import { DraftItem, useOutbound } from '../../../api';
+import { useOutbound } from '../../../api';
 import {
   OutboundLineFragment,
   PartialStockLineFragment,
 } from '../../../api/operations.generated';
+import { DraftItem } from 'packages/invoices/src';
 
 export const createPlaceholderRow = (
   invoiceId: string,
