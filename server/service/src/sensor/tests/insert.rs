@@ -77,7 +77,11 @@ mod query {
                 serial: "new_serial".to_owned(),
                 name: "new_name".to_owned(),
                 is_active: false,
-                store_id: "store_a".to_owned(),
+                store_id: Some("store_a".to_owned()),
+                location_id: None,
+                battery_level: Some(99),
+                log_interval: Some(10),
+                last_connection_timestamp: None,
             },
         };
 
@@ -122,7 +126,11 @@ mod query {
                     name: "new_sensor_name".to_owned(),
                     serial: "store_b_sensor_serial".to_owned(),
                     is_active: true,
-                    store_id: "store_a".to_owned(),
+                    store_id: Some("store_a".to_owned()),
+                    location_id: None,
+                    battery_level: Some(99),
+                    log_interval: Some(10),
+                    last_connection_timestamp: None,
                 }
             })
         );

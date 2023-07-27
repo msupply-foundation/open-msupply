@@ -62,7 +62,7 @@ mod query {
             Err(UpdateSensorError::SensorDoesNotBelongToCurrentStore)
         );
 
-        // Code used in another store
+        // Serial used in another store
         assert_eq!(
             service.update_sensor(
                 &context,
@@ -73,7 +73,7 @@ mod query {
                     is_active: None
                 },
             ),
-            Err(UpdateSensorError::CodeAlreadyExists)
+            Err(UpdateSensorError::SerialAlreadyExists)
         );
     }
     #[actix_rt::test]

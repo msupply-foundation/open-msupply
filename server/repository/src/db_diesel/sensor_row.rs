@@ -121,32 +121,3 @@ impl<'a> SensorRowRepository<'a> {
     //}
 
 }
-
-#[cfg(test)]
-mod test {
-    use util::{inline_init, uuid::uuid};
-
-    use crate::{mock::MockDataInserts, test_db::setup_all, SensorRow, SensorRowRepository};
-
-    fn mock_sensor_row_1() -> SensorRow {
-        inline_init(|r: &mut SensorRow| {
-            r.id = uuid();
-            r.serial = "12345678901234".to_string();
-            r.name = "Sensor 1".to_string();
-            //r.last_connection_timestamp = Some(NaiveDateTime::from_str());
-            r.log_interval = Some(1);
-        })
-    }
-
-    fn mock_sensor_row_2() -> SensorRow {
-        inline_init(|r: &mut SensorRow| {
-            r.id = uuid();
-            r.serial = "4756798811".to_string();
-            r.name = "Sensor 2".to_string();
-            //r.last_connection_timestamp = Some(NaiveDateTime::from_str());
-            r.battery_level = Some(100);
-            r.is_active = true;
-        })
-    }
- 
-}
