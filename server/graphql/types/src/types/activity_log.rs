@@ -48,6 +48,8 @@ pub enum ActivityLogNodeType {
     StockOnHold,
     StockOffHold,
     Repack,
+    PrescriptionCreated,
+    PrescriptionDeleted,
 }
 
 #[Object]
@@ -147,6 +149,8 @@ impl ActivityLogNodeType {
             from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
             from::RequisitionNumberAllocated => to::RequisitionNumberAllocated,
             from::Repack => to::Repack,
+            from::PrescriptionCreated => to::PrescriptionCreated,
+            from::PrescriptionDeleted => to::PrescriptionDeleted,
         }
     }
 
@@ -180,6 +184,8 @@ impl ActivityLogNodeType {
             from::InvoiceNumberAllocated => to::InvoiceNumberAllocated,
             from::RequisitionNumberAllocated => to::RequisitionNumberAllocated,
             from::Repack => to::Repack,
+            from::PrescriptionCreated => to::PrescriptionCreated,
+            from::PrescriptionDeleted => to::PrescriptionDeleted,
         }
     }
 }

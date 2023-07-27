@@ -306,6 +306,8 @@
   "log.stock-off-hold": "Stock off hold",
   "log.stock-on-hold": "Stock on hold",
   "log.stock-sell-price-change": "Sell price changed",
+  "log.prescription-created": "Prescription created",
+  "log.prescription-deleted": "Shipment deleted",
   "messages.ago": "{{time}} ago",
   "messages.cant-delete-generic": "You cannot delete one or more of the selected items",
   "messages.confirm-cancel-generic": "You will lose any changes you have made to this form",
