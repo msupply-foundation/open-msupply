@@ -21,7 +21,7 @@ import {
 } from '@openmsupply-client/system';
 import { PackSizeController } from './hooks';
 import { useOutbound } from '../../api';
-import { DraftItem } from 'packages/invoices/src';
+import { DraftItem } from '../../..';
 
 interface OutboundLineEditFormProps {
   allocatedQuantity: number;
