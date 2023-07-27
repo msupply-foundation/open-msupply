@@ -93,7 +93,7 @@ pub(crate) async fn setup_with_version(
 fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManager {
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
-    const SQLITE_LOCKWAIT_MS: u32 = 5000; //5 second wait for test lock timeout
+    const SQLITE_LOCKWAIT_MS: u32 = 10 * 1000; // 10 second wait for test lock timeout
     let pool = Pool::builder()
         .min_idle(Some(1))
         .connection_customizer(Box::new(SqliteConnectionOptions {
