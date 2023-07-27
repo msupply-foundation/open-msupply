@@ -1,6 +1,7 @@
 {
   "messages.click-to-return-to-shipments": "Não foi possível encontrar um envio com essa ID. Clique em OK para retornar para a lista de Envios",
   "button.add-from-master-list": "Adicionar da lista mestra",
+  "button.delete-lines": "Excluir as linhas selecionadas",
   "button.save-and-confirm-status": "Confirmar {{status}}",
   "button.new-shipment": "Novo Envio",
   "button.requested-to-suggested": "Utilizar Quantidades Sugeridas",
@@ -22,7 +23,6 @@
   "heading.sub-total": "Subtotal",
   "heading.total": "Total",
   "heading.tax": "Imposto",
-  "heading.grand-total": "Total Geral",
   "heading.target-quantity": "Quantidade Alvo",
   "label.new": "Novo",
   "label.finalised": "Finalizado",

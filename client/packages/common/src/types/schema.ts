@@ -1884,6 +1884,8 @@ export enum InvoiceLineNodeType {
 export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']>;
+  clinician?: Maybe<ClinicianNode>;
+  clinicianId?: Maybe<Scalars['String']>;
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['DateTime'];
@@ -1898,6 +1900,7 @@ export type InvoiceNode = {
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
   otherPartyStore?: Maybe<StoreNode>;
+  patient?: Maybe<PatientNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']>;
   pricing: PricingNode;
   /**
