@@ -352,6 +352,7 @@ mod test {
                 invoice_row: mock_outbound_shipment_a(),
                 name_row: mock_name_store_a(),
                 store_row: mock_store_a(),
+                clinician_row: None,
             })
         }));
 

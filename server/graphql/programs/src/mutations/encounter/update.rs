@@ -3,13 +3,12 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::encounter::EncounterNode;
 use repository::{EncounterFilter, EqualFilter};
 use service::{
     auth::{CapabilityTag, Resource, ResourceAccessRequest},
     programs::encounter::{UpdateEncounter, UpdateEncounterError},
 };
-
-use crate::types::encounter::EncounterNode;
 
 #[derive(InputObject)]
 pub struct UpdateEncounterInput {

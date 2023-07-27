@@ -5,13 +5,12 @@ use graphql_core::generic_filters::{
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_types::types::document::{DocumentConnector, DocumentNode};
 use repository::{
     DatetimeFilter, DocumentFilter, DocumentSort, DocumentSortField, EqualFilter, PaginationOption,
     StringFilter,
 };
 use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
-
-use crate::types::document::{DocumentConnector, DocumentNode};
 
 #[derive(Union)]
 pub enum DocumentResponse {
@@ -50,7 +49,7 @@ pub struct DocumentSortInput {
 }
 
 impl DocumentFilterInput {
-    fn to_domain_filter(self) -> DocumentFilter {
+    pub fn to_domain_filter(self) -> DocumentFilter {
         DocumentFilter {
             name: self.name.map(|f| repository::StringFilter {
                 equal_to: f.equal_to,
@@ -66,6 +65,23 @@ impl DocumentFilterInput {
             owner: self.owner.map(EqualFilter::from),
             context: self.context.map(EqualFilter::from),
             data: self.data.map(StringFilter::from),
+        }
+    }
+}
+
+impl DocumentSortInput {
+    pub fn to_domain(self) -> DocumentSort {
+        let key = match self.key {
+            DocumentSortFieldInput::Name => DocumentSortField::Name,
+            DocumentSortFieldInput::Type => DocumentSortField::Type,
+            DocumentSortFieldInput::Owner => DocumentSortField::Owner,
+            DocumentSortFieldInput::Context => DocumentSortField::Context,
+            DocumentSortFieldInput::Datetime => DocumentSortField::Datetime,
+        };
+
+        DocumentSort {
+            key,
+            desc: self.desc,
         }
     }
 }
@@ -137,21 +153,4 @@ pub fn documents(
             })
             .collect(),
     }))
-}
-
-impl DocumentSortInput {
-    pub fn to_domain(self) -> DocumentSort {
-        let key = match self.key {
-            DocumentSortFieldInput::Name => DocumentSortField::Name,
-            DocumentSortFieldInput::Type => DocumentSortField::Type,
-            DocumentSortFieldInput::Owner => DocumentSortField::Owner,
-            DocumentSortFieldInput::Context => DocumentSortField::Context,
-            DocumentSortFieldInput::Datetime => DocumentSortField::Datetime,
-        };
-
-        DocumentSort {
-            key,
-            desc: self.desc,
-        }
-    }
 }
