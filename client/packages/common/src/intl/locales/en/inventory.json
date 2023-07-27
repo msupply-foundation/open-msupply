@@ -1,4 +1,5 @@
 {
+  "button.delete-lines": "Delete selected lines",
   "button.repack": "Repack",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "error.cant-save": "There was a problem saving.",

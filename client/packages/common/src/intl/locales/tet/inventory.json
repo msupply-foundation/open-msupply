@@ -5,6 +5,7 @@
   "button.save-and-confirm-status": "Konfirma {{estatus}}",
   "label.add-batch": "Aumenta Lote",
   "label.finalised": "Finaliza Ona",
+  "button.delete-lines": "Hamos linas ne'ebe hili ona",
   "error.cant-save": "Iha problema wainhira salva.",
   "error.no-locations": "Laiha lokalizasaun atu hatudu.",
   "error.no-stock": "Laiha Stock atu hatudu.",
