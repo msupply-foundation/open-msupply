@@ -163,7 +163,7 @@ impl MockData {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default, PartialEq)]
 pub struct MockDataInserts {
     pub user_accounts: bool,
     pub user_store_joins: bool,
@@ -454,7 +454,7 @@ impl Index<&str> for MockDataCollection {
     }
 }
 
-fn all_mock_data() -> MockDataCollection {
+pub(crate) fn all_mock_data() -> MockDataCollection {
     let mut data: MockDataCollection = Default::default();
     data.insert(
         "base",

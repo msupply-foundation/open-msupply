@@ -1,11 +1,12 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, sync::Mutex};
 
 use diesel::r2d2::{ConnectionManager, Pool};
 
 use crate::{
     database_settings::{DatabaseSettings, SqliteConnectionOptions},
     migrations::{migrate, Version},
-    DBBackendConnection, StorageConnection, StorageConnectionManager,
+    mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
+    DBBackendConnection, StorageConnectionManager,
 };
 
 pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
@@ -21,13 +22,89 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
 }
 
 pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
-    setup_with_version(db_settings, None).await
+    setup_with_version(db_settings, None, MockDataInserts::none())
+        .await
+        .0
 }
+
+static TEMPLATE_LOCK: Mutex<()> = Mutex::new(());
 
 pub(crate) async fn setup_with_version(
     db_settings: &DatabaseSettings,
     version: Option<Version>,
-) -> StorageConnectionManager {
+    inserts: MockDataInserts,
+) -> (StorageConnectionManager, MockDataCollection) {
+    let db_path = db_settings.connection_string();
+
+    let (connection_manager, collection) = if db_path.starts_with("file:") {
+        // memory mode
+        let connection_manager = create_db(&db_settings, version.clone());
+        let connection = connection_manager.connection().unwrap();
+        let collection = insert_all_mock_data(&connection, inserts).await;
+        (connection_manager, collection)
+    } else {
+        // cache db template
+        let cache_all_mock_data = inserts == MockDataInserts::all();
+        let template_name = if cache_all_mock_data {
+            format!(
+                "___template_{}_full_mock",
+                version.as_ref().unwrap_or(&Version::from_package_json())
+            )
+        } else {
+            format!(
+                "___template_{}",
+                version.as_ref().unwrap_or(&Version::from_package_json())
+            )
+        };
+        let template_settings = get_test_db_settings(&template_name);
+        let guard = TEMPLATE_LOCK.lock().unwrap();
+        if !Path::new(&template_settings.database_name).exists() {
+            let connection_manager = create_db(&template_settings, version.clone());
+            let connection = connection_manager.connection().unwrap();
+            if cache_all_mock_data {
+                insert_all_mock_data(&connection, inserts.clone()).await;
+            }
+        }
+        drop(guard);
+
+        // copy template
+
+        // remove existing db file
+        fs::remove_file(&db_path).ok();
+        // create parent dirs
+        let path = Path::new(&db_path);
+        let parent = path.parent().unwrap();
+        fs::create_dir_all(parent).unwrap();
+        fs::copy(&template_settings.database_name, &db_path).unwrap();
+
+        let connection_manager = connection_manager(db_settings);
+        let collection = if !cache_all_mock_data {
+            let connection = connection_manager.connection().unwrap();
+            insert_all_mock_data(&connection, inserts).await
+        } else {
+            all_mock_data()
+        };
+        (connection_manager, collection)
+    };
+
+    (connection_manager, collection)
+}
+
+fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManager {
+    let connection_manager =
+        ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
+    const SQLITE_LOCKWAIT_MS: u32 = 5000; //5 second wait for test lock timeout
+    let pool = Pool::builder()
+        .min_idle(Some(1))
+        .connection_customizer(Box::new(SqliteConnectionOptions {
+            busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
+        }))
+        .build(connection_manager)
+        .expect("Failed to connect to database");
+    StorageConnectionManager::new(pool)
+}
+
+fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> StorageConnectionManager {
     let db_path = db_settings.connection_string();
 
     // If not in-memory mode clean up and create test directory
@@ -41,19 +118,12 @@ pub(crate) async fn setup_with_version(
         fs::create_dir_all(prefix).unwrap();
     }
 
-    let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
-    const SQLITE_LOCKWAIT_MS: u32 = 5000; //5 second wait for test lock timeout
-    let pool = Pool::builder()
-        .min_idle(Some(1))
-        .connection_customizer(Box::new(SqliteConnectionOptions {
-            busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
-        }))
-        .build(connection_manager)
+    let connection_manager = connection_manager(db_settings);
+    let connection = connection_manager
+        .connection()
         .expect("Failed to connect to database");
-    let connection = pool.get().expect("Failed to open connection");
 
-    migrate(&StorageConnection::new(connection), version).unwrap();
+    migrate(&connection, version).unwrap();
 
-    StorageConnectionManager::new(pool)
+    connection_manager
 }

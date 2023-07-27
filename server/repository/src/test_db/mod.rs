@@ -11,9 +11,7 @@ pub use self::postgres::*;
 use crate::{
     database_settings::DatabaseSettings,
     migrations::Version,
-    mock::{
-        insert_all_mock_data, insert_extra_mock_data, MockData, MockDataCollection, MockDataInserts,
-    },
+    mock::{insert_extra_mock_data, MockData, MockDataCollection, MockDataInserts},
     StorageConnection, StorageConnectionManager,
 };
 
@@ -95,10 +93,9 @@ pub async fn setup_test<'a>(
     }: SetupOption<'a>,
 ) -> SetupResult {
     let db_settings = get_test_db_settings(db_name);
-    let connection_manager = setup_with_version(&db_settings, version).await;
+    let (connection_manager, core_data) = setup_with_version(&db_settings, version, inserts).await;
     let connection = connection_manager.connection().unwrap();
 
-    let core_data = insert_all_mock_data(&connection, inserts).await;
     insert_extra_mock_data(&connection, extra_mock_data);
     SetupResult {
         core_data,
