@@ -1,5 +1,4 @@
 {
-  "button.delete-lines": "Supprimer les lignes sélectionnées",
   "button.save-and-confirm-status": "Confirmer {{status}}",
   "label.suggested": "Suggéré",
   "messages.select-rows-to-delete-them": "Sélectionner les lignes pour les supprimer",

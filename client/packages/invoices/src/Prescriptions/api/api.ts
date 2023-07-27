@@ -5,6 +5,7 @@ import {
   Sdk,
 } from './operations.generated';
 import {
+  DeletePrescriptionLineInput,
   InvoiceNodeStatus,
   InvoiceNodeType,
   InvoiceSortFieldInput,
@@ -70,6 +71,9 @@ const prescriptionParsers = {
     colour: patch.colour,
     comment: patch.comment,
     status: prescriptionParsers.toStatus(patch),
+  }),
+  toDeleteLine: (line: { id: string }): DeletePrescriptionLineInput => ({
+    id: line.id,
   }),
 };
 
@@ -162,5 +166,11 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not delete invoices');
+  },
+  deleteLines: async (lines: { id: string }[]) => {
+    return sdk.deletePrescriptionLines({
+      storeId,
+      deletePrescriptionLines: lines.map(prescriptionParsers.toDeleteLine),
+    });
   },
 });

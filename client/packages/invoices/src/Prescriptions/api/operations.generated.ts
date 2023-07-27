@@ -55,6 +55,14 @@ export type DeletePrescriptionsMutationVariables = Types.Exact<{
 
 export type DeletePrescriptionsMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptions?: Array<{ __typename: 'DeletePrescriptionResponseWithId', id: string, response: { __typename: 'DeletePrescriptionError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
+export type DeletePrescriptionLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String'];
+  deletePrescriptionLines: Array<Types.DeletePrescriptionLineInput> | Types.DeletePrescriptionLineInput;
+}>;
+
+
+export type DeletePrescriptionLinesMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptionLines?: Array<{ __typename: 'DeletePrescriptionLineResponseWithId', id: string, response: { __typename: 'DeletePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+
 export const PrescriptionLineFragmentDoc = gql`
     fragment PrescriptionLine on InvoiceLineNode {
   __typename
@@ -309,6 +317,42 @@ export const DeletePrescriptionsDocument = gql`
   }
 }
     `;
+export const DeletePrescriptionLinesDocument = gql`
+    mutation deletePrescriptionLines($storeId: String!, $deletePrescriptionLines: [DeletePrescriptionLineInput!]!) {
+  batchPrescription(
+    storeId: $storeId
+    input: {deletePrescriptionLines: $deletePrescriptionLines}
+  ) {
+    deletePrescriptionLines {
+      id
+      response {
+        ... on DeletePrescriptionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -331,6 +375,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deletePrescriptions(variables: DeletePrescriptionsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeletePrescriptionsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionsMutation>(DeletePrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptions', 'mutation');
+    },
+    deletePrescriptionLines(variables: DeletePrescriptionLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeletePrescriptionLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionLinesMutation>(DeletePrescriptionLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptionLines', 'mutation');
     }
   };
 }
@@ -418,5 +465,22 @@ export const mockUpsertPrescriptionMutation = (resolver: ResponseResolver<GraphQ
 export const mockDeletePrescriptionsMutation = (resolver: ResponseResolver<GraphQLRequest<DeletePrescriptionsMutationVariables>, GraphQLContext<DeletePrescriptionsMutation>, any>) =>
   graphql.mutation<DeletePrescriptionsMutation, DeletePrescriptionsMutationVariables>(
     'deletePrescriptions',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeletePrescriptionLinesMutation((req, res, ctx) => {
+ *   const { storeId, deletePrescriptionLines } = req.variables;
+ *   return res(
+ *     ctx.data({ batchPrescription })
+ *   )
+ * })
+ */
+export const mockDeletePrescriptionLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeletePrescriptionLinesMutationVariables>, GraphQLContext<DeletePrescriptionLinesMutation>, any>) =>
+  graphql.mutation<DeletePrescriptionLinesMutation, DeletePrescriptionLinesMutationVariables>(
+    'deletePrescriptionLines',
     resolver
   )

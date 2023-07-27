@@ -13,6 +13,8 @@ export const usePrescription = {
   },
   line: {
     rows: Line.usePrescriptionRows,
+    delete: Line.usePrescriptionDeleteLines,
+    deleteSelected: Line.usePrescriptionDeleteSelectedLines,
   },
   utils: {
     isDisabled: Utils.usePrescriptionIsDisabled,
