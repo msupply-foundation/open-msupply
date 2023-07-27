@@ -19,6 +19,7 @@ use crate::{
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
     location::{LocationService, LocationServiceTrait},
+    sensor::{SensorService, SensorServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     missing_program::create_missing_master_list_and_program,
@@ -57,6 +58,7 @@ pub struct ServiceProvider {
     pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+    pub sensor_service: Box<dyn SensorServiceTrait>,
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stocktake_service: Box<dyn StocktakeServiceTrait>,
@@ -138,6 +140,7 @@ impl ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
+            sensor_service: Box::new(SensorService {}),
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),

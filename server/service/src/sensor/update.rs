@@ -18,9 +18,9 @@ pub enum UpdateSensorError {
 
 pub struct UpdateSensor {
     pub id: String,
-    pub code: Option<String>,
+    pub serial: Option<String>,
     pub name: Option<String>,
-    pub on_hold: Option<bool>,
+    pub is_active: Option<bool>,
 }
 
 pub fn update_sensor(
@@ -54,7 +54,7 @@ pub fn validate(
         return Err(UpdateSensorError::SerialAlreadyExists);
     }
 
-    if sensor_row.store_id != store_id {
+    if sensor_row.store_id != Some(store_id.to_string()) {
         return Err(UpdateSensorError::SensorDoesNotBelongToCurrentStore);
     }
 

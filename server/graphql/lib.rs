@@ -21,6 +21,7 @@ use graphql_general::{
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_sensor::{SensorMutations, SensorQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_reports::ReportQueries;
@@ -48,6 +49,7 @@ pub type InitialisationSchema = async_graphql::Schema<
 pub struct Queries(
     pub InvoiceQueries,
     pub LocationQueries,
+    pub SensorQueries,
     pub StocktakeQueries,
     pub GeneralQueries,
     pub RequisitionQueries,
@@ -64,6 +66,7 @@ impl Queries {
         Queries(
             InvoiceQueries,
             LocationQueries,
+            SensorQueries,
             StocktakeQueries,
             GeneralQueries,
             RequisitionQueries,
@@ -82,6 +85,7 @@ pub struct Mutations(
     pub InvoiceMutations,
     pub InvoiceLineMutations,
     pub LocationMutations,
+    pub SensorMutations,
     pub StocktakeMutations,
     pub StocktakeLineMutations,
     pub BatchMutations,
@@ -100,6 +104,7 @@ impl Mutations {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
+            SensorMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,

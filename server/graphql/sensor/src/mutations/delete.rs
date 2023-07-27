@@ -5,7 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 
-//use graphql_types::types::{DeleteResponse, InvoiceLineConnector, StockLineConnector};
+use graphql_types::types::{DeleteResponse};//, InvoiceLineConnector, StockLineConnector};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     sensor::delete::{DeleteSensor, DeleteSensorError as ServiceError},
@@ -63,7 +63,7 @@ pub enum DeleteSensorResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "serial", type = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum DeleteSensorErrorInterface {
     SensorNotFound(RecordNotFound),
     RecordBelongsToAnotherStore(RecordBelongsToAnotherStore),
@@ -77,7 +77,7 @@ fn map_error(error: ServiceError) -> Result<DeleteSensorErrorInterface> {
 
     let graphql_error = match error {
         // Structured Errors
-        ServiceError::SensorInUse(sensor_in_use) => {
+        ServiceError::SensorInUse(_sensor_in_use) => {
             return Ok(DeleteSensorErrorInterface::SensorInUse(SensorInUse {
                 //stock_lines: StockLineConnector::from_vec(location_in_use.stock_lines),
                 //invoice_lines: InvoiceLineConnector::from_vec(location_in_use.invoice_lines),
@@ -85,8 +85,8 @@ fn map_error(error: ServiceError) -> Result<DeleteSensorErrorInterface> {
         }
 
         // Standard Graphql Errors
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
+        ServiceError::SensorDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::SensorDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
@@ -100,7 +100,7 @@ pub struct SensorInUse {
 
 #[Object]
 impl SensorInUse {
-    pub async fn serial(&self) -> &'static str {
+    pub async fn description(&self) -> &'static str {
         "Sensor in use"
     }
 
@@ -205,7 +205,7 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // Not current store location
+        // Not current store sensor
         let test_service = TestService(Box::new(|_| {
             Err(DeleteSensorError::SensorDoesNotBelongToCurrentStore)
         }));
@@ -220,7 +220,7 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // Location in use
+        // Sensor in use
         let mutation = r#"
         mutation ($input: DeleteSensorInput!) {
             deleteSensor(input: $input, storeId: \"store_a\") {
@@ -242,58 +242,58 @@ mod test {
         //    }
         //}
 
-        let test_service = TestService(Box::new(|_| {
-            Err(DeleteLocationError::LocationInUse(LocationInUse {
-                stock_lines: vec![StockLine {
-                    stock_line_row: mock_stock_line_a(),
-                    item_row: mock_item_a(),
-                    location_row: None,
-                    name_row: None,
-                    barcode_row: None,
-                }],
-                invoice_lines: vec![successfull_invoice_line()],
-            }))
-        }));
+        //let test_service = TestService(Box::new(|_| {
+        //    Err(DeleteSensorError::SensorInUse(SensorInUse {
+                //stock_lines: vec![StockLine {
+                //    stock_line_row: mock_stock_line_a(),
+                //    item_row: mock_item_a(),
+                //    location_row: None,
+                //    name_row: None,
+                //    barcode_row: None,
+                //}],
+                //invoice_lines: vec![successfull_invoice_line()],
+        //    }))
+        //}));
 
         // let invoice_line_ids = stock_lines.iter();
-        let out_line = successfull_invoice_line();
-        let expected = json!({
-            "deleteLocation": {
-              "error": {
-                "__typename": "LocationInUse",
-                "stockLines": {
-                  "nodes": [{"id": mock_stock_line_a().id}]
-                },
-                "invoiceLines": {
-                  "nodes": [{"id": out_line.invoice_line_row.id}]
-                }
-              }
-            }
-          }
-        );
+        //let out_line = successfull_invoice_line();
+        //let expected = json!({
+        //    "deleteSensor": {
+        //      "error": {
+        //        "__typename": "SensorInUse",
+        //        "stockLines": {
+        //          "nodes": [{"id": mock_stock_line_a().id}]
+        //        },
+        //        "invoiceLines": {
+        //          "nodes": [{"id": out_line.invoice_line_row.id}]
+        //        }
+        //      }
+        //    }
+        //  }
+        //);
 
-        assert_graphql_query!(
-            &settings,
-            mutation,
-            &variables,
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
+        //assert_graphql_query!(
+        //    &settings,
+        //    mutation,
+        //    &variables,
+        //    &expected,
+         //   Some(service_provider(test_service, &connection_manager))
+        //);
     }
 
     #[actix_rt::test]
-    async fn test_graphql_delete_location_success() {
+    async fn test_graphql_delete_sensor_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
-            LocationMutations,
-            "test_graphql_delete_location_success",
+            SensorMutations,
+            "test_graphql_delete_sensor_success",
             MockDataInserts::all(),
         )
         .await;
 
         let mutation = r#"
-        mutation ($input: DeleteLocationInput!) {
-            deleteLocation(input: $input, storeId: \"store_a\") {
+        mutation ($input: DeleteSensorInput!) {
+            deleteSensor(input: $input, storeId: \"store_a\") {
               ... on DeleteResponse {
                 id
               }
@@ -311,7 +311,7 @@ mod test {
         let test_service = TestService(Box::new(|_| Ok("deleted".to_owned())));
 
         let expected = json!({
-            "deleteLocation": {
+            "deleteSensor": {
                 "id": "deleted",
             }
           }

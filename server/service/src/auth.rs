@@ -42,6 +42,9 @@ pub enum Resource {
     // location
     QueryLocation,
     MutateLocation,
+    // sensor
+    QuerySensor,
+    MutateSensor,
     // store
     QueryStore,
     // master list
@@ -127,6 +130,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         ]),
     );
 
+    // sensor
+    map.insert(Resource::QuerySensor, PermissionDSL::HasStoreAccess);
+    map.insert(
+        Resource::MutateSensor,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::SensorMutate),
+        ]),
+    );
     // store: No permission needed
     map.insert(Resource::QueryStore, PermissionDSL::NoPermissionRequired);
     // master list
