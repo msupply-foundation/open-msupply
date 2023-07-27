@@ -30,9 +30,10 @@ import {
   sumAvailableQuantity,
   getAllocatedQuantity,
 } from './utils';
-import { Draft, DraftItem, useOutbound } from '../../api';
+import { useOutbound } from '../../api';
 import { DraftOutboundLine } from '../../../types';
 import { getPackQuantityCellId } from '../../../utils';
+import { Draft, DraftItem } from 'packages/invoices/src';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
