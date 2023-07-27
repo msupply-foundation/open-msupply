@@ -1,5 +1,9 @@
 [
   {
+    "pkg": "@bcyesil/capacitor-plugin-printer",
+    "classpath": "com.bcyesil.capacitor.printer.PrinterPlugin"
+  },
+  {
     "pkg": "@capacitor-community/barcode-scanner",
     "classpath": "com.getcapacitor.community.barcodescanner.BarcodeScanner"
   },
