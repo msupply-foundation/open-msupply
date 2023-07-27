@@ -21,7 +21,6 @@ export const usePrescriptionLineSelector = <T = PrescriptionRowFragment>(
 export const usePrescriptionLine = (itemId?: string) => {
   const selectItems = useCallback(
     (invoice: PrescriptionRowFragment) => {
-      console.log('invoice: ', invoice);
       return itemId
         ? invoice.lines.nodes.filter(({ item }) => itemId === item.id)
         : invoice.lines.nodes.filter(line => isA.stockOutLine(line));

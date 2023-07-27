@@ -11,7 +11,7 @@ import { DraftOutboundLine } from '../../../types';
 import { PackSizeController, useOutboundLineEditRows } from './hooks';
 import { useOutboundLineEditColumns } from './columns';
 import { shouldUpdatePlaceholder } from './utils';
-import { DraftItem } from 'packages/invoices/src';
+import { DraftItem } from '../../..';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;

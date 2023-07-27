@@ -15,7 +15,7 @@ import {
   OutboundLineFragment,
   PartialStockLineFragment,
 } from '../../../api/operations.generated';
-import { DraftItem } from 'packages/invoices/src';
+import { DraftItem } from '../../../..';
 
 export const createPlaceholderRow = (
   invoiceId: string,
