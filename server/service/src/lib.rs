@@ -36,6 +36,7 @@ pub mod report;
 pub mod requisition;
 pub mod requisition_line;
 pub mod service_provider;
+pub mod sensor;
 pub mod settings;
 pub mod settings_service;
 pub mod static_files;

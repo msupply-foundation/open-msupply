@@ -8,21 +8,21 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::LocationNode;
+use graphql_types::types::SensorNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    location::update::{UpdateLocation, UpdateLocationError as ServiceError},
+    sensor::update::{UpdateSensor, UpdateSensorError as ServiceError},
 };
 
-pub fn update_location(
+pub fn update_sensor(
     ctx: &Context<'_>,
     store_id: &str,
-    input: UpdateLocationInput,
-) -> Result<UpdateLocationResponse> {
+    input: UpdateSensorInput,
+) -> Result<UpdateSensorResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateLocation,
+            resource: Resource::MutateSensor,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -31,74 +31,74 @@ pub fn update_location(
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     match service_provider
-        .location_service
-        .update_location(&service_context, input.into())
+        .sensor_service
+        .update_sensor(&service_context, input.into())
     {
-        Ok(location) => Ok(UpdateLocationResponse::Response(LocationNode::from_domain(
-            location,
+        Ok(sensor) => Ok(UpdateSensorResponse::Response(SensorNode::from_domain(
+            sensor,
         ))),
-        Err(error) => Ok(UpdateLocationResponse::Error(UpdateLocationError {
+        Err(error) => Ok(UpdateSensorResponse::Error(UpdateSensorError {
             error: map_error(error)?,
         })),
     }
 }
 
 #[derive(InputObject)]
-pub struct UpdateLocationInput {
+pub struct UpdateSensorInput {
     pub id: String,
-    pub code: Option<String>,
+    pub serial: Option<String>,
     pub name: Option<String>,
-    pub on_hold: Option<bool>,
+    pub is_active: Option<bool>,
 }
 
-impl From<UpdateLocationInput> for UpdateLocation {
+impl From<UpdateSensorInput> for UpdateSensor {
     fn from(
-        UpdateLocationInput {
+        UpdateSensorInput {
             id,
-            code,
+            serial,
             name,
-            on_hold,
-        }: UpdateLocationInput,
+            is_active,
+        }: UpdateSensorInput,
     ) -> Self {
-        UpdateLocation {
+        UpdateSensor {
             id,
-            code,
+            serial,
             name,
-            on_hold,
+            is_active,
         }
     }
 }
 
 #[derive(SimpleObject)]
-pub struct UpdateLocationError {
-    pub error: UpdateLocationErrorInterface,
+pub struct UpdateSensorError {
+    pub error: UpdateSensorErrorInterface,
 }
 
 #[derive(Union)]
-pub enum UpdateLocationResponse {
-    Error(UpdateLocationError),
-    Response(LocationNode),
+pub enum UpdateSensorResponse {
+    Error(UpdateSensorError),
+    Response(SensorNode),
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
-pub enum UpdateLocationErrorInterface {
-    LocationNotFound(RecordNotFound),
+pub enum UpdateSensorErrorInterface {
+    SensorNotFound(RecordNotFound),
     UniqueValueViolation(UniqueValueViolation),
     RecordBelongsToAnotherStore(RecordBelongsToAnotherStore),
     InternalError(InternalError),
     DatabaseError(DatabaseError),
 }
 
-fn map_error(error: ServiceError) -> Result<UpdateLocationErrorInterface> {
+fn map_error(error: ServiceError) -> Result<UpdateSensorErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Standard Graphql Errors
-        ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::CodeAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::LocationDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
+        ServiceError::SensorDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::SerialAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::SensorDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

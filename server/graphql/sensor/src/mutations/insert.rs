@@ -54,15 +54,15 @@ impl From<InsertSensorInput> for InsertSensor {
         InsertSensorInput {
             id,
             serial,
-            name,
-            is_active,
+            name:_,
+            is_active:_,
         }: InsertSensorInput,
     ) -> Self {
         InsertSensor {
             id,
             serial,
-            name,
-            is_active,
+            name: None,
+            is_active: Some(true),
         }
     }
 }
@@ -78,7 +78,7 @@ pub enum InsertSensorResponse {
 }
 
 #[derive(Interface)]
-#[graphql(field(name = "serial", type = "String"))]
+#[graphql(field(name = "description", type = "String"))]
 pub enum InsertSensorErrorInterface {
     SensorAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),
@@ -195,7 +195,7 @@ mod test {
         let mutation = r#"
               mutation ($input: InsertSensorInput!) {
                   insertSensor(input: $input, storeId: \"store_a\") {
-                    ... on InsertLocationError {
+                    ... on InsertSensorError {
                       error {
                         ... on UniqueValueViolation {
                             __typename
@@ -290,7 +290,11 @@ mod test {
                     name: "name".to_owned(),
                     serial: "serial".to_owned(),
                     is_active: true,
-                    store_id: "store_a".to_owned(),
+                    store_id: Some("store_a".to_owned()),
+                    location_id: None,
+                    log_interval: Some(5),
+                    battery_level: Some(95),
+                    last_connection_timestamp: None,
                 },
             })
         }));

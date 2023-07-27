@@ -1,6 +1,6 @@
 use super::validate::check_sensor_exists;
 use crate::service_provider::ServiceContext;
-use repository::EqualFilter;
+//use repository::EqualFilter;
 use repository::{
     SensorRowRepository, RepositoryError, StorageConnection,
     //StockLine, StockLineFilter, StockLineRepository, 
@@ -49,19 +49,19 @@ pub fn validate(
         Some(sensor_row) => sensor_row,
         None => return Err(DeleteSensorError::SensorDoesNotExist),
     };
-    if sensor_row.store_id != store_id {
+    if sensor_row.store_id != Some(store_id.to_string()) {
         return Err(DeleteSensorError::SensorDoesNotBelongToCurrentStore);
     }
     if let Some(sensor_in_use) = check_sensor_in_use(&input.id, connection)? {
-        return Err(DeleteSensorError::SensorInUse(location_in_use));
+        return Err(DeleteSensorError::SensorInUse(sensor_in_use));
     }
 
     Ok(())
 }
 
 pub fn check_sensor_in_use(
-    id: &str,
-    connection: &StorageConnection,
+    _id: &str,
+    _connection: &StorageConnection,
 ) -> Result<Option<SensorInUse>, RepositoryError> {
     //let stock_lines = StockLineRepository::new(connection).query_by_filter(
     //    StockLineFilter::new().location_id(EqualFilter::equal_to(id)),

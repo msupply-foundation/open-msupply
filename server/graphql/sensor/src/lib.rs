@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{sensor::sensorFilter, EqualFilter, PaginationOption};
+use repository::{sensor::SensorFilter, EqualFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -182,7 +182,16 @@ mod test {
                         name: "test_name".to_owned(),
                         serial: "test_serial".to_owned(),
                         is_active: true,
-                        store_id: "store_a".to_owned(),
+                        store_id: Some("store_a".to_string()),
+                        location_id: None,
+                        battery_level: Some(90),
+                        log_interval: Some(5),
+                        last_connection_timestamp: Some(NaiveDate::from_ymd_opt(2022, 7, 1)
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap()
+                            + Duration::seconds(47046),
+                        )
                     },
                 }],
                 count: 1,

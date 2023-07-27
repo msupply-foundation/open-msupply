@@ -17,6 +17,7 @@ graphql_programs = { path = "programs" }
 graphql_types = { path = "types" }
 graphql_general = { path = "general" }
 graphql_location = { path = "location" }
+graphql_sensor = { path = "sensor" }
 graphql_reports = { path = "reports" }
 graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }

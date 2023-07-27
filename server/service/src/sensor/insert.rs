@@ -67,10 +67,10 @@ pub fn generate(
         serial,
         is_active: is_active.unwrap_or(false),
         store_id: Some(store_id.to_string()),
-        location_id,
-        battery_level,
-        log_interval,
-        last_connection_timestamp,
+        location_id: None,
+        battery_level: Some(99),
+        log_interval: Some(10),
+        last_connection_timestamp: None,
     }
 }
 
