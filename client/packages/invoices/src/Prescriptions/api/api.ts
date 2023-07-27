@@ -65,6 +65,7 @@ const prescriptionParsers = {
     patch: RecordPatch<PrescriptionRowFragment>
   ): UpdatePrescriptionInput => ({
     id: patch.id,
+    clinicianId: patch.clinicianId,
     patientId: patch.otherPartyId,
     colour: patch.colour,
     comment: patch.comment,
