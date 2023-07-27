@@ -340,6 +340,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryPatient,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::PatientQuery),
             PermissionDSL::HasDynamicPermission(
                 Permission::DocumentQuery,
                 CapabilityTag::ContextType,
