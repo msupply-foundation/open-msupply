@@ -373,6 +373,7 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             }
             // patient
             Permissions::EditPatientDetails => {
+                output.insert(Permission::PatientQuery);
                 output.insert(Permission::PatientMutate);
             }
             // items
