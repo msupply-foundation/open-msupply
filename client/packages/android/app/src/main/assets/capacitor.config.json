@@ -11,7 +11,8 @@
   "server": {
     "url": "https://localhost:8000",
     "hostname": "should.notmatch.localhost",
-    "cleartext": true
+    "cleartext": true,
+    "androidScheme": "https"
   },
   "plugins": {}
 }
