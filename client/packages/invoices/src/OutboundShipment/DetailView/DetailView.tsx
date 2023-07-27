@@ -20,9 +20,10 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { Draft, useOutbound } from '../api';
+import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OutboundLineFragment } from '../api/operations.generated';
+import { Draft } from '../..';
 
 export const DetailView: FC = () => {
   const isDisabled = useOutbound.utils.isDisabled();
