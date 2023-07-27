@@ -12,12 +12,12 @@ use crate::programs::{
     program_enrolment::program_schema::SchemaProgramEnrolment,
 };
 
-pub(crate) fn upsert_document(
+pub(crate) fn sync_upsert_document(
     con: &StorageConnection,
     document: &Document,
-    is_sync_update: bool,
 ) -> Result<(), RepositoryError> {
-    DocumentRepository::new(con).insert(document, is_sync_update)?;
+    // TODO comment why only insert here
+    DocumentRepository::new(con).sync_insert(document)?;
 
     let Some(registry) = DocumentRegistryRepository::new(con)
         .query_by_filter(

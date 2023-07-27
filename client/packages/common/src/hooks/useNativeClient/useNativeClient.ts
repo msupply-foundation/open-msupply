@@ -1,6 +1,10 @@
-import { uniqWith } from 'lodash';
 import { useState, useEffect } from 'react';
+import { useMutation } from 'react-query';
+import { uniqWith } from 'lodash';
+import { useNavigate } from '@openmsupply-client/common';
 import { KeepAwake } from '@capacitor-community/keep-awake';
+import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 import {
   getNativeAPI,
   getPreference,
@@ -17,8 +21,6 @@ import {
   NativeAPI,
   NativeMode,
 } from './types';
-import { Capacitor } from '@capacitor/core';
-import { useMutation } from 'react-query';
 import { useAuthContext } from '../../authentication';
 
 declare global {
@@ -43,6 +45,7 @@ export const useNativeClient = ({
   discovery,
 }: { discovery?: boolean; autoconnect?: boolean } = {}) => {
   const nativeAPI = getNativeAPI();
+  const navigate = useNavigate();
   const { token } = useAuthContext();
 
   const setMode = (mode: NativeMode) =>
@@ -115,7 +118,7 @@ export const useNativeClient = ({
 
   const allowSleep = async () => {
     // Currently only supported on native platforms via capacitor
-    if (!Capacitor.isNativePlatform) return;
+    if (!Capacitor.isNativePlatform()) return;
 
     const result = await KeepAwake.isSupported();
     if (result.isSupported) await KeepAwake.allowSleep();
@@ -123,7 +126,7 @@ export const useNativeClient = ({
 
   const keepAwake = async () => {
     // Currently only supported on native platforms via capacitor
-    if (!Capacitor.isNativePlatform) return;
+    if (!Capacitor.isNativePlatform()) return;
 
     const result = await KeepAwake.isSupported();
     if (result.isSupported) await KeepAwake.keepAwake();
@@ -189,6 +192,18 @@ export const useNativeClient = ({
     getPreference('previousServer', '').then(server => {
       if (!!server) setState(state => ({ ...state, previousServer: server }));
     });
+    if (Capacitor.isNativePlatform()) {
+      App.removeAllListeners();
+      App.addListener('backButton', ({ canGoBack }) => {
+        if (canGoBack) navigate(-1);
+      });
+    }
+
+    return () => {
+      if (Capacitor.isNativePlatform()) {
+        App.removeAllListeners();
+      }
+    };
   }, []);
 
   // Auto connect if autoconnect=true and server found matching previousConnectedServer

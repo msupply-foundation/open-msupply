@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   TableProvider,
   DataTable,
@@ -12,6 +11,7 @@ import {
   ReadOnlyCheckboxCell,
   ColumnDataAccessor,
   useAuthContext,
+  useNavigate,
   ColumnDescription,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';

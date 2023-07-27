@@ -79,6 +79,7 @@ pub struct ChangelogFilter {
     pub name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub record_id: Option<EqualFilter<String>>,
+    pub action: Option<EqualFilter<ChangelogAction>>,
     pub is_sync_update: Option<EqualFilter<bool>>,
 }
 
@@ -170,6 +171,7 @@ fn create_filtered_query<'a>(
             store_id,
             record_id,
             is_sync_update,
+            action,
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::dsl::table_name);
@@ -181,6 +183,7 @@ fn create_filtered_query<'a>(
             is_sync_update,
             changelog_deduped::dsl::is_sync_update
         );
+        apply_equal_filter!(query, action, changelog_deduped::dsl::row_action);
     }
 
     query
@@ -227,6 +230,11 @@ impl ChangelogFilter {
         self
     }
 
+    pub fn action(mut self, filter: EqualFilter<ChangelogAction>) -> Self {
+        self.action = Some(filter);
+        self
+    }
+
     pub fn is_sync_update(mut self, filter: EqualFilter<bool>) -> Self {
         self.is_sync_update = Some(filter);
         self
@@ -234,6 +242,12 @@ impl ChangelogFilter {
 }
 
 impl ChangelogTableName {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+    }
+}
+
+impl ChangelogAction {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }

@@ -6,9 +6,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    EqualFilter, NameType, Pagination, SimpleStringFilter, Sort,
+    EqualFilter, NameType, Pagination, Sort, StringFilter,
 };
 
 use diesel::{
@@ -28,22 +28,22 @@ pub struct Name {
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct NameFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
-    pub code: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
     pub is_customer: Option<bool>,
     pub is_supplier: Option<bool>,
     pub is_patient: Option<bool>,
     pub is_store: Option<bool>,
-    pub store_code: Option<SimpleStringFilter>,
+    pub store_code: Option<StringFilter>,
     pub is_visible: Option<bool>,
     pub is_system_name: Option<bool>,
     pub r#type: Option<EqualFilter<NameType>>,
 
-    pub phone: Option<SimpleStringFilter>,
-    pub address1: Option<SimpleStringFilter>,
-    pub address2: Option<SimpleStringFilter>,
-    pub country: Option<SimpleStringFilter>,
-    pub email: Option<SimpleStringFilter>,
+    pub phone: Option<StringFilter>,
+    pub address1: Option<StringFilter>,
+    pub address2: Option<StringFilter>,
+    pub country: Option<StringFilter>,
+    pub email: Option<StringFilter>,
 }
 
 impl EqualFilter<NameType> {
@@ -178,17 +178,17 @@ impl<'a> NameRepository<'a> {
             } = f;
 
             apply_equal_filter!(query, id, name_dsl::id);
-            apply_simple_string_filter!(query, code, name_dsl::code);
+            apply_string_filter!(query, code, name_dsl::code);
 
-            apply_simple_string_filter!(query, name, name_dsl::name_);
-            apply_simple_string_filter!(query, store_code, store_dsl::code);
+            apply_string_filter!(query, name, name_dsl::name_);
+            apply_string_filter!(query, store_code, store_dsl::code);
             apply_equal_filter!(query, r#type, name_dsl::type_);
 
-            apply_simple_string_filter!(query, phone, name_dsl::phone);
-            apply_simple_string_filter!(query, address1, name_dsl::address1);
-            apply_simple_string_filter!(query, address2, name_dsl::address2);
-            apply_simple_string_filter!(query, country, name_dsl::country);
-            apply_simple_string_filter!(query, email, name_dsl::email);
+            apply_string_filter!(query, phone, name_dsl::phone);
+            apply_string_filter!(query, address1, name_dsl::address1);
+            apply_string_filter!(query, address2, name_dsl::address2);
+            apply_string_filter!(query, country, name_dsl::country);
+            apply_string_filter!(query, email, name_dsl::email);
 
             if let Some(is_customer) = is_customer {
                 query = query.filter(name_store_join_dsl::name_is_customer.eq(is_customer));
@@ -265,12 +265,12 @@ impl NameFilter {
         self
     }
 
-    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
@@ -295,7 +295,7 @@ impl NameFilter {
         self
     }
 
-    pub fn store_code(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn store_code(mut self, filter: StringFilter) -> Self {
         self.store_code = Some(filter);
         self
     }
@@ -373,8 +373,8 @@ mod tests {
     use crate::{
         mock::MockDataInserts,
         mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
-        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination,
-        SimpleStringFilter, DEFAULT_PAGINATION_LIMIT,
+        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination, StringFilter,
+        DEFAULT_PAGINATION_LIMIT,
     };
 
     use std::convert::TryFrom;
@@ -580,7 +580,7 @@ mod tests {
                 store_id,
                 NameFilter::new()
                     .is_visible(true)
-                    .name(SimpleStringFilter::like("me_")),
+                    .name(StringFilter::like("me_")),
             )
             .unwrap();
         assert_eq!(result.len(), 2);
@@ -593,7 +593,7 @@ mod tests {
                 store_id,
                 NameFilter::new()
                     .is_visible(true)
-                    .name(SimpleStringFilter::like("mE_")),
+                    .name(StringFilter::like("mE_")),
             )
             .unwrap();
         assert_eq!(result.len(), 2);
@@ -605,7 +605,7 @@ mod tests {
             let result = repo
                 .query_by_filter(
                     store_id,
-                    NameFilter::new().name(SimpleStringFilter::like("T_Ää_N")),
+                    NameFilter::new().name(StringFilter::like("T_Ää_N")),
                 )
                 .unwrap();
             assert_eq!(result.len(), 1);
@@ -618,7 +618,7 @@ mod tests {
                 store_id,
                 NameFilter::new()
                     .is_system_name(true)
-                    .code(SimpleStringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
+                    .code(StringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
             )
             .unwrap();
         assert_eq!(result.len(), 1);
@@ -633,7 +633,7 @@ mod tests {
                 NameFilter::new()
                     .is_visible(true)
                     .is_system_name(true)
-                    .code(SimpleStringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
+                    .code(StringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
             )
             .unwrap();
         assert_eq!(result.len(), 0);
