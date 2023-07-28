@@ -5,17 +5,8 @@ import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
 
-const TextField = (params: TextFieldProps) => {
-  const textInputProps: StandardTextFieldProps = {
-    ...params,
-    variant: 'standard',
-    sx: { width: '150px', ...params.sx },
-  };
-  return <BasicTextInput {...textInputProps} />;
-};
-
 export const TimePickerInput: FC<
-  Omit<TimePickerProps<Date>, 'renderInput' | 'value'> & {
+  Omit<TimePickerProps<Date, Date>, 'renderInput' | 'value'> & {
     onChange(date: Date): void;
     value: Date | string | null;
   }
@@ -45,15 +36,20 @@ export const TimePickerInput: FC<
   return (
     <TimePicker
       disabled={disabled}
-      format="HH:mm"
-      slots={{
-        textField: TextField,
-      }}
-      slotProps={{
-        textField: {
-          disabled: !!disabled,
-          error: isInvalid(internalValue),
-        },
+      inputFormat="HH:mm"
+      renderInput={(params: TextFieldProps) => {
+        const textInputProps: StandardTextFieldProps = {
+          ...params,
+          variant: 'standard',
+          sx: { width: '150px', ...params.sx },
+        };
+        return (
+          <BasicTextInput
+            disabled={!!disabled}
+            {...textInputProps}
+            error={isInvalid(internalValue)}
+          />
+        );
       }}
       {...props}
       onChange={(d: Date | null) => {
