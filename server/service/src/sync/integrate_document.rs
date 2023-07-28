@@ -28,13 +28,13 @@ pub(crate) fn upsert_document(
         return Ok(());
     };
 
-    match registry.r#type {
-        repository::DocumentRegistryType::Patient => update_patient(con, document)?,
-        repository::DocumentRegistryType::ProgramEnrolment => {
+    match registry.category {
+        repository::DocumentRegistryCategory::Patient => update_patient(con, document)?,
+        repository::DocumentRegistryCategory::ProgramEnrolment => {
             update_program_enrolment(con, document)?
         }
-        repository::DocumentRegistryType::Encounter => update_encounter(con, document)?,
-        repository::DocumentRegistryType::Custom => {}
+        repository::DocumentRegistryCategory::Encounter => update_encounter(con, document)?,
+        repository::DocumentRegistryCategory::Custom => {}
     };
     Ok(())
 }

@@ -62,6 +62,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             ALTER TABLE document_registry ADD COLUMN context_id TEXT REFERENCES context(id);
             ALTER TABLE document_registry DROP COLUMN document_context;
+            ALTER TABLE document_registry RENAME COLUMN type TO category;
 
             ALTER TABLE user_permission ADD COLUMN context_id TEXT REFERENCES context(id);
             ALTER TABLE user_permission DROP COLUMN context;
@@ -99,6 +100,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
         ALTER TABLE document_registry RENAME COLUMN document_context TO context_id;
         ALTER TABLE document_registry ADD CONSTRAINT document_registry_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);
+        ALTER TABLE document_registry RENAME COLUMN type TO category;
 
         ALTER TABLE user_permission RENAME COLUMN context TO context_id;
         ALTER TABLE user_permission ADD CONSTRAINT user_permission_context_id_fkey FOREIGN KEY (context_id) REFERENCES context(id);

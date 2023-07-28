@@ -896,6 +896,13 @@ export type DocumentNode = {
   userId: Scalars['String'];
 };
 
+export enum DocumentRegistryCategoryNode {
+  Custom = 'CUSTOM',
+  Encounter = 'ENCOUNTER',
+  Patient = 'PATIENT',
+  ProgramEnrolment = 'PROGRAM_ENROLMENT'
+}
+
 export type DocumentRegistryConnector = {
   __typename: 'DocumentRegistryConnector';
   nodes: Array<DocumentRegistryNode>;
@@ -903,21 +910,21 @@ export type DocumentRegistryConnector = {
 };
 
 export type DocumentRegistryFilterInput = {
+  category?: InputMaybe<EqualFilterDocumentRegistryCategoryInput>;
   contextId?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterDocumentRegistryTypeInput>;
 };
 
 export type DocumentRegistryNode = {
   __typename: 'DocumentRegistryNode';
+  category: DocumentRegistryCategoryNode;
   contextId: Scalars['String'];
   documentType: Scalars['String'];
   formSchemaId: Scalars['String'];
   id: Scalars['String'];
   jsonSchema: Scalars['JSON'];
   name?: Maybe<Scalars['String']>;
-  type: DocumentRegistryTypeNode;
   uiSchema: Scalars['JSON'];
   uiSchemaType: Scalars['String'];
 };
@@ -938,13 +945,6 @@ export type DocumentRegistrySortInput = {
   /** Sort query result by `key` */
   key: DocumentRegistrySortFieldInput;
 };
-
-export enum DocumentRegistryTypeNode {
-  Custom = 'CUSTOM',
-  Encounter = 'ENCOUNTER',
-  Patient = 'PATIENT',
-  ProgramEnrolment = 'PROGRAM_ENROLMENT'
-}
 
 export type DocumentResponse = DocumentConnector;
 
@@ -1082,10 +1082,10 @@ export type EqualFilterBigNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']>;
 };
 
-export type EqualFilterDocumentRegistryTypeInput = {
-  equalAny?: InputMaybe<Array<DocumentRegistryTypeNode>>;
-  equalTo?: InputMaybe<DocumentRegistryTypeNode>;
-  notEqualTo?: InputMaybe<DocumentRegistryTypeNode>;
+export type EqualFilterDocumentRegistryCategoryInput = {
+  equalAny?: InputMaybe<Array<DocumentRegistryCategoryNode>>;
+  equalTo?: InputMaybe<DocumentRegistryCategoryNode>;
+  notEqualTo?: InputMaybe<DocumentRegistryCategoryNode>;
 };
 
 export type EqualFilterEncounterStatusInput = {
@@ -1274,12 +1274,12 @@ export type InsertBarcodeInput = {
 export type InsertBarcodeResponse = BarcodeNode;
 
 export type InsertDocumentRegistryInput = {
+  category: DocumentRegistryCategoryNode;
   contextId: Scalars['String'];
   documentType: Scalars['String'];
   formSchemaId: Scalars['String'];
   id: Scalars['String'];
   name?: InputMaybe<Scalars['String']>;
-  type: DocumentRegistryTypeNode;
 };
 
 export type InsertDocumentResponse = DocumentRegistryNode;

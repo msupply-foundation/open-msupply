@@ -1,7 +1,7 @@
 fragment DocumentRegistry on DocumentRegistryNode {
   __typename
   id
-  type
+  category
   documentType
   contextId
   name
@@ -138,7 +138,7 @@ query encounterFields(
 }
 
 fragment EncounterDocumentRegistry on DocumentRegistryNode {
-  type
+  category
   documentType
   contextId
   formSchemaId

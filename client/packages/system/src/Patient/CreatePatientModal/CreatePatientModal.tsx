@@ -12,7 +12,7 @@ import {
   WizardStepper,
   useTranslation,
   useDebounceCallback,
-  DocumentRegistryTypeNode,
+  DocumentRegistryCategoryNode,
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
@@ -44,7 +44,7 @@ const newPatient = (
 export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { data: documentRegistryResponse } =
     useDocumentRegistry.get.documentRegistries({
-      filter: { type: { equalTo: DocumentRegistryTypeNode.Patient } },
+      filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
     });
 
   const [documentRegistry, setDocumentRegistry] = useState<
