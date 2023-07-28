@@ -33,9 +33,9 @@ pub(crate) fn encounter_fields(
 ) -> Result<ListResult<EncounterFieldsResult>, ListError> {
     // restrict query results to allowed entries
     let mut filter = filter.unwrap_or(EncounterFilter::new());
-    filter.context_id = Some(
+    filter.program_context_id = Some(
         filter
-            .context_id
+            .program_context_id
             .unwrap_or_default()
             .restrict_results(&allowed_ctx),
     );

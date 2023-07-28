@@ -85,7 +85,7 @@ impl EncounterFilterInput {
             document_type: self.r#type.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
             document_data: self.document_data.map(SimpleStringFilter::from),
-            context_id: None,
+            program_context_id: None,
         }
     }
 }
