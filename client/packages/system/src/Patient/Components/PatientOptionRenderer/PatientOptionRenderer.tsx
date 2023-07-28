@@ -5,10 +5,10 @@ import {
   Typography,
   Box,
 } from '@openmsupply-client/common';
-import { PatientRowFragment } from '../../api';
+import { SearchInputPatient } from '../../utils';
 
 export const getPatientOptionRenderer =
-  (): AutocompleteOptionRenderer<PatientRowFragment> => (props, item) =>
+  (): AutocompleteOptionRenderer<SearchInputPatient> => (props, item) =>
     (
       <DefaultAutocompleteItemOption {...props} key={item.id}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>

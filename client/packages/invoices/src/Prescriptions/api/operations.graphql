@@ -43,14 +43,6 @@ fragment PrescriptionRow on InvoiceNode {
     name
     code
     isDeceased
-    programEnrolments {
-      programEnrolmentId
-      document {
-        documentRegistry {
-          name
-        }
-      }
-    }
   }
 
   clinician {

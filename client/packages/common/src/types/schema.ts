@@ -67,6 +67,8 @@ export enum ActivityLogNodeType {
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
+  PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
+  PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   Repack = 'REPACK',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
