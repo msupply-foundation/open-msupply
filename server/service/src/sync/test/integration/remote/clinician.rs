@@ -45,7 +45,6 @@ impl SyncRecordTester for ClinicianRecordTester {
             email: None,
             gender: Some(Gender::Male),
             is_active: true,
-            is_sync_update: true,
         };
 
         let clinician_json = json!({
@@ -62,7 +61,6 @@ impl SyncRecordTester for ClinicianRecordTester {
             id: uuid(),
             store_id: store_row.id.clone(),
             clinician_id: clinician_row.id.clone(),
-            is_sync_update: true,
         };
         let join_json = json!({
             "ID": join_row.id,
@@ -96,7 +94,6 @@ impl SyncRecordTester for ClinicianRecordTester {
             d.mobile = Some("mobile".to_string());
             d.email = Some("email".to_string());
             d.gender = Some(Gender::Female);
-            d.is_sync_update = false;
             d
         });
 
