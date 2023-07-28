@@ -2,13 +2,12 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::GenderInput;
+use graphql_types::types::patient::PatientNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::PatientSearch,
     usize_to_u32,
 };
-
-use crate::types::patient::PatientNode;
 
 #[derive(InputObject, Clone)]
 pub struct PatientSearchInput {

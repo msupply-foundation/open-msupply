@@ -8,7 +8,8 @@
       "url": "http://localhost:3003",
       "sourceMapPathOverrides": {
         "webpack://@openmsupply-client/host/..": "${workspaceRoot}/packages"
-      }
+      },
+      "runtimeArgs": ["-user-data-dir=${userHome}/ChromeDevProfile"]
     }
   ]
 }

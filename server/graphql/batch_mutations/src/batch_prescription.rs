@@ -17,11 +17,11 @@ use crate::{to_standard_error, VecOrNone};
 ))]
 #[graphql(concrete(
     name = "UpdatePrescriptionResponseWithId",
-    params(prescription::UpdateResponse)
+    params(prescription::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeletePrescriptionResponseWithId",
-    params(prescription::DeleteResponse)
+    params(prescription::delete::DeleteResponse)
 ))]
 #[graphql(concrete(
     name = "InsertPrescriptionLineResponseWithId",
@@ -29,11 +29,11 @@ use crate::{to_standard_error, VecOrNone};
 ))]
 #[graphql(concrete(
     name = "UpdatePrescriptionLineResponseWithId",
-    params(prescription_line::UpdateResponse)
+    params(prescription_line::update::UpdateResponse)
 ))]
 #[graphql(concrete(
     name = "DeletePrescriptionLineResponseWithId",
-    params(prescription_line::DeleteResponse)
+    params(prescription_line::delete::DeleteResponse)
 ))]
 
 pub struct MutationWithId<T: OutputType> {
@@ -47,10 +47,12 @@ type ServiceResult = BatchPrescriptionResult;
 type InsertPrescriptionsResponse =
     Option<Vec<MutationWithId<prescription::insert::InsertResponse>>>;
 type InsertLinesResponse = Option<Vec<MutationWithId<prescription_line::insert::InsertResponse>>>;
-type UpdateLinesResponse = Option<Vec<MutationWithId<prescription_line::UpdateResponse>>>;
-type DeleteLinesResponse = Option<Vec<MutationWithId<prescription_line::DeleteResponse>>>;
-type UpdatePrescriptionsResponse = Option<Vec<MutationWithId<prescription::UpdateResponse>>>;
-type DeletePrescriptionsResponse = Option<Vec<MutationWithId<prescription::DeleteResponse>>>;
+type UpdateLinesResponse = Option<Vec<MutationWithId<prescription_line::update::UpdateResponse>>>;
+type DeleteLinesResponse = Option<Vec<MutationWithId<prescription_line::delete::DeleteResponse>>>;
+type UpdatePrescriptionsResponse =
+    Option<Vec<MutationWithId<prescription::update::UpdateResponse>>>;
+type DeletePrescriptionsResponse =
+    Option<Vec<MutationWithId<prescription::delete::DeleteResponse>>>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchPrescriptionResponse")]
@@ -68,9 +70,9 @@ pub struct BatchResponse {
 pub struct BatchInput {
     pub insert_prescriptions: Option<Vec<prescription::insert::InsertInput>>,
     pub insert_prescription_lines: Option<Vec<prescription_line::insert::InsertInput>>,
-    pub update_prescription_lines: Option<Vec<prescription_line::UpdateInput>>,
-    pub delete_prescription_lines: Option<Vec<prescription_line::DeleteInput>>,
-    pub update_prescriptions: Option<Vec<prescription::UpdateInput>>,
+    pub update_prescription_lines: Option<Vec<prescription_line::update::UpdateInput>>,
+    pub delete_prescription_lines: Option<Vec<prescription_line::delete::DeleteInput>>,
+    pub update_prescriptions: Option<Vec<prescription::update::UpdateInput>>,
     pub delete_prescriptions: Option<Vec<String>>,
     pub continue_on_error: Option<bool>,
 }

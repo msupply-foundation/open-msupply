@@ -1,5 +1,6 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
+use graphql_types::types::document::{DocumentNode, RawDocumentNode};
 use repository::{
     DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository, DocumentStatus,
     EqualFilter, StorageConnection,
@@ -14,8 +15,6 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-
-use crate::types::document::{DocumentNode, RawDocumentNode};
 
 #[derive(InputObject)]
 pub struct UpdateDocumentInput {

@@ -1,8 +1,8 @@
 use super::program_row::{program, program::dsl as program_dsl};
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    DBType, ProgramRow, SimpleStringFilter, StorageConnection,
+    DBType, ProgramRow, StorageConnection, StringFilter,
 };
 use crate::{EqualFilter, Pagination, Sort};
 
@@ -13,7 +13,7 @@ pub type Program = ProgramRow;
 #[derive(Clone, Default)]
 pub struct ProgramFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
     pub context_id: Option<EqualFilter<String>>,
 }
 
@@ -93,7 +93,7 @@ fn create_filtered_query(filter: Option<ProgramFilter>) -> BoxedUserProgramQuery
         } = f;
 
         apply_equal_filter!(query, id, program_dsl::id);
-        apply_simple_string_filter!(query, name, program_dsl::name);
+        apply_string_filter!(query, name, program_dsl::name);
         apply_equal_filter!(query, context_id, program_dsl::context_id);
     }
 
@@ -110,7 +110,7 @@ impl ProgramFilter {
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }

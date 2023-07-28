@@ -115,28 +115,6 @@ pub(crate) async fn insert_all_extra_data(
     }
 }
 
-macro_rules! check_record_by_id_ignore_is_sync_update {
-    ($repository:ident, $connection:ident, $comparison_record:ident, $record_type:tt, $record_string:expr) => {{
-        let record = $repository::new(&$connection)
-            .find_one_by_id(&$comparison_record.id)
-            .unwrap()
-            .expect(&format!(
-                "{} row not found: {}",
-                $record_string, $comparison_record.id
-            ));
-        assert_eq!(
-            $record_type {
-                is_sync_update: false,
-                ..record
-            },
-            $record_type {
-                is_sync_update: false,
-                ..$comparison_record
-            }
-        )
-    }};
-}
-
 macro_rules! check_record_by_id {
     ($repository:ident, $connection:ident, $comparison_record:ident, $record_string:expr) => {{
         assert_eq!(
@@ -209,13 +187,7 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_option_id!(StockLineRowRepository, con, record, "StockLine");
             }
             Name(record) => {
-                check_record_by_id_ignore_is_sync_update!(
-                    NameRowRepository,
-                    con,
-                    record,
-                    NameRow,
-                    "Name"
-                );
+                check_record_by_id!(NameRowRepository, con, record, "Name");
             }
             NameTag(record) => {
                 check_record_by_id!(NameTagRowRepository, con, record, "NameTag");
@@ -224,13 +196,7 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_id!(NameTagJoinRepository, con, record, "NameTagJoin");
             }
             NameStoreJoin(record) => {
-                check_record_by_id_ignore_is_sync_update!(
-                    NameStoreJoinRepository,
-                    con,
-                    record,
-                    NameStoreJoinRow,
-                    "NameStoreJoin"
-                );
+                check_record_by_id!(NameStoreJoinRepository, con, record, "NameStoreJoin");
             }
             Invoice(record) => {
                 check_record_by_option_id!(InvoiceRowRepository, con, record, "Invoice");
@@ -313,21 +279,14 @@ pub(crate) async fn check_records_against_database(
             Barcode(record) => check_record_by_id!(BarcodeRowRepository, con, record, "Barcode"),
 
             Clinician(record) => {
-                check_record_by_id_ignore_is_sync_update!(
-                    ClinicianRowRepository,
-                    con,
-                    record,
-                    ClinicianRow,
-                    "Clinician"
-                )
+                check_record_by_option_id!(ClinicianRowRepository, con, record, "Clinician")
             }
 
             ClinicianStoreJoin(record) => {
-                check_record_by_id_ignore_is_sync_update!(
+                check_record_by_option_id!(
                     ClinicianStoreJoinRowRepository,
                     con,
                     record,
-                    ClinicianStoreJoinRow,
                     "ClinicianStoreJoin"
                 )
             }
@@ -382,17 +341,15 @@ pub(crate) async fn check_records_against_database(
             InventoryAdjustmentReason => {
                 check_delete_record_by_id!(InventoryAdjustmentReasonRowRepository, con, id)
             }
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             Location => check_delete_record_by_id!(LocationRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
-            LocationMovement => check_delete_record_by_id!(LocationMovementRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             StockLine => check_delete_record_by_id_option!(StockLineRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             Stocktake => check_delete_record_by_id!(StocktakeRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             StocktakeLine => check_delete_record_by_id!(StocktakeLineRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             ActivityLog => check_delete_record_by_id!(ActivityLogRowRepository, con, id),
         }
     }

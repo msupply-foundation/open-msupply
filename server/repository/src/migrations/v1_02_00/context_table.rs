@@ -125,7 +125,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 #[cfg(test)]
 #[actix_rt::test]
 async fn migration_context_program_upgrade() {
-    use crate::migrations::{v1_01_16::V1_01_16, Migration};
+    use crate::migrations::{v1_01_15::V1_01_15, Migration};
     use crate::mock::MockDataInserts;
     use crate::MasterListRepository;
     use crate::{
@@ -134,7 +134,7 @@ async fn migration_context_program_upgrade() {
     };
     use diesel::prelude::*;
 
-    let prev_version = V1_01_16.version();
+    let prev_version = V1_01_15.version();
 
     // test that the migration adds a context for every program
     let SetupResult { connection, .. } = setup_test(SetupOption {

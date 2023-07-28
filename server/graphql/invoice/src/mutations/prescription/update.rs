@@ -411,6 +411,7 @@ mod test {
                 invoice_row: mock_prescription_a(),
                 name_row: mock_patient(),
                 store_row: mock_store_a(),
+                clinician_row: None,
             })
         }));
 

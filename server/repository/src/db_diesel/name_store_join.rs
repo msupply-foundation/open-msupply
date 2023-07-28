@@ -16,6 +16,13 @@ table! {
         store_id -> Text,
         name_is_customer -> Bool,
         name_is_supplier -> Bool,
+    }
+}
+
+table! {
+    #[sql_name = "name_store_join"]
+    name_store_join_is_sync_update (id) {
+        id -> Text,
         is_sync_update -> Bool,
     }
 }
@@ -28,7 +35,6 @@ pub struct NameStoreJoinRow {
     pub store_id: String,
     pub name_is_customer: bool,
     pub name_is_supplier: bool,
-    pub is_sync_update: bool,
 }
 
 joinable!(name_store_join -> store (store_id));
@@ -49,7 +55,7 @@ impl<'a> NameStoreJoinRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_store_join_dsl::name_store_join)
             .values(row)
             .on_conflict(name_store_join_dsl::id)
@@ -60,10 +66,24 @@ impl<'a> NameStoreJoinRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_store_join_dsl::name_store_join)
             .values(row)
             .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
+        diesel::update(name_store_join_is_sync_update::table.find(id))
+            .set(name_store_join_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
+            .execute(&self.connection.connection)?;
+
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
@@ -98,6 +118,23 @@ impl<'a> NameStoreJoinRepository<'a> {
 
         Ok(result)
     }
+
+    pub fn sync_upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        self.toggle_is_sync_update(&row.id, true)?;
+
+        Ok(())
+    }
+
+    #[cfg(test)]
+    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
+        let result = name_store_join_is_sync_update::table
+            .find(id)
+            .select(name_store_join_is_sync_update::dsl::is_sync_update)
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
 }
 
 type BoxedNameStoreJoinQuery = IntoBoxed<'static, name_store_join::table, DBType>;
@@ -122,5 +159,61 @@ impl NameStoreJoinFilter {
     pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
         self.name_id = Some(filter);
         self
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use util::uuid::uuid;
+
+    use crate::{
+        mock::{mock_name_a, mock_store_a, MockDataInserts},
+        test_db::setup_all,
+        NameStoreJoinRepository, NameStoreJoinRow,
+    };
+
+    #[actix_rt::test]
+    async fn name_store_join_is_sync_update() {
+        let (_, connection, _, _) = setup_all(
+            "name_store_join_is_sync_update",
+            MockDataInserts::none().items().units().names().stores(),
+        )
+        .await;
+
+        let repo = NameStoreJoinRepository::new(&connection);
+
+        let base_row = NameStoreJoinRow {
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            ..Default::default()
+        };
+        // Two rows, to make sure is_sync_update update only affects one row
+        let row = NameStoreJoinRow {
+            id: uuid(),
+            ..base_row.clone()
+        };
+        let row2 = NameStoreJoinRow {
+            id: uuid(),
+            ..base_row.clone()
+        };
+
+        // First insert
+        repo.upsert_one(&row).unwrap();
+        repo.upsert_one(&row2).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+
+        // Synchronisation upsert
+        repo.sync_upsert_one(&row).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+
+        // Normal upsert
+        repo.upsert_one(&row).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
     }
 }

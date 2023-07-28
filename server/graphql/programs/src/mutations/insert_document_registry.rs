@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_types::types::document_registry::{DocumentRegistryCategoryNode, DocumentRegistryNode};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::document_registry::{InsertDocRegistryError, InsertDocumentRegistry},
@@ -8,8 +9,6 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-
-use crate::types::document_registry::{DocumentRegistryCategoryNode, DocumentRegistryNode};
 
 #[derive(InputObject)]
 pub struct InsertDocumentRegistryInput {

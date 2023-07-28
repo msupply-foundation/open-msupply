@@ -18,7 +18,6 @@ table! {
     email -> Nullable<Text>,
     gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
     is_active -> Bool,
-    is_sync_update -> Bool,
   }
 }
 
@@ -37,7 +36,14 @@ pub struct ClinicianRow {
     pub email: Option<String>,
     pub gender: Option<Gender>,
     pub is_active: bool,
-    pub is_sync_update: bool,
+}
+
+table! {
+    #[sql_name = "clinician"]
+    clinician_is_sync_update (id) {
+        id -> Text,
+        is_sync_update -> Bool,
+    }
 }
 
 pub struct ClinicianRowRepository<'a> {
@@ -50,7 +56,7 @@ impl<'a> ClinicianRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician::dsl::clinician)
             .values(row)
             .on_conflict(clinician::dsl::id)
@@ -61,14 +67,31 @@ impl<'a> ClinicianRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         diesel::replace_into(clinician::dsl::clinician)
             .values(row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, row_id: &str) -> Result<Option<ClinicianRow>, RepositoryError> {
+    pub fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        self.toggle_is_sync_update(&row.id, false)?;
+        Ok(())
+    }
+
+    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
+        diesel::update(clinician_is_sync_update::table.find(id))
+            .set(clinician_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
+            .execute(&self.connection.connection)?;
+
+        Ok(())
+    }
+
+    pub fn find_one_by_id_option(
+        &self,
+        row_id: &str,
+    ) -> Result<Option<ClinicianRow>, RepositoryError> {
         let result = clinician::dsl::clinician
             .filter(clinician::dsl::id.eq(row_id))
             .first(&self.connection.connection)
@@ -80,5 +103,69 @@ impl<'a> ClinicianRowRepository<'a> {
         diesel::delete(clinician::dsl::clinician.filter(clinician::dsl::id.eq(row_id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+
+    pub fn sync_upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
+        self._upsert_one(row)?;
+        self.toggle_is_sync_update(&row.id, true)?;
+
+        Ok(())
+    }
+
+    #[cfg(test)]
+    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
+        let result = clinician_is_sync_update::table
+            .find(id)
+            .select(clinician_is_sync_update::dsl::is_sync_update)
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use util::uuid::uuid;
+
+    use crate::{mock::MockDataInserts, test_db::setup_all, ClinicianRow, ClinicianRowRepository};
+
+    #[actix_rt::test]
+    async fn clinician_is_sync_update() {
+        let (_, connection, _, _) = setup_all(
+            "clinician_is_sync_update",
+            MockDataInserts::none().items().units(),
+        )
+        .await;
+
+        let repo = ClinicianRowRepository::new(&connection);
+
+        // Two rows, to make sure is_sync_update update only affects one row
+        let row = ClinicianRow {
+            id: uuid(),
+            ..Default::default()
+        };
+        let row2 = ClinicianRow {
+            id: uuid(),
+            ..Default::default()
+        };
+
+        // First insert
+        repo.upsert_one(&row).unwrap();
+        repo.upsert_one(&row2).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+
+        // Synchronisation upsert
+        repo.sync_upsert_one(&row).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(true)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
+
+        // Normal upsert
+        repo.upsert_one(&row).unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(false)));
     }
 }

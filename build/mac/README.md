@@ -3,7 +3,7 @@
 `NOTE` -> this is for demo and testing purposes only, not to be used in production
 
 ```bash
-# for Intel mac
+# for Intel mac (also works on Arm mac)
 ./build/mac/build.sh intel 
 # or for Arm mac (with demo data)
 ./build/mac/build.sh arm true
