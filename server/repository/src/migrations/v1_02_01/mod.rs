@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 pub(crate) struct V1_02_01;
+mod activity_log;
 
 impl Migration for V1_02_01 {
     fn version(&self) -> Version {
@@ -9,6 +10,7 @@ impl Migration for V1_02_01 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        activity_log::migrate(connection)?;
         Ok(())
     }
 }
