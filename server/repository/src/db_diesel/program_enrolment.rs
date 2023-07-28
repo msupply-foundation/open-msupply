@@ -21,7 +21,7 @@ pub struct ProgramEnrolmentFilter {
     pub status: Option<EqualFilter<ProgramEnrolmentStatus>>,
     pub document_type: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
-    pub context_id: Option<EqualFilter<String>>,
+    pub program_context_id: Option<EqualFilter<String>>,
 }
 
 impl ProgramEnrolmentFilter {
@@ -29,7 +29,7 @@ impl ProgramEnrolmentFilter {
         ProgramEnrolmentFilter {
             patient_id: None,
             program_id: None,
-            context_id: None,
+            program_context_id: None,
             enrolment_datetime: None,
             program_enrolment_id: None,
             status: None,
@@ -44,7 +44,7 @@ impl ProgramEnrolmentFilter {
     }
 
     pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.context_id = Some(filter);
+        self.program_context_id = Some(filter);
         self
     }
 

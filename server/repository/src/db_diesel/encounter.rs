@@ -20,7 +20,7 @@ pub struct EncounterFilter {
     pub id: Option<EqualFilter<String>>,
     pub document_type: Option<EqualFilter<String>>,
     pub patient_id: Option<EqualFilter<String>>,
-    pub context_id: Option<EqualFilter<String>>,
+    pub program_context_id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
@@ -48,7 +48,7 @@ impl EncounterFilter {
     }
 
     pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.context_id = Some(filter);
+        self.program_context_id = Some(filter);
         self
     }
 
@@ -124,7 +124,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             id,
             document_type,
             patient_id,
-            context_id: context,
+            program_context_id: context,
             program_id,
             document_name: name,
             created_datetime,
