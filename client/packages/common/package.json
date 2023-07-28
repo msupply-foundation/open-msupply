@@ -18,7 +18,7 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@mui/lab": "^5.0.0-alpha.59",
-    "@mui/material": "^5.14.2",
+    "@mui/material": "^5.11.13",
     "@openmsupply-client/config": "^0.0.0",
     "autosuggest-highlight": "^3.3.4",
     "currency.js": "^2.0.4",

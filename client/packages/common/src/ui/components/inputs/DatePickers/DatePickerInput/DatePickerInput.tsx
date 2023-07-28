@@ -19,7 +19,7 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
   return (
     <BaseDatePickerInput
       disabled={disabled}
-      format="dd/MM/yyyy"
+      inputFormat="dd/MM/yyyy"
       onChange={onChange}
       value={value || null}
       onError={onError}

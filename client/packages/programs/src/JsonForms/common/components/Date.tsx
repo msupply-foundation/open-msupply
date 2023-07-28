@@ -52,7 +52,7 @@ const UIComponent = (props: ControlProps) => {
           onChange={e => {
             if (e) handleChange(path, dateFormatter(e, 'yyyy-MM-dd'));
           }}
-          format="dd/MM/yyyy"
+          inputFormat="dd/MM/yyyy"
           disabled={!props.enabled}
           error={props.errors ?? zErrors}
           disableFuture={disableFuture}

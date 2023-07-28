@@ -6,17 +6,8 @@ import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 import { DateUtils } from '@common/intl';
 import { useDebounceCallback } from '@common/hooks';
 
-const TextField = (params: TextFieldProps) => {
-  const textInputProps: StandardTextFieldProps = {
-    ...params,
-    variant: 'standard',
-    sx: { width: '150px', ...params.sx },
-  };
-  return <BasicTextInput {...textInputProps} />;
-};
-
 export const DateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date>, 'renderInput' | 'value'> & {
+  Omit<DateTimePickerProps<Date, Date>, 'renderInput' | 'value'> & {
     onChange(date: Date): void;
     value: Date | string | null;
   }
@@ -47,45 +38,50 @@ export const DateTimePickerInput: FC<
   return (
     <DateTimePicker
       disabled={disabled}
-      format="dd/MM/yyyy HH:mm"
-      slots={{
-        textField: TextField,
+      inputFormat="dd/MM/yyyy HH:mm"
+      PopperProps={{
+        sx: {
+          '& .MuiTypography-root.Mui-selected': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+          '& .MuiTypography-root.Mui-selected:hover': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+          '& .Mui-selected:focus': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+          '& .MuiPickersDay-root.Mui-selected': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+        },
       }}
-      slotProps={{
-        popper: {
-          sx: {
-            '& .MuiTypography-root.Mui-selected': {
-              backgroundColor: `${theme.palette.secondary.main}`,
-            },
-            '& .MuiTypography-root.Mui-selected:hover': {
-              backgroundColor: `${theme.palette.secondary.main}`,
-            },
-            '& .Mui-selected:focus': {
-              backgroundColor: `${theme.palette.secondary.main}`,
-            },
-            '& .MuiPickersDay-root.Mui-selected': {
-              backgroundColor: `${theme.palette.secondary.main}`,
-            },
+      PaperProps={{
+        sx: {
+          '& .Mui-selected': {
+            backgroundColor: `${theme.palette.secondary.main}!important`,
+          },
+          '& .Mui-selected:focus': {
+            backgroundColor: `${theme.palette.secondary.main}`,
+          },
+          '& .Mui-selected:hover': {
+            backgroundColor: `${theme.palette.secondary.main}`,
           },
         },
-        desktopPaper: {
-          sx: {
-            '& .Mui-selected': {
-              backgroundColor: `${theme.palette.secondary.main}!important`,
-            },
-            '& .Mui-selected:focus': {
-              backgroundColor: `${theme.palette.secondary.main}`,
-            },
-            '& .Mui-selected:hover': {
-              backgroundColor: `${theme.palette.secondary.main}`,
-            },
-          },
-        },
-        textField: {
-          disabled: !!disabled,
-          error: isInvalid(internalValue),
-          sx: { width: 250 },
-        },
+      }}
+      renderInput={(params: TextFieldProps) => {
+        const textInputProps: StandardTextFieldProps = {
+          ...params,
+          variant: 'standard',
+          sx: { width: '150px', ...params.sx },
+        };
+        return (
+          <BasicTextInput
+            disabled={!!disabled}
+            {...textInputProps}
+            error={isInvalid(internalValue)}
+            sx={{ width: 250 }}
+          />
+        );
       }}
       {...props}
       onChange={(d: Date | null) => {
