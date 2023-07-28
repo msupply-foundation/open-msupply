@@ -97,7 +97,7 @@ impl ProgramEnrolmentNode {
         &self.program_enrolment.0.document_type
     }
 
-    pub async fn context(&self) -> &str {
+    pub async fn context_id(&self) -> &str {
         &self.program_enrolment.1.context_id
     }
 
@@ -152,7 +152,7 @@ impl ProgramEnrolmentNode {
             .map(|f| f.to_domain_filter())
             .unwrap_or(EncounterFilter::new())
             .patient_id(EqualFilter::equal_to(&self.program_enrolment.0.patient_id))
-            .context(EqualFilter::equal_to(&self.program_enrolment.1.context_id));
+            .context_id(EqualFilter::equal_to(&self.program_enrolment.1.context_id));
 
         let entries = ctx
             .service_provider()

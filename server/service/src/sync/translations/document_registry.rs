@@ -26,9 +26,6 @@ struct LegacyDocumentRegistryRow {
     pub document_context: String,
     pub name: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    #[serde(rename = "parent_ID")]
-    pub parent_id: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "form_schema_ID")]
     pub form_schema_id: Option<String>,
     pub config: Option<Value>,
@@ -62,7 +59,6 @@ impl SyncTranslation for DocumentRegistryTranslation {
             document_context,
             r#type,
             name,
-            parent_id,
             form_schema_id,
             config,
         } = serde_json::from_str::<LegacyDocumentRegistryRow>(&sync_record.data)?;
@@ -82,7 +78,6 @@ impl SyncTranslation for DocumentRegistryTranslation {
                 LegacyDocumentType::Custom => DocumentRegistryType::Custom,
             },
             name,
-            parent_id,
             form_schema_id,
             config: config_str,
         };

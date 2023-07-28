@@ -58,8 +58,8 @@ pub struct EncounterFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
-    /// The program name
-    pub program: Option<EqualFilterStringInput>,
+    /// The program id
+    pub program_id: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub start_datetime: Option<DatetimeFilterInput>,
     pub end_datetime: Option<DatetimeFilterInput>,
@@ -74,7 +74,7 @@ impl EncounterFilterInput {
         EncounterFilter {
             id: self.id.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
-            program_id: self.program.map(EqualFilter::from),
+            program_id: self.program_id.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             start_datetime: self.start_datetime.map(DatetimeFilter::from),
             status: self
@@ -85,7 +85,7 @@ impl EncounterFilterInput {
             document_type: self.r#type.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
             document_data: self.document_data.map(SimpleStringFilter::from),
-            context: None,
+            context_id: None,
         }
     }
 }

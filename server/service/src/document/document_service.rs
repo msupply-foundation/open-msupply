@@ -88,7 +88,7 @@ pub trait DocumentServiceTrait: Sync + Send {
     ) -> Result<Option<Document>, RepositoryError> {
         let mut filter = DocumentFilter::new().name(StringFilter::equal_to(name));
         if let Some(allowed_ctx) = allowed_ctx {
-            filter = filter.context(EqualFilter::default().restrict_results(allowed_ctx));
+            filter = filter.context_id(EqualFilter::default().restrict_results(allowed_ctx));
         }
 
         Ok(DocumentRepository::new(&ctx.connection)
@@ -106,9 +106,9 @@ pub trait DocumentServiceTrait: Sync + Send {
     ) -> Result<ListResult<Document>, ListError> {
         let mut filter = filter.unwrap_or(DocumentFilter::new());
         if let Some(allowed_ctx) = allowed_ctx {
-            filter.context = Some(
+            filter.context_id = Some(
                 filter
-                    .context
+                    .context_id
                     .unwrap_or_default()
                     .restrict_results(allowed_ctx),
             );
@@ -129,7 +129,7 @@ pub trait DocumentServiceTrait: Sync + Send {
     ) -> Result<Vec<Document>, DocumentHistoryError> {
         let filter = DocumentFilter::new()
             .name(StringFilter::equal_to(name))
-            .context(EqualFilter::default().restrict_results(allowed_ctx));
+            .context_id(EqualFilter::default().restrict_results(allowed_ctx));
 
         let repo = DocumentRepository::new(&ctx.connection);
         let docs = repo.document_history(Some(filter))?;

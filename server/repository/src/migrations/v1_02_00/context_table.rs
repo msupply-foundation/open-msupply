@@ -12,6 +12,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           id TEXT NOT NULL PRIMARY KEY,
           name TEXT NOT NULL
         );
+        ALTER TABLE document_registry DROP COLUMN parent_id;
         "#
     )?;
 

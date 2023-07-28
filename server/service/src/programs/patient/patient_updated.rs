@@ -173,7 +173,6 @@ mod test {
                 document_type: PATIENT_TYPE.to_string(),
                 context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
-                parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
             })
