@@ -439,7 +439,10 @@ impl Document {
 mod test {
     use util::uuid::uuid;
 
-    use crate::{mock::MockDataInserts, test_db::setup_all, DocumentRepository, DocumentRow};
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, ContextRow, ContextRowRepository,
+        DocumentRepository, DocumentRow,
+    };
 
     #[actix_rt::test]
     async fn document_is_sync_update() {
@@ -449,11 +452,20 @@ mod test {
         )
         .await;
 
+        let context_row = ContextRow {
+            id: "id".to_string(),
+            name: "name".to_string(),
+        };
+        ContextRowRepository::new(&connection)
+            .upsert_one(&context_row)
+            .unwrap();
+
         let repo = DocumentRepository::new(&connection);
 
         let base_row = DocumentRow {
             data: "{}".to_string(),
             parent_ids: "[]".to_string(),
+            context_id: context_row.id.clone(),
             ..Default::default()
         };
 
@@ -466,6 +478,7 @@ mod test {
         let row2 = DocumentRow {
             id: uuid(),
             parent_ids: "[]".to_string(),
+            context_id: context_row.id.clone(),
             ..base_row.clone()
         };
 
