@@ -133,7 +133,7 @@ mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType, EqualFilter,
+        DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter,
         FormSchemaRowRepository, PATIENT_CONTEXT_ID,
     };
     use util::inline_init;
@@ -169,7 +169,7 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "patient_id".to_string(),
-                r#type: DocumentRegistryType::Patient,
+                category: DocumentRegistryCategory::Patient,
                 document_type: PATIENT_TYPE.to_string(),
                 context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,

@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    Document, DocumentFilter, DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository,
-    DocumentRegistryType, DocumentRepository, DocumentStatus, EqualFilter, Pagination,
+    Document, DocumentFilter, DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter,
+    DocumentRegistryRepository, DocumentRepository, DocumentStatus, EqualFilter, Pagination,
     ProgramFilter, ProgramRepository, ProgramRow, RepositoryError, StringFilter, TransactionError,
 };
 
@@ -163,7 +163,7 @@ fn validate_document_type(
 ) -> Result<Option<DocumentRegistry>, RepositoryError> {
     let mut entry = DocumentRegistryRepository::new(&ctx.connection).query_by_filter(
         DocumentRegistryFilter::new()
-            .r#type(DocumentRegistryType::ProgramEnrolment.equal_to())
+            .r#type(DocumentRegistryCategory::ProgramEnrolment.equal_to())
             .document_type(EqualFilter::equal_to(document_type)),
     )?;
     Ok(entry.pop())
@@ -218,9 +218,9 @@ mod test {
     use repository::{
         mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
-        DocumentRepository, FormSchemaRowRepository, Pagination, ProgramEnrolmentRepository,
-        StringFilter, PATIENT_CONTEXT_ID,
+        DocumentFilter, DocumentRegistryCategory, DocumentRegistryRow,
+        DocumentRegistryRowRepository, DocumentRepository, FormSchemaRowRepository, Pagination,
+        ProgramEnrolmentRepository, StringFilter, PATIENT_CONTEXT_ID,
     };
     use serde_json::json;
     use util::inline_init;
@@ -265,7 +265,7 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "patient_id".to_string(),
-                r#type: DocumentRegistryType::Patient,
+                category: DocumentRegistryCategory::Patient,
                 document_type: PATIENT_TYPE.to_string(),
                 context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
@@ -276,7 +276,7 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "program_enrolment_id".to_string(),
-                r#type: DocumentRegistryType::ProgramEnrolment,
+                category: DocumentRegistryCategory::ProgramEnrolment,
                 document_type: enrolment_doc_type.to_string(),
                 context_id: program_context.to_string(),
                 name: None,

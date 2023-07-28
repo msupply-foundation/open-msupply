@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use repository::{
-    DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryType, DocumentStatus,
+    DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository, DocumentStatus,
     EqualFilter, StorageConnection,
 };
 use service::{
@@ -114,14 +114,14 @@ fn validate_document_type(
         DocumentRegistryFilter::new().document_type(EqualFilter::equal_to(&input.r#type)),
     )?;
     for entry in entries {
-        match entry.r#type {
-            DocumentRegistryType::ProgramEnrolment => {
+        match entry.category {
+            DocumentRegistryCategory::ProgramEnrolment => {
                 return Err(StandardGraphqlError::BadUserInput(
                     "Programs need to be updated through the matching endpoint".to_string(),
                 )
                 .extend())
             }
-            DocumentRegistryType::Encounter => {
+            DocumentRegistryCategory::Encounter => {
                 return Err(StandardGraphqlError::BadUserInput(
                     "Encounters need to be updated through the matching endpoint".to_string(),
                 )
@@ -194,7 +194,7 @@ mod graphql {
 
     use repository::{
         mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
-        DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
+        DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository,
         FormSchemaRowRepository,
     };
     use serde_json::json;
@@ -263,7 +263,7 @@ mod graphql {
                 id: "someid".to_string(),
                 document_type: "TestProgramEnrolment".to_string(),
                 context_id: context_program_a().id,
-                r#type: DocumentRegistryType::ProgramEnrolment,
+                category: DocumentRegistryCategory::ProgramEnrolment,
                 name: None,
                 form_schema_id: Some(schema.id),
                 config: None,
@@ -316,7 +316,7 @@ mod graphql {
                 id: "someid".to_string(),
                 document_type: "TestEncounter".to_string(),
                 context_id: context_program_a().id,
-                r#type: DocumentRegistryType::Encounter,
+                category: DocumentRegistryCategory::Encounter,
                 name: None,
                 form_schema_id: Some(schema.id),
                 config: None,

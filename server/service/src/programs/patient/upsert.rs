@@ -1,6 +1,6 @@
 use chrono::Utc;
 use repository::{
-    DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryType,
+    DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
     DocumentStatus, EqualFilter, RepositoryError, TransactionError,
 };
 
@@ -164,7 +164,7 @@ fn validate_document_type(
 ) -> Result<Option<DocumentRegistry>, RepositoryError> {
     let mut entry = DocumentRegistryRepository::new(&ctx.connection).query_by_filter(
         DocumentRegistryFilter::new()
-            .r#type(DocumentRegistryType::Patient.equal_to())
+            .r#type(DocumentRegistryCategory::Patient.equal_to())
             .document_type(EqualFilter::equal_to(PATIENT_TYPE)),
     )?;
     Ok(entry.pop())
@@ -199,9 +199,9 @@ pub mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
-        DocumentRepository, EqualFilter, FormSchemaRowRepository, Pagination, PatientFilter,
-        PatientRepository, StringFilter, PATIENT_CONTEXT_ID,
+        DocumentFilter, DocumentRegistryCategory, DocumentRegistryRow,
+        DocumentRegistryRowRepository, DocumentRepository, EqualFilter, FormSchemaRowRepository,
+        Pagination, PatientFilter, PatientRepository, StringFilter, PATIENT_CONTEXT_ID,
     };
     use serde_json::json;
     use util::inline_init;
@@ -268,7 +268,7 @@ pub mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "patient_id".to_string(),
-                r#type: DocumentRegistryType::Patient,
+                category: DocumentRegistryCategory::Patient,
                 document_type: PATIENT_TYPE.to_string(),
                 context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
