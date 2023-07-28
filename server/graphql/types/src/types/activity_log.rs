@@ -50,6 +50,8 @@ pub enum ActivityLogNodeType {
     Repack,
     PrescriptionCreated,
     PrescriptionDeleted,
+    PrescriptionStatusPicked,
+    PrescriptionStatusVerified,
 }
 
 #[Object]
@@ -151,6 +153,8 @@ impl ActivityLogNodeType {
             from::Repack => to::Repack,
             from::PrescriptionCreated => to::PrescriptionCreated,
             from::PrescriptionDeleted => to::PrescriptionDeleted,
+            from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
+            from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
         }
     }
 
@@ -186,6 +190,8 @@ impl ActivityLogNodeType {
             from::Repack => to::Repack,
             from::PrescriptionCreated => to::PrescriptionCreated,
             from::PrescriptionDeleted => to::PrescriptionDeleted,
+            from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
+            from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
         }
     }
 }

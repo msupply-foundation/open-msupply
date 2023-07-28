@@ -8,6 +8,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"ALTER TYPE activity_log_type ADD VALUE 'PRESCRIPTION_CREATED';
         ALTER TYPE activity_log_type ADD VALUE 'PRESCRIPTION_DELETED';
+        ALTER TYPE activity_log_type ADD VALUE 'PRESCRIPTION_STATUS_PICKED';
+        ALTER TYPE activity_log_type ADD VALUE 'PRESCRIPTION_STATUS_VERIFIED';
         "#
     )?;
 

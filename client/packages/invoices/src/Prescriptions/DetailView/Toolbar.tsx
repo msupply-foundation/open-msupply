@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { PatientSearchInput } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
-import { ClinicianSearchInput } from 'packages/system/src/Clinician';
+import { ClinicianSearchInput } from '../../../../system/src/Clinician';
 
 export const Toolbar: FC = () => {
   const { id, patient, clinician, update } = usePrescription.document.fields([
