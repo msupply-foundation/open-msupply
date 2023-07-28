@@ -29,7 +29,6 @@ pub fn create_patient_name_store_join(
             store_id: store_id.to_string(),
             name_is_customer: true,
             name_is_supplier: false,
-            is_sync_update: false,
         })?;
     }
     Ok(())
@@ -75,7 +74,8 @@ pub fn update_patient_row(
     let name_repo = NameRowRepository::new(con);
     let existing_name = name_repo.find_one_by_id(&id)?;
     let existing_name = existing_name.as_ref();
-    name_repo.upsert_one(&NameRow {
+
+    let name_upsert = NameRow {
         id: id.clone(),
         name: patient_name(&first_name, &last_name),
         code: code.unwrap_or("".to_string()),
@@ -111,8 +111,13 @@ pub fn update_patient_row(
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased.unwrap_or(false),
         national_health_number: code_2,
-        is_sync_update,
-    })?;
+    };
+
+    if is_sync_update {
+        name_repo.sync_upsert_one(&name_upsert)?;
+    } else {
+        name_repo.upsert_one(&name_upsert)?;
+    }
 
     Ok(())
 }

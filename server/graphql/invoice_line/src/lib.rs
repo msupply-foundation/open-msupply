@@ -169,7 +169,7 @@ impl InvoiceLineMutations {
         store_id: String,
         input: prescription_line::update::UpdateInput,
     ) -> Result<prescription_line::update::UpdateResponse> {
-        prescription_line::update(ctx, &store_id, input)
+        prescription_line::update::update(ctx, &store_id, input)
     }
 
     async fn delete_prescription_line(
@@ -178,6 +178,6 @@ impl InvoiceLineMutations {
         store_id: String,
         input: prescription_line::delete::DeleteInput,
     ) -> Result<prescription_line::delete::DeleteResponse> {
-        prescription_line::delete(ctx, &store_id, input)
+        prescription_line::delete::delete(ctx, &store_id, input)
     }
 }

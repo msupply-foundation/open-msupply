@@ -12,14 +12,14 @@ import {
   LoadingButton,
   useNavigate,
 } from '@openmsupply-client/common';
-import { CreateDocument, DocumentHistory } from '@openmsupply-client/programs';
+import { FormInputData, DocumentHistory } from '@openmsupply-client/programs';
 
 interface FooterProps {
   documentName?: string;
   isSaving: boolean;
   isDirty?: boolean;
   validationError?: string | boolean;
-  createDoc?: CreateDocument;
+  inputData?: FormInputData;
   showSaveConfirmation: () => void;
 }
 
@@ -28,7 +28,7 @@ export const Footer: FC<FooterProps> = ({
   isSaving,
   isDirty,
   validationError,
-  createDoc,
+  inputData,
   showSaveConfirmation,
 }) => {
   const t = useTranslation('common');
@@ -72,7 +72,7 @@ export const Footer: FC<FooterProps> = ({
               isLoading={isSaving}
               onClick={showSaveConfirmation}
             >
-              {createDoc ? t('button.create') : t('button.save')}
+              {inputData?.isCreating ? t('button.create') : t('button.save')}
             </LoadingButton>
           </Box>
 

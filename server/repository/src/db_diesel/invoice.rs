@@ -1,21 +1,21 @@
 use super::{
+    clinician_row::{clinician, clinician::dsl as clinician_dsl},
     invoice_line_row::invoice_line::dsl as invoice_line_dsl,
     invoice_row::{invoice, invoice::dsl as invoice_dsl},
     name_row::{name, name::dsl as name_dsl},
     store_row::{store, store::dsl as store_dsl},
-    DBType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, RepositoryError,
+    ClinicianRow, DBType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, RepositoryError,
     StorageConnection, StoreRow,
 };
 
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
-    apply_sort_no_case,
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
 };
 
-use crate::{DatetimeFilter, EqualFilter, Pagination, SimpleStringFilter, Sort};
+use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 
 use diesel::{
-    dsl::{InnerJoin, IntoBoxed},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 use util::inline_init;
@@ -25,19 +25,20 @@ pub struct Invoice {
     pub invoice_row: InvoiceRow,
     pub name_row: NameRow,
     pub store_row: StoreRow,
+    pub clinician_row: Option<ClinicianRow>,
 }
 #[derive(Clone, Default)]
 pub struct InvoiceFilter {
     pub id: Option<EqualFilter<String>>,
     pub invoice_number: Option<EqualFilter<i64>>,
     pub name_id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
     pub store_id: Option<EqualFilter<String>>,
     pub user_id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InvoiceRowType>>,
     pub status: Option<EqualFilter<InvoiceRowStatus>>,
     pub on_hold: Option<bool>,
-    pub comment: Option<SimpleStringFilter>,
+    pub comment: Option<StringFilter>,
     pub their_reference: Option<EqualFilter<String>>,
     pub transport_reference: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
@@ -74,7 +75,7 @@ pub struct InvoiceRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-type InvoiceJoin = (InvoiceRow, NameRow, StoreRow);
+type InvoiceJoin = (InvoiceRow, NameRow, StoreRow, Option<ClinicianRow>);
 
 impl<'a> InvoiceRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -164,25 +165,31 @@ impl<'a> InvoiceRepository<'a> {
             .filter(invoice_dsl::id.eq(record_id))
             .inner_join(name_dsl::name)
             .inner_join(store_dsl::store)
+            .left_join(clinician_dsl::clinician)
             .first::<InvoiceJoin>(&self.connection.connection)?)
     }
 }
 
-fn to_domain((invoice_row, name_row, store_row): InvoiceJoin) -> Invoice {
+fn to_domain((invoice_row, name_row, store_row, clinician_row): InvoiceJoin) -> Invoice {
     Invoice {
         invoice_row,
         name_row,
         store_row,
+        clinician_row,
     }
 }
 
-type BoxedInvoiceQuery =
-    IntoBoxed<'static, InnerJoin<InnerJoin<invoice::table, name::table>, store::table>, DBType>;
+type BoxedInvoiceQuery = IntoBoxed<
+    'static,
+    LeftJoin<InnerJoin<InnerJoin<invoice::table, name::table>, store::table>, clinician::table>,
+    DBType,
+>;
 
 fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
     let mut query = invoice_dsl::invoice
         .inner_join(name_dsl::name)
         .inner_join(store_dsl::store)
+        .left_join(clinician_dsl::clinician)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -214,11 +221,11 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
         apply_equal_filter!(query, id, invoice_dsl::id);
         apply_equal_filter!(query, invoice_number, invoice_dsl::invoice_number);
         apply_equal_filter!(query, name_id, invoice_dsl::name_id);
-        apply_simple_string_filter!(query, name, name_dsl::name_);
+        apply_string_filter!(query, name, name_dsl::name_);
         apply_equal_filter!(query, store_id, invoice_dsl::store_id);
         apply_equal_filter!(query, their_reference, invoice_dsl::their_reference);
         apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
-        apply_simple_string_filter!(query, comment, invoice_dsl::comment);
+        apply_string_filter!(query, comment, invoice_dsl::comment);
         apply_equal_filter!(query, linked_invoice_id, invoice_dsl::linked_invoice_id);
         apply_equal_filter!(query, user_id, invoice_dsl::user_id);
         apply_equal_filter!(query, transport_reference, invoice_dsl::transport_reference);
@@ -372,7 +379,7 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }

@@ -107,7 +107,7 @@ fn create_filtered_query<'a>(filter: Option<ProgramEnrolmentFilter>) -> BoxedPro
         status,
         document_type,
         document_name,
-        context_id: context,
+        program_context_id: context,
     }) = filter
     {
         apply_equal_filter!(query, patient_id, program_enlrolment_dsl::patient_id);

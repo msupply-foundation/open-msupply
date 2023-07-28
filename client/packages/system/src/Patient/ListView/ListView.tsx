@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   TableProvider,
   DataTable,
@@ -8,12 +7,11 @@ import {
   NothingHere,
   useFormatDateTime,
   ColumnAlign,
-  useAlertModal,
-  useTranslation,
   useUrlQueryParams,
   ReadOnlyCheckboxCell,
   ColumnDataAccessor,
   useAuthContext,
+  useNavigate,
   ColumnDescription,
 } from '@openmsupply-client/common';
 import { usePatient, PatientRowFragment } from '../api';
@@ -46,14 +44,8 @@ const PatientListComponent: FC = () => {
   const { setDocumentName } = usePatientStore();
   const { data, isError, isLoading } = usePatient.document.list();
   const pagination = { page, first, offset };
-  const t = useTranslation('patients');
   const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();
-  const alert = useAlertModal({
-    title: t('error.something-wrong'),
-    message: t('messages.no-patient-record'),
-    onOk: () => {},
-  });
 
   const columnDefinitions: ColumnDescription<PatientRowFragment>[] = [
     { key: 'code', label: 'label.patient-id' },
@@ -120,11 +112,7 @@ const PatientListComponent: FC = () => {
         isLoading={isLoading}
         isError={isError}
         onRowClick={row => {
-          if (!row.id || !row.document?.name || !row.document?.type) {
-            alert();
-            return;
-          }
-          setDocumentName(row.document.name);
+          setDocumentName(row.document?.name);
           navigate(String(row.id));
         }}
         noDataElement={<NothingHere />}

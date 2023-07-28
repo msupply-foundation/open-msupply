@@ -1,12 +1,12 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::MasterListNode;
-use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{EqualFilter, PaginationOption, StringFilter};
 use repository::{MasterList, MasterListFilter, MasterListSort};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -43,10 +43,10 @@ impl MasterListSortInput {
 #[derive(InputObject, Clone)]
 pub struct MasterListFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub name: Option<SimpleStringFilterInput>,
-    pub code: Option<SimpleStringFilterInput>,
-    pub description: Option<SimpleStringFilterInput>,
-    pub exists_for_name: Option<SimpleStringFilterInput>,
+    pub name: Option<StringFilterInput>,
+    pub code: Option<StringFilterInput>,
+    pub description: Option<StringFilterInput>,
+    pub exists_for_name: Option<StringFilterInput>,
     pub exists_for_name_id: Option<EqualFilterStringInput>,
     pub exists_for_store_id: Option<EqualFilterStringInput>,
     pub is_program: Option<bool>,
@@ -56,10 +56,10 @@ impl MasterListFilterInput {
     pub fn to_domain(self) -> MasterListFilter {
         MasterListFilter {
             id: self.id.map(EqualFilter::from),
-            name: self.name.map(SimpleStringFilter::from),
-            code: self.code.map(SimpleStringFilter::from),
-            description: self.description.map(SimpleStringFilter::from),
-            exists_for_name: self.exists_for_name.map(SimpleStringFilter::from),
+            name: self.name.map(StringFilter::from),
+            code: self.code.map(StringFilter::from),
+            description: self.description.map(StringFilter::from),
+            exists_for_name: self.exists_for_name.map(StringFilter::from),
             exists_for_name_id: self.exists_for_name_id.map(EqualFilter::from),
             exists_for_store_id: self.exists_for_store_id.map(EqualFilter::from),
             is_program: self.is_program,

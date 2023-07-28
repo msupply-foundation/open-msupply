@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod query {
     use repository::{mock::MockDataInserts, test_db::setup_all, MasterListFilter};
-    use repository::{EqualFilter, SimpleStringFilter};
+    use repository::{EqualFilter, StringFilter};
 
     use crate::service_provider::ServiceProvider;
 
@@ -35,7 +35,7 @@ mod query {
                 None,
                 Some(
                     MasterListFilter::new()
-                        .exists_for_name(SimpleStringFilter::like("e_master_list_filter_te")),
+                        .exists_for_name(StringFilter::like("e_master_list_filter_te")),
                 ),
                 None,
             )
