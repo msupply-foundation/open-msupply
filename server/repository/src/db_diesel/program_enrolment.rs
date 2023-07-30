@@ -5,19 +5,22 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{
+        apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
+        apply_string_filter,
+    },
     DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentRow, ProgramEnrolmentStatus,
-    ProgramRow, RepositoryError, Sort,
+    ProgramRow, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ProgramEnrolmentFilter {
     pub patient_id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
     pub enrolment_datetime: Option<DatetimeFilter>,
-    pub program_enrolment_id: Option<EqualFilter<String>>,
+    pub program_enrolment_id: Option<StringFilter>,
     pub status: Option<EqualFilter<ProgramEnrolmentStatus>>,
     pub document_type: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
@@ -58,7 +61,7 @@ impl ProgramEnrolmentFilter {
         self
     }
 
-    pub fn program_enrolment_id(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn program_enrolment_id(mut self, filter: StringFilter) -> Self {
         self.program_enrolment_id = Some(filter);
         self
     }
@@ -94,7 +97,9 @@ pub type ProgramEnrolmentSort = Sort<ProgramEnrolmentSortField>;
 type BoxedProgramEnrolmentQuery =
     IntoBoxed<'static, InnerJoin<program_enrolment::table, program::table>, DBType>;
 
-fn create_filtered_query<'a>(filter: Option<ProgramEnrolmentFilter>) -> BoxedProgramEnrolmentQuery {
+pub(crate) fn create_filtered_query<'a>(
+    filter: Option<ProgramEnrolmentFilter>,
+) -> BoxedProgramEnrolmentQuery {
     let mut query = program_enlrolment_dsl::program_enrolment
         .inner_join(program_dsl::program)
         .into_boxed();
@@ -118,7 +123,7 @@ fn create_filtered_query<'a>(filter: Option<ProgramEnrolmentFilter>) -> BoxedPro
             enrolment_datetime,
             program_enlrolment_dsl::enrolment_datetime
         );
-        apply_equal_filter!(
+        apply_string_filter!(
             query,
             program_enrolment_id,
             program_enlrolment_dsl::program_enrolment_id

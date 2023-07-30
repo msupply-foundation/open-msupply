@@ -1,17 +1,18 @@
 use super::{
     name_row::{name, name::dsl as name_dsl},
     program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
-    program_row::{program, program::dsl as program_dsl},
     DBType, NameRow, StorageConnection,
 };
 
 use crate::{
+    db_diesel::program_enrolment,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Gender, NameType, Pagination, Sort, StringFilter,
+    DateFilter, EqualFilter, Gender, NameType, Pagination, ProgramEnrolmentFilter, Sort,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -184,22 +185,15 @@ impl<'a> PatientRepository<'a> {
                     name_dsl::national_health_number
                 );
 
-                let mut sub_query = program_enrolment_dsl::program_enrolment
-                    .inner_join(program::table)
-                    .select(program_enrolment_dsl::patient_id)
-                    .into_boxed();
-                apply_string_filter!(
-                    sub_query,
-                    identifier,
-                    program_enrolment_dsl::program_enrolment_id
-                );
-                if let Some(allowed_ctx) = allowed_ctx {
-                    apply_equal_filter!(
-                        sub_query,
-                        Some(EqualFilter::default().restrict_results(allowed_ctx)),
-                        program_dsl::context_id
-                    );
-                }
+                let sub_query =
+                    program_enrolment::create_filtered_query(Some(ProgramEnrolmentFilter {
+                        program_enrolment_id: identifier,
+                        program_context_id: allowed_ctx
+                            .map(|ctxs| EqualFilter::default().restrict_results(ctxs)),
+                        ..Default::default()
+                    }))
+                    .select(program_enrolment_dsl::patient_id);
+
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
             }
 
