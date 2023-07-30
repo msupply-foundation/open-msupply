@@ -16,7 +16,8 @@ use crate::{
 #[derive(Debug, Clone)]
 pub enum PermissionDSL {
     HasPermission(Permission),
-    /// The permission context will be extracted and tagged with the provided tag.
+    /// The matching permission context for the Permission will be extracted and added to the user's
+    /// capabilities.
     HasDynamicPermission(Permission),
     NoPermissionRequired,
     HasStoreAccess,
