@@ -4,9 +4,9 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
     use repository::{
         DocumentRegistry, DocumentRegistryCategory, FormSchema, FormSchemaRowRepository,
-        PATIENT_CONTEXT_ID,
     };
     use serde_json::json;
+    use util::constants::PATIENT_CONTEXT_ID;
 
     use crate::document::document_registry::insert::{
         InsertDocRegistryError, InsertDocumentRegistry,

@@ -1,7 +1,9 @@
+use util::constants::PATIENT_CONTEXT_ID;
+
 use crate::migrations::sql;
 use crate::{
     ContextRow, ContextRowRepository, ProgramFilter, ProgramRepository, ProgramRowRepository,
-    StorageConnection, PATIENT_CONTEXT_ID,
+    StorageConnection,
 };
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {

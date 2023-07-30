@@ -220,14 +220,17 @@ mod test {
         test_db::setup_all,
         DocumentFilter, DocumentRegistryCategory, DocumentRegistryRow,
         DocumentRegistryRowRepository, DocumentRepository, FormSchemaRowRepository, Pagination,
-        ProgramEnrolmentRepository, StringFilter, PATIENT_CONTEXT_ID,
+        ProgramEnrolmentRepository, StringFilter,
     };
     use serde_json::json;
-    use util::inline_init;
+    use util::{
+        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
+        inline_init,
+    };
 
     use crate::{
         programs::{
-            patient::{patient_doc_name, test::mock_patient_1, UpdatePatient, PATIENT_TYPE},
+            patient::{patient_doc_name, test::mock_patient_1, UpdatePatient},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
