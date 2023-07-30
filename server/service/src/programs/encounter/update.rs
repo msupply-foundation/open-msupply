@@ -203,10 +203,12 @@ mod test {
         test_db::setup_all,
         DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository,
         EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
-        PATIENT_CONTEXT_ID,
     };
     use serde_json::json;
-    use util::inline_init;
+    use util::{
+        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
+        inline_init,
+    };
 
     use crate::{
         programs::{
@@ -214,7 +216,7 @@ mod test {
                 encounter_schema::{EncounterStatus, SchemaEncounter},
                 InsertEncounter, UpdateEncounter,
             },
-            patient::{test::mock_patient_1, UpdatePatient, PATIENT_TYPE},
+            patient::{test::mock_patient_1, UpdatePatient},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,

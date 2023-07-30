@@ -3,6 +3,7 @@ use repository::{
     DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
     DocumentStatus, EqualFilter, RepositoryError, TransactionError,
 };
+use util::constants::PATIENT_TYPE;
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
@@ -13,7 +14,7 @@ use super::{
     main_patient_doc_name,
     patient_schema::SchemaPatient,
     patient_updated::{create_patient_name_store_join, update_patient_row},
-    Patient, PatientFilter, PATIENT_TYPE,
+    Patient, PatientFilter,
 };
 
 #[derive(PartialEq, Debug)]
@@ -201,16 +202,19 @@ pub mod test {
         test_db::setup_all,
         DocumentFilter, DocumentRegistryCategory, DocumentRegistryRow,
         DocumentRegistryRowRepository, DocumentRepository, EqualFilter, FormSchemaRowRepository,
-        Pagination, PatientFilter, PatientRepository, StringFilter, PATIENT_CONTEXT_ID,
+        Pagination, PatientFilter, PatientRepository, StringFilter,
     };
     use serde_json::json;
-    use util::inline_init;
+    use util::{
+        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
+        inline_init,
+    };
 
     use crate::{
         programs::patient::{
             main_patient_doc_name,
             patient_schema::{ContactDetails, Gender, SchemaPatient},
-            upsert, PATIENT_TYPE,
+            upsert,
         },
         service_provider::ServiceProvider,
     };

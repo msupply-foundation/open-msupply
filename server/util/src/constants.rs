@@ -25,3 +25,8 @@ pub const SYSTEM_USER_ID: &str = "omsupply_system";
 // Missing program
 // TODO: Delete when soft delete for master list is implemented
 pub const MISSING_PROGRAM: &str = "missing_program";
+
+/// The default document type for a patient
+pub const PATIENT_TYPE: &str = "Patient";
+/// The default context ID for a patient
+pub const PATIENT_CONTEXT_ID: &str = "Patient";

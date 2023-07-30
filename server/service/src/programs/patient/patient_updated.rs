@@ -139,14 +139,17 @@ mod test {
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
         DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter,
-        FormSchemaRowRepository, PATIENT_CONTEXT_ID,
+        FormSchemaRowRepository,
     };
-    use util::inline_init;
+    use util::{
+        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
+        inline_init,
+    };
 
     use crate::{
         programs::patient::{
             patient_schema::{ContactDetails, Gender, SchemaPatient},
-            PatientFilter, UpdatePatient, PATIENT_TYPE,
+            PatientFilter, UpdatePatient,
         },
         service_provider::ServiceProvider,
     };

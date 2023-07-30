@@ -4,7 +4,7 @@ use repository::{
     EqualFilter, Pagination, Permission, RepositoryError, UserPermissionFilter,
     UserPermissionRepository, UserPermissionRow,
 };
-use util::uuid::uuid;
+use util::{constants::PATIENT_CONTEXT_ID, uuid::uuid};
 
 use crate::{
     auth_data::AuthData,
@@ -649,7 +649,7 @@ impl AuthServiceTrait for AuthService {
                 user_id: context.user_id.clone(),
                 store_id: Some(context.store_id.clone()),
                 permission: Permission::DocumentQuery,
-                context_id: Some("Patient".to_string()),
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
             })
         }
         if user_permissions
@@ -662,7 +662,7 @@ impl AuthServiceTrait for AuthService {
                 user_id: context.user_id.clone(),
                 store_id: Some(context.store_id.clone()),
                 permission: Permission::DocumentMutate,
-                context_id: Some("Patient".to_string()),
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
             })
         }
 
