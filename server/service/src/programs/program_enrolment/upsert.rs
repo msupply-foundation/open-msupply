@@ -216,7 +216,7 @@ fn validate(
 mod test {
     use chrono::{DateTime, Timelike, Utc};
     use repository::{
-        mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
+        mock::{context_program_a, mock_form_schema_empty, mock_program_a, MockDataInserts},
         test_db::setup_all,
         DocumentFilter, DocumentRegistryCategory, DocumentRegistryRow,
         DocumentRegistryRowRepository, DocumentRepository, FormSchemaRowRepository, Pagination,
@@ -454,7 +454,7 @@ mod test {
             .unwrap();
         // Test program has been written to the programs table
         let found_program = ProgramEnrolmentRepository::new(&ctx.connection)
-            .find_one_by_type_and_patient(&enrolment_doc_type, &patient.id)
+            .find_one_by_program_id_and_patient(&mock_program_a().id, &patient.id)
             .unwrap()
             .unwrap();
         assert_eq!(program_context, found_program.1.context_id);

@@ -190,15 +190,15 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_type_and_patient(
+    pub fn find_one_by_program_id_and_patient(
         &self,
-        r#type: &str,
+        program_id: &str,
         patient_id: &str,
     ) -> Result<Option<ProgramEnrolment>, RepositoryError> {
         Ok(self
             .query_by_filter(
                 ProgramEnrolmentFilter::new()
-                    .document_type(EqualFilter::equal_to(r#type))
+                    .program_id(EqualFilter::equal_to(program_id))
                     .patient_id(EqualFilter::equal_to(patient_id)),
             )?
             .pop())
