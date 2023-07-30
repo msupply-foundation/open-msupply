@@ -1,7 +1,7 @@
 # Context Table
 
-The motivation of the ` context`` table is link independent tables together.
-For example, the  `user_permissions`, the `program``and the`document` table are independent concepts.
+The motivation of the `context` table is linking independent tables together.
+For example, the `user_permissions`, the `program` and the`document` table are independent concepts.
 The context table makes it possible to put these tables into relations, e.g. a program has a user_permission and is related to a set of document types.
 
 ```mermaid
