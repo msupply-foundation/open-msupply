@@ -1,7 +1,7 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::DocumentLoader,
     map_filter,
     pagination::PaginationInput,
@@ -11,7 +11,7 @@ use graphql_core::{
 use repository::{
     DatetimeFilter, EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolment,
     ProgramEnrolmentFilter, ProgramEnrolmentSort, ProgramEnrolmentSortField,
-    ProgramEnrolmentStatus, ProgramEventFilter, ProgramEventSortField, Sort,
+    ProgramEnrolmentStatus, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
 };
 
 use super::{
@@ -71,7 +71,7 @@ pub struct EqualFilterProgramEnrolmentStatusInput {
 pub struct ProgramEnrolmentFilterInput {
     pub patient_id: Option<EqualFilterStringInput>,
     pub enrolment_datetime: Option<DatetimeFilterInput>,
-    pub program_enrolment_id: Option<EqualFilterStringInput>,
+    pub program_enrolment_id: Option<StringFilterInput>,
     pub status: Option<EqualFilterProgramEnrolmentStatusInput>,
     /// Same as program enrolment document type
     pub r#type: Option<EqualFilterStringInput>,
@@ -93,7 +93,7 @@ impl ProgramEnrolmentFilterInput {
         ProgramEnrolmentFilter {
             patient_id: patient_id.map(EqualFilter::from),
             enrolment_datetime: enrolment_datetime.map(DatetimeFilter::from),
-            program_enrolment_id: program_enrolment_id.map(EqualFilter::from),
+            program_enrolment_id: program_enrolment_id.map(StringFilter::from),
             status: status.map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
             document_name: document_name.map(EqualFilter::from),
             document_type: r#type.map(EqualFilter::from),
