@@ -1213,6 +1213,7 @@ export type FullSyncStatusNode = {
   error?: Maybe<SyncErrorNode>;
   integration?: Maybe<SyncStatusNode>;
   isSyncing: Scalars['Boolean'];
+  lastSuccessfulSync?: Maybe<SyncStatusNode>;
   prepareInitial?: Maybe<SyncStatusNode>;
   pullCentral?: Maybe<SyncStatusWithProgressNode>;
   pullRemote?: Maybe<SyncStatusWithProgressNode>;
@@ -1884,6 +1885,7 @@ export enum InvoiceLineNodeType {
 export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']>;
+  clinician?: Maybe<ClinicianNode>;
   colour?: Maybe<Scalars['String']>;
   comment?: Maybe<Scalars['String']>;
   createdDatetime: Scalars['DateTime'];
@@ -1898,6 +1900,7 @@ export type InvoiceNode = {
   otherPartyId: Scalars['String'];
   otherPartyName: Scalars['String'];
   otherPartyStore?: Maybe<StoreNode>;
+  patient?: Maybe<PatientNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']>;
   pricing: PricingNode;
   /**
