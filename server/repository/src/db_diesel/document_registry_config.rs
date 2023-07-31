@@ -2,6 +2,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EventCondition {
+    /// The condition is evaluated against the data located at the specified field in the document
+    /// data.
+    /// For example, against the data at `extension.myField`.
     pub field: String,
 
     #[serde(rename = "isFalsy")]
@@ -27,23 +30,41 @@ pub struct EventCondition {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EventTarget {
-    /// If not set the current document type and document name is used
-    /// If set the specified document type is used but the document name is not set
+    /// The document type the event is emitted to.
+    /// If not set the current document type is used.
+    /// Note, this option does not affect if the target document name.
     #[serde(rename = "documentType")]
     pub document_type: Option<String>,
+    /// If set to true, the event is targeted to the document that is currently edited.
+    /// For example, an event can be targeted to a specific encounter.
     #[serde(rename = "documentName")]
     pub document_name: Option<bool>,
+    /// The type of the event
     pub r#type: String,
 
+    /// If specified the data field in the document data from where the event data is extracted.
+    /// For example, `extension.myData.field1`.
+    /// Note, this option takes precedence over the `data` option.
     #[serde(rename = "dataField")]
     pub data_field: Option<String>,
+    /// A constant event data value, i.e. the event data.
+    /// This setting can also be used as a fallback if there is no data located at a specified
+    /// `data_field`.
     pub data: Option<String>,
 }
 
+/// Every event config follows the same structure:
+/// - A list of `conditions` to configure when an event should be emitted
+/// - A definition about the event that should be emitted.
+/// - A config type (not in here, see EventConfigEnum)
+/// - A config object specific to the config type,
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct EventConfig<T> {
-    pub conditions: Option<Vec<EventCondition>>,
+    /// Event is extracted when ALL conditions match.
+    pub conditions: Vec<EventCondition>,
+    /// Event config based on the config type.
     pub config: T,
+    /// Specifies which event should be emitted when all conditions are satisfied.
     pub event: EventTarget,
 }
 
@@ -58,11 +79,14 @@ pub struct EventScheduleInConfig {
 pub struct EventScheduleConfig {
     /// Field with the scheduled base time.
     /// If not specified the document base time is used.
+    /// For example, `extension.myData.myDatetime`
     #[serde(rename = "datetimeField")]
     pub datetime_field: Option<String>,
-    /// For developing: force to schedules from now.
+    /// For developing: force to schedule an event from now, e.g. in 1 minute.
     #[serde(rename = "scheduleFromNow")]
     pub schedule_from_now: Option<bool>,
+    /// Specifies when an event should be scheduled based on the datetime value from the
+    /// `datetime_field`.
     #[serde(rename = "scheduleIn")]
     pub schedule_in: EventScheduleInConfig,
 }
@@ -70,7 +94,9 @@ pub struct EventScheduleConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type")]
 pub enum EventConfigEnum {
+    /// Config to schedule an event based on a datetime field in the document data.
     Schedule(EventConfig<EventScheduleConfig>),
+    /// Config to extract a field from the document data and put it into an event.
     Field(EventConfig<Option<()>>),
 }
 
