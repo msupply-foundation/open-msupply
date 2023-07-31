@@ -4,7 +4,7 @@ import {
   DocumentRegistryFilterInput,
   DocumentRegistryNode,
   DocumentRegistrySortFieldInput,
-  DocumentRegistryTypeNode,
+  DocumentRegistryCategoryNode,
   EncounterSortFieldInput,
   InsertEncounterInput,
   InsertProgramEnrolmentInput,
@@ -223,8 +223,8 @@ export const getDocumentRegistryQueries = (sdk: Sdk, storeId: string) => ({
     }> => {
       const result = await sdk.documentRegistries({
         filter: {
-          type: {
-            equalTo: DocumentRegistryTypeNode.ProgramEnrolment,
+          category: {
+            equalTo: DocumentRegistryCategoryNode.ProgramEnrolment,
           },
         },
         sort: {

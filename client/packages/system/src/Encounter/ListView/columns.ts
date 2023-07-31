@@ -6,7 +6,7 @@ import {
   SortBy,
   ColumnDataAccessor,
   EncounterNodeStatus,
-  DocumentRegistryTypeNode,
+  DocumentRegistryCategoryNode,
 } from '@openmsupply-client/common';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
@@ -53,8 +53,8 @@ export const useEncounterListColumns = ({
   const { data: enrolmentRegistries } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
-        type: {
-          equalTo: DocumentRegistryTypeNode.ProgramEnrolment,
+        category: {
+          equalTo: DocumentRegistryCategoryNode.ProgramEnrolment,
         },
       },
     });

@@ -6,7 +6,7 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
-    DocumentRegistryConfig, DocumentRegistryRow, DocumentRegistryType, FormSchemaRow,
+    DocumentRegistryCategory, DocumentRegistryConfig, DocumentRegistryRow, FormSchemaRow,
 };
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
@@ -20,7 +20,7 @@ pub struct DocumentRegistryFilter {
     pub id: Option<EqualFilter<String>>,
     pub document_type: Option<EqualFilter<String>>,
     pub context_id: Option<EqualFilter<String>>,
-    pub r#type: Option<EqualFilter<DocumentRegistryType>>,
+    pub category: Option<EqualFilter<DocumentRegistryCategory>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -40,7 +40,7 @@ pub struct DocumentRegistry {
     pub id: String,
     pub document_type: String,
     pub context_id: String,
-    pub r#type: DocumentRegistryType,
+    pub category: DocumentRegistryCategory,
     pub name: Option<String>,
     pub form_schema_id: String,
     pub json_schema: serde_json::Value,
@@ -82,7 +82,7 @@ impl<'a> DocumentRegistryRepository<'a> {
                     apply_sort_no_case!(query, sort, document_registry_dsl::document_type)
                 }
                 DocumentRegistrySortField::Type => {
-                    apply_sort!(query, sort, document_registry_dsl::type_)
+                    apply_sort!(query, sort, document_registry_dsl::category)
                 }
             }
         } else {
@@ -119,7 +119,7 @@ fn create_filtered_query(filter: Option<DocumentRegistryFilter>) -> BoxedDocRegi
             document_registry_dsl::document_type
         );
         apply_equal_filter!(query, filter.context_id, document_registry_dsl::context_id);
-        apply_equal_filter!(query, filter.r#type, document_registry_dsl::type_);
+        apply_equal_filter!(query, filter.category, document_registry_dsl::category);
     }
 
     query
@@ -131,7 +131,7 @@ impl DocumentRegistryFilter {
             id: None,
             document_type: None,
             context_id: None,
-            r#type: None,
+            category: None,
         }
     }
 
@@ -150,8 +150,8 @@ impl DocumentRegistryFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<DocumentRegistryType>) -> Self {
-        self.r#type = Some(filter);
+    pub fn r#type(mut self, filter: EqualFilter<DocumentRegistryCategory>) -> Self {
+        self.category = Some(filter);
         self
     }
 }
@@ -160,7 +160,7 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
     let (
         DocumentRegistryRow {
             id,
-            r#type,
+            category,
             document_type,
             context_id,
             name,
@@ -193,7 +193,7 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
         id,
         document_type,
         context_id,
-        r#type,
+        category,
         name,
         form_schema_id: form_schema.id,
         json_schema,
@@ -203,8 +203,8 @@ fn to_domain(data: DocumentRegistrySchemaJoin) -> Result<DocumentRegistry, Repos
     })
 }
 
-impl DocumentRegistryType {
-    pub fn equal_to(&self) -> EqualFilter<DocumentRegistryType> {
+impl DocumentRegistryCategory {
+    pub fn equal_to(&self) -> EqualFilter<DocumentRegistryCategory> {
         EqualFilter {
             equal_to: Some(self.clone()),
             not_equal_to: None,

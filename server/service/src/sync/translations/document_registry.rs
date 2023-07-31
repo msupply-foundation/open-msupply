@@ -1,5 +1,5 @@
 use crate::sync::sync_serde::empty_str_as_option_string;
-use repository::{DocumentRegistryRow, DocumentRegistryType, StorageConnection, SyncBufferRow};
+use repository::{DocumentRegistryCategory, DocumentRegistryRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -71,11 +71,11 @@ impl SyncTranslation for DocumentRegistryTranslation {
             id,
             document_type,
             context_id: document_context,
-            r#type: match r#type {
-                LegacyDocumentType::Patient => DocumentRegistryType::Patient,
-                LegacyDocumentType::ProgramEnrolment => DocumentRegistryType::ProgramEnrolment,
-                LegacyDocumentType::Encounter => DocumentRegistryType::Encounter,
-                LegacyDocumentType::Custom => DocumentRegistryType::Custom,
+            category: match r#type {
+                LegacyDocumentType::Patient => DocumentRegistryCategory::Patient,
+                LegacyDocumentType::ProgramEnrolment => DocumentRegistryCategory::ProgramEnrolment,
+                LegacyDocumentType::Encounter => DocumentRegistryCategory::Encounter,
+                LegacyDocumentType::Custom => DocumentRegistryCategory::Custom,
             },
             name,
             form_schema_id,
