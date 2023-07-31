@@ -54,6 +54,9 @@ const useHostSync = () => {
     latestSyncDate: DateUtils.getDateOrNull(
       syncStatus?.summary.started || null
     ),
+    latestSuccessfulSyncDate: DateUtils.getDateOrNull(
+      syncStatus?.lastSuccessfulSync?.started || null
+    ),
     onManualSync,
     syncStatus,
     numberOfRecordsInPushQueue,
@@ -66,6 +69,7 @@ export const Sync: React.FC = () => {
   const {
     syncStatus,
     latestSyncDate,
+    latestSuccessfulSyncDate,
     numberOfRecordsInPushQueue,
     isLoading,
     onManualSync,
@@ -79,6 +83,19 @@ export const Sync: React.FC = () => {
       <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
         {`( ${t('messages.ago', {
           time: localisedDistanceToNow(latestSyncDate),
+        })} )`}
+      </Grid>
+    </Grid>
+  ) : null;
+
+  const formattedLatestSuccessfulSyncDate = latestSuccessfulSyncDate ? (
+    <Grid display="flex" container gap={1}>
+      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
+        {Formatter.sentenceCase(relativeDateTime(latestSuccessfulSyncDate))}
+      </Grid>
+      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
+        {`( ${t('messages.ago', {
+          time: localisedDistanceToNow(latestSuccessfulSyncDate),
         })} )`}
       </Grid>
     </Grid>
@@ -100,6 +117,9 @@ export const Sync: React.FC = () => {
           <Typography>{numberOfRecordsInPushQueue}</Typography>
         </Row>
         <Row title={t('sync-info.last-sync')}>{formattedLatestSyncDate}</Row>
+        <Row title={t('sync-info.last-successful-sync')}>
+          {formattedLatestSuccessfulSyncDate}
+        </Row>
         <Row>
           <LoadingButton
             isLoading={isLoading}
