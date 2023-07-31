@@ -117,9 +117,11 @@ export const Sync: React.FC = () => {
           <Typography>{numberOfRecordsInPushQueue}</Typography>
         </Row>
         <Row title={t('sync-info.last-sync')}>{formattedLatestSyncDate}</Row>
-        <Row title={t('sync-info.last-successful-sync')}>
-          {formattedLatestSuccessfulSyncDate}
-        </Row>
+        {!syncStatus?.summary?.finished ? (
+          <Row title={t('sync-info.last-successful-sync')}>
+            {formattedLatestSuccessfulSyncDate}
+          </Row>
+        ) : null}
         <Row>
           <LoadingButton
             isLoading={isLoading}
