@@ -4,8 +4,6 @@ use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
-pub const PATIENT_CONTEXT_ID: &str = "Patient";
-
 table! {
     context (id) {
         id -> Text,

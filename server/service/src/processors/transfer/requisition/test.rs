@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use chrono::NaiveDate;
 use repository::{
     mock::{insert_extra_mock_data, MockData, MockDataInserts},
@@ -128,6 +130,77 @@ pub(crate) struct RequisitionTransferTester {
     request_requisition_line1: RequisitionLineRow,
     request_requisition_line2: RequisitionLineRow,
     response_requisition: Option<RequisitionRow>,
+}
+
+/// Deleted requisitions stuck forever
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn stock_on_deleted_requisitions() {
+    let site_id = 25;
+    let store_name = inline_init(|r: &mut NameRow| {
+        r.id = uuid();
+        r.name = uuid();
+    });
+
+    let store = inline_init(|r: &mut StoreRow| {
+        r.id = uuid();
+        r.name_id = store_name.id.clone();
+        r.site_id = site_id;
+    });
+
+    let requisition = RequisitionRow {
+        id: uuid(),
+        requisition_number: 3,
+        name_id: store.name_id.clone(),
+        store_id: store.id.clone(),
+        r#type: RequisitionRowType::Request,
+        ..RequisitionRow::default()
+    };
+
+    let site_id_settings = inline_init(|r: &mut KeyValueStoreRow| {
+        r.id = KeyValueType::SettingsSyncSiteId;
+        r.value_int = Some(site_id);
+    });
+
+    let ServiceTestContext {
+        service_provider,
+        processors_task,
+        connection,
+        ..
+    } = setup_all_with_data_and_service_provider(
+        "stock_on_deleted_requisitions",
+        MockDataInserts::none().stores().names().items().units(),
+        inline_init(|r: &mut MockData| {
+            r.names = vec![store_name.clone()];
+            r.stores = vec![store.clone()];
+            r.requisitions = vec![requisition.clone()];
+            r.key_value_store_rows = vec![site_id_settings];
+        }),
+    )
+    .await;
+
+    RequisitionRowRepository::new(&connection)
+        .delete(&requisition.id)
+        .unwrap();
+
+    // 1 second delay, to allow processor_task to finish
+    let sleep_task = tokio::time::sleep(Duration::from_secs(1));
+    let service_provider_closure = service_provider.clone();
+    let trigger_and_wait = tokio::spawn(async move {
+        let ctx = service_provider_closure.basic_context().unwrap();
+
+        ctx.processors_trigger
+            .requisition_transfer
+            .try_send(())
+            .unwrap();
+
+        ctx.processors_trigger.await_events_processed().await;
+    });
+
+    tokio::select! {
+         Err(err) = processors_task => unreachable!("{}", err),
+         _ = sleep_task => assert!(false, "Sleep task finished before processor. Processor is stuck on delete record"),
+         Ok(_) = trigger_and_wait => assert!(true),
+    };
 }
 
 impl RequisitionTransferTester {

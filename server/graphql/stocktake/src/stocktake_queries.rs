@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput,
-    SimpleStringFilterInput,
+    StringFilterInput,
 };
 use graphql_core::pagination::PaginationInput;
 use graphql_core::simple_generic_errors::{
@@ -52,8 +52,8 @@ pub struct StocktakeFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub user_id: Option<EqualFilterStringInput>,
     pub stocktake_number: Option<EqualFilterBigNumberInput>,
-    pub comment: Option<SimpleStringFilterInput>,
-    pub description: Option<SimpleStringFilterInput>,
+    pub comment: Option<StringFilterInput>,
+    pub description: Option<StringFilterInput>,
     pub status: Option<EqualFilterStocktakeStatusInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub stocktake_date: Option<DateFilterInput>,
@@ -226,8 +226,8 @@ impl From<StocktakeFilterInput> for StocktakeFilter {
             store_id: None,
             user_id: f.user_id.map(EqualFilter::from),
             stocktake_number: f.stocktake_number.map(EqualFilter::from),
-            comment: f.comment.map(SimpleStringFilter::from),
-            description: f.description.map(SimpleStringFilter::from),
+            comment: f.comment.map(StringFilter::from),
+            description: f.description.map(StringFilter::from),
             status: f
                 .status
                 .map(|t| map_filter!(t, StocktakeNodeStatus::to_domain)),

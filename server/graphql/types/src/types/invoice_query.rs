@@ -1,10 +1,12 @@
-use super::{InvoiceLineConnector, NameNode, RequisitionNode, StoreNode, UserNode};
+use super::patient::PatientNode;
+use super::{ClinicianNode, InvoiceLineConnector, NameNode, RequisitionNode, StoreNode, UserNode};
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, UserLoader,
+    ClinicianLoader, ClinicianLoaderInput, InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader,
+    NameByIdLoaderInput, PatientLoader, UserLoader,
 };
 use graphql_core::{
     loader::{InvoiceStatsLoader, NameByIdLoader, RequisitionsByIdLoader, StoreByIdLoader},
@@ -266,6 +268,42 @@ impl InvoiceNode {
             ))
             .extend(),
         )
+    }
+
+    pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
+        let clinician_id = if let Some(clinician_id) = &self.row().clinician_id {
+            clinician_id
+        } else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
+        Ok(loader
+            .load_one(ClinicianLoaderInput::new(
+                &self.row().store_id,
+                &clinician_id,
+            ))
+            .await?
+            .map(ClinicianNode::from_domain))
+    }
+
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
+
+        let result = loader
+            .load_one(self.row().name_id.clone())
+            .await?
+            .map(|patient| PatientNode {
+                store_id: self.row().store_id.clone(),
+                allowed_ctx: vec![],
+                patient,
+            })
+            .ok_or(Error::new(format!(
+                "Failed to load patient: {}",
+                self.row().name_id
+            )))?;
+
+        Ok(Some(result))
     }
 }
 

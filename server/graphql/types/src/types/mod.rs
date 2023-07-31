@@ -78,6 +78,9 @@ pub use self::store_preference::*;
 pub mod repack;
 pub use self::repack::*;
 
+pub mod program;
+pub use self::program::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
