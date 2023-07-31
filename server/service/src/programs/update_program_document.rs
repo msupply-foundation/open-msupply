@@ -216,10 +216,7 @@ fn match_condition(condition: &EventCondition, doc: &Document) -> bool {
     false
 }
 
-fn match_all_conditions(conditions: Option<Vec<EventCondition>>, doc: &Document) -> bool {
-    let Some(conditions) = conditions else {
-        return false;
-    };
+fn match_all_conditions(conditions: Vec<EventCondition>, doc: &Document) -> bool {
     conditions
         .into_iter()
         .all(|condition| match_condition(&condition, doc))
