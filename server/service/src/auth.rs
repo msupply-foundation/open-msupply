@@ -4,6 +4,7 @@ use repository::{
     EqualFilter, Pagination, Permission, RepositoryError, UserPermissionFilter,
     UserPermissionRepository, UserPermissionRow,
 };
+use util::{constants::PATIENT_CONTEXT_ID, uuid::uuid};
 
 use crate::{
     auth_data::AuthData,
@@ -12,20 +13,12 @@ use crate::{
     token::{JWTValidationError, OmSupplyClaim, TokenService},
 };
 
-/// The enum provides some tags that can be used to tag dynamic permissions.
-/// This decouples the user permissions from the user's service capabilities.
-/// This can also be useful if there would be resources with multiple types of dynamic permissions.
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub enum CapabilityTag {
-    /// Tags the list of capabilities to access documents by type
-    ContextType,
-}
-
 #[derive(Debug, Clone)]
 pub enum PermissionDSL {
     HasPermission(Permission),
-    /// The permission context will be extracted and tagged with the provided tag.
-    HasDynamicPermission(Permission, CapabilityTag),
+    /// The matching permission context for the Permission will be extracted and added to the user's
+    /// capabilities.
+    HasDynamicPermission(Permission),
     NoPermissionRequired,
     HasStoreAccess,
     And(Vec<PermissionDSL>),
@@ -305,25 +298,22 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // TODO add permissions from central
     map.insert(
         Resource::QueryDocument,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentQuery, CapabilityTag::ContextType),
+        PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
     );
     map.insert(
         Resource::MutateDocument,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate, CapabilityTag::ContextType),
+        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
     );
     map.insert(
         Resource::QueryDocumentRegistry,
         PermissionDSL::And(vec![
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
             PermissionDSL::HasStoreAccess,
         ]),
     );
     map.insert(
         Resource::MutateDocumentRegistry,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate, CapabilityTag::ContextType),
+        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
     );
     map.insert(
         Resource::QueryJsonSchema,
@@ -340,10 +330,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::PatientQuery),
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
         ]),
     );
     map.insert(
@@ -352,50 +339,35 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::PatientMutate),
             // permission to read the related doc types when reading the mutated patient
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::QueryProgram,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::QueryEncounter,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::MutateProgram,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentMutate,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
         ]),
     );
     map.insert(
         Resource::MutateEncounter,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentMutate,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
         ]),
     );
 
@@ -502,23 +474,13 @@ pub fn validate_auth(
 pub struct ValidatedUser {
     pub user_id: String,
     pub claims: OmSupplyClaim,
-    /// Contains a list of user capabilities grouped by tags
-    capabilities: HashMap<CapabilityTag, Vec<String>>,
+    /// Contains a list of user permission contexts
+    capabilities: Vec<String>,
 }
 
 impl<'a> ValidatedUser {
-    /// Returns a list of capabilities for a given CapabilityTag, e.g. which documents a user can
-    /// access.
-    pub fn capabilities(&'a self, tag: CapabilityTag) -> &'a Vec<String> {
-        if let Some(contexts) = self.capabilities.get(&tag) {
-            return contexts;
-        }
-        // This is really a dev error and should be caught by minimal testing. Moreover, the panic
-        // only kills the frontend request but doesn't kill the server.
-        panic!(
-            "Dev error: dynamic permission tag {:?} is not defined in the permission DSL",
-            tag
-        );
+    pub fn capabilities(&'a self) -> &'a Vec<String> {
+        &self.capabilities
     }
 }
 
@@ -535,7 +497,7 @@ fn validate_resource_permissions(
     user_permissions: &[UserPermissionRow],
     resource_request: &ResourceAccessRequest,
     required_permissions: &PermissionDSL,
-    dynamic_permissions: &mut HashMap<CapabilityTag, Vec<String>>,
+    dynamic_permissions: &mut Vec<String>,
 ) -> Result<(), String> {
     // When this code runs, user_permissions have already been filtered by store (if specified).
     // It is possible to mis-configure an API call and not specify a store_id when it is required which could result in incorrect permssion evaluation.
@@ -556,12 +518,7 @@ fn validate_resource_permissions(
             }
             return Err(format!("Missing permission: {:?}", permission));
         }
-        PermissionDSL::HasDynamicPermission(permission, tag) => {
-            // Always add an entry for the tag. This is later used to verify that the dev used
-            // ValidatedUser::capabilities with the correct parameter that matches the entry in the
-            // DSL
-            let capabilities = dynamic_permissions.entry(tag.clone()).or_insert(vec![]);
-
+        PermissionDSL::HasDynamicPermission(permission) => {
             let user_permissions = user_permissions
                 .into_iter()
                 .filter(|p| &p.permission == permission)
@@ -574,7 +531,7 @@ fn validate_resource_permissions(
                 .filter_map(|p| p.context_id.clone())
                 .collect::<Vec<_>>();
 
-            capabilities.append(&mut contexts);
+            dynamic_permissions.append(&mut contexts);
 
             return Ok(());
         }
@@ -674,11 +631,40 @@ impl AuthServiceTrait for AuthService {
         if let Some(store_id) = &resource_request.store_id {
             permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
         }
-        let user_permissions = UserPermissionRepository::new(&connection).query(
+        let mut user_permissions = UserPermissionRepository::new(&connection).query(
             Pagination::all(),
             Some(permission_filter),
             None,
         )?;
+
+        // Dynamically add Patient context permissions if the user has PatientQuery/PatientMutate
+        // permissions.
+        if user_permissions
+            .iter()
+            .find(|item| item.permission == Permission::PatientQuery)
+            .is_some()
+        {
+            user_permissions.push(UserPermissionRow {
+                id: uuid(),
+                user_id: context.user_id.clone(),
+                store_id: Some(context.store_id.clone()),
+                permission: Permission::DocumentQuery,
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
+            })
+        }
+        if user_permissions
+            .iter()
+            .find(|item| item.permission == Permission::PatientMutate)
+            .is_some()
+        {
+            user_permissions.push(UserPermissionRow {
+                id: uuid(),
+                user_id: context.user_id.clone(),
+                store_id: Some(context.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
+            })
+        }
 
         let required_permissions = match self.resource_permissions.get(&resource_request.resource) {
             Some(required_permissions) => required_permissions,
@@ -691,7 +677,7 @@ impl AuthServiceTrait for AuthService {
             }
         };
 
-        let mut dynamic_permissions = HashMap::new();
+        let mut dynamic_permissions = Vec::new();
         match validate_resource_permissions(
             &validated_auth.user_id,
             &user_permissions,
@@ -705,7 +691,7 @@ impl AuthServiceTrait for AuthService {
                     return Ok(ValidatedUser {
                         user_id: validated_auth.user_id,
                         claims: validated_auth.claims,
-                        capabilities: HashMap::new(),
+                        capabilities: Vec::new(),
                     });
                 }
                 return Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
@@ -731,8 +717,6 @@ impl From<RepositoryError> for AuthError {
 
 #[cfg(test)]
 mod validate_resource_permissions_test {
-    use std::collections::HashMap;
-
     use repository::{Permission, UserPermissionRow};
 
     use super::{validate_resource_permissions, PermissionDSL, Resource, ResourceAccessRequest};
@@ -755,7 +739,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_err());
 
@@ -772,7 +756,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -784,7 +768,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -798,7 +782,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -811,7 +795,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_err());
 
@@ -832,7 +816,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_err());
 
@@ -862,7 +846,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -895,7 +879,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -918,7 +902,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -951,7 +935,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -976,7 +960,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
     }

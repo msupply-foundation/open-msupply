@@ -437,16 +437,16 @@ export type ClinicianConnector = {
 };
 
 export type ClinicianFilterInput = {
-  address1?: InputMaybe<SimpleStringFilterInput>;
-  address2?: InputMaybe<SimpleStringFilterInput>;
-  code?: InputMaybe<SimpleStringFilterInput>;
-  email?: InputMaybe<SimpleStringFilterInput>;
-  firstName?: InputMaybe<SimpleStringFilterInput>;
+  address1?: InputMaybe<StringFilterInput>;
+  address2?: InputMaybe<StringFilterInput>;
+  code?: InputMaybe<StringFilterInput>;
+  email?: InputMaybe<StringFilterInput>;
+  firstName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  initials?: InputMaybe<SimpleStringFilterInput>;
-  lastName?: InputMaybe<SimpleStringFilterInput>;
-  mobile?: InputMaybe<SimpleStringFilterInput>;
-  phone?: InputMaybe<SimpleStringFilterInput>;
+  initials?: InputMaybe<StringFilterInput>;
+  lastName?: InputMaybe<StringFilterInput>;
+  mobile?: InputMaybe<StringFilterInput>;
+  phone?: InputMaybe<StringFilterInput>;
 };
 
 export type ClinicianNode = {
@@ -873,7 +873,7 @@ export type DocumentFilterInput = {
    * 	This filter makes it possible to search the raw text json data.
    * Be beware of potential performance issues.
    */
-  data?: InputMaybe<SimpleStringFilterInput>;
+  data?: InputMaybe<StringFilterInput>;
   datetime?: InputMaybe<DatetimeFilterInput>;
   name?: InputMaybe<EqualFilterStringInput>;
   owner?: InputMaybe<EqualFilterStringInput>;
@@ -896,6 +896,13 @@ export type DocumentNode = {
   userId: Scalars['String'];
 };
 
+export enum DocumentRegistryCategoryNode {
+  Custom = 'CUSTOM',
+  Encounter = 'ENCOUNTER',
+  Patient = 'PATIENT',
+  ProgramEnrolment = 'PROGRAM_ENROLMENT'
+}
+
 export type DocumentRegistryConnector = {
   __typename: 'DocumentRegistryConnector';
   nodes: Array<DocumentRegistryNode>;
@@ -903,21 +910,21 @@ export type DocumentRegistryConnector = {
 };
 
 export type DocumentRegistryFilterInput = {
+  category?: InputMaybe<EqualFilterDocumentRegistryCategoryInput>;
   contextId?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  type?: InputMaybe<EqualFilterDocumentRegistryTypeInput>;
 };
 
 export type DocumentRegistryNode = {
   __typename: 'DocumentRegistryNode';
+  category: DocumentRegistryCategoryNode;
   contextId: Scalars['String'];
   documentType: Scalars['String'];
   formSchemaId: Scalars['String'];
   id: Scalars['String'];
   jsonSchema: Scalars['JSON'];
   name?: Maybe<Scalars['String']>;
-  type: DocumentRegistryTypeNode;
   uiSchema: Scalars['JSON'];
   uiSchemaType: Scalars['String'];
 };
@@ -938,13 +945,6 @@ export type DocumentRegistrySortInput = {
   /** Sort query result by `key` */
   key: DocumentRegistrySortFieldInput;
 };
-
-export enum DocumentRegistryTypeNode {
-  Custom = 'CUSTOM',
-  Encounter = 'ENCOUNTER',
-  Patient = 'PATIENT',
-  ProgramEnrolment = 'PROGRAM_ENROLMENT'
-}
 
 export type DocumentResponse = DocumentConnector;
 
@@ -1003,7 +1003,7 @@ export type EncounterFieldsResponse = EncounterFieldsConnector;
 export type EncounterFilterInput = {
   clinicianId?: InputMaybe<EqualFilterStringInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  documentData?: InputMaybe<SimpleStringFilterInput>;
+  documentData?: InputMaybe<StringFilterInput>;
   documentName?: InputMaybe<EqualFilterStringInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -1082,10 +1082,10 @@ export type EqualFilterBigNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']>;
 };
 
-export type EqualFilterDocumentRegistryTypeInput = {
-  equalAny?: InputMaybe<Array<DocumentRegistryTypeNode>>;
-  equalTo?: InputMaybe<DocumentRegistryTypeNode>;
-  notEqualTo?: InputMaybe<DocumentRegistryTypeNode>;
+export type EqualFilterDocumentRegistryCategoryInput = {
+  equalAny?: InputMaybe<Array<DocumentRegistryCategoryNode>>;
+  equalTo?: InputMaybe<DocumentRegistryCategoryNode>;
+  notEqualTo?: InputMaybe<DocumentRegistryCategoryNode>;
 };
 
 export type EqualFilterEncounterStatusInput = {
@@ -1274,12 +1274,12 @@ export type InsertBarcodeInput = {
 export type InsertBarcodeResponse = BarcodeNode;
 
 export type InsertDocumentRegistryInput = {
+  category: DocumentRegistryCategoryNode;
   contextId: Scalars['String'];
   documentType: Scalars['String'];
   formSchemaId: Scalars['String'];
   id: Scalars['String'];
   name?: InputMaybe<Scalars['String']>;
-  type: DocumentRegistryTypeNode;
 };
 
 export type InsertDocumentResponse = DocumentRegistryNode;
@@ -1812,7 +1812,7 @@ export type InvoiceCountsSummary = {
 export type InvoiceFilterInput = {
   allocatedDatetime?: InputMaybe<DatetimeFilterInput>;
   colour?: InputMaybe<EqualFilterStringInput>;
-  comment?: InputMaybe<SimpleStringFilterInput>;
+  comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   deliveredDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
@@ -1821,7 +1821,7 @@ export type InvoiceFilterInput = {
   nameId?: InputMaybe<EqualFilterStringInput>;
   onHold?: InputMaybe<Scalars['Boolean']>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
-  otherPartyName?: InputMaybe<SimpleStringFilterInput>;
+  otherPartyName?: InputMaybe<StringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
   requisitionId?: InputMaybe<EqualFilterStringInput>;
   shippedDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -1998,11 +1998,11 @@ export type ItemCountsResponse = {
 };
 
 export type ItemFilterInput = {
-  code?: InputMaybe<SimpleStringFilterInput>;
-  codeOrName?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<StringFilterInput>;
+  codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isVisible?: InputMaybe<Scalars['Boolean']>;
-  name?: InputMaybe<SimpleStringFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
 };
 
@@ -2196,14 +2196,14 @@ export type MasterListConnector = {
 };
 
 export type MasterListFilterInput = {
-  code?: InputMaybe<SimpleStringFilterInput>;
-  description?: InputMaybe<SimpleStringFilterInput>;
-  existsForName?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<StringFilterInput>;
+  description?: InputMaybe<StringFilterInput>;
+  existsForName?: InputMaybe<StringFilterInput>;
   existsForNameId?: InputMaybe<EqualFilterStringInput>;
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isProgram?: InputMaybe<Scalars['Boolean']>;
-  name?: InputMaybe<SimpleStringFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
 };
 
 export type MasterListLineConnector = {
@@ -2835,12 +2835,12 @@ export type NameConnector = {
 };
 
 export type NameFilterInput = {
-  address1?: InputMaybe<SimpleStringFilterInput>;
-  address2?: InputMaybe<SimpleStringFilterInput>;
+  address1?: InputMaybe<StringFilterInput>;
+  address2?: InputMaybe<StringFilterInput>;
   /** Filter by code */
-  code?: InputMaybe<SimpleStringFilterInput>;
-  country?: InputMaybe<SimpleStringFilterInput>;
-  email?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<StringFilterInput>;
+  country?: InputMaybe<StringFilterInput>;
+  email?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   /** Filter by customer property */
   isCustomer?: InputMaybe<Scalars['Boolean']>;
@@ -2858,10 +2858,10 @@ export type NameFilterInput = {
   /** Visibility in current store (based on store_id parameter and existence of name_store_join record) */
   isVisible?: InputMaybe<Scalars['Boolean']>;
   /** Filter by name */
-  name?: InputMaybe<SimpleStringFilterInput>;
-  phone?: InputMaybe<SimpleStringFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
+  phone?: InputMaybe<StringFilterInput>;
   /** Code of the store if store is linked to name */
-  storeCode?: InputMaybe<SimpleStringFilterInput>;
+  storeCode?: InputMaybe<StringFilterInput>;
   /** Filter by the name type */
   type?: InputMaybe<EqualFilterTypeInput>;
 };
@@ -3022,20 +3022,20 @@ export type PatientConnector = {
 };
 
 export type PatientFilterInput = {
-  address1?: InputMaybe<SimpleStringFilterInput>;
-  address2?: InputMaybe<SimpleStringFilterInput>;
-  code?: InputMaybe<SimpleStringFilterInput>;
-  code2?: InputMaybe<SimpleStringFilterInput>;
-  country?: InputMaybe<SimpleStringFilterInput>;
+  address1?: InputMaybe<StringFilterInput>;
+  address2?: InputMaybe<StringFilterInput>;
+  code?: InputMaybe<StringFilterInput>;
+  code2?: InputMaybe<StringFilterInput>;
+  country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
-  email?: InputMaybe<SimpleStringFilterInput>;
-  firstName?: InputMaybe<SimpleStringFilterInput>;
+  email?: InputMaybe<StringFilterInput>;
+  firstName?: InputMaybe<StringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  identifier?: InputMaybe<SimpleStringFilterInput>;
-  lastName?: InputMaybe<SimpleStringFilterInput>;
-  name?: InputMaybe<SimpleStringFilterInput>;
-  phone?: InputMaybe<SimpleStringFilterInput>;
+  identifier?: InputMaybe<StringFilterInput>;
+  lastName?: InputMaybe<StringFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
+  phone?: InputMaybe<StringFilterInput>;
 };
 
 export type PatientNode = {
@@ -3833,7 +3833,7 @@ export enum ReportContext {
 export type ReportFilterInput = {
   context?: InputMaybe<EqualFilterReportContextInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<SimpleStringFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
   subContext?: InputMaybe<EqualFilterStringInput>;
 };
 
@@ -3891,18 +3891,18 @@ export type RequisitionCounts = {
 
 export type RequisitionFilterInput = {
   colour?: InputMaybe<EqualFilterStringInput>;
-  comment?: InputMaybe<SimpleStringFilterInput>;
+  comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
   expectedDeliveryDate?: InputMaybe<DateFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   orderType?: InputMaybe<EqualFilterStringInput>;
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
-  otherPartyName?: InputMaybe<SimpleStringFilterInput>;
+  otherPartyName?: InputMaybe<StringFilterInput>;
   requisitionNumber?: InputMaybe<EqualFilterBigNumberInput>;
   sentDatetime?: InputMaybe<DatetimeFilterInput>;
   status?: InputMaybe<EqualFilterRequisitionStatusInput>;
-  theirReference?: InputMaybe<SimpleStringFilterInput>;
+  theirReference?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterRequisitionTypeInput>;
   userId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -4105,15 +4105,6 @@ export type ResponseStoreStatsNode = {
   stockOnOrder: Scalars['Int'];
 };
 
-export type SimpleStringFilterInput = {
-  /** Search term must be an exact match (case sensitive) */
-  equalTo?: InputMaybe<Scalars['String']>;
-  /** Search term must be an exact match, but case insensitive */
-  insensitiveEqualTo?: InputMaybe<Scalars['String']>;
-  /** Search term must be included in search candidate (case insensitive) */
-  like?: InputMaybe<Scalars['String']>;
-};
-
 export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & {
   __typename: 'SnapshotCountCurrentCountMismatch';
   description: Scalars['String'];
@@ -4166,7 +4157,7 @@ export type StockLineFilterInput = {
   hasPacksInStore?: InputMaybe<Scalars['Boolean']>;
   id?: InputMaybe<EqualFilterStringInput>;
   isAvailable?: InputMaybe<Scalars['Boolean']>;
-  itemCodeOrName?: InputMaybe<SimpleStringFilterInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
@@ -4242,9 +4233,9 @@ export type StocktakeConnector = {
 };
 
 export type StocktakeFilterInput = {
-  comment?: InputMaybe<SimpleStringFilterInput>;
+  comment?: InputMaybe<StringFilterInput>;
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
-  description?: InputMaybe<SimpleStringFilterInput>;
+  description?: InputMaybe<StringFilterInput>;
   finalisedDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isLocked?: InputMaybe<Scalars['Boolean']>;
@@ -4343,10 +4334,10 @@ export type StoreConnector = {
 };
 
 export type StoreFilterInput = {
-  code?: InputMaybe<SimpleStringFilterInput>;
+  code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<SimpleStringFilterInput>;
-  nameCode?: InputMaybe<SimpleStringFilterInput>;
+  name?: InputMaybe<StringFilterInput>;
+  nameCode?: InputMaybe<StringFilterInput>;
   siteId?: InputMaybe<EqualFilterNumberInput>;
 };
 
@@ -4402,6 +4393,13 @@ export type StoreSortInput = {
 };
 
 export type StoresResponse = StoreConnector;
+
+export type StringFilterInput = {
+  /** Search term must be an exact match (case sensitive) */
+  equalTo?: InputMaybe<Scalars['String']>;
+  /** Search term must be included in search candidate (case insensitive) */
+  like?: InputMaybe<Scalars['String']>;
+};
 
 export type SuggestedQuantityCalculationNode = {
   __typename: 'SuggestedQuantityCalculationNode';

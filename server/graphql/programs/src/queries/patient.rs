@@ -1,18 +1,15 @@
 use async_graphql::*;
-use graphql_core::generic_filters::{
-    DateFilterInput, EqualFilterStringInput, SimpleStringFilterInput,
-};
+use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
 use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
+use graphql_types::types::patient::PatientNode;
 use repository::{
     DateFilter, EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField,
-    SimpleStringFilter,
+    StringFilter,
 };
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
-
-use crate::types::patient::PatientNode;
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
 pub struct PatientConnector {
@@ -28,19 +25,19 @@ pub enum PatientResponse {
 #[derive(InputObject, Clone)]
 pub struct PatientFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub name: Option<SimpleStringFilterInput>,
-    pub code: Option<SimpleStringFilterInput>,
-    pub code_2: Option<SimpleStringFilterInput>,
-    pub first_name: Option<SimpleStringFilterInput>,
-    pub last_name: Option<SimpleStringFilterInput>,
+    pub name: Option<StringFilterInput>,
+    pub code: Option<StringFilterInput>,
+    pub code_2: Option<StringFilterInput>,
+    pub first_name: Option<StringFilterInput>,
+    pub last_name: Option<StringFilterInput>,
     pub gender: Option<EqualFilterGenderInput>,
     pub date_of_birth: Option<DateFilterInput>,
-    pub phone: Option<SimpleStringFilterInput>,
-    pub address1: Option<SimpleStringFilterInput>,
-    pub address2: Option<SimpleStringFilterInput>,
-    pub country: Option<SimpleStringFilterInput>,
-    pub email: Option<SimpleStringFilterInput>,
-    pub identifier: Option<SimpleStringFilterInput>,
+    pub phone: Option<StringFilterInput>,
+    pub address1: Option<StringFilterInput>,
+    pub address2: Option<StringFilterInput>,
+    pub country: Option<StringFilterInput>,
+    pub email: Option<StringFilterInput>,
+    pub identifier: Option<StringFilterInput>,
 }
 
 impl PatientFilterInput {
@@ -63,19 +60,19 @@ impl PatientFilterInput {
         } = self;
         PatientFilter {
             id: id.map(EqualFilter::from),
-            name: name.map(SimpleStringFilter::from),
-            code: code.map(SimpleStringFilter::from),
-            code_2: code_2.map(SimpleStringFilter::from),
-            first_name: first_name.map(SimpleStringFilter::from),
-            last_name: last_name.map(SimpleStringFilter::from),
+            name: name.map(StringFilter::from),
+            code: code.map(StringFilter::from),
+            code_2: code_2.map(StringFilter::from),
+            first_name: first_name.map(StringFilter::from),
+            last_name: last_name.map(StringFilter::from),
             gender: gender.map(|t| map_filter!(t, GenderInput::to_domain)),
             date_of_birth: date_of_birth.map(DateFilter::from),
-            phone: phone.map(SimpleStringFilter::from),
-            address1: address1.map(SimpleStringFilter::from),
-            address2: address2.map(SimpleStringFilter::from),
-            country: country.map(SimpleStringFilter::from),
-            email: email.map(SimpleStringFilter::from),
-            identifier: identifier.map(SimpleStringFilter::from),
+            phone: phone.map(StringFilter::from),
+            address1: address1.map(StringFilter::from),
+            address2: address2.map(StringFilter::from),
+            country: country.map(StringFilter::from),
+            email: email.map(StringFilter::from),
+            identifier: identifier.map(StringFilter::from),
         }
     }
 }
@@ -142,7 +139,7 @@ pub fn patients(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -182,7 +179,7 @@ pub fn patient(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

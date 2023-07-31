@@ -5,27 +5,31 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::document_registry::{
+    DocumentRegistryCategoryNode, DocumentRegistryConnector, DocumentRegistryNode,
+};
 use repository::{
     DocumentRegistryFilter, DocumentRegistrySort, DocumentRegistrySortField, EqualFilter,
 };
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 use service::usize_to_u32;
 
-use crate::types::document_registry::{
-    DocumentRegistryConnector, DocumentRegistryNode, DocumentRegistryTypeNode,
-};
+#[derive(Union)]
+pub enum DocumentRegistryResponse {
+    Response(DocumentRegistryConnector),
+}
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterDocumentRegistryTypeInput {
-    pub equal_to: Option<DocumentRegistryTypeNode>,
-    pub equal_any: Option<Vec<DocumentRegistryTypeNode>>,
-    pub not_equal_to: Option<DocumentRegistryTypeNode>,
+pub struct EqualFilterDocumentRegistryCategoryInput {
+    pub equal_to: Option<DocumentRegistryCategoryNode>,
+    pub equal_any: Option<Vec<DocumentRegistryCategoryNode>>,
+    pub not_equal_to: Option<DocumentRegistryCategoryNode>,
 }
 
 #[derive(InputObject, Clone)]
 pub struct DocumentRegistryFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub r#type: Option<EqualFilterDocumentRegistryTypeInput>,
+    pub category: Option<EqualFilterDocumentRegistryCategoryInput>,
     pub document_type: Option<EqualFilterStringInput>,
     pub context_id: Option<EqualFilterStringInput>,
 }
@@ -46,11 +50,6 @@ pub struct DocumentRegistrySortInput {
     desc: Option<bool>,
 }
 
-#[derive(Union)]
-pub enum DocumentRegistryResponse {
-    Response(DocumentRegistryConnector),
-}
-
 pub fn document_registries(
     ctx: &Context<'_>,
     filter: Option<DocumentRegistryFilterInput>,
@@ -64,7 +63,7 @@ pub fn document_registries(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -104,7 +103,7 @@ impl DocumentRegistryFilterInput {
     pub fn to_domain(self) -> DocumentRegistryFilter {
         let DocumentRegistryFilterInput {
             id,
-            r#type,
+            category: r#type,
             document_type,
             context_id,
         } = self;
@@ -112,7 +111,7 @@ impl DocumentRegistryFilterInput {
             id: id.map(EqualFilter::from),
             document_type: document_type.map(EqualFilter::from),
             context_id: context_id.map(EqualFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, DocumentRegistryTypeNode::to_domain)),
+            category: r#type.map(|t| map_filter!(t, DocumentRegistryCategoryNode::to_domain)),
         }
     }
 }

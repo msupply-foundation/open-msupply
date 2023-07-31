@@ -302,7 +302,6 @@ mod test {
                 id: "test_clinician_store_join".to_string(),
                 store_id: mock_store_a().id,
                 clinician_id: clinician().id,
-                is_sync_update: false,
             }
         }
 

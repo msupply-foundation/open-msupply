@@ -12,12 +12,12 @@ use crate::programs::{
     program_enrolment::program_schema::SchemaProgramEnrolment,
 };
 
-pub(crate) fn upsert_document(
+pub(crate) fn sync_upsert_document(
     con: &StorageConnection,
     document: &Document,
-    is_sync_update: bool,
 ) -> Result<(), RepositoryError> {
-    DocumentRepository::new(con).insert(document, is_sync_update)?;
+    // TODO comment why only insert here
+    DocumentRepository::new(con).sync_insert(document)?;
 
     let Some(registry) = DocumentRegistryRepository::new(con)
         .query_by_filter(
@@ -28,13 +28,13 @@ pub(crate) fn upsert_document(
         return Ok(());
     };
 
-    match registry.r#type {
-        repository::DocumentRegistryType::Patient => update_patient(con, document)?,
-        repository::DocumentRegistryType::ProgramEnrolment => {
+    match registry.category {
+        repository::DocumentRegistryCategory::Patient => update_patient(con, document)?,
+        repository::DocumentRegistryCategory::ProgramEnrolment => {
             update_program_enrolment(con, document)?
         }
-        repository::DocumentRegistryType::Encounter => update_encounter(con, document)?,
-        repository::DocumentRegistryType::Custom => {}
+        repository::DocumentRegistryCategory::Encounter => update_encounter(con, document)?,
+        repository::DocumentRegistryCategory::Custom => {}
     };
     Ok(())
 }

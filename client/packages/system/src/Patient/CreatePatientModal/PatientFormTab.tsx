@@ -4,7 +4,7 @@ import {
   JsonData,
   JsonForm,
   useFormSchema,
-  usePatientCreateStore,
+  usePatientStore,
 } from '@openmsupply-client/programs';
 import { PatientPanel } from './PatientPanel';
 import { createPatient, createPatientUI } from './DefaultCreatePatientJsonForm';
@@ -20,7 +20,7 @@ type Patient = {
 };
 
 export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
-  const { updatePatient } = usePatientCreateStore();
+  const { updateCreateNewPatient } = usePatientStore();
   const {
     data: patientCreationUI,
     isError,
@@ -38,7 +38,7 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
       if (ObjUtils.isEqual(patient, newData)) return;
 
       const patientData = newData as Patient;
-      updatePatient({
+      updateCreateNewPatient({
         code: patientData?.code,
         code2: patientData?.code2,
         firstName: patientData?.firstName,

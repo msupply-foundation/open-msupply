@@ -5,10 +5,12 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{PaginationOption, ProgramEventFilter, ProgramEventSort, ProgramEventSortField};
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
-
-use crate::types::{program_enrolment::ProgramEventFilterInput, program_event::ProgramEventNode};
+use graphql_types::types::{
+    program_enrolment::ProgramEventFilterInput,
+    program_event::{ProgramEventNode, ProgramEventSortInput},
+};
+use repository::{PaginationOption, ProgramEventFilter};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
 pub struct ProgramEventConnector {
@@ -19,24 +21,6 @@ pub struct ProgramEventConnector {
 #[derive(Union)]
 pub enum ProgramEventResponse {
     Response(ProgramEventConnector),
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(rename_items = "camelCase")]
-pub enum ProgramEventSortFieldInput {
-    Datetime,
-    DocumentType,
-    DocumentName,
-    Type,
-}
-
-#[derive(InputObject)]
-pub struct ProgramEventSortInput {
-    /// Sort query result by `key`
-    key: ProgramEventSortFieldInput,
-    /// Sort query result is sorted descending or ascending (if not provided the default is
-    /// ascending)
-    desc: Option<bool>,
 }
 
 pub fn program_events(
@@ -53,7 +37,7 @@ pub fn program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let mut filter = filter
         .map(|f| f.to_domain())
@@ -110,7 +94,7 @@ pub fn active_program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let mut filter = filter
         .map(|f| f.to_domain())
@@ -152,20 +136,4 @@ pub fn active_program_events(
 
         nodes,
     }))
-}
-
-impl ProgramEventSortInput {
-    pub fn to_domain(self) -> ProgramEventSort {
-        let key = match self.key {
-            ProgramEventSortFieldInput::Datetime => ProgramEventSortField::Datetime,
-            ProgramEventSortFieldInput::DocumentType => ProgramEventSortField::DocumentType,
-            ProgramEventSortFieldInput::DocumentName => ProgramEventSortField::DocumentName,
-            ProgramEventSortFieldInput::Type => ProgramEventSortField::Type,
-        };
-
-        ProgramEventSort {
-            key,
-            desc: self.desc,
-        }
-    }
 }
