@@ -9,6 +9,9 @@ use crate::{
     DBBackendConnection, StorageConnectionManager,
 };
 
+const TEST_OUTPUT_DIR: &'static str = "test_output";
+const TEMPLATE_MARKER_FILE: &'static str = "___template_needs_update.marker";
+
 pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
     DatabaseSettings {
         username: "postgres".to_string(),
@@ -16,7 +19,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         port: 5432,
         host: "localhost".to_string(),
         // put DB test files into a test directory (also works for in-memory)
-        database_name: format!("test_output/{}.sqlite", db_name),
+        database_name: format!("{}/{}.sqlite", TEST_OUTPUT_DIR, db_name),
         init_sql: None,
     }
 }
@@ -56,8 +59,33 @@ pub(crate) async fn setup_with_version(
                 version.as_ref().unwrap_or(&Version::from_package_json())
             )
         };
-        let template_settings = get_test_db_settings(&template_name);
+
         let guard = TEMPLATE_LOCK.lock().unwrap();
+        // if marker exists, DB needs to be recreated -> delete all template files
+        let marker_path =
+            Path::new(&format!("{}/{}", TEST_OUTPUT_DIR, TEMPLATE_MARKER_FILE)).to_path_buf();
+        if marker_path.exists() {
+            // remove all DB templates
+            for entry in fs::read_dir(TEST_OUTPUT_DIR).unwrap() {
+                let entry = entry.unwrap();
+                if entry.file_name().to_string_lossy() == TEMPLATE_MARKER_FILE {
+                    // delete marker after all template DBs to ensure we deleted all DBs, e.g. if
+                    // this loop is interrupted
+                    continue;
+                }
+                if entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("___template_")
+                {
+                    fs::remove_file(&entry.path()).unwrap();
+                }
+            }
+            // remove marker
+            fs::remove_file(&marker_path).unwrap();
+        }
+
+        let template_settings = get_test_db_settings(&template_name);
         if !Path::new(&template_settings.database_name).exists() {
             let connection_manager = create_db(&template_settings, version.clone());
             let connection = connection_manager.connection().unwrap();
