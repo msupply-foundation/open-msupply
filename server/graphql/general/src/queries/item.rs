@@ -1,13 +1,13 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{ItemConnector, ItemNodeType};
-use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
+use repository::{EqualFilter, PaginationOption, StringFilter};
 use repository::{ItemFilter, ItemSort, ItemSortField};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -42,11 +42,11 @@ pub struct EqualFilterItemTypeInput {
 #[derive(InputObject, Clone)]
 pub struct ItemFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub name: Option<SimpleStringFilterInput>,
+    pub name: Option<StringFilterInput>,
     pub r#type: Option<EqualFilterItemTypeInput>,
-    pub code: Option<SimpleStringFilterInput>,
+    pub code: Option<StringFilterInput>,
     pub is_visible: Option<bool>,
-    pub code_or_name: Option<SimpleStringFilterInput>,
+    pub code_or_name: Option<StringFilterInput>,
 }
 
 #[derive(Union)]
@@ -97,11 +97,11 @@ impl ItemFilterInput {
 
         ItemFilter {
             id: id.map(EqualFilter::from),
-            name: name.map(SimpleStringFilter::from),
-            code: code.map(SimpleStringFilter::from),
+            name: name.map(StringFilter::from),
+            code: code.map(StringFilter::from),
             r#type: r#type.map(|t| map_filter!(t, ItemNodeType::to_domain)),
             is_visible,
-            code_or_name: code_or_name.map(SimpleStringFilter::from),
+            code_or_name: code_or_name.map(StringFilter::from),
         }
     }
 }

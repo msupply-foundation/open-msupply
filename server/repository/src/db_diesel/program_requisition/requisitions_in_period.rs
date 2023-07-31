@@ -1,9 +1,9 @@
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter},
+    diesel_macros::{apply_equal_filter, apply_string_filter},
     repository_error::RepositoryError,
-    EqualFilter, RequisitionRowType, SimpleStringFilter, StorageConnection,
+    EqualFilter, RequisitionRowType, StorageConnection, StringFilter,
 };
 
 table! {
@@ -23,7 +23,7 @@ pub struct RequisitionsInPeriodFilter {
     pub program_id: Option<EqualFilter<String>>,
     pub period_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
-    pub order_type: Option<SimpleStringFilter>,
+    pub order_type: Option<StringFilter>,
     pub r#type: Option<EqualFilter<RequisitionRowType>>,
 }
 
@@ -82,7 +82,7 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
         apply_equal_filter!(query, period_id, requisitions_in_period_dsl::period_id);
         apply_equal_filter!(query, store_id, requisitions_in_period_dsl::store_id);
         apply_equal_filter!(query, r#type, requisitions_in_period_dsl::type_);
-        apply_simple_string_filter!(query, order_type, requisitions_in_period_dsl::order_type);
+        apply_string_filter!(query, order_type, requisitions_in_period_dsl::order_type);
 
         //  Debug diesel query
         // println!(
@@ -116,7 +116,7 @@ impl RequisitionsInPeriodFilter {
         self
     }
 
-    pub fn order_type(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn order_type(mut self, filter: StringFilter) -> Self {
         self.order_type = Some(filter);
         self
     }
@@ -137,8 +137,9 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, MasterListRow, PeriodRow, ProgramRow, RequisitionRow, RequisitionRowType,
-        RequisitionsInPeriod, RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
+        ContextRow, EqualFilter, MasterListRow, PeriodRow, ProgramRow, RequisitionRow,
+        RequisitionRowType, RequisitionsInPeriod, RequisitionsInPeriodFilter,
+        RequisitionsInPeriodRepository,
     };
 
     #[actix_rt::test]
@@ -171,15 +172,24 @@ mod test {
             id: "master_list1".to_string(),
             ..Default::default()
         };
+        let context1 = ContextRow {
+            id: "program1".to_string(),
+            name: "program1".to_string(),
+        };
         let program1 = ProgramRow {
             id: "program1".to_string(),
             master_list_id: master_list.id.clone(),
+            context_id: context1.id.clone(),
             ..Default::default()
         };
-
+        let context2 = ContextRow {
+            id: "program2".to_string(),
+            name: "program2".to_string(),
+        };
         let program2 = ProgramRow {
             id: "program2".to_string(),
             master_list_id: master_list.id.clone(),
+            context_id: context2.id.clone(),
             ..Default::default()
         };
         // Same order type same period
@@ -259,6 +269,7 @@ mod test {
                     period3.clone(),
                     period4.clone(),
                 ],
+                contexts: vec![context1, context2],
                 programs: vec![program1.clone(), program2.clone()],
                 requisitions: vec![
                     requisition1.clone(),

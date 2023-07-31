@@ -3,13 +3,9 @@ use super::StorageConnection;
 use crate::db_diesel::form_schema_row::form_schema;
 use crate::db_diesel::name_row::name;
 use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
-    apply_string_filter,
+    apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
 };
-use crate::{
-    DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, SimpleStringFilter, Sort,
-    StringFilter,
-};
+use crate::{DBType, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort, StringFilter};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
 use diesel::helper_types::IntoBoxed;
@@ -30,7 +26,6 @@ table! {
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
         context_id -> Text,
-        is_sync_update -> Bool,
     }
 }
 
@@ -48,6 +43,13 @@ table! {
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
         context_id -> Text,
+    }
+}
+
+table! {
+    #[sql_name = "document"]
+    document_is_sync_update (id) {
+        id -> Text,
         is_sync_update -> Bool,
     }
 }
@@ -65,7 +67,15 @@ pub enum DocumentStatus {
     Deleted,
 }
 
+#[cfg(test)]
+impl Default for DocumentStatus {
+    fn default() -> Self {
+        DocumentStatus::Active
+    }
+}
+
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[cfg_attr(test, derive(Default))]
 #[table_name = "document"]
 pub struct DocumentRow {
     /// The document data hash
@@ -91,7 +101,6 @@ pub struct DocumentRow {
     pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
     pub context_id: String,
-    pub is_sync_update: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -122,8 +131,8 @@ pub struct DocumentFilter {
     pub r#type: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
     pub owner: Option<EqualFilter<String>>,
-    pub context: Option<EqualFilter<String>>,
-    pub data: Option<SimpleStringFilter>,
+    pub context_id: Option<EqualFilter<String>>,
+    pub data: Option<StringFilter>,
 }
 
 impl DocumentFilter {
@@ -134,7 +143,7 @@ impl DocumentFilter {
             datetime: None,
             data: None,
             owner: None,
-            context: None,
+            context_id: None,
         }
     }
 
@@ -158,12 +167,12 @@ impl DocumentFilter {
         self
     }
 
-    pub fn context(mut self, filter: EqualFilter<String>) -> Self {
-        self.context = Some(filter);
+    pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.context_id = Some(filter);
         self
     }
 
-    pub fn data(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn data(mut self, filter: StringFilter) -> Self {
         self.data = Some(filter);
         self
     }
@@ -190,7 +199,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
             r#type,
             datetime,
             owner,
-            context,
+            context_id: context,
             data,
         } = f;
 
@@ -199,7 +208,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
         apply_date_time_filter!(query, datetime, latest_document::dsl::datetime);
         apply_equal_filter!(query, owner, latest_document::dsl::owner_name_id);
         apply_equal_filter!(query, context, latest_document::dsl::context_id);
-        apply_simple_string_filter!(query, data, latest_document::dsl::data);
+        apply_string_filter!(query, data, latest_document::dsl::data);
     }
     query
 }
@@ -214,10 +223,26 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    pub fn insert(&self, doc: &Document, is_sync_update: bool) -> Result<(), RepositoryError> {
+    fn _insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
-            .values(doc.to_row(is_sync_update)?)
+            .values(doc.to_row()?)
             .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
+        diesel::update(document_is_sync_update::table.find(id))
+            .set(document_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
+            .execute(&self.connection.connection)?;
+
+        Ok(())
+    }
+
+    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
+        diesel::insert_into(document::dsl::document)
+            .values(doc.to_row()?)
+            .execute(&self.connection.connection)?;
+        self.toggle_is_sync_update(&doc.id, false)?;
         Ok(())
     }
 
@@ -232,6 +257,23 @@ impl<'a> DocumentRepository<'a> {
             Some(row) => Some(row.to_document()?),
             None => None,
         })
+    }
+
+    pub fn sync_insert(&self, row: &Document) -> Result<(), RepositoryError> {
+        self.insert(row)?;
+        self.toggle_is_sync_update(&row.id, true)?;
+
+        Ok(())
+    }
+
+    #[cfg(test)]
+    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
+        let result = document_is_sync_update::table
+            .find(id)
+            .select(document_is_sync_update::dsl::is_sync_update)
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
     }
 
     pub fn count(&self, filter: Option<DocumentFilter>) -> Result<i64, RepositoryError> {
@@ -298,7 +340,7 @@ impl<'a> DocumentRepository<'a> {
                 r#type,
                 datetime,
                 owner,
-                context,
+                context_id: context,
                 data,
             } = f;
 
@@ -307,7 +349,7 @@ impl<'a> DocumentRepository<'a> {
             apply_date_time_filter!(query, datetime, document::dsl::datetime);
             apply_equal_filter!(query, owner, document::dsl::owner_name_id);
             apply_equal_filter!(query, context, document::dsl::context_id);
-            apply_simple_string_filter!(query, data, document::dsl::data);
+            apply_string_filter!(query, data, document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query
             .order(document::dsl::datetime.desc())
@@ -335,7 +377,6 @@ impl DocumentRow {
             status,
             owner_name_id,
             context_id,
-            is_sync_update: _,
         } = self;
 
         let parents: Vec<String> =
@@ -368,7 +409,7 @@ impl DocumentRow {
 }
 
 impl Document {
-    pub fn to_row(&self, is_sync_update: bool) -> Result<DocumentRow, RepositoryError> {
+    pub fn to_row(&self) -> Result<DocumentRow, RepositoryError> {
         let parents =
             serde_json::to_string(&self.parent_ids).map_err(|err| RepositoryError::DBError {
                 msg: "Can't serialize parents".to_string(),
@@ -390,7 +431,63 @@ impl Document {
             status: self.status.to_owned(),
             owner_name_id: self.owner_name_id.to_owned(),
             context_id: self.context_id.to_owned(),
-            is_sync_update,
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use util::uuid::uuid;
+
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, ContextRow, ContextRowRepository,
+        DocumentRepository, DocumentRow,
+    };
+
+    #[actix_rt::test]
+    async fn document_is_sync_update() {
+        let (_, connection, _, _) = setup_all(
+            "document_is_sync_update",
+            MockDataInserts::none().items().units(),
+        )
+        .await;
+
+        let context_row = ContextRow {
+            id: "id".to_string(),
+            name: "name".to_string(),
+        };
+        ContextRowRepository::new(&connection)
+            .upsert_one(&context_row)
+            .unwrap();
+
+        let repo = DocumentRepository::new(&connection);
+
+        let base_row = DocumentRow {
+            data: "{}".to_string(),
+            parent_ids: "[]".to_string(),
+            context_id: context_row.id.clone(),
+            ..Default::default()
+        };
+
+        // Two rows, to make sure is_sync_update update only affects one row
+        let row = DocumentRow {
+            id: uuid(),
+            parent_ids: "[]".to_string(),
+            ..base_row.clone()
+        };
+        let row2 = DocumentRow {
+            id: uuid(),
+            parent_ids: "[]".to_string(),
+            context_id: context_row.id.clone(),
+            ..base_row.clone()
+        };
+
+        // First insert
+        repo.insert(&row.clone().to_document().unwrap()).unwrap();
+        repo.sync_insert(&row2.clone().to_document().unwrap())
+            .unwrap();
+
+        assert_eq!(repo.find_is_sync_update_by_id(&row.id), Ok(Some(false)));
+        assert_eq!(repo.find_is_sync_update_by_id(&row2.id), Ok(Some(true)));
     }
 }

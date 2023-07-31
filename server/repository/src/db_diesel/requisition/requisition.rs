@@ -7,13 +7,12 @@ use crate::{
     db_diesel::{
         name_row::{name, name::dsl as name_dsl},
         period::period::{self, dsl as period_dsl},
-        program_requisition::program,
-        program_requisition::program::dsl as program_dsl,
+        program_requisition::program_row::program::{self, dsl as program_dsl},
         store_row::{store, store::dsl as store_dsl},
     },
     diesel_macros::{
-        apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_simple_string_filter,
-        apply_sort, apply_sort_no_case,
+        apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
+        apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
     DBType, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
@@ -205,10 +204,10 @@ fn create_filtered_query(
         );
 
         apply_equal_filter!(query, name_id, requisition_dsl::name_id);
-        apply_simple_string_filter!(query, name, name_dsl::name_);
+        apply_string_filter!(query, name, name_dsl::name_);
         apply_equal_filter!(query, colour, requisition_dsl::colour);
-        apply_simple_string_filter!(query, their_reference, requisition_dsl::their_reference);
-        apply_simple_string_filter!(query, comment, requisition_dsl::comment);
+        apply_string_filter!(query, their_reference, requisition_dsl::their_reference);
+        apply_string_filter!(query, comment, requisition_dsl::comment);
 
         apply_equal_filter!(query, store_id, requisition_dsl::store_id);
         apply_equal_filter!(query, order_type, requisition_dsl::order_type)

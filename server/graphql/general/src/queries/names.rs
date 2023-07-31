@@ -1,13 +1,13 @@
 use async_graphql::{Context, Enum, InputObject, Result, SimpleObject, Union};
 use graphql_core::{
-    generic_filters::{EqualFilterStringInput, SimpleStringFilterInput},
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::{NameNode, NameNodeType};
-use repository::{EqualFilter, Gender, PaginationOption, SimpleStringFilter};
+use repository::{EqualFilter, Gender, PaginationOption, StringFilter};
 use repository::{Name, NameFilter, NameSort, NameSortField};
 use serde::Serialize;
 use service::{
@@ -81,9 +81,9 @@ pub struct EqualFilterGenderInput {
 pub struct NameFilterInput {
     pub id: Option<EqualFilterStringInput>,
     /// Filter by name
-    pub name: Option<SimpleStringFilterInput>,
+    pub name: Option<StringFilterInput>,
     /// Filter by code
-    pub code: Option<SimpleStringFilterInput>,
+    pub code: Option<StringFilterInput>,
     /// Filter by customer property
     pub is_customer: Option<bool>,
     /// Filter by supplier property
@@ -92,7 +92,7 @@ pub struct NameFilterInput {
     /// Is this name a store
     pub is_store: Option<bool>,
     /// Code of the store if store is linked to name
-    pub store_code: Option<SimpleStringFilterInput>,
+    pub store_code: Option<StringFilterInput>,
     /// Visibility in current store (based on store_id parameter and existence of name_store_join record)
     pub is_visible: Option<bool>,
     /// Show system names (defaults to false)
@@ -102,11 +102,11 @@ pub struct NameFilterInput {
     /// Filter by the name type
     pub r#type: Option<EqualFilterTypeInput>,
 
-    pub phone: Option<SimpleStringFilterInput>,
-    pub address1: Option<SimpleStringFilterInput>,
-    pub address2: Option<SimpleStringFilterInput>,
-    pub country: Option<SimpleStringFilterInput>,
-    pub email: Option<SimpleStringFilterInput>,
+    pub phone: Option<StringFilterInput>,
+    pub address1: Option<StringFilterInput>,
+    pub address2: Option<StringFilterInput>,
+    pub country: Option<StringFilterInput>,
+    pub email: Option<StringFilterInput>,
 }
 
 #[derive(SimpleObject)]
@@ -185,20 +185,20 @@ impl NameFilterInput {
 
         NameFilter {
             id: id.map(EqualFilter::from),
-            name: name.map(SimpleStringFilter::from),
-            code: code.map(SimpleStringFilter::from),
-            store_code: store_code.map(SimpleStringFilter::from),
+            name: name.map(StringFilter::from),
+            code: code.map(StringFilter::from),
+            store_code: store_code.map(StringFilter::from),
             is_customer,
             is_supplier,
             is_store,
             is_visible,
             is_system_name: is_system_name.or(Some(false)),
             r#type: r#type.map(|t| map_filter!(t, NameNodeType::to_domain)),
-            phone: phone.map(SimpleStringFilter::from),
-            address1: address1.map(SimpleStringFilter::from),
-            address2: address2.map(SimpleStringFilter::from),
-            country: country.map(SimpleStringFilter::from),
-            email: email.map(SimpleStringFilter::from),
+            phone: phone.map(StringFilter::from),
+            address1: address1.map(StringFilter::from),
+            address2: address2.map(StringFilter::from),
+            country: country.map(StringFilter::from),
+            email: email.map(StringFilter::from),
             is_patient,
         }
     }

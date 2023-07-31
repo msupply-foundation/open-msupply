@@ -1,6 +1,6 @@
 use repository::{
     Document, EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository,
-    EncounterStatus, EqualFilter, RepositoryError, StorageConnection,
+    EncounterStatus, EqualFilter, ProgramRow, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -10,10 +10,10 @@ use super::{encounter_schema, validate_misc::ValidatedSchemaEncounter};
 pub(crate) fn update_encounter_row(
     con: &StorageConnection,
     patient_id: &str,
-    document_context: &str,
     doc: &Document,
     validated_encounter: ValidatedSchemaEncounter,
     clinician_id: Option<String>,
+    program_row: ProgramRow,
 ) -> Result<(), RepositoryError> {
     let status = if let Some(status) = validated_encounter.encounter.status {
         Some(match status {
@@ -30,7 +30,7 @@ pub(crate) fn update_encounter_row(
         .query_by_filter(EncounterFilter::new().document_name(EqualFilter::equal_to(&doc.name)))?
         .pop();
     let id = match row {
-        Some(row) => row.id,
+        Some(row) => row.0.id,
         None => uuid(),
     };
     let row = EncounterRow {
@@ -38,7 +38,7 @@ pub(crate) fn update_encounter_row(
         document_type: doc.r#type.clone(),
         document_name: doc.name.clone(),
         patient_id: patient_id.to_string(),
-        context: document_context.to_string(),
+        program_id: program_row.id,
         created_datetime: validated_encounter.created_datetime,
         start_datetime: validated_encounter.start_datetime,
         end_datetime: validated_encounter.end_datetime,

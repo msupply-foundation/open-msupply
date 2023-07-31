@@ -3,10 +3,10 @@ mod tests {
     use repository::mock::context_program_a;
     use repository::{mock::MockDataInserts, test_db::setup_all};
     use repository::{
-        DocumentRegistry, DocumentRegistryType, FormSchema, FormSchemaRowRepository,
-        PATIENT_CONTEXT_ID,
+        DocumentRegistry, DocumentRegistryCategory, FormSchema, FormSchemaRowRepository,
     };
     use serde_json::json;
+    use util::constants::PATIENT_CONTEXT_ID;
 
     use crate::document::document_registry::insert::{
         InsertDocRegistryError, InsertDocumentRegistry,
@@ -24,7 +24,7 @@ mod tests {
         let service_provider = ServiceProvider::new(connection_manager, "");
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.document_registry_service;
-        let document_context = context_program_a().id;
+        let context_id = context_program_a().id;
 
         // InsertDocRegistryError::NotAllowedToMutateDocument
         assert_eq!(
@@ -32,10 +32,9 @@ mod tests {
                 &context,
                 InsertDocumentRegistry {
                     id: "id".to_string(),
-                    parent_id: None,
                     document_type: "MyDocType".to_string(),
-                    document_context: document_context.clone(),
-                    r#type: DocumentRegistryType::Patient,
+                    context_id: context_id.clone(),
+                    category: DocumentRegistryCategory::Patient,
                     name: None,
                     form_schema_id: "invalid".to_string(),
                 },
@@ -50,19 +49,18 @@ mod tests {
                 &context,
                 InsertDocumentRegistry {
                     id: "id".to_string(),
-                    parent_id: None,
                     document_type: "MyDocType".to_string(),
-                    document_context: document_context.clone(),
-                    r#type: DocumentRegistryType::Patient,
+                    context_id: context_id.clone(),
+                    category: DocumentRegistryCategory::Patient,
                     name: None,
                     form_schema_id: "invalid".to_string(),
                 },
-                &vec![document_context.clone()]
+                &vec![context_id.clone()]
             ),
             Err(InsertDocRegistryError::DataSchemaDoesNotExist)
         );
 
-        // InsertDocRegistryError::InvalidParent
+        // success 1
         FormSchemaRowRepository::new(&context.connection)
             .upsert_one(&FormSchema {
                 id: "schema1".to_string(),
@@ -75,40 +73,20 @@ mod tests {
             service.insert(
                 &context,
                 InsertDocumentRegistry {
-                    id: "id".to_string(),
-                    parent_id: Some("invalid".to_string()),
-                    document_type: "MyDocType".to_string(),
-                    document_context: document_context.clone(),
-                    r#type: DocumentRegistryType::Patient,
-                    name: None,
-                    form_schema_id: "schema1".to_string(),
-                },
-                &vec![document_context.clone()]
-            ),
-            Err(InsertDocRegistryError::InvalidParent)
-        );
-
-        // success 1
-        assert_eq!(
-            service.insert(
-                &context,
-                InsertDocumentRegistry {
                     id: "program1".to_string(),
-                    parent_id: None,
                     document_type: "MyProgram".to_string(),
-                    document_context: document_context.clone(),
-                    r#type: DocumentRegistryType::ProgramEnrolment,
+                    context_id: context_id.clone(),
+                    category: DocumentRegistryCategory::ProgramEnrolment,
                     name: Some("name".to_string()),
                     form_schema_id: "schema1".to_string(),
                 },
-                &vec![document_context.clone()]
+                &vec![context_id.clone()]
             ),
             Ok(DocumentRegistry {
                 id: "program1".to_string(),
-                parent_id: None,
                 document_type: "MyProgram".to_string(),
-                context_id: document_context.clone(),
-                r#type: DocumentRegistryType::ProgramEnrolment,
+                context_id: context_id.clone(),
+                category: DocumentRegistryCategory::ProgramEnrolment,
                 name: Some("name".to_string()),
                 form_schema_id: "schema1".to_string(),
                 json_schema: json!({}),
@@ -124,21 +102,19 @@ mod tests {
                 &context,
                 InsertDocumentRegistry {
                     id: "encounter1".to_string(),
-                    parent_id: Some("program1".to_string()),
                     document_type: "MyEncounter".to_string(),
-                    document_context: document_context.clone(),
-                    r#type: DocumentRegistryType::Encounter,
+                    context_id: context_id.clone(),
+                    category: DocumentRegistryCategory::Encounter,
                     name: None,
                     form_schema_id: "schema1".to_string(),
                 },
-                &vec![document_context.clone()]
+                &vec![context_id.clone()]
             ),
             Ok(DocumentRegistry {
                 id: "encounter1".to_string(),
-                parent_id: Some("program1".to_string()),
                 document_type: "MyEncounter".to_string(),
-                context_id: document_context.clone(),
-                r#type: DocumentRegistryType::Encounter,
+                context_id: context_id.clone(),
+                category: DocumentRegistryCategory::Encounter,
                 name: None,
                 form_schema_id: "schema1".to_string(),
                 json_schema: json!({}),
@@ -154,10 +130,9 @@ mod tests {
                 &context,
                 InsertDocumentRegistry {
                     id: "patient1".to_string(),
-                    parent_id: None,
                     document_type: "Patient1".to_string(),
-                    document_context: PATIENT_CONTEXT_ID.to_string(),
-                    r#type: DocumentRegistryType::Patient,
+                    context_id: PATIENT_CONTEXT_ID.to_string(),
+                    category: DocumentRegistryCategory::Patient,
                     name: None,
                     form_schema_id: "schema1".to_string(),
                 },
@@ -169,10 +144,9 @@ mod tests {
                 &context,
                 InsertDocumentRegistry {
                     id: "patient2".to_string(),
-                    parent_id: None,
                     document_type: "Patient2".to_string(),
-                    document_context: PATIENT_CONTEXT_ID.to_string(),
-                    r#type: DocumentRegistryType::Patient,
+                    context_id: PATIENT_CONTEXT_ID.to_string(),
+                    category: DocumentRegistryCategory::Patient,
                     name: None,
                     form_schema_id: "schema1".to_string(),
                 },

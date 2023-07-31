@@ -10,7 +10,7 @@ mod graphql {
         DateFilter, Requisition, RequisitionFilter, RequisitionSort, RequisitionSortField,
         StorageConnectionManager,
     };
-    use repository::{DatetimeFilter, EqualFilter, PaginationOption, SimpleStringFilter};
+    use repository::{DatetimeFilter, EqualFilter, PaginationOption, StringFilter};
     use serde_json::json;
     use service::{
         requisition::RequisitionServiceTrait,
@@ -231,10 +231,7 @@ mod graphql {
                     NaiveDate::from_ymd_opt(2021, 01, 04).unwrap()
                 ))
             );
-            assert_eq!(
-                name,
-                Some(SimpleStringFilter::like("like_other_party_name"))
-            );
+            assert_eq!(name, Some(StringFilter::like("like_other_party_name")));
             assert_eq!(
                 name_id,
                 Some(EqualFilter::equal_any(vec![
@@ -245,12 +242,9 @@ mod graphql {
             assert_eq!(colour, Some(EqualFilter::equal_to("equal_to_color")));
             assert_eq!(
                 their_reference,
-                Some(SimpleStringFilter::like("like_their_reference"))
+                Some(StringFilter::like("like_their_reference"))
             );
-            assert_eq!(
-                comment,
-                Some(SimpleStringFilter::equal_to("equal_to_comment"))
-            );
+            assert_eq!(comment, Some(StringFilter::equal_to("equal_to_comment")));
 
             Ok(ListResult {
                 rows: vec![inline_init(|r: &mut Requisition| {

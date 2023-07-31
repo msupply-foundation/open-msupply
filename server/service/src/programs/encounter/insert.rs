@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use repository::{
     ClinicianRow, Document, DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository,
-    DocumentStatus, EqualFilter, ProgramEnrolmentFilter, ProgramEnrolmentRepository,
-    ProgramEnrolmentRow, RepositoryError, TransactionError,
+    DocumentStatus, EqualFilter, ProgramEnrolment, ProgramEnrolmentFilter,
+    ProgramEnrolmentRepository, ProgramRow, RepositoryError, TransactionError,
 };
 
 use crate::{
@@ -53,9 +53,8 @@ pub fn insert_encounter(
         .transaction_sync(|_| {
             let (encounter, program_enrolment, clinician) = validate(ctx, &input)?;
             let patient_id = input.patient_id.clone();
-            let context = program_enrolment.context.clone();
             let event_datetime = input.event_datetime;
-            let doc = generate(user_id, input, event_datetime, program_enrolment)?;
+            let doc = generate(user_id, input, event_datetime, &program_enrolment.1)?;
             let encounter_start_datetime = encounter.start_datetime;
 
             let document = service_provider
@@ -88,10 +87,10 @@ pub fn insert_encounter(
                 update_encounter_row(
                     &ctx.connection,
                     &patient_id,
-                    &context,
                     &document,
                     encounter,
                     clinician.map(|c| c.id),
+                    program_enrolment.1,
                 )?;
 
                 update_program_events(
@@ -129,7 +128,7 @@ fn generate(
     user_id: &str,
     input: InsertEncounter,
     event_datetime: DateTime<Utc>,
-    program_enrolment: ProgramEnrolmentRow,
+    program_row: &ProgramRow,
 ) -> Result<RawDocument, RepositoryError> {
     let encounter_name = Utc::now().to_rfc3339();
     Ok(RawDocument {
@@ -142,7 +141,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(input.patient_id),
-        context_id: program_enrolment.context,
+        context_id: program_row.context_id.clone(),
     })
 }
 
@@ -163,12 +162,12 @@ fn validate_patient_program_exists(
     ctx: &ServiceContext,
     patient_id: &str,
     encounter_registry: DocumentRegistry,
-) -> Result<Option<ProgramEnrolmentRow>, RepositoryError> {
+) -> Result<Option<ProgramEnrolment>, RepositoryError> {
     Ok(ProgramEnrolmentRepository::new(&ctx.connection)
         .query_by_filter(
             ProgramEnrolmentFilter::new()
                 .patient_id(EqualFilter::equal_to(patient_id))
-                .context(EqualFilter::equal_to(&encounter_registry.context_id)),
+                .context_id(EqualFilter::equal_to(&encounter_registry.context_id)),
         )?
         .pop())
 }
@@ -179,7 +178,7 @@ fn validate(
 ) -> Result<
     (
         ValidatedSchemaEncounter,
-        ProgramEnrolmentRow,
+        ProgramEnrolment,
         Option<ClinicianRow>,
     ),
     InsertEncounterError,
@@ -220,11 +219,14 @@ mod test {
     use repository::{
         mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType, EncounterFilter,
-        EncounterRepository, EqualFilter, FormSchemaRowRepository, PATIENT_CONTEXT_ID,
+        DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository,
+        EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
-    use util::inline_init;
+    use util::{
+        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
+        inline_init,
+    };
 
     use crate::{
         programs::{
@@ -232,7 +234,7 @@ mod test {
                 encounter_schema::{EncounterStatus, SchemaEncounter},
                 InsertEncounter,
             },
-            patient::{test::mock_patient_1, UpdatePatient, PATIENT_TYPE},
+            patient::{test::mock_patient_1, UpdatePatient},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
@@ -245,11 +247,14 @@ mod test {
         let (_, _, connection_manager, _) = setup_all(
             "test_encounter_insert",
             MockDataInserts::none()
+                .units()
+                .items()
                 .names()
                 .stores()
+                .name_store_joins()
+                .full_master_list()
                 .contexts()
-                .form_schemas()
-                .name_store_joins(),
+                .programs(),
         )
         .await;
 
@@ -270,11 +275,10 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "patient_id".to_string(),
-                r#type: DocumentRegistryType::Patient,
+                category: DocumentRegistryCategory::Patient,
                 document_type: PATIENT_TYPE.to_string(),
                 context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
-                parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
             })
@@ -282,11 +286,10 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "program_enrolment_rego_id".to_string(),
-                r#type: DocumentRegistryType::ProgramEnrolment,
+                category: DocumentRegistryCategory::ProgramEnrolment,
                 document_type: enrolment_doc_type.to_string(),
                 context_id: program_context.clone(),
                 name: None,
-                parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
             })
@@ -294,11 +297,10 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "encounter_rego_id".to_string(),
-                r#type: DocumentRegistryType::Encounter,
+                category: DocumentRegistryCategory::Encounter,
                 document_type: encounter_type.to_string(),
                 context_id: program_context.clone(),
                 name: None,
-                parent_id: Some("program_enrolment_rego_id".to_string()),
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
             })

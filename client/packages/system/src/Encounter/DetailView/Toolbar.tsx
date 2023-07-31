@@ -17,7 +17,7 @@ import {
   TypedTFunction,
   Option,
   useIntlUtils,
-  DocumentRegistryTypeNode,
+  DocumentRegistryCategoryNode,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -62,8 +62,8 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const { data: programEnrolmentRegistry } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
-        type: { equalTo: DocumentRegistryTypeNode.ProgramEnrolment },
-        documentContext: { equalTo: encounter?.context },
+        category: { equalTo: DocumentRegistryCategoryNode.ProgramEnrolment },
+        contextId: { equalTo: encounter?.contextId },
       },
     });
 

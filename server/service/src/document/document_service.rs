@@ -88,7 +88,7 @@ pub trait DocumentServiceTrait: Sync + Send {
     ) -> Result<Option<Document>, RepositoryError> {
         let mut filter = DocumentFilter::new().name(StringFilter::equal_to(name));
         if let Some(allowed_ctx) = allowed_ctx {
-            filter = filter.context(EqualFilter::default().restrict_results(allowed_ctx));
+            filter = filter.context_id(EqualFilter::default().restrict_results(allowed_ctx));
         }
 
         Ok(DocumentRepository::new(&ctx.connection)
@@ -106,9 +106,9 @@ pub trait DocumentServiceTrait: Sync + Send {
     ) -> Result<ListResult<Document>, ListError> {
         let mut filter = filter.unwrap_or(DocumentFilter::new());
         if let Some(allowed_ctx) = allowed_ctx {
-            filter.context = Some(
+            filter.context_id = Some(
                 filter
-                    .context
+                    .context_id
                     .unwrap_or_default()
                     .restrict_results(allowed_ctx),
             );
@@ -129,7 +129,7 @@ pub trait DocumentServiceTrait: Sync + Send {
     ) -> Result<Vec<Document>, DocumentHistoryError> {
         let filter = DocumentFilter::new()
             .name(StringFilter::equal_to(name))
-            .context(EqualFilter::default().restrict_results(allowed_ctx));
+            .context_id(EqualFilter::default().restrict_results(allowed_ctx));
 
         let repo = DocumentRepository::new(&ctx.connection);
         let docs = repo.document_history(Some(filter))?;
@@ -175,7 +175,7 @@ pub trait DocumentServiceTrait: Sync + Send {
                 let current_document = validate_document_delete(con, &input.id, allowed_ctx)?;
                 let document = generate_deleted_document(current_document, user_id)?;
 
-                match DocumentRepository::new(con).insert(&document, false) {
+                match DocumentRepository::new(con).insert(&document) {
                     Ok(_) => Ok(()),
                     Err(error) => Err(DocumentDeleteError::DatabaseError(error)),
                 }
@@ -197,7 +197,7 @@ pub trait DocumentServiceTrait: Sync + Send {
                 let parent_doc = validate_document_undelete(con, &input.id, allowed_ctx)?;
                 let document = generate_undeleted_document(&input.id, parent_doc, user_id)?;
 
-                match DocumentRepository::new(con).insert(&document, false) {
+                match DocumentRepository::new(con).insert(&document) {
                     Ok(_) => Ok(document),
                     Err(error) => Err(DocumentUndeleteError::DatabaseError(error)),
                 }
@@ -373,7 +373,7 @@ fn insert_document(
         .finalise()
         .map_err(|err| DocumentInsertError::InternalError(err))?;
     let repo = DocumentRepository::new(connection);
-    repo.insert(&doc, false)?;
+    repo.insert(&doc)?;
     Ok(doc)
 }
 
@@ -740,7 +740,7 @@ mod document_service_test {
             DocumentDelete {
                 id: document.id.clone(),
             },
-            &vec![document.context_id.clone()],
+            &vec![document.context_id],
         );
         assert_eq!(
             deleted_doc,
