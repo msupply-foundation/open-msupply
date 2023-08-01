@@ -3,6 +3,7 @@ use std::{collections::HashMap, ops::Index, vec};
 mod activity_log;
 mod barcode;
 pub mod common;
+mod context;
 mod document;
 mod form_schema;
 mod full_invoice;
@@ -45,6 +46,7 @@ mod user_account;
 
 pub use barcode::*;
 use common::*;
+pub use context::*;
 pub use document::*;
 pub use form_schema::*;
 pub use full_invoice::*;
@@ -84,14 +86,14 @@ pub use user_account::*;
 
 use crate::{
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
-    ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, Document,
-    DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
-    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
-    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
+    ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
+    ContextRowRepository, Document, DocumentRepository, FormSchema, FormSchemaRowRepository,
+    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceRow, ItemRow, KeyValueStoreRepository, KeyValueStoreRow,
+    LocationRow, LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
+    MasterListRow, MasterListRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow,
+    NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository,
+    PeriodScheduleRow, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
@@ -149,6 +151,7 @@ pub struct MockData {
     pub barcodes: Vec<BarcodeRow>,
     pub clinicians: Vec<ClinicianRow>,
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
+    pub contexts: Vec<ContextRow>,
 }
 
 impl MockData {
@@ -203,6 +206,7 @@ pub struct MockDataInserts {
     pub program_order_types: bool,
     pub clinicians: bool,
     pub clinician_store_joins: bool,
+    pub contexts: bool,
 }
 
 impl MockDataInserts {
@@ -246,6 +250,7 @@ impl MockDataInserts {
             program_order_types: true,
             clinicians: true,
             clinician_store_joins: true,
+            contexts: true,
         }
     }
 
@@ -422,6 +427,11 @@ impl MockDataInserts {
         self.clinician_store_joins = true;
         self
     }
+
+    pub fn contexts(mut self) -> Self {
+        self.contexts = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -486,6 +496,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             program_requisition_settings: mock_program_requisition_settings(),
             program_order_types: mock_program_order_types(),
             name_tag_joins: mock_name_tag_joins(),
+            contexts: mock_contexts(),
             ..Default::default()
         },
     );
@@ -596,6 +607,13 @@ pub fn insert_mock_data(
         if inserts.user_store_joins {
             let repo = UserStoreJoinRowRepository::new(connection);
             for row in &mock_data.user_store_joins {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.contexts {
+            let repo = ContextRowRepository::new(connection);
+            for row in &mock_data.contexts {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -861,6 +879,7 @@ impl MockData {
             mut barcodes,
             mut clinicians,
             mut clinician_store_joins,
+            mut contexts,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -903,6 +922,7 @@ impl MockData {
         self.clinicians.append(&mut clinicians);
         self.clinician_store_joins
             .append(&mut clinician_store_joins);
+        self.contexts.append(&mut contexts);
 
         self
     }
