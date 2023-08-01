@@ -13,18 +13,18 @@ import {
   CellProps,
 } from '@openmsupply-client/common';
 import { ServiceItemSearchInput } from '@openmsupply-client/system';
-import { DraftOutboundLine } from './../../../types';
+import { DraftStockOutLine } from './../../../types';
 
-const TaxPercentageCell = (props: CellProps<DraftOutboundLine>) => (
+const TaxPercentageCell = (props: CellProps<DraftStockOutLine>) => (
   <NonNegativeDecimalCell max={100} {...props} />
 );
 
 export const useServiceLineColumns = (
-  setter: (patch: RecordPatch<DraftOutboundLine>) => void
+  setter: (patch: RecordPatch<DraftStockOutLine>) => void
 ) => {
   const t = useTranslation('distribution');
   const c = useFormatCurrency();
-  return useColumns<DraftOutboundLine>([
+  return useColumns<DraftStockOutLine>([
     {
       key: 'serviceItemName',
       label: 'label.name',
