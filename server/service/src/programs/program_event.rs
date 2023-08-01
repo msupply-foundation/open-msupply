@@ -151,7 +151,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         patient_id: String,
         datetime: NaiveDateTime,
-        context: &str,
+        context_id: &str,
         events: Vec<EventInput>,
     ) -> Result<(), RepositoryError> {
         let result = ctx
@@ -261,7 +261,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                             patient_id: Some(patient_id.clone()),
                             document_type: target.document_type.clone(),
                             document_name: target.document_name.clone(),
-                            context: context.to_string(),
+                            context_id: context_id.to_string(),
                             r#type: target.r#type.clone(),
                             data: it.name,
                         })
@@ -288,7 +288,10 @@ impl ProgramEventServiceTrait for ProgramEventService {}
 
 #[cfg(test)]
 mod test {
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::{mock_program_a, MockDataInserts},
+        test_db::setup_all,
+    };
 
     use crate::service_provider::ServiceProvider;
 
@@ -324,8 +327,11 @@ mod test {
 
     #[actix_rt::test]
     async fn test_basic_program_events() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_basic_program_events", MockDataInserts::none().names()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "test_basic_program_events",
+            MockDataInserts::none().names().contexts(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "");
         let ctx = service_provider.basic_context().unwrap();
@@ -340,7 +346,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -361,7 +367,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -384,7 +390,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -403,7 +409,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
                     document_type: "DocType2".to_string(),
@@ -420,7 +426,7 @@ mod test {
     async fn test_program_reverse_order_events() {
         let (_, _, connection_manager, _) = setup_all(
             "test_program_reverse_order_events",
-            MockDataInserts::none().names(),
+            MockDataInserts::none().names().contexts(),
         )
         .await;
 
@@ -439,7 +445,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -460,7 +466,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![EventInput {
                     active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
                     document_type: "DocType".to_string(),
@@ -476,8 +482,11 @@ mod test {
 
     #[actix_rt::test]
     async fn test_event_stacks() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_event_stacks", MockDataInserts::none().names()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "test_event_stacks",
+            MockDataInserts::none().names().contexts(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "");
         let ctx = service_provider.basic_context().unwrap();
@@ -493,7 +502,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
@@ -525,7 +534,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
@@ -560,7 +569,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
@@ -589,7 +598,7 @@ mod test {
     async fn test_program_events_remove_stacks() {
         let (_, _, connection_manager, _) = setup_all(
             "test_program_events_remove_stacks",
-            MockDataInserts::none().names(),
+            MockDataInserts::none().names().contexts(),
         )
         .await;
 
@@ -603,7 +612,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
@@ -629,7 +638,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![],
             )
             .unwrap();
@@ -640,7 +649,7 @@ mod test {
     async fn test_program_events_remove_stacks2() {
         let (_, _, connection_manager, _) = setup_all(
             "test_program_events_remove_stacks2",
-            MockDataInserts::none().names(),
+            MockDataInserts::none().names().contexts(),
         )
         .await;
 
@@ -660,7 +669,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
@@ -684,7 +693,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![
                     EventInput {
                         active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
@@ -714,7 +723,7 @@ mod test {
                 &ctx,
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
-                "ctx",
+                &mock_program_a().context_id,
                 vec![],
             )
             .unwrap();

@@ -4,13 +4,12 @@ use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_general::{EqualFilterGenderInput, GenderInput};
+use graphql_types::types::patient::PatientNode;
 use repository::{
     DateFilter, EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField,
     StringFilter,
 };
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
-
-use crate::types::patient::PatientNode;
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
 pub struct PatientConnector {
@@ -140,7 +139,7 @@ pub fn patients(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -180,7 +179,7 @@ pub fn patient(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

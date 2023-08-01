@@ -1,7 +1,7 @@
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use repository::{EqualFilter, Pagination, ProgramEnrolmentFilter, ProgramEnrolmentRow};
+use repository::{EqualFilter, Pagination, ProgramEnrolment, ProgramEnrolmentFilter};
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
@@ -28,7 +28,7 @@ pub struct ProgramEnrolmentLoader {
 /// Thus the loader groups requests by program and does a DB query for each program.
 #[async_trait::async_trait]
 impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
-    type Value = ProgramEnrolmentRow;
+    type Value = ProgramEnrolment;
     type Error = async_graphql::Error;
 
     async fn load(
@@ -64,20 +64,20 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
                         None,
                         Some(
                             ProgramEnrolmentFilter::new()
-                                .context(EqualFilter::equal_to(&program))
+                                .context_id(EqualFilter::equal_to(&program))
                                 .patient_id(EqualFilter::equal_any(patient_id)),
                         ),
                         allowed_ctx.clone(),
                     )?;
 
-                for entry in entries.into_iter() {
+                for program_enrolment in entries.into_iter() {
                     out.insert(
                         ProgramEnrolmentLoaderInput::new(
-                            &entry.patient_id,
+                            &program_enrolment.0.patient_id,
                             &program,
                             allowed_ctx.clone(),
                         ),
-                        entry,
+                        program_enrolment,
                     );
                 }
             }

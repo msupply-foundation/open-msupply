@@ -1,6 +1,7 @@
 // TODO: Delete whole file when soft delete for master list is implemented
 use repository::{
-    MasterListRow, MasterListRowRepository, ProgramRow, ProgramRowRepository, RepositoryError,
+    ContextRow, ContextRowRepository, MasterListRow, MasterListRowRepository, ProgramRow,
+    ProgramRowRepository, RepositoryError,
 };
 use util::constants::MISSING_PROGRAM;
 
@@ -16,15 +17,22 @@ pub fn create_missing_master_list_and_program(
         description: MISSING_PROGRAM.to_string(),
     };
 
+    let missing_context = ContextRow {
+        id: MISSING_PROGRAM.to_string(),
+        name: MISSING_PROGRAM.to_string(),
+    };
+
     let missing_program = ProgramRow {
         id: MISSING_PROGRAM.to_string(),
         master_list_id: MISSING_PROGRAM.to_string(),
         name: MISSING_PROGRAM.to_string(),
+        context_id: MISSING_PROGRAM.to_string(),
     };
 
     let connection = service_provider.connection()?;
 
     MasterListRowRepository::new(&connection).upsert_one(&missing_master_list)?;
+    ContextRowRepository::new(&connection).upsert_one(&missing_context)?;
     ProgramRowRepository::new(&connection).upsert_one(&missing_program)?;
 
     Ok(())

@@ -6,9 +6,10 @@ use graphql_core::loader::{
     DocumentRegistryLoader, DocumentRegistryLoaderInput, JsonSchemaLoader, UserLoader,
 };
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
-use graphql_types::types::{JSONSchemaNode, UserNode};
 use repository::{unknown_user, Document};
 use service::document::raw_document::RawDocument;
+
+use crate::types::{JSONSchemaNode, UserNode};
 
 use super::document_registry::DocumentRegistryNode;
 
