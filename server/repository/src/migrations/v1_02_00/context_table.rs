@@ -1,5 +1,6 @@
-use crate::{migrations::sql, StorageConnection, PATIENT_CONTEXT_ID};
+use crate::{migrations::sql, StorageConnection};
 use diesel::prelude::*;
+use util::constants::PATIENT_CONTEXT_ID;
 
 table! {
     context (id) {
@@ -152,12 +153,11 @@ async fn migration_context_program_upgrade() {
     use diesel::prelude::*;
 
     let prev_version = V1_01_15.version();
-    let version = crate::migrations::v1_02_00::V1_02_00.version();
 
     // test that the migration adds a context for every program
     // Migrate to version - 1
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}"),
+        db_name: &format!("migration_context_program_upgrade"),
         version: Some(prev_version.clone()),
         ..Default::default()
     })
