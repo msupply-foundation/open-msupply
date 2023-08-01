@@ -8,6 +8,8 @@ mod postgres;
 #[cfg(feature = "postgres")]
 pub use self::postgres::*;
 
+mod constants;
+
 use crate::{
     database_settings::DatabaseSettings,
     migrations::Version,

@@ -9,8 +9,7 @@ use crate::{
     DBBackendConnection, StorageConnectionManager,
 };
 
-const TEST_OUTPUT_DIR: &'static str = "test_output";
-const TEMPLATE_MARKER_FILE: &'static str = "___template_needs_update.marker";
+use super::constants::{TEMPLATE_MARKER_FILE, TEST_OUTPUT_DIR};
 
 pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
     DatabaseSettings {
