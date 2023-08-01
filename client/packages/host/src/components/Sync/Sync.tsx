@@ -65,7 +65,6 @@ const useHostSync = () => {
 
 export const Sync: React.FC = () => {
   const t = useTranslation('common');
-  const { localisedDistanceToNow, relativeDateTime } = useFormatDateTime();
   const {
     syncStatus,
     latestSyncDate,
@@ -74,32 +73,6 @@ export const Sync: React.FC = () => {
     isLoading,
     onManualSync,
   } = useHostSync();
-
-  const formattedLatestSyncDate = latestSyncDate ? (
-    <Grid display="flex" container gap={1}>
-      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
-        {Formatter.sentenceCase(relativeDateTime(latestSyncDate))}
-      </Grid>
-      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
-        {`( ${t('messages.ago', {
-          time: localisedDistanceToNow(latestSyncDate),
-        })} )`}
-      </Grid>
-    </Grid>
-  ) : null;
-
-  const formattedLatestSuccessfulSyncDate = latestSuccessfulSyncDate ? (
-    <Grid container gap={1} flexWrap="nowrap">
-      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
-        {Formatter.sentenceCase(relativeDateTime(latestSuccessfulSyncDate))}
-      </Grid>
-      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
-        {`( ${t('messages.ago', {
-          time: localisedDistanceToNow(latestSuccessfulSyncDate),
-        })} )`}
-      </Grid>
-    </Grid>
-  ) : null;
 
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
@@ -116,10 +89,12 @@ export const Sync: React.FC = () => {
         <Row title={t('sync-info.number-to-push')}>
           <Typography>{numberOfRecordsInPushQueue}</Typography>
         </Row>
-        <Row title={t('sync-info.last-sync')}>{formattedLatestSyncDate}</Row>
+        <Row title={t('sync-info.last-sync')}>
+          <FormattedSyncDate date={latestSyncDate} />
+        </Row>
         {!!syncStatus?.error ? (
           <Row title={t('sync-info.last-successful-sync')}>
-            {formattedLatestSuccessfulSyncDate}
+            <FormattedSyncDate date={latestSuccessfulSyncDate} />
           </Row>
         ) : null}
         <Row>
@@ -154,3 +129,25 @@ const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => (
     </Grid>
   </Grid>
 );
+
+const FormattedSyncDate = ({ date }: { date: Date | null }) => {
+  const t = useTranslation('common');
+  const { localisedDistanceToNow, relativeDateTime } = useFormatDateTime();
+
+  if (!date) return null;
+
+  const relativeTime = `( ${t('messages.ago', {
+    time: localisedDistanceToNow(date),
+  })} )`;
+
+  return (
+    <Grid display="flex" container gap={1}>
+      <Grid item flex={0} style={{ whiteSpace: 'nowrap' }}>
+        {Formatter.sentenceCase(relativeDateTime(date))}
+      </Grid>
+      <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
+        {relativeTime}
+      </Grid>
+    </Grid>
+  );
+};
