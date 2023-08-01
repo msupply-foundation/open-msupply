@@ -1,6 +1,6 @@
 use repository::{
-    DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryRow,
-    DocumentRegistryRowRepository, DocumentRegistryType, EqualFilter, FormSchemaRowRepository,
+    DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
+    DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchemaRowRepository,
     Pagination, RepositoryError,
 };
 
@@ -10,7 +10,6 @@ use crate::service_provider::ServiceContext;
 pub enum InsertDocRegistryError {
     NotAllowedToMutateDocument,
     OnlyOnePatientEntryAllowed,
-    InvalidParent,
     DataSchemaDoesNotExist,
     InternalError(String),
     RepositoryError(RepositoryError),
@@ -18,10 +17,9 @@ pub enum InsertDocRegistryError {
 
 pub struct InsertDocumentRegistry {
     pub id: String,
-    pub parent_id: Option<String>,
     pub document_type: String,
-    pub document_context: String,
-    pub r#type: DocumentRegistryType,
+    pub context_id: String,
+    pub category: DocumentRegistryCategory,
     pub name: Option<String>,
     pub form_schema_id: String,
 }
@@ -60,21 +58,19 @@ pub fn insert(
 fn generate(
     InsertDocumentRegistry {
         id,
-        parent_id,
         document_type,
-        document_context,
-        r#type,
+        context_id,
+        category,
         name,
         form_schema_id,
     }: InsertDocumentRegistry,
 ) -> DocumentRegistryRow {
     DocumentRegistryRow {
         id,
-        r#type,
+        category,
         document_type,
-        document_context,
+        context_id,
         name,
-        parent_id,
         form_schema_id: Some(form_schema_id),
         config: None,
     }
@@ -85,15 +81,11 @@ fn validate(
     input: &InsertDocumentRegistry,
     allowed_ctx: &[String],
 ) -> Result<(), InsertDocRegistryError> {
-    if !allowed_ctx.contains(&input.document_type) {
+    if !allowed_ctx.contains(&input.context_id) {
         return Err(InsertDocRegistryError::NotAllowedToMutateDocument);
     }
     if !validate_unique_patient_entry(ctx, input)? {
         return Err(InsertDocRegistryError::OnlyOnePatientEntryAllowed);
-    }
-
-    if !validate_parent_entry(ctx, input)? {
-        return Err(InsertDocRegistryError::InvalidParent);
     }
 
     if !validate_schema_exits(ctx, input)? {
@@ -107,30 +99,14 @@ fn validate_unique_patient_entry(
     ctx: &ServiceContext,
     input: &InsertDocumentRegistry,
 ) -> Result<bool, RepositoryError> {
-    if input.r#type != DocumentRegistryType::Patient {
+    if input.category != DocumentRegistryCategory::Patient {
         return Ok(true);
     }
     let repo = DocumentRegistryRepository::new(&ctx.connection);
     let result = repo.count(Some(
-        DocumentRegistryFilter::new().r#type(DocumentRegistryType::Patient.equal_to()),
+        DocumentRegistryFilter::new().r#type(DocumentRegistryCategory::Patient.equal_to()),
     ))?;
     Ok(result == 0)
-}
-
-fn validate_parent_entry(
-    ctx: &ServiceContext,
-    input: &InsertDocumentRegistry,
-) -> Result<bool, RepositoryError> {
-    let parent = match &input.parent_id {
-        Some(parent) => parent,
-        None => return Ok(true),
-    };
-
-    let repo = DocumentRegistryRepository::new(&ctx.connection);
-    let result = repo.count(Some(
-        DocumentRegistryFilter::new().id(EqualFilter::equal_to(parent)),
-    ))?;
-    Ok(result == 1)
 }
 
 fn validate_schema_exits(

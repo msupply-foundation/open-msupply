@@ -1,4 +1,5 @@
 use repository::{PaginationOption, Patient, PatientFilter, PatientSort, RepositoryError};
+use util::constants::PATIENT_TYPE;
 
 use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
@@ -15,9 +16,6 @@ pub use self::query::*;
 pub use self::search::*;
 pub use self::search_central::*;
 pub use self::upsert::*;
-
-/// The default document type for a patient
-pub const PATIENT_TYPE: &str = "Patient";
 
 pub fn main_patient_doc_name(patient_id: &str) -> String {
     patient_doc_name(patient_id, PATIENT_TYPE)
