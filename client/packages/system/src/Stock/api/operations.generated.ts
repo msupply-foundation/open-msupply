@@ -3,7 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
+import { LocationRowFragmentDoc } from '../../../../../packages/system/src/Location/api/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw';
 export type StockLineRowFragment = {
   __typename: 'StockLineNode';
