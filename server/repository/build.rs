@@ -2,12 +2,16 @@ use glob::glob;
 use std::fs;
 use std::path::Path;
 
+#[path = "src/test_db/constants.rs"]
+mod constants;
+use crate::constants::{TEMPLATE_MARKER_FILE, TEST_OUTPUT_DIR};
+
 fn main() {
     // when migrations are changing mark the template DBs to be recreated
-    for entry in glob("../**/test_output").expect("Failed to read glob pattern") {
+    for entry in glob(&format!("../**/{}", TEST_OUTPUT_DIR)).expect("Failed to read glob pattern") {
         match entry {
             Ok(path) => {
-                fs::File::create(Path::new(&path).join("___template_needs_update.marker")).unwrap();
+                fs::File::create(Path::new(&path).join(TEMPLATE_MARKER_FILE)).unwrap();
             }
             Err(e) => println!("cargo:warning={:?}", e),
         }
