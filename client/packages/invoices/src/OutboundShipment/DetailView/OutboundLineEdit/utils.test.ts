@@ -310,7 +310,7 @@ describe('Allocate quantities - differing pack size behaviour', () => {
     const lineTwoAfterChange = { ...two, isUpdated: true };
     lineOneAfterChange.numberOfPacks = 0;
     lineTwoAfterChange.numberOfPacks = 1;
-    const placeholderAfterChange = { ...placeholder };
+    const placeholderAfterChange = { ...placeholder, isUpdated: true };
     placeholderAfterChange.numberOfPacks = 4;
     const expectedAfterChange = [
       lineOneAfterChange,

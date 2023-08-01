@@ -1,9 +1,9 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
+import { NameRowFragmentDoc } from '../../../../../packages/system/src/Name/api/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw';
 export type ItemWithStatsFragment = {
   __typename: 'ItemNode';
@@ -181,8 +181,8 @@ export type RequestFragment = {
 };
 
 export type RequestByNumberQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  requisitionNumber: Types.Scalars['Int'];
+  storeId: Types.Scalars['String']['input'];
+  requisitionNumber: Types.Scalars['Int']['input'];
 }>;
 
 export type RequestByNumberQuery = {
@@ -286,8 +286,8 @@ export type RequestByNumberQuery = {
 };
 
 export type RequisitionLineChartQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  requisitionLineId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  requisitionLineId: Types.Scalars['String']['input'];
 }>;
 
 export type RequisitionLineChartQuery = {
@@ -337,7 +337,7 @@ export type RequisitionLineChartQuery = {
 };
 
 export type RequestsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   filter?: Types.InputMaybe<Types.RequisitionFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
   sort?: Types.InputMaybe<
@@ -382,7 +382,7 @@ export type RequestsQuery = {
 };
 
 export type InsertRequestLineMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.InsertRequestRequisitionLineInput;
 }>;
 
@@ -407,7 +407,7 @@ export type InsertRequestLineMutation = {
 };
 
 export type UpdateRequestLineMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.UpdateRequestRequisitionLineInput;
 }>;
 
@@ -429,9 +429,9 @@ export type UpdateRequestLineMutation = {
 };
 
 export type AddFromMasterListMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  requestId: Types.Scalars['String'];
-  masterListId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  requestId: Types.Scalars['String']['input'];
+  masterListId: Types.Scalars['String']['input'];
 }>;
 
 export type AddFromMasterListMutation = {
@@ -455,7 +455,7 @@ export type DeleteRequestLinesMutationVariables = Types.Exact<{
     | Array<Types.DeleteRequestRequisitionLineInput>
     | Types.DeleteRequestRequisitionLineInput
   >;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type DeleteRequestLinesMutation = {
@@ -478,8 +478,8 @@ export type DeleteRequestLinesMutation = {
 };
 
 export type UseSuggestedQuantityMutationVariables = Types.Exact<{
-  requestId: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
+  requestId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type UseSuggestedQuantityMutation = {
@@ -499,7 +499,7 @@ export type UseSuggestedQuantityMutation = {
 };
 
 export type InsertRequestMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.InsertRequestRequisitionInput;
 }>;
 
@@ -516,7 +516,7 @@ export type InsertRequestMutation = {
 };
 
 export type InsertProgramRequestMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.InsertProgramRequestRequisitionInput;
 }>;
 
@@ -528,7 +528,7 @@ export type InsertProgramRequestMutation = {
 };
 
 export type UpdateRequestMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.UpdateRequestRequisitionInput;
 }>;
 
@@ -547,7 +547,7 @@ export type UpdateRequestMutation = {
 };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.BatchRequestRequisitionInput;
 }>;
 
@@ -601,7 +601,7 @@ export type ProgramSettingsFragment = {
 };
 
 export type ProgramSettingsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type ProgramSettingsQuery = {
@@ -1178,7 +1178,7 @@ export function getSdk(
   return {
     requestByNumber(
       variables: RequestByNumberQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<RequestByNumberQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1193,7 +1193,7 @@ export function getSdk(
     },
     requisitionLineChart(
       variables: RequisitionLineChartQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<RequisitionLineChartQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1208,7 +1208,7 @@ export function getSdk(
     },
     requests(
       variables: RequestsQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<RequestsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1222,7 +1222,7 @@ export function getSdk(
     },
     insertRequestLine(
       variables: InsertRequestLineMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertRequestLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1237,7 +1237,7 @@ export function getSdk(
     },
     updateRequestLine(
       variables: UpdateRequestLineMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateRequestLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1252,7 +1252,7 @@ export function getSdk(
     },
     addFromMasterList(
       variables: AddFromMasterListMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<AddFromMasterListMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1267,7 +1267,7 @@ export function getSdk(
     },
     deleteRequestLines(
       variables: DeleteRequestLinesMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteRequestLinesMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1282,7 +1282,7 @@ export function getSdk(
     },
     useSuggestedQuantity(
       variables: UseSuggestedQuantityMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UseSuggestedQuantityMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1297,7 +1297,7 @@ export function getSdk(
     },
     insertRequest(
       variables: InsertRequestMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertRequestMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1312,7 +1312,7 @@ export function getSdk(
     },
     insertProgramRequest(
       variables: InsertProgramRequestMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertProgramRequestMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1327,7 +1327,7 @@ export function getSdk(
     },
     updateRequest(
       variables: UpdateRequestMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateRequestMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1342,7 +1342,7 @@ export function getSdk(
     },
     deleteRequest(
       variables: DeleteRequestMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<DeleteRequestMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -1357,7 +1357,7 @@ export function getSdk(
     },
     programSettings(
       variables: ProgramSettingsQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<ProgramSettingsQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
