@@ -1,7 +1,106 @@
-import { Column, useColumns } from '@openmsupply-client/common';
-import { PrescriptionLineFragment } from '../../api';
+import {
+  CheckCell,
+  Column,
+  ColumnAlign,
+  CurrencyCell,
+  ExpiryDateCell,
+  PositiveNumberCell,
+  useColumns,
+  useCurrencyFormat,
+} from '@openmsupply-client/common';
+import { DraftStockOutLine } from '../../../types';
+import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
 
-export const useExpansionColumns = (): Column<PrescriptionLineFragment>[] =>
+export const usePrescriptionLineEditColumns = ({
+  onChange,
+  unit,
+}: {
+  onChange: (key: string, value: number, packSize: number) => void;
+  unit: string;
+}) => {
+  const columns = useColumns<DraftStockOutLine>(
+    [
+      [
+        'batch',
+        {
+          accessor: ({ rowData }) => rowData.stockLine?.batch,
+        },
+      ],
+      [
+        'expiryDate',
+        {
+          Cell: ExpiryDateCell,
+          width: 80,
+        },
+      ],
+      [
+        'locationName',
+        {
+          accessor: ({ rowData }) => rowData.location?.name,
+          width: 70,
+        },
+      ],
+      ['packSize', { width: 90 }],
+      [
+        'sellPricePerPack',
+        {
+          Cell: CurrencyCell,
+          formatter: sellPrice => useCurrencyFormat(Number(sellPrice)),
+          width: 120,
+        },
+      ],
+      {
+        label: 'label.on-hold',
+        key: 'onHold',
+        Cell: CheckCell,
+        accessor: ({ rowData }) => rowData.stockLine?.onHold,
+        align: ColumnAlign.Center,
+        width: 80,
+      },
+      {
+        Cell: PositiveNumberCell,
+        label: 'label.in-store',
+        key: 'totalNumberOfPacks',
+        align: ColumnAlign.Right,
+        width: 80,
+        accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
+      },
+      {
+        Cell: PositiveNumberCell,
+        label: 'label.available-packs',
+        key: 'availableNumberOfPacks',
+        align: ColumnAlign.Right,
+        width: 85,
+        accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
+      },
+      [
+        'unitQuantity',
+        {
+          label: 'label.unit-quantity-issued',
+          labelProps: { unit },
+          accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+          width: 120,
+        },
+      ],
+      [
+        'numberOfPacks',
+        {
+          Cell: PackQuantityCell,
+          width: 120,
+          label: 'label.pack-quantity-issued',
+          setter: ({ packSize, id, numberOfPacks }) =>
+            onChange(id, numberOfPacks ?? 0, packSize ?? 1),
+        },
+      ],
+    ],
+    {},
+    [onChange]
+  );
+
+  return columns;
+};
+
+export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
   useColumns([
     'batch',
     'expiryDate',

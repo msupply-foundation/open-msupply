@@ -95,6 +95,7 @@ export interface UseDraftStockOutLinesControl {
   setDraftStockOutLines: React.Dispatch<
     React.SetStateAction<DraftStockOutLine[]>
   >;
+  updateNotes: (note: string) => void;
 }
 
 export const sumAvailableQuantity = (
@@ -340,3 +341,10 @@ export const PackQuantityCell = (props: CellProps<DraftStockOutLine>) => (
     {...props}
   />
 );
+
+export const updateNotes = (
+  draftStockOutLines: DraftStockOutLine[],
+  note: string
+) => {
+  return draftStockOutLines.map(line => ({ ...line, note, isUpdated: true }));
+};
