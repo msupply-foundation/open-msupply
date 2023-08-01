@@ -6,12 +6,12 @@ import {
   SortBy,
   ColumnDataAccessor,
   EncounterNodeStatus,
+  DocumentRegistryCategoryNode,
 } from '@openmsupply-client/common';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
   EncounterRowFragment,
   useDocumentRegistry,
-  DocumentRegistryFragment,
 } from '@openmsupply-client/programs';
 import { useLogicalStatus } from '../utils';
 import { ChipTableCell } from '../../Patient';
@@ -50,20 +50,15 @@ export const useEncounterListColumns = ({
   includePatient = false,
 }: useEncounterListColumnsProps) => {
   const { localisedDate, localisedTime } = useFormatDateTime();
-  const { data: documentRegistries } =
-    useDocumentRegistry.get.documentRegistries();
+  const { data: enrolmentRegistries } =
+    useDocumentRegistry.get.documentRegistries({
+      filter: {
+        category: {
+          equalTo: DocumentRegistryCategoryNode.ProgramEnrolment,
+        },
+      },
+    });
   includePatient;
-  // document type -> parent
-  const documentRegistryParentMap =
-    documentRegistries?.nodes?.reduce((prev, cur) => {
-      if (!cur.parentId) return prev;
-      const parent = documentRegistries?.nodes.find(
-        it => it.id === cur.parentId
-      );
-      if (parent) prev.set(cur.documentType, parent);
-      return prev;
-    }, new Map<string, DocumentRegistryFragment>()) ??
-    new Map<string, DocumentRegistryFragment>();
 
   const columnList: ColumnDescription<EncounterRowFragment>[] = [
     {
@@ -76,7 +71,9 @@ export const useEncounterListColumns = ({
       key: 'program',
       label: 'label.program',
       accessor: ({ rowData }) =>
-        documentRegistryParentMap.get(rowData.type)?.name,
+        enrolmentRegistries?.nodes.find(
+          it => it.contextId === rowData.contextId
+        )?.name,
     },
     {
       key: 'startDatetime',

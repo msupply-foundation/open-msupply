@@ -881,3 +881,5 @@ export const mockProgramSettingsQuery = (resolver: ResponseResolver<GraphQLReque
     'programSettings',
     resolver
   )
+  resolver
+  )

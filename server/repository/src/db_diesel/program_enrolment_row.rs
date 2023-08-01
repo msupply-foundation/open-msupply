@@ -1,5 +1,6 @@
 use super::{
-    name_row::name, name_store_join::name_store_join, store_row::store, StorageConnection,
+    name_row::name, name_store_join::name_store_join, program_row::program, store_row::store,
+    StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -15,7 +16,7 @@ table! {
         id -> Text,
         document_type -> Text,
         document_name -> Text,
-        context -> Text,
+        program_id -> Text,
         patient_id -> Text,
         enrolment_datetime -> Timestamp,
         program_enrolment_id -> Nullable<Text>,
@@ -24,9 +25,11 @@ table! {
 }
 
 joinable!(program_enrolment -> name (patient_id));
+joinable!(program_enrolment -> program (program_id));
 allow_tables_to_appear_in_same_query!(program_enrolment, name);
 allow_tables_to_appear_in_same_query!(program_enrolment, name_store_join);
 allow_tables_to_appear_in_same_query!(program_enrolment, store);
+allow_tables_to_appear_in_same_query!(program_enrolment, program);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -46,8 +49,8 @@ pub struct ProgramEnrolmentRow {
     pub document_type: String,
     /// The program document name
     pub document_name: String,
-    /// The document context for the associated document
-    pub context: String,
+    /// Reference to program id
+    pub program_id: String,
     /// The patient this program belongs to
     pub patient_id: String,
     /// Time when the patient has been enrolled to this program
@@ -62,7 +65,7 @@ impl Default for ProgramEnrolmentRow {
         Self {
             id: Default::default(),
             document_type: Default::default(),
-            context: Default::default(),
+            program_id: Default::default(),
             document_name: Default::default(),
             patient_id: Default::default(),
             enrolment_datetime: Default::default(),

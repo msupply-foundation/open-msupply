@@ -168,6 +168,7 @@ pub(crate) enum PullUpsertRecord {
     MasterListNameJoin(MasterListNameJoinRow),
     PeriodSchedule(PeriodScheduleRow),
     Period(PeriodRow),
+    Context(ContextRow),
     Program(ProgramRow),
     ProgramRequisitionSettings(ProgramRequisitionSettingsRow),
     ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow),
