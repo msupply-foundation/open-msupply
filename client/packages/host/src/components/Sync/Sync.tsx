@@ -89,7 +89,7 @@ export const Sync: React.FC = () => {
   ) : null;
 
   const formattedLatestSuccessfulSyncDate = latestSuccessfulSyncDate ? (
-    <Grid display="flex" container gap={1}>
+    <Grid container gap={1} flexWrap="nowrap">
       <Grid item flex={1} style={{ whiteSpace: 'nowrap' }}>
         {Formatter.sentenceCase(relativeDateTime(latestSuccessfulSyncDate))}
       </Grid>
@@ -107,7 +107,7 @@ export const Sync: React.FC = () => {
         container
         flexDirection="column"
         justifyContent="flex-start"
-        style={{ padding: '15 15 50 15', minWidth: 500 }}
+        style={{ padding: '15 15 50 15', minWidth: 650 }}
         flexWrap="nowrap"
       >
         <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
@@ -117,7 +117,7 @@ export const Sync: React.FC = () => {
           <Typography>{numberOfRecordsInPushQueue}</Typography>
         </Row>
         <Row title={t('sync-info.last-sync')}>{formattedLatestSyncDate}</Row>
-        {!syncStatus?.summary?.finished ? (
+        {!!syncStatus?.error ? (
           <Row title={t('sync-info.last-successful-sync')}>
             {formattedLatestSuccessfulSyncDate}
           </Row>
@@ -145,11 +145,11 @@ interface RowProps {
 }
 
 const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => (
-  <Grid container display="flex" padding={1}>
-    <Grid item flex={1}>
+  <Grid container padding={1}>
+    <Grid item flex={1} flexBasis="40%">
       <Typography fontWeight={700}>{title}</Typography>
     </Grid>
-    <Grid item flex={1}>
+    <Grid item flex={1} flexBasis="60%">
       {children}
     </Grid>
   </Grid>
