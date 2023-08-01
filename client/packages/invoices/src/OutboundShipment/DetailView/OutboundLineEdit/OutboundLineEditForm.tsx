@@ -19,9 +19,9 @@ import {
   StockItemSearchInput,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { PackSizeController } from './hooks';
 import { useOutbound } from '../../api';
 import { DraftItem } from '../../..';
+import { PackSizeController } from '../../../StockOut';
 
 interface OutboundLineEditFormProps {
   allocatedQuantity: number;

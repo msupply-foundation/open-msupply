@@ -1,67 +1,3 @@
-fragment PartialStockLine on StockLineNode {
-  id
-  itemId
-  availableNumberOfPacks
-  totalNumberOfPacks
-  onHold
-  sellPricePerPack
-  packSize
-  expiryDate
-  location {
-    __typename
-    id
-    name
-    code
-    onHold
-  }
-}
-
-fragment OutboundLine on InvoiceLineNode {
-  __typename
-  id
-  type
-  batch
-  expiryDate
-  numberOfPacks
-  packSize
-  invoiceId
-  sellPricePerPack
-  note
-  totalBeforeTax
-  totalAfterTax
-  taxPercentage
-  note
-
-  item {
-    __typename
-    id
-    name
-    code
-    unitName
-  }
-
-  location {
-    __typename
-    id
-    name
-    code
-    onHold
-  }
-
-  stockLine {
-    __typename
-    id
-    itemId
-    batch
-    availableNumberOfPacks
-    totalNumberOfPacks
-    onHold
-    sellPricePerPack
-    packSize
-    expiryDate
-  }
-}
-
 fragment Outbound on InvoiceNode {
   __typename
   id
@@ -104,7 +40,7 @@ fragment Outbound on InvoiceNode {
   lines {
     __typename
     nodes {
-      ...OutboundLine
+      ...StockOutLine
     }
     totalCount
   }

@@ -5,7 +5,7 @@ import {
   DateUtils,
   ArrayUtils,
 } from '@openmsupply-client/common';
-import { DraftOutboundLine } from '../../../../types';
+import { DraftStockOutLine } from '../../types';
 
 // Helper to sort the pack sizes by value.
 const sortPackSizes = (a: PackSizeOption, b: PackSizeOption) => {
@@ -26,10 +26,10 @@ type PackSizeOption = {
   value: number;
 };
 
-const isPlaceholder = (line: DraftOutboundLine): boolean =>
+const isPlaceholder = (line: DraftStockOutLine): boolean =>
   line.type === InvoiceLineNodeType.UnallocatedStock;
 
-const createPackSizeOption = (line: DraftOutboundLine) => ({
+const createPackSizeOption = (line: DraftStockOutLine) => ({
   packSize: line.packSize,
   hasAllocated: line.numberOfPacks > 0,
   hasAvailableStock: isPlaceholder(line)
@@ -56,7 +56,7 @@ const createAnyOption = (t: ReturnType<typeof useTranslation>) => () => ({
   label: t('label.any'),
 });
 
-export const usePackSizeController = (lines: DraftOutboundLine[]) => {
+export const usePackSizeController = (lines: DraftStockOutLine[]) => {
   const t = useTranslation('distribution');
 
   // The selected pack size for auto allocation. The initial value

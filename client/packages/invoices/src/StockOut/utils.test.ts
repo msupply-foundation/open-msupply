@@ -3,12 +3,8 @@ import {
   FnUtils,
   InvoiceLineNodeType,
 } from '@openmsupply-client/common';
-import { DraftOutboundLine } from './../../../types';
-import {
-  createDraftOutboundLine,
-  createPlaceholderRow,
-} from './hooks/useDraftOutboundLines';
-import { allocateQuantities } from './utils';
+import { allocateQuantities, createDraftStockOutLine, createStockOutPlaceholderRow } from './utils';
+import { DraftStockOutLine } from '../types';
 
 type TestLineParams = {
   id?: string;
@@ -30,8 +26,8 @@ const createTestLine = ({
   id = FnUtils.generateUUID(),
   onHold = false,
   expiryDate,
-}: TestLineParams): DraftOutboundLine =>
-  createDraftOutboundLine({
+}: TestLineParams): DraftStockOutLine =>
+  createDraftStockOutLine({
     invoiceId: '',
     invoiceLine: {
       id,
@@ -60,14 +56,19 @@ const createTestLine = ({
         sellPricePerPack: 0,
         itemId,
         packSize,
+        item: {
+          code: '',
+          name: '',
+          __typename: 'ItemNode',
+        },
       },
     },
   });
 
 const getPlaceholder = (
-  line?: Partial<DraftOutboundLine>
-): DraftOutboundLine => ({
-  ...createPlaceholderRow('', 'placeholder', 'placeholder'),
+  line?: Partial<DraftStockOutLine>
+): DraftStockOutLine => ({
+  ...createStockOutPlaceholderRow('', 'placeholder', 'placeholder'),
   ...line,
 });
 
@@ -82,10 +83,10 @@ describe('allocateQuantities - standard behaviour.', () => {
       availableNumberOfPacks: 10,
       totalNumberOfPacks: 10,
     });
-    const draftOutboundLines = [lineOne, placeholder];
+    const draftStockOutLines = [lineOne, placeholder];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const expected = [
@@ -106,10 +107,10 @@ describe('allocateQuantities - standard behaviour.', () => {
     const one = createTestLine({ id: '1' });
     const two = createTestLine({ id: '2' });
     const placeholder = getPlaceholder();
-    const draftOutboundLines = [one, two, placeholder];
+    const draftStockOutLines = [one, two, placeholder];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const lineOne = { ...one, isUpdated: true };
@@ -134,10 +135,10 @@ describe('allocateQuantities - standard behaviour.', () => {
       totalNumberOfPacks: 10,
       packSize: 10,
     });
-    const draftOutboundLines = [lineOne, placeholder];
+    const draftStockOutLines = [lineOne, placeholder];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const expected = [
@@ -158,10 +159,10 @@ describe('Allocate quantities - placeholder row behaviour', () => {
   it('allocates excess quantity to the placeholder row when the status is new', () => {
     const one = createTestLine({ id: '1' });
     const placeholder = getPlaceholder();
-    const draftOutboundLines = [one, placeholder];
+    const draftStockOutLines = [one, placeholder];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const lineOne = { ...one, isUpdated: true };
@@ -185,10 +186,10 @@ describe('Allocate quantities - placeholder row behaviour', () => {
     const one = createTestLine({ id: '1' });
     const two = createTestLine({ id: '2' });
     const placeholder = getPlaceholder();
-    const draftOutboundLines = [one, two, placeholder];
+    const draftStockOutLines = [one, two, placeholder];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const lineOne = { ...one, isUpdated: true };
@@ -214,8 +215,8 @@ describe('Allocate quantities - placeholder row behaviour', () => {
       const one = createTestLine({ id: '1' });
       const placeholder = getPlaceholder();
 
-      const draftOutboundLines = [one, placeholder];
-      const allocate = allocateQuantities(status, draftOutboundLines);
+      const draftStockOutLines = [one, placeholder];
+      const allocate = allocateQuantities(status, draftStockOutLines);
 
       const lineOne = { ...one, isUpdated: true };
       lineOne.numberOfPacks = 1;
@@ -258,10 +259,10 @@ describe('Allocate quantities - differing pack size behaviour', () => {
     const two = createTestLine({ id: '2', packSize: 2 });
     const placeholder = getPlaceholder();
 
-    const draftOutboundLines = [one, two, placeholder];
+    const draftStockOutLines = [one, two, placeholder];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const lineOne = { ...one, isUpdated: true };
@@ -289,10 +290,10 @@ describe('Allocate quantities - differing pack size behaviour', () => {
     const one = createTestLine({ id: '1' });
     const two = createTestLine({ id: '2', packSize: 2 });
     const placeholder = getPlaceholder();
-    const draftOutboundLines = [one, two, placeholder];
+    const draftStockOutLines = [one, two, placeholder];
     let allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const lineOne = { ...one, isUpdated: true };
@@ -332,10 +333,10 @@ describe('Allocating quantities - behaviour when mixing placeholders and pack si
   it('issues any left over quantities to the placeholder at a pack size of 1 (the number of units) when issuing to pack sizes of one', () => {
     const one = createTestLine({ id: '1' });
     const placeholder = getPlaceholder();
-    const draftOutboundLines = [one, placeholder];
+    const draftStockOutLines = [one, placeholder];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const lineOne = { ...one, isUpdated: true };
@@ -357,10 +358,10 @@ describe('Allocating quantities - behaviour when mixing placeholders and pack si
   it('issues any left over quantities to the placeholder at a pack size of 1 (the number of units) when issuing to non-one pack sizes', () => {
     const one = createTestLine({ id: '2', packSize: 2 });
     const placeholder = getPlaceholder();
-    const draftOutboundLines = [one, placeholder];
+    const draftStockOutLines = [one, placeholder];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const lineOne = { ...one, isUpdated: true };
@@ -405,7 +406,7 @@ describe('Allocated quantities - expiry date behaviour', () => {
    *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
    ********************************************************** */
   it('issues to lines with the earliest expiring invoice line', () => {
-    const draftOutboundLines = [
+    const draftStockOutLines = [
       { ...expiringLastLine },
       { ...expiringFirstLine },
       { ...placeholder },
@@ -413,7 +414,7 @@ describe('Allocated quantities - expiry date behaviour', () => {
 
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const expiringLast = { ...expiringLastLine, isUpdated: false };
@@ -434,7 +435,7 @@ describe('Allocated quantities - expiry date behaviour', () => {
    *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
    ********************************************************** */
   it('allocates units to the first expiry batch, with left overs being assigned to later expiring lines', () => {
-    const draftOutboundLines = [
+    const draftStockOutLines = [
       { ...expiringLastLine },
       { ...expiringFirstLine },
       { ...placeholder },
@@ -442,7 +443,7 @@ describe('Allocated quantities - expiry date behaviour', () => {
 
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const expiringLast = {
@@ -490,7 +491,7 @@ describe('Allocated quantities - behaviour for expired lines', () => {
    *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
    ********************************************************** */
   it('does not allocate any quantity to expired lines', () => {
-    const draftOutboundLines = [
+    const draftStockOutLines = [
       { ...expiringLastLine },
       { ...expiredLine },
       { ...placeholder },
@@ -498,7 +499,7 @@ describe('Allocated quantities - behaviour for expired lines', () => {
 
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const expiringLast = {
@@ -527,10 +528,10 @@ describe('Allocated quantities - behaviour generally not possible through the UI
     });
     const placeholder = getPlaceholder();
 
-    const draftOutboundLines = [one, placeholder];
+    const draftStockOutLines = [one, placeholder];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const lineOne = { ...one };
@@ -594,7 +595,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
    *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
    ********************************************************** */
   it('issues to lines by expiry date without over allocating', () => {
-    const draftOutboundLines = [
+    const draftStockOutLines = [
       { ...Line1 },
       { ...Line2 },
       { ...Line3 },
@@ -604,7 +605,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
 
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const line1 = { ...Line1, numberOfPacks: 5, isUpdated: true };
@@ -634,7 +635,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
    *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
    ********************************************************** */
   it('reduces over allocates lines as needed #1', () => {
-    const draftOutboundLines = [
+    const draftStockOutLines = [
       { ...Line1 },
       { ...Line2 },
       { ...Line3 },
@@ -644,7 +645,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
 
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const line1 = { ...Line1, numberOfPacks: 2, isUpdated: true };
@@ -670,7 +671,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
    *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
    ********************************************************** */
   it('reduces previously allocated lines as needed #2', () => {
-    const draftOutboundLines = [
+    const draftStockOutLines = [
       { ...Line1 },
       { ...Line2, availableNumberOfPacks: 10, packSize: 10 },
       { ...placeholder },
@@ -678,7 +679,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
 
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     const line1 = { ...Line1 };
@@ -702,10 +703,10 @@ describe('Allocated quantities - coping with over-allocation', () => {
    *                { numberOfPacks: 0, isUpdated: false, itemId: 'placeholder' }]
    ********************************************************** */
   it('does not over allocate if not required', () => {
-    const draftOutboundLines = [{ ...Line3 }, { ...Line4 }, { ...placeholder }];
+    const draftStockOutLines = [{ ...Line3 }, { ...Line4 }, { ...placeholder }];
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
     const line1 = { ...Line3, numberOfPacks: 1, isUpdated: true };
     const line2 = { ...Line4, numberOfPacks: 2, isUpdated: true };
@@ -741,7 +742,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
     };
     const line4 = { ...Line4 };
 
-    const draftOutboundLines = [
+    const draftStockOutLines = [
       { ...line1 },
       { ...line2 },
       { ...line3 },
@@ -751,7 +752,7 @@ describe('Allocated quantities - coping with over-allocation', () => {
 
     const allocate = allocateQuantities(
       InvoiceNodeStatus.New,
-      draftOutboundLines
+      draftStockOutLines
     );
 
     expect(allocate(61, null)).toEqual([
