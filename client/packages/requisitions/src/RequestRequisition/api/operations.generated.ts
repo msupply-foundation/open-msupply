@@ -1,9 +1,9 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
+import { NameRowFragmentDoc } from '../../../../../packages/system/src/Name/api/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ItemWithStatsFragment = { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
 
@@ -14,23 +14,23 @@ export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: strin
 export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null };
 
 export type RequestByNumberQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  requisitionNumber: Types.Scalars['Int'];
+  storeId: Types.Scalars['String']['input'];
+  requisitionNumber: Types.Scalars['Int']['input'];
 }>;
 
 
 export type RequestByNumberQuery = { __typename: 'Queries', requisitionByNumber: { __typename: 'RecordNotFound', description: string } | { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null } };
 
 export type RequisitionLineChartQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  requisitionLineId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  requisitionLineId: Types.Scalars['String']['input'];
 }>;
 
 
 export type RequisitionLineChartQuery = { __typename: 'Queries', requisitionLineChart: { __typename: 'ItemChartNode', calculationDate?: string | null, consumptionHistory?: { __typename: 'ConsumptionHistoryConnector', totalCount: number, nodes: Array<{ __typename: 'ConsumptionHistoryNode', averageMonthlyConsumption: number, consumption: number, date: string, isCurrent: boolean, isHistoric: boolean }> } | null, stockEvolution?: { __typename: 'StockEvolutionConnector', totalCount: number, nodes: Array<{ __typename: 'StockEvolutionNode', date: string, isHistoric: boolean, isProjected: boolean, minimumStockOnHand: number, maximumStockOnHand: number, stockOnHand: number }> } | null, suggestedQuantityCalculation: { __typename: 'SuggestedQuantityCalculationNode', suggestedQuantity: number, stockOnHand: number, minimumStockOnHand: number, maximumStockOnHand: number, averageMonthlyConsumption: number } } | { __typename: 'RequisitionLineChartError', error: { __typename: 'RecordNotFound', description: string } } };
 
 export type RequestsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   filter?: Types.InputMaybe<Types.RequisitionFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
   sort?: Types.InputMaybe<Array<Types.RequisitionSortInput> | Types.RequisitionSortInput>;
@@ -40,7 +40,7 @@ export type RequestsQueryVariables = Types.Exact<{
 export type RequestsQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null }> } };
 
 export type InsertRequestLineMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.InsertRequestRequisitionLineInput;
 }>;
 
@@ -48,7 +48,7 @@ export type InsertRequestLineMutationVariables = Types.Exact<{
 export type InsertRequestLineMutation = { __typename: 'Mutations', insertRequestRequisitionLine: { __typename: 'InsertRequestRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RequisitionLineWithItemIdExists', description: string } } | { __typename: 'RequisitionLineNode', id: string } };
 
 export type UpdateRequestLineMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.UpdateRequestRequisitionLineInput;
 }>;
 
@@ -56,9 +56,9 @@ export type UpdateRequestLineMutationVariables = Types.Exact<{
 export type UpdateRequestLineMutation = { __typename: 'Mutations', updateRequestRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateRequestRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } };
 
 export type AddFromMasterListMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  requestId: Types.Scalars['String'];
-  masterListId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  requestId: Types.Scalars['String']['input'];
+  masterListId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -66,22 +66,22 @@ export type AddFromMasterListMutation = { __typename: 'Mutations', addFromMaster
 
 export type DeleteRequestLinesMutationVariables = Types.Exact<{
   ids?: Types.InputMaybe<Array<Types.DeleteRequestRequisitionLineInput> | Types.DeleteRequestRequisitionLineInput>;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type DeleteRequestLinesMutation = { __typename: 'Mutations', batchRequestRequisition: { __typename: 'BatchRequestRequisitionResponse', deleteRequestRequisitionLines?: Array<{ __typename: 'DeleteRequestRequisitionLineResponseWithId', id: string, response: { __typename: 'DeleteRequestRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type UseSuggestedQuantityMutationVariables = Types.Exact<{
-  requestId: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
+  requestId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type UseSuggestedQuantityMutation = { __typename: 'Mutations', useSuggestedQuantity: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string }> } | { __typename: 'UseSuggestedQuantityError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type InsertRequestMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.InsertRequestRequisitionInput;
 }>;
 
@@ -89,7 +89,7 @@ export type InsertRequestMutationVariables = Types.Exact<{
 export type InsertRequestMutation = { __typename: 'Mutations', insertRequestRequisition: { __typename: 'InsertRequestRequisitionError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
 export type InsertProgramRequestMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.InsertProgramRequestRequisitionInput;
 }>;
 
@@ -97,7 +97,7 @@ export type InsertProgramRequestMutationVariables = Types.Exact<{
 export type InsertProgramRequestMutation = { __typename: 'Mutations', insertProgramRequestRequisition: { __typename: 'InsertProgramRequestRequisitionError' } | { __typename: 'RequisitionNode', id: string, requisitionNumber: number } };
 
 export type UpdateRequestMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.UpdateRequestRequisitionInput;
 }>;
 
@@ -105,7 +105,7 @@ export type UpdateRequestMutationVariables = Types.Exact<{
 export type UpdateRequestMutation = { __typename: 'Mutations', updateRequestRequisition: { __typename: 'RequisitionNode', id: string, requisitionNumber: number } | { __typename: 'UpdateRequestRequisitionError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type DeleteRequestMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.BatchRequestRequisitionInput;
 }>;
 
@@ -115,7 +115,7 @@ export type DeleteRequestMutation = { __typename: 'Mutations', batchRequestRequi
 export type ProgramSettingsFragment = { __typename: 'ProgramRequisitionSettingNode', programName: string, programId: string, suppliers: Array<{ __typename: 'NameNode', code: string, id: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }>, orderTypes: Array<{ __typename: 'ProgramRequisitionOrderTypeNode', id: string, name: string, availablePeriods: Array<{ __typename: 'PeriodNode', id: string, name: string }> }> };
 
 export type ProgramSettingsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -618,43 +618,43 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    requestByNumber(variables: RequestByNumberQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestByNumberQuery> {
+    requestByNumber(variables: RequestByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestByNumberQuery>(RequestByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requestByNumber', 'query');
     },
-    requisitionLineChart(variables: RequisitionLineChartQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionLineChartQuery> {
+    requisitionLineChart(variables: RequisitionLineChartQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequisitionLineChartQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequisitionLineChartQuery>(RequisitionLineChartDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionLineChart', 'query');
     },
-    requests(variables: RequestsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequestsQuery> {
+    requests(variables: RequestsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequestsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequestsQuery>(RequestsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requests', 'query');
     },
-    insertRequestLine(variables: InsertRequestLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertRequestLineMutation> {
+    insertRequestLine(variables: InsertRequestLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertRequestLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestLineMutation>(InsertRequestLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequestLine', 'mutation');
     },
-    updateRequestLine(variables: UpdateRequestLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateRequestLineMutation> {
+    updateRequestLine(variables: UpdateRequestLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateRequestLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestLineMutation>(UpdateRequestLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequestLine', 'mutation');
     },
-    addFromMasterList(variables: AddFromMasterListMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AddFromMasterListMutation> {
+    addFromMasterList(variables: AddFromMasterListMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AddFromMasterListMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AddFromMasterListMutation>(AddFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addFromMasterList', 'mutation');
     },
-    deleteRequestLines(variables: DeleteRequestLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteRequestLinesMutation> {
+    deleteRequestLines(variables: DeleteRequestLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestLinesMutation>(DeleteRequestLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequestLines', 'mutation');
     },
-    useSuggestedQuantity(variables: UseSuggestedQuantityMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UseSuggestedQuantityMutation> {
+    useSuggestedQuantity(variables: UseSuggestedQuantityMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UseSuggestedQuantityMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UseSuggestedQuantityMutation>(UseSuggestedQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'useSuggestedQuantity', 'mutation');
     },
-    insertRequest(variables: InsertRequestMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertRequestMutation> {
+    insertRequest(variables: InsertRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertRequestMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertRequestMutation>(InsertRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRequest', 'mutation');
     },
-    insertProgramRequest(variables: InsertProgramRequestMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertProgramRequestMutation> {
+    insertProgramRequest(variables: InsertProgramRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertProgramRequestMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramRequestMutation>(InsertProgramRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramRequest', 'mutation');
     },
-    updateRequest(variables: UpdateRequestMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateRequestMutation> {
+    updateRequest(variables: UpdateRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateRequestMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateRequestMutation>(UpdateRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateRequest', 'mutation');
     },
-    deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteRequestMutation> {
+    deleteRequest(variables: DeleteRequestMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteRequestMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteRequestMutation>(DeleteRequestDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteRequest', 'mutation');
     },
-    programSettings(variables: ProgramSettingsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ProgramSettingsQuery> {
+    programSettings(variables: ProgramSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ProgramSettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ProgramSettingsQuery>(ProgramSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'programSettings', 'query');
     }
   };
@@ -880,6 +880,4 @@ export const mockProgramSettingsQuery = (resolver: ResponseResolver<GraphQLReque
   graphql.query<ProgramSettingsQuery, ProgramSettingsQueryVariables>(
     'programSettings',
     resolver
-  )
-  resolver
   )
