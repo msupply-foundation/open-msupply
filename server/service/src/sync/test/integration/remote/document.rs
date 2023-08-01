@@ -5,7 +5,7 @@ use crate::sync::{
     translations::{IntegrationRecords, PullUpsertRecord},
 };
 use chrono::{Timelike, Utc};
-use repository::{Document, DocumentStatus};
+use repository::{ContextRow, Document, DocumentStatus};
 use serde_json::json;
 use util::uuid::uuid;
 
@@ -15,6 +15,19 @@ impl SyncRecordTester for DocumentRecordTester {
         let mut result = Vec::new();
 
         // STEP 1: document sync
+        let context = ContextRow {
+            id: "some context".to_string(),
+            name: "".to_string(),
+        };
+        let context_json = json!({
+            "ID": context.id.clone(),
+            "description": context.name.clone(),
+            "isProgram": true,
+            "code": "",
+            "note": "",
+            "programSettings": { "storeTags": {} },
+        });
+
         let patient_name_id = uuid();
         let patient_name_json = json!({
             "ID": patient_name_id,
@@ -48,11 +61,12 @@ impl SyncRecordTester for DocumentRecordTester {
             form_schema_id: Some(schema_id),
             status: DocumentStatus::Active,
             owner_name_id: Some(patient_name_id),
-            context: "program".to_string(),
+            context_id: context.id.clone(),
         };
 
         result.push(TestStepData {
             central_upsert: json!({
+                "list_master": [context_json],
                 "name": [patient_name_json],
                 "name_store_join": [patient_name_store_join_json],
                 "form_schema": [schema_json],

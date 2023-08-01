@@ -129,7 +129,7 @@ class GQLClient extends GraphQLClient {
     );
   }
 
-  public setHeaders = (headers: RequestInit['headers']): GraphQLClient =>
+  public setHeaders = (headers: HeadersInit): GraphQLClient =>
     this.client.setHeaders(headers);
   public setHeader = (key: string, value: string): GraphQLClient =>
     this.client.setHeader(key, value);

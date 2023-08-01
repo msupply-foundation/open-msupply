@@ -125,9 +125,9 @@ impl PatientNode {
             )?;
         Ok(entries
             .into_iter()
-            .map(|program_row| ProgramEnrolmentNode {
+            .map(|program_enrolment| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
-                program_row,
+                program_enrolment,
                 allowed_ctx: self.allowed_ctx.clone(),
             })
             .collect())

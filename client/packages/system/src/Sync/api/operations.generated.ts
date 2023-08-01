@@ -1,7 +1,7 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type SyncSettingsFragment = { __typename: 'SyncSettingsNode', intervalSeconds: number, url: string, username: string };
@@ -174,22 +174,22 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    syncSettings(variables?: SyncSettingsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SyncSettingsQuery> {
+    syncSettings(variables?: SyncSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SyncSettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<SyncSettingsQuery>(SyncSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'syncSettings', 'query');
     },
-    initialiseSite(variables: InitialiseSiteMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InitialiseSiteMutation> {
+    initialiseSite(variables: InitialiseSiteMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InitialiseSiteMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InitialiseSiteMutation>(InitialiseSiteDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'initialiseSite', 'mutation');
     },
-    updateSyncSettings(variables: UpdateSyncSettingsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateSyncSettingsMutation> {
+    updateSyncSettings(variables: UpdateSyncSettingsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateSyncSettingsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateSyncSettingsMutation>(UpdateSyncSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSyncSettings', 'mutation');
     },
-    syncInfo(variables?: SyncInfoQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SyncInfoQuery> {
+    syncInfo(variables?: SyncInfoQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SyncInfoQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<SyncInfoQuery>(SyncInfoDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'syncInfo', 'query');
     },
-    syncStatus(variables?: SyncStatusQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SyncStatusQuery> {
+    syncStatus(variables?: SyncStatusQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SyncStatusQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<SyncStatusQuery>(SyncStatusDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'syncStatus', 'query');
     },
-    manualSync(variables?: ManualSyncMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ManualSyncMutation> {
+    manualSync(variables?: ManualSyncMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ManualSyncMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<ManualSyncMutation>(ManualSyncDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'manualSync', 'mutation');
     }
   };

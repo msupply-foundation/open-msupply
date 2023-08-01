@@ -5,12 +5,14 @@ use super::{
 };
 
 use crate::{
+    db_diesel::program_enrolment,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Gender, NameType, Pagination, Sort, StringFilter,
+    DateFilter, EqualFilter, Gender, NameType, Pagination, ProgramEnrolmentFilter, Sort,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -183,21 +185,15 @@ impl<'a> PatientRepository<'a> {
                     name_dsl::national_health_number
                 );
 
-                let mut sub_query = program_enrolment_dsl::program_enrolment
-                    .select(program_enrolment_dsl::patient_id)
-                    .into_boxed();
-                apply_string_filter!(
-                    sub_query,
-                    identifier,
-                    program_enrolment_dsl::program_enrolment_id
-                );
-                if let Some(allowed_ctx) = allowed_ctx {
-                    apply_equal_filter!(
-                        sub_query,
-                        Some(EqualFilter::default().restrict_results(allowed_ctx)),
-                        program_enrolment_dsl::context
-                    );
-                }
+                let sub_query =
+                    program_enrolment::create_filtered_query(Some(ProgramEnrolmentFilter {
+                        program_enrolment_id: identifier,
+                        program_context_id: allowed_ctx
+                            .map(|ctxs| EqualFilter::default().restrict_results(ctxs)),
+                        ..Default::default()
+                    }))
+                    .select(program_enrolment_dsl::patient_id);
+
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
             }
 
@@ -312,8 +308,9 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::MockDataInserts, test_db, EqualFilter, NameRow, NameRowRepository, NameType,
-        PatientFilter, PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
+        mock::{mock_program_a, MockDataInserts},
+        test_db, EqualFilter, NameRow, NameRowRepository, NameType, PatientFilter,
+        PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
         ProgramEnrolmentStatus, StringFilter,
     };
 
@@ -356,7 +353,15 @@ mod tests {
     async fn test_patient_identifier_query() {
         let (_, connection, _, _) = test_db::setup_all(
             "patient_identifier_query",
-            MockDataInserts::none().names().stores().name_store_joins(),
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_list()
+                .contexts()
+                .programs(),
         )
         .await;
         let repo = PatientRepository::new(&connection);
@@ -378,7 +383,7 @@ mod tests {
                 document_name: "doc_name".to_string(),
                 patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
-                context: "ProgramType".to_string(),
+                program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
                 status: ProgramEnrolmentStatus::Active,
@@ -438,7 +443,15 @@ mod tests {
     async fn test_patient_program_enrolment_id_allowed_ctx() {
         let (_, connection, _, _) = test_db::setup_all(
             "test_patient_program_enrolment_id_allowed_ctx",
-            MockDataInserts::none().names().stores().name_store_joins(),
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_list()
+                .contexts()
+                .programs(),
         )
         .await;
         let repo = PatientRepository::new(&connection);
@@ -460,7 +473,7 @@ mod tests {
                 document_name: "doc_name".to_string(),
                 patient_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
-                context: "ProgramType".to_string(),
+                program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
                 status: ProgramEnrolmentStatus::Active,
@@ -476,7 +489,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
-                Some(&["ProgramType".to_string()]),
+                Some(&[mock_program_a().id]),
             )
             .unwrap();
         assert!(!result.is_empty());
