@@ -1,4 +1,5 @@
 {
+  "button.allocate": "Aloka",
   "button.language": "Lingua",
   "label.rows-per-page": "Linas por pájina:",
   "label.toggle-password-visibility": "Toggle palavra passe nia vizibilidade",
@@ -57,6 +58,7 @@
   "label.allocated": "Aloka Ona",
   "label.amount": "Montante",
   "label.available": "Disponivel",
+  "label.available-quantity": "Kuantidade Disponivel: {{numeru}} Unidades",
   "label.entered": "Kria Ona",
   "label.settings-password": "Sinkroniza liafuan passe",
   "label.settings-site-id": "ID Sitio",
@@ -68,6 +70,7 @@
   "label.snapshot-num-of-packs": "Snapshot Pakotes",
   "label.soh": "SOH",
   "label.status": "Estatus",
+  "label.total-quantity": "Total Kuantidade",
   "log.stock-sell-price-change": "Presu selu muda ona",
   "messages.ago": "{{time}} liu ba",
   "warning.caps-lock": "Alerta: Caps Lock ativu hela",
