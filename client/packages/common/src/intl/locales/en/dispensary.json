@@ -59,5 +59,6 @@
   "messages.error-saving-prescription": "Error saving prescription 🥺",
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-last-name": "Search by last name",
-  "placeholder.search-by-identifier": "Search by id"
+  "placeholder.search-by-identifier": "Search by id",
+  "warning.cannot-create-placeholder": "{{quantity}} packs have not been added to a line as placeholders are currently not available for prescriptions"
 }
