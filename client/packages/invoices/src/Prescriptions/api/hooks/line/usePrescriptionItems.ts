@@ -1,16 +1,13 @@
 import { useCallback } from 'react';
 import { ArrayUtils } from '@openmsupply-client/common';
 import { isA } from '../../../../utils';
-import {
-  PrescriptionLineFragment,
-  PrescriptionRowFragment,
-} from '../../operations.generated';
+import { PrescriptionRowFragment } from '../../operations.generated';
 import { usePrescriptionLineSelector } from './usePrescriptionLine';
+import { StockOutLineFragment } from '../../../../StockOut';
 
 export const usePrescriptionItem = () => {
   const selectLines = useCallback((invoice: PrescriptionRowFragment) => {
-    const forListView = (line: PrescriptionLineFragment) =>
-      isA.stockOutLine(line);
+    const forListView = (line: StockOutLineFragment) => isA.stockOutLine(line);
     const { lines } = invoice;
     const stockLines = lines.nodes.filter(forListView);
 
