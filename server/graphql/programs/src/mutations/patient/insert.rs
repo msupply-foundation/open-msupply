@@ -3,12 +3,11 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::patient::PatientNode;
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     programs::patient::{UpdatePatient, UpdatePatientError},
 };
-
-use crate::types::patient::PatientNode;
 
 #[derive(InputObject)]
 pub struct InsertPatientInput {
@@ -35,7 +34,7 @@ pub fn insert_patient(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;

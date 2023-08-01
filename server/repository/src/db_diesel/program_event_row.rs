@@ -12,7 +12,7 @@ table! {
         active_start_datetime -> Timestamp,
         active_end_datetime -> Timestamp,
         patient_id -> Nullable<Text>,
-        context -> Text,
+        context_id -> Text,
         document_type -> Text,
         document_name -> Nullable<Text>,
         #[sql_name = "type"] type_ -> Text,
@@ -39,7 +39,7 @@ pub struct ProgramEventRow {
     pub active_end_datetime: NaiveDateTime,
     /// Patient id, if event is associated with a patient
     pub patient_id: Option<String>,
-    pub context: String,
+    pub context_id: String,
     /// The document type the event is associated with (might be different from the source of the
     /// event). For example, an encounter could set the status of a program enrolment.
     pub document_type: String,

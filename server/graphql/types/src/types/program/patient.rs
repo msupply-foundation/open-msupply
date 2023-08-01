@@ -4,13 +4,14 @@ use chrono::{Local, NaiveDate};
 use graphql_core::loader::DocumentLoader;
 use graphql_core::ContextExt;
 
-use graphql_types::types::GenderType;
 use repository::{EqualFilter, Pagination, Patient, ProgramEnrolmentFilter};
 use service::programs::patient::main_patient_doc_name;
 
-use crate::queries::ProgramEnrolmentFilterInput;
 use crate::types::document::DocumentNode;
 use crate::types::program_enrolment::ProgramEnrolmentNode;
+use crate::types::GenderType;
+
+use super::program_enrolment::ProgramEnrolmentFilterInput;
 
 pub struct PatientNode {
     pub store_id: String,
@@ -124,9 +125,9 @@ impl PatientNode {
             )?;
         Ok(entries
             .into_iter()
-            .map(|program_row| ProgramEnrolmentNode {
+            .map(|program_enrolment| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
-                program_row,
+                program_enrolment,
                 allowed_ctx: self.allowed_ctx.clone(),
             })
             .collect())

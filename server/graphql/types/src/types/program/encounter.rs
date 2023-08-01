@@ -1,19 +1,22 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::{
         ClinicianLoader, ClinicianLoaderInput, DocumentLoader, NameByIdLoader, NameByIdLoaderInput,
         ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
     },
+    map_filter,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_types::types::{ClinicianNode, NameNode};
 use repository::{
-    EncounterRow, EncounterStatus, EqualFilter, ProgramEventFilter, ProgramEventSortField, Sort,
+    DatetimeFilter, Encounter, EncounterFilter, EncounterSort, EncounterSortField, EncounterStatus,
+    EqualFilter, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
 };
 use serde::Serialize;
+
+use crate::types::{ClinicianNode, NameNode};
 
 use super::{
     document::DocumentNode, program_enrolment::ProgramEnrolmentNode,
@@ -22,8 +25,98 @@ use super::{
 
 pub struct EncounterNode {
     pub store_id: String,
-    pub encounter_row: EncounterRow,
+    pub encounter: Encounter,
     pub allowed_ctx: Vec<String>,
+}
+
+#[derive(SimpleObject)]
+pub struct EncounterConnector {
+    pub total_count: u32,
+    pub nodes: Vec<EncounterNode>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterEncounterStatusInput {
+    pub equal_to: Option<EncounterNodeStatus>,
+    pub equal_any: Option<Vec<EncounterNodeStatus>>,
+    pub not_equal_to: Option<EncounterNodeStatus>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum EncounterSortFieldInput {
+    Type,
+    PatientId,
+    Program,
+    CreatedDatetime,
+    StartDatetime,
+    EndDatetime,
+    Status,
+}
+
+#[derive(InputObject)]
+pub struct EncounterSortInput {
+    /// Sort query result by `key`
+    key: EncounterSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+impl EncounterSortInput {
+    pub fn to_domain(self) -> EncounterSort {
+        let key = match self.key {
+            EncounterSortFieldInput::Type => EncounterSortField::DocumentType,
+            EncounterSortFieldInput::PatientId => EncounterSortField::PatientId,
+            EncounterSortFieldInput::Program => EncounterSortField::Context,
+            EncounterSortFieldInput::CreatedDatetime => EncounterSortField::CreatedDatetime,
+            EncounterSortFieldInput::StartDatetime => EncounterSortField::StartDatetime,
+            EncounterSortFieldInput::EndDatetime => EncounterSortField::EndDatetime,
+            EncounterSortFieldInput::Status => EncounterSortField::Status,
+        };
+
+        EncounterSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EncounterFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub r#type: Option<EqualFilterStringInput>,
+    pub patient_id: Option<EqualFilterStringInput>,
+    /// The program id
+    pub program_id: Option<EqualFilterStringInput>,
+    pub created_datetime: Option<DatetimeFilterInput>,
+    pub start_datetime: Option<DatetimeFilterInput>,
+    pub end_datetime: Option<DatetimeFilterInput>,
+    pub status: Option<EqualFilterEncounterStatusInput>,
+    pub clinician_id: Option<EqualFilterStringInput>,
+    pub document_name: Option<EqualFilterStringInput>,
+    pub document_data: Option<StringFilterInput>,
+}
+
+impl EncounterFilterInput {
+    pub fn to_domain_filter(self) -> EncounterFilter {
+        EncounterFilter {
+            id: self.id.map(EqualFilter::from),
+            patient_id: self.patient_id.map(EqualFilter::from),
+            program_id: self.program_id.map(EqualFilter::from),
+            created_datetime: self.created_datetime.map(DatetimeFilter::from),
+            start_datetime: self.start_datetime.map(DatetimeFilter::from),
+            status: self
+                .status
+                .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
+            end_datetime: self.end_datetime.map(DatetimeFilter::from),
+            clinician_id: self.clinician_id.map(EqualFilter::from),
+            document_type: self.r#type.map(EqualFilter::from),
+            document_name: self.document_name.map(EqualFilter::from),
+            document_data: self.document_data.map(StringFilter::from),
+            program_context_id: None,
+        }
+    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -71,7 +164,7 @@ impl EncounterEventFilterInput {
             document_type: None,
             document_name: None,
             r#type: self.r#type.clone().map(EqualFilter::from),
-            context: None,
+            context_id: None,
         }
     }
 }
@@ -79,15 +172,19 @@ impl EncounterEventFilterInput {
 #[Object]
 impl EncounterNode {
     pub async fn id(&self) -> &str {
-        &self.encounter_row.id
+        &self.encounter.0.id
     }
 
-    pub async fn context(&self) -> &str {
-        &self.encounter_row.context
+    pub async fn context_id(&self) -> &str {
+        &self.encounter.1.context_id
+    }
+
+    pub async fn program_id(&self) -> &str {
+        &self.encounter.0.program_id
     }
 
     pub async fn patient_id(&self) -> &str {
-        &self.encounter_row.patient_id
+        &self.encounter.0.patient_id
     }
 
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<NameNode> {
@@ -96,7 +193,7 @@ impl EncounterNode {
         let result = loader
             .load_one(NameByIdLoaderInput::new(
                 &self.store_id,
-                &self.encounter_row.patient_id,
+                &self.encounter.0.patient_id,
             ))
             .await?
             .map(NameNode::from_domain)
@@ -106,7 +203,7 @@ impl EncounterNode {
     }
 
     pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let Some(clinician_id) = self.encounter_row.clinician_id.as_ref() else {
+        let Some(clinician_id) = self.encounter.0.clinician_id.as_ref() else {
             return Ok(None)
         };
         let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
@@ -132,49 +229,51 @@ impl EncounterNode {
 
         let result = loader
             .load_one(ProgramEnrolmentLoaderInput::new(
-                &self.encounter_row.patient_id,
-                &self.encounter_row.context,
+                &self.encounter.0.patient_id,
+                &self.encounter.0.program_id,
                 self.allowed_ctx.clone(),
             ))
             .await?
-            .map(|program_row| ProgramEnrolmentNode {
+            .map(|program_enrolment| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
-                program_row,
+                program_enrolment,
                 allowed_ctx: self.allowed_ctx.clone(),
             })
             .ok_or(Error::new(format!(
                 "Failed to load program enrolment: {}",
-                self.encounter_row.context
+                self.encounter.0.program_id
             )))?;
 
         Ok(Some(result))
     }
 
     pub async fn r#type(&self) -> &str {
-        &self.encounter_row.document_type
+        &self.encounter.0.document_type
     }
 
     pub async fn name(&self) -> &str {
-        &self.encounter_row.document_name
+        &self.encounter.0.document_name
     }
 
     pub async fn status(&self) -> Option<EncounterNodeStatus> {
-        self.encounter_row
+        self.encounter
+            .0
             .status
             .as_ref()
             .map(|status| EncounterNodeStatus::from_domain(status))
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.encounter_row.created_datetime, Utc)
+        DateTime::<Utc>::from_utc(self.encounter.0.created_datetime, Utc)
     }
 
     pub async fn start_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.encounter_row.start_datetime, Utc)
+        DateTime::<Utc>::from_utc(self.encounter.0.start_datetime, Utc)
     }
 
     pub async fn end_datetime(&self) -> Option<DateTime<Utc>> {
-        self.encounter_row
+        self.encounter
+            .0
             .end_datetime
             .map(|t| DateTime::<Utc>::from_utc(t, Utc))
     }
@@ -184,7 +283,7 @@ impl EncounterNode {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(self.encounter_row.document_name.clone())
+            .load_one(self.encounter.0.document_name.clone())
             .await?
             .map(|document| DocumentNode {
                 allowed_ctx: self.allowed_ctx.clone(),
@@ -207,11 +306,11 @@ impl EncounterNode {
             .as_ref()
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
-            .document_type(EqualFilter::equal_to(&self.encounter_row.document_type));
+            .patient_id(EqualFilter::equal_to(&self.encounter.0.patient_id))
+            .document_type(EqualFilter::equal_to(&self.encounter.0.document_type));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
-            program_filter = program_filter
-                .document_name(EqualFilter::equal_to(&self.encounter_row.document_name))
+            program_filter =
+                program_filter.document_name(EqualFilter::equal_to(&self.encounter.0.document_name))
         };
         let entries = ctx
             .service_provider()

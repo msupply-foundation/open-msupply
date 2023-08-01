@@ -3,13 +3,12 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::encounter::EncounterNode;
 use repository::{EncounterFilter, EqualFilter};
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     programs::encounter::{UpdateEncounter, UpdateEncounterError},
 };
-
-use crate::types::encounter::EncounterNode;
 
 #[derive(InputObject)]
 pub struct UpdateEncounterInput {
@@ -40,7 +39,7 @@ pub fn update_encounter(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
@@ -90,7 +89,7 @@ pub fn update_encounter(
         }
     };
 
-    let encounter_row = service_provider
+    let encounter = service_provider
         .encounter_service
         .encounter(
             &service_context,
@@ -103,7 +102,7 @@ pub fn update_encounter(
 
     Ok(UpdateEncounterResponse::Response(EncounterNode {
         store_id,
-        encounter_row,
+        encounter,
         allowed_ctx: allowed_ctx.clone(),
     }))
 }

@@ -1,20 +1,107 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::DocumentLoader,
+    map_filter,
     pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolmentRow,
-    ProgramEnrolmentStatus, ProgramEventFilter, ProgramEventSortField, Sort,
+    DatetimeFilter, EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolment,
+    ProgramEnrolmentFilter, ProgramEnrolmentSort, ProgramEnrolmentSortField,
+    ProgramEnrolmentStatus, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
 };
 
-use crate::queries::{EncounterConnector, EncounterFilterInput, EncounterSortInput};
+use super::{
+    document::DocumentNode,
+    encounter::{EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput},
+    program_event::ProgramEventNode,
+};
 
-use super::{document::DocumentNode, encounter::EncounterNode, program_event::ProgramEventNode};
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum ProgramEnrolmentSortFieldInput {
+    Type,
+    PatientId,
+    EnrolmentDatetime,
+    ProgramEnrolmentId,
+    Status,
+}
+
+#[derive(InputObject)]
+pub struct ProgramEnrolmentSortInput {
+    /// Sort query result by `key`
+    key: ProgramEnrolmentSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+impl ProgramEnrolmentSortInput {
+    pub fn to_domain(self) -> ProgramEnrolmentSort {
+        let key = match self.key {
+            ProgramEnrolmentSortFieldInput::Type => ProgramEnrolmentSortField::Type,
+            ProgramEnrolmentSortFieldInput::PatientId => ProgramEnrolmentSortField::PatientId,
+            ProgramEnrolmentSortFieldInput::EnrolmentDatetime => {
+                ProgramEnrolmentSortField::EnrolmentDatetime
+            }
+            ProgramEnrolmentSortFieldInput::ProgramEnrolmentId => {
+                ProgramEnrolmentSortField::ProgramEnrolmentId
+            }
+            ProgramEnrolmentSortFieldInput::Status => ProgramEnrolmentSortField::Status,
+        };
+
+        ProgramEnrolmentSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterProgramEnrolmentStatusInput {
+    pub equal_to: Option<ProgramEnrolmentNodeStatus>,
+    pub equal_any: Option<Vec<ProgramEnrolmentNodeStatus>>,
+    pub not_equal_to: Option<ProgramEnrolmentNodeStatus>,
+}
+
+#[derive(InputObject, Clone)]
+pub struct ProgramEnrolmentFilterInput {
+    pub patient_id: Option<EqualFilterStringInput>,
+    pub enrolment_datetime: Option<DatetimeFilterInput>,
+    pub program_enrolment_id: Option<StringFilterInput>,
+    pub status: Option<EqualFilterProgramEnrolmentStatusInput>,
+    /// Same as program enrolment document type
+    pub r#type: Option<EqualFilterStringInput>,
+    /// The program id
+    pub program_id: Option<EqualFilterStringInput>,
+    pub document_name: Option<EqualFilterStringInput>,
+}
+impl ProgramEnrolmentFilterInput {
+    pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
+        let ProgramEnrolmentFilterInput {
+            patient_id,
+            enrolment_datetime,
+            program_enrolment_id,
+            status,
+            r#type,
+            program_id,
+            document_name,
+        } = self;
+        ProgramEnrolmentFilter {
+            patient_id: patient_id.map(EqualFilter::from),
+            enrolment_datetime: enrolment_datetime.map(DatetimeFilter::from),
+            program_enrolment_id: program_enrolment_id.map(StringFilter::from),
+            status: status.map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
+            document_name: document_name.map(EqualFilter::from),
+            document_type: r#type.map(EqualFilter::from),
+            program_id: program_id.map(EqualFilter::from),
+            program_context_id: None,
+        }
+    }
+}
 
 #[derive(InputObject, Clone)]
 pub struct ProgramEventFilterInput {
@@ -45,7 +132,7 @@ impl ProgramEventFilterInput {
             document_name: document_name.map(EqualFilter::from),
             r#type: r#type.map(EqualFilter::from),
             datetime: None,
-            context: None,
+            context_id: None,
         }
     }
 }
@@ -86,7 +173,7 @@ impl ProgramEnrolmentNodeStatus {
 
 pub struct ProgramEnrolmentNode {
     pub store_id: String,
-    pub program_row: ProgramEnrolmentRow,
+    pub program_enrolment: ProgramEnrolment,
     pub allowed_ctx: Vec<String>,
 }
 
@@ -94,32 +181,32 @@ pub struct ProgramEnrolmentNode {
 impl ProgramEnrolmentNode {
     /// The program type
     pub async fn r#type(&self) -> &str {
-        &self.program_row.document_type
+        &self.program_enrolment.0.document_type
     }
 
-    pub async fn context(&self) -> &str {
-        &self.program_row.context
+    pub async fn context_id(&self) -> &str {
+        &self.program_enrolment.1.context_id
     }
 
     /// The program document name
     pub async fn name(&self) -> &str {
-        &self.program_row.document_name
+        &self.program_enrolment.0.document_name
     }
 
     pub async fn patient_id(&self) -> &str {
-        &self.program_row.patient_id
+        &self.program_enrolment.0.patient_id
     }
 
     pub async fn enrolment_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.program_row.enrolment_datetime, Utc)
+        DateTime::<Utc>::from_utc(self.program_enrolment.0.enrolment_datetime, Utc)
     }
 
     pub async fn program_enrolment_id(&self) -> &Option<String> {
-        &self.program_row.program_enrolment_id
+        &self.program_enrolment.0.program_enrolment_id
     }
 
     pub async fn status(&self) -> ProgramEnrolmentNodeStatus {
-        ProgramEnrolmentNodeStatus::from_domain(&self.program_row.status)
+        ProgramEnrolmentNodeStatus::from_domain(&self.program_enrolment.0.status)
     }
 
     /// The encounter document
@@ -127,7 +214,7 @@ impl ProgramEnrolmentNode {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(self.program_row.document_name.clone())
+            .load_one(self.program_enrolment.0.document_name.clone())
             .await?
             .map(|document| DocumentNode {
                 allowed_ctx: self.allowed_ctx.clone(),
@@ -151,8 +238,8 @@ impl ProgramEnrolmentNode {
         let filter = filter
             .map(|f| f.to_domain_filter())
             .unwrap_or(EncounterFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .context(EqualFilter::equal_to(&self.program_row.context));
+            .patient_id(EqualFilter::equal_to(&self.program_enrolment.0.patient_id))
+            .context_id(EqualFilter::equal_to(&self.program_enrolment.1.context_id));
 
         let entries = ctx
             .service_provider()
@@ -168,10 +255,10 @@ impl ProgramEnrolmentNode {
         let nodes = entries
             .rows
             .into_iter()
-            .map(|row| EncounterNode {
+            .map(|encounter| EncounterNode {
                 allowed_ctx: self.allowed_ctx.clone(),
                 store_id: self.store_id.clone(),
-                encounter_row: row,
+                encounter,
             })
             .collect();
         Ok(EncounterConnector {
@@ -191,8 +278,10 @@ impl ProgramEnrolmentNode {
         let filter = filter
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.program_row.patient_id))
-            .document_type(EqualFilter::equal_to(&self.program_row.document_type));
+            .patient_id(EqualFilter::equal_to(&self.program_enrolment.0.patient_id))
+            .document_type(EqualFilter::equal_to(
+                &self.program_enrolment.0.document_type,
+            ));
         let entries = ctx
             .service_provider()
             .program_event_service
