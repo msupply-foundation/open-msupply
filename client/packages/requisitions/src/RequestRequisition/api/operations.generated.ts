@@ -3,7 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
+import { NameRowFragmentDoc } from '../../../../../packages/system/src/Name/api/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw';
 export type ItemWithStatsFragment = {
   __typename: 'ItemNode';
