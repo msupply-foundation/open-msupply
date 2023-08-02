@@ -1,7 +1,7 @@
 use async_graphql::*;
-use graphql_types::types::document_registry::{DocumentRegistryNode, DocumentRegistryTypeNode};
+use graphql_types::types::document_registry::{DocumentRegistryCategoryNode, DocumentRegistryNode};
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     document::document_registry::{InsertDocRegistryError, InsertDocumentRegistry},
 };
 
@@ -13,10 +13,9 @@ use graphql_core::{
 #[derive(InputObject)]
 pub struct InsertDocumentRegistryInput {
     pub id: String,
-    pub parent_id: Option<String>,
     pub document_type: String,
-    pub document_context: String,
-    pub r#type: DocumentRegistryTypeNode,
+    pub context_id: String,
+    pub category: DocumentRegistryCategoryNode,
     pub name: Option<String>,
     pub form_schema_id: String,
 }
@@ -37,7 +36,7 @@ pub fn insert_document_registry(
             store_id: None,
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -60,9 +59,6 @@ pub fn insert_document_registry(
                 InsertDocRegistryError::OnlyOnePatientEntryAllowed => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                InsertDocRegistryError::InvalidParent => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
                 InsertDocRegistryError::DataSchemaDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
@@ -82,20 +78,18 @@ pub fn insert_document_registry(
 fn to_domain(
     InsertDocumentRegistryInput {
         id,
-        parent_id,
         document_type,
-        document_context,
-        r#type,
+        context_id,
+        category,
         name,
         form_schema_id,
     }: InsertDocumentRegistryInput,
 ) -> InsertDocumentRegistry {
     InsertDocumentRegistry {
         id,
-        parent_id,
         document_type,
-        document_context,
-        r#type: r#type.to_domain(),
+        context_id,
+        category: category.to_domain(),
         name,
         form_schema_id,
     }

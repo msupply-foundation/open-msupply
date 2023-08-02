@@ -5,8 +5,8 @@ use crate::{
         master_list_row::master_list::dsl as master_list_dsl,
         name_tag_row::name_tag::dsl as name_tag_dsl,
     },
-    program::dsl as program_dsl,
     program_requisition_settings_row::program_requisition_settings::dsl as program_requisition_settings_dsl,
+    program_row::program::dsl as program_dsl,
     repository_error::RepositoryError,
     MasterListFilter, MasterListRepository, MasterListRow, NameTagFilter, NameTagRepository,
     ProgramRequisitionSettingsRow, ProgramRow, StorageConnection,
@@ -112,9 +112,10 @@ mod test {
             mock_name_store_a, mock_period_schedule_1, mock_store_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, MasterListFilter, MasterListNameJoinRow, MasterListRow, NameTagFilter,
-        NameTagJoinRow, NameTagRow, ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
-        ProgramRequisitionSettingsRepository, ProgramRequisitionSettingsRow, ProgramRow,
+        ContextRow, EqualFilter, MasterListFilter, MasterListNameJoinRow, MasterListRow,
+        NameTagFilter, NameTagJoinRow, NameTagRow, ProgramRequisitionSettings,
+        ProgramRequisitionSettingsFilter, ProgramRequisitionSettingsRepository,
+        ProgramRequisitionSettingsRow, ProgramRow,
     };
 
     #[actix_rt::test]
@@ -139,9 +140,14 @@ mod test {
             name_id: mock_name_store_a().id,
             master_list_id: master_list.id.clone(),
         };
+        let context = ContextRow {
+            id: "program1".to_string(),
+            name: "program1".to_string(),
+        };
         let program = ProgramRow {
             id: "program1".to_string(),
             master_list_id: master_list.id.clone(),
+            context_id: context.id.clone(),
             ..Default::default()
         };
         let program_requisition_setting = ProgramRequisitionSettingsRow {
@@ -162,6 +168,7 @@ mod test {
                 name_tags: vec![name_tag1],
                 name_tag_joins: vec![name_tag_join1],
                 master_lists: vec![master_list.clone()],
+                contexts: vec![context],
                 programs: vec![program.clone()],
                 master_list_name_joins: vec![master_list_name_join],
                 program_requisition_settings: vec![program_requisition_setting.clone()],

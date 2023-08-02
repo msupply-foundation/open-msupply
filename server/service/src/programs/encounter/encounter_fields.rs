@@ -33,9 +33,9 @@ pub(crate) fn encounter_fields(
 ) -> Result<ListResult<EncounterFieldsResult>, ListError> {
     // restrict query results to allowed entries
     let mut filter = filter.unwrap_or(EncounterFilter::new());
-    filter.context = Some(
+    filter.program_context_id = Some(
         filter
-            .context
+            .program_context_id
             .unwrap_or_default()
             .restrict_results(&allowed_ctx),
     );
@@ -45,7 +45,7 @@ pub(crate) fn encounter_fields(
     let encounters = repository.query(pagination, Some(filter.clone()), sort)?;
     let doc_names = encounters
         .iter()
-        .map(|row| row.document_name.clone())
+        .map(|row| row.0.document_name.clone())
         .collect::<Vec<_>>();
     let documents = DocumentRepository::new(&ctx.connection).query(
         Pagination::all(),
@@ -59,7 +59,7 @@ pub(crate) fn encounter_fields(
     let rows = encounters
         .into_iter()
         .map(|row| {
-            let doc = match doc_map.remove(&row.document_name) {
+            let doc = match doc_map.remove(&row.0.document_name) {
                 Some(doc) => doc,
                 // should not happen:
                 None => return Err(RepositoryError::NotFound),

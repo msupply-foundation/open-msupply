@@ -112,9 +112,9 @@ mod test {
     use crate::{
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        EqualFilter, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, Name,
-        NameRow, NameStoreJoinRepository, NameStoreJoinRow, ProgramRow, ProgramSupplier,
-        ProgramSupplierFilter, ProgramSupplierRepository, StoreRow,
+        ContextRow, EqualFilter, MasterListNameJoinRepository, MasterListNameJoinRow,
+        MasterListRow, Name, NameRow, NameStoreJoinRepository, NameStoreJoinRow, ProgramRow,
+        ProgramSupplier, ProgramSupplierFilter, ProgramSupplierRepository, StoreRow,
     };
 
     #[actix_rt::test]
@@ -158,9 +158,14 @@ mod test {
             id: "master_list1".to_string(),
             ..Default::default()
         };
+        let context1 = ContextRow {
+            id: "program1".to_string(),
+            name: "program1".to_string(),
+        };
         let program1 = ProgramRow {
             id: "program1".to_string(),
             master_list_id: master_list1.id.clone(),
+            context_id: context1.id.clone(),
             ..Default::default()
         };
 
@@ -169,9 +174,14 @@ mod test {
             ..Default::default()
         };
 
+        let context2 = ContextRow {
+            id: "program2".to_string(),
+            name: "program2".to_string(),
+        };
         let program2 = ProgramRow {
             id: "program2".to_string(),
             master_list_id: master_list2.id.clone(),
+            context_id: context2.id.clone(),
             ..Default::default()
         };
 
@@ -226,6 +236,7 @@ mod test {
                     store_name3.clone(),
                 ],
                 master_lists: vec![master_list1, master_list2],
+                contexts: vec![context1, context2],
                 programs: vec![program1.clone(), program2.clone()],
                 master_list_name_joins: vec![master_list_name_join1, master_list_name_join3],
                 name_store_joins: vec![name_store_join1.clone(), name_store_join2.clone()],

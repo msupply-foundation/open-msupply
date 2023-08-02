@@ -25,7 +25,7 @@ table! {
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
-        context -> Text,
+        context_id -> Text,
     }
 }
 
@@ -42,7 +42,7 @@ table! {
         form_schema_id -> Nullable<Text>,
         status -> crate::db_diesel::document::DocumentStatusMapping,
         owner_name_id -> Nullable<Text>,
-        context -> Text,
+        context_id -> Text,
     }
 }
 
@@ -100,7 +100,7 @@ pub struct DocumentRow {
     /// For example, the patient who owns the document
     pub owner_name_id: Option<String>,
     /// For example, program this document belongs to
-    pub context: String,
+    pub context_id: String,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -122,7 +122,7 @@ pub struct Document {
     pub form_schema_id: Option<String>,
     pub status: DocumentStatus,
     pub owner_name_id: Option<String>,
-    pub context: String,
+    pub context_id: String,
 }
 
 #[derive(Clone)]
@@ -131,7 +131,7 @@ pub struct DocumentFilter {
     pub r#type: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
     pub owner: Option<EqualFilter<String>>,
-    pub context: Option<EqualFilter<String>>,
+    pub context_id: Option<EqualFilter<String>>,
     pub data: Option<StringFilter>,
 }
 
@@ -143,7 +143,7 @@ impl DocumentFilter {
             datetime: None,
             data: None,
             owner: None,
-            context: None,
+            context_id: None,
         }
     }
 
@@ -167,8 +167,8 @@ impl DocumentFilter {
         self
     }
 
-    pub fn context(mut self, filter: EqualFilter<String>) -> Self {
-        self.context = Some(filter);
+    pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.context_id = Some(filter);
         self
     }
 
@@ -199,7 +199,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
             r#type,
             datetime,
             owner,
-            context,
+            context_id: context,
             data,
         } = f;
 
@@ -207,7 +207,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
         apply_equal_filter!(query, r#type, latest_document::dsl::type_);
         apply_date_time_filter!(query, datetime, latest_document::dsl::datetime);
         apply_equal_filter!(query, owner, latest_document::dsl::owner_name_id);
-        apply_equal_filter!(query, context, latest_document::dsl::context);
+        apply_equal_filter!(query, context, latest_document::dsl::context_id);
         apply_string_filter!(query, data, latest_document::dsl::data);
     }
     query
@@ -303,7 +303,7 @@ impl<'a> DocumentRepository<'a> {
                     apply_sort!(query, sort, latest_document::dsl::owner_name_id)
                 }
                 DocumentSortField::Context => {
-                    apply_sort!(query, sort, latest_document::dsl::context)
+                    apply_sort!(query, sort, latest_document::dsl::context_id)
                 }
                 DocumentSortField::Datetime => {
                     apply_sort!(query, sort, latest_document::dsl::datetime)
@@ -340,7 +340,7 @@ impl<'a> DocumentRepository<'a> {
                 r#type,
                 datetime,
                 owner,
-                context,
+                context_id: context,
                 data,
             } = f;
 
@@ -348,7 +348,7 @@ impl<'a> DocumentRepository<'a> {
             apply_equal_filter!(query, r#type, document::dsl::type_);
             apply_date_time_filter!(query, datetime, document::dsl::datetime);
             apply_equal_filter!(query, owner, document::dsl::owner_name_id);
-            apply_equal_filter!(query, context, document::dsl::context);
+            apply_equal_filter!(query, context, document::dsl::context_id);
             apply_string_filter!(query, data, document::dsl::data);
         }
         let rows: Vec<DocumentRow> = query
@@ -376,7 +376,7 @@ impl DocumentRow {
             form_schema_id,
             status,
             owner_name_id,
-            context,
+            context_id,
         } = self;
 
         let parents: Vec<String> =
@@ -401,7 +401,7 @@ impl DocumentRow {
             form_schema_id,
             status,
             owner_name_id,
-            context,
+            context_id,
         };
 
         Ok(document)
@@ -430,7 +430,7 @@ impl Document {
             form_schema_id: self.form_schema_id.clone(),
             status: self.status.to_owned(),
             owner_name_id: self.owner_name_id.to_owned(),
-            context: self.context.to_owned(),
+            context_id: self.context_id.to_owned(),
         })
     }
 }
@@ -439,7 +439,10 @@ impl Document {
 mod test {
     use util::uuid::uuid;
 
-    use crate::{mock::MockDataInserts, test_db::setup_all, DocumentRepository, DocumentRow};
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, ContextRow, ContextRowRepository,
+        DocumentRepository, DocumentRow,
+    };
 
     #[actix_rt::test]
     async fn document_is_sync_update() {
@@ -449,11 +452,20 @@ mod test {
         )
         .await;
 
+        let context_row = ContextRow {
+            id: "id".to_string(),
+            name: "name".to_string(),
+        };
+        ContextRowRepository::new(&connection)
+            .upsert_one(&context_row)
+            .unwrap();
+
         let repo = DocumentRepository::new(&connection);
 
         let base_row = DocumentRow {
             data: "{}".to_string(),
             parent_ids: "[]".to_string(),
+            context_id: context_row.id.clone(),
             ..Default::default()
         };
 
@@ -466,6 +478,7 @@ mod test {
         let row2 = DocumentRow {
             id: uuid(),
             parent_ids: "[]".to_string(),
+            context_id: context_row.id.clone(),
             ..base_row.clone()
         };
 

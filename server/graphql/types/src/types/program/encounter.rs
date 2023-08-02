@@ -11,8 +11,8 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EncounterFilter, EncounterRow, EncounterSort, EncounterSortField,
-    EncounterStatus, EqualFilter, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
+    DatetimeFilter, Encounter, EncounterFilter, EncounterSort, EncounterSortField, EncounterStatus,
+    EqualFilter, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
 };
 use serde::Serialize;
 
@@ -25,7 +25,7 @@ use super::{
 
 pub struct EncounterNode {
     pub store_id: String,
-    pub encounter_row: EncounterRow,
+    pub encounter: Encounter,
     pub allowed_ctx: Vec<String>,
 }
 
@@ -87,8 +87,8 @@ pub struct EncounterFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub r#type: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
-    /// The program name
-    pub program: Option<EqualFilterStringInput>,
+    /// The program id
+    pub program_id: Option<EqualFilterStringInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub start_datetime: Option<DatetimeFilterInput>,
     pub end_datetime: Option<DatetimeFilterInput>,
@@ -103,7 +103,7 @@ impl EncounterFilterInput {
         EncounterFilter {
             id: self.id.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
-            context: self.program.map(EqualFilter::from),
+            program_id: self.program_id.map(EqualFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             start_datetime: self.start_datetime.map(DatetimeFilter::from),
             status: self
@@ -114,6 +114,7 @@ impl EncounterFilterInput {
             document_type: self.r#type.map(EqualFilter::from),
             document_name: self.document_name.map(EqualFilter::from),
             document_data: self.document_data.map(StringFilter::from),
+            program_context_id: None,
         }
     }
 }
@@ -163,7 +164,7 @@ impl EncounterEventFilterInput {
             document_type: None,
             document_name: None,
             r#type: self.r#type.clone().map(EqualFilter::from),
-            context: None,
+            context_id: None,
         }
     }
 }
@@ -171,15 +172,19 @@ impl EncounterEventFilterInput {
 #[Object]
 impl EncounterNode {
     pub async fn id(&self) -> &str {
-        &self.encounter_row.id
+        &self.encounter.0.id
     }
 
-    pub async fn context(&self) -> &str {
-        &self.encounter_row.context
+    pub async fn context_id(&self) -> &str {
+        &self.encounter.1.context_id
+    }
+
+    pub async fn program_id(&self) -> &str {
+        &self.encounter.0.program_id
     }
 
     pub async fn patient_id(&self) -> &str {
-        &self.encounter_row.patient_id
+        &self.encounter.0.patient_id
     }
 
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<NameNode> {
@@ -188,7 +193,7 @@ impl EncounterNode {
         let result = loader
             .load_one(NameByIdLoaderInput::new(
                 &self.store_id,
-                &self.encounter_row.patient_id,
+                &self.encounter.0.patient_id,
             ))
             .await?
             .map(NameNode::from_domain)
@@ -198,7 +203,7 @@ impl EncounterNode {
     }
 
     pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let Some(clinician_id) = self.encounter_row.clinician_id.as_ref() else {
+        let Some(clinician_id) = self.encounter.0.clinician_id.as_ref() else {
             return Ok(None)
         };
         let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
@@ -224,49 +229,51 @@ impl EncounterNode {
 
         let result = loader
             .load_one(ProgramEnrolmentLoaderInput::new(
-                &self.encounter_row.patient_id,
-                &self.encounter_row.context,
+                &self.encounter.0.patient_id,
+                &self.encounter.0.program_id,
                 self.allowed_ctx.clone(),
             ))
             .await?
-            .map(|program_row| ProgramEnrolmentNode {
+            .map(|program_enrolment| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
-                program_row,
+                program_enrolment,
                 allowed_ctx: self.allowed_ctx.clone(),
             })
             .ok_or(Error::new(format!(
                 "Failed to load program enrolment: {}",
-                self.encounter_row.context
+                self.encounter.0.program_id
             )))?;
 
         Ok(Some(result))
     }
 
     pub async fn r#type(&self) -> &str {
-        &self.encounter_row.document_type
+        &self.encounter.0.document_type
     }
 
     pub async fn name(&self) -> &str {
-        &self.encounter_row.document_name
+        &self.encounter.0.document_name
     }
 
     pub async fn status(&self) -> Option<EncounterNodeStatus> {
-        self.encounter_row
+        self.encounter
+            .0
             .status
             .as_ref()
             .map(|status| EncounterNodeStatus::from_domain(status))
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.encounter_row.created_datetime, Utc)
+        DateTime::<Utc>::from_utc(self.encounter.0.created_datetime, Utc)
     }
 
     pub async fn start_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.encounter_row.start_datetime, Utc)
+        DateTime::<Utc>::from_utc(self.encounter.0.start_datetime, Utc)
     }
 
     pub async fn end_datetime(&self) -> Option<DateTime<Utc>> {
-        self.encounter_row
+        self.encounter
+            .0
             .end_datetime
             .map(|t| DateTime::<Utc>::from_utc(t, Utc))
     }
@@ -276,7 +283,7 @@ impl EncounterNode {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(self.encounter_row.document_name.clone())
+            .load_one(self.encounter.0.document_name.clone())
             .await?
             .map(|document| DocumentNode {
                 allowed_ctx: self.allowed_ctx.clone(),
@@ -299,11 +306,11 @@ impl EncounterNode {
             .as_ref()
             .map(|f| f.to_domain())
             .unwrap_or(ProgramEventFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.encounter_row.patient_id))
-            .document_type(EqualFilter::equal_to(&self.encounter_row.document_type));
+            .patient_id(EqualFilter::equal_to(&self.encounter.0.patient_id))
+            .document_type(EqualFilter::equal_to(&self.encounter.0.document_type));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
-            program_filter = program_filter
-                .document_name(EqualFilter::equal_to(&self.encounter_row.document_name))
+            program_filter =
+                program_filter.document_name(EqualFilter::equal_to(&self.encounter.0.document_name))
         };
         let entries = ctx
             .service_provider()
