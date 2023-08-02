@@ -1,6 +1,6 @@
 use repository::{
-    DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryRow,
-    DocumentRegistryRowRepository, DocumentRegistryType, EqualFilter, FormSchemaRowRepository,
+    DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
+    DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter, FormSchemaRowRepository,
     Pagination, RepositoryError,
 };
 
@@ -19,7 +19,7 @@ pub struct InsertDocumentRegistry {
     pub id: String,
     pub document_type: String,
     pub context_id: String,
-    pub r#type: DocumentRegistryType,
+    pub category: DocumentRegistryCategory,
     pub name: Option<String>,
     pub form_schema_id: String,
 }
@@ -60,14 +60,14 @@ fn generate(
         id,
         document_type,
         context_id,
-        r#type,
+        category,
         name,
         form_schema_id,
     }: InsertDocumentRegistry,
 ) -> DocumentRegistryRow {
     DocumentRegistryRow {
         id,
-        r#type,
+        category,
         document_type,
         context_id,
         name,
@@ -99,12 +99,12 @@ fn validate_unique_patient_entry(
     ctx: &ServiceContext,
     input: &InsertDocumentRegistry,
 ) -> Result<bool, RepositoryError> {
-    if input.r#type != DocumentRegistryType::Patient {
+    if input.category != DocumentRegistryCategory::Patient {
         return Ok(true);
     }
     let repo = DocumentRegistryRepository::new(&ctx.connection);
     let result = repo.count(Some(
-        DocumentRegistryFilter::new().r#type(DocumentRegistryType::Patient.equal_to()),
+        DocumentRegistryFilter::new().r#type(DocumentRegistryCategory::Patient.equal_to()),
     ))?;
     Ok(result == 0)
 }

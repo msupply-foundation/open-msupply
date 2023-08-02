@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_types::types::document_registry::{DocumentRegistryCategoryNode, DocumentRegistryNode};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     document::document_registry::{InsertDocRegistryError, InsertDocumentRegistry},
@@ -9,14 +10,12 @@ use graphql_core::{
     ContextExt,
 };
 
-use crate::types::document_registry::{DocumentRegistryNode, DocumentRegistryTypeNode};
-
 #[derive(InputObject)]
 pub struct InsertDocumentRegistryInput {
     pub id: String,
     pub document_type: String,
     pub context_id: String,
-    pub r#type: DocumentRegistryTypeNode,
+    pub category: DocumentRegistryCategoryNode,
     pub name: Option<String>,
     pub form_schema_id: String,
 }
@@ -81,7 +80,7 @@ fn to_domain(
         id,
         document_type,
         context_id,
-        r#type,
+        category,
         name,
         form_schema_id,
     }: InsertDocumentRegistryInput,
@@ -90,7 +89,7 @@ fn to_domain(
         id,
         document_type,
         context_id,
-        r#type: r#type.to_domain(),
+        category: category.to_domain(),
         name,
         form_schema_id,
     }

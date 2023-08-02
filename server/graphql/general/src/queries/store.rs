@@ -3,20 +3,20 @@ use graphql_core::generic_filters::{EqualFilterInput, EqualFilterStringInput};
 use graphql_core::simple_generic_errors::{NodeError, NodeErrorInterface};
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::{
-    generic_filters::SimpleStringFilterInput, pagination::PaginationInput,
+    generic_filters::StringFilterInput, pagination::PaginationInput,
     standard_graphql_error::list_error_to_gql_err, ContextExt,
 };
 use graphql_types::types::StoreNode;
 use repository::{EqualFilter, StoreFilter, StoreSort, StoreSortField};
-use repository::{PaginationOption, SimpleStringFilter};
+use repository::{PaginationOption, StringFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject, Clone)]
 pub struct StoreFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub code: Option<SimpleStringFilterInput>,
-    pub name: Option<SimpleStringFilterInput>,
-    pub name_code: Option<SimpleStringFilterInput>,
+    pub code: Option<StringFilterInput>,
+    pub name: Option<StringFilterInput>,
+    pub name_code: Option<StringFilterInput>,
     pub site_id: Option<EqualFilterInput<i32>>,
 }
 
@@ -137,9 +137,9 @@ impl StoreFilterInput {
 
         StoreFilter {
             id: id.map(EqualFilter::from),
-            code: code.map(SimpleStringFilter::from),
-            name: name.map(SimpleStringFilter::from),
-            name_code: name_code.map(SimpleStringFilter::from),
+            code: code.map(StringFilter::from),
+            name: name.map(StringFilter::from),
+            name_code: name_code.map(StringFilter::from),
             site_id: site_id.map(EqualFilter::from),
         }
     }

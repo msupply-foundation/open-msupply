@@ -1,16 +1,14 @@
 use super::{
-    document::{latest_document, latest_document::dsl as latest_document_dsl},
+    document::latest_document::dsl as latest_document_dsl,
     encounter_row::encounter::{self, dsl as encounter_dsl},
     program_row::{program, program::dsl as program_dsl},
     StorageConnection,
 };
 
 use crate::{
-    diesel_macros::{
-        apply_date_time_filter, apply_equal_filter, apply_simple_string_filter, apply_sort,
-    },
-    DBType, DatetimeFilter, EncounterRow, EncounterStatus, EqualFilter, Pagination, ProgramRow,
-    RepositoryError, SimpleStringFilter, Sort,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
+    latest_document, DBType, DatetimeFilter, EncounterRow, EncounterStatus, EqualFilter,
+    Pagination, ProgramRow, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
@@ -20,7 +18,7 @@ pub struct EncounterFilter {
     pub id: Option<EqualFilter<String>>,
     pub document_type: Option<EqualFilter<String>>,
     pub patient_id: Option<EqualFilter<String>>,
-    pub context_id: Option<EqualFilter<String>>,
+    pub program_context_id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
     pub created_datetime: Option<DatetimeFilter>,
@@ -29,7 +27,7 @@ pub struct EncounterFilter {
     pub status: Option<EqualFilter<EncounterStatus>>,
     pub clinician_id: Option<EqualFilter<String>>,
     /// Filter by encounter data
-    pub document_data: Option<SimpleStringFilter>,
+    pub document_data: Option<StringFilter>,
 }
 
 impl EncounterFilter {
@@ -48,7 +46,7 @@ impl EncounterFilter {
     }
 
     pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.context_id = Some(filter);
+        self.program_context_id = Some(filter);
         self
     }
 
@@ -92,7 +90,7 @@ impl EncounterFilter {
         self
     }
 
-    pub fn document_data(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn document_data(mut self, filter: StringFilter) -> Self {
         self.document_data = Some(filter);
         self
     }
@@ -124,7 +122,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             id,
             document_type,
             patient_id,
-            context_id: context,
+            program_context_id: context,
             program_id,
             document_name: name,
             created_datetime,
@@ -151,7 +149,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             let mut sub_query = latest_document_dsl::latest_document
                 .select(latest_document_dsl::name)
                 .into_boxed();
-            apply_simple_string_filter!(sub_query, document_data, latest_document::data);
+            apply_string_filter!(sub_query, document_data, latest_document::data);
             query = query.filter(encounter_dsl::document_name.eq_any(sub_query));
         }
     }

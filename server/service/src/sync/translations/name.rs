@@ -196,7 +196,6 @@ impl SyncTranslation for NameTranslation {
             created_datetime: data.created_datetime.or(data
                 .created_date
                 .map(|date| date.and_hms_opt(0, 0, 0).unwrap())),
-            is_sync_update: true,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -251,7 +250,6 @@ impl SyncTranslation for NameTranslation {
             created_datetime,
             is_deceased,
             national_health_number,
-            is_sync_update: _,
         } = NameRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(

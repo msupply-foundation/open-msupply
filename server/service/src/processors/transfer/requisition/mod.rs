@@ -4,6 +4,7 @@ pub(crate) mod link_request_requisition;
 pub(crate) mod update_request_requisition_status;
 
 #[cfg(test)]
+#[cfg(not(feature = "memory"))]
 pub(crate) mod test;
 
 use repository::{
@@ -80,7 +81,9 @@ pub(crate) fn process_requisition_transfers(
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
         .table_name(ChangelogTableName::Requisition.equal_to())
-        .name_id(EqualFilter::equal_any(active_stores.name_ids()));
+        .name_id(EqualFilter::equal_any(active_stores.name_ids()))
+        // Filter out deletes
+        .action(ChangelogAction::Upsert.equal_to());
 
     loop {
         let cursor = key_value_store_repo

@@ -5,8 +5,8 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
-    DBType, EqualFilter, Pagination, RepositoryError, SimpleStringFilter, Sort,
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    DBType, EqualFilter, Pagination, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::dsl::InnerJoin;
@@ -21,9 +21,9 @@ pub struct Store {
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct StoreFilter {
     pub id: Option<EqualFilter<String>>,
-    pub code: Option<SimpleStringFilter>,
-    pub name: Option<SimpleStringFilter>,
-    pub name_code: Option<SimpleStringFilter>,
+    pub code: Option<StringFilter>,
+    pub name: Option<StringFilter>,
+    pub name_code: Option<StringFilter>,
     pub site_id: Option<EqualFilter<i32>>,
 }
 
@@ -48,17 +48,17 @@ impl StoreFilter {
         self
     }
 
-    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
 
-    pub fn name_code(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name_code(mut self, filter: StringFilter) -> Self {
         self.name_code = Some(filter);
         self
     }
@@ -134,13 +134,13 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
             code,
             name,
             name_code,
-            site_id
+            site_id,
         } = f;
 
         apply_equal_filter!(query, id, store_dsl::id);
-        apply_simple_string_filter!(query, code, store_dsl::code);
-        apply_simple_string_filter!(query, name, name_dsl::name_);
-        apply_simple_string_filter!(query, name_code, name_dsl::code);
+        apply_string_filter!(query, code, store_dsl::code);
+        apply_string_filter!(query, name, name_dsl::name_);
+        apply_string_filter!(query, name_code, name_dsl::code);
         apply_equal_filter!(query, site_id, store_dsl::site_id);
     }
 

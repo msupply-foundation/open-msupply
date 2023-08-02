@@ -1,4 +1,7 @@
-import { DocumentRegistryTypeNode, useQuery } from '@openmsupply-client/common';
+import {
+  DocumentRegistryCategoryNode,
+  useQuery,
+} from '@openmsupply-client/common';
 import {
   DocumentRegistryFragment,
   useDocumentRegistryApi,
@@ -22,8 +25,8 @@ export const useEncounterRegistriesByPrograms = (
     api.get
       .documentRegistries({
         filter: {
-          type: {
-            equalTo: DocumentRegistryTypeNode.Encounter,
+          category: {
+            equalTo: DocumentRegistryCategoryNode.Encounter,
           },
           contextId: {
             equalAny: programs.map(it => it.contextId),

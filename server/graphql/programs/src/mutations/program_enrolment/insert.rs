@@ -3,13 +3,12 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::program_enrolment::ProgramEnrolmentNode;
 use repository::{EqualFilter, ProgramEnrolmentFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::program_enrolment::{UpsertProgramEnrolment, UpsertProgramEnrolmentError},
 };
-
-use crate::types::program_enrolment::ProgramEnrolmentNode;
 
 #[derive(InputObject)]
 pub struct InsertProgramEnrolmentInput {

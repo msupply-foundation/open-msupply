@@ -4,7 +4,7 @@ use crate::sync::{
     },
     translations::{IntegrationRecords, PullUpsertRecord},
 };
-use repository::{ContextRow, DocumentRegistryRow, DocumentRegistryType, FormSchemaJson};
+use repository::{ContextRow, DocumentRegistryCategory, DocumentRegistryRow, FormSchemaJson};
 use serde_json::json;
 use util::uuid::uuid;
 
@@ -41,7 +41,7 @@ impl SyncRecordTester for DocumentRegistryTester {
 
         let doc_registry1 = DocumentRegistryRow {
             id: uuid(),
-            r#type: DocumentRegistryType::ProgramEnrolment,
+            category: DocumentRegistryCategory::ProgramEnrolment,
             document_type: "TestProgram".to_string(),
             context_id: context.id.clone(),
             name: Some("Some name".to_string()),
@@ -50,9 +50,9 @@ impl SyncRecordTester for DocumentRegistryTester {
         };
         let doc_registry_json1 = json!({
             "ID": doc_registry1.id,
-            "type": "PROGRAM_ENROLMENT",
+            "category": "PROGRAM_ENROLMENT",
             "document_type": "TestProgram",
-            "document_context": context.id.clone(),
+            "context_ID": context.id.clone(),
             "name": "Some name",
             "form_schema_ID": form_row1.id,
             "config": "{}",

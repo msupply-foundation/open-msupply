@@ -1,11 +1,11 @@
 import { create } from '@openmsupply-client/common';
-import { CreateDocument } from '@openmsupply-client/programs';
+import { FormInputData } from '@openmsupply-client/programs';
 
 interface PatientModalDocument {
   name?: string;
   patientId?: string;
   type?: string;
-  createDocument?: CreateDocument;
+  createDocument?: FormInputData;
 }
 
 export enum PatientModal {
@@ -37,7 +37,7 @@ interface PatientModalState {
   setCreationModal: (
     current: PatientModal,
     documentType: string,
-    createDocument: CreateDocument,
+    createDocument: FormInputData,
     programType: string
   ) => void;
 }
@@ -76,7 +76,7 @@ export const usePatientModalStore = create<PatientModalState>(set => ({
   setCreationModal: (
     current: PatientModal,
     documentType: string,
-    createDocument: CreateDocument,
+    createDocument: FormInputData,
     programType: string
   ) =>
     set(state => ({

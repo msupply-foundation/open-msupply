@@ -3,9 +3,9 @@ import { AppRoute } from '@openmsupply-client/config';
 import React, { useEffect } from 'react';
 import {
   AuthError,
-  matchPath,
   Location,
   RouteBuilder,
+  matchPath,
   useLocalStorage,
   useLocation,
   useNavigate,

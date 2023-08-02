@@ -5,9 +5,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    ClinicianRow, EqualFilter, Pagination, SimpleStringFilter, Sort,
+    ClinicianRow, EqualFilter, Pagination, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -15,15 +15,15 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 #[derive(Clone, Default)]
 pub struct ClinicianFilter {
     pub id: Option<EqualFilter<String>>,
-    pub code: Option<SimpleStringFilter>,
-    pub first_name: Option<SimpleStringFilter>,
-    pub last_name: Option<SimpleStringFilter>,
-    pub initials: Option<SimpleStringFilter>,
-    pub address1: Option<SimpleStringFilter>,
-    pub address2: Option<SimpleStringFilter>,
-    pub phone: Option<SimpleStringFilter>,
-    pub mobile: Option<SimpleStringFilter>,
-    pub email: Option<SimpleStringFilter>,
+    pub code: Option<StringFilter>,
+    pub first_name: Option<StringFilter>,
+    pub last_name: Option<StringFilter>,
+    pub initials: Option<StringFilter>,
+    pub address1: Option<StringFilter>,
+    pub address2: Option<StringFilter>,
+    pub phone: Option<StringFilter>,
+    pub mobile: Option<StringFilter>,
+    pub email: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -151,15 +151,15 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
         } = f;
 
         apply_equal_filter!(query, id, clinician_dsl::id);
-        apply_simple_string_filter!(query, code, clinician_dsl::code);
-        apply_simple_string_filter!(query, first_name, clinician_dsl::first_name);
-        apply_simple_string_filter!(query, last_name, clinician_dsl::last_name);
-        apply_simple_string_filter!(query, initials, clinician_dsl::initials);
-        apply_simple_string_filter!(query, address1, clinician_dsl::address1);
-        apply_simple_string_filter!(query, address2, clinician_dsl::address2);
-        apply_simple_string_filter!(query, phone, clinician_dsl::phone);
-        apply_simple_string_filter!(query, mobile, clinician_dsl::mobile);
-        apply_simple_string_filter!(query, email, clinician_dsl::email);
+        apply_string_filter!(query, code, clinician_dsl::code);
+        apply_string_filter!(query, first_name, clinician_dsl::first_name);
+        apply_string_filter!(query, last_name, clinician_dsl::last_name);
+        apply_string_filter!(query, initials, clinician_dsl::initials);
+        apply_string_filter!(query, address1, clinician_dsl::address1);
+        apply_string_filter!(query, address2, clinician_dsl::address2);
+        apply_string_filter!(query, phone, clinician_dsl::phone);
+        apply_string_filter!(query, mobile, clinician_dsl::mobile);
+        apply_string_filter!(query, email, clinician_dsl::email);
     };
 
     // Restrict results to clinicians belonging to the store as specified in the
@@ -183,47 +183,47 @@ impl ClinicianFilter {
         self
     }
 
-    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
         self
     }
 
-    pub fn first_name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn first_name(mut self, filter: StringFilter) -> Self {
         self.first_name = Some(filter);
         self
     }
 
-    pub fn last_name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn last_name(mut self, filter: StringFilter) -> Self {
         self.last_name = Some(filter);
         self
     }
 
-    pub fn initials(mut self, value: SimpleStringFilter) -> Self {
+    pub fn initials(mut self, value: StringFilter) -> Self {
         self.initials = Some(value);
         self
     }
 
-    pub fn address1(mut self, value: SimpleStringFilter) -> Self {
+    pub fn address1(mut self, value: StringFilter) -> Self {
         self.address1 = Some(value);
         self
     }
 
-    pub fn address2(mut self, value: SimpleStringFilter) -> Self {
+    pub fn address2(mut self, value: StringFilter) -> Self {
         self.address2 = Some(value);
         self
     }
 
-    pub fn phone(mut self, value: SimpleStringFilter) -> Self {
+    pub fn phone(mut self, value: StringFilter) -> Self {
         self.phone = Some(value);
         self
     }
 
-    pub fn mobile(mut self, value: SimpleStringFilter) -> Self {
+    pub fn mobile(mut self, value: StringFilter) -> Self {
         self.mobile = Some(value);
         self
     }
 
-    pub fn email(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn email(mut self, filter: StringFilter) -> Self {
         self.email = Some(filter);
         self
     }
@@ -234,7 +234,7 @@ mod tests {
     use crate::{
         mock::{mock_store_a, MockDataInserts},
         test_db, ClinicianFilter, ClinicianRepository, ClinicianRow, ClinicianRowRepository,
-        ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, SimpleStringFilter,
+        ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, StringFilter,
     };
     use util::inline_init;
 
@@ -265,7 +265,7 @@ mod tests {
         let result = repository
             .query_by_filter(
                 &mock_store_a().id,
-                ClinicianFilter::new().first_name(SimpleStringFilter::equal_to("First")),
+                ClinicianFilter::new().first_name(StringFilter::equal_to("First")),
             )
             .unwrap();
         assert!(result.is_empty());
@@ -276,14 +276,13 @@ mod tests {
                 id: "JoinId1".to_string(),
                 store_id: mock_store_a().id,
                 clinician_id: "clinician_store_a".to_string(),
-                is_sync_update: false,
             })
             .unwrap();
 
         let result = repository
             .query_by_filter(
                 &mock_store_a().id,
-                ClinicianFilter::new().first_name(SimpleStringFilter::equal_to("First")),
+                ClinicianFilter::new().first_name(StringFilter::equal_to("First")),
             )
             .unwrap();
         assert_eq!(result[0].id, "clinician_store_a");

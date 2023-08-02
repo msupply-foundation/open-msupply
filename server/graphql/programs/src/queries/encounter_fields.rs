@@ -4,15 +4,12 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::encounter::{EncounterFilterInput, EncounterNode, EncounterSortInput};
 use repository::PaginationOption;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::encounter::encounter_fields::{EncounterFields, EncounterFieldsResult},
 };
-
-use crate::types::encounter::EncounterNode;
-
-use super::{EncounterFilterInput, EncounterSortInput};
 
 #[derive(InputObject, Clone)]
 pub struct EncounterFieldsInput {

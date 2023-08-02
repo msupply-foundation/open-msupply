@@ -200,11 +200,14 @@ mod test {
     use repository::{
         mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType, EncounterFilter,
-        EncounterRepository, EqualFilter, FormSchemaRowRepository, PATIENT_CONTEXT_ID,
+        DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository,
+        EncounterFilter, EncounterRepository, EqualFilter, FormSchemaRowRepository,
     };
     use serde_json::json;
-    use util::inline_init;
+    use util::{
+        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
+        inline_init,
+    };
 
     use crate::{
         programs::{
@@ -212,7 +215,7 @@ mod test {
                 encounter_schema::{EncounterStatus, SchemaEncounter},
                 InsertEncounter, UpdateEncounter,
             },
-            patient::{test::mock_patient_1, UpdatePatient, PATIENT_TYPE},
+            patient::{test::mock_patient_1, UpdatePatient},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
@@ -252,7 +255,7 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "patient_id".to_string(),
-                r#type: DocumentRegistryType::Patient,
+                category: DocumentRegistryCategory::Patient,
                 document_type: PATIENT_TYPE.to_string(),
                 context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
@@ -263,7 +266,7 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "program_enrolment_rego_id".to_string(),
-                r#type: DocumentRegistryType::ProgramEnrolment,
+                category: DocumentRegistryCategory::ProgramEnrolment,
                 document_type: enrolment_doc_type.to_string(),
                 context_id: program_context.clone(),
                 name: None,
@@ -274,7 +277,7 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "encounter_rego_id".to_string(),
-                r#type: DocumentRegistryType::Encounter,
+                category: DocumentRegistryCategory::Encounter,
                 document_type: encounter_type.to_string(),
                 context_id: program_context.clone(),
                 name: None,

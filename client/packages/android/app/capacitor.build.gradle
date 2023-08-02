@@ -2,18 +2,20 @@
 
 android {
   compileOptions {
-      sourceCompatibility JavaVersion.VERSION_11
-      targetCompatibility JavaVersion.VERSION_11
+      sourceCompatibility JavaVersion.VERSION_17
+      targetCompatibility JavaVersion.VERSION_17
   }
 }
 
 apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
+    implementation project(':bcyesil-capacitor-plugin-printer')
     implementation project(':capacitor-community-barcode-scanner')
     implementation project(':capacitor-community-keep-awake')
+    implementation project(':capacitor-app')
     implementation project(':capacitor-keyboard')
     implementation project(':capacitor-preferences')
-    implementation "com.android.support:support-v4:28.+"
+
 }
 
 

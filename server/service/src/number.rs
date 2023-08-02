@@ -70,6 +70,7 @@ mod test {
     };
     use util::inline_init;
 
+    #[cfg(not(feature = "memory"))]
     const TEST_SLEEP_TIME: u64 = 100;
     const MAX_CONCURRENCY: u64 = 10;
 

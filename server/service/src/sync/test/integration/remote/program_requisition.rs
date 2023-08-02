@@ -124,7 +124,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
             id: master_list_row.id.clone(),
             name: master_list_row.name.clone(),
             master_list_id: master_list_row.id.clone(),
-            context_id: Some(master_list_row.id.clone()),
+            context_id: master_list_row.id.clone(),
         };
 
         let program_requisition_settings1 = ProgramRequisitionSettingsRow {
@@ -205,7 +205,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
             id: master_list_row2.id.clone(),
             name: master_list_row2.name.clone(),
             master_list_id: master_list_row2.id.clone(),
-            context_id: Some(master_list_row2.id.clone()),
+            context_id: master_list_row2.id.clone(),
         };
 
         let program_requisition_settings3 = ProgramRequisitionSettingsRow {

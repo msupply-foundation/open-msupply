@@ -79,6 +79,9 @@ fragment FullSyncStatus on FullSyncStatusNode {
   summary {
     ...SyncStatus
   }
+  lastSuccessfulSync {
+    ...SyncStatus
+  }
 }
 
 query syncInfo {

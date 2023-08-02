@@ -3,11 +3,10 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::document::{DocumentConnector, DocumentNode};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::document::document_service::DocumentHistoryError;
 use service::usize_to_u32;
-
-use crate::types::document::{DocumentConnector, DocumentNode};
 
 #[derive(Union)]
 pub enum DocumentHistoryResponse {

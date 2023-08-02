@@ -1,17 +1,18 @@
 use super::{
     name_row::{name, name::dsl as name_dsl},
     program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
-    program_row::{program, program::dsl as program_dsl},
     DBType, NameRow, StorageConnection,
 };
 
 use crate::{
+    db_diesel::program_enrolment,
     diesel_macros::{
-        apply_date_filter, apply_equal_filter, apply_simple_string_filter,
-        apply_simple_string_or_filter, apply_sort_no_case,
+        apply_date_filter, apply_equal_filter, apply_sort_no_case, apply_string_filter,
+        apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Gender, NameType, Pagination, SimpleStringFilter, Sort,
+    DateFilter, EqualFilter, Gender, NameType, Pagination, ProgramEnrolmentFilter, Sort,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -21,25 +22,25 @@ pub type Patient = NameRow;
 #[derive(Clone, Default, PartialEq, Debug)]
 pub struct PatientFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<SimpleStringFilter>,
-    pub code: Option<SimpleStringFilter>,
-    pub code_2: Option<SimpleStringFilter>,
-    pub first_name: Option<SimpleStringFilter>,
-    pub last_name: Option<SimpleStringFilter>,
+    pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
+    pub code_2: Option<StringFilter>,
+    pub first_name: Option<StringFilter>,
+    pub last_name: Option<StringFilter>,
     pub gender: Option<EqualFilter<Gender>>,
     pub date_of_birth: Option<DateFilter>,
-    pub phone: Option<SimpleStringFilter>,
-    pub address1: Option<SimpleStringFilter>,
-    pub address2: Option<SimpleStringFilter>,
-    pub country: Option<SimpleStringFilter>,
-    pub email: Option<SimpleStringFilter>,
+    pub phone: Option<StringFilter>,
+    pub address1: Option<StringFilter>,
+    pub address2: Option<StringFilter>,
+    pub country: Option<StringFilter>,
+    pub email: Option<StringFilter>,
 
     /// Filter for any identifier associated with a name entry.
     /// Currently:
     /// - name::code
     /// - name::national_health_number
     /// - program_enrolment::program_enrolment_id
-    pub identifier: Option<SimpleStringFilter>,
+    pub identifier: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -177,50 +178,43 @@ impl<'a> PatientRepository<'a> {
 
             // or filters need to be applied first
             if identifier.is_some() {
-                apply_simple_string_filter!(query, identifier.clone(), name_dsl::code);
-                apply_simple_string_or_filter!(
+                apply_string_filter!(query, identifier.clone(), name_dsl::code);
+                apply_string_or_filter!(
                     query,
                     identifier.clone(),
                     name_dsl::national_health_number
                 );
 
-                let mut sub_query = program_enrolment_dsl::program_enrolment
-                    .inner_join(program::table)
-                    .select(program_enrolment_dsl::patient_id)
-                    .into_boxed();
-                apply_simple_string_filter!(
-                    sub_query,
-                    identifier,
-                    program_enrolment_dsl::program_enrolment_id
-                );
-                if let Some(allowed_ctx) = allowed_ctx {
-                    apply_equal_filter!(
-                        sub_query,
-                        Some(EqualFilter::default().restrict_results(allowed_ctx)),
-                        program_dsl::context_id
-                    );
-                }
+                let sub_query =
+                    program_enrolment::create_filtered_query(Some(ProgramEnrolmentFilter {
+                        program_enrolment_id: identifier,
+                        program_context_id: allowed_ctx
+                            .map(|ctxs| EqualFilter::default().restrict_results(ctxs)),
+                        ..Default::default()
+                    }))
+                    .select(program_enrolment_dsl::patient_id);
+
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
             }
 
             apply_equal_filter!(query, id, name_dsl::id);
-            apply_simple_string_filter!(query, code, name_dsl::code);
-            apply_simple_string_filter!(
+            apply_string_filter!(query, code, name_dsl::code);
+            apply_string_filter!(
                 query,
                 national_health_number,
                 name_dsl::national_health_number
             );
-            apply_simple_string_filter!(query, name, name_dsl::name_);
+            apply_string_filter!(query, name, name_dsl::name_);
 
-            apply_simple_string_filter!(query, first_name, name_dsl::first_name);
-            apply_simple_string_filter!(query, last_name, name_dsl::last_name);
+            apply_string_filter!(query, first_name, name_dsl::first_name);
+            apply_string_filter!(query, last_name, name_dsl::last_name);
             apply_equal_filter!(query, gender, name_dsl::gender);
             apply_date_filter!(query, date_of_birth, name_dsl::date_of_birth);
-            apply_simple_string_filter!(query, phone, name_dsl::phone);
-            apply_simple_string_filter!(query, address1, name_dsl::address1);
-            apply_simple_string_filter!(query, address2, name_dsl::address2);
-            apply_simple_string_filter!(query, country, name_dsl::country);
-            apply_simple_string_filter!(query, email, name_dsl::email);
+            apply_string_filter!(query, phone, name_dsl::phone);
+            apply_string_filter!(query, address1, name_dsl::address1);
+            apply_string_filter!(query, address2, name_dsl::address2);
+            apply_string_filter!(query, country, name_dsl::country);
+            apply_string_filter!(query, email, name_dsl::email);
         };
 
         apply_equal_filter!(
@@ -244,32 +238,32 @@ impl PatientFilter {
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
 
-    pub fn code(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
         self
     }
 
-    pub fn code_2(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn code_2(mut self, filter: StringFilter) -> Self {
         self.code_2 = Some(filter);
         self
     }
 
-    pub fn identifier(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn identifier(mut self, filter: StringFilter) -> Self {
         self.identifier = Some(filter);
         self
     }
 
-    pub fn first_name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn first_name(mut self, filter: StringFilter) -> Self {
         self.first_name = Some(filter);
         self
     }
 
-    pub fn last_name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn last_name(mut self, filter: StringFilter) -> Self {
         self.last_name = Some(filter);
         self
     }
@@ -284,25 +278,25 @@ impl PatientFilter {
         self
     }
 
-    pub fn phone(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn phone(mut self, filter: StringFilter) -> Self {
         self.phone = Some(filter);
         self
     }
 
-    pub fn address1(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn address1(mut self, filter: StringFilter) -> Self {
         self.address1 = Some(filter);
         self
     }
-    pub fn address2(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn address2(mut self, filter: StringFilter) -> Self {
         self.address2 = Some(filter);
         self
     }
-    pub fn country(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn country(mut self, filter: StringFilter) -> Self {
         self.country = Some(filter);
         self
     }
 
-    pub fn email(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn email(mut self, filter: StringFilter) -> Self {
         self.email = Some(filter);
         self
     }
@@ -317,7 +311,7 @@ mod tests {
         mock::{mock_program_a, MockDataInserts},
         test_db, EqualFilter, NameRow, NameRowRepository, NameType, PatientFilter,
         PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
-        ProgramEnrolmentStatus, SimpleStringFilter,
+        ProgramEnrolmentStatus, StringFilter,
     };
 
     #[actix_rt::test]
@@ -331,7 +325,7 @@ mod tests {
         // Make sure we don't return names that are not patients
         let result = repo
             .query_by_filter(
-                PatientFilter::new().identifier(SimpleStringFilter::equal_to("code2")),
+                PatientFilter::new().identifier(StringFilter::equal_to("code2")),
                 None,
             )
             .unwrap();
@@ -397,14 +391,21 @@ mod tests {
             .unwrap();
         let result = repo
             .query_by_filter(
-                PatientFilter::new().identifier(SimpleStringFilter::equal_to("codePatient")),
+                PatientFilter::new().identifier(StringFilter::equal_to("codePatient")),
                 None,
             )
             .unwrap();
         assert_eq!(result.get(0).unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
-                PatientFilter::new().identifier(SimpleStringFilter::equal_to("nhnPatient")),
+                PatientFilter::new().identifier(StringFilter::equal_to("nhnPatient")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
                 None,
             )
             .unwrap();
@@ -412,16 +413,8 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new()
-                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
-                None,
-            )
-            .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
-        let result = repo
-            .query_by_filter(
-                PatientFilter::new()
-                    .code(SimpleStringFilter::equal_to("codePatient"))
-                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+                    .code(StringFilter::equal_to("codePatient"))
+                    .identifier(StringFilter::equal_to("program_enrolment_id")),
                 None,
             )
             .unwrap();
@@ -430,8 +423,8 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new()
-                    .code(SimpleStringFilter::equal_to("code does not exist"))
-                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+                    .code(StringFilter::equal_to("code does not exist"))
+                    .identifier(StringFilter::equal_to("program_enrolment_id")),
                 None,
             )
             .unwrap();
@@ -439,7 +432,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new()
-                    .identifier(SimpleStringFilter::equal_to("identifier does not exist")),
+                    .identifier(StringFilter::equal_to("identifier does not exist")),
                 None,
             )
             .unwrap();
@@ -488,16 +481,14 @@ mod tests {
             .unwrap();
         let result = repo
             .query_by_filter(
-                PatientFilter::new()
-                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+                PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
                 Some(&["WrongContext".to_string()]),
             )
             .unwrap();
         assert!(result.is_empty());
         let result = repo
             .query_by_filter(
-                PatientFilter::new()
-                    .identifier(SimpleStringFilter::equal_to("program_enrolment_id")),
+                PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
                 Some(&[mock_program_a().id]),
             )
             .unwrap();
