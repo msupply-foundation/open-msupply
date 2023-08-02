@@ -1,9 +1,9 @@
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter},
+    diesel_macros::{apply_equal_filter, apply_string_filter},
     repository_error::RepositoryError,
-    EqualFilter, RequisitionRowType, SimpleStringFilter, StorageConnection,
+    EqualFilter, RequisitionRowType, StorageConnection, StringFilter,
 };
 
 table! {
@@ -23,7 +23,7 @@ pub struct RequisitionsInPeriodFilter {
     pub program_id: Option<EqualFilter<String>>,
     pub period_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
-    pub order_type: Option<SimpleStringFilter>,
+    pub order_type: Option<StringFilter>,
     pub r#type: Option<EqualFilter<RequisitionRowType>>,
 }
 
@@ -82,7 +82,7 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
         apply_equal_filter!(query, period_id, requisitions_in_period_dsl::period_id);
         apply_equal_filter!(query, store_id, requisitions_in_period_dsl::store_id);
         apply_equal_filter!(query, r#type, requisitions_in_period_dsl::type_);
-        apply_simple_string_filter!(query, order_type, requisitions_in_period_dsl::order_type);
+        apply_string_filter!(query, order_type, requisitions_in_period_dsl::order_type);
 
         //  Debug diesel query
         // println!(
@@ -116,7 +116,7 @@ impl RequisitionsInPeriodFilter {
         self
     }
 
-    pub fn order_type(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn order_type(mut self, filter: StringFilter) -> Self {
         self.order_type = Some(filter);
         self
     }

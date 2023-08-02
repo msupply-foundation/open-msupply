@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    Document, DocumentFilter, DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository,
-    DocumentRegistryType, DocumentRepository, DocumentStatus, EqualFilter, Pagination,
+    Document, DocumentFilter, DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter,
+    DocumentRegistryRepository, DocumentRepository, DocumentStatus, EqualFilter, Pagination,
     ProgramFilter, ProgramRepository, ProgramRow, RepositoryError, StringFilter, TransactionError,
 };
 
@@ -163,7 +163,7 @@ fn validate_document_type(
 ) -> Result<Option<DocumentRegistry>, RepositoryError> {
     let mut entry = DocumentRegistryRepository::new(&ctx.connection).query_by_filter(
         DocumentRegistryFilter::new()
-            .r#type(DocumentRegistryType::ProgramEnrolment.equal_to())
+            .r#type(DocumentRegistryCategory::ProgramEnrolment.equal_to())
             .document_type(EqualFilter::equal_to(document_type)),
     )?;
     Ok(entry.pop())
@@ -216,18 +216,21 @@ fn validate(
 mod test {
     use chrono::{DateTime, Timelike, Utc};
     use repository::{
-        mock::{context_program_a, mock_form_schema_empty, MockDataInserts},
+        mock::{context_program_a, mock_form_schema_empty, mock_program_a, MockDataInserts},
         test_db::setup_all,
-        DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
-        DocumentRepository, FormSchemaRowRepository, Pagination, ProgramEnrolmentRepository,
-        StringFilter, PATIENT_CONTEXT_ID,
+        DocumentFilter, DocumentRegistryCategory, DocumentRegistryRow,
+        DocumentRegistryRowRepository, DocumentRepository, FormSchemaRowRepository, Pagination,
+        ProgramEnrolmentRepository, StringFilter,
     };
     use serde_json::json;
-    use util::inline_init;
+    use util::{
+        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
+        inline_init,
+    };
 
     use crate::{
         programs::{
-            patient::{patient_doc_name, test::mock_patient_1, UpdatePatient, PATIENT_TYPE},
+            patient::{patient_doc_name, test::mock_patient_1, UpdatePatient},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
@@ -265,7 +268,7 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "patient_id".to_string(),
-                r#type: DocumentRegistryType::Patient,
+                category: DocumentRegistryCategory::Patient,
                 document_type: PATIENT_TYPE.to_string(),
                 context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
@@ -276,7 +279,7 @@ mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "program_enrolment_id".to_string(),
-                r#type: DocumentRegistryType::ProgramEnrolment,
+                category: DocumentRegistryCategory::ProgramEnrolment,
                 document_type: enrolment_doc_type.to_string(),
                 context_id: program_context.to_string(),
                 name: None,
@@ -454,7 +457,7 @@ mod test {
             .unwrap();
         // Test program has been written to the programs table
         let found_program = ProgramEnrolmentRepository::new(&ctx.connection)
-            .find_one_by_type_and_patient(&enrolment_doc_type, &patient.id)
+            .find_one_by_program_id_and_patient(&mock_program_a().id, &patient.id)
             .unwrap()
             .unwrap();
         assert_eq!(program_context, found_program.1.context_id);

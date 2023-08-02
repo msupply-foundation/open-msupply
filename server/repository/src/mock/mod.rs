@@ -166,7 +166,7 @@ impl MockData {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default, PartialEq)]
 pub struct MockDataInserts {
     pub user_accounts: bool,
     pub user_store_joins: bool,
@@ -464,7 +464,7 @@ impl Index<&str> for MockDataCollection {
     }
 }
 
-fn all_mock_data() -> MockDataCollection {
+pub(crate) fn all_mock_data() -> MockDataCollection {
     let mut data: MockDataCollection = Default::default();
     data.insert(
         "base",
@@ -768,7 +768,7 @@ pub fn insert_mock_data(
         if inserts.documents {
             for row in &mock_data.documents {
                 let repo = DocumentRepository::new(connection);
-                repo.insert(row, false).unwrap();
+                repo.insert(row).unwrap();
             }
         }
         if inserts.sync_logs {

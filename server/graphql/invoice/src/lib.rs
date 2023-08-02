@@ -158,9 +158,9 @@ impl InvoiceMutations {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: prescription::UpdateInput,
-    ) -> Result<prescription::UpdateResponse> {
-        prescription::update(ctx, &store_id, input)
+        input: prescription::update::UpdateInput,
+    ) -> Result<prescription::update::UpdateResponse> {
+        prescription::update::update(ctx, &store_id, input)
     }
 
     async fn delete_prescription(
@@ -168,7 +168,7 @@ impl InvoiceMutations {
         ctx: &Context<'_>,
         store_id: String,
         id: String,
-    ) -> Result<prescription::DeleteResponse> {
-        prescription::delete(ctx, &store_id, id)
+    ) -> Result<prescription::delete::DeleteResponse> {
+        prescription::delete::delete(ctx, &store_id, id)
     }
 }

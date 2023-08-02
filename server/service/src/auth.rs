@@ -4,6 +4,7 @@ use repository::{
     EqualFilter, Pagination, Permission, RepositoryError, UserPermissionFilter,
     UserPermissionRepository, UserPermissionRow,
 };
+use util::{constants::PATIENT_CONTEXT_ID, uuid::uuid};
 
 use crate::{
     auth_data::AuthData,
@@ -15,7 +16,8 @@ use crate::{
 #[derive(Debug, Clone)]
 pub enum PermissionDSL {
     HasPermission(Permission),
-    /// The permission context will be extracted and tagged with the provided tag.
+    /// The matching permission context for the Permission will be extracted and added to the user's
+    /// capabilities.
     HasDynamicPermission(Permission),
     NoPermissionRequired,
     HasStoreAccess,
@@ -629,11 +631,40 @@ impl AuthServiceTrait for AuthService {
         if let Some(store_id) = &resource_request.store_id {
             permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
         }
-        let user_permissions = UserPermissionRepository::new(&connection).query(
+        let mut user_permissions = UserPermissionRepository::new(&connection).query(
             Pagination::all(),
             Some(permission_filter),
             None,
         )?;
+
+        // Dynamically add Patient context permissions if the user has PatientQuery/PatientMutate
+        // permissions.
+        if user_permissions
+            .iter()
+            .find(|item| item.permission == Permission::PatientQuery)
+            .is_some()
+        {
+            user_permissions.push(UserPermissionRow {
+                id: uuid(),
+                user_id: context.user_id.clone(),
+                store_id: Some(context.store_id.clone()),
+                permission: Permission::DocumentQuery,
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
+            })
+        }
+        if user_permissions
+            .iter()
+            .find(|item| item.permission == Permission::PatientMutate)
+            .is_some()
+        {
+            user_permissions.push(UserPermissionRow {
+                id: uuid(),
+                user_id: context.user_id.clone(),
+                store_id: Some(context.store_id.clone()),
+                permission: Permission::DocumentMutate,
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
+            })
+        }
 
         let required_permissions = match self.resource_permissions.get(&resource_request.resource) {
             Some(required_permissions) => required_permissions,

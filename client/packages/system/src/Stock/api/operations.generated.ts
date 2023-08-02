@@ -1,9 +1,9 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { LocationRowFragmentDoc } from '../../Location/api/operations.generated';
+import { LocationRowFragmentDoc } from '../../../../../packages/system/src/Location/api/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw';
 export type StockLineRowFragment = {
   __typename: 'StockLineNode';
@@ -84,12 +84,12 @@ export type RepackFragment = {
 export type InvoiceRowFragment = { __typename: 'InvoiceNode'; id: string };
 
 export type StockLinesQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.StockLineSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.StockLineFilterInput>;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type StockLinesQuery = {
@@ -132,8 +132,8 @@ export type StockLinesQuery = {
 };
 
 export type StockLineQueryVariables = Types.Exact<{
-  id: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type StockLineQuery = {
@@ -177,7 +177,7 @@ export type StockLineQuery = {
 
 export type UpdateStockLineMutationVariables = Types.Exact<{
   input: Types.UpdateStockLineInput;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type UpdateStockLineMutation = {
@@ -218,8 +218,8 @@ export type UpdateStockLineMutation = {
 };
 
 export type RepackQueryVariables = Types.Exact<{
-  invoiceId: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
+  invoiceId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type RepackQuery = {
@@ -259,8 +259,8 @@ export type RepackQuery = {
 };
 
 export type RepacksByStockLineQueryVariables = Types.Exact<{
-  stockLineId: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
+  stockLineId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type RepacksByStockLineQuery = {
@@ -303,7 +303,7 @@ export type RepacksByStockLineQuery = {
 
 export type InsertRepackMutationVariables = Types.Exact<{
   input: Types.InsertRepackInput;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 export type InsertRepackMutation = {
@@ -497,7 +497,7 @@ export function getSdk(
   return {
     stockLines(
       variables: StockLinesQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<StockLinesQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -511,7 +511,7 @@ export function getSdk(
     },
     stockLine(
       variables: StockLineQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<StockLineQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -525,7 +525,7 @@ export function getSdk(
     },
     updateStockLine(
       variables: UpdateStockLineMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<UpdateStockLineMutation> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -540,7 +540,7 @@ export function getSdk(
     },
     repack(
       variables: RepackQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<RepackQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -554,7 +554,7 @@ export function getSdk(
     },
     repacksByStockLine(
       variables: RepacksByStockLineQueryVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<RepacksByStockLineQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
@@ -569,7 +569,7 @@ export function getSdk(
     },
     insertRepack(
       variables: InsertRepackMutationVariables,
-      requestHeaders?: Dom.RequestInit['headers']
+      requestHeaders?: GraphQLClientRequestHeaders
     ): Promise<InsertRepackMutation> {
       return withWrapper(
         wrappedRequestHeaders =>

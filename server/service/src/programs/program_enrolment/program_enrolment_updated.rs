@@ -25,7 +25,8 @@ pub(crate) fn update_program_enrolment_row(
         .naive_utc();
 
     let repo = ProgramEnrolmentRepository::new(con);
-    let program_enrolment_row = repo.find_one_by_type_and_patient(&document.r#type, patient_id)?;
+    let program_enrolment_row =
+        repo.find_one_by_program_id_and_patient(&program_row.id, patient_id)?;
     let id = match program_enrolment_row {
         Some(program_enrolment_row) => program_enrolment_row.0.id,
         None => uuid(),

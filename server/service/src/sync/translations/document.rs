@@ -40,7 +40,8 @@ struct LegacyDocumentRow {
     #[serde(rename = "owner_name_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub owner_name_id: Option<String>,
-    pub context: String,
+    #[serde(rename = "context_ID")]
+    pub context_id: String,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -83,7 +84,7 @@ impl SyncTranslation for DocumentTranslation {
             form_schema_id,
             status,
             owner_name_id,
-            context,
+            context_id,
         } = serde_json::from_str::<LegacyDocumentRow>(&sync_record.data)?;
         let result = Document {
             id,
@@ -99,7 +100,7 @@ impl SyncTranslation for DocumentTranslation {
                 LegacyDocumentStatus::Deleted => DocumentStatus::Deleted,
             },
             owner_name_id,
-            context_id: context,
+            context_id,
         };
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::Document(result),
@@ -133,8 +134,7 @@ impl SyncTranslation for DocumentTranslation {
             status,
             owner_name_id,
             context_id,
-            is_sync_update: _,
-        } = document.to_row(false)?;
+        } = document.to_row()?;
 
         let legacy_row = LegacyDocumentRow {
             id,
@@ -150,7 +150,7 @@ impl SyncTranslation for DocumentTranslation {
                 DocumentStatus::Deleted => LegacyDocumentStatus::Deleted,
             },
             owner_name_id,
-            context: context_id,
+            context_id,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

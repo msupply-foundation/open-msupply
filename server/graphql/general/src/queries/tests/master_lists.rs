@@ -6,7 +6,7 @@ mod graphql {
         mock::{mock_master_list_master_list_line_filter_test, MockDataInserts},
         MasterList, MasterListFilter, MasterListSort, StorageConnectionManager,
     };
-    use repository::{EqualFilter, PaginationOption, SimpleStringFilter};
+    use repository::{EqualFilter, PaginationOption, StringFilter};
     use serde_json::{json, Value};
 
     use service::{
@@ -204,14 +204,14 @@ mod graphql {
                 Some(
                     MasterListFilter::new()
                         .id(EqualFilter::equal_to("test_id_filter"))
-                        .name(SimpleStringFilter::equal_to("name_filter"))
-                        .code(SimpleStringFilter::equal_to("code_filter"))
-                        .description(SimpleStringFilter {
+                        .name(StringFilter::equal_to("name_filter"))
+                        .code(StringFilter::equal_to("code_filter"))
+                        .description(StringFilter {
                             equal_to: Some("description_filter_1".to_owned()),
-                            insensitive_equal_to: None,
                             like: Some("description_filter_2".to_owned()),
+                            ..Default::default()
                         })
-                        .exists_for_name(SimpleStringFilter::like("exists_for_name_filter"))
+                        .exists_for_name(StringFilter::like("exists_for_name_filter"))
                         .exists_for_name_id(EqualFilter::not_equal_to("test_name_id_filter"))
                         .exists_for_store_id(EqualFilter::equal_to("store_a"))
                         .is_program(false)

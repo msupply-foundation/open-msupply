@@ -18,7 +18,7 @@ import {
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
 import { usePatient } from '../api';
-import { Gender, usePatientCreateStore } from '@openmsupply-client/programs';
+import { Gender, usePatientStore } from '@openmsupply-client/programs';
 import { CentralPatientSearchResponse } from '../api/api';
 
 const genderToGenderInput = (gender: Gender): GenderInput => {
@@ -127,7 +127,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     }
     setData(patients);
   }, [localSearchData, centralSearchData]);
-  const { setNewPatient } = usePatientCreateStore();
+  const { setCreateNewPatient } = usePatientStore();
   const t = useTranslation('patients');
   const navigate = useNavigate();
   const { localisedDate } = useFormatDateTime();
@@ -241,7 +241,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
           if (row.isOnCentral) {
             setFetchingPatient(row);
           } else {
-            setNewPatient(undefined);
+            setCreateNewPatient(undefined);
             navigate(String(row.id));
           }
         }}

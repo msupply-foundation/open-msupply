@@ -1,5 +1,5 @@
 use async_graphql::*;
-use repository::{DocumentRegistry, DocumentRegistryType};
+use repository::{DocumentRegistry, DocumentRegistryCategory};
 use serde::Serialize;
 
 #[derive(SimpleObject)]
@@ -15,7 +15,7 @@ pub struct DocumentRegistryNode {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum DocumentRegistryTypeNode {
+pub enum DocumentRegistryCategoryNode {
     Patient,
     ProgramEnrolment,
     Encounter,
@@ -36,12 +36,14 @@ impl DocumentRegistryNode {
         &self.document_registry.context_id
     }
 
-    pub async fn r#type(&self) -> DocumentRegistryTypeNode {
-        match self.document_registry.r#type {
-            DocumentRegistryType::Patient => DocumentRegistryTypeNode::Patient,
-            DocumentRegistryType::ProgramEnrolment => DocumentRegistryTypeNode::ProgramEnrolment,
-            DocumentRegistryType::Encounter => DocumentRegistryTypeNode::Encounter,
-            DocumentRegistryType::Custom => DocumentRegistryTypeNode::Custom,
+    pub async fn category(&self) -> DocumentRegistryCategoryNode {
+        match self.document_registry.category {
+            DocumentRegistryCategory::Patient => DocumentRegistryCategoryNode::Patient,
+            DocumentRegistryCategory::ProgramEnrolment => {
+                DocumentRegistryCategoryNode::ProgramEnrolment
+            }
+            DocumentRegistryCategory::Encounter => DocumentRegistryCategoryNode::Encounter,
+            DocumentRegistryCategory::Custom => DocumentRegistryCategoryNode::Custom,
         }
     }
 
@@ -66,13 +68,15 @@ impl DocumentRegistryNode {
     }
 }
 
-impl DocumentRegistryTypeNode {
-    pub fn to_domain(self) -> DocumentRegistryType {
+impl DocumentRegistryCategoryNode {
+    pub fn to_domain(self) -> DocumentRegistryCategory {
         match self {
-            DocumentRegistryTypeNode::Patient => DocumentRegistryType::Patient,
-            DocumentRegistryTypeNode::ProgramEnrolment => DocumentRegistryType::ProgramEnrolment,
-            DocumentRegistryTypeNode::Encounter => DocumentRegistryType::Encounter,
-            DocumentRegistryTypeNode::Custom => DocumentRegistryType::Custom,
+            DocumentRegistryCategoryNode::Patient => DocumentRegistryCategory::Patient,
+            DocumentRegistryCategoryNode::ProgramEnrolment => {
+                DocumentRegistryCategory::ProgramEnrolment
+            }
+            DocumentRegistryCategoryNode::Encounter => DocumentRegistryCategory::Encounter,
+            DocumentRegistryCategoryNode::Custom => DocumentRegistryCategory::Custom,
         }
     }
 }

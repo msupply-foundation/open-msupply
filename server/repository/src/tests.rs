@@ -288,7 +288,7 @@ mod repository_test {
         RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
         StoreRowRepository, UserAccountRowRepository,
     };
-    use crate::{DateFilter, EqualFilter, SimpleStringFilter};
+    use crate::{DateFilter, EqualFilter, StringFilter};
     use chrono::Duration;
     use diesel::{sql_query, sql_types::Text, RunQueryDsl};
     use util::inline_edit;
@@ -493,7 +493,7 @@ mod repository_test {
         let id_rows: Vec<String> = repo
             .query_by_filter(
                 MasterListFilter::new()
-                    .exists_for_name(SimpleStringFilter::like("test_master_list_name")),
+                    .exists_for_name(StringFilter::like("test_master_list_name")),
             )
             .unwrap()
             .into_iter()
@@ -821,7 +821,7 @@ mod repository_test {
 
         // Test query by name
         let result = repo
-            .query_by_filter(RequisitionFilter::new().name(SimpleStringFilter::equal_to("name_a")))
+            .query_by_filter(RequisitionFilter::new().name(StringFilter::equal_to("name_a")))
             .unwrap();
 
         let raw_result = sql_query(
@@ -850,7 +850,7 @@ mod repository_test {
             .query_by_filter(
                 RequisitionFilter::new()
                     .status(RequisitionRowStatus::Draft.equal_to())
-                    .comment(SimpleStringFilter::like("iquE_coMme")),
+                    .comment(StringFilter::like("iquE_coMme")),
             )
             .unwrap();
 

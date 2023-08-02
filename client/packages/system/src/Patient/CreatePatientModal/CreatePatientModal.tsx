@@ -12,15 +12,15 @@ import {
   WizardStepper,
   useTranslation,
   useDebounceCallback,
-  DocumentRegistryTypeNode,
+  DocumentRegistryCategoryNode,
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import {
   CreateNewPatient,
-  usePatientCreateStore,
   DocumentRegistryFragment,
   useDocumentRegistry,
+  usePatientStore,
 } from '@openmsupply-client/programs';
 
 enum Tabs {
@@ -44,7 +44,7 @@ const newPatient = (
 export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { data: documentRegistryResponse } =
     useDocumentRegistry.get.documentRegistries({
-      filter: { type: { equalTo: DocumentRegistryTypeNode.Patient } },
+      filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
     });
 
   const [documentRegistry, setDocumentRegistry] = useState<
@@ -55,7 +55,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
     onClose,
   });
   const navigate = useNavigate();
-  const { patient, setNewPatient } = usePatientCreateStore();
+  const { createNewPatient, setCreateNewPatient } = usePatientStore();
   const t = useTranslation('patients');
 
   const onNext = useDebounceCallback(() => {
@@ -63,8 +63,8 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   }, []);
 
   const onOk = () => {
-    if (patient) {
-      navigate(patient.id);
+    if (createNewPatient) {
+      navigate(createNewPatient.id);
     }
   };
 
@@ -103,7 +103,9 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   }, []);
 
   useEffect(() => {
-    setNewPatient(documentRegistry ? newPatient(documentRegistry) : undefined);
+    setCreateNewPatient(
+      documentRegistry ? newPatient(documentRegistry) : undefined
+    );
   }, [documentRegistry]);
 
   if (documentRegistry === undefined) {
@@ -123,7 +125,9 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
           <DialogButton
             variant="next"
             onClick={onNext}
-            disabled={!patient?.firstName && !patient?.lastName}
+            disabled={
+              !createNewPatient?.firstName && !createNewPatient?.lastName
+            }
           />
         ) : undefined
       }
@@ -131,7 +135,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
         <DialogButton
           variant="cancel"
           onClick={() => {
-            setNewPatient(undefined);
+            setCreateNewPatient(undefined);
             onClose();
           }}
         />
@@ -147,10 +151,10 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
           />
           <TabContext value={currentTab}>
             <DetailSection title="">
-              <PatientFormTab value={Tabs.Form} patient={patient} />
+              <PatientFormTab value={Tabs.Form} patient={createNewPatient} />
               <PatientResultsTab
                 value={Tabs.SearchResults}
-                patient={patient}
+                patient={createNewPatient}
                 active={currentTab === Tabs.SearchResults}
               />
             </DetailSection>

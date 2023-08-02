@@ -1,11 +1,11 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type UpdateResponseMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionInput;
 }>;
 
@@ -17,8 +17,8 @@ export type ResponseLineFragment = { __typename: 'RequisitionLineNode', id: stri
 export type ResponseFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, linesRemainingToSupply: { __typename: 'RequisitionLineConnector', totalCount: number }, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, supplyQuantity: number, remainingQuantityToSupply: number, comment?: string | null, approvedQuantity: number, approvalComment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number } } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null };
 
 export type ResponseByNumberQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  requisitionNumber: Types.Scalars['Int'];
+  storeId: Types.Scalars['String']['input'];
+  requisitionNumber: Types.Scalars['Int']['input'];
 }>;
 
 
@@ -27,7 +27,7 @@ export type ResponseByNumberQuery = { __typename: 'Queries', requisitionByNumber
 export type ResponseRowFragment = { __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null };
 
 export type ResponsesQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   filter?: Types.InputMaybe<Types.RequisitionFilterInput>;
   page?: Types.InputMaybe<Types.PaginationInput>;
   sort?: Types.InputMaybe<Array<Types.RequisitionSortInput> | Types.RequisitionSortInput>;
@@ -37,7 +37,7 @@ export type ResponsesQueryVariables = Types.Exact<{
 export type ResponsesQuery = { __typename: 'Queries', requisitions: { __typename: 'RequisitionConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionNode', colour?: string | null, comment?: string | null, createdDatetime: string, finalisedDatetime?: string | null, id: string, otherPartyName: string, requisitionNumber: number, sentDatetime?: string | null, status: Types.RequisitionNodeStatus, theirReference?: string | null, type: Types.RequisitionNodeType, otherPartyId: string, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null }> } };
 
 export type UpdateResponseLineMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.UpdateResponseRequisitionLineInput;
 }>;
 
@@ -45,24 +45,24 @@ export type UpdateResponseLineMutationVariables = Types.Exact<{
 export type UpdateResponseLineMutation = { __typename: 'Mutations', updateResponseRequisitionLine: { __typename: 'RequisitionLineNode', id: string } | { __typename: 'UpdateResponseRequisitionLineError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } };
 
 export type CreateOutboundFromResponseMutationVariables = Types.Exact<{
-  responseId: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
+  responseId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type CreateOutboundFromResponseMutation = { __typename: 'Mutations', createRequisitionShipment: { __typename: 'CreateRequisitionShipmentError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'NothingRemainingToSupply', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
 export type SupplyRequestedQuantityMutationVariables = Types.Exact<{
-  responseId: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
+  responseId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type SupplyRequestedQuantityMutation = { __typename: 'Mutations', supplyRequestedQuantity: { __typename: 'RequisitionLineConnector', nodes: Array<{ __typename: 'RequisitionLineNode', id: string }> } | { __typename: 'SupplyRequestedQuantityError', error: { __typename: 'CannotEditRequisition', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type ResponseRequisitionStatsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  requisitionLineId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  requisitionLineId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -362,25 +362,25 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    updateResponse(variables: UpdateResponseMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateResponseMutation> {
+    updateResponse(variables: UpdateResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseMutation>(UpdateResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponse', 'mutation');
     },
-    responseByNumber(variables: ResponseByNumberQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ResponseByNumberQuery> {
+    responseByNumber(variables: ResponseByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponseByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponseByNumberQuery>(ResponseByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseByNumber', 'query');
     },
-    responses(variables: ResponsesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ResponsesQuery> {
+    responses(variables: ResponsesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponsesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponsesQuery>(ResponsesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responses', 'query');
     },
-    updateResponseLine(variables: UpdateResponseLineMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateResponseLineMutation> {
+    updateResponseLine(variables: UpdateResponseLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateResponseLineMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateResponseLineMutation>(UpdateResponseLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateResponseLine', 'mutation');
     },
-    createOutboundFromResponse(variables: CreateOutboundFromResponseMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CreateOutboundFromResponseMutation> {
+    createOutboundFromResponse(variables: CreateOutboundFromResponseMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CreateOutboundFromResponseMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<CreateOutboundFromResponseMutation>(CreateOutboundFromResponseDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createOutboundFromResponse', 'mutation');
     },
-    supplyRequestedQuantity(variables: SupplyRequestedQuantityMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<SupplyRequestedQuantityMutation> {
+    supplyRequestedQuantity(variables: SupplyRequestedQuantityMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SupplyRequestedQuantityMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<SupplyRequestedQuantityMutation>(SupplyRequestedQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'supplyRequestedQuantity', 'mutation');
     },
-    responseRequisitionStats(variables: ResponseRequisitionStatsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ResponseRequisitionStatsQuery> {
+    responseRequisitionStats(variables: ResponseRequisitionStatsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ResponseRequisitionStatsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ResponseRequisitionStatsQuery>(ResponseRequisitionStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'responseRequisitionStats', 'query');
     }
   };

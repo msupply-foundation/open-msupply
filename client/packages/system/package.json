@@ -5,8 +5,7 @@
   "main": "./src/index.ts",
   "private": true,
   "devDependencies": {
-    "@awesome-cordova-plugins/core": "^6.3.0",
-    "@awesome-cordova-plugins/printer": "^6.3.0"
+    "@bcyesil/capacitor-plugin-printer": "^0.0.3"
   },
   "scripts": {
     "tsc": "tsc"
@@ -18,6 +17,6 @@
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-diff-viewer": "3.1.1",
-    "zod": "3.18.0"
+    "zod": "3.21.4"
   }
 }

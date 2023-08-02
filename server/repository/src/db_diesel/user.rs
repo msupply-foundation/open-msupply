@@ -8,9 +8,9 @@ use super::{
     DBType, StorageConnection, StoreRow, UserAccountRow, UserStoreJoinRow,
 };
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_simple_string_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    store_preference, EqualFilter, Pagination, SimpleStringFilter, Sort, StorePreferenceRow,
+    store_preference, EqualFilter, Pagination, Sort, StorePreferenceRow, StringFilter,
 };
 
 use diesel::{
@@ -41,7 +41,7 @@ impl User {
 #[derive(Clone, Default)]
 pub struct UserFilter {
     pub id: Option<EqualFilter<String>>,
-    pub username: Option<SimpleStringFilter>,
+    pub username: Option<StringFilter>,
     pub store_id: Option<EqualFilter<String>>,
     pub site_id: Option<EqualFilter<i32>>,
 }
@@ -183,7 +183,7 @@ fn create_filtered_query(filter: Option<UserFilter>) -> BoxedUserQuery {
         } = f;
 
         apply_equal_filter!(query, id, user_dsl::id);
-        apply_simple_string_filter!(query, username, user_dsl::username);
+        apply_string_filter!(query, username, user_dsl::username);
         apply_equal_filter!(query, store_id, user_store_join_dsl::store_id);
         apply_equal_filter!(query, site_id, store_dsl::site_id);
     }
@@ -201,7 +201,7 @@ impl UserFilter {
         self
     }
 
-    pub fn name(mut self, filter: SimpleStringFilter) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.username = Some(filter);
         self
     }

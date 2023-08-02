@@ -1,93 +1,18 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, SimpleStringFilterInput},
-    map_filter,
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{
-    DatetimeFilter, EncounterFilter, EncounterSort, EncounterSortField, EqualFilter,
-    PaginationOption, SimpleStringFilter,
+use graphql_types::types::encounter::{
+    EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput,
 };
+use repository::PaginationOption;
 use service::auth::{Resource, ResourceAccessRequest};
-
-use crate::types::encounter::{EncounterNode, EncounterNodeStatus};
-
-#[derive(SimpleObject)]
-pub struct EncounterConnector {
-    pub total_count: u32,
-    pub nodes: Vec<EncounterNode>,
-}
 
 #[derive(Union)]
 pub enum EncounterResponse {
     Response(EncounterConnector),
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterEncounterStatusInput {
-    pub equal_to: Option<EncounterNodeStatus>,
-    pub equal_any: Option<Vec<EncounterNodeStatus>>,
-    pub not_equal_to: Option<EncounterNodeStatus>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-#[graphql(rename_items = "camelCase")]
-pub enum EncounterSortFieldInput {
-    Type,
-    PatientId,
-    Program,
-    CreatedDatetime,
-    StartDatetime,
-    EndDatetime,
-    Status,
-}
-
-#[derive(InputObject)]
-pub struct EncounterSortInput {
-    /// Sort query result by `key`
-    key: EncounterSortFieldInput,
-    /// Sort query result is sorted descending or ascending (if not provided the default is
-    /// ascending)
-    desc: Option<bool>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct EncounterFilterInput {
-    pub id: Option<EqualFilterStringInput>,
-    pub r#type: Option<EqualFilterStringInput>,
-    pub patient_id: Option<EqualFilterStringInput>,
-    /// The program id
-    pub program_id: Option<EqualFilterStringInput>,
-    pub created_datetime: Option<DatetimeFilterInput>,
-    pub start_datetime: Option<DatetimeFilterInput>,
-    pub end_datetime: Option<DatetimeFilterInput>,
-    pub status: Option<EqualFilterEncounterStatusInput>,
-    pub clinician_id: Option<EqualFilterStringInput>,
-    pub document_name: Option<EqualFilterStringInput>,
-    pub document_data: Option<SimpleStringFilterInput>,
-}
-
-impl EncounterFilterInput {
-    pub fn to_domain_filter(self) -> EncounterFilter {
-        EncounterFilter {
-            id: self.id.map(EqualFilter::from),
-            patient_id: self.patient_id.map(EqualFilter::from),
-            program_id: self.program_id.map(EqualFilter::from),
-            created_datetime: self.created_datetime.map(DatetimeFilter::from),
-            start_datetime: self.start_datetime.map(DatetimeFilter::from),
-            status: self
-                .status
-                .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
-            end_datetime: self.end_datetime.map(DatetimeFilter::from),
-            clinician_id: self.clinician_id.map(EqualFilter::from),
-            document_type: self.r#type.map(EqualFilter::from),
-            document_name: self.document_name.map(EqualFilter::from),
-            document_data: self.document_data.map(SimpleStringFilter::from),
-            context_id: None,
-        }
-    }
 }
 
 pub fn encounters(
@@ -133,23 +58,4 @@ pub fn encounters(
         total_count: result.count,
         nodes,
     }))
-}
-
-impl EncounterSortInput {
-    pub fn to_domain(self) -> EncounterSort {
-        let key = match self.key {
-            EncounterSortFieldInput::Type => EncounterSortField::DocumentType,
-            EncounterSortFieldInput::PatientId => EncounterSortField::PatientId,
-            EncounterSortFieldInput::Program => EncounterSortField::Context,
-            EncounterSortFieldInput::CreatedDatetime => EncounterSortField::CreatedDatetime,
-            EncounterSortFieldInput::StartDatetime => EncounterSortField::StartDatetime,
-            EncounterSortFieldInput::EndDatetime => EncounterSortField::EndDatetime,
-            EncounterSortFieldInput::Status => EncounterSortField::Status,
-        };
-
-        EncounterSort {
-            key,
-            desc: self.desc,
-        }
-    }
 }
