@@ -135,7 +135,7 @@ pub fn update_program_events(
                 ctx,
                 patient_id.to_string(),
                 previous_base_time,
-                &doc.context,
+                &doc.context_id,
                 vec![],
             )?;
         }
@@ -144,7 +144,7 @@ pub fn update_program_events(
         ctx,
         patient_id.to_string(),
         base_time,
-        &doc.context,
+        &doc.context_id,
         event_inputs,
     )?;
     Ok(())

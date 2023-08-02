@@ -1,7 +1,7 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, DatetimeFilter, Pagination, RepositoryError, Sort, SyncLogFilter,
-    SyncLogRepository, SyncLogRow, SyncLogSortField,
+    ChangelogRepository, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
+    SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 use util::Defaults;
 
@@ -39,6 +39,70 @@ pub struct FullSyncStatus {
     pub pull_central: Option<SyncStatusWithProgress>,
     pub pull_remote: Option<SyncStatusWithProgress>,
     pub push: Option<SyncStatusWithProgress>,
+}
+
+impl FullSyncStatus {
+    fn from_sync_log_row(sync_log_row: SyncLogRow) -> FullSyncStatus {
+        let SyncLogRow {
+            started_datetime,
+            finished_datetime,
+            prepare_initial_started_datetime,
+            prepare_initial_finished_datetime,
+            push_started_datetime,
+            push_finished_datetime,
+            push_progress_total,
+            push_progress_done,
+            pull_central_started_datetime,
+            pull_central_finished_datetime,
+            pull_central_progress_total,
+            pull_central_progress_done,
+            pull_remote_started_datetime,
+            pull_remote_finished_datetime,
+            pull_remote_progress_total,
+            pull_remote_progress_done,
+            integration_started_datetime,
+            integration_finished_datetime,
+            error_code: _,
+            error_message: _,
+            id: _,
+        } = sync_log_row;
+        let error = SyncLogError::from_sync_log_row(&sync_log_row);
+
+        FullSyncStatus {
+            is_syncing: finished_datetime.is_none() && error.is_none(),
+            error,
+            summary: SyncStatus {
+                started: started_datetime,
+                finished: finished_datetime,
+            },
+            prepare_initial: prepare_initial_started_datetime.map(|started| SyncStatus {
+                started,
+                finished: prepare_initial_finished_datetime,
+            }),
+            integration: integration_started_datetime.map(|started| SyncStatus {
+                started,
+                finished: integration_finished_datetime,
+            }),
+            pull_central: pull_central_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: pull_central_finished_datetime,
+                total: pull_central_progress_total.map(i32_to_u32),
+                done: pull_central_progress_done.map(i32_to_u32),
+            }),
+            pull_remote: pull_remote_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: pull_remote_finished_datetime,
+                total: pull_remote_progress_total.map(i32_to_u32),
+                done: pull_remote_progress_done.map(i32_to_u32),
+            }),
+            push: push_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: push_finished_datetime,
+                total: push_progress_total.map(i32_to_u32),
+                done: push_progress_done.map(i32_to_u32),
+            }),
+        }
+    }
 }
 
 #[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
@@ -91,6 +155,13 @@ pub trait SyncStatusTrait: Sync + Send {
         ctx: &ServiceContext,
     ) -> Result<u64, NumberOfRecordsInPushQueueError> {
         number_of_records_in_push_queue(ctx)
+    }
+
+    fn get_latest_successful_sync_status(
+        &self,
+        ctx: &ServiceContext,
+    ) -> Result<Option<FullSyncStatus>, RepositoryError> {
+        get_latest_successful_sync_status(ctx)
     }
 }
 
@@ -154,67 +225,38 @@ fn get_latest_sync_status(ctx: &ServiceContext) -> Result<Option<FullSyncStatus>
         None => return Ok(None),
     };
 
-    let error = SyncLogError::from_sync_log_row(&sync_log.sync_log_row);
+    let result = Some(FullSyncStatus::from_sync_log_row(sync_log.sync_log_row));
 
-    let SyncLogRow {
-        started_datetime,
-        finished_datetime,
-        prepare_initial_started_datetime,
-        prepare_initial_finished_datetime,
-        push_started_datetime,
-        push_finished_datetime,
-        push_progress_total,
-        push_progress_done,
-        pull_central_started_datetime,
-        pull_central_finished_datetime,
-        pull_central_progress_total,
-        pull_central_progress_done,
-        pull_remote_started_datetime,
-        pull_remote_finished_datetime,
-        pull_remote_progress_total,
-        pull_remote_progress_done,
-        integration_started_datetime,
-        integration_finished_datetime,
-        error_code: _,
-        error_message: _,
-        id: _,
-    } = sync_log.sync_log_row;
+    Ok(result)
+}
 
-    let result = FullSyncStatus {
-        is_syncing: finished_datetime.is_none() && error.is_none(),
-        error,
-        summary: SyncStatus {
-            started: started_datetime,
-            finished: finished_datetime,
-        },
-        prepare_initial: prepare_initial_started_datetime.map(|started| SyncStatus {
-            started,
-            finished: prepare_initial_finished_datetime,
-        }),
-        integration: integration_started_datetime.map(|started| SyncStatus {
-            started,
-            finished: integration_finished_datetime,
-        }),
-        pull_central: pull_central_started_datetime.map(|started| SyncStatusWithProgress {
-            started,
-            finished: pull_central_finished_datetime,
-            total: pull_central_progress_total.map(i32_to_u32),
-            done: pull_central_progress_done.map(i32_to_u32),
-        }),
-        pull_remote: pull_remote_started_datetime.map(|started| SyncStatusWithProgress {
-            started,
-            finished: pull_remote_finished_datetime,
-            total: pull_remote_progress_total.map(i32_to_u32),
-            done: pull_remote_progress_done.map(i32_to_u32),
-        }),
-        push: push_started_datetime.map(|started| SyncStatusWithProgress {
-            started,
-            finished: push_finished_datetime,
-            total: push_progress_total.map(i32_to_u32),
-            done: push_progress_done.map(i32_to_u32),
-        }),
+fn get_latest_successful_sync_status(
+    ctx: &ServiceContext,
+) -> Result<Option<FullSyncStatus>, RepositoryError> {
+    let sort = Sort {
+        key: SyncLogSortField::StartedDatetime,
+        desc: Some(true),
     };
-    Ok(Some(result))
+
+    let sync_log = match SyncLogRepository::new(&ctx.connection)
+        .query(
+            Pagination::one(),
+            Some(
+                SyncLogFilter::new()
+                    .finished_datetime(DatetimeFilter::is_null(false))
+                    .error_message(EqualFilter::is_null(true)),
+            ),
+            Some(sort),
+        )?
+        .pop()
+    {
+        Some(sync_log) => sync_log,
+        None => return Ok(None),
+    };
+
+    let result = Some(FullSyncStatus::from_sync_log_row(sync_log.sync_log_row));
+
+    Ok(result)
 }
 
 #[derive(Debug)]

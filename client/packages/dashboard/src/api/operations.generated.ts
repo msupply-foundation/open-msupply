@@ -1,44 +1,44 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type StockCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']>;
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
+  storeId: Types.Scalars['String']['input'];
+  daysTillExpired?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
 
 export type StockCountsQuery = { __typename: 'Queries', stockCounts: { __typename: 'StockCounts', expired: number, expiringSoon: number } };
 
 export type ItemCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  lowStockThreshold: Types.Scalars['Int'];
+  storeId: Types.Scalars['String']['input'];
+  lowStockThreshold: Types.Scalars['Int']['input'];
 }>;
 
 
 export type ItemCountsQuery = { __typename: 'Queries', itemCounts: { __typename: 'ItemCounts', itemCounts: { __typename: 'ItemCountsResponse', lowStock: number, noStock: number, moreThanSixMonthsStock: number, total: number } } };
 
 export type RequisitionCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type RequisitionCountsQuery = { __typename: 'Queries', requisitionCounts: { __typename: 'RequisitionCounts', request: { __typename: 'RequestRequisitionCounts', draft: number }, response: { __typename: 'ResponseRequisitionCounts', new: number } } };
 
 export type OutboundShipmentCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
+  storeId: Types.Scalars['String']['input'];
+  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
 
 export type OutboundShipmentCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', notShipped: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
 export type InboundShipmentCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
+  storeId: Types.Scalars['String']['input'];
+  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
 
@@ -115,19 +115,19 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    stockCounts(variables: StockCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<StockCountsQuery> {
+    stockCounts(variables: StockCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StockCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StockCountsQuery>(StockCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'stockCounts', 'query');
     },
-    itemCounts(variables: ItemCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemCountsQuery> {
+    itemCounts(variables: ItemCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemCountsQuery>(ItemCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemCounts', 'query');
     },
-    requisitionCounts(variables: RequisitionCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<RequisitionCountsQuery> {
+    requisitionCounts(variables: RequisitionCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RequisitionCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RequisitionCountsQuery>(RequisitionCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'requisitionCounts', 'query');
     },
-    outboundShipmentCounts(variables: OutboundShipmentCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<OutboundShipmentCountsQuery> {
+    outboundShipmentCounts(variables: OutboundShipmentCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<OutboundShipmentCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<OutboundShipmentCountsQuery>(OutboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundShipmentCounts', 'query');
     },
-    inboundShipmentCounts(variables: InboundShipmentCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InboundShipmentCountsQuery> {
+    inboundShipmentCounts(variables: InboundShipmentCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InboundShipmentCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InboundShipmentCountsQuery>(InboundShipmentCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundShipmentCounts', 'query');
     }
   };

@@ -49,9 +49,10 @@ mod test {
             mock_name_store_a, mock_name_store_b, mock_name_store_c, mock_store_a, mock_store_b,
             mock_store_c, MockData, MockDataInserts,
         },
-        MasterListNameJoinRow, MasterListRow, Name, NameStoreJoinRow, NameTagJoinRow, NameTagRow,
-        PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow, ProgramRequisitionSettings,
-        ProgramRequisitionSettingsRow, ProgramRow, ProgramSupplier, RequisitionRow,
+        ContextRow, MasterListNameJoinRow, MasterListRow, Name, NameStoreJoinRow, NameTagJoinRow,
+        NameTagRow, PeriodRow, PeriodScheduleRow, ProgramRequisitionOrderTypeRow,
+        ProgramRequisitionSettings, ProgramRequisitionSettingsRow, ProgramRow, ProgramSupplier,
+        RequisitionRow,
     };
 
     use crate::{
@@ -95,9 +96,14 @@ mod test {
             name_id: mock_name_store_a().id,
             master_list_id: master_list1.id.clone(),
         };
+        let context1 = ContextRow {
+            id: "program1".to_string(),
+            name: "program1".to_string(),
+        };
         let program1 = ProgramRow {
             id: "program1".to_string(),
             master_list_id: master_list1.id.clone(),
+            context_id: context1.id.clone(),
             ..Default::default()
         };
         let master_list2 = MasterListRow {
@@ -109,9 +115,14 @@ mod test {
             name_id: mock_name_store_a().id,
             master_list_id: master_list2.id.clone(),
         };
+        let context2 = ContextRow {
+            id: "program2".to_string(),
+            name: "program2".to_string(),
+        };
         let program2 = ProgramRow {
             id: "program2".to_string(),
             master_list_id: master_list2.id.clone(),
+            context_id: context2.id.clone(),
             ..Default::default()
         };
 
@@ -253,6 +264,7 @@ mod test {
                     program_requisition_setting2.clone(),
                 ],
                 program_order_types: vec![order_type1.clone(), order_type2.clone()],
+                contexts: vec![context1.clone(), context2.clone()],
                 programs: vec![program1.clone(), program2.clone()],
                 requisitions: vec![requisition1.clone(), requisition2.clone()],
                 ..Default::default()

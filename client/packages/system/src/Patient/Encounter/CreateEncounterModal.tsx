@@ -174,7 +174,7 @@ export const CreateEncounterModal: FC = () => {
                   label={t('label.visit-date')}
                   Input={
                     <DatePickerInput
-                      value={draft?.startDatetime ?? null}
+                      value={DateUtils.getDateOrNull(draft?.startDatetime)}
                       onChange={setStartDatetime}
                       onError={() => setStartDateTimeError(true)}
                       width={250}

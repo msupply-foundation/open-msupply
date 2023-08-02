@@ -10,7 +10,7 @@ use graphql_types::types::{
     program_event::{ProgramEventNode, ProgramEventSortInput},
 };
 use repository::{PaginationOption, ProgramEventFilter};
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
 pub struct ProgramEventConnector {
@@ -37,15 +37,15 @@ pub fn program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let mut filter = filter
         .map(|f| f.to_domain())
         .unwrap_or(ProgramEventFilter::new());
     // restrict query results to allowed entries
-    filter.context = Some(
+    filter.context_id = Some(
         filter
-            .context
+            .context_id
             .unwrap_or_default()
             .restrict_results(&allowed_ctx),
     );
@@ -94,15 +94,15 @@ pub fn active_program_events(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let mut filter = filter
         .map(|f| f.to_domain())
         .unwrap_or(ProgramEventFilter::new());
     // restrict query results to allowed entries
-    filter.context = Some(
+    filter.context_id = Some(
         filter
-            .context
+            .context_id
             .unwrap_or_default()
             .restrict_results(&allowed_ctx),
     );

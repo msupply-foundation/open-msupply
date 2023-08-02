@@ -1,97 +1,76 @@
-import React, { FC, useEffect, useState } from 'react';
-import {
-  DatePicker,
-  DatePickerProps,
-} from '@mui/x-date-pickers/DatePicker/DatePicker';
-import { BasicTextInput } from '../../TextInput/BasicTextInput';
-import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
+import React, { FC } from 'react';
+import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
-import { DateUtils } from '@common/intl';
-import { useDebounceCallback } from '@common/hooks';
+import { BasicTextInput } from '../../TextInput';
+import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
+import { LocaleKey, useTranslation } from '@common/intl';
+
+const TextField = (params: TextFieldProps) => {
+  const textInputProps: StandardTextFieldProps = {
+    ...params,
+    variant: 'standard',
+  };
+  return <BasicTextInput {...textInputProps} />;
+};
 
 export const BaseDatePickerInput: FC<
-  Omit<DatePickerProps<Date, Date>, 'renderInput' | 'value'> & {
-    onChange(date: Date): void;
-    value: Date | string | null;
+  DatePickerProps<Date> & {
     error?: string | undefined;
     width?: number;
   }
-> = ({ disabled, onChange, value, error, width, ...props }) => {
+> = ({ error, onChange, width, ...props }) => {
   const theme = useAppTheme();
-  const [internalValue, setInternalValue] = useState<Date | null>(null);
+  const [validationError, setValidationError] = React.useState<string | null>(null);
+  const t = useTranslation('common');
 
-  useEffect(() => {
-    // This sets the internal state from parent when value has changed and internal date needs updating
-    if (value && internalValue?.toString() !== value.toString())
-      setInternalValue(DateUtils.getDateOrNull(value));
-  }, [value]);
-
-  const isInvalid = (value: Date | null) => {
-    const dateValue = DateUtils.getDateOrNull(value);
-    return !!value && !DateUtils.isValid(dateValue);
-  };
-
-  const debouncedOnChange = useDebounceCallback(
-    value => {
-      // Only run the parent onChange method when the internal date is valid
-      if (DateUtils.isValid(value)) onChange(value);
-    },
-    [onChange]
-  );
-
-  return (
+return (
     <DatePicker
-      disabled={disabled}
-      PopperProps={{
-        sx: {
-          '& .MuiTypography-root.Mui-selected': {
-            backgroundColor: `${theme.palette.secondary.main}`,
-          },
-          '& .MuiTypography-root.Mui-selected:hover': {
-            backgroundColor: `${theme.palette.secondary.main}`,
-          },
-          '& .Mui-selected:focus': {
-            backgroundColor: `${theme.palette.secondary.main}`,
-          },
-          '& .MuiPickersDay-root.Mui-selected': {
-            backgroundColor: `${theme.palette.secondary.main}`,
+      slots={{
+        textField: TextField,
+      }}
+      onChange={(date,context) => {
+        const {validationError} = context;
+
+        setValidationError(validationError ? t(`error.date_${validationError}` as LocaleKey, {defaultValue: validationError}) : null);
+        onChange?.(date, context);
+      }}
+      slotProps={{
+        popper: {
+          sx: {
+            '& .MuiTypography-root.Mui-selected': {
+              backgroundColor: `${theme.palette.secondary.main}`,
+            },
+            '& .MuiTypography-root.Mui-selected:hover': {
+              backgroundColor: `${theme.palette.secondary.main}`,
+            },
+            '& .Mui-selected:focus': {
+              backgroundColor: `${theme.palette.secondary.main}`,
+            },
+            '& .MuiPickersDay-root.Mui-selected': {
+              backgroundColor: `${theme.palette.secondary.main}`,
+            },
           },
         },
-      }}
-      PaperProps={{
-        sx: {
-          '& .Mui-selected': {
-            backgroundColor: `${theme.palette.secondary.main}!important`,
-          },
-          '& .Mui-selected:focus': {
-            backgroundColor: `${theme.palette.secondary.main}`,
-          },
-          '& .Mui-selected:hover': {
-            backgroundColor: `${theme.palette.secondary.main}`,
+        desktopPaper: {
+          sx: {
+            '& .Mui-selected': {
+              backgroundColor: `${theme.palette.secondary.main}!important`,
+            },
+            '& .Mui-selected:focus': {
+              backgroundColor: `${theme.palette.secondary.main}`,
+            },
+            '& .Mui-selected:hover': {
+              backgroundColor: `${theme.palette.secondary.main}`,
+            },
           },
         },
-      }}
-      renderInput={(params: TextFieldProps) => {
-        const textInputProps: StandardTextFieldProps = {
-          ...params,
-          variant: 'standard',
-          helperText: error ?? '',
-          sx: { width },
-        };
-        return (
-          <BasicTextInput
-            disabled={!!disabled}
-            {...textInputProps}
-            error={isInvalid(internalValue) || !!error}
-          />
-        );
+        textField: {
+          error: !!error || !!validationError,
+          helperText: error ?? validationError ?? '',
+          sx: { width, '& .MuiFormHelperText-root': {color: 'error.main'} },
+        },
       }}
       {...props}
-      onChange={(d: Date | null) => {
-        setInternalValue(d);
-        debouncedOnChange(d);
-      }}
-      value={internalValue}
     />
   );
 };

@@ -1,6 +1,6 @@
 use repository::{
     Document, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRepository, EqualFilter,
-    RepositoryError, StorageConnection,
+    ProgramFilter, ProgramRepository, RepositoryError, StorageConnection,
 };
 
 use crate::programs::{
@@ -28,13 +28,13 @@ pub(crate) fn sync_upsert_document(
         return Ok(());
     };
 
-    match registry.r#type {
-        repository::DocumentRegistryType::Patient => update_patient(con, document)?,
-        repository::DocumentRegistryType::ProgramEnrolment => {
+    match registry.category {
+        repository::DocumentRegistryCategory::Patient => update_patient(con, document)?,
+        repository::DocumentRegistryCategory::ProgramEnrolment => {
             update_program_enrolment(con, document)?
         }
-        repository::DocumentRegistryType::Encounter => update_encounter(con, document)?,
-        repository::DocumentRegistryType::Custom => {}
+        repository::DocumentRegistryCategory::Encounter => update_encounter(con, document)?,
+        repository::DocumentRegistryCategory::Custom => {}
     };
     Ok(())
 }
@@ -60,7 +60,10 @@ fn update_program_enrolment(
         .map_err(|err| {
         RepositoryError::as_db_error(&format!("Invalid program enrolment data: {}", err), "")
     })?;
-    update_program_enrolment_row(con, patient_id, document, program_enrolment)
+    let program_row = ProgramRepository::new(con)
+        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
+    update_program_enrolment_row(con, patient_id, document, program_enrolment, program_row)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())
 }
@@ -80,13 +83,16 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         .clinician
         .as_ref()
         .and_then(|c| c.id.clone());
+    let program_row = ProgramRepository::new(con)
+        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
     update_encounter_row(
         con,
         &patient_id,
-        &document.context,
         document,
         encounter,
         clinician_id,
+        program_row,
     )
     .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())

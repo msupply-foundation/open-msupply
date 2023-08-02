@@ -263,7 +263,7 @@ impl LoginService {
                         user_id: user_store_join.user_id.clone(),
                         store_id: Some(user_store_join.store_id.clone()),
                         permission,
-                        context: None,
+                        context_id: None,
                     })
                     .collect();
 

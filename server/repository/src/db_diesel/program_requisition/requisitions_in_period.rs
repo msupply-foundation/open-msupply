@@ -137,8 +137,9 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, MasterListRow, PeriodRow, ProgramRow, RequisitionRow, RequisitionRowType,
-        RequisitionsInPeriod, RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
+        ContextRow, EqualFilter, MasterListRow, PeriodRow, ProgramRow, RequisitionRow,
+        RequisitionRowType, RequisitionsInPeriod, RequisitionsInPeriodFilter,
+        RequisitionsInPeriodRepository,
     };
 
     #[actix_rt::test]
@@ -171,15 +172,24 @@ mod test {
             id: "master_list1".to_string(),
             ..Default::default()
         };
+        let context1 = ContextRow {
+            id: "program1".to_string(),
+            name: "program1".to_string(),
+        };
         let program1 = ProgramRow {
             id: "program1".to_string(),
             master_list_id: master_list.id.clone(),
+            context_id: context1.id.clone(),
             ..Default::default()
         };
-
+        let context2 = ContextRow {
+            id: "program2".to_string(),
+            name: "program2".to_string(),
+        };
         let program2 = ProgramRow {
             id: "program2".to_string(),
             master_list_id: master_list.id.clone(),
+            context_id: context2.id.clone(),
             ..Default::default()
         };
         // Same order type same period
@@ -259,6 +269,7 @@ mod test {
                     period3.clone(),
                     period4.clone(),
                 ],
+                contexts: vec![context1, context2],
                 programs: vec![program1.clone(), program2.clone()],
                 requisitions: vec![
                     requisition1.clone(),
