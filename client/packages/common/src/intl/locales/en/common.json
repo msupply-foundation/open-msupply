@@ -336,6 +336,7 @@
   "success.data-saved": "Saved successfully",
   "sync-info.number-to-push": "Number of records to push",
   "sync-info.last-sync": "Last sync",
+  "sync-info.last-successful-sync": "Last successful sync",
   "sync-status.prepare": "Prepare",
   "sync-status.pull-central": "Pull Central",
   "sync-status.pull-remote": "Pull Remote",

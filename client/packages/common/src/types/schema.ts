@@ -1213,6 +1213,7 @@ export type FullSyncStatusNode = {
   error?: Maybe<SyncErrorNode>;
   integration?: Maybe<SyncStatusNode>;
   isSyncing: Scalars['Boolean']['output'];
+  lastSuccessfulSync?: Maybe<SyncStatusNode>;
   prepareInitial?: Maybe<SyncStatusNode>;
   pullCentral?: Maybe<SyncStatusWithProgressNode>;
   pullRemote?: Maybe<SyncStatusWithProgressNode>;
