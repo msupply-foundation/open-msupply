@@ -1,18 +1,20 @@
 use repository::{
-    Document, DocumentFilter, DocumentRegistryCategory, DocumentRegistryFilter,
-    DocumentRegistryRepository, DocumentRepository, EncounterFilter, EncounterRepository,
-    EqualFilter, ProgramFilter, ProgramRepository, RepositoryError, StorageConnection,
-    StringFilter,
+    Document, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
+    DocumentRepository, EncounterFilter, EncounterRepository, EqualFilter, ProgramFilter,
+    ProgramRepository, RepositoryError, StorageConnection,
 };
 
-use crate::programs::{
-    encounter::{
-        encounter_updated::update_encounter_row, validate_misc::validate_encounter_schema,
+use crate::{
+    document::is_latest_doc,
+    programs::{
+        encounter::{
+            encounter_updated::update_encounter_row, validate_misc::validate_encounter_schema,
+        },
+        patient::{patient_schema::SchemaPatient, patient_updated::update_patient_row},
+        program_enrolment::program_enrolment_updated::update_program_enrolment_row,
+        program_enrolment::program_schema::SchemaProgramEnrolment,
+        update_program_document::update_program_events,
     },
-    patient::{patient_schema::SchemaPatient, patient_updated::update_patient_row},
-    program_enrolment::program_enrolment_updated::update_program_enrolment_row,
-    program_enrolment::program_schema::SchemaProgramEnrolment,
-    update_program_document::update_program_events,
 };
 
 pub(crate) fn sync_upsert_document(
@@ -20,14 +22,7 @@ pub(crate) fn sync_upsert_document(
     document: &Document,
 ) -> Result<(), RepositoryError> {
     // Fetch current document by name to check if the new document is the latest in the DB
-    let current_doc = DocumentRepository::new(con)
-        .query_by_filter(DocumentFilter::new().name(StringFilter::equal_to(&document.name)))?
-        .pop();
-    let new_doc_is_latest = if let Some(current_doc) = current_doc {
-        current_doc.datetime <= document.datetime
-    } else {
-        true
-    };
+    let new_doc_is_latest = is_latest_doc(con, &document.name, document.datetime)?;
 
     // Insert the new document
     // Note, every document is immutable for which reason an insert (instead of an upsert) is used.
@@ -135,7 +130,7 @@ mod integrate_document_test {
     use repository::{
         mock::{context_program_a, MockDataInserts},
         test_db::setup_all,
-        DocumentStatus, PatientFilter,
+        DocumentStatus, PatientFilter, StringFilter,
     };
     use serde_json::json;
     use util::constants::PATIENT_TYPE;
