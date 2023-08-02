@@ -328,6 +328,13 @@ impl<'a> DocumentRepository<'a> {
         Ok(result)
     }
 
+    pub fn query_by_filter(
+        &self,
+        filter: DocumentFilter,
+    ) -> Result<Vec<Document>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter), None)
+    }
+
     /// Gets all document versions
     pub fn document_history(
         &self,
