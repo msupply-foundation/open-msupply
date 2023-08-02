@@ -16,6 +16,7 @@ import {
   useIsGrouped,
   Box,
   Switch,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 
@@ -62,7 +63,7 @@ export const Toolbar: FC = () => {
             Input={
               <DatePickerInput
                 disabled={isDisabled}
-                value={stocktakeDate || null}
+                value={DateUtils.getDateOrNull(stocktakeDate)}
                 onChange={date => {
                   update({ stocktakeDate: Formatter.naiveDate(date) });
                 }}

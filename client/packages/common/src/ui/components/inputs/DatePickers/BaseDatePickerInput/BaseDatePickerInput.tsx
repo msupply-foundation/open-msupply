@@ -1,8 +1,6 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC } from 'react';
 import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
-import { DateUtils } from '@common/intl';
-import { useDebounceCallback } from '@common/hooks';
 import { BasicTextInput } from '../../TextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
 
@@ -15,40 +13,24 @@ const TextField = (params: TextFieldProps) => {
 };
 
 export const BaseDatePickerInput: FC<
-  Omit<DatePickerProps<Date>, 'renderInput' | 'value'> & {
-    onChange(date: Date): void;
-    value: Date | string | null;
+  DatePickerProps<Date> & {
     error?: string | undefined;
     width?: number;
   }
-> = ({ disabled, onChange, value, error, width, ...props }) => {
+> = ({ error, onChange, width, ...props }) => {
   const theme = useAppTheme();
-  const [internalValue, setInternalValue] = useState<Date | null>(null);
+  const [validationError, setValidationError] = React.useState<string | null>(null);
 
-  useEffect(() => {
-    // This sets the internal state from parent when value has changed and internal date needs updating
-    if (value && internalValue?.toString() !== value.toString())
-      setInternalValue(DateUtils.getDateOrNull(value));
-  }, [value]);
-
-  const isInvalid = (value: Date | null) => {
-    const dateValue = DateUtils.getDateOrNull(value);
-    return !!value && !DateUtils.isValid(dateValue);
-  };
-
-  const debouncedOnChange = useDebounceCallback(
-    value => {
-      // Only run the parent onChange method when the internal date is valid
-      if (DateUtils.isValid(value)) onChange(value);
-    },
-    [onChange]
-  );
-
-  return (
+return (
     <DatePicker
-      disabled={disabled}
       slots={{
         textField: TextField,
+      }}
+      onChange={(date,context) => {
+        const {validationError} = context;
+
+        setValidationError(validationError);
+        onChange?.(date, context);
       }}
       slotProps={{
         popper: {
@@ -81,18 +63,12 @@ export const BaseDatePickerInput: FC<
           },
         },
         textField: {
-          helperText: error ?? '',
-          sx: { width },
-          disabled: !!disabled,
-          error: isInvalid(internalValue) || !!error,
+          error: !!error || !!validationError,
+          helperText: error ?? validationError ?? '',
+          sx: { width, '& .MuiFormHelperText-root': {color: 'error.main'} },
         },
       }}
       {...props}
-      onChange={(d: Date | null) => {
-        setInternalValue(d);
-        debouncedOnChange(d);
-      }}
-      value={internalValue}
     />
   );
 };
