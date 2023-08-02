@@ -34,16 +34,12 @@ const UIComponent = (props: ControlProps) => {
 
   const dobPath = composePaths(path, 'dateOfBirth');
   const estimatedPath = composePaths(path, 'dateOfBirthIsEstimated');
-  const onChangeDoB = (dob: Date | null, keyBoardInputValue?: string) => {
-    // dob is returned from the date picker, the keyBoardInputValue is the TextInput value
-    // and will be populated if the user types in a date
-    const dateOfBirth =
-      dob !== null && DateUtils.isValid(dob)
-        ? dob
-        : DateUtils.getDateOrNull(keyBoardInputValue ?? null);
-    // if dob is invalid, clear age and don't update the form data
-    if (dateOfBirth === null) {
+  const onChangeDoB = (dob: Date | null) => {
+    const dateOfBirth = DateUtils.getDateOrNull(dob);
+    // if dob is invalid, clear age and don't update all the form data
+    if (dateOfBirth === null || !DateUtils.isValid(dateOfBirth)) {
       setAge('');
+      handleChange(dobPath, null); // required for validation to fire
       return;
     }
     setAge(DateUtils.age(dateOfBirth));
@@ -83,8 +79,8 @@ const UIComponent = (props: ControlProps) => {
             // undefined is displayed as "now" and null as unset
             value={dob ?? null}
             onChange={onChangeDoB}
-            inputFormat="dd/MM/yyyy"
-            InputProps={{ sx: { width: 135 } }}
+            format="dd/MM/yyyy"
+            slotProps={{ textField: { sx: { width: 135 } } }}
             disableFuture
             disabled={!props.enabled}
           />

@@ -9,6 +9,7 @@ import {
   DateTimePicker,
   DateTimePickerProps,
   BaseDatePickerInput,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -26,26 +27,28 @@ const Options = z
 
 type Options = z.infer<typeof Options>;
 
+const TextField = (params: TextFieldProps) => {
+  const textInputProps: StandardTextFieldProps = {
+    ...params,
+    variant: 'standard',
+  };
+  return <BasicTextInput {...textInputProps} />;
+};
+
 const DateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date, Date>, 'renderInput'> & { error: string }
+  Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
 > = props => (
   <DateTimePicker
     disabled={props.disabled}
-    renderInput={(params: TextFieldProps) => {
-      const textInputProps: StandardTextFieldProps = {
-        ...params,
-        variant: 'standard',
-      };
-      return (
-        <BasicTextInput
-          error={!!props.error}
-          helperText={props.error}
-          FormHelperTextProps={
-            !!props.error ? { sx: { color: 'error.main' } } : undefined
-          }
-          {...textInputProps}
-        />
-      );
+    slots={{ textField: TextField }}
+    slotProps={{
+      textField: {
+        error: !!props.error,
+        helperText: props.error,
+        FormHelperTextProps: !!props.error
+          ? { sx: { color: 'error.main' } }
+          : undefined,
+      },
     }}
     {...props}
   />
@@ -81,7 +84,7 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const sharedComponentProps = {
-    value: data ?? null,
+    value: DateUtils.getDateOrNull(data),
     onChange: (e: Date | null) => onChange(e),
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
