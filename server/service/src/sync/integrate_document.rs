@@ -29,11 +29,11 @@ pub(crate) fn sync_upsert_document(
         true
     };
 
-    // insert the new document
+    // Insert the new document
     // Note, every document is immutable for which reason an insert (instead of an upsert) is used.
     DocumentRepository::new(con).sync_insert(document)?;
 
-    // Only if the new document is the latest update the aux tables
+    // Only if the new document is the latest, update the aux tables
     if !new_doc_is_latest {
         return Ok(());
     }
