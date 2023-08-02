@@ -16,6 +16,8 @@ schema.graphql
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+# test template DB marker
+___template_needs_update.marker
 
 # directories used by the server at runtime
 plugins
