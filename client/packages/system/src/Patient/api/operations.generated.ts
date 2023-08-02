@@ -1,17 +1,17 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type PatientRowFragment = { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> };
 
 export type PatientsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   key: Types.PatientSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   filter?: Types.InputMaybe<Types.PatientFilterInput>;
 }>;
 
@@ -19,8 +19,8 @@ export type PatientsQueryVariables = Types.Exact<{
 export type PatientsQuery = { __typename: 'Queries', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> }> } };
 
 export type PatientByIdQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  nameId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  nameId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -28,7 +28,7 @@ export type PatientByIdQuery = { __typename: 'Queries', patients: { __typename: 
 
 export type PatientSearchQueryVariables = Types.Exact<{
   input: Types.PatientSearchInput;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -36,22 +36,22 @@ export type PatientSearchQuery = { __typename: 'Queries', patientSearch: { __typ
 
 export type CentralPatientSearchQueryVariables = Types.Exact<{
   input: Types.CentralPatientSearchInput;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type CentralPatientSearchQuery = { __typename: 'Queries', centralPatientSearch: { __typename: 'CentralPatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'CentralPatientNode', id: string, code: string, dateOfBirth?: string | null, firstName: string, lastName: string }> } | { __typename: 'CentralPatientSearchError', error: { __typename: 'ConnectionError', description: string } } };
 
 export type LinkPatientToStoreMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  nameId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  nameId: Types.Scalars['String']['input'];
 }>;
 
 
 export type LinkPatientToStoreMutation = { __typename: 'Mutations', linkPatientToStore: { __typename: 'LinkPatientPatientToStoreError', error: { __typename: 'ConnectionError', description: string } } | { __typename: 'NameStoreJoinNode', id: string, storeId: string, nameId: string } };
 
 export type InsertPatientMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.InsertPatientInput;
 }>;
 
@@ -59,7 +59,7 @@ export type InsertPatientMutationVariables = Types.Exact<{
 export type InsertPatientMutation = { __typename: 'Mutations', insertPatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } };
 
 export type UpdatePatientMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.UpdatePatientInput;
 }>;
 
@@ -214,25 +214,25 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    patients(variables: PatientsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientsQuery> {
+    patients(variables: PatientsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PatientsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PatientsQuery>(PatientsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patients', 'query');
     },
-    patientById(variables: PatientByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientByIdQuery> {
+    patientById(variables: PatientByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PatientByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PatientByIdQuery>(PatientByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientById', 'query');
     },
-    patientSearch(variables: PatientSearchQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PatientSearchQuery> {
+    patientSearch(variables: PatientSearchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PatientSearchQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PatientSearchQuery>(PatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'patientSearch', 'query');
     },
-    centralPatientSearch(variables: CentralPatientSearchQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<CentralPatientSearchQuery> {
+    centralPatientSearch(variables: CentralPatientSearchQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CentralPatientSearchQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<CentralPatientSearchQuery>(CentralPatientSearchDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'centralPatientSearch', 'query');
     },
-    linkPatientToStore(variables: LinkPatientToStoreMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LinkPatientToStoreMutation> {
+    linkPatientToStore(variables: LinkPatientToStoreMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LinkPatientToStoreMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<LinkPatientToStoreMutation>(LinkPatientToStoreDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'linkPatientToStore', 'mutation');
     },
-    insertPatient(variables: InsertPatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertPatientMutation> {
+    insertPatient(variables: InsertPatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertPatientMutation>(InsertPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPatient', 'mutation');
     },
-    updatePatient(variables: UpdatePatientMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdatePatientMutation> {
+    updatePatient(variables: UpdatePatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdatePatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdatePatientMutation>(UpdatePatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePatient', 'mutation');
     }
   };

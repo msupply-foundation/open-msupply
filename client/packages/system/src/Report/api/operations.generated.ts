@@ -1,15 +1,15 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ReportRowFragment = { __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null };
 
 export type ReportsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  key: Types.Scalars['String'];
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  storeId: Types.Scalars['String']['input'];
+  key: Types.Scalars['String']['input'];
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ReportFilterInput>;
 }>;
 
@@ -17,10 +17,10 @@ export type ReportsQueryVariables = Types.Exact<{
 export type ReportsQuery = { __typename: 'Queries', reports: { __typename: 'ReportConnector', totalCount: number, nodes: Array<{ __typename: 'ReportNode', context: Types.ReportContext, id: string, name: string, subContext?: string | null, argumentSchema?: { __typename: 'FormSchemaNode', id: string, type: string, jsonSchema: any, uiSchema: any } | null }> } };
 
 export type PrintReportQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  reportId: Types.Scalars['String'];
-  dataId?: Types.InputMaybe<Types.Scalars['String']>;
-  arguments?: Types.InputMaybe<Types.Scalars['JSON']>;
+  storeId: Types.Scalars['String']['input'];
+  reportId: Types.Scalars['String']['input'];
+  dataId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  arguments?: Types.InputMaybe<Types.Scalars['JSON']['input']>;
   format?: Types.InputMaybe<Types.PrintFormat>;
 }>;
 
@@ -89,10 +89,10 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    reports(variables: ReportsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ReportsQuery> {
+    reports(variables: ReportsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ReportsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReportsQuery>(ReportsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'reports', 'query');
     },
-    printReport(variables: PrintReportQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<PrintReportQuery> {
+    printReport(variables: PrintReportQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PrintReportQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PrintReportQuery>(PrintReportDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'printReport', 'query');
     }
   };

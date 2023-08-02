@@ -8,7 +8,7 @@ use graphql_types::types::encounter::{
     EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput,
 };
 use repository::PaginationOption;
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
 pub enum EncounterResponse {
@@ -29,7 +29,7 @@ pub fn encounters(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -47,9 +47,9 @@ pub fn encounters(
     let nodes = result
         .rows
         .into_iter()
-        .map(|encounter_row| EncounterNode {
+        .map(|encounter| EncounterNode {
             store_id: store_id.clone(),
-            encounter_row,
+            encounter,
             allowed_ctx: allowed_ctx.clone(),
         })
         .collect();

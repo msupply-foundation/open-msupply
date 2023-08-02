@@ -1,7 +1,7 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ServiceItemRowFragment = { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null };
@@ -19,56 +19,56 @@ export type ItemRowWithStatsFragment = { __typename: 'ItemNode', availableStockO
 export type ItemFragment = { __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string } }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
 
 export type ItemsWithStockLinesQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.ItemSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type ItemsWithStockLinesQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string } }> }, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } }> } };
 
 export type ItemsQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.ItemSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type ItemsQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null }> } };
 
 export type ItemStockOnHandQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   key?: Types.InputMaybe<Types.ItemSortFieldInput>;
-  isDesc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  isDesc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
 
 export type ItemStockOnHandQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', code: string, id: string, name: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number }> } };
 
 export type ItemsWithStatsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   key?: Types.InputMaybe<Types.ItemSortFieldInput>;
-  isDesc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  isDesc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
 
 export type ItemsWithStatsQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, name: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } }> } };
 
 export type ItemByIdQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  itemId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -303,19 +303,19 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    itemsWithStockLines(variables: ItemsWithStockLinesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsWithStockLinesQuery> {
+    itemsWithStockLines(variables: ItemsWithStockLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemsWithStockLinesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStockLinesQuery>(ItemsWithStockLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStockLines', 'query');
     },
-    items(variables: ItemsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsQuery> {
+    items(variables: ItemsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemsQuery>(ItemsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'items', 'query');
     },
-    itemStockOnHand(variables: ItemStockOnHandQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemStockOnHandQuery> {
+    itemStockOnHand(variables: ItemStockOnHandQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemStockOnHandQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemStockOnHandQuery>(ItemStockOnHandDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemStockOnHand', 'query');
     },
-    itemsWithStats(variables: ItemsWithStatsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemsWithStatsQuery> {
+    itemsWithStats(variables: ItemsWithStatsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemsWithStatsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemsWithStatsQuery>(ItemsWithStatsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemsWithStats', 'query');
     },
-    itemById(variables: ItemByIdQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<ItemByIdQuery> {
+    itemById(variables: ItemByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemByIdQuery>(ItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemById', 'query');
     }
   };

@@ -1,7 +1,7 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { StockOutLineFragmentDoc } from '../../StockOut/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
@@ -12,53 +12,53 @@ export type OutboundRowFragment = { __typename: 'InvoiceNode', comment?: string 
 export type BarcodeFragment = { __typename: 'BarcodeNode', id: string, itemId: string, packSize?: number | null, gtin: string };
 
 export type InvoicesQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   key: Types.InvoiceSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']>;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.InvoiceFilterInput>;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type InvoicesQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, taxPercentage?: number | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, taxPercentage?: number | null } }> } };
 
 export type InvoiceQueryVariables = Types.Exact<{
-  id: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type InvoiceQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, taxPercentage?: number | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, requisition?: { __typename: 'RequisitionNode', id: string, requisitionNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean }, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type OutboundByNumberQueryVariables = Types.Exact<{
-  invoiceNumber: Types.Scalars['Int'];
-  storeId: Types.Scalars['String'];
+  invoiceNumber: Types.Scalars['Int']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type OutboundByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, taxPercentage?: number | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, requisition?: { __typename: 'RequisitionNode', id: string, requisitionNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, item: { __typename: 'ItemNode', name: string, code: string } } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean }, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type InvoiceCountsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']>;
+  storeId: Types.Scalars['String']['input'];
+  timezoneOffset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
 
 export type InvoiceCountsQuery = { __typename: 'Queries', invoiceCounts: { __typename: 'InvoiceCounts', outbound: { __typename: 'OutboundInvoiceCounts', notShipped: number, created: { __typename: 'InvoiceCountsSummary', today: number, thisWeek: number } } } };
 
 export type BarcodeByGtinQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  gtin: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  gtin: Types.Scalars['String']['input'];
 }>;
 
 
 export type BarcodeByGtinQuery = { __typename: 'Queries', barcodeByGtin: { __typename: 'BarcodeNode', id: string, itemId: string, packSize?: number | null, gtin: string } | { __typename: 'NodeError' } };
 
 export type InsertOutboundShipmentMutationVariables = Types.Exact<{
-  id: Types.Scalars['String'];
-  otherPartyId: Types.Scalars['String'];
-  storeId: Types.Scalars['String'];
+  id: Types.Scalars['String']['input'];
+  otherPartyId: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -66,7 +66,7 @@ export type InsertOutboundShipmentMutation = { __typename: 'Mutations', insertOu
 
 export type UpdateOutboundShipmentMutationVariables = Types.Exact<{
   input: Types.UpdateOutboundShipmentInput;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -74,22 +74,22 @@ export type UpdateOutboundShipmentMutation = { __typename: 'Mutations', updateOu
 
 export type UpdateOutboundShipmentNameMutationVariables = Types.Exact<{
   input: Types.UpdateOutboundShipmentNameInput;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type UpdateOutboundShipmentNameMutation = { __typename: 'Mutations', updateOutboundShipmentName: { __typename: 'InvoiceNode', id: string } | { __typename: 'UpdateOutboundShipmentNameError', error: { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type DeleteOutboundShipmentsMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  deleteOutboundShipments: Array<Types.Scalars['String']> | Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  deleteOutboundShipments: Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input'];
 }>;
 
 
 export type DeleteOutboundShipmentsMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.BatchOutboundShipmentInput;
 }>;
 
@@ -97,7 +97,7 @@ export type UpsertOutboundShipmentMutationVariables = Types.Exact<{
 export type UpsertOutboundShipmentMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', insertOutboundShipmentUnallocatedLines?: Array<{ __typename: 'InsertOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'UnallocatedLineForItemAlreadyExists', description: string } | { __typename: 'UnallocatedLinesOnlyEditableInNewInvoice', description: string } } | { __typename: 'InvoiceLineNode', id: string } }> | null, deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipmentServiceLines?: Array<{ __typename: 'DeleteOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipmentUnallocatedLines?: Array<{ __typename: 'DeleteOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteOutboundShipments?: Array<{ __typename: 'DeleteOutboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, insertOutboundShipmentLines?: Array<{ __typename: 'InsertOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertOutboundShipmentServiceLines?: Array<{ __typename: 'InsertOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string } } | { __typename: 'InvoiceLineNode' } }> | null, insertOutboundShipments?: Array<{ __typename: 'InsertOutboundShipmentResponseWithId', id: string, response: { __typename: 'InsertOutboundShipmentError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipmentLines?: Array<{ __typename: 'UpdateOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'LocationIsOnHold', description: string } | { __typename: 'LocationNotFound', description: string } | { __typename: 'NotEnoughStockForReduction', description: string, batch: { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'StockLineNode' } } | { __typename: 'RecordNotFound', description: string } | { __typename: 'StockLineAlreadyExistsInInvoice', description: string } | { __typename: 'StockLineIsOnHold', description: string } } }> | null, updateOutboundShipmentServiceLines?: Array<{ __typename: 'UpdateOutboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'UpdateOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode' } | { __typename: 'UpdateOutboundShipmentUnallocatedLineError', error: { __typename: 'ForeignKeyError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, updateOutboundShipments?: Array<{ __typename: 'UpdateOutboundShipmentResponseWithId', id: string, response: { __typename: 'InvoiceNode' } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'UpdateOutboundShipmentError', error: { __typename: 'CanOnlyChangeToAllocatedWhenNoUnallocatedLines', description: string } | { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'InvoiceIsNotEditable', description: string } | { __typename: 'NotAnOutboundShipmentError', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, allocateOutboundShipmentUnallocatedLines?: Array<{ __typename: 'AllocateOutboundShipmentUnallocatedLineResponseWithId', id: string, response: { __typename: 'AllocateOutboundShipmentUnallocatedLineError', error: { __typename: 'RecordNotFound', description: string } } | { __typename: 'AllocateOutboundShipmentUnallocatedLineNode', deletes: Array<{ __typename: 'DeleteResponse', id: string }>, inserts: { __typename: 'InvoiceLineConnector', totalCount: number }, updates: { __typename: 'InvoiceLineConnector', totalCount: number } } }> | null } };
 
 export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   deleteOutboundShipmentLines: Array<Types.DeleteOutboundShipmentLineInput> | Types.DeleteOutboundShipmentLineInput;
 }>;
 
@@ -105,16 +105,16 @@ export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
 export type DeleteOutboundShipmentLinesMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type AddToOutboundShipmentFromMasterListMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
-  shipmentId: Types.Scalars['String'];
-  masterListId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
+  shipmentId: Types.Scalars['String']['input'];
+  masterListId: Types.Scalars['String']['input'];
 }>;
 
 
 export type AddToOutboundShipmentFromMasterListMutation = { __typename: 'Mutations', addToOutboundShipmentFromMasterList: { __typename: 'AddToOutboundShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisName', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
 
 export type InsertBarcodeMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.InsertBarcodeInput;
 }>;
 
@@ -889,43 +889,43 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    invoices(variables: InvoicesQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoicesQuery> {
+    invoices(variables: InvoicesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InvoicesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoicesQuery>(InvoicesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoices', 'query');
     },
-    invoice(variables: InvoiceQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceQuery> {
+    invoice(variables: InvoiceQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InvoiceQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceQuery>(InvoiceDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoice', 'query');
     },
-    outboundByNumber(variables: OutboundByNumberQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<OutboundByNumberQuery> {
+    outboundByNumber(variables: OutboundByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<OutboundByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<OutboundByNumberQuery>(OutboundByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'outboundByNumber', 'query');
     },
-    invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InvoiceCountsQuery> {
+    invoiceCounts(variables: InvoiceCountsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InvoiceCountsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceCountsQuery>(InvoiceCountsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceCounts', 'query');
     },
-    barcodeByGtin(variables: BarcodeByGtinQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<BarcodeByGtinQuery> {
+    barcodeByGtin(variables: BarcodeByGtinQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<BarcodeByGtinQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<BarcodeByGtinQuery>(BarcodeByGtinDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'barcodeByGtin', 'query');
     },
-    insertOutboundShipment(variables: InsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertOutboundShipmentMutation> {
+    insertOutboundShipment(variables: InsertOutboundShipmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertOutboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundShipmentMutation>(InsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundShipment', 'mutation');
     },
-    updateOutboundShipment(variables: UpdateOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateOutboundShipmentMutation> {
+    updateOutboundShipment(variables: UpdateOutboundShipmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundShipmentMutation>(UpdateOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundShipment', 'mutation');
     },
-    updateOutboundShipmentName(variables: UpdateOutboundShipmentNameMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateOutboundShipmentNameMutation> {
+    updateOutboundShipmentName(variables: UpdateOutboundShipmentNameMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundShipmentNameMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundShipmentNameMutation>(UpdateOutboundShipmentNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundShipmentName', 'mutation');
     },
-    deleteOutboundShipments(variables: DeleteOutboundShipmentsMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentsMutation> {
+    deleteOutboundShipments(variables: DeleteOutboundShipmentsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteOutboundShipmentsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentsMutation>(DeleteOutboundShipmentsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipments', 'mutation');
     },
-    upsertOutboundShipment(variables: UpsertOutboundShipmentMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpsertOutboundShipmentMutation> {
+    upsertOutboundShipment(variables: UpsertOutboundShipmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertOutboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertOutboundShipmentMutation>(UpsertOutboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertOutboundShipment', 'mutation');
     },
-    deleteOutboundShipmentLines(variables: DeleteOutboundShipmentLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteOutboundShipmentLinesMutation> {
+    deleteOutboundShipmentLines(variables: DeleteOutboundShipmentLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteOutboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentLinesMutation>(DeleteOutboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipmentLines', 'mutation');
     },
-    addToOutboundShipmentFromMasterList(variables: AddToOutboundShipmentFromMasterListMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<AddToOutboundShipmentFromMasterListMutation> {
+    addToOutboundShipmentFromMasterList(variables: AddToOutboundShipmentFromMasterListMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AddToOutboundShipmentFromMasterListMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AddToOutboundShipmentFromMasterListMutation>(AddToOutboundShipmentFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addToOutboundShipmentFromMasterList', 'mutation');
     },
-    insertBarcode(variables: InsertBarcodeMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertBarcodeMutation> {
+    insertBarcode(variables: InsertBarcodeMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertBarcodeMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertBarcodeMutation>(InsertBarcodeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertBarcode', 'mutation');
     }
   };

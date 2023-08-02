@@ -10,7 +10,7 @@ use repository::{
     DatetimeFilter, DocumentFilter, DocumentSort, DocumentSortField, EqualFilter, PaginationOption,
     StringFilter,
 };
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
 pub enum DocumentResponse {
@@ -23,7 +23,7 @@ pub struct DocumentFilterInput {
     pub r#type: Option<EqualFilterStringInput>,
     pub datetime: Option<DatetimeFilterInput>,
     pub owner: Option<EqualFilterStringInput>,
-    pub context: Option<EqualFilterStringInput>,
+    pub context_id: Option<EqualFilterStringInput>,
     /// This filter makes it possible to search the raw text json data.
     /// Be beware of potential performance issues.
     pub data: Option<StringFilterInput>,
@@ -63,7 +63,7 @@ impl DocumentFilterInput {
             r#type: self.r#type.map(EqualFilter::from),
             datetime: self.datetime.map(DatetimeFilter::from),
             owner: self.owner.map(EqualFilter::from),
-            context: self.context.map(EqualFilter::from),
+            context_id: self.context_id.map(EqualFilter::from),
             data: self.data.map(StringFilter::from),
         }
     }
@@ -94,7 +94,7 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
             store_id: Some(store_id),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -124,7 +124,7 @@ pub fn documents(
             store_id: Some(store_id),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

@@ -3,7 +3,7 @@ use repository::{
         mock_name_tag_1, mock_name_tag_2, mock_name_tag_3, mock_period_schedule_1,
         mock_period_schedule_2,
     },
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
+    ContextRow, ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
 };
 
 use crate::sync::{
@@ -118,10 +118,15 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             LegacyTableName::LIST_MASTER,
             MASTER_LIST_WITH_PROGRAM_1,
             vec![
+                PullUpsertRecord::Context(ContextRow {
+                    id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
+                    name: "Program Test 01".to_owned(),
+                }),
                 PullUpsertRecord::Program(ProgramRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     name: "Program Test 01".to_owned(),
                     master_list_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
+                    context_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                 }),
                 PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_1().id,
@@ -191,10 +196,15 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             LegacyTableName::LIST_MASTER,
             MASTER_LIST_WITH_PROGRAM_2,
             vec![
+                PullUpsertRecord::Context(ContextRow {
+                    id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
+                    name: "Program Test 02".to_owned(),
+                }),
                 PullUpsertRecord::Program(ProgramRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     name: "Program Test 02".to_owned(),
                     master_list_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
+                    context_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                 }),
                 PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned() + &mock_name_tag_1().id,
