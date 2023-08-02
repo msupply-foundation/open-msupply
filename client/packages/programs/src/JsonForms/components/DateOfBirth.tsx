@@ -36,9 +36,10 @@ const UIComponent = (props: ControlProps) => {
   const estimatedPath = composePaths(path, 'dateOfBirthIsEstimated');
   const onChangeDoB = (dob: Date | null) => {
     const dateOfBirth = DateUtils.getDateOrNull(dob);
-    // if dob is invalid, clear age and don't update the form data
-    if (dateOfBirth === null) {
+    // if dob is invalid, clear age and don't update all the form data
+    if (dateOfBirth === null || !DateUtils.isValid(dateOfBirth)) {
       setAge('');
+      handleChange(dobPath, null); // required for validation to fire
       return;
     }
     setAge(DateUtils.age(dateOfBirth));
