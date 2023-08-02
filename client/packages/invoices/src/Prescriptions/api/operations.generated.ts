@@ -56,7 +56,7 @@ export type DeletePrescriptionsMutationVariables = Types.Exact<{
 export type DeletePrescriptionsMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptions?: Array<{ __typename: 'DeletePrescriptionResponseWithId', id: string, response: { __typename: 'DeletePrescriptionError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type DeletePrescriptionLinesMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   deletePrescriptionLines: Array<Types.DeletePrescriptionLineInput> | Types.DeletePrescriptionLineInput;
 }>;
 
@@ -368,7 +368,7 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deletePrescriptions(variables: DeletePrescriptionsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionsMutation>(DeletePrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptions', 'mutation');
     },
-    deletePrescriptionLines(variables: DeletePrescriptionLinesMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeletePrescriptionLinesMutation> {
+    deletePrescriptionLines(variables: DeletePrescriptionLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionLinesMutation>(DeletePrescriptionLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptionLines', 'mutation');
     }
   };
