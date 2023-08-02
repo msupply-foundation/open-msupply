@@ -9,10 +9,7 @@
       "@common/intl/*": ["packages/common/src/intl/*"],
       "@common/styles": ["packages/common/src/styles"],
       "@common/types": ["packages/common/src/types"],
-      "@common/utils": ["packages/common/src/utils"],
-      "graphql-request/dist/types.dom": [
-        "node_modules/graphql-request/src/types.dom"
-      ]
+      "@common/utils": ["packages/common/src/utils"]
     },
     "resolveJsonModule": true,
     "target": "es2015",

@@ -1,6 +1,7 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
+mod context_table;
 mod log_settings;
 pub(crate) struct V1_02_00;
 
@@ -11,7 +12,7 @@ impl Migration for V1_02_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         log_settings::migrate(connection)?;
-
+        context_table::migrate(connection)?;
         Ok(())
     }
 }

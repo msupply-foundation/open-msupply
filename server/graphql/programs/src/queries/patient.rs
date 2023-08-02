@@ -9,7 +9,7 @@ use repository::{
     DateFilter, EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField,
     StringFilter,
 };
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
 pub struct PatientConnector {
@@ -139,7 +139,7 @@ pub fn patients(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -179,7 +179,7 @@ pub fn patient(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

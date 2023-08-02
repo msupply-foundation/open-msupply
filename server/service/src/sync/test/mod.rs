@@ -246,6 +246,7 @@ pub(crate) async fn check_records_against_database(
             }
 
             Period(record) => check_record_by_id!(PeriodRowRepository, con, record, "Period"),
+            Context(record) => check_record_by_id!(ContextRowRepository, con, record, "Context"),
             Program(record) => check_record_by_id!(ProgramRowRepository, con, record, "Program"),
             ProgramRequisitionSettings(record) => check_record_by_id!(
                 ProgramRequisitionSettingsRowRepository,
@@ -340,17 +341,15 @@ pub(crate) async fn check_records_against_database(
             InventoryAdjustmentReason => {
                 check_delete_record_by_id!(InventoryAdjustmentReasonRowRepository, con, id)
             }
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             Location => check_delete_record_by_id!(LocationRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
-            LocationMovement => check_delete_record_by_id!(LocationMovementRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             StockLine => check_delete_record_by_id_option!(StockLineRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             Stocktake => check_delete_record_by_id!(StocktakeRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             StocktakeLine => check_delete_record_by_id!(StocktakeLineRowRepository, con, id),
-            #[cfg(feature = "integration_test")]
+            #[cfg(all(test, feature = "integration_test"))]
             ActivityLog => check_delete_record_by_id!(ActivityLogRowRepository, con, id),
         }
     }

@@ -256,6 +256,7 @@ mod user_account_test {
                 .stores()
                 .user_accounts()
                 .user_store_joins()
+                .contexts()
                 .user_permissions(),
         )
         .await;
@@ -300,7 +301,7 @@ mod user_account_test {
                         user_id: mock_user_account_a().id,
                         store_id: Some("store_b".to_string()),
                         permission: Permission::InboundShipmentMutate,
-                        context: None,
+                        context_id: None,
                     }],
                 }],
             )

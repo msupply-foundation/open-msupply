@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import '@fontsource/inter/variable.css';
+import '@fontsource-variable/inter';
 import {
   AppThemeProvider,
   HashRouter,
