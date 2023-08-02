@@ -21,6 +21,8 @@ pub struct SyncLog {
 pub struct SyncLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub prepare_initial_finished_datetime: Option<DatetimeFilter>,
+    pub finished_datetime: Option<DatetimeFilter>,
+    pub error_message: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -101,6 +103,8 @@ fn create_filtered_query(filter: Option<SyncLogFilter>) -> BoxedSyncLogQuery {
         let SyncLogFilter {
             id,
             prepare_initial_finished_datetime,
+            finished_datetime,
+            error_message,
         } = f;
         apply_equal_filter!(query, id, sync_log_dsl::id);
         apply_date_time_filter!(
@@ -108,6 +112,8 @@ fn create_filtered_query(filter: Option<SyncLogFilter>) -> BoxedSyncLogQuery {
             prepare_initial_finished_datetime,
             sync_log_dsl::prepare_initial_finished_datetime
         );
+        apply_date_time_filter!(query, finished_datetime, sync_log_dsl::finished_datetime);
+        apply_equal_filter!(query, error_message, sync_log_dsl::error_message);
     }
 
     query
@@ -124,6 +130,16 @@ impl SyncLogFilter {
 
     pub fn prepare_initial_finished_datetime(mut self, value: DatetimeFilter) -> SyncLogFilter {
         self.prepare_initial_finished_datetime = Some(value);
+        self
+    }
+
+    pub fn finished_datetime(mut self, value: DatetimeFilter) -> Self {
+        self.finished_datetime = Some(value);
+        self
+    }
+
+    pub fn error_message(mut self, value: EqualFilter<String>) -> Self {
+        self.error_message = Some(value);
         self
     }
 }

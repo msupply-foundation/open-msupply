@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import { BaseDatePickerInput } from '../BaseDatePickerInput';
 
 interface DatePickerInputProps {
-  value: Date | string | null;
+  value: Date | null;
   onChange: (value: Date | null) => void;
   disabled?: boolean;
   onError?: () => void;
@@ -19,7 +19,7 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
   return (
     <BaseDatePickerInput
       disabled={disabled}
-      inputFormat="dd/MM/yyyy"
+      format="dd/MM/yyyy"
       onChange={onChange}
       value={value || null}
       onError={onError}

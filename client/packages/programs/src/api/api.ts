@@ -4,7 +4,7 @@ import {
   DocumentRegistryFilterInput,
   DocumentRegistryNode,
   DocumentRegistrySortFieldInput,
-  DocumentRegistryTypeNode,
+  DocumentRegistryCategoryNode,
   EncounterSortFieldInput,
   InsertEncounterInput,
   InsertProgramEnrolmentInput,
@@ -20,7 +20,6 @@ import {
   ClinicianFragment,
   DocumentFragment,
   DocumentRegistryFragment,
-  DocumentRegistryWithChildrenFragment,
   EncounterFieldsFragment,
   EncounterFragment,
   EncounterRowFragment,
@@ -219,13 +218,13 @@ export const getDocumentRegistryQueries = (sdk: Sdk, storeId: string) => ({
     programRegistries: async (
       sortBy?: SortBy<DocumentRegistryNode>
     ): Promise<{
-      nodes: DocumentRegistryWithChildrenFragment[];
+      nodes: DocumentRegistryFragment[];
       totalCount: number;
     }> => {
-      const result = await sdk.documentRegistriesWithChildren({
+      const result = await sdk.documentRegistries({
         filter: {
-          type: {
-            equalTo: DocumentRegistryTypeNode.ProgramEnrolment,
+          category: {
+            equalTo: DocumentRegistryCategoryNode.ProgramEnrolment,
           },
         },
         sort: {
