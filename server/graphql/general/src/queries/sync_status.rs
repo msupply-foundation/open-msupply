@@ -63,6 +63,7 @@ pub struct FullSyncStatusNode {
     pull_central: Option<SyncStatusWithProgressNode>,
     pull_remote: Option<SyncStatusWithProgressNode>,
     push: Option<SyncStatusWithProgressNode>,
+    last_successful_sync: Option<SyncStatusNode>,
 }
 
 pub fn latest_sync_status(
@@ -82,6 +83,10 @@ pub fn latest_sync_status(
         Some(sync_status) => sync_status,
         None => return Ok(None),
     };
+    let last_successful_sync_status = service_provider
+        .sync_status_service
+        .get_latest_successful_sync_status(&ctx)
+        .unwrap_or(None);
 
     let FullSyncStatus {
         is_syncing,
@@ -127,6 +132,13 @@ pub fn latest_sync_status(
             total: status.total,
             done: status.done,
         }),
+        last_successful_sync: match last_successful_sync_status {
+            None => None,
+            Some(last_successful_sync_status) => Some(SyncStatusNode {
+                started: last_successful_sync_status.summary.started,
+                finished: last_successful_sync_status.summary.finished,
+            }),
+        },
     };
 
     Ok(Some(result))
