@@ -11,7 +11,6 @@
   "button.requested-to-suggested": "Utilizar cantidades sugeridas",
   "error.no-requisition-items": "No se han agregado elementos a esta Orden Interna.",
   "button.new-shipment": "Nuevo envío",
-  "button.save-and-confirm-status": "Confirmar {{status}}",
   "error.amc-is-zero": "Sin valor de Consumo Promedio Mensual",
   "error.no-inbound-items": "No se han agregado elementos a este envío.",
   "error.no-inbound-shipments": "No hay entradas para mostrar.",

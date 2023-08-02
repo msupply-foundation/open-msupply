@@ -33,7 +33,7 @@ import {
 import { useOutbound } from '../../api';
 import { DraftOutboundLine } from '../../../types';
 import { getPackQuantityCellId } from '../../../utils';
-import { Draft, DraftItem } from 'packages/invoices/src';
+import { Draft, DraftItem } from '../../..';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;

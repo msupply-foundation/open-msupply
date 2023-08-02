@@ -2,7 +2,6 @@
   "messages.select-rows-to-delete-them": "Hili lina sira atu hamos",
   "error.provide-reason": "Tenke justifika razaun ba lina sira ne'ebe maka iha diferensia iha kalkulasaun numeru ba pakote nian.",
   "messages.deleted-locations_other": "Hamos tiha ona Lokalizasaun sira {{count}}",
-  "button.save-and-confirm-status": "Konfirma {{estatus}}",
   "label.add-batch": "Aumenta Lote",
   "label.finalised": "Finaliza Ona",
   "error.cant-save": "Iha problema wainhira salva.",

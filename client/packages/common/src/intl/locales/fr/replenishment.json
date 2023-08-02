@@ -2,7 +2,6 @@
   "button.add-from-master-list": "Utiliser une liste",
   "button.new-shipment": "Nouvelle livraison",
   "button.requested-to-suggested": "Utiliser Quantités Suggérées",
-  "button.save-and-confirm-status": "Confirmer {{status}}",
   "error.amc-is-zero": "Aucune valeur de CMM",
   "error.no-inbound-items": "Aucun article n'a été ajouté à cette livraison.",
   "error.no-inbound-shipments": "Il n'y pas de bon de livraison à afficher.",
