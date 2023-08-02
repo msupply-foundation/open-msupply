@@ -33,7 +33,7 @@ export const Toolbar: FC = () => {
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
 
-  return (
+    return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
         container
@@ -65,7 +65,8 @@ export const Toolbar: FC = () => {
                 disabled={isDisabled}
                 value={DateUtils.getDateOrNull(stocktakeDate)}
                 onChange={date => {
-                  update({ stocktakeDate: Formatter.naiveDate(date) });
+                  if(DateUtils.isValid(date))
+                    update({ stocktakeDate: Formatter.naiveDate(date) });
                 }}
               />
             }
