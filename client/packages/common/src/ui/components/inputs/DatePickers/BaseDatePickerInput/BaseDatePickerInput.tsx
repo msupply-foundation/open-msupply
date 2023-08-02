@@ -3,6 +3,7 @@ import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
 import { BasicTextInput } from '../../TextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
+import { LocaleKey, useTranslation } from '@common/intl';
 
 const TextField = (params: TextFieldProps) => {
   const textInputProps: StandardTextFieldProps = {
@@ -20,6 +21,7 @@ export const BaseDatePickerInput: FC<
 > = ({ error, onChange, width, ...props }) => {
   const theme = useAppTheme();
   const [validationError, setValidationError] = React.useState<string | null>(null);
+  const t = useTranslation('common');
 
 return (
     <DatePicker
@@ -29,7 +31,7 @@ return (
       onChange={(date,context) => {
         const {validationError} = context;
 
-        setValidationError(validationError);
+        setValidationError(validationError ? t(`error.date_${validationError}` as LocaleKey, {defaultValue: validationError}) : null);
         onChange?.(date, context);
       }}
       slotProps={{
