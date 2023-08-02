@@ -30,6 +30,7 @@ table! {
 }
 
 // view of the document table that only shows the latest document version
+// grouped by document name
 table! {
     latest_document (id) {
         id -> Text,
@@ -310,7 +311,7 @@ impl<'a> DocumentRepository<'a> {
                 }
             }
         } else {
-            query = query.order(latest_document::dsl::datetime.desc())
+            query = query.order(latest_document::dsl::datetime.asc())
         }
 
         // Debug diesel query
