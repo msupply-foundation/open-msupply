@@ -1,7 +1,7 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type InventoryAdjustmentReasonRowFragment = { __typename: 'InventoryAdjustmentReasonNode', id: string, type: Types.InventoryAdjustmentReasonNodeType, reason: string };
@@ -47,7 +47,7 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    inventoryAdjustmentReasons(variables?: InventoryAdjustmentReasonsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InventoryAdjustmentReasonsQuery> {
+    inventoryAdjustmentReasons(variables?: InventoryAdjustmentReasonsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InventoryAdjustmentReasonsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InventoryAdjustmentReasonsQuery>(InventoryAdjustmentReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inventoryAdjustmentReasons', 'query');
     }
   };

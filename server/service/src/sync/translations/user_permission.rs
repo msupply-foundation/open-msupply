@@ -38,7 +38,8 @@ impl SyncTranslation for UserPermissionTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::USER_PERMISSION,
-            dependencies: vec![LegacyTableName::STORE],
+            // include LIST_MASTER to populate context entries, e.g. program contexts
+            dependencies: vec![LegacyTableName::STORE, LegacyTableName::LIST_MASTER],
         }
     }
 
@@ -68,7 +69,7 @@ impl SyncTranslation for UserPermissionTranslation {
             user_id,
             store_id,
             permission: user_permission,
-            context,
+            context_id: context,
         };
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::UserPermission(result),

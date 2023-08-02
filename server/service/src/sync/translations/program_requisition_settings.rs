@@ -1,5 +1,5 @@
 use repository::{
-    NameTagRowRepository, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
+    ContextRow, NameTagRowRepository, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, StorageConnection, SyncBufferRow,
 };
@@ -104,6 +104,7 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
                 })
             });
 
+        upserts.push(PullUpsertRecord::Context(generate.context_row));
         upserts.push(PullUpsertRecord::Program(generate.program_row));
 
         generate
@@ -165,6 +166,7 @@ fn delete_requisition_program(
 
 #[derive(Clone)]
 struct GenerateRequisitionProgram {
+    pub context_row: ContextRow,
     pub program_row: ProgramRow,
     pub program_requisition_settings_rows: Vec<ProgramRequisitionSettingsRow>,
     pub program_requisition_order_type_rows: Vec<ProgramRequisitionOrderTypeRow>,
@@ -183,10 +185,15 @@ fn generate_requisition_program(
         master_list.id
     ))?;
 
+    let context_row = ContextRow {
+        id: master_list.id.clone(),
+        name: master_list.description.clone(),
+    };
     let program_row = ProgramRow {
         id: master_list.id.clone(),
         master_list_id: master_list.id.clone(),
         name: master_list.description.clone(),
+        context_id: context_row.id.clone(),
     };
 
     let mut program_requisition_settings_rows = Vec::new();
@@ -240,6 +247,7 @@ fn generate_requisition_program(
     }
 
     Ok(Some(GenerateRequisitionProgram {
+        context_row,
         program_row,
         program_requisition_settings_rows,
         program_requisition_order_type_rows,

@@ -223,7 +223,7 @@ mod test {
     #[actix_rt::test]
     async fn get_response_requisition_line_stats_success() {
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "get_requisition_line_chart_consumption",
+            "get_response_requisition_line_stats_success",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.requisitions = vec![

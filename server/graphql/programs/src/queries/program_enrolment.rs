@@ -5,7 +5,7 @@ use graphql_types::types::program_enrolment::{
 };
 use repository::Pagination;
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     usize_to_u32,
 };
 
@@ -33,7 +33,7 @@ pub fn program_enrolments(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -50,7 +50,7 @@ pub fn program_enrolments(
         .into_iter()
         .map(|program_row| ProgramEnrolmentNode {
             store_id: store_id.clone(),
-            program_row,
+            program_enrolment: program_row,
             allowed_ctx: allowed_ctx.clone(),
         })
         .collect();

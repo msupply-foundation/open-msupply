@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { useReportApi } from './useReportApi';
-import { Printer } from '@awesome-cordova-plugins/printer';
+import { Printer } from '@bcyesil/capacitor-plugin-printer';
 import { JsonData } from '@openmsupply-client/programs';
 
 type PrintReportParams = {
@@ -35,7 +35,7 @@ const printPage = (url: string) => {
     const html = await response.text();
 
     if (EnvUtils.platform === Platform.Android) {
-      Printer.print(html);
+      Printer.print({ content: html });
     } else {
       const frame = document.createElement('iframe');
 
