@@ -2,7 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 
 use crate::{Document, DocumentStatus};
 
-use super::mock_form_schema_simple;
+use super::{context_program_a, mock_form_schema_simple};
 
 pub fn document_a() -> Document {
     Document {
@@ -19,7 +19,7 @@ pub fn document_a() -> Document {
         data: mock_form_schema_simple().json_schema,
         status: DocumentStatus::Active,
         owner_name_id: None,
-        context: "Context".to_string(),
+        context_id: context_program_a().id,
     }
 }
 

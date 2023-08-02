@@ -111,8 +111,8 @@ fn create_filtered_query(filter: Option<UserPermissionFilter>) -> BoxedUserPermi
         apply_equal_filter!(query, permission, user_permission_dsl::permission);
 
         query = match has_context {
-            Some(true) => query.filter(user_permission_dsl::context.is_not_null()),
-            Some(false) => query.filter(user_permission_dsl::context.is_null()),
+            Some(true) => query.filter(user_permission_dsl::context_id.is_not_null()),
+            Some(false) => query.filter(user_permission_dsl::context_id.is_null()),
             None => query,
         };
     }

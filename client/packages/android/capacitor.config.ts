@@ -23,6 +23,7 @@ const config: CapacitorConfig = {
     hostname: 'should.notmatch.localhost',
     // Required to access discovery graphql on http
     cleartext: true,
+    androidScheme: 'https',
   },
   plugins: {
     // Below will turn on debug (uncomment and run `yarn apply-config`)

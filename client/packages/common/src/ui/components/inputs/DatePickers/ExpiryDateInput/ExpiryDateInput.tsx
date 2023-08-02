@@ -17,7 +17,7 @@ export const ExpiryDateInput: FC<ExpiryDateInputProps> = ({
     <BaseDatePickerInput
       disabled={disabled}
       views={['year', 'month']}
-      inputFormat="MM/yyyy"
+      format="MM/yyyy"
       value={value}
       onChange={d => {
         if (d) onChange(lastDayOfMonth(d));
