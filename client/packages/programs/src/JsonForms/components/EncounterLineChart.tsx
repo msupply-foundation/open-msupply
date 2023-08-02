@@ -141,6 +141,10 @@ const UIComponent = (props: ControlProps) => {
   if (!visible || !option) {
     return null;
   }
+
+  // with no valid data, the y-axis label cannot be shown, so we provide some defaults
+  const domain = (data.every(value => value.y === null) || data.length === 0) ? [0, 100] : undefined;
+
   return (
     <Box
       display="flex"
@@ -164,7 +168,7 @@ const UIComponent = (props: ControlProps) => {
           tickFormatter={dayMonthShort}
           domain={['auto', 'auto']}
         />
-        <YAxis>
+        <YAxis domain={domain}>
           <Label
             value={`${option.label ?? '-'} [${option.unit ?? '?'}]`}
             angle={-90}
