@@ -80,6 +80,10 @@ pub struct EventScheduleConfig {
     /// Field with the scheduled base time.
     /// If not specified the document base time is used.
     /// For example, `extension.myData.myDatetime`
+    ///
+    /// Note, the document base time is currently extracted from the document when updating the
+    /// document and is dependent on the document type, e.g. for encounters the base time is the
+    /// encounter's `startDatetime`.
     #[serde(rename = "datetimeField")]
     pub datetime_field: Option<String>,
     /// For developing: force to schedule an event from now, e.g. in 1 minute.
