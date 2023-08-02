@@ -1,9 +1,5 @@
-use async_graphql::{dataloader::DataLoader, *};
-use graphql_core::{
-    loader::{DocumentRegistryChildrenLoader, DocumentRegistryLoaderInput},
-    ContextExt,
-};
-use repository::{DocumentRegistry, DocumentRegistryType};
+use async_graphql::*;
+use repository::{DocumentRegistry, DocumentRegistryCategory};
 use serde::Serialize;
 
 #[derive(SimpleObject)]
@@ -19,7 +15,7 @@ pub struct DocumentRegistryNode {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum DocumentRegistryTypeNode {
+pub enum DocumentRegistryCategoryNode {
     Patient,
     ProgramEnrolment,
     Encounter,
@@ -36,25 +32,23 @@ impl DocumentRegistryNode {
         &self.document_registry.document_type
     }
 
-    pub async fn document_context(&self) -> &str {
-        &self.document_registry.document_context
+    pub async fn context_id(&self) -> &str {
+        &self.document_registry.context_id
     }
 
-    pub async fn r#type(&self) -> DocumentRegistryTypeNode {
-        match self.document_registry.r#type {
-            DocumentRegistryType::Patient => DocumentRegistryTypeNode::Patient,
-            DocumentRegistryType::ProgramEnrolment => DocumentRegistryTypeNode::ProgramEnrolment,
-            DocumentRegistryType::Encounter => DocumentRegistryTypeNode::Encounter,
-            DocumentRegistryType::Custom => DocumentRegistryTypeNode::Custom,
+    pub async fn category(&self) -> DocumentRegistryCategoryNode {
+        match self.document_registry.category {
+            DocumentRegistryCategory::Patient => DocumentRegistryCategoryNode::Patient,
+            DocumentRegistryCategory::ProgramEnrolment => {
+                DocumentRegistryCategoryNode::ProgramEnrolment
+            }
+            DocumentRegistryCategory::Encounter => DocumentRegistryCategoryNode::Encounter,
+            DocumentRegistryCategory::Custom => DocumentRegistryCategoryNode::Custom,
         }
     }
 
     pub async fn name(&self) -> &Option<String> {
         &self.document_registry.name
-    }
-
-    pub async fn parent_id(&self) -> &Option<String> {
-        &self.document_registry.parent_id
     }
 
     pub async fn form_schema_id(&self) -> &str {
@@ -72,33 +66,17 @@ impl DocumentRegistryNode {
     pub async fn ui_schema(&self) -> &serde_json::Value {
         &self.document_registry.ui_schema
     }
-
-    pub async fn children(&self, ctx: &Context<'_>) -> Result<Vec<DocumentRegistryNode>> {
-        let loader = ctx.get_loader::<DataLoader<DocumentRegistryChildrenLoader>>();
-        let children = loader
-            .load_one(DocumentRegistryLoaderInput::new(
-                &self.allowed_ctx,
-                &self.document_registry.id,
-            ))
-            .await?
-            .unwrap_or(vec![]);
-        Ok(children
-            .into_iter()
-            .map(|document_registry| DocumentRegistryNode {
-                allowed_ctx: self.allowed_ctx.clone(),
-                document_registry,
-            })
-            .collect())
-    }
 }
 
-impl DocumentRegistryTypeNode {
-    pub fn to_domain(self) -> DocumentRegistryType {
+impl DocumentRegistryCategoryNode {
+    pub fn to_domain(self) -> DocumentRegistryCategory {
         match self {
-            DocumentRegistryTypeNode::Patient => DocumentRegistryType::Patient,
-            DocumentRegistryTypeNode::ProgramEnrolment => DocumentRegistryType::ProgramEnrolment,
-            DocumentRegistryTypeNode::Encounter => DocumentRegistryType::Encounter,
-            DocumentRegistryTypeNode::Custom => DocumentRegistryType::Custom,
+            DocumentRegistryCategoryNode::Patient => DocumentRegistryCategory::Patient,
+            DocumentRegistryCategoryNode::ProgramEnrolment => {
+                DocumentRegistryCategory::ProgramEnrolment
+            }
+            DocumentRegistryCategoryNode::Encounter => DocumentRegistryCategory::Encounter,
+            DocumentRegistryCategoryNode::Custom => DocumentRegistryCategory::Custom,
         }
     }
 }

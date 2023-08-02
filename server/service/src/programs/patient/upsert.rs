@@ -1,8 +1,9 @@
 use chrono::Utc;
 use repository::{
-    DocumentRegistry, DocumentRegistryFilter, DocumentRegistryRepository, DocumentRegistryType,
+    DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
     DocumentStatus, EqualFilter, RepositoryError, TransactionError,
 };
+use util::constants::PATIENT_TYPE;
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
@@ -13,7 +14,7 @@ use super::{
     main_patient_doc_name,
     patient_schema::SchemaPatient,
     patient_updated::{create_patient_name_store_join, update_patient_row},
-    Patient, PatientFilter, PATIENT_TYPE,
+    Patient, PatientFilter,
 };
 
 #[derive(PartialEq, Debug)]
@@ -125,7 +126,7 @@ fn generate(
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
         owner_name_id: Some(patient.id.clone()),
-        context: registry.document_context,
+        context_id: registry.context_id,
     })
 }
 
@@ -164,7 +165,7 @@ fn validate_document_type(
 ) -> Result<Option<DocumentRegistry>, RepositoryError> {
     let mut entry = DocumentRegistryRepository::new(&ctx.connection).query_by_filter(
         DocumentRegistryFilter::new()
-            .r#type(DocumentRegistryType::Patient.equal_to())
+            .r#type(DocumentRegistryCategory::Patient.equal_to())
             .document_type(EqualFilter::equal_to(PATIENT_TYPE)),
     )?;
     Ok(entry.pop())
@@ -199,18 +200,21 @@ pub mod test {
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
-        DocumentFilter, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRegistryType,
-        DocumentRepository, EqualFilter, FormSchemaRowRepository, Pagination, PatientFilter,
-        PatientRepository, StringFilter,
+        DocumentFilter, DocumentRegistryCategory, DocumentRegistryRow,
+        DocumentRegistryRowRepository, DocumentRepository, EqualFilter, FormSchemaRowRepository,
+        Pagination, PatientFilter, PatientRepository, StringFilter,
     };
     use serde_json::json;
-    use util::inline_init;
+    use util::{
+        constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
+        inline_init,
+    };
 
     use crate::{
         programs::patient::{
             main_patient_doc_name,
             patient_schema::{ContactDetails, Gender, SchemaPatient},
-            upsert, PATIENT_TYPE,
+            upsert,
         },
         service_provider::ServiceProvider,
     };
@@ -268,11 +272,10 @@ pub mod test {
         registry_repo
             .upsert_one(&DocumentRegistryRow {
                 id: "patient_id".to_string(),
-                r#type: DocumentRegistryType::Patient,
+                category: DocumentRegistryCategory::Patient,
                 document_type: PATIENT_TYPE.to_string(),
-                document_context: "Patient".to_string(),
+                context_id: PATIENT_CONTEXT_ID.to_string(),
                 name: None,
-                parent_id: None,
                 form_schema_id: Some(schema.id.clone()),
                 config: None,
             })

@@ -21,9 +21,9 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         allowed_ctx: &[String],
     ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
         let mut filter = filter.unwrap_or(DocumentRegistryFilter::new());
-        filter.document_context = Some(
+        filter.context_id = Some(
             filter
-                .document_context
+                .context_id
                 .unwrap_or_default()
                 .restrict_results(allowed_ctx),
         );
@@ -43,26 +43,8 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
             Pagination::new(),
             Some(
                 DocumentRegistryFilter::new()
-                    .document_context(EqualFilter::default().restrict_results(allowed_ctx))
+                    .context_id(EqualFilter::default().restrict_results(allowed_ctx))
                     .document_type(EqualFilter::equal_any(types)),
-            ),
-            None,
-        )?)
-    }
-
-    fn get_children(
-        &self,
-        ctx: &ServiceContext,
-        parent_ids: &[String],
-        allowed_ctx: &[String],
-    ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
-        let repo = DocumentRegistryRepository::new(&ctx.connection);
-        Ok(repo.query(
-            Pagination::new(),
-            Some(
-                DocumentRegistryFilter::new()
-                    .document_context(EqualFilter::default().restrict_results(allowed_ctx))
-                    .parent_id(EqualFilter::equal_any(parent_ids.to_vec())),
             ),
             None,
         )?)

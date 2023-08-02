@@ -138,3 +138,17 @@ App data would need to be cleared if the local certificate was changed.
 
 Go to `browse files` in device manager, then navigate to `data/org.openmsupply.client/files/(log_name).log` to view log, logs that have exceeded the max file size is compressed and saved as a `.gz` zip.
 Alternatively when using an emulator, navigate to `data/user/0/org.openmsupply.client/files/(log_name).log`.
+
+## Common Android Studio Errors
+
+#### Java
+
+If you get Java Compatibility* error in Android studio during gradle sync, you can download a new JDK via settings/preferences -> Build, Execution, Deployment -> Build Tools -> Gradle -> (drop down Gradle JDK:), and choose Java version as per [capacitor.build.gradle](https://github.com/openmsupply/open-msupply/blob/7befca66e757570bcec1eacc58099393e8eba8d0/client/packages/android/app/capacitor.build.gradle#L5). Then sync gradle files vai elephant icon on top right or File -> Sync Project with Gradle Files. 
+
+#### AGP 
+
+If you get AGP compatibility error in Android Studio during gradle sync, you will need to update your Android Studio version.
+
+#### Failed to find/build :capacitor
+
+Run `npx cap sync` from android directory
