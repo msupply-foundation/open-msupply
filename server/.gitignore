@@ -28,6 +28,8 @@ static_files
 omsupply-database
 omsupply-database-wal
 omsupply-database-shm
+___template_needs_update.marker
+___template_needs_update_pg.marker
 
 # local configuration file (generated from example.yaml)
 configuration/local.yaml
