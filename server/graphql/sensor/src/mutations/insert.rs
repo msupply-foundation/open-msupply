@@ -45,8 +45,8 @@ pub fn insert_sensor(
 pub struct InsertSensorInput {
     pub id: String,
     pub serial: String,
-    pub name: String,
-    pub is_active: bool,
+    pub name: Option<String>,
+    pub is_active: Option<bool>,
 }
 
 impl From<InsertSensorInput> for InsertSensor {
@@ -54,8 +54,8 @@ impl From<InsertSensorInput> for InsertSensor {
         InsertSensorInput {
             id,
             serial,
-            name:_,
-            is_active:_,
+            name: _,
+            is_active: _,
         }: InsertSensorInput,
     ) -> Self {
         InsertSensor {
@@ -268,7 +268,7 @@ mod test {
                 id
                 serial
                 name
-                is_active
+                isActive
               }
             }
           }
@@ -304,8 +304,7 @@ mod test {
                 "id": "id",
                 "name": "name",
                 "serial": "serial",
-                "is_active": true
-
+                "isActive": true,
             }
           }
         );

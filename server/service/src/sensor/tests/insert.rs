@@ -91,7 +91,7 @@ mod query {
                 InsertSensor {
                     id: "new_id".to_owned(),
                     serial: "new_serial".to_owned(),
-                    name: None,
+                    name: Some("new_name".to_owned()),
                     is_active: None
                 },
             ),

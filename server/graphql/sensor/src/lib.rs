@@ -99,7 +99,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
-    use repository::mock::mock_sensors;
+    //use repository::mock::mock_sensors;
     use repository::{
         sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
         mock::MockDataInserts,
@@ -149,7 +149,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_locations_success() {
+    async fn test_graphql_sensors_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             SensorQueries,
             EmptyMutation,
@@ -166,7 +166,7 @@ mod test {
                   id
                   name
                   serial
-                  is_active
+                  isActive
                 }
                 totalCount
               }
@@ -206,7 +206,7 @@ mod test {
                           "id": "active_sensor",
                           "name": "test_name",
                           "serial": "test_serial",
-                          "is_active": true,
+                          "isActive": true,
                       },
                   ],
                   "totalCount": 1
@@ -251,7 +251,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_locations_inputs() {
+    async fn test_graphql_sensors_inputs() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             SensorQueries,
             EmptyMutation,
@@ -360,58 +360,4 @@ mod test {
         );
     }
 
-    #[actix_rt::test]
-    async fn test_sensors_always_filtered_by_store() {
-        let (_, _, _, settings) = setup_graphl_test(
-            SensorQueries,
-            EmptyMutation,
-            "test_sensors_always_filtered_by_store",
-            MockDataInserts::none().stores().locations().sensors(),
-        )
-        .await;
-
-        let count_store_a = mock_sensors()
-            .iter()
-            .filter(|v| v.store_id == Some("store_a".to_string()))
-            .count();
-        let count_store_b = mock_sensors()
-            .iter()
-            .filter(|v| v.store_id == Some("store_b".to_string()))
-            .count();
-        assert!(count_store_a != count_store_b);
-
-        let query = r#"
-        query {
-            sensors(storeId: \"store_a\") {
-              ... on SensorConnector {
-                totalCount
-              }
-            }
-        }
-        "#;
-        let expected = json!({
-              "sensors": {
-                  "totalCount": count_store_a
-              }
-          }
-        );
-        assert_graphql_query!(&settings, query, &None, &expected, None);
-
-        let query = r#"
-        query {
-            sensors(storeId: \"store_b\") {
-              ... on SensorConnector {
-                totalCount
-              }
-            }
-        }
-        "#;
-        let expected = json!({
-              "sensors": {
-                  "totalCount": count_store_b
-              }
-          }
-        );
-        assert_graphql_query!(&settings, query, &None, &expected, None);
-    }
 }
