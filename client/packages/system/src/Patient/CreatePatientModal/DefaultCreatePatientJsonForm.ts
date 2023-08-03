@@ -5,7 +5,6 @@ export const createPatient = {
       enum: [
         'FEMALE',
         'MALE',
-        'TRANSGENDER',
         'TRANSGENDER_MALE',
         'TRANSGENDER_FEMALE',
         'UNKNOWN',
@@ -94,7 +93,8 @@ export const createPatientUI = {
         show: [
           ['MALE', 'Male'],
           ['FEMALE', 'Female'],
-          ['TRANSGENDER', 'Transgender'],
+          ['TRANSGENDER_MALE', 'Transgender Male'],
+          ['TRANSGENDER_FEMALE', 'Transgender Female']
         ],
       },
     },
