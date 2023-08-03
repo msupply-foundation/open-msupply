@@ -18,7 +18,7 @@ const SENSOR_1: (&'static str, &'static str) = (
         "storeID": "store_a",
         "is_active": true,
         "lastConnectionDate": "2023-07-01",
-        "lastConnectionTime": 47046,
+        "lastConnectionTime": 47046
     }"#,
 );
 

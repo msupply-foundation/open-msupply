@@ -1,7 +1,7 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_option_to_isostring, naive_time, zero_date_as_option,
+        date_option_to_isostring, naive_time, zero_date_as_option, empty_str_as_option_string,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -35,8 +35,10 @@ pub struct LegacySensorRow {
     #[serde(rename = "macAddress")]
     pub serial: String,
     #[serde(rename = "locationID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_id: Option<String>,
-    #[serde(rename = "StoreID")]
+    #[serde(rename = "storeID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     pub store_id: Option<String>,
     #[serde(rename = "batteryLevel")]
     pub battery_level: Option<i32>,
