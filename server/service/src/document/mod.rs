@@ -8,7 +8,7 @@ pub mod document_service;
 pub mod form_schema_service;
 pub mod raw_document;
 
-/// Checks if the doc is the latest in the DB
+/// Checks that there is no document in the DB with a datetime greater than the provided `datetime`.
 pub(crate) fn is_latest_doc(
     connection: &StorageConnection,
     name: &str,
