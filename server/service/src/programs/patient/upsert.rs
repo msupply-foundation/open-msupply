@@ -52,7 +52,7 @@ pub fn upsert_patient(
             let doc_timestamp = doc.datetime.clone();
 
             // Update the name first because the doc is referring the name id
-            if is_latest_doc(ctx, service_provider, &doc.name, doc.datetime)
+            if is_latest_doc(&ctx.connection, &doc.name, doc.datetime)
                 .map_err(UpdatePatientError::DatabaseError)?
             {
                 update_patient_row(&ctx.connection, &doc_timestamp, patient, false)?;
