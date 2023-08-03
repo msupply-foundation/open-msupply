@@ -16,7 +16,6 @@ import {
   createDraftStockOutLineFromStockLine,
   createStockOutPlaceholderRow,
   issueStock,
-  updateNotes,
 } from '../../../../StockOut/utils';
 
 export const useDraftOutboundLines = (
@@ -96,19 +95,10 @@ export const useDraftOutboundLines = (
     [draftStockOutLines]
   );
 
-  const onUpdateNote = useCallback(
-    (note: string) => {
-      setIsDirty(true);
-      setDraftStockOutLines(updateNotes(draftStockOutLines, note));
-    },
-    [draftStockOutLines]
-  );
-
   return {
     draftStockOutLines,
     isLoading: isLoading || outboundLinesLoading,
     setDraftStockOutLines,
-    updateNotes: onUpdateNote,
     updateQuantity: onChangeRowQuantity,
   };
 };

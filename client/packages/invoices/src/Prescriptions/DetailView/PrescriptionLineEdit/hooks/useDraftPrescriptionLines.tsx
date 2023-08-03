@@ -18,9 +18,14 @@ import {
   updateNotes,
 } from '../../../../StockOut/utils';
 
+export interface UseDraftPrescriptionLinesControl
+  extends UseDraftStockOutLinesControl {
+  updateNotes: (note: string) => void;
+}
+
 export const useDraftPrescriptionLines = (
   item: DraftItem | null
-): UseDraftStockOutLinesControl => {
+): UseDraftPrescriptionLinesControl => {
   const { id: invoiceId, status } = usePrescription.document.fields([
     'id',
     'status',

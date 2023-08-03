@@ -60,5 +60,5 @@
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-last-name": "Search by last name",
   "placeholder.search-by-identifier": "Search by id",
-  "warning.cannot-create-placeholder": "{{quantity}} packs have not been added to a line as placeholders are currently not available for prescriptions"
+  "warning.cannot-create-placeholder-packs": "There is a total of {{quantity}} packs available. Unable to allocate the full amount requested."
 }

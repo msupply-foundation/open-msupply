@@ -140,8 +140,8 @@ export const PrescriptionLineEdit: React.FC<ItemDetailsModalProps> = ({
 
     if (difference > 0) {
       const warningSnack = warning(
-        t('warning.cannot-create-placeholder', {
-          quantity: difference,
+        t('warning.cannot-create-placeholder-packs', {
+          quantity: newAllocatedTotal,
         })
       );
       warningSnack();

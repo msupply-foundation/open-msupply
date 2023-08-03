@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';
 import { DraftStockOutLine } from './../../../types';
-import { StockOutLineFragment } from 'packages/invoices/src/StockOut';
+import { StockOutLineFragment } from '../../../StockOut';
 
 const createDraftLine = ({
   item,
