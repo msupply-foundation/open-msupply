@@ -5,6 +5,7 @@ mod barcode;
 pub mod common;
 mod context;
 mod document;
+mod document_registry;
 mod form_schema;
 mod full_invoice;
 mod full_master_list;
@@ -87,13 +88,14 @@ pub use user_account::*;
 use crate::{
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
-    ContextRowRepository, Document, DocumentRepository, FormSchema, FormSchemaRowRepository,
-    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, ItemRow, KeyValueStoreRepository, KeyValueStoreRow,
-    LocationRow, LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
-    MasterListRow, MasterListRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow,
-    NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository,
-    PeriodScheduleRow, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
+    ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
+    DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
+    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
+    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
+    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
+    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
+    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
+    PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
@@ -102,7 +104,9 @@ use crate::{
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
-use self::{activity_log::mock_activity_logs, unit::mock_units};
+use self::{
+    activity_log::mock_activity_logs, document_registry::mock_document_registries, unit::mock_units,
+};
 
 use super::{
     InvoiceRowRepository, ItemRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository,
@@ -138,6 +142,7 @@ pub struct MockData {
     pub stocktake_lines: Vec<StocktakeLineRow>,
     pub form_schemas: Vec<FormSchema>,
     pub documents: Vec<Document>,
+    pub document_registries: Vec<DocumentRegistryRow>,
     pub sync_buffer_rows: Vec<SyncBufferRow>,
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
@@ -195,6 +200,7 @@ pub struct MockDataInserts {
     pub logs: bool,
     pub form_schemas: bool,
     pub documents: bool,
+    pub document_registries: bool,
     pub sync_buffer_rows: bool,
     pub key_value_store_rows: bool,
     pub activity_logs: bool,
@@ -239,6 +245,7 @@ impl MockDataInserts {
             logs: true,
             form_schemas: true,
             documents: true,
+            document_registries: true,
             sync_buffer_rows: true,
             key_value_store_rows: true,
             activity_logs: true,
@@ -491,6 +498,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             stocktake_lines: mock_stocktake_line_data(),
             form_schemas: mock_form_schemas(),
             documents: mock_documents(),
+            document_registries: mock_document_registries(),
             activity_logs: mock_activity_logs(),
             programs: mock_programs(),
             program_requisition_settings: mock_program_requisition_settings(),
@@ -771,6 +779,14 @@ pub fn insert_mock_data(
                 repo.insert(row).unwrap();
             }
         }
+
+        if inserts.document_registries {
+            for row in &mock_data.document_registries {
+                let repo = DocumentRegistryRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
         if inserts.sync_logs {
             for row in &mock_data.sync_logs {
                 let repo = SyncLogRowRepository::new(connection);
@@ -865,6 +881,7 @@ impl MockData {
             user_permissions: _,
             mut form_schemas,
             mut documents,
+            mut document_registries,
             sync_buffer_rows: _,
             mut key_value_store_rows,
             mut activity_logs,
@@ -905,6 +922,7 @@ impl MockData {
         self.stock_lines.append(&mut stock_lines);
         self.form_schemas.append(&mut form_schemas);
         self.documents.append(&mut documents);
+        self.document_registries.append(&mut document_registries);
         self.key_value_store_rows.append(&mut key_value_store_rows);
         self.activity_logs.append(&mut activity_logs);
         self.sync_logs.append(&mut sync_logs);

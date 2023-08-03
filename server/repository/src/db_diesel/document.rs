@@ -30,6 +30,7 @@ table! {
 }
 
 // view of the document table that only shows the latest document version
+// grouped by document name
 table! {
     latest_document (id) {
         id -> Text,
@@ -310,7 +311,7 @@ impl<'a> DocumentRepository<'a> {
                 }
             }
         } else {
-            query = query.order(latest_document::dsl::datetime.desc())
+            query = query.order(latest_document::dsl::datetime.asc())
         }
 
         // Debug diesel query
@@ -326,6 +327,13 @@ impl<'a> DocumentRepository<'a> {
             result.push(row.to_document()?);
         }
         Ok(result)
+    }
+
+    pub fn query_by_filter(
+        &self,
+        filter: DocumentFilter,
+    ) -> Result<Vec<Document>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter), None)
     }
 
     /// Gets all document versions
