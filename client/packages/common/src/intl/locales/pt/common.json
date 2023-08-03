@@ -269,6 +269,8 @@
   "messages.ago": "{{time}} atrás",
   "messages.confirm-cancel-generic": "Você perderá qualquer mudança que tenha feito nesse formulário",
   "messages.confirm-delete-generic": "Isso irá excluir de forma permanente os dados",
+  "messages.deleted-lines_one": "Excluída {{count}} linha",
+  "messages.deleted-lines_other": "Excluídas {{count}} linhas",
   "messages.delete-this-line": "Excluir essa linha",
   "messages.deleted-generic_one": "{{count}} registro excluído",
   "messages.over-allocated": "Por conta do tamanho dos pacotes disponíveis a quantidade total de {{quantity}} foi alocada ao invés de {{issueQuantity}}",

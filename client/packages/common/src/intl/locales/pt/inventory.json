@@ -46,7 +46,6 @@
   "messages.deleted-locations_other": "Excluídos {{count}} locais",
   "messages.error-deleting-locations_other": "{{count}} locais não puderam ser excluídos",
   "placeholder.enter-an-item-code-or-name": "Insira o código do item",
-  "messages.deleted-lines": "{{count}} linhas foram excluídas",
   "messages.create-stocktake-1": "Você pode criar um inventário baseado em items associados a um local, items que você tem em estoque atualmente ou items alocados a uma lista mestra.",
   "messages.create-stocktake-2": "Para criar um inventário vazio, simplesmente clique em OK para continuar.",
   "messages.finalised-stock-take": "Esse inventário está finalizado e não poderá ser excluído",

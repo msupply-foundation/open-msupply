@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Typography,
   DialogButton,
@@ -16,10 +16,10 @@ import {
   useKeyboardHeightAdjustment,
   InvoiceLineNodeType,
   useNotification,
+  useFormatNumber,
 } from '@openmsupply-client/common';
 import { useDraftPrescriptionLines, useNextItem } from './hooks';
 import { usePrescription } from '../../api';
-import { getPackQuantityCellId } from '../../../utils';
 import { Draft, DraftItem } from '../../..';
 import {
   PackSizeController,
@@ -32,28 +32,14 @@ import { DraftStockOutLine } from '../../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
 
-interface ItemDetailsModalProps {
+interface PrescriptionLineEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   draft: Draft | null;
   mode: ModalMode | null;
 }
 
-const useFocusNumberOfPacksInput = (draft: Draft | null) => {
-  const batch = draft?.barcode?.batch;
-
-  useEffect(() => {
-    setTimeout(() => {
-      if (!batch) return;
-      const input = document.getElementById(getPackQuantityCellId(batch));
-      if (input) {
-        input.focus();
-      }
-    }, 500);
-  }, [batch]);
-};
-
-export const PrescriptionLineEdit: React.FC<ItemDetailsModalProps> = ({
+export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   isOpen,
   onClose,
   draft,
@@ -80,7 +66,7 @@ export const PrescriptionLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
-  useFocusNumberOfPacksInput(draft);
+  const { format } = useFormatNumber();
 
   const placeholder = draftStockOutLines?.find(
     ({ type, numberOfPacks }) =>
@@ -99,7 +85,6 @@ export const PrescriptionLineEdit: React.FC<ItemDetailsModalProps> = ({
 
   const onSave = async () => {
     if (!isDirty) return;
-    console.log('onSave', draftStockOutLines);
 
     await mutateAsync(draftStockOutLines);
     if (!draft) return;
@@ -132,17 +117,23 @@ export const PrescriptionLineEdit: React.FC<ItemDetailsModalProps> = ({
     setDraftStockOutLines(newAllocateQuantities ?? draftStockOutLines);
     setIsAutoAllocated(autoAllocated);
 
+    const allocateInUnits = packSize === null;
     const newAllocatedTotal = newAllocateQuantities?.reduce(
-      (acc, { numberOfPacks }) => acc + numberOfPacks,
+      (acc, { numberOfPacks, packSize }) =>
+        acc + numberOfPacks * (allocateInUnits ? packSize : 1),
       0
     );
     const difference = newVal - (newAllocatedTotal ?? 0);
-
-    if (difference > 0) {
+    if (difference > 0 && newAllocatedTotal !== undefined) {
       const warningSnack = warning(
-        t('warning.cannot-create-placeholder-packs', {
-          quantity: newAllocatedTotal,
-        })
+        t(
+          allocateInUnits
+            ? 'warning.cannot-create-placeholder-units'
+            : 'warning.cannot-create-placeholder-packs',
+          {
+            quantity: format(newAllocatedTotal),
+          }
+        )
       );
       warningSnack();
     }
@@ -210,7 +201,6 @@ export const PrescriptionLineEdit: React.FC<ItemDetailsModalProps> = ({
           updateQuantity={onUpdateQuantity}
           draftPrescriptionLines={draftStockOutLines}
           allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
-          batch={draft?.barcode?.batch}
         />
       </Grid>
     </Modal>
@@ -225,7 +215,6 @@ interface TableProps {
   updateQuantity: (batchId: string, updateQuantity: number) => void;
   draftPrescriptionLines: DraftStockOutLine[];
   allocatedQuantity: number;
-  batch?: string;
 }
 
 const TableWrapper: React.FC<TableProps> = ({
@@ -236,7 +225,6 @@ const TableWrapper: React.FC<TableProps> = ({
   updateQuantity,
   draftPrescriptionLines,
   allocatedQuantity,
-  batch,
 }) => {
   const t = useTranslation('dispensary');
 
@@ -274,7 +262,6 @@ const TableWrapper: React.FC<TableProps> = ({
         onChange={updateQuantity}
         rows={draftPrescriptionLines}
         item={currentItem}
-        batch={batch}
         allocatedQuantity={allocatedQuantity}
       />
     </TableProvider>

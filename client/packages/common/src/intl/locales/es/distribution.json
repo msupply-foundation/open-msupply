@@ -82,8 +82,6 @@
   "messages.confirm-delete-shipments_other": "Esto eliminará permanentemente {{count}} envíos",
   "messages.confirm-delete-lines_one": "Esto eliminará permanentemente 1 línea de esta factura",
   "messages.confirm-delete-lines_other": "Esto eliminará permanentemente {{count}} líneas de esta factura",
-  "messages.deleted-lines_one": "Se eliminó {{count}} línea",
-  "messages.deleted-lines_other": "Se eliminaron {{count}} líneas",
   "messages.deleted-requisition_one": "Se eliminaron {{count}} solicitudes",
   "messages.deleted-requisitions_other": "Se eliminaron {{count}} solicitudes",
   "messages.error-saving-shipment": "Error al guardar el envío 🥺",

@@ -218,6 +218,8 @@
   "messages.delete-this-line": "Eliminar esta línea",
   "messages.deleted-generic_one": "{{count}} eliminado del registro",
   "messages.deleted-generic_other": "Se eliminaron {{count}} registros",
+  "messages.deleted-lines_one": "Se eliminó {{count}} línea",
+  "messages.deleted-lines_other": "Se eliminaron {{count}} líneas",
   "messages.over-allocated": "Debido a los tamaños de paquete disponibles, se ha asignado una cantidad total de {{quantity}} en lugar de {{issueQuantity}}",
   "messages.native-mode": "Selecciona el modo en el que deseas ejecutar. Ten en cuenta que puedes cambiar esta opción más tarde si tienes acceso de administrador.",
   "messages.native-mode-client": "Este modo le permite seleccionar a qué servidor conectarse.",

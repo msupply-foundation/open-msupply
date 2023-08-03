@@ -61,8 +61,6 @@
   "messages.select-rows-to-delete-them": "Hili lina sira atu hamos",
   "messages.shipment-saved": "Remessa salva ona🥳",
   "messages.confirm-delete-lines_other": "Ne'e sei hasai permanente {{count}} linas husi Invoice ida ne'e",
-  "messages.deleted-lines_other": "Hamos ona {{count}} linas",
-  "messages.deleted-lines_one": "Hamos ona {{count}} lina",
   "messages.deleted-requisition_one": "Hamos ona {{count}} requizisaun",
   "messages.deleted-requisitions_other": "Hamos ona {{count}} requizisaun",
   "label.stock-on-order": "Stock iha Pedidu",

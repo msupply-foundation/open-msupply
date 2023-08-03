@@ -2,11 +2,9 @@ import {
   CheckCell,
   Column,
   ColumnAlign,
-  CurrencyCell,
   ExpiryDateCell,
   PositiveNumberCell,
   useColumns,
-  useCurrencyFormat,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
@@ -41,14 +39,6 @@ export const usePrescriptionLineEditColumns = ({
         },
       ],
       ['packSize', { width: 90 }],
-      [
-        'sellPricePerPack',
-        {
-          Cell: CurrencyCell,
-          formatter: sellPrice => useCurrencyFormat(Number(sellPrice)),
-          width: 120,
-        },
-      ],
       {
         label: 'label.on-hold',
         key: 'onHold',
@@ -122,12 +112,6 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
       'unitQuantity',
       {
         accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
-      },
-    ],
-    [
-      'sellPricePerUnit',
-      {
-        accessor: ({ rowData }) => rowData.sellPricePerPack,
       },
     ],
   ]);

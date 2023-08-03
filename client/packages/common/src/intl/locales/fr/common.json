@@ -293,5 +293,7 @@
   "label.dps": "Cond.",
   "label.default-pack-size": "Conditionnement",
   "label.requested-packs": "Qté de boites demandées",
-  "label.requested-number-packs": "Qté de boites demandées"
+  "label.requested-number-packs": "Qté de boites demandées",
+  "messages.deleted-lines_one": "{{count}} ligne supprimée",
+  "messages.deleted-lines_other": "{{count}} lignes supprimées"
 }

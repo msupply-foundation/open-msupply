@@ -81,8 +81,6 @@
   "messages.confirm-inbound-status-as": "Confirm status as $t({{status}})?\nNote: changing from 'New' will remove any lines with zero quantity.",
   "messages.confirm-status-as": "Confirm status as $t({{status}})?",
   "messages.could-not-save": "Could not Save",
-  "messages.deleted-lines_one": "Deleted {{count}} line",
-  "messages.deleted-lines_other": "Deleted {{count}} lines",
   "messages.deleted-shipments_one": "Deleted {{count}} shipment",
   "messages.deleted-shipments_other": "Deleted {{count}} shipments",
   "messages.confirm-delete-invoice-lines_one": "This will permanently remove 1 line from this invoice",
