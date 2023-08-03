@@ -234,6 +234,8 @@
   "placeholder.search-by-name": "Buka bazeia ba naran",
   "messages.delete-this-line": "Hamos lina ida ne'e",
   "messages.deleted-generic_one": "Registu {{count}} hamos tiha ona",
+  "messages.deleted-lines_other": "Hamos ona {{count}} linas",
+  "messages.deleted-lines_one": "Hamos ona {{count}} lina",
   "log.stock-expiry-date-change": "Data expirasaun iha mudansa",
   "placeholder.filter-by-status": "Filter tuir estatus",
   "placeholder.filter-items": "Filter items",

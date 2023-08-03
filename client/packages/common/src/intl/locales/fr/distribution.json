@@ -87,8 +87,6 @@
   "messages.confirm-delete-shipments_other": "Cela supprimera définitivement {{count}} bons de livraison",
   "messages.confirm-delete-lines_one": "Cela supprimera définitivement 1 ligne de cette livraison",
   "messages.confirm-delete-lines_other": "Cela supprimera définitivement {{count}} lignes de cette livraison",
-  "messages.deleted-lines_one": "{{count}} ligne supprimée",
-  "messages.deleted-lines_other": "{{count}} lignes supprimées",
   "messages.deleted-requisition_one": "{{count}} réquisitions supprimées",
   "messages.deleted-requisitions_other": "{{count}} réquisitions supprimées",
   "messages.error-saving-shipment": "Erreur lors de la sauvegarde du bon de livraison 🥺",

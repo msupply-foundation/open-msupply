@@ -79,19 +79,11 @@ const TotalRow = ({ allocatedQuantity }: { allocatedQuantity: number }) => {
 
 export const PrescriptionLineEditTable: React.FC<
   PrescriptionLineEditTableProps
-> = ({
-  onChange,
-  packSizeController,
-  rows,
-  item,
-  allocatedQuantity,
-  batch,
-}) => {
+> = ({ onChange, packSizeController, rows, item, allocatedQuantity }) => {
   const t = useTranslation('dispensary');
   const { orderedRows, placeholderRow } = usePrescriptionLineEditRows(
     rows,
-    packSizeController,
-    batch
+    packSizeController
   );
   const onEditStockLine = (key: string, value: number, packSize: number) => {
     onChange(key, value, packSize);

@@ -145,7 +145,7 @@ export const PrescriptionLineEditForm: React.FC<
             </Grid>
           </ModalRow>
           <Grid display="flex" flex={1} marginTop={1}>
-            <ModalLabel label={t('label.comment')} />
+            <ModalLabel label={t('label.note')} />
             <BasicTextInput
               value={draftPrescriptionLines[0]?.note ?? ''}
               onChange={e => {

@@ -330,6 +330,8 @@
   "messages.delete-this-line": "Delete this line",
   "messages.deleted-generic_one": "Deleted {{count}} record",
   "messages.deleted-generic_other": "Deleted {{count}} records",
+  "messages.deleted-lines_one": "Deleted {{count}} line",
+  "messages.deleted-lines_other": "Deleted {{count}} lines",
   "messages.detect-scanner": "To identify your scanner, try scanning the barcode above",
   "messages.over-allocated": "Due to the pack sizes available a total quantity of {{quantity}} has been allocated rather than {{issueQuantity}}",
   "messages.native-mode": "Select the mode which you would like to run. Note that you can change this option later if you have administrator access.",

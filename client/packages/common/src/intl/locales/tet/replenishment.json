@@ -75,8 +75,6 @@
   "messages.deleted-shipments_one": "Hamos ona {{count}} Remessa",
   "messages.deleted-shipments_other": "Hamos ona {{count}} Remessas",
   "messages.confirm-delete-shipments_one": "Ne'e sei hasai permanente remessa 1",
-  "messages.deleted-lines_other": "Hamos ona {{count}} linas",
-  "messages.deleted-lines_one": "Hamos ona {{count}} lina",
   "messages.error-saving-shipment": "Iha erru atu salva remessa🥺",
   "messages.select-rows-to-delete-them": "Hili lina sira atu hamos",
   "messages.shipment-saved": "Remessa salva ona🥳",

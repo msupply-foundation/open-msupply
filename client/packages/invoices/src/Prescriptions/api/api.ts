@@ -201,8 +201,11 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
         .map(prescriptionParsers.toInsertLine),
       updatePrescriptionLines: draftPrescriptionLine
         .filter(
-          ({ type, isCreated, isUpdated }) =>
-            !isCreated && isUpdated && type === InvoiceLineNodeType.StockOut
+          ({ type, isCreated, isUpdated, numberOfPacks }) =>
+            !isCreated &&
+            isUpdated &&
+            type === InvoiceLineNodeType.StockOut &&
+            numberOfPacks > 0
         )
         .map(prescriptionParsers.toUpdateLine),
       deletePrescriptionLines: draftPrescriptionLine

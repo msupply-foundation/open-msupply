@@ -84,8 +84,6 @@
   "info.cannot-edit-program-requisition": "Não foi possível editar o fornecedor, mínimo MDE, máximo MDE ou adicionar itens a uma requisição do programa.",
   "info.automatic-shipment": "Esta entrada foi criada automaticamente, como um resultado de um Envio de outro armazém.",
   "messages.could-not-save": "Não foi possível salvar",
-  "messages.deleted-lines_one": "Excluída {{count}} linha",
-  "messages.deleted-lines_other": "Excluídas {{count}} linhas",
   "messages.deleted-shipments_one": "Excluídos {{count}} envios",
   "messages.deleted-shipments_other": "Excluídos {{count}} envios",
   "messages.confirm-delete-invoice-lines_one": "Isso excluirá permanentemente 1 linha desta fatura",

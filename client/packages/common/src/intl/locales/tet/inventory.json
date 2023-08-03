@@ -32,7 +32,6 @@
   "messages.confirm-delete-stocktake_lines_other": "Ne'e sei hasai permanente linas {{count}} Stocktake",
   "messages.deleted-stocktakes_one": "Hamos tiha ona stocktake {{count}}",
   "messages.deleted-stocktakes_other": "Hamos tiha ona stocktakes {{count}}",
-  "messages.deleted-lines": "Hamos tiha ona linas {{count}}",
   "messages.confirm-save-stock-line": "Ita hakarak salva mudansa ba lina Stock ne'e? Mudansa hotu sei grava no bele reve fIla fali iha ekran ne'e.",
   "status.finalised": "Finaliza Ona",
   "title.stock-line-details": "Lina Stock nia detalius",
