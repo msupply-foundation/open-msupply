@@ -20,7 +20,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   disabled,
   disableEncounterButton,
 }) => {
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const { setModal: selectModal, reset } = usePatientModalStore();
   const options = [
     {

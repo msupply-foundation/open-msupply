@@ -1,0 +1,166 @@
+fragment PrescriptionRow on InvoiceNode {
+  __typename
+  comment
+  createdDatetime
+  pickedDatetime
+  verifiedDatetime
+  id
+  invoiceNumber
+  otherPartyId
+  otherPartyName
+  type
+  status
+  colour
+  pricing {
+    __typename
+    totalAfterTax
+  }
+}
+
+query prescriptions(
+  $first: Int
+  $offset: Int
+  $key: InvoiceSortFieldInput!
+  $desc: Boolean
+  $filter: InvoiceFilterInput
+  $storeId: String!
+) {
+  invoices(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      nodes {
+        ...PrescriptionRow
+      }
+      totalCount
+    }
+  }
+}
+
+query prescriptionByNumber($invoiceNumber: Int!, $storeId: String!) {
+  invoiceByNumber(
+    invoiceNumber: $invoiceNumber
+    storeId: $storeId
+    type: PRESCRIPTION
+  ) {
+    __typename
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      ...PrescriptionRow
+    }
+  }
+}
+
+mutation insertPrescription(
+  $id: String!
+  $patientId: String!
+  $storeId: String!
+) {
+  insertPrescription(
+    storeId: $storeId
+    input: { id: $id, patientId: $patientId }
+  ) {
+    __typename
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+    }
+    ... on InsertPrescriptionError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotVisible {
+          __typename
+          description
+        }
+        ... on OtherPartyNotAPatient {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
+}
+
+mutation upsertPrescription(
+  $storeId: String!
+  $input: BatchPrescriptionInput!
+) {
+  batchPrescription(storeId: $storeId, input: $input) {
+    __typename
+    updatePrescriptions {
+      id
+      response {
+        ... on UpdatePrescriptionError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on NodeError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deletePrescriptions(
+  $storeId: String!
+  $deletePrescriptions: [String!]!
+) {
+  batchPrescription(
+    storeId: $storeId
+    input: { deletePrescriptions: $deletePrescriptions }
+  ) {
+    __typename
+    deletePrescriptions {
+      id
+      response {
+        ... on DeletePrescriptionError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteInvoiceWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
