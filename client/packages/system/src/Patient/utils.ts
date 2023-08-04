@@ -20,6 +20,12 @@ export interface NameSearchInputProps {
   disabled?: boolean;
 }
 
+export interface PatientSearchModalProps {
+  open: boolean;
+  onClose: () => void;
+  onChange: (name: PatientRowFragment) => void;
+}
+
 export const basicFilterOptions = {
   stringify: (name: PatientRowFragment) => `${name.code} ${name.name}`,
   limit: 100,

@@ -14,6 +14,7 @@ import {
 import { OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { DraftOutboundLine, InboundItem } from './types';
+import { PrescriptionRowFragment } from './Prescriptions/api';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -118,6 +119,12 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
     : inbound.status === InvoiceNodeStatus.Picked ||
         inbound.status === InvoiceNodeStatus.Shipped ||
         inbound.status === InvoiceNodeStatus.Verified;
+};
+
+export const isPrescriptionDisabled = (
+  prescription: PrescriptionRowFragment
+): boolean => {
+  return prescription.status === InvoiceNodeStatus.Verified;
 };
 
 export const isInboundListItemDisabled = (
@@ -241,6 +248,30 @@ export const inboundsToCsv = (
     Formatter.csvDateTimeString(node.deliveredDatetime),
     node.comment,
     node.pricing.totalAfterTax,
+  ]);
+  return Formatter.csv({ fields, data });
+};
+
+export const prescriptionToCsv = (
+  invoices: PrescriptionRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.name'),
+    t('label.status'),
+    t('label.invoice-number'),
+    t('label.entered'),
+    t('label.comment'),
+  ];
+
+  const data = invoices.map(node => [
+    node.id,
+    node.otherPartyName,
+    node.status,
+    node.invoiceNumber,
+    Formatter.csvDateTimeString(node.createdDatetime),
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };

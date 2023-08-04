@@ -15,7 +15,7 @@ import { usePatient } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
 const SummaryRow = ({ label, value }: { label: LocaleKey; value: string }) => {
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   return (
     <Box gap={1} display="flex">
       <Box style={{ textAlign: 'start', width: 135 }}>
@@ -33,7 +33,7 @@ export const PatientSummary: FC = () => {
   const { data: patient } = usePatient.document.get(patientId);
   const { localisedDate } = useFormatDateTime();
   const { setSuffix } = useBreadcrumbs([AppRoute.Patients]);
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const formatDateOfBirth = (dateOfBirth: string | null) => {
     const dob = DateUtils.getDateOrNull(dateOfBirth);
 

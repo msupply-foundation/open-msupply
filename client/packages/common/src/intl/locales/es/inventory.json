@@ -58,7 +58,6 @@
   "stocktake.comment-location-template": "Creado usando los artículos de la ubicación '{{location}}'",
   "title.stock-line-details": "Detalle de línea de inventario",
   "messages.unlocked-description": "Esto habilitará nuevamente los cambios en la toma de inventario.",
-  "button.delete-lines": "Eliminar líneas seleccionadas",
   "messages.select-rows-to-delete-them": "Selecciona filas para eliminarlas",
   "error.cant-save": "Hubo un problema al guardar.",
   "error.no-stocktake-items": "No se han agregado artículos a esta toma de inventario.",

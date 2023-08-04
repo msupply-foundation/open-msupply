@@ -27,6 +27,7 @@
   "cmdk.goto-stocktakes": "Go to: Stocktakes",
   "cmdk.goto-suppliers": "Go to: Suppliers",
   "cmdk.placeholder": "Type a command or search",
+  "cmdk.goto-prescriptions": "Go to: Prescriptions",
   "customer-requisition": "Requisitions",
   "customers": "Customers",
   "dashboard": "Dashboard",
@@ -93,5 +94,6 @@
   "suppliers": "Suppliers",
   "sync": "Sync",
   "tools": "Tools",
-  "cmdk.goto-patients": "Go to: Patients"
+  "cmdk.goto-patients": "Go to: Patients",
+  "prescription": "Prescriptions"
 }

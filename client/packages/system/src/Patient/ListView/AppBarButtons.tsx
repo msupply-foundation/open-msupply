@@ -19,7 +19,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
   sortBy,
 }) => {
   const { success, error } = useNotification();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const [open, setOpen] = useState(false);
 

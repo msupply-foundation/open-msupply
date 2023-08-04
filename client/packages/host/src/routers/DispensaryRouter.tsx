@@ -7,6 +7,10 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 
+const InvoiceService = React.lazy(
+  () => import('@openmsupply-client/invoices/src/InvoiceService')
+);
+
 const PatientService = React.lazy(
   () => import('@openmsupply-client/system/src/Patient/Service')
 );
@@ -18,6 +22,11 @@ const EncounterService = React.lazy(
 const ReportService = React.lazy(
   () => import('@openmsupply-client/system/src/Report/Service')
 );
+
+const fullPrescriptionPath = RouteBuilder.create(AppRoute.Dispensary)
+  .addPart(AppRoute.Prescription)
+  .addWildCard()
+  .build();
 
 const fullPatientsPath = RouteBuilder.create(AppRoute.Dispensary)
   .addPart(AppRoute.Patients)
@@ -34,9 +43,14 @@ const fullReportsPath = RouteBuilder.create(AppRoute.Dispensary)
   .build();
 
 export const DispensaryRouter: FC = () => {
+  const gotoDistribution = useMatch(fullPrescriptionPath);
   const gotoPatients = useMatch(fullPatientsPath);
   const gotoEncounters = useMatch(fullEncountersPath);
   const gotoReports = useMatch(fullReportsPath);
+
+  if (gotoDistribution) {
+    return <InvoiceService />;
+  }
 
   if (gotoPatients) {
     return <PatientService />;
