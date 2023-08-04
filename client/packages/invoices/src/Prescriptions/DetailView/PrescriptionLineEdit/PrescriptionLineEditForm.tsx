@@ -13,7 +13,6 @@ import {
   Typography,
   ButtonWithIcon,
   ZapIcon,
-  InfoPanel,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -53,7 +52,6 @@ export const PrescriptionLineEditForm: React.FC<
   availableQuantity,
   disabled,
   canAutoAllocate,
-  isAutoAllocated,
   updateNotes,
   draftPrescriptionLines,
 }) => {
@@ -88,7 +86,12 @@ export const PrescriptionLineEditForm: React.FC<
     );
   };
 
-  const showAllocationWarning = isAutoAllocated && issueQuantity < quantity;
+  const handleIssueQuantityChange = (quantity: number) => {
+    setIssueQuantity(quantity);
+  };
+
+  const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
+  const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
     setIssueQuantity(quantity);
@@ -144,42 +147,33 @@ export const PrescriptionLineEditForm: React.FC<
               />
             </Grid>
           </ModalRow>
-          <Grid display="flex" flex={1} marginTop={1}>
+          <ModalRow>
             <ModalLabel label={t('label.note')} />
             <BasicTextInput
-              value={draftPrescriptionLines[0]?.note ?? ''}
+              value={note}
               onChange={e => {
                 updateNotes(e.target.value);
               }}
-              fullWidth
               InputProps={{
                 sx: {
                   backgroundColor: theme => theme.palette.background.menu,
                 },
               }}
+              fullWidth
+              style={{ flex: 1 }}
             />
-          </Grid>
+          </ModalRow>
         </>
       )}
       {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
-          {showAllocationWarning && (
-            <Grid display="flex" justifyContent="center" flex={1}>
-              <InfoPanel
-                message={t('messages.over-allocated', {
-                  quantity,
-                  issueQuantity,
-                })}
-              />
-            </Grid>
-          )}
           <Grid container>
             <ModalLabel label={t('label.issue')} />
             <NonNegativeIntegerInput
               autoFocus
               value={issueQuantity}
-              onChange={setIssueQuantity}
+              onChange={handleIssueQuantityChange}
             />
 
             <Box marginLeft={1} />

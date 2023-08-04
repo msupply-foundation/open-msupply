@@ -149,6 +149,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     setIsDirty(true);
     setDraftStockOutLines(newAllocateQuantities ?? draftStockOutLines);
     setIsAutoAllocated(autoAllocated);
+
+    return newAllocateQuantities;
   };
 
   const canAutoAllocate = !!(currentItem && draftStockOutLines.length);
