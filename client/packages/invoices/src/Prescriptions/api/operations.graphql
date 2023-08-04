@@ -8,12 +8,110 @@ fragment PrescriptionRow on InvoiceNode {
   invoiceNumber
   otherPartyId
   otherPartyName
+  clinicianId
   type
   status
   colour
   pricing {
     __typename
     totalAfterTax
+    totalBeforeTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalAfterTax
+    serviceTotalBeforeTax
+    taxPercentage
+  }
+
+  user {
+    __typename
+    username
+    email
+  }
+
+  lines {
+    __typename
+    nodes {
+      ...PrescriptionLine
+    }
+    totalCount
+  }
+
+  patient {
+    __typename
+    id
+    name
+    code
+    isDeceased
+  }
+
+  clinician {
+    id
+    firstName
+    lastName
+  }
+}
+
+fragment PartialStockLine on StockLineNode {
+  id
+  itemId
+  availableNumberOfPacks
+  totalNumberOfPacks
+  onHold
+  sellPricePerPack
+  packSize
+  expiryDate
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+}
+
+fragment PrescriptionLine on InvoiceLineNode {
+  __typename
+  id
+  type
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  invoiceId
+  sellPricePerPack
+  note
+  totalBeforeTax
+  totalAfterTax
+  note
+
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+  }
+
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+
+  stockLine {
+    __typename
+    id
+    itemId
+    batch
+    availableNumberOfPacks
+    totalNumberOfPacks
+    onHold
+    sellPricePerPack
+    packSize
+    expiryDate
   }
 }
 
@@ -154,6 +252,44 @@ mutation deletePrescriptions(
             ... on CannotEditInvoice {
               __typename
               description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation deletePrescriptionLines(
+  $storeId: String!
+  $deletePrescriptionLines: [DeletePrescriptionLineInput!]!
+) {
+  batchPrescription(
+    storeId: $storeId
+    input: { deletePrescriptionLines: $deletePrescriptionLines }
+  ) {
+    deletePrescriptionLines {
+      id
+      response {
+        ... on DeletePrescriptionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
             }
           }
         }

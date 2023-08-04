@@ -4,7 +4,11 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type PrescriptionRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number } };
+export type PrescriptionRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null };
+
+export type PartialStockLineFragment = { __typename: 'StockLineNode', id: string, itemId: string, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null };
+
+export type PrescriptionLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null } | null };
 
 export type PrescriptionsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -16,7 +20,7 @@ export type PrescriptionsQueryVariables = Types.Exact<{
 }>;
 
 
-export type PrescriptionsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number } }> } };
+export type PrescriptionsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null }> } };
 
 export type PrescriptionByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -24,7 +28,7 @@ export type PrescriptionByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type PrescriptionByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type PrescriptionByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, verifiedDatetime?: string | null, id: string, invoiceNumber: number, otherPartyId: string, otherPartyName: string, clinicianId?: string | null, type: Types.InvoiceNodeType, status: Types.InvoiceNodeStatus, colour?: string | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null }, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, invoiceId: string, sellPricePerPack: number, note?: string | null, totalBeforeTax: number, totalAfterTax: number, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null }, location?: { __typename: 'LocationNode', id: string, name: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', id: string, itemId: string, batch?: string | null, availableNumberOfPacks: number, totalNumberOfPacks: number, onHold: boolean, sellPricePerPack: number, packSize: number, expiryDate?: string | null } | null }> }, patient?: { __typename: 'PatientNode', id: string, name: string, code: string, isDeceased: boolean } | null, clinician?: { __typename: 'ClinicianNode', id: string, firstName?: string | null, lastName: string } | null } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type InsertPrescriptionMutationVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
@@ -51,6 +55,57 @@ export type DeletePrescriptionsMutationVariables = Types.Exact<{
 
 export type DeletePrescriptionsMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptions?: Array<{ __typename: 'DeletePrescriptionResponseWithId', id: string, response: { __typename: 'DeletePrescriptionError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
+export type DeletePrescriptionLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  deletePrescriptionLines: Array<Types.DeletePrescriptionLineInput> | Types.DeletePrescriptionLineInput;
+}>;
+
+
+export type DeletePrescriptionLinesMutation = { __typename: 'Mutations', batchPrescription: { __typename: 'BatchPrescriptionResponse', deletePrescriptionLines?: Array<{ __typename: 'DeletePrescriptionLineResponseWithId', id: string, response: { __typename: 'DeletePrescriptionLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+
+export const PrescriptionLineFragmentDoc = gql`
+    fragment PrescriptionLine on InvoiceLineNode {
+  __typename
+  id
+  type
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  invoiceId
+  sellPricePerPack
+  note
+  totalBeforeTax
+  totalAfterTax
+  note
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+  }
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+  stockLine {
+    __typename
+    id
+    itemId
+    batch
+    availableNumberOfPacks
+    totalNumberOfPacks
+    onHold
+    sellPricePerPack
+    packSize
+    expiryDate
+  }
+}
+    `;
 export const PrescriptionRowFragmentDoc = gql`
     fragment PrescriptionRow on InvoiceNode {
   __typename
@@ -62,12 +117,62 @@ export const PrescriptionRowFragmentDoc = gql`
   invoiceNumber
   otherPartyId
   otherPartyName
+  clinicianId
   type
   status
   colour
   pricing {
     __typename
     totalAfterTax
+    totalBeforeTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalAfterTax
+    serviceTotalBeforeTax
+    taxPercentage
+  }
+  user {
+    __typename
+    username
+    email
+  }
+  lines {
+    __typename
+    nodes {
+      ...PrescriptionLine
+    }
+    totalCount
+  }
+  patient {
+    __typename
+    id
+    name
+    code
+    isDeceased
+  }
+  clinician {
+    id
+    firstName
+    lastName
+  }
+}
+    ${PrescriptionLineFragmentDoc}`;
+export const PartialStockLineFragmentDoc = gql`
+    fragment PartialStockLine on StockLineNode {
+  id
+  itemId
+  availableNumberOfPacks
+  totalNumberOfPacks
+  onHold
+  sellPricePerPack
+  packSize
+  expiryDate
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
   }
 }
     `;
@@ -204,6 +309,42 @@ export const DeletePrescriptionsDocument = gql`
   }
 }
     `;
+export const DeletePrescriptionLinesDocument = gql`
+    mutation deletePrescriptionLines($storeId: String!, $deletePrescriptionLines: [DeletePrescriptionLineInput!]!) {
+  batchPrescription(
+    storeId: $storeId
+    input: {deletePrescriptionLines: $deletePrescriptionLines}
+  ) {
+    deletePrescriptionLines {
+      id
+      response {
+        ... on DeletePrescriptionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -226,6 +367,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deletePrescriptions(variables: DeletePrescriptionsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionsMutation>(DeletePrescriptionsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptions', 'mutation');
+    },
+    deletePrescriptionLines(variables: DeletePrescriptionLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePrescriptionLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeletePrescriptionLinesMutation>(DeletePrescriptionLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePrescriptionLines', 'mutation');
     }
   };
 }
@@ -313,5 +457,22 @@ export const mockUpsertPrescriptionMutation = (resolver: ResponseResolver<GraphQ
 export const mockDeletePrescriptionsMutation = (resolver: ResponseResolver<GraphQLRequest<DeletePrescriptionsMutationVariables>, GraphQLContext<DeletePrescriptionsMutation>, any>) =>
   graphql.mutation<DeletePrescriptionsMutation, DeletePrescriptionsMutationVariables>(
     'deletePrescriptions',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeletePrescriptionLinesMutation((req, res, ctx) => {
+ *   const { storeId, deletePrescriptionLines } = req.variables;
+ *   return res(
+ *     ctx.data({ batchPrescription })
+ *   )
+ * })
+ */
+export const mockDeletePrescriptionLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeletePrescriptionLinesMutationVariables>, GraphQLContext<DeletePrescriptionLinesMutation>, any>) =>
+  graphql.mutation<DeletePrescriptionLinesMutation, DeletePrescriptionLinesMutationVariables>(
+    'deletePrescriptionLines',
     resolver
   )

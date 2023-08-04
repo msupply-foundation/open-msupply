@@ -7,7 +7,11 @@ import {
 } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '../../api';
 import { getPatientOptionRenderer } from '../PatientOptionRenderer';
-import { filterByNameAndCode, PatientSearchModalProps } from '../../utils';
+import {
+  filterByNameAndCode,
+  PatientSearchModalProps,
+  SearchInputPatient,
+} from '../../utils';
 
 const PatientSearchComponent: FC<PatientSearchModalProps> = ({
   open,
@@ -28,9 +32,9 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
       onClose={onClose}
       title={t('patients')}
       renderOption={PatientOptionRenderer}
-      getOptionLabel={(option: PatientRowFragment) => option.name}
+      getOptionLabel={(option: SearchInputPatient) => option.name}
       filterOptions={filterByNameAndCode}
-      onChange={(_, name: PatientRowFragment | PatientRowFragment[] | null) => {
+      onChange={(_, name: SearchInputPatient | SearchInputPatient[] | null) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
     />

@@ -76,7 +76,7 @@ pub fn update_prescription(
             if status_changed {
                 activity_log_entry(
                     &ctx,
-                    log_type_from_invoice_status(&update_invoice.status),
+                    log_type_from_invoice_status(&update_invoice.status, true),
                     Some(update_invoice.id.to_owned()),
                     None,
                 )?;
@@ -277,17 +277,6 @@ mod test {
                 r.r#type = InvoiceRowType::Prescription;
             })
         }
-        fn prescription_line_a() -> InvoiceLineRow {
-            inline_init(|r: &mut InvoiceLineRow| {
-                r.id = "test_prescription_pricing_line_a".to_string();
-                r.invoice_id = "test_prescription_pricing".to_string();
-                r.item_id = "item_a".to_string();
-                r.stock_line_id = Some("item_a_line_a".to_string());
-                r.item_code = "item_a_code".to_string();
-                r.pack_size = 1;
-                r.number_of_packs = 5.0;
-            })
-        }
         fn clinician() -> ClinicianRow {
             inline_init(|r: &mut ClinicianRow| {
                 r.id = "test_clinician".to_string();
@@ -419,8 +408,8 @@ mod test {
             .find_many_by_record_id(&prescription().id)
             .unwrap()
             .into_iter()
-            .find(|l| l.r#type == ActivityLogType::InvoiceStatusPicked)
+            .find(|l| l.r#type == ActivityLogType::PrescriptionStatusPicked)
             .unwrap();
-        assert_eq!(log.r#type, ActivityLogType::InvoiceStatusPicked);
+        assert_eq!(log.r#type, ActivityLogType::PrescriptionStatusPicked);
     }
 }

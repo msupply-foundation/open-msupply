@@ -76,7 +76,7 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
 
         system_activity_log_entry(
             connection,
-            log_type_from_invoice_status(&updated_outbound_shipment.status),
+            log_type_from_invoice_status(&updated_outbound_shipment.status, false),
             &updated_outbound_shipment.store_id,
             &updated_outbound_shipment.id,
         )?;
