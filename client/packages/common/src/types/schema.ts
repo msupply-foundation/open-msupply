@@ -67,6 +67,10 @@ export enum ActivityLogNodeType {
   InvoiceStatusPicked = 'INVOICE_STATUS_PICKED',
   InvoiceStatusShipped = 'INVOICE_STATUS_SHIPPED',
   InvoiceStatusVerified = 'INVOICE_STATUS_VERIFIED',
+  PrescriptionCreated = 'PRESCRIPTION_CREATED',
+  PrescriptionDeleted = 'PRESCRIPTION_DELETED',
+  PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
+  PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
   Repack = 'REPACK',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
@@ -1885,6 +1889,7 @@ export type InvoiceNode = {
   __typename: 'InvoiceNode';
   allocatedDatetime?: Maybe<Scalars['DateTime']['output']>;
   clinician?: Maybe<ClinicianNode>;
+  clinicianId?: Maybe<Scalars['String']['output']>;
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];

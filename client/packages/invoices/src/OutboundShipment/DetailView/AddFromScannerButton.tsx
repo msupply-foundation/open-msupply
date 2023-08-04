@@ -11,8 +11,9 @@ import {
   Tooltip,
   Box,
 } from '@openmsupply-client/common';
-import { Draft, useOutbound } from '../api';
+import { useOutbound } from '../api';
 import { isOutboundDisabled } from '../../utils';
+import { Draft } from '../..';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
