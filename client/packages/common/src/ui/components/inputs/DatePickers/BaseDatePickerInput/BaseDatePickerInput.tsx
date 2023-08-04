@@ -20,19 +20,27 @@ export const BaseDatePickerInput: FC<
   }
 > = ({ error, onChange, width, ...props }) => {
   const theme = useAppTheme();
-  const [validationError, setValidationError] = React.useState<string | null>(null);
+  const [validationError, setValidationError] = React.useState<string | null>(
+    null
+  );
   const t = useTranslation('common');
 
-return (
+  return (
     <DatePicker
       slots={{
         textField: TextField,
       }}
-      onChange={(date,context) => {
-        const {validationError} = context;
+      onChange={(date, context) => {
+        const { validationError } = context;
 
-        setValidationError(validationError ? t(`error.date_${validationError}` as LocaleKey, {defaultValue: validationError}) : null);
-        onChange?.(date, context);
+        setValidationError(
+          validationError
+            ? t(`error.date_${validationError}` as LocaleKey, {
+                defaultValue: validationError,
+              })
+            : null
+        );
+        if (!validationError) onChange?.(date, context);
       }}
       slotProps={{
         popper: {
@@ -67,7 +75,7 @@ return (
         textField: {
           error: !!error || !!validationError,
           helperText: error ?? validationError ?? '',
-          sx: { width, '& .MuiFormHelperText-root': {color: 'error.main'} },
+          sx: { width, '& .MuiFormHelperText-root': { color: 'error.main' } },
         },
       }}
       {...props}
