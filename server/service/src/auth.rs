@@ -88,6 +88,7 @@ pub enum Resource {
     // patient program
     QueryProgram,
     QueryEncounter,
+    QueryContactTrace,
     MutateProgram,
     MutateEncounter,
     SyncInfo,
@@ -351,6 +352,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
     map.insert(
         Resource::QueryEncounter,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryContactTrace,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
