@@ -8,9 +8,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE TABLE contact_trace (
           id TEXT NOT NULL PRIMARY KEY,
           program_id Text,
+          document_id Text,
           datetime TIMESTAMP,
           contact_trace_id TEXT,
           status TEXT NOT NULL,
+          root_patient_id TEXT NOT NULL REFERENCES name(id),
           patient_id TEXT REFERENCES name(id),
           first_name TEXT,
           last_name TEXT
@@ -29,9 +31,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE TABLE contact_trace (
           id TEXT NOT NULL PRIMARY KEY,
           program_id Text,
+          document_id Text,
           datetime TIMESTAMP,
           contact_trace_id TEXT,
           status contact_trace_status NOT NULL,
+          root_patient_id TEXT NOT NULL REFERENCES name(id),
           patient_id TEXT REFERENCES name(id),
           first_name TEXT,
           last_name TEXT
