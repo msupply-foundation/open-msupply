@@ -40,6 +40,10 @@ use mutations::undelete_document::undelete_document;
 use mutations::undelete_document::UndeleteDocumentInput;
 use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
+use queries::contact_trace::contact_traces;
+use queries::contact_trace::ContactTraceFilterInput;
+use queries::contact_trace::ContactTraceResponse;
+use queries::contact_trace::ContactTraceSortInput;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::programs::patient::patient_search_central;
@@ -204,6 +208,17 @@ impl ProgramsQueries {
         sort: Option<EncounterSortInput>,
     ) -> Result<EncounterFieldsResponse> {
         encounter_fields(ctx, store_id, input, page, filter, sort)
+    }
+
+    pub async fn contact_traces(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<ContactTraceFilterInput>,
+        sort: Option<ContactTraceSortInput>,
+    ) -> Result<ContactTraceResponse> {
+        contact_traces(ctx, store_id, page, filter, sort)
     }
 }
 

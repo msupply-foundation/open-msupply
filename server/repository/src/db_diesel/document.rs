@@ -128,6 +128,7 @@ pub struct Document {
 
 #[derive(Clone)]
 pub struct DocumentFilter {
+    pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub r#type: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
@@ -139,6 +140,7 @@ pub struct DocumentFilter {
 impl DocumentFilter {
     pub fn new() -> Self {
         DocumentFilter {
+            id: None,
             name: None,
             r#type: None,
             datetime: None,
@@ -146,6 +148,11 @@ impl DocumentFilter {
             owner: None,
             context_id: None,
         }
+    }
+
+    pub fn id(mut self, value: EqualFilter<String>) -> Self {
+        self.id = Some(value);
+        self
     }
 
     pub fn name(mut self, value: StringFilter) -> Self {
@@ -196,6 +203,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
 
     if let Some(f) = filter {
         let DocumentFilter {
+            id,
             name,
             r#type,
             datetime,
@@ -204,6 +212,7 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
             data,
         } = f;
 
+        apply_equal_filter!(query, id, latest_document::dsl::id);
         apply_string_filter!(query, name, latest_document::dsl::name);
         apply_equal_filter!(query, r#type, latest_document::dsl::type_);
         apply_date_time_filter!(query, datetime, latest_document::dsl::datetime);
@@ -344,6 +353,7 @@ impl<'a> DocumentRepository<'a> {
         let mut query = document::dsl::document.into_boxed();
         if let Some(f) = filter {
             let DocumentFilter {
+                id,
                 name,
                 r#type,
                 datetime,
@@ -352,6 +362,7 @@ impl<'a> DocumentRepository<'a> {
                 data,
             } = f;
 
+            apply_equal_filter!(query, id, document::dsl::id);
             apply_string_filter!(query, name, document::dsl::name);
             apply_equal_filter!(query, r#type, document::dsl::type_);
             apply_date_time_filter!(query, datetime, document::dsl::datetime);
