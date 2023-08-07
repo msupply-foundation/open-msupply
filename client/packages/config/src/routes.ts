@@ -10,6 +10,7 @@ export enum AppRoute {
   Dispensary = 'dispensary',
   Patients = 'patients',
   Encounter = 'encounter',
+  Prescription = 'prescription',
 
   Discovery = 'discovery',
 

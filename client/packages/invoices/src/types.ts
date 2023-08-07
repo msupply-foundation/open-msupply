@@ -1,5 +1,6 @@
 import { InboundLineFragment } from './InboundShipment/api';
 import { OutboundLineFragment } from './OutboundShipment/api';
+import { PrescriptionLineFragment } from './Prescriptions/api';
 
 export interface DraftInboundLine extends InboundLineFragment {
   isCreated?: boolean;
@@ -23,4 +24,10 @@ export type OutboundItem = {
   id: string;
   itemId: string;
   lines: OutboundLineFragment[];
+};
+
+export type PrescriptionItem = {
+  id: string;
+  itemId: string;
+  lines: PrescriptionLineFragment[];
 };
