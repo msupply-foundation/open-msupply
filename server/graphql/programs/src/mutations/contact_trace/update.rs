@@ -62,7 +62,7 @@ pub fn update_contact_trace(
             r#type,
             data,
             schema_id,
-            root_patient_id: patient_id,
+            patient_id,
             parent: Some(parent),
         },
         allowed_ctx.clone(),
