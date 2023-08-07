@@ -7,8 +7,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
         CREATE TABLE contact_trace (
           id TEXT NOT NULL PRIMARY KEY,
-          program_id Text,
-          document_id Text,
+          program_id TEXT NOT NULL REFERENCES program(id),
+          document_id TEXT NOT NULL REFERENCES document(id),
           datetime TIMESTAMP,
           contact_trace_id TEXT,
           status TEXT NOT NULL,
@@ -30,8 +30,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         
         CREATE TABLE contact_trace (
           id TEXT NOT NULL PRIMARY KEY,
-          program_id Text,
-          document_id Text,
+          program_id TEXT NOT NULL REFERENCES program(id),
+          document_id TEXT NOT NULL REFERENCES document(id),
           datetime TIMESTAMP,
           contact_trace_id TEXT,
           status contact_trace_status NOT NULL,
@@ -39,7 +39,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           patient_id TEXT REFERENCES name(id),
           first_name TEXT,
           last_name TEXT
-        );"#,
+        );
+
+        ALTER TYPE document_registry_type RENAME TO document_registry_category;
+        ALTER TYPE document_registry_category ADD VALUE IF NOT EXISTS 'CONTACT_TRACE';
+        "#,
     )?;
 
     Ok(())

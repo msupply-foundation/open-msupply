@@ -85,6 +85,7 @@ impl ContactTraceSortInput {
 pub struct ContactTraceFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub program_id: Option<EqualFilterStringInput>,
+    pub document_name: Option<StringFilterInput>,
     pub datetime: Option<DatetimeFilterInput>,
     pub root_patient_id: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
@@ -100,6 +101,7 @@ impl ContactTraceFilterInput {
             id: self.id.map(EqualFilter::from),
             patient_id: self.patient_id.map(EqualFilter::from),
             program_id: self.program_id.map(EqualFilter::from),
+            document_name: self.document_name.map(StringFilter::from),
             datetime: self.datetime.map(DatetimeFilter::from),
             status: self
                 .status

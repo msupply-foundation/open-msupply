@@ -1,5 +1,6 @@
 use super::{
     contact_trace_row::{contact_trace, contact_trace::dsl as contact_trace_dsl},
+    document::{document, document::dsl as document_dsl},
     program_row::{program, program::dsl as program_dsl},
     StorageConnection,
 };
@@ -7,8 +8,8 @@ use super::{
 use crate::{
     contact_trace_row::{ContactTraceRow, ContactTraceStatus},
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
-    DBType, DatetimeFilter, EqualFilter, Pagination, ProgramRow, RepositoryError, Sort,
-    StringFilter,
+    DBType, DatetimeFilter, DocumentRow, EqualFilter, Pagination, ProgramRow, RepositoryError,
+    Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
@@ -17,6 +18,7 @@ use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
 pub struct ContactTraceFilter {
     pub id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
+    pub document_name: Option<StringFilter>,
     pub program_context_id: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
     pub root_patient_id: Option<EqualFilter<String>>,
@@ -37,15 +39,19 @@ pub enum ContactTraceSortField {
     LastName,
 }
 
-pub type ContactTrace = (ContactTraceRow, ProgramRow);
+pub type ContactTrace = (ContactTraceRow, DocumentRow, ProgramRow);
 
 pub type ContactTraceSort = Sort<ContactTraceSortField>;
 
-type BoxedProgramQuery =
-    IntoBoxed<'static, InnerJoin<contact_trace::table, program::table>, DBType>;
+type BoxedProgramQuery = IntoBoxed<
+    'static,
+    InnerJoin<InnerJoin<contact_trace::table, document::table>, program::table>,
+    DBType,
+>;
 
 fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgramQuery {
     let mut query = contact_trace_dsl::contact_trace
+        .inner_join(document_dsl::document)
         .inner_join(program_dsl::program)
         .into_boxed();
 
@@ -53,6 +59,7 @@ fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgram
         let ContactTraceFilter {
             id,
             program_id,
+            document_name,
             program_context_id,
             datetime,
             root_patient_id,
@@ -69,6 +76,7 @@ fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgram
         apply_equal_filter!(query, patient_id, contact_trace_dsl::patient_id);
         apply_equal_filter!(query, program_context_id, program_dsl::context_id);
         apply_equal_filter!(query, program_id, contact_trace_dsl::program_id);
+        apply_string_filter!(query, document_name, document_dsl::name);
         apply_equal_filter!(query, status, contact_trace_dsl::status);
         apply_string_filter!(query, contact_trace_id, contact_trace_dsl::contact_trace_id);
         apply_string_filter!(query, first_name, contact_trace_dsl::first_name);

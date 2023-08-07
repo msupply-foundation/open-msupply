@@ -126,7 +126,7 @@ pub struct Document {
     pub context_id: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct DocumentFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
