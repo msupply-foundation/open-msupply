@@ -2,6 +2,7 @@
   "app.login": "Connexion",
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Ajouter un article",
+  "button.allocate": "Allouer",
   "button.cancel": "Annuler",
   "button.close": "Fermer",
   "button.export": "Exporter",
@@ -71,6 +72,7 @@
   "label.amount": "Montant",
   "label.api-version": "Version API:",
   "label.app-version": "Version:",
+  "label.available-quantity": "Quantité disponible : {{number}} unités",
   "label.available-packs": "Stock Dispo (boites)",
   "label.batch": "Lot",
   "label.chargeCode": "Code facturation",
@@ -131,6 +133,8 @@
   "label.order-history": "Historique des commandes",
   "label.our-soh": "Notre Stock",
   "label.pack": "Boite",
+  "label.packs-of_one": "boite de",
+  "label.packs-of_other": "boites de",
   "label.pack-quantity": "Qté (boites)",
   "label.pack-quantity-issued": "Qté de boites distribuées",
   "label.pack-size": "Conditionnement",
@@ -154,6 +158,7 @@
   "label.target-stock": "Quantité cible",
   "label.tax": "Taxe",
   "label.total": "Total",
+  "label.total-quantity": "Quantité totale",
   "label.type": "Type",
   "label.unit": "Unité",
   "label.unit-price": "Prix unitaire",
@@ -288,5 +293,7 @@
   "label.dps": "Cond.",
   "label.default-pack-size": "Conditionnement",
   "label.requested-packs": "Qté de boites demandées",
-  "label.requested-number-packs": "Qté de boites demandées"
+  "label.requested-number-packs": "Qté de boites demandées",
+  "messages.deleted-lines_one": "{{count}} ligne supprimée",
+  "messages.deleted-lines_other": "{{count}} lignes supprimées"
 }

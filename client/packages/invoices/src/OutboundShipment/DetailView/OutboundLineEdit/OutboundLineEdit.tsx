@@ -21,19 +21,13 @@ import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
 import {
   useDraftOutboundLines,
-  usePackSizeController,
   useNextItem,
-  PackSizeController,
 } from './hooks';
-import {
-  allocateQuantities,
-  sumAvailableQuantity,
-  getAllocatedQuantity,
-} from './utils';
 import { useOutbound } from '../../api';
-import { DraftOutboundLine } from '../../../types';
 import { getPackQuantityCellId } from '../../../utils';
 import { Draft, DraftItem } from '../../..';
+import { PackSizeController, allocateQuantities, getAllocatedQuantity, sumAvailableQuantity, usePackSizeController } from '../../../StockOut';
+import { DraftStockOutLine } from '../../../types';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
@@ -74,19 +68,19 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { status } = useOutbound.document.fields('status');
   const isDisabled = useOutbound.utils.isDisabled();
   const {
-    draftOutboundLines,
+    draftStockOutLines,
     updateQuantity,
-    setDraftOutboundLines,
+    setDraftStockOutLines,
     isLoading,
   } = useDraftOutboundLines(currentItem);
-  const packSizeController = usePackSizeController(draftOutboundLines);
+  const packSizeController = usePackSizeController(draftStockOutLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
   const { warning } = useNotification();
   useFocusNumberOfPacksInput(draft);
 
-  const placeholder = draftOutboundLines?.find(
+  const placeholder = draftStockOutLines?.find(
     ({ type, numberOfPacks }) =>
       type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
   );
@@ -99,7 +93,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const onSave = async () => {
     if (!isDirty) return;
 
-    await mutateAsync(draftOutboundLines);
+    await mutateAsync(draftStockOutLines);
     if (!draft) return;
 
     const { barcode } = draft;
@@ -110,7 +104,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     // it is possible for the user to select multiple batch lines
     // if the scanned barcode does not contain a batch number
     // however the scanned barcode can only relate to a specific pack size and therefore batch
-    const packSize = draftOutboundLines.find(
+    const packSize = draftStockOutLines.find(
       line => line.numberOfPacks > 0
     )?.packSize;
 
@@ -150,14 +144,16 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   ) => {
     const newAllocateQuantities = allocateQuantities(
       status,
-      draftOutboundLines
+      draftStockOutLines
     )(newVal, packSize);
     setIsDirty(true);
-    setDraftOutboundLines(newAllocateQuantities ?? draftOutboundLines);
+    setDraftStockOutLines(newAllocateQuantities ?? draftStockOutLines);
     setIsAutoAllocated(autoAllocated);
+
+    return newAllocateQuantities;
   };
 
-  const canAutoAllocate = !!(currentItem && draftOutboundLines.length);
+  const canAutoAllocate = !!(currentItem && draftStockOutLines.length);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
@@ -202,8 +198,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           packSizeController={packSizeController}
           onChangeItem={setCurrentItem}
           item={currentItem}
-          allocatedQuantity={getAllocatedQuantity(draftOutboundLines)}
-          availableQuantity={sumAvailableQuantity(draftOutboundLines)}
+          allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
+          availableQuantity={sumAvailableQuantity(draftStockOutLines)}
           onChangeQuantity={onAllocate}
           canAutoAllocate={canAutoAllocate}
           isAutoAllocated={isAutoAllocated}
@@ -215,8 +211,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           isLoading={isLoading}
           packSizeController={packSizeController}
           updateQuantity={onUpdateQuantity}
-          draftOutboundLines={draftOutboundLines}
-          allocatedQuantity={getAllocatedQuantity(draftOutboundLines)}
+          draftOutboundLines={draftStockOutLines}
+          allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
           batch={draft?.barcode?.batch}
         />
       </Grid>
@@ -230,7 +226,7 @@ interface TableProps {
   isLoading: boolean;
   packSizeController: PackSizeController;
   updateQuantity: (batchId: string, updateQuantity: number) => void;
-  draftOutboundLines: DraftOutboundLine[];
+  draftOutboundLines: DraftStockOutLine[];
   allocatedQuantity: number;
   batch?: string;
 }

@@ -1,6 +1,5 @@
 import { InboundLineFragment } from './InboundShipment/api';
-import { OutboundLineFragment } from './OutboundShipment/api';
-import { PrescriptionLineFragment } from './Prescriptions/api';
+import { StockOutLineFragment } from './StockOut/operations.generated';
 
 export interface DraftInboundLine extends InboundLineFragment {
   isCreated?: boolean;
@@ -8,7 +7,7 @@ export interface DraftInboundLine extends InboundLineFragment {
   isUpdated?: boolean;
 }
 
-export interface DraftOutboundLine extends OutboundLineFragment {
+export interface DraftStockOutLine extends StockOutLineFragment {
   isCreated?: boolean;
   isUpdated?: boolean;
   isDeleted?: boolean;
@@ -20,14 +19,8 @@ export type InboundItem = {
   lines: InboundLineFragment[];
 };
 
-export type OutboundItem = {
+export type StockOutItem = {
   id: string;
   itemId: string;
-  lines: OutboundLineFragment[];
-};
-
-export type PrescriptionItem = {
-  id: string;
-  itemId: string;
-  lines: PrescriptionLineFragment[];
+  lines: StockOutLineFragment[];
 };

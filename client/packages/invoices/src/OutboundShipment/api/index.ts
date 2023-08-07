@@ -1,7 +1,5 @@
 export {
   OutboundFragment,
-  PartialStockLineFragment,
-  OutboundLineFragment,
   OutboundRowFragment,
 } from './operations.generated';
 

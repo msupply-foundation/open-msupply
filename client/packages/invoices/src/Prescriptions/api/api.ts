@@ -6,13 +6,17 @@ import {
 } from './operations.generated';
 import {
   DeletePrescriptionLineInput,
+  InsertPrescriptionLineInput,
+  InvoiceLineNodeType,
   InvoiceNodeStatus,
   InvoiceNodeType,
   InvoiceSortFieldInput,
   RecordPatch,
   UpdatePrescriptionInput,
+  UpdatePrescriptionLineInput,
   UpdatePrescriptionStatusInput,
 } from '@common/types';
+import { DraftStockOutLine } from '../../types';
 
 export type ListParams = {
   first: number;
@@ -72,6 +76,24 @@ const prescriptionParsers = {
     comment: patch.comment,
     status: prescriptionParsers.toStatus(patch),
   }),
+  toInsertLine: (line: DraftStockOutLine): InsertPrescriptionLineInput => {
+    return {
+      id: line.id,
+      itemId: line.item.id,
+      numberOfPacks: line.numberOfPacks,
+      stockLineId: line.stockLine?.id ?? '',
+      invoiceId: line.invoiceId,
+      note: line.note ?? '',
+    };
+  },
+  toUpdateLine: (line: DraftStockOutLine): UpdatePrescriptionLineInput => {
+    return {
+      id: line.id,
+      numberOfPacks: line.numberOfPacks,
+      stockLineId: line.stockLine?.id ?? '',
+      note: line.note ?? '',
+    };
+  },
   toDeleteLine: (line: { id: string }): DeletePrescriptionLineInput => ({
     id: line.id,
   }),
@@ -166,6 +188,40 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not delete invoices');
+  },
+  updateLines: async (draftPrescriptionLine: DraftStockOutLine[]) => {
+    const input = {
+      insertPrescriptionLines: draftPrescriptionLine
+        .filter(
+          ({ type, isCreated, numberOfPacks }) =>
+            isCreated &&
+            type === InvoiceLineNodeType.StockOut &&
+            numberOfPacks > 0
+        )
+        .map(prescriptionParsers.toInsertLine),
+      updatePrescriptionLines: draftPrescriptionLine
+        .filter(
+          ({ type, isCreated, isUpdated, numberOfPacks }) =>
+            !isCreated &&
+            isUpdated &&
+            type === InvoiceLineNodeType.StockOut &&
+            numberOfPacks > 0
+        )
+        .map(prescriptionParsers.toUpdateLine),
+      deletePrescriptionLines: draftPrescriptionLine
+        .filter(
+          ({ type, isCreated, isUpdated, numberOfPacks }) =>
+            !isCreated &&
+            isUpdated &&
+            type === InvoiceLineNodeType.StockOut &&
+            numberOfPacks === 0
+        )
+        .map(prescriptionParsers.toDeleteLine),
+    };
+
+    const result = await sdk.upsertPrescription({ storeId, input });
+
+    return result;
   },
   deleteLines: async (lines: { id: string }[]) => {
     return sdk.deletePrescriptionLines({

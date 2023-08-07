@@ -7,21 +7,19 @@ import {
   DataTable,
   MiniTable,
 } from '@openmsupply-client/common';
-import { PrescriptionLineFragment } from '../api/operations.generated';
-import { PrescriptionItem } from '../../types';
 import { usePrescription } from '../api';
 import { usePrescriptionColumn } from './columns';
 import { useExpansionColumns } from './PrescriptionLineEdit/columns';
+import { StockOutItem } from '../../types';
+import { StockOutLineFragment } from '../../StockOut';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick?:
-    | null
-    | ((rowData: PrescriptionLineFragment | PrescriptionItem) => void);
+  onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
 }
 
 const Expand: FC<{
-  rowData: PrescriptionLineFragment | PrescriptionItem;
+  rowData: StockOutLineFragment | StockOutItem;
 }> = ({ rowData }) => {
   const expandoColumns = useExpansionColumns();
 
