@@ -16,6 +16,12 @@ use graphql_types::types::program_event::ProgramEventSortInput;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
+use mutations::contact_trace::insert::insert_contact_trace;
+use mutations::contact_trace::insert::InsertContactTraceInput;
+use mutations::contact_trace::insert::InsertContactTraceResponse;
+use mutations::contact_trace::update::update_contact_trace;
+use mutations::contact_trace::update::UpdateContactTraceInput;
+use mutations::contact_trace::update::UpdateContactTraceResponse;
 use mutations::delete_document::delete_document;
 use mutations::delete_document::DeleteDocumentInput;
 use mutations::delete_document::DeleteDocumentResponse;
@@ -335,5 +341,23 @@ impl ProgramsMutations {
         input: AllocateProgramNumberInput,
     ) -> Result<AllocateProgramNumberResponse> {
         allocate_program_number(ctx, store_id, input)
+    }
+
+    pub async fn insert_contact_trace(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertContactTraceInput,
+    ) -> Result<InsertContactTraceResponse> {
+        insert_contact_trace(ctx, store_id, input)
+    }
+
+    pub async fn update_contact_trace(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateContactTraceInput,
+    ) -> Result<UpdateContactTraceResponse> {
+        update_contact_trace(ctx, store_id, input)
     }
 }
