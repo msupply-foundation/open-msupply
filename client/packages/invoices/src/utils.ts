@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
-import { DraftOutboundLine, InboundItem } from './types';
+import { DraftStockOutLine, InboundItem } from './types';
 import { PrescriptionRowFragment } from './Prescriptions/api';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
@@ -208,7 +208,7 @@ export const isA = {
 };
 
 export const get = {
-  stockLineSubtotal: (line: DraftOutboundLine) =>
+  stockLineSubtotal: (line: DraftStockOutLine) =>
     line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
 };
 

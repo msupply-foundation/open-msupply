@@ -14,16 +14,16 @@ import {
 } from '@openmsupply-client/common';
 import { toItemRow, LogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
-import { OutboundLineEdit } from './OutboundLineEdit';
-import { OutboundItem } from '../../types';
+import { StockOutItem } from '../../types';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { useOutbound } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
-import { OutboundLineFragment } from '../api/operations.generated';
 import { Draft } from '../..';
+import { StockOutLineFragment } from '../../StockOut';
+import { OutboundLineEdit } from './OutboundLineEdit';
 
 export const DetailView: FC = () => {
   const isDisabled = useOutbound.utils.isDisabled();
@@ -33,7 +33,7 @@ export const DetailView: FC = () => {
   const t = useTranslation('distribution');
   const navigate = useNavigate();
   const onRowClick = useCallback(
-    (item: OutboundLineFragment | OutboundItem) => {
+    (item: StockOutLineFragment | StockOutItem) => {
       onOpen({ item: toItemRow(item) });
     },
     [toItemRow, onOpen]
@@ -69,7 +69,7 @@ export const DetailView: FC = () => {
         <TableProvider
           createStore={createTableStore}
           queryParamsStore={createQueryParamsStore<
-            OutboundLineFragment | OutboundItem
+            StockOutLineFragment | StockOutItem
           >({
             initialSortBy: {
               key: 'itemName',

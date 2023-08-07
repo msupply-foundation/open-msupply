@@ -1,12 +1,12 @@
-import { createDraftOutboundLine } from './useDraftOutboundLines';
-import { DraftOutboundLine } from '../../../../types';
 import { usePackSizeController } from './usePackSizeController';
 import { act } from '@testing-library/react';
 import {
   InvoiceLineNodeType,
   renderHookWithProvider,
 } from '@openmsupply-client/common';
-import { createPlaceholderRow } from './useDraftOutboundLines';
+import { createDraftStockOutLine, createStockOutPlaceholderRow } from '../utils';
+import { DraftStockOutLine } from '../../types';
+
 
 const pastDate = () => new Date(0).toISOString();
 
@@ -21,7 +21,7 @@ type TestLineParams = {
   expiryDate?: string;
 };
 
-const makePlaceholder = () => createPlaceholderRow('1', '1');
+const makePlaceholder = () => createStockOutPlaceholderRow('1', '1');
 
 const testLine = ({
   itemId = '1',
@@ -32,8 +32,8 @@ const testLine = ({
   id,
   onHold = false,
   expiryDate = undefined,
-}: TestLineParams): DraftOutboundLine =>
-  createDraftOutboundLine({
+}: TestLineParams): DraftStockOutLine =>
+  createDraftStockOutLine({
     invoiceId: '',
     invoiceLine: {
       id,
@@ -62,17 +62,22 @@ const testLine = ({
         sellPricePerPack: 0,
         itemId,
         packSize,
+        item: {
+          code: '',
+          name: '',
+          __typename: 'ItemNode',
+        },
       },
     },
   });
 
-const singlePackSizeLines: DraftOutboundLine[] = [
+const singlePackSizeLines: DraftStockOutLine[] = [
   testLine({ id: '1', numberOfPacks: 1 }),
   testLine({ id: '2', numberOfPacks: 1 }),
   makePlaceholder(),
 ];
 
-const multiplePackSizeLines: DraftOutboundLine[] = [
+const multiplePackSizeLines: DraftStockOutLine[] = [
   testLine({ id: '1', numberOfPacks: 1 }),
   testLine({ id: '2', numberOfPacks: 1, packSize: 2 }),
   testLine({
@@ -86,7 +91,7 @@ const multiplePackSizeLines: DraftOutboundLine[] = [
   makePlaceholder(),
 ];
 
-const multipleWithOneAssigned: DraftOutboundLine[] = [
+const multipleWithOneAssigned: DraftStockOutLine[] = [
   testLine({
     id: '1',
     packSize: 1,
@@ -103,7 +108,7 @@ const multipleWithOneAssigned: DraftOutboundLine[] = [
   makePlaceholder(),
 ];
 
-const singleLineWithNoneAssigned: DraftOutboundLine[] = [
+const singleLineWithNoneAssigned: DraftStockOutLine[] = [
   testLine({
     id: '1',
     packSize: 2,
@@ -114,7 +119,7 @@ const singleLineWithNoneAssigned: DraftOutboundLine[] = [
   makePlaceholder(),
 ];
 
-const multipleLinesWithNoneAssigned: DraftOutboundLine[] = [
+const multipleLinesWithNoneAssigned: DraftStockOutLine[] = [
   testLine({
     id: '1',
     packSize: 2,
@@ -132,7 +137,7 @@ const multipleLinesWithNoneAssigned: DraftOutboundLine[] = [
   makePlaceholder(),
 ];
 
-const multipleLinesWithNoneAssignedMultiplePackSizes: DraftOutboundLine[] = [
+const multipleLinesWithNoneAssignedMultiplePackSizes: DraftStockOutLine[] = [
   testLine({
     id: '1',
     packSize: 1,

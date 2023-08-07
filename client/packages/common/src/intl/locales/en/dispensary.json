@@ -25,6 +25,7 @@
   "label.visit-end": "End",
   "label.clinician": "Clinician",
   "label.encounter-status": "Status",
+  "label.note": "Note",
   "label.additional-info": "Additional Info",
   "label.entered-by": "Entered by",
   "label.entered-on": "Entered on",
@@ -59,5 +60,7 @@
   "messages.error-saving-prescription": "Error saving prescription 🥺",
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-last-name": "Search by last name",
-  "placeholder.search-by-identifier": "Search by id"
+  "placeholder.search-by-identifier": "Search by id",
+  "warning.cannot-create-placeholder-packs": "There is a total of {{quantity}} packs available. Unable to allocate the full amount requested.",
+  "warning.cannot-create-placeholder-units": "There is a total of {{quantity}} units available. Unable to allocate the full amount requested."
 }

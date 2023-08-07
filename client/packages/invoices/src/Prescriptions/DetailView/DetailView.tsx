@@ -17,22 +17,24 @@ import { AppRoute } from '@openmsupply-client/config';
 import { usePrescriptionIsDisabled } from '../api/hooks/utils/usePrescriptionIsDisabled';
 import { usePrescription } from '../api/hooks';
 import { ContentArea } from './ContentArea';
-import { PrescriptionLineFragment } from '../api';
 import { AppBarButtons } from './AppBarButton';
 import { Toolbar } from './Toolbar';
 import { SidePanel } from './SidePanel';
-import { PrescriptionItem } from '../../types';
 import { Draft } from '../..';
 import { Footer } from './Footer';
+import { PrescriptionLineEdit } from './PrescriptionLineEdit/PrescriptionLineEdit';
+import { StockOutLineFragment } from '../../StockOut';
+import { StockOutItem } from '../../types';
 
 export const PrescriptionDetailView: FC = () => {
   const isDisabled = usePrescriptionIsDisabled();
-  const { onOpen, setMode } = useEditModal<Draft>();
+  const { entity, mode, onOpen, onClose, isOpen, setMode } =
+    useEditModal<Draft>();
   const { data, isLoading } = usePrescription.document.get();
   const t = useTranslation('dispensary');
   const navigate = useNavigate();
   const onRowClick = useCallback(
-    (item: PrescriptionLineFragment | PrescriptionItem) => {
+    (item: StockOutLineFragment | StockOutItem) => {
       onOpen({ item: toItemRow(item) });
     },
     [toItemRow, onOpen]
@@ -68,7 +70,7 @@ export const PrescriptionDetailView: FC = () => {
         <TableProvider
           createStore={createTableStore}
           queryParamsStore={createQueryParamsStore<
-            PrescriptionLineFragment | PrescriptionItem
+            StockOutLineFragment | StockOutItem
           >({
             initialSortBy: {
               key: 'itemName',
@@ -76,6 +78,14 @@ export const PrescriptionDetailView: FC = () => {
           })}
         >
           <AppBarButtons onAddItem={onAddItem} />
+          {isOpen && (
+            <PrescriptionLineEdit
+              draft={entity}
+              mode={mode}
+              isOpen={isOpen}
+              onClose={onClose}
+            />
+          )}
 
           <Toolbar />
           <DetailTabs tabs={tabs} />

@@ -19,6 +19,10 @@ fragment StockLine on StockLineNode {
     name
     onHold
   }
+  item {
+    name
+    code
+  }
   note
   onHold
   packSize
