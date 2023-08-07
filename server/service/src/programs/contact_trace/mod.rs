@@ -1,6 +1,6 @@
 use repository::{
     contact_trace::{ContactTrace, ContactTraceFilter, ContactTraceSort},
-    Document, PaginationOption,
+    Document, PaginationOption, RepositoryError,
 };
 
 use crate::{
@@ -9,14 +9,14 @@ use crate::{
 };
 
 use self::{
-    query::contact_traces,
+    query::{contact_trace, contact_traces},
     upsert::{upsert_contact_trace, UpsertContactTrace, UpsertContactTraceError},
 };
 
 pub mod contact_trace_schema;
 pub mod contact_trace_updated;
 mod query;
-mod upsert;
+pub mod upsert;
 
 pub trait ContactTraceServiceTrait: Sync + Send {
     fn contact_traces(
@@ -28,6 +28,15 @@ pub trait ContactTraceServiceTrait: Sync + Send {
         allowed_ctx: Vec<String>,
     ) -> Result<ListResult<ContactTrace>, ListError> {
         contact_traces(ctx, pagination, filter, sort, allowed_ctx)
+    }
+
+    fn contact_trace(
+        &self,
+        ctx: &ServiceContext,
+        filter: ContactTraceFilter,
+        allowed_ctx: Vec<String>,
+    ) -> Result<Option<ContactTrace>, RepositoryError> {
+        contact_trace(ctx, filter, allowed_ctx)
     }
 
     fn upsert_contact_trace(

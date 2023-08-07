@@ -1,6 +1,6 @@
 use repository::{
     contact_trace::{ContactTrace, ContactTraceFilter, ContactTraceRepository, ContactTraceSort},
-    PaginationOption,
+    PaginationOption, RepositoryError,
 };
 
 use crate::{
@@ -32,4 +32,21 @@ pub(crate) fn contact_traces(
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
         count: i64_to_u32(repository.count(Some(filter))?),
     })
+}
+
+pub(crate) fn contact_trace(
+    ctx: &ServiceContext,
+    mut filter: ContactTraceFilter,
+    allowed_ctx: Vec<String>,
+) -> Result<Option<ContactTrace>, RepositoryError> {
+    // restrict query results to allowed entries
+    filter.program_context_id = Some(
+        filter
+            .program_context_id
+            .unwrap_or_default()
+            .restrict_results(&allowed_ctx),
+    );
+
+    let repository = ContactTraceRepository::new(&ctx.connection);
+    Ok(repository.query_by_filter(filter)?.pop())
 }
