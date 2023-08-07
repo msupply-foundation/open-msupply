@@ -1,4 +1,4 @@
-use super::{program_row::program, StorageConnection};
+use super::{document::document, program_row::program, StorageConnection};
 
 use crate::repository_error::RepositoryError;
 
@@ -30,6 +30,8 @@ table! {
 
 joinable!(contact_trace -> program (program_id));
 allow_tables_to_appear_in_same_query!(contact_trace, program);
+joinable!(contact_trace -> document (document_id));
+allow_tables_to_appear_in_same_query!(contact_trace, document);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
 #[changeset_options(treat_none_as_null = "true")]
