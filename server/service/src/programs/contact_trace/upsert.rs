@@ -31,7 +31,7 @@ pub enum UpsertContactTraceError {
 }
 
 pub struct UpsertContactTrace {
-    pub root_patient_id: String,
+    pub patient_id: String,
     /// Document type for this contact trace
     pub r#type: String,
     pub data: serde_json::Value,
@@ -50,7 +50,7 @@ pub fn upsert_contact_trace(
     let document = ctx
         .connection
         .transaction_sync(|_| {
-            let patient_id = input.root_patient_id.clone();
+            let patient_id = input.patient_id.clone();
             let (schema_program, registry, program_row) = validate(ctx, &input)?;
             let doc = generate(user_id, input, registry)?;
 
@@ -108,7 +108,7 @@ fn generate(
 ) -> Result<RawDocument, RepositoryError> {
     let now = Utc::now();
     Ok(RawDocument {
-        name: patient_doc_name_with_id(&input.root_patient_id, &input.r#type, &now.to_rfc3339()),
+        name: patient_doc_name_with_id(&input.patient_id, &input.r#type, &now.to_rfc3339()),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
         datetime: now,
@@ -116,7 +116,7 @@ fn generate(
         data: input.data,
         form_schema_id: Some(input.schema_id),
         status: DocumentStatus::Active,
-        owner_name_id: Some(input.root_patient_id),
+        owner_name_id: Some(input.patient_id),
         context_id: registry.context_id,
     })
 }
@@ -170,7 +170,7 @@ fn validate(
     ctx: &ServiceContext,
     input: &UpsertContactTrace,
 ) -> Result<(SchemaContactTrace, DocumentRegistry, ProgramRow), UpsertContactTraceError> {
-    if !validate_patient_exists(ctx, &input.root_patient_id)? {
+    if !validate_patient_exists(ctx, &input.patient_id)? {
         return Err(UpsertContactTraceError::InvalidRootPatientId);
     }
 
@@ -292,7 +292,7 @@ mod test {
                     data: json!({"datetime": true}),
                     schema_id: schema.id.clone(),
                     parent: None,
-                    root_patient_id: "some_id".to_string(),
+                    patient_id: "some_id".to_string(),
                     r#type: trace_doc_type.clone(),
                 },
                 vec!["WrongType".to_string()],
@@ -311,7 +311,7 @@ mod test {
                     data: json!({"datetime": true}),
                     schema_id: schema.id.clone(),
                     parent: None,
-                    root_patient_id: "some_id".to_string(),
+                    patient_id: "some_id".to_string(),
                     r#type: trace_doc_type.clone(),
                 },
                 vec![program_context.clone()],
@@ -345,7 +345,7 @@ mod test {
                     data: json!({"datetime": true}),
                     schema_id: schema.id.clone(),
                     parent: None,
-                    root_patient_id: "some_id".to_string(),
+                    patient_id: "some_id".to_string(),
                     r#type: trace_doc_type.clone(),
                 },
                 vec![program_context.clone()],
@@ -367,7 +367,7 @@ mod test {
                     data: serde_json::to_value(contact_trace).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: None,
-                    root_patient_id: patient.id.clone(),
+                    patient_id: patient.id.clone(),
                     r#type: trace_doc_type.clone(),
                 },
                 vec![program_context.clone()],
@@ -391,7 +391,7 @@ mod test {
                     data: serde_json::to_value(program.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: None,
-                    root_patient_id: patient.id.clone(),
+                    patient_id: patient.id.clone(),
                     r#type: trace_doc_type.clone(),
                 },
                 vec![program_context.clone()],
@@ -405,7 +405,7 @@ mod test {
                     &service_provider,
                     "user",
                     UpsertContactTrace {
-                        root_patient_id: patient.id.clone(),
+                        patient_id: patient.id.clone(),
                         r#type: trace_doc_type.clone(),
                         data: serde_json::to_value(program.clone()).unwrap(),
                         schema_id: schema.id.clone(),
@@ -424,7 +424,7 @@ mod test {
                 &service_provider,
                 "user",
                 UpsertContactTrace {
-                    root_patient_id: patient.id.clone(),
+                    patient_id: patient.id.clone(),
                     r#type: trace_doc_type.clone(),
                     data: serde_json::to_value(program.clone()).unwrap(),
                     schema_id: schema.id.clone(),

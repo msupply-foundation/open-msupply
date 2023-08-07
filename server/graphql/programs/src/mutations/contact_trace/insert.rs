@@ -58,7 +58,7 @@ pub fn insert_contact_trace(
         UpsertContactTrace {
             r#type,
             data,
-            root_patient_id: patient_id,
+            patient_id,
             schema_id,
             parent: None,
         },
