@@ -1,8 +1,6 @@
 {
-  "button.delete-lines": "Delete selected lines",
   "button.add-from-master-list": "Add from master list",
   "button.new-shipment": "New Shipment",
-  "button.save-and-confirm-status": "Confirm {{status}}",
   "button.requested-to-suggested": "Use Suggested Quantities",
   "error.amc-is-zero": "No Average Monthly Consumption value",
   "error.no-inbound-items": "No items have been added to this shipment.",
@@ -25,7 +23,6 @@
   "heading.sub-total": "Sub total",
   "heading.total": "Total",
   "heading.tax": "Tax",
-  "heading.grand-total": "Grand total",
   "heading.edit-tax-rate": "Edit tax rate percentage",
   "info.automatic-shipment": "This shipment was created automatically, as the result of an Outbound Shipment in another store.",
   "info.automatic-shipment-no-edit": "You are unable to edit details until the status is confirmed as Delivered.",

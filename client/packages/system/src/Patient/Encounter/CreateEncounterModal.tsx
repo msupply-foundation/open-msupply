@@ -47,7 +47,7 @@ interface Encounter {
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
   const { user, storeId } = useAuthContext();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const { getLocalisedFullName } = useIntlUtils();
   const { current, setModal: selectModal } = usePatientModalStore();
   const [encounterRegistry, setEncounterRegistry] = useState<

@@ -1,9 +1,7 @@
 {
   "button.add-from-master-list": "Utiliser une liste",
-  "button.delete-lines": "Supprimer les lignes sélectionnées",
   "button.new-shipment": "Nouvelle livraison",
   "button.requested-to-suggested": "Utiliser Quantités Suggérées",
-  "button.save-and-confirm-status": "Confirmer {{status}}",
   "error.amc-is-zero": "Aucune valeur de CMM",
   "error.no-inbound-items": "Aucun article n'a été ajouté à cette livraison.",
   "error.no-inbound-shipments": "Il n'y pas de bon de livraison à afficher.",
@@ -98,7 +96,6 @@
   "messages.confirm-status-as": "Êtes vous sûr(e) de vouloir confirmer le statut comme $t({{status}}) ?",
   "messages.saved": "Sauvegardé",
   "heading.tax": "Taxe",
-  "heading.grand-total": "Grand total",
   "heading.edit-tax-rate": "Modifier le taux de taxation (%)",
   "label.program": "Bon de commande",
   "info.cannot-edit-program-requisition": "On ne peut pas modifier le fournisseur, le MDS minimum et maximum ou ajouter des articles dans un bon de commande \"programme\".",

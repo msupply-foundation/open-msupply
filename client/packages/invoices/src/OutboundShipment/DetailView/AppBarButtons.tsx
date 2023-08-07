@@ -10,7 +10,7 @@ import {
   ReportContext,
   PrinterIcon,
 } from '@openmsupply-client/common';
-import { Draft, useOutbound } from '../api';
+import { useOutbound } from '../api';
 import {
   useReport,
   ReportRowFragment,
@@ -19,6 +19,7 @@ import {
 import { AddFromMasterListButton } from './AddFromMasterListButton';
 import { JsonData } from '@openmsupply-client/programs';
 import { AddFromScannerButton } from './AddFromScannerButton';
+import { Draft } from '../..';
 
 interface AppBarButtonProps {
   onAddItem: (draft?: Draft) => void;
