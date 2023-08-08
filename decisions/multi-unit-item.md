@@ -1,9 +1,9 @@
 # Multi Unit Number
 
-- *Date*: 08/02/23
-- *Deciders*:
+- *Date*: 09/08/23
+- *Deciders*: Mark Glover, Gary, Adam, Richard, Craig, Andrei
 - *Status*:
-- *Outcome*: Option 2 (store preference table with store_id as primary key and columns as preferences)
+- *Outcome*: Option 3 (pack lens, a way to choose which of the configure unit variants to see in UI)
 - *Related Material*: See original [issue](https://github.com/openmsupply/open-msupply/issues/1089)
 
 ## Background
@@ -135,6 +135,8 @@ We may want to display total in units in more places then outbound shipment, for
 
 I am now recommending Option 3, I like the general idea even though it touches quite a few UI areas (there would be more UI areas affected in the future if it's not done now). I estimate 2 weeks of work for option 3 (1 week for configuration 1 week for enforcing them in UI, would suggest we do central configurations in omSupply, as per this idea 'todo add central server configuration with omSupply, parallel sync server' idea)
 Option 1 would also be good if we are able to `group` packs/units columns and fields as showm in Option 3, and use existing default pack size for item for internal orders.
+
+Option 3 was chosen, there was some concern about reports needing to implement this if it's implemented in UI, this was not deemed critical (reports can still be base unit, and if the need arrises we can do reports based on default unit variant)
 
 ## Extra
 
