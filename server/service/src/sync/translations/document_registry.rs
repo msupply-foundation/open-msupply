@@ -13,6 +13,7 @@ enum LegacyDocumentCategory {
     Patient,
     ProgramEnrolment,
     Encounter,
+    ContactTrace,
     Custom,
 }
 
@@ -78,6 +79,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
                     DocumentRegistryCategory::ProgramEnrolment
                 }
                 LegacyDocumentCategory::Encounter => DocumentRegistryCategory::Encounter,
+                LegacyDocumentCategory::ContactTrace => DocumentRegistryCategory::ContactTrace,
                 LegacyDocumentCategory::Custom => DocumentRegistryCategory::Custom,
             },
             name,
