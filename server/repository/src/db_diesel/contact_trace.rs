@@ -21,8 +21,8 @@ pub struct ContactTraceFilter {
     pub document_name: Option<StringFilter>,
     pub program_context_id: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
-    pub root_patient_id: Option<EqualFilter<String>>,
     pub patient_id: Option<EqualFilter<String>>,
+    pub contact_patient_id: Option<EqualFilter<String>>,
     pub status: Option<EqualFilter<ContactTraceStatus>>,
     pub contact_trace_id: Option<StringFilter>,
     pub first_name: Option<StringFilter>,
@@ -62,8 +62,8 @@ fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgram
             document_name,
             program_context_id,
             datetime,
-            root_patient_id,
             patient_id,
+            contact_patient_id,
             status,
             contact_trace_id,
             first_name,
@@ -72,8 +72,12 @@ fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgram
 
         apply_equal_filter!(query, id, contact_trace_dsl::id);
         apply_date_time_filter!(query, datetime, contact_trace_dsl::datetime);
-        apply_equal_filter!(query, root_patient_id, contact_trace_dsl::root_patient_id);
         apply_equal_filter!(query, patient_id, contact_trace_dsl::patient_id);
+        apply_equal_filter!(
+            query,
+            contact_patient_id,
+            contact_trace_dsl::contact_patient_id
+        );
         apply_equal_filter!(query, program_context_id, program_dsl::context_id);
         apply_equal_filter!(query, program_id, contact_trace_dsl::program_id);
         apply_string_filter!(query, document_name, document_dsl::name);

@@ -12,8 +12,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           datetime TIMESTAMP,
           contact_trace_id TEXT,
           status TEXT NOT NULL,
-          root_patient_id TEXT NOT NULL REFERENCES name(id),
-          patient_id TEXT REFERENCES name(id),
+          patient_id TEXT NOT NULL REFERENCES name(id),
+          contact_patient_id TEXT REFERENCES name(id),
           first_name TEXT,
           last_name TEXT
         );"#,
@@ -35,8 +35,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           datetime TIMESTAMP,
           contact_trace_id TEXT,
           status contact_trace_status NOT NULL,
-          root_patient_id TEXT NOT NULL REFERENCES name(id),
-          patient_id TEXT REFERENCES name(id),
+          patient_id TEXT NOT NULL REFERENCES name(id),
+          contact_patient_id TEXT REFERENCES name(id),
           first_name TEXT,
           last_name TEXT
         );

@@ -87,8 +87,8 @@ pub struct ContactTraceFilterInput {
     pub program_id: Option<EqualFilterStringInput>,
     pub document_name: Option<StringFilterInput>,
     pub datetime: Option<DatetimeFilterInput>,
-    pub root_patient_id: Option<EqualFilterStringInput>,
     pub patient_id: Option<EqualFilterStringInput>,
+    pub contact_patient_id: Option<EqualFilterStringInput>,
     pub status: Option<EqualFilterContactTraceStatusInput>,
     pub contact_trace_id: Option<StringFilterInput>,
     pub first_name: Option<StringFilterInput>,
@@ -99,7 +99,7 @@ impl ContactTraceFilterInput {
     pub fn to_domain_filter(self) -> ContactTraceFilter {
         ContactTraceFilter {
             id: self.id.map(EqualFilter::from),
-            patient_id: self.patient_id.map(EqualFilter::from),
+            contact_patient_id: self.contact_patient_id.map(EqualFilter::from),
             program_id: self.program_id.map(EqualFilter::from),
             document_name: self.document_name.map(StringFilter::from),
             datetime: self.datetime.map(DatetimeFilter::from),
@@ -109,7 +109,7 @@ impl ContactTraceFilterInput {
             contact_trace_id: self.contact_trace_id.map(StringFilter::from),
             first_name: self.first_name.map(StringFilter::from),
             last_name: self.last_name.map(StringFilter::from),
-            root_patient_id: self.root_patient_id.map(EqualFilter::from),
+            patient_id: self.patient_id.map(EqualFilter::from),
             program_context_id: None,
         }
     }
@@ -162,12 +162,16 @@ impl ContactTraceNode {
         self.trace_row().contact_trace_id.clone()
     }
 
-    pub async fn patient_id(&self) -> Option<String> {
-        self.trace_row().patient_id.clone()
+    pub async fn patient_id(&self) -> &str {
+        &self.trace_row().patient_id
     }
 
-    pub async fn patient(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
-        let Some(ref patient_id) = self.trace_row().patient_id else {
+    pub async fn contact_patient_id(&self) -> Option<String> {
+        self.trace_row().contact_patient_id.clone()
+    }
+
+    pub async fn contact_patient(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
+        let Some(ref patient_id) = self.trace_row().contact_patient_id else {
         return Ok(None)
       };
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
@@ -190,7 +194,7 @@ impl ContactTraceNode {
 
         let result = loader
             .load_one(ProgramEnrolmentLoaderInput::new(
-                &self.trace_row().root_patient_id,
+                &self.trace_row().patient_id,
                 &self.trace_row().program_id,
                 self.allowed_ctx.clone(),
             ))

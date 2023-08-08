@@ -2,7 +2,7 @@ use repository::{
     Document, EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository,
     EncounterStatus, EqualFilter, ProgramRow, RepositoryError, StorageConnection,
 };
-use util::uuid::uuid;
+use util::hash::sha256;
 
 use super::{encounter_schema, validate_misc::ValidatedSchemaEncounter};
 
@@ -31,7 +31,7 @@ pub(crate) fn update_encounter_row(
         .pop();
     let id = match row {
         Some(row) => row.0.id,
-        None => uuid(),
+        None => sha256(&doc.name),
     };
     let row = EncounterRow {
         id,
