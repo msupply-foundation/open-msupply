@@ -21,8 +21,8 @@ table! {
       datetime -> Timestamp,
       contact_trace_id -> Nullable<Text>,
       status -> crate::db_diesel::contact_trace_row::ContactTraceStatusMapping,
-      root_patient_id -> Text,
-      patient_id -> Nullable<Text>,
+      patient_id -> Text,
+      contact_patient_id -> Nullable<Text>,
       first_name -> Nullable<Text>,
       last_name -> Nullable<Text>,
     }
@@ -44,10 +44,10 @@ pub struct ContactTraceRow {
     pub datetime: NaiveDateTime,
     pub contact_trace_id: Option<String>,
     pub status: ContactTraceStatus,
-    /// Linked patient id of the contact.
     /// Patient id of the patient this contact belongs to.
-    pub root_patient_id: String,
-    pub patient_id: Option<String>,
+    pub patient_id: String,
+    /// Linked patient id of the contact.
+    pub contact_patient_id: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
 }

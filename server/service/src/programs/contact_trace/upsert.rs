@@ -195,7 +195,7 @@ fn validate(
                 err
             )])
         })?;
-    if let Some(patient_id) = &contact_trace_json.id {
+    if let Some(patient_id) = &contact_trace_json.contact.id {
         if !validate_patient_exists(ctx, patient_id)? {
             return Err(UpsertContactTraceError::InvalidPatientId);
         }
@@ -356,7 +356,7 @@ mod test {
 
         // InvalidPatientId
         let contact_trace = inline_init(|v: &mut SchemaContactTrace| {
-            v.id = Some("Invalid patient id".to_string());
+            v.contact.id = Some("Invalid patient id".to_string());
         });
         let err = service
             .upsert_contact_trace(

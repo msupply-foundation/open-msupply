@@ -85,39 +85,11 @@
     "ContactTrace": {
       "description": "Contact tracing information for a contact associated with a patient.",
       "properties": {
-        "birthPlace": {
-          "$ref": "#/definitions/Address",
-          "description": "Place of birth"
-        },
-        "code": {
-          "description": "Patient code, e.g. national id or other patient identifier",
-          "type": "string"
-        },
-        "code2": {
-          "description": "Secondary patient code, e.g. another type of health id",
-          "type": "string"
-        },
-        "contactDetails": {
-          "items": {
-            "$ref": "#/definitions/ContactDetails"
-          },
-          "type": "array"
+        "contact": {
+          "$ref": "#/definitions/Person",
+          "description": "Person details about the contact in this contact trace"
         },
         "contactTraceId": {
-          "type": "string"
-        },
-        "dateOfBirth": {
-          "description": "184099003 Date of birth",
-          "format": "date",
-          "type": "string"
-        },
-        "dateOfBirthIsEstimated": {
-          "description": "Date of birth is estimated",
-          "type": "boolean"
-        },
-        "dateOfDeath": {
-          "description": "Date of death",
-          "format": "date",
           "type": "string"
         },
         "datetime": {
@@ -128,47 +100,12 @@
         "extension": {
           "type": "object"
         },
-        "firstName": {
-          "type": "string"
-        },
-        "gender": {
-          "$ref": "#/definitions/Gender",
-          "description": "394744001 Gender unspecified"
-        },
-        "id": {
-          "description": "mSupply Patient id",
-          "type": "string"
-        },
-        "isDeceased": {
-          "description": "Person is deceased",
-          "type": "boolean"
-        },
-        "lastName": {
-          "description": "184096005 Patient Surname",
-          "type": "string"
-        },
-        "middleName": {
-          "type": "string"
-        },
-        "notes": {
-          "items": {
-            "$ref": "#/definitions/Note"
-          },
-          "type": "array"
-        },
-        "passportNumber": {
-          "description": "1601000122107 Passport Number",
-          "type": "string"
-        },
-        "socioEconomics": {
-          "$ref": "#/definitions/SocioEconomics"
-        },
         "status": {
           "$ref": "#/definitions/ContactTraceStatus",
           "description": "Current status"
         }
       },
-      "required": ["datetime", "status"],
+      "required": ["datetime", "status", "contact"],
       "type": "object"
     },
     "ContactTraceStatus": {
@@ -207,6 +144,78 @@
         }
       },
       "required": ["text"],
+      "type": "object"
+    },
+    "Person": {
+      "properties": {
+        "birthPlace": {
+          "$ref": "#/definitions/Address",
+          "description": "Place of birth"
+        },
+        "code": {
+          "description": "Patient code, e.g. national id or other patient identifier",
+          "type": "string"
+        },
+        "code2": {
+          "description": "Secondary patient code, e.g. another type of health id",
+          "type": "string"
+        },
+        "contactDetails": {
+          "items": {
+            "$ref": "#/definitions/ContactDetails"
+          },
+          "type": "array"
+        },
+        "dateOfBirth": {
+          "description": "184099003 Date of birth",
+          "format": "date",
+          "type": "string"
+        },
+        "dateOfBirthIsEstimated": {
+          "description": "Date of birth is estimated",
+          "type": "boolean"
+        },
+        "dateOfDeath": {
+          "description": "Date of death",
+          "format": "date",
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "gender": {
+          "$ref": "#/definitions/Gender",
+          "description": "394744001 Gender unspecified"
+        },
+        "id": {
+          "description": "mSupply Patient id",
+          "type": "string"
+        },
+        "isDeceased": {
+          "description": "Person is deceased",
+          "type": "boolean"
+        },
+        "lastName": {
+          "description": "184096005 Patient Surname",
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
+        "passportNumber": {
+          "description": "1601000122107 Passport Number",
+          "type": "string"
+        },
+        "socioEconomics": {
+          "$ref": "#/definitions/SocioEconomics"
+        }
+      },
       "type": "object"
     },
     "SocioEconomics": {
