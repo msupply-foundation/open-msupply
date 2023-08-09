@@ -17,10 +17,12 @@ use graphql_types::types::{
 use repository::{
     contact_trace::{ContactTrace, ContactTraceFilter, ContactTraceSort, ContactTraceSortField},
     contact_trace_row::{ContactTraceRow, ContactTraceStatus},
-    DatetimeFilter, EqualFilter, PaginationOption, StringFilter,
+    DatetimeFilter, EqualFilter, PaginationOption, ProgramRow, StringFilter,
 };
 use serde::Serialize;
 use service::auth::{Resource, ResourceAccessRequest};
+
+use super::program_node::ProgramNode;
 
 pub struct ContactTraceNode {
     pub store_id: String,
@@ -142,6 +144,10 @@ impl ContactTraceNode {
     fn trace_row(&self) -> &ContactTraceRow {
         &self.contact_trace.0
     }
+
+    fn program_row(&self) -> &ProgramRow {
+        &self.contact_trace.2
+    }
 }
 
 #[Object]
@@ -152,6 +158,12 @@ impl ContactTraceNode {
 
     pub async fn program_id(&self) -> &str {
         &self.trace_row().program_id
+    }
+
+    pub async fn program(&self) -> ProgramNode {
+        ProgramNode {
+            program_row: self.program_row().clone(),
+        }
     }
 
     pub async fn document_id(&self) -> &str {
@@ -166,18 +178,33 @@ impl ContactTraceNode {
         &self.trace_row().patient_id
     }
 
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<NameNode> {
+        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+
+        let result = loader
+            .load_one(NameByIdLoaderInput::new(
+                &self.store_id,
+                &self.trace_row().patient_id,
+            ))
+            .await?
+            .map(NameNode::from_domain)
+            .ok_or(Error::new("Encounter without patient"))?;
+
+        Ok(result)
+    }
+
     pub async fn contact_patient_id(&self) -> Option<String> {
         self.trace_row().contact_patient_id.clone()
     }
 
     pub async fn contact_patient(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
-        let Some(ref patient_id) = self.trace_row().contact_patient_id else {
-        return Ok(None)
-      };
+        let Some(ref contact_patient_id) = self.trace_row().contact_patient_id else {
+            return Ok(None)
+        };
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let result = loader
-            .load_one(NameByIdLoaderInput::new(&self.store_id, patient_id))
+            .load_one(NameByIdLoaderInput::new(&self.store_id, contact_patient_id))
             .await?
             .map(NameNode::from_domain)
             .ok_or(Error::new("Contact without patient"))?;
