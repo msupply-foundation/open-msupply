@@ -2,8 +2,10 @@ use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection, 
 
 use crate::{lower, repository_error::RepositoryError};
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
+use util::Defaults;
 
 table! {
     user_account (id) {
@@ -16,6 +18,7 @@ table! {
         last_name -> Nullable<Text>,
         phone_number -> Nullable<Text>,
         job_title -> Nullable<Text>,
+        last_successful_sync -> Timestamp,
     }
 }
 
@@ -51,6 +54,7 @@ pub struct UserAccountRow {
     pub last_name: Option<String>,
     pub phone_number: Option<String>,
     pub job_title: Option<String>,
+    pub last_successful_sync: NaiveDateTime,
 }
 
 impl Default for UserAccountRow {
@@ -65,6 +69,7 @@ impl Default for UserAccountRow {
             last_name: None,
             phone_number: None,
             job_title: None,
+            last_successful_sync: Defaults::naive_date_time(),
         }
     }
 }
