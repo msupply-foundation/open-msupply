@@ -10,9 +10,11 @@ export const useSync = {
     initialise: Sync.useInitialiseSite,
     manualSync: Sync.useManualSync,
     update: Sync.useUpdateSyncSettings,
+    updateUser: Sync.useUpdateUser,
   },
   utils: {
     syncStatus: Utils.useSyncStatus,
     syncInfo: Utils.useSyncInfo,
+    lastSuccessfulUserSync: Utils.useLastSuccessfulUserSync,
   },
 };
