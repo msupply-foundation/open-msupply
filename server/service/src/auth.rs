@@ -1126,8 +1126,6 @@ mod permission_validation_test {
             inline_init(|r: &mut UserAccountRow| {
                 r.id = "user".to_string();
                 r.username = "user".to_string();
-                r.hashed_password =
-                    "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1".to_string();
             })
         }
 
@@ -1135,8 +1133,6 @@ mod permission_validation_test {
             inline_init(|r: &mut UserAccountRow| {
                 r.id = "user_without_permission".to_string();
                 r.username = "user".to_string();
-                r.hashed_password =
-                    "d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1".to_string();
             })
         }
 
@@ -1173,6 +1169,7 @@ mod permission_validation_test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
+        let password = "pass";
 
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),
@@ -1186,7 +1183,7 @@ mod permission_validation_test {
             auth_data.auth_token_secret.as_bytes(),
             true,
         )
-        .jwt_token(&user().id, &user().hashed_password, 60, 120)
+        .jwt_token(&user().id, password, 60, 120)
         .unwrap()
         .token;
 
@@ -1208,12 +1205,7 @@ mod permission_validation_test {
             auth_data.auth_token_secret.as_bytes(),
             true,
         )
-        .jwt_token(
-            &user_without_permission().id,
-            &user().hashed_password,
-            60,
-            120,
-        )
+        .jwt_token(&user_without_permission().id, password, 60, 120)
         .unwrap()
         .token;
         assert!(service_provider
