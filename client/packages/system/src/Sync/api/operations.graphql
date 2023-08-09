@@ -100,3 +100,22 @@ query syncStatus {
 mutation manualSync {
   manualSync
 }
+
+fragment LastSuccessfulUserSync on LastSuccessfulUserSyncNode {
+  lastSuccessfulSync
+}
+
+mutation updateUser {
+  updateUser {
+    ... on UpdateUserNode {
+      lastSuccessfulSync
+    }
+  }
+}
+
+query lastSuccessfulUserSync {
+  lastSuccessfulUserSync {
+    __typename
+    ...LastSuccessfulUserSync
+  }
+}

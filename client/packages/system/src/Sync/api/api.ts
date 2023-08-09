@@ -35,6 +35,16 @@ export const getSyncQueries = (sdk: Sdk) => ({
     });
     return result?.updateSyncSettings;
   },
+  lastSuccessfulUserSync: async () => {
+    const result = await sdk.lastSuccessfulUserSync();
+
+    return result.lastSuccessfulUserSync;
+  },
+  updateUser: async () => {
+    const result = await sdk.updateUser();
+
+    return result.updateUser;
+  },
 });
 
 // In typescript it's allowed to have excess properties on object
