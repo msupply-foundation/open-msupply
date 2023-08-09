@@ -73,6 +73,15 @@ export const Sync: React.FC = () => {
     isLoading,
     onManualSync,
   } = useHostSync();
+  const { data } = useSync.utils.lastSuccessfulUserSync(
+    STATUS_POLLING_INTERVAL
+  );
+  const { mutateAsync: updateUser, isLoading: updateUserIsLoading } =
+    useSync.sync.updateUser();
+
+  const onUpdateUser = async () => {
+    await updateUser();
+  };
 
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
@@ -111,6 +120,35 @@ export const Sync: React.FC = () => {
         </Row>
       </Grid>
       <SyncProgress syncStatus={syncStatus} isOperational={true} />
+      <Grid
+        container
+        flexDirection="column"
+        justifyContent="flex-start"
+        style={{ padding: '15 15 50 15', minWidth: 650 }}
+        marginTop={2}
+        flexWrap="nowrap"
+      >
+        <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
+          {t('heading.user-sync')}
+        </Typography>
+        <Row title={t('sync-info.last-successful-sync')}>
+          <FormattedSyncDate
+            date={DateUtils.getDateOrNull(data?.lastSuccessfulSync || null)}
+          />
+        </Row>
+        <Row>
+          <LoadingButton
+            isLoading={updateUserIsLoading}
+            startIcon={<RadioIcon />}
+            variant="contained"
+            sx={{ fontSize: '12px' }}
+            disabled={false}
+            onClick={onUpdateUser}
+          >
+            {t('button.sync-now')}
+          </LoadingButton>
+        </Row>
+      </Grid>
     </Grid>
   );
 };
