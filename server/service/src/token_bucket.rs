@@ -7,6 +7,9 @@ use util::hash::sha256;
 struct TokenInfo {
     token_hash: String,
     expiry_date: usize,
+    // Temporarily store password in token info.
+    // Will need to delete once server has implemented its own central server.
+    password: String,
 }
 
 fn token_hash(token: &str) -> String {
@@ -55,7 +58,7 @@ impl TokenBucket {
     /// If token is already known the expiry_date is updated.
     /// This can be used to reduce the expiry date of a token on the server, e.g. to reduce the
     /// token expiry time of a token that just has been refreshed.
-    pub fn put(&mut self, user_id: &str, token: &str, expiry_date: usize) {
+    pub fn put(&mut self, user_id: &str, password: &str, token: &str, expiry_date: usize) {
         let now = Utc::now().timestamp() as usize;
         if expiry_date < now {
             return;
@@ -79,9 +82,24 @@ impl TokenBucket {
                 user_tokens.push(TokenInfo {
                     token_hash,
                     expiry_date,
+                    password: password.to_string(),
                 });
             }
         }
+    }
+
+    pub fn get_password(&self, user_id: &str) -> String {
+        let user_tokens = match self.users.get(user_id) {
+            Some(value) => value,
+            None => return String::new(),
+        };
+
+        let mut password = String::new();
+        for token in user_tokens {
+            password = token.password.clone();
+            break;
+        }
+        password
     }
 
     /// Removes all known tokens for a given user

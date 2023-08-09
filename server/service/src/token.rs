@@ -133,6 +133,7 @@ impl<'a> TokenService<'a> {
     pub fn jwt_token(
         &mut self,
         user_id: &str,
+        password: &str,
         valid_for_sec: usize,
         refresh_token_valid_for_sec: usize,
     ) -> Result<TokenPair, JWTIssuingError> {
@@ -152,8 +153,8 @@ impl<'a> TokenService<'a> {
             error!("{}", e);
             return JWTIssuingError::ConcurrencyLockError(anyhow!("jwt_token: {}", e));
         })?;
-        token_bucket.put(user_id, &pair.token, pair.expiry_date);
-        token_bucket.put(user_id, &pair.refresh, pair.refresh_expiry_date);
+        token_bucket.put(user_id, password, &pair.token, pair.expiry_date);
+        token_bucket.put(user_id, password, &pair.refresh, pair.refresh_expiry_date);
 
         Ok(pair)
     }
@@ -205,10 +206,11 @@ impl<'a> TokenService<'a> {
         if self.validate_token_bucket && !token_bucket.contains(&user_id, refresh_token) {
             return Err(JWTRefreshError::TokenInvalided);
         }
+        let password: String = token_bucket.get_password(&user_id);
 
         // add new tokens to bucket
-        token_bucket.put(&user_id, &pair.token, pair.expiry_date);
-        token_bucket.put(&user_id, &pair.refresh, pair.refresh_expiry_date);
+        token_bucket.put(&user_id, &password, &pair.token, pair.expiry_date);
+        token_bucket.put(&user_id, &password, &pair.refresh, pair.refresh_expiry_date);
         // Shorten the expiry time of the old refresh token.
         //
         // Note, if the client goes offline before receiving the new refresh token the user might
@@ -216,7 +218,7 @@ impl<'a> TokenService<'a> {
         // issue.
         let reduced_expiry =
             std::cmp::min(Utc::now().timestamp() as usize + 5 * 60, decoded.claims.exp);
-        token_bucket.put(&user_id, refresh_token, reduced_expiry);
+        token_bucket.put(&user_id, &password, refresh_token, reduced_expiry);
 
         Ok(pair)
     }
@@ -330,12 +332,13 @@ mod user_account_test {
         let bucket = RwLock::new(TokenBucket::new());
         const JWT_TOKEN_SECRET: &[u8] = "some secret".as_bytes();
         let user_id = "test_user_id";
+        let password = "pass";
         let mut bucket_validating_service = TokenService::new(&bucket, JWT_TOKEN_SECRET, true);
         let bucket_not_validating_service = TokenService::new(&bucket, JWT_TOKEN_SECRET, false);
 
         // should be able to create a new token
         let token_pair = bucket_validating_service
-            .jwt_token(user_id, 60, 120)
+            .jwt_token(user_id, password, 60, 120)
             .unwrap();
 
         // should be able to verify token
@@ -389,10 +392,13 @@ mod user_account_test {
         let bucket = RwLock::new(TokenBucket::new());
         const JWT_TOKEN_SECRET: &[u8] = "some secret".as_bytes();
         let user_id = "test_user_id";
+        let password = "pass";
         let mut bucket_validating_service = TokenService::new(&bucket, JWT_TOKEN_SECRET, true);
 
         // should be able to create a new token
-        let token_pair = bucket_validating_service.jwt_token(user_id, 1, 1).unwrap();
+        let token_pair = bucket_validating_service
+            .jwt_token(user_id, password, 1, 1)
+            .unwrap();
         // should be able to verify token
         let claims = bucket_validating_service
             .verify_token(&token_pair.token, Some(2))
