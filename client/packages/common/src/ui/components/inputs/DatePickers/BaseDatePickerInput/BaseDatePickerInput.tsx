@@ -18,7 +18,7 @@ export const BaseDatePickerInput: FC<
     error?: string | undefined;
     width?: number;
   }
-> = ({ error, onChange, width, ...props }) => {
+> = ({ error, onChange, onError, width, ...props }) => {
   const theme = useAppTheme();
   const [validationError, setValidationError] = React.useState<string | null>(
     null
@@ -40,6 +40,7 @@ export const BaseDatePickerInput: FC<
               })
             : null
         );
+        if (validationError && onError) onError(validationError, date);
         if (!validationError) onChange?.(date, context);
       }}
       slotProps={{
