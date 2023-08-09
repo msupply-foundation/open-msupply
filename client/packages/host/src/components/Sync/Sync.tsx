@@ -79,10 +79,6 @@ export const Sync: React.FC = () => {
   const { mutateAsync: updateUser, isLoading: updateUserIsLoading } =
     useSync.sync.updateUser();
 
-  const onUpdateUser = async () => {
-    await updateUser();
-  };
-
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
       <Grid
@@ -143,7 +139,7 @@ export const Sync: React.FC = () => {
             variant="contained"
             sx={{ fontSize: '12px' }}
             disabled={false}
-            onClick={onUpdateUser}
+            onClick={async () => await updateUser()}
           >
             {t('button.sync-now')}
           </LoadingButton>
