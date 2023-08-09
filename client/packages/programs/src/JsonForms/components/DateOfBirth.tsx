@@ -15,6 +15,7 @@ import {
   FormLabel,
   Box,
   DetailInputWithLabelRow,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -22,6 +23,7 @@ import {
   FORM_GAP,
   FORM_LABEL_WIDTH,
 } from '../common';
+import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 
@@ -31,6 +33,10 @@ const UIComponent = (props: ControlProps) => {
   const [dob, setDoB] = React.useState<Date | null>(null);
   const t = useTranslation('common');
   const dateFormatter = useFormatDateTime().customDate;
+  const { customError, setCustomError } = useJSONFormsCustomError(
+    path,
+    'Date of Birth'
+  );
 
   const dobPath = composePaths(path, 'dateOfBirth');
   const estimatedPath = composePaths(path, 'dateOfBirthIsEstimated');
@@ -42,6 +48,7 @@ const UIComponent = (props: ControlProps) => {
       handleChange(dobPath, null); // required for validation to fire
       return;
     }
+    setCustomError(undefined);
     setAge(DateUtils.age(dateOfBirth));
     setDoB(dateOfBirth);
     handleChange(dobPath, dateFormatter(dateOfBirth, 'yyyy-MM-dd'));
@@ -80,9 +87,17 @@ const UIComponent = (props: ControlProps) => {
             value={dob ?? null}
             onChange={onChangeDoB}
             format="dd/MM/yyyy"
-            slotProps={{ textField: { sx: { width: 135 } } }}
+            width={135}
             disableFuture
             disabled={!props.enabled}
+            onError={validationError =>
+              setCustomError(
+                t(`error.date_${validationError}` as LocaleKey, {
+                  defaultValue: validationError,
+                })
+              )
+            }
+            error={customError}
           />
           <Box
             flex={0}
