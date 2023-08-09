@@ -66,7 +66,7 @@ impl Loader<String> for DocumentByIdLoader {
         )?;
 
         for doc in result {
-            out.insert(doc.name.clone(), doc);
+            out.insert(doc.id.clone(), doc);
         }
 
         Ok(out)

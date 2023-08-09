@@ -51,8 +51,13 @@ pub fn upsert_contact_trace(
         .connection
         .transaction_sync(|_| {
             let patient_id = input.patient_id.clone();
-            let (schema_program, registry, program_row) = validate(ctx, &input)?;
-            let doc = generate(user_id, input, registry)?;
+            let ValidationResult {
+                contact_trace_data,
+                document_registry,
+                program_row,
+                parent,
+            } = validate(ctx, &input)?;
+            let doc = generate(user_id, input, document_registry, parent)?;
 
             let document = service_provider
                 .document_service
@@ -85,7 +90,7 @@ pub fn upsert_contact_trace(
                     &ctx.connection,
                     &patient_id,
                     &document,
-                    schema_program,
+                    contact_trace_data,
                     program_row,
                 )?;
             };
@@ -105,10 +110,15 @@ fn generate(
     user_id: &str,
     input: UpsertContactTrace,
     registry: DocumentRegistry,
+    existing: Option<Document>,
 ) -> Result<RawDocument, RepositoryError> {
     let now = Utc::now();
     Ok(RawDocument {
-        name: patient_doc_name_with_id(&input.patient_id, &input.r#type, &now.to_rfc3339()),
+        name: existing.map(|e| e.name).unwrap_or(patient_doc_name_with_id(
+            &input.patient_id,
+            &input.r#type,
+            &now.to_rfc3339(),
+        )),
         parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
         author: user_id.to_string(),
         datetime: now,
@@ -166,13 +176,36 @@ fn validate_program(
         .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(context_id)))
 }
 
+fn validate_parent_doc_exists(
+    ctx: &ServiceContext,
+    parent: &str,
+) -> Result<Option<Document>, RepositoryError> {
+    DocumentRepository::new(&ctx.connection).find_one_by_id(parent)
+}
+
+struct ValidationResult {
+    contact_trace_data: SchemaContactTrace,
+    document_registry: DocumentRegistry,
+    program_row: ProgramRow,
+    parent: Option<Document>,
+}
+
 fn validate(
     ctx: &ServiceContext,
     input: &UpsertContactTrace,
-) -> Result<(SchemaContactTrace, DocumentRegistry, ProgramRow), UpsertContactTraceError> {
+) -> Result<ValidationResult, UpsertContactTraceError> {
     if !validate_patient_exists(ctx, &input.patient_id)? {
         return Err(UpsertContactTraceError::InvalidRootPatientId);
     }
+
+    let parent = if let Some(parent) = &input.parent {
+        Some(
+            validate_parent_doc_exists(ctx, parent)?
+                .ok_or(UpsertContactTraceError::InvalidParentId)?,
+        )
+    } else {
+        None
+    };
 
     let document_registry = match validate_document_type(ctx, &input.r#type)? {
         Some(document_registry) => document_registry,
@@ -188,20 +221,25 @@ fn validate(
         }
     };
 
-    let contact_trace_json: super::contact_trace_schema::ContactTrace =
+    let contact_trace_data: super::contact_trace_schema::ContactTrace =
         validate_contact_trace_schema(input).map_err(|err| {
             UpsertContactTraceError::InvalidDataSchema(vec![format!(
                 "Invalid program data: {}",
                 err
             )])
         })?;
-    if let Some(patient_id) = &contact_trace_json.contact.id {
+    if let Some(patient_id) = &contact_trace_data.contact.id {
         if !validate_patient_exists(ctx, patient_id)? {
             return Err(UpsertContactTraceError::InvalidPatientId);
         }
     }
 
-    Ok((contact_trace_json, document_registry, program_row))
+    Ok(ValidationResult {
+        contact_trace_data,
+        document_registry,
+        program_row,
+        parent,
+    })
 }
 
 #[cfg(test)]
