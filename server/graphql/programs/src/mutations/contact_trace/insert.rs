@@ -83,10 +83,10 @@ pub fn insert_contact_trace(
                 UpsertContactTraceError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                UpsertContactTraceError::InvalidRootPatientId => {
+                UpsertContactTraceError::InvalidPatientId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertContactTraceError::InvalidPatientId => {
+                UpsertContactTraceError::InvalidContactPatientId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 UpsertContactTraceError::InvalidParentId => {

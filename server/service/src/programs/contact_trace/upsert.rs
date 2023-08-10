@@ -18,8 +18,8 @@ use super::{
 #[derive(PartialEq, Debug)]
 pub enum UpsertContactTraceError {
     NotAllowedToMutateDocument,
-    InvalidRootPatientId,
     InvalidPatientId,
+    InvalidContactPatientId,
     /// Invalid document parent id
     InvalidParentId,
     InvalidDataSchema(Vec<String>),
@@ -195,7 +195,7 @@ fn validate(
     input: &UpsertContactTrace,
 ) -> Result<ValidationResult, UpsertContactTraceError> {
     if !validate_patient_exists(ctx, &input.patient_id)? {
-        return Err(UpsertContactTraceError::InvalidRootPatientId);
+        return Err(UpsertContactTraceError::InvalidPatientId);
     }
 
     let parent = if let Some(parent) = &input.parent {
@@ -339,7 +339,7 @@ mod test {
             .unwrap();
         matches!(err, UpsertContactTraceError::NotAllowedToMutateDocument);
 
-        // InvalidRootPatientId
+        // InvalidPatientId
         let err = service
             .upsert_contact_trace(
                 &ctx,
@@ -392,7 +392,7 @@ mod test {
             .unwrap();
         matches!(err, UpsertContactTraceError::InvalidDataSchema(_));
 
-        // InvalidPatientId
+        // InvalidContactPatientId
         let contact_trace = inline_init(|v: &mut SchemaContactTrace| {
             v.contact.id = Some("Invalid patient id".to_string());
         });
@@ -412,7 +412,7 @@ mod test {
             )
             .err()
             .unwrap();
-        matches!(err, UpsertContactTraceError::InvalidPatientId);
+        matches!(err, UpsertContactTraceError::InvalidContactPatientId);
 
         // success insert
 
