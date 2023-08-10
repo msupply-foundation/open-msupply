@@ -1,10 +1,9 @@
 import { useQuery } from '@openmsupply-client/common';
 import { useSyncApi } from './useSyncApi';
 
-export const useLastSuccessfulUserSync = (refetchInterval: number) => {
+export const useLastSuccessfulUserSync = () => {
   const api = useSyncApi();
-  return useQuery(api.keys.userInfo(), api.lastSuccessfulUserSync, {
+  return useQuery(api.keys.userSync(), api.lastSuccessfulUserSync, {
     cacheTime: 0,
-    refetchInterval,
   });
 };
