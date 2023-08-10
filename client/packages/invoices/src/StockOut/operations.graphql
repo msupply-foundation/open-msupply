@@ -1,0 +1,71 @@
+fragment PartialStockLine on StockLineNode {
+  id
+  itemId
+  availableNumberOfPacks
+  totalNumberOfPacks
+  onHold
+  sellPricePerPack
+  packSize
+  expiryDate
+  item {
+    name
+    code
+  }
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+}
+
+fragment StockOutLine on InvoiceLineNode {
+  __typename
+  id
+  type
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  invoiceId
+  sellPricePerPack
+  note
+  totalBeforeTax
+  totalAfterTax
+  taxPercentage
+  note
+
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+  }
+
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+  }
+
+  stockLine {
+    __typename
+    id
+    itemId
+    batch
+    availableNumberOfPacks
+    totalNumberOfPacks
+    onHold
+    sellPricePerPack
+    packSize
+    expiryDate
+    item {
+      name
+      code
+    }
+  }
+}

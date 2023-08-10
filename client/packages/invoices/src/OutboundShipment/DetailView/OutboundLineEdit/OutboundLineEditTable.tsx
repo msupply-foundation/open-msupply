@@ -7,16 +7,16 @@ import {
   TableCell,
   styled,
 } from '@openmsupply-client/common';
-import { DraftOutboundLine } from '../../../types';
-import { PackSizeController, useOutboundLineEditRows } from './hooks';
-import { DraftItem } from '../../api';
+import { DraftStockOutLine } from '../../../types';
+import { useOutboundLineEditRows } from './hooks';
 import { useOutboundLineEditColumns } from './columns';
-import { shouldUpdatePlaceholder } from './utils';
+import { DraftItem } from '../../..';
+import { PackSizeController, shouldUpdatePlaceholder } from '../../../StockOut';
 
 export interface OutboundLineEditTableProps {
   onChange: (key: string, value: number, packSize: number) => void;
   packSizeController: PackSizeController;
-  rows: DraftOutboundLine[];
+  rows: DraftStockOutLine[];
   item: DraftItem | null;
   allocatedQuantity: number;
   batch?: string;
@@ -34,7 +34,7 @@ const TotalCell = styled(TableCell)({
   fontWeight: 'bold',
 });
 
-const PlaceholderRow = ({ line }: { line?: DraftOutboundLine }) => {
+const PlaceholderRow = ({ line }: { line?: DraftStockOutLine }) => {
   const t = useTranslation('distribution');
   const [placeholderBuffer, setPlaceholderBuffer] = useState(
     line?.numberOfPacks ?? 0

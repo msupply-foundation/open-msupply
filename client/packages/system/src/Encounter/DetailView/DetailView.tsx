@@ -25,7 +25,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { useLogicalStatus } from '../utils';
 
 export const DetailView: FC = () => {
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const id = useEncounter.utils.idFromUrl();
   const navigate = useNavigate();
   const { setSuffix } = useBreadcrumbs([AppRoute.Encounter]);

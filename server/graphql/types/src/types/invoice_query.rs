@@ -287,6 +287,10 @@ impl InvoiceNode {
             .map(ClinicianNode::from_domain))
     }
 
+    pub async fn clinician_id(&self) -> &Option<String> {
+        &self.row().clinician_id
+    }
+
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
