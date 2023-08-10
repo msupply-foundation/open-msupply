@@ -73,9 +73,7 @@ export const Sync: React.FC = () => {
     isLoading,
     onManualSync,
   } = useHostSync();
-  const { data } = useSync.utils.lastSuccessfulUserSync(
-    STATUS_POLLING_INTERVAL
-  );
+  const { data } = useSync.utils.lastSuccessfulUserSync();
   const { mutateAsync: updateUser, isLoading: updateUserIsLoading } =
     useSync.sync.updateUser();
 
