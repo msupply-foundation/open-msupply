@@ -1,13 +1,14 @@
 use chrono::Utc;
 use repository::{
-    Document, DocumentFilter, DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter,
-    DocumentRegistryRepository, DocumentRepository, DocumentStatus, EqualFilter, Pagination,
-    ProgramFilter, ProgramRepository, ProgramRow, RepositoryError, StringFilter, TransactionError,
+    Document, DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter,
+    DocumentRegistryRepository, DocumentRepository, DocumentStatus, EqualFilter, PatientFilter,
+    PatientRepository, ProgramFilter, ProgramRepository, ProgramRow, RepositoryError,
+    TransactionError,
 };
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
-    programs::patient::{main_patient_doc_name, patient_doc_name_with_id},
+    programs::patient::patient_doc_name_with_id,
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -145,15 +146,13 @@ fn validate_patient_exists(
     ctx: &ServiceContext,
     patient_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let doc_name = main_patient_doc_name(patient_id);
-    let document = DocumentRepository::new(&ctx.connection)
-        .query(
-            Pagination::one(),
-            Some(DocumentFilter::new().name(StringFilter::equal_to(&doc_name))),
+    let patient = PatientRepository::new(&ctx.connection)
+        .query_by_filter(
+            PatientFilter::new().id(EqualFilter::equal_to(patient_id)),
             None,
         )?
         .pop();
-    Ok(document.is_some())
+    Ok(patient.is_some())
 }
 
 fn validate_document_type(
@@ -228,9 +227,13 @@ fn validate(
                 err
             )])
         })?;
-    if let Some(patient_id) = &contact_trace_data.contact.id {
+    if let Some(patient_id) = contact_trace_data
+        .contact
+        .as_ref()
+        .and_then(|c| c.id.as_ref())
+    {
         if !validate_patient_exists(ctx, patient_id)? {
-            return Err(UpsertContactTraceError::InvalidPatientId);
+            return Err(UpsertContactTraceError::InvalidContactPatientId);
         }
     }
 
@@ -260,7 +263,10 @@ mod test {
 
     use crate::{
         programs::{
-            contact_trace::{contact_trace_schema::SchemaContactTrace, upsert::UpsertContactTrace},
+            contact_trace::{
+                contact_trace_schema::{Person, SchemaContactTrace},
+                upsert::UpsertContactTrace,
+            },
             patient::{test::mock_patient_1, UpdatePatient},
         },
         service_provider::ServiceProvider,
@@ -394,7 +400,11 @@ mod test {
 
         // InvalidContactPatientId
         let contact_trace = inline_init(|v: &mut SchemaContactTrace| {
-            v.contact.id = Some("Invalid patient id".to_string());
+            let contact = Person {
+                id: Some("Invalid patient id".to_string()),
+                ..Person::default()
+            };
+            v.contact = Some(contact);
         });
         let err = service
             .upsert_contact_trace(

@@ -51,9 +51,15 @@ pub(crate) fn update_contact_trace_row(
         datetime,
         status,
         contact_trace_id: contact_trace.contact_trace_id,
-        contact_patient_id: contact_trace.contact.id,
-        first_name: contact_trace.contact.first_name,
-        last_name: contact_trace.contact.last_name,
+        contact_patient_id: contact_trace.contact.as_ref().and_then(|c| c.id.clone()),
+        first_name: contact_trace
+            .contact
+            .as_ref()
+            .and_then(|c| c.first_name.clone()),
+        last_name: contact_trace
+            .contact
+            .as_ref()
+            .and_then(|c| c.last_name.clone()),
     };
     ContactTraceRowRepository::new(con).upsert_one(&row)?;
 
