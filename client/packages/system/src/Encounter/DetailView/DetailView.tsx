@@ -42,7 +42,7 @@ export const DetailView: FC = () => {
     isError,
   } = useEncounter.document.byIdPromise(id);
 
-  const handleSave = useEncounter.document.upsert(
+  const handleSave = useEncounter.document.upsertDocument(
     encounter?.patient.id ?? '',
     encounter?.type ?? ''
   );
@@ -95,9 +95,10 @@ export const DetailView: FC = () => {
               encounter.patient.lastName
             )}
           </Breadcrumb>
-          <span>{` / ${
-            encounter.document.documentRegistry?.name
-          } - ${dateFormat.localisedDate(encounter.startDatetime)}`}</span>
+          <span>{` / ${encounter.document.documentRegistry
+            ?.name} - ${dateFormat.localisedDate(
+            encounter.startDatetime
+          )}`}</span>
         </span>
       );
 

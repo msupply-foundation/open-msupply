@@ -465,3 +465,87 @@ query activeProgramEvents(
     }
   }
 }
+
+fragment ContactTraceRow on ContactTraceNode {
+  __typename
+  contactTraceId
+  datetime
+  document {
+    name
+    type
+    id
+  }
+  documentId
+  firstName
+  id
+  lastName
+  patientId
+  patient {
+    id
+    name
+    firstName
+    lastName
+  }
+  contactPatient {
+    id
+    name
+  }
+  program {
+    id
+    name
+  }
+  status
+}
+
+query contactTraces(
+  $storeId: String!
+  $key: ContactTraceSortFieldInput
+  $desc: Boolean
+  $filter: ContactTraceFilterInput
+  $page: PaginationInput
+) {
+  contactTraces(
+    storeId: $storeId
+    filter: $filter
+    sort: { key: $key, desc: $desc }
+    page: $page
+  ) {
+    ... on ContactTraceConnector {
+      nodes {
+        ...ContactTraceRow
+      }
+      totalCount
+    }
+  }
+}
+
+fragment ContactTrace on ContactTraceNode {
+  id
+  document {
+    ...Document
+  }
+}
+
+mutation insertContactTrace(
+  $storeId: String!
+  $input: InsertContactTraceInput!
+) {
+  insertContactTrace(storeId: $storeId, input: $input) {
+    ... on ContactTraceNode {
+      __typename
+      ...ContactTrace
+    }
+  }
+}
+
+mutation updateContactTrace(
+  $storeId: String!
+  $input: UpdateContactTraceInput!
+) {
+  updateContactTrace(storeId: $storeId, input: $input) {
+    ... on ContactTraceNode {
+      __typename
+      ...ContactTrace
+    }
+  }
+}
