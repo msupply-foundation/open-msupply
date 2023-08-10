@@ -10,24 +10,40 @@ import { PatientRowFragment } from './api';
 export interface NameSearchProps {
   open: boolean;
   onClose: () => void;
-  onChange: (name: PatientRowFragment) => void;
+  onChange: (name: SearchInputPatient) => void;
+}
+
+export interface SearchInputPatient {
+  id: string;
+  name: string;
+  code: string;
+  isDeceased: boolean;
+  firstName?: string | null;
+  lastName?: string | null;
+  dateOfBirth?: string | null;
 }
 
 export interface NameSearchInputProps {
-  onChange: (name: PatientRowFragment) => void;
+  onChange: (name: SearchInputPatient) => void;
   width?: number;
-  value: PatientRowFragment | null;
+  value: SearchInputPatient | null;
   disabled?: boolean;
 }
 
+export interface PatientSearchModalProps {
+  open: boolean;
+  onClose: () => void;
+  onChange: (name: SearchInputPatient) => void;
+}
+
 export const basicFilterOptions = {
-  stringify: (name: PatientRowFragment) => `${name.code} ${name.name}`,
+  stringify: (name: SearchInputPatient) => `${name.code} ${name.name}`,
   limit: 100,
 };
 
 export const filterByNameAndCode = (
-  options: PatientRowFragment[],
-  state: FilterOptionsState<PatientRowFragment>
+  options: SearchInputPatient[],
+  state: FilterOptionsState<SearchInputPatient>
 ) =>
   options.filter(option =>
     RegexUtils.matchObjectProperties(state.inputValue, option, ['name', 'code'])

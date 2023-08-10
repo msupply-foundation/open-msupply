@@ -56,7 +56,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   });
   const navigate = useNavigate();
   const { createNewPatient, setCreateNewPatient } = usePatientStore();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
 
   const onNext = useDebounceCallback(() => {
     onChangeTab(Tabs.SearchResults);

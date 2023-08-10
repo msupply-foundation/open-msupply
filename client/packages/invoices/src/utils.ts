@@ -13,7 +13,8 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
-import { DraftOutboundLine, InboundItem } from './types';
+import { DraftStockOutLine, InboundItem } from './types';
+import { PrescriptionRowFragment } from './Prescriptions/api';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -44,6 +45,12 @@ export const nextStatusMap: { [k in InvoiceNodeStatus]?: InvoiceNodeStatus } = {
   [InvoiceNodeStatus.Delivered]: InvoiceNodeStatus.Verified,
 };
 
+export const prescriptionStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Verified,
+];
+
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
@@ -71,6 +78,16 @@ export const getNextInboundStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
   const nextStatus = nextStatusMap[currentStatus];
+  return nextStatus ?? null;
+};
+
+export const getNextPrescriptionStatus = (
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus | null => {
+  const currentStatusIdx = prescriptionStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = prescriptionStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 
@@ -118,6 +135,12 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
     : inbound.status === InvoiceNodeStatus.Picked ||
         inbound.status === InvoiceNodeStatus.Shipped ||
         inbound.status === InvoiceNodeStatus.Verified;
+};
+
+export const isPrescriptionDisabled = (
+  prescription: PrescriptionRowFragment
+): boolean => {
+  return prescription.status === InvoiceNodeStatus.Verified;
 };
 
 export const isInboundListItemDisabled = (
@@ -185,7 +208,7 @@ export const isA = {
 };
 
 export const get = {
-  stockLineSubtotal: (line: DraftOutboundLine) =>
+  stockLineSubtotal: (line: DraftStockOutLine) =>
     line.numberOfPacks * (line.stockLine?.sellPricePerPack ?? 0),
 };
 
@@ -241,6 +264,30 @@ export const inboundsToCsv = (
     Formatter.csvDateTimeString(node.deliveredDatetime),
     node.comment,
     node.pricing.totalAfterTax,
+  ]);
+  return Formatter.csv({ fields, data });
+};
+
+export const prescriptionToCsv = (
+  invoices: PrescriptionRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.name'),
+    t('label.status'),
+    t('label.invoice-number'),
+    t('label.entered'),
+    t('label.comment'),
+  ];
+
+  const data = invoices.map(node => [
+    node.id,
+    node.otherPartyName,
+    node.status,
+    node.invoiceNumber,
+    Formatter.csvDateTimeString(node.createdDatetime),
+    node.comment,
   ]);
   return Formatter.csv({ fields, data });
 };

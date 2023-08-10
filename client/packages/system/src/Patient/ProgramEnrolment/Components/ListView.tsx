@@ -54,7 +54,7 @@ const ProgramListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const { setEditModal: setEditingModal, setModal: selectModal } =
     usePatientModalStore();
 
