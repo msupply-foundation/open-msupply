@@ -60,6 +60,7 @@ const UIComponent = (props: ControlProps) => {
     setDoB(dob);
     handleChange(dobPath, dateFormatter(dob, 'yyyy-MM-dd'));
     handleChange(estimatedPath, true);
+    setCustomError(undefined);
     setAge(newAge);
   };
 

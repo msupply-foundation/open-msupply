@@ -10,10 +10,13 @@ import {
   DateTimePickerProps,
   BaseDatePickerInput,
   DateUtils,
+  LocaleKey,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 const Options = z
   .object({
@@ -63,6 +66,11 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
+  const t = useTranslation('common');
+  const { customError, setCustomError } = useJSONFormsCustomError(
+    path,
+    'Date-Time'
+  );
 
   if (!props.visible) {
     return null;
@@ -74,6 +82,7 @@ const UIComponent = (props: ControlProps) => {
 
   const onChange = (e: Date | null) => {
     if (!e) return;
+    setCustomError(undefined);
 
     try {
       setError(undefined);
@@ -89,7 +98,7 @@ const UIComponent = (props: ControlProps) => {
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
-    error: zErrors ?? error ?? props.errors,
+    error: zErrors ?? error ?? customError ?? props.errors,
   };
 
   return (
@@ -109,7 +118,16 @@ const UIComponent = (props: ControlProps) => {
             {...sharedComponentProps}
           />
         ) : (
-          <BaseDatePickerInput {...sharedComponentProps} />
+          <BaseDatePickerInput
+            {...sharedComponentProps}
+            onError={validationError =>
+              setCustomError(
+                t(`error.date_${validationError}` as LocaleKey, {
+                  defaultValue: validationError,
+                })
+              )
+            }
+          />
         )
       }
     />

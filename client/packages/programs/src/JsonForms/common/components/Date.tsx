@@ -6,10 +6,13 @@ import {
   useFormatDateTime,
   BaseDatePickerInput,
   DateUtils,
+  LocaleKey,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 const Options = z
   .object({
@@ -30,6 +33,8 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
+  const t = useTranslation('common');
+  const { customError, setCustomError } = useJSONFormsCustomError(path, 'Date');
   const disableFuture = options?.disableFuture ?? false;
 
   if (!props.visible) {
@@ -53,11 +58,20 @@ const UIComponent = (props: ControlProps) => {
           onChange={e => {
             setHasData(e !== null);
             if (e) handleChange(path, dateFormatter(e, 'yyyy-MM-dd'));
+            if (customError) setCustomError(undefined);
           }}
           format="dd/MM/yyyy"
           disabled={!props.enabled}
-          error={hasData ? (props.errors ?? zErrors) : ''}
+          error={hasData ? customError ?? props.errors ?? zErrors : ''}
           disableFuture={disableFuture}
+          onBlur={() => setHasData(true)}
+          onError={validationError =>
+            setCustomError(
+              t(`error.date_${validationError}` as LocaleKey, {
+                defaultValue: validationError,
+              })
+            )
+          }
         />
       }
     />
