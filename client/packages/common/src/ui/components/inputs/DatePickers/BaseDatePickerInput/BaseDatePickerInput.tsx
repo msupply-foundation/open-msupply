@@ -17,12 +17,11 @@ export const BaseDatePickerInput: FC<
   DatePickerProps<Date> & {
     error?: string | undefined;
     width?: number;
+    onBlur?: (e: React.SyntheticEvent) => void;
   }
-> = ({ error, onChange, onError, width, ...props }) => {
+> = ({ error, onChange, onError, width, onBlur, ...props }) => {
   const theme = useAppTheme();
-  const [validationError, setValidationError] = React.useState<string | null>(
-    null
-  );
+  const [internalError, setInternalError] = React.useState<string | null>(null);
   const t = useTranslation('common');
 
   return (
@@ -33,15 +32,21 @@ export const BaseDatePickerInput: FC<
       onChange={(date, context) => {
         const { validationError } = context;
 
-        setValidationError(
-          validationError
-            ? t(`error.date_${validationError}` as LocaleKey, {
-                defaultValue: validationError,
-              })
-            : null
-        );
-        if (validationError && onError) onError(validationError, date);
-        if (!validationError) onChange?.(date, context);
+        if (validationError) {
+          if (onError) onError(validationError, date);
+          else
+            setInternalError(
+              validationError
+                ? t(`error.date_${validationError}` as LocaleKey, {
+                    defaultValue: validationError,
+                  })
+                : null
+            );
+        }
+        if (!validationError) {
+          setInternalError(null);
+          onChange?.(date, context);
+        }
       }}
       slotProps={{
         popper: {
@@ -74,9 +79,10 @@ export const BaseDatePickerInput: FC<
           },
         },
         textField: {
-          error: !!error || !!validationError,
-          helperText: error ?? validationError ?? '',
+          error: !!error || !!internalError,
+          helperText: error ?? internalError ?? '',
           sx: { width, '& .MuiFormHelperText-root': { color: 'error.main' } },
+          onBlur,
         },
       }}
       {...props}
