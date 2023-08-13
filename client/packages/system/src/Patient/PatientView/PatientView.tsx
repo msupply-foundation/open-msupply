@@ -181,7 +181,7 @@ export enum PatientTabValue {
   Details = 'Details',
   Programs = 'Programs',
   Encounters = 'Encounters',
-  ContactTraces = 'ContactTraces',
+  ContactTraces = 'Contact Traces',
 }
 
 /**
