@@ -536,7 +536,7 @@ export type CreateRequisitionShipmentInput = {
 
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
-export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateUserErrorInterface & {
+export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & LastSuccessfulUserSyncErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1184,6 +1184,11 @@ export type FailedToFetchReportData = PrintReportErrorInterface & {
   errors: Scalars['JSON']['output'];
 };
 
+export type FetchUserError = LastSuccessfulUserSyncErrorInterface & {
+  __typename: 'FetchUserError';
+  description: Scalars['String']['output'];
+};
+
 export enum ForeignKey {
   InvoiceId = 'invoiceId',
   ItemId = 'itemId',
@@ -1738,13 +1743,13 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateUserErrorInterface & {
+export type InternalError = InsertLocationErrorInterface & LastSuccessfulUserSyncErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
 };
 
-export type InvalidCredentials = AuthTokenErrorInterface & UpdateUserErrorInterface & {
+export type InvalidCredentials = AuthTokenErrorInterface & LastSuccessfulUserSyncErrorInterface & {
   __typename: 'InvalidCredentials';
   description: Scalars['String']['output'];
 };
@@ -2104,12 +2109,21 @@ export enum LanguageType {
   Tetum = 'TETUM'
 }
 
+export type LastSuccessfulUserSyncError = {
+  __typename: 'LastSuccessfulUserSyncError';
+  error: LastSuccessfulUserSyncErrorInterface;
+};
+
+export type LastSuccessfulUserSyncErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type LastSuccessfulUserSyncNode = {
   __typename: 'LastSuccessfulUserSyncNode';
   lastSuccessfulSync: Scalars['DateTime']['output'];
 };
 
-export type LastSuccessfulUserSyncResponse = LastSuccessfulUserSyncNode;
+export type LastSuccessfulUserSyncResponse = LastSuccessfulUserSyncError | LastSuccessfulUserSyncNode;
 
 export type LinkPatientPatientToStoreError = {
   __typename: 'LinkPatientPatientToStoreError';
@@ -2377,7 +2391,7 @@ export type Mutations = {
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
-  updateUser: UpdateUserResponse;
+  updateUser: LastSuccessfulUserSyncResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -5079,22 +5093,6 @@ export enum UpdateStocktakeStatusInput {
 }
 
 export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
-
-export type UpdateUserError = {
-  __typename: 'UpdateUserError';
-  error: UpdateUserErrorInterface;
-};
-
-export type UpdateUserErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
-export type UpdateUserNode = {
-  __typename: 'UpdateUserNode';
-  lastSuccessfulSync: Scalars['DateTime']['output'];
-};
-
-export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
 export type UpsertLogLevelInput = {
   level: LogLevelEnum;

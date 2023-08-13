@@ -107,8 +107,13 @@ fragment LastSuccessfulUserSync on LastSuccessfulUserSyncNode {
 
 mutation updateUser {
   updateUser {
-    ... on UpdateUserNode {
-      lastSuccessfulSync
+    __typename
+    ...LastSuccessfulUserSync
+    ... on LastSuccessfulUserSyncError {
+      error {
+        __typename
+        description
+      }
     }
   }
 }
