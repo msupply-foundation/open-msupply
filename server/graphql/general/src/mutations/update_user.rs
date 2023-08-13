@@ -1,7 +1,5 @@
 use async_graphql::*;
-use chrono::{DateTime, NaiveDateTime, Utc};
 use graphql_core::{
-    simple_generic_errors::{DatabaseError, InternalError},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -11,39 +9,13 @@ use service::{
     sync::sync_user::SyncUser,
 };
 
-use crate::queries::InvalidCredentials;
+use crate::queries::{
+    FetchUserError, InvalidCredentials, LastSuccessfulUserSyncError,
+    LastSuccessfulUserSyncErrorInterface, LastSuccessfulUserSyncNode,
+    LastSuccessfulUserSyncResponse,
+};
 
-pub struct UpdateUserNode {
-    pub last_successful_sync: NaiveDateTime,
-}
-
-#[Object]
-impl UpdateUserNode {
-    pub async fn last_successful_sync(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.last_successful_sync, Utc)
-    }
-}
-
-#[derive(Interface)]
-#[graphql(field(name = "description", type = "&str"))]
-pub enum UpdateUserErrorInterface {
-    InvalidCredentials(InvalidCredentials),
-    DatabaseError(DatabaseError),
-    InternalError(InternalError),
-}
-
-#[derive(SimpleObject)]
-pub struct UpdateUserError {
-    pub error: UpdateUserErrorInterface,
-}
-
-#[derive(Union)]
-pub enum UpdateUserResponse {
-    Error(UpdateUserError),
-    Response(UpdateUserNode),
-}
-
-pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateUserResponse> {
+pub async fn update_user(ctx: &Context<'_>) -> Result<LastSuccessfulUserSyncResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -60,12 +32,24 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateUserResponse> {
             let formatted_error = format!("{:#?}", error);
             let graphql_error = match error {
                 LoginError::LoginFailure => {
-                    return Ok(UpdateUserResponse::Error(UpdateUserError {
-                        error: UpdateUserErrorInterface::InvalidCredentials(InvalidCredentials {}),
-                    }))
+                    return Ok(LastSuccessfulUserSyncResponse::Error(
+                        LastSuccessfulUserSyncError {
+                            error: LastSuccessfulUserSyncErrorInterface::InvalidCredentials(
+                                InvalidCredentials {},
+                            ),
+                        },
+                    ))
                 }
-                LoginError::FetchUserError(_)
-                | LoginError::UpdateUserError(_)
+                LoginError::FetchUserError(_) => {
+                    return Ok(LastSuccessfulUserSyncResponse::Error(
+                        LastSuccessfulUserSyncError {
+                            error: LastSuccessfulUserSyncErrorInterface::FetchUserError(
+                                FetchUserError {},
+                            ),
+                        },
+                    ))
+                }
+                LoginError::UpdateUserError(_)
                 | LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
                 | LoginError::FailedToGenerateToken(_) => {
@@ -76,7 +60,9 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateUserResponse> {
         }
     };
 
-    Ok(UpdateUserResponse::Response(UpdateUserNode {
-        last_successful_sync: user.last_successful_sync,
-    }))
+    Ok(LastSuccessfulUserSyncResponse::Response(
+        LastSuccessfulUserSyncNode {
+            last_successful_sync: user.last_successful_sync,
+        },
+    ))
 }

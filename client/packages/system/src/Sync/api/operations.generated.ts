@@ -53,12 +53,12 @@ export type LastSuccessfulUserSyncFragment = { __typename: 'LastSuccessfulUserSy
 export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'UpdateUserError' } | { __typename: 'UpdateUserNode', lastSuccessfulSync: string } };
+export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'LastSuccessfulUserSyncError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'FetchUserError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'InvalidCredentials', description: string } } | { __typename: 'LastSuccessfulUserSyncNode', lastSuccessfulSync: string } };
 
 export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type LastSuccessfulUserSyncQuery = { __typename: 'Queries', lastSuccessfulUserSync: { __typename: 'LastSuccessfulUserSyncNode', lastSuccessfulSync: string } };
+export type LastSuccessfulUserSyncQuery = { __typename: 'Queries', lastSuccessfulUserSync: { __typename: 'LastSuccessfulUserSyncError' } | { __typename: 'LastSuccessfulUserSyncNode', lastSuccessfulSync: string } };
 
 export const SyncSettingsFragmentDoc = gql`
     fragment SyncSettings on SyncSettingsNode {
@@ -186,12 +186,17 @@ export const ManualSyncDocument = gql`
 export const UpdateUserDocument = gql`
     mutation updateUser {
   updateUser {
-    ... on UpdateUserNode {
-      lastSuccessfulSync
+    __typename
+    ...LastSuccessfulUserSync
+    ... on LastSuccessfulUserSyncError {
+      error {
+        __typename
+        description
+      }
     }
   }
 }
-    `;
+    ${LastSuccessfulUserSyncFragmentDoc}`;
 export const LastSuccessfulUserSyncDocument = gql`
     query lastSuccessfulUserSync {
   lastSuccessfulUserSync {

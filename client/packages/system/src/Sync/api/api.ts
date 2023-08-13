@@ -38,7 +38,11 @@ export const getSyncQueries = (sdk: Sdk) => ({
   lastSuccessfulUserSync: async () => {
     const result = await sdk.lastSuccessfulUserSync();
 
-    return result.lastSuccessfulUserSync;
+    if (
+      result.lastSuccessfulUserSync.__typename === 'LastSuccessfulUserSyncNode'
+    ) {
+      return result.lastSuccessfulUserSync;
+    }
   },
   updateUser: async () => {
     const result = await sdk.updateUser();

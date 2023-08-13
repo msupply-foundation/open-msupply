@@ -2,6 +2,7 @@ import React, { PropsWithChildren, useState, useEffect } from 'react';
 
 import {
   DateUtils,
+  ErrorWithDetails,
   Formatter,
   Grid,
   LoadingButton,
@@ -64,7 +65,7 @@ const useHostSync = () => {
 };
 
 export const Sync: React.FC = () => {
-  const t = useTranslation('common');
+  const t = useTranslation('app');
   const {
     syncStatus,
     latestSyncDate,
@@ -76,6 +77,24 @@ export const Sync: React.FC = () => {
   const { data } = useSync.utils.lastSuccessfulUserSync();
   const { mutateAsync: updateUser, isLoading: updateUserIsLoading } =
     useSync.sync.updateUser();
+  const [fetchUserError, setFetchUserError] = useState(false);
+
+  const onUpdateUser = async () => {
+    setFetchUserError(false);
+
+    try {
+      const update = await updateUser();
+
+      if (
+        update.__typename === 'LastSuccessfulUserSyncError' &&
+        update.error.__typename === 'FetchUserError'
+      ) {
+        setFetchUserError(true);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
@@ -137,11 +156,14 @@ export const Sync: React.FC = () => {
             variant="contained"
             sx={{ fontSize: '12px' }}
             disabled={false}
-            onClick={async () => await updateUser()}
+            onClick={onUpdateUser}
           >
             {t('button.sync-now')}
           </LoadingButton>
         </Row>
+        {fetchUserError ? (
+          <ErrorWithDetails error={t('error.connection-error')} details="" />
+        ) : null}
       </Grid>
     </Grid>
   );

@@ -10,6 +10,8 @@ use crate::{
 
 pub struct SyncUser {}
 
+// Re-login to central server with user credentials to update latest user info
+// (mainly user permissions)
 impl SyncUser {
     pub async fn update_user(
         service_provider: &ServiceProvider,
@@ -48,7 +50,7 @@ impl SyncUser {
             }
             Err(err) => match err {
                 FetchUserError::Unauthenticated => return Err(LoginError::LoginFailure),
-                FetchUserError::ConnectionError(_) => info!("{:?}", err),
+                FetchUserError::ConnectionError(_) => return Err(LoginError::FetchUserError(err)),
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
         };

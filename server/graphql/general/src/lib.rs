@@ -22,7 +22,7 @@ use mutations::{
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
-    update_user::{update_user, UpdateUserResponse},
+    update_user::update_user,
 };
 use queries::{
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
@@ -328,7 +328,7 @@ impl GeneralMutations {
         update_log_level(ctx, store_id, input)
     }
 
-    pub async fn update_user(&self, ctx: &Context<'_>) -> Result<UpdateUserResponse> {
+    pub async fn update_user(&self, ctx: &Context<'_>) -> Result<LastSuccessfulUserSyncResponse> {
         update_user(ctx).await
     }
 }
