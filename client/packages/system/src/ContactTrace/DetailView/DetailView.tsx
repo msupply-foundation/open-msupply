@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   useTranslation,
   DetailViewSkeleton,
@@ -10,35 +10,158 @@ import {
   useFormatDateTime,
   Breadcrumb,
   useIntlUtils,
+  ContactTraceNodeStatus,
 } from '@openmsupply-client/common';
 import {
   useJsonForms,
   useContactTraces,
   ContactTraceRowFragment,
+  useDocumentRegistry,
+  SchemaData,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
+import { usePatient } from '../../Patient';
 
-export const DetailView: FC = () => {
+export type ContactTrace = {
+  status: ContactTraceNodeStatus;
+  datetime: string;
+};
+
+export type ContactTraceData = {
+  id: string | undefined;
+  type: string;
+  documentName: string | undefined;
+  contactTrace: ContactTrace;
+  patient: {
+    id: string;
+    name?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  };
+  schema: SchemaData | undefined;
+  programName: string;
+};
+
+/**
+ * Hook to provide all data needed for the DetailView.
+ * The Data is either load from an existing contact trace otherwise some default data is returned.
+ */
+const useContactTraceData = (
+  traceId: string,
+  createType: string | null,
+  createPatientId: string | null
+): { data: ContactTraceData | undefined; isLoading: boolean } => {
+  const [result, setResult] = useState<{
+    data: ContactTraceData | undefined;
+    isLoading: boolean;
+  }>({ data: undefined, isLoading: true });
+  const [creationDate] = useState(new Date());
+  const { data: contactTraces, isLoading } = useContactTraces.document.list(
+    { filterBy: { id: { equalTo: traceId } } },
+    !createType
+  );
+
+  const { data: patient, isLoading: isLoadingPatient } =
+    usePatient.document.get(createPatientId ?? undefined);
+  const { data: registries, isLoading: isLoadingRegistry } =
+    useDocumentRegistry.get.documentRegistries({
+      filter: { documentType: { equalTo: createType } },
+    });
+
+  // existing trace:
+  useEffect(() => {
+    if (!!createType) {
+      return;
+    }
+    if (!contactTraces) {
+      return;
+    }
+
+    const contactTrace = contactTraces?.nodes?.[0];
+    const data: ContactTraceData | undefined = contactTrace
+      ? {
+          id: contactTrace.id,
+          type: contactTrace.document.type,
+          documentName: contactTrace.document.name,
+          contactTrace: {
+            status: contactTrace.status,
+            datetime: contactTrace.datetime,
+          },
+          schema: undefined,
+          patient: contactTrace.patient ?? undefined,
+          programName: contactTrace.program.name,
+        }
+      : undefined;
+    setResult({ data, isLoading });
+  }, [contactTraces]);
+
+  // create
+  useEffect(() => {
+    if (!createType) {
+      return;
+    }
+    if (isLoadingPatient || isLoadingRegistry) {
+      setResult({ data: undefined, isLoading: true });
+      return;
+    }
+    const registry = registries?.nodes?.[0];
+    if (!patient || !registry) {
+      setResult({ data: undefined, isLoading: false });
+      return;
+    }
+
+    setResult({
+      data: {
+        id: undefined,
+        type: createType,
+        documentName: undefined,
+        contactTrace: {
+          status: ContactTraceNodeStatus.Pending,
+          datetime: creationDate.toISOString(),
+        },
+        schema: registry,
+        patient,
+        programName: registry.name ?? '',
+      },
+      isLoading: false,
+    });
+  }, [registries, isLoadingPatient, isLoadingRegistry]);
+
+  return result;
+};
+
+export type DetailViewProps = {
+  createPatientId: string | null;
+  createType: string | null;
+};
+
+export const DetailView: FC<DetailViewProps> = ({
+  createType,
+  createPatientId,
+}) => {
   const t = useTranslation('dispensary');
-  const id = useContactTraces.utils.idFromUrl();
   const navigate = useNavigate();
   const { setSuffix } = useBreadcrumbs([AppRoute.ContactTrace]);
   const dateFormat = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
+  const id = useContactTraces.utils.idFromUrl();
+  const { data: contactData, isLoading } = useContactTraceData(
+    id,
+    createType,
+    createPatientId
+  );
+  // Used when creating a new contact trace:
+  const [newContactTraceId, setNewContactTraceId] = useState(id);
 
-  const {
-    data: contactTraces,
-    isSuccess,
-    isError,
-  } = useContactTraces.document.list({ filterBy: { id: { equalTo: id } } });
-
-  const contactTrace = contactTraces?.nodes?.[0];
   const handleSave = useContactTraces.document.upsertDocument(
-    contactTrace?.patientId ?? '',
-    contactTrace?.document.type ?? ''
+    contactData?.patient?.id ?? '',
+    contactData?.type ?? '',
+    contactTrace => {
+      if (contactTrace.id !== id) setNewContactTraceId(contactTrace.id);
+    }
   );
 
   const {
@@ -50,16 +173,35 @@ export const DetailView: FC = () => {
     validationError,
     revert,
   } = useJsonForms(
-    contactTrace?.document?.name,
-    contactTrace?.patientId,
+    contactData?.documentName,
+    contactData?.patient?.id,
     {
       handleSave,
     },
-    undefined
+    createType && contactData?.schema
+      ? {
+          data: contactData?.contactTrace,
+          schema: contactData?.schema,
+          isCreating: newContactTraceId === id,
+        }
+      : undefined
   );
 
+  // When a contact trace id changes (contact trace has been created), wait till the isDirty flag
+  // is cleared and then navigate to the correct url.
+  useEffect(() => {
+    if (!isDirty && newContactTraceId !== id) {
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.ContactTrace)
+          .addPart(newContactTraceId)
+          .build()
+      );
+    }
+  }, [isDirty, newContactTraceId]);
+
   const updateContactTrace = useDebounceCallback(
-    (patch: Partial<ContactTraceRowFragment>) =>
+    (patch: Partial<ContactTrace>) =>
       setData({
         ...(typeof data === 'object' ? data : {}),
         ...patch,
@@ -68,38 +210,38 @@ export const DetailView: FC = () => {
   );
 
   useEffect(() => {
-    if (contactTrace) {
+    if (contactData) {
       setSuffix(
         <span key="patient-contact-trace">
           <Breadcrumb
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
-              .addPart(contactTrace.patientId)
+              .addPart(contactData.patient.id)
               .addQuery({ tab: PatientTabValue.ContactTraces })
               .build()}
           >
             {getLocalisedFullName(
-              contactTrace.patient.firstName,
-              contactTrace.patient.lastName
+              contactData.patient?.firstName,
+              contactData.patient?.lastName
             )}
           </Breadcrumb>
-          <span>{` / ${contactTrace.program?.name} - ${dateFormat.localisedDate(
-            contactTrace.datetime
+          <span>{` / ${contactData.programName} - ${dateFormat.localisedDate(
+            contactData.contactTrace.datetime
           )}`}</span>
         </span>
       );
     }
-  }, [contactTrace]);
+  }, [contactData]);
 
-  if (!isSuccess && !isError) return <DetailViewSkeleton />;
+  if (isLoading) return <DetailViewSkeleton />;
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
-      {contactTrace && (
-        <Toolbar onChange={updateContactTrace} trace={contactTrace} />
+      {contactData && (
+        <Toolbar onChange={updateContactTrace} data={contactData} />
       )}
-      {contactTrace ? (
+      {!isLoading ? (
         JsonForm
       ) : (
         <AlertModal
@@ -117,7 +259,7 @@ export const DetailView: FC = () => {
       )}
 
       <Footer
-        documentName={contactTrace?.document?.name}
+        documentName={contactData?.documentName}
         onSave={saveData}
         onCancel={revert}
         isDisabled={!isDirty || !!validationError}
