@@ -14,10 +14,10 @@ import {
   Option,
   ContactTraceNodeStatus,
 } from '@openmsupply-client/common';
-import { ContactTraceRowFragment } from '@openmsupply-client/programs';
 
 import { Select } from '@common/components';
 import { traceStatusTranslation } from './Footer';
+import { ContactTrace, ContactTraceData } from './DetailView';
 
 const traceStatusOption = (
   status: ContactTraceNodeStatus,
@@ -33,22 +33,22 @@ const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
 );
 interface ToolbarProps {
-  onChange: (patch: Partial<ContactTraceRowFragment>) => void;
-  trace: ContactTraceRowFragment;
+  onChange: (patch: Partial<ContactTrace>) => void;
+  data: ContactTraceData;
 }
-export const Toolbar: FC<ToolbarProps> = ({ trace, onChange }) => {
+export const Toolbar: FC<ToolbarProps> = ({ data, onChange }) => {
   const [status, setStatus] = useState<ContactTraceNodeStatus | undefined>(
-    trace.status ?? undefined
+    data.contactTrace.status ?? undefined
   );
   const [datetime, setDatetime] = useState<string | undefined>();
   const t = useTranslation('dispensary');
 
   useEffect(() => {
-    setStatus(trace.status ?? undefined);
-    setDatetime(trace.datetime);
-  }, [trace.status, trace.datetime]);
+    setStatus(data.contactTrace.status ?? undefined);
+    setDatetime(data.contactTrace.datetime);
+  }, [data.contactTrace.status, data.contactTrace.datetime]);
 
-  const { patient } = trace;
+  const { patient } = data;
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -88,7 +88,7 @@ export const Toolbar: FC<ToolbarProps> = ({ trace, onChange }) => {
               <Row
                 label={t('label.program')}
                 Input={
-                  <BasicTextInput disabled value={trace.program.name ?? ''} />
+                  <BasicTextInput disabled value={data.programName ?? ''} />
                 }
               />
               <Row
