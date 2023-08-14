@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   rankWith,
   uiTypeIs,
@@ -11,14 +11,14 @@ import { isEmpty } from 'lodash';
 import { z } from 'zod';
 import { renderLayoutElements } from '@jsonforms/material-renderers';
 import { FORM_GAP, useZodOptionsValidation } from '../common';
-import { useDocument, useProgramEvents } from '../../api';
+import { useDocument, useEncounter, useProgramEvents } from '../../api';
 import { Box, FormLabel } from '@mui/material';
 import { useFormatDateTime } from '@common/intl';
 
 /**
  * Group-like layout control that displays historic encounter data as readonly if a certain
  * condition is met.
- * If the condition is not met the normal layout is rendered and the layout elements are editable.
+ * If the condition is not met the normal layout is rendered and the layoutelements are editable.
  */
 const Options = z
   .object({
@@ -50,13 +50,23 @@ const UIComponent = ({
     Options,
     uischema.options
   );
-  const [now] = useState<Date | undefined>(new Date());
+  const [datetime, setDatetime] = useState<Date | undefined>();
   const { localisedDate } = useFormatDateTime();
+  const { data: encounter } = useEncounter.document.byDocName(
+    config.documentName
+  );
+  useEffect(() => {
+    if (encounter) {
+      // Look for event just before the current encounter, this avoids that we look at events from
+      // the current encounter which would be problematic...
+      setDatetime(new Date(new Date(encounter?.startDatetime).getTime() - 1));
+    }
+  }, [encounter]);
 
   const patientId = config?.patientId;
   const { data: events } = useProgramEvents.document.list(
     {
-      at: now,
+      at: datetime,
       filter: {
         patientId: {
           equalTo: patientId,
@@ -69,7 +79,7 @@ const UIComponent = ({
         first: 1,
       },
     },
-    !!options
+    !!options && !!datetime
   );
   const { data: previousDocument } = useDocument.get.documentByName(
     events?.nodes[0]?.documentName ?? undefined
