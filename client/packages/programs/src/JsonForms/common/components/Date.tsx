@@ -56,7 +56,7 @@ const UIComponent = (props: ControlProps) => {
           }}
           format="dd/MM/yyyy"
           disabled={!props.enabled}
-          error={hasData ? (props.errors ?? zErrors) : ''}
+          error={hasData ? props.errors ?? zErrors : ''}
           disableFuture={disableFuture}
         />
       }
