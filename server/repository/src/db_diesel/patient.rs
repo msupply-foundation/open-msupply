@@ -41,6 +41,8 @@ pub struct PatientFilter {
     /// - name::national_health_number
     /// - program_enrolment::program_enrolment_id
     pub identifier: Option<StringFilter>,
+    // Filter for name and code
+    pub name_and_code: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -174,6 +176,7 @@ impl<'a> PatientRepository<'a> {
                 country,
                 email,
                 identifier,
+                name_and_code,
             } = f;
 
             // or filters need to be applied first
@@ -195,6 +198,11 @@ impl<'a> PatientRepository<'a> {
                     .select(program_enrolment_dsl::patient_id);
 
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
+            }
+
+            if name_and_code.is_some() {
+                apply_string_filter!(query, name_and_code.clone(), name_dsl::name_);
+                apply_string_or_filter!(query, name_and_code.clone(), name_dsl::code);
             }
 
             apply_equal_filter!(query, id, name_dsl::id);

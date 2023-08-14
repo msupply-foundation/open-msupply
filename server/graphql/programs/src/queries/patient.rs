@@ -38,6 +38,7 @@ pub struct PatientFilterInput {
     pub country: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
     pub identifier: Option<StringFilterInput>,
+    pub name_and_code: Option<StringFilterInput>,
 }
 
 impl PatientFilterInput {
@@ -57,6 +58,7 @@ impl PatientFilterInput {
             country,
             email,
             identifier,
+            name_and_code,
         } = self;
         PatientFilter {
             id: id.map(EqualFilter::from),
@@ -73,6 +75,7 @@ impl PatientFilterInput {
             country: country.map(StringFilter::from),
             email: email.map(StringFilter::from),
             identifier: identifier.map(StringFilter::from),
+            name_and_code: name_and_code.map(StringFilter::from),
         }
     }
 }
