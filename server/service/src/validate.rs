@@ -49,7 +49,7 @@ pub fn check_other_party(
     let other_party = get_other_party(connection, store_id, other_party_id)?
         .ok_or(OtherPartyErrors::OtherPartyDoesNotExist)?;
 
-    if !other_party.is_visible() {
+    if !other_party.is_visible() && !other_party.is_patient() {
         return Err(OtherPartyErrors::OtherPartyNotVisible);
     }
 

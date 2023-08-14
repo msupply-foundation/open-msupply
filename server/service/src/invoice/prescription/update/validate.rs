@@ -40,6 +40,8 @@ pub fn validate(
         )
         .map_err(|e| match e {
             OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
+            // kept this in for match but added condition so that it won't trigger for patients
+            // since you should be allowed to prescribe to a patient as long as they're on the site
             OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
             OtherPartyErrors::TypeMismatched => OtherPartyNotAPatient,
             OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
