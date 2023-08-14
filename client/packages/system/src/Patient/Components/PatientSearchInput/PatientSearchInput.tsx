@@ -1,12 +1,12 @@
 import React, { FC } from 'react';
-import { Autocomplete, useBufferState } from '@openmsupply-client/common';
+import { Autocomplete } from '@openmsupply-client/common';
 import {
   NameSearchInputProps,
-  basicFilterOptions,
+  SearchInputPatient,
   filterByNameAndCode,
 } from '../../utils';
-import { usePatient } from '../../api';
 import { getPatientOptionRenderer } from '../PatientOptionRenderer';
+import { searchPatient } from '../utils';
 
 export const PatientSearchInput: FC<NameSearchInputProps> = ({
   onChange,
@@ -14,29 +14,29 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   value,
   disabled = false,
 }) => {
-  const { data, isLoading } = usePatient.document.list({
-    sortBy: { key: 'name', direction: 'asc' },
-  });
-  const [buffer, setBuffer] = useBufferState(value);
   const PatientOptionRenderer = getPatientOptionRenderer();
+  const { debouncedOnChange, isLoading, patients, setSearchText } =
+    searchPatient();
 
   return (
     <Autocomplete
+      options={patients ?? []}
       disabled={disabled}
       clearable={false}
-      value={buffer && { ...buffer, label: buffer.name }}
-      filterOptionConfig={basicFilterOptions}
-      filterOptions={filterByNameAndCode}
       loading={isLoading}
-      onChange={(_, name) => {
-        setBuffer(name);
-        name && onChange(name);
+      onInputChange={(_, value) => {
+        debouncedOnChange(value);
+        setSearchText(value);
       }}
-      options={data?.nodes ?? []}
+      onChange={(_, name) => {
+        if (name && !(name instanceof Array)) onChange(name);
+      }}
       renderOption={PatientOptionRenderer}
+      getOptionLabel={(option: SearchInputPatient) => option.name}
       width={`${width}px`}
       popperMinWidth={width}
-      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+      defaultValue={value && { ...value, label: value.name }}
+      filterOptions={filterByNameAndCode}
     />
   );
 };
