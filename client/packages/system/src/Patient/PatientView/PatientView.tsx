@@ -8,6 +8,7 @@ import {
   EncounterSortFieldInput,
   ProgramEnrolmentSortFieldInput,
   useAuthContext,
+  ContactTraceSortFieldInput,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -233,7 +234,7 @@ export const PatientView = () => {
       Component: <ContactTraceListView />,
       value: PatientTabValue.ContactTraces,
       sort: {
-        key: EncounterSortFieldInput.StartDatetime,
+        key: ContactTraceSortFieldInput.Datetime,
         dir: 'desc' as 'desc' | 'asc',
       },
     },
