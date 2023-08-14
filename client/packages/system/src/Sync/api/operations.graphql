@@ -101,19 +101,15 @@ mutation manualSync {
   manualSync
 }
 
-fragment LastSuccessfulUserSync on LastSuccessfulUserSyncNode {
+fragment UpdateUser on UpdateUserNode {
   lastSuccessfulSync
 }
 
 mutation updateUser {
   updateUser {
     __typename
-    ...LastSuccessfulUserSync
-    ... on LastSuccessfulUserSyncError {
-      error {
-        __typename
-        description
-      }
+    ... on UpdateUserNode {
+      ...UpdateUser
     }
   }
 }
@@ -121,6 +117,6 @@ mutation updateUser {
 query lastSuccessfulUserSync {
   lastSuccessfulUserSync {
     __typename
-    ...LastSuccessfulUserSync
+    ...UpdateUser
   }
 }

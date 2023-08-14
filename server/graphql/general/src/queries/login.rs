@@ -77,7 +77,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
             let graphql_error = match error {
                 LoginError::LoginFailure => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
-                        error: AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials {}),
+                        error: AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials),
                     }))
                 }
                 LoginError::FailedToGenerateToken(_) => {
