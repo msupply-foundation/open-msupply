@@ -314,3 +314,11 @@ impl OtherPartyNotVisible {
         "Other party name is not visible in current store"
     }
 }
+
+pub struct ConnectionError;
+#[Object]
+impl ConnectionError {
+    pub async fn description(&self) -> &'static str {
+        "Failed to reach central server"
+    }
+}

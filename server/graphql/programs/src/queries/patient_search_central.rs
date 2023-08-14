@@ -1,6 +1,8 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::{
+    simple_generic_errors::ConnectionError, standard_graphql_error::StandardGraphqlError,
+};
 use service::{
     apis::patient_v4::PatientV4,
     programs::patient::{CentralPatientRequestError, PatientSearch},
@@ -20,14 +22,6 @@ pub struct CentralPatientSearchInput {
 pub struct CentralPatientSearchConnector {
     pub total_count: u32,
     pub nodes: Vec<CentralPatientNode>,
-}
-
-pub struct ConnectionError;
-#[Object]
-impl ConnectionError {
-    pub async fn description(&self) -> &'static str {
-        "Failed to reach central server"
-    }
 }
 
 #[derive(Interface)]

@@ -991,12 +991,13 @@ mod permission_validation_test {
             debug_no_access_control: false,
         };
         let user_id = "test_user_id";
+        let password = "pass";
         let mut service = TokenService::new(
             &auth_data.token_bucket,
             auth_data.auth_token_secret.as_bytes(),
             true,
         );
-        let token_pair = service.jwt_token(user_id, 60, 120).unwrap();
+        let token_pair = service.jwt_token(user_id, password, 60, 120).unwrap();
 
         let (_, _, connection_manager, _) = setup_all(
             "basic_permission_validation",
@@ -1168,6 +1169,7 @@ mod permission_validation_test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
+        let password = "pass";
 
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),
@@ -1181,7 +1183,7 @@ mod permission_validation_test {
             auth_data.auth_token_secret.as_bytes(),
             true,
         )
-        .jwt_token(&user().id, 60, 120)
+        .jwt_token(&user().id, password, 60, 120)
         .unwrap()
         .token;
 
@@ -1203,7 +1205,7 @@ mod permission_validation_test {
             auth_data.auth_token_secret.as_bytes(),
             true,
         )
-        .jwt_token(&user_without_permission().id, 60, 120)
+        .jwt_token(&user_without_permission().id, password, 60, 120)
         .unwrap()
         .token;
         assert!(service_provider
