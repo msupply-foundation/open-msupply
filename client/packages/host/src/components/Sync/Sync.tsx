@@ -67,14 +67,13 @@ const useHostSync = () => {
 };
 
 const useUpdateUser = () => {
-  const { data: initialSyncDate } = useSync.utils.lastSuccessfulUserSync();
-  const [syncDate, setSyncDate] = useState<string | null>(null);
+  const { data: lastSuccessfulSync } = useSync.utils.lastSuccessfulUserSync();
   const [error, setError] = useState<ErrorWithDetailsProps | null>(null);
   const { mutateAsync: updateUser, isLoading } = useSync.sync.updateUser();
   const t = useTranslation('app');
 
   return {
-    lastSuccessfulSync: initialSyncDate || syncDate,
+    lastSuccessfulSync,
     error,
     isLoading,
     updateUser: async () => {
@@ -84,7 +83,8 @@ const useUpdateUser = () => {
 
         switch (update.__typename) {
           case 'UpdateUserNode':
-            return setSyncDate(update.lastSuccessfulSync);
+            // Sync date will be updated through cache invalidation
+            return;
           case 'ConnectionError':
             return setError({
               error: t('error.connection-error'),
