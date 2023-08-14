@@ -3,11 +3,13 @@ import React, { PropsWithChildren, useState, useEffect } from 'react';
 import {
   DateUtils,
   ErrorWithDetails,
+  ErrorWithDetailsProps,
   Formatter,
   Grid,
   LoadingButton,
   RadioIcon,
   Typography,
+  noOtherVariants,
   useFormatDateTime,
   useNativeClient,
   useTranslation,
@@ -64,6 +66,43 @@ const useHostSync = () => {
   };
 };
 
+const useUpdateUser = () => {
+  const { data: initialSyncDate } = useSync.utils.lastSuccessfulUserSync();
+  const [syncDate, setSyncDate] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorWithDetailsProps | null>(null);
+  const { mutateAsync: updateUser, isLoading } = useSync.sync.updateUser();
+  const t = useTranslation('app');
+
+  return {
+    lastSuccessfulSync: initialSyncDate || syncDate,
+    error,
+    isLoading,
+    updateUser: async () => {
+      setError(null);
+      try {
+        const update = await updateUser();
+
+        switch (update.__typename) {
+          case 'UpdateUserNode':
+            return setSyncDate(update.lastSuccessfulSync);
+          case 'ConnectionError':
+            return setError({
+              error: t('error.connection-error'),
+              details: '',
+            });
+          default:
+            noOtherVariants(update);
+        }
+      } catch (error) {
+        setError({
+          error: t('error.unknown-sync-error'),
+          details: String(error),
+        });
+      }
+    },
+  };
+};
+
 export const Sync: React.FC = () => {
   const t = useTranslation('app');
   const {
@@ -74,27 +113,12 @@ export const Sync: React.FC = () => {
     isLoading,
     onManualSync,
   } = useHostSync();
-  const { data } = useSync.utils.lastSuccessfulUserSync();
-  const { mutateAsync: updateUser, isLoading: updateUserIsLoading } =
-    useSync.sync.updateUser();
-  const [fetchUserError, setFetchUserError] = useState(false);
-
-  const onUpdateUser = async () => {
-    setFetchUserError(false);
-
-    try {
-      const update = await updateUser();
-
-      if (
-        update.__typename === 'LastSuccessfulUserSyncError' &&
-        update.error.__typename === 'FetchUserError'
-      ) {
-        setFetchUserError(true);
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  const {
+    isLoading: updateUserIsLoading,
+    lastSuccessfulSync,
+    updateUser,
+    error: updateUserError,
+  } = useUpdateUser();
 
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
@@ -146,7 +170,7 @@ export const Sync: React.FC = () => {
         </Typography>
         <Row title={t('sync-info.last-successful-sync')}>
           <FormattedSyncDate
-            date={DateUtils.getDateOrNull(data?.lastSuccessfulSync || null)}
+            date={DateUtils.getDateOrNull(lastSuccessfulSync || null)}
           />
         </Row>
         <Row>
@@ -156,14 +180,12 @@ export const Sync: React.FC = () => {
             variant="contained"
             sx={{ fontSize: '12px' }}
             disabled={false}
-            onClick={onUpdateUser}
+            onClick={updateUser}
           >
             {t('button.sync-now')}
           </LoadingButton>
         </Row>
-        {fetchUserError ? (
-          <ErrorWithDetails error={t('error.connection-error')} details="" />
-        ) : null}
+        {updateUserError && <ErrorWithDetails {...updateUserError} />}
       </Grid>
     </Grid>
   );
