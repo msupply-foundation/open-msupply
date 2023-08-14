@@ -4,6 +4,7 @@ use std::{
 };
 
 use bcrypt::BcryptError;
+use chrono::Utc;
 use log::info;
 use repository::{
     ActivityLogType, Language, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
@@ -143,7 +144,12 @@ impl LoginService {
         );
         let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
         let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
-        let pair = match token_service.jwt_token(&user_account.id, max_age_token, max_age_refresh) {
+        let pair = match token_service.jwt_token(
+            &user_account.id,
+            &input.password,
+            max_age_token,
+            max_age_refresh,
+        ) {
             Ok(pair) => pair,
             Err(err) => return Err(LoginError::FailedToGenerateToken(err)),
         };
@@ -240,6 +246,7 @@ impl LoginService {
             last_name: user_info.user.last_name,
             phone_number: user_info.user.phone1,
             job_title: user_info.user.job_title,
+            last_successful_sync: Utc::now().naive_utc(),
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores
