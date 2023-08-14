@@ -55,7 +55,13 @@ pub fn upsert_patient(
             if is_latest_doc(&ctx.connection, &doc.name, doc.datetime)
                 .map_err(UpdatePatientError::DatabaseError)?
             {
-                update_patient_row(&ctx.connection, &doc_timestamp, patient, false)?;
+                update_patient_row(
+                    &ctx.connection,
+                    Some(store_id.to_string()),
+                    &doc_timestamp,
+                    patient,
+                    false,
+                )?;
                 create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
             }
 
