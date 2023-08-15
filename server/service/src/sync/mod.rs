@@ -11,6 +11,7 @@ mod sync_api_credentials;
 mod sync_buffer;
 pub(crate) mod sync_serde;
 pub mod sync_status;
+pub mod sync_user;
 pub mod synchroniser;
 pub mod synchroniser_driver;
 pub(crate) mod translation_and_integration;

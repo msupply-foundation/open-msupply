@@ -2370,6 +2370,7 @@ export type Mutations = {
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
+  updateUser: UpdateUserResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -3348,6 +3349,7 @@ export type Queries = {
   itemCounts: ItemCounts;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
+  lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
@@ -5070,6 +5072,13 @@ export enum UpdateStocktakeStatusInput {
 }
 
 export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
+
+export type UpdateUserNode = {
+  __typename: 'UpdateUserNode';
+  lastSuccessfulSync: Scalars['DateTime']['output'];
+};
+
+export type UpdateUserResponse = ConnectionError | UpdateUserNode;
 
 export type UpsertLogLevelInput = {
   level: LogLevelEnum;

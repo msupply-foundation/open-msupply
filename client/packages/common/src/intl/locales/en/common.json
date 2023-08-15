@@ -97,6 +97,7 @@
   "heading.edit-item": "Edit Item",
   "heading.expiring-stock": "Expiring Stock",
   "heading.synchronise-status": "Synchronisation Status",
+  "heading.user-sync": "User Synchronisation Status",
   "heading.select-items": "Select Items",
   "heading.server-log": "Server Log",
   "heading.settings-display": "Display settings",

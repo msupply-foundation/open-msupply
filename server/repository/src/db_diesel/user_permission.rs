@@ -48,7 +48,7 @@ impl<'a> UserPermissionRepository<'a> {
         &self,
         filter: UserPermissionFilter,
     ) -> Result<Vec<UserPermission>, RepositoryError> {
-        self.query(Pagination::new(), Some(filter), None)
+        self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query_one(
