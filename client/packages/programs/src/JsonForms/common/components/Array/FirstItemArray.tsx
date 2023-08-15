@@ -6,11 +6,10 @@ import {
   ControlElement,
   composePaths,
   uiTypeIs,
+  JsonSchema7,
+  ControlProps,
 } from '@jsonforms/core';
-import {
-  withJsonFormsArrayControlProps,
-  JsonFormsDispatch,
-} from '@jsonforms/react';
+import { withJsonFormsArrayControlProps, JsonForms } from '@jsonforms/react';
 import {
   Box,
   Typography,
@@ -25,7 +24,9 @@ interface UISchemaWithCustomProps extends ControlElement {
   itemLabel?: string;
 }
 
-interface FirstItemArrayControlCustomProps extends ArrayControlProps {
+interface FirstItemArrayControlCustomProps
+  extends ArrayControlProps,
+    ControlProps {
   uischema: UISchemaWithCustomProps;
   data: JsonData[];
   options?: {
@@ -47,6 +48,9 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
     rootSchema,
     renderers,
     options,
+    data,
+    config,
+    handleChange,
   } = props;
 
   const childUiSchema = useMemo(
@@ -63,6 +67,12 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
     [uischemas, schema, uischema.scope, path, uischema, rootSchema]
   );
 
+  // If there are definitions they need to be added to the child schema
+  const schemaWithDefs = {
+    ...(schema as JsonSchema7),
+    definitions: rootSchema.definitions as Record<string, JsonSchema7>,
+  };
+
   if (!visible) return null;
 
   const childPath = composePaths(path, `${0}`);
@@ -78,18 +88,24 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
         </Box>
       ) : null}
 
-      <JsonFormsDispatch
+      <JsonForms
         key={childPath}
-        schema={schema}
+        schema={schemaWithDefs}
         uischema={childUiSchema || uischema}
-        enabled={enabled}
-        path={childPath}
-        renderers={renderers}
+        data={data?.[0] ?? {}}
+        config={config}
+        readonly={!enabled}
+        renderers={renderers ?? []}
+        onChange={({ data }) => {
+          if (Object.values(data).filter(it => !!it).length > 0) {
+            handleChange(childPath, data);
+          }
+        }}
       />
     </Box>
   );
 };
 
 export const FirstItemArray = withJsonFormsArrayControlProps(
-  FirstItemArrayComponent as ComponentType<FirstItemArrayControlCustomProps>
+  FirstItemArrayComponent as ComponentType<ArrayControlProps>
 );
