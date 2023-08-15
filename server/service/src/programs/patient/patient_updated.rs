@@ -83,6 +83,7 @@ pub fn update_patient_row(
         r#type: NameType::Patient,
         is_customer: existing_name.map(|n| n.is_customer).unwrap_or(true),
         is_supplier: existing_name.map(|n| n.is_supplier).unwrap_or(false),
+        // supplying_store_id is the home store for a patient and is needed for mSupply compatibility
         supplying_store_id: existing_name
             .and_then(|n| n.supplying_store_id.clone())
             .or(store_id),
