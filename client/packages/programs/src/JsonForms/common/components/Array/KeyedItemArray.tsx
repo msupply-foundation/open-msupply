@@ -43,6 +43,9 @@ interface KeyedItemArrayControlCustomProps
 
 export const keyedItemArrayTester = rankWith(10, uiTypeIs('KeyedItemArray'));
 
+const isJsonObject = (item?: JsonData): item is Record<string, JsonData> =>
+  !!item && typeof item === 'object' && !Array.isArray(item);
+
 const KeyedItemArrayComponent: ComponentType<
   KeyedItemArrayControlCustomProps
 > = (props: KeyedItemArrayControlCustomProps) => {
@@ -69,19 +72,30 @@ const KeyedItemArrayComponent: ComponentType<
     if (!options) return;
     const arrayData = data ?? [];
     const elementIndex = arrayData.findIndex(item => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) return;
+      if (!isJsonObject(item)) return;
 
       return item[options.keyField] === options.keyValue;
     });
     if (elementIndex >= 0) {
-      // Only set the index when the entry exists otherwise the renderer might overwrite the object
-      // created below, removing the the `keyField` while doing so...
       setIndex(elementIndex);
       return;
     }
+
+    if (index >= 0) {
+      // Ensure that the keyField is set, e.g. might have been overwritten by the child renderer
+      const existing = arrayData[index];
+      if (isJsonObject(existing)) {
+        existing[options.keyField] = options.keyValue;
+      }
+      arrayData[index] = existing;
+      handleChange(path, arrayData);
+      return;
+    }
+
     arrayData.push({
       [options.keyField]: options.keyValue,
     });
+    setIndex(arrayData.length - 1);
     handleChange(path, arrayData);
   }, [options, data]);
 
