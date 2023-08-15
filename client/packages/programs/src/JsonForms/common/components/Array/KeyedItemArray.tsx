@@ -7,11 +7,9 @@ import {
   composePaths,
   uiTypeIs,
   ControlProps,
+  JsonSchema7,
 } from '@jsonforms/core';
-import {
-  withJsonFormsArrayControlProps,
-  JsonFormsDispatch,
-} from '@jsonforms/react';
+import { withJsonFormsArrayControlProps, JsonForms } from '@jsonforms/react';
 import { Typography } from '@openmsupply-client/common';
 
 import { JsonData } from '../../JsonForm';
@@ -59,10 +57,11 @@ const KeyedItemArrayComponent: ComponentType<
     rootSchema,
     renderers,
     data,
+    config,
     handleChange,
   } = props;
 
-  const [index, setIndex] = useState<number>(-1);
+  const [index, setIndex] = useState<number>(0);
   const { errors: zErrors, options } = useZodOptionsValidation(
     Options,
     uischema.options
@@ -80,23 +79,6 @@ const KeyedItemArrayComponent: ComponentType<
       setIndex(elementIndex);
       return;
     }
-
-    if (index >= 0) {
-      // Ensure that the keyField is set, e.g. might have been overwritten by the child renderer
-      const existing = arrayData[index];
-      if (isJsonObject(existing)) {
-        existing[options.keyField] = options.keyValue;
-      }
-      arrayData[index] = existing;
-      handleChange(path, arrayData);
-      return;
-    }
-
-    arrayData.push({
-      [options.keyField]: options.keyValue,
-    });
-    setIndex(arrayData.length - 1);
-    handleChange(path, arrayData);
   }, [options, data]);
 
   const childUiSchema = useMemo(
@@ -114,21 +96,34 @@ const KeyedItemArrayComponent: ComponentType<
   );
 
   const childPath = composePaths(path, `${index}`);
+  // If there are definitions they need to be added to the child schema
+  const schemaWithDefs = {
+    ...(schema as JsonSchema7),
+    definitions: rootSchema.definitions as Record<string, JsonSchema7>,
+  };
 
   if (zErrors) {
     return <Typography color="error">{zErrors}</Typography>;
   }
-
   if (!visible || index < 0) return null;
+  if (!options) return null;
 
   return (
-    <JsonFormsDispatch
+    <JsonForms
       key={childPath}
-      schema={schema}
+      schema={schemaWithDefs}
       uischema={childUiSchema || uischema}
-      enabled={enabled}
-      path={childPath}
-      renderers={renderers}
+      data={data?.[0] ?? {}}
+      config={config}
+      readonly={!enabled}
+      renderers={renderers ?? []}
+      onChange={({ data }) => {
+        if (Object.values(data).filter(it => !!it).length > 0) {
+          // only insert data if the object is not empty
+          data[options.keyField] = options.keyValue;
+          handleChange(childPath, data);
+        }
+      }}
     />
   );
 };
