@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react';
 import { PatientRowFragment, usePatient } from '../api';
 import { useDebounceCallback } from '@common/hooks';
 
-const MIN_CHARS = 3;
-
 export const searchPatient = () => {
   const patientQueries = usePatient.utils.api();
   const [patients, setPatients] = useState<PatientRowFragment[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [searchText, setSearchText] = useState('');
-  const [overlimit, setOverlimit] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     search('');
@@ -22,40 +20,50 @@ export const searchPatient = () => {
         first: 100,
         sortBy: { key: 'name', direction: 'asc' },
         filterBy: {
-          nameAndCode: { like: searchValue },
+          nameOrCode: { like: searchValue },
         },
       })
       .then(result => {
-        if (result.totalCount > 100) {
-          setOverlimit(true);
-        } else {
-          setOverlimit(false);
-        }
+        setTotalCount(result.totalCount);
         setPatients(result.nodes);
         setIsLoading(false);
       })
       .catch(err => {
-        console.log(err);
+        console.error(err);
       });
   };
 
   const debouncedOnChange = useDebounceCallback(
-    value => {
-      if (value.length >= MIN_CHARS) search(value);
-      else {
-        if (patients.length) search('');
-      }
-    },
+    value => search(value),
     [searchText],
     500
   );
+
+  const reset = useDebounceCallback(
+    () => {
+      setPatients([]);
+      setSearchText('');
+      setTotalCount(0);
+    },
+    [],
+    500
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => search(searchText), 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchText]);
 
   return {
     debouncedOnChange,
     isLoading,
     patients,
     setSearchText,
-    overlimit,
+    totalCount,
+    reset,
     searchText,
   };
 };
