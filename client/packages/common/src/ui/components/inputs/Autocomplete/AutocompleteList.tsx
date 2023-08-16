@@ -103,9 +103,6 @@ export const AutocompleteList = <T,>({
           '& .MuiAutocomplete-inputRoot': {
             width: width ? `${width}px` : 'auto',
           },
-          '& .MuiAutocomplete-noOptions': {
-            display: 'none',
-          },
         }}
         classes={{ noOptions: 'something' }}
         ListboxProps={{
