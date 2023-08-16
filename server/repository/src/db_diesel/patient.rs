@@ -308,6 +308,11 @@ impl PatientFilter {
         self.email = Some(filter);
         self
     }
+
+    pub fn name_or_code(mut self, filter: StringFilter) -> Self {
+        self.name_or_code = Some(filter);
+        self
+    }
 }
 
 #[cfg(test)]
@@ -445,6 +450,16 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.len(), 0);
+        // test filter for name_or_code and identifier
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new()
+                    .name_or_code(StringFilter::equal_to("codePatient"))
+                    .identifier(StringFilter::like("nhn")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.get(0).unwrap().id, patient_row.id);
     }
 
     #[actix_rt::test]
