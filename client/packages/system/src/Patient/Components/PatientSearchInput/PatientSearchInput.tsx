@@ -15,8 +15,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   disabled = false,
 }) => {
   const PatientOptionRenderer = getPatientOptionRenderer();
-  const { debouncedOnChange, isLoading, patients, setSearchText } =
-    searchPatient();
+  const { isLoading, patients, setSearchText } = searchPatient();
 
   return (
     <Autocomplete
@@ -24,10 +23,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
       disabled={disabled}
       clearable={false}
       loading={isLoading}
-      onInputChange={(_, value) => {
-        debouncedOnChange(value);
-        setSearchText(value);
-      }}
+      onInputChange={(_, value) => setSearchText(value)}
       onChange={(_, name) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
@@ -37,6 +33,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
       popperMinWidth={width}
       defaultValue={value && { ...value, label: value.name }}
       filterOptions={filterByNameAndCode}
+      noOptionsText=""
     />
   );
 };
