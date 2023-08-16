@@ -33,6 +33,8 @@ pub struct LegacyPrefData {
     pub response_requisition_requires_authorisation: bool,
     #[serde(rename = "includeRequisitionsInSuppliersRemoteAuthorisationProcesses")]
     pub request_requisition_requires_authorisation: bool,
+    #[serde(default)]
+    // In case preference is missing, use default
     #[serde(rename = "omSupplyUsesProgramModule")]
     pub om_program_module: bool,
 }
