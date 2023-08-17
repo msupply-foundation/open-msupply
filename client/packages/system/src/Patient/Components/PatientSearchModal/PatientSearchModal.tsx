@@ -27,12 +27,12 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
   const t = useTranslation('dispensary');
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { height } = useWindowDimensions();
-  const { isLoading, patients, setSearchText, totalCount, reset, searchText } =
+  const { isLoading, patients, search, totalCount, isSuccess } =
     searchPatient();
 
   const modalHeight = height * 0.7;
   const handleClose = () => {
-    reset();
+    search('');
     onClose();
   };
 
@@ -42,7 +42,7 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
       <Box padding={2}>
         <Box>
           <Typography variant="body1">
-            {!!searchText
+            {isSuccess
               ? t('messages.results-found', { totalCount })
               : t('placeholder.search-by-name-or-code')}
           </Typography>
@@ -54,8 +54,8 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
         </Box>
         <AutocompleteList
           loading={isLoading}
-          options={patients ?? []}
-          onInputChange={(_, value) => setSearchText(value)}
+          options={patients}
+          onInputChange={(_, value) => search(value)}
           renderOption={PatientOptionRenderer}
           getOptionLabel={(option: SearchInputPatient) => option.name}
           filterOptions={filterByNameAndCode}
