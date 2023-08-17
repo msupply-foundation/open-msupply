@@ -10,8 +10,6 @@ import {
   DateTimePickerProps,
   BaseDatePickerInput,
   DateUtils,
-  LocaleKey,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -66,7 +64,6 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
-  const t = useTranslation('common');
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,
     'Date-Time'
@@ -120,13 +117,7 @@ const UIComponent = (props: ControlProps) => {
         ) : (
           <BaseDatePickerInput
             {...sharedComponentProps}
-            onError={validationError =>
-              setCustomError(
-                t(`error.date_${validationError}` as LocaleKey, {
-                  defaultValue: validationError,
-                })
-              )
-            }
+            onError={validationError => setCustomError(validationError)}
           />
         )
       }

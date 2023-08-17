@@ -15,7 +15,6 @@ import {
   FormLabel,
   Box,
   DetailInputWithLabelRow,
-  LocaleKey,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -91,13 +90,7 @@ const UIComponent = (props: ControlProps) => {
             width={135}
             disableFuture
             disabled={!props.enabled}
-            onError={validationError =>
-              setCustomError(
-                t(`error.date_${validationError}` as LocaleKey, {
-                  defaultValue: validationError,
-                })
-              )
-            }
+            onError={validationError => setCustomError(validationError)}
             error={customError}
           />
           <Box
