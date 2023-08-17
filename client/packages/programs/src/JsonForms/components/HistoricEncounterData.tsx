@@ -77,9 +77,6 @@ const UIComponent = ({
           equalTo: options?.condition.eventType,
         },
       },
-      page: {
-        first: 1,
-      },
     },
     !!options && !!datetime
   );
