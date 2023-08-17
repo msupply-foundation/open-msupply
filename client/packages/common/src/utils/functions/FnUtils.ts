@@ -3,6 +3,7 @@ import { v4 } from 'uuid';
 
 export const FnUtils = {
   generateUUID: (): UUID => v4(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   debounce: <T extends (...args: any[]) => any>(
     callback: T,
     wait = 500

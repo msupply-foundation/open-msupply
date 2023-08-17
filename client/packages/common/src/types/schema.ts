@@ -3045,6 +3045,7 @@ export type PatientFilterInput = {
   identifier?: InputMaybe<StringFilterInput>;
   lastName?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
+  nameOrCode?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
 };
 
@@ -3092,6 +3093,7 @@ export type PatientSearchInput = {
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  nameOrCode?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type PatientSearchNode = {
