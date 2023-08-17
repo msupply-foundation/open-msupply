@@ -1,4 +1,4 @@
-import { SaveDocumentMutation } from 'packages/programs/src/JsonForms';
+import { SaveDocumentMutation } from '../../../JsonForms';
 import { useContactTraces } from '..';
 import { ContactTraceFragment } from '../../operations.generated';
 
