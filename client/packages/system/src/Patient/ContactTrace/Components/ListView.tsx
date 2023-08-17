@@ -12,9 +12,9 @@ import {
 import { useContactTraces } from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
-import { ContactTraceRowFragment } from 'packages/programs/src/api/operations.generated';
-import { useContactTraceListColumns } from 'packages/system/src/ContactTrace';
-import { AppRoute } from 'packages/config/src';
+import { ContactTraceRowFragment } from '@openmsupply-client/programs';
+import { useContactTraceListColumns } from '@openmsupply-client/system';
+import { AppRoute } from '@openmsupply-client/config';
 
 const ContactTraceComponent: FC = () => {
   const {
