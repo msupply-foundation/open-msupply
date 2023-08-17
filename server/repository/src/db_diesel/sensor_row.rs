@@ -107,17 +107,4 @@ impl<'a> SensorRowRepository<'a> {
             .load(&self.connection.connection)?)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(sensor_dsl::sensor.filter(sensor_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    //pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
-    //    let result = barcode_dsl::barcode
-    //        .filter(barcode_dsl::item_id.eq(item_id))
-    //        .get_results(&self.connection.connection)?;
-    //    Ok(result)
-    //}
-
 }

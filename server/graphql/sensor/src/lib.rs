@@ -83,15 +83,6 @@ impl SensorMutations {
     ) -> Result<UpdateSensorResponse> {
         update_sensor(ctx, &store_id, input)
     }
-
-    async fn delete_sensor(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: DeleteSensorInput,
-    ) -> Result<DeleteSensorResponse> {
-        delete_sensor(ctx, &store_id, input)
-    }
 }
 
 #[cfg(test)]
