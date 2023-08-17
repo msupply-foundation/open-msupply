@@ -62,7 +62,10 @@ export const useLogin = (
 
     if (
       mostRecentlyUsedCredentials?.store &&
-      stores?.some(store => store.id === mostRecentlyUsedCredentials?.store?.id)
+      stores?.some(
+        store => store.id === mostRecentlyUsedCredentials?.store?.id
+      ) &&
+      mostRecentlyUsedCredentials?.username === userDetails?.username
     ) {
       return (
         stores.find(
