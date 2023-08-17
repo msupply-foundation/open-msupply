@@ -69,8 +69,8 @@ const FirstItemArrayComponent = (props: FirstItemArrayControlCustomProps) => {
 
   // If there are definitions they need to be added to the child schema
   const schemaWithDefs = {
-    ...(schema as JsonSchema7),
     definitions: rootSchema.definitions as Record<string, JsonSchema7>,
+    ...(schema as JsonSchema7),
   };
 
   if (!visible) return null;
