@@ -47,7 +47,7 @@ export type ContactTraceData = {
 
 /**
  * Hook to provide all data needed for the DetailView.
- * The Data is either load from an existing contact trace otherwise some default data is returned.
+ * The data is either loaded from an existing contact trace otherwise some default data is returned.
  */
 const useContactTraceData = (
   traceId: string,
