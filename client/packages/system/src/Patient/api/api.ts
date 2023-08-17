@@ -98,14 +98,17 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     },
     search: async (
       input: PatientSearchInput
-    ): Promise<{ score: number; patient: PatientRowFragment }[]> => {
+    ): Promise<{
+      totalCount: number;
+      nodes: { score: number; patient: PatientRowFragment }[];
+    }> => {
       const result = await sdk.patientSearch({
         storeId,
         input,
       });
 
       if (result.patientSearch.__typename === 'PatientSearchConnector') {
-        return result.patientSearch.nodes;
+        return result.patientSearch;
       }
 
       throw new Error('Could not search for patients');
