@@ -19,7 +19,7 @@ import { Typography } from '@common/components';
 /**
  * Group-like layout control that displays historic encounter data as readonly if a certain
  * condition is met.
- * If the condition is not met the normal layout is rendered and the layoutelements are editable.
+ * If the condition is not met the normal layout is rendered and the layout elements are editable.
  */
 const Options = z
   .object({
