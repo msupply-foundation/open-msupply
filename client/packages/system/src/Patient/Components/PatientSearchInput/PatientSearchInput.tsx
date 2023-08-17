@@ -15,15 +15,15 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   disabled = false,
 }) => {
   const PatientOptionRenderer = getPatientOptionRenderer();
-  const { isLoading, patients, setSearchText } = searchPatient();
+  const { isLoading, patients, search } = searchPatient();
 
   return (
     <Autocomplete
-      options={patients ?? []}
+      options={patients}
       disabled={disabled}
       clearable={false}
       loading={isLoading}
-      onInputChange={(_, value) => setSearchText(value)}
+      onInputChange={(_, value) => search(value)}
       onChange={(_, name) => {
         if (name && !(name instanceof Array)) onChange(name);
       }}
