@@ -13,7 +13,8 @@ import { renderLayoutElements } from '@jsonforms/material-renderers';
 import { FORM_GAP, useZodOptionsValidation } from '../common';
 import { useDocument, useEncounter, useProgramEvents } from '../../api';
 import { Box, FormLabel } from '@mui/material';
-import { useFormatDateTime } from '@common/intl';
+import { useFormatDateTime, useTranslation } from '@common/intl';
+import { Typography } from '@common/components';
 
 /**
  * Group-like layout control that displays historic encounter data as readonly if a certain
@@ -52,6 +53,7 @@ const UIComponent = ({
   );
   const [datetime, setDatetime] = useState<Date | undefined>();
   const { localisedDate } = useFormatDateTime();
+  const t = useTranslation('dispensary');
   const { data: encounter } = useEncounter.document.byDocName(
     config.documentName
   );
@@ -122,16 +124,17 @@ const UIComponent = ({
             readonly={true}
             renderers={renderers ?? []}
           />
-          <FormLabel
+
+          <Typography
             sx={{
               fontSize: '12px',
               marginLeft: 'auto',
             }}
           >
-            {`Recorded on ${localisedDate(
-              previousDocument.data.startDatetime
-            )}`}
-          </FormLabel>
+            {t('messages.recorded-on', {
+              datetime: localisedDate(previousDocument.data.startDatetime),
+            })}
+          </Typography>
         </Box>
       </>
     );

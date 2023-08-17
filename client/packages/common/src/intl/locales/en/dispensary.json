@@ -58,6 +58,7 @@
   "messages.click-to-return-to-prescriptions": "Unable to find a prescription with that ID. Click OK to return to the prescription list",
   "messages.prescription-saved": "Prescription saved 🥳",
   "messages.error-saving-prescription": "Error saving prescription 🥺",
+  "messages.recorded-on": "Recorded on {{datetime}}",
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-last-name": "Search by last name",
   "placeholder.search-by-identifier": "Search by id",
