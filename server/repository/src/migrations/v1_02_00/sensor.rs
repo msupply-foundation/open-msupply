@@ -24,59 +24,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'sensor';
+                CREATE TRIGGER sensor_trigger
+                AFTER INSERT OR UPDATE OR DELETE ON sensor
+                FOR EACH ROW EXECUTE PROCEDURE update_changelog();
             "#
-        )?;
-
-        sql!(
-            connection,
-            r#"CREATE OR REPLACE FUNCTION upsert_sensor_changelog()
-        RETURNS trigger
-        LANGUAGE plpgsql
-       AS $function$
-         BEGIN
-           INSERT INTO changelog (table_name, record_id, row_action)
-                 VALUES ('sensor', NEW.id, 'UPSERT');
-           -- The return value is required, even though it is ignored for a row-level AFTER trigger
-           RETURN NULL;
-         END;
-       $function$
-       ;"#
-        )?;
-
-        sql!(
-            connection,
-            r#"CREATE OR REPLACE FUNCTION delete_sensor_changelog()
-        RETURNS trigger
-        LANGUAGE plpgsql
-       AS $function$
-         BEGIN
-           INSERT INTO changelog (table_name, record_id, row_action)
-                 VALUES ('sensor', OLD.id, 'DELETE');
-           -- The return value is required, even though it is ignored for a row-level AFTER trigger
-           RETURN NULL;
-         END;
-       $function$
-       ;"#
-        )?;
-
-        sql!(
-            connection,
-            r#"create trigger sensor_upsert_trigger after
-        insert
-            or
-        update
-            on
-            sensor for each row execute function upsert_sensor_changelog();
-        "#
-        )?;
-        sql!(
-            connection,
-            r#"create trigger sensor_delete_trigger after
-        delete
-            on
-            sensor for each row execute function delete_sensor_changelog();
-        "#
         )?;
     }
     #[cfg(not(feature = "postgres"))]
