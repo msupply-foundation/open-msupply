@@ -1,5 +1,9 @@
-import React, { FC } from 'react';
-import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
+import React, { FC, useState } from 'react';
+import {
+  DatePicker,
+  DatePickerProps,
+  DateValidationError,
+} from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
 import { BasicTextInput } from '../../TextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
@@ -14,15 +18,21 @@ const TextField = (params: TextFieldProps) => {
 };
 
 export const BaseDatePickerInput: FC<
-  DatePickerProps<Date> & {
+  Omit<DatePickerProps<Date>, 'onError'> & {
     error?: string | undefined;
     width?: number;
-    onBlur?: (e: React.SyntheticEvent) => void;
+    onError?: (validationError: string, date?: Date | null) => void;
   }
-> = ({ error, onChange, onError, width, onBlur, ...props }) => {
+> = ({ error, onChange, onError, width, ...props }) => {
   const theme = useAppTheme();
-  const [internalError, setInternalError] = React.useState<string | null>(null);
+  const [internalError, setInternalError] = useState<string | null>(null);
+  const [isInitialEntry, setIsInitialEntry] = useState(true);
   const t = useTranslation('common');
+
+  const getTranslatedDateError = (validationError: DateValidationError) =>
+    t(`error.date_${validationError}` as LocaleKey, {
+      defaultValue: validationError,
+    });
 
   return (
     <DatePicker
@@ -33,17 +43,12 @@ export const BaseDatePickerInput: FC<
         const { validationError } = context;
 
         if (validationError) {
-          if (onError) onError(validationError, date);
-          else
-            setInternalError(
-              validationError
-                ? t(`error.date_${validationError}` as LocaleKey, {
-                    defaultValue: validationError,
-                  })
-                : null
-            );
+          const translatedError = getTranslatedDateError(validationError);
+          if (onError) onError(translatedError, date);
+          else setInternalError(validationError ? translatedError : null);
         }
         if (!validationError) {
+          setIsInitialEntry(false);
           setInternalError(null);
           onChange?.(date, context);
         }
@@ -79,10 +84,10 @@ export const BaseDatePickerInput: FC<
           },
         },
         textField: {
-          error: !!error || !!internalError,
-          helperText: error ?? internalError ?? '',
+          error: !isInitialEntry && (!!error || !!internalError),
+          helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
           sx: { width, '& .MuiFormHelperText-root': { color: 'error.main' } },
-          onBlur,
+          onBlur: () => setIsInitialEntry(false),
         },
       }}
       {...props}

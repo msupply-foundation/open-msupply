@@ -6,8 +6,6 @@ import {
   useFormatDateTime,
   BaseDatePickerInput,
   DateUtils,
-  LocaleKey,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -27,13 +25,11 @@ export const dateTester = rankWith(5, isDateControl);
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
-  const [hasData, setHasData] = React.useState(!!data);
   const dateFormatter = useFormatDateTime().customDate;
   const { errors: zErrors, options } = useZodOptionsValidation(
     Options,
     uischema.options
   );
-  const t = useTranslation('common');
   const { customError, setCustomError } = useJSONFormsCustomError(path, 'Date');
   const disableFuture = options?.disableFuture ?? false;
 
@@ -56,22 +52,14 @@ const UIComponent = (props: ControlProps) => {
           // undefined is displayed as "now" and null as unset
           value={DateUtils.getDateOrNull(data)}
           onChange={e => {
-            setHasData(e !== null);
             if (e) handleChange(path, dateFormatter(e, 'yyyy-MM-dd'));
             if (customError) setCustomError(undefined);
           }}
           format="dd/MM/yyyy"
           disabled={!props.enabled}
-          error={hasData ? customError ?? props.errors ?? zErrors : ''}
+          error={customError ?? props.errors ?? zErrors ?? ''}
           disableFuture={disableFuture}
-          onBlur={() => setHasData(true)}
-          onError={validationError =>
-            setCustomError(
-              t(`error.date_${validationError}` as LocaleKey, {
-                defaultValue: validationError,
-              })
-            )
-          }
+          onError={validationError => setCustomError(validationError)}
         />
       }
     />
