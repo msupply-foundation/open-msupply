@@ -22,11 +22,12 @@ export const useContactTraceListColumns = ({
   const { localisedDate } = useFormatDateTime();
 
   const columnList: ColumnDescription<ContactTraceRowFragment>[] = [];
-  if (includePatient) {
+if (includePatient) {
     columnList.push({
       key: 'patientName',
       label: 'label.patient',
       accessor: ({ rowData }) => rowData?.patient?.name,
+      sortable: false,
     });
   }
   columnList.push(
@@ -34,6 +35,7 @@ export const useContactTraceListColumns = ({
       key: 'programName',
       label: 'label.program',
       accessor: ({ rowData }) => rowData.program.name,
+      sortable: false,
     },
     {
       key: 'contactTraceId',
@@ -43,6 +45,7 @@ export const useContactTraceListColumns = ({
       key: 'contactPatientName',
       label: 'label.contact-patient',
       accessor: ({ rowData }) => rowData?.contactPatient?.name,
+      sortable: false,
     },
     {
       key: 'status',
