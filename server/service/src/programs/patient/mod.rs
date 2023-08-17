@@ -60,7 +60,7 @@ pub trait PatientServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
         input: PatientSearch,
         allowed_ctx: Option<&[String]>,
-    ) -> Result<Vec<PatientSearchResult>, RepositoryError> {
+    ) -> Result<ListResult<PatientSearchResult>, RepositoryError> {
         patient_search(ctx, service_provider, input, allowed_ctx)
     }
 }

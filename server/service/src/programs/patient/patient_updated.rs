@@ -38,6 +38,7 @@ pub fn create_patient_name_store_join(
 /// Updates the names table for the updated patient.
 pub fn update_patient_row(
     con: &StorageConnection,
+    store_id: Option<String>,
     update_timestamp: &DateTime<Utc>,
     patient: SchemaPatient,
     is_sync_update: bool,
@@ -82,9 +83,12 @@ pub fn update_patient_row(
         r#type: NameType::Patient,
         is_customer: existing_name.map(|n| n.is_customer).unwrap_or(true),
         is_supplier: existing_name.map(|n| n.is_supplier).unwrap_or(false),
-        supplying_store_id: existing_name.and_then(|n| n.supplying_store_id.clone()),
-        first_name: first_name,
-        last_name: last_name,
+        // supplying_store_id is the home store for a patient and is needed for mSupply compatibility
+        supplying_store_id: existing_name
+            .and_then(|n| n.supplying_store_id.clone())
+            .or(store_id),
+        first_name,
+        last_name,
         gender: gender.and_then(|g| match g {
             SchemaGender::Female => Some(Gender::Female),
             SchemaGender::Male => Some(Gender::Male),
