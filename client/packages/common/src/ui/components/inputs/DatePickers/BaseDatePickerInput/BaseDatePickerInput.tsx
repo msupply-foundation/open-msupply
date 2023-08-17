@@ -1,5 +1,9 @@
-import React, { FC } from 'react';
-import { DatePicker, DatePickerProps } from '@mui/x-date-pickers';
+import React, { FC, useState } from 'react';
+import {
+  DatePicker,
+  DatePickerProps,
+  DateValidationError,
+} from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
 import { BasicTextInput } from '../../TextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
@@ -14,25 +18,40 @@ const TextField = (params: TextFieldProps) => {
 };
 
 export const BaseDatePickerInput: FC<
-  DatePickerProps<Date> & {
+  Omit<DatePickerProps<Date>, 'onError'> & {
     error?: string | undefined;
     width?: number;
+    onError?: (validationError: string, date?: Date | null) => void;
   }
-> = ({ error, onChange, width, ...props }) => {
+> = ({ error, onChange, onError, width, ...props }) => {
   const theme = useAppTheme();
-  const [validationError, setValidationError] = React.useState<string | null>(null);
+  const [internalError, setInternalError] = useState<string | null>(null);
+  const [isInitialEntry, setIsInitialEntry] = useState(true);
   const t = useTranslation('common');
 
-return (
+  const getTranslatedDateError = (validationError: DateValidationError) =>
+    t(`error.date_${validationError}` as LocaleKey, {
+      defaultValue: validationError,
+    });
+
+  return (
     <DatePicker
       slots={{
         textField: TextField,
       }}
-      onChange={(date,context) => {
-        const {validationError} = context;
+      onChange={(date, context) => {
+        const { validationError } = context;
 
-        setValidationError(validationError ? t(`error.date_${validationError}` as LocaleKey, {defaultValue: validationError}) : null);
-        onChange?.(date, context);
+        if (validationError) {
+          const translatedError = getTranslatedDateError(validationError);
+          if (onError) onError(translatedError, date);
+          else setInternalError(validationError ? translatedError : null);
+        }
+        if (!validationError) {
+          setIsInitialEntry(false);
+          setInternalError(null);
+          onChange?.(date, context);
+        }
       }}
       slotProps={{
         popper: {
@@ -65,9 +84,10 @@ return (
           },
         },
         textField: {
-          error: !!error || !!validationError,
-          helperText: error ?? validationError ?? '',
-          sx: { width, '& .MuiFormHelperText-root': {color: 'error.main'} },
+          error: !isInitialEntry && (!!error || !!internalError),
+          helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
+          sx: { width, '& .MuiFormHelperText-root': { color: 'error.main' } },
+          onBlur: () => setIsInitialEntry(false),
         },
       }}
       {...props}
