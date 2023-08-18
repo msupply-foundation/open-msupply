@@ -1,21 +1,21 @@
 import React, { FC, ReactNode, useEffect, useState } from 'react';
+import { Box, Grid } from '@openmsupply-client/common';
 import {
-  AppBarContentPortal,
-  Box,
-  InputWithLabelRow,
-  Grid,
-  useTranslation,
-  BasicTextInput,
-  DatePickerInput,
   DateUtils,
-  UserIcon,
   LocaleKey,
   TypedTFunction,
+  useTranslation,
+} from '@common/intl';
+import { UserIcon } from '@common/icons';
+import { ContactTraceNodeStatus } from '@common/types';
+import {
+  AppBarContentPortal,
+  BasicTextInput,
+  DatePickerInput,
+  InputWithLabelRow,
   Option,
-  ContactTraceNodeStatus,
-} from '@openmsupply-client/common';
-
-import { Select } from '@common/components';
+  Select,
+} from '@common/components';
 import { traceStatusTranslation } from './Footer';
 import { ContactTrace, ContactTraceData } from './DetailView';
 
