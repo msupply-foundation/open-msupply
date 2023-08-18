@@ -1,8 +1,8 @@
 use crate::sync::translations::{sensor::LegacySensorRow, LegacyTableName, PullUpsertRecord};
 
+use chrono::{Duration, NaiveDate, NaiveTime};
 use repository::SensorRow;
 use serde_json::json;
-use chrono::{NaiveDate, NaiveTime, Duration};
 
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 
@@ -35,12 +35,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             location_id: None,
             battery_level: Some(100),
             log_interval: Some(1),
-            last_connection_timestamp: Some(NaiveDate::from_ymd_opt(2023, 7, 1)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap()
-                + Duration::seconds(47046),
-            )
+            last_connection_timestamp: Some(
+                NaiveDate::from_ymd_opt(2023, 7, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046),
+            ),
         }),
     )]
 }

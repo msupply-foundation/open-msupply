@@ -3,7 +3,7 @@ use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::EqualFilter;
 use repository::{
     sensor::{Sensor, SensorFilter, SensorRepository},
-    SensorRow, SensorRowRepository, RepositoryError, StorageConnection,
+    RepositoryError, SensorRow, SensorRowRepository, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]

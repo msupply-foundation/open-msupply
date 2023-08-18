@@ -108,9 +108,7 @@ mod test {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
-    use repository::{
-        sensor::Sensor, mock::MockDataInserts, SensorRow, StorageConnectionManager,
-    };
+    use repository::{mock::MockDataInserts, sensor::Sensor, SensorRow, StorageConnectionManager};
     use serde_json::json;
 
     use service::{
@@ -178,9 +176,7 @@ mod test {
         }));
 
         // Record Already Exists
-        let test_service = TestService(Box::new(|_| {
-            Err(InsertSensorError::SensorAlreadyExists)
-        }));
+        let test_service = TestService(Box::new(|_| Err(InsertSensorError::SensorAlreadyExists)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -237,9 +233,7 @@ mod test {
            }
          "#;
 
-        let test_service = TestService(Box::new(|_| {
-            Err(InsertSensorError::CreatedRecordNotFound)
-        }));
+        let test_service = TestService(Box::new(|_| Err(InsertSensorError::CreatedRecordNotFound)));
         let expected_message = "Internal error";
         assert_standard_graphql_error!(
             &settings,

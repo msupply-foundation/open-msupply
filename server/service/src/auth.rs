@@ -131,7 +131,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     // sensor
-	map.insert(
+    map.insert(
         Resource::QuerySensor,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,

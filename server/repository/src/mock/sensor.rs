@@ -1,5 +1,5 @@
 use crate::SensorRow;
-use chrono::{NaiveDate, Duration};
+use chrono::{Duration, NaiveDate};
 
 pub fn mock_sensor_1() -> SensorRow {
     SensorRow {
@@ -11,12 +11,13 @@ pub fn mock_sensor_1() -> SensorRow {
         location_id: None,
         battery_level: Some(100),
         log_interval: Some(1),
-        last_connection_timestamp: Some(NaiveDate::from_ymd_opt(2023, 7, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(47046),
-        )
+        last_connection_timestamp: Some(
+            NaiveDate::from_ymd_opt(2023, 7, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
+        ),
     }
 }
 
@@ -30,12 +31,13 @@ pub fn mock_sensor_is_active() -> SensorRow {
         location_id: None,
         battery_level: Some(90),
         log_interval: Some(5),
-        last_connection_timestamp: Some(NaiveDate::from_ymd_opt(2022, 7, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(47046),
-        )
+        last_connection_timestamp: Some(
+            NaiveDate::from_ymd_opt(2022, 7, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
+        ),
     }
 }
 
@@ -50,12 +52,13 @@ pub fn mock_sensor_2() -> SensorRow {
         location_id: None,
         battery_level: Some(90),
         log_interval: Some(5),
-        last_connection_timestamp: Some(NaiveDate::from_ymd_opt(2022, 7, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(47046),
-        )
+        last_connection_timestamp: Some(
+            NaiveDate::from_ymd_opt(2022, 7, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
+        ),
     }
 }
 
@@ -70,12 +73,13 @@ pub fn mock_sensor_in_another_store() -> SensorRow {
         location_id: None,
         battery_level: Some(90),
         log_interval: Some(5),
-        last_connection_timestamp: Some(NaiveDate::from_ymd_opt(2022, 7, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(47046),
-        )
+        last_connection_timestamp: Some(
+            NaiveDate::from_ymd_opt(2022, 7, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
+        ),
     }
 }
 

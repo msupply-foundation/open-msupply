@@ -26,11 +26,7 @@ pub trait SensorServiceTrait: Sync + Send {
         get_sensors(ctx, pagination, filter, sort)
     }
 
-    fn get_sensor(
-        &self,
-        ctx: &ServiceContext,
-        id: String,
-    ) -> Result<Sensor, SingleRecordError> {
+    fn get_sensor(&self, ctx: &ServiceContext, id: String) -> Result<Sensor, SingleRecordError> {
         get_sensor(ctx, id)
     }
 

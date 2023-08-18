@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod query {
     use repository::{
-        sensor::{SensorFilter, SensorSortField},
         mock::MockDataInserts,
+        sensor::{SensorFilter, SensorSortField},
         test_db::setup_all,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
@@ -134,10 +134,7 @@ mod query {
             .into_iter()
             .map(|sensor| sensor.sensor_row.name)
             .collect();
-        let sorted_names: Vec<String> = sensors
-            .into_iter()
-            .map(|sensor| sensor.name)
-            .collect();
+        let sorted_names: Vec<String> = sensors.into_iter().map(|sensor| sensor.name).collect();
 
         assert_eq!(result_names, sorted_names);
 
@@ -162,10 +159,7 @@ mod query {
             .into_iter()
             .map(|sensor| sensor.sensor_row.name)
             .collect();
-        let sorted_names: Vec<String> = sensors
-            .into_iter()
-            .map(|sensor| sensor.name)
-            .collect();
+        let sorted_names: Vec<String> = sensors.into_iter().map(|sensor| sensor.name).collect();
 
         assert_eq!(result_names, sorted_names);
     }

@@ -21,12 +21,12 @@ use graphql_general::{
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
-use graphql_sensor::{SensorMutations, SensorQueries};
-use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
+use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
+use graphql_sensor::{SensorMutations, SensorQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::StocktakeLineMutations;
