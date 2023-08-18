@@ -76,7 +76,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     setShowAllocationWarning(false);
   };
 
-  const unit = item?.unitName ?? t('label.units', { count: 1 });
+  const unit = item?.unitName ?? t('label.units-plural', { count: 1 });
   const allocate = () => {
     const newAllocateQuantities = onChangeQuantity(
       issueQuantity,
@@ -98,7 +98,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   useEffect(() => {
     setIssueQuantity(quantity);
   }, [packSizeController.selected?.value]);
-  
+
   return (
     <Grid container gap="4px">
       <ModalRow>
@@ -153,7 +153,12 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
               <InfoPanel
                 message={t('messages.over-allocated', {
                   quantity: format(placeholderQuantity),
-                  issueQuantity: format(issueQuantity * (packSizeController.selected?.value === -1 ? 1 : packSizeController.selected?.value ?? 1)),
+                  issueQuantity: format(
+                    issueQuantity *
+                      (packSizeController.selected?.value === -1
+                        ? 1
+                        : packSizeController.selected?.value ?? 1)
+                  ),
                 })}
               />
             </Grid>

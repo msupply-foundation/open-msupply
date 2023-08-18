@@ -75,7 +75,7 @@ export const PrescriptionLineEditForm: React.FC<
     );
   };
 
-  const unit = item?.unitName ?? t('label.units', { count: 1 });
+  const unit = item?.unitName ?? t('label.units-plural', { count: 1 });
   const allocate = () => {
     onChangeQuantity(
       issueQuantity,
