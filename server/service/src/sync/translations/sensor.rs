@@ -74,17 +74,6 @@ impl SyncTranslation for SensorTranslation {
 
         let data = serde_json::from_str::<LegacySensorRow>(&sync_record.data)?;
 
-        let last_connection_timestamp = data.last_connection_date.map(|last_connection_date| {
-            NaiveDateTime::new(last_connection_date, data.last_connection_time)
-        });
-
-        let deserialised_row = match serde_json::from_str::<LegacySensorRow>(&sync_record.data) {
-            Ok(row) => row,
-            Err(e) => {
-                log::warn!("Failed to deserialise sensor row: {:?}", e);
-                return Ok(None);
-            }
-        };
         let LegacySensorRow {
             id,
             name,
@@ -94,9 +83,13 @@ impl SyncTranslation for SensorTranslation {
             battery_level,
             log_interval,
             is_active,
-            last_connection_date: _,
-            last_connection_time: _,
-        } = deserialised_row;
+            last_connection_date,
+            last_connection_time,
+        } = data;
+
+        let last_connection_timestamp = last_connection_date.map(|last_connection_date| {
+            NaiveDateTime::new(last_connection_date, last_connection_time)
+        });
 
         let result = SensorRow {
             id,
@@ -141,11 +134,7 @@ impl SyncTranslation for SensorTranslation {
                 changelog.record_id
             )))?;
 
-        let mut last_connection_date = None;
-
-        if let Some(last_connected_timestamp) = last_connection_timestamp {
-            last_connection_date = Some(last_connected_timestamp.date());
-        }
+        let last_connection_date = last_connection_timestamp.map(|t| t.date());
 
         let last_connection_time = last_connection_timestamp
             .map(|last_connection_timestamp: NaiveDateTime| last_connection_timestamp.time())
