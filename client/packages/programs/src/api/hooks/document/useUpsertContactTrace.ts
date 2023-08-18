@@ -2,12 +2,6 @@ import { SaveDocumentMutation } from '../../../JsonForms';
 import { useContactTraces } from '..';
 import { ContactTraceFragment } from '../../operations.generated';
 
-export type UpsertContactTraceMutation = (
-  jsonData: unknown,
-  formSchemaId: string,
-  parent?: string
-) => Promise<ContactTraceFragment>;
-
 /**
  * Upserts a contact trace.
  *
@@ -18,7 +12,7 @@ export const useUpsertContactTrace = (
   patientId: string,
   type: string,
   onUpsert?: (trace: ContactTraceFragment) => void
-): UpsertContactTraceMutation => {
+): SaveDocumentMutation => {
   const { mutateAsync: insert } = useContactTraces.document.insert();
   const { mutateAsync: update } = useContactTraces.document.update();
 
@@ -43,18 +37,6 @@ export const useUpsertContactTrace = (
     if (onUpsert) {
       onUpsert(result);
     }
-    return result;
-  };
-};
-
-export const useUpsertContactTraceDocument = (
-  patientId: string,
-  type: string,
-  onUpsert?: (trace: ContactTraceFragment) => void
-): SaveDocumentMutation => {
-  const upsert = useUpsertContactTrace(patientId, type, onUpsert);
-  return async (jsonData: unknown, formSchemaId: string, parent?: string) => {
-    const result = await upsert(jsonData, formSchemaId, parent);
     return result.document;
   };
 };
