@@ -1,9 +1,6 @@
-//use super::StockLineConnector;
 use async_graphql::*;
-//use async_graphql::{dataloader::DataLoader, Context};
 use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::simple_generic_errors::NodeError;
-//use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
 use repository::{
     sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
     EqualFilter, SensorRow,
@@ -73,15 +70,6 @@ impl SensorNode {
     pub async fn is_active(&self) -> bool {
         self.row().is_active
     }
-
-    //pub async fn stock(&self, ctx: &Context<'_>) -> Result<StockLineConnector> {
-    //    let loader = ctx.get_loader::<DataLoader<StockLineByLocationIdLoader>>();
-    //    let result_option = loader.load_one(self.row().id.clone()).await?;
-
-    //    Ok(StockLineConnector::from_vec(
-    //        result_option.unwrap_or(vec![]),
-    //    ))
-    //}
 }
 
 #[derive(Union)]
