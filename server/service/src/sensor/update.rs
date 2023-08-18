@@ -1,10 +1,10 @@
 use super::{
     query::get_sensor,
-    validate::{check_sensor_serial_is_unique, check_sensor_exists},
+    validate::{check_sensor_exists, check_sensor_serial_is_unique},
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::{
-    sensor::Sensor, SensorRow, SensorRowRepository, RepositoryError, StorageConnection,
+    sensor::Sensor, RepositoryError, SensorRow, SensorRowRepository, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]

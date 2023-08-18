@@ -96,10 +96,10 @@ use crate::{
     PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, 
-    SensorRow, SensorRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow,
+    SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
+    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
+    SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 

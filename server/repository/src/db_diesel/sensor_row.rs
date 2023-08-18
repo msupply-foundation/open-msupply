@@ -1,9 +1,12 @@
-use super::{sensor_row::sensor::dsl as sensor_dsl, store_row::store, location_row::location, StorageConnection};
+use super::{
+    location_row::location, sensor_row::sensor::dsl as sensor_dsl, store_row::store,
+    StorageConnection,
+};
 
-use crate::{repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
-use diesel::prelude::*;
 use chrono::NaiveDateTime;
+use diesel::prelude::*;
 
 table! {
     sensor (id) {
@@ -106,5 +109,4 @@ impl<'a> SensorRowRepository<'a> {
             .filter(sensor_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?)
     }
-
 }

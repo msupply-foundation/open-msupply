@@ -3,8 +3,8 @@ mod query {
     use repository::mock::mock_store_a;
     use repository::EqualFilter;
     use repository::{
-        sensor::{Sensor, SensorFilter, SensorRepository},
         mock::MockDataInserts,
+        sensor::{Sensor, SensorFilter, SensorRepository},
         test_db::setup_all,
         SensorRow,
     };

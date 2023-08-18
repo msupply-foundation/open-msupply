@@ -1,13 +1,13 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_option_to_isostring, naive_time, zero_date_as_option, empty_str_as_option_string,
+        date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use repository::{
-    SensorRow, SensorRowRepository, ChangelogRow, ChangelogTableName, StorageConnection,
+    ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, StorageConnection,
     SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -59,7 +59,7 @@ impl SyncTranslation for SensorTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::SENSOR,
-            dependencies: vec![LegacyTableName::LOCATION,LegacyTableName::STORE],
+            dependencies: vec![LegacyTableName::LOCATION, LegacyTableName::STORE],
         }
     }
 
@@ -74,9 +74,9 @@ impl SyncTranslation for SensorTranslation {
 
         let data = serde_json::from_str::<LegacySensorRow>(&sync_record.data)?;
 
-        let last_connection_timestamp = data
-        .last_connection_date
-        .map(|last_connection_date| NaiveDateTime::new(last_connection_date, data.last_connection_time));
+        let last_connection_timestamp = data.last_connection_date.map(|last_connection_date| {
+            NaiveDateTime::new(last_connection_date, data.last_connection_time)
+        });
 
         let deserialised_row = match serde_json::from_str::<LegacySensorRow>(&sync_record.data) {
             Ok(row) => row,

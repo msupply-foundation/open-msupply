@@ -3,14 +3,14 @@ mod query {
     use repository::mock::mock_store_a;
     use repository::EqualFilter;
     use repository::{
-        sensor::{SensorFilter, SensorRepository},
         mock::MockDataInserts,
+        sensor::{SensorFilter, SensorRepository},
         test_db::setup_all,
         //InvoiceLineFilter, InvoiceLineRepository, StockLineFilter, StockLineRepository,
     };
 
     use crate::{
-        sensor::delete::{DeleteSensor, DeleteSensorError},// SensorInUse},
+        sensor::delete::{DeleteSensor, DeleteSensorError}, // SensorInUse},
         service_provider::ServiceProvider,
     };
 
@@ -75,7 +75,7 @@ mod query {
         //    Err(DeleteSensorError::SensorInUse(SensorInUse {
         //        stock_lines,
         //        invoice_lines
-         //   }))
+        //   }))
         //);
     }
     #[actix_rt::test]

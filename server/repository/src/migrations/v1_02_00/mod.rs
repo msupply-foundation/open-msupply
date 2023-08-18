@@ -2,9 +2,9 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 mod invoice;
-mod sensor;
 mod log_settings;
 mod number_and_permission_type;
+mod sensor;
 mod store_preference;
 pub(crate) struct V1_02_00;
 

@@ -120,10 +120,7 @@ impl SensorConnector {
     pub fn from_vec(sensors: Vec<Sensor>) -> SensorConnector {
         SensorConnector {
             total_count: usize_to_u32(sensors.len()),
-            nodes: sensors
-                .into_iter()
-                .map(SensorNode::from_domain)
-                .collect(),
+            nodes: sensors.into_iter().map(SensorNode::from_domain).collect(),
         }
     }
 }

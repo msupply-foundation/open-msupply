@@ -1,6 +1,6 @@
 use super::{
     sensor_row::{sensor, sensor::dsl as sensor_dsl},
-    SensorRow, DBType, StorageConnection,
+    DBType, SensorRow, StorageConnection,
 };
 use diesel::prelude::*;
 

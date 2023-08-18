@@ -92,8 +92,8 @@ mod test {
     use graphql_core::test_helpers::setup_graphl_test;
     //use repository::mock::mock_sensors;
     use repository::{
-        sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
         mock::MockDataInserts,
+        sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
         SensorRow, StorageConnectionManager,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
@@ -106,7 +106,7 @@ mod test {
     };
 
     use crate::SensorQueries;
-    use chrono::{NaiveDate, Duration};
+    use chrono::{Duration, NaiveDate};
 
     type GetSensors = dyn Fn(
             Option<PaginationOption>,
@@ -178,12 +178,13 @@ mod test {
                         location_id: None,
                         battery_level: Some(90),
                         log_interval: Some(5),
-                        last_connection_timestamp: Some(NaiveDate::from_ymd_opt(2022, 7, 1)
-                            .unwrap()
-                            .and_hms_opt(0, 0, 0)
-                            .unwrap()
-                            + Duration::seconds(47046),
-                        )
+                        last_connection_timestamp: Some(
+                            NaiveDate::from_ymd_opt(2022, 7, 1)
+                                .unwrap()
+                                .and_hms_opt(0, 0, 0)
+                                .unwrap()
+                                + Duration::seconds(47046),
+                        ),
                     },
                 }],
                 count: 1,
@@ -350,5 +351,4 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
     }
-
 }

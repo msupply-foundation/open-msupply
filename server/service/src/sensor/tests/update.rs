@@ -3,8 +3,8 @@ mod query {
     use repository::mock::mock_store_a;
     use repository::EqualFilter;
     use repository::{
-        sensor::{SensorFilter, SensorRepository},
         mock::MockDataInserts,
+        sensor::{SensorFilter, SensorRepository},
         test_db::setup_all,
     };
 
@@ -114,7 +114,7 @@ mod query {
                     SensorFilter::new().id(EqualFilter::equal_to(&sensor.sensor_row.id))
                 )
                 .unwrap()[0],
-                sensor
+            sensor
         );
 
         // Success with all changes and serial that is not unique accross stores
@@ -142,7 +142,7 @@ mod query {
                     SensorFilter::new().id(EqualFilter::equal_to(&sensor.sensor_row.id))
                 )
                 .unwrap()[0],
-                sensor
+            sensor
         );
     }
 }
