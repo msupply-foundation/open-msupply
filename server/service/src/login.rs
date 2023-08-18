@@ -300,6 +300,13 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::ManageLocations => {
                 output.insert(Permission::LocationMutate);
             }
+            // sensor
+            Permissions::EditSensorLocation => {
+                output.insert(Permission::SensorMutate);
+            }
+            Permissions::ViewSensorDetails => {
+                output.insert(Permission::SensorQuery);
+            }
             // stock line
             Permissions::ViewStock => {
                 output.insert(Permission::StockLineQuery);
