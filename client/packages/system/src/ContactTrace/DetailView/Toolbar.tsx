@@ -17,7 +17,7 @@ import {
   Select,
 } from '@common/components';
 import { traceStatusTranslation } from './utils';
-import { ContactTrace, ContactTraceData } from './DetailView';
+import { ContactTrace, ContactTraceData } from './useContactTraceData';
 
 const traceStatusOption = (
   status: ContactTraceNodeStatus,
