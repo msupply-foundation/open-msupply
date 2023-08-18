@@ -16,7 +16,7 @@ import {
   Option,
   Select,
 } from '@common/components';
-import { traceStatusTranslation } from './Footer';
+import { traceStatusTranslation } from './utils';
 import { ContactTrace, ContactTraceData } from './DetailView';
 
 const traceStatusOption = (
