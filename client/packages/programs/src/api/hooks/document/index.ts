@@ -33,10 +33,7 @@ import { useProgramEnrolmentByDocName } from './useProgramEnrolmentByDocName';
 import { useContactTraces } from './useContactTraces';
 import { useInsertContactTrace } from './useInsertContactTrace';
 import { useUpdateContactTrace } from './useUpdateContactTrace';
-import {
-  useUpsertContactTrace,
-  useUpsertContactTraceDocument,
-} from './useUpsertContactTrace';
+import { useUpsertContactTrace } from './useUpsertContactTrace';
 
 export const Document = {
   useDocumentByName,
@@ -73,5 +70,5 @@ export const Document = {
   useInsertContactTrace,
   useUpdateContactTrace,
   useUpsertContactTrace,
-  useUpsertContactTraceDocument,
+  useUpsertContactTraceDocument: useUpsertContactTrace,
 };
