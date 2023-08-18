@@ -31,9 +31,9 @@ export type ContactTrace = {
 };
 
 export type ContactTraceData = {
-  id: string | undefined;
+  id?: string;
   type: string;
-  documentName: string | undefined;
+  documentName?: string;
   contactTrace: ContactTrace;
   patient: {
     id: string;
@@ -41,7 +41,7 @@ export type ContactTraceData = {
     firstName?: string | null;
     lastName?: string | null;
   };
-  schema: SchemaData | undefined;
+  schema?: SchemaData;
   programName: string;
 };
 
