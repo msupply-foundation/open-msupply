@@ -8,7 +8,7 @@ export const useContactTraces = (
 ) => {
   const api = useContactTraceApi();
 
-  return useQuery(api.keys.list(params), () => api.contactTraces(params), {
+  return useQuery(api.keys.list(params), () => api.list(params), {
     enabled,
   });
 };
