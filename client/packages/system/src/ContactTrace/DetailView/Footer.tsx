@@ -14,14 +14,12 @@ import {
   useDialog,
   StatusCrumbs,
   ContactTraceNodeStatus,
-  LocaleKey,
-  TypedTFunction,
-  noOtherVariants,
 } from '@openmsupply-client/common';
 import {
   DocumentHistory,
   ContactTraceRowFragment,
 } from '@openmsupply-client/programs';
+import { traceStatusTranslation } from './utils';
 
 interface FooterProps {
   documentName?: string;
@@ -30,20 +28,6 @@ interface FooterProps {
   onSave: () => void;
   contactTrace?: ContactTraceRowFragment;
 }
-
-export const traceStatusTranslation = (
-  status: ContactTraceNodeStatus,
-  t: TypedTFunction<LocaleKey>
-): string => {
-  switch (status) {
-    case ContactTraceNodeStatus.Pending:
-      return t('label.trace-status-pending');
-    case ContactTraceNodeStatus.Done:
-      return t('label.trace-status-done');
-    default:
-      return noOtherVariants(status);
-  }
-};
 
 const ContactTraceStatusCrumbs: FC<{ trace: ContactTraceRowFragment }> = ({
   trace,
