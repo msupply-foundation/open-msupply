@@ -50,9 +50,7 @@ const ContactTraceListComponent: FC = () => {
       data={data?.nodes}
       isLoading={isLoading}
       isError={isError}
-      onRowClick={row => {
-        navigate(String(row.id));
-      }}
+      onRowClick={({ id }) => navigate(String(id))}
       noDataElement={<NothingHere />}
     />
   );
