@@ -414,7 +414,7 @@ export type ContactTraceListParams = {
 };
 
 export const getContactTraceQueries = (sdk: Sdk, storeId: string) => ({
-  contactTraces: async ({
+  list: async ({
     sortBy,
     filterBy,
   }: ContactTraceListParams): Promise<{
@@ -433,7 +433,7 @@ export const getContactTraceQueries = (sdk: Sdk, storeId: string) => ({
     return result?.contactTraces;
   },
 
-  insertContactTrace: async (
+  insert: async (
     input: InsertContactTraceInput
   ): Promise<ContactTraceFragment> => {
     const result = await sdk.insertContactTrace({
@@ -448,7 +448,7 @@ export const getContactTraceQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not insert contact trace');
   },
 
-  updateContactTrace: async (
+  update: async (
     input: UpdateContactTraceInput
   ): Promise<ContactTraceFragment> => {
     const result = await sdk.updateContactTrace({
