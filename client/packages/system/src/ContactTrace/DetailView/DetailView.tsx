@@ -130,7 +130,7 @@ const useContactTraceData = (
   return result;
 };
 
-export type DetailViewProps = {
+type DetailViewProps = {
   createPatientId: string | null;
   createType: string | null;
 };
@@ -150,14 +150,15 @@ export const DetailView: FC<DetailViewProps> = ({
     createType,
     createPatientId
   );
-  // Used when creating a new contact trace:
-  const [newContactTraceId, setNewContactTraceId] = useState(id);
+  // Used when creating a new contact trace, i.e. to check if it differs from the creation id from
+  // the URL.
+  const [contactTraceId, setContactTraceId] = useState(id);
 
   const handleSave = useContactTraces.document.upsertDocument(
     contactData?.patient?.id ?? '',
     contactData?.type ?? '',
     contactTrace => {
-      if (contactTrace.id !== id) setNewContactTraceId(contactTrace.id);
+      if (contactTrace.id !== id) setContactTraceId(contactTrace.id);
     }
   );
 
@@ -179,7 +180,7 @@ export const DetailView: FC<DetailViewProps> = ({
       ? {
           data: contactData?.contactTrace,
           schema: contactData?.schema,
-          isCreating: newContactTraceId === id,
+          isCreating: contactTraceId === id,
         }
       : undefined
   );
@@ -187,15 +188,15 @@ export const DetailView: FC<DetailViewProps> = ({
   // When a contact trace id changes (contact trace has been created), wait till the isDirty flag
   // is cleared and then navigate to the correct url.
   useEffect(() => {
-    if (!isDirty && newContactTraceId !== id) {
+    if (!isDirty && contactTraceId !== id) {
       navigate(
         RouteBuilder.create(AppRoute.Dispensary)
           .addPart(AppRoute.ContactTrace)
-          .addPart(newContactTraceId)
+          .addPart(contactTraceId)
           .build()
       );
     }
-  }, [isDirty, newContactTraceId]);
+  }, [isDirty, contactTraceId]);
 
   const updateContactTrace = useDebounceCallback(
     (patch: Partial<ContactTrace>) =>
