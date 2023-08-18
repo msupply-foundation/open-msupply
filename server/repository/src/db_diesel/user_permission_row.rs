@@ -31,6 +31,7 @@ pub enum Permission {
     LocationMutate,
     // sensor,
     SensorMutate,
+	SensorQuery,
     // stock line
     StockLineQuery,
     StockLineMutate,

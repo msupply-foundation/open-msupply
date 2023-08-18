@@ -131,7 +131,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     );
 
     // sensor
-    map.insert(Resource::QuerySensor, PermissionDSL::HasStoreAccess);
+	map.insert(
+        Resource::QuerySensor,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::SensorQuery),
+        ]),
+    );
     map.insert(
         Resource::MutateSensor,
         PermissionDSL::And(vec![
@@ -139,6 +145,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::SensorMutate),
         ]),
     );
+
     // store: No permission needed
     map.insert(Resource::QueryStore, PermissionDSL::NoPermissionRequired);
     // master list
