@@ -73,10 +73,7 @@ const useContactTraceData = (
 
   // existing trace:
   useEffect(() => {
-    if (!!createType) {
-      return;
-    }
-    if (!contactTraces) {
+    if (!!createType || !contactTraces) {
       return;
     }
 
