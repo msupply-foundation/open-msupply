@@ -18,17 +18,19 @@ import { AppRoute } from '@openmsupply-client/config';
 
 const ContactTraceComponent: FC = () => {
   const {
+    sort: { sortBy, onChangeSortBy },
     pagination: { page, first, offset, onChangePage },
   } = useQueryParamsStore();
 
-  const { queryParams, updateSortQuery } = useUrlQueryParams();
+  const { queryParams } = useUrlQueryParams();
 
   const patientId = usePatient.utils.id();
 
   const { data, isError, isLoading } = useContactTraces.document.list({
+    ...queryParams,
     sortBy: {
-      key: queryParams.sortBy.key as ContactTraceSortFieldInput,
-      isDesc: queryParams.sortBy.isDesc,
+      key: sortBy.key as ContactTraceSortFieldInput,
+      isDesc: sortBy.isDesc,
     },
     filterBy: { patientId: { equalTo: patientId } },
   });
@@ -36,13 +38,13 @@ const ContactTraceComponent: FC = () => {
   const navigate = useNavigate();
 
   const columns = useContactTraceListColumns({
-    sortBy: queryParams.sortBy,
-    onChangeSortBy: updateSortQuery,
+    sortBy,
+    onChangeSortBy,
   });
 
   return (
     <DataTable
-      id="contact-trace--list"
+      id="contact-trace-list"
       pagination={{ ...pagination, total: data?.totalCount }}
       onChangePage={onChangePage}
       columns={columns}
