@@ -7,7 +7,7 @@ import {
 import { useAppTheme } from '@common/styles';
 import { BasicTextInput } from '../../TextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
-import { LocaleKey, useTranslation } from '@common/intl';
+import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 
 const TextField = (params: TextFieldProps) => {
   const textInputProps: StandardTextFieldProps = {
@@ -15,6 +15,26 @@ const TextField = (params: TextFieldProps) => {
     variant: 'standard',
   };
   return <BasicTextInput {...textInputProps} />;
+};
+
+const getFormattedDateError = (
+  t: TypedTFunction<LocaleKey>,
+  validationError: DateValidationError
+) => {
+  switch (validationError) {
+    case 'invalidDate':
+      return t('error.date_invalidDate');
+    case 'minDate':
+      return t('error.date_minDate');
+    case 'maxDate':
+      return t('error.date_maxDate');
+    case 'disablePast':
+      return t('error.date_disablePast');
+    case 'disableFuture':
+      return t('error.date_disableFuture');
+    default:
+      return validationError ?? '';
+  }
 };
 
 export const BaseDatePickerInput: FC<
@@ -29,11 +49,6 @@ export const BaseDatePickerInput: FC<
   const [isInitialEntry, setIsInitialEntry] = useState(true);
   const t = useTranslation('common');
 
-  const getTranslatedDateError = (validationError: DateValidationError) =>
-    t(`error.date_${validationError}` as LocaleKey, {
-      defaultValue: validationError,
-    });
-
   return (
     <DatePicker
       slots={{
@@ -43,7 +58,7 @@ export const BaseDatePickerInput: FC<
         const { validationError } = context;
 
         if (validationError) {
-          const translatedError = getTranslatedDateError(validationError);
+          const translatedError = getFormattedDateError(t, validationError);
           if (onError) onError(translatedError, date);
           else setInternalError(validationError ? translatedError : null);
         }
