@@ -211,7 +211,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                     justifyContent="flex-start"
                   >
                     <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit', {
+                      {t('label.unit-plural', {
                         count: packSizeController.selected?.value,
                         unit,
                       })}

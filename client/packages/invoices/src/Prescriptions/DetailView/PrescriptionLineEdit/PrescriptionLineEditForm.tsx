@@ -193,7 +193,7 @@ export const PrescriptionLineEditForm: React.FC<
                           unit,
                           count: issueQuantity,
                         })} ${t('label.in-packs-of')}`
-                      : t('label.packs-of')}
+                      : t('label.in-packs-of')}
                   </InputLabel>
                 </Grid>
 
@@ -216,7 +216,7 @@ export const PrescriptionLineEditForm: React.FC<
                     justifyContent="flex-start"
                   >
                     <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit', {
+                      {t('label.unit-plural', {
                         count: packSizeController.selected?.value,
                         unit,
                       })}
