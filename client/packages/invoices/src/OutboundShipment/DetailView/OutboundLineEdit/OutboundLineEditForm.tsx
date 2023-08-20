@@ -76,7 +76,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     setShowAllocationWarning(false);
   };
 
-  const unit = item?.unitName ?? t('label.units', { count: 1 });
+  const unit = item?.unitName ?? t('label.unit');
   const allocate = () => {
     const newAllocateQuantities = onChangeQuantity(
       issueQuantity,
@@ -98,7 +98,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   useEffect(() => {
     setIssueQuantity(quantity);
   }, [packSizeController.selected?.value]);
-  
+
   return (
     <Grid container gap="4px">
       <ModalRow>
@@ -153,7 +153,12 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
               <InfoPanel
                 message={t('messages.over-allocated', {
                   quantity: format(placeholderQuantity),
-                  issueQuantity: format(issueQuantity * (packSizeController.selected?.value === -1 ? 1 : packSizeController.selected?.value ?? 1)),
+                  issueQuantity: format(
+                    issueQuantity *
+                      (packSizeController.selected?.value === -1
+                        ? 1
+                        : packSizeController.selected?.value ?? 1)
+                  ),
                 })}
               />
             </Grid>
@@ -179,11 +184,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 >
                   <InputLabel sx={{ fontSize: '12px' }}>
                     {packSizeController.selected?.value === -1
-                      ? t('label.units-in-pack-size-of', {
+                      ? `${t('label.unit-plural', {
                           unit,
-                          count: quantity,
-                        })
-                      : t('label.packs-of', { count: quantity })}
+                          count: issueQuantity,
+                        })} ${t('label.in-packs-of')}`
+                      : t('label.in-packs-of')}
                   </InputLabel>
                 </Grid>
 
@@ -206,7 +211,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                     justifyContent="flex-start"
                   >
                     <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit', {
+                      {t('label.unit-plural', {
                         count: packSizeController.selected?.value,
                         unit,
                       })}
