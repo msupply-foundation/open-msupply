@@ -77,7 +77,6 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   };
 
   const unit = item?.unitName ?? t('label.unit');
-  console.log(item?.unitName);
   const allocate = () => {
     const newAllocateQuantities = onChangeQuantity(
       issueQuantity,
@@ -187,9 +186,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                     {packSizeController.selected?.value === -1
                       ? `${t('label.unit-plural', {
                           unit,
-                          count: quantity,
+                          count: issueQuantity,
                         })} ${t('label.in-packs-of')}`
-                      : t('label.in-packs-of', { count: quantity })}
+                      : t('label.in-packs-of')}
                   </InputLabel>
                 </Grid>
 
