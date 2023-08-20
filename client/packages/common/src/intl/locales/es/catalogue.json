@@ -1,7 +1,6 @@
 {
   "label.code": "Código",
   "label.name": "Nombre",
-  "label.units": "Unidades",
   "error.master-list-not-found": "Lista maestra no encontrada",
   "error.no-master-lists": "No hay listas maestras para mostrar.",
   "label.atc-category": "Categoría ATC",
