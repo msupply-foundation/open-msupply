@@ -104,13 +104,12 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     login,
     isLoggingIn,
     upsertMostRecentCredential,
-    mostRecentlyUsedCredentials,
+    mostRecentCredentials,
   } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
   const { refreshToken } = useRefreshToken();
   const { setHeader } = useGql();
-  const mostRecentUsername =
-    mostRecentlyUsedCredentials?.[0]?.username ?? undefined;
+  const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
 
   // initialise the auth header with the cookie value i.e. on page refresh
   setHeader('Authorization', `Bearer ${authCookie?.token}`);

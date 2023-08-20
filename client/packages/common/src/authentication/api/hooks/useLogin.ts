@@ -2,6 +2,7 @@ import { useIntlUtils } from '@common/intl';
 import { AuthCookie, AuthError, setAuthCookie } from '../../AuthContext';
 import { useGetAuthToken } from './useGetAuthToken';
 import {
+  AuthenticationCredentials,
   LocalStorage,
   useAuthApi,
   useGetUserDetails,
@@ -39,6 +40,24 @@ const skipNoStoreRequests = (documentNode?: DocumentNode) => {
   }
 };
 
+// mostly this is as a migration fix - previous format is a single object, not an array
+const getMostRecentCredentials = (
+  mostRecentlyUsedCredentials:
+    | AuthenticationCredentials
+    | AuthenticationCredentials[]
+    | null
+) => {
+  if (mostRecentlyUsedCredentials === null) return [];
+
+  if (Array.isArray(mostRecentlyUsedCredentials))
+    return mostRecentlyUsedCredentials;
+
+  if (typeof mostRecentlyUsedCredentials === 'object')
+    return [mostRecentlyUsedCredentials];
+
+  return [];
+};
+
 export const useLogin = (
   setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
 ) => {
@@ -53,13 +72,16 @@ export const useLogin = (
   const getUserPermissions = useGetUserPermissions();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_error, setError, removeError] = useLocalStorage('/auth/error');
+  const mostRecentCredentials = getMostRecentCredentials(
+    mostRecentlyUsedCredentials
+  );
   const upsertMostRecentCredential = (
     username: string,
     store?: UserStoreNodeFragment
   ) => {
     const newMRU = [
       { username, store },
-      ...(mostRecentlyUsedCredentials ?? []).filter(
+      ...mostRecentCredentials.filter(
         mru => mru.username.toLowerCase() !== username.toLowerCase()
       ),
     ];
@@ -71,7 +93,7 @@ export const useLogin = (
   const getStore = async (userDetails?: Partial<UserNode>) => {
     const defaultStore = userDetails?.defaultStore;
     const stores = userDetails?.stores?.nodes;
-    const mru = mostRecentlyUsedCredentials?.find(
+    const mru = mostRecentCredentials?.find(
       item =>
         item.username.toLowerCase() === userDetails?.username?.toLowerCase()
     );
@@ -147,6 +169,6 @@ export const useLogin = (
     isLoggingIn,
     login,
     upsertMostRecentCredential,
-    mostRecentlyUsedCredentials,
+    mostRecentCredentials,
   };
 };
