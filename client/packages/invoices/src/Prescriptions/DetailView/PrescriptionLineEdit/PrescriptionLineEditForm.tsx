@@ -75,7 +75,7 @@ export const PrescriptionLineEditForm: React.FC<
     );
   };
 
-  const unit = item?.unitName ?? t('label.units-plural', { count: 1 });
+  const unit = item?.unitName ?? t('label.unit');
   const allocate = () => {
     onChangeQuantity(
       issueQuantity,
@@ -189,10 +189,10 @@ export const PrescriptionLineEditForm: React.FC<
                 >
                   <InputLabel sx={{ fontSize: '12px' }}>
                     {packSizeController.selected?.value === -1
-                      ? t('label.units-in-pack-size-of', {
+                      ? `${t('label.unit-plural', {
                           unit,
                           count: quantity,
-                        })
+                        })} ${t('label.in-packs-of')}`
                       : t('label.packs-of', { count: quantity })}
                   </InputLabel>
                 </Grid>
