@@ -33,6 +33,8 @@ import {
   searchTester,
   programEventTester,
   ProgramEvent,
+  historicEncounterDataTester,
+  HistoricEncounterData,
 } from './components';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
@@ -104,6 +106,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: decisionTreeTester, renderer: DecisionTreeControl },
   { tester: searchTester, renderer: Search },
   { tester: programEventTester, renderer: ProgramEvent },
+  { tester: historicEncounterDataTester, renderer: HistoricEncounterData },
 ];
 
 /**
