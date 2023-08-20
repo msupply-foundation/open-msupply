@@ -191,9 +191,9 @@ export const PrescriptionLineEditForm: React.FC<
                     {packSizeController.selected?.value === -1
                       ? `${t('label.unit-plural', {
                           unit,
-                          count: quantity,
+                          count: issueQuantity,
                         })} ${t('label.in-packs-of')}`
-                      : t('label.packs-of', { count: quantity })}
+                      : t('label.packs-of')}
                   </InputLabel>
                 </Grid>
 
