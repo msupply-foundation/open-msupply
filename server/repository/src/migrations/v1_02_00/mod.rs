@@ -4,6 +4,7 @@ use crate::StorageConnection;
 mod invoice;
 mod log_settings;
 mod number_and_permission_type;
+mod sensor;
 mod store_preference;
 pub(crate) struct V1_02_00;
 
@@ -17,6 +18,7 @@ impl Migration for V1_02_00 {
         invoice::migrate(connection)?;
         number_and_permission_type::migrate(connection)?;
         store_preference::migrate(connection)?;
+        sensor::migrate(connection)?;
         Ok(())
     }
 }
