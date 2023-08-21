@@ -8,6 +8,7 @@ import {
   EncounterSortFieldInput,
   ProgramEnrolmentSortFieldInput,
   useAuthContext,
+  ContactTraceSortFieldInput,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -26,6 +27,7 @@ import {
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
+import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 
 const useUpsertPatient = (): SaveDocumentMutation => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
@@ -176,6 +178,13 @@ const PatientDetailView = ({
   );
 };
 
+export enum PatientTabValue {
+  Details = 'Details',
+  Programs = 'Programs',
+  Encounters = 'Encounters',
+  ContactTraces = 'Contact Traces',
+}
+
 /**
  * Main patient view containing patient details and program tabs
  */
@@ -191,7 +200,7 @@ export const PatientView = () => {
   const { store } = useAuthContext();
 
   const requiresConfirmation = (tab: string) => {
-    return tab === 'Details' && isDirtyPatient;
+    return tab === PatientTabValue.Details && isDirtyPatient;
   };
 
   useEffect(() => {
@@ -202,12 +211,12 @@ export const PatientView = () => {
   const tabs = [
     {
       Component: <PatientDetailView onEdit={setIsDirtyPatient} />,
-      value: 'Details',
+      value: PatientTabValue.Details,
       confirmOnLeaving: isDirtyPatient,
     },
     {
       Component: <ProgramListView />,
-      value: 'Programs',
+      value: PatientTabValue.Programs,
       sort: {
         key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
         dir: 'desc' as 'desc' | 'asc',
@@ -215,9 +224,17 @@ export const PatientView = () => {
     },
     {
       Component: <EncounterListView />,
-      value: 'Encounters',
+      value: PatientTabValue.Encounters,
       sort: {
         key: EncounterSortFieldInput.StartDatetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
+    },
+    {
+      Component: <ContactTraceListView />,
+      value: PatientTabValue.ContactTraces,
+      sort: {
+        key: ContactTraceSortFieldInput.Datetime,
         dir: 'desc' as 'desc' | 'asc',
       },
     },
@@ -246,12 +263,15 @@ export const PatientView = () => {
             setCreationModal(
               PatientModal.Program,
               documentRegistry.documentType,
-              createDocument,
-              documentRegistry.documentType
+              createDocument
             );
           }}
         />
       ) : null}
+      {current === PatientModal.ContactTraceSearch ? (
+        <CreateContactTraceModal />
+      ) : null}
+
       <AppBarButtons disabled={!!createNewPatient} store={store} />
       <PatientSummary />
       {/* Only show tabs if program module is on and patient is saved.

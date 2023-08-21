@@ -10,3 +10,4 @@ export * from './Report';
 export * from './InventoryAdjustmentReason';
 export * from './Patient';
 export * from './Encounter';
+export * from './ContactTrace';

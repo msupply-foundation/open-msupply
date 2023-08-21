@@ -17,7 +17,7 @@ import { useLogicalStatus } from '../utils';
 import { ChipTableCell } from '../../Patient';
 
 interface useEncounterListColumnsProps {
-  onChangeSortBy: (column: Column<any>) => void;
+  onChangeSortBy: (column: Column<EncounterRowFragment>) => void;
   sortBy: SortBy<EncounterRowFragment>;
   includePatient?: boolean;
 }

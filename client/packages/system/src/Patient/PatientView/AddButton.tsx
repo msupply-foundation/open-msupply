@@ -33,6 +33,10 @@ export const AddButton: React.FC<AddButtonProps> = ({
       label: t('button.add-encounter'),
       isDisabled: disableEncounterButton,
     },
+    {
+      value: PatientModal.ContactTraceSearch,
+      label: t('button.add-contact-trace'),
+    },
   ];
 
   const [selectedOption, setSelectedOption] = useState<
