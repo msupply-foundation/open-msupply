@@ -1,3 +1,4 @@
+use repository::NameRow;
 use repository::{PaginationOption, Patient, PatientFilter, PatientSort, RepositoryError};
 use util::constants::PATIENT_TYPE;
 
@@ -5,16 +6,20 @@ use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
 use crate::ListResult;
 
+mod insert_name_patient;
 pub mod patient_schema;
 pub mod patient_updated;
 mod query;
 mod search;
 mod search_central;
+mod update_name_patient;
 mod upsert;
 
+pub use self::insert_name_patient::*;
 pub use self::query::*;
 pub use self::search::*;
 pub use self::search_central::*;
+pub use self::update_name_patient::*;
 pub use self::upsert::*;
 
 pub fn main_patient_doc_name(patient_id: &str) -> String {
@@ -62,6 +67,24 @@ pub trait PatientServiceTrait: Sync + Send {
         allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<PatientSearchResult>, RepositoryError> {
         patient_search(ctx, service_provider, input, allowed_ctx)
+    }
+
+    fn insert_name_patient(
+        &self,
+        ctx: &ServiceContext,
+        service_provider: &ServiceProvider,
+        input: &NameRow,
+    ) -> Result<Patient, InsertNamePatientError> {
+        insert_name_patient(ctx, service_provider, input)
+    }
+
+    fn update_name_patient(
+        &self,
+        ctx: &ServiceContext,
+        service_provider: &ServiceProvider,
+        input: UpdateNamePatient,
+    ) -> Result<Patient, UpdateNamePatientError> {
+        update_name_patient(ctx, service_provider, input)
     }
 }
 
