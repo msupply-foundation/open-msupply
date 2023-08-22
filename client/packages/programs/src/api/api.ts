@@ -359,10 +359,14 @@ export const getClinicianQueries = (sdk: Sdk, storeId: string) => ({
 
 export const getFormSchemaQueries = (sdk: Sdk) => ({
   get: {
-    byType: async (type: string): Promise<FormSchemaFragment> => {
+    byType: async (type: string): Promise<FormSchemaFragment | undefined> => {
       const result = await sdk.formSchema({
         filter: { type: { equalTo: type } },
       });
+
+      if (!result.formSchema) {
+        return undefined;
+      }
 
       if (result.formSchema?.__typename === 'FormSchemaNode') {
         return result.formSchema;

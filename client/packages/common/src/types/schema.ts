@@ -1522,10 +1522,13 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
 };
 
 export type InsertPatientInput = {
-  /** Patient document data */
-  data: Scalars['JSON']['input'];
-  /** The schema id used for the patient data */
-  schemaId: Scalars['String']['input'];
+  code: Scalars['String']['input'];
+  code2?: InputMaybe<Scalars['String']['input']>;
+  dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  gender?: InputMaybe<GenderInput>;
+  id: Scalars['String']['input'];
+  lastName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPatientResponse = PatientNode;
@@ -1589,6 +1592,15 @@ export type InsertProgramEnrolmentInput = {
 };
 
 export type InsertProgramEnrolmentResponse = ProgramEnrolmentNode;
+
+export type InsertProgramPatientInput = {
+  /** Patient document data */
+  data: Scalars['JSON']['input'];
+  /** The schema id used for the patient data */
+  schemaId: Scalars['String']['input'];
+};
+
+export type InsertProgramPatientResponse = PatientNode;
 
 export type InsertProgramRequestRequisitionError = {
   __typename: 'InsertProgramRequestRequisitionError';
@@ -2325,6 +2337,7 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  /** Inserts a new patient (without document data) */
   insertPatient: InsertPatientResponse;
   insertPrescription: InsertPrescriptionResponse;
   insertPrescriptionLine: InsertPrescriptionLineResponse;
@@ -2333,12 +2346,18 @@ export type Mutations = {
    * Every patient can only have one program document of each program type.
    */
   insertProgramEnrolment: InsertProgramEnrolmentResponse;
+  /**
+   * Inserts a new program patient, i.e. a patient the can contain additional information stored
+   * in a document.
+   */
+  insertProgramPatient: InsertProgramPatientResponse;
   insertProgramRequestRequisition: InsertProgramRequestRequisitionResponse;
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
+  /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
   /** Set supply quantity to requested quantity */
@@ -2357,11 +2376,17 @@ export type Mutations = {
   updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
+  /** Updates a new patient (without document data) */
   updatePatient: UpdatePatientResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
   /** Updates an existing program document belonging to a patient. */
   updateProgramEnrolment: UpdateProgramEnrolmentResponse;
+  /**
+   * Updates a new program patient, i.e. a patient the can contain additional information stored
+   * in a document.
+   */
+  updateProgramPatient: UpdateProgramPatientResponse;
   updateRequestRequisition: UpdateRequestRequisitionResponse;
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
@@ -2631,6 +2656,12 @@ export type MutationsInsertProgramEnrolmentArgs = {
 };
 
 
+export type MutationsInsertProgramPatientArgs = {
+  input: InsertProgramPatientInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsInsertProgramRequestRequisitionArgs = {
   input: InsertProgramRequestRequisitionInput;
   storeId: Scalars['String']['input'];
@@ -2782,6 +2813,12 @@ export type MutationsUpdatePrescriptionLineArgs = {
 
 export type MutationsUpdateProgramEnrolmentArgs = {
   input: UpdateProgramEnrolmentInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateProgramPatientArgs = {
+  input: UpdateProgramPatientInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4808,11 +4845,13 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
 };
 
 export type UpdatePatientInput = {
-  /** Patient document data */
-  data: Scalars['JSON']['input'];
-  parent: Scalars['String']['input'];
-  /** The schema id used for the patient data */
-  schemaId: Scalars['String']['input'];
+  code: Scalars['String']['input'];
+  code2?: InputMaybe<Scalars['String']['input']>;
+  dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  gender?: InputMaybe<GenderInput>;
+  id: Scalars['String']['input'];
+  lastName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePatientResponse = PatientNode;
@@ -4885,6 +4924,16 @@ export type UpdateProgramEnrolmentInput = {
 };
 
 export type UpdateProgramEnrolmentResponse = ProgramEnrolmentNode;
+
+export type UpdateProgramPatientInput = {
+  /** Patient document data */
+  data: Scalars['JSON']['input'];
+  parent: Scalars['String']['input'];
+  /** The schema id used for the patient data */
+  schemaId: Scalars['String']['input'];
+};
+
+export type UpdateProgramPatientResponse = PatientNode;
 
 export type UpdateRequestRequisitionError = {
   __typename: 'UpdateRequestRequisitionError';
