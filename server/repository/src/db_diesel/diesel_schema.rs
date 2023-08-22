@@ -10,13 +10,14 @@ use super::{
     program_requisition::program_requisition_settings_row::program_requisition_settings,
     requisition_line_row::requisition_line, requisition_row::requisition, sensor_row::sensor,
     stock_line_row::stock_line, stocktake_line_row::stocktake_line, stocktake_row::stocktake,
-    store_row::store, unit_row::unit, user_row::user_account,
+    store_row::store, temperature_log_row::temperature_log, unit_row::unit, user_row::user_account,
 };
 
 allow_tables_to_appear_in_same_query!(
     unit,
     location,
     sensor,
+    temperature_log,
     item,
     stock_line,
     name,
