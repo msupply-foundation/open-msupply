@@ -10,6 +10,8 @@ import {
   EncounterSortFieldInput,
   PaginationInput,
   CentralPatientSearchInput,
+  InsertProgramPatientInput,
+  UpdateProgramPatientInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -151,6 +153,36 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not update patient');
+  },
+
+  insertProgramPatient: async (
+    input: InsertProgramPatientInput
+  ): Promise<PatientRowFragment> => {
+    const result = await sdk.insertProgramPatient({
+      storeId,
+      input,
+    });
+
+    if (result.insertProgramPatient?.__typename === 'PatientNode') {
+      return result.insertProgramPatient;
+    }
+
+    throw new Error('Could not insert program patient');
+  },
+
+  updateProgramPatient: async (
+    input: UpdateProgramPatientInput
+  ): Promise<PatientRowFragment> => {
+    const result = await sdk.updateProgramPatient({
+      storeId,
+      input,
+    });
+
+    if (result.updateProgramPatient.__typename === 'PatientNode') {
+      return result.updateProgramPatient;
+    }
+
+    throw new Error('Could not update program patient');
   },
   linkPatientToStore: async (
     nameId: string
