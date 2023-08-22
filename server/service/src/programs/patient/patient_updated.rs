@@ -126,7 +126,7 @@ pub fn update_patient_row(
     Ok(())
 }
 
-fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
+pub fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
     let mut out = vec![];
     if let Some(last) = last {
         out.push(last.clone());
