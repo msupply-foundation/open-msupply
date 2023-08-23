@@ -120,14 +120,17 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
     );
   };
 
-  const isElementEditable = (child: any, index: number) => {
+  const isElementEditable = (child: JsonData, index: number) => {
+    if (!child || typeof child !== 'object' || Array.isArray(child))
+      return false;
     if (!enabled) return false;
     if (!options?.['editRestrictions']) return true;
 
     const restrictions = options?.['editRestrictions'];
 
     // Must be editable if no timestamp (means it's just created)
-    if (!child.created) return true;
+    const created = child['created'];
+    if (!created || typeof created !== 'string') return true;
 
     // Only allow the latest element to be edited
     if (restrictions?.latest && index !== inputData.length - 1) return false;
@@ -135,13 +138,13 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
     // Author must match the current user
     if (
       restrictions?.isCurrentUser &&
-      child?.authorId &&
-      child.authorId !== config.user.id
+      child['authorId'] &&
+      child['authorId'] !== config.user.id
     )
       return false;
 
     // Must not be older than `maxAge` days
-    if (DateUtils.ageInDays(child.created) >= 1) return false;
+    if (DateUtils.ageInDays(created) >= 1) return false;
 
     return true;
   };
