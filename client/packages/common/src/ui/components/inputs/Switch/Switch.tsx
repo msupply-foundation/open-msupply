@@ -22,7 +22,7 @@ interface SwitchProps {
     checked: boolean
   ) => void;
   size?: 'medium' | 'small';
-  value?: any;
+  value?: unknown;
 }
 
 const getLabelStyle = (

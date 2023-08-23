@@ -63,7 +63,7 @@ export enum NativeMode {
 
 export type Protocol = 'http' | 'https';
 
-export const isProtocol = (value: any): value is Protocol =>
+export const isProtocol = (value: string): value is Protocol =>
   value === 'http' || value === 'https';
 
 // Should match server/server/src/discovery.rs (FrontEndHost)
