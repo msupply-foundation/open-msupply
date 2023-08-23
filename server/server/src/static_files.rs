@@ -7,12 +7,14 @@ use actix_web::web::Data;
 use actix_web::{guard, web, Error, HttpRequest, HttpResponse};
 use reqwest::StatusCode;
 use serde::Deserialize;
+use service::plugin_files::PluginFileService;
 use service::settings::Settings;
 use service::static_files::StaticFileService;
 
 // this function could be located in different module
 pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/files").guard(guard::Get()).to(files));
+    cfg.service(web::resource("/plugins").guard(guard::Get()).to(plugins));
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,6 +42,30 @@ async fn files(
             disposition: DispositionType::Inline,
             parameters: vec![DispositionParam::Filename(file.name)],
         })
+        .into_response(&req);
+
+    Ok(response)
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PluginRequestQuery {
+    name: String,
+}
+
+async fn plugins(
+    req: HttpRequest,
+    query: web::Query<PluginRequestQuery>,
+    settings: Data<Settings>,
+) -> Result<HttpResponse, Error> {
+    let service = PluginFileService::new(&settings.server.base_dir)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+    let file = service
+        .find_file(&query.name)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
+        .ok_or(std::io::Error::new(ErrorKind::NotFound, "Plugin not found"))?;
+
+    let response = fs::NamedFile::open(file.path)?
+        .set_content_type("application/javascript; charset=utf-8".parse().unwrap())
         .into_response(&req);
 
     Ok(response)
