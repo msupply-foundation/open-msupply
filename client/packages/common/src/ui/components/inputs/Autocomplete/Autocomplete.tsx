@@ -88,7 +88,6 @@ export function Autocomplete<T>({
       autoFocus={autoFocus}
       InputProps={{
         disableUnderline: false,
-        style: props.disabled ? { paddingLeft: 0 } : {},
         ...props.InputProps,
       }}
       sx={{ width }}
