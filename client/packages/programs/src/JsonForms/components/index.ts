@@ -8,3 +8,4 @@ export * from './PreviousEncounterField';
 export * from './QuantityDispensed';
 export * from './Search/Search';
 export * from './ProgramEvent';
+export * from './HistoricEncounterData';
