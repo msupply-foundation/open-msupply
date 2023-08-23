@@ -5,11 +5,11 @@ use super::{
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     repository_error::RepositoryError,
 };
 
-use crate::{EqualFilter, Pagination, Sort};
+use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct TemperatureLog {
@@ -21,6 +21,7 @@ pub struct TemperatureLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub sensor_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub timestamp: Option<DatetimeFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -63,10 +64,10 @@ impl<'a> TemperatureLogRepository<'a> {
                     apply_sort_no_case!(query, sort, temperature_log_dsl::id)
                 }
                 TemperatureLogSortField::Timestamp => {
-                    apply_sort_no_case!(query, sort, temperature_log_dsl::timestamp)
+                    apply_sort!(query, sort, temperature_log_dsl::timestamp)
                 }
                 TemperatureLogSortField::Temperature => {
-                    apply_sort_no_case!(query, sort, temperature_log_dsl::temperature)
+                    apply_sort!(query, sort, temperature_log_dsl::temperature)
                 }
             }
         } else {
@@ -91,6 +92,7 @@ fn create_filtered_query(filter: Option<TemperatureLogFilter>) -> BoxedLogQuery 
         apply_equal_filter!(query, filter.id, temperature_log_dsl::id);
         apply_equal_filter!(query, filter.sensor_id, temperature_log_dsl::sensor_id);
         apply_equal_filter!(query, filter.store_id, temperature_log_dsl::store_id);
+        apply_date_time_filter!(query, filter.timestamp, temperature_log_dsl::timestamp);
     }
 
     query
@@ -106,6 +108,7 @@ impl TemperatureLogFilter {
             id: None,
             sensor_id: None,
             store_id: None,
+            timestamp: None,
         }
     }
 
@@ -116,6 +119,11 @@ impl TemperatureLogFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn timestamp(mut self, filter: DatetimeFilter) -> Self {
+        self.timestamp = Some(filter);
         self
     }
 }
