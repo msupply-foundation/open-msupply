@@ -61,12 +61,17 @@ export function useTableStore<T = TableStore>(
   selector?: (state: TableStore) => T,
   equalityFn?: (a: T, b: T) => boolean
 ): T {
-  if (!selector) return useStore(useContext(tableContext)) as unknown as T;
-
   const store = useContext(tableContext);
-  if (!equalityFn) return useStore(store, selector);
+  const storeWithoutSelector = useStore(store) as unknown as T;
+  const storeWithSelector = useStore(
+    store,
+    selector ?? ((_: TableStore) => storeWithoutSelector),
+    equalityFn
+  );
 
-  return useStore(store, selector, equalityFn);
+  if (!selector) return storeWithoutSelector;
+
+  return storeWithSelector;
 }
 
 const getRowState = (
