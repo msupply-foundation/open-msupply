@@ -85,18 +85,21 @@ export const usePopover = ({
   const [internalIsOpen, internalSetOpen] = useState(false);
 
   const Popover: FC<Partial<PropsWithChildren<BasePopoverProps>>> =
-    React.useCallback(props => {
-      isOpenCallback.current = internalSetOpen;
-      setAnchorElCallback.current = setInternalAnchorEl;
+    React.useCallback(
+      props => {
+        isOpenCallback.current = internalSetOpen;
+        setAnchorElCallback.current = setInternalAnchorEl;
 
-      return (
-        <BasePopover
-          {...props}
-          anchorEl={internalAnchorEl}
-          isOpen={internalIsOpen}
-        />
-      );
-    }, []);
+        return (
+          <BasePopover
+            {...props}
+            anchorEl={internalAnchorEl}
+            isOpen={internalIsOpen}
+          />
+        );
+      },
+      [internalAnchorEl, internalIsOpen]
+    );
 
   return {
     Popover,
