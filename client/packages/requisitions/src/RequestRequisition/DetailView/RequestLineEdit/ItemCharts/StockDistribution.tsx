@@ -108,21 +108,16 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
   averageMonthlyConsumption = 0,
   suggestedQuantity = 0,
 }) => {
-  if (averageMonthlyConsumption === 0) return <CalculationError isAmcZero />;
-
   const { maxMonthsOfStock } = useRequest.document.fields('maxMonthsOfStock');
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
   const t = useTranslation('replenishment');
-
-  if (suggestedQuantity === 0 && availableStockOnHand === 0)
-    return <CalculationError isSohAndQtyZero />;
 
   const monthlyConsumptionWidth =
     availableStockOnHand > targetQuantity
       ? Math.round((100 * targetQuantity) / availableStockOnHand)
       : 100;
 
-  return useMemo(
+  const control = useMemo(
     () => (
       <>
         <Typography variant="body1" fontWeight={700} fontSize={12}>
@@ -172,6 +167,11 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
     ),
     [availableStockOnHand, averageMonthlyConsumption, suggestedQuantity]
   );
+
+  if (averageMonthlyConsumption === 0) return <CalculationError isAmcZero />;
+  if (suggestedQuantity === 0 && availableStockOnHand === 0)
+    return <CalculationError isSohAndQtyZero />;
+  return control;
 };
 
 export const StockDistribution: React.FC<StockDistributionProps> = ({

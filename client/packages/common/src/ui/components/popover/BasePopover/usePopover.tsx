@@ -67,7 +67,7 @@ export const usePopover = ({
         right: e.clientX,
         width: 25,
         height: 25,
-      } as DOMRect);
+      }) as DOMRect;
 
     setAnchorElCallback.current?.({ getBoundingClientRect });
     isOpenCallback.current?.(true);
@@ -80,13 +80,12 @@ export const usePopover = ({
   const show = useDebounceCallback(showCallback, [], showDebounceDelay);
   const hide = useDebounceCallback(hideCallback, [], hideDebounceDelay);
 
+  const [internalAnchorEl, setInternalAnchorEl] =
+    useState<VirtualElement | null>(null);
+  const [internalIsOpen, internalSetOpen] = useState(false);
+
   const Popover: FC<Partial<PropsWithChildren<BasePopoverProps>>> =
     React.useCallback(props => {
-      const [internalAnchorEl, setInternalAnchorEl] =
-        useState<VirtualElement | null>(null);
-
-      const [internalIsOpen, internalSetOpen] = useState(false);
-
       isOpenCallback.current = internalSetOpen;
       setAnchorElCallback.current = setInternalAnchorEl;
 

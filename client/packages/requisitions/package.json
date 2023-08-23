@@ -6,7 +6,8 @@
   "private": true,
   "devDependencies": {},
   "scripts": {
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "eslint": "eslint ./src"
   },
   "dependencies": {
     "@openmsupply-client/common": "^0.0.1",

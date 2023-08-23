@@ -21,25 +21,31 @@ interface StockLineEditModalProps {
 }
 
 interface UseDraftStockLineControl {
-  draft: StockLineRowFragment;
+  draft: StockLineRowFragment | null;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
   onSave: () => Promise<void>;
   isLoading: boolean;
 }
 
 const useDraftStockLine = (
-  seed: StockLineRowFragment
+  seed: StockLineRowFragment | null
 ): UseDraftStockLineControl => {
-  const [stockLine, setStockLine] = useState<StockLineRowFragment>(() => ({
-    ...seed,
-  }));
+  const [stockLine, setStockLine] = useState<StockLineRowFragment | null>(() =>
+    seed
+      ? {
+          ...seed,
+        }
+      : null
+  );
   const { mutate, isLoading } = useStock.line.update();
 
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
-    setStockLine({ ...stockLine, ...patch });
+    if (stockLine) setStockLine({ ...stockLine, ...patch });
   };
 
-  const onSave = async () => mutate(stockLine);
+  const onSave = async () => {
+    if (stockLine) mutate(stockLine);
+  };
 
   return {
     draft: stockLine,
@@ -61,9 +67,9 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
     message: t('messages.confirm-save-stock-line'),
   });
 
-  if (!stockLine) return null;
-
   const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
+
+  if (!stockLine || !draft) return null;
 
   const tabs = [
     {
