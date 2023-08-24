@@ -1,3 +1,4 @@
+use chrono::Utc;
 use repository::{
     EqualFilter, NameRow, NameRowRepository, NameType, Patient, PatientFilter, RepositoryError,
     StorageConnection, TransactionError,
@@ -32,25 +33,33 @@ fn validate(con: &StorageConnection, input: &NameRow) -> Result<(), InsertNamePa
     Ok(())
 }
 
+fn generate(mut input: NameRow) -> NameRow {
+    if input.created_datetime.is_none() {
+        input.created_datetime = Some(Utc::now().naive_utc());
+    }
+    input
+}
+
 pub(crate) fn insert_name_patient(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    input: &NameRow,
+    input: NameRow,
 ) -> Result<Patient, InsertNamePatientError> {
     let patient = ctx
         .connection
         .transaction_sync(|con| {
             validate(con, &input)?;
+            let row = generate(input);
 
             let name_repo = NameRowRepository::new(con);
-            name_repo.upsert_one(input)?;
+            name_repo.upsert_one(&row)?;
 
             let patient = service_provider
                 .patient_service
                 .get_patients(
                     ctx,
                     None,
-                    Some(PatientFilter::new().id(EqualFilter::equal_to(&input.id))),
+                    Some(PatientFilter::new().id(EqualFilter::equal_to(&row.id))),
                     None,
                     None,
                 )
