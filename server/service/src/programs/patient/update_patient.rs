@@ -7,7 +7,7 @@ use repository::{
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
 #[derive(PartialEq, Debug)]
-pub enum UpdateNamePatientError {
+pub enum UpdatePatientError {
     PatientDoesNotExists,
     NotAPatient,
     InternalError(String),
@@ -16,28 +16,25 @@ pub enum UpdateNamePatientError {
 
 fn validate_patient_exists(
     con: &StorageConnection,
-    input: &UpdateNamePatient,
+    input: &UpdatePatient,
 ) -> Result<Option<NameRow>, RepositoryError> {
     NameRowRepository::new(con).find_one_by_id(&input.id)
 }
 
-fn validate(
-    con: &StorageConnection,
-    input: &UpdateNamePatient,
-) -> Result<NameRow, UpdateNamePatientError> {
+fn validate(con: &StorageConnection, input: &UpdatePatient) -> Result<NameRow, UpdatePatientError> {
     let Some(existing) = validate_patient_exists(con, &input)? else {
-        return Err(UpdateNamePatientError::PatientDoesNotExists);
+        return Err(UpdatePatientError::PatientDoesNotExists);
     };
 
     if existing.r#type != NameType::Patient {
-        return Err(UpdateNamePatientError::NotAPatient);
+        return Err(UpdatePatientError::NotAPatient);
     }
 
     Ok(existing)
 }
 
-fn generate(existing: NameRow, update: UpdateNamePatient) -> NameRow {
-    let UpdateNamePatient {
+fn generate(existing: NameRow, update: UpdatePatient) -> NameRow {
+    let UpdatePatient {
         id: _,
         code,
         code_2,
@@ -59,7 +56,7 @@ fn generate(existing: NameRow, update: UpdateNamePatient) -> NameRow {
 }
 
 #[derive(Default)]
-pub struct UpdateNamePatient {
+pub struct UpdatePatient {
     pub id: String,
     pub code: String,
     pub code_2: Option<String>,
@@ -72,8 +69,8 @@ pub struct UpdateNamePatient {
 pub(crate) fn update_name_patient(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    input: UpdateNamePatient,
-) -> Result<Patient, UpdateNamePatientError> {
+    input: UpdatePatient,
+) -> Result<Patient, UpdatePatientError> {
     let patient = ctx
         .connection
         .transaction_sync(|con| {
@@ -92,20 +89,20 @@ pub(crate) fn update_name_patient(
                     None,
                     None,
                 )
-                .map_err(|err| UpdateNamePatientError::DatabaseError(err))?
+                .map_err(|err| UpdatePatientError::DatabaseError(err))?
                 .rows
                 .pop()
-                .ok_or(UpdateNamePatientError::InternalError(
+                .ok_or(UpdatePatientError::InternalError(
                     "Can't find the just inserted patient".to_string(),
                 ))?;
             Ok(patient)
         })
-        .map_err(|err: TransactionError<UpdateNamePatientError>| err.to_inner_error())?;
+        .map_err(|err: TransactionError<UpdatePatientError>| err.to_inner_error())?;
     Ok(patient)
 }
 
-impl From<RepositoryError> for UpdateNamePatientError {
+impl From<RepositoryError> for UpdatePatientError {
     fn from(err: RepositoryError) -> Self {
-        UpdateNamePatientError::DatabaseError(err)
+        UpdatePatientError::DatabaseError(err)
     }
 }

@@ -9,7 +9,7 @@ use graphql_types::types::patient::PatientNode;
 use repository::{NameRow, NameType};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    programs::patient::{patient_updated::patient_name, InsertNamePatientError},
+    programs::patient::{patient_updated::patient_name, InsertPatientError},
 };
 use util::inline_init;
 
@@ -77,16 +77,16 @@ pub fn insert_patient(
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                InsertNamePatientError::PatientExists => {
+                InsertPatientError::PatientExists => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                InsertNamePatientError::NotAPatient => {
+                InsertPatientError::NotAPatient => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                InsertNamePatientError::InternalError(_) => {
+                InsertPatientError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                InsertNamePatientError::DatabaseError(_) => {
+                InsertPatientError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
             };

@@ -8,7 +8,7 @@ use graphql_general::GenderInput;
 use graphql_types::types::patient::PatientNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    programs::patient::{UpdateNamePatient, UpdateNamePatientError},
+    programs::patient::{UpdatePatient, UpdatePatientError},
 };
 use util::inline_init;
 
@@ -59,7 +59,7 @@ pub fn update_patient(
     match service_provider.patient_service.update_name_patient(
         &service_context,
         service_provider,
-        inline_init(|n: &mut UpdateNamePatient| {
+        inline_init(|n: &mut UpdatePatient| {
             n.id = id;
             n.code = code;
             n.code_2 = code_2;
@@ -77,16 +77,16 @@ pub fn update_patient(
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                UpdateNamePatientError::PatientDoesNotExists => {
+                UpdatePatientError::PatientDoesNotExists => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpdateNamePatientError::NotAPatient => {
+                UpdatePatientError::NotAPatient => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                UpdateNamePatientError::InternalError(_) => {
+                UpdatePatientError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                UpdateNamePatientError::DatabaseError(_) => {
+                UpdatePatientError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
             };

@@ -6,21 +6,21 @@ use crate::service_provider::ServiceContext;
 use crate::service_provider::ServiceProvider;
 use crate::ListResult;
 
-mod insert_name_patient;
+mod insert_patient;
 pub mod patient_schema;
 pub mod patient_updated;
 mod query;
 mod search;
 mod search_central;
-mod update_name_patient;
-mod upsert;
+mod update_patient;
+mod upsert_program_patient;
 
-pub use self::insert_name_patient::*;
+pub use self::insert_patient::*;
 pub use self::query::*;
 pub use self::search::*;
 pub use self::search_central::*;
-pub use self::update_name_patient::*;
-pub use self::upsert::*;
+pub use self::update_patient::*;
+pub use self::upsert_program_patient::*;
 
 pub fn main_patient_doc_name(patient_id: &str) -> String {
     patient_doc_name(patient_id, PATIENT_TYPE)
@@ -54,9 +54,9 @@ pub trait PatientServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
         store_id: &str,
         user_id: &str,
-        input: UpdatePatient,
-    ) -> Result<Patient, UpdatePatientError> {
-        upsert_patient(ctx, service_provider, store_id, user_id, input)
+        input: UpdateProgramPatient,
+    ) -> Result<Patient, UpdateProgramPatientError> {
+        upsert_program_patient(ctx, service_provider, store_id, user_id, input)
     }
 
     fn patient_search(
@@ -74,16 +74,16 @@ pub trait PatientServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
         input: NameRow,
-    ) -> Result<Patient, InsertNamePatientError> {
-        insert_name_patient(ctx, service_provider, input)
+    ) -> Result<Patient, InsertPatientError> {
+        insert_patient(ctx, service_provider, input)
     }
 
     fn update_name_patient(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
-        input: UpdateNamePatient,
-    ) -> Result<Patient, UpdateNamePatientError> {
+        input: UpdatePatient,
+    ) -> Result<Patient, UpdatePatientError> {
         update_name_patient(ctx, service_provider, input)
     }
 }
