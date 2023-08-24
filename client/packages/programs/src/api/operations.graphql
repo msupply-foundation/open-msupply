@@ -430,10 +430,15 @@ fragment FormSchema on FormSchemaNode {
   uiSchema
 }
 
-query formSchema($filter: FormSchemaFilterInput) {
+query formSchemas($filter: FormSchemaFilterInput) {
   formSchema(filter: $filter) {
-    __typename
-    ...FormSchema
+    ... on FormSchemaConnector {
+      __typename
+      nodes {
+        __typename
+        ...FormSchema
+      }
+    }
   }
 }
 

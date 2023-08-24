@@ -360,16 +360,12 @@ export const getClinicianQueries = (sdk: Sdk, storeId: string) => ({
 export const getFormSchemaQueries = (sdk: Sdk) => ({
   get: {
     byType: async (type: string): Promise<FormSchemaFragment | undefined> => {
-      const result = await sdk.formSchema({
+      const result = await sdk.formSchemas({
         filter: { type: { equalTo: type } },
       });
 
-      if (!result.formSchema) {
-        return undefined;
-      }
-
-      if (result.formSchema?.__typename === 'FormSchemaNode') {
-        return result.formSchema;
+      if (result.formSchema?.__typename === 'FormSchemaConnector') {
+        return result.formSchema.nodes[0];
       }
 
       throw new Error('Error querying form schema');
