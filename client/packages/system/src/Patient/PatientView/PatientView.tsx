@@ -104,9 +104,11 @@ const PatientDetailView = ({
     });
   const patientRegistry = patientRegistries?.nodes[0];
   const isCreatingPatient = !!createNewPatient;
-  // we have to memo createDoc to avoid an infinite render loop
+  // we have to memo the data to avoid an infinite render loop
   const inputData = useMemo<FormInputData | undefined>(() => {
     if (!!createNewPatient) {
+      // Use the unsaved patient information from createNewPatient, i.e. from a "create patient"
+      // request
       return {
         schema: createNewPatient.documentRegistry ?? DEFAULT_SCHEMA,
         data: {
@@ -121,7 +123,8 @@ const PatientDetailView = ({
         isCreating: true,
       };
     } else if (!!currentPatient && !currentPatient.document) {
-      // no document associated with the patient; use data from the Name row
+      // The loaded patient doesn't has a document. Use the information we got (from the name
+      // table).
       return {
         schema: patientRegistry ?? DEFAULT_SCHEMA,
         data: {
