@@ -22,7 +22,8 @@
         },
         "code": {
           "description": "Patient code, e.g. national id or other patient identifier",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "code2": {
           "description": "Secondary patient code, e.g. another type of health id",
