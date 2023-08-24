@@ -7,7 +7,7 @@ use repository::{
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
 #[derive(PartialEq, Debug)]
-pub enum InsertNamePatientError {
+pub enum InsertPatientError {
     PatientExists,
     NotAPatient,
     InternalError(String),
@@ -22,13 +22,13 @@ fn validate_patient_does_not_exist(
     Ok(existing.is_none())
 }
 
-fn validate(con: &StorageConnection, input: &NameRow) -> Result<(), InsertNamePatientError> {
+fn validate(con: &StorageConnection, input: &NameRow) -> Result<(), InsertPatientError> {
     if input.r#type != NameType::Patient {
-        return Err(InsertNamePatientError::NotAPatient);
+        return Err(InsertPatientError::NotAPatient);
     }
 
     if !validate_patient_does_not_exist(con, input)? {
-        return Err(InsertNamePatientError::PatientExists);
+        return Err(InsertPatientError::PatientExists);
     }
     Ok(())
 }
@@ -40,11 +40,11 @@ fn generate(input: NameRow) -> NameRow {
     }
 }
 
-pub(crate) fn insert_name_patient(
+pub(crate) fn insert_patient(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     input: NameRow,
-) -> Result<Patient, InsertNamePatientError> {
+) -> Result<Patient, InsertPatientError> {
     let patient = ctx
         .connection
         .transaction_sync(|con| {
@@ -63,20 +63,20 @@ pub(crate) fn insert_name_patient(
                     None,
                     None,
                 )
-                .map_err(|err| InsertNamePatientError::DatabaseError(err))?
+                .map_err(|err| InsertPatientError::DatabaseError(err))?
                 .rows
                 .pop()
-                .ok_or(InsertNamePatientError::InternalError(
+                .ok_or(InsertPatientError::InternalError(
                     "Can't find the just inserted patient".to_string(),
                 ))?;
             Ok(patient)
         })
-        .map_err(|err: TransactionError<InsertNamePatientError>| err.to_inner_error())?;
+        .map_err(|err: TransactionError<InsertPatientError>| err.to_inner_error())?;
     Ok(patient)
 }
 
-impl From<RepositoryError> for InsertNamePatientError {
+impl From<RepositoryError> for InsertPatientError {
     fn from(err: RepositoryError) -> Self {
-        InsertNamePatientError::DatabaseError(err)
+        InsertPatientError::DatabaseError(err)
     }
 }

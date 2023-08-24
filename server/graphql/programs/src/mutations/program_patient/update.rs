@@ -6,7 +6,7 @@ use graphql_core::{
 use graphql_types::types::patient::PatientNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    programs::patient::{UpdatePatient, UpdatePatientError},
+    programs::patient::{UpdateProgramPatient, UpdateProgramPatientError},
 };
 
 #[derive(InputObject)]
@@ -45,7 +45,7 @@ pub fn update_program_patient(
         service_provider,
         &store_id,
         &user.user_id,
-        UpdatePatient {
+        UpdateProgramPatient {
             data: input.data,
             schema_id: input.schema_id,
             parent: Some(input.parent),
@@ -59,28 +59,28 @@ pub fn update_program_patient(
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let std_err = match error {
-                UpdatePatientError::InvalidDataSchema(_) => {
+                UpdateProgramPatientError::InvalidDataSchema(_) => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpdatePatientError::DataSchemaDoesNotExist => {
+                UpdateProgramPatientError::DataSchemaDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpdatePatientError::InternalError(_) => {
+                UpdateProgramPatientError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                UpdatePatientError::DatabaseError(_) => {
+                UpdateProgramPatientError::DatabaseError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                UpdatePatientError::InvalidPatientId => {
+                UpdateProgramPatientError::InvalidPatientId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpdatePatientError::PatientExists => {
+                UpdateProgramPatientError::PatientExists => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpdatePatientError::InvalidParentId => {
+                UpdateProgramPatientError::InvalidParentId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpdatePatientError::PatientDocumentRegistryDoesNotExit => {
+                UpdateProgramPatientError::PatientDocumentRegistryDoesNotExit => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
             };
