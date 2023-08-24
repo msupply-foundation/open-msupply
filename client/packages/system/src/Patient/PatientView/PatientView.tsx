@@ -61,11 +61,11 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
     usePatient.document.insertProgramPatient();
   const { mutateAsync: updatePatient } =
     usePatient.document.updateProgramPatient();
-  return async (jsonData: unknown, formSchemaId?: string, parent?: string) => {
+  return async (jsonData: unknown, schemaId: string, parent?: string) => {
     if (parent === undefined) {
       const result = await insertPatient({
         data: jsonData,
-        schemaId: formSchemaId ?? '',
+        schemaId,
       });
       if (!result.document) throw Error('Inserted document not set!');
       return result.document;
@@ -73,7 +73,7 @@ const useUpsertProgramPatient = (): SaveDocumentMutation => {
       const result = await updatePatient({
         data: jsonData,
         parent,
-        schemaId: formSchemaId ?? '',
+        schemaId,
       });
       if (!result.document) throw Error('Inserted document not set!');
       return result.document;
