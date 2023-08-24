@@ -18,7 +18,6 @@ export type SaveDocumentMutation = (
 
 export type DocumentFormData = JsonFormData<SavedDocument>;
 
-// eslint-disable-next-line valid-jsdoc
 /**
  * Manages the document data for a JSON form.
  * Data is taken either:
