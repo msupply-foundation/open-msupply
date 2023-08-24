@@ -36,7 +36,7 @@ fn validate(
     Ok(existing)
 }
 
-fn generate(mut existing: NameRow, update: UpdateNamePatient) -> NameRow {
+fn generate(existing: NameRow, update: UpdateNamePatient) -> NameRow {
     let UpdateNamePatient {
         id: _,
         code,
@@ -46,14 +46,16 @@ fn generate(mut existing: NameRow, update: UpdateNamePatient) -> NameRow {
         gender,
         date_of_birth,
     } = update;
-    existing.code = code;
-    existing.national_health_number = code_2;
-    existing.first_name = first_name;
-    existing.last_name = last_name;
-    existing.gender = gender;
-    existing.date_of_birth = date_of_birth;
 
-    existing
+    NameRow {
+        code,
+        first_name,
+        last_name,
+        gender,
+        date_of_birth,
+        national_health_number: code_2,
+        ..existing
+    }
 }
 
 #[derive(Default)]
