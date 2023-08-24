@@ -72,7 +72,7 @@ export const useDocumentDataAccessor = (
     }
   }, [databaseResponse]);
 
-  // user createDoc if there is one
+  // use schema from the formInputData if there is one
   useEffect(() => {
     if (formInputData) {
       setSchema(formInputData.schema);
