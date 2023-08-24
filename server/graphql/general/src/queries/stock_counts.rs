@@ -31,8 +31,9 @@ impl StockCounts {
         let date = Utc::now().with_timezone(&self.timezone_offset).date_naive()
             + Duration::days(days_till_expired as i64);
         let expired = self.expired(ctx).await?;
-
-        Ok(service.count_expired_stock(&service_ctx, &self.store_id, date)? - expired)
+        let expiring = service.count_expired_stock(&service_ctx, &self.store_id, date)? - expired;
+        // I don't see how it is possible that expired is greater than expiring.. if it happened it would look daft though
+        Ok(std::cmp::max(0, expiring))
     }
 }
 
