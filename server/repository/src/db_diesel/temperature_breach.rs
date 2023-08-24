@@ -1,6 +1,8 @@
 use super::{
-    temperature_breach_row::{temperature_breach, temperature_breach::dsl as temperature_breach_dsl},
-    DBType, TemperatureBreachRow, TemperatureBreachRowType, StorageConnection,
+    temperature_breach_row::{
+        temperature_breach, temperature_breach::dsl as temperature_breach_dsl,
+    },
+    DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachRowType,
 };
 use diesel::prelude::*;
 use util::inline_init;
@@ -50,7 +52,10 @@ impl<'a> TemperatureBreachRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_by_filter(&self, filter: TemperatureBreachFilter) -> Result<Vec<TemperatureBreach>, RepositoryError> {
+    pub fn query_by_filter(
+        &self,
+        filter: TemperatureBreachFilter,
+    ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -96,8 +101,16 @@ fn create_filtered_query(filter: Option<TemperatureBreachFilter>) -> BoxedLogQue
         apply_equal_filter!(query, filter.sensor_id, temperature_breach_dsl::sensor_id);
         apply_equal_filter!(query, filter.store_id, temperature_breach_dsl::store_id);
         apply_equal_filter!(query, filter.r#type, temperature_breach_dsl::type_);
-        apply_date_time_filter!(query, filter.start_timestamp, temperature_breach_dsl::start_timestamp);
-        apply_date_time_filter!(query, filter.end_timestamp, temperature_breach_dsl::end_timestamp);
+        apply_date_time_filter!(
+            query,
+            filter.start_timestamp,
+            temperature_breach_dsl::start_timestamp
+        );
+        apply_date_time_filter!(
+            query,
+            filter.end_timestamp,
+            temperature_breach_dsl::end_timestamp
+        );
     }
 
     query
@@ -118,7 +131,9 @@ impl TemperatureBreachRowType {
 }
 
 pub fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
-    TemperatureBreach { temperature_breach_row }
+    TemperatureBreach {
+        temperature_breach_row,
+    }
 }
 
 impl TemperatureBreachFilter {
@@ -137,7 +152,7 @@ impl TemperatureBreachFilter {
         self.id = Some(filter);
         self
     }
-    
+
     pub fn sensor_id(mut self, filter: EqualFilter<String>) -> Self {
         self.sensor_id = Some(filter);
         self

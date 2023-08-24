@@ -1,6 +1,6 @@
 use super::{
     temperature_log_row::{temperature_log, temperature_log::dsl as temperature_log_dsl},
-    DBType, TemperatureLogRow, StorageConnection,
+    DBType, StorageConnection, TemperatureLogRow,
 };
 use diesel::prelude::*;
 
@@ -47,7 +47,10 @@ impl<'a> TemperatureLogRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_by_filter(&self, filter: TemperatureLogFilter) -> Result<Vec<TemperatureLog>, RepositoryError> {
+    pub fn query_by_filter(
+        &self,
+        filter: TemperatureLogFilter,
+    ) -> Result<Vec<TemperatureLog>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -99,7 +102,9 @@ fn create_filtered_query(filter: Option<TemperatureLogFilter>) -> BoxedLogQuery 
 }
 
 pub fn to_domain(temperature_log_row: TemperatureLogRow) -> TemperatureLog {
-    TemperatureLog { temperature_log_row }
+    TemperatureLog {
+        temperature_log_row,
+    }
 }
 
 impl TemperatureLogFilter {
@@ -116,7 +121,7 @@ impl TemperatureLogFilter {
         self.id = Some(filter);
         self
     }
-    
+
     pub fn sensor_id(mut self, filter: EqualFilter<String>) -> Self {
         self.sensor_id = Some(filter);
         self
