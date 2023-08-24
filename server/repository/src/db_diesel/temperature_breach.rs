@@ -133,6 +133,11 @@ impl TemperatureBreachFilter {
         }
     }
 
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+    
     pub fn sensor_id(mut self, filter: EqualFilter<String>) -> Self {
         self.sensor_id = Some(filter);
         self
