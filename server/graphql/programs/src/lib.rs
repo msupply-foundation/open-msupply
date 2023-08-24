@@ -273,7 +273,7 @@ impl ProgramsMutations {
         update_patient(ctx, store_id, input)
     }
 
-    /// Inserts a new program patient, i.e. a patient the can contain additional information stored
+    /// Inserts a new program patient, i.e. a patient that can contain additional information stored
     /// in a document.
     pub async fn insert_program_patient(
         &self,
