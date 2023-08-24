@@ -30,7 +30,9 @@ impl StockCounts {
         let days_till_expired = self.days_till_expired.unwrap_or(7);
         let date = Utc::now().with_timezone(&self.timezone_offset).date_naive()
             + Duration::days(days_till_expired as i64);
-        Ok(service.count_expired_stock(&service_ctx, &self.store_id, date)?)
+        let expired = self.expired(ctx).await?;
+
+        Ok(service.count_expired_stock(&service_ctx, &self.store_id, date)? - expired)
     }
 }
 
