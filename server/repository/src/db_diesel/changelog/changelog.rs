@@ -60,6 +60,9 @@ pub enum ChangelogTableName {
     NameStoreJoin,
     Document,
     Sensor,
+    TemperatureBreach,
+    TemperatureBreachConfig,
+    TemperatureLog,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
