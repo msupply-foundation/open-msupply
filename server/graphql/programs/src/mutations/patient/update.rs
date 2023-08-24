@@ -14,7 +14,7 @@ use util::inline_init;
 
 /// All fields in the input object will be used to update the patient record.
 /// This means that the caller also has to provide the fields that are not going to change.
-/// For example, if the last_name is not provided the last_name in the patient record will be clear.
+/// For example, if the last_name is not provided, the last_name in the patient record will be cleared.
 #[derive(InputObject)]
 pub struct UpdatePatientInput {
     pub id: String,
