@@ -57,6 +57,7 @@ pub fn insert_patient(
     match service_provider.patient_service.insert_name_patient(
         &service_context,
         service_provider,
+        &store_id,
         inline_init(|n: &mut NameRow| {
             n.id = id;
             n.r#type = NameType::Patient;
