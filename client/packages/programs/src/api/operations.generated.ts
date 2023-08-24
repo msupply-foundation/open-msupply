@@ -178,12 +178,12 @@ export type CliniciansQuery = { __typename: 'Queries', clinicians: { __typename:
 
 export type FormSchemaFragment = { __typename: 'FormSchemaNode', id: string, jsonSchema: any, type: string, uiSchema: any };
 
-export type FormSchemaQueryVariables = Types.Exact<{
+export type FormSchemasQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.FormSchemaFilterInput>;
 }>;
 
 
-export type FormSchemaQuery = { __typename: 'Queries', formSchema?: { __typename: 'FormSchemaNode', id: string, jsonSchema: any, type: string, uiSchema: any } | null };
+export type FormSchemasQuery = { __typename: 'Queries', formSchema: { __typename: 'FormSchemaConnector', nodes: Array<{ __typename: 'FormSchemaNode', id: string, jsonSchema: any, type: string, uiSchema: any }> } };
 
 export type ActiveProgramEventsQueryVariables = Types.Exact<{
   at?: Types.InputMaybe<Types.Scalars['String']['input']>;
@@ -603,11 +603,16 @@ export const CliniciansDocument = gql`
   }
 }
     ${ClinicianFragmentDoc}`;
-export const FormSchemaDocument = gql`
-    query formSchema($filter: FormSchemaFilterInput) {
+export const FormSchemasDocument = gql`
+    query formSchemas($filter: FormSchemaFilterInput) {
   formSchema(filter: $filter) {
-    __typename
-    ...FormSchema
+    ... on FormSchemaConnector {
+      __typename
+      nodes {
+        __typename
+        ...FormSchema
+      }
+    }
   }
 }
     ${FormSchemaFragmentDoc}`;
@@ -690,8 +695,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     clinicians(variables: CliniciansQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CliniciansQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<CliniciansQuery>(CliniciansDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'clinicians', 'query');
     },
-    formSchema(variables?: FormSchemaQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FormSchemaQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<FormSchemaQuery>(FormSchemaDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'formSchema', 'query');
+    formSchemas(variables?: FormSchemasQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<FormSchemasQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<FormSchemasQuery>(FormSchemasDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'formSchemas', 'query');
     },
     activeProgramEvents(variables: ActiveProgramEventsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ActiveProgramEventsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ActiveProgramEventsQuery>(ActiveProgramEventsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'activeProgramEvents', 'query');
@@ -993,16 +998,16 @@ export const mockCliniciansQuery = (resolver: ResponseResolver<GraphQLRequest<Cl
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockFormSchemaQuery((req, res, ctx) => {
+ * mockFormSchemasQuery((req, res, ctx) => {
  *   const { filter } = req.variables;
  *   return res(
  *     ctx.data({ formSchema })
  *   )
  * })
  */
-export const mockFormSchemaQuery = (resolver: ResponseResolver<GraphQLRequest<FormSchemaQueryVariables>, GraphQLContext<FormSchemaQuery>, any>) =>
-  graphql.query<FormSchemaQuery, FormSchemaQueryVariables>(
-    'formSchema',
+export const mockFormSchemasQuery = (resolver: ResponseResolver<GraphQLRequest<FormSchemasQueryVariables>, GraphQLContext<FormSchemasQuery>, any>) =>
+  graphql.query<FormSchemasQuery, FormSchemasQueryVariables>(
+    'formSchemas',
     resolver
   )
 
