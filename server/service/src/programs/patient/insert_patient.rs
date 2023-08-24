@@ -6,6 +6,8 @@ use repository::{
 
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
+use super::patient_updated::create_patient_name_store_join;
+
 #[derive(PartialEq, Debug)]
 pub enum InsertPatientError {
     PatientExists,
@@ -43,6 +45,7 @@ fn generate(input: NameRow) -> NameRow {
 pub(crate) fn insert_patient(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
+    store_id: &str,
     input: NameRow,
 ) -> Result<Patient, InsertPatientError> {
     let patient = ctx
@@ -53,6 +56,7 @@ pub(crate) fn insert_patient(
 
             let name_repo = NameRowRepository::new(con);
             name_repo.upsert_one(&row)?;
+            create_patient_name_store_join(&con, store_id, &row.id)?;
 
             let patient = service_provider
                 .patient_service

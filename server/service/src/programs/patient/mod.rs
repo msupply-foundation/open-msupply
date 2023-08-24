@@ -73,9 +73,10 @@ pub trait PatientServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
+        store_id: &str,
         input: NameRow,
     ) -> Result<Patient, InsertPatientError> {
-        insert_patient(ctx, service_provider, input)
+        insert_patient(ctx, service_provider, store_id, input)
     }
 
     fn update_name_patient(
