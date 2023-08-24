@@ -33,11 +33,11 @@ fn validate(con: &StorageConnection, input: &NameRow) -> Result<(), InsertNamePa
     Ok(())
 }
 
-fn generate(mut input: NameRow) -> NameRow {
-    if input.created_datetime.is_none() {
-        input.created_datetime = Some(Utc::now().naive_utc());
+fn generate(input: NameRow) -> NameRow {
+    NameRow {
+        created_datetime: Some(input.created_datetime.unwrap_or(Utc::now().naive_utc())),
+        ..input
     }
-    input
 }
 
 pub(crate) fn insert_name_patient(
