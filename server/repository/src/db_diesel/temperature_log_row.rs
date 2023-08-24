@@ -1,6 +1,6 @@
 use super::{
-    location_row::location, sensor_row::sensor, temperature_log_row::temperature_log::dsl as temperature_log_dsl, store_row::store,
-    StorageConnection,
+    location_row::location, sensor_row::sensor, store_row::store,
+    temperature_log_row::temperature_log::dsl as temperature_log_dsl, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -96,7 +96,10 @@ impl<'a> TemperatureLogRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<TemperatureLogRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<TemperatureLogRow>, RepositoryError> {
         Ok(temperature_log_dsl::temperature_log
             .filter(temperature_log_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?)

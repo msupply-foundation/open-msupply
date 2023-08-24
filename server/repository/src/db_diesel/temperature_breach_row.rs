@@ -1,6 +1,6 @@
 use super::{
-    location_row::location, sensor_row::sensor, temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl, store_row::store,
-    StorageConnection,
+    location_row::location, sensor_row::sensor, store_row::store,
+    temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -119,7 +119,10 @@ impl<'a> TemperatureBreachRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<TemperatureBreachRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &self,
+        id: &str,
+    ) -> Result<Option<TemperatureBreachRow>, RepositoryError> {
         let result = temperature_breach_dsl::temperature_breach
             .filter(temperature_breach_dsl::id.eq(id))
             .first(&self.connection.connection)
@@ -127,7 +130,10 @@ impl<'a> TemperatureBreachRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<TemperatureBreachRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<TemperatureBreachRow>, RepositoryError> {
         Ok(temperature_breach_dsl::temperature_breach
             .filter(temperature_breach_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?)

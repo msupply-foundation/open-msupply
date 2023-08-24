@@ -1,6 +1,7 @@
 use super::{
-    temperature_breach_row::TemperatureBreachRowType, temperature_breach_config_row::temperature_breach_config::dsl as temperature_breach_config_dsl, store_row::store,
-    StorageConnection,
+    store_row::store,
+    temperature_breach_config_row::temperature_breach_config::dsl as temperature_breach_config_dsl,
+    temperature_breach_row::TemperatureBreachRowType, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -91,7 +92,10 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<TemperatureBreachConfigRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &self,
+        id: &str,
+    ) -> Result<Option<TemperatureBreachConfigRow>, RepositoryError> {
         let result = temperature_breach_config_dsl::temperature_breach_config
             .filter(temperature_breach_config_dsl::id.eq(id))
             .first(&self.connection.connection)
@@ -99,7 +103,10 @@ impl<'a> TemperatureBreachConfigRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<TemperatureBreachConfigRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<TemperatureBreachConfigRow>, RepositoryError> {
         Ok(temperature_breach_config_dsl::temperature_breach_config
             .filter(temperature_breach_config_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?)

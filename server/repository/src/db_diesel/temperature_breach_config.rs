@@ -1,6 +1,8 @@
 use super::{
-    temperature_breach_config_row::{temperature_breach_config, temperature_breach_config::dsl as temperature_breach_config_dsl},
-    DBType, TemperatureBreachConfigRow, TemperatureBreachRowType, StorageConnection,
+    temperature_breach_config_row::{
+        temperature_breach_config, temperature_breach_config::dsl as temperature_breach_config_dsl,
+    },
+    DBType, StorageConnection, TemperatureBreachConfigRow, TemperatureBreachRowType,
 };
 use diesel::prelude::*;
 
@@ -41,12 +43,18 @@ impl<'a> TemperatureBreachConfigRepository<'a> {
         TemperatureBreachConfigRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<TemperatureBreachConfigFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(
+        &self,
+        filter: Option<TemperatureBreachConfigFilter>,
+    ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_by_filter(&self, filter: TemperatureBreachConfigFilter) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
+    pub fn query_by_filter(
+        &self,
+        filter: TemperatureBreachConfigFilter,
+    ) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -92,14 +100,22 @@ fn create_filtered_query(filter: Option<TemperatureBreachConfigFilter>) -> Boxed
             query = query.filter(temperature_breach_config_dsl::is_active.eq(value));
         }
 
-        apply_equal_filter!(query, filter.store_id, temperature_breach_config_dsl::store_id);
+        apply_equal_filter!(
+            query,
+            filter.store_id,
+            temperature_breach_config_dsl::store_id
+        );
     }
 
     query
 }
 
-pub fn to_domain(temperature_breach_config_row: TemperatureBreachConfigRow) -> TemperatureBreachConfig {
-    TemperatureBreachConfig { temperature_breach_config_row }
+pub fn to_domain(
+    temperature_breach_config_row: TemperatureBreachConfigRow,
+) -> TemperatureBreachConfig {
+    TemperatureBreachConfig {
+        temperature_breach_config_row,
+    }
 }
 
 impl TemperatureBreachConfigFilter {
