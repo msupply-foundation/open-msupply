@@ -364,8 +364,8 @@ export const getFormSchemaQueries = (sdk: Sdk) => ({
         filter: { type: { equalTo: type } },
       });
 
-      if (result.formSchema?.__typename === 'FormSchemaConnector') {
-        return result.formSchema.nodes[0];
+      if (result.formSchemas?.__typename === 'FormSchemaConnector') {
+        return result.formSchemas.nodes[0];
       }
 
       throw new Error('Error querying form schema');

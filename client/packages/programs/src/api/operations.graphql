@@ -431,7 +431,7 @@ fragment FormSchema on FormSchemaNode {
 }
 
 query formSchemas($filter: FormSchemaFilterInput) {
-  formSchema(filter: $filter) {
+  formSchemas(filter: $filter) {
     ... on FormSchemaConnector {
       __typename
       nodes {
