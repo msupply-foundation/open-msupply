@@ -15,8 +15,8 @@ table! {
         description -> Text,
         is_active -> Bool,
         store_id -> Nullable<Text>,
-        minimum_temperature -> Float,
-        maximum_temperature -> Float,
+        minimum_temperature -> Double,
+        maximum_temperature -> Double,
     }
 }
 
@@ -41,8 +41,8 @@ pub struct TemperatureBreachConfigRow {
     pub description: String,
     pub is_active: bool,
     pub store_id: Option<String>,
-    pub minimum_temperature: f32,
-    pub maximum_temperature: f32,
+    pub minimum_temperature: f64,
+    pub maximum_temperature: f64,
 }
 
 impl Default for TemperatureBreachConfigRow {

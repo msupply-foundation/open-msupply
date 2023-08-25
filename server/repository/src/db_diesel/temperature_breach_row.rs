@@ -21,8 +21,8 @@ table! {
         start_timestamp -> Timestamp,
         end_timestamp -> Timestamp,
         acknowledged -> Bool,
-        threshold_minimum -> Float,
-        threshold_maximum -> Float,
+        threshold_minimum -> Double,
+        threshold_maximum -> Double,
         threshold_duration -> Integer,
     }
 }
@@ -63,8 +63,8 @@ pub struct TemperatureBreachRow {
     pub start_timestamp: NaiveDateTime,
     pub end_timestamp: NaiveDateTime,
     pub acknowledged: bool,
-    pub threshold_minimum: f32,
-    pub threshold_maximum: f32,
+    pub threshold_minimum: f64,
+    pub threshold_maximum: f64,
     pub threshold_duration: i32,
 }
 

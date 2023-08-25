@@ -11,7 +11,7 @@ use diesel::prelude::*;
 table! {
     temperature_log (id) {
         id -> Text,
-        temperature -> Float,
+        temperature -> Double,
         sensor_id -> Text,
         location_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
@@ -36,7 +36,7 @@ joinable!(temperature_log -> location (location_id));
 #[table_name = "temperature_log"]
 pub struct TemperatureLogRow {
     pub id: String,
-    pub temperature: f32,
+    pub temperature: f64,
     pub sensor_id: String,
     pub location_id: Option<String>,
     pub store_id: Option<String>,
