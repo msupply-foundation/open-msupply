@@ -5,5 +5,6 @@ pub mod encounter;
 pub mod insert_document_registry;
 pub mod patient;
 pub mod program_enrolment;
+pub mod program_patient;
 pub mod undelete_document;
 pub mod update_document;

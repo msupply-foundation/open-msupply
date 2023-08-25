@@ -18,7 +18,7 @@ use super::{
 };
 
 #[derive(PartialEq, Debug)]
-pub enum UpdatePatientError {
+pub enum UpdateProgramPatientError {
     InvalidPatientId,
     InvalidParentId,
     PatientExists,
@@ -29,20 +29,20 @@ pub enum UpdatePatientError {
     DatabaseError(RepositoryError),
 }
 
-pub struct UpdatePatient {
+pub struct UpdateProgramPatient {
     pub data: serde_json::Value,
     pub schema_id: String,
     /// If the patient is new the parent is not set
     pub parent: Option<String>,
 }
 
-pub fn upsert_patient(
+pub fn upsert_program_patient(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     store_id: &str,
     user_id: &str,
-    input: UpdatePatient,
-) -> Result<Patient, UpdatePatientError> {
+    input: UpdateProgramPatient,
+) -> Result<Patient, UpdateProgramPatientError> {
     let patient = ctx
         .connection
         .transaction_sync(|_| {
@@ -53,9 +53,15 @@ pub fn upsert_patient(
 
             // Update the name first because the doc is referring the name id
             if is_latest_doc(&ctx.connection, &doc.name, doc.datetime)
-                .map_err(UpdatePatientError::DatabaseError)?
+                .map_err(UpdateProgramPatientError::DatabaseError)?
             {
-                update_patient_row(&ctx.connection, &doc_timestamp, patient, false)?;
+                update_patient_row(
+                    &ctx.connection,
+                    Some(store_id.to_string()),
+                    &doc_timestamp,
+                    patient,
+                    false,
+                )?;
                 create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
             }
 
@@ -64,23 +70,25 @@ pub fn upsert_patient(
                 .update_document(ctx, doc, &vec![PATIENT_TYPE.to_string()])
                 .map_err(|err| match err {
                     DocumentInsertError::NotAllowedToMutateDocument => {
-                        UpdatePatientError::InternalError(
+                        UpdateProgramPatientError::InternalError(
                             "Wrong params for update_document".to_string(),
                         )
                     }
                     DocumentInsertError::InvalidDataSchema(err) => {
-                        UpdatePatientError::InvalidDataSchema(err)
+                        UpdateProgramPatientError::InvalidDataSchema(err)
                     }
                     DocumentInsertError::DatabaseError(err) => {
-                        UpdatePatientError::DatabaseError(err)
+                        UpdateProgramPatientError::DatabaseError(err)
                     }
                     DocumentInsertError::InternalError(err) => {
-                        UpdatePatientError::InternalError(err)
+                        UpdateProgramPatientError::InternalError(err)
                     }
                     DocumentInsertError::DataSchemaDoesNotExist => {
-                        UpdatePatientError::DataSchemaDoesNotExist
+                        UpdateProgramPatientError::DataSchemaDoesNotExist
                     }
-                    DocumentInsertError::InvalidParent(_) => UpdatePatientError::InvalidParentId,
+                    DocumentInsertError::InvalidParent(_) => {
+                        UpdateProgramPatientError::InvalidParentId
+                    }
                 })?;
 
             let patient = service_provider
@@ -92,21 +100,21 @@ pub fn upsert_patient(
                     None,
                     None,
                 )
-                .map_err(|err| UpdatePatientError::DatabaseError(err))?
+                .map_err(|err| UpdateProgramPatientError::DatabaseError(err))?
                 .rows
                 .pop()
-                .ok_or(UpdatePatientError::InternalError(
+                .ok_or(UpdateProgramPatientError::InternalError(
                     "Can't find the just inserted patient".to_string(),
                 ))?;
             Ok(patient)
         })
-        .map_err(|err: TransactionError<UpdatePatientError>| err.to_inner_error())?;
+        .map_err(|err: TransactionError<UpdateProgramPatientError>| err.to_inner_error())?;
     Ok(patient)
 }
 
-impl From<RepositoryError> for UpdatePatientError {
+impl From<RepositoryError> for UpdateProgramPatientError {
     fn from(err: RepositoryError) -> Self {
-        UpdatePatientError::DatabaseError(err)
+        UpdateProgramPatientError::DatabaseError(err)
     }
 }
 
@@ -114,7 +122,7 @@ fn generate(
     user_id: &str,
     patient: &SchemaPatient,
     registry: DocumentRegistry,
-    input: UpdatePatient,
+    input: UpdateProgramPatient,
 ) -> Result<RawDocument, RepositoryError> {
     Ok(RawDocument {
         name: main_patient_doc_name(&patient.id),
@@ -130,13 +138,15 @@ fn generate(
     })
 }
 
-fn validate_patient_schema(input: &UpdatePatient) -> Result<SchemaPatient, UpdatePatientError> {
+fn validate_patient_schema(
+    input: &UpdateProgramPatient,
+) -> Result<SchemaPatient, UpdateProgramPatientError> {
     // Check that we can parse the data into a default Patient object, i.e. that it's following the
     // default patient JSON schema.
     // If the patient data uses a derived patient schema, the derived schema is validated in the
     // document service.
     let patient: SchemaPatient = serde_json::from_value(input.data.clone()).map_err(|err| {
-        UpdatePatientError::InvalidDataSchema(vec![format!("Invalid patient data: {}", err)])
+        UpdateProgramPatientError::InvalidDataSchema(vec![format!("Invalid patient data: {}", err)])
     })?;
     Ok(patient)
 }
@@ -174,21 +184,21 @@ fn validate_document_type(
 fn validate(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
-    input: &UpdatePatient,
-) -> Result<(SchemaPatient, DocumentRegistry), UpdatePatientError> {
+    input: &UpdateProgramPatient,
+) -> Result<(SchemaPatient, DocumentRegistry), UpdateProgramPatientError> {
     let patient = validate_patient_schema(input)?;
     if !validate_patient_id(&patient) {
-        return Err(UpdatePatientError::InvalidPatientId);
+        return Err(UpdateProgramPatientError::InvalidPatientId);
     }
 
     let document_registry = match validate_document_type(ctx)? {
         Some(document_registry) => document_registry,
-        None => return Err(UpdatePatientError::PatientDocumentRegistryDoesNotExit),
+        None => return Err(UpdateProgramPatientError::PatientDocumentRegistryDoesNotExit),
     };
 
     if input.parent.is_none() {
         if !validate_patient_not_exists(ctx, service_provider, &patient.id)? {
-            return Err(UpdatePatientError::PatientExists);
+            return Err(UpdateProgramPatientError::PatientExists);
         }
     }
 
@@ -214,12 +224,12 @@ pub mod test {
         programs::patient::{
             main_patient_doc_name,
             patient_schema::{ContactDetails, Gender, SchemaPatient},
-            upsert,
+            upsert_program_patient,
         },
         service_provider::ServiceProvider,
     };
 
-    use super::UpdatePatientError;
+    use super::UpdateProgramPatientError;
 
     pub fn mock_patient_1() -> SchemaPatient {
         let contact_details = ContactDetails {
@@ -290,7 +300,7 @@ pub mod test {
                 &service_provider,
                 "store_a",
                 "user",
-                upsert::UpdatePatient {
+                upsert_program_patient::UpdateProgramPatient {
                     data: json!({"invalid": true}),
                     // TODO use a valid patient schema id
                     schema_id: schema.id.clone(),
@@ -299,7 +309,7 @@ pub mod test {
             )
             .err()
             .unwrap();
-        matches!(err, UpdatePatientError::InvalidDataSchema(_));
+        matches!(err, UpdateProgramPatientError::InvalidDataSchema(_));
 
         // success insert
         assert!(PatientRepository::new(&ctx.connection)
@@ -316,7 +326,7 @@ pub mod test {
                 &service_provider,
                 "store_a",
                 "user",
-                upsert::UpdatePatient {
+                upsert_program_patient::UpdateProgramPatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: None,
@@ -339,7 +349,7 @@ pub mod test {
                     &service_provider,
                     "store_a",
                     "user",
-                    upsert::UpdatePatient {
+                    upsert_program_patient::UpdateProgramPatient {
                         data: serde_json::to_value(patient.clone()).unwrap(),
                         schema_id: schema.id.clone(),
                         parent: None,
@@ -347,7 +357,7 @@ pub mod test {
                 )
                 .err()
                 .unwrap(),
-            UpdatePatientError::PatientExists,
+            UpdateProgramPatientError::PatientExists,
         );
 
         assert_eq!(
@@ -357,7 +367,7 @@ pub mod test {
                     &service_provider,
                     "store_a",
                     "user",
-                    upsert::UpdatePatient {
+                    upsert_program_patient::UpdateProgramPatient {
                         data: serde_json::to_value(patient.clone()).unwrap(),
                         schema_id: schema.id.clone(),
                         parent: Some("invalid".to_string()),
@@ -365,7 +375,7 @@ pub mod test {
                 )
                 .err()
                 .unwrap(),
-            UpdatePatientError::InvalidParentId
+            UpdateProgramPatientError::InvalidParentId
         );
 
         // success update
@@ -387,7 +397,7 @@ pub mod test {
                 &service_provider,
                 "store_a",
                 "user",
-                upsert::UpdatePatient {
+                upsert_program_patient::UpdateProgramPatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: Some(v0.id),

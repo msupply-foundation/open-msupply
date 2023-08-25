@@ -6,6 +6,8 @@ import {
   createFilterOptions,
   CreateFilterOptionsConfig,
   FilterOptionsState,
+  AutocompleteInputChangeReason,
+  GlobalStyles,
 } from '@mui/material';
 import { AutocompleteOnChange, AutocompleteOptionRenderer } from './types';
 import { BasicTextInput } from '../TextInput';
@@ -30,9 +32,15 @@ export type AutocompleteListProps<T> = {
   limitTags?: number;
   inputValue?: string;
   clearText?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value?: any;
   disableClearable?: boolean;
   getOptionDisabled?: (option: T) => boolean;
+  onInputChange?: (
+    event: React.SyntheticEvent,
+    value: string,
+    reason: AutocompleteInputChangeReason
+  ) => void;
 };
 
 export const AutocompleteList = <T,>({
@@ -57,6 +65,7 @@ export const AutocompleteList = <T,>({
   value,
   disableClearable,
   getOptionDisabled,
+  onInputChange,
 }: AutocompleteListProps<T>): JSX.Element => {
   const createdFilterOptions = createFilterOptions(filterOptionConfig);
   const optionRenderer = optionKey
@@ -72,48 +81,61 @@ export const AutocompleteList = <T,>({
   }
 
   return (
-    <MuiAutocomplete
-      disableClearable={disableClearable}
-      autoSelect={false}
-      loading={loading}
-      loadingText={loadingText}
-      noOptionsText={noOptionsText}
-      onChange={onChange}
-      sx={{
-        '& .MuiAutocomplete-inputRoot': {
-          width: width ? `${width}px` : 'auto',
-        },
-      }}
-      ListboxProps={{
-        style: {
-          minHeight: height ? `${height}` : 'auto',
-          maxHeight: height ? `${height}` : 'auto',
-        },
-      }}
-      renderInput={
-        renderInput || (props => <BasicTextInput {...props} autoFocus />)
-      }
-      filterOptions={filterOptions ?? createdFilterOptions}
-      open
-      forcePopupIcon={false}
-      options={mappedOptions}
-      renderOption={optionRenderer}
-      componentsProps={{
-        paper: {
-          sx: {
-            backgroundColor: theme => theme.palette.background.toolbar,
-            minHeight: height ? `${height}` : 'auto',
+    <>
+      {noOptionsText === '' && (
+        <GlobalStyles
+          styles={{
+            '& .MuiAutocomplete-noOptions': {
+              display: 'none',
+            },
+          }}
+        />
+      )}
+      <MuiAutocomplete
+        disableClearable={disableClearable}
+        autoSelect={false}
+        loading={loading}
+        loadingText={loadingText}
+        noOptionsText={noOptionsText}
+        onChange={onChange}
+        onInputChange={onInputChange}
+        sx={{
+          '& .MuiAutocomplete-inputRoot': {
+            width: width ? `${width}px` : 'auto',
           },
-        },
-      }}
-      disableCloseOnSelect={disableCloseOnSelect}
-      multiple={multiple}
-      getOptionLabel={getOptionLabel}
-      limitTags={limitTags}
-      inputValue={inputValue}
-      clearText={clearText}
-      value={value}
-      getOptionDisabled={getOptionDisabled}
-    />
+        }}
+        classes={{ noOptions: 'something' }}
+        ListboxProps={{
+          style: {
+            minHeight: height ? `${height}` : 'auto',
+            maxHeight: height ? `${height}` : 'auto',
+          },
+        }}
+        renderInput={
+          renderInput || (props => <BasicTextInput {...props} autoFocus />)
+        }
+        filterOptions={filterOptions ?? createdFilterOptions}
+        open
+        forcePopupIcon={false}
+        options={mappedOptions}
+        renderOption={optionRenderer}
+        componentsProps={{
+          paper: {
+            sx: {
+              backgroundColor: theme => theme.palette.background.toolbar,
+              minHeight: height ? `${height}` : 'auto',
+            },
+          },
+        }}
+        disableCloseOnSelect={disableCloseOnSelect}
+        multiple={multiple}
+        getOptionLabel={getOptionLabel}
+        limitTags={limitTags}
+        inputValue={inputValue}
+        clearText={clearText}
+        value={value}
+        getOptionDisabled={getOptionDisabled}
+      />
+    </>
   );
 };

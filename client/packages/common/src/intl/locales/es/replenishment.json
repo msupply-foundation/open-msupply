@@ -61,8 +61,6 @@
   "messages.click-to-return-to-requisitions": "No se puede encontrar una solicitud con ese ID. Haz clic en Aceptar para volver a la lista de solicitudes",
   "messages.deleted-shipments_one": "Se eliminó {{count}} envío",
   "messages.deleted-shipments_other": "Se eliminaron {{count}} envíos",
-  "messages.deleted-lines_one": "Se eliminó {{count}} línea",
-  "messages.deleted-lines_other": "Se eliminaron {{count}} líneas",
   "messages.changing-max-mos": "Esto cambiará el objetivo máximo de meses de existencias.",
   "messages.changing-min-mos": "Esto cambiará el umbral mínimo de meses de existencias.",
   "messages.could-not-save": "No se pudo guardar",

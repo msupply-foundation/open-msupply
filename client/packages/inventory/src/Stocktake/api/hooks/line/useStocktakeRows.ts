@@ -13,7 +13,7 @@ export const useStocktakeRows = (isGrouped = true) => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
-  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'desc' } });
+  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { data: lines } = useStocktakeLines();
   const { data: items } = useStocktakeItems();
   const { itemFilter, setItemFilter, matchItem } = useItemUtils();

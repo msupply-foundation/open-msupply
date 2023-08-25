@@ -59,7 +59,7 @@ fn update_patient(con: &StorageConnection, document: &Document) -> Result<(), Re
         RepositoryError::as_db_error(&format!("Invalid patient data: {}", err), "")
     })?;
 
-    update_patient_row(con, &document.datetime, patient, true)
+    update_patient_row(con, None, &document.datetime, patient, true)
         .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())
 }

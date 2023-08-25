@@ -16,6 +16,7 @@ import {
   useEncounter,
   useJsonForms,
   EncounterFragment,
+  useDocumentDataAccessor,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -47,6 +48,11 @@ export const DetailView: FC = () => {
     encounter?.type ?? ''
   );
 
+  const dataAccessor = useDocumentDataAccessor(
+    encounter?.document?.name,
+    undefined,
+    handleSave
+  );
   const {
     JsonForm,
     data,
@@ -56,12 +62,11 @@ export const DetailView: FC = () => {
     validationError,
     revert,
   } = useJsonForms(
-    encounter?.document?.name,
-    encounter?.patient?.id,
     {
-      handleSave,
+      documentName: encounter?.document?.name,
+      patientId: encounter?.patient?.id,
     },
-    undefined
+    dataAccessor
   );
 
   const updateEncounter = useDebounceCallback(

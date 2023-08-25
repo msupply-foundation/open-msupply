@@ -58,7 +58,7 @@ export const CreateEncounterModal: FC = () => {
   const [draft, setDraft] = useState<Encounter | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
-  const [startDateTimeError, setStartDateTimeError] = useState(false);
+  const [startDateTimeError, setStartDateTimeError] = useState<string>();
   const [note] = useState<NoteSchema | undefined>(undefined);
 
   const handleSave = useEncounter.document.upsert(
@@ -104,7 +104,7 @@ export const CreateEncounterModal: FC = () => {
       ...currentOrNewDraft(),
       startDatetime,
     });
-    setStartDateTimeError(false);
+    setStartDateTimeError(undefined);
   };
 
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
@@ -176,7 +176,10 @@ export const CreateEncounterModal: FC = () => {
                     <DatePickerInput
                       value={DateUtils.getDateOrNull(draft?.startDatetime)}
                       onChange={setStartDatetime}
-                      onError={() => setStartDateTimeError(true)}
+                      onError={validationError =>
+                        setStartDateTimeError(validationError as string)
+                      }
+                      error={startDateTimeError}
                       width={250}
                     />
                   }

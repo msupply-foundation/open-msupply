@@ -15,16 +15,16 @@ import {
   InvoiceSortFieldInput,
   UpdateOutboundShipmentNameInput,
 } from '@openmsupply-client/common';
-import { DraftOutboundLine } from '../../types';
+import { DraftStockOutLine } from '../../types';
 import { get, isA } from '../../utils';
 import {
   OutboundRowFragment,
   OutboundFragment,
   InsertOutboundShipmentMutationVariables,
   Sdk,
-  OutboundLineFragment,
   BarcodeByGtinQuery,
 } from './operations.generated';
+import { StockOutLineFragment } from '../../StockOut';
 
 export type ListParams = {
   first: number;
@@ -95,7 +95,7 @@ const outboundParsers = {
     id: patch.id,
     otherPartyId: patch.otherPartyId,
   }),
-  toInsertLine: (line: DraftOutboundLine): InsertOutboundShipmentLineInput => {
+  toInsertLine: (line: DraftStockOutLine): InsertOutboundShipmentLineInput => {
     return {
       id: line.id,
       itemId: line.item.id,
@@ -105,7 +105,7 @@ const outboundParsers = {
       totalBeforeTax: get.stockLineSubtotal(line),
     };
   },
-  toUpdateLine: (line: DraftOutboundLine): UpdateOutboundShipmentLineInput => {
+  toUpdateLine: (line: DraftStockOutLine): UpdateOutboundShipmentLineInput => {
     return {
       id: line.id,
       numberOfPacks: line.numberOfPacks,
@@ -117,7 +117,7 @@ const outboundParsers = {
     id: line.id,
   }),
   toInsertPlaceholder: (
-    line: DraftOutboundLine
+    line: DraftStockOutLine
   ): InsertOutboundShipmentUnallocatedLineInput => ({
     id: line.id,
     quantity: line.numberOfPacks,
@@ -125,15 +125,15 @@ const outboundParsers = {
     itemId: line.item.id,
   }),
   toUpdatePlaceholder: (
-    line: DraftOutboundLine
+    line: DraftStockOutLine
   ): UpdateOutboundShipmentUnallocatedLineInput => ({
     id: line.id,
     quantity: line.numberOfPacks,
   }),
-  toDeletePlaceholder: (line: DraftOutboundLine) => ({
+  toDeletePlaceholder: (line: DraftStockOutLine) => ({
     id: line.id,
   }),
-  toInsertServiceCharge: (line: DraftOutboundLine) => ({
+  toInsertServiceCharge: (line: DraftStockOutLine) => ({
     id: line.id,
     invoiceId: line.invoiceId,
     itemId: line.item.id,
@@ -141,14 +141,14 @@ const outboundParsers = {
     totalBeforeTax: line.totalBeforeTax,
     note: line.note,
   }),
-  toUpdateServiceCharge: (line: DraftOutboundLine) => ({
+  toUpdateServiceCharge: (line: DraftStockOutLine) => ({
     id: line.id,
     itemId: line.item.id,
     tax: { percentage: line.taxPercentage },
     totalBeforeTax: line.totalBeforeTax,
     note: line.note,
   }),
-  toDeleteServiceCharge: (line: DraftOutboundLine) => ({
+  toDeleteServiceCharge: (line: DraftStockOutLine) => ({
     id: line.id,
   }),
 };
@@ -324,7 +324,7 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not update customer name');
   },
-  updateLines: async (draftOutboundLines: DraftOutboundLine[]) => {
+  updateLines: async (draftOutboundLines: DraftStockOutLine[]) => {
     const input = {
       insertOutboundShipmentLines: draftOutboundLines
         .filter(
@@ -432,13 +432,13 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
     tax,
     type,
   }: {
-    lines: OutboundLineFragment[];
+    lines: StockOutLineFragment[];
     tax: number;
     type: InvoiceLineNodeType.StockOut | InvoiceLineNodeType.Service;
   }) => {
-    const toUpdateStockLine = (line: OutboundLineFragment) =>
+    const toUpdateStockLine = (line: StockOutLineFragment) =>
       outboundParsers.toUpdateLine({ ...line, taxPercentage: tax });
-    const toUpdateServiceLine = (line: OutboundLineFragment) =>
+    const toUpdateServiceLine = (line: StockOutLineFragment) =>
       outboundParsers.toUpdateServiceCharge({ ...line, taxPercentage: tax });
 
     const result =

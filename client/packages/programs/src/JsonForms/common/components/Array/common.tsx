@@ -109,7 +109,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
     new Array(inputData?.length ?? 0).fill(defaultExpanded)
   );
 
-  const getItemLabelCommon = (child: any, index: number) => {
+  const getItemLabelCommon = (child: JsonData, index: number) => {
     return (
       <Typography
         sx={{

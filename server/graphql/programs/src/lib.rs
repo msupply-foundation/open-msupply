@@ -32,7 +32,9 @@ use mutations::encounter::update::update_encounter;
 use mutations::encounter::update::UpdateEncounterInput;
 use mutations::encounter::update::UpdateEncounterResponse;
 use mutations::insert_document_registry::*;
-use mutations::patient::insert::*;
+use mutations::patient::insert::insert_patient;
+use mutations::patient::insert::InsertPatientInput;
+use mutations::patient::insert::InsertPatientResponse;
 use mutations::patient::update::update_patient;
 use mutations::patient::update::UpdatePatientInput;
 use mutations::patient::update::UpdatePatientResponse;
@@ -42,6 +44,10 @@ use mutations::program_enrolment::insert::InsertProgramEnrolmentResponse;
 use mutations::program_enrolment::update::update_program_enrolment;
 use mutations::program_enrolment::update::UpdateProgramEnrolmentInput;
 use mutations::program_enrolment::update::UpdateProgramEnrolmentResponse;
+use mutations::program_patient::insert::*;
+use mutations::program_patient::update::update_program_patient;
+use mutations::program_patient::update::UpdateProgramPatientInput;
+use mutations::program_patient::update::UpdateProgramPatientResponse;
 use mutations::undelete_document::undelete_document;
 use mutations::undelete_document::UndeleteDocumentInput;
 use mutations::undelete_document::UndeleteDocumentResponse;
@@ -268,6 +274,7 @@ impl ProgramsMutations {
         insert_document_registry(ctx, input)
     }
 
+    /// Inserts a new patient (without document data)
     pub async fn insert_patient(
         &self,
         ctx: &Context<'_>,
@@ -277,6 +284,7 @@ impl ProgramsMutations {
         insert_patient(ctx, store_id, input)
     }
 
+    /// Updates a new patient (without document data)
     pub async fn update_patient(
         &self,
         ctx: &Context<'_>,
@@ -286,6 +294,29 @@ impl ProgramsMutations {
         update_patient(ctx, store_id, input)
     }
 
+    /// Inserts a new program patient, i.e. a patient that can contain additional information stored
+    /// in a document.
+    pub async fn insert_program_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertProgramPatientInput,
+    ) -> Result<InsertProgramPatientResponse> {
+        insert_program_patient(ctx, store_id, input)
+    }
+
+    /// Updates a new program patient, i.e. a patient the can contain additional information stored
+    /// in a document.
+    pub async fn update_program_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateProgramPatientInput,
+    ) -> Result<UpdateProgramPatientResponse> {
+        update_program_patient(ctx, store_id, input)
+    }
+
+    /// Links a patient to a store and thus effectively to a site
     pub async fn link_patient_to_store(
         &self,
         ctx: &Context<'_>,

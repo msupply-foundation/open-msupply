@@ -15,6 +15,9 @@ import {
   useJsonForms,
   useContactTraces,
   ContactTraceRowFragment,
+  useDocumentDataAccessor,
+  JsonFormData,
+  SavedDocument,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -55,6 +58,28 @@ export const DetailView: FC<DetailViewProps> = ({
     }
   );
 
+  const dataAccessor = useDocumentDataAccessor(
+    contactData?.documentName,
+    undefined,
+    handleSave
+  );
+  const accessor: JsonFormData<SavedDocument> =
+    createType && contactData?.schema
+      ? {
+          loadedData: contactData.contactTrace,
+          isLoading: false,
+          error: undefined,
+          isCreating: contactTraceId === id,
+          schema: contactData?.schema,
+          save: async (data: unknown) => {
+            return await handleSave(
+              data,
+              contactData.schema?.formSchemaId ?? ''
+            );
+          },
+        }
+      : dataAccessor;
+
   const {
     JsonForm,
     data,
@@ -64,18 +89,11 @@ export const DetailView: FC<DetailViewProps> = ({
     validationError,
     revert,
   } = useJsonForms(
-    contactData?.documentName,
-    contactData?.patient?.id,
     {
-      handleSave,
+      documentName: contactData?.documentName,
+      patientId: contactData?.patient?.id,
     },
-    createType && contactData?.schema
-      ? {
-          data: contactData?.contactTrace,
-          schema: contactData?.schema,
-          isCreating: contactTraceId === id,
-        }
-      : undefined
+    accessor
   );
 
   // When a contact trace id changes (contact trace has been created), wait till the isDirty flag
