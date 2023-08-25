@@ -97,7 +97,6 @@ fn generate_line(
         batch,
         expiry_date,
         location_id,
-        note,
         ..
     }: StockLineRow,
 ) -> InvoiceLineRow {
@@ -119,7 +118,7 @@ fn generate_line(
         total_after_tax,
         tax,
         r#type,
-        note,
+        note: input.note,
         inventory_adjustment_reason_id: None,
     };
 

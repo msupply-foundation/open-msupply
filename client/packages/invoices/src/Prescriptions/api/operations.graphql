@@ -32,7 +32,7 @@ fragment PrescriptionRow on InvoiceNode {
   lines {
     __typename
     nodes {
-      ...PrescriptionLine
+      ...StockOutLine
     }
     totalCount
   }
@@ -49,69 +49,6 @@ fragment PrescriptionRow on InvoiceNode {
     id
     firstName
     lastName
-  }
-}
-
-fragment PartialStockLine on StockLineNode {
-  id
-  itemId
-  availableNumberOfPacks
-  totalNumberOfPacks
-  onHold
-  sellPricePerPack
-  packSize
-  expiryDate
-  location {
-    __typename
-    id
-    name
-    code
-    onHold
-  }
-}
-
-fragment PrescriptionLine on InvoiceLineNode {
-  __typename
-  id
-  type
-  batch
-  expiryDate
-  numberOfPacks
-  packSize
-  invoiceId
-  sellPricePerPack
-  note
-  totalBeforeTax
-  totalAfterTax
-  note
-
-  item {
-    __typename
-    id
-    name
-    code
-    unitName
-  }
-
-  location {
-    __typename
-    id
-    name
-    code
-    onHold
-  }
-
-  stockLine {
-    __typename
-    id
-    itemId
-    batch
-    availableNumberOfPacks
-    totalNumberOfPacks
-    onHold
-    sellPricePerPack
-    packSize
-    expiryDate
   }
 }
 
@@ -205,6 +142,141 @@ mutation upsertPrescription(
 ) {
   batchPrescription(storeId: $storeId, input: $input) {
     __typename
+    deletePrescriptionLines {
+      id
+      response {
+        ... on DeletePrescriptionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+    deletePrescriptions {
+      id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeletePrescriptionError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteInvoiceWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+          }
+        }
+      }
+    }
+    insertPrescriptionLines {
+      id
+      response {
+        ... on InsertPrescriptionLineError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+    insertPrescriptions {
+      id
+      response {
+        ... on InsertPrescriptionError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+    updatePrescriptionLines {
+      id
+      response {
+        ... on UpdatePrescriptionLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+            ... on LocationIsOnHold {
+              __typename
+              description
+            }
+            ... on LocationNotFound {
+              __typename
+              description
+            }
+            ... on NotEnoughStockForReduction {
+              __typename
+              batch {
+                ... on NodeError {
+                  __typename
+                  error {
+                    description
+                    ... on RecordNotFound {
+                      __typename
+                      description
+                    }
+                    ... on DatabaseError {
+                      __typename
+                      description
+                      fullError
+                    }
+                  }
+                }
+              }
+            }
+            ... on StockLineAlreadyExistsInInvoice {
+              __typename
+              description
+            }
+            ... on StockLineIsOnHold {
+              __typename
+              description
+            }
+          }
+        }
+      }
+    }
     updatePrescriptions {
       id
       response {

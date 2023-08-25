@@ -12,28 +12,26 @@ import {
   PositiveNumberCell,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
-import { PrescriptionLineFragment } from '../api';
-import { PrescriptionItem } from '../../types';
+import { StockOutLineFragment } from '../../StockOut';
+import { StockOutItem } from '../../types';
 
 interface UsePrescriptionColumnOptions {
-  sortBy: SortBy<PrescriptionLineFragment | PrescriptionItem>;
-  onChangeSortBy: (
-    column: Column<PrescriptionLineFragment | PrescriptionItem>
-  ) => void;
+  sortBy: SortBy<StockOutLineFragment | StockOutItem>;
+  onChangeSortBy: (column: Column<StockOutLineFragment | StockOutItem>) => void;
 }
 
 const expansionColumn = getRowExpandColumn<
-  PrescriptionLineFragment | PrescriptionItem
+  StockOutLineFragment | StockOutItem
 >();
 const notePopoverColumn = getNotePopoverColumn<
-  PrescriptionLineFragment | PrescriptionItem
+  StockOutLineFragment | StockOutItem
 >();
 
 export const usePrescriptionColumn = ({
   sortBy,
   onChangeSortBy,
 }: UsePrescriptionColumnOptions): Column<
-  PrescriptionLineFragment | PrescriptionItem
+  StockOutLineFragment | StockOutItem
 >[] => {
   const { c } = useCurrency();
   return useColumns(

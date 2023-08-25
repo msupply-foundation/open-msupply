@@ -8,7 +8,10 @@ import {
   EncounterSortFieldInput,
   ProgramEnrolmentSortFieldInput,
   useAuthContext,
+  InsertPatientInput,
   ContactTraceSortFieldInput,
+  UpdatePatientInput,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -16,10 +19,14 @@ import { PatientSummary } from './PatientSummary';
 import { ProgramDetailModal, ProgramListView } from '../ProgramEnrolment';
 import { CreateEncounterModal, EncounterListView } from '../Encounter';
 import {
+  JsonFormData,
   FormInputData,
   PatientModal,
   ProgramSearchModal,
   SaveDocumentMutation,
+  SavedDocument,
+  SchemaData,
+  useDocumentDataAccessor,
   useDocumentRegistry,
   useJsonForms,
   usePatientModalStore,
@@ -29,14 +36,39 @@ import {
 import { Footer } from './Footer';
 import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 
-const useUpsertPatient = (): SaveDocumentMutation => {
+import defaultPatientSchema from '../DefaultPatientSchema.json';
+import defaultPatientUISchema from '../DefaultPatientUISchema.json';
+
+const DEFAULT_SCHEMA: SchemaData = {
+  formSchemaId: undefined,
+  jsonSchema: defaultPatientSchema,
+  uiSchema: defaultPatientUISchema,
+};
+
+const useUpsertPatient = (
+  create: boolean
+): ((input: unknown) => Promise<void>) => {
   const { mutateAsync: insertPatient } = usePatient.document.insert();
   const { mutateAsync: updatePatient } = usePatient.document.update();
-  return async (jsonData: unknown, formSchemaId: string, parent?: string) => {
+  return async (input: unknown) => {
+    if (create) {
+      await insertPatient(input as InsertPatientInput);
+    } else {
+      await updatePatient(input as UpdatePatientInput);
+    }
+  };
+};
+
+const useUpsertProgramPatient = (): SaveDocumentMutation => {
+  const { mutateAsync: insertPatient } =
+    usePatient.document.insertProgramPatient();
+  const { mutateAsync: updatePatient } =
+    usePatient.document.updateProgramPatient();
+  return async (jsonData: unknown, schemaId: string, parent?: string) => {
     if (parent === undefined) {
       const result = await insertPatient({
         data: jsonData,
-        schemaId: formSchemaId,
+        schemaId,
       });
       if (!result.document) throw Error('Inserted document not set!');
       return result.document;
@@ -44,7 +76,7 @@ const useUpsertPatient = (): SaveDocumentMutation => {
       const result = await updatePatient({
         data: jsonData,
         parent,
-        schemaId: formSchemaId,
+        schemaId,
       });
       if (!result.document) throw Error('Inserted document not set!');
       return result.document;
@@ -67,19 +99,21 @@ const PatientDetailView = ({
   const patientId = usePatient.utils.id();
   const { data: currentPatient } = usePatient.document.get(patientId);
 
-  const { data: patientRegistries } =
+  const { data: patientRegistries, isLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
         documentType: { equalTo: 'Patient' },
       },
     });
   const patientRegistry = patientRegistries?.nodes[0];
-
-  // we have to memo createDoc to avoid an infinite render loop
+  const isCreatingPatient = !!createNewPatient;
+  // we have to memo the data to avoid an infinite render loop
   const inputData = useMemo<FormInputData | undefined>(() => {
-    if (createNewPatient) {
+    if (!!createNewPatient) {
+      // Use the unsaved patient information from createNewPatient, i.e. from a "create patient"
+      // request
       return {
-        schema: createNewPatient.documentRegistry,
+        schema: createNewPatient.documentRegistry ?? DEFAULT_SCHEMA,
         data: {
           id: createNewPatient.id,
           code: createNewPatient.code,
@@ -88,25 +122,14 @@ const PatientDetailView = ({
           lastName: createNewPatient.lastName,
           gender: createNewPatient.gender,
           dateOfBirth: createNewPatient.dateOfBirth,
-          addresses: [],
-          contactDetails: [],
-          socioEconomics: {},
-          isDeceased: false,
         },
         isCreating: true,
       };
-    } else if (
-      !!patientRegistry &&
-      !!currentPatient &&
-      !currentPatient.document
-    ) {
-      // no document associated with the patient; use data from the Name row
+    } else if (!!currentPatient && !currentPatient.document) {
+      // The loaded patient doesn't has a document. Use the information we got (from the name
+      // table).
       return {
-        schema: {
-          formSchemaId: patientRegistry.formSchemaId,
-          jsonSchema: patientRegistry.jsonSchema,
-          uiSchema: patientRegistry.uiSchema,
-        },
+        schema: patientRegistry ?? DEFAULT_SCHEMA,
         data: {
           id: currentPatient.id,
           code: currentPatient.code,
@@ -115,23 +138,39 @@ const PatientDetailView = ({
           lastName: currentPatient.lastName ?? undefined,
           gender: currentPatient.gender ?? undefined,
           dateOfBirth: currentPatient.dateOfBirth ?? undefined,
-          addresses: [],
-          contactDetails: [],
-          socioEconomics: {},
-          isDeceased: false,
         },
         isCreating: false,
       };
     } else return undefined;
   }, [createNewPatient, currentPatient, patientRegistry]);
 
-  const handleSave = useUpsertPatient();
+  const handleProgramPatientSave = useUpsertProgramPatient();
+  const handlePatientSave = useUpsertPatient(isCreatingPatient);
+  const documentDataAccessor = useDocumentDataAccessor(
+    createNewPatient ? undefined : documentName,
+    inputData,
+    handleProgramPatientSave
+  );
+  const accessor: JsonFormData<SavedDocument | void> = patientRegistry
+    ? documentDataAccessor
+    : {
+        loadedData: inputData?.data,
+        isLoading: false,
+        error: undefined,
+        isCreating: isCreatingPatient,
+        schema: DEFAULT_SCHEMA,
+        save: async (data: unknown) => {
+          await handlePatientSave(data);
+        },
+      };
+
   const { JsonForm, saveData, isSaving, isDirty, validationError } =
     useJsonForms(
-      createNewPatient ? undefined : documentName,
-      patientId,
-      { handleSave },
-      inputData
+      {
+        documentName: createNewPatient ? undefined : documentName,
+        patientId: patientId,
+      },
+      accessor
     );
 
   useEffect(() => {
@@ -139,11 +178,11 @@ const PatientDetailView = ({
   }, []);
 
   const save = useCallback(async () => {
-    const documentName = await saveData();
-    if (documentName) {
-      setDocumentName(documentName);
-      // patient has been created => unset the create request data
-      setCreateNewPatient(undefined);
+    const savedDocument = await saveData();
+    // patient has been created => unset the create request data
+    setCreateNewPatient(undefined);
+    if (savedDocument) {
+      setDocumentName(savedDocument.name);
     }
   }, [saveData]);
 
@@ -162,6 +201,8 @@ const PatientDetailView = ({
     message: t('messages.confirm-save-generic'),
     title: t('heading.are-you-sure'),
   });
+
+  if (isLoading) return <BasicSpinner />;
 
   return (
     <Box flex={1} display="flex" justifyContent="center">

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { isA } from './../../../../utils';
+import { isA } from '../../../../utils';
 import { useQuery } from '@openmsupply-client/common';
 import { PrescriptionRowFragment } from '../../operations.generated';
 import { usePrescriptionNumber } from '../utils/usePrescriptionNumber';

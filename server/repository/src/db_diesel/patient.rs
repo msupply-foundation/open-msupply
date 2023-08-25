@@ -41,6 +41,8 @@ pub struct PatientFilter {
     /// - name::national_health_number
     /// - program_enrolment::program_enrolment_id
     pub identifier: Option<StringFilter>,
+    // Filter for name and code
+    pub name_or_code: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -174,6 +176,7 @@ impl<'a> PatientRepository<'a> {
                 country,
                 email,
                 identifier,
+                name_or_code,
             } = f;
 
             // or filters need to be applied first
@@ -195,6 +198,11 @@ impl<'a> PatientRepository<'a> {
                     .select(program_enrolment_dsl::patient_id);
 
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
+            }
+
+            if name_or_code.is_some() {
+                apply_string_filter!(query, name_or_code.clone(), name_dsl::name_);
+                apply_string_or_filter!(query, name_or_code.clone(), name_dsl::code);
             }
 
             apply_equal_filter!(query, id, name_dsl::id);
@@ -298,6 +306,11 @@ impl PatientFilter {
 
     pub fn email(mut self, filter: StringFilter) -> Self {
         self.email = Some(filter);
+        self
+    }
+
+    pub fn name_or_code(mut self, filter: StringFilter) -> Self {
+        self.name_or_code = Some(filter);
         self
     }
 }
@@ -437,6 +450,16 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.len(), 0);
+        // test filter for name_or_code and identifier
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new()
+                    .name_or_code(StringFilter::equal_to("codePatient"))
+                    .identifier(StringFilter::like("nhn")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.get(0).unwrap().id, patient_row.id);
     }
 
     #[actix_rt::test]

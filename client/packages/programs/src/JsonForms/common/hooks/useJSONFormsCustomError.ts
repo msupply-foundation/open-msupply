@@ -16,24 +16,30 @@ export const useJSONFormsCustomError = (
       return;
     }
     const currentErrors = core?.errors ?? [];
-    if (
-      customError &&
-      !currentErrors.find(
-        it => it.schemaPath === path && it.keyword === keyword
-      )
-    ) {
-      dispatch(
-        Actions.updateErrors([
-          ...currentErrors,
-          {
-            instancePath: `/${path}`.replace(/\./g, '/'),
-            message: customError,
-            schemaPath: path,
-            keyword,
-            params: {},
-          },
-        ])
-      );
+    const existingIndex = currentErrors.findIndex(
+      it => it.schemaPath === path && it.keyword === keyword
+    );
+    if (customError) {
+      if (existingIndex === -1)
+        dispatch(
+          Actions.updateErrors([
+            ...currentErrors,
+            {
+              instancePath: `/${path}`.replace(/\./g, '/'),
+              message: customError,
+              schemaPath: path,
+              keyword,
+              params: {},
+            },
+          ])
+        );
+      else {
+        const existingAction = currentErrors[existingIndex];
+        if (existingAction && existingAction?.message !== customError) {
+          existingAction.message = customError;
+          dispatch(Actions.updateErrors([...currentErrors]));
+        }
+      }
     }
   }, [core, dispatch, customError, path, keyword]);
 

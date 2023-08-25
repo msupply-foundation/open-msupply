@@ -10,3 +10,7 @@ pub(crate) const DATETIME: &'static str = "TEXT";
 pub(crate) const DOUBLE: &'static str = "DOUBLE PRECISION";
 #[cfg(not(feature = "postgres"))]
 pub(crate) const DOUBLE: &'static str = "REAL";
+#[cfg(feature = "postgres")]
+pub(crate) const DEFAULT_TIMESTAMP: &'static str = "'epoch'";
+#[cfg(not(feature = "postgres"))]
+pub(crate) const DEFAULT_TIMESTAMP: &'static str = "0";

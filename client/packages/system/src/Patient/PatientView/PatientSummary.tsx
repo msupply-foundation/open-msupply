@@ -10,6 +10,7 @@ import {
   DateUtils,
   Formatter,
   useBreadcrumbs,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -32,6 +33,7 @@ export const PatientSummary: FC = () => {
   const patientId = usePatient.utils.id();
   const { data: patient } = usePatient.document.get(patientId);
   const { localisedDate } = useFormatDateTime();
+  const { getLocalisedFullName } = useIntlUtils();
   const { setSuffix } = useBreadcrumbs([AppRoute.Patients]);
   const t = useTranslation('dispensary');
   const formatDateOfBirth = (dateOfBirth: string | null) => {
@@ -43,7 +45,9 @@ export const PatientSummary: FC = () => {
   };
   useEffect(() => {
     if (patient)
-      setSuffix(`${patient?.firstName} ${patient?.lastName}`.trimStart());
+      setSuffix(
+        `${getLocalisedFullName(patient?.firstName, patient?.lastName)}`
+      );
   }, [patient]);
 
   return (

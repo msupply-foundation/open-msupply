@@ -12,9 +12,11 @@ export const usePrescription = {
     delete: Document.usePrescriptionDelete,
   },
   line: {
+    stockLines: Line.usePrescriptionLine,
     rows: Line.usePrescriptionRows,
     delete: Line.usePrescriptionDeleteLines,
     deleteSelected: Line.usePrescriptionDeleteSelectedLines,
+    save: Line.usePrescriptionSaveLines,
   },
   utils: {
     isDisabled: Utils.usePrescriptionIsDisabled,

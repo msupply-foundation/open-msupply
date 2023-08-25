@@ -1,14 +1,14 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
     EqualFilter, Gender, NameRow, NameRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    NameStoreJoinRow, NameType, StorageConnection,
+    NameStoreJoinRow, NameType, RepositoryError, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
 
 use super::{
     patient_schema::{SchemaGender, SchemaPatient},
-    UpdatePatientError,
+    UpdateProgramPatientError,
 };
 
 // create name_store_join if not existing
@@ -16,7 +16,7 @@ pub fn create_patient_name_store_join(
     con: &StorageConnection,
     store_id: &str,
     name_id: &str,
-) -> Result<(), UpdatePatientError> {
+) -> Result<(), RepositoryError> {
     let name_store_join = NameStoreJoinRepository::new(con)
         .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(name_id)))?
         .pop();
@@ -38,10 +38,11 @@ pub fn create_patient_name_store_join(
 /// Updates the names table for the updated patient.
 pub fn update_patient_row(
     con: &StorageConnection,
+    store_id: Option<String>,
     update_timestamp: &DateTime<Utc>,
     patient: SchemaPatient,
     is_sync_update: bool,
-) -> Result<(), UpdatePatientError> {
+) -> Result<(), UpdateProgramPatientError> {
     let SchemaPatient {
         id,
         code,
@@ -67,7 +68,10 @@ pub fn update_patient_row(
     let contact = contact_details.as_ref().and_then(|it| it.get(0));
     let date_of_birth = match date_of_birth {
         Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
-            UpdatePatientError::InternalError(format!("Invalid date of birth format: {}", err))
+            UpdateProgramPatientError::InternalError(format!(
+                "Invalid date of birth format: {}",
+                err
+            ))
         })?),
         None => None,
     };
@@ -82,9 +86,12 @@ pub fn update_patient_row(
         r#type: NameType::Patient,
         is_customer: existing_name.map(|n| n.is_customer).unwrap_or(true),
         is_supplier: existing_name.map(|n| n.is_supplier).unwrap_or(false),
-        supplying_store_id: existing_name.and_then(|n| n.supplying_store_id.clone()),
-        first_name: first_name,
-        last_name: last_name,
+        // supplying_store_id is the home store for a patient and is needed for mSupply compatibility
+        supplying_store_id: existing_name
+            .and_then(|n| n.supplying_store_id.clone())
+            .or(store_id),
+        first_name,
+        last_name,
         gender: gender.and_then(|g| match g {
             SchemaGender::Female => Some(Gender::Female),
             SchemaGender::Male => Some(Gender::Male),
@@ -122,7 +129,7 @@ pub fn update_patient_row(
     Ok(())
 }
 
-fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
+pub fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
     let mut out = vec![];
     if let Some(last) = last {
         out.push(last.clone());
@@ -149,7 +156,7 @@ mod test {
     use crate::{
         programs::patient::{
             patient_schema::{ContactDetails, Gender, SchemaPatient},
-            PatientFilter, UpdatePatient,
+            PatientFilter, UpdateProgramPatient,
         },
         service_provider::ServiceProvider,
     };
@@ -215,7 +222,7 @@ mod test {
                 &service_provider,
                 "store_a",
                 "user",
-                UpdatePatient {
+                UpdateProgramPatient {
                     data: serde_json::to_value(patient.clone()).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: None,
@@ -263,7 +270,7 @@ mod test {
                 &service_provider,
                 "store_a",
                 "user",
-                UpdatePatient {
+                UpdateProgramPatient {
                     data: patient,
                     schema_id: schema.id,
                     parent: None,
