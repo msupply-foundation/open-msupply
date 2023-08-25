@@ -10,6 +10,7 @@ import {
   useAuthContext,
   InsertPatientInput,
   UpdatePatientInput,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -33,8 +34,8 @@ import {
 } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
 
-import defaultPatientSchema from './DefaultPatientSchema.json';
-import defaultPatientUISchema from './DefaultPatientUISchema.json';
+import defaultPatientSchema from '../DefaultPatientSchema.json';
+import defaultPatientUISchema from '../DefaultPatientUISchema.json';
 
 const DEFAULT_SCHEMA: SchemaData = {
   formSchemaId: undefined,
@@ -96,7 +97,7 @@ const PatientDetailView = ({
   const patientId = usePatient.utils.id();
   const { data: currentPatient } = usePatient.document.get(patientId);
 
-  const { data: patientRegistries } =
+  const { data: patientRegistries, isLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
         documentType: { equalTo: 'Patient' },
@@ -198,6 +199,8 @@ const PatientDetailView = ({
     message: t('messages.confirm-save-generic'),
     title: t('heading.are-you-sure'),
   });
+
+  if (isLoading) return <BasicSpinner />;
 
   return (
     <Box flex={1} display="flex" justifyContent="center">

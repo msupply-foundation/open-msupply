@@ -1199,6 +1199,12 @@ export type ForeignKeyError = DeleteInboundShipmentLineErrorInterface & DeleteIn
   key: ForeignKey;
 };
 
+export type FormSchemaConnector = {
+  __typename: 'FormSchemaConnector';
+  nodes: Array<FormSchemaNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type FormSchemaFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterStringInput>;
@@ -1210,6 +1216,22 @@ export type FormSchemaNode = {
   jsonSchema: Scalars['JSON']['output'];
   type: Scalars['String']['output'];
   uiSchema: Scalars['JSON']['output'];
+};
+
+export type FormSchemaResponse = FormSchemaConnector;
+
+export enum FormSchemaSortFieldInput {
+  Id = 'id'
+}
+
+export type FormSchemaSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: FormSchemaSortFieldInput;
 };
 
 export type FullSyncStatusNode = {
@@ -2347,7 +2369,7 @@ export type Mutations = {
    */
   insertProgramEnrolment: InsertProgramEnrolmentResponse;
   /**
-   * Inserts a new program patient, i.e. a patient the can contain additional information stored
+   * Inserts a new program patient, i.e. a patient that can contain additional information stored
    * in a document.
    */
   insertProgramPatient: InsertProgramPatientResponse;
@@ -3376,7 +3398,7 @@ export type Queries = {
   documents: DocumentResponse;
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
-  formSchema?: Maybe<FormSchemaNode>;
+  formSchemas: FormSchemaResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -3536,8 +3558,10 @@ export type QueriesEncountersArgs = {
 };
 
 
-export type QueriesFormSchemaArgs = {
+export type QueriesFormSchemasArgs = {
   filter?: InputMaybe<FormSchemaFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<FormSchemaSortInput>>;
 };
 
 
@@ -4844,6 +4868,11 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
   response: UpdateOutboundShipmentUnallocatedLineResponse;
 };
 
+/**
+ * All fields in the input object will be used to update the patient record.
+ * This means that the caller also has to provide the fields that are not going to change.
+ * For example, if the last_name is not provided, the last_name in the patient record will be cleared.
+ */
 export type UpdatePatientInput = {
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
