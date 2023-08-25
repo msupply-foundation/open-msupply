@@ -126,7 +126,7 @@ export const DetailView: FC<DetailViewProps> = ({
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
               .addPart(contactData.patient.id)
-              .addQuery({ tab: PatientTabValue.ContactTraces })
+              .addQuery({ tab: PatientTabValue.ContactTracing })
               .build()}
           >
             {getLocalisedFullName(

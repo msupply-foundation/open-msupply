@@ -223,7 +223,7 @@ export enum PatientTabValue {
   Details = 'Details',
   Programs = 'Programs',
   Encounters = 'Encounters',
-  ContactTraces = 'Contact Traces',
+  ContactTracing = 'Contact Tracing',
 }
 
 /**
@@ -273,7 +273,7 @@ export const PatientView = () => {
     },
     {
       Component: <ContactTraceListView />,
-      value: PatientTabValue.ContactTraces,
+      value: PatientTabValue.ContactTracing,
       sort: {
         key: ContactTraceSortFieldInput.Datetime,
         dir: 'desc' as 'desc' | 'asc',
