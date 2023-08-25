@@ -122,6 +122,30 @@ mutation linkPatientToStore($storeId: String!, $nameId: String!) {
   }
 }
 
+mutation insertProgramPatient(
+  $storeId: String!
+  $input: InsertProgramPatientInput!
+) {
+  insertProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
+    }
+  }
+}
+
+mutation updateProgramPatient(
+  $storeId: String!
+  $input: UpdateProgramPatientInput!
+) {
+  updateProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
+    }
+  }
+}
+
 mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {

@@ -228,7 +228,7 @@ mod test {
 
     use crate::{
         programs::{
-            patient::{patient_doc_name, test::mock_patient_1, UpdatePatient},
+            patient::{patient_doc_name, test::mock_patient_1, UpdateProgramPatient},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
@@ -334,7 +334,7 @@ mod test {
                 &service_provider,
                 "store_a",
                 &patient.id,
-                UpdatePatient {
+                UpdateProgramPatient {
                     data: serde_json::to_value(&patient).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: None,

@@ -1,2 +1,2 @@
-pub mod insert;
-pub mod update;
+pub(crate) mod insert;
+pub(crate) mod update;
