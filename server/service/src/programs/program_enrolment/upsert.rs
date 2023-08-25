@@ -1,13 +1,13 @@
 use chrono::Utc;
 use repository::{
-    Document, DocumentFilter, DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter,
-    DocumentRegistryRepository, DocumentRepository, DocumentStatus, EqualFilter, Pagination,
-    ProgramFilter, ProgramRepository, ProgramRow, RepositoryError, StringFilter, TransactionError,
+    Document, DocumentRegistry, DocumentRegistryCategory, DocumentRegistryFilter,
+    DocumentRegistryRepository, DocumentStatus, EqualFilter, PatientFilter, PatientRepository,
+    ProgramFilter, ProgramRepository, ProgramRow, RepositoryError, TransactionError,
 };
 
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
-    programs::patient::{main_patient_doc_name, patient_doc_name},
+    programs::patient::patient_doc_name,
     service_provider::{ServiceContext, ServiceProvider},
 };
 
@@ -133,15 +133,13 @@ fn validate_patient_exists(
     ctx: &ServiceContext,
     patient_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let doc_name = main_patient_doc_name(patient_id);
-    let document = DocumentRepository::new(&ctx.connection)
-        .query(
-            Pagination::one(),
-            Some(DocumentFilter::new().name(StringFilter::equal_to(&doc_name))),
+    let patient = PatientRepository::new(&ctx.connection)
+        .query_by_filter(
+            PatientFilter::new().id(EqualFilter::equal_to(patient_id)),
             None,
         )?
         .pop();
-    Ok(document.is_some())
+    Ok(patient.is_some())
 }
 
 fn validate_program_not_exists(
