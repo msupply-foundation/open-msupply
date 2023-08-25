@@ -274,6 +274,10 @@ impl GeneralQueries {
     ) -> Result<update_user::UpdateUserNode> {
         last_successful_user_sync(ctx)
     }
+
+    pub async fn item_variants_list(&self, _store_id: String) -> Vec<ItemVariantNode> {
+        item_variants_list(&_store_id)
+    }
 }
 
 #[derive(Default, Clone)]

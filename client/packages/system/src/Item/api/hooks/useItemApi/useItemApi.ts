@@ -12,6 +12,7 @@ export const useItemApi = () => {
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams<ItemRowFragment>) =>
       [...keys.list(), params] as const,
+    itemVariantsList: () => [...keys.base(), storeId, 'variants'] as const,
   };
 
   const queries = getItemQueries(getSdk(client), storeId);

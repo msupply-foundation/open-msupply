@@ -13,6 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { useItems, ItemRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
+import { getItemVariantInputColumn } from '../Components/ItemVariant';
 
 const ItemListComponent: FC = () => {
   const {
@@ -42,14 +43,7 @@ const ItemListComponent: FC = () => {
     [
       'code',
       'name',
-      {
-        accessor: ({ rowData }) => rowData.unitName ?? '',
-        align: ColumnAlign.Right,
-        key: 'unitName',
-        label: 'label.unit',
-        sortable: false,
-        width: 100,
-      },
+      getItemVariantInputColumn(),
       [
         'stockOnHand',
         {

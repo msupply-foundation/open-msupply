@@ -74,6 +74,17 @@ export type ItemByIdQueryVariables = Types.Exact<{
 
 export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string } }> } }> } };
 
+export type VariantFragment = { __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string };
+
+export type ItemVariantFragment = { __typename: 'ItemVariantNode', id: string, mostUsed: string, unit: string, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> };
+
+export type ItemVariantsListQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type ItemVariantsListQuery = { __typename: 'Queries', itemVariantsList: Array<{ __typename: 'ItemVariantNode', id: string, mostUsed: string, unit: string, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> }> };
+
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
   __typename
@@ -179,6 +190,24 @@ export const ItemFragmentDoc = gql`
   }
 }
     ${StockLineFragmentDoc}`;
+export const VariantFragmentDoc = gql`
+    fragment Variant on VariantNode {
+  id
+  longName
+  packSize
+  shortName
+}
+    `;
+export const ItemVariantFragmentDoc = gql`
+    fragment ItemVariant on ItemVariantNode {
+  id
+  mostUsed
+  unit
+  variants {
+    ...Variant
+  }
+}
+    ${VariantFragmentDoc}`;
 export const ItemsWithStockLinesDocument = gql`
     query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
   items(
@@ -295,6 +324,13 @@ export const ItemByIdDocument = gql`
 }
     ${ItemFragmentDoc}
 ${StockLineFragmentDoc}`;
+export const ItemVariantsListDocument = gql`
+    query itemVariantsList($storeId: String!) {
+  itemVariantsList(storeId: $storeId) {
+    ...ItemVariant
+  }
+}
+    ${ItemVariantFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -317,6 +353,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     itemById(variables: ItemByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemByIdQuery>(ItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemById', 'query');
+    },
+    itemVariantsList(variables: ItemVariantsListQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemVariantsListQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<ItemVariantsListQuery>(ItemVariantsListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemVariantsList', 'query');
     }
   };
 }
@@ -404,5 +443,22 @@ export const mockItemsWithStatsQuery = (resolver: ResponseResolver<GraphQLReques
 export const mockItemByIdQuery = (resolver: ResponseResolver<GraphQLRequest<ItemByIdQueryVariables>, GraphQLContext<ItemByIdQuery>, any>) =>
   graphql.query<ItemByIdQuery, ItemByIdQueryVariables>(
     'itemById',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockItemVariantsListQuery((req, res, ctx) => {
+ *   const { storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ itemVariantsList })
+ *   )
+ * })
+ */
+export const mockItemVariantsListQuery = (resolver: ResponseResolver<GraphQLRequest<ItemVariantsListQueryVariables>, GraphQLContext<ItemVariantsListQuery>, any>) =>
+  graphql.query<ItemVariantsListQuery, ItemVariantsListQueryVariables>(
+    'itemVariantsList',
     resolver
   )
