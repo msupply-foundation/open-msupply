@@ -183,7 +183,7 @@ export type FormSchemasQueryVariables = Types.Exact<{
 }>;
 
 
-export type FormSchemasQuery = { __typename: 'Queries', formSchema: { __typename: 'FormSchemaConnector', nodes: Array<{ __typename: 'FormSchemaNode', id: string, jsonSchema: any, type: string, uiSchema: any }> } };
+export type FormSchemasQuery = { __typename: 'Queries', formSchemas: { __typename: 'FormSchemaConnector', nodes: Array<{ __typename: 'FormSchemaNode', id: string, jsonSchema: any, type: string, uiSchema: any }> } };
 
 export type ActiveProgramEventsQueryVariables = Types.Exact<{
   at?: Types.InputMaybe<Types.Scalars['String']['input']>;
@@ -605,7 +605,7 @@ export const CliniciansDocument = gql`
     ${ClinicianFragmentDoc}`;
 export const FormSchemasDocument = gql`
     query formSchemas($filter: FormSchemaFilterInput) {
-  formSchema(filter: $filter) {
+  formSchemas(filter: $filter) {
     ... on FormSchemaConnector {
       __typename
       nodes {
@@ -1001,7 +1001,7 @@ export const mockCliniciansQuery = (resolver: ResponseResolver<GraphQLRequest<Cl
  * mockFormSchemasQuery((req, res, ctx) => {
  *   const { filter } = req.variables;
  *   return res(
- *     ctx.data({ formSchema })
+ *     ctx.data({ formSchemas })
  *   )
  * })
  */

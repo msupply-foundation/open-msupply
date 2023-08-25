@@ -3398,7 +3398,7 @@ export type Queries = {
   documents: DocumentResponse;
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
-  formSchema: FormSchemaResponse;
+  formSchemas: FormSchemaResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -3558,7 +3558,7 @@ export type QueriesEncountersArgs = {
 };
 
 
-export type QueriesFormSchemaArgs = {
+export type QueriesFormSchemasArgs = {
   filter?: InputMaybe<FormSchemaFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<FormSchemaSortInput>>;

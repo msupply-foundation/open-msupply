@@ -12,7 +12,7 @@ pub struct FormSchemaQueries;
 
 #[Object]
 impl FormSchemaQueries {
-    async fn form_schema(
+    async fn form_schemas(
         &self,
         ctx: &Context<'_>,
         page: Option<PaginationInput>,
