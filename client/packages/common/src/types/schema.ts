@@ -2085,6 +2085,14 @@ export type ItemStatsNode = {
   averageMonthlyConsumption: Scalars['Float']['output'];
 };
 
+export type ItemVariantNode = {
+  __typename: 'ItemVariantNode';
+  id: Scalars['String']['output'];
+  mostUsed: Scalars['String']['output'];
+  unit: Scalars['String']['output'];
+  variants: Array<VariantNode>;
+};
+
 export type ItemsResponse = ItemConnector;
 
 export type JsonschemaNode = {
@@ -3349,6 +3357,7 @@ export type Queries = {
   invoiceCounts: InvoiceCounts;
   invoices: InvoicesResponse;
   itemCounts: ItemCounts;
+  itemVariantsList: Array<ItemVariantNode>;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
   lastSuccessfulUserSync: UpdateUserNode;
@@ -3546,6 +3555,11 @@ export type QueriesInvoicesArgs = {
 
 export type QueriesItemCountsArgs = {
   lowStockThreshold?: InputMaybe<Scalars['Int']['input']>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesItemVariantsListArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -5183,4 +5197,12 @@ export type UserStorePermissionNode = {
   context: Array<Scalars['String']['output']>;
   permissions: Array<UserPermission>;
   storeId: Scalars['String']['output'];
+};
+
+export type VariantNode = {
+  __typename: 'VariantNode';
+  id: Scalars['String']['output'];
+  longName: Scalars['String']['output'];
+  packSize: Scalars['Int']['output'];
+  shortName: Scalars['String']['output'];
 };
