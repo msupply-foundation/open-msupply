@@ -66,7 +66,7 @@ pub struct UpdatePatient {
     pub date_of_birth: Option<NaiveDate>,
 }
 
-pub(crate) fn update_name_patient(
+pub(crate) fn update_patient(
     ctx: &ServiceContext,
     service_provider: &ServiceProvider,
     input: UpdatePatient,
