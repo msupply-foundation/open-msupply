@@ -12,14 +12,11 @@ import {
   DialogButton,
   ClockIcon,
   useDialog,
-  StatusCrumbs,
-  ContactTraceNodeStatus,
 } from '@openmsupply-client/common';
 import {
   DocumentHistory,
   ContactTraceRowFragment,
 } from '@openmsupply-client/programs';
-import { traceStatusTranslation } from './utils';
 
 interface FooterProps {
   documentName?: string;
@@ -29,33 +26,11 @@ interface FooterProps {
   contactTrace?: ContactTraceRowFragment;
 }
 
-const ContactTraceStatusCrumbs: FC<{ trace: ContactTraceRowFragment }> = ({
-  trace,
-}) => {
-  const t = useTranslation('common');
-  // TODO StatusCrumbs shows "Order History" in the logs pop up -> make this configurable
-  return (
-    <StatusCrumbs
-      statuses={[ContactTraceNodeStatus.Pending, ContactTraceNodeStatus.Done]}
-      statusLog={{
-        [ContactTraceNodeStatus.Pending]:
-          trace.status === ContactTraceNodeStatus.Pending ? trace.datetime : '',
-        [ContactTraceNodeStatus.Done]:
-          trace.status === ContactTraceNodeStatus.Done ? trace.datetime : '',
-      }}
-      statusFormatter={(status: ContactTraceNodeStatus) =>
-        traceStatusTranslation(status, t)
-      }
-    />
-  );
-};
-
 export const Footer: FC<FooterProps> = ({
   documentName,
   isDisabled,
   onCancel,
   onSave,
-  contactTrace,
 }) => {
   const t = useTranslation('common');
   const navigate = useNavigate();
@@ -77,9 +52,6 @@ export const Footer: FC<FooterProps> = ({
             disabled={documentName === undefined}
             onClick={showDialog}
           />
-          {contactTrace ? (
-            <ContactTraceStatusCrumbs trace={contactTrace} />
-          ) : null}
           <Box
             flex={1}
             display="flex"

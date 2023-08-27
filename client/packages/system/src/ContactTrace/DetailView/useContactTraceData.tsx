@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { ContactTraceNodeStatus } from '@common/types';
 import {
   SchemaData,
   useContactTraces,
@@ -9,7 +8,6 @@ import {
 import { usePatient } from '../../Patient';
 
 export type ContactTrace = {
-  status: ContactTraceNodeStatus;
   datetime: string;
 };
 
@@ -66,7 +64,6 @@ export const useContactTraceData = (
           type: contactTrace.document.type,
           documentName: contactTrace.document.name,
           contactTrace: {
-            status: contactTrace.status,
             datetime: contactTrace.datetime,
           },
           schema: undefined,
@@ -98,7 +95,6 @@ export const useContactTraceData = (
         type: createType,
         documentName: undefined,
         contactTrace: {
-          status: ContactTraceNodeStatus.Pending,
           datetime: creationDate.toISOString(),
         },
         schema: registry,

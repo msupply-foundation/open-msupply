@@ -530,26 +530,30 @@ export type ContactTraceConnector = {
 export type ContactTraceFilterInput = {
   contactPatientId?: InputMaybe<EqualFilterStringInput>;
   contactTraceId?: InputMaybe<StringFilterInput>;
+  dateOfBirth?: InputMaybe<DateFilterInput>;
   datetime?: InputMaybe<DatetimeFilterInput>;
   documentName?: InputMaybe<StringFilterInput>;
   firstName?: InputMaybe<StringFilterInput>;
+  gender?: InputMaybe<EqualFilterGenderInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   lastName?: InputMaybe<StringFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
-  status?: InputMaybe<EqualFilterContactTraceStatusInput>;
 };
 
 export type ContactTraceNode = {
   __typename: 'ContactTraceNode';
+  age?: Maybe<Scalars['Int']['output']>;
   contactPatient?: Maybe<NameNode>;
   contactPatientId?: Maybe<Scalars['String']['output']>;
   contactTraceId?: Maybe<Scalars['String']['output']>;
+  dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   datetime: Scalars['DateTime']['output'];
   /** The encounter document */
   document: DocumentNode;
   documentId: Scalars['String']['output'];
   firstName?: Maybe<Scalars['String']['output']>;
+  gender?: Maybe<GenderType>;
   id: Scalars['String']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
   patient: NameNode;
@@ -558,13 +562,7 @@ export type ContactTraceNode = {
   /** Returns the matching program enrolment for the root patient of this contact trace */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   programId: Scalars['String']['output'];
-  status: ContactTraceNodeStatus;
 };
-
-export enum ContactTraceNodeStatus {
-  Done = 'DONE',
-  Pending = 'PENDING'
-}
 
 export type ContactTraceResponse = ContactTraceConnector;
 
@@ -574,8 +572,7 @@ export enum ContactTraceSortFieldInput {
   FirstName = 'firstName',
   LastName = 'lastName',
   PatientId = 'patientId',
-  ProgramId = 'programId',
-  Status = 'status'
+  ProgramId = 'programId'
 }
 
 export type ContactTraceSortInput = {
@@ -1154,12 +1151,6 @@ export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
-};
-
-export type EqualFilterContactTraceStatusInput = {
-  equalAny?: InputMaybe<Array<ContactTraceNodeStatus>>;
-  equalTo?: InputMaybe<ContactTraceNodeStatus>;
-  notEqualTo?: InputMaybe<ContactTraceNodeStatus>;
 };
 
 export type EqualFilterDocumentRegistryCategoryInput = {

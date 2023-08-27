@@ -1,33 +1,13 @@
-import React, { FC, ReactNode, useEffect, useState } from 'react';
+import React, { FC, ReactNode } from 'react';
 import { Box, Grid } from '@openmsupply-client/common';
-import {
-  DateUtils,
-  LocaleKey,
-  TypedTFunction,
-  useTranslation,
-} from '@common/intl';
+import { useTranslation } from '@common/intl';
 import { UserIcon } from '@common/icons';
-import { ContactTraceNodeStatus } from '@common/types';
 import {
   AppBarContentPortal,
   BasicTextInput,
-  DatePickerInput,
   InputWithLabelRow,
-  Option,
-  Select,
 } from '@common/components';
-import { traceStatusTranslation } from './utils';
 import { ContactTrace, ContactTraceData } from './useContactTraceData';
-
-const traceStatusOption = (
-  status: ContactTraceNodeStatus,
-  t: TypedTFunction<LocaleKey>
-): Option => {
-  return {
-    label: traceStatusTranslation(status, t),
-    value: status,
-  };
-};
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
@@ -36,17 +16,8 @@ interface ToolbarProps {
   onChange: (patch: Partial<ContactTrace>) => void;
   data: ContactTraceData;
 }
-export const Toolbar: FC<ToolbarProps> = ({ data, onChange }) => {
-  const [status, setStatus] = useState<ContactTraceNodeStatus | undefined>(
-    data.contactTrace.status ?? undefined
-  );
-  const [datetime, setDatetime] = useState<string | undefined>();
+export const Toolbar: FC<ToolbarProps> = ({ data }) => {
   const t = useTranslation('dispensary');
-
-  useEffect(() => {
-    setStatus(data.contactTrace.status ?? undefined);
-    setDatetime(data.contactTrace.datetime);
-  }, [data.contactTrace.status, data.contactTrace.datetime]);
 
   const { patient } = data;
 
@@ -89,44 +60,6 @@ export const Toolbar: FC<ToolbarProps> = ({ data, onChange }) => {
                 label={t('label.program')}
                 Input={
                   <BasicTextInput disabled value={data.programName ?? ''} />
-                }
-              />
-              <Row
-                label={t('label.contact-trace-status')}
-                Input={
-                  <Select
-                    fullWidth
-                    onChange={event => {
-                      const newStatus = event.target
-                        .value as ContactTraceNodeStatus;
-                      setStatus(newStatus);
-                      onChange({
-                        status: newStatus,
-                      });
-                    }}
-                    options={[
-                      traceStatusOption(ContactTraceNodeStatus.Pending, t),
-                      traceStatusOption(ContactTraceNodeStatus.Done, t),
-                    ]}
-                    value={status}
-                  />
-                }
-              />
-            </Box>
-            <Box display="flex" gap={1}>
-              <Row
-                label={t('label.visit-date')}
-                Input={
-                  <DatePickerInput
-                    value={DateUtils.getDateOrNull(datetime ?? null)}
-                    onChange={date => {
-                      const datetime = DateUtils.formatRFC3339(date);
-                      setDatetime(datetime);
-                      onChange({
-                        datetime,
-                      });
-                    }}
-                  />
                 }
               />
             </Box>
