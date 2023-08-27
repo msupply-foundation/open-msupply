@@ -11,11 +11,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           document_id TEXT NOT NULL REFERENCES document(id),
           datetime TIMESTAMP,
           contact_trace_id TEXT,
-          status TEXT NOT NULL,
           patient_id TEXT NOT NULL REFERENCES name(id),
           contact_patient_id TEXT REFERENCES name(id),
           first_name TEXT,
-          last_name TEXT
+          last_name TEXT,
+          gender TEXT,
+          date_of_birth TIMESTAMP
         );"#,
     )?;
 
@@ -23,22 +24,18 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-        CREATE TYPE contact_trace_status AS ENUM (
-          'PENDING',
-          'DONE'
-        );
-        
         CREATE TABLE contact_trace (
           id TEXT NOT NULL PRIMARY KEY,
           program_id TEXT NOT NULL REFERENCES program(id),
           document_id TEXT NOT NULL REFERENCES document(id),
           datetime TIMESTAMP,
           contact_trace_id TEXT,
-          status contact_trace_status NOT NULL,
           patient_id TEXT NOT NULL REFERENCES name(id),
           contact_patient_id TEXT REFERENCES name(id),
           first_name TEXT,
-          last_name TEXT
+          last_name TEXT,
+          gender gender_type,
+          date_of_birth TIMESTAMP
         );
 
         ALTER TYPE document_registry_type RENAME TO document_registry_category;

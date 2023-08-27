@@ -100,17 +100,15 @@
         "extension": {
           "type": "object"
         },
-        "status": {
-          "$ref": "#/definitions/ContactTraceStatus",
-          "description": "Current status"
+        "notes": {
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
         }
       },
-      "required": ["datetime", "status"],
+      "required": ["datetime"],
       "type": "object"
-    },
-    "ContactTraceStatus": {
-      "enum": ["PENDING", "DONE"],
-      "type": "string"
     },
     "Gender": {
       "enum": [

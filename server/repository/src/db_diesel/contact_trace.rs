@@ -6,10 +6,13 @@ use super::{
 };
 
 use crate::{
-    contact_trace_row::{ContactTraceRow, ContactTraceStatus},
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
-    DBType, DatetimeFilter, DocumentRow, EqualFilter, Pagination, ProgramRow, RepositoryError,
-    Sort, StringFilter,
+    contact_trace_row::ContactTraceRow,
+    diesel_macros::{
+        apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
+        apply_sort_no_case, apply_string_filter,
+    },
+    DBType, DateFilter, DatetimeFilter, DocumentRow, EqualFilter, Gender, Pagination, ProgramRow,
+    RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
@@ -23,20 +26,22 @@ pub struct ContactTraceFilter {
     pub datetime: Option<DatetimeFilter>,
     pub patient_id: Option<EqualFilter<String>>,
     pub contact_patient_id: Option<EqualFilter<String>>,
-    pub status: Option<EqualFilter<ContactTraceStatus>>,
     pub contact_trace_id: Option<StringFilter>,
     pub first_name: Option<StringFilter>,
     pub last_name: Option<StringFilter>,
+    pub gender: Option<EqualFilter<Gender>>,
+    pub date_of_birth: Option<DateFilter>,
 }
 
 pub enum ContactTraceSortField {
     Datetime,
     PatientId,
     ProgramId,
-    Status,
     ContactTraceId,
     FirstName,
     LastName,
+    Gender,
+    DateOfBirth,
 }
 
 pub type ContactTrace = (ContactTraceRow, DocumentRow, ProgramRow);
@@ -64,10 +69,11 @@ fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgram
             datetime,
             patient_id,
             contact_patient_id,
-            status,
             contact_trace_id,
             first_name,
             last_name,
+            gender,
+            date_of_birth,
         } = f;
 
         apply_equal_filter!(query, id, contact_trace_dsl::id);
@@ -81,10 +87,11 @@ fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgram
         apply_equal_filter!(query, program_context_id, program_dsl::context_id);
         apply_equal_filter!(query, program_id, contact_trace_dsl::program_id);
         apply_string_filter!(query, document_name, document_dsl::name);
-        apply_equal_filter!(query, status, contact_trace_dsl::status);
         apply_string_filter!(query, contact_trace_id, contact_trace_dsl::contact_trace_id);
         apply_string_filter!(query, first_name, contact_trace_dsl::first_name);
         apply_string_filter!(query, last_name, contact_trace_dsl::last_name);
+        apply_equal_filter!(query, gender, contact_trace_dsl::gender);
+        apply_date_filter!(query, date_of_birth, contact_trace_dsl::date_of_birth);
     }
     query
 }
@@ -130,9 +137,6 @@ impl<'a> ContactTraceRepository<'a> {
                 ContactTraceSortField::PatientId => {
                     apply_sort!(query, sort, contact_trace_dsl::patient_id)
                 }
-                ContactTraceSortField::Status => {
-                    apply_sort!(query, sort, contact_trace_dsl::status)
-                }
                 ContactTraceSortField::ContactTraceId => {
                     apply_sort!(query, sort, contact_trace_dsl::contact_trace_id)
                 }
@@ -141,6 +145,12 @@ impl<'a> ContactTraceRepository<'a> {
                 }
                 ContactTraceSortField::LastName => {
                     apply_sort!(query, sort, contact_trace_dsl::last_name)
+                }
+                ContactTraceSortField::Gender => {
+                    apply_sort_no_case!(query, sort, contact_trace_dsl::gender)
+                }
+                ContactTraceSortField::DateOfBirth => {
+                    apply_sort_no_case!(query, sort, contact_trace_dsl::date_of_birth)
                 }
             }
         } else {

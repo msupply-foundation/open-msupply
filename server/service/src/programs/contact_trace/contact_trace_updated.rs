@@ -1,12 +1,15 @@
-use chrono::DateTime;
+use super::{
+    contact_trace_schema::{SchemaContactTrace, SchemaGender},
+    upsert::UpsertContactTraceError,
+};
+use chrono::{DateTime, NaiveDate};
 use repository::{
     contact_trace::{ContactTraceFilter, ContactTraceRepository},
-    contact_trace_row::{ContactTraceRow, ContactTraceRowRepository, ContactTraceStatus},
-    Document, ProgramRow, StorageConnection, StringFilter,
+    contact_trace_row::{ContactTraceRow, ContactTraceRowRepository},
+    Document, Gender, ProgramRow, StorageConnection, StringFilter,
 };
+use std::str::FromStr;
 use util::hash::sha256;
-
-use super::{contact_trace_schema::SchemaContactTrace, upsert::UpsertContactTraceError};
 
 /// Callback called when a program enrolment document has been updated
 pub(crate) fn update_contact_trace_row(
@@ -38,10 +41,7 @@ pub(crate) fn update_contact_trace_row(
         None => sha256(&document.name),
     };
 
-    let status = match contact_trace.status {
-        super::contact_trace_schema::ContactTraceStatus::Pending => ContactTraceStatus::Pending,
-        super::contact_trace_schema::ContactTraceStatus::Done => ContactTraceStatus::Done,
-    };
+    let contact = contact_trace.contact.as_ref();
 
     let row = ContactTraceRow {
         id: contact_trace_id,
@@ -49,17 +49,35 @@ pub(crate) fn update_contact_trace_row(
         document_id: document.id.clone(),
         patient_id: patient_id.to_string(),
         datetime,
-        status,
         contact_trace_id: contact_trace.contact_trace_id,
-        contact_patient_id: contact_trace.contact.as_ref().and_then(|c| c.id.clone()),
-        first_name: contact_trace
-            .contact
-            .as_ref()
-            .and_then(|c| c.first_name.clone()),
+        contact_patient_id: contact.and_then(|c| c.id.clone()),
+        first_name: contact.and_then(|c| c.first_name.clone()),
         last_name: contact_trace
             .contact
             .as_ref()
             .and_then(|c| c.last_name.clone()),
+        gender: contact.and_then(|c| {
+            c.gender.as_ref().map(|g| match g {
+                SchemaGender::Female => Gender::Female,
+                SchemaGender::Male => Gender::Male,
+                SchemaGender::Transgender => Gender::Transgender,
+                SchemaGender::TransgenderMale => Gender::TransgenderMale,
+                SchemaGender::TransgenderFemale => Gender::TransgenderFemale,
+                SchemaGender::Unknown => Gender::Unknown,
+                SchemaGender::NonBinary => Gender::NonBinary,
+            })
+        }),
+        date_of_birth: contact
+            .and_then(|c| match &c.date_of_birth {
+                Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
+                    UpsertContactTraceError::InternalError(format!(
+                        "Invalid date of birth format: {}",
+                        err
+                    ))
+                })),
+                None => None,
+            })
+            .transpose()?,
     };
     ContactTraceRowRepository::new(con).upsert_one(&row)?;
 
