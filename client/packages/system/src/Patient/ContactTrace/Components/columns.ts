@@ -11,26 +11,15 @@ import { ContactTraceRowFragment } from '@openmsupply-client/programs';
 export interface ContactTraceListColumnsProps {
   onChangeSortBy: (column: Column<ContactTraceRowFragment>) => void;
   sortBy: SortBy<ContactTraceRowFragment>;
-  includePatient?: boolean;
 }
 
 export const useContactTraceListColumns = ({
   onChangeSortBy,
   sortBy,
-  includePatient,
 }: ContactTraceListColumnsProps) => {
   const { localisedDate } = useFormatDateTime();
 
-  const columnList: ColumnDescription<ContactTraceRowFragment>[] = [];
-  if (includePatient) {
-    columnList.push({
-      key: 'patientName',
-      label: 'label.patient',
-      accessor: ({ rowData }) => rowData?.patient?.name,
-      sortable: false,
-    });
-  }
-  columnList.push(
+  const columnList: ColumnDescription<ContactTraceRowFragment>[] = [
     {
       key: 'programName',
       label: 'label.program',
@@ -56,8 +45,8 @@ export const useContactTraceListColumns = ({
       label: 'label.age',
       align: ColumnAlign.Right,
       width: 175,
-    }
-  );
+    },
+  ];
 
   const columns = useColumns<ContactTraceRowFragment>(
     columnList,
