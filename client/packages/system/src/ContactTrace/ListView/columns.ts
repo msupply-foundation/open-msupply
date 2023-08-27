@@ -22,7 +22,7 @@ export const useContactTraceListColumns = ({
   const { localisedDate } = useFormatDateTime();
 
   const columnList: ColumnDescription<ContactTraceRowFragment>[] = [];
-if (includePatient) {
+  if (includePatient) {
     columnList.push({
       key: 'patientName',
       label: 'label.patient',
@@ -38,26 +38,24 @@ if (includePatient) {
       sortable: false,
     },
     {
-      key: 'contactTraceId',
-      label: 'label.contact_trace-id',
-    },
-    {
-      key: 'contactPatientName',
-      label: 'label.contact-patient',
-      accessor: ({ rowData }) => rowData?.contactPatient?.name,
-      sortable: false,
-    },
-    {
-      key: 'status',
-      label: 'label.status',
-    },
-    {
       key: 'datetime',
       label: 'label.date',
-      align: ColumnAlign.Right,
-      width: 175,
       formatter: dateString =>
         dateString ? localisedDate((dateString as string) || '') : '',
+    },
+    {
+      key: 'firstName',
+      label: 'label.first-name',
+    },
+    {
+      key: 'lastName',
+      label: 'label.last-name',
+    },
+    {
+      key: 'age',
+      label: 'label.age',
+      align: ColumnAlign.Right,
+      width: 175,
     }
   );
 

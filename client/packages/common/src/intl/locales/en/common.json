@@ -168,7 +168,6 @@
   "label.generate": "Generate",
   "label.enrolment-program": "Program",
   "label.enrolment-patient-id": "Enrolment Patient Id",
-  "label.contact_trace-id": "Contact Trace ID",
   "label.enrolment-datetime": "Enrolment Date",
   "label.encounter": "Encounter",
   "label.encounters": "Encounters",
