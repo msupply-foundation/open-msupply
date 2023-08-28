@@ -23,7 +23,7 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
-import { useLogicalStatus } from '../utils';
+import { getLogicalStatus } from '../utils';
 
 export const DetailView: FC = () => {
   const t = useTranslation('dispensary');
@@ -109,7 +109,7 @@ export const DetailView: FC = () => {
 
       if (encounter.status === EncounterNodeStatus.Pending) {
         const datetime = new Date(encounter.startDatetime);
-        const status = useLogicalStatus(datetime, t);
+        const status = getLogicalStatus(datetime, t);
         setLogicalStatus(status);
       }
     }

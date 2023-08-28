@@ -17,7 +17,7 @@ import {
   PatientSearchModalProps,
   SearchInputPatient,
 } from '../../utils';
-import { searchPatient } from '../utils';
+import { useSearchPatient } from '../utils';
 
 const PatientSearchComponent: FC<PatientSearchModalProps> = ({
   open,
@@ -28,7 +28,7 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
   const PatientOptionRenderer = getPatientOptionRenderer();
   const { height } = useWindowDimensions();
   const { isLoading, patients, search, totalCount, isSuccess } =
-    searchPatient();
+    useSearchPatient();
 
   const modalHeight = height * 0.7;
   const handleClose = () => {
