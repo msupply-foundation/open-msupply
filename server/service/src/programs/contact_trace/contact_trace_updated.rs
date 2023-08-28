@@ -41,6 +41,10 @@ pub(crate) fn update_contact_trace_row(
         None => sha256(&document.name),
     };
 
+    let store_id = contact_trace
+        .location
+        .as_ref()
+        .and_then(|l| l.store_id.clone());
     let contact = contact_trace.contact.as_ref();
 
     let row = ContactTraceRow {
@@ -78,6 +82,7 @@ pub(crate) fn update_contact_trace_row(
                 None => None,
             })
             .transpose()?,
+        store_id,
     };
     ContactTraceRowRepository::new(con).upsert_one(&row)?;
 

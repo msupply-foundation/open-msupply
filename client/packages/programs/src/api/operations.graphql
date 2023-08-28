@@ -474,6 +474,7 @@ query activeProgramEvents(
 fragment ContactTraceRow on ContactTraceNode {
   __typename
   contactTraceId
+  storeId
   datetime
   document {
     name
