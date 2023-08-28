@@ -88,7 +88,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
         }
 
         let data = serde_json::from_str::<LegacyTemperatureBreachRow>(&sync_record.data)?;
-        let r#type = from_legacy_type(&data.r#type);
+        let r#type = from_legacy_breach_type(&data.r#type);
         let start_timestamp = NaiveDateTime::new(data.start_date, data.start_time);
         let end_timestamp = NaiveDateTime::new(data.end_date, data.end_time);
         
@@ -145,7 +145,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
         let start_time = start_timestamp.time();
         let end_date = end_timestamp.date();
         let end_time = end_timestamp.time();
-        let r#type = to_legacy_type(&r#type);
+        let r#type = to_legacy_breach_type(&r#type);
 
         let legacy_row = LegacyTemperatureBreachRow {
             id,
@@ -171,7 +171,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
     }
 }
 
-fn from_legacy_type(t: &LegacyTemperatureBreachType) -> TemperatureBreachRowType {
+pub fn from_legacy_breach_type(t: &LegacyTemperatureBreachType) -> TemperatureBreachRowType {
     match t {
         LegacyTemperatureBreachType::ColdConsecutive => TemperatureBreachRowType::ColdConsecutive,
         LegacyTemperatureBreachType::HotConsecutive => TemperatureBreachRowType::HotConsecutive,
@@ -180,7 +180,7 @@ fn from_legacy_type(t: &LegacyTemperatureBreachType) -> TemperatureBreachRowType
     }
 }
 
-fn to_legacy_type(t: &TemperatureBreachRowType) -> LegacyTemperatureBreachType {
+pub fn to_legacy_breach_type(t: &TemperatureBreachRowType) -> LegacyTemperatureBreachType {
     match t {
         TemperatureBreachRowType::ColdConsecutive => LegacyTemperatureBreachType::ColdConsecutive,
         TemperatureBreachRowType::HotConsecutive => LegacyTemperatureBreachType::HotConsecutive,
