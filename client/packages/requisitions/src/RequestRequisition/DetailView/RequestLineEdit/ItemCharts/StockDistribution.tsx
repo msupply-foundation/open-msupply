@@ -168,10 +168,14 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
     [availableStockOnHand, averageMonthlyConsumption, suggestedQuantity]
   );
 
-  if (averageMonthlyConsumption === 0) return <CalculationError isAmcZero />;
-  if (suggestedQuantity === 0 && availableStockOnHand === 0)
-    return <CalculationError isSohAndQtyZero />;
-  return control;
+  const isAmcZero = averageMonthlyConsumption === 0;
+  const isSohAndQtyZero = suggestedQuantity === 0 && availableStockOnHand === 0;
+
+  return isAmcZero || isSohAndQtyZero ? (
+    <CalculationError isAmcZero={isAmcZero} isSohAndQtyZero={isSohAndQtyZero} />
+  ) : (
+    DistributionBars
+  );
 };
 
 export const StockDistribution: React.FC<StockDistributionProps> = ({
