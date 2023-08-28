@@ -70,7 +70,7 @@ export const CreateContactTraceModal: FC = () => {
     >
       <React.Suspense fallback={<div />}>
         <InputWithLabelRow
-          label={t('label.contact-trace-type')}
+          label={t('label.contact-tracing-type')}
           Input={
             <ContactTraceSearchInput
               onChange={onChangeContactTrace}
