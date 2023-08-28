@@ -34,12 +34,10 @@ const useDraftStockLine = (
   const { mutate, isLoading } = useStock.line.update();
 
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
-    if (stockLine) setStockLine({ ...stockLine, ...patch });
+    setStockLine({ ...stockLine, ...patch });
   };
 
-  const onSave = async () => {
-    if (stockLine) mutate(stockLine);
-  };
+  const onSave = async () => mutate(stockLine);
 
   return {
     draft: stockLine,
