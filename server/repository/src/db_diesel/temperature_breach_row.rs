@@ -39,17 +39,18 @@ joinable!(temperature_breach -> sensor (sensor_id));
 joinable!(temperature_breach -> store (store_id));
 joinable!(temperature_breach -> location (location_id));
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum TemperatureBreachRowType {
     ColdConsecutive,
     ColdCumulative,
+    #[default]
     HotConsecutive,
     HotCumulative,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "temperature_breach"]
 pub struct TemperatureBreachRow {
@@ -68,24 +69,6 @@ pub struct TemperatureBreachRow {
     pub threshold_duration: i32,
 }
 
-impl Default for TemperatureBreachRow {
-    fn default() -> Self {
-        TemperatureBreachRow {
-            id: Default::default(),
-            duration: Default::default(),
-            r#type: TemperatureBreachRowType::HotConsecutive,
-            sensor_id: Default::default(),
-            location_id: None,
-            store_id: None,
-            start_timestamp: Default::default(),
-            end_timestamp: Default::default(),
-            acknowledged: false,
-            threshold_minimum: Default::default(),
-            threshold_maximum: Default::default(),
-            threshold_duration: Default::default(),
-        }
-    }
-}
 pub struct TemperatureBreachRowRepository<'a> {
     connection: &'a StorageConnection,
 }

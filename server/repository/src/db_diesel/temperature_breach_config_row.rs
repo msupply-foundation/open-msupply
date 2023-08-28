@@ -30,7 +30,7 @@ table! {
 
 joinable!(temperature_breach_config -> store (store_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "temperature_breach_config"]
 pub struct TemperatureBreachConfigRow {
@@ -45,20 +45,6 @@ pub struct TemperatureBreachConfigRow {
     pub maximum_temperature: f64,
 }
 
-impl Default for TemperatureBreachConfigRow {
-    fn default() -> Self {
-        TemperatureBreachConfigRow {
-            id: Default::default(),
-            duration: Default::default(),
-            r#type: TemperatureBreachRowType::HotConsecutive,
-            description: Default::default(),
-            is_active: false,
-            store_id: None,
-            minimum_temperature: Default::default(),
-            maximum_temperature: Default::default(),
-        }
-    }
-}
 pub struct TemperatureBreachConfigRowRepository<'a> {
     connection: &'a StorageConnection,
 }
