@@ -1,14 +1,12 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
-    sync_serde::{
-        date_to_isostring, empty_str_as_option_string, naive_time,
-    },
+    sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time},
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, TemperatureLogRow, TemperatureLogRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureLogRow,
+    TemperatureLogRowRepository,
 };
 use serde::{Deserialize, Serialize};
 
@@ -50,7 +48,11 @@ impl SyncTranslation for TemperatureLogTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::TEMPERATURE_LOG,
-            dependencies: vec![LegacyTableName::LOCATION, LegacyTableName::SENSOR, LegacyTableName::STORE],
+            dependencies: vec![
+                LegacyTableName::LOCATION,
+                LegacyTableName::SENSOR,
+                LegacyTableName::STORE,
+            ],
         }
     }
 
