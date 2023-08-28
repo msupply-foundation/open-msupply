@@ -16,7 +16,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           first_name TEXT,
           last_name TEXT,
           gender TEXT,
-          date_of_birth TIMESTAMP
+          date_of_birth TIMESTAMP,
+          store_id TEXT REFERENCES store(id)
         );"#,
     )?;
 
@@ -35,7 +36,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           first_name TEXT,
           last_name TEXT,
           gender gender_type,
-          date_of_birth TIMESTAMP
+          date_of_birth TIMESTAMP,
+          store_id TEXT REFERENCES store(id)
         );
 
         ALTER TYPE document_registry_type RENAME TO document_registry_category;

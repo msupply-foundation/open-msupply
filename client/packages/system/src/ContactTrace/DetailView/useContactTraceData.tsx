@@ -6,9 +6,13 @@ import {
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../../Patient';
+import { useAuthContext } from 'packages/common/src';
 
 export type ContactTrace = {
   datetime: string;
+  location?: {
+    storeId?: string;
+  };
 };
 
 export type ContactTraceData = {
@@ -35,6 +39,8 @@ export const useContactTraceData = (
   createType: string | null,
   createPatientId: string | null
 ): { data: ContactTraceData | undefined; isLoading: boolean } => {
+  const { storeId } = useAuthContext();
+
   const [result, setResult] = useState<{
     data: ContactTraceData | undefined;
     isLoading: boolean;
@@ -65,6 +71,11 @@ export const useContactTraceData = (
           documentName: contactTrace.document.name,
           contactTrace: {
             datetime: contactTrace.datetime,
+            location: contactTrace?.storeId
+              ? {
+                  storeId: contactTrace.storeId,
+                }
+              : undefined,
           },
           schema: undefined,
           patient: contactTrace.patient ?? undefined,
@@ -96,6 +107,9 @@ export const useContactTraceData = (
         documentName: undefined,
         contactTrace: {
           datetime: creationDate.toISOString(),
+          location: {
+            storeId,
+          },
         },
         schema: registry,
         patient,

@@ -562,6 +562,7 @@ export type ContactTraceNode = {
   /** Returns the matching program enrolment for the root patient of this contact trace */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   programId: Scalars['String']['output'];
+  storeId?: Maybe<Scalars['String']['output']>;
 };
 
 export type ContactTraceResponse = ContactTraceConnector;

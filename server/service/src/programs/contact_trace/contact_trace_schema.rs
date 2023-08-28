@@ -17,6 +17,7 @@ impl Default for SchemaContactTrace {
             contact: Default::default(),
             extension: None,
             notes: None,
+            location: Default::default(),
         }
     }
 }

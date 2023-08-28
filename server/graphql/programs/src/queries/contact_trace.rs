@@ -139,6 +139,10 @@ impl ContactTraceNode {
         &self.trace_row().id
     }
 
+    pub async fn store_id(&self) -> Option<String> {
+        self.trace_row().store_id.clone()
+    }
+
     pub async fn program_id(&self) -> &str {
         &self.trace_row().program_id
     }
