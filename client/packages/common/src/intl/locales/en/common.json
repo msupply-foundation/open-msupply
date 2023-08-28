@@ -180,7 +180,7 @@
   "label.encounter-status-cancelled": "Cancelled",
   "label.encounter-status-missed": "Missed",
   "label.encounter-status-scheduled": "Scheduled",
-  "label.contact-trace-type": "Contact Trace",
+  "label.contact-tracing-type": "Contact Tracing",
   "label.trace-status-pending": "Pending",
   "label.trace-status-done": "Done",
   "label.program-enrolment-status-active": "Active",
