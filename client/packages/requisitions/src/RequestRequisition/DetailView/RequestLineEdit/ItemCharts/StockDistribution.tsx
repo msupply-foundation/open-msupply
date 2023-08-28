@@ -117,7 +117,7 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
       ? Math.round((100 * targetQuantity) / availableStockOnHand)
       : 100;
 
-  const control = useMemo(
+  const DistributionBars = useMemo(
     () => (
       <>
         <Typography variant="body1" fontWeight={700} fontSize={12}>
