@@ -80,26 +80,27 @@ export const usePopover = ({
   const show = useDebounceCallback(showCallback, [], showDebounceDelay);
   const hide = useDebounceCallback(hideCallback, [], hideDebounceDelay);
 
-  const [internalAnchorEl, setInternalAnchorEl] =
-    useState<VirtualElement | null>(null);
-  const [internalIsOpen, internalSetOpen] = useState(false);
+  const PopoverComponent: FC<
+    Partial<PropsWithChildren<BasePopoverProps>>
+  > = props => {
+    const [internalAnchorEl, setInternalAnchorEl] =
+      useState<VirtualElement | null>(null);
 
-  const Popover: FC<Partial<PropsWithChildren<BasePopoverProps>>> =
-    React.useCallback(
-      props => {
-        isOpenCallback.current = internalSetOpen;
-        setAnchorElCallback.current = setInternalAnchorEl;
+    const [internalIsOpen, internalSetOpen] = useState(false);
 
-        return (
-          <BasePopover
-            {...props}
-            anchorEl={internalAnchorEl}
-            isOpen={internalIsOpen}
-          />
-        );
-      },
-      [internalAnchorEl, internalIsOpen]
+    isOpenCallback.current = internalSetOpen;
+    setAnchorElCallback.current = setInternalAnchorEl;
+
+    return (
+      <BasePopover
+        {...props}
+        anchorEl={internalAnchorEl}
+        isOpen={internalIsOpen}
+      />
     );
+  };
+
+  const Popover = React.useCallback(PopoverComponent, []);
 
   return {
     Popover,
