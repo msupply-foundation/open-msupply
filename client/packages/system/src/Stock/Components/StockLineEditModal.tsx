@@ -17,26 +17,20 @@ interface StockLineEditModalProps {
   isOpen: boolean;
   onClose: () => void;
 
-  stockLine: StockLineRowFragment | null;
+  stockLine: StockLineRowFragment;
 }
 
 interface UseDraftStockLineControl {
-  draft: StockLineRowFragment | null;
+  draft: StockLineRowFragment;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
   onSave: () => Promise<void>;
   isLoading: boolean;
 }
 
 const useDraftStockLine = (
-  seed: StockLineRowFragment | null
+  seed: StockLineRowFragment
 ): UseDraftStockLineControl => {
-  const [stockLine, setStockLine] = useState<StockLineRowFragment | null>(() =>
-    seed
-      ? {
-          ...seed,
-        }
-      : null
-  );
+  const [stockLine, setStockLine] = useState<StockLineRowFragment>(seed);
   const { mutate, isLoading } = useStock.line.update();
 
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
@@ -68,8 +62,6 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   });
 
   const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
-
-  if (!stockLine || !draft) return null;
 
   const tabs = [
     {
