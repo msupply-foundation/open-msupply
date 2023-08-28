@@ -211,6 +211,7 @@ impl PullUpsertRecord {
             Barcode(record) => BarcodeRowRepository::new(con).sync_upsert_one(record),
             Sensor(record) => SensorRowRepository::new(con).upsert_one(record),
             TemperatureLog(record) => TemperatureLogRowRepository::new(con).upsert_one(record),
+            TemperatureBreach(record) => TemperatureBreachRowRepository::new(con).upsert_one(record),
             Clinician(record) => ClinicianRowRepository::new(con).sync_upsert_one(record),
             ClinicianStoreJoin(record) => {
                 ClinicianStoreJoinRowRepository::new(con).sync_upsert_one(record)
