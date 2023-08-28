@@ -31,7 +31,7 @@ joinable!(temperature_log -> sensor (sensor_id));
 joinable!(temperature_log -> store (store_id));
 joinable!(temperature_log -> location (location_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "temperature_log"]
 pub struct TemperatureLogRow {
@@ -43,18 +43,6 @@ pub struct TemperatureLogRow {
     pub timestamp: NaiveDateTime,
 }
 
-impl Default for TemperatureLogRow {
-    fn default() -> Self {
-        TemperatureLogRow {
-            id: Default::default(),
-            temperature: Default::default(),
-            sensor_id: Default::default(),
-            location_id: None,
-            store_id: None,
-            timestamp: Default::default(),
-        }
-    }
-}
 pub struct TemperatureLogRowRepository<'a> {
     connection: &'a StorageConnection,
 }
