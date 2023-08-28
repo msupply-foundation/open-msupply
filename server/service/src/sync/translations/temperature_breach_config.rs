@@ -1,16 +1,16 @@
-use crate::sync::{
-    api::RemoteSyncRecordV5,
-    sync_serde::empty_str_as_option_string,
-};
+use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository, StorageConnection,
-    SyncBufferRow, TemperatureBreachRowType,
+    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachConfigRow,
+    TemperatureBreachConfigRowRepository, TemperatureBreachRowType,
 };
 use serde::{Deserialize, Serialize};
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation, temperature_breach::{LegacyTemperatureBreachType, from_legacy_breach_type, to_legacy_breach_type},
+    temperature_breach::{
+        from_legacy_breach_type, to_legacy_breach_type, LegacyTemperatureBreachType,
+    },
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
 };
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TEMPERATURE_BREACH_CONFIG;
@@ -59,7 +59,7 @@ impl SyncTranslation for TemperatureBreachConfigTranslation {
 
         let data = serde_json::from_str::<LegacyTemperatureBreachConfigRow>(&sync_record.data)?;
         let r#type = from_legacy_breach_type(&data.r#type);
-        
+
         let result = TemperatureBreachConfigRow {
             id: data.id,
             duration: data.duration,
@@ -131,8 +131,11 @@ mod tests {
         use crate::sync::test::test_data::temperature_breach_config as test_data;
         let translator = TemperatureBreachConfigTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_temperature_breach_config_translation", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all(
+            "test_temperature_breach_config_translation",
+            MockDataInserts::none(),
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator

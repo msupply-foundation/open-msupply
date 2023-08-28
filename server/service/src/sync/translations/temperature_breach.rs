@@ -1,14 +1,12 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
-    sync_serde::{
-        date_to_isostring, empty_str_as_option_string, naive_time,
-    },
+    sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time},
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, TemperatureBreachRow, TemperatureBreachRowRepository, StorageConnection,
-    SyncBufferRow, TemperatureBreachRowType,
+    ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachRow,
+    TemperatureBreachRowRepository, TemperatureBreachRowType,
 };
 use serde::{Deserialize, Serialize};
 
@@ -74,7 +72,11 @@ impl SyncTranslation for TemperatureBreachTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::TEMPERATURE_BREACH,
-            dependencies: vec![LegacyTableName::LOCATION, LegacyTableName::SENSOR, LegacyTableName::STORE],
+            dependencies: vec![
+                LegacyTableName::LOCATION,
+                LegacyTableName::SENSOR,
+                LegacyTableName::STORE,
+            ],
         }
     }
 
@@ -91,7 +93,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
         let r#type = from_legacy_breach_type(&data.r#type);
         let start_timestamp = NaiveDateTime::new(data.start_date, data.start_time);
         let end_timestamp = NaiveDateTime::new(data.end_date, data.end_time);
-        
+
         let result = TemperatureBreachRow {
             id: data.id,
             duration: data.duration,
@@ -199,8 +201,11 @@ mod tests {
         use crate::sync::test::test_data::temperature_breach as test_data;
         let translator = TemperatureBreachTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_temperature_breach_translation", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all(
+            "test_temperature_breach_translation",
+            MockDataInserts::none(),
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
