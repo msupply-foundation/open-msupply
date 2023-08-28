@@ -156,7 +156,7 @@ export const isInboundListItemDisabled = (
 export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
 
-export const useIsInboundStatusChangeDisabled = (
+export const isInboundStatusChangeDisabled = (
   inbound: InboundFragment
 ): boolean => {
   if (inbound.onHold) return true;
