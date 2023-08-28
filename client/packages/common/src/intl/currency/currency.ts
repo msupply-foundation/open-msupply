@@ -139,8 +139,3 @@ export const useFormatCurrency = (dp?: number) => {
   const { c } = useCurrency(dp);
   return (value: currency.Any) => c(value).format();
 };
-
-export const useCurrencyFormat = (value: currency.Any) => {
-  const { c } = useCurrency();
-  return c(value).format();
-};
