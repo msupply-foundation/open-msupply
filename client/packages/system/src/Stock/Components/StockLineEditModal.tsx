@@ -30,7 +30,7 @@ interface UseDraftStockLineControl {
 const useDraftStockLine = (
   seed: StockLineRowFragment
 ): UseDraftStockLineControl => {
-  const [stockLine, setStockLine] = useState<StockLineRowFragment>(seed);
+  const [stockLine, setStockLine] = useState<StockLineRowFragment>({ ...seed });
   const { mutate, isLoading } = useStock.line.update();
 
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
