@@ -18,6 +18,8 @@ import {
 import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
+import { getItemVariantPackUnit } from '../../Item/Components/ItemVariant';
+import { useInitUnitStore } from '../../Item';
 
 const StockListComponent: FC = () => {
   const {
@@ -31,6 +33,8 @@ const StockListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
   const { data, isLoading, isError } = useStock.line.list();
   const [repackId, setRepackId] = React.useState<string | null>(null);
   const EditStockLineCell = <T extends StockLineRowFragment>({
@@ -79,11 +83,12 @@ const StockListComponent: FC = () => {
         },
       ],
       ['locationName', { sortable: false }],
-      [
-        'itemUnit',
-        { accessor: ({ rowData }) => rowData.item.unitName, sortable: false },
-      ],
-      'packSize',
+      {
+        key: 'packUnit',
+        label: 'label.pack-unit',
+        Cell: getItemVariantPackUnit(rowData => rowData.itemId),
+        accessor: ({ rowData }) => rowData.packSize,
+      },
       [
         'numberOfPacks',
         {

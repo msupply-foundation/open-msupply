@@ -2119,14 +2119,6 @@ export type ItemStatsNode = {
   averageMonthlyConsumption: Scalars['Float']['output'];
 };
 
-export type ItemVariantNode = {
-  __typename: 'ItemVariantNode';
-  id: Scalars['String']['output'];
-  mostUsed: Scalars['String']['output'];
-  unit: Scalars['String']['output'];
-  variants: Array<VariantNode>;
-};
-
 export type ItemsResponse = ItemConnector;
 
 export type JsonschemaNode = {
@@ -3416,7 +3408,7 @@ export type Queries = {
   invoiceCounts: InvoiceCounts;
   invoices: InvoicesResponse;
   itemCounts: ItemCounts;
-  itemVariantsList: Array<ItemVariantNode>;
+  itemVariantsList: Array<UnitVariantNode>;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
   lastSuccessfulUserSync: UpdateUserNode;
@@ -4600,6 +4592,14 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   __typename: 'UniqueValueViolation';
   description: Scalars['String']['output'];
   field: UniqueValueKey;
+};
+
+export type UnitVariantNode = {
+  __typename: 'UnitVariantNode';
+  itemId: Scalars['String']['output'];
+  mostUsedVariantId: Scalars['String']['output'];
+  unitName?: Maybe<Scalars['String']['output']>;
+  variants: Array<VariantNode>;
 };
 
 export type UpdateDisplaySettingsError = {

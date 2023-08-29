@@ -239,10 +239,10 @@ fragment Variant on VariantNode {
   shortName
 }
 
-fragment ItemVariant on ItemVariantNode {
-  id
-  mostUsed
-  unit
+fragment UnitVariant on UnitVariantNode {
+  itemId
+  mostUsedVariantId
+  unitName
   variants {
     ...Variant
   }
@@ -250,6 +250,6 @@ fragment ItemVariant on ItemVariantNode {
 
 query itemVariantsList($storeId: String!) {
   itemVariantsList(storeId: $storeId) {
-    ...ItemVariant
+    ...UnitVariant
   }
 }

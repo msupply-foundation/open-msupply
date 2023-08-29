@@ -159,7 +159,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
-    itemVariantsList: async () => {
+    unitVariantsList: async () => {
       const result = await sdk.itemVariantsList({ storeId });
 
       return result.itemVariantsList;
