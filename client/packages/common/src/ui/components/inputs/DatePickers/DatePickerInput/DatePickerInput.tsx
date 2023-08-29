@@ -5,8 +5,9 @@ interface DatePickerInputProps {
   value: Date | null;
   onChange: (value: Date | null) => void;
   disabled?: boolean;
-  onError?: () => void;
+  onError?: (validationError: string) => void;
   width?: number;
+  error?: string | undefined;
 }
 
 export const DatePickerInput: FC<DatePickerInputProps> = ({
@@ -15,6 +16,7 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
   disabled = false,
   onError,
   width,
+  error,
 }) => {
   return (
     <BaseDatePickerInput
@@ -24,6 +26,7 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
       value={value || null}
       onError={onError}
       width={width}
+      error={error}
     />
   );
 };
