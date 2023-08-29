@@ -16,6 +16,22 @@ export const BasicCell = <T extends RecordWithId>({
   localisedDate,
   isError,
 }: CellProps<T>): ReactElement => (
+  <InnerBasicCell
+    isError={isError}
+    value={column.formatter(column.accessor({ rowData }), {
+      t: localisedText,
+      d: localisedDate,
+    })}
+  />
+);
+
+export const InnerBasicCell = ({
+  isError,
+  value,
+}: {
+  isError?: boolean;
+  value: string;
+}): ReactElement => (
   <Box
     sx={{
       border: theme =>
@@ -30,10 +46,7 @@ export const BasicCell = <T extends RecordWithId>({
         textOverflow: 'ellipsis',
       }}
     >
-      {column.formatter(column.accessor({ rowData }), {
-        t: localisedText,
-        d: localisedDate,
-      })}
+      {value}
     </div>
   </Box>
 );

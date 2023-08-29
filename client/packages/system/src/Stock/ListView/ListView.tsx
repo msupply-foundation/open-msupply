@@ -18,7 +18,7 @@ import {
 import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
-import { getItemVariantPackUnit } from '../../Item/Components/ItemVariant';
+import { getPackUnitCell } from '../../Item/Components/ItemVariant';
 import { useInitUnitStore } from '../../Item';
 
 const StockListComponent: FC = () => {
@@ -86,8 +86,10 @@ const StockListComponent: FC = () => {
       {
         key: 'packUnit',
         label: 'label.pack-unit',
-        Cell: getItemVariantPackUnit(rowData => rowData.itemId),
-        accessor: ({ rowData }) => rowData.packSize,
+        Cell: getPackUnitCell({
+          getItemId: r => r.itemId,
+          getPackSize: r => r.packSize,
+        }),
       },
       [
         'numberOfPacks',
