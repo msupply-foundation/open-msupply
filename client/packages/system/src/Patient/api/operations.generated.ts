@@ -50,6 +50,22 @@ export type LinkPatientToStoreMutationVariables = Types.Exact<{
 
 export type LinkPatientToStoreMutation = { __typename: 'Mutations', linkPatientToStore: { __typename: 'LinkPatientPatientToStoreError', error: { __typename: 'ConnectionError', description: string } } | { __typename: 'NameStoreJoinNode', id: string, storeId: string, nameId: string } };
 
+export type InsertProgramPatientMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertProgramPatientInput;
+}>;
+
+
+export type InsertProgramPatientMutation = { __typename: 'Mutations', insertProgramPatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } };
+
+export type UpdateProgramPatientMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateProgramPatientInput;
+}>;
+
+
+export type UpdateProgramPatientMutation = { __typename: 'Mutations', updateProgramPatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } };
+
 export type InsertPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.InsertPatientInput;
@@ -186,6 +202,26 @@ export const LinkPatientToStoreDocument = gql`
   }
 }
     `;
+export const InsertProgramPatientDocument = gql`
+    mutation insertProgramPatient($storeId: String!, $input: InsertProgramPatientInput!) {
+  insertProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
+    }
+  }
+}
+    ${PatientRowFragmentDoc}`;
+export const UpdateProgramPatientDocument = gql`
+    mutation updateProgramPatient($storeId: String!, $input: UpdateProgramPatientInput!) {
+  updateProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
+    }
+  }
+}
+    ${PatientRowFragmentDoc}`;
 export const InsertPatientDocument = gql`
     mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
@@ -228,6 +264,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     linkPatientToStore(variables: LinkPatientToStoreMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LinkPatientToStoreMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<LinkPatientToStoreMutation>(LinkPatientToStoreDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'linkPatientToStore', 'mutation');
+    },
+    insertProgramPatient(variables: InsertProgramPatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertProgramPatientMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertProgramPatientMutation>(InsertProgramPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertProgramPatient', 'mutation');
+    },
+    updateProgramPatient(variables: UpdateProgramPatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateProgramPatientMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateProgramPatientMutation>(UpdateProgramPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateProgramPatient', 'mutation');
     },
     insertPatient(variables: InsertPatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertPatientMutation>(InsertPatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPatient', 'mutation');
@@ -321,6 +363,40 @@ export const mockCentralPatientSearchQuery = (resolver: ResponseResolver<GraphQL
 export const mockLinkPatientToStoreMutation = (resolver: ResponseResolver<GraphQLRequest<LinkPatientToStoreMutationVariables>, GraphQLContext<LinkPatientToStoreMutation>, any>) =>
   graphql.mutation<LinkPatientToStoreMutation, LinkPatientToStoreMutationVariables>(
     'linkPatientToStore',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertProgramPatientMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertProgramPatient })
+ *   )
+ * })
+ */
+export const mockInsertProgramPatientMutation = (resolver: ResponseResolver<GraphQLRequest<InsertProgramPatientMutationVariables>, GraphQLContext<InsertProgramPatientMutation>, any>) =>
+  graphql.mutation<InsertProgramPatientMutation, InsertProgramPatientMutationVariables>(
+    'insertProgramPatient',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateProgramPatientMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateProgramPatient })
+ *   )
+ * })
+ */
+export const mockUpdateProgramPatientMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateProgramPatientMutationVariables>, GraphQLContext<UpdateProgramPatientMutation>, any>) =>
+  graphql.mutation<UpdateProgramPatientMutation, UpdateProgramPatientMutationVariables>(
+    'updateProgramPatient',
     resolver
   )
 
