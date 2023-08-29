@@ -1,71 +1,79 @@
-import React, { PropsWithChildren, createContext, useContext } from 'react';
-import { useItemVariants } from '../api';
+import { useUnitVariantList } from '../api';
+import { create } from 'zustand';
+import isEqual from 'lodash/isEqual';
+import { UnitVariantNode } from '@common/types';
 import { NumUtils } from '@common/utils';
+import { useEffect } from 'react';
 
-export const useUnitVariant = (itemId?: string) => {
-  const { data } = useItemVariants();
-  const item = data?.find(item => item.id === itemId);
-
-  const asPackUnit = (packSize: number) => {
-    return (
-      item?.variants.find(variant => variant.packSize === packSize)
-        ?.shortName || `${item?.unit} x ${packSize}`
-    );
+interface UnitState {
+  // From back end
+  items: {
+    [itemId: string]: UnitVariantNode;
   };
+  // Should be called on startup when fetching multi unit variants
+  setItems: (newItems: UnitVariantNode[]) => void;
+}
 
-  // calculates SOH, AMC, MOS, Target, Suggested and Requested based on default or user selected variant
-  const numberOfPacksFromQuantity = (
-    totalQuantity: number,
-    packSize: number
-  ) => {
-    return NumUtils.round(totalQuantity / packSize, 2);
+const useUnitStore = create<UnitState>(set => {
+  return {
+    items: {},
+    userSelected: {},
+    // TODO add user selected
+
+    setItems: newItems =>
+      set(() => {
+        const items = newItems.reduce(
+          (acc, item) => ({ [item.itemId]: item, ...acc }),
+          {}
+        );
+        return { items };
+      }),
   };
+});
 
-  const options = item?.variants ?? [];
+export const useInitUnitStore = () => {
+  const { setItems } = useUnitStore();
+  // This should happen on startup and when store is changed (for store changed, calculated mostUsed and app data userSelecte would change)
+  // Suggested places:
+  // https://github.com/openmsupply/open-msupply/blob/312b837c3d17a1ead05e140b7668cd5f45dffbc3/client/packages/common/src/authentication/api/hooks/useLogin.ts#L107
+  // https://github.com/openmsupply/open-msupply/blob/312b837c3d17a1ead05e140b7668cd5f45dffbc3/client/packages/common/src/authentication/AuthContext.tsx#L125
+  const { data } = useUnitVariantList();
 
-  // const quantityFromNumberOfPacks - reverse of above
+  useEffect(() => {
+    if (!data) return;
+    setItems(data || []);
+  }, [data]);
 
-  // set in app data
-  const setDefaultOption = () => {};
+  // TODO add user selected from app data
+};
 
-  const defaultOption = () => {
-    // TODO: search app data first to see if user has preferred preference
-    return item?.variants.find(variant =>
-      variant.longName.includes(item?.unit)
-    );
-  };
+export const useUnitVariant = (itemId: string) => {
+  // TODO [state.items[itemId], state.userSelected[itemdId]]
+  const item = useUnitStore(state => state.items[itemId], isEqual);
+  if (!item) {
+    return {
+      asPackUnit: (packSize: number) => String(packSize),
+      numberOfPacksFromQuantity: (totalQuantity: number) => totalQuantity,
+    };
+  }
+
+  const mostUsedVariant = item.variants.find(
+    ({ id }) => id === item.mostUsedVariantId
+  )?.packSize;
+  const defaultPackSize = /* userSelectedVariantId || */ mostUsedVariant || 1;
 
   return {
-    asPackUnit,
-    numberOfPacksFromQuantity,
-    options,
-    setDefaultOption,
-    defaultOption,
+    asPackUnit: (packSize: number) => {
+      let foundVariant = item.variants.find(
+        variant => variant.packSize === packSize
+      );
+
+      if (foundVariant) return foundVariant.shortName;
+      if (item.unitName) return `${item?.unitName} x ${packSize}`;
+      return `${packSize}`;
+    },
+    numberOfPacksFromQuantity: (totalQuantity: number) => {
+      NumUtils.round(totalQuantity / defaultPackSize, 2);
+    },
   };
-};
-
-export type UseUnitVariantContext = ReturnType<typeof useUnitVariant>;
-
-const UnitVariantContext = createContext<UseUnitVariantContext>({} as any);
-
-export const useUnitVariantContext = () => {
-  const context = useContext(UnitVariantContext);
-
-  if (!context) throw new Error('Context does not exist');
-
-  return context;
-};
-
-type UnitVariantProps = PropsWithChildren<{ itemId?: string }>;
-
-export const UnitVariantProvider: React.FC<
-  PropsWithChildren<UnitVariantProps>
-> = ({ itemId, children }) => {
-  const state = useUnitVariant(itemId);
-
-  return (
-    <UnitVariantContext.Provider value={state}>
-      {children}
-    </UnitVariantContext.Provider>
-  );
 };
