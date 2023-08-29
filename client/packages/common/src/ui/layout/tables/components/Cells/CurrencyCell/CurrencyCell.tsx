@@ -1,6 +1,6 @@
 import React from 'react';
 import { Typography } from '@mui/material';
-import { useCurrencyFormat } from '@common/intl';
+import { useFormatCurrency } from '@common/intl';
 import { RecordWithId } from '@common/types';
 import { CellProps } from '../../../columns/types';
 
@@ -9,7 +9,8 @@ export const CurrencyCell = <T extends RecordWithId>({
   rowData,
 }: CellProps<T>) => {
   const currencyValue = column.accessor({ rowData }) as string;
-  const formattedCurrency = useCurrencyFormat(currencyValue);
+  const formatCurrency = useFormatCurrency();
+  const formattedCurrency = formatCurrency(currencyValue);
 
   return (
     <Typography

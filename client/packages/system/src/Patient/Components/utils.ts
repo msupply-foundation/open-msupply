@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { usePatient } from '../api';
-import { useDebounceCallback } from '@common/hooks';
+import { useDebouncedValueCallback } from '@common/hooks';
 
-export const searchPatient = () => {
+export const useSearchPatient = () => {
   const [searchText, setSearchText] = useState('');
   const { mutate, isLoading, data, isSuccess } = usePatient.utils.search();
 
-  const debounced = useDebounceCallback(
+  const debounced = useDebouncedValueCallback(
     value => mutate({ nameOrCode: value }),
     [searchText],
     500

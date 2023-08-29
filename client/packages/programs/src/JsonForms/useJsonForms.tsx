@@ -5,7 +5,6 @@ import {
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
 import { JsonData, JsonForm } from './common';
-import { useDocumentLoader } from './useDocumentLoader';
 import _ from 'lodash';
 import {
   JsonFormsRendererRegistryEntry,
@@ -33,6 +32,8 @@ import {
   searchTester,
   programEventTester,
   ProgramEvent,
+  historicEncounterDataTester,
+  HistoricEncounterData,
 } from './components';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
@@ -57,23 +58,6 @@ const isEqualIgnoreUndefined = (
   return _.isEqualWith(a, b, comparisonFunc);
 };
 
-export type SavedDocument = {
-  id: string;
-  name: string;
-  type: string;
-};
-
-export type SaveDocumentMutation = (
-  jsonData: unknown,
-  formSchemaId: string,
-  parent?: string
-) => Promise<SavedDocument>;
-
-interface JsonFormOptions {
-  onCancel?: () => void;
-  handleSave?: SaveDocumentMutation;
-}
-
 export interface SchemaData {
   formSchemaId?: string;
   jsonSchema: JsonSchema;
@@ -86,7 +70,11 @@ export interface SchemaData {
 export interface FormInputData {
   data: JsonData;
   schema: SchemaData;
-  /** Indicates if data is newly created, i.e. if the data isDirty */
+  /**
+   * Indicates if data is newly created, i.e. if the data isDirty.
+   * For example, if a patient data may come from the NameRow instead of a document and thus is
+   * can be marked with `isCreating: false`.
+   */
   isCreating: boolean;
 }
 
@@ -104,27 +92,45 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: decisionTreeTester, renderer: DecisionTreeControl },
   { tester: searchTester, renderer: Search },
   { tester: programEventTester, renderer: ProgramEvent },
+  { tester: historicEncounterDataTester, renderer: HistoricEncounterData },
 ];
 
 /**
- * @param docName the document name (if the document already exist)
- * @param inputData the initial data of of the document, e.g. if the the document doesn't exist yet
- * or if there isn't a document.
+ * Data input for the useJsonForms hook.
+ *
+ * The data and save method can be provided by an external hook.
+ */
+export type JsonFormData<R> = {
+  /** Initial form data */
+  loadedData: JsonData;
+  /** Initial form data is still loading */
+  isLoading: boolean;
+  /** There was an error loading the initial form data */
+  error: string | undefined;
+  /** Indicates if the initial form data is going be created (is dirty) */
+  isCreating: boolean;
+  /** The schema of the data */
+  schema: SchemaData | undefined;
+  /** Method to update the form data */
+  save?: (data: unknown) => Promise<R>;
+};
+
+/**
+ * This hook add provides functionality to save form data and keep track if form data has been
+ * modified.
+ *
+ * What data is shown and how it is saved can be customized through the `jsonFormData` form
+ * parameter.
  */
 
-export const useJsonForms = (
-  docName: string | undefined,
-  patientId: string | undefined,
-  options: JsonFormOptions = {},
-  inputData?: FormInputData
+export const useJsonForms = <R,>(
+  config: {
+    documentName?: string;
+    patientId?: string;
+  },
+  jsonFormData: JsonFormData<R>
 ) => {
-  const {
-    data: loadedData,
-    isLoading,
-    documentId,
-    schema,
-    error,
-  } = useDocumentLoader(docName, inputData);
+  const { loadedData, isLoading, error, save, isCreating } = jsonFormData;
   const [initialData, setInitialData] = useState<JsonData | undefined>(
     loadedData
   );
@@ -142,7 +148,7 @@ export const useJsonForms = (
   useConfirmOnLeaving(isDirty);
 
   // returns the document name
-  const saveData = async (): Promise<string | undefined> => {
+  const saveData = async (): Promise<R | undefined> => {
     if (data === undefined) {
       return undefined;
     }
@@ -150,17 +156,13 @@ export const useJsonForms = (
 
     // Run mutation...
     try {
-      const result = await options.handleSave?.(
-        data,
-        schema?.formSchemaId ?? '',
-        documentId
-      );
+      const result = await save?.(data);
 
       const successSnack = success(t('success.data-saved'));
       successSnack();
 
       setInitialData(data);
-      return result?.name;
+      return result;
     } catch (err) {
       const errorSnack = errorNotification(t('error.problem-saving'));
       errorSnack();
@@ -183,19 +185,20 @@ export const useJsonForms = (
       isSaving ||
       isLoading ||
       // document doesn't exist yet; always set the isDirty flag
-      !!inputData?.isCreating ||
+      isCreating ||
       !isEqualIgnoreUndefined(initialData, data);
     setIsDirty(dirty);
     if (data === undefined) {
       setData(initialData);
     }
-  }, [initialData, data, isSaving, isLoading, inputData]);
+  }, [initialData, data, isSaving, isLoading, isCreating]);
 
   useEffect(() => {
     setData(initialData);
     return () => setIsDirty(false);
   }, [initialData]);
 
+  const schema = jsonFormData.schema;
   return {
     JsonForm: (
       <JsonForm
@@ -207,10 +210,7 @@ export const useJsonForms = (
         setError={setValidationError}
         updateData={updateData}
         additionalRenderers={additionalRenderers}
-        config={{
-          documentName: docName,
-          patientId,
-        }}
+        config={config}
       />
     ),
     data,

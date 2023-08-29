@@ -29,8 +29,6 @@ export const AddFromScannerButtonComponent = ({
   const { error, warning } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  if (!isEnabled) return null;
-
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
       const { content, gtin, batch } = result;
@@ -88,6 +86,8 @@ export const AddFromScannerButtonComponent = ({
     ],
     [isScanning]
   );
+
+  if (!isEnabled) return null;
 
   return (
     <Tooltip title={isConnected ? '' : t('error.scanner-not-connected')}>
