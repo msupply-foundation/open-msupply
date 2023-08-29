@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   Autocomplete,
   AutocompleteOptionRenderer,
@@ -6,7 +6,6 @@ import {
   DefaultAutocompleteItemOption,
   DocumentRegistryCategoryNode,
   Typography,
-  useBufferState,
 } from '@openmsupply-client/common';
 import {
   useDocumentRegistry,
@@ -16,7 +15,6 @@ import {
 interface ContactTraceSearchInputProps {
   onChange: (type: DocumentRegistryFragment) => void;
   width?: number;
-  value: DocumentRegistryFragment | null;
   disabled?: boolean;
 }
 
@@ -36,7 +34,6 @@ const getContactTraceOptionRenderer =
 export const ContactTraceSearchInput: FC<ContactTraceSearchInputProps> = ({
   onChange,
   width = 250,
-  value,
   disabled = false,
 }) => {
   const { data, isLoading } = useDocumentRegistry.get.documentRegistries({
@@ -46,7 +43,17 @@ export const ContactTraceSearchInput: FC<ContactTraceSearchInputProps> = ({
       },
     },
   });
-  const [buffer, setBuffer] = useBufferState(value);
+  const [registry, setRegistry] = useState<
+    DocumentRegistryFragment | undefined
+  >();
+
+  useEffect(() => {
+    if (!isLoading && data && data?.nodes.length === 1) {
+      const defaultRegistry = data?.nodes[0];
+      setRegistry(defaultRegistry);
+      defaultRegistry && onChange(defaultRegistry);
+    }
+  }, [data, isLoading]);
   const OptionRenderer = getContactTraceOptionRenderer();
 
   return (
@@ -54,15 +61,16 @@ export const ContactTraceSearchInput: FC<ContactTraceSearchInputProps> = ({
       disabled={disabled}
       clearable={false}
       value={
-        buffer && {
-          ...buffer,
-          label: buffer.name ?? '',
-        }
+        (registry && {
+          ...registry,
+          label: registry.name ?? '',
+        }) ??
+        null
       }
       loading={isLoading}
-      onChange={(_, name) => {
-        setBuffer(name);
-        name && onChange(name);
+      onChange={(_, entry) => {
+        setRegistry(entry ?? undefined);
+        entry && onChange(entry);
       }}
       options={data?.nodes ?? []}
       renderOption={OptionRenderer}

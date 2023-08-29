@@ -74,7 +74,6 @@ export const CreateContactTraceModal: FC = () => {
           Input={
             <ContactTraceSearchInput
               onChange={onChangeContactTrace}
-              value={null}
               width={250}
             />
           }
