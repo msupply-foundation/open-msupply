@@ -3137,6 +3137,13 @@ export type PeriodNode = {
   startDate: Scalars['NaiveDate']['output'];
 };
 
+export type PluginNode = {
+  __typename: 'PluginNode';
+  config: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   serviceTotalAfterTax: Scalars['Float']['output'];
@@ -3368,6 +3375,7 @@ export type Queries = {
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
+  plugins: Array<PluginNode>;
   /**
    * Creates a printed report.
    *

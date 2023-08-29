@@ -2,13 +2,13 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const CopyPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-// const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
+const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
 const path = require('path');
-// const deps = require('./package.json').dependencies;
+const dependencies = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
-
+ 
 class DummyWebpackPlugin {
   apply(compiler) {
     compiler.hooks.run.tap('DummyWebpackPlugin', () => {});
@@ -110,7 +110,7 @@ module.exports = env => {
     },
     plugins: [
       new ReactRefreshWebpackPlugin(),
-      new webpack.DefinePlugin({ API_HOST: JSON.stringify(env.API_HOST) }),
+      new webpack.DefinePlugin({ API_HOST: JSON.stringify(env.API_HOST), PLUGIN_URL: JSON.stringify(env.PLUGIN_URL) }),
       bundleAnalyzerPlugin,
       new HtmlWebpackPlugin({
         favicon: './public/favicon.ico',
@@ -134,36 +134,27 @@ module.exports = env => {
           },
         ],
       }),
-      // new ModuleFederationPlugin({
-      //   name: 'host',
-      //   filename: 'remoteEntry.js',
-      //   remotes: {
-      //     customers: 'customers@http://localhost:3007/remoteEntry.js',
-      //     dashboard: 'dashboard@http://localhost:3004/remoteEntry.js',
-      //     invoices: 'invoices@http://localhost:3005/remoteEntry.js',
-      //   },
-      //   exposes: {
-      //     './Host': './src/Host',
-      //   },
-      //   shared: [
-      //     {
-      //       ...deps,
-      //       react: {
-      //         singleton: true,
-      //         requiredVersion: deps.react,
-      //       },
-      //       'react-dom': {
-      //         singleton: true,
-      //         requiredVersion: deps['react-dom'],
-      //       },
-      //     },
-      //     {
-      //       '@openmsupply-client/common': {
-      //         requiredVersion: require('../common/package.json').version,
-      //       },
-      //     },
-      //   ],
-      // }),
+      new ModuleFederationPlugin({
+        name: 'host',
+        shared: [
+          {
+            '@openmsupply-client/common': {
+              eager: true,
+            },    
+            react: {
+              singleton: true,
+              eager: true,
+              requiredVersion: dependencies.react,
+            },
+            'react-dom': {
+              singleton: true,
+              eager: true,
+              requiredVersion: dependencies['react-dom'],
+            },
+            'react-singleton-context': {singleton: true, eager: true},
+          },
+        ],
+      }),
     ],
   };
 };
