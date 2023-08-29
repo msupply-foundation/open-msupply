@@ -47,6 +47,8 @@ pub enum ContactTraceSortFieldInput {
     ContactTraceId,
     FirstName,
     LastName,
+    DateOfBirth,
+    Gender,
 }
 
 #[derive(InputObject)]
@@ -67,6 +69,8 @@ impl ContactTraceSortInput {
             ContactTraceSortFieldInput::ContactTraceId => ContactTraceSortField::ContactTraceId,
             ContactTraceSortFieldInput::FirstName => ContactTraceSortField::FirstName,
             ContactTraceSortFieldInput::LastName => ContactTraceSortField::LastName,
+            ContactTraceSortFieldInput::DateOfBirth => ContactTraceSortField::DateOfBirth,
+            ContactTraceSortFieldInput::Gender => ContactTraceSortField::Gender,
         };
 
         ContactTraceSort {

@@ -28,7 +28,7 @@ export const useContactTraceListColumns = ({
     },
     {
       key: 'datetime',
-      label: 'label.date',
+      label: 'label.date-created',
       formatter: dateString =>
         dateString ? localisedDate((dateString as string) || '') : '',
     },
@@ -41,10 +41,15 @@ export const useContactTraceListColumns = ({
       label: 'label.last-name',
     },
     {
-      key: 'age',
+      key: 'gender',
+      label: 'label.gender',
+    },
+    {
+      key: 'dateOfBirth',
       label: 'label.age',
       align: ColumnAlign.Right,
       width: 175,
+      accessor: ({ rowData }) => rowData.age,
     },
   ];
 

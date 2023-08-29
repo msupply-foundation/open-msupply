@@ -569,8 +569,10 @@ export type ContactTraceResponse = ContactTraceConnector;
 
 export enum ContactTraceSortFieldInput {
   ContactTraceId = 'contactTraceId',
+  DateOfBirth = 'dateOfBirth',
   Datetime = 'datetime',
   FirstName = 'firstName',
+  Gender = 'gender',
   LastName = 'lastName',
   PatientId = 'patientId',
   ProgramId = 'programId'
