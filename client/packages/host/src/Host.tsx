@@ -1,6 +1,5 @@
 import React from 'react';
 import Bugsnag from '@bugsnag/js';
-import 'react-singleton-context';
 import {
   BrowserRouter,
   Routes,
