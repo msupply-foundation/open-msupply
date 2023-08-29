@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from 'react';
 import { BasicTextInput } from '../TextInput';
 import { CloseIcon, SearchIcon } from '@common/icons';
-import { useDebounceCallback } from '@common/hooks';
+import { useDebouncedValueCallback } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
 import { Box } from '@mui/material';
 import { IconButton } from '@common/components';
@@ -54,7 +54,7 @@ export const SearchBar: FC<SearchBarProps> = ({
     setBuffer(value);
   }, [value]);
 
-  const debouncedOnChange = useDebounceCallback(
+  const debouncedOnChange = useDebouncedValueCallback(
     value => {
       onChange(value);
       setLoading(false);

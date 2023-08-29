@@ -132,7 +132,7 @@ const StockListComponent: FC = () => {
           stockLine={data?.nodes.find(({ id }) => id === repackId) ?? null}
         />
       )}
-      {isOpen && (
+      {isOpen && entity && (
         <StockLineEditModal
           isOpen={isOpen}
           onClose={onClose}

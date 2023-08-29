@@ -1,5 +1,4 @@
 import {
-  useCurrencyFormat,
   useColumns,
   PositiveNumberCell,
   ColumnAlign,
@@ -7,6 +6,7 @@ import {
   CheckCell,
   CurrencyCell,
   Column,
+  useCurrency,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
@@ -18,6 +18,7 @@ export const useOutboundLineEditColumns = ({
   onChange: (key: string, value: number, packSize: number) => void;
   unit: string;
 }) => {
+  const { c } = useCurrency();
   const columns = useColumns<DraftStockOutLine>(
     [
       [
@@ -45,7 +46,7 @@ export const useOutboundLineEditColumns = ({
         'sellPricePerPack',
         {
           Cell: CurrencyCell,
-          formatter: sellPrice => useCurrencyFormat(Number(sellPrice)),
+          formatter: sellPrice => c(Number(sellPrice)).format(),
           width: 120,
         },
       ],
