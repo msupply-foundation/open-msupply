@@ -2,7 +2,7 @@ use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_strin
 
 use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow, TemperatureBreachConfigRow,
-    TemperatureBreachConfigRowRepository, TemperatureBreachRowType,
+    TemperatureBreachConfigRowRepository,
 };
 use serde::{Deserialize, Serialize};
 
