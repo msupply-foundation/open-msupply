@@ -63,7 +63,7 @@ export const useUnitVariant = (itemId: string) => {
 
   return {
     asPackUnit: (packSize: number) => {
-      let foundVariant = item.variants.find(
+      const foundVariant = item.variants.find(
         variant => variant.packSize === packSize
       );
 
