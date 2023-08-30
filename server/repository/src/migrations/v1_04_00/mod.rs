@@ -1,27 +1,27 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
-pub(crate) struct V1_03_00;
-mod user;
+pub(crate) struct V1_04_00;
+mod contact_trace;
 
-impl Migration for V1_03_00 {
+impl Migration for V1_04_00 {
     fn version(&self) -> Version {
-        Version::from_str("1.3.0")
+        Version::from_str("1.4.0")
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        user::migrate(connection)?;
+        contact_trace::migrate(connection)?;
         Ok(())
     }
 }
 
 #[cfg(test)]
 #[actix_rt::test]
-async fn migration_1_03_00() {
+async fn migration_1_04_00() {
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let version = V1_03_00.version();
+    let version = V1_04_00.version();
 
     // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {
