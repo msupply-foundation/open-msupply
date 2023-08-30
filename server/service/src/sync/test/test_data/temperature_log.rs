@@ -1,4 +1,6 @@
-use crate::sync::translations::{temperature_log::LegacyTemperatureLogRow, LegacyTableName, PullUpsertRecord};
+use crate::sync::translations::{
+    temperature_log::LegacyTemperatureLogRow, LegacyTableName, PullUpsertRecord,
+};
 
 use chrono::{Duration, NaiveDate, NaiveTime};
 use repository::TemperatureLogRow;
@@ -30,10 +32,10 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             temperature: 10.6,
             sensor_id: "cf5812e0c33911eb9757779d39ae2dbd".to_string(),
             timestamp: NaiveDate::from_ymd_opt(2023, 7, 1)
-                    .unwrap()
-                    .and_hms_opt(0, 0, 0)
-                    .unwrap()
-                    + Duration::seconds(47046),
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
         }),
     )]
 }

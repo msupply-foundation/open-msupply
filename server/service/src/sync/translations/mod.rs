@@ -80,6 +80,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(sensor::SensorTranslation {}),
         Box::new(temperature_log::TemperatureLogTranslation {}),
         Box::new(temperature_breach::TemperatureBreachTranslation {}),
+        Box::new(temperature_breach_config::TemperatureBreachConfigTranslation {}),
         Box::new(clinician::ClinicianTranslation {}),
         Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
         // Remote-Central (site specific)

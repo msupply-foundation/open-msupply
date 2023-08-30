@@ -1,4 +1,7 @@
-use crate::sync::translations::{temperature_breach::LegacyTemperatureBreachType, temperature_breach_config::LegacyTemperatureBreachConfigRow, LegacyTableName, PullUpsertRecord};
+use crate::sync::translations::{
+    temperature_breach::LegacyTemperatureBreachType,
+    temperature_breach_config::LegacyTemperatureBreachConfigRow, LegacyTableName, PullUpsertRecord,
+};
 
 use repository::{TemperatureBreachConfigRow, TemperatureBreachRowType};
 use serde_json::json;
