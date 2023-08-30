@@ -8,13 +8,75 @@ import {
   ContactTraceSortFieldInput,
   useNavigate,
   RouteBuilder,
+  useColumns,
+  ColumnAlign,
+  Column,
+  SortBy,
+  ColumnDescription,
 } from '@openmsupply-client/common';
 import { useContactTraces } from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
 import { ContactTraceRowFragment } from '@openmsupply-client/programs';
-import { useContactTraceListColumns } from './columns';
+import { useFormatDateTime } from '@common/intl';
 import { AppRoute } from '@openmsupply-client/config';
+
+interface ContactTraceListColumnsProps {
+  onChangeSortBy: (column: Column<ContactTraceRowFragment>) => void;
+  sortBy: SortBy<ContactTraceRowFragment>;
+}
+
+const useContactTraceListColumns = ({
+  onChangeSortBy,
+  sortBy,
+}: ContactTraceListColumnsProps) => {
+  const { localisedDate } = useFormatDateTime();
+
+  const columnList: ColumnDescription<ContactTraceRowFragment>[] = [
+    {
+      key: 'programName',
+      label: 'label.program',
+      accessor: ({ rowData }) => rowData.program.name,
+      sortable: false,
+    },
+    {
+      key: 'datetime',
+      label: 'label.date-created',
+      formatter: dateString =>
+        dateString ? localisedDate((dateString as string) || '') : '',
+    },
+    {
+      key: 'firstName',
+      label: 'label.first-name',
+    },
+    {
+      key: 'lastName',
+      label: 'label.last-name',
+    },
+    {
+      key: 'gender',
+      label: 'label.gender',
+    },
+    {
+      key: 'dateOfBirth',
+      label: 'label.age',
+      align: ColumnAlign.Right,
+      width: 175,
+      accessor: ({ rowData }) => rowData.age,
+    },
+  ];
+
+  const columns = useColumns<ContactTraceRowFragment>(
+    columnList,
+    {
+      sortBy,
+      onChangeSortBy,
+    },
+    [sortBy, onChangeSortBy]
+  );
+
+  return columns;
+};
 
 const ContactTraceComponent: FC = () => {
   const {
