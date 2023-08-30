@@ -233,7 +233,7 @@ mod test {
                 encounter_schema::{EncounterStatus, SchemaEncounter},
                 InsertEncounter,
             },
-            patient::{test::mock_patient_1, UpdatePatient},
+            patient::{test::mock_patient_1, UpdateProgramPatient},
             program_enrolment::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolment},
         },
         service_provider::ServiceProvider,
@@ -309,12 +309,12 @@ mod test {
         let patient = mock_patient_1();
         service_provider
             .patient_service
-            .upsert_patient(
+            .upsert_program_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
                 &patient.id,
-                UpdatePatient {
+                UpdateProgramPatient {
                     data: serde_json::to_value(&patient).unwrap(),
                     schema_id: schema.id.clone(),
                     parent: None,

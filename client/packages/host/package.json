@@ -22,7 +22,8 @@
     "build": "webpack --env production",
     "build-stats": "webpack --env stats --env production",
     "serve": "serve dist -p 3003",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "eslint": "eslint ./src"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.0.5",
