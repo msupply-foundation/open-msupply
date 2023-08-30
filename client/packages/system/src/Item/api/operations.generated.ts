@@ -76,14 +76,14 @@ export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemC
 
 export type VariantFragment = { __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string };
 
-export type ItemVariantFragment = { __typename: 'ItemVariantNode', id: string, mostUsed: string, unit: string, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> };
+export type UnitVariantFragment = { __typename: 'UnitVariantNode', itemId: string, mostUsedVariantId: string, unitName?: string | null, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> };
 
 export type ItemVariantsListQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type ItemVariantsListQuery = { __typename: 'Queries', itemVariantsList: Array<{ __typename: 'ItemVariantNode', id: string, mostUsed: string, unit: string, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> }> };
+export type ItemVariantsListQuery = { __typename: 'Queries', itemVariantsList: Array<{ __typename: 'UnitVariantNode', itemId: string, mostUsedVariantId: string, unitName?: string | null, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> }> };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -198,11 +198,11 @@ export const VariantFragmentDoc = gql`
   shortName
 }
     `;
-export const ItemVariantFragmentDoc = gql`
-    fragment ItemVariant on ItemVariantNode {
-  id
-  mostUsed
-  unit
+export const UnitVariantFragmentDoc = gql`
+    fragment UnitVariant on UnitVariantNode {
+  itemId
+  mostUsedVariantId
+  unitName
   variants {
     ...Variant
   }
@@ -327,10 +327,10 @@ ${StockLineFragmentDoc}`;
 export const ItemVariantsListDocument = gql`
     query itemVariantsList($storeId: String!) {
   itemVariantsList(storeId: $storeId) {
-    ...ItemVariant
+    ...UnitVariant
   }
 }
-    ${ItemVariantFragmentDoc}`;
+    ${UnitVariantFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
