@@ -54,6 +54,8 @@ export type ItemStockOnHandQueryVariables = Types.Exact<{
 
 export type ItemStockOnHandQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', code: string, id: string, name: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number }> } };
 
+export type ItemsWithStatsFragment = { __typename: 'ItemNode', code: string, id: string, name: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
+
 export type ItemsWithStatsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   key?: Types.InputMaybe<Types.ItemSortFieldInput>;
@@ -190,6 +192,23 @@ export const ItemFragmentDoc = gql`
   }
 }
     ${StockLineFragmentDoc}`;
+export const ItemsWithStatsFragmentDoc = gql`
+    fragment ItemsWithStats on ItemNode {
+  __typename
+  code
+  id
+  name
+  unitName
+  defaultPackSize
+  availableStockOnHand(storeId: $storeId)
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
+}
+    `;
 export const VariantFragmentDoc = gql`
     fragment Variant on VariantNode {
   id
@@ -278,25 +297,13 @@ export const ItemsWithStatsDocument = gql`
     ... on ItemConnector {
       __typename
       nodes {
-        __typename
-        code
-        id
-        name
-        unitName
-        defaultPackSize
-        availableStockOnHand(storeId: $storeId)
-        stats(storeId: $storeId) {
-          __typename
-          averageMonthlyConsumption
-          availableStockOnHand
-          availableMonthsOfStockOnHand
-        }
+        ...ItemsWithStats
       }
       totalCount
     }
   }
 }
-    `;
+    ${ItemsWithStatsFragmentDoc}`;
 export const ItemByIdDocument = gql`
     query itemById($storeId: String!, $itemId: String!) {
   items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {

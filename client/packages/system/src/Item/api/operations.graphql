@@ -171,6 +171,22 @@ query itemStockOnHand(
   }
 }
 
+fragment ItemsWithStats on ItemNode {
+  __typename
+  code
+  id
+  name
+  unitName
+  defaultPackSize
+  availableStockOnHand(storeId: $storeId)
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
+}
+
 query itemsWithStats(
   $storeId: String!
   $key: ItemSortFieldInput
@@ -188,19 +204,7 @@ query itemsWithStats(
     ... on ItemConnector {
       __typename
       nodes {
-        __typename
-        code
-        id
-        name
-        unitName
-        defaultPackSize
-        availableStockOnHand(storeId: $storeId)
-        stats(storeId: $storeId) {
-          __typename
-          averageMonthlyConsumption
-          availableStockOnHand
-          availableMonthsOfStockOnHand
-        }
+        ...ItemsWithStats
       }
       totalCount
     }
