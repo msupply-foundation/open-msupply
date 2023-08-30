@@ -47,7 +47,7 @@ export const useInitUnitStore = () => {
 };
 
 export const useUnitVariant = (itemId: string) => {
-  // TODO [state.items[itemId], state.userSelected[itemdId]]
+  // TODO [state.items[itemId], state.userSelected[itemId]]
   const item = useUnitStore(state => state.items[itemId], isEqual);
   if (!item) {
     return {
