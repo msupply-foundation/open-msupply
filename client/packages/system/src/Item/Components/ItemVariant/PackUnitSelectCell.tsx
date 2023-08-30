@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { useUnitVariant } from '../../context';
 
-// Adjust pack size
+// Drop down selector for unit variant
 export const getPackUnitSelectCell =
   <T extends RecordWithId>({
     getItemId,
@@ -20,7 +20,6 @@ export const getPackUnitSelectCell =
     const { variantsControll } = useUnitVariant(getItemId(rowData));
 
     if (!variantsControll) {
-      // TODO should do default if not units ? (check what happens)
       return <InnerBasicCell isError={isError} value={getUnitName(rowData)} />;
     }
 
