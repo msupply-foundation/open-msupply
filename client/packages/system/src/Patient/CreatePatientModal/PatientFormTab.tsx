@@ -7,8 +7,11 @@ import {
   usePatientStore,
 } from '@openmsupply-client/programs';
 import { PatientPanel } from './PatientPanel';
-import { createPatient, createPatientUI } from './DefaultCreatePatientJsonForm';
 import { ObjUtils } from '@common/utils';
+
+import defaultPatientSchema from '../DefaultPatientSchema.json';
+import defaultPatientUISchema from '../DefaultPatientUISchema.json';
+import { BasicSpinner } from '@openmsupply-client/common';
 
 type Patient = {
   code?: string;
@@ -49,12 +52,14 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
     }
   };
 
+  if (isLoading) return <BasicSpinner />;
+
   return (
     <PatientPanel value={value} patient={patient}>
       <JsonForm
         data={(patient as JsonData) || {}}
-        jsonSchema={patientCreationUI?.jsonSchema || createPatient}
-        uiSchema={patientCreationUI?.uiSchema || createPatientUI}
+        jsonSchema={patientCreationUI?.jsonSchema || defaultPatientSchema}
+        uiSchema={patientCreationUI?.uiSchema || defaultPatientUISchema}
         isError={patientCreationUI ? isError : false}
         isLoading={patientCreationUI ? isLoading : false}
         updateData={setPatient}

@@ -1,10 +1,8 @@
 import { useInbound } from '../document/useInbound';
-import {
-    useIsInboundStatusChangeDisabled,
-  } from '../../../../utils';
+import { isInboundStatusChangeDisabled } from '../../../../utils';
 
 export const useIsStatusChangeDisabled = (): boolean => {
   const { data } = useInbound();
   if (!data) return true;
-  return useIsInboundStatusChangeDisabled(data);
+  return isInboundStatusChangeDisabled(data);
 };

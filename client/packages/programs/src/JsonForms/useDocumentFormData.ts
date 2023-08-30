@@ -2,29 +2,33 @@ import {
   useDocument,
   FormInputData,
   SchemaData,
+  JsonFormData,
 } from '@openmsupply-client/programs';
 import { useEffect, useState } from 'react';
-import { JsonData } from './common';
 
-export interface DocumentDataResponse {
-  isLoading: boolean;
-  error?: string;
-  documentId?: string;
-  data?: JsonData;
-  schema?: SchemaData;
-}
+export type SavedDocument = {
+  name: string;
+};
 
-// eslint-disable-next-line valid-jsdoc
+export type SaveDocumentMutation = (
+  jsonData: unknown,
+  formSchemaId: string,
+  parent?: string
+) => Promise<SavedDocument>;
+
+export type DocumentFormData = JsonFormData<SavedDocument>;
+
 /**
  * Manages the document data for a JSON form.
  * Data is taken either:
  * - from an api call (if the document already exist)
- * - from the createDoc (if the document is going to be created)
+ * - from the formInputData (e.g. if the document is going to be created)
  */
-export const useDocumentLoader = (
+export const useDocumentDataAccessor = (
   docName: string | undefined,
-  createDoc?: FormInputData
-): DocumentDataResponse => {
+  formInputData?: FormInputData,
+  handleSave?: SaveDocumentMutation
+): DocumentFormData => {
   const [error, setError] = useState<string | undefined>();
   // the current document id (undefined if its a new document)
   const [documentId, setDocumentId] = useState<string | undefined>();
@@ -68,18 +72,23 @@ export const useDocumentLoader = (
     }
   }, [databaseResponse]);
 
-  // user createDoc if there is one
+  // use schema from the formInputData if there is one
   useEffect(() => {
-    if (createDoc) {
-      setSchema(createDoc.schema);
+    if (formInputData) {
+      setSchema(formInputData.schema);
     }
-  }, [createDoc]);
+  }, [formInputData]);
 
   return {
     isLoading,
     error,
-    documentId,
-    data: createDoc?.data ?? databaseResponse?.data,
+    loadedData: formInputData?.data ?? databaseResponse?.data,
+    isCreating: formInputData?.isCreating ?? false,
     schema,
+    save: handleSave
+      ? async (data: unknown) => {
+          return await handleSave(data, schema.formSchemaId ?? '', documentId);
+        }
+      : undefined,
   };
 };

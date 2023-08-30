@@ -29,7 +29,8 @@
     "electron:build": "lerna run --scope @openmsupply-client/electron make",
     "i18n-unused-display": "i18n-unused display-unused",
     "i18n-unused-remove": "i18n-unused remove-unused",
-    "i18n-missing": "i18n-unused display-missed"
+    "i18n-missing": "i18n-unused display-missed",
+    "eslint": "lerna run --scope @openmsupply-client/* --parallel eslint"
   },
   "workspaces": {
     "packages": [
@@ -81,6 +82,7 @@
     "eslint-plugin-jest-dom": "^5.0.1",
     "eslint-plugin-react": "^7.27.1",
     "eslint-plugin-storybook": "^0.6.11",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "^8.0.3",
     "i18n-unused": "^0.13.0",
     "jest": "^29.6.2",

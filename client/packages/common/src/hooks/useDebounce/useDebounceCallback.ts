@@ -7,8 +7,7 @@ export const useDebounceCallback = <T extends (...args: any[]) => any>(
   depsArray: DependencyList,
   wait = 500
 ): ((...args: Parameters<T>) => Promise<ReturnType<T>>) => {
-  const memoizedCallback = useCallback(FnUtils.debounce(callback, wait), []);
-  const debounced = useCallback(memoizedCallback, depsArray);
+  const debounced = useCallback(FnUtils.debounce(callback, wait), depsArray);
 
   return debounced;
 };
