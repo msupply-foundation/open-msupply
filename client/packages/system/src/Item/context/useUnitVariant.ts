@@ -1,8 +1,7 @@
 import { useUnitVariantList } from '../api';
 import { create } from 'zustand';
-import isEqual from 'lodash/isEqual';
 import { UnitVariantNode } from '@common/types';
-import { NumUtils } from '@common/utils';
+import { NumUtils, isEqual } from '@common/utils';
 import { useEffect } from 'react';
 
 interface UnitState {
