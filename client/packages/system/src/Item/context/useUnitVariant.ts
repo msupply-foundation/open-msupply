@@ -1,14 +1,19 @@
 import { useUnitVariantList } from '../api';
 import { create } from 'zustand';
-import { UnitVariantNode } from '@common/types';
+import { UnitVariantNode, VariantNode } from '@common/types';
 import { NumUtils, isEqual } from '@common/utils';
 import { useEffect } from 'react';
 
+type UserSelectedVariants = {
+  [itemId: string]: /* userSelectedVariantId */ string;
+};
 interface UnitState {
   // From back end
   items: {
     [itemId: string]: UnitVariantNode;
   };
+  userSelectedVariants: UserSelectedVariants;
+  setUserSelectedVariant: (_: { itemId: string; variantId: string }) => void;
   // Should be called on startup when fetching multi unit variants
   setItems: (newItems: UnitVariantNode[]) => void;
 }
@@ -16,16 +21,20 @@ interface UnitState {
 const useUnitStore = create<UnitState>(set => {
   return {
     items: {},
-    userSelected: {},
+    userSelectedVariants: {},
     // TODO add user selected
-
+    setUserSelectedVariant: ({ itemId, variantId }) =>
+      set(({ userSelectedVariants, items }) => ({
+        items,
+        userSelectedVariants: { ...userSelectedVariants, [itemId]: variantId },
+      })),
     setItems: newItems =>
-      set(() => {
+      set(({ userSelectedVariants }) => {
         const items = newItems.reduce(
           (acc, item) => ({ [item.itemId]: item, ...acc }),
           {}
         );
-        return { items };
+        return { items, userSelectedVariants };
       }),
   };
 });
@@ -46,24 +55,49 @@ export const useInitUnitStore = () => {
   // TODO add user selected from app data
 };
 
-export const useUnitVariant = (itemId: string) => {
-  // TODO [state.items[itemId], state.userSelected[itemId]]
-  const item = useUnitStore(state => state.items[itemId], isEqual);
-  if (!item) {
+export const useUnitVariant = (
+  itemId: string
+): {
+  asPackUnit: (packSize: number) => string;
+  numberOfPacksFromQuantity: (totalQuantity: number) => number;
+  variantsControll?: {
+    variants: VariantNode[];
+    // Selected by user or mostUsed (calculated by backend)
+    activeVariant: VariantNode;
+    setUserSelectedVariant: (variantId: string) => void;
+  };
+} => {
+  const [item, userSelectedVariantId, setUserSelectedVariant] = useUnitStore(
+    state => [
+      state.items[itemId],
+      state.userSelectedVariants[itemId],
+      state.setUserSelectedVariant,
+    ],
+    isEqual
+  );
+
+  if (!item || item.variants.length == 0) {
     return {
-      asPackUnit: (packSize: number) => String(packSize),
-      numberOfPacksFromQuantity: (totalQuantity: number) => totalQuantity,
+      asPackUnit: packSize => String(packSize),
+      numberOfPacksFromQuantity: totalQuantity => totalQuantity,
     };
   }
 
-  const mostUsedVariant = item.variants.find(
-    ({ id }) => id === item.mostUsedVariantId
-  )?.packSize;
-  const defaultPackSize = /* userSelectedVariantId || */ mostUsedVariant || 1;
+  const { variants, mostUsedVariantId } = item;
+
+  const mostUsedVariant = variants.find(({ id }) => id === mostUsedVariantId);
+  const userSelectedVariant = variants.find(
+    ({ id }) => id === userSelectedVariantId
+  );
+
+  const activeVariant =
+    userSelectedVariant ||
+    mostUsedVariant ||
+    (variants[0] as VariantNode); /* item.variants.length === 0 above confirms that it's safe to assume it will not be undefined */
 
   return {
-    asPackUnit: (packSize: number) => {
-      const foundVariant = item.variants.find(
+    asPackUnit: packSize => {
+      const foundVariant = variants.find(
         variant => variant.packSize === packSize
       );
 
@@ -71,8 +105,14 @@ export const useUnitVariant = (itemId: string) => {
       if (item.unitName) return `${item?.unitName} x ${packSize}`;
       return `${packSize}`;
     },
-    numberOfPacksFromQuantity: (totalQuantity: number) => {
-      NumUtils.round(totalQuantity / defaultPackSize, 2);
+    numberOfPacksFromQuantity: totalQuantity =>
+      NumUtils.round(totalQuantity / activeVariant.packSize, 2),
+    // TODO what if variants were soft deleted ?
+    variantsControll: {
+      variants: variants,
+      activeVariant,
+      setUserSelectedVariant: variantId =>
+        setUserSelectedVariant({ itemId, variantId }),
     },
   };
 };
