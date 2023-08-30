@@ -24,14 +24,11 @@ fn match_push_table(changelog: &ChangelogRow) -> bool {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum LegacyTemperatureBreachType {
-    #[serde(rename = "COLD_CONSECUTIVE")]
     ColdConsecutive,
-    #[serde(rename = "HOT_CONSECUTIVE")]
     HotConsecutive,
-    #[serde(rename = "COLD_CUMULATIVE")]
     ColdCumulative,
-    #[serde(rename = "HOT_CUMULATIVE")]
     HotCumulative,
 }
 

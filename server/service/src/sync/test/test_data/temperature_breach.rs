@@ -1,4 +1,7 @@
-use crate::sync::translations::{temperature_breach::{LegacyTemperatureBreachRow, LegacyTemperatureBreachType}, LegacyTableName, PullUpsertRecord};
+use crate::sync::translations::{
+    temperature_breach::{LegacyTemperatureBreachRow, LegacyTemperatureBreachType},
+    LegacyTableName, PullUpsertRecord,
+};
 
 use chrono::{Duration, NaiveDate, NaiveTime};
 use repository::{TemperatureBreachRow, TemperatureBreachRowType};
@@ -42,15 +45,15 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             threshold_maximum: 2.0,
             threshold_duration: 3600,
             start_timestamp: NaiveDate::from_ymd_opt(2023, 7, 1)
-                    .unwrap()
-                    .and_hms_opt(0, 0, 0)
-                    .unwrap()
-                    + Duration::seconds(47046),
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
             end_timestamp: NaiveDate::from_ymd_opt(2023, 7, 2)
-                    .unwrap()
-                    .and_hms_opt(0, 0, 0)
-                    .unwrap()
-                    + Duration::seconds(47046),
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(47046),
         }),
     )]
 }

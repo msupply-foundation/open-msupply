@@ -54,8 +54,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             "#
     )?;
 
-    #[cfg(feature = "postgres")]
-    {
+    if cfg!(feature = "postgres") {
         sql!(
             connection,
             r#"
@@ -76,9 +75,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog();
             "#
         )?;
-    }
-    #[cfg(not(feature = "postgres"))]
-    {
+    } else {
         sql!(
             connection,
             r#"

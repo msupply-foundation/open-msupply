@@ -43,7 +43,7 @@ pub(crate) struct TemperatureBreachConfigTranslation {}
 impl SyncTranslation for TemperatureBreachConfigTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
-            table: LegacyTableName::TEMPERATURE_BREACH,
+            table: LegacyTableName::TEMPERATURE_BREACH_CONFIG,
             dependencies: vec![LegacyTableName::STORE],
         }
     }

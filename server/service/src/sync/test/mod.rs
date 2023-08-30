@@ -181,10 +181,20 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_id!(TemperatureLogRowRepository, con, record, "TemperatureLog");
             }
             TemperatureBreach(record) => {
-                check_record_by_id!(TemperatureBreachRowRepository, con, record, "TemperatureBreach");
+                check_record_by_id!(
+                    TemperatureBreachRowRepository,
+                    con,
+                    record,
+                    "TemperatureBreach"
+                );
             }
             TemperatureBreachConfig(record) => {
-                check_record_by_id!(TemperatureBreachConfigRowRepository, con, record, "TemperatureBreachConfig");
+                check_record_by_id!(
+                    TemperatureBreachConfigRowRepository,
+                    con,
+                    record,
+                    "TemperatureBreachConfig"
+                );
             }
             Location(record) => {
                 check_record_by_id!(LocationRowRepository, con, record, "Location");
