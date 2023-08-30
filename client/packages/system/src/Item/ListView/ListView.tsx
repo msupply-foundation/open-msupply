@@ -55,7 +55,7 @@ const ItemListComponent: FC = () => {
         {
           Cell: getPackUnitQuantityCell({
             getItemId: r => r.id,
-            getQuantity: r => r.stats.availableStockOnHand,
+            getQuantity: r => NumUtils.round(r.stats.availableStockOnHand),
           }),
           label: 'label.soh',
           description: 'description.soh',

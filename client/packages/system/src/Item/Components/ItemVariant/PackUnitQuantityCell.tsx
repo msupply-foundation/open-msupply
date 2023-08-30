@@ -6,7 +6,7 @@ import {
 } from '@openmsupply-client/common';
 import { useUnitVariant } from '../../context';
 
-// Adjust pack size
+// Adjust quantity to reflect selected unit variant
 export const getPackUnitQuantityCell =
   <T extends RecordWithId>({
     getItemId,
