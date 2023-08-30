@@ -6,7 +6,7 @@ import {
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../../Patient';
-import { useAuthContext } from 'packages/common/src';
+import { useAuthContext } from '@openmsupply-client/common';
 
 export type ContactTrace = {
   datetime: string;
