@@ -22,26 +22,27 @@ interface useEncounterListColumnsProps {
   includePatient?: boolean;
 }
 
-export const useEncounterAdditionalInfoAccessor: ColumnDataAccessor<
-  EncounterRowFragment,
-  string[]
-> = ({ rowData }): string[] => {
+const useEncounterAdditionalInfoAccessor: () => {
+  additionalInfoAccessor: ColumnDataAccessor<EncounterRowFragment, string[]>;
+} = () => {
   const t = useTranslation();
-  const additionalInfo = [];
+  return {
+    additionalInfoAccessor: ({ rowData }): string[] => {
+      const additionalInfo = rowData.activeProgramEvents
+        .map(e => (e.type?.startsWith('status') ? e.data : undefined))
+        .filter((data): data is string => !!data);
 
-  if (rowData?.activeProgramEvents[0]?.data) {
-    additionalInfo.push(rowData.activeProgramEvents[0].data);
-  }
+      if (rowData?.status === EncounterNodeStatus.Pending) {
+        const startDatetime = new Date(rowData?.startDatetime);
+        const status = getLogicalStatus(startDatetime, t);
+        if (status) {
+          additionalInfo.push(status);
+        }
+      }
 
-  if (rowData?.status === EncounterNodeStatus.Pending) {
-    const startDatetime = new Date(rowData?.startDatetime);
-    const status = getLogicalStatus(startDatetime, t);
-    if (status) {
-      additionalInfo.push(status);
-    }
-  }
-
-  return additionalInfo;
+      return additionalInfo;
+    },
+  };
 };
 
 export const useEncounterListColumns = ({
@@ -59,6 +60,8 @@ export const useEncounterListColumns = ({
       },
     });
   includePatient;
+
+  const { additionalInfoAccessor } = useEncounterAdditionalInfoAccessor();
 
   const columnList: ColumnDescription<EncounterRowFragment>[] = [
     {
@@ -107,7 +110,7 @@ export const useEncounterListColumns = ({
     label: 'label.additional-info',
     key: 'events',
     sortable: false,
-    accessor: useEncounterAdditionalInfoAccessor,
+    accessor: additionalInfoAccessor,
     Cell: ChipTableCell,
     minWidth: 400,
   });
