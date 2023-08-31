@@ -4,6 +4,15 @@ import { Box, CircularProgress } from '@mui/material';
 import { ErrorBoundary, ErrorWithDetails, useTranslation } from '../..';
 import { loadPlugin } from '../utils';
 
+/**
+ * PluginLoaderProps
+ * module: the name of the exposed component
+ * name: the name of the plugin
+ * path: file path for the plugin, possibly unnecessary now
+ * data: is context specific data which is passed to the plugin, for example a plugin
+ * on the InboundShipment DetailView will have an type of `InvoiceNode`
+ * scope: the name of the scope used by webpack module federation
+ */
 interface PluginLoaderProps {
   module: string;
   name: string;

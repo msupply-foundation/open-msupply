@@ -23,16 +23,18 @@ import { usePatient } from '../api';
 const EncounterListComponent: FC = () => {
   const {
     sort: { sortBy, onChangeSortBy },
-    pagination: { page, first, offset, onChangePage },
   } = useQueryParamsStore();
 
-  const { queryParams } = useUrlQueryParams();
+  const {
+    queryParams: { page, first, offset, filterBy },
+    updatePaginationQuery,
+  } = useUrlQueryParams();
 
   const patientId = usePatient.utils.id();
   const { data, isError, isLoading } = useEncounter.document.list({
-    ...queryParams,
+    pagination: { first, offset },
     // enforce filtering by patient id
-    filterBy: { ...queryParams.filterBy, patientId: { equalTo: patientId } },
+    filterBy: { ...filterBy, patientId: { equalTo: patientId } },
     sortBy: {
       key: sortBy.key as EncounterSortFieldInput,
       isDesc: sortBy.isDesc,
@@ -41,7 +43,6 @@ const EncounterListComponent: FC = () => {
   });
   const dataWithStatus: EncounterFragmentWithStatus[] | undefined =
     useEncounterFragmentWithStatus(data?.nodes);
-  const pagination = { page, first, offset };
   const navigate = useNavigate();
 
   const columns = useEncounterListColumns({ onChangeSortBy, sortBy });
@@ -49,8 +50,8 @@ const EncounterListComponent: FC = () => {
   return (
     <DataTable
       id="encounter-list"
-      pagination={{ ...pagination, total: data?.totalCount }}
-      onChangePage={onChangePage}
+      pagination={{ page, first, offset, total: data?.totalCount }}
+      onChangePage={updatePaginationQuery}
       columns={columns}
       data={dataWithStatus}
       isLoading={isLoading}
