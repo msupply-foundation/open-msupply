@@ -5,7 +5,7 @@
   "scripts": {
     "start": "webpack-cli serve --port 3000",
     "start-local": "webpack-cli serve --port 3000",
-    "build-plugin": "NODE_ENV=production webpack && cp dist/* ../../../server/app_data/plugins/Dashboard/"
+    "build-plugin": "rm -rf dist && mkdir dist && NODE_ENV=production webpack && cp dist/* ../../../server/app_data/plugins/Dashboard/"
   },
   "license": "MIT",
   "devDependencies": {
