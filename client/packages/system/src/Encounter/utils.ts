@@ -45,7 +45,7 @@ export const useEncounterFragmentWithStatus = (
   );
 };
 
-export const useLogicalStatus = (
+export const getLogicalStatus = (
   startDatetime: Date,
   t: ReturnType<typeof useTranslation>
 ): string | undefined => {

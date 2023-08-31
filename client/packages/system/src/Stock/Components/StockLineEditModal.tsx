@@ -17,7 +17,7 @@ interface StockLineEditModalProps {
   isOpen: boolean;
   onClose: () => void;
 
-  stockLine: StockLineRowFragment | null;
+  stockLine: StockLineRowFragment;
 }
 
 interface UseDraftStockLineControl {
@@ -30,9 +30,7 @@ interface UseDraftStockLineControl {
 const useDraftStockLine = (
   seed: StockLineRowFragment
 ): UseDraftStockLineControl => {
-  const [stockLine, setStockLine] = useState<StockLineRowFragment>(() => ({
-    ...seed,
-  }));
+  const [stockLine, setStockLine] = useState<StockLineRowFragment>({ ...seed });
   const { mutate, isLoading } = useStock.line.update();
 
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
@@ -60,8 +58,6 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
     title: t('heading.are-you-sure'),
     message: t('messages.confirm-save-stock-line'),
   });
-
-  if (!stockLine) return null;
 
   const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
 

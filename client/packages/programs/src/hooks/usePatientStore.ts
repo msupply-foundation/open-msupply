@@ -19,8 +19,8 @@ export enum Gender {
 }
 
 export interface CreateNewPatient {
-  documentRegistry: DocumentRegistryFragment;
   id: string;
+  documentRegistry: DocumentRegistryFragment | undefined;
   code?: string;
   code2?: string;
   firstName?: string;

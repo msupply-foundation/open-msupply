@@ -8,7 +8,8 @@
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "node updateElectronVersion.js && yarn prettier --write package.json && electron-forge make"
+    "make": "node updateElectronVersion.js && yarn prettier --write package.json && electron-forge make",
+    "eslint": "eslint ./src"
   },
   "author": {
     "name": "mSupply Foundation"

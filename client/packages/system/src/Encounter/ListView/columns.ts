@@ -13,16 +13,16 @@ import {
   EncounterRowFragment,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
-import { useLogicalStatus } from '../utils';
+import { getLogicalStatus } from '../utils';
 import { ChipTableCell } from '../../Patient';
 
 interface useEncounterListColumnsProps {
-  onChangeSortBy: (column: Column<any>) => void;
+  onChangeSortBy: (column: Column<EncounterRowFragment>) => void;
   sortBy: SortBy<EncounterRowFragment>;
   includePatient?: boolean;
 }
 
-export const encounterAdditionalInfoAccessor: ColumnDataAccessor<
+export const useEncounterAdditionalInfoAccessor: ColumnDataAccessor<
   EncounterRowFragment,
   string[]
 > = ({ rowData }): string[] => {
@@ -35,7 +35,7 @@ export const encounterAdditionalInfoAccessor: ColumnDataAccessor<
 
   if (rowData?.status === EncounterNodeStatus.Pending) {
     const startDatetime = new Date(rowData?.startDatetime);
-    const status = useLogicalStatus(startDatetime, t);
+    const status = getLogicalStatus(startDatetime, t);
     if (status) {
       additionalInfo.push(status);
     }
@@ -107,7 +107,7 @@ export const useEncounterListColumns = ({
     label: 'label.additional-info',
     key: 'events',
     sortable: false,
-    accessor: encounterAdditionalInfoAccessor,
+    accessor: useEncounterAdditionalInfoAccessor,
     Cell: ChipTableCell,
     minWidth: 400,
   });
