@@ -1,0 +1,19 @@
+{
+  "name": "Dashboard",
+  "version": "1.0.0",
+  "components": [
+    {
+      "area": "Dashboard",
+      "type": "None",
+      "module": "SyncStatus"
+    },
+    {
+      "area": "Dashboard",
+      "type": "None",
+      "module": "Replenishment"
+    }
+  ],
+  "dependencies": {
+    "omSupplyVersion": "8.0.0"
+  }
+}

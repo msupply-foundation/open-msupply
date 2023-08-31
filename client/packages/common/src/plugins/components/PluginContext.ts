@@ -5,7 +5,7 @@ export interface PluginState {
   plugins: Plugin<unknown>[];
 }
 
-export type PluginComponent  = <T>({data}:{data:T}) => JSX.Element;
+export type PluginComponent = <T>({ data }: { data: T }) => JSX.Element;
 
 export interface PluginControllerState extends PluginState {
   setState: (state: PluginState) => void;
@@ -18,7 +18,7 @@ export interface PluginControllerState extends PluginState {
   }: {
     area: PluginArea;
     type: PluginType;
-    data: unknown;
+    data?: unknown;
   }) => (JSX.Element | null)[];
 }
 
