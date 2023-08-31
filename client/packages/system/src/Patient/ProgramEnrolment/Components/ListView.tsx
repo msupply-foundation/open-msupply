@@ -38,17 +38,20 @@ const programAdditionalInfoAccessor: ColumnDataAccessor<
 
 const ProgramListComponent: FC = () => {
   const {
-    pagination: { page, first, offset, onChangePage },
+    sort: { sortBy, onChangeSortBy },
   } = useQueryParamsStore();
 
-  const { queryParams, updateSortQuery } = useUrlQueryParams();
+  const {
+    queryParams: { page, first, offset },
+    updatePaginationQuery,
+  } = useUrlQueryParams();
 
   const patientId = usePatient.utils.id();
 
   const { data, isError, isLoading } = useProgramEnrolments.document.list({
     sortBy: {
-      key: queryParams.sortBy.key as ProgramEnrolmentSortFieldInput,
-      isDesc: queryParams.sortBy.isDesc,
+      key: sortBy.key as ProgramEnrolmentSortFieldInput,
+      isDesc: sortBy.isDesc,
     },
     filterBy: { patientId: { equalTo: patientId } },
   });
@@ -92,17 +95,17 @@ const ProgramListComponent: FC = () => {
       },
     ],
     {
-      sortBy: queryParams.sortBy,
-      onChangeSortBy: updateSortQuery,
+      sortBy,
+      onChangeSortBy,
     },
-    [queryParams.sortBy, updateSortQuery]
+    [sortBy, onChangeSortBy]
   );
 
   return (
     <DataTable
       id="program-enrolment-list"
       pagination={{ ...pagination, total: data?.totalCount }}
-      onChangePage={onChangePage}
+      onChangePage={updatePaginationQuery}
       columns={columns}
       data={data?.nodes}
       isLoading={isLoading}
