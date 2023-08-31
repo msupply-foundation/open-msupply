@@ -27,11 +27,9 @@ const programAdditionalInfoAccessor: ColumnDataAccessor<
   ProgramEnrolmentRowFragmentWithId,
   string[]
 > = ({ rowData }): string[] => {
-  const additionalInfo = [];
-
-  if (rowData?.activeProgramEvents[0]?.data) {
-    additionalInfo.push(rowData.activeProgramEvents[0].data);
-  }
+  const additionalInfo = rowData.activeProgramEvents
+    .map(e => (e.type?.startsWith('status') ? e.data : undefined))
+    .filter((data): data is string => !!data);
 
   return additionalInfo;
 };
