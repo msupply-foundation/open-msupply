@@ -35,7 +35,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const t = useTranslation('common');
   const { print, isPrinting } = useReport.utils.print();
   const pluginButtons = usePluginElements({
-    area: PluginArea.Toolbar,
+    area: PluginArea.AppBar,
     type: PluginType.InboundShipment,
     data,
   });

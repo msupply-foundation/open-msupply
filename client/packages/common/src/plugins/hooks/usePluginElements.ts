@@ -9,7 +9,7 @@ export function usePluginElements<T>({
 }: {
   area: PluginArea;
   type: PluginType;
-  data: T;
+  data?: T;
 }) {
   const { getPluginElements } = useContext(PluginContext);
 

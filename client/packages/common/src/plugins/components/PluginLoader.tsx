@@ -31,7 +31,7 @@ export const PluginLoader = ({
   scope,
 }: PluginLoaderProps) => {
   const PluginUnavailable = () => {
-    const t = useTranslation('common');
+    const t = useTranslation('plugin');
 
     return (
       <ErrorWithDetails

@@ -8,7 +8,7 @@ const dependencies = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
- 
+
 class DummyWebpackPlugin {
   apply(compiler) {
     compiler.hooks.run.tap('DummyWebpackPlugin', () => {});
@@ -110,7 +110,10 @@ module.exports = env => {
     },
     plugins: [
       new ReactRefreshWebpackPlugin(),
-      new webpack.DefinePlugin({ API_HOST: JSON.stringify(env.API_HOST), PLUGIN_URL: JSON.stringify(env.PLUGIN_URL) }),
+      new webpack.DefinePlugin({
+        API_HOST: JSON.stringify(env.API_HOST),
+        PLUGIN_URL: JSON.stringify(env.PLUGIN_URL),
+      }),
       bundleAnalyzerPlugin,
       new HtmlWebpackPlugin({
         favicon: './public/favicon.ico',
@@ -140,7 +143,7 @@ module.exports = env => {
           {
             '@openmsupply-client/common': {
               eager: true,
-            },    
+            },
             react: {
               singleton: true,
               eager: true,
@@ -151,7 +154,7 @@ module.exports = env => {
               eager: true,
               requiredVersion: dependencies['react-dom'],
             },
-            'react-singleton-context': {singleton: true, eager: true},
+            'react-singleton-context': { singleton: true, eager: true },
           },
         ],
       }),
