@@ -39,7 +39,7 @@ export const PluginProvider: FC<PropsWithChildren<PluginProviderProps>> = ({
       }: {
         area: PluginArea;
         type: PluginType;
-        data: T;
+        data?: T;
       }) {
         return (plugins as Plugin<T>[])
           .filter(plugin => plugin.area === area && plugin.type === type)
@@ -49,7 +49,7 @@ export const PluginProvider: FC<PropsWithChildren<PluginProviderProps>> = ({
               module={plugin.module}
               data={data}
               path={plugin.path}
-              key={plugin.name}
+              key={`${plugin.name}-${plugin.module}`}
             />
           ));
       },
