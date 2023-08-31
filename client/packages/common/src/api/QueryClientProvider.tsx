@@ -13,11 +13,13 @@ const QueryClientContext = createRegisteredContext<{ client: QueryClient }>(
 
 export const QueryClientProvider: FC<
   PropsWithChildren<{ client: QueryClient }>
-> = ({ client, children }) => (
-  <QueryClientContext.Provider value={{ client }}>
-    <QueryClientProviderProxy>{children}</QueryClientProviderProxy>
-  </QueryClientContext.Provider>
-);
+> = ({ client, children }) => {
+  return (
+    <QueryClientContext.Provider value={{ client }}>
+      <QueryClientProviderProxy>{children}</QueryClientProviderProxy>
+    </QueryClientContext.Provider>
+  );
+};
 
 export const QueryClientProviderProxy: FC<PropsWithChildrenOnly> = ({
   children,
