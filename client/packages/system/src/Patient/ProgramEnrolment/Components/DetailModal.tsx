@@ -13,6 +13,7 @@ import {
   DocumentHistory,
   PatientModal,
   SaveDocumentMutation,
+  useDocumentDataAccessor,
   useJsonForms,
   usePatientModalStore,
   useProgramEnrolments,
@@ -50,14 +51,19 @@ export const ProgramDetailModal: FC = () => {
 
   const { current, document, reset } = usePatientModalStore();
   const handleSave = useUpsertProgramEnrolment(patientId, document?.type || '');
+
+  const dataAccessor = useDocumentDataAccessor(
+    document?.name,
+    document?.createDocument,
+    handleSave
+  );
   const { JsonForm, isLoading, saveData, isDirty, validationError } =
     useJsonForms(
-      document?.name,
-      patientId,
       {
-        handleSave,
+        documentName: document?.name,
+        patientId,
       },
-      document?.createDocument
+      dataAccessor
     );
 
   const { Modal } = useDialog({

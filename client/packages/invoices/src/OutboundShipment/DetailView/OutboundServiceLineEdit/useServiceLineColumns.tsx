@@ -23,7 +23,7 @@ export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftStockOutLine>) => void
 ) => {
   const t = useTranslation('distribution');
-  const c = useFormatCurrency();
+  const formatCurrency = useFormatCurrency();
   return useColumns<DraftStockOutLine>([
     {
       key: 'serviceItemName',
@@ -69,7 +69,7 @@ export const useServiceLineColumns = (
       label: 'label.total',
       align: ColumnAlign.Right,
       width: 75,
-      accessor: ({ rowData }) => c(rowData?.totalAfterTax),
+      accessor: ({ rowData }) => formatCurrency(rowData?.totalAfterTax),
     },
     {
       key: 'isDeleted',

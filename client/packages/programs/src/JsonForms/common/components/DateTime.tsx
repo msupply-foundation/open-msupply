@@ -8,8 +8,8 @@ import {
   DetailInputWithLabelRow,
   DateTimePicker,
   DateTimePickerProps,
-  BaseDatePickerInput,
   DateUtils,
+  DatePickerInput,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -115,7 +115,7 @@ const UIComponent = (props: ControlProps) => {
             {...sharedComponentProps}
           />
         ) : (
-          <BaseDatePickerInput
+          <DatePickerInput
             {...sharedComponentProps}
             onError={validationError => setCustomError(validationError)}
           />

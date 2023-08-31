@@ -45,7 +45,7 @@ const getIcon = (section?: AppRoute) => {
   }
 };
 
-const getSection = (): Section | undefined => {
+const useSection = (): Section | undefined => {
   const routes = [
     AppRoute.Catalogue,
     AppRoute.Distribution,
@@ -77,7 +77,7 @@ const getSection = (): Section | undefined => {
 
 export const SectionIcon: React.FC = () => {
   const t = useTranslation('app');
-  const section = getSection();
+  const section = useSection();
 
   return section?.icon ? (
     <Tooltip title={t(section?.titleKey)}>

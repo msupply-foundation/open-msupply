@@ -33,7 +33,7 @@ interface CreatePatientModal {
 }
 
 const newPatient = (
-  documentRegistry: DocumentRegistryFragment
+  documentRegistry: DocumentRegistryFragment | undefined
 ): CreateNewPatient => {
   return {
     id: FnUtils.generateUUID(),
@@ -42,7 +42,7 @@ const newPatient = (
 };
 
 export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
-  const { data: documentRegistryResponse } =
+  const { data: documentRegistryResponse, isLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
     });
@@ -103,12 +103,10 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   }, []);
 
   useEffect(() => {
-    setCreateNewPatient(
-      documentRegistry ? newPatient(documentRegistry) : undefined
-    );
+    setCreateNewPatient(newPatient(documentRegistry));
   }, [documentRegistry]);
 
-  if (documentRegistry === undefined) {
+  if (isLoading) {
     return null;
   }
   return (
