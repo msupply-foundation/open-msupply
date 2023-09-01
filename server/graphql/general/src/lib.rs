@@ -11,7 +11,7 @@ pub use self::queries::{
 use graphql_core::pagination::PaginationInput;
 
 use crate::store_preference::store_preferences;
-use graphql_types::types::{PluginNode, StorePreferenceNode};
+use graphql_types::types::StorePreferenceNode;
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,

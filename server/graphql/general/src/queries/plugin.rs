@@ -1,13 +1,17 @@
 use async_graphql::*;
 use graphql_core::ContextExt;
-use graphql_types::types::PluginNode;
 use service::plugin_files::PluginFileService;
 
-pub fn get_plugins(ctx: &Context<'_>) -> Result<Vec<PluginNode>> {
-    let settings = ctx.get_settings();
-    let service = PluginFileService::new(&settings.server.base_dir);
-    let plugins = service.unwrap().find_files()?;
+#[derive(PartialEq, Debug, SimpleObject)]
+pub struct PluginNode {
+    pub config: String,
+    pub name: String,
+    pub path: String,
+}
 
+pub fn get_plugins(ctx: &Context<'_>) -> Result<Vec<PluginNode>, Error> {
+    let settings = ctx.get_settings();
+    let plugins = PluginFileService::find_files(&settings.server.base_dir)?;
     let plugins: Vec<PluginNode> = plugins
         .into_iter()
         .map(|plugin| PluginNode {
