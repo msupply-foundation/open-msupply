@@ -54,11 +54,6 @@ export const BaseDatePickerInput: FC<
   const [isInitialEntry, setIsInitialEntry] = useState(true);
   const t = useTranslation('common');
 
-  const dateValue =
-    typeof props.value === 'string'
-      ? DateUtils.getDateOrNull(props.value)
-      : props.value;
-
   return (
     <DatePicker
       slots={{
@@ -116,7 +111,7 @@ export const BaseDatePickerInput: FC<
         },
       }}
       {...props}
-      value={dateValue}
+      value={DateUtils.getDateOrNull(props.value)}
     />
   );
 };
