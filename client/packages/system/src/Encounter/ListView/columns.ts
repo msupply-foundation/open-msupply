@@ -11,6 +11,7 @@ import {
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
   EncounterRowFragment,
+  getStatusEventData,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
 import { getLogicalStatus } from '../utils';
@@ -28,9 +29,7 @@ const useEncounterAdditionalInfoAccessor: () => {
   const t = useTranslation();
   return {
     additionalInfoAccessor: ({ rowData }): string[] => {
-      const additionalInfo = rowData.activeProgramEvents
-        .map(e => (e.type?.startsWith('status') ? e.data : undefined))
-        .filter((data): data is string => !!data);
+      const additionalInfo = getStatusEventData(rowData.activeProgramEvents);
 
       if (rowData?.status === EncounterNodeStatus.Pending) {
         const startDatetime = new Date(rowData?.startDatetime);
