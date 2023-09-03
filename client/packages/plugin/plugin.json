@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "components": [
     {
-      "area": "Dashboard",
-      "type": "None",
+      "area": "DashboardWidget",
+      "type": "Dashboard",
       "module": "SyncStatus"
     },
     {
-      "area": "Dashboard",
-      "type": "None",
+      "area": "DashboardWidget",
+      "type": "Dashboard",
       "module": "Replenishment"
     }
   ],

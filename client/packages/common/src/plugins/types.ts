@@ -1,13 +1,13 @@
 export enum PluginArea {
   AppBar,
-  Dashboard,
+  DashboardWidget,
   Toolbar,
 }
 
 export enum PluginType {
+  Dashboard,
   InboundShipment,
   InternalOrder,
-  None,
   OutboundShipment,
   Requisition,
   Stocktake,

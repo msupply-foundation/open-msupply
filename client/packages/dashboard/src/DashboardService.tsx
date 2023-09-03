@@ -13,8 +13,8 @@ import {
 
 const Dashboard: React.FC = () => {
   const plugins = usePluginElements({
-    area: PluginArea.Dashboard,
-    type: PluginType.None,
+    area: PluginArea.DashboardWidget,
+    type: PluginType.Dashboard,
   });
 
   return (
