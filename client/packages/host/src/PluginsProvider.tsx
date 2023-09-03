@@ -15,7 +15,7 @@ const getPluginArea = (area: string) => {
     case 'AppBar':
       return PluginArea.AppBar;
     case 'Dashboard':
-      return PluginArea.Dashboard;
+      return PluginArea.DashboardWidget;
     default:
       throw new Error(`Unknown plugin area ${area}`);
   }
@@ -23,10 +23,19 @@ const getPluginArea = (area: string) => {
 
 const getPluginType = (type: string) => {
   switch (type) {
+    case 'dashboard':
+      return PluginType.Dashboard;
     case 'InboundShipment':
       return PluginType.InboundShipment;
-    case 'None':
-      return PluginType.None;
+    case 'InternalOrder':
+      return PluginType.InternalOrder;
+    case 'OutboundShipment':
+      return PluginType.OutboundShipment;
+    case 'Requisition':
+      return PluginType.Requisition;
+    case 'Stocktake':
+      return PluginType.Stocktake;
+
     default:
       throw new Error(`Unknown plugin type ${type}`);
   }
