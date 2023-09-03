@@ -19,8 +19,19 @@ const getPluginArea = (area: string) => {
 
 const getPluginType = (type: string) => {
   switch (type) {
+    case 'dashboard':
+      return PluginType.Dashboard;
     case 'InboundShipment':
       return PluginType.InboundShipment;
+    case 'InternalOrder':
+      return PluginType.InternalOrder;
+    case 'OutboundShipment':
+      return PluginType.OutboundShipment;
+    case 'Requisition':
+      return PluginType.Requisition;
+    case 'Stocktake':
+      return PluginType.Stocktake;
+
     default:
       throw new Error(`Unknown plugin type ${type}`);
   }
