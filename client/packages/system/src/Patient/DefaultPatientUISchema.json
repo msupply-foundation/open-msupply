@@ -36,7 +36,17 @@
         {
           "type": "Control",
           "scope": "#/properties/gender",
-          "label": "Gender"
+          "label": "Gender",
+          "options": {
+            "show": [
+              ["MALE", "Male"],
+              ["FEMALE", "Female"],
+              ["TRANSGENDER_MALE", "Transgender Male"],
+              ["TRANSGENDER_FEMALE", "Transgender Female"],
+              ["NON_BINARY", "Non-binary"],
+              ["UNKOWN", "Unknown"]
+            ]
+          }
         }
       ]
     }
