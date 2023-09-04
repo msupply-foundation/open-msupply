@@ -1,2 +1,2 @@
 export * from './SyncStatus';
-export * from './Replenishment';
+export * from './StockDonorColumn';

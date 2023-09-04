@@ -1,4 +1,6 @@
 import React from 'react';
+import { ColumnDefinition } from '../ui';
+import { RecordWithId } from '../types/utility';
 
 /* eslint-disable camelcase */
 declare const __webpack_init_sharing__: (shareScope: string) => Promise<void>;
@@ -18,7 +20,12 @@ type Container = {
   init: (shareScope: unknown) => Promise<void>;
 };
 
-type PluginModule = { default: React.ComponentType<{ data: unknown }> };
+type PluginModule = {
+  default: React.ComponentType<{ data: unknown }>;
+};
+type PluginColumn = {
+  default: ColumnDefinition<RecordWithId>;
+};
 
 export const fetchPlugin = (url: string, plugin: string): Promise<Container> =>
   new Promise((resolve, reject) => {
@@ -46,10 +53,21 @@ export const fetchPlugin = (url: string, plugin: string): Promise<Container> =>
     // Lastly we inject the script tag into the document's head to trigger the script load
     document.head.appendChild(script);
   });
+export const loadPluginModule = (props: loadPluginProps) =>
+  loadPlugin<PluginModule>(props);
 
-export const loadPlugin =
-  ({ plugin, url, module, scope = 'default' }: loadPluginProps) =>
-  async (): Promise<PluginModule> => {
+export const loadPluginColumn = (props: loadPluginProps) =>
+  loadPlugin<PluginColumn>(props);
+
+function loadPlugin<T>({
+  plugin,
+  url,
+  module,
+  scope = 'default',
+}: loadPluginProps): () => Promise<T> {
+  // const loadPlugin =
+  // ({ plugin, url, module, scope = 'default' }: loadPluginProps) =>
+  return async () => {
     try {
       // Check if this plugin has already been loaded
       if (!(plugin in window)) {
@@ -74,7 +92,7 @@ export const loadPlugin =
       if (!Module?.default)
         throw new Error(`Module has no default for plugin ${plugin}`);
 
-      return Module as PluginModule;
+      return Module as T;
     } catch (e) {
       console.error(e);
     }
@@ -82,3 +100,4 @@ export const loadPlugin =
       reject(new Error(`Failed to load plugin ${plugin}`))
     );
   };
+}

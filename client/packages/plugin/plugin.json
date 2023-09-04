@@ -1,11 +1,11 @@
 {
-  "name": "Dashboard",
+  "name": "StockDonor",
   "version": "1.0.0",
   "components": [
     {
-      "area": "DashboardWidget",
-      "type": "Dashboard",
-      "module": "SyncStatus"
+      "area": "Column",
+      "type": "Stock",
+      "module": "StockDonorColumn"
     },
     {
       "area": "DashboardWidget",

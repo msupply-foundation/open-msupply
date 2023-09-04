@@ -12,6 +12,8 @@ import {
 } from './PluginContext';
 import { Plugin, PluginArea, PluginType } from '../types';
 import { PluginLoader } from './PluginLoader';
+import { Environment } from '@openmsupply-client/config';
+import { loadPluginColumn } from '../utils';
 
 interface PluginProviderProps {
   plugins: Plugin<unknown>[];
@@ -59,7 +61,25 @@ export const PluginProvider: FC<PropsWithChildren<PluginProviderProps>> = ({
     [setState, pluginState]
   );
 
+  const updateColumnPlugin = (plugin: Plugin<unknown>, column: unknown) => {
+    const { plugins } = pluginState;
+    const index = plugins.findIndex(
+      p => p.name === plugin.name && p.module === plugin.module
+    );
+    if (index === -1) return;
+
+    plugins[index] = { ...plugin, data: column };
+  };
+
   useEffect(() => {
+    plugins.forEach(async plugin => {
+      if (plugin.area !== PluginArea.Column) return;
+
+      const { name, module } = plugin;
+      const url = `${Environment.PLUGIN_URL}/${name}${Environment.PLUGIN_EXTENSION}`;
+      const column = await loadPluginColumn({ plugin: name, url, module })();
+      updateColumnPlugin(plugin, column.default);
+    });
     setState({ ...pluginState, plugins });
   }, [plugins]);
 
