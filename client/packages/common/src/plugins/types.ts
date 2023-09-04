@@ -10,6 +10,7 @@ export enum PluginType {
   InternalOrder,
   OutboundShipment,
   Requisition,
+  Stock,
   Stocktake,
 }
 
