@@ -1,5 +1,6 @@
 import { createContext } from 'react';
 import { Plugin, PluginArea, PluginType } from '../types';
+import { RecordWithId } from '../../types/utility';
 
 export interface PluginState {
   plugins: Plugin<unknown>[];
@@ -11,14 +12,14 @@ export interface PluginControllerState extends PluginState {
   setState: (state: PluginState) => void;
   setPlugins: (plugins: Plugin<unknown>[]) => void;
   getPlugins: (area: PluginArea, type: PluginType) => Plugin<unknown>[];
-  getPluginElements: ({
+  getPluginElements: <T extends RecordWithId>({
     area,
     type,
     data,
   }: {
     area: PluginArea;
     type: PluginType;
-    data?: unknown;
+    data?: T;
   }) => (JSX.Element | null)[];
 }
 

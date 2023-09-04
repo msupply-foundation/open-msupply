@@ -10,12 +10,15 @@ import { useHost } from './api';
 
 const getPluginArea = (area: string) => {
   switch (area) {
-    case 'Toolbar':
-      return PluginArea.Toolbar;
     case 'AppBar':
       return PluginArea.AppBar;
-    case 'Dashboard':
+    case 'Column':
+      return PluginArea.Column;
+    case 'DashboardWidget':
       return PluginArea.DashboardWidget;
+    case 'Toolbar':
+      return PluginArea.Toolbar;
+
     default:
       throw new Error(`Unknown plugin area ${area}`);
   }
@@ -23,7 +26,7 @@ const getPluginArea = (area: string) => {
 
 const getPluginType = (type: string) => {
   switch (type) {
-    case 'dashboard':
+    case 'Dashboard':
       return PluginType.Dashboard;
     case 'InboundShipment':
       return PluginType.InboundShipment;
@@ -33,6 +36,8 @@ const getPluginType = (type: string) => {
       return PluginType.OutboundShipment;
     case 'Requisition':
       return PluginType.Requisition;
+    case 'Stock':
+      return PluginType.Stock;
     case 'Stocktake':
       return PluginType.Stocktake;
 
@@ -65,6 +70,7 @@ const mapPlugin = (plugin: PluginNode): Plugin<unknown>[] | null => {
     const pluginConfig = JSON.parse(config) as PluginConfig;
     pluginConfig.components.forEach(component => {
       const { area, type, module } = component;
+      console.log('component', component);
       elements.push({
         area: getPluginArea(area),
         module,
@@ -75,7 +81,11 @@ const mapPlugin = (plugin: PluginNode): Plugin<unknown>[] | null => {
     });
     return elements;
   } catch (e) {
-    console.error(`Failed to parse plugin config for plugin ${path}`);
+    console.error(
+      `Failed to parse plugin config for plugin ${path}`,
+      e,
+      config
+    );
   }
   return null;
 };

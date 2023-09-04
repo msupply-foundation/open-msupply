@@ -23,7 +23,6 @@ const productionApiHost = `${protocol}//${hostname}:${port}`;
 
 const developmentApiHost =
   (typeof API_HOST !== 'undefined' && API_HOST) || defaultDevelopmentApiHost;
-console.info('hello', PLUGIN_URL);
 const apiHost = isProductionBuild ? productionApiHost : developmentApiHost;
 const isPluginLocal = typeof PLUGIN_URL !== 'undefined' && !!PLUGIN_URL;
 const pluginUrl = isPluginLocal ? PLUGIN_URL : `${apiHost}/plugins`;

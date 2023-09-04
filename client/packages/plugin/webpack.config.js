@@ -38,11 +38,11 @@ module.exports = {
   devtool: prod ? undefined : 'source-map',
   plugins: [
     new ModuleFederationPlugin({
-      name: 'Dashboard',
+      name: 'StockDonor',
       remotes: {},
       exposes: {
         SyncStatus: './src/SyncStatus.tsx',
-        Replenishment: './src/Replenishment.tsx',
+        StockDonorColumn: './src/StockDonorColumn.ts',
       },
       shared: {
         ...dependencies,

@@ -2,7 +2,7 @@ import React, { ComponentType } from 'react';
 import { Environment } from '@openmsupply-client/config';
 import { Box, CircularProgress } from '@mui/material';
 import { ErrorBoundary, ErrorWithDetails, useTranslation } from '../..';
-import { loadPlugin } from '../utils';
+import { loadPluginModule } from '../utils';
 
 interface PluginLoaderProps {
   module: string;
@@ -43,7 +43,7 @@ export const PluginLoader = ({
 
   const url = `${Environment.PLUGIN_URL}/${name}${Environment.PLUGIN_EXTENSION}`;
   const Component = React.lazy<ComponentType<{ data: unknown }>>(
-    loadPlugin({ plugin: name, url, module, scope })
+    loadPluginModule({ plugin: name, url, module, scope })
   );
 
   return (
