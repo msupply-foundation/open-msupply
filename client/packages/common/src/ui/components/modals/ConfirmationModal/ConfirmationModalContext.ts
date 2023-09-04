@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { createRegisteredContext } from 'react-singleton-context';
 
 export interface ConfirmationModalState {
   open: boolean;
@@ -24,4 +24,7 @@ export interface ConfirmationModalControllerState
 }
 
 export const ConfirmationModalContext =
-  createContext<ConfirmationModalControllerState>({} as any);
+  createRegisteredContext<ConfirmationModalControllerState>(
+    'confirmation-modal-provider',
+    {} as any
+  );
