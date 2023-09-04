@@ -63,20 +63,22 @@ export const loadPlugin =
       // `container` is the plugin app
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const container = window[plugin as any] as unknown as Container;
-      if (!container) throw new Error(`Failed to load plugin: ${plugin}`);
+      if (!container)
+        throw new Error(`Plugin container not found for ${plugin}`);
 
       // The module passed to get() must match the `exposes` item in our plugin app's webpack.config
       const factory = await container.get(module);
 
       // `Module` is the React Component exported from the plugin
       const Module = factory?.();
-      if (!Module?.default) throw new Error(`Failed to load plugin: ${plugin}`);
+      if (!Module?.default)
+        throw new Error(`Module has no default for plugin ${plugin}`);
 
       return Module as PluginModule;
     } catch (e) {
       console.error(e);
     }
     return new Promise((_resolve, reject) =>
-      reject(new Error('Failed to load plugin'))
+      reject(new Error(`Failed to load plugin ${plugin}`))
     );
   };

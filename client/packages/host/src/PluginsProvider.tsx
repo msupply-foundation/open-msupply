@@ -10,6 +10,10 @@ import { useHost } from './api';
 
 const getPluginArea = (area: string) => {
   switch (area) {
+    case 'AppBar':
+      return PluginArea.AppBar;
+    case 'DashboardWidget':
+      return PluginArea.DashboardWidget;
     case 'Toolbar':
       return PluginArea.Toolbar;
     default:
@@ -19,8 +23,21 @@ const getPluginArea = (area: string) => {
 
 const getPluginType = (type: string) => {
   switch (type) {
+    case 'Dashboard':
+      return PluginType.Dashboard;
     case 'InboundShipment':
       return PluginType.InboundShipment;
+    case 'InternalOrder':
+      return PluginType.InternalOrder;
+    case 'OutboundShipment':
+      return PluginType.OutboundShipment;
+    case 'Requisition':
+      return PluginType.Requisition;
+    case 'Stocktake':
+      return PluginType.Stocktake;
+    case 'Stock':
+      return PluginType.Stock;
+
     default:
       throw new Error(`Unknown plugin type ${type}`);
   }
