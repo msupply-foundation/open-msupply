@@ -58,7 +58,7 @@ export const SearchWithDocumentSource = (
       return;
     }
 
-    const newObj: Record<string, any> = {};
+    const newObj: Record<string, unknown> = {};
     options.saveFields?.forEach(
       field => (newObj[field] = requestedData[field] ?? null)
     );
