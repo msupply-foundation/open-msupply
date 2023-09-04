@@ -95,7 +95,7 @@ const ItemListComponent: FC = () => {
       <Toolbar filter={filter} />
       <DataTable
         id="item-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}
