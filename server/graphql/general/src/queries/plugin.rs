@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::ContextExt;
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 use service::plugin_files::PluginFileService;
 
 #[derive(PartialEq, Debug, SimpleObject)]
@@ -11,7 +11,8 @@ pub struct PluginNode {
 
 pub fn get_plugins(ctx: &Context<'_>) -> Result<Vec<PluginNode>, Error> {
     let settings = ctx.get_settings();
-    let plugins = PluginFileService::find_files(&settings.server.base_dir)?;
+    let plugins = PluginFileService::find_files(&settings.server.base_dir)
+        .map_err(|err| StandardGraphqlError::InternalError(format!("{:?}", err)))?;
     let plugins: Vec<PluginNode> = plugins
         .into_iter()
         .map(|plugin| PluginNode {
