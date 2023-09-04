@@ -27,7 +27,7 @@ interface StockItemSelectModalProps {
   extraFilter?: (item: ItemRowWithStatsFragment) => boolean;
   isOpen: boolean;
   onClose: () => void;
-  onChange: (items?: ItemWithStockLines[]) => Promise<any>;
+  onChange: (items?: ItemWithStockLines[]) => Promise<unknown>;
   disableBackdrop: boolean;
 }
 
@@ -64,7 +64,7 @@ export const StockItemSelectModal = ({
   isOpen,
   onChange,
   onClose,
-  disableBackdrop
+  disableBackdrop,
 }: StockItemSelectModalProps) => {
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop });
   const t = useTranslation('inventory');

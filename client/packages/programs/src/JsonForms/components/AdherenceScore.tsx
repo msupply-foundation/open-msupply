@@ -177,7 +177,7 @@ const UIComponent = (props: ControlProps) => {
     const targetPath = composePaths(path, options.targetField);
     setTargetPath(targetPath);
     setAdherenceScore(extractProperty(data, targetPath));
-  }, [options, path]);
+  }, [options, path, data, targetPath]);
 
   // fetch current encounter
   const encounterId = useEncounter.utils.idFromUrl();
@@ -224,7 +224,16 @@ const UIComponent = (props: ControlProps) => {
       handleChange(targetPath, status);
       setAdherenceScore(status);
     }
-  }, [options, previousCount, currentEncounter, data, targetPath]);
+  }, [
+    options,
+    previousCount,
+    currentEncounter,
+    data,
+    targetPath,
+    adherenceScore,
+    t,
+    handleChange,
+  ]);
 
   if (!props.visible) {
     return null;

@@ -138,7 +138,7 @@ export const StoryProvider: FC<PropsWithChildrenOnly> = ({ children }) => (
 );
 
 function createMatchMedia(width: number) {
-  return (query: any) => ({
+  return (query: string) => ({
     matches: mediaQuery.match(query, { width }),
     media: query,
     onchange: null,

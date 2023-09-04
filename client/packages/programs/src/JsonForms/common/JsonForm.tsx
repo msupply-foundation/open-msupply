@@ -122,7 +122,7 @@ const FormComponent = ({
   const mapErrors = (
     errors?: {
       keyword: string;
-      parentSchema?: Record<string, any>;
+      parentSchema?: Record<string, Record<string, string>>;
       message?: string;
     }[]
   ) =>
