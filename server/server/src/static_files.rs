@@ -52,16 +52,13 @@ async fn files(
 }
 
 async fn plugins(req: HttpRequest, settings: Data<Settings>) -> Result<HttpResponse, Error> {
-    let service = PluginFileService::new(&settings.server.base_dir)
-        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
     let path = req.match_info();
     let plugin = path
         .get("plugin")
         .ok_or(std::io::Error::new(ErrorKind::NotFound, "Plugin not found"))?;
     let filename = path.get("filename");
 
-    let file = service
-        .find_file(plugin, filename)
+    let file = PluginFileService::find_file(&settings.server.base_dir, plugin, filename)
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
         .ok_or(std::io::Error::new(ErrorKind::NotFound, "Plugin not found"))?;
 
