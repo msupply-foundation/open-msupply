@@ -15,6 +15,7 @@ import {
 import {
   PatientModal,
   ProgramEnrolmentRowFragmentWithId,
+  getStatusEventData,
   usePatientModalStore,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
@@ -27,12 +28,7 @@ const programAdditionalInfoAccessor: ColumnDataAccessor<
   ProgramEnrolmentRowFragmentWithId,
   string[]
 > = ({ rowData }): string[] => {
-  const additionalInfo = [];
-
-  if (rowData?.activeProgramEvents[0]?.data) {
-    additionalInfo.push(rowData.activeProgramEvents[0].data);
-  }
-
+  const additionalInfo = getStatusEventData(rowData.activeProgramEvents);
   return additionalInfo;
 };
 
