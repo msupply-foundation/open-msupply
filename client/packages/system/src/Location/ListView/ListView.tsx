@@ -50,7 +50,7 @@ const LocationListComponent: FC = () => {
       <AppBarButtons onCreate={() => onOpen()} />
       <DataTable
         id="location-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={locations}
