@@ -100,17 +100,27 @@
         "extension": {
           "type": "object"
         },
-        "status": {
-          "$ref": "#/definitions/ContactTraceStatus",
-          "description": "Current status"
+        "location": {
+          "$ref": "#/definitions/ContactTraceLocation",
+          "description": "The store/clinic/location of the contact trace"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
         }
       },
-      "required": ["datetime", "status"],
+      "required": ["datetime"],
       "type": "object"
     },
-    "ContactTraceStatus": {
-      "enum": ["PENDING", "DONE"],
-      "type": "string"
+    "ContactTraceLocation": {
+      "properties": {
+        "storeId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "Gender": {
       "enum": [

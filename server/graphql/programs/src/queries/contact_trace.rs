@@ -1,7 +1,9 @@
 use async_graphql::{dataloader::DataLoader, *};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local, NaiveDate, Utc};
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
+    generic_filters::{
+        DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
+    },
     loader::{
         DocumentByIdLoader, NameByIdLoader, NameByIdLoaderInput, ProgramEnrolmentLoader,
         ProgramEnrolmentLoaderInput,
@@ -11,15 +13,15 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::{
-    document::DocumentNode, program_enrolment::ProgramEnrolmentNode, NameNode,
+    document::DocumentNode, program_enrolment::ProgramEnrolmentNode, GenderType, NameNode,
 };
 use repository::{
     contact_trace::{ContactTrace, ContactTraceFilter, ContactTraceSort, ContactTraceSortField},
-    contact_trace_row::{ContactTraceRow, ContactTraceStatus},
-    DatetimeFilter, EqualFilter, PaginationOption, ProgramRow, StringFilter,
+    contact_trace_row::ContactTraceRow,
+    DateFilter, DatetimeFilter, EqualFilter, PaginationOption, ProgramRow, StringFilter,
 };
-use serde::Serialize;
 use service::auth::{Resource, ResourceAccessRequest};
 
 use super::program_node::ProgramNode;
@@ -36,23 +38,17 @@ pub struct ContactTraceConnector {
     pub nodes: Vec<ContactTraceNode>,
 }
 
-#[derive(InputObject, Clone)]
-pub struct EqualFilterContactTraceStatusInput {
-    pub equal_to: Option<ContactTraceNodeStatus>,
-    pub equal_any: Option<Vec<ContactTraceNodeStatus>>,
-    pub not_equal_to: Option<ContactTraceNodeStatus>,
-}
-
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum ContactTraceSortFieldInput {
     Datetime,
     PatientId,
     ProgramId,
-    Status,
     ContactTraceId,
     FirstName,
     LastName,
+    DateOfBirth,
+    Gender,
 }
 
 #[derive(InputObject)]
@@ -70,10 +66,11 @@ impl ContactTraceSortInput {
             ContactTraceSortFieldInput::Datetime => ContactTraceSortField::Datetime,
             ContactTraceSortFieldInput::PatientId => ContactTraceSortField::PatientId,
             ContactTraceSortFieldInput::ProgramId => ContactTraceSortField::ProgramId,
-            ContactTraceSortFieldInput::Status => ContactTraceSortField::Status,
             ContactTraceSortFieldInput::ContactTraceId => ContactTraceSortField::ContactTraceId,
             ContactTraceSortFieldInput::FirstName => ContactTraceSortField::FirstName,
             ContactTraceSortFieldInput::LastName => ContactTraceSortField::LastName,
+            ContactTraceSortFieldInput::DateOfBirth => ContactTraceSortField::DateOfBirth,
+            ContactTraceSortFieldInput::Gender => ContactTraceSortField::Gender,
         };
 
         ContactTraceSort {
@@ -91,51 +88,41 @@ pub struct ContactTraceFilterInput {
     pub datetime: Option<DatetimeFilterInput>,
     pub patient_id: Option<EqualFilterStringInput>,
     pub contact_patient_id: Option<EqualFilterStringInput>,
-    pub status: Option<EqualFilterContactTraceStatusInput>,
     pub contact_trace_id: Option<StringFilterInput>,
     pub first_name: Option<StringFilterInput>,
     pub last_name: Option<StringFilterInput>,
+    pub gender: Option<EqualFilterGenderInput>,
+    pub date_of_birth: Option<DateFilterInput>,
 }
 
 impl ContactTraceFilterInput {
     pub fn to_domain_filter(self) -> ContactTraceFilter {
+        let ContactTraceFilterInput {
+            id,
+            program_id,
+            document_name,
+            datetime,
+            patient_id,
+            contact_patient_id,
+            contact_trace_id,
+            first_name,
+            last_name,
+            gender,
+            date_of_birth,
+        } = self;
         ContactTraceFilter {
-            id: self.id.map(EqualFilter::from),
-            contact_patient_id: self.contact_patient_id.map(EqualFilter::from),
-            program_id: self.program_id.map(EqualFilter::from),
-            document_name: self.document_name.map(StringFilter::from),
-            datetime: self.datetime.map(DatetimeFilter::from),
-            status: self
-                .status
-                .map(|s| map_filter!(s, ContactTraceNodeStatus::to_domain)),
-            contact_trace_id: self.contact_trace_id.map(StringFilter::from),
-            first_name: self.first_name.map(StringFilter::from),
-            last_name: self.last_name.map(StringFilter::from),
-            patient_id: self.patient_id.map(EqualFilter::from),
+            id: id.map(EqualFilter::from),
+            contact_patient_id: contact_patient_id.map(EqualFilter::from),
+            program_id: program_id.map(EqualFilter::from),
+            document_name: document_name.map(StringFilter::from),
+            datetime: datetime.map(DatetimeFilter::from),
+            contact_trace_id: contact_trace_id.map(StringFilter::from),
+            first_name: first_name.map(StringFilter::from),
+            last_name: last_name.map(StringFilter::from),
+            patient_id: patient_id.map(EqualFilter::from),
             program_context_id: None,
-        }
-    }
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-pub enum ContactTraceNodeStatus {
-    Pending,
-    Done,
-}
-
-impl ContactTraceNodeStatus {
-    pub fn to_domain(self) -> ContactTraceStatus {
-        match self {
-            ContactTraceNodeStatus::Pending => ContactTraceStatus::Pending,
-            ContactTraceNodeStatus::Done => ContactTraceStatus::Done,
-        }
-    }
-
-    pub fn from_domain(status: &ContactTraceStatus) -> ContactTraceNodeStatus {
-        match status {
-            ContactTraceStatus::Pending => ContactTraceNodeStatus::Pending,
-            ContactTraceStatus::Done => ContactTraceNodeStatus::Done,
+            gender: gender.map(|t| map_filter!(t, GenderInput::to_domain)),
+            date_of_birth: date_of_birth.map(DateFilter::from),
         }
     }
 }
@@ -154,6 +141,10 @@ impl ContactTraceNode {
 impl ContactTraceNode {
     pub async fn id(&self) -> &str {
         &self.trace_row().id
+    }
+
+    pub async fn store_id(&self) -> Option<String> {
+        self.trace_row().store_id.clone()
     }
 
     pub async fn program_id(&self) -> &str {
@@ -239,10 +230,6 @@ impl ContactTraceNode {
         Ok(Some(result))
     }
 
-    pub async fn status(&self) -> ContactTraceNodeStatus {
-        ContactTraceNodeStatus::from_domain(&self.trace_row().status)
-    }
-
     pub async fn datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_utc(self.trace_row().datetime, Utc)
     }
@@ -269,6 +256,24 @@ impl ContactTraceNode {
 
     pub async fn last_name(&self) -> Option<String> {
         self.trace_row().last_name.clone()
+    }
+
+    pub async fn gender(&self) -> Option<GenderType> {
+        self.trace_row()
+            .gender
+            .as_ref()
+            .map(GenderType::from_domain)
+    }
+
+    pub async fn date_of_birth(&self) -> Option<NaiveDate> {
+        self.trace_row().date_of_birth.clone()
+    }
+
+    pub async fn age(&self) -> Option<i64> {
+        self.trace_row().date_of_birth.clone().map(|dob| {
+            let diff = Local::now().naive_utc().date().signed_duration_since(dob);
+            diff.num_days() / 365
+        })
     }
 }
 

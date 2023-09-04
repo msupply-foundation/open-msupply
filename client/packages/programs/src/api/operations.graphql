@@ -474,6 +474,7 @@ query activeProgramEvents(
 fragment ContactTraceRow on ContactTraceNode {
   __typename
   contactTraceId
+  storeId
   datetime
   document {
     name
@@ -481,9 +482,12 @@ fragment ContactTraceRow on ContactTraceNode {
     id
   }
   documentId
-  firstName
   id
+  firstName
   lastName
+  gender
+  dateOfBirth
+  age
   patientId
   patient {
     id
@@ -499,7 +503,6 @@ fragment ContactTraceRow on ContactTraceNode {
     id
     name
   }
-  status
 }
 
 query contactTraces(

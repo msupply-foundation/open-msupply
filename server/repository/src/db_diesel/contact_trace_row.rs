@@ -1,17 +1,9 @@
 use super::{document::document, program_row::program, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Gender};
 
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
-use diesel_derive_enum::DbEnum;
-
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ContactTraceStatus {
-    Pending,
-    Done,
-}
 
 table! {
     contact_trace (id) {
@@ -20,11 +12,13 @@ table! {
       document_id -> Text,
       datetime -> Timestamp,
       contact_trace_id -> Nullable<Text>,
-      status -> crate::db_diesel::contact_trace_row::ContactTraceStatusMapping,
       patient_id -> Text,
       contact_patient_id -> Nullable<Text>,
       first_name -> Nullable<Text>,
       last_name -> Nullable<Text>,
+      gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
+      date_of_birth -> Nullable<Date>,
+      store_id -> Nullable<Text>,
     }
 }
 
@@ -43,13 +37,15 @@ pub struct ContactTraceRow {
     pub document_id: String,
     pub datetime: NaiveDateTime,
     pub contact_trace_id: Option<String>,
-    pub status: ContactTraceStatus,
     /// Patient id of the patient this contact belongs to.
     pub patient_id: String,
     /// Linked patient id of the contact.
     pub contact_patient_id: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
+    pub gender: Option<Gender>,
+    pub date_of_birth: Option<NaiveDate>,
+    pub store_id: Option<String>,
 }
 
 pub struct ContactTraceRowRepository<'a> {

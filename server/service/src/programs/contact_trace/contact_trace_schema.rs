@@ -7,15 +7,17 @@ use serde::{Deserialize, Serialize};
 schemafy::schemafy!("src/programs/schemas/contact_trace.json");
 
 pub type SchemaContactTrace = ContactTrace;
+pub type SchemaGender = Gender;
 
 impl Default for SchemaContactTrace {
     fn default() -> Self {
         SchemaContactTrace {
             datetime: Default::default(),
-            status: ContactTraceStatus::Pending,
             contact_trace_id: Default::default(),
             contact: Default::default(),
             extension: None,
+            notes: None,
+            location: Default::default(),
         }
     }
 }
