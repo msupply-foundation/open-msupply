@@ -60,7 +60,7 @@ export const useUnitVariant = (
 ): {
   asPackUnit: (packSize: number) => string;
   numberOfPacksFromQuantity: (totalQuantity: number) => number;
-  variantsControll?: {
+  variantsControl?: {
     variants: VariantNode[];
     // Selected by user or mostUsed (calculated by backend)
     activeVariant: VariantNode;
@@ -108,7 +108,7 @@ export const useUnitVariant = (
     numberOfPacksFromQuantity: totalQuantity =>
       NumUtils.round(totalQuantity / activeVariant.packSize, 2),
     // TODO what if variants were soft deleted ?
-    variantsControll: {
+    variantsControl: {
       variants: variants,
       activeVariant,
       setUserSelectedVariant: variantId =>
