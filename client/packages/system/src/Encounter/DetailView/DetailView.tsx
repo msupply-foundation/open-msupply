@@ -25,6 +25,24 @@ import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
 
+const getPatientBreadcrumbSuffix = (
+  encounter: EncounterFragment,
+  getLocalisedFullName: (
+    firstName: string | null | undefined,
+    lastName: string | null | undefined
+  ) => string
+): string => {
+  if (!!encounter.patient.firstName || !!encounter.patient.firstName) {
+    return getLocalisedFullName(
+      encounter.patient.firstName,
+      encounter.patient.lastName
+    );
+  }
+  if (!!encounter.patient.code2) return encounter.patient.code2;
+  if (!!encounter.patient.code) return encounter.patient.code;
+  return encounter.patient.id;
+};
+
 export const DetailView: FC = () => {
   const t = useTranslation('dispensary');
   const id = useEncounter.utils.idFromUrl();
@@ -95,10 +113,7 @@ export const DetailView: FC = () => {
               .addQuery({ tab: 'Encounters' })
               .build()}
           >
-            {getLocalisedFullName(
-              encounter.patient.firstName,
-              encounter.patient.lastName
-            )}
+            {getPatientBreadcrumbSuffix(encounter, getLocalisedFullName)}
           </Breadcrumb>
           <span>{` / ${encounter.document.documentRegistry
             ?.name} - ${dateFormat.localisedDate(
