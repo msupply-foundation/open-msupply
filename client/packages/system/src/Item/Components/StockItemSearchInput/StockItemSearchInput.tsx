@@ -50,6 +50,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {
+      onPageChange(0); // Reset pagination when searching for a new item
       onFilter(searchText);
     },
     [onFilter],
