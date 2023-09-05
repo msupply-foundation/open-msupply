@@ -62,7 +62,10 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
   const { enabled, data, config } = props;
   const { localisedDateTime } = useFormatDateTime();
 
-  const options = NotesOptions.parse(props.uischema.options);
+  const { options } = useZodOptionsValidation(
+    NoteOptions,
+    props.uischema.options
+  );
 
   const inputData = (data as NoteSchema[]) ?? [];
 
