@@ -26,7 +26,6 @@ export const getPackUnitSelectCell =
     const { variants, activeVariant, setUserSelectedVariant } =
       variantsControll;
 
-    console.log(activeVariant);
     return (
       <Select
         options={variants.map(v => ({ label: v.shortName, value: v.id }))}
