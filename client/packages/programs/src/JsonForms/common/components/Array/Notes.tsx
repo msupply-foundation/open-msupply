@@ -144,7 +144,11 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
       return false;
 
     // Must not be older than `maxAge` days
-    if (DateUtils.ageInDays(created) >= 1) return false;
+    if (
+      DateUtils.ageInDays(created) >= options['editRestrictions']['maxAge'] ??
+      Infinity
+    )
+      return false;
 
     return true;
   };
