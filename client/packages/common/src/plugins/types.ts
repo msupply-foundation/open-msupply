@@ -2,6 +2,7 @@ export enum PluginArea {
   AppBar,
   Column,
   DashboardWidget,
+  EditForm,
   Toolbar,
 }
 

@@ -41,7 +41,7 @@ module.exports = {
       name: 'StockDonor',
       remotes: {},
       exposes: {
-        SyncStatus: './src/SyncStatus.tsx',
+        StockDonorEdit: './src/StockDonorEdit.tsx',
         StockDonorColumn: './src/StockDonorColumn.ts',
       },
       shared: {
