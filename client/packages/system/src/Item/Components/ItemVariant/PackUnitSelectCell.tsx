@@ -17,26 +17,22 @@ export const getPackUnitSelectCell =
     getUnitName: (row: T) => string;
   }) =>
   ({ isError, rowData }: CellProps<T>): ReactElement => {
-    const { variantsControll } = useUnitVariant(getItemId(rowData));
+    const { variantsControl } = useUnitVariant(getItemId(rowData));
 
-    if (!variantsControll) {
+    if (!variantsControl) {
       return <InnerBasicCell isError={isError} value={getUnitName(rowData)} />;
     }
 
-    const { variants, activeVariant, setUserSelectedVariant } =
-      variantsControll;
+    const { variants, activeVariant, setUserSelectedVariant } = variantsControl;
 
-    console.log(activeVariant);
     return (
       <Select
         options={variants.map(v => ({ label: v.shortName, value: v.id }))}
         value={activeVariant.id}
-        onClick={e => {
-          e.stopPropagation();
-        }}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          setUserSelectedVariant(e.target.value);
-        }}
+        onClick={e => e.stopPropagation()}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setUserSelectedVariant(e.target.value)
+        }
       />
     );
   };
