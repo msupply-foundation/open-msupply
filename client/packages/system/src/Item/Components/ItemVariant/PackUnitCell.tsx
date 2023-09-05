@@ -15,7 +15,7 @@ export const getPackUnitCell =
   }: {
     getItemId: (row: T) => string;
     getPackSize: (row: T) => number;
-    getUnitName: (row: T) => string | undefined;
+    getUnitName: (row: T) => string | null;
   }) =>
   ({ isError, rowData }: CellProps<T>): ReactElement => {
     const { asPackUnit } = useUnitVariant(
