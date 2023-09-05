@@ -159,6 +159,8 @@ fragment Encounter on EncounterNode {
     id
     firstName
     lastName
+    code
+    code2
     name
     dateOfBirth
   }
