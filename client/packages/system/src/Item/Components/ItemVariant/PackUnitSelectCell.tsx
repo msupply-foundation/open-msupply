@@ -29,12 +29,10 @@ export const getPackUnitSelectCell =
       <Select
         options={variants.map(v => ({ label: v.shortName, value: v.id }))}
         value={activeVariant.id}
-        onClick={e => {
-          e.stopPropagation();
-        }}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          setUserSelectedVariant(e.target.value);
-        }}
+        onClick={e => e.stopPropagation()}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          setUserSelectedVariant(e.target.value)
+        }
       />
     );
   };
