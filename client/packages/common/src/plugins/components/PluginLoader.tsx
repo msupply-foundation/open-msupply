@@ -1,5 +1,4 @@
 import React, { ComponentType } from 'react';
-import { Environment } from '@openmsupply-client/config';
 import { Box, CircularProgress } from '@mui/material';
 import { ErrorBoundary, ErrorWithDetails, useTranslation } from '../..';
 import { loadPluginModule } from '../utils';
@@ -41,9 +40,8 @@ export const PluginLoader = ({
     );
   };
 
-  const url = `${Environment.PLUGIN_URL}/${name}${Environment.PLUGIN_EXTENSION}`;
   const Component = React.lazy<ComponentType<{ data: unknown }>>(
-    loadPluginModule({ plugin: name, url, module, scope })
+    loadPluginModule({ plugin: name, module, scope })
   );
 
   return (

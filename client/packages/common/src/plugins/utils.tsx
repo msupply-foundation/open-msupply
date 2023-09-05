@@ -1,6 +1,7 @@
 import React from 'react';
 import { ColumnDefinition } from '../ui';
 import { RecordWithId } from '../types/utility';
+import { Environment } from '@openmsupply-client/config';
 
 /* eslint-disable camelcase */
 declare const __webpack_init_sharing__: (shareScope: string) => Promise<void>;
@@ -10,7 +11,6 @@ type Factory = Promise<() => { default: React.ComponentType }>;
 
 interface loadPluginProps {
   plugin: string;
-  url: string;
   module: string;
   scope?: string;
 }
@@ -53,20 +53,21 @@ export const fetchPlugin = (url: string, plugin: string): Promise<Container> =>
     // Lastly we inject the script tag into the document's head to trigger the script load
     document.head.appendChild(script);
   });
+
 export const loadPluginModule = (props: loadPluginProps) =>
   loadPlugin<PluginModule>(props);
 
 export const loadPluginColumn = (props: loadPluginProps) =>
   loadPlugin<PluginColumn>(props);
 
+const getPluginUrl = (name: string) =>
+  `${Environment.PLUGIN_URL}/${name}${Environment.PLUGIN_EXTENSION}`;
+
 function loadPlugin<T>({
   plugin,
-  url,
   module,
   scope = 'default',
 }: loadPluginProps): () => Promise<T> {
-  // const loadPlugin =
-  // ({ plugin, url, module, scope = 'default' }: loadPluginProps) =>
   return async () => {
     try {
       // Check if this plugin has already been loaded
@@ -74,7 +75,10 @@ function loadPlugin<T>({
         // Initializes the shared scope. Fills it with known provided modules from this build and all remotes
         await __webpack_init_sharing__(scope);
         // Fetch the plugin app
-        const fetchedContainer = await fetchPlugin(`${url}`, plugin);
+        const fetchedContainer = await fetchPlugin(
+          getPluginUrl(plugin),
+          plugin
+        );
         // Initialize the plugin app
         await fetchedContainer.init(__webpack_share_scopes__[scope]);
       }

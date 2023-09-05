@@ -9,7 +9,7 @@ export const usePlugins = ({
   area: PluginArea;
   type: PluginType;
 }) => {
-  const { getPlugins } = useContext(PluginContext);
+  const { plugins } = useContext(PluginContext);
 
-  return getPlugins(area, type);
+  return plugins.filter(plugin => plugin.area === area && plugin.type === type);
 };

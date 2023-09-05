@@ -62,7 +62,10 @@ export const ColumnPicker = <T extends RecordWithId>({
     });
   };
 
-  useEffect(() => onChange(columns.filter(isVisible)), [hiddenColumnsConfig]);
+  useEffect(
+    () => onChange(columns.filter(isVisible)),
+    [hiddenColumnsConfig, columns]
+  );
 
   return (
     <>

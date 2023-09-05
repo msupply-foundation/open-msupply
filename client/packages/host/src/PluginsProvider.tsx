@@ -70,13 +70,12 @@ const mapPlugin = (plugin: PluginNode): Plugin<unknown>[] | null => {
     const pluginConfig = JSON.parse(config) as PluginConfig;
     pluginConfig.components.forEach(component => {
       const { area, type, module } = component;
-      console.log('component', component);
       elements.push({
         area: getPluginArea(area),
         module,
         name: pluginConfig.name,
-        type: getPluginType(type),
         path,
+        type: getPluginType(type),
       });
     });
     return elements;
