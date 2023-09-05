@@ -78,14 +78,14 @@ export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemC
 
 export type VariantFragment = { __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string };
 
-export type UnitVariantFragment = { __typename: 'UnitVariantNode', itemId: string, mostUsedVariantId: string, unitName?: string | null, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> };
+export type UnitVariantFragment = { __typename: 'UnitVariantNode', itemId: string, mostUsedVariantId: string, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> };
 
 export type ItemVariantsListQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type ItemVariantsListQuery = { __typename: 'Queries', itemVariantsList: Array<{ __typename: 'UnitVariantNode', itemId: string, mostUsedVariantId: string, unitName?: string | null, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> }> };
+export type ItemVariantsListQuery = { __typename: 'Queries', itemVariantsList: Array<{ __typename: 'UnitVariantNode', itemId: string, mostUsedVariantId: string, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> }> };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -221,7 +221,6 @@ export const UnitVariantFragmentDoc = gql`
     fragment UnitVariant on UnitVariantNode {
   itemId
   mostUsedVariantId
-  unitName
   variants {
     ...Variant
   }

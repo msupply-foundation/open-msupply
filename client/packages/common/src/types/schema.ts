@@ -4598,7 +4598,6 @@ export type UnitVariantNode = {
   __typename: 'UnitVariantNode';
   itemId: Scalars['String']['output'];
   mostUsedVariantId: Scalars['String']['output'];
-  unitName?: Maybe<Scalars['String']['output']>;
   variants: Array<VariantNode>;
 };
 

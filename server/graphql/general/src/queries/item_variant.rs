@@ -11,7 +11,6 @@ pub struct VariantNode {
 #[derive(SimpleObject)]
 pub struct UnitVariantNode {
     pub item_id: String, // item id
-    pub unit_name: Option<String>,
     pub most_used_variant_id: String,
     pub variants: Vec<VariantNode>,
 }
@@ -21,7 +20,6 @@ pub fn item_variants_list(_store_id: &str) -> Vec<UnitVariantNode> {
         UnitVariantNode {
             // Reference data: Amoxicillin 250mg tabs
             item_id: "E43D125F51DE4355AE1233DA449ED08A".to_string(),
-            unit_name: Some("tablet".to_string()),
             most_used_variant_id: "amo-50".to_string(),
             variants: vec![
                 VariantNode {
@@ -47,7 +45,6 @@ pub fn item_variants_list(_store_id: &str) -> Vec<UnitVariantNode> {
         UnitVariantNode {
             // Reference data: Acetylsalicylic Acid 100mg tabs
             item_id: "179D364578D343C8BC45930C16A1D61C".to_string(),
-            unit_name: Some("tablet".to_string()),
             most_used_variant_id: "ace-twenty".to_string(),
             variants: vec![
                 VariantNode {
