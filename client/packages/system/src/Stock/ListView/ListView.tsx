@@ -14,12 +14,10 @@ import {
   useToggle,
   StockIcon,
   ColumnAlign,
-  ColumnDefinition,
   ColumnDescription,
   PluginType,
   PluginArea,
-  RecordWithId,
-  usePlugins,
+  usePluginColumns,
 } from '@openmsupply-client/common';
 import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
@@ -39,6 +37,10 @@ const StockListComponent: FC = () => {
   const t = useTranslation('inventory');
   const { data, isLoading, isError } = useStock.line.list();
   const [repackId, setRepackId] = React.useState<string | null>(null);
+  const pluginColumns = usePluginColumns<StockLineRowFragment>({
+    area: PluginArea.Column,
+    type: PluginType.Stock,
+  });
   const EditStockLineCell = <T extends StockLineRowFragment>({
     rowData,
     isDisabled,
@@ -64,16 +66,6 @@ const StockListComponent: FC = () => {
     />
   );
 
-  const pluginColumns: ColumnDefinition<StockLineRowFragment>[] = usePlugins({
-    area: PluginArea.Column,
-    type: PluginType.Stock,
-  })
-    .map(plugin => plugin.data)
-    .filter(
-      (column): column is ColumnDefinition<RecordWithId> => column !== null
-    )
-    .map(plugin => plugin as unknown as ColumnDefinition<StockLineRowFragment>);
-  console.info('plugin columns', pluginColumns);
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
     {
       key: 'edit',
@@ -134,7 +126,7 @@ const StockListComponent: FC = () => {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
-    [sortBy]
+    [sortBy, pluginColumns]
   );
 
   const { isOpen, entity, onClose, onOpen } =

@@ -12,12 +12,22 @@ import {
 } from './PluginContext';
 import { Plugin, PluginArea, PluginType } from '../types';
 import { PluginLoader } from './PluginLoader';
-import { Environment } from '@openmsupply-client/config';
+import { ColumnDefinition } from '../../ui';
 import { loadPluginColumn } from '../utils';
+import { RecordWithId } from '../../types/utility';
 
 interface PluginProviderProps {
   plugins: Plugin<unknown>[];
 }
+
+const mapPluginToColumnDefinition = async <T extends RecordWithId>(
+  plugin: Plugin<T>
+): Promise<ColumnDefinition<T>> => {
+  const { module, name } = plugin;
+  const pluginColumn = await loadPluginColumn({ plugin: name, module })();
+
+  return pluginColumn.default as unknown as ColumnDefinition<T>;
+};
 
 export const PluginProvider: FC<PropsWithChildren<PluginProviderProps>> = ({
   children,
@@ -32,8 +42,6 @@ export const PluginProvider: FC<PropsWithChildren<PluginProviderProps>> = ({
       setState,
       setPlugins: (plugins: Plugin<unknown>[]) =>
         setState(state => ({ ...state, plugins })),
-      getPlugins: (area: PluginArea, type: PluginType) =>
-        plugins.filter(plugin => plugin.area === area && plugin.type === type),
       getPluginElements: function <T>({
         area,
         type,
@@ -43,7 +51,7 @@ export const PluginProvider: FC<PropsWithChildren<PluginProviderProps>> = ({
         type: PluginType;
         data?: T;
       }) {
-        return (plugins as Plugin<T>[])
+        return (pluginState.plugins as Plugin<T>[])
           .filter(plugin => plugin.area === area && plugin.type === type)
           .map(plugin => (
             <PluginLoader
@@ -55,31 +63,26 @@ export const PluginProvider: FC<PropsWithChildren<PluginProviderProps>> = ({
             />
           ));
       },
+      getPluginColumns: function <T extends RecordWithId>({
+        area,
+        type,
+      }: {
+        area: PluginArea;
+        type: PluginType;
+      }) {
+        const promises = (pluginState.plugins as Plugin<T>[])
+          .filter(plugin => plugin.area === area && plugin.type === type)
+          .map(mapPluginToColumnDefinition);
+
+        return Promise.all(promises);
+      },
 
       ...pluginState,
     }),
     [setState, pluginState]
   );
 
-  const updateColumnPlugin = (plugin: Plugin<unknown>, column: unknown) => {
-    const { plugins } = pluginState;
-    const index = plugins.findIndex(
-      p => p.name === plugin.name && p.module === plugin.module
-    );
-    if (index === -1) return;
-
-    plugins[index] = { ...plugin, data: column };
-  };
-
   useEffect(() => {
-    plugins.forEach(async plugin => {
-      if (plugin.area !== PluginArea.Column) return;
-
-      const { name, module } = plugin;
-      const url = `${Environment.PLUGIN_URL}/${name}${Environment.PLUGIN_EXTENSION}`;
-      const column = await loadPluginColumn({ plugin: name, url, module })();
-      updateColumnPlugin(plugin, column.default);
-    });
     setState({ ...pluginState, plugins });
   }, [plugins]);
 
