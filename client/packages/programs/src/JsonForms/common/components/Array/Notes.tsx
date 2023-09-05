@@ -62,7 +62,7 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
   const { enabled, data, config } = props;
   const { localisedDateTime } = useFormatDateTime();
 
-  const options = props.uischema.options;
+  const options = NotesOptions.parse(props.uischema.options);
 
   const inputData = (data as NoteSchema[]) ?? [];
 
@@ -145,8 +145,8 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
 
     // Must not be older than `maxAge` days
     if (
-      DateUtils.ageInDays(created) >= options['editRestrictions']['maxAge'] ??
-      Infinity
+      DateUtils.ageInDays(created) >=
+      (options?.editRestrictions?.maxAge ?? Infinity)
     )
       return false;
 
