@@ -17,14 +17,13 @@ export const getPackUnitSelectCell =
     getUnitName: (row: T) => string;
   }) =>
   ({ isError, rowData }: CellProps<T>): ReactElement => {
-    const { variantsControll } = useUnitVariant(getItemId(rowData));
+    const { variantsControl } = useUnitVariant(getItemId(rowData));
 
-    if (!variantsControll) {
+    if (!variantsControl) {
       return <InnerBasicCell isError={isError} value={getUnitName(rowData)} />;
     }
 
-    const { variants, activeVariant, setUserSelectedVariant } =
-      variantsControll;
+    const { variants, activeVariant, setUserSelectedVariant } = variantsControl;
 
     return (
       <Select
