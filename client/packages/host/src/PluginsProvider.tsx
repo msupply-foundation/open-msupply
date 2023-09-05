@@ -16,6 +16,8 @@ const getPluginArea = (area: string) => {
       return PluginArea.Column;
     case 'DashboardWidget':
       return PluginArea.DashboardWidget;
+    case 'EditForm':
+      return PluginArea.EditForm;
     case 'Toolbar':
       return PluginArea.Toolbar;
 

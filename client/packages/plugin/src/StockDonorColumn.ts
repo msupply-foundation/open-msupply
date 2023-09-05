@@ -5,7 +5,8 @@ const StockDonorColumn: ColumnDefinition<StockLineRowFragment> = {
   key: 'stock-donor',
   accessor: () => `Donor`,
   label: 'label.donor',
-  order: 1,
+  sortable: false,
+  order: 103,
 };
 
 export default StockDonorColumn;
