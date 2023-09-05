@@ -1,7 +1,7 @@
 import { useUnitVariantList } from '../api';
 import { create } from 'zustand';
 import { UnitVariantNode, VariantNode } from '@common/types';
-import { NumUtils, isEqual } from '@common/utils';
+import { ArrayUtils, NumUtils, isEqual } from '@common/utils';
 import { useEffect } from 'react';
 
 type UserSelectedVariants = {
@@ -30,11 +30,11 @@ const useUnitStore = create<UnitState>(set => {
       })),
     setItems: newItems =>
       set(({ userSelectedVariants }) => {
-        const items = newItems.reduce(
-          (acc, item) => ({ [item.itemId]: item, ...acc }),
-          {}
-        );
-        return { items, userSelectedVariants };
+        return {
+          // Using function for iterator instead of just itemId for type safety
+          items: ArrayUtils.keyBy(newItems, item => item.itemId),
+          userSelectedVariants,
+        };
       }),
   };
 });
