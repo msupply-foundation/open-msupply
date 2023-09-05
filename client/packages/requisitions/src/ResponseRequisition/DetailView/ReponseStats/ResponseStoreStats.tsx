@@ -44,33 +44,31 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
           paddingBottom: 2,
         }}
       >
-        <>
-          <Box
-            display="flex"
-            alignItems="flex-start"
-            width={predictedStockPercent}
-          >
-            <ValueBar
-              value={stockOnHand}
-              total={predictedStockLevels}
-              label={t('label.stock-on-hand')}
-              colour="gray.dark"
-              startDivider
-            />
-            <ValueBar
-              value={incomingStock}
-              total={predictedStockLevels}
-              label={t('label.incoming-stock')}
-              colour="gray.main"
-            />
-            <ValueBar
-              value={stockOnOrder}
-              total={predictedStockLevels}
-              label={t('label.stock-on-order')}
-              colour="gray.light"
-            />
-          </Box>
-        </>
+        <Box
+          display="flex"
+          alignItems="flex-start"
+          width={predictedStockPercent}
+        >
+          <ValueBar
+            value={stockOnHand}
+            total={predictedStockLevels}
+            label={t('label.stock-on-hand')}
+            colour="gray.dark"
+            startDivider
+          />
+          <ValueBar
+            value={incomingStock}
+            total={predictedStockLevels}
+            label={t('label.incoming-stock')}
+            colour="gray.main"
+          />
+          <ValueBar
+            value={stockOnOrder}
+            total={predictedStockLevels}
+            label={t('label.stock-on-order')}
+            colour="gray.light"
+          />
+        </Box>
       </Box>
       <Box
         sx={{
@@ -80,23 +78,21 @@ export const ResponseStoreStats: React.FC<ResponseStoreStatsProps> = ({
           paddingBottom: 2,
         }}
       >
-        <>
-          <Box display="flex" alignItems="flex-start" width={requestedPercent}>
-            <ValueBar
-              value={requestedQuantity}
-              total={totalRequested}
-              label={t('label.requested-quantity')}
-              colour="primary.main"
-              startDivider
-            />
-            <ValueBar
-              value={otherRequestedQuantity}
-              total={totalRequested}
-              label={t('label.all-requested-quantity')}
-              colour="primary.light"
-            />
-          </Box>
-        </>
+        <Box display="flex" alignItems="flex-start" width={requestedPercent}>
+          <ValueBar
+            value={requestedQuantity}
+            total={totalRequested}
+            label={t('label.requested-quantity')}
+            colour="primary.main"
+            startDivider
+          />
+          <ValueBar
+            value={otherRequestedQuantity}
+            total={totalRequested}
+            label={t('label.all-requested-quantity')}
+            colour="primary.light"
+          />
+        </Box>
       </Box>
     </>
   );
