@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::{
-        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, NameByIdLoader, NameByIdLoaderInput,
+        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, PatientLoader,
         ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
     },
     map_filter,
@@ -16,10 +16,10 @@ use repository::{
 };
 use serde::Serialize;
 
-use crate::types::{ClinicianNode, NameNode};
+use crate::types::ClinicianNode;
 
 use super::{
-    document::DocumentNode, program_enrolment::ProgramEnrolmentNode,
+    document::DocumentNode, patient::PatientNode, program_enrolment::ProgramEnrolmentNode,
     program_event::ProgramEventNode,
 };
 
@@ -187,16 +187,17 @@ impl EncounterNode {
         &self.encounter.0.patient_id
     }
 
-    pub async fn patient(&self, ctx: &Context<'_>) -> Result<NameNode> {
-        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(NameByIdLoaderInput::new(
-                &self.store_id,
-                &self.encounter.0.patient_id,
-            ))
+            .load_one(self.encounter.0.patient_id.clone())
             .await?
-            .map(NameNode::from_domain)
+            .map(|patient| PatientNode {
+                store_id: self.store_id.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
+                patient,
+            })
             .ok_or(Error::new("Encounter without patient"))?;
 
         Ok(result)
