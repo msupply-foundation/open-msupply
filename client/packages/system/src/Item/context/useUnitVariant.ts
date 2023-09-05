@@ -76,14 +76,12 @@ export const useUnitVariant = (
 ): {
   asPackUnit: (packSize: number) => string;
   numberOfPacksFromQuantity: (totalQuantity: number) => number;
-  variantsControl:
-    | {
-        variants: VariantNode[];
-        // Selected by user or mostUsed (calculated by backend)
-        activeVariant: VariantNode;
-        setUserSelectedVariant: (variantId: string) => void;
-      }
-    | string;
+  variantsControl?: {
+    variants: VariantNode[];
+    // Selected by user or mostUsed (calculated by backend)
+    activeVariant: VariantNode;
+    setUserSelectedVariant: (variantId: string) => void;
+  };
 } => {
   const [item, userSelectedVariantId, setUserSelectedVariant] = useUnitStore(
     state => [
@@ -99,8 +97,6 @@ export const useUnitVariant = (
     return {
       asPackUnit: packSize => asPackUnit({ packSize, unitName, t }),
       numberOfPacksFromQuantity: totalQuantity => totalQuantity,
-      // If no variants exists return default pack unit display
-      variantsControl: asPackUnit({ packSize: 1, unitName, t }),
     };
   }
 
@@ -132,14 +128,11 @@ export const useUnitVariant = (
     numberOfPacksFromQuantity: totalQuantity =>
       NumUtils.round(totalQuantity / activeVariant.packSize, 2),
     // TODO what if variants were soft deleted ?
-    variantsControl:
-      (variants.length > 0 && {
-        variants: variants,
-        activeVariant,
-        setUserSelectedVariant: variantId =>
-          setUserSelectedVariant({ itemId, variantId }),
-      }) ||
-      // If no variants exists return default pack unit display
-      asPackUnit({ packSize: 1, unitName, t }),
+    variantsControl: {
+      variants: variants,
+      activeVariant,
+      setUserSelectedVariant: variantId =>
+        setUserSelectedVariant({ itemId, variantId }),
+    },
   };
 };
