@@ -89,7 +89,7 @@ const StockListComponent: FC = () => {
         Cell: getPackUnitCell({
           getItemId: r => r.itemId,
           getPackSize: r => r.packSize,
-          getUnitName: r => r.item.unitName || undefined,
+          getUnitName: r => r.item.unitName || null,
         }),
       },
       [
