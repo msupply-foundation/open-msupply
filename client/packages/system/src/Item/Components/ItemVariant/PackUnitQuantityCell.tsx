@@ -16,7 +16,10 @@ export const getPackUnitQuantityCell =
     getQuantity: (row: T) => number;
   }) =>
   ({ isError, rowData }: CellProps<T>): ReactElement => {
-    const { numberOfPacksFromQuantity } = useUnitVariant(getItemId(rowData));
+    const { numberOfPacksFromQuantity } = useUnitVariant(
+      getItemId(rowData),
+      null
+    );
 
     const quantity = getQuantity(rowData);
     const packQuantity = numberOfPacksFromQuantity(quantity);
