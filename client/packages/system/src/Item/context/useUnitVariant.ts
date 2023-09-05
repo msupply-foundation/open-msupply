@@ -1,7 +1,7 @@
 import { useUnitVariantList } from '../api';
 import { create } from 'zustand';
 import { UnitVariantNode, VariantNode } from '@common/types';
-import { NumUtils, isEqual } from '@common/utils';
+import { ArrayUtils, NumUtils, isEqual } from '@common/utils';
 import { useEffect } from 'react';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 
@@ -31,11 +31,11 @@ const useUnitStore = create<UnitState>(set => {
       })),
     setItems: newItems =>
       set(({ userSelectedVariants }) => {
-        const items = newItems.reduce(
-          (acc, item) => ({ [item.itemId]: item, ...acc }),
-          {}
-        );
-        return { items, userSelectedVariants };
+        return {
+          // Using function for iterator instead of just itemId for type safety
+          items: ArrayUtils.keyBy(newItems, item => item.itemId),
+          userSelectedVariants,
+        };
       }),
   };
 });
@@ -76,7 +76,7 @@ export const useUnitVariant = (
 ): {
   asPackUnit: (packSize: number) => string;
   numberOfPacksFromQuantity: (totalQuantity: number) => number;
-  variantsControll?: {
+  variantsControl?: {
     variants: VariantNode[];
     // Selected by user or mostUsed (calculated by backend)
     activeVariant: VariantNode;
@@ -128,7 +128,7 @@ export const useUnitVariant = (
     numberOfPacksFromQuantity: totalQuantity =>
       NumUtils.round(totalQuantity / activeVariant.packSize, 2),
     // TODO what if variants were soft deleted ?
-    variantsControll: {
+    variantsControl: {
       variants: variants,
       activeVariant,
       setUserSelectedVariant: variantId =>
