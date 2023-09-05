@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { UnitVariantNode, VariantNode } from '@common/types';
 import { NumUtils, isEqual } from '@common/utils';
 import { useEffect } from 'react';
+import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 
 type UserSelectedVariants = {
   [itemId: string]: /* userSelectedVariantId */ string;
@@ -55,8 +56,23 @@ export const useInitUnitStore = () => {
   // TODO add user selected from app data
 };
 
+type AsPackUnit = (_: {
+  packSize: number;
+  packUnitName?: string;
+  unitName?: string;
+  t: TypedTFunction<LocaleKey>;
+}) => string;
+const asPackUnit: AsPackUnit = ({ packSize, packUnitName, unitName, t }) => {
+  if (packUnitName) return packUnitName;
+  if (unitName) return `${packSize} ${unitName}`;
+
+  let defaultUnit = t('label.unit');
+  return `${packSize} ${defaultUnit};`;
+};
+
 export const useUnitVariant = (
-  itemId: string
+  itemId: string,
+  unitName?: string
 ): {
   asPackUnit: (packSize: number) => string;
   numberOfPacksFromQuantity: (totalQuantity: number) => number;
@@ -75,10 +91,11 @@ export const useUnitVariant = (
     ],
     isEqual
   );
+  const t = useTranslation('common');
 
   if (!item || item.variants.length == 0) {
     return {
-      asPackUnit: packSize => String(packSize),
+      asPackUnit: packSize => asPackUnit({ packSize, unitName, t }),
       numberOfPacksFromQuantity: totalQuantity => totalQuantity,
     };
   }
@@ -101,9 +118,12 @@ export const useUnitVariant = (
         variant => variant.packSize === packSize
       );
 
-      if (foundVariant) return foundVariant.shortName;
-      if (item.unitName) return `${item?.unitName} x ${packSize}`;
-      return `${packSize}`;
+      return asPackUnit({
+        packSize,
+        unitName,
+        packUnitName: foundVariant?.shortName,
+        t,
+      });
     },
     numberOfPacksFromQuantity: totalQuantity =>
       NumUtils.round(totalQuantity / activeVariant.packSize, 2),

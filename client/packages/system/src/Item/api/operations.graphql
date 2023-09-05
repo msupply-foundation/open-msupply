@@ -246,7 +246,6 @@ fragment Variant on VariantNode {
 fragment UnitVariant on UnitVariantNode {
   itemId
   mostUsedVariantId
-  unitName
   variants {
     ...Variant
   }
