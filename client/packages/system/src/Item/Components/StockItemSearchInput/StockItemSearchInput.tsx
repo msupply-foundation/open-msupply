@@ -1,14 +1,17 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
   useToggle,
   useFormatNumber,
   useTranslation,
-  Autocomplete,
+  AutocompleteWithPagination as Autocomplete,
   defaultOptionMapper,
+  ArrayUtils,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
-import { useItemStockOnHand } from '../../api';
+import { ItemStockOnHandFragment, useItemStockOnHand } from '../../api';
 import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
+import { useOrganisationFilter, usePagination } from './hooks';
 
 export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   onChange,
@@ -19,16 +22,39 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   autoFocus = false,
   openOnFocus,
 }) => {
-  const { data, isLoading } = useItemStockOnHand();
+  const debounceTimeout = 300;
+  const { pagination, onPageChange } = usePagination();
+  const { filter, onFilter } = useOrganisationFilter();
+  const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
+
+  const { data, isLoading } = useItemStockOnHand({
+    pagination,
+    filter,
+  });
   const t = useTranslation('common');
   const formatNumber = useFormatNumber();
 
-  const value = data?.nodes.find(({ id }) => id === currentItemId) ?? null;
+  const value = items.find(({ id }) => id === currentItemId) ?? null;
   const selectControl = useToggle();
 
-  const options = extraFilter
-    ? data?.nodes?.filter(extraFilter) ?? []
-    : data?.nodes ?? [];
+  const options = extraFilter ? items.filter(extraFilter) ?? [] : items ?? [];
+
+  const cachedSearchedItems = useMemo(() => {
+    const newItems = ArrayUtils.uniqBy(
+      [...items, ...(data?.nodes ?? [])],
+      'id'
+    );
+    const sorted = ArrayUtils.orderBy(newItems, ['name'], ['asc']);
+    return sorted;
+  }, [items, data]);
+
+  const debounceOnFilter = useDebounceCallback(
+    (searchText: string) => {
+      onFilter(searchText);
+    },
+    [onFilter],
+    debounceTimeout
+  );
 
   useEffect(() => {
     // using the Autocomplete openOnFocus prop, the popper is incorrectly positioned
@@ -37,6 +63,8 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       setTimeout(() => selectControl.toggleOn(), 300);
     }
   }, []);
+
+  useEffect(() => setItems(cachedSearchedItems), [cachedSearchedItems]);
 
   return (
     <Autocomplete
@@ -51,11 +79,18 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       onChange={(_, item) => onChange(item)}
       options={defaultOptionMapper(options, 'name')}
       getOptionLabel={option => `${option.code}     ${option.name}`}
-      renderOption={getItemOptionRenderer(t('label.units'), formatNumber.format)}
+      renderOption={getItemOptionRenderer(
+        t('label.units'),
+        formatNumber.format
+      )}
       width={width ? `${width}px` : '100%'}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
+      onInputChange={(_, value) => debounceOnFilter(value)}
+      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+      paginationDebounce={debounceTimeout}
+      onPageChange={onPageChange}
     />
   );
 };
