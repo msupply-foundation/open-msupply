@@ -23,9 +23,9 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   openOnFocus,
 }) => {
   const debounceTimeout = 300;
+  const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
   const { pagination, onPageChange } = usePagination();
   const { filter, onFilter } = useOrganisationFilter();
-  const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
 
   const { data, isLoading } = useItemStockOnHand({
     pagination,
