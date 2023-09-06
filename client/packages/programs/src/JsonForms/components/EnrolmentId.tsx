@@ -60,7 +60,7 @@ const UIComponent = (props: ControlProps) => {
         sx: { ...inputProps.sx, ...DefaultFormRowSpacing },
       }}
       labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment={'start'}
+      inputAlignment="start"
     />
   );
 };
