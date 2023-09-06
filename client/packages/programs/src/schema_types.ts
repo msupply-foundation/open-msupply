@@ -1,5 +1,5 @@
 import { EncounterNodeStatus } from '@common/types';
-import { Clinician } from 'packages/system/src/Clinician';
+import { Clinician } from '@openmsupply-client/system';
 
 /** The Note schema data structure */
 export type NoteSchema = {
