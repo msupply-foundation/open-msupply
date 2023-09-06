@@ -22,7 +22,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   autoFocus = false,
   openOnFocus,
 }) => {
-  const debounceTimeout = 300;
+  const DEBOUNCE_TIMEOUT = 300;
   const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
   const { pagination, onPageChange } = usePagination();
   const { filter, onFilter } = useOrganisationFilter();
