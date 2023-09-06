@@ -1,10 +1,14 @@
-import React, { FC, PropsWithChildren, SyntheticEvent } from 'react';
+import React, {
+  FC,
+  PropsWithChildren,
+  SyntheticEvent,
+  useState,
+  useEffect,
+} from 'react';
 import {
   Autocomplete as MuiAutocomplete,
   AutocompleteRenderInputParams,
   createFilterOptions,
-  styled,
-  Popper,
   PopperProps,
   CircularProgress,
   Box,
@@ -12,6 +16,9 @@ import {
 import { BasicTextInput } from '../TextInput';
 import { useDebounceCallback } from '@common/hooks';
 import type { AutocompleteProps } from './Autocomplete';
+import { StyledPopper } from './components';
+
+const LOADER_HIDE_TIMEOUT = 500;
 
 export interface AutocompleteWithPaginationProps<T>
   extends AutocompleteProps<T> {
@@ -24,10 +31,6 @@ export interface AutocompleteWithPaginationProps<T>
   paginationDebounce?: number;
   onPageChange?: (page: number) => void;
 }
-
-const StyledPopper = styled(Popper)(({ theme }) => ({
-  boxShadow: theme.shadows[2],
-}));
 
 export function AutocompleteWithPagination<T>({
   defaultValue,
@@ -59,6 +62,7 @@ export function AutocompleteWithPagination<T>({
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteWithPaginationProps<T>>) {
   const filter = filterOptions ?? createFilterOptions(filterOptionConfig);
+  const [isLoading, setIsLoading] = useState(true);
 
   const defaultRenderInput = (props: AutocompleteRenderInputParams) => (
     <BasicTextInput
@@ -71,7 +75,9 @@ export function AutocompleteWithPagination<T>({
         // style: props.disabled ? { paddingLeft: 0 } : {},
         endAdornment: (
           <>
-            {loading ? <CircularProgress color="primary" size={18} /> : null}
+            {isLoading || loading ? (
+              <CircularProgress color="primary" size={18} />
+            ) : null}
             {props.InputProps.endAdornment}
           </>
         ),
@@ -80,7 +86,7 @@ export function AutocompleteWithPagination<T>({
     />
   );
 
-  const defaultRenderOption: FC = (
+  const DefaultRenderOption: FC = (
     props: React.HTMLAttributes<HTMLLIElement>,
     option: { id?: string; label?: string } & T
   ) => (
@@ -131,6 +137,10 @@ export function AutocompleteWithPagination<T>({
     />
   );
 
+  useEffect(() => {
+    setTimeout(() => setIsLoading(false), LOADER_HIDE_TIMEOUT);
+  }, [options]);
+
   return (
     <MuiAutocomplete
       {...restOfAutocompleteProps}
@@ -149,7 +159,7 @@ export function AutocompleteWithPagination<T>({
       options={options}
       size="small"
       renderInput={renderInput || defaultRenderInput}
-      renderOption={renderOption || defaultRenderOption}
+      renderOption={renderOption || DefaultRenderOption}
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
