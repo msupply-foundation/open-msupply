@@ -103,6 +103,26 @@ export function AutocompleteWithPagination<T>({
     paginationDebounce
   );
 
+  const listboxProps =
+    !pagination || !onPageChange
+      ? undefined
+      : {
+          onScroll: (event: SyntheticEvent) => {
+            const listboxNode = event.currentTarget;
+            const scrollPosition =
+              listboxNode.scrollTop + listboxNode.clientHeight;
+
+            // the scrollPosition should equal scrollHeight at the end of the list
+            // but can be off by 0.5px, hence the +1 and greater than or equal to
+            if (scrollPosition + 1 >= listboxNode.scrollHeight) {
+              // Scroll bar is at the end, load more data
+              const { page, first, total } = pagination;
+              if (first * (page + 1) > total) return; // We have no more data to fetch
+              debounceOnPageChange(page + 1);
+            }
+          },
+        };
+
   const CustomPopper: React.FC<PopperProps> = props => (
     <StyledPopper
       {...props}
@@ -133,24 +153,7 @@ export function AutocompleteWithPagination<T>({
       onChange={onChange}
       getOptionLabel={getOptionLabel || defaultGetOptionLabel}
       PopperComponent={popperMinWidth ? CustomPopper : StyledPopper}
-      ListboxProps={
-        (pagination &&
-          onPageChange && {
-            onScroll: (event: SyntheticEvent) => {
-              const listboxNode = event.currentTarget;
-              if (
-                listboxNode.scrollTop + listboxNode.clientHeight ===
-                listboxNode.scrollHeight
-              ) {
-                // Scroll bar is at the end, load more data
-                const { page, first, total } = pagination;
-                if (first * (page + 1) > total) return; // We have no more data to fetch
-                debounceOnPageChange(page + 1);
-              }
-            },
-          }) ||
-        undefined
-      }
+      ListboxProps={listboxProps}
     />
   );
 }
