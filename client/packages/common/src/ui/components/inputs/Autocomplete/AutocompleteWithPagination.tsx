@@ -142,9 +142,6 @@ export function AutocompleteWithPagination<T>({
                 listboxNode.scrollTop + listboxNode.clientHeight ===
                 listboxNode.scrollHeight
               ) {
-                // testing
-                console.log('at the end', pagination);
-
                 // Scroll bar is at the end, load more data
                 const { page, first, total } = pagination;
                 if (first * (page + 1) > total) return; // We have no more data to fetch
