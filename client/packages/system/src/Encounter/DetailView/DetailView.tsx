@@ -97,7 +97,7 @@ const useSaveWithStatusChangeModal = (
     <Modal
       title={t('messages.save-encounter-as-visited')}
       cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-      height={1}
+      height={200}
       okButton={
         <DialogButton
           variant="save"
