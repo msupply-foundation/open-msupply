@@ -13,6 +13,8 @@ import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 import { useOrganisationFilter, usePagination } from './hooks';
 
+const DEBOUNCE_TIMEOUT = 300;
+
 export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   onChange,
   currentItemId,
@@ -22,7 +24,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   autoFocus = false,
   openOnFocus,
 }) => {
-  const DEBOUNCE_TIMEOUT = 300;
   const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
   const { pagination, onPageChange } = usePagination();
   const { filter, onFilter } = useOrganisationFilter();
