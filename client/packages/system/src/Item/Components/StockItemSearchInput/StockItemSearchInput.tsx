@@ -46,7 +46,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     );
     const sorted = ArrayUtils.orderBy(newItems, ['name'], ['asc']);
     return sorted;
-  }, [items, data]);
+  }, [data]);
 
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {
