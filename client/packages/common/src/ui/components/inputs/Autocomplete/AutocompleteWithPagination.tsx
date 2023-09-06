@@ -100,7 +100,7 @@ export function AutocompleteWithPagination<T>({
       onPageChange && onPageChange(page);
     },
     [onPageChange],
-    paginationDebounce || 500
+    paginationDebounce
   );
 
   const CustomPopper: React.FC<PopperProps> = props => (
