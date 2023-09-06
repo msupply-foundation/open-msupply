@@ -25,7 +25,7 @@ const UIComponent = (props: ControlProps) => {
     uischema.options
   );
 
-  // fetch current encounter
+  // fetch matching program enrolment
   const { data } = useProgramEnrolments.document.list({
     filterBy: {
       type: { equalTo: options?.programEnrolmentType },
