@@ -54,14 +54,14 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       onFilter(searchText);
     },
     [onFilter],
-    debounceTimeout
+    DEBOUNCE_TIMEOUT
   );
 
   useEffect(() => {
     // using the Autocomplete openOnFocus prop, the popper is incorrectly positioned
     // when used within a Dialog. This is a workaround to fix the popper position.
     if (openOnFocus) {
-      setTimeout(() => selectControl.toggleOn(), 300);
+      setTimeout(() => selectControl.toggleOn(), DEBOUNCE_TIMEOUT);
     }
   }, []);
 
@@ -90,7 +90,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       open={selectControl.isOn}
       onInputChange={(_, value) => debounceOnFilter(value)}
       pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-      paginationDebounce={debounceTimeout}
+      paginationDebounce={DEBOUNCE_TIMEOUT}
       onPageChange={onPageChange}
     />
   );
