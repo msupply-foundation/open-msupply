@@ -11,12 +11,17 @@ import {
   Breadcrumb,
   useIntlUtils,
   EncounterNodeStatus,
+  useDialog,
+  DialogButton,
+  ButtonWithIcon,
+  SaveIcon,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
   useJsonForms,
   EncounterFragment,
   useDocumentDataAccessor,
+  EncounterSchema,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -43,6 +48,88 @@ const getPatientBreadcrumbSuffix = (
   return encounter.patient.id;
 };
 
+/**
++ * Updates the status and once the status has been update saves the encounter
++ */
+const useSaveWithStatus = (
+  saveData: () => void,
+  encounterData: EncounterSchema | undefined,
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
+): ((status: EncounterNodeStatus | undefined) => void) => {
+  const [saveStatus, setSaveStatus] = useState<
+    EncounterNodeStatus | undefined
+  >();
+
+  useEffect(() => {
+    if (!!saveStatus && saveStatus === encounterData?.status) {
+      saveData();
+    }
+  }, [saveStatus, encounterData?.status]);
+
+  return (status: EncounterNodeStatus | undefined) => {
+    if (status === undefined) {
+      // no status change
+      saveData();
+      return;
+    }
+    updateEncounter({ status });
+    setSaveStatus(status);
+  };
+};
+
+const useSaveWithStatusChangeModal = (
+  onSave: () => void,
+  encounterData: EncounterSchema | undefined,
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
+): { showDialog: () => void; SaveAsVisitedModal: React.FC } => {
+  const { Modal, hideDialog, showDialog } = useDialog({
+    disableBackdrop: true,
+  });
+  const t = useTranslation('dispensary');
+
+  const saveWithStatusChange = useSaveWithStatus(
+    onSave,
+    encounterData,
+    updateEncounter
+  );
+
+  const SaveAsVisitedModal = () => (
+    <Modal
+      title={t('messages.save-encounter-as-visited')}
+      cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+      height={1}
+      okButton={
+        <DialogButton
+          variant="save"
+          onClick={() => {
+            onSave();
+            hideDialog();
+          }}
+        />
+      }
+      nextButton={
+        <ButtonWithIcon
+          color="secondary"
+          variant="contained"
+          onClick={() => {
+            saveWithStatusChange(EncounterNodeStatus.Visited);
+            hideDialog();
+          }}
+          Icon={<SaveIcon />}
+          label={t('button-save-as-visited')}
+        />
+      }
+    >
+      <></>
+    </Modal>
+  );
+
+  return {
+    showDialog,
+    SaveAsVisitedModal,
+  };
+};
+
 export const DetailView: FC = () => {
   const t = useTranslation('dispensary');
   const id = useEncounter.utils.idFromUrl();
@@ -56,10 +143,9 @@ export const DetailView: FC = () => {
 
   const {
     data: encounter,
-    mutate: fetchEncounter,
     isSuccess,
     isError,
-  } = useEncounter.document.byIdPromise(id);
+  } = useEncounter.document.byId(id);
 
   const handleSave = useEncounter.document.upsert(
     encounter?.patient.id ?? '',
@@ -96,11 +182,16 @@ export const DetailView: FC = () => {
     [data, setData]
   );
 
-  // using a mutation to fetch rather than a query
-  // because the API does not error on invalid ids
-  // which results in an infinite re-render
-  // if the id is invalid and a query is used
-  useEffect(() => fetchEncounter(), [id]);
+  const { showDialog: showSaveAsVisitedDialog, SaveAsVisitedModal } =
+    useSaveWithStatusChangeModal(
+      saveData,
+      data as unknown as EncounterSchema,
+      updateEncounter
+    );
+  const suggestSaveWithStatusVisited = encounter
+    ? new Date(encounter.startDatetime).getTime() < Date.now() &&
+      encounter.status === EncounterNodeStatus.Pending
+    : false;
 
   useEffect(() => {
     if (encounter) {
@@ -158,9 +249,16 @@ export const DetailView: FC = () => {
       {encounter && (
         <SidePanel encounter={encounter} onChange={updateEncounter} />
       )}
+      <SaveAsVisitedModal />
       <Footer
         documentName={encounter?.document?.name}
-        onSave={saveData}
+        onSave={() => {
+          if (suggestSaveWithStatusVisited) {
+            showSaveAsVisitedDialog();
+          } else {
+            saveData();
+          }
+        }}
         onCancel={revert}
         isDisabled={!isDirty || !!validationError}
         encounter={data as EncounterFragment}
