@@ -12,10 +12,10 @@ export const useOrganisationFilter = (searchText = '') => {
   };
 };
 
-export const usePagination = () => {
+export const usePagination = (first: number = 500) => {
   const [pagination, setPagination] = useState({
     page: 0,
-    first: 1000,
+    first,
     offset: 0,
   });
 
