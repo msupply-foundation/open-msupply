@@ -11,7 +11,7 @@ import {
 import { ItemStockOnHandFragment, useItemStockOnHand } from '../../api';
 import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
-import { useOrganisationFilter, usePagination } from './hooks';
+import { useItemFilter, usePagination } from './hooks';
 
 const DEBOUNCE_TIMEOUT = 300;
 
@@ -26,7 +26,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 }) => {
   const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
   const { pagination, onPageChange } = usePagination();
-  const { filter, onFilter } = useOrganisationFilter();
+  const { filter, onFilter } = useItemFilter();
 
   const { data, isLoading } = useItemStockOnHand({
     pagination,
