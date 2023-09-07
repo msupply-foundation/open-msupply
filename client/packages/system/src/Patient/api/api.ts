@@ -69,14 +69,19 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       const key = sortBy?.key as PatientSortFieldInput;
 
       const result = await sdk.patients({
-        page: {
-          first,
-          offset,
-        },
-        sort: {
-          key,
-          desc: key && !!sortBy?.isDesc,
-        },
+        page:
+          first || offset
+            ? {
+                first,
+                offset,
+              }
+            : undefined,
+        sort: key
+          ? {
+              key,
+              desc: key && !!sortBy?.isDesc,
+            }
+          : undefined,
         storeId,
         filter: filterBy,
       });
