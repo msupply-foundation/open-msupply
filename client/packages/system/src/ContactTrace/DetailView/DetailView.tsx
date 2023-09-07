@@ -107,7 +107,7 @@ export const DetailView: FC<DetailViewProps> = ({
           .build()
       );
     }
-  }, [isDirty, contactTraceId]);
+  }, [isDirty, contactTraceId, id, navigate]);
 
   const updateContactTrace = useDebounceCallback(
     (patch: Partial<ContactTrace>) =>
@@ -140,7 +140,7 @@ export const DetailView: FC<DetailViewProps> = ({
         </span>
       );
     }
-  }, [contactData]);
+  }, [contactData, setSuffix]);
 
   if (isLoading) return <DetailViewSkeleton />;
 
@@ -148,7 +148,11 @@ export const DetailView: FC<DetailViewProps> = ({
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
       {contactData && (
-        <Toolbar onChange={updateContactTrace} data={contactData} />
+        <Toolbar
+          onChange={updateContactTrace}
+          data={contactData}
+          documentData={(data as ContactTrace) ?? contactData.contactTrace}
+        />
       )}
       {!isLoading ? (
         JsonForm
