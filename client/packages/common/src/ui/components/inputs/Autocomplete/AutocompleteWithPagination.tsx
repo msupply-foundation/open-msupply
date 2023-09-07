@@ -72,7 +72,6 @@ export function AutocompleteWithPagination<T>({
       InputProps={{
         ...props.InputProps,
         disableUnderline: false,
-        // style: props.disabled ? { paddingLeft: 0 } : {},
         endAdornment: (
           <>
             {isLoading || loading ? (
