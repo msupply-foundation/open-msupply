@@ -43,11 +43,11 @@ const ItemListComponent: FC = () => {
       'name',
       {
         key: 'packUnit',
-        label: 'label.pack-unit',
+        label: 'label.pack',
         align: ColumnAlign.Right,
         Cell: getPackUnitSelectCell({
           getItemId: r => r.id,
-          getUnitName: r => r.unitName || '',
+          getUnitName: r => r.unitName || null,
         }),
       },
       [

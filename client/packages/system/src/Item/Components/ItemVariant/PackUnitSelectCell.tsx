@@ -14,13 +14,17 @@ export const getPackUnitSelectCell =
     getUnitName,
   }: {
     getItemId: (row: T) => string;
-    getUnitName: (row: T) => string;
+    getUnitName: (row: T) => string | null;
   }) =>
   ({ isError, rowData }: CellProps<T>): ReactElement => {
-    const { variantsControl } = useUnitVariant(getItemId(rowData));
+    const { asPackUnit, variantsControl } = useUnitVariant(
+      getItemId(rowData),
+      getUnitName(rowData)
+    );
 
     if (!variantsControl) {
-      return <InnerBasicCell isError={isError} value={getUnitName(rowData)} />;
+      // If no variants exist, then use number of packs = 1
+      return <InnerBasicCell isError={isError} value={asPackUnit(1)} />;
     }
 
     const { variants, activeVariant, setUserSelectedVariant } = variantsControl;
