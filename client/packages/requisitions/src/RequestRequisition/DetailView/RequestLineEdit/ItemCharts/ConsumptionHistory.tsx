@@ -35,12 +35,16 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   const tooltipFormatter = (
     value: number,
     name: string,
-    props: { payload?: { date: string; isHistoric: boolean } }
+    props: {
+      payload?: { date: string; isHistoric: boolean; isCurrent: boolean };
+    }
   ): [number, string] => {
     switch (name) {
       case 'consumption':
         const label = props.payload?.isHistoric
           ? t('label.consumption')
+          : props.payload?.isCurrent
+          ? t('label.current')
           : t('label.projected');
         return [value, label];
       case 'averageMonthlyConsumption':
@@ -94,6 +98,12 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
                   value: t('label.consumption'),
                   type: 'rect',
                   id: '1',
+                  color: theme.palette.gray.light,
+                },
+                {
+                  value: t('label.current'),
+                  type: 'rect',
+                  id: '2',
                   color: theme.palette.gray.main,
                 },
                 {
@@ -116,6 +126,8 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
                   key={entry.date}
                   fill={
                     entry.isHistoric
+                      ? theme.palette.gray.light
+                      : entry.isCurrent
                       ? theme.palette.gray.main
                       : theme.palette.primary.light
                   }

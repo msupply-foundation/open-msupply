@@ -3,6 +3,7 @@ use chrono::NaiveDate;
 use service::requisition_line::chart::{
     ConsumptionHistory, ItemChart, StockEvolution, SuggestedQuantityCalculation,
 };
+use util::last_day_of_the_month;
 
 pub struct ConsumptionHistoryNode {
     pub consumption_history: ConsumptionHistory,
@@ -57,7 +58,7 @@ impl ConsumptionHistoryNode {
     }
 
     pub async fn is_current(&self) -> bool {
-        self.reference_date == self.consumption_history.date
+        last_day_of_the_month(&self.reference_date) == self.consumption_history.date
     }
 }
 

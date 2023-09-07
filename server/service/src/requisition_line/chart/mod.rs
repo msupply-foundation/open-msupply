@@ -8,6 +8,7 @@ pub use historic_consumption::*;
 
 mod stock_evolution;
 pub use stock_evolution::*;
+use util::{date_with_months_offset, last_day_of_the_month};
 
 use crate::service_provider::ServiceContext;
 
@@ -86,10 +87,13 @@ pub fn get_requisition_line_chart(
         consumption_history_options,
     )?;
 
-    // Replace last consumption_history element with requisition line AMC (current AMC)
-    if let Some(last) = consumption_history.last_mut() {
-        last.consumption = average_monthly_consumption as u32;
-        last.average_monthly_consumption = average_monthly_consumption as f64;
+    // Add in the projected month which shows the requisition line AMC (current AMC)
+    if let Some(last) = consumption_history.last() {
+        consumption_history.push(ConsumptionHistory {
+            consumption: average_monthly_consumption as u32,
+            average_monthly_consumption: average_monthly_consumption as f64,
+            date: last_day_of_the_month(&date_with_months_offset(&last.date, 1)),
+        });
     }
 
     let StockEvolutionResult {
