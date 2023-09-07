@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ControlProps } from '@jsonforms/core';
 import {
   useDebounceCallback,
@@ -10,6 +10,8 @@ import {
   BasicTextInput,
   Typography,
   DetailInputWithLabelRow,
+  FilterBy,
+  Select,
 } from '@openmsupply-client/common';
 import {
   FORM_INPUT_COLUMN_WIDTH,
@@ -18,19 +20,40 @@ import {
 } from '../../common/styleConstants';
 import { useSearchQueries } from './useSearchQueries';
 import { UserOptions } from './Search';
+import { JsonFormsDispatch } from '@jsonforms/react';
+import { PatientRowFragment } from '@openmsupply-client/system';
 
 const MIN_CHARS = 3;
 
 export const SearchWithUserSource = (
   props: ControlProps & { options: UserOptions }
 ) => {
-  const { data, path, handleChange, label, visible, options } = props;
+  const {
+    data,
+    path,
+    handleChange,
+    label,
+    visible,
+    options,
+    schema,
+    renderers,
+  } = props;
   const t = useTranslation('programs');
   const [searchText, setSearchText] = useState('');
   const [editMode, setEditMode] = useState(!data);
   const [noResultsText, setNoResultsText] = useState(
     t('control.search.searching-label')
   );
+  const [selectedPatient, setSelectedPatient] = useState<
+    PatientRowFragment | undefined
+  >(data.id);
+
+  // console.log('path', path);
+  // console.log('data', data);
+  // console.log('props', props);
+  // console.log('options', options);
+  // console.log('schema', schema);
+  // console.log('uischema', uischema);
 
   const {
     runQuery,
@@ -43,12 +66,24 @@ export const SearchWithUserSource = (
     results,
   } = useSearchQueries(options ?? {});
 
+  useEffect(() => {
+    // Only run the database query if a specific patient hasn't yet been
+    // selected
+    if (selectedPatient) return;
+
+    const searchFilter: FilterBy = {};
+    options.searchFields.forEach(field => {
+      if (data[field]) searchFilter[field] = { like: data[field] };
+    });
+    if (Object.keys(searchFilter).length > 0) runQuery(searchFilter);
+  }, [data]);
+
   const debouncedOnChange = useDebounceCallback(
     value => {
       if (value.length >= MIN_CHARS) runQuery(value);
       else {
         // Clear the results if user input falls *below* `minChars`
-        if (results.length) runQuery('');
+        if (results.length) runQuery({});
       }
       setNoResultsText(t('control.search.no-results-label'));
     },
@@ -56,7 +91,7 @@ export const SearchWithUserSource = (
     500
   );
 
-  const handleDataUpdate = (selectedResult: Record<string, unknown> | null) => {
+  const handleSelect = (selectedResult: Record<string, unknown> | null) => {
     if (selectedResult === null) return;
     if (!saveFields) handleChange(path, selectedResult);
     else {
@@ -85,73 +120,96 @@ export const SearchWithUserSource = (
   if (!visible) return null;
 
   return (
-    <DetailInputWithLabelRow
-      sx={DefaultFormRowSx}
-      label={label}
-      labelWidthPercentage={FORM_LABEL_WIDTH}
-      inputAlignment={'start'}
-      Input={
-        editMode ? (
-          <Autocomplete
-            sx={{
-              '.MuiFormControl-root': { minWidth: '100%' },
-              flexBasis: '100%',
-            }}
-            options={results}
-            disabled={!props.enabled}
-            onChange={(_, option) => handleDataUpdate(option)}
-            onInputChange={(_, value) => {
-              debouncedOnChange(value);
-              setSearchText(value);
-              setNoResultsText(t('control.search.searching-label'));
-            }}
-            onBlur={() => {
-              if (data) setEditMode(false);
-            }}
-            getOptionLabel={getOptionLabel ?? undefined}
-            clearable={!props.config?.required}
-            inputProps={{
-              error: !!error,
-              helperText: error,
-            }}
-            noOptionsText={getNoOptionsText()}
-            renderInput={params => (
-              <BasicTextInput
-                {...params}
-                placeholder={
-                  placeholderText ?? t('control.search.search-placeholder')
-                }
-              />
-            )}
-          />
-        ) : (
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="space-between"
-            flexBasis="100%"
-            sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
-          >
-            {!error ? (
-              <>
-                {getDisplayElement && getDisplayElement(data)}
-                <IconButton
-                  label={t('label.edit')}
-                  icon={<EditIcon style={{ width: 16 }} />}
-                  onClick={() => {
-                    setEditMode(true);
-                  }}
-                  color="primary"
-                  height="20px"
-                  width="20px"
+    <>
+      <JsonFormsDispatch
+        schema={schema}
+        uischema={{
+          type: 'VerticalLayout',
+          // elements: options.elements
+        }}
+        path={path}
+        renderers={renderers}
+      />
+      {results.length > 0 && (
+        <Select
+          options={results.map(res => ({
+            label: getOptionLabel(res) ?? '',
+            value: 'res',
+          }))}
+          onChange={_ => {
+            setSelectedPatient(undefined);
+          }}
+          value={selectedPatient ?? null}
+        />
+      )}
+      <DetailInputWithLabelRow
+        sx={DefaultFormRowSx}
+        label={label}
+        labelWidthPercentage={FORM_LABEL_WIDTH}
+        inputAlignment={'start'}
+        Input={
+          editMode ? (
+            <Autocomplete
+              sx={{
+                '.MuiFormControl-root': { minWidth: '100%' },
+                flexBasis: '100%',
+              }}
+              options={results}
+              disabled={!props.enabled}
+              onChange={(_, option) => handleSelect(option)}
+              onInputChange={(_, value) => {
+                debouncedOnChange(value);
+                setSearchText(value);
+                setNoResultsText(t('control.search.searching-label'));
+              }}
+              onBlur={() => {
+                if (data) setEditMode(false);
+              }}
+              // getOptionLabel={getOptionLabel ?? undefined}
+              clearable={!props.config?.required}
+              inputProps={{
+                error: !!error,
+                helperText: error,
+              }}
+              noOptionsText={getNoOptionsText()}
+              renderInput={params => (
+                <BasicTextInput
+                  {...params}
+                  placeholder={
+                    placeholderText ?? t('control.search.search-placeholder')
+                  }
                 />
-              </>
-            ) : (
-              <Typography color="error">{error}</Typography>
-            )}
-          </Box>
-        )
-      }
-    />
+              )}
+            />
+          ) : (
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              flexBasis="100%"
+              sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
+            >
+              {!error ? (
+                <>
+                  {getDisplayElement && getDisplayElement(data)}
+                  <IconButton
+                    label={t('label.edit')}
+                    icon={<EditIcon style={{ width: 16 }} />}
+                    onClick={() => {
+                      setEditMode(true);
+                    }}
+                    color="primary"
+                    height="20px"
+                    width="20px"
+                  />
+                </>
+              ) : (
+                <Typography color="error">{error}</Typography>
+              )}
+            </Box>
+          )
+        }
+      />
+    </>
   );
 };

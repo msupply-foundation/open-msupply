@@ -33,6 +33,10 @@ const UserOptions = z.object({
    * Text to show in input field before user entry
    */
   placeholderText: z.string().optional(),
+
+  // NEW ONES
+  elements: z.array(z.any()),
+  searchFields: z.array(z.string()),
 });
 
 const DocumentOptions = z.object({
