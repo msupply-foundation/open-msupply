@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export const useOrganisationFilter = (searchText = '') => {
+export const useItemFilter = (searchText = '') => {
   const filterBy = useCallback(
     (value: string) => ({ name: { like: value } }),
     [searchText]
