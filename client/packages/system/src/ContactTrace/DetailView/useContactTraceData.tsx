@@ -10,6 +10,12 @@ import { useAuthContext } from '@openmsupply-client/common';
 
 export type ContactTrace = {
   datetime: string;
+  contact?: {
+    id: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+  };
   location?: {
     storeId?: string;
   };
@@ -71,6 +77,15 @@ export const useContactTraceData = (
           documentName: contactTrace.document.name,
           contactTrace: {
             datetime: contactTrace.datetime,
+            contact: contactTrace.contactPatient
+              ? {
+                  id: contactTrace.contactPatient.id,
+                  name: contactTrace.contactPatient.name,
+                  firstName:
+                    contactTrace.contactPatient?.firstName ?? undefined,
+                  lastName: contactTrace.contactPatient?.lastName ?? undefined,
+                }
+              : undefined,
             location: contactTrace?.storeId
               ? {
                   storeId: contactTrace.storeId,
@@ -83,7 +98,7 @@ export const useContactTraceData = (
         }
       : undefined;
     setResult({ data, isLoading });
-  }, [contactTraces]);
+  }, [contactTraces, isLoading, createType]);
 
   // create
   useEffect(() => {
@@ -107,6 +122,7 @@ export const useContactTraceData = (
         documentName: undefined,
         contactTrace: {
           datetime: creationDate.toISOString(),
+          contact: undefined,
           location: {
             storeId,
           },
@@ -117,7 +133,15 @@ export const useContactTraceData = (
       },
       isLoading: false,
     });
-  }, [registries, isLoadingPatient, isLoadingRegistry]);
+  }, [
+    registries,
+    isLoadingPatient,
+    isLoadingRegistry,
+    createType,
+    patient,
+    creationDate,
+    storeId,
+  ]);
 
   return result;
 };
