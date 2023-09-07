@@ -67,7 +67,7 @@ const asPackUnit: AsPackUnit = ({ packSize, packUnitName, unitName, t }) => {
   if (unitName) return `${packSize} ${unitName}`;
 
   const defaultUnit = t('label.unit');
-  return `${packSize} ${defaultUnit};`;
+  return `${packSize} ${defaultUnit}`;
 };
 
 export const useUnitVariant = (
