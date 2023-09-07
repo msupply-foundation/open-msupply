@@ -56,13 +56,18 @@ export const useInitUnitStore = () => {
   // TODO add user selected from app data
 };
 
-type AsPackUnit = (_: {
+type CommonAsPackUnit = (_: {
   packSize: number;
   packUnitName?: string;
   unitName: string | null;
   t: TypedTFunction<LocaleKey>;
 }) => string;
-const asPackUnit: AsPackUnit = ({ packSize, packUnitName, unitName, t }) => {
+const commonAsPackUnit: CommonAsPackUnit = ({
+  packSize,
+  packUnitName,
+  unitName,
+  t,
+}) => {
   if (packUnitName) return packUnitName;
   if (unitName) return `${packSize} ${unitName}`;
 
@@ -95,7 +100,7 @@ export const useUnitVariant = (
 
   if (!item || item.variants.length == 0) {
     return {
-      asPackUnit: packSize => asPackUnit({ packSize, unitName, t }),
+      asPackUnit: packSize => commonAsPackUnit({ packSize, unitName, t }),
       numberOfPacksFromQuantity: totalQuantity => totalQuantity,
     };
   }
@@ -118,7 +123,7 @@ export const useUnitVariant = (
         variant => variant.packSize === packSize
       );
 
-      return asPackUnit({
+      return commonAsPackUnit({
         packSize,
         unitName,
         packUnitName: foundVariant?.shortName,
