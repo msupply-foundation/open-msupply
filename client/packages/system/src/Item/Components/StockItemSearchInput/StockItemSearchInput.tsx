@@ -38,7 +38,14 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
   const value = items.find(({ id }) => id === currentItemId) ?? null;
   const selectControl = useToggle();
 
-  const options = extraFilter ? items.filter(extraFilter) ?? [] : items ?? [];
+  const options = useMemo(
+    () =>
+      defaultOptionMapper(
+        extraFilter ? items.filter(extraFilter) ?? [] : items ?? [],
+        'name'
+      ),
+    [items]
+  );
 
   const cachedSearchedItems = useMemo(() => {
     const newItems = ArrayUtils.uniqBy(
@@ -79,7 +86,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       value={value ? { ...value, label: value.name ?? '' } : null}
       noOptionsText={t('error.no-items')}
       onChange={(_, item) => onChange(item)}
-      options={defaultOptionMapper(options, 'name')}
+      options={options}
       getOptionLabel={option => `${option.code}     ${option.name}`}
       renderOption={getItemOptionRenderer(
         t('label.units'),
