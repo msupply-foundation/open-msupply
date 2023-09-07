@@ -22,7 +22,7 @@ pub fn item_variants_list(_store_id: &str) -> Vec<UnitVariantNode> {
             // Reference data: Amoxicillin 250mg tabs
             item_id: "E43D125F51DE4355AE1233DA449ED08A".to_string(),
             unit_name: Some("tablet".to_string()),
-            most_used_variant_id: "ghi".to_string(),
+            most_used_variant_id: "amo-50".to_string(),
             variants: vec![
                 VariantNode {
                     id: "amo-one".to_string(),

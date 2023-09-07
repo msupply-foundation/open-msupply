@@ -9,10 +9,15 @@ import {
   useTranslation,
   useUrlQueryParams,
   ColumnAlign,
-  useFormatNumber,
+  NumUtils,
 } from '@openmsupply-client/common';
-import { useItems, ItemRowFragment } from '../api';
+import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
+import {
+  getPackUnitQuantityCell,
+  getPackUnitSelectCell,
+} from '../Components/ItemVariant';
+import { useInitUnitStore } from '../context';
 // import { getItemVariantInputColumn } from '../Components/ItemVariant';
 
 const ItemListComponent: FC = () => {
@@ -25,30 +30,33 @@ const ItemListComponent: FC = () => {
     initialSort: { key: 'name', dir: 'asc' },
     filterKey: 'codeOrName',
   });
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
   const { data, isError, isLoading } = useItems();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
-  const formatNumber = useFormatNumber();
 
-  type ItemWithStats = ItemRowFragment & {
-    stats: {
-      averageMonthlyConsumption?: number | null;
-      availableStockOnHand?: number | null;
-      availableMonthsOfStockOnHand?: number | null;
-    };
-  };
-
-  const columns = useColumns<ItemWithStats>(
+  const columns = useColumns<ItemsWithStatsFragment>(
     [
       'code',
       'name',
-      // getItemVariantInputColumn(),
+      {
+        key: 'packUnit',
+        label: 'label.pack-unit',
+        align: ColumnAlign.Right,
+        Cell: getPackUnitSelectCell({
+          getItemId: r => r.id,
+          getUnitName: r => r.unitName || '',
+        }),
+      },
       [
         'stockOnHand',
         {
-          accessor: ({ rowData }) =>
-            formatNumber.round(rowData.stats.availableStockOnHand ?? 0),
+          Cell: getPackUnitQuantityCell({
+            getItemId: r => r.id,
+            getQuantity: r => NumUtils.round(r.stats.availableStockOnHand),
+          }),
           label: 'label.soh',
           description: 'description.soh',
           sortable: false,
@@ -57,18 +65,21 @@ const ItemListComponent: FC = () => {
       [
         'monthlyConsumption',
         {
-          accessor: ({ rowData }) =>
-            formatNumber.round(rowData.stats.averageMonthlyConsumption ?? 0, 2),
+          Cell: getPackUnitQuantityCell({
+            getItemId: r => r.id,
+            getQuantity: r =>
+              NumUtils.round(r.stats.averageMonthlyConsumption, 2),
+          }),
           align: ColumnAlign.Right,
           sortable: false,
         },
       ],
       {
-        accessor: ({ rowData }) =>
-          formatNumber.round(
-            rowData.stats.availableMonthsOfStockOnHand ?? 0,
-            2
-          ),
+        Cell: getPackUnitQuantityCell({
+          getItemId: r => r.id,
+          getQuantity: r =>
+            NumUtils.round(r.stats.availableMonthsOfStockOnHand ?? 0, 2),
+        }),
         align: ColumnAlign.Right,
         description: 'description.months-of-stock',
         key: 'availableMonthsOfStockOnHand',
