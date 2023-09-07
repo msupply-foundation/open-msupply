@@ -329,7 +329,7 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
                 output.insert(Permission::StocktakeQuery);
             }
             Permissions::AddStocktakeLines => {
-                output.insert(Permission::StocktakeQuery);
+                output.insert(Permission::StocktakeMutate);
             }
             Permissions::EditStocktakeLines => {
                 output.insert(Permission::StocktakeMutate);
@@ -379,6 +379,10 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
                 output.insert(Permission::LogQuery);
             }
             // patient
+            Permissions::AddPatients => {
+                output.insert(Permission::PatientQuery);
+                output.insert(Permission::PatientMutate);
+            }
             Permissions::EditPatientDetails => {
                 output.insert(Permission::PatientQuery);
                 output.insert(Permission::PatientMutate);

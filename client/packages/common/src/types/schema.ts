@@ -1100,7 +1100,7 @@ export type EncounterNode = {
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  patient: NameNode;
+  patient: PatientNode;
   patientId: Scalars['String']['output'];
   /** Returns the matching program enrolment for the patient of this encounter */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;

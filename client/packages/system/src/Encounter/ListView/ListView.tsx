@@ -21,17 +21,16 @@ const EncounterListComponent: FC = () => {
     updateSortQuery,
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  const { queryParams } = useUrlQueryParams({
+  } = useUrlQueryParams({
     initialSort: {
       key: EncounterSortFieldInput.StartDatetime,
       dir: 'desc',
     },
   });
   const { data, isError, isLoading } = useEncounter.document.list({
-    ...queryParams,
+    pagination: { first, offset },
+    sortBy,
   });
-  const pagination = { page, first, offset };
   const navigate = useNavigate();
   const columns = useEncounterListColumns({
     onChangeSortBy: updateSortQuery,
@@ -44,7 +43,7 @@ const EncounterListComponent: FC = () => {
   return (
     <DataTable
       id="name-list"
-      pagination={{ ...pagination, total: data?.totalCount }}
+      pagination={{ page, first, offset, total: data?.totalCount }}
       onChangePage={updatePaginationQuery}
       columns={columns}
       data={dataWithStatus}

@@ -9,7 +9,9 @@ import { usePatient } from '@openmsupply-client/system';
 export const QueryValues = ['patientByCode'] as const;
 type QueryValue = (typeof QueryValues)[number];
 
-type GetDisplayElement = (result: Record<string, any>) => JSX.Element | null;
+type GetDisplayElement = (
+  result: Record<string, unknown>
+) => JSX.Element | null;
 
 interface SearchQueryOptions {
   query?: QueryValue;
@@ -22,7 +24,7 @@ interface SearchQueryOptions {
 interface SearchQueryOutput {
   runQuery: (searchValue: string) => void;
   saveFields: string[] | null;
-  getOptionLabel?: (result: Record<string, any>) => string;
+  getOptionLabel?: (result: Record<string, unknown>) => string;
   getDisplayElement?: GetDisplayElement;
   placeholderText: string;
 }
@@ -36,7 +38,7 @@ export const useSearchQueries = ({
   saveFields,
   placeholderText,
 }: SearchQueryOptions = {}) => {
-  const [results, setResults] = useState<Record<string, any>[]>([]);
+  const [results, setResults] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -60,7 +62,7 @@ export const useSearchQueries = ({
             sortBy: { key: 'lastName', direction: 'asc' },
             filterBy: { code: { like: searchValue } },
           })
-          .then((result: any) => {
+          .then(result => {
             setResults(result.nodes);
             setLoading(false);
           })
