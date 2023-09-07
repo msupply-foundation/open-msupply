@@ -86,6 +86,7 @@ const StockListComponent: FC = () => {
       {
         key: 'packUnit',
         label: 'label.pack',
+        sortable: false,
         Cell: getPackUnitCell({
           getItemId: r => r.itemId,
           getPackSize: r => r.packSize,
