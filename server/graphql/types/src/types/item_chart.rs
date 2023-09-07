@@ -180,14 +180,14 @@ mod test {
     use super::*;
 
     #[actix_rt::test]
-    async fn graphq_test_item_chart_node() {
+    async fn graphql_test_item_chart_node() {
         #[derive(Clone)]
         struct TestQuery;
 
         let (_, _, _, settings) = setup_graphl_test(
             TestQuery,
             EmptyMutation,
-            "graphq_test_item_chart_node",
+            "graphql_test_item_chart_node",
             MockDataInserts::none(),
         )
         .await;
@@ -200,12 +200,12 @@ mod test {
                         ConsumptionHistory {
                             consumption: 10,
                             average_monthly_consumption: 11.0,
-                            date: NaiveDate::from_ymd_opt(2020, 12, 01).unwrap(),
+                            date: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
                         },
                         ConsumptionHistory {
                             consumption: 10,
                             average_monthly_consumption: 11.0,
-                            date: NaiveDate::from_ymd_opt(2021, 01, 01).unwrap(),
+                            date: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap(),
                         },
                     ]),
                     stock_evolution: Some(vec![
@@ -274,14 +274,14 @@ mod test {
                   {
                     "averageMonthlyConsumption": 11,
                     "consumption": 10,
-                    "date": "2020-12-01",
+                    "date": "2020-12-31",
                     "isCurrent": false,
                     "isHistoric": true
                   },
                   {
                     "averageMonthlyConsumption": 11,
                     "consumption": 10,
-                    "date": "2021-01-01",
+                    "date": "2021-01-31",
                     "isCurrent": true,
                     "isHistoric": false
                   }
