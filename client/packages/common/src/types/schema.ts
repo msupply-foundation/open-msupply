@@ -544,7 +544,7 @@ export type ContactTraceFilterInput = {
 export type ContactTraceNode = {
   __typename: 'ContactTraceNode';
   age?: Maybe<Scalars['Int']['output']>;
-  contactPatient?: Maybe<NameNode>;
+  contactPatient?: Maybe<PatientNode>;
   contactPatientId?: Maybe<Scalars['String']['output']>;
   contactTraceId?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
@@ -556,7 +556,7 @@ export type ContactTraceNode = {
   gender?: Maybe<GenderType>;
   id: Scalars['String']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
-  patient: NameNode;
+  patient: PatientNode;
   patientId: Scalars['String']['output'];
   program: ProgramNode;
   /** Returns the matching program enrolment for the root patient of this contact trace */

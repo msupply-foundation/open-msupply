@@ -69,10 +69,14 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       const key = sortBy?.key as PatientSortFieldInput;
 
       const result = await sdk.patients({
-        first,
-        offset,
-        key,
-        desc: !!sortBy?.isDesc,
+        page: {
+          first,
+          offset,
+        },
+        sort: {
+          key,
+          desc: key && !!sortBy?.isDesc,
+        },
         storeId,
         filter: filterBy,
       });
@@ -91,8 +95,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
           : PatientSortFieldInput.Code;
 
       const result = await sdk.patients({
-        key,
-        desc: !!sortBy?.isDesc,
+        sort: { key, desc: !!sortBy?.isDesc },
         storeId,
       });
 

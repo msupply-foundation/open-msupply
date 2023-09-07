@@ -500,6 +500,8 @@ fragment ContactTraceRow on ContactTraceNode {
   contactPatient {
     id
     name
+    firstName
+    lastName
   }
   program {
     id
