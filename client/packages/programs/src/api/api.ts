@@ -14,6 +14,7 @@ import {
   ProgramEventNode,
   UpdateEncounterInput,
   UpdateProgramEnrolmentInput,
+  ProgramEnrolmentFilterInput,
 } from '@common/types';
 import { EncounterListParams } from './hooks/utils/useEncounterApi';
 import {
@@ -258,7 +259,7 @@ export const getAllocateProgramNumber = (sdk: Sdk, storeId: string) => ({
 
 export type ProgramEnrolmentListParams = {
   sortBy?: SortRule<ProgramEnrolmentSortFieldInput>;
-  filterBy?: FilterBy;
+  filterBy?: ProgramEnrolmentFilterInput;
 };
 
 export const getProgramEnrolmentQueries = (sdk: Sdk, storeId: string) => ({
