@@ -31,6 +31,9 @@ pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
+pub(crate) mod temperature_breach;
+pub(crate) mod temperature_breach_config;
+pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user_permission;
 
@@ -75,6 +78,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(activity_log::ActivityLogTranslation {}),
         Box::new(barcode::BarcodeTranslation {}),
         Box::new(sensor::SensorTranslation {}),
+        Box::new(temperature_log::TemperatureLogTranslation {}),
+        Box::new(temperature_breach::TemperatureBreachTranslation {}),
+        Box::new(temperature_breach_config::TemperatureBreachConfigTranslation {}),
         Box::new(clinician::ClinicianTranslation {}),
         Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
         // Remote-Central (site specific)
@@ -147,6 +153,9 @@ pub(crate) mod LegacyTableName {
     pub(crate) const REQUISITION_LINE: &str = "requisition_line";
     pub(crate) const OM_ACTIVITY_LOG: &str = "om_activity_log";
     pub(crate) const SENSOR: &str = "sensor";
+    pub(crate) const TEMPERATURE_LOG: &str = "temperature_log";
+    pub(crate) const TEMPERATURE_BREACH: &str = "temperature_breach";
+    pub(crate) const TEMPERATURE_BREACH_CONFIG: &str = "temperature_breach_config";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
     pub(crate) const NAME_TAG_JOIN: &str = "name_tag_join";
@@ -190,6 +199,9 @@ pub(crate) enum PullUpsertRecord {
     StorePreference(StorePreferenceRow),
     Barcode(BarcodeRow),
     Sensor(SensorRow),
+    TemperatureLog(TemperatureLogRow),
+    TemperatureBreach(TemperatureBreachRow),
+    TemperatureBreachConfig(TemperatureBreachConfigRow),
     Clinician(ClinicianRow),
     ClinicianStoreJoin(ClinicianStoreJoinRow),
     FormSchema(FormSchemaJson),
