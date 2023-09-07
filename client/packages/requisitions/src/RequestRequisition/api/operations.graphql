@@ -133,6 +133,14 @@ fragment Request on RequisitionNode {
   orderType
 }
 
+fragment ConsumptionHistory on ConsumptionHistoryNode {
+  averageMonthlyConsumption
+  consumption
+  date
+  isCurrent
+  isHistoric
+}
+
 query requestByNumber($storeId: String!, $requisitionNumber: Int!) {
   requisitionByNumber(
     requisitionNumber: $requisitionNumber
@@ -171,11 +179,7 @@ query requisitionLineChart($storeId: String!, $requisitionLineId: String!) {
       consumptionHistory {
         totalCount
         nodes {
-          averageMonthlyConsumption
-          consumption
-          date
-          isCurrent
-          isHistoric
+          ...ConsumptionHistory
         }
       }
       stockEvolution {
