@@ -3,10 +3,11 @@ import {
   Typography,
   useTranslation,
   RegexUtils,
+  FilterBy,
 } from '@openmsupply-client/common';
-import { usePatient } from '@openmsupply-client/system';
+import { PatientRowFragment, usePatient } from '@openmsupply-client/system';
 
-export const QueryValues = ['patientByCode'] as const;
+export const QueryValues = ['patientSearch'] as const;
 type QueryValue = (typeof QueryValues)[number];
 
 type GetDisplayElement = (
@@ -22,9 +23,9 @@ interface SearchQueryOptions {
 }
 
 interface SearchQueryOutput {
-  runQuery: (searchValue: string) => void;
+  runQuery: (searchFilter: FilterBy) => void;
   saveFields: string[] | null;
-  getOptionLabel?: (result: Record<string, unknown>) => string;
+  getOptionLabel: (result: PatientRowFragment) => string;
   getDisplayElement?: GetDisplayElement;
   placeholderText: string;
 }
@@ -38,7 +39,7 @@ export const useSearchQueries = ({
   saveFields,
   placeholderText,
 }: SearchQueryOptions = {}) => {
-  const [results, setResults] = useState<Record<string, unknown>[]>([]);
+  const [results, setResults] = useState<PatientRowFragment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -47,12 +48,8 @@ export const useSearchQueries = ({
   const patientQueries = usePatient.utils.api();
 
   const searchQueries: Record<QueryValue, SearchQueryOutput> = {
-    patientByCode: {
-      runQuery: async (searchValue: string) => {
-        if (searchValue === '') {
-          setResults([]);
-          return;
-        }
+    patientSearch: {
+      runQuery: async (searchFilter: FilterBy) => {
         setError(false);
         setLoading(true);
         patientQueries.get
@@ -60,10 +57,11 @@ export const useSearchQueries = ({
             first: 10,
             offset: 0,
             sortBy: { key: 'lastName', direction: 'asc' },
-            filterBy: { code: { like: searchValue } },
+            filterBy: searchFilter,
           })
           .then(result => {
             setResults(result.nodes);
+            console.log('Result', result.nodes);
             setLoading(false);
           })
           .catch(err => {
@@ -72,8 +70,9 @@ export const useSearchQueries = ({
           });
       },
       getOptionLabel: data =>
-        optionString ??
-        `${data['code']} - ${data['firstName']} ${data['lastName']}`,
+        optionString
+          ? formatTemplateString(optionString, data)
+          : `${data['code']} - ${data['firstName']} ${data['lastName']}`,
       getDisplayElement: data => {
         if (!data || !data?.['code']) return null;
         return (
@@ -102,6 +101,8 @@ export const useSearchQueries = ({
         runQuery: () => {},
         saveFields: [],
         placeholderText: '',
+        getOptionLabel: () => {},
+        getDisplayElement: () => {},
       };
 
   return {
