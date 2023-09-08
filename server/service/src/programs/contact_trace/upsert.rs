@@ -32,6 +32,8 @@ pub enum UpsertContactTraceError {
 }
 
 pub struct UpsertContactTrace {
+    /// Patient id for the patient this contact tracing entry belongs to, i.e. not the patient_id
+    /// associated with the contact.
     pub patient_id: String,
     /// Document type for this contact trace
     pub r#type: String,
