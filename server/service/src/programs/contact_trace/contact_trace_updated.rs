@@ -36,6 +36,9 @@ pub(crate) fn update_contact_trace_row(
             ..ContactTraceFilter::default()
         })?
         .pop();
+    // Documents are identified by a human readable name. Thus, use hash(name) as an ID.
+    // For example, an ID works better in an web URL.
+    // This also makes sure the table row gets the same ID when the whole site is re-synced.
     let contact_trace_id = match contact_trace_row {
         Some(contact_trace_row) => contact_trace_row.0.id,
         None => sha256(&document.name),
