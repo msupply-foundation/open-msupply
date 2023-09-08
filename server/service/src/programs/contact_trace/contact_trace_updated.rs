@@ -40,7 +40,7 @@ pub(crate) fn update_contact_trace_row(
     // For example, an ID works better in an web URL.
     // This also makes sure the table row gets the same ID when the whole site is re-synced.
     let contact_trace_id = match contact_trace_row {
-        Some(contact_trace_row) => contact_trace_row.0.id,
+        Some(contact_trace_row) => contact_trace_row.contact_trace.id,
         None => sha256(&document.name),
     };
 

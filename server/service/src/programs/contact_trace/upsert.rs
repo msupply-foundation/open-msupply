@@ -492,11 +492,14 @@ mod test {
             .pop()
             .unwrap();
 
-        assert_eq!(program_context, found_trace.1.context_id);
+        assert_eq!(program_context, found_trace.document.context_id);
         assert_eq!(
             program.datetime,
-            DateTime::<Utc>::from_utc(found_trace.0.datetime, Utc).to_rfc3339()
+            DateTime::<Utc>::from_utc(found_trace.contact_trace.datetime, Utc).to_rfc3339()
         );
-        assert_eq!(program.contact_trace_id, found_trace.0.contact_trace_id);
+        assert_eq!(
+            program.contact_trace_id,
+            found_trace.contact_trace.contact_trace_id
+        );
     }
 }
