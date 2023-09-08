@@ -36,6 +36,7 @@ pub struct ContactTraceRow {
     /// The document version used to populate this row
     pub document_id: String,
     pub datetime: NaiveDateTime,
+    /// User definable id of the contact trace
     pub contact_trace_id: Option<String>,
     /// Patient id of the patient this contact belongs to.
     pub patient_id: String,
