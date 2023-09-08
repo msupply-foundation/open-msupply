@@ -222,13 +222,12 @@ fn validate(
         }
     };
 
-    let contact_trace_data: super::contact_trace_schema::ContactTrace =
-        validate_contact_trace_schema(input).map_err(|err| {
-            UpsertContactTraceError::InvalidDataSchema(vec![format!(
-                "Invalid contact trace data: {}",
-                err
-            )])
-        })?;
+    let contact_trace_data = validate_contact_trace_schema(input).map_err(|err| {
+        UpsertContactTraceError::InvalidDataSchema(vec![format!(
+            "Invalid contact trace data: {}",
+            err
+        )])
+    })?;
     if let Some(patient_id) = contact_trace_data
         .contact
         .as_ref()
