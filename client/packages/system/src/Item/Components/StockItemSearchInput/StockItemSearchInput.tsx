@@ -43,18 +43,14 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
       defaultOptionMapper(
         extraFilter ? items.filter(extraFilter) ?? [] : items ?? [],
         'name'
-      ),
+      ).sort((a, b) => a.label.localeCompare(b.label)),
     [items]
   );
 
-  const cachedSearchedItems = useMemo(() => {
-    const newItems = ArrayUtils.uniqBy(
-      [...items, ...(data?.nodes ?? [])],
-      'id'
-    );
-    const sorted = ArrayUtils.orderBy(newItems, ['name'], ['asc']);
-    return sorted;
-  }, [data]);
+  const cachedSearchedItems = useMemo(
+    () => ArrayUtils.uniqBy([...items, ...(data?.nodes ?? [])], 'id'),
+    [data]
+  );
 
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {
