@@ -223,7 +223,7 @@ fn validate(
     let contact_trace_data: super::contact_trace_schema::ContactTrace =
         validate_contact_trace_schema(input).map_err(|err| {
             UpsertContactTraceError::InvalidDataSchema(vec![format!(
-                "Invalid program data: {}",
+                "Invalid contact trace data: {}",
                 err
             )])
         })?;
