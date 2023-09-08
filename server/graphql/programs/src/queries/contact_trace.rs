@@ -129,11 +129,11 @@ impl ContactTraceFilterInput {
 
 impl ContactTraceNode {
     fn trace_row(&self) -> &ContactTraceRow {
-        &self.contact_trace.0
+        &self.contact_trace.contact_trace
     }
 
     fn program_row(&self) -> &ProgramRow {
-        &self.contact_trace.2
+        &self.contact_trace.program
     }
 }
 

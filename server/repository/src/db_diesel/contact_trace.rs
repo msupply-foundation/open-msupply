@@ -44,7 +44,13 @@ pub enum ContactTraceSortField {
     DateOfBirth,
 }
 
-pub type ContactTrace = (ContactTraceRow, DocumentRow, ProgramRow);
+pub type ContactTraceJoin = (ContactTraceRow, DocumentRow, ProgramRow);
+
+pub struct ContactTrace {
+    pub contact_trace: ContactTraceRow,
+    pub document: DocumentRow,
+    pub program: ProgramRow,
+}
 
 pub type ContactTraceSort = Sort<ContactTraceSortField>;
 
@@ -160,7 +166,14 @@ impl<'a> ContactTraceRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ContactTrace>(&self.connection.connection)?;
+            .load::<ContactTraceJoin>(&self.connection.connection)?
+            .into_iter()
+            .map(|row| ContactTrace {
+                contact_trace: row.0,
+                document: row.1,
+                program: row.2,
+            })
+            .collect();
 
         Ok(result)
     }
