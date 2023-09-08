@@ -22,7 +22,7 @@ pub(crate) fn update_contact_trace_row(
     let datetime = DateTime::parse_from_rfc3339(&contact_trace.datetime)
         .map_err(|err| {
             UpsertContactTraceError::InternalError(format!(
-                "Invalid enrolment datetime format: {}",
+                "Invalid contact trace datetime format: {}",
                 err
             ))
         })?
