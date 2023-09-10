@@ -14,8 +14,10 @@ pub trait PluginDataServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         filter: Option<PluginDataFilter>,
         sort: Option<PluginDataSort>,
-    ) -> Result<Vec<PluginData>, RepositoryError> {
-        Ok(PluginDataRepository::new(&ctx.connection).query(Pagination::new(), filter, sort)?)
+    ) -> Result<Option<PluginData>, RepositoryError> {
+        Ok(PluginDataRepository::new(&ctx.connection)
+            .query(Pagination::new(), filter, sort)?
+            .pop())
     }
 
     fn insert(

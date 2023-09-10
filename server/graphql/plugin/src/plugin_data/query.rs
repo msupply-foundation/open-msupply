@@ -2,16 +2,18 @@ use async_graphql::*;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
     map_filter,
+    simple_generic_errors::{NodeError, NodeErrorInterface},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{PluginDataConnector, RelatedRecordNodeType};
+use graphql_types::types::{PluginDataConnector, PluginDataNode, RelatedRecordNodeType};
 use repository::{EqualFilter, PluginDataFilter, PluginDataSort, PluginDataSortField};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
 pub enum PluginDataResponse {
-    Response(PluginDataConnector),
+    Response(PluginDataNode),
+    Error(NodeError),
 }
 
 #[derive(InputObject, Clone)]
@@ -54,7 +56,7 @@ pub fn get_plugin_data(
     r#type: RelatedRecordNodeType,
     filter: Option<PluginDataFilterInput>,
     sort: Option<Vec<PluginDataSortInput>>,
-) -> Result<PluginDataConnector> {
+) -> Result<PluginDataResponse> {
     let resource = map_resource_type(r#type);
 
     validate_auth(
@@ -77,7 +79,14 @@ pub fn get_plugin_data(
         )
         .map_err(StandardGraphqlError::from_repository_error)?;
 
-    Ok(PluginDataConnector::from_vec(plugin_data))
+    let response = match plugin_data {
+        Some(plugin_data) => PluginDataResponse::Response(PluginDataNode::from_domain(plugin_data)),
+        None => PluginDataResponse::Error(NodeError {
+            error: NodeErrorInterface::record_not_found(),
+        }),
+    };
+
+    Ok(response)
 }
 
 fn map_resource_type(from: RelatedRecordNodeType) -> Resource {
