@@ -95,12 +95,13 @@ use crate::{
     MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
     NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
     NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
-    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
+    ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
+    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
+    SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
@@ -157,6 +158,7 @@ pub struct MockData {
     pub clinicians: Vec<ClinicianRow>,
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
+    pub plugin_data: Vec<PluginDataRow>,
 }
 
 impl MockData {
@@ -213,6 +215,7 @@ pub struct MockDataInserts {
     pub clinicians: bool,
     pub clinician_store_joins: bool,
     pub contexts: bool,
+    pub plugin_data: bool,
 }
 
 impl MockDataInserts {
@@ -258,6 +261,7 @@ impl MockDataInserts {
             clinicians: true,
             clinician_store_joins: true,
             contexts: true,
+            plugin_data: true,
         }
     }
 
@@ -437,6 +441,11 @@ impl MockDataInserts {
 
     pub fn contexts(mut self) -> Self {
         self.contexts = true;
+        self
+    }
+
+    pub fn plugin_data(mut self) -> Self {
+        self.plugin_data = true;
         self
     }
 }
@@ -849,6 +858,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(&row).unwrap();
             }
         }
+
+        if inserts.plugin_data {
+            let repo = PluginDataRowRepository::new(connection);
+            for row in &mock_data.plugin_data {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -897,6 +913,7 @@ impl MockData {
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
+            plugin_data: _,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
