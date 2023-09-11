@@ -12,6 +12,7 @@ use graphql_types::types::patient::PatientNode;
 use graphql_types::types::program_enrolment::ProgramEnrolmentFilterInput;
 use graphql_types::types::program_enrolment::ProgramEnrolmentSortInput;
 use graphql_types::types::program_enrolment::ProgramEventFilterInput;
+use graphql_types::types::program_event::ProgramEventResponse;
 use graphql_types::types::program_event::ProgramEventSortInput;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;

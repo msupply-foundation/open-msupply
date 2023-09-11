@@ -11,7 +11,6 @@ import {
   PaginationInput,
   ProgramEnrolmentSortFieldInput,
   ProgramEventFilterInput,
-  ProgramEventNode,
   UpdateEncounterInput,
   UpdateProgramEnrolmentInput,
   ProgramEnrolmentFilterInput,
@@ -27,6 +26,7 @@ import {
   FormSchemaFragment,
   ProgramEnrolmentFragment,
   ProgramEnrolmentRowFragment,
+  ProgramEventFragment,
   Sdk,
 } from './operations.generated';
 
@@ -386,7 +386,7 @@ export const getProgramEventQueries = (sdk: Sdk, storeId: string) => ({
     filter,
     page,
   }: ProgramEventParams): Promise<{
-    nodes: ProgramEventNode[];
+    nodes: ProgramEventFragment[];
     totalCount: number;
   }> => {
     const result = await sdk.activeProgramEvents({
