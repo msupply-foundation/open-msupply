@@ -1,13 +1,9 @@
-import React, { useState } from 'react';
-import { Typography, RegexUtils, FilterBy } from '@openmsupply-client/common';
+import { useState } from 'react';
+import { RegexUtils, FilterBy } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '@openmsupply-client/system';
 
 export const QueryValues = ['patientSearch'] as const;
 type QueryValue = (typeof QueryValues)[number];
-
-type GetDisplayElement = (
-  result: Record<string, unknown>
-) => JSX.Element | null;
 
 interface SearchQueryOptions {
   query?: QueryValue;
@@ -20,15 +16,13 @@ interface SearchQueryOutput {
   runQuery: (searchFilter: FilterBy) => void;
   saveFields: string[] | null;
   getOptionLabel: (result: PatientRowFragment) => string;
-  getDisplayElement?: GetDisplayElement;
 }
 
-const { formatTemplateString, removeEmptyLines } = RegexUtils;
+const { formatTemplateString } = RegexUtils;
 
 export const useSearchQueries = ({
   query,
   optionString,
-  displayString,
   saveFields,
 }: SearchQueryOptions = {}) => {
   const [results, setResults] = useState<PatientRowFragment[]>([]);
@@ -50,7 +44,12 @@ export const useSearchQueries = ({
             filterBy: searchFilter,
           })
           .then(result => {
-            setResults(result.nodes);
+            setResults(
+              // If patient has a full document field, use that since it'll make
+              // more data available. Otherwise just use the basic Patient
+              // fields
+              result.nodes.map(patient => patient.document?.data ?? patient)
+            );
             setLoading(false);
           })
           .catch(err => {
@@ -62,22 +61,6 @@ export const useSearchQueries = ({
         optionString
           ? formatTemplateString(optionString, data)
           : `${data['code']} - ${data['firstName']} ${data['lastName']}`,
-      getDisplayElement: data => {
-        if (!data || !data?.['code']) return null;
-        return (
-          <Typography style={{ whiteSpace: 'pre' }}>
-            {displayString
-              ? removeEmptyLines(formatTemplateString(displayString, data, ''))
-              : removeEmptyLines(
-                  formatTemplateString(
-                    '${firstName} ${lastName} (${code})\n${email}\n${document.data.contactDetails[0].address1}\n${document.data.contactDetails[0].address2}',
-                    data,
-                    ''
-                  )
-                )}
-          </Typography>
-        );
-      },
       saveFields: saveFields ?? null,
     },
   };

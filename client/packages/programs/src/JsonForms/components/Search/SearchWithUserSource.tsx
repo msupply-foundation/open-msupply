@@ -33,6 +33,8 @@ export const SearchWithUserSource = (
   } = props;
   const t = useTranslation('programs');
 
+  console.log('Data', data);
+
   const isPatientSelected = !!data?.id;
 
   const {
@@ -56,7 +58,11 @@ export const SearchWithUserSource = (
 
     const searchFilter: FilterBy = {};
     options.searchFields.forEach(field => {
-      if (data[field]) searchFilter[field] = { like: data[field] };
+      const match =
+        field in queryMatchTypes
+          ? queryMatchTypes?.[field as keyof typeof queryMatchTypes]
+          : 'like';
+      if (data[field]) searchFilter[field] = { [match]: data[field] };
     });
     if (Object.keys(searchFilter).length > 0) runQuery(searchFilter);
   }, [data]);
@@ -64,15 +70,16 @@ export const SearchWithUserSource = (
   const handlePatientSelect = (patientId: string) => {
     const patient = results.find(p => (p.id = patientId));
     if (!patient) return;
-    if (!saveFields) handleChange(path, patient);
-    else {
-      const newData = Object.fromEntries(
-        Object.entries(patient).filter(
-          ([key]) => (saveFields as string[])?.includes(key)
-        )
-      );
-      handleChange(path, newData);
+    if (!saveFields) {
+      handleChange(path, patient);
+      return;
     }
+    const newData = Object.fromEntries(
+      Object.entries(patient).filter(
+        ([key]) => (saveFields as string[])?.includes(key)
+      )
+    );
+    handleChange(path, newData);
   };
 
   const error = props.errors ?? queryError ?? null;
@@ -154,4 +161,13 @@ export const SearchWithUserSource = (
       )}
     </Box>
   );
+};
+
+// Most search fields will be matched using partial string matching, using
+// "like". However, this is not available/reasonable for some fields, so their
+// match type is referenced here
+const queryMatchTypes = {
+  // Add more as required
+  gender: 'equalTo',
+  dateOfBirth: 'equalTo',
 };
