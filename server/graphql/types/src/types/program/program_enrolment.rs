@@ -17,7 +17,9 @@ use repository::{
 use super::{
     document::DocumentNode,
     encounter::{EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput},
-    program_event::{ProgramEventConnector, ProgramEventNode, ProgramEventResponse},
+    program_event::{
+        ProgramEventConnector, ProgramEventNode, ProgramEventResponse, ProgramEventSortInput,
+    },
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -275,6 +277,8 @@ impl ProgramEnrolmentNode {
         ctx: &Context<'_>,
         at: Option<DateTime<Utc>>,
         filter: Option<ProgramEventFilterInput>,
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
     ) -> Result<ProgramEventResponse> {
         // TODO use loader?
         let context = ctx.service_provider().basic_context()?;
@@ -292,12 +296,12 @@ impl ProgramEnrolmentNode {
                 &context,
                 at.map(|at| at.naive_utc())
                     .unwrap_or(Utc::now().naive_utc()),
-                None,
+                page.map(PaginationOption::from),
                 Some(filter),
-                Some(Sort {
+                Some(sort.map(ProgramEventSortInput::to_domain).unwrap_or(Sort {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),
-                }),
+                })),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
         Ok(ProgramEventResponse::Response(ProgramEventConnector {
