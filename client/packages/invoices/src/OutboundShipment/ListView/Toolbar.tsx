@@ -15,7 +15,7 @@ export const Toolbar: FC<{
 }> = ({ filter }) => {
   const t = useTranslation('distribution');
 
-  const onDelete = useOutbound.document.delete();
+  const onDelete = useOutbound.document.deleteRows();
 
   const key = 'otherPartyName' as keyof OutboundRowFragment;
   const filterString = (filter.filterBy?.[key]?.like as string) || '';

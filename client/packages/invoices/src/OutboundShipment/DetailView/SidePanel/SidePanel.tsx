@@ -1,9 +1,11 @@
 import React, { memo } from 'react';
 import {
   CopyIcon,
+  DeleteIcon,
   DetailPanelAction,
   DetailPanelPortal,
   useNotification,
+  useSingleDeleteConfirmation,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
@@ -11,11 +13,30 @@ import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 import { TransportSection } from './TransportSection';
+import { canDeleteInvoice } from 'packages/invoices/src/utils';
 
 export const SidePanelComponent = () => {
   const { success } = useNotification();
   const t = useTranslation('distribution');
   const { data } = useOutbound.document.get();
+  const { mutateAsync } = useOutbound.document.delete();
+  const canDelete = data ? canDeleteInvoice(data) : false;
+  const deleteAction = async () => {
+    if (!data) return;
+    await mutateAsync([data]);
+  };
+
+  const onDelete = useSingleDeleteConfirmation({
+    deleteAction,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-shipment', {
+        number: data?.invoiceNumber,
+      }),
+      deleteSuccess: t('messages.deleted-shipments', {
+        count: 1,
+      }),
+    },
+  });
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -26,11 +47,19 @@ export const SidePanelComponent = () => {
   return (
     <DetailPanelPortal
       Actions={
-        <DetailPanelAction
-          icon={<CopyIcon />}
-          title={t('link.copy-to-clipboard')}
-          onClick={copyToClipboard}
-        />
+        <>
+          <DetailPanelAction
+            icon={<DeleteIcon />}
+            title={t('label.delete')}
+            onClick={onDelete}
+            disabled={!canDelete}
+          />
+          <DetailPanelAction
+            icon={<CopyIcon />}
+            title={t('link.copy-to-clipboard')}
+            onClick={copyToClipboard}
+          />
+        </>
       }
     >
       <AdditionalInfoSection />
