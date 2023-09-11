@@ -33,8 +33,6 @@ export const SearchWithUserSource = (
   } = props;
   const t = useTranslation('programs');
 
-  console.log('Data', data);
-
   const isPatientSelected = !!data?.id;
 
   const {
@@ -65,6 +63,7 @@ export const SearchWithUserSource = (
       if (data[field]) searchFilter[field] = { [match]: data[field] };
     });
     if (Object.keys(searchFilter).length > 0) runQuery(searchFilter);
+    else resetResults();
   }, [data]);
 
   const handlePatientSelect = (patientId: string) => {

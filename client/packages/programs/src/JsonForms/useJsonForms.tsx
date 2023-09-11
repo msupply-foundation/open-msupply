@@ -149,8 +149,6 @@ export const useJsonForms = <R,>(
 
   useConfirmOnLeaving(isDirty);
 
-  console.log('validationError', validationError);
-
   // returns the document name
   const saveData = async (): Promise<R | undefined> => {
     if (data === undefined) {
