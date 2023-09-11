@@ -13,8 +13,11 @@ import {
   PanelRow,
   PanelField,
   InfoTooltipIcon,
+  DeleteIcon,
+  useSingleDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
+import { canDeleteStocktake } from '../../utils';
 
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation('common');
@@ -53,6 +56,8 @@ export const SidePanel: FC = () => {
   const { success } = useNotification();
   const t = useTranslation('inventory');
   const { data } = useStocktake.document.get();
+  const { mutateAsync } = useStocktake.document.delete();
+  const canDelete = data ? canDeleteStocktake(data) : false;
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -60,14 +65,39 @@ export const SidePanel: FC = () => {
       .then(() => success('Copied to clipboard successfully')());
   };
 
+  const deleteAction = async () => {
+    if (!data) return;
+    await mutateAsync([data]);
+  };
+
+  const onDelete = useSingleDeleteConfirmation({
+    deleteAction,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-stocktake', {
+        number: data?.stocktakeNumber,
+      }),
+      deleteSuccess: t('messages.deleted-stocktakes', {
+        count: 1,
+      }),
+    },
+  });
+
   return (
     <DetailPanelPortal
       Actions={
-        <DetailPanelAction
-          icon={<CopyIcon />}
-          title={t('link.copy-to-clipboard')}
-          onClick={copyToClipboard}
-        />
+        <>
+          <DetailPanelAction
+            icon={<DeleteIcon />}
+            title={t('label.delete')}
+            onClick={onDelete}
+            disabled={!canDelete}
+          />
+          <DetailPanelAction
+            icon={<CopyIcon />}
+            title={t('link.copy-to-clipboard')}
+            onClick={copyToClipboard}
+          />
+        </>
       }
     >
       <AdditionalInfoSection />
