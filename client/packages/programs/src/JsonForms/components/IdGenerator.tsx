@@ -270,7 +270,7 @@ const useUniqueProgramEnrolmentIdValidation = () => {
 
 const UIComponent = (props: ControlProps) => {
   const { label, path, data, visible, handleChange, uischema, config } = props;
-  const t = useTranslation(['patients', 'common']);
+  const t = useTranslation('dispensary');
   const { core } = useJsonForms();
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)
