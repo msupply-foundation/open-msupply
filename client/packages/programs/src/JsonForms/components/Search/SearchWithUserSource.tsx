@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ControlProps } from '@jsonforms/core';
+import { ControlProps, UISchemaElement } from '@jsonforms/core';
 import {
   useTranslation,
   Box,
@@ -33,28 +33,23 @@ export const SearchWithUserSource = (
   } = props;
   const t = useTranslation('programs');
 
-  const isPatientSelected = !!data.id;
-
-  // console.log('path', path);
-  console.log('data', data);
-  console.log('isPatientSelected', isPatientSelected);
-  // console.log('props', props);
-  // console.log('options', options);
-  // console.log('schema', schema);
-  // console.log('uischema', uischema);
+  const isPatientSelected = !!data?.id;
 
   const {
     runQuery,
     getOptionLabel,
-    getDisplayElement,
     saveFields,
-    loading,
     error: queryError,
     results,
     resetResults,
   } = useSearchQueries(options ?? {});
 
   useEffect(() => {
+    if (!data) {
+      handleChange(path, {});
+      return;
+    }
+
     // Only run the database query if a specific patient hasn't yet been
     // selected
     if (isPatientSelected) return;
@@ -98,10 +93,12 @@ export const SearchWithUserSource = (
       </Typography>
       <JsonFormsDispatch
         schema={schema}
-        uischema={{
-          type: 'VerticalLayout',
-          elements: options.elements,
-        }}
+        uischema={
+          {
+            type: 'VerticalLayout',
+            elements: options.elements,
+          } as UISchemaElement
+        }
         path={path}
         renderers={renderers}
         enabled={!isPatientSelected}
@@ -136,20 +133,17 @@ export const SearchWithUserSource = (
                 sx={{ width: FORM_INPUT_COLUMN_WIDTH }}
               >
                 {!error ? (
-                  <>
-                    {getDisplayElement && getDisplayElement(data)}
-                    <Button
-                      onClick={() => {
-                        handleChange(path, {});
-                        resetResults();
-                      }}
-                      variant="outlined"
-                      size="small"
-                      sx={{ mt: 1 }}
-                    >
-                      {t('control.search.reset-button')}
-                    </Button>
-                  </>
+                  <Button
+                    onClick={() => {
+                      handleChange(path, {});
+                      resetResults();
+                    }}
+                    variant="outlined"
+                    size="small"
+                    sx={{ mt: 1 }}
+                  >
+                    {t('control.search.reset-button')}
+                  </Button>
                 ) : (
                   <Typography color="error">{error}</Typography>
                 )}

@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Typography,
-  useTranslation,
-  RegexUtils,
-  FilterBy,
-} from '@openmsupply-client/common';
+import { Typography, RegexUtils, FilterBy } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '@openmsupply-client/system';
 
 export const QueryValues = ['patientSearch'] as const;
@@ -19,7 +14,6 @@ interface SearchQueryOptions {
   optionString?: string;
   displayString?: string;
   saveFields?: string[];
-  placeholderText?: string;
 }
 
 interface SearchQueryOutput {
@@ -27,7 +21,6 @@ interface SearchQueryOutput {
   saveFields: string[] | null;
   getOptionLabel: (result: PatientRowFragment) => string;
   getDisplayElement?: GetDisplayElement;
-  placeholderText: string;
 }
 
 const { formatTemplateString, removeEmptyLines } = RegexUtils;
@@ -37,13 +30,10 @@ export const useSearchQueries = ({
   optionString,
   displayString,
   saveFields,
-  placeholderText,
 }: SearchQueryOptions = {}) => {
   const [results, setResults] = useState<PatientRowFragment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-
-  const t = useTranslation('programs');
 
   const patientQueries = usePatient.utils.api();
 
@@ -61,7 +51,6 @@ export const useSearchQueries = ({
           })
           .then(result => {
             setResults(result.nodes);
-            console.log('Result', result.nodes);
             setLoading(false);
           })
           .catch(err => {
@@ -90,8 +79,6 @@ export const useSearchQueries = ({
         );
       },
       saveFields: saveFields ?? null,
-      placeholderText:
-        placeholderText ?? t('control.search.search-patient-placeholder'),
     },
   };
 
