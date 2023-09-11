@@ -47,7 +47,7 @@ export type ColumnKey =
   | 'stockOnHand'
   | 'theirReference';
 
-const getColumnLookup = <T extends RecordWithId>(): Record<
+export const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
   ColumnDefinition<T>
 > => ({
