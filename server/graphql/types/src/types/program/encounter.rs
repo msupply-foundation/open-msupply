@@ -350,6 +350,8 @@ impl EncounterNode {
         ctx: &Context<'_>,
         at: Option<DateTime<Utc>>,
         filter: Option<ActiveEncounterEventFilterInput>,
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
     ) -> Result<ProgramEventResponse> {
         // TODO use loader?
         let context = ctx.service_provider().basic_context()?;
@@ -370,12 +372,12 @@ impl EncounterNode {
                 &context,
                 at.map(|at| at.naive_utc())
                     .unwrap_or(Utc::now().naive_utc()),
-                None,
+                page.map(PaginationOption::from),
                 Some(program_filter),
-                Some(Sort {
+                Some(sort.map(ProgramEventSortInput::to_domain).unwrap_or(Sort {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),
-                }),
+                })),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
