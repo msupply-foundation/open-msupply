@@ -32,11 +32,12 @@ export const useDraftOutboundLines = (
   const [draftStockOutLines, setDraftStockOutLines] = useState<
     DraftStockOutLine[]
   >([]);
+  const noStockLines = !data?.nodes.length;
 
   useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
-    if (!item) {
+    if (!item || noStockLines) {
       return setDraftStockOutLines([]);
     }
 
