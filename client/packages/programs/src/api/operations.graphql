@@ -111,9 +111,10 @@ fragment EncounterFields on EncounterFieldsNode {
 }
 
 fragment ProgramEvent on ProgramEventNode {
-  activeDatetime
+  activeStartDatetime
   type
   data
+  documentName
 }
 
 query encounterFields(
@@ -248,7 +249,12 @@ fragment EncounterRow on EncounterNode {
     name
   }
   activeProgramEvents(at: $eventTime, filter: { isCurrentEncounter: true }) {
-    ...ProgramEvent
+    ... on ProgramEventConnector {
+      nodes {
+        __typename
+        ...ProgramEvent
+      }
+    }
   }
 }
 
@@ -311,7 +317,12 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
     }
   }
   activeProgramEvents(at: $eventTime) {
-    ...ProgramEvent
+    ... on ProgramEventConnector {
+      nodes {
+        __typename
+        ...ProgramEvent
+      }
+    }
   }
 }
 
@@ -461,13 +472,7 @@ query activeProgramEvents(
       totalCount
       nodes {
         __typename
-        type
-        patientId
-        documentType
-        documentName
-        datetime
-        data
-        activeDatetime
+        ...ProgramEvent
       }
     }
   }

@@ -7,20 +7,25 @@ use graphql_core::{
         ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
     },
     map_filter,
+    pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
     DatetimeFilter, Encounter, EncounterFilter, EncounterSort, EncounterSortField, EncounterStatus,
-    EqualFilter, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
+    EqualFilter, PaginationOption, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
 };
 use serde::Serialize;
 
 use crate::types::ClinicianNode;
 
 use super::{
-    document::DocumentNode, patient::PatientNode, program_enrolment::ProgramEnrolmentNode,
-    program_event::ProgramEventNode,
+    document::DocumentNode,
+    patient::PatientNode,
+    program_enrolment::ProgramEnrolmentNode,
+    program_event::{
+        ProgramEventConnector, ProgramEventNode, ProgramEventResponse, ProgramEventSortInput,
+    },
 };
 
 pub struct EncounterNode {
@@ -146,16 +151,22 @@ impl EncounterNodeStatus {
 }
 
 #[derive(InputObject, Clone)]
-pub struct EncounterEventFilterInput {
+pub struct ActiveEncounterEventFilterInput {
     pub r#type: Option<EqualFilterStringInput>,
+    pub data: Option<StringFilterInput>,
     /// Only include events that are for the current encounter, i.e. have matching encounter type
     /// and matching encounter name of the current encounter. If not set all events with matching
     /// encounter type are returned.
     pub is_current_encounter: Option<bool>,
 }
 
-impl EncounterEventFilterInput {
-    pub fn to_domain(&self) -> ProgramEventFilter {
+impl ActiveEncounterEventFilterInput {
+    pub fn to_domain(self) -> ProgramEventFilter {
+        let ActiveEncounterEventFilterInput {
+            r#type,
+            data,
+            is_current_encounter: _,
+        } = self;
         ProgramEventFilter {
             datetime: None,
             active_start_datetime: None,
@@ -163,7 +174,46 @@ impl EncounterEventFilterInput {
             patient_id: None,
             document_type: None,
             document_name: None,
-            r#type: self.r#type.clone().map(EqualFilter::from),
+            r#type: r#type.map(EqualFilter::from),
+            data: data.map(StringFilter::from),
+            context_id: None,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EncounterEventFilterInput {
+    pub r#type: Option<EqualFilterStringInput>,
+    pub data: Option<StringFilterInput>,
+    pub datetime: Option<DatetimeFilterInput>,
+    pub active_start_datetime: Option<DatetimeFilterInput>,
+    pub active_end_datetime: Option<DatetimeFilterInput>,
+
+    /// Only include events that are for the current encounter, i.e. have matching encounter type
+    /// and matching encounter name of the current encounter. If not set all events with matching
+    /// encounter type are returned.
+    pub is_current_encounter: Option<bool>,
+}
+
+impl EncounterEventFilterInput {
+    pub fn to_domain(self) -> ProgramEventFilter {
+        let EncounterEventFilterInput {
+            r#type,
+            data,
+            datetime,
+            active_start_datetime,
+            active_end_datetime,
+            is_current_encounter: _,
+        } = self;
+        ProgramEventFilter {
+            datetime: datetime.map(DatetimeFilter::from),
+            active_start_datetime: active_start_datetime.map(DatetimeFilter::from),
+            active_end_datetime: active_end_datetime.map(DatetimeFilter::from),
+            patient_id: None,
+            document_type: None,
+            document_name: None,
+            r#type: r#type.map(EqualFilter::from),
+            data: data.map(StringFilter::from),
             context_id: None,
         }
     }
@@ -299,13 +349,13 @@ impl EncounterNode {
         &self,
         ctx: &Context<'_>,
         at: Option<DateTime<Utc>>,
-        filter: Option<EncounterEventFilterInput>,
-    ) -> Result<Vec<ProgramEventNode>> {
+        filter: Option<ActiveEncounterEventFilterInput>,
+    ) -> Result<ProgramEventResponse> {
         // TODO use loader?
         let context = ctx.service_provider().basic_context()?;
         let mut program_filter = filter
             .as_ref()
-            .map(|f| f.to_domain())
+            .map(|f| f.clone().to_domain())
             .unwrap_or(ProgramEventFilter::new())
             .patient_id(EqualFilter::equal_to(&self.encounter.0.patient_id))
             .document_type(EqualFilter::equal_to(&self.encounter.0.document_type));
@@ -313,7 +363,7 @@ impl EncounterNode {
             program_filter =
                 program_filter.document_name(EqualFilter::equal_to(&self.encounter.0.document_name))
         };
-        let entries = ctx
+        let list_result = ctx
             .service_provider()
             .program_event_service
             .active_events(
@@ -328,14 +378,61 @@ impl EncounterNode {
                 }),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
-        Ok(entries
-            .rows
-            .into_iter()
-            .map(|row| ProgramEventNode {
-                store_id: self.store_id.clone(),
-                row,
-                allowed_ctx: self.allowed_ctx.clone(),
-            })
-            .collect())
+
+        Ok(ProgramEventResponse::Response(ProgramEventConnector {
+            total_count: list_result.count,
+            nodes: list_result
+                .rows
+                .into_iter()
+                .map(|row| ProgramEventNode {
+                    store_id: self.store_id.clone(),
+                    row,
+                    allowed_ctx: self.allowed_ctx.clone(),
+                })
+                .collect(),
+        }))
+    }
+
+    pub async fn program_events(
+        &self,
+        ctx: &Context<'_>,
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
+        filter: Option<EncounterEventFilterInput>,
+    ) -> Result<ProgramEventResponse> {
+        let context = ctx.service_provider().basic_context()?;
+        let mut program_filter = filter
+            .as_ref()
+            .map(|f| f.clone().to_domain())
+            .unwrap_or(ProgramEventFilter::new())
+            .patient_id(EqualFilter::equal_to(&self.encounter.0.patient_id))
+            .document_type(EqualFilter::equal_to(&self.encounter.0.document_type));
+        if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
+            program_filter =
+                program_filter.document_name(EqualFilter::equal_to(&self.encounter.0.document_name))
+        };
+        let list_result = ctx
+            .service_provider()
+            .program_event_service
+            .events(
+                &context,
+                page.map(PaginationOption::from),
+                Some(program_filter),
+                sort.map(ProgramEventSortInput::to_domain),
+            )
+            .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(ProgramEventResponse::Response(ProgramEventConnector {
+            total_count: list_result.count,
+            nodes: list_result
+                .rows
+                .into_iter()
+                .map(|row| ProgramEventNode {
+                    store_id: self.store_id.clone(),
+                    row,
+                    allowed_ctx: self.allowed_ctx.clone(),
+                })
+                .collect(),
+        }))
     }
 }
