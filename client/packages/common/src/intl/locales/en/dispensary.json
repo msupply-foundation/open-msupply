@@ -62,6 +62,7 @@
   "messages.recorded-on": "Recorded on {{datetime}}",
   "messages.results-found": "{{totalCount}} results found",
   "messages.results-over-limit": "Showing the first 100 results only - please refine your search",  
+  "messages.no-stock-available": "There is no stock available",
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-last-name": "Search by last name",
   "placeholder.search-by-identifier": "Search by id",
