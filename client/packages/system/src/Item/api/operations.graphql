@@ -167,6 +167,7 @@ query itemStockOnHand(
         defaultPackSize
         availableStockOnHand(storeId: $storeId)
       }
+      totalCount
     }
   }
 }
