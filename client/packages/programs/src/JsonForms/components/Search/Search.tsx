@@ -3,6 +3,7 @@ import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidation';
+import { Typography } from '@openmsupply-client/common';
 import { SearchWithUserSource } from './SearchWithUserSource';
 import { SearchWithDocumentSource } from './SearchWithDocumentSource';
 import { QueryValues } from './useSearchQueries';
@@ -35,7 +36,7 @@ const UserOptions = z.object({
   placeholderText: z.string().optional(),
 
   // NEW ONES
-  elements: z.array(z.any()),
+  elements: z.array(z.any()), //FIX
   searchFields: z.array(z.string()),
 });
 
@@ -84,6 +85,8 @@ const UIComponent = (props: ControlProps) => {
     Options,
     props.uischema.options
   );
+
+  if (zErrors) return <Typography color="error">{zErrors}</Typography>;
 
   const childProps = { ...props, errors: props.errors ?? zErrors };
 
