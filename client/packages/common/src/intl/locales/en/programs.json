@@ -5,7 +5,7 @@
   "control.search.searching-label": "Searching...",
   "control.search.no-results-label": "No results",
   "control.search.reset-button": "Reset",
-  "control.search.matching-patients": "These patients match your search terms. Please select from this list if you find the patient you're looking for",
+  "control.search.matching-patients": "We've found some existing patients that match the above entered data. Please select from this list if applicable",
   "control.search.error.no-document": "Unable to access requested document",
   "control.search.error.no-data": "Unable to extract path \"{{docPath}}\" from document",
   "control.search.error.no-patient-contact": "No matching patient contact found",

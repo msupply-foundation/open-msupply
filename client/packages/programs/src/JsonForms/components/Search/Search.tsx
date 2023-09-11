@@ -23,20 +23,16 @@ const UserOptions = z.object({
    */
   optionString: z.string().optional(),
   /**
-   * Pattern for formatting selected result (as above)
-   */
-  displayString: z.string().optional(),
-  /**
    * List of fields to save in document data (from selected item object)
    */
   saveFields: z.array(z.string()).optional(),
   /**
-   * Text to show in input field before user entry
+   * Child form elements
    */
-  placeholderText: z.string().optional(),
-
-  // NEW ONES
-  elements: z.array(z.any()), //FIX
+  elements: z.array(z.any()),
+  /**
+   * List of fields to match against when searching Patients
+   */
   searchFields: z.array(z.string()),
 });
 
