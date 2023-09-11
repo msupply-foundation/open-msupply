@@ -53,6 +53,7 @@
   "messages.patients-create": "Click [OK & Next] to add a new patient with the details entered, or click an existing patient below to view their details.",
   "messages.regenerate-id-confirm": "This will create a new ID and cannot be undone.",
   "messages.inactive": "Program inactive",
+  "messages.confirm-delete-prescription": "This will permanently remove Prescription #{{number}}",
   "messages.confirm-delete-prescriptions_one": "This will permanently remove 1 prescription",
   "messages.confirm-delete-prescriptions_other": "This will permanently remove {{count}} prescriptions",
   "messages.deleted-prescriptions_one": "Deleted {{count}} prescription",
