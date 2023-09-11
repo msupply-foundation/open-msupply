@@ -107,6 +107,7 @@ export const useSearchQueries = ({
 
   return {
     ...returnObject,
+    resetResults: () => setResults([]),
     loading,
     error,
     results,
