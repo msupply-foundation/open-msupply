@@ -19,6 +19,7 @@ import { InboundLineFragment, useInbound } from '../../../api';
 import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
 import { TabLayout } from './TabLayout';
+import { useUnitVariant } from 'packages/system/src';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -30,12 +31,16 @@ interface InboundLineEditProps {
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
+  const { variantsControl } = useUnitVariant(String(item?.id), null);
   const { data: lines } = useInbound.lines.list(item?.id ?? '');
   const { id } = useInbound.document.fields('id');
   const { mutateAsync, isLoading } = useInbound.lines.save();
   const [draftLines, setDraftLines] = useState<DraftInboundLine[]>([]);
   const { isDirty, setIsDirty } = useDirtyCheck();
   useConfirmOnLeaving(isDirty);
+
+  const defaultPackSize =
+    variantsControl?.activeVariant?.packSize || item?.defaultPackSize || 1;
 
   useEffect(() => {
     if (lines && item) {
@@ -44,10 +49,13 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
           item: line.item,
           invoiceId: line.invoiceId,
           seed: line,
+          defaultPackSize,
         })
       );
       if (drafts.length === 0)
-        drafts.push(CreateDraft.stockInLine({ item, invoiceId: id }));
+        drafts.push(
+          CreateDraft.stockInLine({ item, invoiceId: id, defaultPackSize })
+        );
       setDraftLines(drafts);
     } else {
       setDraftLines([]);
@@ -56,7 +64,11 @@ const useDraftInboundLines = (item: InboundLineItem | null) => {
 
   const addDraftLine = () => {
     if (item) {
-      const newLine = CreateDraft.stockInLine({ item, invoiceId: id });
+      const newLine = CreateDraft.stockInLine({
+        item,
+        invoiceId: id,
+        defaultPackSize,
+      });
       setIsDirty(true);
       setDraftLines(draftLines => [...draftLines, newLine]);
     }
