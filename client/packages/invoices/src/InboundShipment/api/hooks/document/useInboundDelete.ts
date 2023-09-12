@@ -1,4 +1,4 @@
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   RouteBuilder,
   useMutation,
