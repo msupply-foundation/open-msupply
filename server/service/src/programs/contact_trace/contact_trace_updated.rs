@@ -39,7 +39,7 @@ pub(crate) fn update_contact_trace_row(
     // Documents are identified by a human readable name. Thus, use hash(name) as an ID.
     // For example, an ID works better in an web URL.
     // This also makes sure the table row gets the same ID when the whole site is re-synced.
-    let contact_trace_id = match contact_trace_row {
+    let id = match contact_trace_row {
         Some(contact_trace_row) => contact_trace_row.contact_trace.id,
         None => sha256(&document.name),
     };
@@ -51,7 +51,7 @@ pub(crate) fn update_contact_trace_row(
     let contact = contact_trace.contact.as_ref();
 
     let row = ContactTraceRow {
-        id: contact_trace_id,
+        id,
         program_id: program_row.id,
         document_id: document.id.clone(),
         patient_id: patient_id.to_string(),
