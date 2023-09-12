@@ -11,6 +11,11 @@ import {
   useFormatDateTime,
   useTranslation,
   createTableStore,
+  InputWithLabelRow,
+  BasicTextInput,
+  Grid,
+  ButtonWithIcon,
+  RewindIcon,
 } from '@openmsupply-client/common';
 import {
   ChipTableCell,
@@ -60,8 +65,8 @@ const FilterBar = ({
 
 type ModalContentProps = {
   documentData: ContactTrace;
-  onPatientLinked: (patientId: string) => void;
-  hideDialog: () => void;
+  linkedPatientId: string | undefined;
+  setLinkedPatientId: (id?: string) => void;
 };
 
 const useFilter = ({ contact }: ContactTrace) => {
@@ -78,8 +83,8 @@ const useFilter = ({ contact }: ContactTrace) => {
 
 const ModalContent: FC<ModalContentProps> = ({
   documentData,
-  onPatientLinked,
-  hideDialog,
+  linkedPatientId,
+  setLinkedPatientId,
 }) => {
   const t = useTranslation('dispensary');
   const { localisedDate } = useFormatDateTime();
@@ -134,8 +139,39 @@ const ModalContent: FC<ModalContentProps> = ({
       maxWidth: 250,
     },
   ]);
+  const { data: linkedPatient } = usePatient.document.get(linkedPatientId);
   return (
-    <TableProvider createStore={createTableStore}>
+    <>
+      <Grid
+        container
+        spacing={2}
+        direction="row"
+        justifyContent="space-between"
+        bgcolor="background.toolbar"
+        padding={3}
+        paddingBottom={2}
+        boxShadow={theme => theme.shadows[2]}
+      >
+        <Grid item>
+          <InputWithLabelRow
+            label={t('label.linked-patient')}
+            Input={
+              <BasicTextInput
+                disabled
+                value={linkedPatient ? linkedPatient.name : ''}
+              />
+            }
+          />
+        </Grid>
+        <Grid item>
+          <ButtonWithIcon
+            Icon={<RewindIcon />}
+            disabled={!linkedPatientId}
+            onClick={() => setLinkedPatientId(undefined)}
+            label={t('button.unlink-patient')}
+          />
+        </Grid>
+      </Grid>
       <DetailContainer>
         <Box
           display="flex"
@@ -156,44 +192,59 @@ const ModalContent: FC<ModalContentProps> = ({
                 : t('messages.patient-data-required-for-search')
             }
             onRowClick={row => {
-              onPatientLinked(row.id);
-              hideDialog();
+              setLinkedPatientId(row.id);
             }}
           />
         </Box>
       </DetailContainer>
-    </TableProvider>
+    </>
   );
 };
 
 export const useLinkPatientModal = (
-  onPatientLinked: (patientId: string) => void
+  documentData: ContactTrace,
+  onPatientLinked: (patientId?: string) => void
 ): {
   showDialog: () => void;
   hideDialog: () => void;
 
-  LinkPatientModal: FC<{ documentData: ContactTrace }>;
+  LinkPatientModal: FC;
 } => {
-  const t = useTranslation('dispensary');
-
   const { Modal, showDialog, hideDialog } = useDialog();
+  const [linkedPatientId, setLinkedPatientId] = useState(
+    documentData?.contact?.id
+  );
 
-  const LinkPatientModal: FC<{ documentData: ContactTrace }> = ({
-    documentData,
-  }) => {
+  const LinkPatientModal: FC = () => {
     return (
-      <Modal
-        title={t('title-link-contact-to-patient-modal')}
-        sx={{ maxWidth: '90%', minWidth: '65%', height: '100%' }}
-        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
-        slideAnimation={false}
-      >
-        <ModalContent
-          documentData={documentData}
-          onPatientLinked={onPatientLinked}
-          hideDialog={hideDialog}
-        />
-      </Modal>
+      <TableProvider createStore={createTableStore}>
+        <Modal
+          sx={{
+            maxWidth: '90%',
+            minWidth: '65%',
+            height: '100%',
+          }}
+          title={''}
+          contentProps={{ sx: { padding: 0 } }}
+          cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+          okButton={
+            <DialogButton
+              variant="ok"
+              onClick={() => {
+                onPatientLinked(linkedPatientId);
+                hideDialog();
+              }}
+            />
+          }
+          slideAnimation={false}
+        >
+          <ModalContent
+            documentData={documentData}
+            linkedPatientId={linkedPatientId}
+            setLinkedPatientId={setLinkedPatientId}
+          />
+        </Modal>
+      </TableProvider>
     );
   };
 

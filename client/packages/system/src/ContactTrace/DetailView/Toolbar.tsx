@@ -1,8 +1,6 @@
-import React, { FC, ReactNode, useCallback } from 'react';
+import React, { FC, ReactNode } from 'react';
 import {
   Box,
-  CheckIcon,
-  EditIcon,
   Grid,
   UserIcon,
   useIntlUtils,
@@ -11,11 +9,9 @@ import {
 import {
   AppBarContentPortal,
   BasicTextInput,
-  ButtonWithIcon,
   InputWithLabelRow,
 } from '@common/components';
 import { ContactTrace, ContactTraceData } from './useContactTraceData';
-import { useLinkPatientModal } from './LinkPatientModal';
 import { PatientRowFragment, usePatient } from '../../Patient';
 
 const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
@@ -43,21 +39,12 @@ const useContactName = (
 };
 
 interface ToolbarProps {
-  /** Makes a change to the contact trace */
-  onChange: (patch: Partial<ContactTrace>) => void;
   data: ContactTraceData;
   documentData: ContactTrace;
 }
 
-export const Toolbar: FC<ToolbarProps> = ({ onChange, data, documentData }) => {
+export const Toolbar: FC<ToolbarProps> = ({ data, documentData }) => {
   const t = useTranslation('dispensary');
-
-  const patientLinked = useCallback(
-    (patientId: string) => {
-      onChange({ contact: { ...documentData.contact, id: patientId } });
-    },
-    [onChange, documentData.contact]
-  );
 
   // mSupply patient linked to the contact
   const { data: contactPatient } = usePatient.document.get(
@@ -65,7 +52,6 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange, data, documentData }) => {
   );
   const contactName = useContactName(documentData, contactPatient);
 
-  const { LinkPatientModal, showDialog } = useLinkPatientModal(patientLinked);
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -99,16 +85,6 @@ export const Toolbar: FC<ToolbarProps> = ({ onChange, data, documentData }) => {
                 label={t('label.contact')}
                 Input={<BasicTextInput disabled value={contactName} />}
               />
-              <ButtonWithIcon
-                variant="outlined"
-                color="secondary"
-                Icon={
-                  !!documentData?.contact?.id ? <CheckIcon /> : <EditIcon />
-                }
-                label={t('button.link-contact-to-patient')}
-                onClick={showDialog}
-              />
-              <LinkPatientModal documentData={documentData} />
             </Box>
             <Box display="flex" gap={1.5}>
               <Row

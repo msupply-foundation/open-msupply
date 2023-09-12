@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   useTranslation,
   DetailViewSkeleton,
@@ -25,6 +25,7 @@ import { Footer } from './Footer';
 import { PatientTabValue } from '../../Patient/PatientView/PatientView';
 
 import { ContactTrace, useContactTraceData } from './useContactTraceData';
+import { AppBarButtons } from './AppBarButtons';
 
 type DetailViewProps = {
   createPatientId: string | null;
@@ -66,7 +67,7 @@ export const DetailView: FC<DetailViewProps> = ({
   const accessor: JsonFormData<SavedDocument> =
     createType && contactData?.schema
       ? {
-          loadedData: contactData.contactTrace,
+          loadedData: contactData.documentData,
           isLoading: false,
           error: undefined,
           isCreating: contactTraceId === id,
@@ -135,24 +136,36 @@ export const DetailView: FC<DetailViewProps> = ({
             )}
           </Breadcrumb>
           <span>{` / ${contactData.programName} - ${dateFormat.localisedDate(
-            contactData.contactTrace.datetime
+            contactData.documentData.datetime
           )}`}</span>
         </span>
       );
     }
   }, [contactData, setSuffix]);
 
+  const documentData =
+    (data as ContactTrace) ?? contactData?.documentData ?? {};
+  const patientLinked = useCallback(
+    (patientId: string | undefined) => {
+      updateContactTrace({
+        contact: { ...documentData.contact, id: patientId },
+      });
+    },
+    [updateContactTrace, documentData.contact]
+  );
+
   if (isLoading) return <DetailViewSkeleton />;
 
   return (
     <React.Suspense fallback={<DetailViewSkeleton />}>
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
+
+      <AppBarButtons
+        onLinkContact={patientLinked}
+        documentData={documentData}
+      />
       {contactData && (
-        <Toolbar
-          onChange={updateContactTrace}
-          data={contactData}
-          documentData={(data as ContactTrace) ?? contactData.contactTrace}
-        />
+        <Toolbar data={contactData} documentData={documentData} />
       )}
       {!isLoading ? (
         JsonForm
