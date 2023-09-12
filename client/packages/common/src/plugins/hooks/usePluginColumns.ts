@@ -1,36 +1,56 @@
-import { useContext, useEffect, useState } from 'react';
-import { PluginArea, PluginType } from '../types';
-import { PluginContext } from '../components/PluginContext';
+import { useEffect, useState } from 'react';
+import { ColumnPlugin, ColumnPluginType } from '../types';
 import { RecordWithId } from '../../types/utility';
 import { ColumnDefinition } from '../../ui';
+import { usePluginProvider } from '../components';
+import { loadPluginColumn } from '../utils';
+
+const mapPluginToColumnDefinition = async <T extends RecordWithId>(
+  plugin: ColumnPlugin
+): Promise<ColumnDefinition<T>> => {
+  const { module, name } = plugin;
+  const pluginColumn = await loadPluginColumn<T>({ plugin: name, module })();
+
+  return pluginColumn.default;
+};
 
 export function usePluginColumns<T extends RecordWithId>({
-  area,
   type,
 }: {
-  area: PluginArea;
-  type: PluginType;
+  type: ColumnPluginType;
 }) {
-  const { getPluginColumns } = useContext(PluginContext);
+  const { updateColumnPlugin, columnPlugins } = usePluginProvider();
   const [pluginColumns, setPluginColumns] = useState<ColumnDefinition<T>[]>([]);
-  const { plugins } = useContext(PluginContext);
+  const columns = columnPlugins.filter(column => column.type === type);
 
   useEffect(() => {
-    const setColumns = (
-      columns: (ColumnDefinition<RecordWithId> | null)[]
-    ): void => {
-      setPluginColumns(
-        columns
-          .filter(
-            (column): column is ColumnDefinition<RecordWithId> =>
-              column !== null
-          )
-          .map(column => column as unknown as ColumnDefinition<T>)
-      );
-    };
+    columns
+      .filter(plugin => !plugin.isLoaded)
+      .forEach(plugin => {
+        mapPluginToColumnDefinition<T>(plugin).then(column => {
+          updateColumnPlugin({
+            ...plugin,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            column: column as any,
+            isLoaded: true,
+          });
+        });
+      });
 
-    getPluginColumns({ area, type }).then(setColumns);
-  }, [plugins]);
+    setPluginColumns(
+      columns
+        .filter(plugin => plugin.isLoaded)
+        .map(plugin =>
+          'column' in plugin
+            ? (plugin.column as unknown as ColumnDefinition<T>)
+            : null
+        )
+        .filter(column => column !== null) as ColumnDefinition<T>[]
+    );
+
+    // tidy up on unmount
+    return () => setPluginColumns([]);
+  }, [columnPlugins]);
 
   return pluginColumns;
 }

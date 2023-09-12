@@ -6,7 +6,6 @@ import { loadPluginModule } from '../utils';
 interface PluginLoaderProps {
   module: string;
   name: string;
-  path: string;
   data?: unknown;
   scope?: string;
 }

@@ -3,13 +3,16 @@ import {
   BasicTextInput,
   InputWithLabelRow,
   InputWithLabelRowProps,
+  PluginComponent,
   useTranslation,
 } from '@openmsupply-client/common';
-import { StockDonorEditProps } from './StockDonorEdit';
+import { StockLineRowFragment } from '@openmsupply-client/system';
 
-export const StockDonorEditInput = ({ data }: StockDonorEditProps) => {
+const StockDonorEditInput: PluginComponent<StockLineRowFragment> = ({
+  data,
+}) => {
   const t = useTranslation('common');
-  const [donor, setDonor] = React.useState<string>('donor');
+  const [donor, setDonor] = React.useState(data?.supplierName ?? '');
 
   const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
     <InputWithLabelRow
@@ -26,8 +29,6 @@ export const StockDonorEditInput = ({ data }: StockDonorEditProps) => {
     />
   );
 
-  console.log('data', data);
-
   return (
     <StyledInputRow
       label={t('label.donor')}
@@ -40,3 +41,4 @@ export const StockDonorEditInput = ({ data }: StockDonorEditProps) => {
     />
   );
 };
+export default StockDonorEditInput;
