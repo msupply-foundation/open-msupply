@@ -152,7 +152,7 @@ const ModalContent: FC<ModalContentProps> = ({
             columns={columns}
             noDataMessage={
               searchEnabled
-                ? t('messages.no-matching-patients')
+                ? t('messages.no-matching-patients-for-contact-trace')
                 : t('messages.patient-data-required-for-search')
             }
             onRowClick={row => {
