@@ -37,6 +37,8 @@ export const useDraftOutboundLines = (
   useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
+    // Check placed in since last else in the map is needed to show placeholder row,
+    // but also causes a placeholder row to be created when there is no stock lines.
     if (!item || noStockLines) {
       return setDraftStockOutLines([]);
     }
