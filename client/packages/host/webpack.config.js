@@ -11,26 +11,34 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const fs = require('fs');
 
 const localPlugins = () => {
+  const plugins = [];
   try {
-    return fs
-      .readdirSync('../plugins')
+    fs.readdirSync('../plugins')
       .map(fileName => ({
         fileName,
         fullFileName: path.join('../plugins', fileName),
       }))
       .filter(({ fullFileName }) => fs.lstatSync(fullFileName).isDirectory())
-      .map(plugin => ({
-        path: plugin.fileName,
-        name: plugin.fileName,
-        config: fs.readFileSync(
-          path.join(plugin.fullFileName, 'plugin.json'),
-          'utf8'
-        ),
-      }));
+      .forEach(plugin => {
+        try {
+          plugins.push({
+            path: plugin.fileName,
+            name: plugin.fileName,
+            config: fs.readFileSync(
+              path.join(plugin.fullFileName, 'plugin.json'),
+              'utf8'
+            ),
+          });
+        } catch (e) {
+          console.error(
+            `Error parsing plugin ${plugin.fileName}: ${e.message}`
+          );
+        }
+      });
   } catch (e) {
     console.error(`Error reading plugins directory: ${e.message}`);
-    return [];
   }
+  return plugins;
 };
 
 class DummyWebpackPlugin {
