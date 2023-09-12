@@ -18,6 +18,7 @@ import {
   CircularProgress,
   useNotification,
   Tooltip,
+  usePluginElements,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -49,6 +50,10 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
     ? draft.supplierName
     : t('message.no-supplier');
   const location = draft?.location ?? null;
+  const plugins = usePluginElements({
+    type: 'StockEditForm',
+    data: draft,
+  });
 
   const scanBarcode = async () => {
     try {
@@ -144,6 +149,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
             />
           }
         />
+        {plugins}
       </Grid>
       <Grid
         container

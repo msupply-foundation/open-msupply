@@ -1,8 +1,9 @@
-import { ItemRowFragment } from 'packages/system/src';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 export { default as InvoiceService } from './InvoiceService';
 export { useOutbound } from './OutboundShipment/api';
 export { useInbound } from './InboundShipment/api';
+export { DraftStockOutLine } from './types';
 
 export type DraftItem = Pick<ItemRowFragment, 'id' | 'unitName'>;
 
