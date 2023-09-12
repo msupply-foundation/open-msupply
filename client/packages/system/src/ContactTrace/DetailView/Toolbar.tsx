@@ -9,6 +9,7 @@ import {
 import {
   AppBarContentPortal,
   BasicTextInput,
+  InfoTooltipIcon,
   InputWithLabelRow,
 } from '@common/components';
 import { ContactTrace, ContactTraceData } from './useContactTraceData';
@@ -24,7 +25,13 @@ const useContactName = (
 ): string => {
   const { getLocalisedFullName } = useIntlUtils();
   if (!!linkedPatient) {
-    return linkedPatient.name ?? linkedPatient.id;
+    if (linkedPatient.name) {
+      return getLocalisedFullName(
+        linkedPatient.firstName,
+        linkedPatient.lastName
+      );
+    }
+    return linkedPatient.id;
   }
   if (documentData?.contact?.id && !linkedPatient) {
     return ''; // still loading
@@ -36,6 +43,31 @@ const useContactName = (
     );
   }
   return documentData?.contact?.name ?? documentData?.contact?.id ?? '';
+};
+
+const recordedDiffersFromLinkedPatient = (
+  documentData: ContactTrace,
+  linkedPatient: PatientRowFragment | undefined
+) => {
+  if (!linkedPatient) {
+    return false;
+  }
+  if (
+    !!documentData.contact?.firstName &&
+    !!linkedPatient.firstName &&
+    documentData.contact?.firstName !== linkedPatient.firstName
+  ) {
+    return true;
+  }
+  if (
+    !!documentData.contact?.lastName &&
+    !!linkedPatient.lastName &&
+    documentData.contact?.lastName !== linkedPatient.lastName
+  ) {
+    return true;
+  }
+
+  return false;
 };
 
 interface ToolbarProps {
@@ -50,8 +82,9 @@ export const Toolbar: FC<ToolbarProps> = ({ data, documentData }) => {
   const { data: contactPatient } = usePatient.document.get(
     documentData?.contact?.id
   );
-  const contactName = useContactName(documentData, contactPatient);
 
+  const contactName = useContactName(documentData, contactPatient);
+  const { getLocalisedFullName } = useIntlUtils();
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -85,6 +118,26 @@ export const Toolbar: FC<ToolbarProps> = ({ data, documentData }) => {
                 label={t('label.contact')}
                 Input={<BasicTextInput disabled value={contactName} />}
               />
+              {recordedDiffersFromLinkedPatient(
+                documentData,
+                contactPatient
+              ) ? (
+                <Box
+                  display="flex"
+                  sx={{ color: 'error.main' }}
+                  gap={1}
+                  justifyContent="center"
+                >
+                  <InfoTooltipIcon
+                    title={t('label.recorded-contact-differs', {
+                      recordedName: getLocalisedFullName(
+                        documentData?.contact?.firstName,
+                        documentData.contact?.lastName
+                      ),
+                    })}
+                  />
+                </Box>
+              ) : null}
             </Box>
             <Box display="flex" gap={1.5}>
               <Row
