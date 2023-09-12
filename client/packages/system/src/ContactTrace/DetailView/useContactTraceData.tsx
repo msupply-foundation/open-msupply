@@ -11,7 +11,7 @@ import { useAuthContext } from '@openmsupply-client/common';
 export type ContactTrace = {
   datetime: string;
   contact?: {
-    id: string;
+    id?: string;
     name?: string;
     firstName?: string;
     lastName?: string;
@@ -25,7 +25,7 @@ export type ContactTraceData = {
   id?: string;
   type: string;
   documentName?: string;
-  contactTrace: ContactTrace;
+  documentData: ContactTrace;
   patient: {
     id: string;
     name?: string | null;
@@ -75,7 +75,7 @@ export const useContactTraceData = (
           id: contactTrace.id,
           type: contactTrace.document.type,
           documentName: contactTrace.document.name,
-          contactTrace: {
+          documentData: {
             datetime: contactTrace.datetime,
             contact: contactTrace.contactPatient
               ? {
@@ -120,7 +120,7 @@ export const useContactTraceData = (
         id: undefined,
         type: createType,
         documentName: undefined,
-        contactTrace: {
+        documentData: {
           datetime: creationDate.toISOString(),
           contact: undefined,
           location: {
