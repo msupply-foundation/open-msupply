@@ -21,7 +21,7 @@ import {
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../..';
 import { PackSizeController } from '../../../StockOut';
-import { DraftStockOutLine } from 'packages/invoices/src/types';
+import { DraftStockOutLine } from '@openmsupply-client/invoices';
 
 interface PrescriptionLineEditFormProps {
   allocatedQuantity: number;

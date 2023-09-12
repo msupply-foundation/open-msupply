@@ -15,8 +15,6 @@ import {
   StockIcon,
   ColumnAlign,
   ColumnDescription,
-  PluginType,
-  PluginArea,
   usePluginColumns,
 } from '@openmsupply-client/common';
 import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
@@ -38,8 +36,7 @@ const StockListComponent: FC = () => {
   const { data, isLoading, isError } = useStock.line.list();
   const [repackId, setRepackId] = React.useState<string | null>(null);
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
-    area: PluginArea.Column,
-    type: PluginType.Stock,
+    type: 'Stock',
   });
   const EditStockLineCell = <T extends StockLineRowFragment>({
     rowData,

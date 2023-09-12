@@ -1,19 +1,14 @@
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 import {
   BrowserRouter,
+  PluginComponent,
   QueryClientProviderProxy,
   ThemeProviderProxy,
 } from '@openmsupply-client/common';
-import { StockDonorEditInput } from './StockDonorEditInput';
+import StockDonorEditInput from './StockDonorEditInput';
 import { StockLineRowFragment } from '@openmsupply-client/system';
 
-export interface StockDonorEditProps {
-  data: StockLineRowFragment;
-}
-
-const StockDonorEdit: React.FC<PropsWithChildren<StockDonorEditProps>> = ({
-  data,
-}) => (
+const StockDonorEdit: PluginComponent<StockLineRowFragment> = ({ data }) => (
   <ThemeProviderProxy>
     <QueryClientProviderProxy>
       <BrowserRouter>

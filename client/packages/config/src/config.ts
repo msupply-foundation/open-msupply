@@ -24,15 +24,14 @@ const productionApiHost = `${protocol}//${hostname}:${port}`;
 const developmentApiHost =
   (typeof API_HOST !== 'undefined' && API_HOST) || defaultDevelopmentApiHost;
 const apiHost = isProductionBuild ? productionApiHost : developmentApiHost;
-const isPluginLocal = typeof PLUGIN_URL !== 'undefined' && !!PLUGIN_URL;
-const pluginUrl = isPluginLocal ? PLUGIN_URL : `${apiHost}/plugins`;
+
+const pluginUrl = `${apiHost}/plugins`;
 
 export const Environment = {
   API_HOST: apiHost,
   FILE_URL: `${apiHost}/files?id=`,
   GRAPHQL_URL: `${apiHost}/graphql`,
   PLUGIN_URL: pluginUrl,
-  PLUGIN_EXTENSION: isPluginLocal ? '.js' : '',
 };
 
 export default Environment;

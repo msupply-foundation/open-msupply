@@ -4,12 +4,12 @@
   "main": "index.js",
   "scripts": {
     "start": "webpack-cli serve --port 3000",
-    "start-local": "webpack-cli serve --port 3000",
-    "build-plugin": "rm -rf dist && mkdir dist && NODE_ENV=production webpack && cp dist/* ../../../server/app_data/plugins/StockDonor/"
+    "build-plugin": "rm -rf dist && mkdir dist && NODE_ENV=production webpack && cp dist/* ../../../../server/app_data/plugins/StockDonor/"
   },
   "license": "MIT",
   "devDependencies": {
     "@openmsupply-client/common": "^0.0.1",
+    "@openmsupply-client/host": "^0.0.0",
     "@types/react": "^18.2.20",
     "@types/react-dom": "^18.2.7",
     "copy-webpack-plugin": "^11.0.0",

@@ -23,8 +23,8 @@ type Container = {
 type PluginModule = {
   default: React.ComponentType<{ data: unknown }>;
 };
-type PluginColumn = {
-  default: ColumnDefinition<RecordWithId>;
+type PluginColumn<T extends RecordWithId> = {
+  default: ColumnDefinition<T>;
 };
 
 export const fetchPlugin = (url: string, plugin: string): Promise<Container> =>
@@ -57,11 +57,12 @@ export const fetchPlugin = (url: string, plugin: string): Promise<Container> =>
 export const loadPluginModule = (props: loadPluginProps) =>
   loadPlugin<PluginModule>(props);
 
-export const loadPluginColumn = (props: loadPluginProps) =>
-  loadPlugin<PluginColumn>(props);
+export const loadPluginColumn = <T extends RecordWithId>(
+  props: loadPluginProps
+) => loadPlugin<PluginColumn<T>>(props);
 
 const getPluginUrl = (name: string) =>
-  `${Environment.PLUGIN_URL}/${name}${Environment.PLUGIN_EXTENSION}`;
+  `${Environment.PLUGIN_URL}/${name}/${name}.js`;
 
 function loadPlugin<T>({
   plugin,
