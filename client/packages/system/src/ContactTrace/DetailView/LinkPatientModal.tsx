@@ -71,7 +71,7 @@ const useFilter = ({ contact }: ContactTrace) => {
   });
   const [patch, setPatch] = useState<Partial<Filter>>({});
 
-  useEffect(() => setFilter({ ...filter, ...patch }), [patch]);
+  useEffect(() => setFilter(f => ({ ...f, ...patch })), [patch]);
 
   return { filter, onChange: setPatch };
 };
