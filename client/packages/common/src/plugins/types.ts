@@ -1,40 +1,59 @@
-export enum PluginArea {
-  AppBar,
-  DashboardWidget,
-  Toolbar,
+import { FunctionComponent } from 'react';
+import {
+  ColumnDefinition,
+  InvoiceNode,
+  RecordWithId,
+} from '@openmsupply-client/common';
+import { StockLineRowFragment } from '@openmsupply-client/system';
+
+export type PluginComponent<T> = FunctionComponent<{ data: T }>;
+
+export interface ComponentPluginBase<T> {
+  Component: PluginComponent<T>;
+  isLoaded: boolean;
+  module: string;
+  localModule: string;
+  name: string;
 }
 
-export enum PluginType {
-  Dashboard,
-  InboundShipment,
-  InternalOrder,
-  OutboundShipment,
-  Requisition,
-  Stock,
-  Stocktake,
-}
-
-/**
- * Plugin interface
- * area: the area of the app which the plugin component will be rendered in
- * data: is context specific data which is passed to the plugin, for example a plugin
- * module: the name of the exposed react component
- * name: the name of the plugin
- * path: file path for the plugin, possibly unnecessary now
- * on the InboundShipment DetailView will have an type of `InvoiceNode`
- * scope: the name of the scope used by webpack module federation
- * type: defines the type of the data to be passed in
- */
-export interface Plugin<T> {
-  area: PluginArea;
-  data?: T;
+export interface ColumnPluginBase<T extends RecordWithId> {
+  column: ColumnDefinition<T>;
+  isLoaded: boolean;
   module: string;
   name: string;
-  path: string;
-  type: PluginType;
 }
 
-export interface PluginDefinition {
-  config: string;
-  name: string;
-}
+export type ComponentPluginType =
+  | 'Dashboard'
+  | 'InboundShipmentAppBar'
+  | 'StockEditForm';
+
+export type ColumnPluginType = 'Stock';
+
+export type StockComponentPlugin = {
+  type: 'StockEditForm';
+} & ComponentPluginBase<StockLineRowFragment>;
+
+export type StockColumnPlugin = {
+  type: 'Stock';
+} & ColumnPluginBase<StockLineRowFragment>;
+
+export type InboundShipmentComponentPlugin = {
+  type: 'InboundShipmentAppBar';
+} & ComponentPluginBase<InvoiceNode>;
+
+export type DashboardPlugin = {
+  type: 'Dashboard';
+} & ComponentPluginBase<Record<string, never>>;
+
+export type ComponentPlugin =
+  | StockComponentPlugin
+  | InboundShipmentComponentPlugin
+  | DashboardPlugin;
+
+export type ColumnPlugin = StockColumnPlugin;
+
+export type PluginDefinition = {
+  columnPlugins: ColumnPlugin[];
+  componentPlugins: ComponentPlugin[];
+};
