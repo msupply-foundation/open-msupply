@@ -72,7 +72,6 @@ export const useSearchQueries = ({
         saveFields: [],
         placeholderText: '',
         getOptionLabel: () => {},
-        getDisplayElement: () => {},
       };
 
   return {
