@@ -129,6 +129,7 @@ export const Toolbar: FC<ToolbarProps> = ({ data, documentData }) => {
                   justifyContent="center"
                 >
                   <InfoTooltipIcon
+                    iconSx={{ color: 'gray.main' }}
                     title={t('label.recorded-contact-differs', {
                       recordedName: getLocalisedFullName(
                         documentData?.contact?.firstName,
