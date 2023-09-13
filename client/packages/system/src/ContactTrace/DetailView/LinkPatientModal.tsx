@@ -16,6 +16,9 @@ import {
   Grid,
   ButtonWithIcon,
   RewindIcon,
+  useRowStyle,
+  AppSxProp,
+  alpha,
 } from '@openmsupply-client/common';
 import {
   ChipTableCell,
@@ -67,6 +70,8 @@ type ModalContentProps = {
   documentData: ContactTrace;
   linkedPatientId: string | undefined;
   setLinkedPatientId: (id?: string) => void;
+  filter: Filter;
+  onChangeFilter: (patch: Partial<Filter>) => void;
 };
 
 const useFilter = ({ contact }: ContactTrace) => {
@@ -82,13 +87,19 @@ const useFilter = ({ contact }: ContactTrace) => {
 };
 
 const ModalContent: FC<ModalContentProps> = ({
-  documentData,
+  filter,
+  onChangeFilter,
   linkedPatientId,
   setLinkedPatientId,
 }) => {
   const t = useTranslation('dispensary');
   const { localisedDate } = useFormatDateTime();
-  const { filter, onChange } = useFilter(documentData);
+  const { setRowStyles } = useRowStyle();
+  const style: AppSxProp = {
+    backgroundColor: theme =>
+      `${alpha(theme.palette.secondary.main, 0.1)}!important`,
+    '& .MuiTableCell-root': { fontWeight: 700 },
+  };
 
   const searchEnabled =
     (filter.firstName?.length ?? 0) > 0 ||
@@ -140,6 +151,14 @@ const ModalContent: FC<ModalContentProps> = ({
     },
   ]);
   const { data: linkedPatient } = usePatient.document.get(linkedPatientId);
+
+  useEffect(() => {
+    const patients =
+      matchingPatients?.filter(p => p.id === linkedPatientId).map(p => p.id) ??
+      [];
+    setRowStyles(patients, style);
+  }, [linkedPatientId]);
+
   return (
     <>
       <Grid
@@ -180,7 +199,7 @@ const ModalContent: FC<ModalContentProps> = ({
           gap={2}
           width="100%"
         >
-          <FilterBar onChange={onChange} filter={filter} />
+          <FilterBar onChange={onChangeFilter} filter={filter} />
           <DataTable
             dense
             id="create-patient-duplicates"
@@ -210,6 +229,7 @@ export const useLinkPatientModal = (
 
   LinkPatientModal: FC;
 } => {
+  const { filter, onChange } = useFilter(documentData);
   const { Modal, showDialog, hideDialog } = useDialog();
   const [linkedPatientId, setLinkedPatientId] = useState(
     documentData?.contact?.id
@@ -242,6 +262,8 @@ export const useLinkPatientModal = (
             documentData={documentData}
             linkedPatientId={linkedPatientId}
             setLinkedPatientId={setLinkedPatientId}
+            onChangeFilter={onChange}
+            filter={filter}
           />
         </Modal>
       </TableProvider>
