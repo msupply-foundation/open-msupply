@@ -2,8 +2,8 @@ pub mod plugin_data;
 use self::plugin_data::mutations;
 
 use async_graphql::*;
-use graphql_types::types::{PluginDataConnector, RelatedRecordNodeType};
-use plugin_data::query::{PluginDataFilterInput, PluginDataSortInput};
+use graphql_types::types::RelatedRecordNodeType;
+use plugin_data::query::{PluginDataFilterInput, PluginDataResponse, PluginDataSortInput};
 
 #[derive(Default, Clone)]
 pub struct PluginQueries;
@@ -17,7 +17,7 @@ impl PluginQueries {
         r#type: RelatedRecordNodeType,
         filter: Option<PluginDataFilterInput>,
         sort: Option<Vec<PluginDataSortInput>>,
-    ) -> Result<PluginDataConnector> {
+    ) -> Result<PluginDataResponse> {
         plugin_data::query::get_plugin_data(ctx, &store_id, r#type, filter, sort)
     }
 }
