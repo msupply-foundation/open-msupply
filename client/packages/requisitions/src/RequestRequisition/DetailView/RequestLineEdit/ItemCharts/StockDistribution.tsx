@@ -117,10 +117,16 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
   if (suggestedQuantity === 0 && availableStockOnHand === 0)
     return <CalculationError isSohAndQtyZero />;
 
-  const monthlyConsumptionWidth =
+  const targetQuantityWidth =
     availableStockOnHand > targetQuantity
       ? Math.round((100 * targetQuantity) / availableStockOnHand)
       : 100;
+  const barWidth =
+    availableStockOnHand + suggestedQuantity < targetQuantity
+      ? `${Math.round(
+          (100 * (availableStockOnHand + suggestedQuantity)) / targetQuantity
+        )}%`
+      : '100%';
 
   return useMemo(
     () => (
@@ -131,14 +137,12 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
         <Box
           display="flex"
           alignItems="flex-start"
-          width={`${monthlyConsumptionWidth}%`}
+          width={`${targetQuantityWidth}%`}
           style={{ paddingBottom: 7 }}
         >
           <MonthlyBar
             flexBasis="1px"
-            label={
-              monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''
-            }
+            label={targetQuantityWidth > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''}
             left={true}
           />
 
@@ -148,12 +152,12 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
               month={i + 1}
               flexBasis={`${100 / maxMonthsOfStock}%`}
               averageMonthlyConsumption={averageMonthlyConsumption}
-              showText={monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT}
+              showText={targetQuantityWidth > MIN_MC_WIDTH_TO_SHOW_TEXT}
             />
           ))}
         </Box>
 
-        <Box display="flex" alignItems="flex-start" width="100%">
+        <Box display="flex" alignItems="flex-start" width={barWidth}>
           <ValueBar
             value={availableStockOnHand}
             total={targetQuantity}
