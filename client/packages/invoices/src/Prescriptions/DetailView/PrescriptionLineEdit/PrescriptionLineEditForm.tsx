@@ -147,6 +147,10 @@ export const PrescriptionLineEditForm: React.FC<
               />
             </Grid>
           </ModalRow>
+        </>
+      )}
+      {item && canAutoAllocate ? (
+        <>
           <ModalRow>
             <ModalLabel label={t('label.note')} />
             <BasicTextInput
@@ -163,10 +167,6 @@ export const PrescriptionLineEditForm: React.FC<
               style={{ flex: 1 }}
             />
           </ModalRow>
-        </>
-      )}
-      {item && canAutoAllocate ? (
-        <>
           <Divider margin={10} />
           <Grid container>
             <ModalLabel label={t('label.issue')} />
