@@ -29,7 +29,9 @@ const useEncounterAdditionalInfoAccessor: () => {
   const t = useTranslation();
   return {
     additionalInfoAccessor: ({ rowData }): string[] => {
-      const additionalInfo = getStatusEventData(rowData.activeProgramEvents);
+      const additionalInfo = getStatusEventData(
+        rowData.activeProgramEvents.nodes
+      );
 
       if (rowData?.status === EncounterNodeStatus.Pending) {
         const startDatetime = new Date(rowData?.startDatetime);

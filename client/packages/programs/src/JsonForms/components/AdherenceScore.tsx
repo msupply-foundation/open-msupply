@@ -105,7 +105,7 @@ const usePreviousCountFromEvent = (
 
   return {
     count,
-    time: new Date(event.activeDatetime),
+    time: new Date(event.activeStartDatetime),
   };
 };
 
