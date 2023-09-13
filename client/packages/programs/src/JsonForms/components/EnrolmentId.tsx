@@ -1,8 +1,9 @@
 import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import { DetailInputWithLabelRow } from '@openmsupply-client/common';
 import React from 'react';
 import { z } from 'zod';
+import { get as extractProperty } from 'lodash';
 import { useProgramEnrolments } from '../../api';
 import {
   DefaultFormRowSpacing,
@@ -13,6 +14,11 @@ import {
 const Options = z
   .object({
     programEnrolmentType: z.string(),
+    /**
+     * Specifies a field pointing to a patientId.
+     * This patient id is then used query for the program enrolment.
+     */
+    patientIdField: z.string().optional(),
   })
   .strict();
 type Options = z.infer<typeof Options>;
@@ -25,11 +31,16 @@ const UIComponent = (props: ControlProps) => {
     uischema.options
   );
 
+  const { core } = useJsonForms();
+  const patientId = options?.patientIdField
+    ? extractProperty(core?.data, options?.patientIdField ?? '')
+    : config?.patientId;
+
   // fetch matching program enrolment
   const { data } = useProgramEnrolments.document.list({
     filterBy: {
       type: { equalTo: options?.programEnrolmentType },
-      patientId: { equalTo: config?.patientId },
+      patientId: { equalTo: patientId },
     },
   });
   const enrolment = data?.nodes[0];
