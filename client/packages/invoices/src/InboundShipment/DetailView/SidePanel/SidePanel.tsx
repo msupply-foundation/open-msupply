@@ -21,7 +21,7 @@ export const SidePanel: FC = () => {
   const { data } = useInbound.document.get();
   const { mutateAsync } = useInbound.document.delete();
   const isTransfer = !!data?.linkedShipment?.id;
-  const canDelete = data ? data?.status === InvoiceNodeStatus.New : false;
+  const canDelete = data?.status === InvoiceNodeStatus.New;
 
   const copyToClipboard = () => {
     navigator.clipboard

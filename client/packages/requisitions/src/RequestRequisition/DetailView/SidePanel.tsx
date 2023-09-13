@@ -141,7 +141,7 @@ export const SidePanel: FC = () => {
   const { mutateAsync } = useRequest.document.delete();
   const { data } = useRequest.document.get();
   const { success } = useNotification();
-  const canDelete = data ? data.status === RequisitionNodeStatus.Draft : false;
+  const canDelete = data?.status === RequisitionNodeStatus.Draft;
 
   const deleteAction = async () => {
     if (!data) return;
