@@ -6,7 +6,7 @@ import {
   DetailPanelPortal,
   InvoiceNodeStatus,
   useNotification,
-  useSingleDeleteConfirmation,
+  useDeleteConfirmation,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
@@ -34,7 +34,8 @@ export const SidePanel: FC = () => {
     await mutateAsync([data]);
   };
 
-  const onDelete = useSingleDeleteConfirmation({
+  const onDelete = useDeleteConfirmation({
+    selectedRows: [data],
     deleteAction,
     messages: {
       confirmMessage: t('messages.confirm-delete-shipment', {

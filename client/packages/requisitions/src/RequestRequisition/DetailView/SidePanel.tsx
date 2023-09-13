@@ -20,7 +20,7 @@ import {
   InfoTooltipIcon,
   DeleteIcon,
   RequisitionNodeStatus,
-  useSingleDeleteConfirmation,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -154,7 +154,8 @@ export const SidePanel: FC = () => {
       .then(() => success('Copied to clipboard successfully')());
   };
 
-  const onDelete = useSingleDeleteConfirmation({
+  const onDelete = useDeleteConfirmation({
+    selectedRows: [data],
     deleteAction,
     messages: {
       confirmMessage: t('messages.confirm-delete-requisition', {

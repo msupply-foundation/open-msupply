@@ -14,7 +14,7 @@ import {
   PanelField,
   InfoTooltipIcon,
   DeleteIcon,
-  useSingleDeleteConfirmation,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 import { canDeleteStocktake } from '../../utils';
@@ -70,7 +70,8 @@ export const SidePanel: FC = () => {
     await mutateAsync([data]);
   };
 
-  const onDelete = useSingleDeleteConfirmation({
+  const onDelete = useDeleteConfirmation({
+    selectedRows: [data],
     deleteAction,
     messages: {
       confirmMessage: t('messages.confirm-delete-stocktake', {
