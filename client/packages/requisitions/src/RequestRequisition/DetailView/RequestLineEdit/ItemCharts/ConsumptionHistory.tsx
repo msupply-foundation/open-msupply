@@ -14,18 +14,18 @@ import {
 } from '@common/components';
 import {
   Box,
-  ConsumptionHistoryNode,
   LocaleKey,
   useFormatDateTime,
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useRequest } from '../../../api/hooks';
+import { ConsumptionHistoryFragment } from '../../../api';
 
 const getLabelLocaleKey = ({
   payload,
 }: {
-  payload?: ConsumptionHistoryNode;
+  payload?: ConsumptionHistoryFragment;
 }): LocaleKey => {
   switch (true) {
     case payload?.isHistoric:
@@ -53,7 +53,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
     value: number,
     name: string,
     props: {
-      payload?: ConsumptionHistoryNode; // { date: string; isHistoric: boolean; isCurrent: boolean };
+      payload?: ConsumptionHistoryFragment; // { date: string; isHistoric: boolean; isCurrent: boolean };
     }
   ): [number, string] => {
     switch (name) {
@@ -69,7 +69,7 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
 
   const tooltipLabelFormatter = (date: string) => dateFormatter(date);
 
-  const getFillColour = (entry: ConsumptionHistoryNode): string => {
+  const getFillColour = (entry: ConsumptionHistoryFragment): string => {
     switch (true) {
       case entry.isHistoric:
         return theme.palette.gray.light;
