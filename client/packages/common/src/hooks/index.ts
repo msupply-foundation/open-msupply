@@ -23,4 +23,3 @@ export * from './useToggle';
 export * from './useWindowDimensions';
 export * from './useKeyboardHeightAdjustment';
 export * from './useNativeClient';
-export * from './useSingleDeleteConfirmation';
