@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   DataTable,
@@ -95,11 +95,6 @@ const ModalContent: FC<ModalContentProps> = ({
   const t = useTranslation('dispensary');
   const { localisedDate } = useFormatDateTime();
   const { setRowStyles } = useRowStyle();
-  const style: AppSxProp = {
-    backgroundColor: theme =>
-      `${alpha(theme.palette.secondary.main, 0.1)}!important`,
-    '& .MuiTableCell-root': { fontWeight: 700 },
-  };
 
   const searchEnabled =
     (filter.firstName?.length ?? 0) > 0 ||
@@ -121,7 +116,10 @@ const ModalContent: FC<ModalContentProps> = ({
     searchEnabled
   );
 
-  const matchingPatients = !searchEnabled ? [] : localSearchData?.nodes;
+  const matchingPatients = useMemo(
+    () => (!searchEnabled ? [] : localSearchData?.nodes),
+    [localSearchData?.nodes, searchEnabled]
+  );
 
   const columns = useColumns<PatientRowFragment>([
     {
@@ -153,11 +151,16 @@ const ModalContent: FC<ModalContentProps> = ({
   const { data: linkedPatient } = usePatient.document.get(linkedPatientId);
 
   useEffect(() => {
+    const style: AppSxProp = {
+      backgroundColor: theme =>
+        `${alpha(theme.palette.secondary.main, 0.1)}!important`,
+      '& .MuiTableCell-root': { fontWeight: 700 },
+    };
     const patients =
       matchingPatients?.filter(p => p.id === linkedPatientId).map(p => p.id) ??
       [];
     setRowStyles(patients, style);
-  }, [linkedPatientId]);
+  }, [linkedPatientId, matchingPatients, setRowStyles]);
 
   return (
     <>
