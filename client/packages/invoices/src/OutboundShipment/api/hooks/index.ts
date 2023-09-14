@@ -19,6 +19,7 @@ export const useOutbound = {
 
     update: Document.useOutboundUpdate,
     delete: Document.useOutboundDelete,
+    deleteRows: Document.useOutboundDeleteRows,
     insert: Document.useOutboundInsert,
 
     fields: Document.useOutboundFields,
