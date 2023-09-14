@@ -67,13 +67,13 @@ impl RequisitionLineNode {
     }
 
     /// Calculated quantity
-    /// When months_of_stock < requisition.min_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
+    /// When months_of_stock < requisition.min_months_of_stock, calculated = average_monthly_consumption * requisition.max_months_of_stock - months_of_stock
     pub async fn suggested_quantity(&self) -> &i32 {
         &self.row().suggested_quantity
     }
 
     pub async fn approved_quantity(&self) -> &i32 {
-        &self.row().approved_quantity 
+        &self.row().approved_quantity
     }
 
     pub async fn approval_comment(&self) -> &Option<String> {
