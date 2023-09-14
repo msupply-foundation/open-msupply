@@ -32,7 +32,7 @@ export interface TableStore {
   setRowStyles: (ids: string[], style: AppSxProp) => void;
 }
 
-const tableContext = createContext<UseBoundStore<StoreApi<TableStore>>>(
+export const tableContext = createContext<UseBoundStore<StoreApi<TableStore>>>(
   {} as UseBoundStore<StoreApi<TableStore>>
 );
 
