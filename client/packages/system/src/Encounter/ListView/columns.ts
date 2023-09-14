@@ -66,9 +66,8 @@ export const useEncounterListColumns = ({
 
   const columnList: ColumnDescription<EncounterRowFragment>[] = [
     {
-      key: 'encounter-type',
+      key: 'type',
       label: 'label.encounter-type',
-      sortable: false,
       accessor: ({ rowData }) => rowData?.document.documentRegistry?.name,
     },
     {
@@ -101,6 +100,7 @@ export const useEncounterListColumns = ({
         dateString ? localisedTime((dateString as string) || '') : '',
     },
   ];
+
   if (includePatient)
     columnList.push({
       key: 'patientId',

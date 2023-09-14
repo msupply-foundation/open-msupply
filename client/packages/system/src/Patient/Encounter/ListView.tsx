@@ -35,11 +35,7 @@ const EncounterListComponent: FC = () => {
     pagination: { first, offset },
     // enforce filtering by patient id
     filterBy: { ...filterBy, patientId: { equalTo: patientId } },
-    sortBy: {
-      key: sortBy.key as EncounterSortFieldInput,
-      isDesc: sortBy.isDesc,
-      direction: sortBy.isDesc ? 'desc' : 'asc',
-    },
+    sortBy,
   });
   const dataWithStatus: EncounterFragmentWithStatus[] | undefined =
     useEncounterFragmentWithStatus(data?.nodes);
