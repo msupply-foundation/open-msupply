@@ -13,10 +13,9 @@ import {
   createTableStore,
   createQueryParamsStore,
   QueryParamsProvider,
-  useRowStyle,
+  useRowHighlight,
   useNotification,
   useIsGrouped,
-  AppSxProp,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -51,7 +50,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const isMediumScreen = useIsMediumScreen();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
-  const { setRowStyle } = useRowStyle();
+  const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
   const { isGrouped } = useIsGrouped('stocktake');
 
@@ -79,20 +78,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     }
 
     if (item) {
-      const hasPlaceholder = draftLines.some(
-        line => line.countedNumberOfPacks === null
-      );
-
-      const highlight: AppSxProp = {
-        animation: 'highlight 1.5s',
-        color: hasPlaceholder
-          ? theme => theme.palette.secondary.light
-          : undefined,
-      };
       const rowIds = draftLines.map(line =>
         isGrouped ? line.itemId : line.id
       );
-      rowIds.forEach(id => setRowStyle(id, highlight));
+
+      highlightRows({ rowIds });
     }
     onClose();
   };
