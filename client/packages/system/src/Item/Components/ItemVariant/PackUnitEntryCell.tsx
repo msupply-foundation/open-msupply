@@ -19,7 +19,7 @@ export const getPackUnitEntryCell =
     getUnitName: (row: T) => string | null;
   }) =>
   ({ rowData, column }: CellProps<T>): ReactElement => {
-    const { asPackUnit, variantsControl } = useUnitVariant(
+    const { variantsControl } = useUnitVariant(
       getItemId(rowData),
       getUnitName(rowData)
     );
@@ -34,7 +34,7 @@ export const getPackUnitEntryCell =
     const numberInput = (
       <PositiveNumberInput
         value={packSize}
-        // Should PoaistiveNumberInput ever return undefined ?
+        // Should PositiveNumberInput ever return undefined ?
         onChange={newValue => {
           setPackSize(newValue || 1);
           updater({ ...rowData, [column.key]: newValue });
@@ -48,22 +48,19 @@ export const getPackUnitEntryCell =
     }
 
     const { variants } = variantsControl;
-
-    // Options should include manually entered option
-    const extraOptions = variants.find(v => v.packSize === packSize)
-      ? []
-      : [{ label: asPackUnit(packSize), value: packSize }];
+    const isManuallyEntered =
+      variants.find(v => v.packSize === packSize) === undefined;
 
     return (
       <Box display="flex" flexDirection="row">
-        {numberInput}
+        {(packSize === 1 || isManuallyEntered) && numberInput}
         <Select
-          sx={{ flexGrow: 1 }}
-          options={[
-            ...extraOptions,
-            ...variants.map(v => ({ label: v.shortName, value: v.packSize })),
-          ]}
-          value={packSize}
+          sx={{ flexGrow: 1, marginLeft: '-2px' }}
+          options={variants.map(v => ({
+            label: v.shortName,
+            value: v.packSize,
+          }))}
+          value={isManuallyEntered ? 1 : packSize}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const newValue = Number(e.target.value);
 
