@@ -8,6 +8,7 @@ import {
   useNavigate,
   createQueryParamsStore,
   EncounterSortFieldInput,
+  useQueryParamsStore,
 } from '@openmsupply-client/common';
 import { useEncounterListColumns } from './columns';
 import {
@@ -18,22 +19,24 @@ import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
 
 const EncounterListComponent: FC = () => {
   const {
-    updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { page, first, offset },
   } = useUrlQueryParams({
     initialSort: {
       key: EncounterSortFieldInput.StartDatetime,
       dir: 'desc',
     },
   });
+  const {
+    sort: { sortBy, onChangeSortBy },
+  } = useQueryParamsStore();
   const { data, isError, isLoading } = useEncounter.document.list({
     pagination: { first, offset },
     sortBy,
   });
   const navigate = useNavigate();
   const columns = useEncounterListColumns({
-    onChangeSortBy: updateSortQuery,
+    onChangeSortBy,
     sortBy,
     includePatient: true,
   });
