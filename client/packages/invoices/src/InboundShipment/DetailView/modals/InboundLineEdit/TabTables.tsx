@@ -21,7 +21,7 @@ import {
   LocationRowFragment,
   useInitUnitStore,
 } from '@openmsupply-client/system';
-import { getPackUnitEntryCell } from 'packages/system/src/Item/Components/ItemVariant';
+import { getPackUnitEntryCell } from '@openmsupply-client/system';
 
 interface TableProps {
   lines: DraftInboundLine[];

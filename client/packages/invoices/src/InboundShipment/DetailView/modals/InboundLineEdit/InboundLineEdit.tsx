@@ -19,7 +19,7 @@ import { InboundLineFragment, useInbound } from '../../../api';
 import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
 import { TabLayout } from './TabLayout';
-import { useUnitVariant } from 'packages/system/src';
+import { useUnitVariant } from '@openmsupply-client/system';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
