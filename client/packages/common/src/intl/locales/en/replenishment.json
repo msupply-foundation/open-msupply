@@ -89,6 +89,7 @@
   "messages.confirm-delete-requisition-lines_other": "This will permanently remove {{count}} lines from this order",
   "messages.confirm-delete-shipments_one": "This will permanently remove 1 shipment",
   "messages.confirm-delete-shipments_other": "This will permanently remove {{count}} shipments",
+  "messages.confirm-delete-requisition": "This will permently remove Internal Order #{{number}}",
   "messages.confirm-delete-requisitions_one": "This will permanently remove 1 internal order",
   "messages.confirm-delete-requisitions_other": "This will permanently remove {{count}} internal order",
   "messages.confirm-delete-shipment-lines_one": "This will permanently remove 1 shipment line",
