@@ -56,7 +56,9 @@ const StyledListItem = styled<
         '&:hover': {
           boxShadow: theme.shadows[3],
           backgroundColor: theme.mixins.drawer.hoverBackgroundColor,
-          color: theme.mixins.drawer.hoverTextColor,
+          '& .MuiTypography-root': {
+            color: theme.mixins.drawer.hoverTextColor,
+          },
         },
       }
 );
