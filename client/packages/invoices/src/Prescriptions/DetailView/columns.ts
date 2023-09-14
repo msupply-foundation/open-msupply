@@ -10,6 +10,7 @@ import {
   ArrayUtils,
   useCurrency,
   PositiveNumberCell,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
@@ -23,9 +24,6 @@ interface UsePrescriptionColumnOptions {
 const expansionColumn = getRowExpandColumn<
   StockOutLineFragment | StockOutItem
 >();
-const notePopoverColumn = getNotePopoverColumn<
-  StockOutLineFragment | StockOutItem
->();
 
 export const usePrescriptionColumn = ({
   sortBy,
@@ -34,10 +32,12 @@ export const usePrescriptionColumn = ({
   StockOutLineFragment | StockOutItem
 >[] => {
   const { c } = useCurrency();
+  const t = useTranslation();
+
   return useColumns(
     [
       [
-        notePopoverColumn,
+        getNotePopoverColumn(t('label.direction')),
         {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
