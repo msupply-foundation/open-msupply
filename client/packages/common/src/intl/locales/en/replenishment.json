@@ -29,6 +29,7 @@
   "info.manual-shipment": "This shipment was created manually. The delivery status will not be automatically updated.",
   "label.add-batch": "Add batch",
   "label.consumption": "Consumption",
+  "label.current": "Current",
   "label.draft": "Draft",
   "label.finalised": "Finalised",
   "label.hide-stock-over-minimum": "Hide stock over minimum",
