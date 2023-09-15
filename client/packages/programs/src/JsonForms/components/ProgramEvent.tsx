@@ -138,6 +138,7 @@ const useDisplayValue = (
   if (!event) return '';
 
   if (options?.display?.type === 'eventActiveStartDatetime') {
+    // 'P' is "Long localized date": https://date-fns.org/docs/format
     const format = options?.display.format ?? 'P';
     return customDate(new Date(event.activeStartDatetime), format);
   }
