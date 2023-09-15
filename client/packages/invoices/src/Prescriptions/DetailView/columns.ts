@@ -32,12 +32,12 @@ export const usePrescriptionColumn = ({
   StockOutLineFragment | StockOutItem
 >[] => {
   const { c } = useCurrency();
-  const t = useTranslation();
+  const t = useTranslation('dispensary');
 
   return useColumns(
     [
       [
-        getNotePopoverColumn(t('label.direction')),
+        getNotePopoverColumn(t('label.directions')),
         {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
