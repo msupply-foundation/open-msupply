@@ -48,12 +48,12 @@ fn generate(existing: NameRow, update: UpdatePatient) -> NameRow {
 
     NameRow {
         code,
-        first_name: first_name.clone(),
-        last_name: last_name.clone(),
+        name: patient_name(&first_name, &last_name),
+        first_name,
+        last_name,
         gender,
         date_of_birth,
         national_health_number: code_2,
-        name: patient_name(&first_name, &last_name),
         ..existing
     }
 }
@@ -96,7 +96,7 @@ pub(crate) fn update_patient(
                 .rows
                 .pop()
                 .ok_or(UpdatePatientError::InternalError(
-                    "Can't find the newly created patient".to_string(),
+                    "Can't find the updated patient".to_string(),
                 ))?;
             Ok(patient)
         })
