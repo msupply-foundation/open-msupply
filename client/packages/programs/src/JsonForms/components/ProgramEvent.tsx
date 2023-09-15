@@ -240,7 +240,7 @@ const UIComponent = (props: ControlProps) => {
           inputProps={{
             value: displayOption ?? '',
             disabled: true,
-            sx: { ...DefaultFormRowSpacing },
+            sx: DefaultFormRowSpacing,
             error: !!errors,
             helperText: errors,
             multiline,
