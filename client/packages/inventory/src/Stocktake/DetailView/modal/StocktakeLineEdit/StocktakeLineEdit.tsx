@@ -51,6 +51,9 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     useStocktakeLineEdit(currentItem);
   const { setRowStyles } = useRowStyle();
   const { error } = useNotification();
+  // Order by newly added batch since new batches are now
+  // added to the top of the stocktake list instead of the bottom
+  const reversedDraftLines = [...draftLines].reverse();
 
   const onNext = async () => {
     if (isSaving) return;
@@ -134,7 +137,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                       <StyledTabContainer>
                         <BatchTable
                           isDisabled={isDisabled}
-                          batches={draftLines}
+                          batches={reversedDraftLines}
                           update={update}
                         />
                       </StyledTabContainer>
@@ -144,7 +147,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                       <StyledTabContainer>
                         <PricingTable
                           isDisabled={isDisabled}
-                          batches={draftLines}
+                          batches={reversedDraftLines}
                           update={update}
                         />
                       </StyledTabContainer>
@@ -161,7 +164,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                         >
                           <LocationTable
                             isDisabled={isDisabled}
-                            batches={draftLines}
+                            batches={reversedDraftLines}
                             update={update}
                           />
                         </QueryParamsProvider>
