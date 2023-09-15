@@ -152,7 +152,7 @@ export const PrescriptionLineEditForm: React.FC<
       {item && canAutoAllocate ? (
         <>
           <ModalRow>
-            <ModalLabel label={t('label.direction')} />
+            <ModalLabel label={t('label.directions')} />
             <BasicTextInput
               value={note}
               onChange={e => {
