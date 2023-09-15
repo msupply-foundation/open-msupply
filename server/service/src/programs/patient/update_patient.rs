@@ -6,6 +6,8 @@ use repository::{
 
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
+use super::patient_updated::patient_name;
+
 #[derive(PartialEq, Debug)]
 pub enum UpdatePatientError {
     PatientDoesNotExists,
@@ -46,11 +48,12 @@ fn generate(existing: NameRow, update: UpdatePatient) -> NameRow {
 
     NameRow {
         code,
-        first_name,
-        last_name,
+        first_name: first_name.clone(),
+        last_name: last_name.clone(),
         gender,
         date_of_birth,
         national_health_number: code_2,
+        name: patient_name(&first_name, &last_name),
         ..existing
     }
 }
@@ -93,7 +96,7 @@ pub(crate) fn update_patient(
                 .rows
                 .pop()
                 .ok_or(UpdatePatientError::InternalError(
-                    "Can't find the just inserted patient".to_string(),
+                    "Can't find the newly created patient".to_string(),
                 ))?;
             Ok(patient)
         })
