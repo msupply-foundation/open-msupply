@@ -9,8 +9,9 @@ declare const PLUGIN_URL: string;
 // by default we assume development API server is launched on the same domain/ip and on port 8000. We can overwrite this
 // with API_HOST which is available through webpack.DefinePlugin (i.e. webpack server --env API_PORT=800 --env API_IP 'localhost')
 
-// When developing plugins, you can set the env variable PLUGIN_URL to the url of the plugin server to enable hot reloading
-// e.g. `webpack-cli serve --port 3000 --env PLUGIN_URL=http://localhost:3000`,
+// When developing plugins, you can set the env variable PLUGIN_URL to the url of the local webpack dev server which is hosting the plugin to enable hot reloading
+// e.g. Given that the plugin under development is running: `webpack-cli serve --port 3000` you can then run the main app  using `webpack-cli serve --env PLUGIN_URL=http://localhost:3000`
+// in order to load the plugin from the local webpack dev server. This will also enable hot reloading of the plugin when changes are made to the plugin source code.
 
 // Important to note, if we overwrite API_HOST in development, we should use ip/domain that is known outside of localhost
 // because web app in development mode may be accessed by clients on different machine (i.e. when debugging Android app)

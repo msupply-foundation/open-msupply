@@ -81,8 +81,8 @@ pub use self::repack::*;
 pub mod program;
 pub use self::program::*;
 
-pub mod plugin;
-pub use self::plugin::*;
+pub mod plugin_data;
+pub use self::plugin_data::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

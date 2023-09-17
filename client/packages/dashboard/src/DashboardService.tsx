@@ -28,4 +28,20 @@ const Dashboard: React.FC = () => {
   );
 };
 
+  return (
+    <Grid
+      container
+      sx={{
+        backgroundColor: 'background.toolbar',
+        paddingBottom: '32px',
+      }}
+      justifyContent="space-evenly"
+    >
+      <ReplenishmentWidget />
+      <DistributionWidget />
+      <StockWidget />
+      {plugins}
+    </Grid>
+  );
+};
 export default Dashboard;
