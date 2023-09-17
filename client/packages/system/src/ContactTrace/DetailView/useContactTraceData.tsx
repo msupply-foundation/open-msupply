@@ -10,6 +10,12 @@ import { useAuthContext } from '@openmsupply-client/common';
 
 export type ContactTrace = {
   datetime: string;
+  contact?: {
+    id?: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+  };
   location?: {
     storeId?: string;
   };
@@ -19,7 +25,7 @@ export type ContactTraceData = {
   id?: string;
   type: string;
   documentName?: string;
-  contactTrace: ContactTrace;
+  documentData: ContactTrace;
   patient: {
     id: string;
     name?: string | null;
@@ -69,8 +75,17 @@ export const useContactTraceData = (
           id: contactTrace.id,
           type: contactTrace.document.type,
           documentName: contactTrace.document.name,
-          contactTrace: {
+          documentData: {
             datetime: contactTrace.datetime,
+            contact: contactTrace.contactPatient
+              ? {
+                  id: contactTrace.contactPatient.id,
+                  name: contactTrace.contactPatient.name,
+                  firstName:
+                    contactTrace.contactPatient?.firstName ?? undefined,
+                  lastName: contactTrace.contactPatient?.lastName ?? undefined,
+                }
+              : undefined,
             location: contactTrace?.storeId
               ? {
                   storeId: contactTrace.storeId,
@@ -83,7 +98,7 @@ export const useContactTraceData = (
         }
       : undefined;
     setResult({ data, isLoading });
-  }, [contactTraces]);
+  }, [contactTraces, isLoading, createType]);
 
   // create
   useEffect(() => {
@@ -105,8 +120,9 @@ export const useContactTraceData = (
         id: undefined,
         type: createType,
         documentName: undefined,
-        contactTrace: {
+        documentData: {
           datetime: creationDate.toISOString(),
+          contact: undefined,
           location: {
             storeId,
           },
@@ -117,7 +133,15 @@ export const useContactTraceData = (
       },
       isLoading: false,
     });
-  }, [registries, isLoadingPatient, isLoadingRegistry]);
+  }, [
+    registries,
+    isLoadingPatient,
+    isLoadingRegistry,
+    createType,
+    patient,
+    creationDate,
+    storeId,
+  ]);
 
   return result;
 };

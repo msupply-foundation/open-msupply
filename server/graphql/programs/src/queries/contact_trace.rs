@@ -5,8 +5,7 @@ use graphql_core::{
         DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
     },
     loader::{
-        DocumentByIdLoader, NameByIdLoader, NameByIdLoaderInput, ProgramEnrolmentLoader,
-        ProgramEnrolmentLoaderInput,
+        DocumentByIdLoader, PatientLoader, ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
     },
     map_filter,
     pagination::PaginationInput,
@@ -15,7 +14,8 @@ use graphql_core::{
 };
 use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::{
-    document::DocumentNode, program_enrolment::ProgramEnrolmentNode, GenderType, NameNode,
+    document::DocumentNode, patient::PatientNode, program_enrolment::ProgramEnrolmentNode,
+    GenderType,
 };
 use repository::{
     contact_trace::{ContactTrace, ContactTraceFilter, ContactTraceSort, ContactTraceSortField},
@@ -169,17 +169,18 @@ impl ContactTraceNode {
         &self.trace_row().patient_id
     }
 
-    pub async fn patient(&self, ctx: &Context<'_>) -> Result<NameNode> {
-        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(NameByIdLoaderInput::new(
-                &self.store_id,
-                &self.trace_row().patient_id,
-            ))
+            .load_one(self.trace_row().patient_id.clone())
             .await?
-            .map(NameNode::from_domain)
-            .ok_or(Error::new("Encounter without patient"))?;
+            .map(|patient| PatientNode {
+                store_id: self.store_id.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
+                patient,
+            })
+            .ok_or(Error::new("Contact trace without patient"))?;
 
         Ok(result)
     }
@@ -188,16 +189,20 @@ impl ContactTraceNode {
         self.trace_row().contact_patient_id.clone()
     }
 
-    pub async fn contact_patient(&self, ctx: &Context<'_>) -> Result<Option<NameNode>> {
+    pub async fn contact_patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
         let Some(ref contact_patient_id) = self.trace_row().contact_patient_id else {
             return Ok(None)
         };
-        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(NameByIdLoaderInput::new(&self.store_id, contact_patient_id))
+            .load_one(contact_patient_id.clone())
             .await?
-            .map(NameNode::from_domain)
+            .map(|patient| PatientNode {
+                store_id: self.store_id.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
+                patient,
+            })
             .ok_or(Error::new("Contact without patient"))?;
 
         Ok(Some(result))
