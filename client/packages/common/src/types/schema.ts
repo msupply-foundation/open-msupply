@@ -3421,7 +3421,8 @@ export type ProgramEventFilterInput = {
 
 export type ProgramEventNode = {
   __typename: 'ProgramEventNode';
-  activeDatetime: Scalars['DateTime']['output'];
+  activeEndDatetime: Scalars['DateTime']['output'];
+  activeStartDatetime: Scalars['DateTime']['output'];
   data?: Maybe<Scalars['String']['output']>;
   datetime: Scalars['DateTime']['output'];
   /** The document associated with the document_name */
