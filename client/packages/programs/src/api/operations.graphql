@@ -111,9 +111,10 @@ fragment EncounterFields on EncounterFieldsNode {
 }
 
 fragment ProgramEvent on ProgramEventNode {
-  activeDatetime
+  activeStartDatetime
   type
   data
+  documentName
 }
 
 query encounterFields(
@@ -467,7 +468,7 @@ query activeProgramEvents(
         documentName
         datetime
         data
-        activeDatetime
+        activeStartDatetime
       }
     }
   }
