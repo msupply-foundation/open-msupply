@@ -1,4 +1,4 @@
 {
-  "error.plugin": "There was an error loading the plugin {{path}}",
+  "error.plugin": "There was an error loading the plugin {{name}}",
   "error.plugin-unavailable": "Plugin unavailable"
 }
