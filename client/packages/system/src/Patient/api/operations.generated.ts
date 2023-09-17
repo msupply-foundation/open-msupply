@@ -8,10 +8,8 @@ export type PatientRowFragment = { __typename: 'PatientNode', id: string, code: 
 
 export type PatientsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  key: Types.PatientSortFieldInput;
-  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
-  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  page?: Types.InputMaybe<Types.PaginationInput>;
+  sort?: Types.InputMaybe<Types.PatientSortInput>;
   filter?: Types.InputMaybe<Types.PatientFilterInput>;
 }>;
 
@@ -111,13 +109,8 @@ export const PatientRowFragmentDoc = gql`
 }
     `;
 export const PatientsDocument = gql`
-    query patients($storeId: String!, $key: PatientSortFieldInput!, $desc: Boolean, $first: Int, $offset: Int, $filter: PatientFilterInput) {
-  patients(
-    storeId: $storeId
-    page: {first: $first, offset: $offset}
-    sort: {key: $key, desc: $desc}
-    filter: $filter
-  ) {
+    query patients($storeId: String!, $page: PaginationInput, $sort: PatientSortInput, $filter: PatientFilterInput) {
+  patients(storeId: $storeId, page: $page, sort: $sort, filter: $filter) {
     ... on PatientConnector {
       __typename
       nodes {
@@ -286,7 +279,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockPatientsQuery((req, res, ctx) => {
- *   const { storeId, key, desc, first, offset, filter } = req.variables;
+ *   const { storeId, page, sort, filter } = req.variables;
  *   return res(
  *     ctx.data({ patients })
  *   )
