@@ -1,4 +1,3 @@
-use repository::NameRow;
 use repository::{PaginationOption, Patient, PatientFilter, PatientSort, RepositoryError};
 use util::constants::PATIENT_TYPE;
 
@@ -74,7 +73,7 @@ pub trait PatientServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
         store_id: &str,
-        input: NameRow,
+        input: InsertPatient,
     ) -> Result<Patient, InsertPatientError> {
         insert_patient(ctx, service_provider, store_id, input)
     }
