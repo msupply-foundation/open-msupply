@@ -1,71 +1,63 @@
-import React, {
-  FC,
-  PropsWithChildren,
-  useState,
-  useMemo,
-  useEffect,
-} from 'react';
 import {
-  PluginContext,
-  PluginControllerState,
-  PluginState,
-} from './PluginContext';
-import { Plugin, PluginArea, PluginType } from '../types';
-import { PluginLoader } from './PluginLoader';
+  ColumnPlugin,
+  ComponentPlugin,
+  create,
+  ArrayUtils,
+} from '@openmsupply-client/common';
 
-interface PluginProviderProps {
-  plugins: Plugin<unknown>[];
-}
-
-export const PluginProvider: FC<PropsWithChildren<PluginProviderProps>> = ({
-  children,
-  plugins,
-}) => {
-  const [pluginState, setState] = useState<PluginState>({
-    plugins: [],
-  });
-
-  const pluginController: PluginControllerState = useMemo(
-    () => ({
-      setState,
-      setPlugins: (plugins: Plugin<unknown>[]) =>
-        setState(state => ({ ...state, plugins })),
-      getPlugins: (area: PluginArea, type: PluginType) =>
-        plugins.filter(plugin => plugin.area === area && plugin.type === type),
-      getPluginElements: function <T>({
-        area,
-        type,
-        data,
-      }: {
-        area: PluginArea;
-        type: PluginType;
-        data?: T;
-      }) {
-        return (plugins as Plugin<T>[])
-          .filter(plugin => plugin.area === area && plugin.type === type)
-          .map(plugin => (
-            <PluginLoader
-              name={plugin.name}
-              module={plugin.module}
-              data={data}
-              path={plugin.path}
-              key={`${plugin.name}-${plugin.module}`}
-            />
-          ));
-      },
-
-      ...pluginState,
-    }),
-    [setState, pluginState]
-  );
-
-  useEffect(() => {
-    setState({ ...pluginState, plugins });
-  }, [plugins]);
-
-  return (
-    <PluginContext.Provider value={pluginController}>
-      {children}
-    </PluginContext.Provider>
-  );
+type PluginProvider = {
+  columnPlugins: ColumnPlugin[];
+  componentPlugins: ComponentPlugin[];
+  addColumnPlugin: (plugin: ColumnPlugin) => void;
+  updateColumnPlugin: (plugin: ColumnPlugin) => void;
+  addComponentPlugin: (plugin: ComponentPlugin) => void;
+  getComponentPlugins: <T extends ComponentPlugin['type']>(
+    type: T
+  ) => Extract<ComponentPlugin, { type: T }>[];
+  getColumnPlugins: <T extends ColumnPlugin['type']>(
+    type: T
+  ) => Extract<ColumnPlugin, { type: T }>[];
 };
+
+export const usePluginProvider = create<PluginProvider>((set, get) => {
+  return {
+    columnPlugins: [],
+    componentPlugins: [],
+    addColumnPlugin: (plugin: ColumnPlugin) =>
+      set(({ columnPlugins }) => ({
+        columnPlugins: ArrayUtils.uniqBy([...columnPlugins, plugin], 'module'),
+      })),
+    addComponentPlugin: (plugin: ComponentPlugin) =>
+      set(({ componentPlugins }) => ({
+        componentPlugins: ArrayUtils.uniqBy(
+          [...componentPlugins, plugin],
+          'module'
+        ),
+      })),
+    updateColumnPlugin: (plugin: ColumnPlugin) =>
+      set(({ columnPlugins }) => {
+        const current = columnPlugins.find(p => p.name === plugin.name);
+        if (!current) return { columnPlugins };
+        return {
+          columnPlugins: [
+            ...columnPlugins.filter(p => p.name !== plugin.name),
+            plugin,
+          ],
+        };
+      }),
+    getColumnPlugins: <T extends ColumnPlugin['type']>(type: T) => {
+      const columnPlugins = get().columnPlugins;
+      return columnPlugins.filter(
+        (plugin): plugin is Extract<ColumnPlugin, { type: T }> =>
+          plugin.type === type
+      );
+    },
+    getComponentPlugins: <T extends ComponentPlugin['type']>(type: T) => {
+      const plugins = get().componentPlugins;
+      return plugins.filter(
+        (plugin): plugin is Extract<ComponentPlugin, { type: T }> =>
+          plugin.type === type
+      );
+    },
+  };
+});

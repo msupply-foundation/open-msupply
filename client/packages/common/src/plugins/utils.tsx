@@ -1,4 +1,7 @@
 import React from 'react';
+import { ColumnDefinition } from '../ui';
+import { RecordWithId } from '../types/utility';
+import { Environment } from '@openmsupply-client/config';
 
 /* eslint-disable camelcase */
 declare const __webpack_init_sharing__: (shareScope: string) => Promise<void>;
@@ -8,7 +11,6 @@ type Factory = Promise<() => { default: React.ComponentType }>;
 
 interface loadPluginProps {
   plugin: string;
-  url: string;
   module: string;
   scope?: string;
 }
@@ -18,7 +20,12 @@ type Container = {
   init: (shareScope: unknown) => Promise<void>;
 };
 
-type PluginModule = { default: React.ComponentType<{ data: unknown }> };
+type PluginModule = {
+  default: React.ComponentType<{ data: unknown }>;
+};
+type PluginColumn<T extends RecordWithId> = {
+  default: ColumnDefinition<T>;
+};
 
 export const fetchPlugin = (url: string, plugin: string): Promise<Container> =>
   new Promise((resolve, reject) => {
@@ -47,16 +54,32 @@ export const fetchPlugin = (url: string, plugin: string): Promise<Container> =>
     document.head.appendChild(script);
   });
 
-export const loadPlugin =
-  ({ plugin, url, module, scope = 'default' }: loadPluginProps) =>
-  async (): Promise<PluginModule> => {
+export const loadPluginModule = (props: loadPluginProps) =>
+  loadPlugin<PluginModule>(props);
+
+export const loadPluginColumn = <T extends RecordWithId>(
+  props: loadPluginProps
+) => loadPlugin<PluginColumn<T>>(props);
+
+const getPluginUrl = (name: string) =>
+  `${Environment.PLUGIN_URL}/${name}/${name}.js`;
+
+function loadPlugin<T>({
+  plugin,
+  module,
+  scope = 'default',
+}: loadPluginProps): () => Promise<T> {
+  return async () => {
     try {
       // Check if this plugin has already been loaded
       if (!(plugin in window)) {
         // Initializes the shared scope. Fills it with known provided modules from this build and all remotes
         await __webpack_init_sharing__(scope);
         // Fetch the plugin app
-        const fetchedContainer = await fetchPlugin(`${url}`, plugin);
+        const fetchedContainer = await fetchPlugin(
+          getPluginUrl(plugin),
+          plugin
+        );
         // Initialize the plugin app
         await fetchedContainer.init(__webpack_share_scopes__[scope]);
       }
@@ -74,7 +97,7 @@ export const loadPlugin =
       if (!Module?.default)
         throw new Error(`Module has no default for plugin ${plugin}`);
 
-      return Module as PluginModule;
+      return Module as T;
     } catch (e) {
       console.error(e);
     }
@@ -82,3 +105,4 @@ export const loadPlugin =
       reject(new Error(`Failed to load plugin ${plugin}`))
     );
   };
+}

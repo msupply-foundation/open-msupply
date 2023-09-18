@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  Grid,
-  PluginArea,
-  PluginType,
-  usePluginElements,
-} from '@openmsupply-client/common';
+import { Grid, usePluginElements } from '@openmsupply-client/common';
 import {
   DistributionWidget,
   ReplenishmentWidget,
@@ -13,8 +8,7 @@ import {
 
 const Dashboard: React.FC = () => {
   const plugins = usePluginElements({
-    area: PluginArea.DashboardWidget,
-    type: PluginType.Dashboard,
+    type: 'Dashboard',
   });
 
   return (
@@ -33,4 +27,5 @@ const Dashboard: React.FC = () => {
     </Grid>
   );
 };
+
 export default Dashboard;
