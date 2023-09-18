@@ -1,33 +1,55 @@
 import React from 'react';
-import { ComponentPluginType } from '../types';
-import { RecordWithId } from '../../types/utility';
+import {
+  ComponentPlugin,
+  ComponentPluginData,
+  ComponentPluginType,
+} from '../types';
 import { usePluginProvider } from '../components';
 import { PluginLoader } from '../components';
 
-export function usePluginElements<T extends RecordWithId>({
+const mapPlugin = <T extends ComponentPluginType>(
+  plugin: Extract<ComponentPlugin, { type: T }>,
+  data?: ComponentPluginData<T>
+) => {
+  if (plugin.isLoaded) {
+    if (!plugin.Component) {
+      console.error(
+        `Plugin ${plugin.name} isLoaded but the Component is undefined. Check that the module has a default export.`
+      );
+      return null;
+    }
+    return (
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      React.createElement<{ data: any /* ComponentPluginData<T> */ }>(
+        plugin.Component,
+        {
+          data,
+          key: plugin.name,
+        }
+      )
+    );
+  }
+  return (
+    <PluginLoader
+      name={plugin.name}
+      module={plugin.module}
+      data={data}
+      key={`${plugin.name}-${plugin.module}`}
+    />
+  );
+};
+
+export function usePluginElements<T extends ComponentPluginType>({
   type,
   data,
 }: {
-  type: ComponentPluginType;
-  data?: T;
+  type: T;
+  data?: ComponentPluginData<T>;
 }) {
   const { getComponentPlugins } = usePluginProvider();
   const plugins = getComponentPlugins(type);
 
-  return plugins.map(plugin =>
-    plugin.isLoaded ? (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      React.createElement<{ data: any }>(plugin.Component, {
-        data,
-        key: plugin.name,
-      })
-    ) : (
-      <PluginLoader
-        name={plugin.name}
-        module={plugin.module}
-        data={data}
-        key={`${plugin.name}-${plugin.module}`}
-      />
-    )
+  return plugins.map((plugin: Extract<ComponentPlugin, { type: T }>) =>
+    mapPlugin(plugin, data)
   );
 }

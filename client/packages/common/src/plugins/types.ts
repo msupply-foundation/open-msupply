@@ -1,10 +1,15 @@
 import { FunctionComponent } from 'react';
-import {
-  ColumnDefinition,
-  InvoiceNode,
-  RecordWithId,
-} from '@openmsupply-client/common';
+import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '@openmsupply-client/system';
+import { InboundFragment } from '@openmsupply-client/invoices';
+
+type extractDataType<Type> = Type extends ComponentPluginBase<infer DataType>
+  ? DataType
+  : never;
+
+export type ComponentPluginData<T> = extractDataType<
+  Extract<ComponentPlugin, { type: T }>
+>;
 
 export type PluginComponent<T> = FunctionComponent<{ data: T }>;
 
@@ -12,7 +17,7 @@ export interface ComponentPluginBase<T> {
   Component: PluginComponent<T>;
   isLoaded: boolean;
   module: string;
-  localModule: string;
+  localModule?: string;
   name: string;
 }
 
@@ -40,7 +45,7 @@ export type StockColumnPlugin = {
 
 export type InboundShipmentComponentPlugin = {
   type: 'InboundShipmentAppBar';
-} & ComponentPluginBase<InvoiceNode>;
+} & ComponentPluginBase<InboundFragment>;
 
 export type DashboardPlugin = {
   type: 'Dashboard';
