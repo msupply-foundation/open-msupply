@@ -4,7 +4,7 @@ import { CloseIcon, SearchIcon } from '@common/icons';
 import { useDebouncedValueCallback } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
 import { Box } from '@mui/material';
-import { IconButton } from '@common/components';
+import { IconButton, InputAdornment } from '@common/components';
 import { useTranslation } from '@common/intl';
 
 interface SearchBarProps {
@@ -15,7 +15,7 @@ interface SearchBarProps {
   debounceTime?: number;
 }
 
-const SearchBarAction: FC<{
+const EndAdornment: FC<{
   isLoading: boolean;
   hasValue: boolean;
   onClear: () => void;
@@ -23,16 +23,18 @@ const SearchBarAction: FC<{
   const t = useTranslation();
   if (isLoading) return <InlineSpinner />;
 
-  if (hasValue)
-    return (
+  if (!hasValue) return null;
+
+  return (
+    <InputAdornment position="end">
       <IconButton
+        sx={{ color: 'gray.main' }}
         label={t('label.clear-filter')}
         onClick={onClear}
         icon={<CloseIcon />}
       />
-    );
-
-  return null;
+    </InputAdornment>
+  );
 };
 
 export const SearchBar: FC<SearchBarProps> = ({
@@ -44,11 +46,6 @@ export const SearchBar: FC<SearchBarProps> = ({
 }) => {
   const [buffer, setBuffer] = useState(value);
   const [loading, setLoading] = useState(false);
-
-  // Sync the passed in isLoading state with the internal setLoading state
-  //   useEffect(() => {
-  //     setLoading(isLoading);
-  //   }, [isLoading]);
 
   useEffect(() => {
     setBuffer(value);
@@ -83,7 +80,7 @@ export const SearchBar: FC<SearchBarProps> = ({
       <BasicTextInput
         InputProps={{
           endAdornment: (
-            <SearchBarAction
+            <EndAdornment
               isLoading={isLoading || loading}
               hasValue={!!buffer}
               onClear={() => handleChange('')}
@@ -92,7 +89,10 @@ export const SearchBar: FC<SearchBarProps> = ({
           sx: {
             paddingLeft: '6px',
             alignItems: 'center',
-            transition: theme => theme.transitions.create('width'),
+            transition: theme =>
+              theme.transitions.create('width', {
+                delay: 100,
+              }),
             width: '220px',
             '&.Mui-focused': {
               width: '360px',
