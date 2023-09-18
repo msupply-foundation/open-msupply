@@ -47,6 +47,7 @@ pub enum Permissions {
     AddEditGoodsReceived,
     ManageTenders,
     AddPatients,
+    ViewPatients,
     /// not used
     EditRemoteData,
     ChooseDispensaryModeByDefaultOnLogIn,
@@ -377,6 +378,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (177, Permissions::EditStoreCredentials),
         (178, Permissions::ChangeAssetStatus),
         (179, Permissions::AddEditVaccinators),
+        (190, Permissions::ViewPatients),
         (200, Permissions::ConfirmInternalOrderSent),
         (501, Permissions::HISAddPatients),
         (502, Permissions::HISEditPatientsInfo),

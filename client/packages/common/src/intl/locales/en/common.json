@@ -338,6 +338,7 @@
   "messages.confirm-remove-item": "Are you sure?",
   "messages.confirm-save-generic": "Are you ready to save changes?",
   "messages.delete-this-line": "Delete this line",
+  "messages.confirm-delete-shipment": "This will permanently remove Shipment #{{number}}",
   "messages.deleted-generic_one": "Deleted {{count}} record",
   "messages.deleted-generic_other": "Deleted {{count}} records",
   "messages.deleted-lines_one": "Deleted {{count}} line",

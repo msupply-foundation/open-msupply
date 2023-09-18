@@ -9,6 +9,17 @@ use repository::{ProgramEventRow, ProgramEventSort, ProgramEventSortField};
 
 use super::{document::DocumentNode, patient::PatientNode};
 
+#[derive(SimpleObject)]
+pub struct ProgramEventConnector {
+    pub total_count: u32,
+    pub nodes: Vec<ProgramEventNode>,
+}
+
+#[derive(Union)]
+pub enum ProgramEventResponse {
+    Response(ProgramEventConnector),
+}
+
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum ProgramEventSortFieldInput {

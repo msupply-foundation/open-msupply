@@ -55,7 +55,10 @@ const StyledListItem = styled<
         marginTop: 5,
         '&:hover': {
           boxShadow: theme.shadows[3],
-          backgroundColor: theme.palette.background.toolbar,
+          backgroundColor: theme.mixins.drawer.hoverBackgroundColor,
+          '& .MuiTypography-root': {
+            color: theme.mixins.drawer.hoverTextColor,
+          },
         },
       }
 );

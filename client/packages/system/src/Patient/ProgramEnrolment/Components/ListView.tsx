@@ -28,7 +28,7 @@ const programAdditionalInfoAccessor: ColumnDataAccessor<
   ProgramEnrolmentRowFragmentWithId,
   string[]
 > = ({ rowData }): string[] => {
-  const additionalInfo = getStatusEventData(rowData.activeProgramEvents);
+  const additionalInfo = getStatusEventData(rowData.activeProgramEvents.nodes);
   return additionalInfo;
 };
 

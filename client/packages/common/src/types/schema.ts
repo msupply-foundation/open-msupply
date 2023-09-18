@@ -32,6 +32,17 @@ export type Scalars = {
   NaiveDate: { input: string; output: string; }
 };
 
+export type ActiveEncounterEventFilterInput = {
+  data?: InputMaybe<StringFilterInput>;
+  /**
+   * 	Only include events that are for the current encounter, i.e. have matching encounter type
+   * and matching encounter name of the current encounter. If not set all events with matching
+   * encounter type are returned.
+   */
+  isCurrentEncounter?: InputMaybe<Scalars['Boolean']['input']>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type ActivityLogConnector = {
   __typename: 'ActivityLogConnector';
   nodes: Array<ActivityLogNode>;
@@ -1047,6 +1058,10 @@ export type EncounterConnector = {
 };
 
 export type EncounterEventFilterInput = {
+  activeEndDatetime?: InputMaybe<DatetimeFilterInput>;
+  activeStartDatetime?: InputMaybe<DatetimeFilterInput>;
+  data?: InputMaybe<StringFilterInput>;
+  datetime?: InputMaybe<DatetimeFilterInput>;
   /**
    * 	Only include events that are for the current encounter, i.e. have matching encounter type
    * and matching encounter name of the current encounter. If not set all events with matching
@@ -1091,7 +1106,7 @@ export type EncounterFilterInput = {
 
 export type EncounterNode = {
   __typename: 'EncounterNode';
-  activeProgramEvents: Array<ProgramEventNode>;
+  activeProgramEvents: ProgramEventResponse;
   clinician?: Maybe<ClinicianNode>;
   contextId: Scalars['String']['output'];
   createdDatetime: Scalars['DateTime']['output'];
@@ -1104,6 +1119,7 @@ export type EncounterNode = {
   patientId: Scalars['String']['output'];
   /** Returns the matching program enrolment for the patient of this encounter */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
+  programEvents: ProgramEventResponse;
   programId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
   status?: Maybe<EncounterNodeStatus>;
@@ -1113,7 +1129,16 @@ export type EncounterNode = {
 
 export type EncounterNodeActiveProgramEventsArgs = {
   at?: InputMaybe<Scalars['DateTime']['input']>;
+  filter?: InputMaybe<ActiveEncounterEventFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ProgramEventSortInput>;
+};
+
+
+export type EncounterNodeProgramEventsArgs = {
   filter?: InputMaybe<EncounterEventFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ProgramEventSortInput>;
 };
 
 export enum EncounterNodeStatus {
@@ -3347,7 +3372,7 @@ export type ProgramEnrolmentFilterInput = {
 
 export type ProgramEnrolmentNode = {
   __typename: 'ProgramEnrolmentNode';
-  activeProgramEvents: Array<ProgramEventNode>;
+  activeProgramEvents: ProgramEventResponse;
   contextId: Scalars['String']['output'];
   /** The encounter document */
   document: DocumentNode;
@@ -3367,6 +3392,8 @@ export type ProgramEnrolmentNode = {
 export type ProgramEnrolmentNodeActiveProgramEventsArgs = {
   at?: InputMaybe<Scalars['DateTime']['input']>;
   filter?: InputMaybe<ProgramEventFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ProgramEventSortInput>;
 };
 
 
@@ -3412,6 +3439,7 @@ export type ProgramEventConnector = {
 export type ProgramEventFilterInput = {
   activeEndDatetime?: InputMaybe<DatetimeFilterInput>;
   activeStartDatetime?: InputMaybe<DatetimeFilterInput>;
+  data?: InputMaybe<StringFilterInput>;
   documentName?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
@@ -4137,7 +4165,7 @@ export type RequisitionLineNode = {
   requestedQuantity: Scalars['Int']['output'];
   /**
    * Calculated quantity
-   * When months_of_stock < requisition.min_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
+   * When months_of_stock < requisition.min_months_of_stock, calculated = average_monthly_consumption * requisition.max_months_of_stock - months_of_stock
    */
   suggestedQuantity: Scalars['Int']['output'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */
