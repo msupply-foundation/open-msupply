@@ -380,12 +380,13 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             }
             // patient
             Permissions::AddPatients => {
-                output.insert(Permission::PatientQuery);
                 output.insert(Permission::PatientMutate);
             }
             Permissions::EditPatientDetails => {
-                output.insert(Permission::PatientQuery);
                 output.insert(Permission::PatientMutate);
+            }
+            Permissions::ViewPatients => {
+                output.insert(Permission::PatientQuery);
             }
             // items
             Permissions::EditItems => {
