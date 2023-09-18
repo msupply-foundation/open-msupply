@@ -6,12 +6,11 @@ use graphql_core::{
 };
 use graphql_general::GenderInput;
 use graphql_types::types::patient::PatientNode;
-use repository::{NameRow, NameType};
+use repository::NameType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    programs::patient::{patient_updated::patient_name, InsertPatientError},
+    programs::patient::{InsertPatient as ServiceInput, InsertPatientError},
 };
-use util::inline_init;
 
 #[derive(InputObject)]
 pub struct InsertPatientInput {
@@ -32,15 +31,7 @@ pub enum InsertPatientResponse {
 pub fn insert_patient(
     ctx: &Context<'_>,
     store_id: String,
-    InsertPatientInput {
-        id,
-        code,
-        code_2,
-        first_name,
-        last_name,
-        gender,
-        date_of_birth,
-    }: InsertPatientInput,
+    input: InsertPatientInput,
 ) -> Result<InsertPatientResponse> {
     let user = validate_auth(
         ctx,
@@ -58,17 +49,7 @@ pub fn insert_patient(
         &service_context,
         service_provider,
         &store_id,
-        inline_init(|n: &mut NameRow| {
-            n.id = id;
-            n.r#type = NameType::Patient;
-            n.name = patient_name(&first_name, &last_name);
-            n.code = code;
-            n.national_health_number = code_2;
-            n.first_name = first_name;
-            n.last_name = last_name;
-            n.gender = gender.map(|g| g.to_domain());
-            n.date_of_birth = date_of_birth;
-        }),
+        input.to_domain(),
     ) {
         Ok(patient) => Ok(InsertPatientResponse::Response(PatientNode {
             store_id,
@@ -92,6 +73,31 @@ pub fn insert_patient(
                 }
             };
             Err(std_err.extend())
+        }
+    }
+}
+
+impl InsertPatientInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let InsertPatientInput {
+            id,
+            code,
+            code_2,
+            first_name,
+            last_name,
+            gender,
+            date_of_birth,
+        } = self;
+
+        ServiceInput {
+            id,
+            code,
+            code_2,
+            first_name,
+            last_name,
+            gender: gender.map(|g| g.to_domain()),
+            date_of_birth,
+            r#type: NameType::Patient,
         }
     }
 }

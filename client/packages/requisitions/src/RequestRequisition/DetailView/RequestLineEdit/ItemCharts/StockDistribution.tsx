@@ -17,18 +17,24 @@ export interface StockDistributionProps {
 
 const MIN_MC_WIDTH_TO_SHOW_TEXT = 5;
 
+interface MonthlyConsumptionProps {
+  month: number;
+  flexBasis: string;
+  averageMonthlyConsumption: number;
+  showText: boolean;
+  isTarget: boolean;
+  isThreshold: boolean;
+}
+
 const MonthlyConsumption = ({
   month,
   flexBasis,
   averageMonthlyConsumption,
   showText,
-}: {
-  month: number;
-  flexBasis: string;
-  averageMonthlyConsumption: number;
-  showText: boolean;
-}) => {
-  const t = useTranslation('common');
+  isTarget,
+  isThreshold,
+}: MonthlyConsumptionProps) => {
+  const t = useTranslation('replenishment');
   const formatNumber = useFormatNumber();
   const text = ` (${month} ${t('label.months', {
     count: month,
@@ -37,21 +43,45 @@ const MonthlyConsumption = ({
     showText ? text : ''
   }`;
 
-  return <MonthlyBar flexBasis={flexBasis} label={label} />;
+  const additionalLabel =
+    isTarget && showText
+      ? t('label.max-months-of-stock')
+      : isThreshold && showText
+      ? t('label.min-months-of-stock')
+      : undefined;
+
+  return (
+    <MonthlyBar
+      flexBasis={flexBasis}
+      label={label}
+      additionalLabel={additionalLabel}
+      showText={showText}
+    />
+  );
 };
 
 const MonthlyBar = ({
   label,
   left,
   flexBasis,
+  additionalLabel,
+  showText,
 }: {
   label: string;
   left?: boolean;
   flexBasis?: string;
+  additionalLabel?: string;
+  showText?: boolean;
 }) => {
   const directionStyle = left
-    ? { borderLeftWidth: 1, paddingLeft: 8 }
+    ? { borderLeftWidth: 1, paddingLeft: 0 }
     : { paddingLeft: 3, paddingRight: 8, borderRightWidth: 1 };
+  const additionalLabelStyle = additionalLabel
+    ? { height: 40 }
+    : showText
+    ? { height: 20, marginTop: 20 }
+    : {};
+
   return (
     <Box
       sx={{
@@ -62,9 +92,23 @@ const MonthlyBar = ({
         height: '20px',
         overflow: 'hidden',
       }}
-      style={{ ...directionStyle, textAlign: left ? undefined : 'right' }}
+      style={{
+        ...directionStyle,
+        ...additionalLabelStyle,
+        textAlign: left ? undefined : 'right',
+      }}
       flexBasis={flexBasis}
     >
+      {additionalLabel && (
+        <Typography
+          variant="body1"
+          fontSize={12}
+          color="primary"
+          style={{ color: 'primary' }}
+        >
+          {additionalLabel}
+        </Typography>
+      )}
       <Tooltip title={label} placement="top">
         <Typography
           variant="body1"
@@ -108,14 +152,24 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
   averageMonthlyConsumption = 0,
   suggestedQuantity = 0,
 }) => {
-  const { maxMonthsOfStock } = useRequest.document.fields('maxMonthsOfStock');
+  const { maxMonthsOfStock, minMonthsOfStock } = useRequest.document.fields([
+    'maxMonthsOfStock',
+    'minMonthsOfStock',
+  ]);
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
   const t = useTranslation('replenishment');
 
-  const monthlyConsumptionWidth =
+  const targetQuantityWidth =
     availableStockOnHand > targetQuantity
       ? Math.round((100 * targetQuantity) / availableStockOnHand)
       : 100;
+  const barWidth =
+    availableStockOnHand + suggestedQuantity < targetQuantity
+      ? `${Math.round(
+          (100 * (availableStockOnHand + suggestedQuantity)) / targetQuantity
+        )}%`
+      : '100%';
+  const showText = targetQuantityWidth > MIN_MC_WIDTH_TO_SHOW_TEXT;
 
   const DistributionBars = useMemo(
     () => (
@@ -126,14 +180,13 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
         <Box
           display="flex"
           alignItems="flex-start"
-          width={`${monthlyConsumptionWidth}%`}
+          width={`${targetQuantityWidth}%`}
           style={{ paddingBottom: 7 }}
         >
           <MonthlyBar
             flexBasis="1px"
-            label={
-              monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT ? '0' : ''
-            }
+            label={showText ? '0' : ''}
+            showText={showText}
             left={true}
           />
 
@@ -143,12 +196,14 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
               month={i + 1}
               flexBasis={`${100 / maxMonthsOfStock}%`}
               averageMonthlyConsumption={averageMonthlyConsumption}
-              showText={monthlyConsumptionWidth > MIN_MC_WIDTH_TO_SHOW_TEXT}
+              showText={showText}
+              isThreshold={i + 1 === minMonthsOfStock}
+              isTarget={i + 1 === maxMonthsOfStock}
             />
           ))}
         </Box>
 
-        <Box display="flex" alignItems="flex-start" width="100%">
+        <Box display="flex" alignItems="flex-start" width={barWidth}>
           <ValueBar
             value={availableStockOnHand}
             total={targetQuantity}

@@ -47,6 +47,7 @@
   "messages.unlocked-description": "This will re-enable changes to the stocktake.",
   "messages.select-rows-to-delete": "Select rows to delete",
   "messages.click-to-return": "Unable to find a stocktake with that ID. Click OK to return to the stocktake list",
+  "messages.confirm-delete-stocktake": "This will permanently remove Stocktake #{{number}}",
   "messages.confirm-delete-stocktakes_one": "This will permanently remove 1 stocktake",
   "messages.confirm-delete-stocktakes_other": "This will permanently remove {{count}} stocktakes",
   "messages.confirm-delete-stocktake_lines_one": "This will permanently remove 1 stocktake line",
