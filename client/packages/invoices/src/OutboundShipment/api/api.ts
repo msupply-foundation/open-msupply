@@ -371,10 +371,9 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
         .map(outboundParsers.toUpdatePlaceholder),
       deleteOutboundShipmentUnallocatedLines: draftOutboundLines
         .filter(
-          ({ type, numberOfPacks, isUpdated, isCreated }) =>
+          ({ type, numberOfPacks, isCreated }) =>
             type === InvoiceLineNodeType.UnallocatedStock &&
             numberOfPacks === 0 &&
-            isUpdated &&
             !isCreated
         )
         .map(outboundParsers.toDeletePlaceholder),
