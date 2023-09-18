@@ -17,7 +17,7 @@ interface PluginColumns {
 }
 
 interface PluginComponents {
-  localModule: string;
+  localModule?: string;
   module: string;
   type: string;
 }
@@ -88,7 +88,11 @@ export const useInitPlugins = () => {
   const initLocalPlugins = async () => {
     for (const plugin of LOCAL_PLUGINS ?? []) {
       const plugins = mapPlugin(plugin);
+      const handleImportError = (e: Error) =>
+        console.error(`Unable to load plugin ${plugin.name}: ${e.message}`);
+
       plugins?.componentPlugins.forEach(mapped => {
+        const module = mapped.localModule ?? mapped.module;
         import(
           // Using the localModule property to load the inner component
           // when loading directly like this, the component has access to app context
@@ -97,12 +101,14 @@ export const useInitPlugins = () => {
           // which causes issues
           /* webpackExclude: /node_modules/ */
           /* webpackExclude: /operations.graphql/ */
-          `../../../plugins/${plugin.path}/src/${mapped.localModule}`
-        ).then(module => {
-          mapped.Component = module.default;
-          mapped.isLoaded = true;
-          addComponentPlugin(mapped);
-        });
+          `../../../plugins/${plugin.path}/src/${module}`
+        )
+          .then(module => {
+            mapped.Component = module.default;
+            mapped.isLoaded = true;
+            addComponentPlugin(mapped);
+          })
+          .catch(handleImportError);
       });
       plugins?.columnPlugins.forEach(mapped => {
         import(
@@ -111,11 +117,13 @@ export const useInitPlugins = () => {
           /* webpackExclude: /node_modules/ */
           /* webpackExclude: /operations.graphql/ */
           `../../../plugins/${plugin.path}/src/${mapped.module}`
-        ).then(module => {
-          mapped.column = module.default;
-          mapped.isLoaded = true;
-          addColumnPlugin(mapped);
-        });
+        )
+          .then(module => {
+            mapped.column = module.default;
+            mapped.isLoaded = true;
+            addColumnPlugin(mapped);
+          })
+          .catch(handleImportError);
       });
     }
   };

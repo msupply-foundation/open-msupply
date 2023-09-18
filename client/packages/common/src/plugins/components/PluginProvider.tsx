@@ -25,13 +25,13 @@ export const usePluginProvider = create<PluginProvider>((set, get) => {
     componentPlugins: [],
     addColumnPlugin: (plugin: ColumnPlugin) =>
       set(({ columnPlugins }) => ({
-        columnPlugins: ArrayUtils.uniqBy([...columnPlugins, plugin], 'name'),
+        columnPlugins: ArrayUtils.uniqBy([...columnPlugins, plugin], 'module'),
       })),
     addComponentPlugin: (plugin: ComponentPlugin) =>
       set(({ componentPlugins }) => ({
         componentPlugins: ArrayUtils.uniqBy(
           [...componentPlugins, plugin],
-          'name'
+          'module'
         ),
       })),
     updateColumnPlugin: (plugin: ColumnPlugin) =>
