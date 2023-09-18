@@ -96,7 +96,7 @@ export const useUnitVariant = (
     ],
     isEqual
   );
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   if (!item || item.variants.length == 0) {
     return {
