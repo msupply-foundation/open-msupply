@@ -1,49 +1,25 @@
+import { AppRoute } from '@openmsupply-client/config';
 import {
-  useTableStore,
-  useTranslation,
-  useQueryClient,
+  RouteBuilder,
   useMutation,
-  InvoiceNodeStatus,
-  useDeleteConfirmation,
+  useNavigate,
+  useQueryClient,
 } from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
-import { useInbounds } from './useInbounds';
 
 export const useInboundDelete = () => {
   const queryClient = useQueryClient();
-  const { data: rows } = useInbounds();
   const api = useInboundApi();
-  const { mutateAsync } = useMutation(api.delete);
-  const t = useTranslation('replenishment');
+  const navigate = useNavigate();
 
-  const selectedRows = useTableStore(
-    state =>
-      rows?.nodes.filter(({ id }) => state.rowState[id]?.isSelected) ?? []
-  );
-
-  const deleteAction = async () => {
-    await mutateAsync(selectedRows)
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
-      .catch(err => {
-        throw err;
-      });
-  };
-
-  const confirmAndDelete = useDeleteConfirmation({
-    selectedRows,
-    deleteAction,
-    canDelete: selectedRows.every(
-      ({ status }) => status === InvoiceNodeStatus.New
-    ),
-    messages: {
-      confirmMessage: t('messages.confirm-delete-shipments', {
-        count: selectedRows.length,
-      }),
-      deleteSuccess: t('messages.deleted-shipments', {
-        count: selectedRows.length,
-      }),
+  return useMutation(api.delete, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(api.keys.base());
+      navigate(
+        RouteBuilder.create(AppRoute.Replenishment)
+          .addPart(AppRoute.InboundShipment)
+          .build()
+      );
     },
   });
-
-  return confirmAndDelete;
 };

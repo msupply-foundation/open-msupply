@@ -13,6 +13,8 @@ export type RequestLineFragment = { __typename: 'RequisitionLineNode', id: strin
 
 export type RequestFragment = { __typename: 'RequisitionNode', id: string, type: Types.RequisitionNodeType, status: Types.RequisitionNodeStatus, createdDatetime: string, sentDatetime?: string | null, finalisedDatetime?: string | null, requisitionNumber: number, colour?: string | null, theirReference?: string | null, comment?: string | null, otherPartyName: string, otherPartyId: string, maxMonthsOfStock: number, minMonthsOfStock: number, approvalStatus: Types.RequisitionNodeApprovalStatus, programName?: string | null, orderType?: string | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, lines: { __typename: 'RequisitionLineConnector', totalCount: number, nodes: Array<{ __typename: 'RequisitionLineNode', id: string, itemId: string, requestedQuantity: number, suggestedQuantity: number, comment?: string | null, itemStats: { __typename: 'ItemStatsNode', availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null, averageMonthlyConsumption: number }, linkedRequisitionLine?: { __typename: 'RequisitionLineNode', approvedQuantity: number, approvalComment?: string | null } | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } } }> }, shipments: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null }> }, otherParty: { __typename: 'NameNode', id: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, name: string, store?: { __typename: 'StoreNode', id: string, code: string } | null }, linkedRequisition?: { __typename: 'RequisitionNode', approvalStatus: Types.RequisitionNodeApprovalStatus } | null, period?: { __typename: 'PeriodNode', name: string, startDate: string, endDate: string } | null };
 
+export type ConsumptionHistoryFragment = { __typename: 'ConsumptionHistoryNode', averageMonthlyConsumption: number, consumption: number, date: string, isCurrent: boolean, isHistoric: boolean };
+
 export type RequestByNumberQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   requisitionNumber: Types.Scalars['Int']['input'];
@@ -253,6 +255,15 @@ export const RequestFragmentDoc = gql`
   orderType
 }
     ${RequestLineFragmentDoc}`;
+export const ConsumptionHistoryFragmentDoc = gql`
+    fragment ConsumptionHistory on ConsumptionHistoryNode {
+  averageMonthlyConsumption
+  consumption
+  date
+  isCurrent
+  isHistoric
+}
+    `;
 export const ProgramSettingsFragmentDoc = gql`
     fragment ProgramSettings on ProgramRequisitionSettingNode {
   programName
@@ -310,11 +321,7 @@ export const RequisitionLineChartDocument = gql`
       consumptionHistory {
         totalCount
         nodes {
-          averageMonthlyConsumption
-          consumption
-          date
-          isCurrent
-          isHistoric
+          ...ConsumptionHistory
         }
       }
       stockEvolution {
@@ -348,7 +355,7 @@ export const RequisitionLineChartDocument = gql`
     }
   }
 }
-    `;
+    ${ConsumptionHistoryFragmentDoc}`;
 export const RequestsDocument = gql`
     query requests($storeId: String!, $filter: RequisitionFilterInput, $page: PaginationInput, $sort: [RequisitionSortInput!]) {
   requisitions(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
