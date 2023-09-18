@@ -18,8 +18,7 @@ import {
 import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
-import { getPackUnitCell } from '../../Item/Components/ItemVariant';
-import { useInitUnitStore } from '../../Item';
+import { getPackUnitCell, useInitUnitStore } from '@openmsupply-client/system';
 
 const StockListComponent: FC = () => {
   const {
