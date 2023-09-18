@@ -9,6 +9,17 @@ use repository::{ProgramEventRow, ProgramEventSort, ProgramEventSortField};
 
 use super::{document::DocumentNode, patient::PatientNode};
 
+#[derive(SimpleObject)]
+pub struct ProgramEventConnector {
+    pub total_count: u32,
+    pub nodes: Vec<ProgramEventNode>,
+}
+
+#[derive(Union)]
+pub enum ProgramEventResponse {
+    Response(ProgramEventConnector),
+}
+
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum ProgramEventSortFieldInput {
@@ -81,8 +92,12 @@ impl ProgramEventNode {
         DateTime::<Utc>::from_utc(self.row.datetime, Utc)
     }
 
-    pub async fn active_datetime(&self) -> DateTime<Utc> {
+    pub async fn active_start_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_utc(self.row.active_start_datetime, Utc)
+    }
+
+    pub async fn active_end_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row.active_end_datetime, Utc)
     }
 
     pub async fn document_type(&self) -> &str {
