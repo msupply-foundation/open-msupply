@@ -122,7 +122,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             id,
             document_type,
             patient_id,
-            program_context_id: context,
+            program_context_id,
             program_id,
             document_name: name,
             created_datetime,
@@ -136,7 +136,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
         apply_equal_filter!(query, id, encounter_dsl::id);
         apply_equal_filter!(query, document_type, encounter_dsl::document_type);
         apply_equal_filter!(query, patient_id, encounter_dsl::patient_id);
-        apply_equal_filter!(query, context, program_dsl::context_id);
+        apply_equal_filter!(query, program_context_id, program_dsl::context_id);
         apply_equal_filter!(query, program_id, encounter_dsl::program_id);
         apply_equal_filter!(query, name, encounter_dsl::document_name);
         apply_date_time_filter!(query, created_datetime, encounter_dsl::created_datetime);

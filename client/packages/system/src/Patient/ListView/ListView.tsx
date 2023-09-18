@@ -20,7 +20,7 @@ import { Toolbar } from './Toolbar';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { ChipTableCell } from '../Components';
 
-const programEnrolmentLabelAccessor: ColumnDataAccessor<
+export const programEnrolmentLabelAccessor: ColumnDataAccessor<
   PatientRowFragment,
   string[]
 > = ({ rowData }): string[] => {
@@ -42,7 +42,11 @@ const PatientListComponent: FC = () => {
   const { store } = useAuthContext();
 
   const { setDocumentName } = usePatientStore();
-  const { data, isError, isLoading } = usePatient.document.list();
+  const { queryParams } = useUrlQueryParams({
+    filterKey: ['lastName', 'firstName', 'identifier'],
+    initialSort: { key: 'code', dir: 'asc' },
+  });
+  const { data, isError, isLoading } = usePatient.document.list(queryParams);
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();

@@ -14,10 +14,16 @@ import {
   UpdateEncounterInput,
   UpdateProgramEnrolmentInput,
   ProgramEnrolmentFilterInput,
+  ContactTraceFilterInput,
+  ContactTraceSortFieldInput,
+  UpdateContactTraceInput,
+  InsertContactTraceInput,
 } from '@common/types';
 import { EncounterListParams } from './hooks/utils/useEncounterApi';
 import {
   ClinicianFragment,
+  ContactTraceFragment,
+  ContactTraceRowFragment,
   DocumentFragment,
   DocumentRegistryFragment,
   EncounterFieldsFragment,
@@ -400,5 +406,61 @@ export const getProgramEventQueries = (sdk: Sdk, storeId: string) => ({
       return result.activeProgramEvents;
     }
     throw new Error('Error querying program events');
+  },
+});
+
+export type ContactTraceListParams = {
+  sortBy?: SortRule<ContactTraceSortFieldInput>;
+  filterBy?: ContactTraceFilterInput;
+};
+
+export const getContactTraceQueries = (sdk: Sdk, storeId: string) => ({
+  list: async ({
+    sortBy,
+    filterBy,
+  }: ContactTraceListParams): Promise<{
+    nodes: ContactTraceRowFragment[];
+    totalCount: number;
+  }> => {
+    const result = await sdk.contactTraces({
+      storeId,
+      key:
+        (sortBy?.key as ContactTraceSortFieldInput) ??
+        ContactTraceSortFieldInput.Datetime,
+      desc: sortBy?.isDesc,
+      filter: filterBy,
+    });
+
+    return result?.contactTraces;
+  },
+
+  insert: async (
+    input: InsertContactTraceInput
+  ): Promise<ContactTraceFragment> => {
+    const result = await sdk.insertContactTrace({
+      storeId,
+      input,
+    });
+
+    if (result.insertContactTrace.__typename === 'ContactTraceNode') {
+      return result.insertContactTrace;
+    }
+
+    throw new Error('Could not insert contact trace');
+  },
+
+  update: async (
+    input: UpdateContactTraceInput
+  ): Promise<ContactTraceFragment> => {
+    const result = await sdk.updateContactTrace({
+      storeId,
+      input,
+    });
+
+    if (result.updateContactTrace.__typename === 'ContactTraceNode') {
+      return result.updateContactTrace;
+    }
+
+    throw new Error('Could not update contact trace');
   },
 });

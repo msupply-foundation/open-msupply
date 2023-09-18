@@ -21,7 +21,7 @@ import {
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../..';
 import { PackSizeController } from '../../../StockOut';
-import { DraftStockOutLine } from 'packages/invoices/src/types';
+import { DraftStockOutLine } from '../../../types';
 
 interface PrescriptionLineEditFormProps {
   allocatedQuantity: number;

@@ -7,6 +7,10 @@ use repository::{
 use crate::{
     document::is_latest_doc,
     programs::{
+        contact_trace::{
+            contact_trace_schema::SchemaContactTrace,
+            contact_trace_updated::update_contact_trace_row,
+        },
         encounter::{
             encounter_updated::update_encounter_row, validate_misc::validate_encounter_schema,
         },
@@ -44,6 +48,7 @@ pub(crate) fn sync_upsert_document(
         DocumentRegistryCategory::Patient => update_patient(con, document)?,
         DocumentRegistryCategory::ProgramEnrolment => update_program_enrolment(con, document)?,
         DocumentRegistryCategory::Encounter => update_encounter(con, document)?,
+        DocumentRegistryCategory::ContactTrace => update_contact_trace(con, document)?,
         DocumentRegistryCategory::Custom => {}
     };
     Ok(())
@@ -121,6 +126,25 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         None,
     )
     .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
+    Ok(())
+}
+
+fn update_contact_trace(
+    con: &StorageConnection,
+    document: &Document,
+) -> Result<(), RepositoryError> {
+    let Some(patient_id) = &document.owner_name_id else {
+        return Err(RepositoryError::as_db_error("Document owner id expected", ""));
+    };
+    let contact_trace: SchemaContactTrace =
+        serde_json::from_value(document.data.clone()).map_err(|err| {
+            RepositoryError::as_db_error(&format!("Invalid contact trace data: {}", err), "")
+        })?;
+    let program_row = ProgramRepository::new(con)
+        .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
+        .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
+    update_contact_trace_row(con, patient_id, document, contact_trace, program_row)
+        .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
     Ok(())
 }
 
