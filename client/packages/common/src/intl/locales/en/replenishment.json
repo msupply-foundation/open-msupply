@@ -77,6 +77,7 @@
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
   "messages.changing-max-mos": "This will change the maximum months of stock target.",
   "messages.changing-min-mos": "This will change the minimum months of stock threshold.",
+  "messages.unassign-min-mos": "This will remove the minimum months of stock threshold. Minimum MOS will default to be the same as maximum MOS.",
   "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list",
   "messages.click-to-return-to-shipments": "Unable to find a shipment with that ID. Click OK to return to the shipment list",
   "messages.confirm-inbound-status-as": "Confirm status as $t({{status}})?\nNote: changing from 'New' will remove any lines with zero quantity.",

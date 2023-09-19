@@ -25,6 +25,11 @@ export const ToolbarActions = () => {
     message: t('messages.changing-min-mos'),
   });
 
+  const getMinMOSUnassignConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.unassign-min-mos'),
+  });
+
   const getMaxMOSConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.changing-max-mos'),
@@ -59,12 +64,19 @@ export const ToolbarActions = () => {
                   value: numberOfMonths,
                 })),
               ]}
-              onChange={(_, option) =>
-                option &&
-                getMinMOSConfirmation({
-                  onConfirm: () => update({ minMonthsOfStock: option.value }),
-                })
-              }
+              onChange={(_, option) => {
+                if (option && option.value === 0) {
+                  getMinMOSUnassignConfirmation({
+                    onConfirm: () => update({ minMonthsOfStock: option.value }),
+                  });
+                } else {
+                  option &&
+                    getMinMOSConfirmation({
+                      onConfirm: () =>
+                        update({ minMonthsOfStock: option.value }),
+                    });
+                }
+              }}
               getOptionDisabled={option => option.value > maxMonthsOfStock}
             />
           }
