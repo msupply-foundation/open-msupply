@@ -9,7 +9,6 @@ type PluginProvider = {
   columnPlugins: ColumnPlugin[];
   componentPlugins: ComponentPlugin[];
   addColumnPlugin: (plugin: ColumnPlugin) => void;
-  updateColumnPlugin: (plugin: ColumnPlugin) => void;
   addComponentPlugin: (plugin: ComponentPlugin) => void;
   getComponentPlugins: <T extends ComponentPlugin['type']>(
     type: T
@@ -34,17 +33,6 @@ export const usePluginProvider = create<PluginProvider>((set, get) => {
           'module'
         ),
       })),
-    updateColumnPlugin: (plugin: ColumnPlugin) =>
-      set(({ columnPlugins }) => {
-        const current = columnPlugins.find(p => p.name === plugin.name);
-        if (!current) return { columnPlugins };
-        return {
-          columnPlugins: [
-            ...columnPlugins.filter(p => p.name !== plugin.name),
-            plugin,
-          ],
-        };
-      }),
     getColumnPlugins: <T extends ColumnPlugin['type']>(type: T) => {
       const columnPlugins = get().columnPlugins;
       return columnPlugins.filter(

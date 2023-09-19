@@ -11,10 +11,18 @@ export type ComponentPluginData<T> = extractDataType<
   Extract<ComponentPlugin, { type: T }>
 >;
 
+type extractColumnType<Type> = Type extends ColumnPluginBase<infer DataType>
+  ? DataType
+  : never;
+
+export type ColumnPluginColumn<T> = extractColumnType<
+  Extract<ColumnPlugin, { type: T }>
+>;
+
 export type PluginComponent<T> = FunctionComponent<{ data: T }>;
 
 export interface ComponentPluginBase<T> {
-  Component: PluginComponent<T>;
+  Component: PluginComponent<T> | undefined;
   isLoaded: boolean;
   module: string;
   localModule?: string;
@@ -22,8 +30,7 @@ export interface ComponentPluginBase<T> {
 }
 
 export interface ColumnPluginBase<T extends RecordWithId> {
-  column: ColumnDefinition<T>;
-  isLoaded: boolean;
+  column: () => Promise<ColumnDefinition<T>>;
   module: string;
   name: string;
 }

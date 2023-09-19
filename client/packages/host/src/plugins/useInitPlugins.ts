@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
-import { PluginNode } from '@common/types';
+import { PluginNode, RecordWithId } from '@common/types';
 import {
+  ColumnDefinition,
   ColumnPlugin,
   ComponentPlugin,
   PluginDefinition,
   usePluginProvider,
+  loadPluginColumn,
 } from '@openmsupply-client/common';
 import { useHost } from '../api';
 
@@ -53,10 +55,14 @@ const mapPlugin = (plugin: PluginNode): PluginDefinition | null => {
     });
     pluginConfig.columns?.forEach(column => {
       const { type, module } = column;
+      const name = pluginConfig.name;
       columnPlugins.push({
-        isLoaded: false,
+        column: () =>
+          loadPluginColumn({ plugin: name, module })().then(
+            module => module.default
+          ),
         module,
-        name: pluginConfig.name,
+        name,
         type,
       } as ColumnPlugin);
     });
@@ -119,8 +125,10 @@ export const useInitPlugins = () => {
           `../../../plugins/${plugin.path}/src/${mapped.module}`
         )
           .then(module => {
-            mapped.column = module.default;
-            mapped.isLoaded = true;
+            mapped.column = <T extends RecordWithId>() =>
+              new Promise<ColumnDefinition<T>>(resolve =>
+                resolve(module.default)
+              );
             addColumnPlugin(mapped);
           })
           .catch(handleImportError);
