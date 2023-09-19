@@ -10,6 +10,7 @@ import {
 import { useRequest, useHideOverStocked } from '../../api';
 
 const months = [1, 2, 3, 4, 5, 6];
+const notSet = { label: 'Not Set', value: 0 };
 
 export const ToolbarActions = () => {
   const { on, toggle } = useHideOverStocked();
@@ -40,15 +41,24 @@ export const ToolbarActions = () => {
               disabled={isDisabled || isProgram}
               clearIcon={null}
               isOptionEqualToValue={(a, b) => a.value === b.value}
-              value={{
-                label: t('label.number-months', { count: minMonthsOfStock }),
-                value: minMonthsOfStock,
-              }}
+              value={
+                minMonthsOfStock === 0
+                  ? { label: 'Not Set', value: 0 }
+                  : {
+                      label: t('label.number-months', {
+                        count: minMonthsOfStock,
+                      }),
+                      value: minMonthsOfStock,
+                    }
+              }
               width="150px"
-              options={months.map(numberOfMonths => ({
-                label: t('label.number-months', { count: numberOfMonths }),
-                value: numberOfMonths,
-              }))}
+              options={[
+                notSet,
+                ...months.map(numberOfMonths => ({
+                  label: t('label.number-months', { count: numberOfMonths }),
+                  value: numberOfMonths,
+                })),
+              ]}
               onChange={(_, option) =>
                 option &&
                 getMinMOSConfirmation({
