@@ -60,7 +60,6 @@
   "messages.cant-delete-requisitions": "Vous pouvez uniquement supprimer les réquisitions avec un statut 'Brouillon'",
   "messages.changing-max-mos": "Cela modifiera le mois de stock maximum pour définir le stock cible.",
   "messages.changing-min-mos": "Cela changera le seuil minimum de mois de stock.",
-  "messages.unassign-min-mos": "Cela supprimera le seuil minimum de mois de stock. Les mois minimum de stock seront par défaut les mêmes que les mois maximum de stock.",
   "messages.click-to-return-to-requisitions": "La réquisition recherchée est introuvable. Cliquez sur OK pour retourner à la liste des réquisitions",
   "messages.click-to-return-to-shipments": "Le bon de livraison recherché est introuvable. Cliquez sur OK pour retourner à la liste des bons de livraison",
   "messages.confirm-delete-invoice-lines_one": "Cela supprimera définitivement 1 ligne de ce bon de livraison",
