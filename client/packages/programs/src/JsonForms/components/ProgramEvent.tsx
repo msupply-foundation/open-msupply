@@ -61,7 +61,8 @@ const Options = z
     eventType: z.string(),
     /**
      * Specifies a field pointing to a patientId.
-     * This patient id is then used query for the program event.
+     * This patient id is then used to query for the program event.
+     * If there is no data at patientIdField nothing is displayed.
      */
     patientIdField: z.string().optional(),
     /**
@@ -174,7 +175,7 @@ const UIComponent = (props: ControlProps) => {
 
   const { core } = useJsonForms();
   const patientId = options?.patientIdField
-    ? extractProperty(core?.data, options?.patientIdField ?? '')
+    ? extractProperty(core?.data, options?.patientIdField ?? '') ?? '' // use empty/invalid id if field is not set
     : config?.patientId;
 
   useEffect(() => {
