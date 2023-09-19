@@ -63,7 +63,6 @@
   "messages.deleted-shipments_other": "Se eliminaron {{count}} envíos",
   "messages.changing-max-mos": "Esto cambiará el objetivo máximo de meses de existencias.",
   "messages.changing-min-mos": "Esto cambiará el umbral mínimo de meses de existencias.",
-  "messages.unassign-min-mos": "Esto eliminará el umbral mínimo de meses de existencias. Los meses mínimos de stock serán por defecto los mismos que los meses máximos de stock.",
   "messages.could-not-save": "No se pudo guardar",
   "messages.confirm-delete-shipments_other": "Esto eliminará permanentemente {{count}} envíos",
   "messages.confirm-delete-invoice-lines_other": "Esto eliminará permanentemente {{count}} líneas de esta factura",
