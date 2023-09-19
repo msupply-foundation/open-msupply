@@ -8,12 +8,14 @@ export const useRequestLines = () => {
   const { on } = useHideOverStocked();
   const { itemFilter, setItemFilter, matchItem } = useItemUtils();
   const { columns, onChangeSortBy, sortBy } = useRequestColumns();
-  const { lines, minMonthsOfStock } = useRequestFields([
+  const { lines, minMonthsOfStock, maxMonthsOfStock } = useRequestFields([
     'lines',
     'minMonthsOfStock',
+    'maxMonthsOfStock',
   ]);
 
   const sorted = useMemo(() => {
+    const minMonthsOfStockDefined = minMonthsOfStock ?? maxMonthsOfStock;
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     const { getSortValue } = currentColumn ?? {};
     const sorted = getSortValue
@@ -26,8 +28,8 @@ export const useRequestLines = () => {
       return sorted.filter(
         item =>
           item.itemStats.availableStockOnHand <
-            item.itemStats.averageMonthlyConsumption * minMonthsOfStock &&
-          matchItem(itemFilter, item.item)
+            item.itemStats.averageMonthlyConsumption *
+              minMonthsOfStockDefined && matchItem(itemFilter, item.item)
       );
     } else {
       return sorted.filter(item => matchItem(itemFilter, item.item));
