@@ -229,6 +229,23 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
       width="100%"
       gap={2}
       paddingX={10}
+      sx={{
+        alignItems: 'flex-start',
+        '& .MuiGrid-container': {
+          '& .MuiGrid-grid-xs-true': {
+            '& .MuiGrid-container': {
+              '& .MuiGrid-grid-xs-true': {
+                maxWidth: 600,
+              },
+            },
+          },
+        },
+        '& .MuiTypography-root': {
+          width: '40%',
+          textAlign: 'right',
+          whiteSpace: 'nowrap',
+        },
+      }}
     >
       <ScrollFix />
       {isLoading ? (
