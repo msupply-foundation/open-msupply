@@ -64,6 +64,7 @@
   "messages.off-hold-confirmation": "Isso habilitará mudanças de status",
   "messages.cant-delete-requisitions": "Só é possível excluir requisições com o status 'Rascunho'",
   "messages.changing-min-mos": "Isso mudará o numero mínimo de meses de estoque limite.",
+  "messages.unassign-min-mos": "Isso removerá o limite mínimo de meses de estoque. Os meses mínimos de estoque serão, por padrão, iguais aos meses máximos de estoque.",
   "messages.confirm-inbound-status-as": "Confirmar o status como $t({{status}})?\nNota: trocar de \"Novo\" irá excluir qualquer linha com quantidade zero.",
   "messages.confirm-status-as": "Confirmar o status como $t({{status}})?",
   "messages.select-rows-to-delete-them": "Selecione as linhas para serem excluídas",
