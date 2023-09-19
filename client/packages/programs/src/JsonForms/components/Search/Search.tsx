@@ -9,6 +9,9 @@ import { SearchWithDocumentSource } from './SearchWithDocumentSource';
 import { QueryValues } from './useSearchQueries';
 import { SearchWithPatientContactSource } from './SearchWithPatientContactSource';
 
+/**
+ * Specifies the search options when doing a user input type search
+ */
 const UserOptions = z.object({
   /**
    * Source of the search data -- user input or extract it from document
@@ -36,6 +39,9 @@ const UserOptions = z.object({
   searchFields: z.array(z.string()),
 });
 
+/**
+ * Specifies the search options when doing a search using a document source
+ */
 const DocumentOptions = z.object({
   source: z.literal('document'),
   /**
