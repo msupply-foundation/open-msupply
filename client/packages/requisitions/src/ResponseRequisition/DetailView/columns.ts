@@ -5,14 +5,22 @@ import {
   getCommentPopoverColumn,
   useUrlQueryParams,
   ColumnDescription,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
+import {
+  getPackUnitQuantityCell,
+  useInitUnitStore,
+  useUnitVariant,
+} from '@openmsupply-client/system';
 
 export const useResponseColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     getCommentPopoverColumn(),
@@ -30,37 +38,58 @@ export const useResponseColumns = () => {
         getSortValue: rowData => rowData.item.name,
       },
     ],
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item.unitName,
-        getSortValue: rowData => rowData.item.unitName ?? '',
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      accessor: ({ rowData }) => {
+        const { variantsControl } = useUnitVariant(
+          rowData.item.id,
+          rowData.item.unitName ?? null
+        );
+
+        if (variantsControl) return variantsControl.activeVariant.longName;
+        else return rowData.item.unitName;
       },
-    ],
+    },
     [
       'stockOnHand',
       {
-        accessor: ({ rowData }) => rowData.itemStats.availableStockOnHand,
-        getSortValue: rowData => rowData.itemStats.availableStockOnHand,
         label: 'label.our-soh',
         description: 'description.our-soh',
+        sortable: false,
+        Cell: getPackUnitQuantityCell({
+          getItemId: row => row.itemId,
+          getQuantity: row =>
+            NumUtils.round(row.itemStats.availableStockOnHand),
+        }),
       },
     ],
     {
       key: 'customerStockOnHand',
-      accessor: ({ rowData }) =>
-        rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand,
-      getSortValue: rowData =>
-        rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? '',
-
       label: 'label.customer-soh',
       description: 'description.customer-soh',
       width: 100,
       align: ColumnAlign.Right,
+      getSortValue: rowData =>
+        rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? '',
+      Cell: getPackUnitQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row =>
+          NumUtils.round(
+            row?.linkedRequisitionLine?.itemStats.availableStockOnHand ?? 0
+          ),
+      }),
     },
     [
       'requestedQuantity',
-      { getSortValue: rowData => rowData.requestedQuantity },
+      {
+        getSortValue: rowData => rowData.requestedQuantity,
+        Cell: getPackUnitQuantityCell({
+          getItemId: row => row.itemId,
+          getQuantity: row => NumUtils.round(row.requestedQuantity ?? 0),
+        }),
+      },
     ],
   ];
 
@@ -69,6 +98,10 @@ export const useResponseColumns = () => {
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
       sortable: false,
+      Cell: getPackUnitQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => NumUtils.round(row.approvedQuantity),
+      }),
     });
     columnDefinitions.push({
       key: 'approvalComment',
@@ -79,7 +112,13 @@ export const useResponseColumns = () => {
 
   columnDefinitions.push([
     'supplyQuantity',
-    { getSortValue: rowData => rowData.supplyQuantity },
+    {
+      getSortValue: rowData => rowData.supplyQuantity,
+      Cell: getPackUnitQuantityCell({
+        getItemId: row => row.itemId,
+        getQuantity: row => NumUtils.round(row.supplyQuantity),
+      }),
+    },
   ]);
   columnDefinitions.push({
     label: 'label.remaining-to-supply',
@@ -87,8 +126,11 @@ export const useResponseColumns = () => {
     key: 'remainingToSupply',
     width: 100,
     align: ColumnAlign.Right,
-    accessor: ({ rowData }) => rowData.remainingQuantityToSupply,
     getSortValue: rowData => rowData.remainingQuantityToSupply,
+    Cell: getPackUnitQuantityCell({
+      getItemId: row => row.itemId,
+      getQuantity: row => NumUtils.round(row.remainingQuantityToSupply),
+    }),
   });
   columnDefinitions.push(GenericColumnKey.Selection);
 
