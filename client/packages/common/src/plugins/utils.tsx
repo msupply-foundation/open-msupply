@@ -2,6 +2,7 @@ import React from 'react';
 import { ColumnDefinition } from '../ui';
 import { RecordWithId } from '../types/utility';
 import { Environment } from '@openmsupply-client/config';
+import { PluginModule } from './types';
 
 /* eslint-disable camelcase */
 declare const __webpack_init_sharing__: (shareScope: string) => Promise<void>;
@@ -20,9 +21,6 @@ type Container = {
   init: (shareScope: unknown) => Promise<void>;
 };
 
-type PluginModule = {
-  default: React.ComponentType<{ data: unknown }>;
-};
 type PluginColumn<T extends RecordWithId> = {
   default: ColumnDefinition<T>;
 };
@@ -54,8 +52,9 @@ export const fetchPlugin = (url: string, plugin: string): Promise<Container> =>
     document.head.appendChild(script);
   });
 
-export const loadPluginModule = (props: loadPluginProps) =>
-  loadPlugin<PluginModule>(props);
+export function loadPluginModule<T>(props: loadPluginProps) {
+  return loadPlugin<PluginModule<T>>(props);
+}
 
 export const loadPluginColumn = <T extends RecordWithId>(
   props: loadPluginProps

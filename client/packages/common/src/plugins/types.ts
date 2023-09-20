@@ -1,4 +1,4 @@
-import { FunctionComponent } from 'react';
+// import { FunctionComponent } from 'react';
 import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
@@ -11,19 +11,14 @@ export type ComponentPluginData<T> = extractDataType<
   Extract<ComponentPlugin, { type: T }>
 >;
 
-type extractColumnType<Type> = Type extends ColumnPluginBase<infer DataType>
-  ? DataType
-  : never;
+// export type PluginComponent<T> = FunctionComponent<{ data: T }>;
 
-export type ColumnPluginColumn<T> = extractColumnType<
-  Extract<ColumnPlugin, { type: T }>
->;
-
-export type PluginComponent<T> = FunctionComponent<{ data: T }>;
+export type PluginModule<DataType> = {
+  default: React.ComponentType<{ data?: DataType | undefined }>;
+};
 
 export interface ComponentPluginBase<T> {
-  Component: PluginComponent<T> | undefined;
-  isLoaded: boolean;
+  component: () => Promise<PluginModule<T>>;
   module: string;
   localModule?: string;
   name: string;
