@@ -279,7 +279,6 @@
   "approval-status.denied": "Denegado",
   "approval-status.none": "Ninguno",
   "approval-status.pending": "Pendiente",
-  "label.num-stocktake-packs": "Número de paquetes",
   "label.auth-status": "Estado de Aprobación",
   "label.group-by-item": "Agrupar por artículo",
   "label.requested-packs": "Paquetes solicitados",
