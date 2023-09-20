@@ -83,6 +83,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
 fn get_date_fields() -> Vec<TableAndFieldName> {
     vec![
         ("name", "date_of_birth"),
+        ("name", "date_of_death"),
         ("stock_line", "expiry_date"),
         ("requisition", "expected_delivery_date"),
         ("invoice_line", "expiry_date"),
