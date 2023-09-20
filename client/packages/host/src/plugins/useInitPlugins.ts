@@ -7,6 +7,10 @@ import {
   PluginDefinition,
   usePluginProvider,
   loadPluginColumn,
+  loadPluginModule,
+  ComponentPluginData,
+  ComponentPluginType,
+  PluginModule,
 } from '@openmsupply-client/common';
 import { useHost } from '../api';
 
@@ -21,7 +25,7 @@ interface PluginColumns {
 interface PluginComponents {
   localModule?: string;
   module: string;
-  type: string;
+  type: ComponentPluginType;
 }
 
 interface PluginDependencies {
@@ -43,10 +47,13 @@ const mapPlugin = (plugin: PluginNode): PluginDefinition | null => {
     const columnPlugins: ColumnPlugin[] = [];
     const pluginConfig = JSON.parse(config) as PluginConfig;
 
-    pluginConfig.components?.forEach(component => {
+    pluginConfig.components?.forEach((component: PluginComponents) => {
       const { type, module, localModule } = component;
       componentPlugins.push({
-        isLoaded: false,
+        component: loadPluginModule<ComponentPluginData<unknown>>({
+          plugin: pluginConfig.name,
+          module,
+        }),
         localModule,
         module,
         name: pluginConfig.name,
@@ -110,8 +117,19 @@ export const useInitPlugins = () => {
           `../../../plugins/${plugin.path}/src/${module}`
         )
           .then(module => {
-            mapped.Component = module.default;
-            mapped.isLoaded = true;
+            mapped.component = <T>() =>
+              new Promise<PluginModule<T>>((resolve, reject) => {
+                if (module.default) {
+                  resolve(module);
+                } else {
+                  reject(
+                    new Error(
+                      `Unable to load plugin ${mapped.module}. Check that the module has a default export.`
+                    )
+                  );
+                }
+              });
+
             addComponentPlugin(mapped);
           })
           .catch(handleImportError);
