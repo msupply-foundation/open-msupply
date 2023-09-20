@@ -46,7 +46,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   mode,
 }) => {
   const item = !draft ? null : draft.item ?? null;
-  const t = useTranslation(['dispensary']);
+  const t = useTranslation(['dispensary', 'distribution']);
   const { info, warning } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -149,7 +149,9 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       0
     );
     if (allocated === 0) {
-      const warningSnack = warning(t('warning.no-quantity-allocated'));
+      const warningSnack = warning(
+        t('warning.no-quantity-allocated', { ns: 'distribution' })
+      );
       warningSnack();
       return;
     } else {
