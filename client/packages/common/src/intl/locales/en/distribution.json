@@ -106,5 +106,5 @@
   "stocktake.description-template": "Created by {{username}} on {{date}}",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "info.no-shipment": "Finalising this requisition will prevent you from creating a shipment for it.",
-  "warning.no-quantity-allocated": "No stock has been allocated. Please allocate some stock cancel"
+  "warning.no-quantity-allocated": "No stock has been allocated. Please allocate some stock or Cancel"
 }
