@@ -31,8 +31,6 @@
   "label.hide-stock-over-minimum": "Ocultar estoque acima do mínimo",
   "label.max": "Máximo",
   "label.min": "Mínimo",
-  "label.max-months-of-stock": "Objetivo MDE (Meses de Estoque)",
-  "label.min-months-of-stock": "Limite de reordenação MDE (Meses De Estoque)",
   "label.moving-average": "Média Móvel (3meses)",
   "label.pricing": "Preços",
   "label.number-months_one": "{{count}} Mês",
