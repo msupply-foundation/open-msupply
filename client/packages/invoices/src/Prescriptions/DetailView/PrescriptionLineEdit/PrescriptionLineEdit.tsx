@@ -153,18 +153,17 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       );
       warningSnack();
       return;
-    } else {
-      try {
-        onSave();
-        setIsDirty(false);
-        if (!!placeholder) {
-          const infoSnack = info(t('message.placeholder-line'));
-          infoSnack();
-        }
-        onClose();
-      } catch (e) {
-        // console.log(e);
+    }
+    try {
+      onSave();
+      setIsDirty(false);
+      if (!!placeholder) {
+        const infoSnack = info(t('message.placeholder-line'));
+        infoSnack();
       }
+      onClose();
+    } catch (e) {
+      // console.log(e);
     }
   };
 
