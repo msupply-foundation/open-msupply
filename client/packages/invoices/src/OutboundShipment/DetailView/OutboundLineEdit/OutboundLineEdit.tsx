@@ -200,7 +200,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         <DialogButton
           disabled={!currentItem}
           variant="ok"
-          onClick={() => handleClick()}
+          onClick={handleClick}
         />
       }
       height={height}

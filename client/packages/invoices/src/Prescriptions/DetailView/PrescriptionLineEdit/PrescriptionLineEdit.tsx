@@ -184,7 +184,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
         <DialogButton
           disabled={!currentItem}
           variant="ok"
-          onClick={() => handleClick()}
+          onClick={handleClick}
         />
       }
       height={height}
