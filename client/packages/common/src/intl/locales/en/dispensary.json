@@ -86,5 +86,5 @@
   "placeholder.search-by-identifier": "Search by id",
   "warning.cannot-create-placeholder-packs": "There is a total of {{quantity}} packs available. Unable to allocate the full amount requested.",
   "warning.cannot-create-placeholder-units": "There is a total of {{quantity}} units available. Unable to allocate the full amount requested.",
-  "warning.no-quantity-allocated": "No stock has been allocated. Please allocate some stock or click 'Cancel'"
+  "warning.no-quantity-allocated": "No stock has been allocated. Please allocate some stock or cancel"
 }
