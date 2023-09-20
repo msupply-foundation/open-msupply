@@ -11,6 +11,7 @@ import {
   DefaultFormRowSpacing,
   DefaultFormRowSx,
   FORM_LABEL_WIDTH,
+  JsonFormsConfig,
   useZodOptionsValidation,
 } from '../common';
 import {
@@ -157,7 +158,8 @@ const useDisplayValue = (
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { label, uischema, config } = props;
+  const { label, uischema } = props;
+  const config: JsonFormsConfig = props.config;
 
   const [datetime, setDatetime] = useState<Date | undefined>();
 
