@@ -160,11 +160,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   const handleClick = async () => {
-    const allocated = draftStockOutLines?.reduce(
-      (accumulator, stockOutLine) => accumulator + stockOutLine.numberOfPacks,
-      0
-    );
-    if (allocated === 0) {
+    const nonAllocated =
+      draftStockOutLines.filter(line => line.numberOfPacks > 0).length === 0;
+
+    if (nonAllocated) {
       const warningSnack = warning(t('warning.no-quantity-allocated'));
       warningSnack();
       return;
