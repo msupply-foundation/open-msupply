@@ -143,6 +143,31 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
+  const handleClick = async () => {
+    const allocated = draftStockOutLines?.reduce(
+      (accumulator, stockOutLine) => accumulator + stockOutLine.numberOfPacks,
+      0
+    );
+    console.log('allocated', allocated);
+    if (allocated === 0) {
+      const warningSnack = warning(t('warning.no-quantity-allocated'));
+      warningSnack();
+      return;
+    } else {
+      try {
+        onSave();
+        setIsDirty(false);
+        if (!!placeholder) {
+          const infoSnack = info(t('message.placeholder-line'));
+          infoSnack();
+        }
+        onClose();
+      } catch (e) {
+        // console.log(e);
+      }
+    }
+  };
+
   return (
     <Modal
       title={t(
@@ -160,19 +185,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
         <DialogButton
           disabled={!currentItem}
           variant="ok"
-          onClick={async () => {
-            try {
-              onSave();
-              setIsDirty(false);
-              if (!!placeholder) {
-                const infoSnack = info(t('message.placeholder-line'));
-                infoSnack();
-              }
-              onClose();
-            } catch (e) {
-              // console.log(e);
-            }
-          }}
+          onClick={() => handleClick()}
         />
       }
       height={height}
