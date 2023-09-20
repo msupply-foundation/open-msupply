@@ -4,7 +4,7 @@ import {
   useNotification,
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
-import { JsonData, JsonForm } from './common';
+import { JsonData, JsonForm, JsonFormsConfig } from './common';
 import _ from 'lodash';
 import {
   JsonFormsRendererRegistryEntry,
@@ -124,12 +124,8 @@ export type JsonFormData<R> = {
  * What data is shown and how it is saved can be customized through the `jsonFormData` form
  * parameter.
  */
-
 export const useJsonForms = <R,>(
-  config: {
-    documentName?: string;
-    patientId?: string;
-  },
+  config: JsonFormsConfig,
   jsonFormData: JsonFormData<R>
 ) => {
   const { loadedData, isLoading, error, save, isCreating } = jsonFormData;
