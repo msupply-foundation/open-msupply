@@ -53,6 +53,10 @@ import {
 import { NumberField, numberTester } from './components/Number';
 import { DateTime, datetimeTester } from './components/DateTime';
 import { Header, headerTester } from './components/Header';
+import {
+  FORM_COLUMN_MAX_WIDTH,
+  FORM_LABEL_COLUMN_WIDTH,
+} from './styleConstants';
 
 export type JsonType = string | number | boolean | null | undefined;
 
@@ -235,13 +239,13 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
           '& .MuiGrid-grid-xs-true': {
             '& .MuiGrid-container': {
               '& .MuiGrid-grid-xs-true': {
-                maxWidth: 600,
+                maxWidth: FORM_COLUMN_MAX_WIDTH,
               },
             },
           },
         },
-        '& .MuiTypography-root': {
-          width: '40%',
+        '& h1, h2, h3, h4, h5, h6': {
+          width: FORM_LABEL_COLUMN_WIDTH,
           textAlign: 'right',
           whiteSpace: 'nowrap',
         },
