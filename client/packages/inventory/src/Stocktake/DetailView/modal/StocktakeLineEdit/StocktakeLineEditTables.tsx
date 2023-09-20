@@ -8,7 +8,6 @@ import {
   CurrencyInputCell,
   useTranslation,
   getExpiryDateInputColumn,
-  PositiveNumberInputCell,
   NonNegativeDecimalCell,
   EnabledCheckboxCell,
   ColumnDescription,
@@ -21,6 +20,7 @@ import { DraftStocktakeLine } from './utils';
 import {
   Adjustment,
   getLocationInputColumn,
+  getPackUnitCell,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
 } from '@openmsupply-client/system';
@@ -162,7 +162,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
     getBatchColumn(update, theme),
     {
       key: 'snapshotNumberOfPacks',
-      label: 'label.num-stocktake-packs',
+      label: 'label.snapshot-num-of-packs',
       width: 100,
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
@@ -171,12 +171,16 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
     },
     {
-      key: 'packSize',
-      label: 'label.pack-size',
-      width: 100,
-      getIsDisabled: rowData => !!rowData.stockLine,
-      Cell: PositiveNumberInputCell,
-      setter: patch => update({ ...patch, countThisLine: true }),
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: getPackUnitCell({
+        getItemId: row => row?.itemId,
+        getPackSize: row => {
+          return row?.packSize || 1;
+        },
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
     },
     {
       key: 'countedNumberOfPacks',
