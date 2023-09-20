@@ -148,7 +148,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       (accumulator, stockOutLine) => accumulator + stockOutLine.numberOfPacks,
       0
     );
-    console.log('allocated', allocated);
     if (allocated === 0) {
       const warningSnack = warning(t('warning.no-quantity-allocated'));
       warningSnack();
