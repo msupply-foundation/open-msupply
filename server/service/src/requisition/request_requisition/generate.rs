@@ -25,13 +25,11 @@ pub fn generate_suggested_quantity(
     }
     let months_of_stock = available_stock_on_hand as f64 / average_monthly_consumption as f64;
 
-    let default_min_months_of_stock: f64;
-
-    if min_months_of_stock == 0.0 {
-        default_min_months_of_stock = max_months_of_stock
+    let default_min_months_of_stock = if min_months_of_stock == 0.0 {
+        max_months_of_stock
     } else {
-        default_min_months_of_stock = min_months_of_stock
-    }
+        min_months_of_stock
+    };
 
     if max_months_of_stock == 0.0 || (months_of_stock > default_min_months_of_stock) {
         return 0;
