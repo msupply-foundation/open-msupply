@@ -22,7 +22,7 @@ import { z } from 'zod';
 import { useZodOptionsValidation } from '../../hooks/useZodOptionsValidation';
 
 import { DateUtils } from '@common/intl';
-import { JsonData } from '../../JsonForm';
+import { JsonData, JsonFormsConfig } from '../../JsonForm';
 import {
   CommonOptions,
   ArrayControlCustomProps,
@@ -59,7 +59,8 @@ const NotesOptions = CommonOptions.extend({
 });
 
 const NotesComponent = (props: ArrayControlCustomProps) => {
-  const { enabled, data, config } = props;
+  const { enabled, data } = props;
+  const config: JsonFormsConfig = props.config;
   const { localisedDateTime } = useFormatDateTime();
 
   const options = NotesOptions.parse(props.uischema.options);
@@ -139,7 +140,7 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
     if (
       restrictions?.isCurrentUser &&
       child['authorId'] &&
-      child['authorId'] !== config.user.id
+      child['authorId'] !== config.user?.id
     )
       return false;
 

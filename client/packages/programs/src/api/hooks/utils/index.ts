@@ -2,16 +2,18 @@ import { useClinicianApi } from './useClinicianApi';
 import { usePatientDocumentApi } from './useDocumentApi';
 import { useDocumentRegistryApi } from './useDocumentRegistryApi';
 import { useEncounterApi } from './useEncounterApi';
-import { useEncounterIdFromUrl } from './useEncounterIdFromUrl';
+import { useIdFromUrl } from './useIdFromUrl';
 import { useProgramEnrolmentApi } from './useProgramEnrolmentApi';
 import { useProgramEventApi } from './useProgramEventApi';
+import { useContactTraceApi } from './useContactTraceApi';
 
 export const Utils = {
   useDocumentApi: usePatientDocumentApi,
   useDocumentRegistryApi,
   useEncounterApi,
-  useEncounterIdFromUrl,
+  useIdFromUrl,
   useProgramEnrolmentApi,
   useClinicianApi,
   useProgramEventApi,
+  useContactTraceApi,
 };
