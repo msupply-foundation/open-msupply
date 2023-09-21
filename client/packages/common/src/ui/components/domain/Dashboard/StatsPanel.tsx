@@ -3,7 +3,7 @@ import { Grid, Paper, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
-import { StyleFreeLink } from '../../navigation/AppNavLink/StyleFreeLink';
+import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
 
 export type Stat = {
   label: string;
@@ -129,7 +129,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
             color="secondary"
             style={{ fontSize: 12, fontWeight: 500 }}
           >
-            {link ? <StyleFreeLink href={link}>{title}</StyleFreeLink> : title}
+            {link ? <SimpleLink href={link}>{title}</SimpleLink> : title}
           </Typography>
         </Grid>
       </Grid>
