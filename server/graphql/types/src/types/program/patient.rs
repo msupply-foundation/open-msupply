@@ -88,6 +88,10 @@ impl PatientNode {
         self.patient.is_deceased
     }
 
+    pub async fn date_of_death(&self) -> Option<NaiveDate> {
+        self.patient.date_of_death.clone()
+    }
+
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
