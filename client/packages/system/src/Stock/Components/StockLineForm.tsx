@@ -103,7 +103,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
         gap={1}
       >
         <TextWithLabelRow
-          label={t('label.pack-quantity')}
+          label={t('label.num-packs')}
           text={String(draft.totalNumberOfPacks)}
           textProps={{ textAlign: 'end' }}
         />
