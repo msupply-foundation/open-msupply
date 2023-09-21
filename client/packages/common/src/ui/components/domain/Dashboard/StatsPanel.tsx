@@ -102,53 +102,45 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   title,
   width,
   link,
-}) => {
-  console.log('title', title);
-  console.log('link', link);
-  return (
-    <Paper
-      sx={{
-        borderRadius: '16px',
-        marginTop: '14px',
-        marginBottom: '21px',
-        boxShadow: theme => theme.shadows[1],
-        padding: '14px 24px',
-        width: width ? `${width}px` : undefined,
-      }}
-    >
-      <Grid container>
-        <Grid alignItems="center" display="flex">
-          <Grid item style={{ marginInlineEnd: 8 }}>
-            <StockIcon
-              sx={theme => ({
-                fill: theme.palette.secondary.main,
-                height: 16,
-                width: 16,
-              })}
-            />
-          </Grid>
-          <Grid item>
-            <Typography
-              color="secondary"
-              style={{ fontSize: 12, fontWeight: 500 }}
-            >
-              {link ? (
-                <StyleFreeLink href={link}>{title}</StyleFreeLink>
-              ) : (
-                title
-              )}
-            </Typography>
-          </Grid>
-        </Grid>
-        <Grid container justifyContent="space-between" alignItems="flex-end">
-          <Content
-            isError={isError}
-            isLoading={isLoading}
-            stats={stats}
-            error={error}
+}) => (
+  <Paper
+    sx={{
+      borderRadius: '16px',
+      marginTop: '14px',
+      marginBottom: '21px',
+      boxShadow: theme => theme.shadows[1],
+      padding: '14px 24px',
+      width: width ? `${width}px` : undefined,
+    }}
+  >
+    <Grid container>
+      <Grid alignItems="center" display="flex">
+        <Grid item style={{ marginInlineEnd: 8 }}>
+          <StockIcon
+            sx={theme => ({
+              fill: theme.palette.secondary.main,
+              height: 16,
+              width: 16,
+            })}
           />
         </Grid>
+        <Grid item>
+          <Typography
+            color="secondary"
+            style={{ fontSize: 12, fontWeight: 500 }}
+          >
+            {link ? <StyleFreeLink href={link}>{title}</StyleFreeLink> : title}
+          </Typography>
+        </Grid>
       </Grid>
-    </Paper>
-  );
-};
+      <Grid container justifyContent="space-between" alignItems="flex-end">
+        <Content
+          isError={isError}
+          isLoading={isLoading}
+          stats={stats}
+          error={error}
+        />
+      </Grid>
+    </Grid>
+  </Paper>
+);
