@@ -3,38 +3,32 @@ import {
   ComponentPlugin,
   ComponentPluginData,
   ComponentPluginType,
+  PluginModule,
 } from '../types';
 import { usePluginProvider } from '../components';
 import { PluginLoader } from '../components';
 
-const mapPlugin = <T extends ComponentPluginType>(
-  plugin: Extract<ComponentPlugin, { type: T }>,
+const mapComponentPlugin = <T extends ComponentPluginType>(
+  component: Extract<ComponentPlugin, { type: T }>,
   data?: ComponentPluginData<T>
 ) => {
-  if (plugin.isLoaded) {
-    if (!plugin.Component) {
-      console.error(
-        `Plugin ${plugin.name} isLoaded but the Component is undefined. Check that the module has a default export.`
-      );
-      return null;
-    }
-    return (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      React.createElement<{ data: any /* ComponentPluginData<T> */ }>(
-        plugin.Component,
-        {
-          data,
-          key: plugin.name,
-        }
-      )
-    );
-  }
+  const Component = () =>
+    new Promise<PluginModule<unknown>>(resolve => {
+      component
+        .component()
+        .then(module => resolve(module as PluginModule<unknown>))
+        .catch(e => {
+          console.error(e);
+          resolve({ default: () => null });
+        });
+    });
+
   return (
     <PluginLoader
-      name={plugin.name}
-      module={plugin.module}
+      Component={Component}
       data={data}
-      key={`${plugin.name}-${plugin.module}`}
+      key={`${component.pluginName}-${component.module}`}
+      name={component.pluginName}
     />
   );
 };
@@ -50,6 +44,6 @@ export function usePluginElements<T extends ComponentPluginType>({
   const plugins = getComponentPlugins(type);
 
   return plugins.map((plugin: Extract<ComponentPlugin, { type: T }>) =>
-    mapPlugin(plugin, data)
+    mapComponentPlugin(plugin, data)
   );
 }
