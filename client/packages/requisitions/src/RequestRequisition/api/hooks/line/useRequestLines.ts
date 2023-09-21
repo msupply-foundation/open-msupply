@@ -15,7 +15,7 @@ export const useRequestLines = () => {
   ]);
 
   const sorted = useMemo(() => {
-    const minMonthsOfStockDefined = minMonthsOfStock ?? maxMonthsOfStock;
+    const threshold = minMonthsOfStock ?? maxMonthsOfStock;
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
     const { getSortValue } = currentColumn ?? {};
     const sorted = getSortValue
@@ -28,8 +28,8 @@ export const useRequestLines = () => {
       return sorted.filter(
         item =>
           item.itemStats.availableStockOnHand <
-            item.itemStats.averageMonthlyConsumption *
-              minMonthsOfStockDefined && matchItem(itemFilter, item.item)
+            item.itemStats.averageMonthlyConsumption * threshold &&
+          matchItem(itemFilter, item.item)
       );
     } else {
       return sorted.filter(item => matchItem(itemFilter, item.item));
