@@ -17,27 +17,27 @@ import { useHost } from '../api';
 // Used for local plugins in dev mode
 declare const LOCAL_PLUGINS: PluginNode[];
 
-interface PluginColumns {
+interface PluginColumn {
   module: string;
   type: string;
 }
 
-interface PluginComponents {
+interface PluginComponent {
   localModule?: string;
   module: string;
   type: ComponentPluginType;
 }
 
-interface PluginDependencies {
+interface PluginDependency {
   omSupplyVersion: string;
 }
 
 interface PluginConfig {
   name: string;
   version: string;
-  columns?: PluginColumns[];
-  components: PluginComponents[];
-  dependencies: PluginDependencies;
+  columns?: PluginColumn[];
+  components: PluginComponent[];
+  dependencies: PluginDependency;
 }
 
 const mapPlugin = (plugin: PluginNode): PluginDefinition | null => {
@@ -47,7 +47,7 @@ const mapPlugin = (plugin: PluginNode): PluginDefinition | null => {
     const columnPlugins: ColumnPlugin[] = [];
     const pluginConfig = JSON.parse(config) as PluginConfig;
 
-    pluginConfig.components?.forEach((component: PluginComponents) => {
+    pluginConfig.components?.forEach((component: PluginComponent) => {
       const { type, module, localModule } = component;
       componentPlugins.push({
         component: loadPluginModule<ComponentPluginData<unknown>>({
@@ -56,7 +56,7 @@ const mapPlugin = (plugin: PluginNode): PluginDefinition | null => {
         }),
         localModule,
         module,
-        name: pluginConfig.name,
+        pluginName: pluginConfig.name,
         type,
       } as ComponentPlugin);
     });
@@ -69,7 +69,7 @@ const mapPlugin = (plugin: PluginNode): PluginDefinition | null => {
             module => module.default
           ),
         module,
-        name,
+        pluginName: pluginConfig.name,
         type,
       } as ColumnPlugin);
     });
@@ -129,7 +129,6 @@ export const useInitPlugins = () => {
                   );
                 }
               });
-
             addComponentPlugin(mapped);
           })
           .catch(handleImportError);
