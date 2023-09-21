@@ -6,7 +6,6 @@ import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidat
 import { Typography } from '@openmsupply-client/common';
 import { SearchWithUserSource } from './SearchWithUserSource';
 import { SearchWithDocumentSource } from './SearchWithDocumentSource';
-import { QueryValues } from './useSearchQueries';
 import { SearchWithPatientContactSource } from './SearchWithPatientContactSource';
 
 /**
@@ -17,10 +16,6 @@ const UserOptions = z.object({
    * Source of the search data -- user input or extract it from document
    */
   source: z.literal('user'),
-  /**
-   * Which pre-defined query to use (in useSearchQueries)
-   */
-  query: z.enum(QueryValues),
   /**
    * Pattern for formatting options list items (e.g. "${firstName} ${lastName}")
    */

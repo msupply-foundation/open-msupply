@@ -1,4 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { RegexUtils } from '@openmsupply-client/common';
+import { PatientRowFragment } from '@openmsupply-client/system';
 import { ControlProps, UISchemaElement } from '@jsonforms/core';
 import {
   useTranslation,
@@ -14,9 +16,11 @@ import {
   DefaultFormRowSx,
   FORM_LABEL_WIDTH,
 } from '../../common/styleConstants';
-import { useSearchQueries } from './useSearchQueries';
+import { usePatientSearchQuery } from './usePatientSearchQuery';
 import { UserOptions } from './Search';
 import { JsonFormsDispatch } from '@jsonforms/react';
+
+const { formatTemplateString } = RegexUtils;
 
 export const SearchWithUserSource = (
   props: ControlProps & { options: UserOptions }
@@ -35,47 +39,27 @@ export const SearchWithUserSource = (
 
   const isPatientSelected = !!data?.id;
 
-  const {
-    runQuery,
-    getOptionLabel,
-    saveFields,
-    error: queryError,
-    results,
-    resetResults,
-  } = useSearchQueries(options ?? {});
+  const searchFilter = !isPatientSelected
+    ? createSearchFilter(options?.searchFields, data)
+    : undefined;
 
-  useEffect(() => {
-    if (!data) {
-      handleChange(path, {});
-      return;
-    }
+  const { results, error: queryError } = usePatientSearchQuery(searchFilter);
 
-    // Only run the database query if a specific patient hasn't yet been
-    // selected
-    if (isPatientSelected) return;
-
-    const searchFilter: FilterBy = {};
-    options.searchFields.forEach(field => {
-      const match =
-        field in queryMatchTypes
-          ? queryMatchTypes?.[field as keyof typeof queryMatchTypes]
-          : 'like';
-      if (data[field]) searchFilter[field] = { [match]: data[field] };
-    });
-    if (Object.keys(searchFilter).length > 0) runQuery(searchFilter);
-    else resetResults();
-  }, [data]);
+  const getOptionLabel = (data: PatientRowFragment) =>
+    options?.optionString
+      ? formatTemplateString(options?.optionString, data)
+      : `${data['code']} - ${data['firstName']} ${data['lastName']}`;
 
   const handlePatientSelect = (patientId: string) => {
     const patient = results.find(p => (p.id = patientId));
     if (!patient) return;
-    if (!saveFields) {
+    if (!options?.saveFields) {
       handleChange(path, patient);
       return;
     }
     const newData = Object.fromEntries(
       Object.entries(patient).filter(
-        ([key]) => (saveFields as string[])?.includes(key)
+        ([key]) => (options.saveFields as string[])?.includes(key)
       )
     );
     handleChange(path, newData);
@@ -142,7 +126,6 @@ export const SearchWithUserSource = (
                   <Button
                     onClick={() => {
                       handleChange(path, {});
-                      resetResults();
                     }}
                     variant="outlined"
                     size="small"
@@ -169,4 +152,19 @@ const queryMatchTypes = {
   // Add more as required
   gender: 'equalTo',
   dateOfBirth: 'equalTo',
+};
+
+const createSearchFilter = (searchFields: string[], data: any) => {
+  if (!data) return undefined;
+
+  const searchFilter: FilterBy = {};
+  searchFields.forEach(field => {
+    const match =
+      field in queryMatchTypes
+        ? queryMatchTypes?.[field as keyof typeof queryMatchTypes]
+        : 'like';
+    if (data[field]) searchFilter[field] = { [match]: data[field] };
+  });
+
+  return Object.keys(searchFilter).length > 0 ? searchFilter : undefined;
 };
