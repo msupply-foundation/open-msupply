@@ -3,6 +3,7 @@ import { Grid, Paper, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
+import { StyleFreeLink } from '../../navigation/AppNavLink/StyleFreeLink';
 
 export type Stat = {
   label: string;
@@ -15,6 +16,7 @@ export interface StatsPanelProps {
   stats: Stat[];
   title: string;
   width?: number;
+  link?: string;
 }
 
 const Statistic: FC<Stat> = ({ label, value }) => {
@@ -99,45 +101,54 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   stats,
   title,
   width,
-}) => (
-  <Paper
-    sx={{
-      borderRadius: '16px',
-      marginTop: '14px',
-      marginBottom: '21px',
-      boxShadow: theme => theme.shadows[1],
-      padding: '14px 24px',
-      width: width ? `${width}px` : undefined,
-    }}
-  >
-    <Grid container>
-      <Grid alignItems="center" display="flex">
-        <Grid item style={{ marginInlineEnd: 8 }}>
-          <StockIcon
-            sx={theme => ({
-              fill: theme.palette.secondary.main,
-              height: 16,
-              width: 16,
-            })}
+  link,
+}) => {
+  console.log('title', title);
+  console.log('link', link);
+  return (
+    <Paper
+      sx={{
+        borderRadius: '16px',
+        marginTop: '14px',
+        marginBottom: '21px',
+        boxShadow: theme => theme.shadows[1],
+        padding: '14px 24px',
+        width: width ? `${width}px` : undefined,
+      }}
+    >
+      <Grid container>
+        <Grid alignItems="center" display="flex">
+          <Grid item style={{ marginInlineEnd: 8 }}>
+            <StockIcon
+              sx={theme => ({
+                fill: theme.palette.secondary.main,
+                height: 16,
+                width: 16,
+              })}
+            />
+          </Grid>
+          <Grid item>
+            <Typography
+              color="secondary"
+              style={{ fontSize: 12, fontWeight: 500 }}
+            >
+              {link ? (
+                <StyleFreeLink href={link}>{title}</StyleFreeLink>
+              ) : (
+                title
+              )}
+            </Typography>
+          </Grid>
+        </Grid>
+        <Grid container justifyContent="space-between" alignItems="flex-end">
+          <Content
+            isError={isError}
+            isLoading={isLoading}
+            stats={stats}
+            error={error}
           />
         </Grid>
-        <Grid item>
-          <Typography
-            color="secondary"
-            style={{ fontSize: 12, fontWeight: 500 }}
-          >
-            {title}
-          </Typography>
-        </Grid>
       </Grid>
-      <Grid container justifyContent="space-between" alignItems="flex-end">
-        <Content
-          isError={isError}
-          isLoading={isLoading}
-          stats={stats}
-          error={error}
-        />
-      </Grid>
-    </Grid>
-  </Paper>
-);
+    </Paper>
+  );
+};
