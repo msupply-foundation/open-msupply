@@ -8,13 +8,13 @@ import {
 import { usePluginProvider } from '../components';
 import { PluginLoader } from '../components';
 
-const mapPlugin = <T extends ComponentPluginType>(
-  plugin: Extract<ComponentPlugin, { type: T }>,
+const mapComponentPlugin = <T extends ComponentPluginType>(
+  component: Extract<ComponentPlugin, { type: T }>,
   data?: ComponentPluginData<T>
 ) => {
   const Component = () =>
     new Promise<PluginModule<unknown>>(resolve => {
-      plugin
+      component
         .component()
         .then(module => resolve(module as PluginModule<unknown>))
         .catch(e => {
@@ -27,8 +27,8 @@ const mapPlugin = <T extends ComponentPluginType>(
     <PluginLoader
       Component={Component}
       data={data}
-      key={`${plugin.name}-${plugin.module}`}
-      name={plugin.name}
+      key={`${component.pluginName}-${component.module}`}
+      name={component.pluginName}
     />
   );
 };
@@ -44,6 +44,6 @@ export function usePluginElements<T extends ComponentPluginType>({
   const plugins = getComponentPlugins(type);
 
   return plugins.map((plugin: Extract<ComponentPlugin, { type: T }>) =>
-    mapPlugin(plugin, data)
+    mapComponentPlugin(plugin, data)
   );
 }

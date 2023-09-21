@@ -21,13 +21,13 @@ export interface ComponentPluginBase<T> {
   component: () => Promise<PluginModule<T>>;
   module: string;
   localModule?: string;
-  name: string;
+  pluginName: string;
 }
 
 export interface ColumnPluginBase<T extends RecordWithId> {
   column: () => Promise<ColumnDefinition<T>>;
   module: string;
-  name: string;
+  pluginName: string;
 }
 
 export type ComponentPluginType =
