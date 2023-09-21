@@ -3,7 +3,6 @@
   "heading.edit-tax-rate": "Hadia persentajem taxa nian",
   "messages.click-to-return-to-requisitions": "Labele atu hetan requizisaun ho ID. Klik OK atu fila fali ba lista requizisaun",
   "messages.confirm-delete-shipments_other": "Ne'e sei hasai permanente {{count}} remessas",
-  "messages.changing-max-mos": "Ne'e sei muda tarjetu Stock Maximu ba fulan nian.",
   "messages.confirm-delete-invoice-lines_other": "Ne'e sei hasai permanente {{count}} linas husi Invoice ida ne'e",
   "messages.confirm-delete-shipment-lines_one": "Ne'e sei hamos permanenti remessa lina 1",
   "button.add-from-master-list": "Aumenta husi Master List",
@@ -87,7 +86,6 @@
   "messages.confirm-delete-shipment-lines_other": "Ne'e sei hasai permanente {{count}} linas remessa",
   "messages.deleted-requisitions_one": "Hamos ona {{count}} pedidu",
   "messages.deleted-requisitions_other": "Hamos ona {{count}} pedidu sira",
-  "messages.changing-min-mos": "Ne'e sei muda threshold minimun stock ba fulan nian.",
   "messages.confirm-status-as": "Konfirma estatus hanesan $t({{status}})?",
   "messages.saved": "Salva ona"
 }
