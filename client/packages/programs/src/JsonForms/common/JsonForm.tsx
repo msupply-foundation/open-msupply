@@ -232,17 +232,11 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
       alignItems="center"
       width="100%"
       gap={2}
-      paddingX={10}
+      paddingX={5}
       sx={{
         alignItems: 'flex-start',
-        '& .MuiGrid-container': {
-          '& .MuiGrid-grid-xs-true': {
-            '& .MuiGrid-container': {
-              '& .MuiGrid-grid-xs-true': {
-                maxWidth: FORM_COLUMN_MAX_WIDTH,
-              },
-            },
-          },
+        '& .input-with-label-row': {
+          maxWidth: FORM_COLUMN_MAX_WIDTH,
         },
         '& h1, h2, h3, h4, h5, h6': {
           width: FORM_LABEL_COLUMN_WIDTH,
