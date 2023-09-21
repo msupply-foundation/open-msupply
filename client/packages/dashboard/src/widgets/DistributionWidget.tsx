@@ -15,7 +15,7 @@ import {
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useDashboard } from '../api';
 import { useOutbound } from '@openmsupply-client/invoices';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from 'packages/config';
 
 export const DistributionWidget: React.FC = () => {
   const modalControl = useToggle(false);
