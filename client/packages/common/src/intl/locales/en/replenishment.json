@@ -103,5 +103,6 @@
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "messages.shipment-saved": "Shipment saved 🥳",
   "info.cannot-edit-program-requisition": "Cannot edit supplier, minimum MOS, maximum MOS or add items in a program requisition.",
-  "template.requisition-sent": "Approved by {{name}}{{job}}. Email: {{email}} and Phone Number: {{phone}}."
+  "template.requisition-sent": "Approved by {{name}}{{job}}. Email: {{email}} and Phone Number: {{phone}}.",
+  "label.not-set": "Not set"
 }
