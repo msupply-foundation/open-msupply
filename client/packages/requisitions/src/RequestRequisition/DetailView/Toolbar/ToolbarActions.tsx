@@ -10,7 +10,6 @@ import {
 import { useRequest, useHideOverStocked } from '../../api';
 
 const months = [1, 2, 3, 4, 5, 6];
-const notSet = { label: 'Not Set', value: 0 };
 
 export const ToolbarActions = () => {
   const { on, toggle } = useHideOverStocked();
@@ -48,7 +47,7 @@ export const ToolbarActions = () => {
               isOptionEqualToValue={(a, b) => a.value === b.value}
               value={
                 minMonthsOfStock === 0
-                  ? { label: 'Not Set', value: 0 }
+                  ? { label: t('label.not-set'), value: 0 }
                   : {
                       label: t('label.number-months', {
                         count: minMonthsOfStock,
@@ -58,7 +57,7 @@ export const ToolbarActions = () => {
               }
               width="150px"
               options={[
-                notSet,
+                { label: t('label.not-set'), value: 0 },
                 ...months.map(numberOfMonths => ({
                   label: t('label.number-months', { count: numberOfMonths }),
                   value: numberOfMonths,
