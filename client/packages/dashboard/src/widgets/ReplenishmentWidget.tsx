@@ -15,7 +15,7 @@ import { ApiException, PropsWithChildrenOnly } from '@common/types';
 import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from 'packages/config';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
