@@ -147,7 +147,7 @@ export const DetailView: FC = () => {
     isError,
   } = useEncounter.document.byId(id);
 
-  const handleSave = useEncounter.document.upsert(
+  const handleSave = useEncounter.document.upsertDocument(
     encounter?.patient.id ?? '',
     encounter?.type ?? ''
   );
