@@ -192,40 +192,6 @@ export const useInboundShipmentColumns = () => {
           },
         },
       ],
-      {
-        key: 'packUnit',
-        label: 'label.pack',
-        sortable: false,
-        Cell: PackUnitMultipleCell,
-      },
-      {
-        label: 'label.sell',
-        key: 'sellPricePerPack',
-        align: ColumnAlign.Right,
-        width: 120,
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(
-              lines.map(line => ({ sell: getSellPrice(line) })),
-              'sell',
-              ''
-            );
-          } else {
-            return getSellPrice(rowData);
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return c(
-              ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
-            ).format();
-          } else {
-            return getSellPrice(rowData);
-          }
-        },
-      },
       [
         'unitQuantity',
         {
@@ -269,6 +235,53 @@ export const useInboundShipmentColumns = () => {
           },
         },
       ],
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackUnitMultipleCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
+          },
+          getPackSize: row => {
+            if ('lines' in row) return 1;
+            else return row?.packSize || 1;
+          },
+          getUnitName: row => {
+            if ('lines' in row) return null;
+            else return row?.item?.unitName ?? null;
+          },
+        }),
+      },
+      {
+        label: 'label.sell',
+        key: 'sellPricePerPack',
+        align: ColumnAlign.Right,
+        width: 120,
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.ifTheSameElseDefault(
+              lines.map(line => ({ sell: getSellPrice(line) })),
+              'sell',
+              ''
+            );
+          } else {
+            return getSellPrice(rowData);
+          }
+        },
+        getSortValue: rowData => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return c(
+              ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
+            ).format();
+          } else {
+            return getSellPrice(rowData);
+          }
+        },
+      },
       getRowExpandColumn(),
       GenericColumnKey.Selection,
     ],

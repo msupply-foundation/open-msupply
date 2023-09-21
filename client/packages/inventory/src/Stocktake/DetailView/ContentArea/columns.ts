@@ -13,12 +13,12 @@ import {
 import {
   InventoryAdjustmentReasonRowFragment,
   PackUnitMultipleCell,
+  getPackUnitCell,
   useInitUnitStore,
 } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
-import { getPackUnitCell } from '@openmsupply-client/system';
 
 interface UseStocktakeColumnOptions {
   sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
@@ -151,7 +151,14 @@ export const useStocktakeColumns = ({
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackUnitMultipleCell,
+        Cell: PackUnitMultipleCell({
+          getItemId: row => row?.item?.id ?? '',
+          getPackSize: row => {
+            if ('lines' in row) return 1;
+            else return row?.packSize || 1;
+          },
+          getUnitName: row => row?.item?.unitName ?? null,
+        }),
       },
       {
         key: 'snapshotNumPacks',
