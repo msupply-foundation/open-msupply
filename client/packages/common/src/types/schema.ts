@@ -3226,12 +3226,6 @@ export type PeriodNode = {
   startDate: Scalars['NaiveDate']['output'];
 };
 
-export type PluginDataConnector = {
-  __typename: 'PluginDataConnector';
-  nodes: Array<PluginDataNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type PluginDataFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   pluginName?: InputMaybe<EqualFilterStringInput>;
@@ -3249,6 +3243,8 @@ export type PluginDataNode = {
   relatedRecordType: RelatedRecordNodeType;
   storeId: Scalars['String']['output'];
 };
+
+export type PluginDataResponse = NodeError | PluginDataNode;
 
 export enum PluginDataSortFieldInput {
   Id = 'id',
@@ -3505,7 +3501,7 @@ export type Queries = {
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
-  pluginData: PluginDataConnector;
+  pluginData: PluginDataResponse;
   plugins: Array<PluginNode>;
   /**
    * Creates a printed report.
@@ -4118,7 +4114,7 @@ export type RequisitionLineNode = {
   requestedQuantity: Scalars['Int']['output'];
   /**
    * Calculated quantity
-   * When months_of_stock < requisition.min_months_of_stock, calculated = average_monthy_consumption * requisition.max_months_of_stock - months_of_stock
+   * When months_of_stock < requisition.min_months_of_stock, calculated = average_monthly_consumption * requisition.max_months_of_stock - months_of_stock
    */
   suggestedQuantity: Scalars['Int']['output'];
   /** Quantity to be supplied in the next shipment, only used in response requisition */

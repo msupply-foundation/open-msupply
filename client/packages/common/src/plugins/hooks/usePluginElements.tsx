@@ -11,7 +11,9 @@ export function usePluginElements<T extends RecordWithId>({
   type: ComponentPluginType;
   data?: T;
 }) {
-  const { getComponentPlugins } = usePluginProvider();
+  const getComponentPlugins = usePluginProvider(
+    state => state.getComponentPlugins
+  );
   const plugins = getComponentPlugins(type);
 
   return plugins.map(plugin =>
