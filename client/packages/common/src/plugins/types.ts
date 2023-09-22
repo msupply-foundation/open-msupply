@@ -11,8 +11,6 @@ export type ComponentPluginData<T> = extractDataType<
   Extract<ComponentPlugin, { type: T }>
 >;
 
-// export type PluginComponent<T> = FunctionComponent<{ data: T }>;
-
 export type PluginModule<DataType> = {
   default: React.ComponentType<{ data?: DataType | undefined }>;
 };
