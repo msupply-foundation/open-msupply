@@ -18,9 +18,13 @@ import { useRequest } from '../../../api/hooks';
 
 export interface StockEvolutionProps {
   id: string;
+  numberOfPacksFromQuantity: (totalQuantity: number) => number;
 }
 
-export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
+export const StockEvolution: React.FC<StockEvolutionProps> = ({
+  id,
+  numberOfPacksFromQuantity,
+}) => {
   const t = useTranslation('replenishment');
   const theme = useTheme();
   const { dayMonthShort } = useFormatDateTime();
@@ -40,6 +44,13 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
     }
   };
   if (!data || !data.stockEvolution) return null;
+
+  const stockEvolution = data.stockEvolution.nodes.map(entry => ({
+    ...entry,
+    stockOnHand: numberOfPacksFromQuantity(entry.stockOnHand),
+    minimumStockOnHand: numberOfPacksFromQuantity(entry.minimumStockOnHand),
+    maximumStockOnHand: numberOfPacksFromQuantity(entry.maximumStockOnHand),
+  }));
   const tooltipLabelFormatter = (date: string) => dateFormatter(date);
 
   return isLoading ? (
@@ -59,11 +70,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
         {data.stockEvolution.nodes.length === 0 ? (
           <Typography width={450}>{t('error.no-data')}</Typography>
         ) : (
-          <ComposedChart
-            width={450}
-            height={255}
-            data={data?.stockEvolution.nodes}
-          >
+          <ComposedChart width={450} height={255} data={stockEvolution}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="date"
@@ -106,7 +113,7 @@ export const StockEvolution: React.FC<StockEvolutionProps> = ({ id }) => {
               ]}
             />
             <Bar dataKey="stockOnHand">
-              {data.stockEvolution.nodes?.map(entry => (
+              {stockEvolution.map(entry => (
                 <Cell
                   key={entry.date}
                   fill={
