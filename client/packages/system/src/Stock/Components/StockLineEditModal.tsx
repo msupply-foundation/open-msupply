@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   useTranslation,
   Grid,
@@ -8,6 +8,7 @@ import {
   ObjUtils,
   useConfirmationModal,
   ModalTabs,
+  usePluginProvider,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useStock } from '../api';
 import { LogList } from '../../Log';
@@ -60,6 +61,14 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   });
 
   const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
+  // const { dispatchEvent, addEventListener, removeEventListener } =
+  //   usePluginProvider();
+  const addEventListener = usePluginProvider(state => state.addEventListener);
+  const removeEventListener = usePluginProvider(
+    state => state.removeEventListener
+  );
+  const dispatchEvent = usePluginProvider(state => state.dispatchEvent);
+  const [hasChanged, setHasChanged] = useState(false);
 
   const tabs = [
     {
@@ -72,6 +81,14 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
     },
   ];
 
+  const onChange = () => setHasChanged(true);
+
+  useEffect(() => {
+    addEventListener('onChange', 'StockEditForm', onChange);
+
+    return () => removeEventListener('onChange', 'StockEditForm', onChange);
+  }, []);
+
   return (
     <Modal
       width={700}
@@ -81,11 +98,12 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={ObjUtils.isEqual(draft, stockLine)}
+          disabled={ObjUtils.isEqual(draft, stockLine) && !hasChanged}
           onClick={() =>
             getConfirmation({
               onConfirm: async () => {
                 await onSave();
+                dispatchEvent('onSave', 'StockEditForm', new Event(draft.id));
                 onClose();
               },
             })
