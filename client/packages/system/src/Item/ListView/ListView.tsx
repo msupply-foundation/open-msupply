@@ -18,7 +18,6 @@ import {
   getPackUnitSelectCell,
 } from '../Components/ItemVariant';
 import { useInitUnitStore } from '../context';
-// import { getItemVariantInputColumn } from '../Components/ItemVariant';
 
 const ItemListComponent: FC = () => {
   const {
