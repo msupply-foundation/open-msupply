@@ -24,6 +24,8 @@ pub enum ProgramEventResponse {
 #[graphql(rename_items = "camelCase")]
 pub enum ProgramEventSortFieldInput {
     Datetime,
+    ActiveStartDatetime,
+    ActiveEndDatetime,
     DocumentType,
     DocumentName,
     Type,
@@ -42,6 +44,12 @@ impl ProgramEventSortInput {
     pub fn to_domain(self) -> ProgramEventSort {
         let key = match self.key {
             ProgramEventSortFieldInput::Datetime => ProgramEventSortField::Datetime,
+            ProgramEventSortFieldInput::ActiveStartDatetime => {
+                ProgramEventSortField::ActiveStartDatetime
+            }
+            ProgramEventSortFieldInput::ActiveEndDatetime => {
+                ProgramEventSortField::ActiveEndDatetime
+            }
             ProgramEventSortFieldInput::DocumentType => ProgramEventSortField::DocumentType,
             ProgramEventSortFieldInput::DocumentName => ProgramEventSortField::DocumentName,
             ProgramEventSortFieldInput::Type => ProgramEventSortField::Type,
