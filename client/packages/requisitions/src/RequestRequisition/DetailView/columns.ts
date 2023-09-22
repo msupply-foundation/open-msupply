@@ -8,18 +8,48 @@ import {
   useFormatNumber,
   useUrlQueryParams,
   ColumnDescription,
+  NumUtils,
+  ColumnDataAccessor,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
+import {
+  getPackUnitQuantityCell,
+  getPackUnitSelectCell,
+  useInitUnitStore,
+  useUnitVariant,
+} from '@openmsupply-client/system';
+
+const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
+  rowData,
+}) => {
+  const t = useTranslation();
+  const formatNumber = useFormatNumber();
+  const { itemStats } = rowData;
+  const { availableStockOnHand, availableMonthsOfStockOnHand } = itemStats;
+  const { numberOfPacksFromQuantity } = useUnitVariant(rowData.itemId, null);
+
+  const packQuantity = numberOfPacksFromQuantity(availableStockOnHand);
+
+  const monthsString = availableMonthsOfStockOnHand
+    ? `(${formatNumber.round(availableMonthsOfStockOnHand, 1)} ${t(
+        'label.months',
+        {
+          count: availableMonthsOfStockOnHand,
+        }
+      )})`
+    : '';
+  return `${packQuantity} ${monthsString}`;
+};
 
 export const useRequestColumns = () => {
-  const t = useTranslation('common');
   const { maxMonthsOfStock } = useRequest.document.fields('maxMonthsOfStock');
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const formatNumber = useFormatNumber();
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
 
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
     getCommentPopoverColumn(),
@@ -40,11 +70,13 @@ export const useRequestColumns = () => {
       },
     ],
     {
-      key: 'unit',
-      label: 'label.unit',
-      align: ColumnAlign.Left,
-      accessor: ({ rowData }) => rowData.item.unitName,
-      getSortValue: rowData => rowData.item.unitName ?? '',
+      key: 'packUnit',
+      label: 'label.pack',
+      align: ColumnAlign.Right,
+      Cell: getPackUnitSelectCell({
+        getItemId: r => r.itemId,
+        getUnitName: r => r.item.unitName || null,
+      }),
     },
     {
       key: 'defaultPackSize',
@@ -60,21 +92,7 @@ export const useRequestColumns = () => {
       description: 'description.stock-on-hand',
       align: ColumnAlign.Right,
       width: 200,
-      accessor: ({ rowData }) => {
-        const { itemStats } = rowData;
-        const { availableStockOnHand, availableMonthsOfStockOnHand } =
-          itemStats;
-
-        const monthsString = availableMonthsOfStockOnHand
-          ? `(${formatNumber.round(availableMonthsOfStockOnHand, 1)} ${t(
-              'label.months',
-              {
-                count: availableMonthsOfStockOnHand,
-              }
-            )})`
-          : '';
-        return `${availableStockOnHand} ${monthsString}`;
-      },
+      accessor: useStockOnHand,
       getSortValue: rowData => rowData.itemStats.availableStockOnHand,
     },
     [
@@ -82,7 +100,11 @@ export const useRequestColumns = () => {
       {
         width: 150,
         align: ColumnAlign.Right,
-        accessor: ({ rowData }) => rowData.itemStats.averageMonthlyConsumption,
+        Cell: getPackUnitQuantityCell({
+          getItemId: r => r.itemId,
+          getQuantity: r =>
+            NumUtils.round(r.itemStats.averageMonthlyConsumption),
+        }),
         getSortValue: rowData => rowData.itemStats.averageMonthlyConsumption,
       },
     ],
@@ -91,8 +113,13 @@ export const useRequestColumns = () => {
       label: 'label.target-stock',
       align: ColumnAlign.Right,
       width: 150,
-      accessor: ({ rowData }) =>
-        rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
+      Cell: getPackUnitQuantityCell({
+        getItemId: r => r.itemId,
+        getQuantity: r =>
+          NumUtils.round(
+            r.itemStats.averageMonthlyConsumption * maxMonthsOfStock
+          ),
+      }),
       getSortValue: rowData =>
         rowData.itemStats.averageMonthlyConsumption * maxMonthsOfStock,
     },
@@ -102,6 +129,10 @@ export const useRequestColumns = () => {
       description: 'description.forecast-quantity',
       align: ColumnAlign.Right,
       width: 200,
+      Cell: getPackUnitQuantityCell({
+        getItemId: r => r.itemId,
+        getQuantity: r => NumUtils.round(r.suggestedQuantity),
+      }),
       getSortValue: rowData => rowData.suggestedQuantity,
     },
     {
@@ -109,42 +140,24 @@ export const useRequestColumns = () => {
       label: 'label.requested-quantity',
       align: ColumnAlign.Right,
       width: 150,
+      Cell: getPackUnitQuantityCell({
+        getItemId: r => r.itemId,
+        getQuantity: r => NumUtils.round(r.requestedQuantity),
+      }),
       getSortValue: rowData => rowData.requestedQuantity,
-    },
-    {
-      key: 'requestedNumPacks',
-      label: 'label.requested-packs',
-      description: 'label.requested-number-packs',
-      align: ColumnAlign.Right,
-      // width: 150,
-      accessor: ({ rowData }) =>
-        formatNumber.round(
-          rowData.requestedQuantity / rowData.item.defaultPackSize,
-          2
-        ),
-      sortable: false,
     },
   ];
 
   if (usesRemoteAuthorisation) {
     columnDefinitions.push({
-      key: 'approvedQuantity',
-      label: 'label.approved-quantity',
-      align: ColumnAlign.Right,
-      sortable: false,
-      accessor: ({ rowData }) =>
-        rowData.linkedRequisitionLine?.approvedQuantity,
-    });
-    columnDefinitions.push({
       key: 'approvedNumPacks',
       label: 'label.approved-packs',
       align: ColumnAlign.Right,
-      accessor: ({ rowData }) =>
-        formatNumber.round(
-          (rowData.linkedRequisitionLine?.approvedQuantity ?? 0) /
-            rowData.item.defaultPackSize,
-          2
-        ),
+      Cell: getPackUnitQuantityCell({
+        getItemId: r => r.itemId,
+        getQuantity: r =>
+          NumUtils.round(r.linkedRequisitionLine?.approvedQuantity ?? 0, 2),
+      }),
       sortable: false,
     });
     columnDefinitions.push({

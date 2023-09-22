@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Grid,
   InputWithLabelRow,
@@ -6,14 +6,14 @@ import {
   NonNegativeIntegerInput,
   TextArea,
   Typography,
-  Switch,
-  Box,
-  NumUtils,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import {
   StockItemSearchInputWithStats,
   ItemRowWithStatsFragment,
+  VariantControl,
+  useInitUnitStore,
+  PackUnitSelect,
 } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { DraftRequestLine } from './hooks';
@@ -24,6 +24,9 @@ interface RequestLineEditFormProps {
   onChangeItem: (item: ItemRowWithStatsFragment) => void;
   update: (patch: Partial<DraftRequestLine>) => void;
   draftLine: DraftRequestLine | null;
+  variantsControl?: VariantControl;
+  numberOfPacksFromQuantity: (totalQuantity: number) => number;
+  numberOfPacksToQuantity: (numPacks: number) => number;
 }
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => {
@@ -91,14 +94,16 @@ export const RequestLineEditForm = ({
   onChangeItem,
   update,
   draftLine,
+  variantsControl,
+  numberOfPacksFromQuantity,
+  numberOfPacksToQuantity,
 }: RequestLineEditFormProps) => {
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
   const t = useTranslation('replenishment');
   const formatNumber = useFormatNumber();
   const { lines } = useRequest.line.list();
-  const isPacksEnabled = !!item?.defaultPackSize;
-  const [isPacks, setIsPacks] = useState(isPacksEnabled);
   const requestedQuantity = draftLine?.requestedQuantity ?? 0;
-  const defaultPackSize = item?.defaultPackSize ?? 0;
 
   return (
     <RequestLineEditFormLayout
@@ -121,13 +126,25 @@ export const RequestLineEditForm = ({
           />
 
           {item && item?.unitName ? (
-            <InfoRow label={t('label.unit')} value={item.unitName} />
+            variantsControl ? (
+              <Grid paddingTop={2}>
+                <InputWithLabelRow
+                  Input={<PackUnitSelect variantControl={variantsControl} />}
+                  label={t('label.pack')}
+                />
+              </Grid>
+            ) : (
+              <InfoRow label={t('label.unit')} value={item?.unitName} />
+            )
           ) : null}
+
           {!!draftLine?.itemStats.averageMonthlyConsumption ? (
             <InfoRow
               label={t('label.amc')}
               value={formatNumber.round(
-                draftLine?.itemStats.averageMonthlyConsumption,
+                numberOfPacksFromQuantity(
+                  draftLine?.itemStats.averageMonthlyConsumption
+                ),
                 2
               )}
             />
@@ -136,39 +153,24 @@ export const RequestLineEditForm = ({
             <InfoRow
               label={t('label.soh')}
               value={formatNumber.round(
-                draftLine?.itemStats.availableStockOnHand,
+                numberOfPacksFromQuantity(
+                  draftLine?.itemStats.availableStockOnHand
+                ),
                 2
               )}
-            />
-          ) : null}
-          {isPacksEnabled ? (
-            <InfoRow
-              label={t('label.default-pack-size')}
-              value={String(item.defaultPackSize)}
             />
           ) : null}
         </>
       }
       Middle={
         <>
-          {isPacksEnabled && (
-            <Box display="flex" justifyContent="flex-end" alignItems="center">
-              <Switch
-                label={t('label.units')}
-                checked={isPacks}
-                onChange={(_event, checked) => setIsPacks(checked)}
-                size="small"
-              />
-              <Box paddingLeft={2} paddingRight={2}>
-                {t('label.packs')}
-              </Box>
-            </Box>
-          )}
           <InputWithLabelRow
             Input={
               <NumericTextInput
                 width={100}
-                value={Math.round(draftLine?.suggestedQuantity ?? 0)}
+                value={numberOfPacksFromQuantity(
+                  draftLine?.suggestedQuantity ?? 0
+                )}
                 disabled
               />
             }
@@ -179,34 +181,19 @@ export const RequestLineEditForm = ({
             Input={
               <NonNegativeIntegerInput
                 autoFocus
-                disabled={isPacks}
-                value={requestedQuantity}
+                value={numberOfPacksFromQuantity(requestedQuantity)}
                 width={100}
-                onChange={requestedQuantity => update({ requestedQuantity })}
+                onChange={requestedQuantity =>
+                  update({
+                    requestedQuantity:
+                      numberOfPacksToQuantity(requestedQuantity),
+                  })
+                }
               />
             }
             labelWidth="750px"
             label={t('label.order-quantity')}
           />
-          {isPacksEnabled && (
-            <InputWithLabelRow
-              Input={
-                <NonNegativeIntegerInput
-                  autoFocus
-                  disabled={!isPacks}
-                  value={NumUtils.round(requestedQuantity / defaultPackSize, 2)}
-                  width={100}
-                  onChange={quantity =>
-                    update({
-                      requestedQuantity: quantity * defaultPackSize,
-                    })
-                  }
-                />
-              }
-              labelWidth="750px"
-              label={t('label.requested-packs')}
-            />
-          )}
         </>
       }
       Right={

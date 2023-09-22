@@ -8,7 +8,11 @@ import {
   Box,
   useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
-import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
+import {
+  ItemRowWithStatsFragment,
+  useInitUnitStore,
+  useUnitVariant,
+} from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
 import { useRequest } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
@@ -29,6 +33,9 @@ export const RequestLineEdit = ({
   mode,
   item,
 }: RequestLineEditProps) => {
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
+
   const disabled = useRequest.utils.isDisabled();
   const { Modal } = useDialog({ onClose, isOpen, animationTimeout: 100 });
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -43,6 +50,12 @@ export const RequestLineEdit = ({
 
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
   const height = useKeyboardHeightAdjustment(600);
+
+  const {
+    variantsControl,
+    numberOfPacksFromQuantity,
+    numberOfPacksToQuantity,
+  } = useUnitVariant(item?.id ?? '', item?.name ?? null);
 
   const deletePreviousLine = () => {
     if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);
@@ -109,14 +122,21 @@ export const RequestLineEdit = ({
             disabled={mode === ModalMode.Update || disabled}
             onChangeItem={onChangeItem}
             item={currentItem}
+            variantsControl={variantsControl}
+            numberOfPacksFromQuantity={numberOfPacksFromQuantity}
+            numberOfPacksToQuantity={numberOfPacksToQuantity}
           />
           {!!draft && (
             <StockDistribution
-              availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-              averageMonthlyConsumption={
+              availableStockOnHand={numberOfPacksFromQuantity(
+                draft?.itemStats?.availableStockOnHand
+              )}
+              averageMonthlyConsumption={numberOfPacksFromQuantity(
                 draft?.itemStats?.averageMonthlyConsumption
-              }
-              suggestedQuantity={draft?.suggestedQuantity}
+              )}
+              suggestedQuantity={numberOfPacksFromQuantity(
+                draft?.suggestedQuantity
+              )}
             />
           )}
           <Box
@@ -128,8 +148,14 @@ export const RequestLineEdit = ({
               <Box display="flex" height={289} />
             ) : (
               <>
-                <ConsumptionHistory id={draft?.id || ''} />
-                <StockEvolution id={draft?.id || ''} />
+                <ConsumptionHistory
+                  id={draft?.id || ''}
+                  numberOfPacksFromQuantity={numberOfPacksFromQuantity}
+                />
+                <StockEvolution
+                  id={draft?.id || ''}
+                  numberOfPacksFromQuantity={numberOfPacksFromQuantity}
+                />
               </>
             )}
           </Box>
