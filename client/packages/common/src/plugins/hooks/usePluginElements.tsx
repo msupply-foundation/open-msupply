@@ -1,33 +1,49 @@
 import React from 'react';
-import { ComponentPluginType } from '../types';
-import { RecordWithId } from '../../types/utility';
+import {
+  ComponentPlugin,
+  ComponentPluginData,
+  ComponentPluginType,
+  PluginModule,
+} from '../types';
 import { usePluginProvider } from '../components';
 import { PluginLoader } from '../components';
 
-export function usePluginElements<T extends RecordWithId>({
+const mapComponentPlugin = <T extends ComponentPluginType>(
+  component: Extract<ComponentPlugin, { type: T }>,
+  data?: ComponentPluginData<T>
+) => {
+  const Component = () =>
+    new Promise<PluginModule<unknown>>(resolve => {
+      component
+        .component()
+        .then(module => resolve(module as PluginModule<unknown>))
+        .catch(e => {
+          console.error(e);
+          resolve({ default: () => null });
+        });
+    });
+
+  return (
+    <PluginLoader
+      Component={Component}
+      data={data}
+      key={`${component.pluginName}-${component.module}`}
+      name={component.pluginName}
+    />
+  );
+};
+
+export function usePluginElements<T extends ComponentPluginType>({
   type,
   data,
 }: {
-  type: ComponentPluginType;
-  data?: T;
+  type: T;
+  data?: ComponentPluginData<T>;
 }) {
   const { getComponentPlugins } = usePluginProvider();
   const plugins = getComponentPlugins(type);
 
-  return plugins.map(plugin =>
-    plugin.isLoaded ? (
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      React.createElement<{ data: any }>(plugin.Component, {
-        data,
-        key: plugin.name,
-      })
-    ) : (
-      <PluginLoader
-        name={plugin.name}
-        module={plugin.module}
-        data={data}
-        key={`${plugin.name}-${plugin.module}`}
-      />
-    )
+  return plugins.map((plugin: Extract<ComponentPlugin, { type: T }>) =>
+    mapComponentPlugin(plugin, data)
   );
 }

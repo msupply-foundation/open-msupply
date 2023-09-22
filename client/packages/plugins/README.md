@@ -7,4 +7,6 @@ Plugins are a way of extending front end functionality without altering the base
 
 Plugins are written as [react](https://react.dev/) components and compiled to distributable packages. These are copied to the server and then are available to all clients using that server.
 
-A plugin can interact with the app framework, accessing language translations, call the data API and using the standard theme. Shared UI components can be used and the various utility functions are available.
+A plugin can interact with the app framework, access language translations, call the data API or use the current theme. 
+
+For example, a plugin can use shared UI components and utility functions from the app framework.
