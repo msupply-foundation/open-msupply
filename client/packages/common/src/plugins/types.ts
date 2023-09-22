@@ -1,26 +1,33 @@
-import { FunctionComponent } from 'react';
-import {
-  ColumnDefinition,
-  InvoiceNode,
-  RecordWithId,
-} from '@openmsupply-client/common';
+// import { FunctionComponent } from 'react';
+import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '@openmsupply-client/system';
+import { InboundFragment } from '@openmsupply-client/invoices';
 
-export type PluginComponent<T> = FunctionComponent<{ data: T }>;
+type extractDataType<Type> = Type extends ComponentPluginBase<infer DataType>
+  ? DataType
+  : never;
+
+export type ComponentPluginData<T> = extractDataType<
+  Extract<ComponentPlugin, { type: T }>
+>;
+
+// export type PluginComponent<T> = FunctionComponent<{ data: T }>;
+
+export type PluginModule<DataType> = {
+  default: React.ComponentType<{ data?: DataType | undefined }>;
+};
 
 export interface ComponentPluginBase<T> {
-  Component: PluginComponent<T>;
-  isLoaded: boolean;
+  component: () => Promise<PluginModule<T>>;
   module: string;
-  localModule: string;
-  name: string;
+  localModule?: string;
+  pluginName: string;
 }
 
 export interface ColumnPluginBase<T extends RecordWithId> {
-  column: ColumnDefinition<T>;
-  isLoaded: boolean;
+  column: () => Promise<ColumnDefinition<T>>;
   module: string;
-  name: string;
+  pluginName: string;
 }
 
 export type ComponentPluginType =
@@ -40,7 +47,7 @@ export type StockColumnPlugin = {
 
 export type InboundShipmentComponentPlugin = {
   type: 'InboundShipmentAppBar';
-} & ComponentPluginBase<InvoiceNode>;
+} & ComponentPluginBase<InboundFragment>;
 
 export type DashboardPlugin = {
   type: 'Dashboard';

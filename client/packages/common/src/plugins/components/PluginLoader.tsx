@@ -1,13 +1,16 @@
 import React, { ComponentType } from 'react';
 import { Box, CircularProgress } from '@mui/material';
-import { ErrorBoundary, ErrorWithDetails, useTranslation } from '../..';
-import { loadPluginModule } from '../utils';
+import {
+  ErrorBoundary,
+  ErrorWithDetails,
+  PluginModule,
+  useTranslation,
+} from '../..';
 
-interface PluginLoaderProps {
-  module: string;
+interface PluginLoaderProps<T> {
+  Component: () => Promise<PluginModule<T>>;
+  data?: T;
   name: string;
-  data?: unknown;
-  scope?: string;
 }
 const Loader = (
   <Box
@@ -22,12 +25,11 @@ const Loader = (
   </Box>
 );
 
-export const PluginLoader = ({
+export function PluginLoader<T>({
+  Component,
   data,
-  module,
   name,
-  scope,
-}: PluginLoaderProps) => {
+}: PluginLoaderProps<T>) {
   const PluginUnavailable = () => {
     const t = useTranslation('plugin');
 
@@ -39,15 +41,13 @@ export const PluginLoader = ({
     );
   };
 
-  const Component = React.lazy<ComponentType<{ data: unknown }>>(
-    loadPluginModule({ plugin: name, module, scope })
-  );
+  const Plugin = React.lazy<ComponentType<{ data?: T }>>(Component);
 
   return (
     <ErrorBoundary Fallback={PluginUnavailable}>
       <React.Suspense fallback={Loader}>
-        <Component data={data} />
+        <Plugin data={data} />
       </React.Suspense>
     </ErrorBoundary>
   );
-};
+}

@@ -65,7 +65,7 @@ export const parseResult = (content?: string): ScanResult => {
       ?.data as string;
     const batch = gs1?.parsedCodeItems?.find(item => item.ai === '10')
       ?.data as string;
-    const expiry = gs1?.parsedCodeItems.find(item => item.ai === '17')
+    const expiry = gs1?.parsedCodeItems?.find(item => item.ai === '17')
       ?.data as Date;
 
     return {
