@@ -6,7 +6,6 @@ import {
   NothingHere,
   useUrlQueryParams,
   useNavigate,
-  createQueryParamsStore,
   EncounterSortFieldInput,
 } from '@openmsupply-client/common';
 import { useEncounterListColumns } from './columns';
@@ -14,7 +13,7 @@ import {
   EncounterFragmentWithStatus,
   useEncounterFragmentWithStatus,
 } from '../utils';
-import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
+import { useEncounter } from '@openmsupply-client/programs';
 
 const EncounterListComponent: FC = () => {
   const {
@@ -58,15 +57,7 @@ const EncounterListComponent: FC = () => {
 };
 
 export const EncounterListView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<EncounterFragment>({
-      initialSortBy: {
-        key: EncounterSortFieldInput.StartDatetime,
-        isDesc: true,
-      },
-    })}
-  >
+  <TableProvider createStore={createTableStore}>
     <EncounterListComponent />
   </TableProvider>
 );
