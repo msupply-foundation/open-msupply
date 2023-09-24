@@ -8,7 +8,8 @@ import {
   ObjUtils,
   useConfirmationModal,
   ModalTabs,
-  usePluginProvider,
+  usePluginEvents,
+  usePluginElements,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useStock } from '../api';
 import { LogList } from '../../Log';
@@ -61,18 +62,19 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   });
 
   const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
-  // const { dispatchEvent, addEventListener, removeEventListener } =
-  //   usePluginProvider();
-  const addEventListener = usePluginProvider(state => state.addEventListener);
-  const removeEventListener = usePluginProvider(
-    state => state.removeEventListener
-  );
-  const dispatchEvent = usePluginProvider(state => state.dispatchEvent);
+  const { dispatchEvent, addEventListener, removeEventListener } =
+    usePluginEvents();
   const [hasChanged, setHasChanged] = useState(false);
+  const plugins = usePluginElements({
+    type: 'StockEditForm',
+    data: stockLine,
+  });
 
   const tabs = [
     {
-      Component: <StockLineForm draft={draft} onUpdate={onUpdate} />,
+      Component: (
+        <StockLineForm draft={draft} onUpdate={onUpdate} plugins={plugins} />
+      ),
       value: 'label.details',
     },
     {
