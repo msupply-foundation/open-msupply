@@ -152,11 +152,13 @@ impl SuggestedQuantityCalculation {
             average_monthly_consumption: from.requisition_line_row.average_monthly_consumption
                 as f64,
             stock_on_hand: from.requisition_line_row.available_stock_on_hand as u32,
-            minimum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
-                * match from.requisition_row.min_months_of_stock {
-                    0.0 => from.requisition_row.max_months_of_stock,
-                    _ => from.requisition_row.min_months_of_stock,
-                },
+            minimum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64 * {
+                if from.requisition_row.min_months_of_stock == 0.0 {
+                    from.requisition_row.max_months_of_stock as f64
+                } else {
+                    from.requisition_row.min_months_of_stock as f64
+                }
+            },
             maximum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
                 * from.requisition_row.max_months_of_stock as f64,
             suggested: from.requisition_line_row.suggested_quantity as u32,
