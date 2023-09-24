@@ -6,7 +6,6 @@ import {
   ModalRow,
   Select,
   useTranslation,
-  InputLabel,
   NonNegativeIntegerInput,
   Divider,
   Box,
@@ -19,6 +18,8 @@ import {
 import {
   StockItemSearchInput,
   ItemRowFragment,
+  useInitUnitStore,
+  useUnitVariant,
 } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';
 import { DraftItem } from '../../..';
@@ -53,6 +54,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   canAutoAllocate,
   isAutoAllocated,
 }) => {
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
   const t = useTranslation('distribution');
   const [showAllocationWarning, setShowAllocationWarning] = useState(false);
   const [placeholderQuantity, setPlaceholderQuantity] = useState(0);
@@ -63,6 +66,16 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
   const [issueQuantity, setIssueQuantity] = useState(0);
   const { items } = useOutbound.line.rows();
+
+  const { variantsControl, asPackUnit } = useUnitVariant(
+    item?.id ?? '',
+    item?.unitName ?? null
+  );
+
+  packSizeController.options = packSizeController.options.map(option => ({
+    ...option,
+    label: option.value === -1 ? t('label.any') : asPackUnit(option.value),
+  }));
 
   const onChangePackSize = (newPackSize: number) => {
     const newAllocatedQuantity =
@@ -76,7 +89,6 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     setShowAllocationWarning(false);
   };
 
-  const unit = item?.unitName ?? t('label.unit');
   const allocate = () => {
     const newAllocateQuantities = onChangeQuantity(
       issueQuantity,
@@ -140,7 +152,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
             <BasicTextInput
               disabled
               sx={{ width: 150 }}
-              value={item?.unitName ?? ''}
+              value={asPackUnit(variantsControl?.activeVariant.packSize ?? 1)}
             />
           </Grid>
         </ModalRow>
@@ -182,42 +194,16 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                   justifyContent="flex-start"
                   style={{ minWidth: 125 }}
                 >
-                  <InputLabel sx={{ fontSize: '12px' }}>
-                    {packSizeController.selected?.value === -1
-                      ? `${t('label.unit-plural', {
-                          unit,
-                          count: issueQuantity,
-                        })} ${t('label.in-packs-of')}`
-                      : t('label.in-packs-of')}
-                  </InputLabel>
+                  <Select
+                    sx={{ width: 110 }}
+                    options={packSizeController.options}
+                    value={packSizeController.selected?.value ?? ''}
+                    onChange={e => {
+                      const { value } = e.target;
+                      onChangePackSize(Number(value));
+                    }}
+                  />
                 </Grid>
-
-                <Box marginLeft={1} />
-
-                <Select
-                  sx={{ width: 110 }}
-                  options={packSizeController.options}
-                  value={packSizeController.selected?.value ?? ''}
-                  onChange={e => {
-                    const { value } = e.target;
-                    onChangePackSize(Number(value));
-                  }}
-                />
-                {packSizeController.selected?.value !== -1 && (
-                  <Grid
-                    item
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="flex-start"
-                  >
-                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit-plural', {
-                        count: packSizeController.selected?.value,
-                        unit,
-                      })}
-                    </InputLabel>
-                  </Grid>
-                )}
                 <Box marginLeft="auto" />
               </>
             ) : null}

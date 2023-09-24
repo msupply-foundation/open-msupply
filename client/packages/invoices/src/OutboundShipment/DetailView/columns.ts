@@ -12,7 +12,12 @@ import {
   InvoiceLineNodeType,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
-import { LocationRowFragment } from '@openmsupply-client/system';
+import {
+  LocationRowFragment,
+  PackUnitMultipleCell,
+  getPackUnitCell,
+  useInitUnitStore,
+} from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -31,9 +36,6 @@ const notePopoverColumn = getNotePopoverColumn<
 const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
   row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
 
-const getPackSize = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize;
-
 const getNumberOfPacks = (row: StockOutLineFragment) =>
   isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
 
@@ -45,6 +47,8 @@ export const useOutboundColumns = ({
   onChangeSortBy,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const { c } = useCurrency();
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
   return useColumns(
     [
       [
@@ -110,28 +114,6 @@ export const useOutboundColumns = ({
               return ArrayUtils.ifTheSameElseDefault(items, 'name', '');
             } else {
               return rowData.item.name;
-            }
-          },
-        },
-      ],
-      [
-        'itemUnit',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              return row.lines[0]?.item.unitName ?? '';
-            } else {
-              return row.item.unitName ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const items = rowData.lines.map(({ item }) => item);
-              return (
-                ArrayUtils.ifTheSameElseDefault(items, 'unitName', '') ?? ''
-              );
-            } else {
-              return rowData.item.unitName ?? '';
             }
           },
         },
@@ -219,6 +201,27 @@ export const useOutboundColumns = ({
         },
       ],
       [
+        'unitQuantity',
+        {
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
+          },
+        },
+      ],
+      [
         'numberOfPacks',
         {
           Cell: PositiveNumberCell,
@@ -264,50 +267,25 @@ export const useOutboundColumns = ({
           },
         },
       ],
-      [
-        'packSize',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
-              );
-            } else {
-              return getPackSize(row) ?? '';
-            }
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackUnitMultipleCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
           },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return getPackSize(rowData);
-            }
+          getPackSize: row => {
+            if ('lines' in row) return 1;
+            else return row?.packSize || 1;
           },
-        },
-      ],
-      [
-        'unitQuantity',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getUnitQuantity(lines);
-            } else {
-              return getUnitQuantity(rowData);
-            }
+          getUnitName: row => {
+            if ('lines' in row) return null;
+            else return row?.item?.unitName ?? null;
           },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getUnitQuantity(lines);
-            } else {
-              return getUnitQuantity(rowData);
-            }
-          },
-        },
-      ],
+        }),
+      },
       {
         label: 'label.unit-price',
         key: 'sellPricePerUnit',
@@ -388,3 +366,40 @@ export const useOutboundColumns = ({
     [sortBy]
   );
 };
+
+export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
+  useColumns([
+    'batch',
+    'expiryDate',
+    [
+      'locationName',
+      {
+        accessor: ({ rowData }) => rowData.location?.name,
+      },
+    ],
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: getPackUnitCell({
+        getItemId: row => row?.item.id,
+        getPackSize: row => {
+          return row?.packSize || 1;
+        },
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
+    },
+    'numberOfPacks',
+    [
+      'unitQuantity',
+      {
+        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
+      },
+    ],
+    [
+      'sellPricePerUnit',
+      {
+        accessor: ({ rowData }) => rowData.sellPricePerPack,
+      },
+    ],
+  ]);
