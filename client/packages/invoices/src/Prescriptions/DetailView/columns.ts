@@ -11,7 +11,11 @@ import {
   useCurrency,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
-import { LocationRowFragment } from '@openmsupply-client/system';
+import {
+  LocationRowFragment,
+  PackUnitMultipleCell,
+  useInitUnitStore,
+} from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -34,6 +38,8 @@ export const usePrescriptionColumn = ({
   StockOutLineFragment | StockOutItem
 >[] => {
   const { c } = useCurrency();
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
   return useColumns(
     [
       [
@@ -99,28 +105,6 @@ export const usePrescriptionColumn = ({
               return ArrayUtils.ifTheSameElseDefault(items, 'name', '');
             } else {
               return rowData.item.name;
-            }
-          },
-        },
-      ],
-      [
-        'itemUnit',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              return row.lines[0]?.item.unitName ?? '';
-            } else {
-              return row.item.unitName ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const items = rowData.lines.map(({ item }) => item);
-              return (
-                ArrayUtils.ifTheSameElseDefault(items, 'unitName', '') ?? ''
-              );
-            } else {
-              return rowData.item.unitName ?? '';
             }
           },
         },
@@ -253,29 +237,25 @@ export const usePrescriptionColumn = ({
           },
         },
       ],
-      [
-        'packSize',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
-              );
-            } else {
-              return row.packSize ?? '';
-            }
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackUnitMultipleCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
           },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return rowData.packSize;
-            }
+          getPackSize: row => {
+            if ('lines' in row) return 1;
+            else return row?.packSize || 1;
           },
-        },
-      ],
+          getUnitName: row => {
+            if ('lines' in row) return null;
+            else return row?.item?.unitName ?? null;
+          },
+        }),
+      },
       [
         'unitQuantity',
         {
