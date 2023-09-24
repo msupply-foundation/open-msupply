@@ -8,6 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
+import { getPackUnitCell } from '@openmsupply-client/system';
 
 export const usePrescriptionLineEditColumns = ({
   onChange,
@@ -38,7 +39,6 @@ export const usePrescriptionLineEditColumns = ({
           width: 70,
         },
       ],
-      ['packSize', { width: 90 }],
       {
         label: 'label.on-hold',
         key: 'onHold',
@@ -62,6 +62,18 @@ export const usePrescriptionLineEditColumns = ({
         align: ColumnAlign.Right,
         width: 85,
         accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
+      },
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: getPackUnitCell({
+          getItemId: row => row?.item?.id,
+          getPackSize: row => {
+            return row?.packSize || 1;
+          },
+          getUnitName: row => row?.item.unitName ?? null,
+        }),
       },
       [
         'unitQuantity',

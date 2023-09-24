@@ -6,7 +6,6 @@ import {
   ModalRow,
   Select,
   useTranslation,
-  InputLabel,
   NonNegativeIntegerInput,
   Divider,
   Box,
@@ -17,6 +16,8 @@ import {
 import {
   StockItemSearchInput,
   ItemRowFragment,
+  useInitUnitStore,
+  useUnitVariant,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../..';
@@ -56,6 +57,8 @@ export const PrescriptionLineEditForm: React.FC<
   draftPrescriptionLines,
 }) => {
   const t = useTranslation('dispensary');
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
 
   const quantity =
     allocatedQuantity /
@@ -63,6 +66,16 @@ export const PrescriptionLineEditForm: React.FC<
 
   const [issueQuantity, setIssueQuantity] = useState(0);
   const { items } = usePrescription.line.rows();
+
+  const { variantsControl, asPackUnit } = useUnitVariant(
+    item?.id ?? '',
+    item?.unitName ?? null
+  );
+
+  packSizeController.options = packSizeController.options.map(option => ({
+    ...option,
+    label: option.value === -1 ? t('label.any') : asPackUnit(option.value),
+  }));
 
   const onChangePackSize = (newPackSize: number) => {
     const newAllocatedQuantity =
@@ -75,7 +88,6 @@ export const PrescriptionLineEditForm: React.FC<
     );
   };
 
-  const unit = item?.unitName ?? t('label.unit');
   const allocate = () => {
     onChangeQuantity(
       issueQuantity,
@@ -143,7 +155,7 @@ export const PrescriptionLineEditForm: React.FC<
               <BasicTextInput
                 disabled
                 sx={{ width: 150 }}
-                value={item?.unitName ?? ''}
+                value={asPackUnit(variantsControl?.activeVariant.packSize ?? 1)}
               />
             </Grid>
           </ModalRow>
@@ -187,42 +199,16 @@ export const PrescriptionLineEditForm: React.FC<
                   justifyContent="flex-start"
                   style={{ minWidth: 125 }}
                 >
-                  <InputLabel sx={{ fontSize: '12px' }}>
-                    {packSizeController.selected?.value === -1
-                      ? `${t('label.unit-plural', {
-                          unit,
-                          count: issueQuantity,
-                        })} ${t('label.in-packs-of')}`
-                      : t('label.in-packs-of')}
-                  </InputLabel>
+                  <Select
+                    sx={{ width: 110 }}
+                    options={packSizeController.options}
+                    value={packSizeController.selected?.value ?? ''}
+                    onChange={e => {
+                      const { value } = e.target;
+                      onChangePackSize(Number(value));
+                    }}
+                  />
                 </Grid>
-
-                <Box marginLeft={1} />
-
-                <Select
-                  sx={{ width: 110 }}
-                  options={packSizeController.options}
-                  value={packSizeController.selected?.value ?? ''}
-                  onChange={e => {
-                    const { value } = e.target;
-                    onChangePackSize(Number(value));
-                  }}
-                />
-                {packSizeController.selected?.value !== -1 && (
-                  <Grid
-                    item
-                    alignItems="center"
-                    display="flex"
-                    justifyContent="flex-start"
-                  >
-                    <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
-                      {t('label.unit-plural', {
-                        count: packSizeController.selected?.value,
-                        unit,
-                      })}
-                    </InputLabel>
-                  </Grid>
-                )}
                 <Box marginLeft="auto" />
               </>
             ) : null}
