@@ -19,14 +19,17 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
-import {
-  useDraftOutboundLines,
-  useNextItem,
-} from './hooks';
+import { useDraftOutboundLines, useNextItem } from './hooks';
 import { useOutbound } from '../../api';
 import { getPackQuantityCellId } from '../../../utils';
 import { Draft, DraftItem } from '../../..';
-import { PackSizeController, allocateQuantities, getAllocatedQuantity, sumAvailableQuantity, usePackSizeController } from '../../../StockOut';
+import {
+  PackSizeController,
+  allocateQuantities,
+  getAllocatedQuantity,
+  sumAvailableQuantity,
+  usePackSizeController,
+} from '../../../StockOut';
 import { DraftStockOutLine } from '../../../types';
 
 interface ItemDetailsModalProps {
@@ -57,7 +60,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   mode,
 }) => {
   const item = !draft ? null : draft.item ?? null;
-  const t = useTranslation(['distribution']);
+  const t = useTranslation('distribution');
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -104,9 +107,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     // it is possible for the user to select multiple batch lines
     // if the scanned barcode does not contain a batch number
     // however the scanned barcode can only relate to a specific pack size and therefore batch
-    const packSize = draftStockOutLines.find(
-      line => line.numberOfPacks > 0
-    )?.packSize;
+    const packSize = draftStockOutLines.find(line => line.numberOfPacks > 0)
+      ?.packSize;
 
     const input = {
       input: {
