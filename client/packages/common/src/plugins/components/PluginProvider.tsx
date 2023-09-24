@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   ColumnPlugin,
   ComponentPlugin,
@@ -106,3 +107,20 @@ export const usePluginProvider = create<PluginProvider>((set, get) => ({
       ),
     })),
 }));
+
+export const usePluginEvents = () => {
+  const addEventListener = usePluginProvider(state => state.addEventListener);
+  const removeEventListener = usePluginProvider(
+    state => state.removeEventListener
+  );
+  const dispatchEvent = usePluginProvider(state => state.dispatchEvent);
+
+  return React.useMemo(
+    () => ({
+      addEventListener,
+      dispatchEvent,
+      removeEventListener,
+    }),
+    [addEventListener, dispatchEvent, removeEventListener]
+  );
+};
