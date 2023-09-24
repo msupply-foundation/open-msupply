@@ -171,18 +171,6 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
     },
     {
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: getPackUnitCell({
-        getItemId: row => row?.itemId,
-        getPackSize: row => {
-          return row?.packSize || 1;
-        },
-        getUnitName: row => row?.item.unitName ?? null,
-      }),
-    },
-    {
       key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
       width: 100,
@@ -203,6 +191,18 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
         update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
       },
       accessor: ({ rowData }) => rowData.countedNumberOfPacks ?? '',
+    },
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: getPackUnitCell({
+        getItemId: row => row?.itemId,
+        getPackSize: row => {
+          return row?.packSize || 1;
+        },
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
     },
     [
       expiryDateColumn,

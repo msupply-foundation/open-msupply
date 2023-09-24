@@ -43,7 +43,12 @@ export const GeneralTab: FC<GeneralTabProps> = ({ variantControl }) => {
           />
           {variantControl ? (
             <DetailInputWithLabelRow
-              Input={<PackUnitSelect variantControl={variantControl} />}
+              Input={
+                <PackUnitSelect
+                  variantControl={variantControl}
+                  sx={{ width: '185px' }}
+                />
+              }
               label={t('label.unit')}
             />
           ) : (
