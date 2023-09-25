@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   Box,
   useConfirmationModal,
@@ -19,9 +19,9 @@ import {
   FORM_GAP,
   FORM_LABEL_WIDTH,
 } from '@openmsupply-client/programs';
+import { usePatient } from '../../../../system/src/Patient/api';
 import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
-import { useJsonForms } from '@jsonforms/react';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 import { useDebouncedTextInput } from '../common/hooks/useDebouncedTextInput';
 
@@ -282,27 +282,26 @@ const useUniqueProgramEnrolmentIdValidation = () => {
 };
 
 const useUniqueProgramPatientCodeValidation = () => {
-  const { mutateAsync: fetchProgramEnrolments } =
-    useProgramEnrolments.document.programEnrolmentsPromise();
-
+  const { mutateAsync: fetchPatientCodes } =
+    usePatient.document.usePatientsPromise();
   // returns error if validation fails (patient code already in use)
 
   return async (
     code: string,
     documentName: string
   ): Promise<string | undefined> => {
-    const result = await fetchProgramEnrolments({
+    const result = await fetchPatientCodes({
       filterBy: {
-        patientId: { notEqualTo: null },
+        code: { equalTo: code },
       },
     });
     // should render all patients?
-    console.log('result', result);
-    if (result.totalCount === 0) {
+    console.log('data', result);
+    if (result?.nodes?.length === 0) {
       return undefined;
     }
 
-    if (result.nodes[0]?.name === documentName) {
+    if (result?.nodes[0]?.name === documentName) {
       return undefined;
     }
     return `Duplicated code: ${code}`;
