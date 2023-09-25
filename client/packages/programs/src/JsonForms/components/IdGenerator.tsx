@@ -284,8 +284,8 @@ const useUniqueProgramEnrolmentIdValidation = () => {
 const useUniqueProgramPatientCodeValidation = () => {
   const { mutateAsync: fetchPatientCodes } =
     usePatient.document.usePatientsPromise();
-  // returns error if validation fails (patient code already in use)
 
+  // returns error if validation fails (patient code already in use)
   return async (
     code: string,
     documentName: string
@@ -295,8 +295,6 @@ const useUniqueProgramPatientCodeValidation = () => {
         code: { equalTo: code },
       },
     });
-    // should render all patients?
-    console.log('data', result);
     if (result?.nodes?.length === 0) {
       return undefined;
     }
