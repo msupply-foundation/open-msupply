@@ -13,6 +13,7 @@ interface SearchBarProps {
   placeholder: string;
   isLoading?: boolean;
   debounceTime?: number;
+  expandOnFocus?: boolean;
 }
 
 const EndAdornment: FC<{
@@ -43,6 +44,7 @@ export const SearchBar: FC<SearchBarProps> = ({
   placeholder,
   isLoading = false,
   debounceTime = 500,
+  expandOnFocus = false,
 }) => {
   const [buffer, setBuffer] = useState(value);
   const [loading, setLoading] = useState(false);
@@ -89,15 +91,18 @@ export const SearchBar: FC<SearchBarProps> = ({
           sx: {
             paddingLeft: '6px',
             alignItems: 'center',
-            transition: theme =>
-              theme.transitions.create('width', {
-                delay: 100,
-              }),
             width: '220px',
-            '&.Mui-focused': {
-              width: '360px',
-            },
-
+            ...(expandOnFocus
+              ? {
+                  transition: theme =>
+                    theme.transitions.create('width', {
+                      delay: 100,
+                    }),
+                  '&.Mui-focused': {
+                    width: '360px',
+                  },
+                }
+              : {}),
             backgroundColor: theme => theme.palette.background.menu,
           },
         }}
