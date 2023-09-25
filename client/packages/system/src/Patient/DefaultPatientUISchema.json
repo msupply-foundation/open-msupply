@@ -23,9 +23,9 @@
             ],
             "allowManualEntry": true,
             "validations": [
-              // {
-              //   "type": "UniquePatientCode"
-              // }
+              {
+                "type": "UniquePatientCode"
+              }
             ]
           }
         },
