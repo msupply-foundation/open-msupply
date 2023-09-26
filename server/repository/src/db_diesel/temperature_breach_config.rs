@@ -24,6 +24,7 @@ pub struct TemperatureBreachConfigFilter {
     pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
     pub is_active: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
+    pub description: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -125,6 +126,7 @@ impl TemperatureBreachConfigFilter {
             is_active: None,
             r#type: None,
             store_id: None,
+            description: None,
         }
     }
 
@@ -145,6 +147,11 @@ impl TemperatureBreachConfigFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn description(mut self, filter: EqualFilter<String>) -> Self {
+        self.description = Some(filter);
         self
     }
 }
