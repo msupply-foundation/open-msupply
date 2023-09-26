@@ -15,7 +15,7 @@ use service::static_files::StaticFileService;
 pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/files").guard(guard::Get()).to(files));
     cfg.service(
-        web::resource(["/plugins/{plugin}/{filename}", "/plugins/{plugin}"])
+        web::resource(r#"/plugins/{plugin}/{filename:.*\..+$}"#)
             .guard(guard::Get())
             .to(plugins),
     );
@@ -59,8 +59,8 @@ async fn plugins(req: HttpRequest, settings: Data<Settings>) -> Result<HttpRespo
     let filename = path.get("filename");
 
     let file = PluginFileService::find_file(&settings.server.base_dir, plugin, filename)
-        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
-        .ok_or(std::io::Error::new(ErrorKind::NotFound, "Plugin not found"))?;
+        .unwrap()
+        .unwrap();
 
     let response = fs::NamedFile::open(file.path)?
         .set_content_type("application/javascript; charset=utf-8".parse().unwrap())
