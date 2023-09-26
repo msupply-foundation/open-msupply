@@ -92,9 +92,9 @@ const StockListComponent: FC = () => {
         key: 'itemName',
         label: 'label.item_one',
         Cell: ItemCell,
-        maxWidth: 200,
+        maxWidth: 300,
         sortable: false,
-        align: ColumnAlign.Center,
+        align: ColumnAlign.Left,
       },
       'batch',
       [
