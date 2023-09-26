@@ -14,6 +14,7 @@ import {
   useToggle,
   StockIcon,
   ColumnAlign,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
@@ -58,6 +59,24 @@ const StockListComponent: FC = () => {
     />
   );
 
+  const ItemCell = <T extends StockLineRowFragment>({
+    rowData,
+  }: CellProps<T>): React.ReactElement<CellProps<T>> => {
+    const itemName = rowData.item.name;
+    return (
+      <Tooltip title={String(itemName)} placement="bottom-start">
+        <div
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'auto',
+          }}
+        >
+          {String(itemName)}
+        </div>
+      </Tooltip>
+    );
+  };
+
   const columns = useColumns<StockLineRowFragment>(
     [
       {
@@ -69,7 +88,14 @@ const StockListComponent: FC = () => {
         align: ColumnAlign.Center,
       },
       ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
-      ['itemName', { accessor: ({ rowData }) => rowData.item.name }],
+      {
+        key: 'itemName',
+        label: 'label.item_one',
+        Cell: ItemCell,
+        maxWidth: 200,
+        sortable: false,
+        align: ColumnAlign.Center,
+      },
       'batch',
       [
         'expiryDate',
