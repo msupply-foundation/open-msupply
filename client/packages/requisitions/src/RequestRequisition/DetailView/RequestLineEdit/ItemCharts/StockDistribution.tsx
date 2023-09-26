@@ -197,7 +197,7 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
               flexBasis={`${100 / maxMonthsOfStock}%`}
               averageMonthlyConsumption={averageMonthlyConsumption}
               showText={showText}
-              isThreshold={i + 1 === minMonthsOfStock}
+              isThreshold={i + 1 === (minMonthsOfStock ?? maxMonthsOfStock)}
               isTarget={i + 1 === maxMonthsOfStock}
             />
           ))}
