@@ -35,9 +35,9 @@
   "label.hide-stock-over-minimum": "Hide stock over minimum",
   "label.location": "Location",
   "label.max": "Max",
-  "label.max-months-of-stock": "Maximum MOS",
+  "label.max-months-of-stock": "Target MOS",
   "label.min": "Min",
-  "label.min-months-of-stock": "Minimum MOS",
+  "label.min-months-of-stock": "Reorder threshold MOS",
   "label.moving-average": "Mov. Avg. (3mo)",
   "label.new": "New",
   "label.number-months_one": "{{count}} Month",
@@ -75,8 +75,9 @@
   "messages.off-hold-confirmation": "This will re-enable status changes",
   "messages.on-hold-confirmation": "This will prevent any further status changes until the hold is removed",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
-  "messages.changing-max-mos": "This will change the maximum months of stock target.",
-  "messages.changing-min-mos": "This will change the minimum months of stock threshold.",
+  "messages.changing-max-mos": "This will change the target months of stock.",
+  "messages.changing-min-mos": "This will change the reorder threshold months of stock.",
+  "messages.unassign-min-mos": "This will remove the stock reorder threshold. Reorder threshold will now default to be the same as target months of stock.",
   "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list",
   "messages.click-to-return-to-shipments": "Unable to find a shipment with that ID. Click OK to return to the shipment list",
   "messages.confirm-inbound-status-as": "Confirm status as $t({{status}})?\nNote: changing from 'New' will remove any lines with zero quantity.",
@@ -102,5 +103,6 @@
   "messages.select-rows-to-delete-them": "Select rows to delete them",
   "messages.shipment-saved": "Shipment saved 🥳",
   "info.cannot-edit-program-requisition": "Cannot edit supplier, minimum MOS, maximum MOS or add items in a program requisition.",
-  "template.requisition-sent": "Approved by {{name}}{{job}}. Email: {{email}} and Phone Number: {{phone}}."
+  "template.requisition-sent": "Approved by {{name}}{{job}}. Email: {{email}} and Phone Number: {{phone}}.",
+  "label.not-set": "Not set"
 }
