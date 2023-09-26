@@ -26,10 +26,12 @@ impl PluginFileService {
             Some(filename) => filename.to_string(),
             None => format!("{}.js", plugin).clone(),
         };
-        let file_path = match find_file(&plugin_dir_path, plugin, &filename)? {
-            Some(path) => path,
-            None => return Ok(None),
-        };
+
+        let file_path = plugin_dir_path.join(plugin).join(filename);
+        if !file_path.exists() {
+            return Ok(None);
+        }
+
         Ok(Some(PluginFile {
             name: plugin.to_string(),
             path: file_path.to_string_lossy().to_string(),
@@ -37,7 +39,7 @@ impl PluginFileService {
         }))
     }
 
-    pub fn find_files(base_dir: &Option<String>) -> anyhow::Result<Vec<PluginFile>> {
+    pub fn plugin_files(base_dir: &Option<String>) -> anyhow::Result<Vec<PluginFile>> {
         let mut files = Vec::new();
         let (plugin_dir_path, plugin_dir) = get_plugin_dir(base_dir)?;
         let paths = fs::read_dir(&plugin_dir_path)?;
@@ -48,7 +50,7 @@ impl PluginFileService {
                 continue;
             }
             let file_path = entry_path.join(PLUGIN_FILE_NAME);
-            if file_path.clone().exists() {
+            if file_path.exists() {
                 let path = file_path
                     .to_string_lossy()
                     .to_string()
@@ -78,29 +80,4 @@ fn get_plugin_dir(base_dir: &Option<String>) -> Result<(PathBuf, String), anyhow
         plugin_dir_path.clone(),
         plugin_dir_path.to_string_lossy().to_string(),
     ))
-}
-
-fn find_file(file_dir: &PathBuf, plugin: &str, filename: &str) -> Result<Option<PathBuf>, Error> {
-    let paths = fs::read_dir(file_dir)?;
-    for entry in paths {
-        let path = entry?.path();
-        if path.is_file() {
-            continue;
-        }
-        match path.file_name() {
-            Some(name) => {
-                if name != plugin {
-                    continue;
-                }
-            }
-            None => continue,
-        };
-
-        let file_path = path.join(filename);
-        if file_path.exists() {
-            return Ok(Some(file_path));
-        }
-    }
-
-    Ok(None)
 }
