@@ -10,6 +10,7 @@ import {
   ColumnDescription,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
+import { ItemCell } from './ContentArea';
 
 export const useRequestColumns = () => {
   const t = useTranslation('common');
@@ -34,6 +35,7 @@ export const useRequestColumns = () => {
     [
       'itemName',
       {
+        Cell: ItemCell,
         width: 350,
         accessor: ({ rowData }) => rowData.item.name,
         getSortValue: rowData => rowData.item.name,
