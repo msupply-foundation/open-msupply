@@ -11,8 +11,6 @@ import {
   Divider,
   Box,
   Typography,
-  ButtonWithIcon,
-  ZapIcon,
   InfoPanel,
   useFormatNumber,
 } from '@openmsupply-client/common';
@@ -54,8 +52,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   isAutoAllocated,
 }) => {
   const t = useTranslation('distribution');
-  const [showAllocationWarning, setShowAllocationWarning] = useState(false);
-  const [placeholderQuantity, setPlaceholderQuantity] = useState(0);
+  const [allocationWarning, setAllocationWarning] = useState<
+    string | undefined
+  >();
   const { format } = useFormatNumber();
   const quantity =
     allocatedQuantity /
@@ -65,34 +64,55 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   const { items } = useOutbound.line.rows();
 
   const onChangePackSize = (newPackSize: number) => {
+    const packSize = newPackSize === -1 ? 1 : newPackSize;
     const newAllocatedQuantity =
-      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / newPackSize);
+      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / packSize);
     packSizeController.setPackSize(newPackSize);
-    onChangeQuantity(
-      newAllocatedQuantity,
-      newPackSize === -1 ? null : newPackSize,
-      false
-    );
-    setShowAllocationWarning(false);
+
+    allocate(newAllocatedQuantity, newPackSize);
   };
 
   const unit = item?.unitName ?? t('label.unit');
-  const allocate = () => {
+  const getAllocationWarning = (
+    requestedQuantity: number,
+    allocatedQuantity: number,
+    placeholderQuantity: number
+  ) => {
+    if (allocatedQuantity !== requestedQuantity) {
+      return t('messages.over-allocated', {
+        allocatedQuantity: format(allocatedQuantity),
+        requestedQuantity: format(requestedQuantity),
+      });
+    }
+    if (placeholderQuantity > 0) {
+      return t('messages.placeholder-allocated', { placeholderQuantity });
+    }
+
+    return undefined;
+  };
+
+  const allocate = (quantity: number, packSize: number) => {
     const newAllocateQuantities = onChangeQuantity(
-      issueQuantity,
-      packSizeController.selected?.value === -1
-        ? null
-        : Number(packSizeController.selected?.value),
+      quantity,
+      packSize === -1 ? null : packSize,
       true
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
-    setPlaceholderQuantity(placeholderLine?.numberOfPacks ?? 0);
-    setShowAllocationWarning(!!placeholderLine?.numberOfPacks);
+    const warning = getAllocationWarning(
+      quantity * (packSize === -1 ? 1 : packSize),
+      newAllocateQuantities?.reduce(
+        (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+        0
+      ) ?? 0,
+      placeholderLine?.numberOfPacks ?? 0
+    );
+    setAllocationWarning(warning);
   };
 
   const handleIssueQuantityChange = (quantity: number) => {
     setIssueQuantity(quantity);
-    setShowAllocationWarning(false);
+    setAllocationWarning(undefined);
+    allocate(quantity, Number(packSizeController.selected?.value));
   };
 
   useEffect(() => {
@@ -148,19 +168,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
-          {showAllocationWarning && isAutoAllocated && (
+          {allocationWarning && isAutoAllocated && (
             <Grid display="flex" justifyContent="center" flex={1}>
-              <InfoPanel
-                message={t('messages.over-allocated', {
-                  quantity: format(placeholderQuantity),
-                  issueQuantity: format(
-                    issueQuantity *
-                      (packSizeController.selected?.value === -1
-                        ? 1
-                        : packSizeController.selected?.value ?? 1)
-                  ),
-                })}
-              />
+              <InfoPanel message={allocationWarning} />
             </Grid>
           )}
           <Grid container>
@@ -221,14 +231,6 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 <Box marginLeft="auto" />
               </>
             ) : null}
-            <Box flex={1} display="flex" justifyContent="flex-end">
-              <ButtonWithIcon
-                disabled={issueQuantity === 0}
-                onClick={allocate}
-                label={t('button.allocate')}
-                Icon={<ZapIcon />}
-              />
-            </Box>
           </Grid>
         </>
       ) : (
