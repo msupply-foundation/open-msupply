@@ -67,28 +67,21 @@ export const RequestLineEditFormLayout = ({
       paddingBottom={1}
       boxShadow={theme => theme.shadows[2]}
     >
-      <Grid
-        item
-        xs={8}
-        direction="column"
-        justifyContent="space-between"
-        paddingBottom={1}
-      >
-        <Grid item xs={4}>
+      <Grid item xs={8} direction="column" justifyContent="space-between">
+        <Grid item xs={12}>
           {Top}
         </Grid>
         <Grid
           item
-          xs={8}
+          xs={12}
           container
           direction="row"
           justifyContent="space-between"
-          padding={3}
         >
-          <Grid item xs={4}>
+          <Grid item xs={6}>
             {Left}
           </Grid>
-          <Grid item xs={4}>
+          <Grid item xs={6}>
             {Middle}
           </Grid>
         </Grid>
@@ -238,8 +231,8 @@ export const RequestLineEditForm = ({
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },
             }}
-            minRows={6}
-            maxRows={6}
+            minRows={6.2}
+            maxRows={6.2}
           />
         </>
       }
