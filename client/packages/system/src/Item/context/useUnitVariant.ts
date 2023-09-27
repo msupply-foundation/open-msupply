@@ -88,7 +88,7 @@ export const useUnitVariant = (
 ): {
   asPackUnit: (packSize: number) => string;
   numberOfPacksFromQuantity: (totalQuantity: number) => number;
-  numberOfPacksToQuantity: (numPacks: number) => number;
+  numberOfPacksToTotalQuantity: (numPacks: number) => number;
   variantsControl?: VariantControl;
 } => {
   const [item, userSelectedVariantId, setUserSelectedVariant] = useUnitStore(
@@ -105,7 +105,7 @@ export const useUnitVariant = (
     return {
       asPackUnit: packSize => commonAsPackUnit({ packSize, unitName, t }),
       numberOfPacksFromQuantity: totalQuantity => totalQuantity,
-      numberOfPacksToQuantity: numPacks => numPacks,
+      numberOfPacksToTotalQuantity: numPacks => numPacks,
     };
   }
 
@@ -136,7 +136,7 @@ export const useUnitVariant = (
     },
     numberOfPacksFromQuantity: totalQuantity =>
       NumUtils.round(totalQuantity / activeVariant.packSize, 2),
-    numberOfPacksToQuantity: numPacks =>
+    numberOfPacksToTotalQuantity: numPacks =>
       NumUtils.round(numPacks * activeVariant.packSize, 2),
     // TODO what if variants were soft deleted ?
     variantsControl: {

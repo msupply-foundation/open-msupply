@@ -17,7 +17,7 @@ interface ResponseLineEditFormProps {
   draftLine: DraftResponseLine;
   variantsControl?: VariantControl;
   numberOfPacksFromQuantity: (totalQuantity: number) => number;
-  numberOfPacksToQuantity: (numPacks: number) => number;
+  numberOfPacksToTotalQuantity: (numPacks: number) => number;
 }
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => {
@@ -85,7 +85,7 @@ export const ResponseLineEditForm = ({
   draftLine,
   variantsControl,
   numberOfPacksFromQuantity,
-  numberOfPacksToQuantity,
+  numberOfPacksToTotalQuantity,
 }: ResponseLineEditFormProps) => {
   const t = useTranslation('distribution');
   const supplyQuantity = draftLine.supplyQuantity ?? 0;
@@ -136,7 +136,8 @@ export const ResponseLineEditForm = ({
                 width={150}
                 onChange={supplyQuantity =>
                   update({
-                    supplyQuantity: numberOfPacksToQuantity(supplyQuantity),
+                    supplyQuantity:
+                      numberOfPacksToTotalQuantity(supplyQuantity),
                   })
                 }
               />

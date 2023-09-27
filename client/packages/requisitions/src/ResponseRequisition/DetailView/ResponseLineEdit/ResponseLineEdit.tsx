@@ -32,7 +32,7 @@ export const ResponseLineEdit = ({
   const { next, hasNext } = useNextResponseLine(currentLine);
   const { data } = useResponse.line.stats(draft?.id);
   const {
-    numberOfPacksToQuantity,
+    numberOfPacksToTotalQuantity,
     numberOfPacksFromQuantity,
     variantsControl,
   } = useUnitVariant(draft.itemId, draft.item.unitName ?? null);
@@ -118,7 +118,7 @@ export const ResponseLineEdit = ({
             disabled={isDisabled}
             variantsControl={variantsControl}
             numberOfPacksFromQuantity={numberOfPacksFromQuantity}
-            numberOfPacksToQuantity={numberOfPacksToQuantity}
+            numberOfPacksToTotalQuantity={numberOfPacksToTotalQuantity}
           />
           <ModalTabs
             tabs={tabs}
