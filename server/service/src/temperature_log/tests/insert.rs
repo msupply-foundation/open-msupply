@@ -39,7 +39,11 @@ mod query {
                 InsertTemperatureLog {
                     id: mock_data["base"].temperature_logs[0].id.clone(),
                     sensor_id: "invalid".to_owned(),
-                    timestamp: None,
+                    timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
+                        + Duration::seconds(47046),
                 },
             ),
             Err(InsertTemperatureLogError::TemperatureLogAlreadyExists)

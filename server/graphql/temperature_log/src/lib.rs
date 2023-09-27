@@ -127,11 +127,11 @@ mod test {
 
         let query = r#"
         query {
-            temperature_logs(storeId: \"store_a\") {
+            temperatureLogs(storeId: \"store_a\") {
               ... on TemperatureLogConnector {
                 nodes {
                   id
-                  sensor_id
+                  sensorId
                 }
                 totalCount
               }
@@ -161,11 +161,11 @@ mod test {
         }));
 
         let expected = json!({
-              "temperature_logs": {
+              "temperatureLogs": {
                   "nodes": [
                       {
                           "id": "temperature_log_1a",
-                          "sensor_id": "sensor_1",
+                          "sensorId": "sensor_1",
                       },
                   ],
                   "totalCount": 1
@@ -191,7 +191,7 @@ mod test {
         }));
 
         let expected = json!({
-              "temperature_logs": {
+              "temperatureLogs": {
                   "nodes": [
 
                   ],
@@ -224,7 +224,7 @@ mod test {
             $sort: [TemperatureLogSortInput]
             $filter: TemperatureLogFilterInput
           ) {
-            temperature_logs(sort: $sort, filter: $filter, storeId: \"store_a\") {
+            temperatureLogs(sort: $sort, filter: $filter, storeId: \"store_a\") {
               __typename
             }
           }
@@ -232,7 +232,7 @@ mod test {
         "#;
 
         let expected = json!({
-              "temperature_logs": {
+              "temperatureLogs": {
                   "__typename": "TemperatureLogConnector"
               }
           }
@@ -306,7 +306,7 @@ mod test {
 
         let variables = json!({
           "filter": {
-            "sensor_id": { "equalTo": "match_sensor"},
+            "sensorId": { "equalTo": "match_sensor"},
           }
         });
 
