@@ -4,6 +4,7 @@ import { NumericTextInputProps, NumericTextInput } from './NumericTextInput';
 
 interface NonNegativeIntegerInputProps
   extends Omit<NumericTextInputProps, 'onChange'> {
+  defaultValue?: number;
   max?: number;
   onChange: (newValue: number) => void;
 }
@@ -13,6 +14,7 @@ export const NonNegativeIntegerInput = React.forwardRef(
   (
     {
       sx,
+      defaultValue,
       disabled = false,
       value,
       max,
@@ -28,11 +30,13 @@ export const NonNegativeIntegerInput = React.forwardRef(
         InputProps={{
           sx: { ...sx, '& .MuiInput-input': { textAlign: 'right' } },
         }}
-        onChange={value =>
-          value !== undefined
-            ? onChange(NumUtils.constrain(Math.round(value), 0, max ?? 4294967295))
-            : undefined
-        }
+        onChange={value => {
+          if (value === undefined) {
+            if (defaultValue !== undefined) onChange(defaultValue);
+            return;
+          }
+          onChange(NumUtils.constrain(Math.round(value), 0, max ?? 4294967295));
+        }}
         disabled={disabled}
         value={value}
         {...rest}
