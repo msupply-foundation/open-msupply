@@ -111,23 +111,21 @@ export const RequestLineEditForm = ({
   return (
     <RequestLineEditFormLayout
       Top={
-        <>
-          <StockItemSearchInputWithStats
-            autoFocus={!item}
-            openOnFocus={!item}
-            width={600}
-            disabled={disabled}
-            currentItemId={item?.id}
-            onChange={(newItem: ItemRowWithStatsFragment | null) =>
-              newItem && onChangeItem(newItem)
-            }
-            extraFilter={
-              disabled
-                ? undefined
-                : itemRow => !lines?.some(({ item }) => itemRow.id === item.id)
-            }
-          />
-        </>
+        <StockItemSearchInputWithStats
+          autoFocus={!item}
+          openOnFocus={!item}
+          width={600}
+          disabled={disabled}
+          currentItemId={item?.id}
+          onChange={(newItem: ItemRowWithStatsFragment | null) =>
+            newItem && onChangeItem(newItem)
+          }
+          extraFilter={
+            disabled
+              ? undefined
+              : itemRow => !lines?.some(({ item }) => itemRow.id === item.id)
+          }
+        />
       }
       Left={
         <>
