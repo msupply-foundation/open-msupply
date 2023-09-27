@@ -9,6 +9,7 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use repository::contact_trace::ContactTraceFilter;
 use repository::{EqualFilter, Pagination, PaginationOption, Patient, ProgramEnrolmentFilter};
 use service::programs::patient::main_patient_doc_name;
+use service::usize_to_u32;
 
 use crate::types::document::DocumentNode;
 use crate::types::program_enrolment::ProgramEnrolmentNode;
@@ -18,7 +19,9 @@ use super::contact_trace::{
     ContactTraceConnector, ContactTraceFilterInput, ContactTraceNode, ContactTraceResponse,
     ContactTraceSortInput,
 };
-use super::program_enrolment::ProgramEnrolmentFilterInput;
+use super::program_enrolment::{
+    ProgramEnrolmentConnector, ProgramEnrolmentFilterInput, ProgramEnrolmentResponse,
+};
 
 pub struct PatientNode {
     pub store_id: String,
@@ -117,14 +120,14 @@ impl PatientNode {
         &self,
         ctx: &Context<'_>,
         filter: Option<ProgramEnrolmentFilterInput>,
-    ) -> Result<Vec<ProgramEnrolmentNode>> {
+    ) -> Result<ProgramEnrolmentResponse> {
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
             .map(|f| f.to_domain_filter())
             .unwrap_or(ProgramEnrolmentFilter::new())
             .patient_id(EqualFilter::equal_to(&self.patient.id));
 
-        let entries = ctx
+        let nodes: Vec<_> = ctx
             .service_provider()
             .program_enrolment_service
             .program_enrolments(
@@ -133,15 +136,20 @@ impl PatientNode {
                 None,
                 Some(filter),
                 self.allowed_ctx.clone(),
-            )?;
-        Ok(entries
+            )?
             .into_iter()
-            .map(|program_enrolment| ProgramEnrolmentNode {
+            .map(|program_row| ProgramEnrolmentNode {
                 store_id: self.store_id.clone(),
-                program_enrolment,
+                program_enrolment: program_row,
                 allowed_ctx: self.allowed_ctx.clone(),
             })
-            .collect())
+            .collect();
+        Ok(ProgramEnrolmentResponse::Response(
+            ProgramEnrolmentConnector {
+                total_count: usize_to_u32(nodes.len()),
+                nodes,
+            },
+        ))
     }
 
     pub async fn contact_traces(

@@ -16,11 +16,17 @@ fragment PatientRow on PatientNode {
   }
   isDeceased
   programEnrolments {
-    programEnrolmentId
-    document {
-      documentRegistry {
-        name
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        programEnrolmentId
+        document {
+          documentRegistry {
+            name
+          }
+        }
       }
+      totalCount
     }
   }
 }
