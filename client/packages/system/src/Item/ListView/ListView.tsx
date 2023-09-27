@@ -10,6 +10,8 @@ import {
   useUrlQueryParams,
   ColumnAlign,
   useFormatNumber,
+  CellProps,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { useItems, ItemRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
@@ -38,10 +40,35 @@ const ItemListComponent: FC = () => {
     };
   };
 
+  const ItemCell = <T extends ItemWithStats>({
+    rowData,
+  }: CellProps<T>): React.ReactElement<CellProps<T>> => {
+    const itemName = rowData.name;
+    return (
+      <Tooltip title={String(itemName)} placement="bottom-start">
+        <div
+          style={{
+            overflow: 'hidden',
+            textOverflow: 'elipsis',
+          }}
+        >
+          {String(itemName)}
+        </div>
+      </Tooltip>
+    );
+  };
+
   const columns = useColumns<ItemWithStats>(
     [
       'code',
-      'name',
+      {
+        key: 'itemName',
+        label: 'label.item_one',
+        Cell: ItemCell,
+        maxWidth: 350,
+        sortable: false,
+        align: ColumnAlign.Left,
+      },
       {
         accessor: ({ rowData }) => rowData.unitName ?? '',
         align: ColumnAlign.Right,
