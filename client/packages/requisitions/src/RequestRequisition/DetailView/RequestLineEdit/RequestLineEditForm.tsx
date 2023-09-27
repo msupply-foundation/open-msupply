@@ -47,12 +47,14 @@ interface RequestLineEditFormLayoutProps {
   Left: React.ReactElement;
   Middle: React.ReactElement;
   Right: React.ReactElement;
+  Top: React.ReactElement;
 }
 
 export const RequestLineEditFormLayout = ({
   Left,
   Middle,
   Right,
+  Top,
 }: RequestLineEditFormLayoutProps) => {
   return (
     <Grid
@@ -65,18 +67,31 @@ export const RequestLineEditFormLayout = ({
       paddingBottom={1}
       boxShadow={theme => theme.shadows[2]}
     >
-      <Grid item xs={4}>
-        {Left}
-      </Grid>
       <Grid
         item
-        xs={4}
+        xs={8}
+        direction="column"
+        justifyContent="space-between"
         paddingBottom={1}
-        display="flex"
-        flexDirection="column"
-        justifyContent="flex-end"
       >
-        {Middle}
+        <Grid item xs={4}>
+          {Top}
+        </Grid>
+        <Grid
+          item
+          xs={8}
+          container
+          direction="row"
+          justifyContent="space-between"
+          padding={3}
+        >
+          <Grid item xs={4}>
+            {Left}
+          </Grid>
+          <Grid item xs={4}>
+            {Middle}
+          </Grid>
+        </Grid>
       </Grid>
       <Grid item xs={4}>
         {Right}
@@ -102,12 +117,12 @@ export const RequestLineEditForm = ({
 
   return (
     <RequestLineEditFormLayout
-      Left={
+      Top={
         <>
           <StockItemSearchInputWithStats
             autoFocus={!item}
             openOnFocus={!item}
-            width={300}
+            width={600}
             disabled={disabled}
             currentItemId={item?.id}
             onChange={(newItem: ItemRowWithStatsFragment | null) =>
@@ -119,7 +134,10 @@ export const RequestLineEditForm = ({
                 : itemRow => !lines?.some(({ item }) => itemRow.id === item.id)
             }
           />
-
+        </>
+      }
+      Left={
+        <>
           {item && item?.unitName ? (
             <InfoRow label={t('label.unit')} value={item.unitName} />
           ) : null}
