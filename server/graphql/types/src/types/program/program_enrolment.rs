@@ -2,7 +2,7 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
-    loader::DocumentLoader,
+    loader::{DocumentLoader, PatientLoader},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
@@ -17,6 +17,7 @@ use repository::{
 use super::{
     document::DocumentNode,
     encounter::{EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput},
+    patient::PatientNode,
     program_event::{
         ProgramEventConnector, ProgramEventNode, ProgramEventResponse, ProgramEventSortInput,
     },
@@ -200,6 +201,22 @@ impl ProgramEnrolmentNode {
 
     pub async fn patient_id(&self) -> &str {
         &self.program_enrolment.0.patient_id
+    }
+
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
+
+        let result = loader
+            .load_one(self.program_enrolment.0.patient_id.clone())
+            .await?
+            .map(|patient| PatientNode {
+                store_id: self.store_id.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
+                patient,
+            })
+            .ok_or(Error::new("Program enrolment without patient"))?;
+
+        Ok(result)
     }
 
     pub async fn enrolment_datetime(&self) -> DateTime<Utc> {

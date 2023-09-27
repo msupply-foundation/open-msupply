@@ -4,13 +4,20 @@ use chrono::{Local, NaiveDate};
 use graphql_core::loader::DocumentLoader;
 use graphql_core::ContextExt;
 
-use repository::{EqualFilter, Pagination, Patient, ProgramEnrolmentFilter};
+use graphql_core::pagination::PaginationInput;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use repository::contact_trace::ContactTraceFilter;
+use repository::{EqualFilter, Pagination, PaginationOption, Patient, ProgramEnrolmentFilter};
 use service::programs::patient::main_patient_doc_name;
 
 use crate::types::document::DocumentNode;
 use crate::types::program_enrolment::ProgramEnrolmentNode;
 use crate::types::GenderType;
 
+use super::contact_trace::{
+    ContactTraceConnector, ContactTraceFilterInput, ContactTraceNode, ContactTraceResponse,
+    ContactTraceSortInput,
+};
 use super::program_enrolment::ProgramEnrolmentFilterInput;
 
 pub struct PatientNode {
@@ -135,5 +142,45 @@ impl PatientNode {
                 allowed_ctx: self.allowed_ctx.clone(),
             })
             .collect())
+    }
+
+    pub async fn contact_traces(
+        &self,
+        ctx: &Context<'_>,
+        page: Option<PaginationInput>,
+        filter: Option<ContactTraceFilterInput>,
+        sort: Option<ContactTraceSortInput>,
+    ) -> Result<ContactTraceResponse> {
+        let service_provider = ctx.service_provider();
+        let context = service_provider.basic_context()?;
+
+        let mut filter = filter
+            .map(|f| f.to_domain_filter())
+            .unwrap_or(ContactTraceFilter::default());
+        filter.patient_id = Some(EqualFilter::equal_to(&self.patient.id));
+        let result = service_provider
+            .contact_trace_service
+            .contact_traces(
+                &context,
+                page.map(PaginationOption::from),
+                Some(filter),
+                sort.map(ContactTraceSortInput::to_domain),
+                self.allowed_ctx.clone(),
+            )
+            .map_err(StandardGraphqlError::from_list_error)?;
+        let nodes = result
+            .rows
+            .into_iter()
+            .map(|encounter| ContactTraceNode {
+                store_id: self.store_id.clone(),
+                contact_trace: encounter,
+                allowed_ctx: self.allowed_ctx.clone(),
+            })
+            .collect();
+
+        Ok(ContactTraceResponse::Response(ContactTraceConnector {
+            total_count: result.count,
+            nodes,
+        }))
     }
 }
