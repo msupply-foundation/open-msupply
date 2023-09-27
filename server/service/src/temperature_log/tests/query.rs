@@ -6,6 +6,7 @@ mod query {
         test_db::setup_all,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
+    use chrono::NaiveDateTime;
 
     use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
 
@@ -127,16 +128,16 @@ mod query {
             .unwrap();
 
         let mut temperature_logs = mock_data["base"].temperature_logs.clone();
-        temperature_logs.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        temperature_logs.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
 
-        let result_names: Vec<String> = result
+        let result_timestamps: Vec<NaiveDateTime> = result
             .rows
             .into_iter()
-            .map(|temperature_log| temperature_log.temperature_log_row.name)
+            .map(|temperature_log| temperature_log.temperature_log_row.timestamp)
             .collect();
-        let sorted_names: Vec<String> = temperature_logs.into_iter().map(|temperature_log| temperature_log.name).collect();
+        let sorted_timestamps: Vec<NaiveDateTime> = temperature_logs.into_iter().map(|temperature_log| temperature_log.timestamp).collect();
 
-        assert_eq!(result_names, sorted_names);
+        assert_eq!(result_timestamps, sorted_timestamps);
 
         // Test Temperature sort with desc sort
         let result = service
@@ -152,15 +153,15 @@ mod query {
             .unwrap();
 
         let mut temperature_logs = mock_data["base"].temperature_logs.clone();
-        temperature_logs.sort_by(|a, b| b.name.to_lowercase().cmp(&a.name.to_lowercase()));
+        temperature_logs.sort_by(|a, b| b.temperature.partial_cmp(&a.temperature).unwrap());
 
-        let result_names: Vec<String> = result
+        let result_temperatures: Vec<f64> = result
             .rows
             .into_iter()
-            .map(|temperature_log| temperature_log.temperature_log_row.name)
+            .map(|temperature_log| temperature_log.temperature_log_row.temperature)
             .collect();
-        let sorted_names: Vec<String> = temperature_logs.into_iter().map(|temperature_log| temperature_log.name).collect();
+        let sorted_temperatures: Vec<f64> = temperature_logs.into_iter().map(|temperature_log| temperature_log.temperature).collect();
 
-        assert_eq!(result_names, sorted_names);
+        assert_eq!(result_temperatures, sorted_temperatures);
     }
 }
