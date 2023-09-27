@@ -190,9 +190,9 @@ export const useStocktakeColumns = ({
         sortable: false,
         Cell: PackUnitMultipleCell({
           getItemId: row => row?.item?.id ?? '',
-          getPackSize: row => {
-            if ('lines' in row) return 1;
-            else return row?.packSize || 1;
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row.packSize ?? 1];
           },
           getUnitName: row => row?.item?.unitName ?? null,
         }),
