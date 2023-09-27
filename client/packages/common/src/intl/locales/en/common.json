@@ -337,7 +337,7 @@
   "messages.confirm-status-as": "Confirm status as $t({{status}})?",
   "messages.confirm-remove-item": "Are you sure?",
   "messages.confirm-save-generic": "Are you ready to save changes?",
-  "messages.confirm-zero-quantity": "There is no allocated quantity for this item. Do you want to continue?",
+  "messages.confirm-zero-quantity": "There is no allocated quantity for this item! Click OK again to confirm.",
   "messages.confirm-zero-quantity-status": "You have rows with 0 quantity issued. If you proceed, these will be removed. Please \"Cancel\" if you wish to update the items.",
   "messages.delete-this-line": "Delete this line",
   "messages.confirm-delete-shipment": "This will permanently remove Shipment #{{number}}",

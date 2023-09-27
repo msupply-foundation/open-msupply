@@ -12,6 +12,7 @@ import {
   Box,
   Typography,
   InfoPanel,
+  Alert,
   useFormatNumber,
   useDebounceCallback,
 } from '@openmsupply-client/common';
@@ -39,6 +40,7 @@ interface OutboundLineEditFormProps {
   disabled: boolean;
   canAutoAllocate: boolean;
   isAutoAllocated: boolean;
+  showZeroQuantityConfirmation: boolean;
 }
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -51,6 +53,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   disabled,
   canAutoAllocate,
   isAutoAllocated,
+  showZeroQuantityConfirmation,
 }) => {
   const t = useTranslation('distribution');
   const [allocationWarning, setAllocationWarning] = useState<
@@ -176,6 +179,13 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
+          {showZeroQuantityConfirmation && (
+            <Grid display="flex" justifyContent="center" flex={1}>
+              <Alert severity="warning">
+                {t('messages.confirm-zero-quantity')}
+              </Alert>
+            </Grid>
+          )}
           {allocationWarning && isAutoAllocated && (
             <Grid display="flex" justifyContent="center" flex={1}>
               <InfoPanel message={allocationWarning} />

@@ -17,7 +17,6 @@ import {
   InvoiceLineNodeType,
   useNotification,
   InvoiceNodeStatus,
-  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
@@ -84,6 +83,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
   const { warning } = useNotification();
+  const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
+    useState(false);
   useFocusNumberOfPacksInput(draft);
 
   const placeholder = draftStockOutLines?.find(
@@ -154,6 +155,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     setIsDirty(true);
     setDraftStockOutLines(newAllocateQuantities ?? draftStockOutLines);
     setIsAutoAllocated(autoAllocated);
+    if (showZeroQuantityConfirmation && newVal !== 0)
+      setShowZeroQuantityConfirmation(false);
 
     return newAllocateQuantities;
   };
@@ -162,7 +165,15 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
-  const save = async () => {
+  const handleSave = async () => {
+    if (
+      getAllocatedQuantity(draftStockOutLines) === 0 &&
+      !showZeroQuantityConfirmation
+    ) {
+      setShowZeroQuantityConfirmation(true);
+      return;
+    }
+
     try {
       await onSave();
       setIsDirty(false);
@@ -174,21 +185,6 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     } catch (e) {
       // console.log(e);
     }
-  };
-  const showZeroQuantityConfirmation = useConfirmationModal({
-    onConfirm: async () => {
-      await save();
-    },
-    message: t('messages.confirm-zero-quantity'),
-    title: t('heading.are-you-sure'),
-  });
-
-  const handleSave = async () => {
-    if (getAllocatedQuantity(draftStockOutLines) === 0) {
-      showZeroQuantityConfirmation();
-      return;
-    }
-    await save();
   };
 
   return (
@@ -228,6 +224,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           onChangeQuantity={onAllocate}
           canAutoAllocate={canAutoAllocate}
           isAutoAllocated={isAutoAllocated}
+          showZeroQuantityConfirmation={showZeroQuantityConfirmation}
         />
 
         <TableWrapper
