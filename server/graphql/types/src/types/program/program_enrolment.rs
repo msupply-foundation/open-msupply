@@ -183,6 +183,17 @@ pub struct ProgramEnrolmentNode {
     pub allowed_ctx: Vec<String>,
 }
 
+#[derive(SimpleObject)]
+pub struct ProgramEnrolmentConnector {
+    pub total_count: u32,
+    pub nodes: Vec<ProgramEnrolmentNode>,
+}
+
+#[derive(Union)]
+pub enum ProgramEnrolmentResponse {
+    Response(ProgramEnrolmentConnector),
+}
+
 #[Object]
 impl ProgramEnrolmentNode {
     /// The program type

@@ -13,6 +13,7 @@ use graphql_types::types::encounter::EncounterFilterInput;
 use graphql_types::types::encounter::EncounterSortInput;
 use graphql_types::types::patient::PatientNode;
 use graphql_types::types::program_enrolment::ProgramEnrolmentFilterInput;
+use graphql_types::types::program_enrolment::ProgramEnrolmentResponse;
 use graphql_types::types::program_enrolment::ProgramEnrolmentSortInput;
 use graphql_types::types::program_enrolment::ProgramEventFilterInput;
 use graphql_types::types::program_event::ProgramEventResponse;
