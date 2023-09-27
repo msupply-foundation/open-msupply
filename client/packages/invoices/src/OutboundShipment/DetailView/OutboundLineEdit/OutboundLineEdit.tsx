@@ -16,6 +16,8 @@ import {
   useKeyboardHeightAdjustment,
   InvoiceLineNodeType,
   useNotification,
+  InvoiceNodeStatus,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
@@ -31,6 +33,7 @@ import {
   usePackSizeController,
 } from '../../../StockOut';
 import { DraftStockOutLine } from '../../../types';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
@@ -66,9 +69,9 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
 
-  const { mutateAsync } = useOutbound.line.save();
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
   const { status } = useOutbound.document.fields('status');
+  const { mutateAsync } = useOutbound.line.save(status);
   const isDisabled = useOutbound.utils.isDisabled();
   const {
     draftStockOutLines,
@@ -159,6 +162,35 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
+  const save = async () => {
+    try {
+      await onSave();
+      setIsDirty(false);
+      if (!!placeholder) {
+        const infoSnack = info(t('message.placeholder-line'));
+        infoSnack();
+      }
+      onClose();
+    } catch (e) {
+      // console.log(e);
+    }
+  };
+  const showZeroQuantityConfirmation = useConfirmationModal({
+    onConfirm: async () => {
+      await save();
+    },
+    message: t('messages.confirm-zero-quantity'),
+    title: t('heading.are-you-sure'),
+  });
+
+  const handleSave = async () => {
+    if (getAllocatedQuantity(draftStockOutLines) === 0) {
+      showZeroQuantityConfirmation();
+      return;
+    }
+    await save();
+  };
+
   return (
     <Modal
       title={t(
@@ -176,19 +208,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         <DialogButton
           disabled={!currentItem}
           variant="ok"
-          onClick={async () => {
-            try {
-              onSave();
-              setIsDirty(false);
-              if (!!placeholder) {
-                const infoSnack = info(t('message.placeholder-line'));
-                infoSnack();
-              }
-              onClose();
-            } catch (e) {
-              // console.log(e);
-            }
-          }}
+          onClick={handleSave}
         />
       }
       height={height}
@@ -198,7 +218,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         <OutboundLineEditForm
           disabled={mode === ModalMode.Update || isDisabled}
           packSizeController={packSizeController}
-          onChangeItem={setCurrentItem}
+          onChangeItem={(item: ItemRowFragment | null) => {
+            if (status === InvoiceNodeStatus.New) setIsDirty(true);
+            setCurrentItem(item);
+          }}
           item={currentItem}
           allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
           availableQuantity={sumAvailableQuantity(draftStockOutLines)}
