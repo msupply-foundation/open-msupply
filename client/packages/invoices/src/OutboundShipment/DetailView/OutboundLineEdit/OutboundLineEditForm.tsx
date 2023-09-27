@@ -13,6 +13,7 @@ import {
   Typography,
   InfoPanel,
   useFormatNumber,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -91,6 +92,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     return undefined;
   };
 
+  const debouncedQuantityUpdate = useDebounceCallback(
+    quantity => setIssueQuantity(quantity),
+    []
+  );
+
   const allocate = (quantity: number, packSize: number) => {
     const newAllocateQuantities = onChangeQuantity(
       quantity,
@@ -98,26 +104,28 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       true
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
-    const warning = getAllocationWarning(
-      quantity * (packSize === -1 ? 1 : packSize),
+    const allocatedQuantity =
       newAllocateQuantities?.reduce(
         (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
         0
-      ) ?? 0,
+      ) ?? 0;
+    const warning = getAllocationWarning(
+      quantity * (packSize === -1 ? 1 : packSize),
+      allocatedQuantity,
       placeholderLine?.numberOfPacks ?? 0
     );
     setAllocationWarning(warning);
+    debouncedQuantityUpdate(allocatedQuantity);
   };
 
   const handleIssueQuantityChange = (quantity: number) => {
     setIssueQuantity(quantity);
-    setAllocationWarning(undefined);
     allocate(quantity, Number(packSizeController.selected?.value));
   };
 
   useEffect(() => {
-    setIssueQuantity(quantity);
-  }, [packSizeController.selected?.value]);
+    if (!isAutoAllocated) setIssueQuantity(quantity);
+  }, [packSizeController.selected?.value, quantity]);
 
   return (
     <Grid container gap="4px">
@@ -179,6 +187,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
+              defaultValue={0}
             />
 
             <Box marginLeft={1} />
