@@ -17,6 +17,7 @@ import {
   InvoiceLineNodeType,
   useNotification,
   useFormatNumber,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { useDraftPrescriptionLines, useNextItem } from './hooks';
 import { usePrescription } from '../../api';
@@ -53,7 +54,11 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
 
   const { mutateAsync } = usePrescription.line.save();
-  const { status } = usePrescription.document.fields('status');
+  const { mutateAsync: mutateStatus } = usePrescription.document.update();
+  const { status, id: invoiceId } = usePrescription.document.fields([
+    'status',
+    'id',
+  ]);
   const isDisabled = usePrescription.utils.isDisabled();
   const {
     draftStockOutLines,
@@ -86,7 +91,23 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const onSave = async () => {
     if (!isDirty) return;
 
+    // needed since placeholders aren't being created for prescriptions yet, but still adding to array
+    const hasOnHold = draftStockOutLines.some(
+      ({ stockLine, location }) => stockLine?.onHold || location?.onHold
+    );
+
+    if (
+      status !== InvoiceNodeStatus.Picked &&
+      draftStockOutLines.length >= 1 &&
+      !hasOnHold
+    ) {
+      await mutateStatus({
+        id: invoiceId,
+        status: InvoiceNodeStatus.Picked,
+      });
+    }
     await mutateAsync(draftStockOutLines);
+
     if (!draft) return;
   };
 
