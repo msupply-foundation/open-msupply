@@ -23,7 +23,7 @@ mod stock_line;
 mod stocktake_lines;
 mod store;
 //mod temperature_breach;
-//mod temperature_breach_config;
+mod temperature_breach_config;
 mod temperature_log;
 mod user;
 
@@ -54,7 +54,7 @@ pub use stock_line::*;
 pub use stocktake_lines::*;
 pub use store::*;
 //pub use temperature_breach::*;
-//pub use temperature_breach_config::*;
+pub use temperature_breach_config::*;
 pub use temperature_log::*;
 pub use user::*;
 
