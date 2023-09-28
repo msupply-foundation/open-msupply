@@ -150,7 +150,7 @@ mod test {
 
         let query = r#"
         query {
-            temperature_breach_configs(storeId: \"store_a\") {
+            temperatureBreachConfigs(storeId: \"store_a\") {
               ... on TemperatureBreachConfigConnector {
                 nodes {
                   id
@@ -183,7 +183,7 @@ mod test {
         }));
 
         let expected = json!({
-              "temperature_breach_configs": {
+              "temperatureBreachConfigs": {
                   "nodes": [
                       {
                           "id": "active_temperature_breach_config",
@@ -214,7 +214,7 @@ mod test {
         }));
 
         let expected = json!({
-              "temperature_breach_configs": {
+              "temperatureBreachConfigs": {
                   "nodes": [
 
                   ],
@@ -247,7 +247,7 @@ mod test {
             $sort: [TemperatureBreachConfigSortInput]
             $filter: TemperatureBreachConfigFilterInput
           ) {
-            temperature_breach_configs(sort: $sort, filter: $filter, storeId: \"store_a\") {
+            temperatureBreachConfigs(sort: $sort, filter: $filter, storeId: \"store_a\") {
               __typename
             }
           }
@@ -255,7 +255,7 @@ mod test {
         "#;
 
         let expected = json!({
-              "temperature_breach_configs": {
+              "temperatureBreachConfigs": {
                   "__typename": "TemperatureBreachConfigConnector"
               }
           }
