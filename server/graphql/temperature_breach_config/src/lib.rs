@@ -106,8 +106,7 @@ mod test {
     };
 
     use crate::TemperatureBreachConfigQueries;
-    use chrono::{Duration, NaiveDate};
-
+   
     type GetTemperatureBreachConfigs = dyn Fn(
             Option<PaginationOption>,
             Option<TemperatureBreachConfigFilter>,
@@ -174,7 +173,7 @@ mod test {
                         duration: 3600,
                         is_active: true,
                         minimum_temperature: -273.0,
-                        maximum_temperature: 2,
+                        maximum_temperature: 2.0,
                         r#type: TemperatureBreachRowType::ColdConsecutive,
                         store_id: Some("store_a".to_string()),
                     },

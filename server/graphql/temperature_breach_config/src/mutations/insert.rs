@@ -103,7 +103,7 @@ mod test {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
-    use repository::{mock::MockDataInserts, temperature_breach_config::{TemperatureBreachConfig, TemperatureBreachRowType}, TemperatureBreachConfigRow, StorageConnectionManager};
+    use repository::{mock::MockDataInserts, TemperatureBreachRowType, temperature_breach_config::TemperatureBreachConfig, TemperatureBreachConfigRow, StorageConnectionManager};
     use serde_json::json;
 
     use service::{
@@ -249,7 +249,7 @@ mod test {
                     is_active: true,
                     store_id: Some("store_a".to_owned()),
                     minimum_temperature: -273.0,
-                    maximum_temperature: 2,
+                    maximum_temperature: 2.0,
                     r#type: TemperatureBreachRowType::ColdConsecutive,
                 },
             })
