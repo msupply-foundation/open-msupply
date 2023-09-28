@@ -138,6 +138,8 @@ const PatientDetailView = ({
           lastName: currentPatient.lastName ?? undefined,
           gender: currentPatient.gender ?? undefined,
           dateOfBirth: currentPatient.dateOfBirth ?? undefined,
+          isDeceased: currentPatient.isDeceased ?? undefined,
+          dateOfDeath: currentPatient.dateOfDeath ?? undefined,
         },
         isCreating: false,
       };

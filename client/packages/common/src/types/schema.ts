@@ -3217,6 +3217,7 @@ export type PatientFilterInput = {
   code2?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
+  dateOfDeath?: InputMaybe<DateFilterInput>;
   email?: InputMaybe<StringFilterInput>;
   firstName?: InputMaybe<StringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderInput>;
@@ -3237,6 +3238,7 @@ export type PatientNode = {
   code2?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
+  dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
@@ -3290,6 +3292,7 @@ export enum PatientSortFieldInput {
   Code2 = 'code2',
   Country = 'country',
   DateOfBirth = 'dateOfBirth',
+  DateOfDeath = 'dateOfDeath',
   Email = 'email',
   FirstName = 'firstName',
   Gender = 'gender',
@@ -3465,6 +3468,8 @@ export type ProgramEventNode = {
 export type ProgramEventResponse = ProgramEventConnector;
 
 export enum ProgramEventSortFieldInput {
+  ActiveEndDatetime = 'activeEndDatetime',
+  ActiveStartDatetime = 'activeStartDatetime',
   Datetime = 'datetime',
   DocumentName = 'documentName',
   DocumentType = 'documentType',
