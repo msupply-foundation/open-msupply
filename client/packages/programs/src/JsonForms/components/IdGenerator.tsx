@@ -19,8 +19,8 @@ import {
   FORM_GAP,
   FORM_LABEL_WIDTH,
 } from '@openmsupply-client/programs';
-import { usePatient } from '../../../../system/src/Patient/api';
 import { get as extractProperty } from 'lodash';
+import { usePatient } from '@openmsupply-client/system';
 import { z } from 'zod';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 import { useDebouncedTextInput } from '../common/hooks/useDebouncedTextInput';
@@ -286,10 +286,7 @@ const useUniqueProgramPatientCodeValidation = () => {
     usePatient.document.usePatientsPromise();
 
   // returns error if validation fails (patient code already in use)
-  return async (
-    code: string,
-    documentName: string
-  ): Promise<string | undefined> => {
+  return async (code: string, name: string): Promise<string | undefined> => {
     const result = await fetchPatients({
       filterBy: {
         code: { equalTo: code },
@@ -299,7 +296,7 @@ const useUniqueProgramPatientCodeValidation = () => {
       return undefined;
     }
 
-    if (result?.nodes[0]?.name === documentName) {
+    if (result?.nodes[0]?.name === name) {
       return undefined;
     }
     return `Duplicated code: ${code}`;
@@ -374,10 +371,7 @@ const UIComponent = (props: ControlProps) => {
           return error;
         }
       } else if (validation.type === 'UniquePatientCode') {
-        const error = await validateUniquePatientCodeId(
-          id,
-          config.documentName
-        );
+        const error = await validateUniquePatientCodeId(id, config.name);
         if (error) {
           return error;
         }
