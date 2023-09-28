@@ -282,7 +282,7 @@ const useUniqueProgramEnrolmentIdValidation = () => {
 };
 
 const useUniqueProgramPatientCodeValidation = () => {
-  const { mutateAsync: fetchPatientCodes } =
+  const { mutateAsync: fetchPatients } =
     usePatient.document.usePatientsPromise();
 
   // returns error if validation fails (patient code already in use)
@@ -290,7 +290,7 @@ const useUniqueProgramPatientCodeValidation = () => {
     code: string,
     documentName: string
   ): Promise<string | undefined> => {
-    const result = await fetchPatientCodes({
+    const result = await fetchPatients({
       filterBy: {
         code: { equalTo: code },
       },
