@@ -259,7 +259,7 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
         id,
         otherPartyId,
         maxMonthsOfStock: 1,
-        minMonthsOfStock: 1,
+        minMonthsOfStock: 0,
       },
     });
 

@@ -107,7 +107,7 @@ const ProgramListComponent: FC = () => {
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
-        setEditingModal(PatientModal.Program, row.type, row.name, row.type);
+        setEditingModal(PatientModal.Program, row.type, row.name);
       }}
       noDataElement={
         <NothingHere

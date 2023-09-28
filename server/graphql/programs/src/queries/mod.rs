@@ -20,3 +20,5 @@ pub mod encounter_fields;
 pub use self::encounter_fields::*;
 pub mod document_registry;
 pub use self::document_registry::*;
+pub mod contact_trace;
+pub mod program_node;
