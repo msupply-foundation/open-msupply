@@ -9,8 +9,7 @@ export const usePatientsPromise = () => {
     const patients = await api.get.list(query);
 
     return {
-      nodes: patients.nodes,
-      totalCount: patients.totalCount,
+      patients,
     };
   });
 };

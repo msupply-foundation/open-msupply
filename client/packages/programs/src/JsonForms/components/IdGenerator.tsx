@@ -18,12 +18,14 @@ import {
   useProgramEnrolments,
   FORM_GAP,
   FORM_LABEL_WIDTH,
+  ProgramEnrolmentRowFragmentWithId,
 } from '@openmsupply-client/programs';
 import { get as extractProperty } from 'lodash';
 import { usePatient } from '@openmsupply-client/system';
 import { z } from 'zod';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 import { useDebouncedTextInput } from '../common/hooks/useDebouncedTextInput';
+import { ProgramEnrolmentRowFragment } from '../../api/operations.generated';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
@@ -260,6 +262,21 @@ const useUniqueProgramEnrolmentIdValidation = () => {
   const { mutateAsync: fetchProgramEnrolments } =
     useProgramEnrolments.document.programEnrolmentsPromise();
 
+  // Only take the latest status event
+  const latestNodes = (nodes: ProgramEnrolmentRowFragment[]) => {
+    const latest = nodes.map(node => {
+      const events = node.activeProgramEvents.nodes
+        .filter(e => e.type === 'programStatus' && e.data)
+        .slice(0, 1);
+      return {
+        ...node,
+        events,
+        id: node.name,
+      } as ProgramEnrolmentRowFragmentWithId;
+    });
+    return latest;
+  };
+
   // returns error string if validation fails
   return async (
     id: string,
@@ -270,11 +287,11 @@ const useUniqueProgramEnrolmentIdValidation = () => {
         programEnrolmentId: { equalTo: id },
       },
     });
-    if (result.totalCount === 0) {
+    if (result.programs.totalCount === 0) {
       return undefined;
     }
 
-    if (result.nodes[0]?.name === documentName) {
+    if (latestNodes(result.programs.nodes)[0]?.name === documentName) {
       return undefined;
     }
     return `Duplicated id: ${id}`;
@@ -292,11 +309,11 @@ const useUniqueProgramPatientCodeValidation = () => {
         code: { equalTo: code },
       },
     });
-    if (result?.nodes?.length === 0) {
+    if (result?.patients.nodes?.length === 0) {
       return undefined;
     }
 
-    if (result?.nodes[0]?.name === name) {
+    if (result?.patients.nodes[0]?.name === name) {
       return undefined;
     }
     return `Duplicated code: ${code}`;
