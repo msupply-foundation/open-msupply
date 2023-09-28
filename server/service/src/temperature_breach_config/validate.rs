@@ -1,6 +1,4 @@
-use repository::EqualFilter;
 use repository::{
-    temperature_breach_config::{TemperatureBreachConfigFilter, TemperatureBreachConfigRepository},
     RepositoryError, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository, StorageConnection,
 };
 

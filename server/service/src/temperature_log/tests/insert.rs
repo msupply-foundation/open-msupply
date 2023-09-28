@@ -44,6 +44,7 @@ mod query {
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
                         + Duration::seconds(47046),
+                    temperature: 2.4,
                 },
             ),
             Err(InsertTemperatureLogError::TemperatureLogAlreadyExists)
@@ -56,6 +57,7 @@ mod query {
                     id: "new_id".to_owned(),
                     sensor_id: temperature_logs_in_store[0].temperature_log_row.sensor_id.clone(),
                     timestamp: temperature_logs_in_store[0].temperature_log_row.timestamp.clone(),
+                    temperature: temperature_logs_in_store[0].temperature_log_row.temperature,
                 },
             ),
             Err(InsertTemperatureLogError::TemperatureLogNotUnique)
@@ -101,6 +103,7 @@ mod query {
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
                         + Duration::seconds(47046),
+                    temperature: 2.4,
                 },
             ),
             Ok(result_temperature_log.clone())

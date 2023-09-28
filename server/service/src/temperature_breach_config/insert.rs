@@ -57,12 +57,12 @@ pub fn generate(
 ) -> TemperatureBreachConfigRow {
     TemperatureBreachConfigRow {
         id,
-        description: "breach config 1".to_string(),
+        description: description,
         duration: 3600,
         minimum_temperature: -273.0,
         maximum_temperature: 2.0,
         r#type: TemperatureBreachRowType::ColdConsecutive,
-        is_active: false,
+        is_active: is_active,
         store_id: Some(store_id.to_string()),
     }
 }

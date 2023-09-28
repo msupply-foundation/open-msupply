@@ -1,6 +1,6 @@
 use super::{query::get_temperature_log, validate::check_temperature_log_is_unique};
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use chrono::{NaiveDateTime, NaiveDate, Duration};
+use chrono::NaiveDateTime;
 use repository::EqualFilter;
 use repository::{
     temperature_log::{TemperatureLog, TemperatureLogFilter, TemperatureLogRepository},
@@ -19,6 +19,7 @@ pub struct InsertTemperatureLog {
     pub id: String,
     pub sensor_id: String,
     pub timestamp: NaiveDateTime,
+    pub temperature: f64,
 }
 
 pub fn insert_temperature_log(
@@ -58,19 +59,16 @@ pub fn generate(
         id,
         sensor_id,
         timestamp,
+        temperature,
     }: InsertTemperatureLog,
 ) -> TemperatureLogRow {
     TemperatureLogRow {
         id,
-        sensor_id: "sensor_1".to_owned(),
+        sensor_id: sensor_id,
         store_id: Some(store_id.to_string()),
         location_id: None,
-        temperature: 2.4,
-        timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(47046),
+        temperature: temperature,
+        timestamp: timestamp,
     }
 }
 
