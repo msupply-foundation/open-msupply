@@ -53,13 +53,13 @@ impl From<InsertTemperatureBreachConfigInput> for InsertTemperatureBreachConfig 
         InsertTemperatureBreachConfigInput {
             id,
             description,
-            is_active: _,
+            is_active,
         }: InsertTemperatureBreachConfigInput,
     ) -> Self {
         InsertTemperatureBreachConfig {
             id,
             description,
-            is_active: true,
+            is_active,
         }
     }
 }
@@ -166,6 +166,7 @@ mod test {
           "input": {
             "id": "n/a",
             "description": "n/a",
+            "isActive": true,
           }
         }));
 
@@ -236,6 +237,7 @@ mod test {
           "input": {
             "id": "n/a",
             "description": "n/a",
+            "isActive": true,
           }
         }));
 
