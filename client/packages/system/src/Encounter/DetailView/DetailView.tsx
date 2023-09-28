@@ -15,6 +15,7 @@ import {
   DialogButton,
   ButtonWithIcon,
   SaveIcon,
+  EncounterSortFieldInput,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -29,6 +30,7 @@ import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
+import { PatientTabValue } from '../../Patient/PatientView/PatientView';
 
 const getPatientBreadcrumbSuffix = (
   encounter: EncounterFragment,
@@ -201,7 +203,11 @@ export const DetailView: FC = () => {
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
               .addPart(encounter.patient.id)
-              .addQuery({ tab: 'Encounters' })
+              .addQuery({
+                tab: PatientTabValue.Encounters,
+                sort: EncounterSortFieldInput.StartDatetime,
+                dir: 'desc',
+              })
               .build()}
           >
             {getPatientBreadcrumbSuffix(encounter, getLocalisedFullName)}
