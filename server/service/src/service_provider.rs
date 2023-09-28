@@ -24,13 +24,14 @@ use crate::{
     missing_program::create_missing_master_list_and_program,
     name::get_names,
     processors::ProcessorsTrigger,
-    repack::{RepackService, RepackServiceTrait},
     programs::{
+        contact_trace::{ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
         program_event::{ProgramEventService, ProgramEventServiceTrait},
     },
+    repack::{RepackService, RepackServiceTrait},
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
@@ -87,6 +88,7 @@ pub struct ServiceProvider {
     pub program_enrolment_service: Box<dyn ProgramEnrolmentServiceTrait>,
     pub encounter_service: Box<dyn EncounterServiceTrait>,
     pub program_event_service: Box<dyn ProgramEventServiceTrait>,
+    pub contact_trace_service: Box<dyn ContactTraceServiceTrait>,
 
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
@@ -160,6 +162,7 @@ impl ServiceProvider {
             program_enrolment_service: Box::new(ProgramEnrolmentService {}),
             program_event_service: Box::new(ProgramEventService {}),
             encounter_service: Box::new(EncounterService {}),
+            contact_trace_service: Box::new(ContactTraceService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
             site_info_service: Box::new(SiteInfoService),
             sync_status_service: Box::new(SyncStatusService),

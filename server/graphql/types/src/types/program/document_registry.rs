@@ -19,6 +19,7 @@ pub enum DocumentRegistryCategoryNode {
     Patient,
     ProgramEnrolment,
     Encounter,
+    ContactTrace,
     Custom,
 }
 
@@ -43,6 +44,7 @@ impl DocumentRegistryNode {
                 DocumentRegistryCategoryNode::ProgramEnrolment
             }
             DocumentRegistryCategory::Encounter => DocumentRegistryCategoryNode::Encounter,
+            DocumentRegistryCategory::ContactTrace => DocumentRegistryCategoryNode::ContactTrace,
             DocumentRegistryCategory::Custom => DocumentRegistryCategoryNode::Custom,
         }
     }
@@ -76,6 +78,7 @@ impl DocumentRegistryCategoryNode {
                 DocumentRegistryCategory::ProgramEnrolment
             }
             DocumentRegistryCategoryNode::Encounter => DocumentRegistryCategory::Encounter,
+            DocumentRegistryCategoryNode::ContactTrace => DocumentRegistryCategory::ContactTrace,
             DocumentRegistryCategoryNode::Custom => DocumentRegistryCategory::Custom,
         }
     }
