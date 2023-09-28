@@ -26,10 +26,6 @@ mod query {
             .unwrap();
         let service = service_provider.temperature_breach_config_service;
 
-        let temperature_breach_configs_in_store = temperature_breach_config_repository
-            .query_by_filter(TemperatureBreachConfigFilter::new().store_id(EqualFilter::equal_to("store_a")))
-            .unwrap();
-
         let temperature_breach_configs_not_in_store = temperature_breach_config_repository
             .query_by_filter(TemperatureBreachConfigFilter::new().store_id(EqualFilter::not_equal_to("store_a")))
             .unwrap();

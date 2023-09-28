@@ -113,54 +113,54 @@ mod query {
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.temperature_breach_config_service;
-        // Test Name sort with default sort order
+        // Test Description sort with default sort order
         let result = service
             .get_temperature_breach_configs(
                 &context,
                 None,
                 None,
                 Some(Sort {
-                    key: TemperatureBreachConfigSortField::Name,
+                    key: TemperatureBreachConfigSortField::Description,
                     desc: None,
                 }),
             )
             .unwrap();
 
         let mut temperature_breach_configs = mock_data["base"].temperature_breach_configs.clone();
-        temperature_breach_configs.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        temperature_breach_configs.sort_by(|a, b| a.description.to_lowercase().cmp(&b.description.to_lowercase()));
 
-        let result_names: Vec<String> = result
+        let result_descriptions: Vec<String> = result
             .rows
             .into_iter()
-            .map(|temperature_breach_config| temperature_breach_config.temperature_breach_config_row.name)
+            .map(|temperature_breach_config| temperature_breach_config.temperature_breach_config_row.description)
             .collect();
-        let sorted_names: Vec<String> = temperature_breach_configs.into_iter().map(|temperature_breach_config| temperature_breach_config.name).collect();
+        let sorted_descriptions: Vec<String> = temperature_breach_configs.into_iter().map(|temperature_breach_config| temperature_breach_config.description).collect();
 
-        assert_eq!(result_names, sorted_names);
+        assert_eq!(result_descriptions, sorted_descriptions);
 
-        // Test Name sort with desc sort
+        // Test Description sort with desc sort
         let result = service
             .get_temperature_breach_configs(
                 &context,
                 None,
                 None,
                 Some(Sort {
-                    key: TemperatureBreachConfigSortField::Name,
+                    key: TemperatureBreachConfigSortField::Description,
                     desc: Some(true),
                 }),
             )
             .unwrap();
 
         let mut temperature_breach_configs = mock_data["base"].temperature_breach_configs.clone();
-        temperature_breach_configs.sort_by(|a, b| b.name.to_lowercase().cmp(&a.name.to_lowercase()));
+        temperature_breach_configs.sort_by(|a, b| b.description.to_lowercase().cmp(&a.description.to_lowercase()));
 
-        let result_names: Vec<String> = result
+        let result_descriptions: Vec<String> = result
             .rows
             .into_iter()
-            .map(|temperature_breach_config| temperature_breach_config.temperature_breach_config_row.name)
+            .map(|temperature_breach_config| temperature_breach_config.temperature_breach_config_row.description)
             .collect();
-        let sorted_names: Vec<String> = temperature_breach_configs.into_iter().map(|temperature_breach_config| temperature_breach_config.name).collect();
+        let sorted_descriptions: Vec<String> = temperature_breach_configs.into_iter().map(|temperature_breach_config| temperature_breach_config.description).collect();
 
-        assert_eq!(result_names, sorted_names);
+        assert_eq!(result_descriptions, sorted_descriptions);
     }
 }

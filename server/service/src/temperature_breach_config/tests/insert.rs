@@ -27,10 +27,6 @@ mod query {
             .unwrap();
         let service = service_provider.temperature_breach_config_service;
 
-        let temperature_breach_configs_in_store = temperature_breach_config_repository
-            .query_by_filter(TemperatureBreachConfigFilter::new().store_id(EqualFilter::equal_to("store_a")))
-            .unwrap();
-
         assert_eq!(
             service.insert_temperature_breach_config(
                 &context,
@@ -43,17 +39,6 @@ mod query {
             Err(InsertTemperatureBreachConfigError::TemperatureBreachConfigAlreadyExists)
         );
 
-        assert_eq!(
-            service.insert_temperature_breach_config(
-                &context,
-                InsertTemperatureBreachConfig {
-                    id: "new_id".to_owned(),
-                    description: temperature_breach_configs_in_store[0].temperature_breach_config_row.description.clone(),
-                    is_active: true
-                },
-            ),
-            Err(InsertTemperatureBreachConfigError::TemperatureBreachConfigWithDescriptionAlreadyExists)
-        );
     }
 
     #[actix_rt::test]
