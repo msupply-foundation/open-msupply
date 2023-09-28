@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use repository::{EqualFilter, DatetimeFilter};
 use repository::{
     temperature_log::{TemperatureLogFilter, TemperatureLogRepository},
-    RepositoryError, TemperatureLogRow, TemperatureLogRowRepository, StorageConnection,
+    RepositoryError, StorageConnection,
 };
 
 pub fn check_temperature_log_is_unique(
@@ -21,11 +21,4 @@ pub fn check_temperature_log_is_unique(
     )?;
 
     Ok(temperature_logs.len() == 0)
-}
-
-pub fn check_temperature_log_exists(
-    id: &str,
-    connection: &StorageConnection,
-) -> Result<Option<TemperatureLogRow>, RepositoryError> {
-    Ok(TemperatureLogRowRepository::new(connection).find_one_by_id(id)?)
 }

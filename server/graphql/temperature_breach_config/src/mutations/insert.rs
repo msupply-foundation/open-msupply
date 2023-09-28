@@ -1,7 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
-        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueViolation,
+        DatabaseError, InternalError, RecordAlreadyExist,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
