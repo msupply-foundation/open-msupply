@@ -12,10 +12,7 @@ import { ObjUtils } from '@common/utils';
 import defaultPatientSchema from '../DefaultPatientSchema.json';
 import defaultPatientUISchema from '../DefaultPatientUISchema.json';
 import { BasicSpinner } from '@openmsupply-client/common';
-import {
-  IdGenerator,
-  idGeneratorTester,
-} from 'packages/programs/src/JsonForms/components';
+import { IdGenerator, idGeneratorTester } from '@openmsupply-client/programs';
 
 type Patient = {
   code?: string;
