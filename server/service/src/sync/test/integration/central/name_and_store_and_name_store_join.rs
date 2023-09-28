@@ -73,7 +73,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "created_date": "2022-05-22",
             "is_deceased": false,
             "national_health_number": "",
-            "date_of_death": "",
+            "om_date_of_death": "",
         });
 
         let name_row2 = inline_init(|r: &mut NameRow| {
