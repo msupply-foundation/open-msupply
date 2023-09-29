@@ -6,6 +6,7 @@ use super::{
 
 use crate::{
     db_diesel::program_enrolment,
+    diesel_extensions::date_coalesce,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
@@ -15,6 +16,7 @@ use crate::{
     StringFilter,
 };
 
+use chrono::NaiveDate;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type Patient = NameRow;
@@ -29,6 +31,7 @@ pub struct PatientFilter {
     pub last_name: Option<StringFilter>,
     pub gender: Option<EqualFilter<Gender>>,
     pub date_of_birth: Option<DateFilter>,
+    pub date_of_death: Option<DateFilter>,
     pub phone: Option<StringFilter>,
     pub address1: Option<StringFilter>,
     pub address2: Option<StringFilter>,
@@ -59,6 +62,7 @@ pub enum PatientSortField {
     Address2,
     Country,
     Email,
+    DateOfDeath,
 }
 
 pub type PatientSort = Sort<PatientSortField>;
@@ -131,6 +135,9 @@ impl<'a> PatientRepository<'a> {
                 PatientSortField::Code2 => {
                     apply_sort_no_case!(query, sort, name_dsl::national_health_number)
                 }
+                PatientSortField::DateOfDeath => {
+                    apply_sort_no_case!(query, sort, name_dsl::date_of_death)
+                }
             }
         } else {
             query = query.order(name_dsl::id.asc())
@@ -170,6 +177,7 @@ impl<'a> PatientRepository<'a> {
                 last_name,
                 gender,
                 date_of_birth,
+                date_of_death,
                 phone,
                 address1,
                 address2,
@@ -218,6 +226,14 @@ impl<'a> PatientRepository<'a> {
             apply_string_filter!(query, last_name, name_dsl::last_name);
             apply_equal_filter!(query, gender, name_dsl::gender);
             apply_date_filter!(query, date_of_birth, name_dsl::date_of_birth);
+            apply_date_filter!(
+                query,
+                date_of_death,
+                date_coalesce::coalesce(
+                    name_dsl::date_of_death,
+                    NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
+                )
+            );
             apply_string_filter!(query, phone, name_dsl::phone);
             apply_string_filter!(query, address1, name_dsl::address1);
             apply_string_filter!(query, address2, name_dsl::address2);
@@ -286,6 +302,11 @@ impl PatientFilter {
         self
     }
 
+    pub fn date_of_death(mut self, filter: DateFilter) -> Self {
+        self.date_of_death = Some(filter);
+        self
+    }
+
     pub fn phone(mut self, filter: StringFilter) -> Self {
         self.phone = Some(filter);
         self
@@ -317,12 +338,12 @@ impl PatientFilter {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
+    use chrono::{NaiveDate, Utc};
     use util::inline_init;
 
     use crate::{
         mock::{mock_program_a, MockDataInserts},
-        test_db, EqualFilter, NameRow, NameRowRepository, NameType, PatientFilter,
+        test_db, DateFilter, EqualFilter, NameRow, NameRowRepository, NameType, PatientFilter,
         PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
         ProgramEnrolmentStatus, StringFilter,
     };
@@ -516,5 +537,58 @@ mod tests {
             )
             .unwrap();
         assert!(!result.is_empty());
+    }
+
+    #[actix_rt::test]
+    async fn test_name_date_of_death() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_name_date_of_death", MockDataInserts::none()).await;
+        let repo = PatientRepository::new(&connection);
+
+        let name_row_repo = NameRowRepository::new(&connection);
+        let patient_row = inline_init(|row: &mut NameRow| {
+            row.id = "patient_1".to_string();
+            row.r#type = NameType::Patient;
+        });
+        name_row_repo.upsert_one(&patient_row).unwrap();
+
+        // Query if patient is still alive if date of death is not set
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
+                    NaiveDate::from_ymd_opt(2023, 05, 20).unwrap(),
+                )),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+
+        // Add date of death
+        let patient_row = inline_init(|row: &mut NameRow| {
+            row.id = "patient_1".to_string();
+            row.r#type = NameType::Patient;
+            row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 09, 20).unwrap())
+        });
+        name_row_repo.upsert_one(&patient_row).unwrap();
+        // Query if patient is not alive after date_of_death
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
+                    NaiveDate::from_ymd_opt(2023, 09, 22).unwrap(),
+                )),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+        // Query if patient is still alive before date_of_death
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
+                    NaiveDate::from_ymd_opt(2023, 05, 20).unwrap(),
+                )),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
     }
 }

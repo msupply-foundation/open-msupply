@@ -47,6 +47,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
                 .and_hms_opt(0, 0, 0),
             is_deceased: false,
             national_health_number: None,
+            date_of_death: None,
         };
         let name_json1 = json!({
             "ID": name_row1.id,
@@ -71,7 +72,8 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "hold": true,
             "created_date": "2022-05-22",
             "is_deceased": false,
-            "national_health_number": ""
+            "national_health_number": "",
+            "om_date_of_death": "",
         });
 
         let name_row2 = inline_init(|r: &mut NameRow| {
