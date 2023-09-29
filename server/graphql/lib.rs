@@ -30,7 +30,7 @@ use graphql_sensor::{SensorMutations, SensorQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::StocktakeLineMutations;
-//use graphql_temperature_breach::TemperatureBreachQueries;
+use graphql_temperature_breach::{TemperatureBreachMutations, TemperatureBreachQueries};
 use graphql_temperature_breach_config::{TemperatureBreachConfigMutations, TemperatureBreachConfigQueries};
 use graphql_temperature_log::TemperatureLogQueries;
 
@@ -53,7 +53,7 @@ pub struct Queries(
     pub InvoiceQueries,
     pub LocationQueries,
     pub SensorQueries,
-    //pub TemperatureBreachQueries,
+    pub TemperatureBreachQueries,
     pub TemperatureBreachConfigQueries,
     pub TemperatureLogQueries,
     pub StocktakeQueries,
@@ -73,7 +73,7 @@ impl Queries {
             InvoiceQueries,
             LocationQueries,
             SensorQueries,
-            //TemperatureBreachQueries,
+            TemperatureBreachQueries,
             TemperatureBreachConfigQueries,
             TemperatureLogQueries,
             StocktakeQueries,
@@ -95,6 +95,7 @@ pub struct Mutations(
     pub InvoiceLineMutations,
     pub LocationMutations,
     pub SensorMutations,
+    pub TemperatureBreachMutations,
     pub TemperatureBreachConfigMutations,
     pub StocktakeMutations,
     pub StocktakeLineMutations,
@@ -115,6 +116,7 @@ impl Mutations {
             InvoiceLineMutations,
             LocationMutations,
             SensorMutations,
+            TemperatureBreachMutations,
             TemperatureBreachConfigMutations,
             StocktakeMutations,
             StocktakeLineMutations,
