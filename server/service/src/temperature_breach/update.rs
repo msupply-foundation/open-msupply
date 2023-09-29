@@ -1,0 +1,82 @@
+use super::{
+    query::get_temperature_breach,
+    validate::check_temperature_breach_exists,
+};
+use crate::{service_provider::ServiceContext, SingleRecordError};
+use repository::{
+    temperature_breach::TemperatureBreach, RepositoryError, TemperatureBreachRow, TemperatureBreachRowRepository, StorageConnection,
+};
+
+#[derive(PartialEq, Debug)]
+pub enum UpdateTemperatureBreachError {
+    TemperatureBreachDoesNotExist,
+    TemperatureBreachDoesNotBelongToCurrentStore,
+    UpdatedRecordNotFound,
+    DatabaseError(RepositoryError),
+}
+
+pub struct UpdateTemperatureBreach {
+    pub id: String,
+    pub acknowledged: Option<bool>,
+}
+
+pub fn update_temperature_breach(
+    ctx: &ServiceContext,
+    input: UpdateTemperatureBreach,
+) -> Result<TemperatureBreach, UpdateTemperatureBreachError> {
+    let temperature_breach = ctx
+        .connection
+        .transaction_sync(|connection| {
+            let temperature_breach_row = validate(connection, &ctx.store_id, &input)?;
+            let updated_temperature_breach_row = generate(input, temperature_breach_row);
+            TemperatureBreachRowRepository::new(&connection).upsert_one(&updated_temperature_breach_row)?;
+
+            get_temperature_breach(ctx, updated_temperature_breach_row.id).map_err(UpdateTemperatureBreachError::from)
+        })
+        .map_err(|error| error.to_inner_error())?;
+    Ok(temperature_breach)
+}
+
+pub fn validate(
+    connection: &StorageConnection,
+    store_id: &str,
+    input: &UpdateTemperatureBreach,
+) -> Result<TemperatureBreachRow, UpdateTemperatureBreachError> {
+    let temperature_breach_row = match check_temperature_breach_exists(&input.id, connection)? {
+        Some(temperature_breach_row) => temperature_breach_row,
+        None => return Err(UpdateTemperatureBreachError::TemperatureBreachDoesNotExist),
+    };
+
+    if temperature_breach_row.store_id != Some(store_id.to_string()) {
+        return Err(UpdateTemperatureBreachError::TemperatureBreachDoesNotBelongToCurrentStore);
+    }
+
+    Ok(temperature_breach_row)
+}
+
+pub fn generate(
+    UpdateTemperatureBreach {
+        id: _,
+        acknowledged,
+    }: UpdateTemperatureBreach,
+    mut temperature_breach_row: TemperatureBreachRow,
+) -> TemperatureBreachRow {
+    temperature_breach_row.acknowledged = acknowledged.unwrap_or(temperature_breach_row.acknowledged);
+    temperature_breach_row
+}
+
+impl From<RepositoryError> for UpdateTemperatureBreachError {
+    fn from(error: RepositoryError) -> Self {
+        UpdateTemperatureBreachError::DatabaseError(error)
+    }
+}
+
+impl From<SingleRecordError> for UpdateTemperatureBreachError {
+    fn from(error: SingleRecordError) -> Self {
+        use UpdateTemperatureBreachError::*;
+        match error {
+            SingleRecordError::DatabaseError(error) => DatabaseError(error),
+            SingleRecordError::NotFound(_) => UpdatedRecordNotFound,
+        }
+    }
+}
