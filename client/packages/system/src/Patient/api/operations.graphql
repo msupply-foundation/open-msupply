@@ -15,6 +15,7 @@ fragment PatientRow on PatientNode {
     type
   }
   isDeceased
+  dateOfDeath
   programEnrolments {
     ... on ProgramEnrolmentConnector {
       __typename
