@@ -11,6 +11,7 @@ import {
   useCurrency,
   InvoiceLineNodeType,
   PositiveNumberCell,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
@@ -45,6 +46,7 @@ export const useOutboundColumns = ({
   onChangeSortBy,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const { c } = useCurrency();
+  const t = useTranslation();
   return useColumns(
     [
       [
@@ -143,8 +145,11 @@ export const useOutboundColumns = ({
             if ('lines' in row) {
               const { lines } = row;
               return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'batch', '[multiple]') ??
-                ''
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'batch',
+                  `${t('multiple')}`
+                ) ?? ''
               );
             } else {
               return row.batch ?? '';
@@ -156,7 +161,7 @@ export const useOutboundColumns = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'batch',
-                '[multiple]'
+                `${t('multiple')}`
               );
             } else {
               return rowData.batch;
@@ -201,7 +206,15 @@ export const useOutboundColumns = ({
               const locations = row.lines
                 .map(({ location }) => location)
                 .filter(Boolean) as LocationRowFragment[];
-              return ArrayUtils.ifTheSameElseDefault(locations, 'name', '');
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  `${t('multiple')}`
+                );
+              } else {
+                return '';
+              }
             } else {
               return row.location?.name ?? '';
             }
@@ -211,7 +224,14 @@ export const useOutboundColumns = ({
               const locations = rowData.lines
                 .map(({ location }) => location)
                 .filter(Boolean) as LocationRowFragment[];
-              return ArrayUtils.ifTheSameElseDefault(locations, 'name', '');
+
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  `${t('multiple')}`
+                );
+              }
             } else {
               return rowData.location?.name ?? '';
             }
