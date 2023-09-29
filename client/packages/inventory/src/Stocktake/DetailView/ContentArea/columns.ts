@@ -9,6 +9,7 @@ import {
   SortBy,
   PositiveNumberCell,
   getLinesFromRow,
+  useTranslation,
 } from '@openmsupply-client/common';
 import {
   InventoryAdjustmentReasonRowFragment,
@@ -32,6 +33,8 @@ const expandColumn = getRowExpandColumn<
 const getStocktakeReasons = (
   rowData: StocktakeLineFragment | StocktakeSummaryItem
 ) => {
+  const t = useTranslation();
+
   if ('lines' in rowData) {
     const { lines } = rowData;
     const inventoryAdjustmentReasons = lines
@@ -42,7 +45,7 @@ const getStocktakeReasons = (
         ArrayUtils.ifTheSameElseDefault(
           inventoryAdjustmentReasons,
           'reason',
-          '[multiple]'
+          `${t('multiple')}`
         ) ?? ''
       );
     } else {
@@ -60,6 +63,7 @@ export const useStocktakeColumns = ({
   StocktakeLineFragment | StocktakeSummaryItem
 >[] => {
   const { getError } = useStocktakeLineErrorContext();
+  const t = useTranslation();
 
   return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [
@@ -103,8 +107,11 @@ export const useStocktakeColumns = ({
             if ('lines' in row) {
               const { lines } = row;
               return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'batch', '[multiple]') ??
-                ''
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'batch',
+                  `${t('multiple')}`
+                ) ?? ''
               );
             } else {
               return row.batch ?? '';
@@ -116,7 +123,7 @@ export const useStocktakeColumns = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'batch',
-                '[multiple]'
+                `${t('multiple')}`
               );
             } else {
               return rowData.batch;
@@ -135,7 +142,7 @@ export const useStocktakeColumns = ({
                 '';
               return (
                 (expiryDate && Formatter.expiryDate(new Date(expiryDate))) ||
-                '[multiple]'
+                `${t('multiple')}`
               );
             } else {
               return row.expiryDate
@@ -149,7 +156,7 @@ export const useStocktakeColumns = ({
               const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
-                '[multiple]'
+                `${t('multiple')}`
               );
               return expiryDate;
             } else {
@@ -170,7 +177,7 @@ export const useStocktakeColumns = ({
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  '[multiple]'
+                  `${t('multiple')}`
                 );
               } else {
                 return '';
@@ -189,7 +196,7 @@ export const useStocktakeColumns = ({
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  '[multiple]'
+                  `${t('multiple')}`
                 );
               }
             } else {
@@ -208,7 +215,7 @@ export const useStocktakeColumns = ({
                 ArrayUtils.ifTheSameElseDefault(
                   lines,
                   'packSize',
-                  '[multiple]'
+                  `${t('multiple')}`
                 ) ?? ''
               );
             } else {
@@ -221,7 +228,7 @@ export const useStocktakeColumns = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'packSize',
-                '[multiple]'
+                `${t('multiple')}`
               );
             } else {
               return rowData.packSize;
@@ -359,8 +366,11 @@ export const useStocktakeColumns = ({
           if ('lines' in row) {
             const { lines } = row;
             return (
-              ArrayUtils.ifTheSameElseDefault(lines, 'comment', '[multiple]') ??
-              ''
+              ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'comment',
+                `${t('multiple')}`
+              ) ?? ''
             );
           } else {
             return row.comment ?? '';
@@ -372,7 +382,7 @@ export const useStocktakeColumns = ({
             return ArrayUtils.ifTheSameElseDefault(
               lines,
               'comment',
-              '[multiple]'
+              `${t('multiple')}`
             );
           } else {
             return rowData.comment;
