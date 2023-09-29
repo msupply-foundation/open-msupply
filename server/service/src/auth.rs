@@ -49,6 +49,7 @@ pub enum Resource {
     QueryTemperatureLog,
     // temperature breach
     QueryTemperatureBreach,
+    MutateTemperatureBreach,
     // temperature breach config
     QueryTemperatureBreachConfig,
     MutateTemperatureBreachConfig,
@@ -175,6 +176,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::SensorQuery),
+        ]),
+    );
+
+    map.insert(
+        Resource::MutateTemperatureBreach,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::SensorMutate),
         ]),
     );
 
