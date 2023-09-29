@@ -33,6 +33,7 @@ import {
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
+import { useDeviceDetect } from '../../utils';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -143,6 +144,7 @@ export const AppDrawer: React.FC = () => {
   const drawer = useDrawer();
   const { logout, userHasPermission, store } = useAuthContext();
   const location = useLocation();
+  const { isMobile } = useDeviceDetect();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -151,6 +153,7 @@ export const AppDrawer: React.FC = () => {
   }, [isMediumScreen]);
 
   const onHoverOut = () => {
+    if (isMobile) return;
     if (!drawer.hoverOpen) return;
 
     drawer.close();
@@ -158,6 +161,7 @@ export const AppDrawer: React.FC = () => {
   };
 
   const onHoverOver = () => {
+    if (isMobile) return;
     if (drawer.isOpen) return;
 
     drawer.open();
