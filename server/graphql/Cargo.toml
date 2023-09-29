@@ -18,6 +18,7 @@ graphql_types = { path = "types" }
 graphql_general = { path = "general" }
 graphql_location = { path = "location" }
 graphql_sensor = { path = "sensor" }
+graphql_temperature_breach = { path = "temperature_breach" }
 graphql_temperature_breach_config = { path = "temperature_breach_config" }
 graphql_temperature_log = { path = "temperature_log" }
 graphql_reports = { path = "reports" }
