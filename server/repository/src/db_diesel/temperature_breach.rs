@@ -22,11 +22,13 @@ pub struct TemperatureBreach {
 #[derive(Clone, PartialEq, Debug)]
 pub struct TemperatureBreachFilter {
     pub id: Option<EqualFilter<String>>,
-    pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
+    //pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
     pub sensor_id: Option<EqualFilter<String>>,
+    //pub location_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub start_timestamp: Option<DatetimeFilter>,
     pub end_timestamp: Option<DatetimeFilter>,
+    pub acknowledged: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -100,7 +102,7 @@ fn create_filtered_query(filter: Option<TemperatureBreachFilter>) -> BoxedLogQue
         apply_equal_filter!(query, filter.id, temperature_breach_dsl::id);
         apply_equal_filter!(query, filter.sensor_id, temperature_breach_dsl::sensor_id);
         apply_equal_filter!(query, filter.store_id, temperature_breach_dsl::store_id);
-        apply_equal_filter!(query, filter.r#type, temperature_breach_dsl::type_);
+        //apply_equal_filter!(query, filter.r#type, temperature_breach_dsl::type_);
         apply_date_time_filter!(
             query,
             filter.start_timestamp,
@@ -142,9 +144,11 @@ impl TemperatureBreachFilter {
             id: None,
             sensor_id: None,
             store_id: None,
+            //location_id: None,
+            acknowledged: None,
             start_timestamp: None,
             end_timestamp: None,
-            r#type: None,
+            //r#type: None,
         }
     }
 
@@ -163,6 +167,16 @@ impl TemperatureBreachFilter {
         self
     }
 
+    //pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
+    //    self.location_id = Some(filter);
+    //    self
+    //}
+
+    pub fn acknowledged(mut self, filter: bool) -> Self {
+        self.acknowledged = Some(filter);
+        self
+    }
+
     pub fn start_timestamp(mut self, filter: DatetimeFilter) -> Self {
         self.start_timestamp = Some(filter);
         self
@@ -173,8 +187,8 @@ impl TemperatureBreachFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<TemperatureBreachRowType>) -> Self {
-        self.r#type = Some(filter);
-        self
-    }
+    //pub fn r#type(mut self, filter: EqualFilter<TemperatureBreachRowType>) -> Self {
+    //    self.r#type = Some(filter);
+    //    self
+    //}
 }
