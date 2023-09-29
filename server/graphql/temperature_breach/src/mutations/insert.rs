@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::TemperatureBreachNode;
-use repository::{TemperatureBreachRow, TemperatureBreachRowType};
+//use repository::TemperatureBreachRowType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     temperature_breach::insert::{InsertTemperatureBreach, InsertTemperatureBreachError as ServiceError},
@@ -113,6 +113,7 @@ fn map_error(error: ServiceError) -> Result<InsertTemperatureBreachErrorInterfac
 mod test {
 
     use async_graphql::EmptyMutation;
+    use chrono::{Duration, NaiveDate};
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };

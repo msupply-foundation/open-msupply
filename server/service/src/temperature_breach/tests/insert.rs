@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod query {
+    use chrono::{NaiveDate, Duration};
     use repository::mock::mock_store_a;
     use repository::EqualFilter;
     use repository::{
