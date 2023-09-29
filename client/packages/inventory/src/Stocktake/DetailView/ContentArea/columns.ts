@@ -10,7 +10,10 @@ import {
   PositiveNumberCell,
   getLinesFromRow,
 } from '@openmsupply-client/common';
-import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
+import {
+  InventoryAdjustmentReasonRowFragment,
+  LocationRowFragment,
+} from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
@@ -34,13 +37,17 @@ const getStocktakeReasons = (
     const inventoryAdjustmentReasons = lines
       .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
       .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
-    return (
-      ArrayUtils.ifTheSameElseDefault(
-        inventoryAdjustmentReasons,
-        'reason',
-        '[multiple]'
-      ) ?? ''
-    );
+    if (inventoryAdjustmentReasons.length !== 0) {
+      return (
+        ArrayUtils.ifTheSameElseDefault(
+          inventoryAdjustmentReasons,
+          'reason',
+          '[multiple]'
+        ) ?? ''
+      );
+    } else {
+      return '';
+    }
   } else {
     return rowData.inventoryAdjustmentReason?.reason ?? '';
   }
@@ -147,6 +154,46 @@ export const useStocktakeColumns = ({
               return expiryDate;
             } else {
               return rowData.expiryDate;
+            }
+          },
+        },
+      ],
+      [
+        'locationName',
+        {
+          getSortValue: row => {
+            if ('lines' in row) {
+              const locations = row.lines
+                .map(({ location }) => location)
+                .filter(Boolean) as LocationRowFragment[];
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  '[multiple]'
+                );
+              } else {
+                return '';
+              }
+            } else {
+              return row.location?.name ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const locations = rowData.lines
+                .map(({ location }) => location)
+                .filter(Boolean) as LocationRowFragment[];
+
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  '[multiple]'
+                );
+              }
+            } else {
+              return rowData.location?.name ?? '';
             }
           },
         },
@@ -345,6 +392,12 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
   return useColumns([
     'batch',
     'expiryDate',
+    [
+      'locationName',
+      {
+        accessor: ({ rowData }) => rowData.location?.name,
+      },
+    ],
     'packSize',
     {
       key: 'snapshotNumPacks',
