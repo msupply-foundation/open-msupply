@@ -19,8 +19,6 @@ mod query {
         let (mock_data, _, connection_manager, _) =
             setup_all("insert_temperature_breach_config_service_errors", MockDataInserts::all()).await;
 
-        let connection = connection_manager.connection().unwrap();
-        let temperature_breach_config_repository = TemperatureBreachConfigRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
             .context(mock_store_a().id, "".to_string())

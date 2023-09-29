@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod query {
+    use chrono::NaiveDateTime;
     use repository::{
         mock::MockDataInserts,
         temperature_breach::{TemperatureBreachFilter, TemperatureBreachSortField},
