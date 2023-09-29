@@ -4,6 +4,7 @@ use crate::sync::{
     },
     translations::{IntegrationRecords, PullUpsertRecord},
 };
+use chrono::NaiveDate;
 use repository::{Gender, NameRow, NameStoreJoinRow, NameType, StoreMode, StoreRow};
 
 use serde_json::json;
@@ -101,6 +102,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         let patient_row = inline_edit(&patient_name_row, |mut p| {
             p.first_name = Some("Rebeus".to_string());
             p.last_name = Some("Hagrid".to_string());
+            p.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 09, 21).unwrap());
             p
         });
 
