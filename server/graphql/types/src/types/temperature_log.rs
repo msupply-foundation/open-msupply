@@ -1,10 +1,12 @@
 use async_graphql::*;
 use chrono::NaiveDateTime;
-use graphql_core::generic_filters::{EqualFilterStringInput, DatetimeFilterInput};
+use graphql_core::generic_filters::{DatetimeFilterInput, EqualFilterStringInput};
 use graphql_core::simple_generic_errors::NodeError;
 use repository::{
-    temperature_log::{TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField},
-    EqualFilter, TemperatureLogRow, DatetimeFilter,
+    temperature_log::{
+        TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
+    },
+    DatetimeFilter, EqualFilter, TemperatureLogRow,
 };
 use service::{usize_to_u32, ListResult};
 
@@ -109,7 +111,10 @@ impl TemperatureLogConnector {
     pub fn from_vec(temperature_logs: Vec<TemperatureLog>) -> TemperatureLogConnector {
         TemperatureLogConnector {
             total_count: usize_to_u32(temperature_logs.len()),
-            nodes: temperature_logs.into_iter().map(TemperatureLogNode::from_domain).collect(),
+            nodes: temperature_logs
+                .into_iter()
+                .map(TemperatureLogNode::from_domain)
+                .collect(),
         }
     }
 }

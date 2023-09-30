@@ -1,15 +1,15 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{
-        DatabaseError, InternalError, RecordAlreadyExist,
-    },
+    simple_generic_errors::{DatabaseError, InternalError, RecordAlreadyExist},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::TemperatureBreachConfigNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    temperature_breach_config::insert::{InsertTemperatureBreachConfig, InsertTemperatureBreachConfigError as ServiceError},
+    temperature_breach_config::insert::{
+        InsertTemperatureBreachConfig, InsertTemperatureBreachConfigError as ServiceError,
+    },
 };
 
 pub fn insert_temperature_breach_config(
@@ -32,12 +32,14 @@ pub fn insert_temperature_breach_config(
         .temperature_breach_config_service
         .insert_temperature_breach_config(&service_context, input.into())
     {
-        Ok(temperature_breach_config) => Ok(InsertTemperatureBreachConfigResponse::Response(TemperatureBreachConfigNode::from_domain(
-            temperature_breach_config,
-        ))),
-        Err(error) => Ok(InsertTemperatureBreachConfigResponse::Error(InsertTemperatureBreachConfigError {
-            error: map_error(error)?,
-        })),
+        Ok(temperature_breach_config) => Ok(InsertTemperatureBreachConfigResponse::Response(
+            TemperatureBreachConfigNode::from_domain(temperature_breach_config),
+        )),
+        Err(error) => Ok(InsertTemperatureBreachConfigResponse::Error(
+            InsertTemperatureBreachConfigError {
+                error: map_error(error)?,
+            },
+        )),
     }
 }
 
@@ -103,21 +105,27 @@ mod test {
     use graphql_core::{
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
-    use repository::{mock::MockDataInserts, TemperatureBreachRowType, temperature_breach_config::TemperatureBreachConfig, TemperatureBreachConfigRow, StorageConnectionManager};
+    use repository::{
+        mock::MockDataInserts, temperature_breach_config::TemperatureBreachConfig,
+        StorageConnectionManager, TemperatureBreachConfigRow, TemperatureBreachRowType,
+    };
     use serde_json::json;
 
     use service::{
+        service_provider::{ServiceContext, ServiceProvider},
         temperature_breach_config::{
             insert::{InsertTemperatureBreachConfig, InsertTemperatureBreachConfigError},
             TemperatureBreachConfigServiceTrait,
         },
-        service_provider::{ServiceContext, ServiceProvider},
     };
 
     use crate::TemperatureBreachConfigMutations;
 
-    type InsertTemperatureBreachConfigMethod =
-        dyn Fn(InsertTemperatureBreachConfig) -> Result<TemperatureBreachConfig, InsertTemperatureBreachConfigError> + Sync + Send;
+    type InsertTemperatureBreachConfigMethod = dyn Fn(
+            InsertTemperatureBreachConfig,
+        ) -> Result<TemperatureBreachConfig, InsertTemperatureBreachConfigError>
+        + Sync
+        + Send;
 
     pub struct TestService(pub Box<InsertTemperatureBreachConfigMethod>);
 
@@ -136,7 +144,8 @@ mod test {
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        service_provider.temperature_breach_config_service = Box::new(temperature_breach_config_service);
+        service_provider.temperature_breach_config_service =
+            Box::new(temperature_breach_config_service);
         service_provider
     }
 
@@ -171,7 +180,9 @@ mod test {
         }));
 
         // Record Already Exists
-        let test_service = TestService(Box::new(|_| Err(InsertTemperatureBreachConfigError::TemperatureBreachConfigAlreadyExists)));
+        let test_service = TestService(Box::new(|_| {
+            Err(InsertTemperatureBreachConfigError::TemperatureBreachConfigAlreadyExists)
+        }));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -199,7 +210,9 @@ mod test {
            }
          "#;
 
-        let test_service = TestService(Box::new(|_| Err(InsertTemperatureBreachConfigError::CreatedRecordNotFound)));
+        let test_service = TestService(Box::new(|_| {
+            Err(InsertTemperatureBreachConfigError::CreatedRecordNotFound)
+        }));
         let expected_message = "Internal error";
         assert_standard_graphql_error!(
             &settings,

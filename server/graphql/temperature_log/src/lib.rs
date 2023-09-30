@@ -55,9 +55,9 @@ impl TemperatureLogQueries {
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
-        Ok(TemperatureLogsResponse::Response(TemperatureLogConnector::from_domain(
-            temperature_logs,
-        )))
+        Ok(TemperatureLogsResponse::Response(
+            TemperatureLogConnector::from_domain(temperature_logs),
+        ))
     }
 }
 
@@ -69,15 +69,17 @@ mod test {
     //use repository::mock::mock_temperature_logs;
     use repository::{
         mock::MockDataInserts,
-        temperature_log::{TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField},
-        TemperatureLogRow, StorageConnectionManager,
+        temperature_log::{
+            TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
+        },
+        StorageConnectionManager, TemperatureLogRow,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
 
     use service::{
-        temperature_log::TemperatureLogServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
+        temperature_log::TemperatureLogServiceTrait,
         ListError, ListResult,
     };
 
@@ -150,10 +152,10 @@ mod test {
                         location_id: None,
                         temperature: 2.4,
                         timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
-                                .unwrap()
-                                .and_hms_opt(0, 0, 0)
-                                .unwrap()
-                                + Duration::seconds(47046),
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap()
+                            + Duration::seconds(47046),
                     },
                 }],
                 count: 1,

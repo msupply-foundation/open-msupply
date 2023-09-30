@@ -10,16 +10,19 @@ mod query {
     };
 
     use crate::{
-        temperature_log::insert::{InsertTemperatureLog, InsertTemperatureLogError},
         service_provider::ServiceProvider,
+        temperature_log::insert::{InsertTemperatureLog, InsertTemperatureLogError},
     };
 
-    use chrono::{NaiveDate, Duration};
+    use chrono::{Duration, NaiveDate};
 
     #[actix_rt::test]
     async fn insert_temperature_log_service_errors() {
-        let (mock_data, _, connection_manager, _) =
-            setup_all("insert_temperature_log_service_errors", MockDataInserts::all()).await;
+        let (mock_data, _, connection_manager, _) = setup_all(
+            "insert_temperature_log_service_errors",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let connection = connection_manager.connection().unwrap();
         let temperature_log_repository = TemperatureLogRepository::new(&connection);
@@ -55,8 +58,14 @@ mod query {
                 &context,
                 InsertTemperatureLog {
                     id: "new_id".to_owned(),
-                    sensor_id: temperature_logs_in_store[0].temperature_log_row.sensor_id.clone(),
-                    timestamp: temperature_logs_in_store[0].temperature_log_row.timestamp.clone(),
+                    sensor_id: temperature_logs_in_store[0]
+                        .temperature_log_row
+                        .sensor_id
+                        .clone(),
+                    timestamp: temperature_logs_in_store[0]
+                        .temperature_log_row
+                        .timestamp
+                        .clone(),
                     temperature: temperature_logs_in_store[0].temperature_log_row.temperature,
                 },
             ),
@@ -66,8 +75,11 @@ mod query {
 
     #[actix_rt::test]
     async fn insert_temperature_log_service_success() {
-        let (_, _, connection_manager, _) =
-            setup_all("insert_temperature_log_service_success", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_temperature_log_service_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let connection = connection_manager.connection().unwrap();
         let temperature_log_repository = TemperatureLogRepository::new(&connection);
@@ -119,6 +131,5 @@ mod query {
                 .unwrap(),
             vec![result_temperature_log]
         );
-
     }
 }

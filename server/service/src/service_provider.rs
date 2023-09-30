@@ -35,9 +35,6 @@ use crate::{
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
     sensor::{SensorService, SensorServiceTrait},
-    temperature_breach::{TemperatureBreachService, TemperatureBreachServiceTrait},
-    temperature_breach_config::{TemperatureBreachConfigService, TemperatureBreachConfigServiceTrait},
-    temperature_log::{TemperatureLogService, TemperatureLogServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
@@ -49,6 +46,11 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     system_user::create_system_user,
+    temperature_breach::{TemperatureBreachService, TemperatureBreachServiceTrait},
+    temperature_breach_config::{
+        TemperatureBreachConfigService, TemperatureBreachConfigServiceTrait,
+    },
+    temperature_log::{TemperatureLogService, TemperatureLogServiceTrait},
     ListError, ListResult,
 };
 use repository::{

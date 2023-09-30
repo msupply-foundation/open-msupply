@@ -1,9 +1,9 @@
 use chrono::NaiveDateTime;
-use repository::{EqualFilter, DatetimeFilter};
 use repository::{
     temperature_log::{TemperatureLogFilter, TemperatureLogRepository},
     RepositoryError, StorageConnection,
 };
+use repository::{DatetimeFilter, EqualFilter};
 
 pub fn check_temperature_log_is_unique(
     id: &str,
@@ -11,7 +11,6 @@ pub fn check_temperature_log_is_unique(
     timestamp: NaiveDateTime,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-
     let temperature_logs = TemperatureLogRepository::new(connection).query_by_filter(
         TemperatureLogFilter::new()
             .sensor_id(EqualFilter::equal_to(sensor_id))

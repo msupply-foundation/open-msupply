@@ -4,7 +4,7 @@ use chrono::NaiveDateTime;
 use repository::EqualFilter;
 use repository::{
     temperature_log::{TemperatureLog, TemperatureLogFilter, TemperatureLogRepository},
-    RepositoryError, TemperatureLogRow, TemperatureLogRowRepository, StorageConnection,
+    RepositoryError, StorageConnection, TemperatureLogRow, TemperatureLogRowRepository,
 };
 
 #[derive(PartialEq, Debug)]
@@ -33,7 +33,8 @@ pub fn insert_temperature_log(
             let new_temperature_log = generate(&ctx.store_id, input);
             TemperatureLogRowRepository::new(&connection).upsert_one(&new_temperature_log)?;
 
-            get_temperature_log(ctx, new_temperature_log.id).map_err(InsertTemperatureLogError::from)
+            get_temperature_log(ctx, new_temperature_log.id)
+                .map_err(InsertTemperatureLogError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(temperature_log)

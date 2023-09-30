@@ -1,24 +1,29 @@
 #[cfg(test)]
 mod query {
-    use chrono::{NaiveDate, Duration};
+    use chrono::{Duration, NaiveDate};
     use repository::mock::mock_store_a;
     use repository::EqualFilter;
     use repository::{
         mock::MockDataInserts,
-        temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachRepository},
+        temperature_breach::{
+            TemperatureBreach, TemperatureBreachFilter, TemperatureBreachRepository,
+        },
         test_db::setup_all,
         TemperatureBreachRow, TemperatureBreachRowType,
     };
 
     use crate::{
-        temperature_breach::insert::{InsertTemperatureBreach, InsertTemperatureBreachError},
         service_provider::ServiceProvider,
+        temperature_breach::insert::{InsertTemperatureBreach, InsertTemperatureBreachError},
     };
 
     #[actix_rt::test]
     async fn insert_temperature_breach_service_errors() {
-        let (mock_data, _, connection_manager, _) =
-            setup_all("insert_temperature_breach_service_errors", MockDataInserts::all()).await;
+        let (mock_data, _, connection_manager, _) = setup_all(
+            "insert_temperature_breach_service_errors",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let connection = connection_manager.connection().unwrap();
         let temperature_breach_repository = TemperatureBreachRepository::new(&connection);
@@ -29,7 +34,9 @@ mod query {
         let service = service_provider.temperature_breach_service;
 
         let temperature_breachs_in_store = temperature_breach_repository
-            .query_by_filter(TemperatureBreachFilter::new().store_id(EqualFilter::equal_to("store_a")))
+            .query_by_filter(
+                TemperatureBreachFilter::new().store_id(EqualFilter::equal_to("store_a")),
+            )
             .unwrap();
 
         assert_eq!(
@@ -60,22 +67,35 @@ mod query {
                 &context,
                 InsertTemperatureBreach {
                     id: "new_id".to_owned(),
-                    sensor_id: temperature_breachs_in_store[0].temperature_breach_row.sensor_id.clone(),
-                    start_timestamp: temperature_breachs_in_store[0].temperature_breach_row.start_timestamp.clone(),
-                    end_timestamp: temperature_breachs_in_store[0].temperature_breach_row.end_timestamp.clone(),
-                    duration: temperature_breachs_in_store[0].temperature_breach_row.duration,
+                    sensor_id: temperature_breachs_in_store[0]
+                        .temperature_breach_row
+                        .sensor_id
+                        .clone(),
+                    start_timestamp: temperature_breachs_in_store[0]
+                        .temperature_breach_row
+                        .start_timestamp
+                        .clone(),
+                    end_timestamp: temperature_breachs_in_store[0]
+                        .temperature_breach_row
+                        .end_timestamp
+                        .clone(),
+                    duration: temperature_breachs_in_store[0]
+                        .temperature_breach_row
+                        .duration,
                     //r#type: temperature_breachs_in_store[0].temperature_breach_row.r#type,
                 },
             ),
             Err(InsertTemperatureBreachError::TemperatureBreachNotUnique)
         );
-
     }
 
     #[actix_rt::test]
     async fn insert_temperature_breach_service_success() {
-        let (_, _, connection_manager, _) =
-            setup_all("insert_temperature_breach_service_success", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_temperature_breach_service_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let connection = connection_manager.connection().unwrap();
         let temperature_breach_repository = TemperatureBreachRepository::new(&connection);
@@ -143,6 +163,5 @@ mod query {
                 .unwrap(),
             vec![result_temperature_breach]
         );
-
     }
 }

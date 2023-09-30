@@ -1,10 +1,8 @@
-use super::{
-    query::get_temperature_breach,
-    validate::check_temperature_breach_exists,
-};
+use super::{query::get_temperature_breach, validate::check_temperature_breach_exists};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::{
-    temperature_breach::TemperatureBreach, RepositoryError, TemperatureBreachRow, TemperatureBreachRowRepository, StorageConnection,
+    temperature_breach::TemperatureBreach, RepositoryError, StorageConnection,
+    TemperatureBreachRow, TemperatureBreachRowRepository,
 };
 
 #[derive(PartialEq, Debug)]
@@ -29,9 +27,11 @@ pub fn update_temperature_breach(
         .transaction_sync(|connection| {
             let temperature_breach_row = validate(connection, &ctx.store_id, &input)?;
             let updated_temperature_breach_row = generate(input, temperature_breach_row);
-            TemperatureBreachRowRepository::new(&connection).upsert_one(&updated_temperature_breach_row)?;
+            TemperatureBreachRowRepository::new(&connection)
+                .upsert_one(&updated_temperature_breach_row)?;
 
-            get_temperature_breach(ctx, updated_temperature_breach_row.id).map_err(UpdateTemperatureBreachError::from)
+            get_temperature_breach(ctx, updated_temperature_breach_row.id)
+                .map_err(UpdateTemperatureBreachError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(temperature_breach)
@@ -61,7 +61,8 @@ pub fn generate(
     }: UpdateTemperatureBreach,
     mut temperature_breach_row: TemperatureBreachRow,
 ) -> TemperatureBreachRow {
-    temperature_breach_row.acknowledged = acknowledged.unwrap_or(temperature_breach_row.acknowledged);
+    temperature_breach_row.acknowledged =
+        acknowledged.unwrap_or(temperature_breach_row.acknowledged);
     temperature_breach_row
 }
 

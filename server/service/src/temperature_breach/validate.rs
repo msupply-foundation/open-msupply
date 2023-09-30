@@ -1,11 +1,12 @@
 use std::f32::consts::E;
 
 use chrono::NaiveDateTime;
-use repository::{EqualFilter, DatetimeFilter};
 use repository::{
     temperature_breach::{TemperatureBreachFilter, TemperatureBreachRepository},
-    RepositoryError, TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachRowType, StorageConnection,
+    RepositoryError, StorageConnection, TemperatureBreachRow, TemperatureBreachRowRepository,
+    TemperatureBreachRowType,
 };
+use repository::{DatetimeFilter, EqualFilter};
 
 pub fn check_temperature_breach_exists(
     id: &str,
@@ -22,7 +23,6 @@ pub fn check_temperature_breach_is_unique(
     //r#type: &TemperatureBreachRowType,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-
     let temperature_breachs = TemperatureBreachRepository::new(connection).query_by_filter(
         TemperatureBreachFilter::new()
             .sensor_id(EqualFilter::equal_to(sensor_id))

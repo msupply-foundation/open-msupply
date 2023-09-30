@@ -1,9 +1,12 @@
-use super::{query::get_temperature_breach_config};
+use super::query::get_temperature_breach_config;
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::EqualFilter;
 use repository::{
-    temperature_breach_config::{TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigRepository},
-    RepositoryError, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository, TemperatureBreachRowType, StorageConnection,
+    temperature_breach_config::{
+        TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigRepository,
+    },
+    RepositoryError, StorageConnection, TemperatureBreachConfigRow,
+    TemperatureBreachConfigRowRepository, TemperatureBreachRowType,
 };
 
 #[derive(PartialEq, Debug)]
@@ -28,9 +31,11 @@ pub fn insert_temperature_breach_config(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
             let new_temperature_breach_config = generate(&ctx.store_id, input);
-            TemperatureBreachConfigRowRepository::new(&connection).upsert_one(&new_temperature_breach_config)?;
+            TemperatureBreachConfigRowRepository::new(&connection)
+                .upsert_one(&new_temperature_breach_config)?;
 
-            get_temperature_breach_config(ctx, new_temperature_breach_config.id).map_err(InsertTemperatureBreachConfigError::from)
+            get_temperature_breach_config(ctx, new_temperature_breach_config.id)
+                .map_err(InsertTemperatureBreachConfigError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(temperature_breach_config)

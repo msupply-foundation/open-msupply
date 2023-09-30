@@ -1,6 +1,8 @@
 use repository::EqualFilter;
 use repository::{
-    temperature_breach_config::{TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigRepository},
+    temperature_breach_config::{
+        TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigRepository,
+    },
     RepositoryError, StorageConnectionManager,
 };
 
@@ -21,12 +23,21 @@ impl Loader<String> for TemperatureBreachConfigByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = TemperatureBreachConfigRepository::new(&connection);
 
-        let result =
-            repo.query_by_filter(TemperatureBreachConfigFilter::new().id(EqualFilter::equal_any(ids.to_owned())))?;
+        let result = repo.query_by_filter(
+            TemperatureBreachConfigFilter::new().id(EqualFilter::equal_any(ids.to_owned())),
+        )?;
 
         Ok(result
             .into_iter()
-            .map(|temperature_breach_config| (temperature_breach_config.temperature_breach_config_row.id.clone(), temperature_breach_config))
+            .map(|temperature_breach_config| {
+                (
+                    temperature_breach_config
+                        .temperature_breach_config_row
+                        .id
+                        .clone(),
+                    temperature_breach_config,
+                )
+            })
             .collect())
     }
 }

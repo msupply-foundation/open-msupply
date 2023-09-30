@@ -1,11 +1,14 @@
 use async_graphql::*;
 use chrono::NaiveDateTime;
 use graphql_core::generic_filters::{DatetimeFilterInput, EqualFilterStringInput};
-use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::map_filter;
+use graphql_core::simple_generic_errors::NodeError;
 
 use repository::{
-    temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort, TemperatureBreachSortField},
+    temperature_breach::{
+        TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort,
+        TemperatureBreachSortField,
+    },
     DatetimeFilter, EqualFilter, TemperatureBreachRow, TemperatureBreachRowType,
 };
 use service::{usize_to_u32, ListResult};
@@ -163,7 +166,9 @@ impl TemperatureBreachNode {
 }
 
 impl TemperatureBreachConnector {
-    pub fn from_domain(temperature_breachs: ListResult<TemperatureBreach>) -> TemperatureBreachConnector {
+    pub fn from_domain(
+        temperature_breachs: ListResult<TemperatureBreach>,
+    ) -> TemperatureBreachConnector {
         TemperatureBreachConnector {
             total_count: temperature_breachs.count,
             nodes: temperature_breachs
@@ -177,7 +182,10 @@ impl TemperatureBreachConnector {
     pub fn from_vec(temperature_breachs: Vec<TemperatureBreach>) -> TemperatureBreachConnector {
         TemperatureBreachConnector {
             total_count: usize_to_u32(temperature_breachs.len()),
-            nodes: temperature_breachs.into_iter().map(TemperatureBreachNode::from_domain).collect(),
+            nodes: temperature_breachs
+                .into_iter()
+                .map(TemperatureBreachNode::from_domain)
+                .collect(),
         }
     }
 }

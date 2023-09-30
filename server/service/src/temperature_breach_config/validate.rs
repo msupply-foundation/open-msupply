@@ -1,5 +1,6 @@
 use repository::{
-    RepositoryError, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository, StorageConnection,
+    RepositoryError, StorageConnection, TemperatureBreachConfigRow,
+    TemperatureBreachConfigRowRepository,
 };
 
 pub fn check_temperature_breach_config_exists(

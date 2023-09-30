@@ -4,7 +4,8 @@ use chrono::NaiveDateTime;
 use repository::EqualFilter;
 use repository::{
     temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachRepository},
-    RepositoryError, TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachRowType, StorageConnection,
+    RepositoryError, StorageConnection, TemperatureBreachRow, TemperatureBreachRowRepository,
+    TemperatureBreachRowType,
 };
 
 #[derive(PartialEq, Debug)]
@@ -35,7 +36,8 @@ pub fn insert_temperature_breach(
             let new_temperature_breach = generate(&ctx.store_id, input);
             TemperatureBreachRowRepository::new(&connection).upsert_one(&new_temperature_breach)?;
 
-            get_temperature_breach(ctx, new_temperature_breach.id).map_err(InsertTemperatureBreachError::from)
+            get_temperature_breach(ctx, new_temperature_breach.id)
+                .map_err(InsertTemperatureBreachError::from)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(temperature_breach)
@@ -48,7 +50,13 @@ pub fn validate(
     if !check_temperature_breach_does_not_exist(&input.id, connection)? {
         return Err(InsertTemperatureBreachError::TemperatureBreachAlreadyExists);
     }
-    if !check_temperature_breach_is_unique(&input.id, &input.sensor_id, input.start_timestamp, input.end_timestamp, connection)? {
+    if !check_temperature_breach_is_unique(
+        &input.id,
+        &input.sensor_id,
+        input.start_timestamp,
+        input.end_timestamp,
+        connection,
+    )? {
         return Err(InsertTemperatureBreachError::TemperatureBreachNotUnique);
     }
 

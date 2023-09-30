@@ -21,12 +21,18 @@ impl Loader<String> for TemperatureLogByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = TemperatureLogRepository::new(&connection);
 
-        let result =
-            repo.query_by_filter(TemperatureLogFilter::new().id(EqualFilter::equal_any(ids.to_owned())))?;
+        let result = repo.query_by_filter(
+            TemperatureLogFilter::new().id(EqualFilter::equal_any(ids.to_owned())),
+        )?;
 
         Ok(result
             .into_iter()
-            .map(|temperature_log| (temperature_log.temperature_log_row.id.clone(), temperature_log))
+            .map(|temperature_log| {
+                (
+                    temperature_log.temperature_log_row.id.clone(),
+                    temperature_log,
+                )
+            })
             .collect())
     }
 }
