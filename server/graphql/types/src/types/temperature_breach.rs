@@ -106,9 +106,9 @@ impl TemperatureBreachNode {
         self.row().acknowledged
     }
 
-    //pub async fn duration(&self) -> i32 {
-    //    self.row().duration
-    //}
+    pub async fn duration(&self) -> i32 {
+        self.row().duration
+    }
 
     //pub async fn r#type(&self) -> TemperatureBreachNodeType {
     //    TemperatureBreachNodeType::from_domain(&self.row().r#type)
