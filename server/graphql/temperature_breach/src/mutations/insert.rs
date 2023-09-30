@@ -180,7 +180,9 @@ mod test {
           "input": {
             "id": "n/a",
             "sensorId": "n/a",
-            "acknowledged": true,
+            "startTimestamp": "n/a",
+            "endTimestamp": "n/a",
+            "duration": 0,
           }
         }));
 
@@ -241,7 +243,9 @@ mod test {
               ... on TemperatureBreachNode {
                 id
                 sensorId
-                acknowledged
+                startTimestamp
+                endTimestamp
+                duration
               }
             }
           }
@@ -251,7 +255,9 @@ mod test {
           "input": {
             "id": "n/a",
             "sensorId": "n/a",
-            "acknowledged": true,
+            "startTimestamp": "n/a",
+            "endTimestamp": "n/a",
+            "duration": 0,
           }
         }));
 
@@ -287,7 +293,9 @@ mod test {
             "insertTemperatureBreach": {
                 "id": "id",
                 "sensorID": "sensor_1",
-                "acknowledged": false,
+                "startTimestamp": "20220701130406",
+                "endTimestamp": "20220701140406",
+                "duration": 3600,
             }
           }
         );
