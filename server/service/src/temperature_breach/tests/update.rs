@@ -9,14 +9,17 @@ mod query {
     };
 
     use crate::{
-        temperature_breach::update::{UpdateTemperatureBreach, UpdateTemperatureBreachError},
         service_provider::ServiceProvider,
+        temperature_breach::update::{UpdateTemperatureBreach, UpdateTemperatureBreachError},
     };
 
     #[actix_rt::test]
     async fn temperature_breach_service_update_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("temperature_breach_service_update_errors", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "temperature_breach_service_update_errors",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let connection = connection_manager.connection().unwrap();
         let temperature_breach_repository = TemperatureBreachRepository::new(&connection);
@@ -27,7 +30,9 @@ mod query {
         let service = service_provider.temperature_breach_service;
 
         let temperature_breachs_not_in_store = temperature_breach_repository
-            .query_by_filter(TemperatureBreachFilter::new().store_id(EqualFilter::not_equal_to("store_a")))
+            .query_by_filter(
+                TemperatureBreachFilter::new().store_id(EqualFilter::not_equal_to("store_a")),
+            )
             .unwrap();
 
         // TemperatureBreach does not exist
@@ -47,7 +52,10 @@ mod query {
             service.update_temperature_breach(
                 &context,
                 UpdateTemperatureBreach {
-                    id: temperature_breachs_not_in_store[0].temperature_breach_row.id.clone(),
+                    id: temperature_breachs_not_in_store[0]
+                        .temperature_breach_row
+                        .id
+                        .clone(),
                     acknowledged: None
                 },
             ),
@@ -56,8 +64,11 @@ mod query {
     }
     #[actix_rt::test]
     async fn temperature_breach_service_update_success() {
-        let (_, _, connection_manager, _) =
-            setup_all("temperature_breach_service_update_success", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "temperature_breach_service_update_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let connection = connection_manager.connection().unwrap();
         let temperature_breach_repository = TemperatureBreachRepository::new(&connection);
@@ -68,7 +79,9 @@ mod query {
         let service = service_provider.temperature_breach_service;
 
         let temperature_breachs_in_store = temperature_breach_repository
-            .query_by_filter(TemperatureBreachFilter::new().store_id(EqualFilter::equal_to("store_a")))
+            .query_by_filter(
+                TemperatureBreachFilter::new().store_id(EqualFilter::equal_to("store_a")),
+            )
             .unwrap();
 
         // Success with no changes
@@ -86,16 +99,17 @@ mod query {
 
         assert_eq!(
             temperature_breach_repository
-                .query_by_filter(
-                    TemperatureBreachFilter::new().id(EqualFilter::equal_to(&temperature_breach.temperature_breach_row.id))
-                )
+                .query_by_filter(TemperatureBreachFilter::new().id(EqualFilter::equal_to(
+                    &temperature_breach.temperature_breach_row.id
+                )))
                 .unwrap()[0],
-                temperature_breach
+            temperature_breach
         );
 
         // Success with all changes
         let mut temperature_breach = temperature_breachs_in_store[1].clone();
-        temperature_breach.temperature_breach_row.acknowledged = !temperature_breach.temperature_breach_row.acknowledged;
+        temperature_breach.temperature_breach_row.acknowledged =
+            !temperature_breach.temperature_breach_row.acknowledged;
 
         assert_eq!(
             service.update_temperature_breach(
@@ -110,11 +124,11 @@ mod query {
 
         assert_eq!(
             temperature_breach_repository
-                .query_by_filter(
-                    TemperatureBreachFilter::new().id(EqualFilter::equal_to(&temperature_breach.temperature_breach_row.id))
-                )
+                .query_by_filter(TemperatureBreachFilter::new().id(EqualFilter::equal_to(
+                    &temperature_breach.temperature_breach_row.id
+                )))
                 .unwrap()[0],
-                temperature_breach
+            temperature_breach
         );
     }
 }

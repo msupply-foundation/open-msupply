@@ -24,7 +24,11 @@ pub trait TemperatureLogServiceTrait: Sync + Send {
         get_temperature_logs(ctx, pagination, filter, sort)
     }
 
-    fn get_temperature_log(&self, ctx: &ServiceContext, id: String) -> Result<TemperatureLog, SingleRecordError> {
+    fn get_temperature_log(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<TemperatureLog, SingleRecordError> {
         get_temperature_log(ctx, id)
     }
 
@@ -35,7 +39,6 @@ pub trait TemperatureLogServiceTrait: Sync + Send {
     ) -> Result<TemperatureLog, InsertTemperatureLogError> {
         insert_temperature_log(ctx, input)
     }
-
 }
 
 pub struct TemperatureLogService {}

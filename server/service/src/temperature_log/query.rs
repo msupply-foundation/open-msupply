@@ -1,4 +1,6 @@
-use repository::temperature_log::{TemperatureLog, TemperatureLogFilter, TemperatureLogRepository, TemperatureLogSort};
+use repository::temperature_log::{
+    TemperatureLog, TemperatureLogFilter, TemperatureLogRepository, TemperatureLogSort,
+};
 use repository::{EqualFilter, PaginationOption};
 
 use crate::{
@@ -24,7 +26,10 @@ pub fn get_temperature_logs(
     })
 }
 
-pub fn get_temperature_log(ctx: &ServiceContext, id: String) -> Result<TemperatureLog, SingleRecordError> {
+pub fn get_temperature_log(
+    ctx: &ServiceContext,
+    id: String,
+) -> Result<TemperatureLog, SingleRecordError> {
     let repository = TemperatureLogRepository::new(&ctx.connection);
 
     let mut result =

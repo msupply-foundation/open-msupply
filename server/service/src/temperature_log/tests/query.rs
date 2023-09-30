@@ -1,19 +1,22 @@
 #[cfg(test)]
 mod query {
+    use chrono::NaiveDateTime;
     use repository::{
         mock::MockDataInserts,
         temperature_log::{TemperatureLogFilter, TemperatureLogSortField},
         test_db::setup_all,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
-    use chrono::NaiveDateTime;
 
     use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
 
     #[actix_rt::test]
     async fn temperature_log_service_pagination() {
-        let (_, _, connection_manager, _) =
-            setup_all("test_temperature_log_service_pagination", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "test_temperature_log_service_pagination",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
@@ -135,7 +138,10 @@ mod query {
             .into_iter()
             .map(|temperature_log| temperature_log.temperature_log_row.timestamp)
             .collect();
-        let sorted_timestamps: Vec<NaiveDateTime> = temperature_logs.into_iter().map(|temperature_log| temperature_log.timestamp).collect();
+        let sorted_timestamps: Vec<NaiveDateTime> = temperature_logs
+            .into_iter()
+            .map(|temperature_log| temperature_log.timestamp)
+            .collect();
 
         assert_eq!(result_timestamps, sorted_timestamps);
 
@@ -160,7 +166,10 @@ mod query {
             .into_iter()
             .map(|temperature_log| temperature_log.temperature_log_row.temperature)
             .collect();
-        let sorted_temperatures: Vec<f64> = temperature_logs.into_iter().map(|temperature_log| temperature_log.temperature).collect();
+        let sorted_temperatures: Vec<f64> = temperature_logs
+            .into_iter()
+            .map(|temperature_log| temperature_log.temperature)
+            .collect();
 
         assert_eq!(result_temperatures, sorted_temperatures);
     }

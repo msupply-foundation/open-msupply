@@ -8,7 +8,9 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{temperature_breach_config::TemperatureBreachConfigFilter, EqualFilter, PaginationOption};
+use repository::{
+    temperature_breach_config::TemperatureBreachConfigFilter, EqualFilter, PaginationOption,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -55,9 +57,9 @@ impl TemperatureBreachConfigQueries {
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
-        Ok(TemperatureBreachConfigsResponse::Response(TemperatureBreachConfigConnector::from_domain(
-            temperature_breach_configs,
-        )))
+        Ok(TemperatureBreachConfigsResponse::Response(
+            TemperatureBreachConfigConnector::from_domain(temperature_breach_configs),
+        ))
     }
 }
 
@@ -93,20 +95,23 @@ mod test {
     //use repository::mock::mock_temperature_breach_configs;
     use repository::{
         mock::MockDataInserts,
-        temperature_breach_config::{TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigSort, TemperatureBreachConfigSortField},
-        TemperatureBreachConfigRow, TemperatureBreachRowType, StorageConnectionManager,
+        temperature_breach_config::{
+            TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigSort,
+            TemperatureBreachConfigSortField,
+        },
+        StorageConnectionManager, TemperatureBreachConfigRow, TemperatureBreachRowType,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
 
     use service::{
-        temperature_breach_config::TemperatureBreachConfigServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
+        temperature_breach_config::TemperatureBreachConfigServiceTrait,
         ListError, ListResult,
     };
 
     use crate::TemperatureBreachConfigQueries;
-   
+
     type GetTemperatureBreachConfigs = dyn Fn(
             Option<PaginationOption>,
             Option<TemperatureBreachConfigFilter>,
@@ -134,7 +139,8 @@ mod test {
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        service_provider.temperature_breach_config_service = Box::new(temperature_breach_config_service);
+        service_provider.temperature_breach_config_service =
+            Box::new(temperature_breach_config_service);
         service_provider
     }
 

@@ -1,4 +1,7 @@
-use repository::temperature_breach_config::{TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigRepository, TemperatureBreachConfigSort};
+use repository::temperature_breach_config::{
+    TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigRepository,
+    TemperatureBreachConfigSort,
+};
 use repository::{EqualFilter, PaginationOption};
 
 use crate::{
@@ -24,11 +27,14 @@ pub fn get_temperature_breach_configs(
     })
 }
 
-pub fn get_temperature_breach_config(ctx: &ServiceContext, id: String) -> Result<TemperatureBreachConfig, SingleRecordError> {
+pub fn get_temperature_breach_config(
+    ctx: &ServiceContext,
+    id: String,
+) -> Result<TemperatureBreachConfig, SingleRecordError> {
     let repository = TemperatureBreachConfigRepository::new(&ctx.connection);
 
-    let mut result =
-        repository.query_by_filter(TemperatureBreachConfigFilter::new().id(EqualFilter::equal_to(&id)))?;
+    let mut result = repository
+        .query_by_filter(TemperatureBreachConfigFilter::new().id(EqualFilter::equal_to(&id)))?;
 
     if let Some(record) = result.pop() {
         Ok(record)

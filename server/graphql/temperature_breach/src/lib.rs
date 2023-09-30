@@ -55,9 +55,9 @@ impl TemperatureBreachQueries {
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
-        Ok(TemperatureBreachsResponse::Response(TemperatureBreachConnector::from_domain(
-            temperature_breachs,
-        )))
+        Ok(TemperatureBreachsResponse::Response(
+            TemperatureBreachConnector::from_domain(temperature_breachs),
+        ))
     }
 }
 
@@ -94,20 +94,23 @@ mod test {
     //use repository::mock::mock_temperature_breachs;
     use repository::{
         mock::MockDataInserts,
-        temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort, TemperatureBreachSortField},
-        TemperatureBreachRow, TemperatureBreachRowType, StorageConnectionManager,
+        temperature_breach::{
+            TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort,
+            TemperatureBreachSortField,
+        },
+        StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
 
     use service::{
-        temperature_breach::TemperatureBreachServiceTrait,
         service_provider::{ServiceContext, ServiceProvider},
+        temperature_breach::TemperatureBreachServiceTrait,
         ListError, ListResult,
     };
 
     use crate::TemperatureBreachQueries;
-   
+
     type GetTemperatureBreachs = dyn Fn(
             Option<PaginationOption>,
             Option<TemperatureBreachFilter>,

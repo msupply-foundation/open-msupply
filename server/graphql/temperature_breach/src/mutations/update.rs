@@ -11,7 +11,9 @@ use graphql_core::{
 use graphql_types::types::TemperatureBreachNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    temperature_breach::update::{UpdateTemperatureBreach, UpdateTemperatureBreachError as ServiceError},
+    temperature_breach::update::{
+        UpdateTemperatureBreach, UpdateTemperatureBreachError as ServiceError,
+    },
 };
 
 pub fn update_temperature_breach(
@@ -34,12 +36,14 @@ pub fn update_temperature_breach(
         .temperature_breach_service
         .update_temperature_breach(&service_context, input.into())
     {
-        Ok(temperature_breach) => Ok(UpdateTemperatureBreachResponse::Response(TemperatureBreachNode::from_domain(
-            temperature_breach,
-        ))),
-        Err(error) => Ok(UpdateTemperatureBreachResponse::Error(UpdateTemperatureBreachError {
-            error: map_error(error)?,
-        })),
+        Ok(temperature_breach) => Ok(UpdateTemperatureBreachResponse::Response(
+            TemperatureBreachNode::from_domain(temperature_breach),
+        )),
+        Err(error) => Ok(UpdateTemperatureBreachResponse::Error(
+            UpdateTemperatureBreachError {
+                error: map_error(error)?,
+            },
+        )),
     }
 }
 
@@ -51,15 +55,9 @@ pub struct UpdateTemperatureBreachInput {
 
 impl From<UpdateTemperatureBreachInput> for UpdateTemperatureBreach {
     fn from(
-        UpdateTemperatureBreachInput {
-            id,
-            acknowledged,
-        }: UpdateTemperatureBreachInput,
+        UpdateTemperatureBreachInput { id, acknowledged }: UpdateTemperatureBreachInput,
     ) -> Self {
-        UpdateTemperatureBreach {
-            id,
-            acknowledged,
-        }
+        UpdateTemperatureBreach { id, acknowledged }
     }
 }
 

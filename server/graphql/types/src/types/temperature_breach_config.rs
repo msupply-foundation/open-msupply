@@ -1,10 +1,13 @@
 use async_graphql::*;
 use graphql_core::generic_filters::EqualFilterStringInput;
-use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::map_filter;
+use graphql_core::simple_generic_errors::NodeError;
 
 use repository::{
-    temperature_breach_config::{TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigSort, TemperatureBreachConfigSortField},
+    temperature_breach_config::{
+        TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigSort,
+        TemperatureBreachConfigSortField,
+    },
     EqualFilter, TemperatureBreachConfigRow, TemperatureBreachRowType,
 };
 use service::{usize_to_u32, ListResult};
@@ -129,8 +132,12 @@ pub enum TemperatureBreachConfigResponse {
 }
 
 impl TemperatureBreachConfigNode {
-    pub fn from_domain(temperature_breach_config: TemperatureBreachConfig) -> TemperatureBreachConfigNode {
-        TemperatureBreachConfigNode { temperature_breach_config }
+    pub fn from_domain(
+        temperature_breach_config: TemperatureBreachConfig,
+    ) -> TemperatureBreachConfigNode {
+        TemperatureBreachConfigNode {
+            temperature_breach_config,
+        }
     }
 
     pub fn row(&self) -> &TemperatureBreachConfigRow {
@@ -139,7 +146,9 @@ impl TemperatureBreachConfigNode {
 }
 
 impl TemperatureBreachConfigConnector {
-    pub fn from_domain(temperature_breach_configs: ListResult<TemperatureBreachConfig>) -> TemperatureBreachConfigConnector {
+    pub fn from_domain(
+        temperature_breach_configs: ListResult<TemperatureBreachConfig>,
+    ) -> TemperatureBreachConfigConnector {
         TemperatureBreachConfigConnector {
             total_count: temperature_breach_configs.count,
             nodes: temperature_breach_configs
@@ -150,10 +159,15 @@ impl TemperatureBreachConfigConnector {
         }
     }
 
-    pub fn from_vec(temperature_breach_configs: Vec<TemperatureBreachConfig>) -> TemperatureBreachConfigConnector {
+    pub fn from_vec(
+        temperature_breach_configs: Vec<TemperatureBreachConfig>,
+    ) -> TemperatureBreachConfigConnector {
         TemperatureBreachConfigConnector {
             total_count: usize_to_u32(temperature_breach_configs.len()),
-            nodes: temperature_breach_configs.into_iter().map(TemperatureBreachConfigNode::from_domain).collect(),
+            nodes: temperature_breach_configs
+                .into_iter()
+                .map(TemperatureBreachConfigNode::from_domain)
+                .collect(),
         }
     }
 }

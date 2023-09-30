@@ -31,7 +31,9 @@ use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::StocktakeLineMutations;
 use graphql_temperature_breach::{TemperatureBreachMutations, TemperatureBreachQueries};
-use graphql_temperature_breach_config::{TemperatureBreachConfigMutations, TemperatureBreachConfigQueries};
+use graphql_temperature_breach_config::{
+    TemperatureBreachConfigMutations, TemperatureBreachConfigQueries,
+};
 use graphql_temperature_log::TemperatureLogQueries;
 
 use repository::StorageConnectionManager;

@@ -11,7 +11,9 @@ use graphql_core::{
 use graphql_types::types::TemperatureBreachConfigNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    temperature_breach_config::update::{UpdateTemperatureBreachConfig, UpdateTemperatureBreachConfigError as ServiceError},
+    temperature_breach_config::update::{
+        UpdateTemperatureBreachConfig, UpdateTemperatureBreachConfigError as ServiceError,
+    },
 };
 
 pub fn update_temperature_breach_config(
@@ -34,12 +36,14 @@ pub fn update_temperature_breach_config(
         .temperature_breach_config_service
         .update_temperature_breach_config(&service_context, input.into())
     {
-        Ok(temperature_breach_config) => Ok(UpdateTemperatureBreachConfigResponse::Response(TemperatureBreachConfigNode::from_domain(
-            temperature_breach_config,
-        ))),
-        Err(error) => Ok(UpdateTemperatureBreachConfigResponse::Error(UpdateTemperatureBreachConfigError {
-            error: map_error(error)?,
-        })),
+        Ok(temperature_breach_config) => Ok(UpdateTemperatureBreachConfigResponse::Response(
+            TemperatureBreachConfigNode::from_domain(temperature_breach_config),
+        )),
+        Err(error) => Ok(UpdateTemperatureBreachConfigResponse::Error(
+            UpdateTemperatureBreachConfigError {
+                error: map_error(error)?,
+            },
+        )),
     }
 }
 
@@ -94,7 +98,9 @@ fn map_error(error: ServiceError) -> Result<UpdateTemperatureBreachConfigErrorIn
     let graphql_error = match error {
         // Standard Graphql Errors
         ServiceError::TemperatureBreachConfigDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::TemperatureBreachConfigDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
+        ServiceError::TemperatureBreachConfigDoesNotBelongToCurrentStore => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

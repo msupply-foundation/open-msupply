@@ -4,20 +4,28 @@ mod query {
     use repository::EqualFilter;
     use repository::{
         mock::MockDataInserts,
-        temperature_breach_config::{TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigRepository},
+        temperature_breach_config::{
+            TemperatureBreachConfig, TemperatureBreachConfigFilter,
+            TemperatureBreachConfigRepository,
+        },
         test_db::setup_all,
         TemperatureBreachConfigRow, TemperatureBreachRowType,
     };
 
     use crate::{
-        temperature_breach_config::insert::{InsertTemperatureBreachConfig, InsertTemperatureBreachConfigError},
         service_provider::ServiceProvider,
+        temperature_breach_config::insert::{
+            InsertTemperatureBreachConfig, InsertTemperatureBreachConfigError,
+        },
     };
 
     #[actix_rt::test]
     async fn insert_temperature_breach_config_service_errors() {
-        let (mock_data, _, connection_manager, _) =
-            setup_all("insert_temperature_breach_config_service_errors", MockDataInserts::all()).await;
+        let (mock_data, _, connection_manager, _) = setup_all(
+            "insert_temperature_breach_config_service_errors",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -36,16 +44,19 @@ mod query {
             ),
             Err(InsertTemperatureBreachConfigError::TemperatureBreachConfigAlreadyExists)
         );
-
     }
 
     #[actix_rt::test]
     async fn insert_temperature_breach_config_service_success() {
-        let (_, _, connection_manager, _) =
-            setup_all("insert_temperature_breach_config_service_success", MockDataInserts::all()).await;
+        let (_, _, connection_manager, _) = setup_all(
+            "insert_temperature_breach_config_service_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let connection = connection_manager.connection().unwrap();
-        let temperature_breach_config_repository = TemperatureBreachConfigRepository::new(&connection);
+        let temperature_breach_config_repository =
+            TemperatureBreachConfigRepository::new(&connection);
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
             .context(mock_store_a().id, "".to_string())
