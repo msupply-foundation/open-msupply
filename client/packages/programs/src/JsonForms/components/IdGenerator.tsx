@@ -18,14 +18,12 @@ import {
   useProgramEnrolments,
   FORM_GAP,
   FORM_LABEL_WIDTH,
-  ProgramEnrolmentRowFragmentWithId,
 } from '@openmsupply-client/programs';
 import { get as extractProperty } from 'lodash';
 import { usePatient } from '@openmsupply-client/system';
 import { z } from 'zod';
 import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 import { useDebouncedTextInput } from '../common/hooks/useDebouncedTextInput';
-import { ProgramEnrolmentRowFragment } from '../../api/operations.generated';
 
 export const idGeneratorTester = rankWith(10, uiTypeIs('IdGenerator'));
 
@@ -262,21 +260,6 @@ const useUniqueProgramEnrolmentIdValidation = () => {
   const { mutateAsync: fetchProgramEnrolments } =
     useProgramEnrolments.document.programEnrolmentsPromise();
 
-  // Only take the latest status event
-  const latestNodes = (nodes: ProgramEnrolmentRowFragment[]) => {
-    const latest = nodes.map(node => {
-      const events = node.activeProgramEvents.nodes
-        .filter(e => e.type === 'programStatus' && e.data)
-        .slice(0, 1);
-      return {
-        ...node,
-        events,
-        id: node.name,
-      } as ProgramEnrolmentRowFragmentWithId;
-    });
-    return latest;
-  };
-
   // returns error string if validation fails
   return async (
     id: string,
@@ -291,7 +274,7 @@ const useUniqueProgramEnrolmentIdValidation = () => {
       return undefined;
     }
 
-    if (latestNodes(result.programs.nodes)[0]?.name === documentName) {
+    if (result?.programs.nodes[0]?.name === documentName) {
       return undefined;
     }
     return `Duplicated id: ${id}`;
