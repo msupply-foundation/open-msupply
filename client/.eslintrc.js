@@ -6,6 +6,7 @@ module.exports = {
   extends: [
     'plugin:jest-dom/recommended',
     'plugin:react/recommended',
+    'plugin:react-hooks/recommended',
     'plugin:@typescript-eslint/recommended',
     'google',
     'prettier',
@@ -27,7 +28,7 @@ module.exports = {
   },
 
   settings: { react: { version: 'detect' } },
-  plugins: ['react', , '@typescript-eslint'],
+  plugins: ['react', '@typescript-eslint'],
   rules: {
     camelcase: ['error', { allow: ['_ONLY_FOR_TESTING'] }],
     'require-jsdoc': 'off',
@@ -48,5 +49,8 @@ module.exports = {
       'always',
       { markers: ['#', '/'], exceptions: ['-'] },
     ],
+    'react-hooks/exhaustive-deps': 'off',
+    '@typescript-eslint/no-explicit-any': 'warn',
   },
+  ignorePatterns: ['**/operations.generated.ts', '**/types/schema.ts'],
 };

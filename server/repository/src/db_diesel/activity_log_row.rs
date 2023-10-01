@@ -50,6 +50,10 @@ pub enum ActivityLogType {
     StockOnHold,
     StockOffHold,
     Repack,
+    PrescriptionCreated,
+    PrescriptionDeleted,
+    PrescriptionStatusPicked,
+    PrescriptionStatusVerified,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

@@ -1,12 +1,13 @@
 # Program Events
 
 While practitioners are the main driver for entering data there are certain use-cases where data is set in a predefined way.
-Currently this is done using program `events`.
+Currently, this is done using program `events`.
 Events are stored in documents but are filled automatically, e.g. by the UI form controls while editing a form.
 For example, events are currently used for the following purposes:
 
 1. Based on the dispensed pill count encounter, two events are scheduled in the future to change the program status to "Treatment interrupted" or "Lost to follow up"
 2. Based on encounter fields being set or not, the specific encounter is labelled as "Pending Lab Report" or "Lap Report Received"
+3. Extract / index data from a document so that it can be accessed without scanning through all documents
 
 When updating a document (currently only encounter documents) the backend extracts events from the document and puts these events into a `program_event` table.
 This table can, for example, be used to find the current encounter status by querying the latest status event which is not scheduled in the future.
@@ -21,7 +22,7 @@ For example, status changes for one patient should not affect another patient.
 
 Event targets are identified by the following event properties:
 
-- patient id
+- patient ID
 - document type (e.g. to target the event to a certain program document type)
 - document name (e.g. to target the event to a specific encounter)
 - type (custom type of the event)
@@ -51,7 +52,7 @@ At time t=30 `e1` is active while it becomes inactive at t=40 where then `e2` be
 **Delayed Event Activation**
 Events can be configured to become active after a certain period of time.
 
-For example, after a patient visited a doctor (t=20) the patient's status might change to "Follow up need" after a certain amount of time (at t=40):
+For example, after a patient visited a doctor (t=20) the patient's status might change to "Follow-up need" after a certain amount of time (at t=40):
 
 ```
 ---------e1-----------------------
@@ -78,7 +79,7 @@ This mechanism can be used to keep a patient's "warning status" clear, e.g. if t
 ```
 
 **Delayed Event Stacks**
-It is also required that events can becomes active in multiple stages, e.g. a status change like "Warning" -> "2nd Warning" -> "Danger".
+It is also required that events can become active in multiple stages, e.g. a status change like "Warning" -> "2nd Warning" -> "Danger".
 To achieve this, delayed events can be stacked.
 All events in a stack have the same creation time.
 
@@ -103,8 +104,8 @@ For example, an event `e2` at t=35 prevents that later events from the first sta
 ```
 
 **Replacing Stacks**
-When updating a document the events in the document might change and thus it must be possible updated or even removed event stacks.
-For this the old stack is fully removed and the updated stack is inserted.
+When updating a document the events in the document might change, and thus it must be possible updated or even removed event stacks.
+For this the old stack is fully removed, and the updated stack is inserted.
 
 **Querying Event at a certain Time**
 For reporting it is required to query event, e.g. states, at a certain point in time.
@@ -130,13 +131,13 @@ When inserting a new event this requires us to also update the `active_end_datet
 For example, based on the previous example, `e3` is inserted as following:
 
 ```
-  -------s1-------------e3-------------e2-
-a)       20------->30--E|              |
-b)       20------------E|--->40        |
-c)                      35------>45---E|
-d)                                     50
+---------s1-------------e3-------------e2-
+         20------->30--E|              |
+         20------------E|--->40--E     |
+                        35------->45--E|
+                                       50
 ```
 
-When inserting `e3` we need to update update the `active_end_datetime` for the stack `s1` and use the latest `active_end_datetime` from `s1` for `e3`.
+When inserting `e3` we need to update the `active_end_datetime` for the stack `s1` and use the latest `active_end_datetime` from `s1` for `e3`.
 
-Similar the `active_end_datetime` column needs to be update when replacing a stack.
+Similar the `active_end_datetime` column needs to be updated when replacing a stack.

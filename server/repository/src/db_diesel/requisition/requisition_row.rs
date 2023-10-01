@@ -1,7 +1,7 @@
 use super::requisition_row::requisition::dsl as requisition_dsl;
 
 use crate::db_diesel::{
-    name_row::name, period::period, program_requisition::program, store_row::store,
+    name_row::name, period::period, program_requisition::program_row::program, store_row::store,
     user_row::user_account,
 };
 use crate::repository_error::RepositoryError;

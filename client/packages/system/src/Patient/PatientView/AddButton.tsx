@@ -20,7 +20,7 @@ export const AddButton: React.FC<AddButtonProps> = ({
   disabled,
   disableEncounterButton,
 }) => {
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const { setModal: selectModal, reset } = usePatientModalStore();
   const options = [
     {
@@ -32,6 +32,10 @@ export const AddButton: React.FC<AddButtonProps> = ({
       value: PatientModal.Encounter,
       label: t('button.add-encounter'),
       isDisabled: disableEncounterButton,
+    },
+    {
+      value: PatientModal.ContactTraceSearch,
+      label: t('button.add-contact-trace'),
     },
   ];
 

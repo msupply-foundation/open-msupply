@@ -40,7 +40,8 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
             bridge.getPlugin("BarcodeScanner"),
             bridge.getPlugin("Preferences"),
             bridge.getPlugin("KeepAwake"),
-            bridge.getPlugin("App")
+            bridge.getPlugin("App"),
+            bridge.getPlugin("Printer")
         );
 
         try {

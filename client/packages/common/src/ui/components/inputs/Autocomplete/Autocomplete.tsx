@@ -6,8 +6,6 @@ import {
   CreateFilterOptionsConfig,
   AutocompleteInputChangeReason,
   AutocompleteProps as MuiAutocompleteProps,
-  styled,
-  Popper,
   PopperProps,
   StandardTextFieldProps,
 } from '@mui/material';
@@ -17,6 +15,8 @@ import {
   AutocompleteOptionRenderer,
 } from './types';
 import { BasicTextInput } from '../TextInput';
+import { StyledPopper } from './components';
+
 export interface AutocompleteProps<T>
   extends Omit<
     MuiAutocompleteProps<T, undefined, boolean, undefined>,
@@ -48,10 +48,6 @@ export interface AutocompleteProps<T>
   popperMinWidth?: number;
   inputProps?: StandardTextFieldProps;
 }
-
-const StyledPopper = styled(Popper)(({ theme }) => ({
-  boxShadow: theme.shadows[2],
-}));
 
 export function Autocomplete<T>({
   defaultValue,
@@ -88,7 +84,6 @@ export function Autocomplete<T>({
       autoFocus={autoFocus}
       InputProps={{
         disableUnderline: false,
-        style: props.disabled ? { paddingLeft: 0 } : {},
         ...props.InputProps,
       }}
       sx={{ width }}

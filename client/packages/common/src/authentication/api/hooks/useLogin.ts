@@ -2,6 +2,7 @@ import { useIntlUtils } from '@common/intl';
 import { AuthCookie, AuthError, setAuthCookie } from '../../AuthContext';
 import { useGetAuthToken } from './useGetAuthToken';
 import {
+  AuthenticationCredentials,
   LocalStorage,
   useAuthApi,
   useGetUserDetails,
@@ -10,7 +11,7 @@ import {
   useLocalStorage,
   useQueryClient,
 } from '@openmsupply-client/common';
-import { LanguageType, UserNode } from '@common/types';
+import { LanguageType, UserNode, UserStoreNodeFragment } from '@common/types';
 
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 
@@ -39,6 +40,24 @@ const skipNoStoreRequests = (documentNode?: DocumentNode) => {
   }
 };
 
+// mostly this is as a migration fix - previous format is a single object, not an array
+const getMostRecentCredentials = (
+  mostRecentlyUsedCredentials:
+    | AuthenticationCredentials
+    | AuthenticationCredentials[]
+    | null
+) => {
+  if (mostRecentlyUsedCredentials === null) return [];
+
+  if (Array.isArray(mostRecentlyUsedCredentials))
+    return mostRecentlyUsedCredentials;
+
+  if (typeof mostRecentlyUsedCredentials === 'object')
+    return [mostRecentlyUsedCredentials];
+
+  return [];
+};
+
 export const useLogin = (
   setCookie: React.Dispatch<React.SetStateAction<AuthCookie | undefined>>
 ) => {
@@ -53,22 +72,34 @@ export const useLogin = (
   const getUserPermissions = useGetUserPermissions();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_error, setError, removeError] = useLocalStorage('/auth/error');
+  const mostRecentCredentials = getMostRecentCredentials(
+    mostRecentlyUsedCredentials
+  );
+  const upsertMostRecentCredential = (
+    username: string,
+    store?: UserStoreNodeFragment
+  ) => {
+    const newMRU = [
+      { username, store },
+      ...mostRecentCredentials.filter(
+        mru => mru.username.toLowerCase() !== username.toLowerCase()
+      ),
+    ];
+    setMRUCredentials(newMRU);
+  };
 
   // returns MRU store, if set
   // or the first store in the list
   const getStore = async (userDetails?: Partial<UserNode>) => {
     const defaultStore = userDetails?.defaultStore;
     const stores = userDetails?.stores?.nodes;
+    const mru = mostRecentCredentials?.find(
+      item =>
+        item.username.toLowerCase() === userDetails?.username?.toLowerCase()
+    );
 
-    if (
-      mostRecentlyUsedCredentials?.store &&
-      stores?.some(store => store.id === mostRecentlyUsedCredentials?.store?.id)
-    ) {
-      return (
-        stores.find(
-          store => store.id === mostRecentlyUsedCredentials.store?.id
-        ) || mostRecentlyUsedCredentials.store
-      );
+    if (mru?.store && stores?.some(store => store.id === mru?.store?.id)) {
+      return stores.find(store => store.id === mru.store?.id) ?? mru.store;
     }
 
     if (!!defaultStore) return defaultStore;
@@ -123,7 +154,7 @@ export const useLogin = (
     if (userLocale === undefined) {
       changeLanguage(getLocaleCode(userDetails?.language as LanguageType));
     }
-    setMRUCredentials({ username, store });
+    upsertMostRecentCredential(username, store);
     setAuthCookie(authCookie);
     setCookie(authCookie);
     setLoginError(!!token, !!store);
@@ -134,5 +165,10 @@ export const useLogin = (
     return { token, error };
   };
 
-  return { isLoggingIn, login };
+  return {
+    isLoggingIn,
+    login,
+    upsertMostRecentCredential,
+    mostRecentCredentials,
+  };
 };

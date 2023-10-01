@@ -6,7 +6,7 @@ import { Document } from './document';
 import { ProgramEnrolmentRowFragmentWithId } from './document/useProgramEnrolments';
 import { EncounterRegistryByProgram } from './document/useEncounterRegistriesByPrograms';
 import { useDocumentRegistryApi } from './utils/useDocumentRegistryApi';
-import { useEncounterIdFromUrl } from './utils/useEncounterIdFromUrl';
+import { useIdFromUrl } from './utils/useIdFromUrl';
 
 export { EncounterRegistryByProgram };
 
@@ -43,7 +43,7 @@ export const usePatient = {
 
 export const useEncounter = {
   utils: {
-    idFromUrl: useEncounterIdFromUrl,
+    idFromUrl: useIdFromUrl,
   },
   encounterFields: Document.useEncounterFields,
   document: {
@@ -53,6 +53,7 @@ export const useEncounter = {
     byDocName: Document.useEncounterByDocName,
     previous: Document.useEncounterPrevious,
     upsert: Document.useUpsertEncounter,
+    upsertDocument: Document.useUpsertEncounterDocument,
   },
 };
 
@@ -81,5 +82,18 @@ export const useFormSchema = {
 export const useProgramEvents = {
   document: {
     list: Document.useProgramEvents,
+  },
+};
+
+export const useContactTraces = {
+  document: {
+    list: Document.useContactTraces,
+    insert: Document.useInsertContactTrace,
+    update: Document.useUpdateContactTrace,
+    upsert: Document.useUpsertContactTrace,
+    upsertDocument: Document.useUpsertContactTraceDocument,
+  },
+  utils: {
+    idFromUrl: useIdFromUrl,
   },
 };

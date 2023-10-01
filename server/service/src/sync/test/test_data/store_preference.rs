@@ -130,8 +130,7 @@ const STORE_PREFERENCE_2: (&'static str, &'static str) = (
         "monthsUnderstock": 3,
         "monthsItemsExpire": 3,
         "boxPrefix": "",
-        "boxPercentageSpace": 0,
-        "omSupplyUsesProgramModule": false
+        "boxPercentageSpace": 0
     }
 }"#,
 );
@@ -159,6 +158,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 pack_to_one: false,
                 response_requisition_requires_authorisation: false,
                 request_requisition_requires_authorisation: true,
+                // This one is missing, should default to false
                 om_program_module: false,
             }),
         ),

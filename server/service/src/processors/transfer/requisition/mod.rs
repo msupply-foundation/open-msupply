@@ -4,6 +4,7 @@ pub(crate) mod link_request_requisition;
 pub(crate) mod update_request_requisition_status;
 
 #[cfg(test)]
+#[cfg(not(feature = "memory"))]
 pub(crate) mod test;
 
 use repository::{

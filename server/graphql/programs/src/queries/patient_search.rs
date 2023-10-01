@@ -1,14 +1,11 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_general::GenderInput;
+use graphql_types::types::{patient::PatientNode, GenderInput};
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     programs::patient::PatientSearch,
-    usize_to_u32,
 };
-
-use crate::types::patient::PatientNode;
 
 #[derive(InputObject, Clone)]
 pub struct PatientSearchInput {
@@ -20,6 +17,7 @@ pub struct PatientSearchInput {
     last_name: Option<String>,
     date_of_birth: Option<NaiveDate>,
     gender: Option<GenderInput>,
+    name_or_code: Option<String>,
 }
 
 pub struct PatientSearchNode {
@@ -62,19 +60,19 @@ pub fn patient_search(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let result: Vec<PatientSearchNode> = service_provider
-        .patient_service
-        .patient_search(
-            &context,
-            service_provider,
-            input.to_domain(),
-            Some(&allowed_ctx),
-        )?
+    let result = service_provider.patient_service.patient_search(
+        &context,
+        service_provider,
+        input.to_domain(),
+        Some(&allowed_ctx),
+    )?;
+    let nodes = result
+        .rows
         .into_iter()
         .map(|p| PatientSearchNode {
             patient: PatientNode {
@@ -87,8 +85,8 @@ pub fn patient_search(
         .collect();
 
     Ok(PatientSearchResponse::Response(PatientSearchConnector {
-        total_count: usize_to_u32(result.len()),
-        nodes: result,
+        total_count: result.count,
+        nodes,
     }))
 }
 
@@ -101,6 +99,7 @@ impl PatientSearchInput {
             last_name: self.last_name,
             date_of_birth: self.date_of_birth,
             gender: self.gender.map(|g| g.to_domain()),
+            name_or_code: self.name_or_code,
         }
     }
 }

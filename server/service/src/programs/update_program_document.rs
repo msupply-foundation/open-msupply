@@ -1,26 +1,27 @@
 use chrono::{DateTime, Duration, Months, NaiveDateTime, Utc};
-use repository::{Document, EventCondition, EventConfigEnum, EventTarget, RepositoryError};
+use repository::{
+    Document, EventCondition, EventConfigEnum, EventTarget, RepositoryError, StorageConnection,
+};
 use serde_json::{Map, Value};
 
-use crate::service_provider::{ServiceContext, ServiceProvider};
+use crate::document::document_registry::{DocumentRegistryService, DocumentRegistryServiceTrait};
 
-use super::program_event::EventInput;
+use super::program_event::{EventInput, ProgramEventService, ProgramEventServiceTrait};
 
+#[derive(Debug)]
 pub enum UpdateProgramDocumentError {
     DatabaseError(RepositoryError),
     InternalError(String),
 }
 
 fn extract_events(
-    ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
+    connection: &StorageConnection,
     base_time: NaiveDateTime,
     doc: &Document,
-    allowed_ctx: &[String],
+    allowed_ctx: Option<&[String]>,
 ) -> Result<Vec<EventInput>, UpdateProgramDocumentError> {
-    let Some(registry_entries) = service_provider
-        .document_registry_service
-        .get_entries_by_doc_type(ctx, vec![doc.r#type.clone()], allowed_ctx)?
+    let Some(registry_entries) = DocumentRegistryService {}
+        .get_entries_by_doc_type(connection, vec![doc.r#type.clone()], allowed_ctx)?
         .pop() else { return Ok(vec![])};
 
     let Some(config) = registry_entries.config else {
@@ -116,35 +117,34 @@ fn extract_events(
 
 /// * `base_time` - the document time, e.g. for encounters it's the start_datetime
 pub fn update_program_events(
-    ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
+    connection: &StorageConnection,
     patient_id: &str,
     base_time: NaiveDateTime,
     previous_base_time: Option<NaiveDateTime>,
     doc: &Document,
-    allowed_ctx: &[String],
+    allowed_ctx: Option<&[String]>,
 ) -> Result<(), UpdateProgramDocumentError> {
-    let event_inputs = extract_events(ctx, service_provider, base_time, &doc, allowed_ctx)?;
+    let event_inputs = extract_events(connection, base_time, &doc, allowed_ctx)?;
     if let Some(previous_base_time) = previous_base_time {
         // the base time has changed, remove all events for the old base time
         // Example of the problem, if the previous_base_time was accidentally set a year
         // into the future and is than fixed, old event from the previous_base_time would
         // take precedence for a long time.
         if previous_base_time != base_time {
-            service_provider.program_event_service.upsert_events(
-                ctx,
+            ProgramEventService {}.upsert_events(
+                connection,
                 patient_id.to_string(),
                 previous_base_time,
-                &doc.context,
+                &doc.context_id,
                 vec![],
             )?;
         }
     }
-    service_provider.program_event_service.upsert_events(
-        ctx,
+    ProgramEventService {}.upsert_events(
+        connection,
         patient_id.to_string(),
         base_time,
-        &doc.context,
+        &doc.context_id,
         event_inputs,
     )?;
     Ok(())
@@ -216,10 +216,7 @@ fn match_condition(condition: &EventCondition, doc: &Document) -> bool {
     false
 }
 
-fn match_all_conditions(conditions: Option<Vec<EventCondition>>, doc: &Document) -> bool {
-    let Some(conditions) = conditions else {
-        return false;
-    };
+fn match_all_conditions(conditions: Vec<EventCondition>, doc: &Document) -> bool {
     conditions
         .into_iter()
         .all(|condition| match_condition(&condition, doc))

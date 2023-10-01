@@ -18,7 +18,7 @@ pub struct RawDocument {
     pub status: DocumentStatus,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub owner_name_id: Option<String>,
-    pub context: String,
+    pub context_id: String,
 }
 
 impl RawDocument {
@@ -42,7 +42,7 @@ impl RawDocument {
             form_schema_id,
             status,
             owner_name_id: owner,
-            context,
+            context_id,
         } = self;
         Ok(Document {
             id,
@@ -55,7 +55,7 @@ impl RawDocument {
             form_schema_id,
             status,
             owner_name_id: owner,
-            context,
+            context_id,
         })
     }
 }
@@ -83,10 +83,10 @@ mod document_id_test {
             form_schema_id: None,
             status: DocumentStatus::Active,
             owner_name_id: None,
-            context: "ctx".to_string(),
+            context_id: "ctx".to_string(),
         };
         let document = raw.finalise().unwrap();
-        let expected_json_string = r#"{"author":"author","context":"ctx","data":{"a":"avalue","b":0.3453333},"datetime":"1970-01-01T00:00:01Z","name":"name","parents":["p1"],"status":"Active","type":"test"}"#;
+        let expected_json_string = r#"{"author":"author","context_id":"ctx","data":{"a":"avalue","b":0.3453333},"datetime":"1970-01-01T00:00:01Z","name":"name","parents":["p1"],"status":"Active","type":"test"}"#;
         let expected_id = sha256(expected_json_string);
         assert_eq!(document.id, expected_id);
     }
