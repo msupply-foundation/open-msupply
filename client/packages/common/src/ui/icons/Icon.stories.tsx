@@ -22,6 +22,7 @@ import { CopyIcon } from './Copy';
 import { CustomersIcon } from './Customers';
 import { DashboardIcon } from './Dashboard';
 import { DeleteIcon } from './Delete';
+import { FiberManualRecordIcon } from './FiberManualRecord';
 import { DownloadIcon } from './Download';
 import { EditIcon } from './Edit';
 import { ExternalLinkIcon } from './ExternalLink';
@@ -150,6 +151,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <UserIcon {...args} />, name: 'User' },
     { icon: <XCircleIcon {...args} />, name: 'XCircle' },
     { icon: <ZapIcon {...args} />, name: 'Zap' },
+    { icon: <FiberManualRecordIcon {...args} />, name: 'FiberManualRecord' },
   ];
   const [filteredIcons, setFilteredIcons] = useState(icons);
   const filterIcons = (event: ChangeEvent<HTMLInputElement>) => {
