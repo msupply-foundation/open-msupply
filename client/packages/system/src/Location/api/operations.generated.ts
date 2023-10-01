@@ -1,14 +1,16 @@
 import * as Types from '@openmsupply-client/common';
 
 import { GraphQLClient } from 'graphql-request';
-import * as Dom from 'graphql-request/dist/types.dom';
+import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type LocationRowFragment = { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string };
 
 export type LocationsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   sort?: Types.InputMaybe<Array<Types.LocationSortInput> | Types.LocationSortInput>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
 }>;
 
 
@@ -16,7 +18,7 @@ export type LocationsQuery = { __typename: 'Queries', locations: { __typename: '
 
 export type InsertLocationMutationVariables = Types.Exact<{
   input: Types.InsertLocationInput;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -24,14 +26,14 @@ export type InsertLocationMutation = { __typename: 'Mutations', insertLocation: 
 
 export type UpdateLocationMutationVariables = Types.Exact<{
   input: Types.UpdateLocationInput;
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type UpdateLocationMutation = { __typename: 'Mutations', updateLocation: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | { __typename: 'UpdateLocationError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'InternalError', description: string, fullError: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } | { __typename: 'UniqueValueViolation', description: string, field: Types.UniqueValueKey } } };
 
 export type DeleteLocationMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String'];
+  storeId: Types.Scalars['String']['input'];
   input: Types.DeleteLocationInput;
 }>;
 
@@ -48,8 +50,12 @@ export const LocationRowFragmentDoc = gql`
 }
     `;
 export const LocationsDocument = gql`
-    query locations($storeId: String!, $sort: [LocationSortInput!]) {
-  locations(storeId: $storeId, sort: $sort) {
+    query locations($storeId: String!, $sort: [LocationSortInput!], $first: Int, $offset: Int) {
+  locations(
+    storeId: $storeId
+    sort: $sort
+    page: {first: $first, offset: $offset}
+  ) {
     __typename
     ... on LocationConnector {
       __typename
@@ -195,16 +201,16 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    locations(variables: LocationsQueryVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<LocationsQuery> {
+    locations(variables: LocationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LocationsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LocationsQuery>(LocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'locations', 'query');
     },
-    insertLocation(variables: InsertLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<InsertLocationMutation> {
+    insertLocation(variables: InsertLocationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertLocationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertLocationMutation>(InsertLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertLocation', 'mutation');
     },
-    updateLocation(variables: UpdateLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<UpdateLocationMutation> {
+    updateLocation(variables: UpdateLocationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateLocationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateLocationMutation>(UpdateLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLocation', 'mutation');
     },
-    deleteLocation(variables: DeleteLocationMutationVariables, requestHeaders?: Dom.RequestInit["headers"]): Promise<DeleteLocationMutation> {
+    deleteLocation(variables: DeleteLocationMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteLocationMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteLocationMutation>(DeleteLocationDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteLocation', 'mutation');
     }
   };
@@ -216,7 +222,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockLocationsQuery((req, res, ctx) => {
- *   const { storeId, sort } = req.variables;
+ *   const { storeId, sort, first, offset } = req.variables;
  *   return res(
  *     ctx.data({ locations })
  *   )

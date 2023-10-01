@@ -47,7 +47,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
                 .and_hms_opt(0, 0, 0),
             is_deceased: false,
             national_health_number: None,
-            is_sync_update: true,
+            date_of_death: None,
         };
         let name_json1 = json!({
             "ID": name_row1.id,
@@ -72,7 +72,8 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "hold": true,
             "created_date": "2022-05-22",
             "is_deceased": false,
-            "national_health_number": ""
+            "national_health_number": "",
+            "om_date_of_death": "",
         });
 
         let name_row2 = inline_init(|r: &mut NameRow| {
@@ -80,7 +81,6 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             r.r#type = NameType::Facility;
             r.is_customer = true;
             r.is_supplier = false;
-            r.is_sync_update = true;
         });
         let mut name_json2 = json!({
             "ID": name_row2.id,
@@ -123,7 +123,6 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             store_id: new_site_properties.store_id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
-            is_sync_update: true,
         };
         let name_store_join_json1 = json!({
             "ID": name_store_join_row1.id,
@@ -138,7 +137,6 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             store_id: store_row.id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
-            is_sync_update: true,
         };
         let name_store_join_json2 = json!({
             "ID": name_store_join_row2.id,

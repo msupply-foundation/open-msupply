@@ -1,5 +1,4 @@
 import {
-  useCurrencyFormat,
   useColumns,
   PositiveNumberCell,
   ColumnAlign,
@@ -7,10 +6,10 @@ import {
   CheckCell,
   CurrencyCell,
   Column,
+  useCurrency,
 } from '@openmsupply-client/common';
-import { DraftOutboundLine } from '../../../types';
-import { OutboundLineFragment } from '../../api';
-import { PackQuantityCell } from '../PackQuantityCell';
+import { DraftStockOutLine } from '../../../types';
+import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
 
 export const useOutboundLineEditColumns = ({
   onChange,
@@ -19,7 +18,8 @@ export const useOutboundLineEditColumns = ({
   onChange: (key: string, value: number, packSize: number) => void;
   unit: string;
 }) => {
-  const columns = useColumns<DraftOutboundLine>(
+  const { c } = useCurrency();
+  const columns = useColumns<DraftStockOutLine>(
     [
       [
         'batch',
@@ -46,7 +46,7 @@ export const useOutboundLineEditColumns = ({
         'sellPricePerPack',
         {
           Cell: CurrencyCell,
-          formatter: sellPrice => useCurrencyFormat(Number(sellPrice)),
+          formatter: sellPrice => c(Number(sellPrice)).format(),
           width: 120,
         },
       ],
@@ -101,7 +101,7 @@ export const useOutboundLineEditColumns = ({
   return columns;
 };
 
-export const useExpansionColumns = (): Column<OutboundLineFragment>[] =>
+export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
   useColumns([
     'batch',
     'expiryDate',

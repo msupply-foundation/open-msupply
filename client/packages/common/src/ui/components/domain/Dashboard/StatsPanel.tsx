@@ -114,12 +114,11 @@ export const StatsPanel: FC<StatsPanelProps> = ({
       <Grid alignItems="center" display="flex">
         <Grid item style={{ marginInlineEnd: 8 }}>
           <StockIcon
-            color="secondary"
-            style={{
+            sx={theme => ({
+              fill: theme.palette.secondary.main,
               height: 16,
               width: 16,
-              fill: '#3568d4',
-            }}
+            })}
           />
         </Grid>
         <Grid item>

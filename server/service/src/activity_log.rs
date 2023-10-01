@@ -93,16 +93,21 @@ pub fn system_activity_log_entry(
     Ok(ActivityLogRowRepository::new(&connection).insert_one(log)?)
 }
 
-pub fn log_type_from_invoice_status(status: &InvoiceRowStatus) -> ActivityLogType {
+pub fn log_type_from_invoice_status(
+    status: &InvoiceRowStatus,
+    prescription: bool,
+) -> ActivityLogType {
     use ActivityLogType as to;
     use InvoiceRowStatus as from;
 
     match status {
         from::New => to::InvoiceCreated,
         from::Allocated => to::InvoiceStatusAllocated,
+        from::Picked if prescription => to::PrescriptionStatusPicked,
         from::Picked => to::InvoiceStatusPicked,
         from::Shipped => to::InvoiceStatusShipped,
         from::Delivered => to::InvoiceStatusDelivered,
+        from::Verified if prescription => to::PrescriptionStatusVerified,
         from::Verified => to::InvoiceStatusVerified,
     }
 }

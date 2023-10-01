@@ -1,11 +1,10 @@
 fragment DocumentRegistry on DocumentRegistryNode {
   __typename
   id
-  type
+  category
   documentType
-  documentContext
+  contextId
   name
-  parentId
   formSchemaId
   jsonSchema
   uiSchemaType
@@ -70,30 +69,6 @@ query documentRegistries(
   }
 }
 
-fragment DocumentRegistryWithChildren on DocumentRegistryNode {
-  ...DocumentRegistry
-  children {
-    ...DocumentRegistry
-  }
-}
-
-query documentRegistriesWithChildren(
-  $filter: DocumentRegistryFilterInput
-  $sort: DocumentRegistrySortInput
-  $storeId: String!
-) {
-  documentRegistries(sort: $sort, filter: $filter, storeId: $storeId) {
-    ... on DocumentRegistryConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        ...DocumentRegistryWithChildren
-      }
-    }
-  }
-}
-
 query getDocumentHistory($storeId: String!, $name: String!) {
   documentHistory(storeId: $storeId, name: $name) {
     __typename
@@ -136,9 +111,10 @@ fragment EncounterFields on EncounterFieldsNode {
 }
 
 fragment ProgramEvent on ProgramEventNode {
-  activeDatetime
+  activeStartDatetime
   type
   data
+  documentName
 }
 
 query encounterFields(
@@ -163,24 +139,20 @@ query encounterFields(
 }
 
 fragment EncounterDocumentRegistry on DocumentRegistryNode {
-  type
+  category
   documentType
-  documentContext
+  contextId
   formSchemaId
   id
   jsonSchema
   name
-  parentId
   uiSchema
   uiSchemaType
-  children {
-    id
-  }
 }
 
 fragment Encounter on EncounterNode {
   id
-  context
+  contextId
   type
   name
   status
@@ -188,6 +160,8 @@ fragment Encounter on EncounterNode {
     id
     firstName
     lastName
+    code
+    code2
     name
     dateOfBirth
   }
@@ -262,6 +236,7 @@ fragment EncounterRow on EncounterNode {
       name
     }
   }
+  contextId
   startDatetime
   endDatetime
   status
@@ -274,7 +249,12 @@ fragment EncounterRow on EncounterNode {
     name
   }
   activeProgramEvents(at: $eventTime, filter: { isCurrentEncounter: true }) {
-    ...ProgramEvent
+    ... on ProgramEventConnector {
+      nodes {
+        __typename
+        ...ProgramEvent
+      }
+    }
   }
 }
 
@@ -326,6 +306,7 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
   type
   programEnrolmentId
   patientId
+  contextId
   name
   enrolmentDatetime
   status
@@ -336,7 +317,12 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
     }
   }
   activeProgramEvents(at: $eventTime) {
-    ...ProgramEvent
+    ... on ProgramEventConnector {
+      nodes {
+        __typename
+        ...ProgramEvent
+      }
+    }
   }
 }
 
@@ -457,10 +443,15 @@ fragment FormSchema on FormSchemaNode {
   uiSchema
 }
 
-query formSchema($filter: FormSchemaFilterInput) {
-  formSchema(filter: $filter) {
-    __typename
-    ...FormSchema
+query formSchemas($filter: FormSchemaFilterInput) {
+  formSchemas(filter: $filter) {
+    ... on FormSchemaConnector {
+      __typename
+      nodes {
+        __typename
+        ...FormSchema
+      }
+    }
   }
 }
 
@@ -481,14 +472,97 @@ query activeProgramEvents(
       totalCount
       nodes {
         __typename
-        type
-        patientId
-        documentType
-        documentName
-        datetime
-        data
-        activeDatetime
+        ...ProgramEvent
       }
+    }
+  }
+}
+
+fragment ContactTraceRow on ContactTraceNode {
+  __typename
+  contactTraceId
+  storeId
+  datetime
+  document {
+    name
+    type
+    id
+  }
+  documentId
+  id
+  firstName
+  lastName
+  gender
+  dateOfBirth
+  age
+  patientId
+  patient {
+    id
+    name
+    firstName
+    lastName
+  }
+  contactPatient {
+    id
+    name
+    firstName
+    lastName
+  }
+  program {
+    id
+    name
+  }
+}
+
+query contactTraces(
+  $storeId: String!
+  $key: ContactTraceSortFieldInput
+  $desc: Boolean
+  $filter: ContactTraceFilterInput
+  $page: PaginationInput
+) {
+  contactTraces(
+    storeId: $storeId
+    filter: $filter
+    sort: { key: $key, desc: $desc }
+    page: $page
+  ) {
+    ... on ContactTraceConnector {
+      nodes {
+        ...ContactTraceRow
+      }
+      totalCount
+    }
+  }
+}
+
+fragment ContactTrace on ContactTraceNode {
+  id
+  document {
+    ...Document
+  }
+}
+
+mutation insertContactTrace(
+  $storeId: String!
+  $input: InsertContactTraceInput!
+) {
+  insertContactTrace(storeId: $storeId, input: $input) {
+    ... on ContactTraceNode {
+      __typename
+      ...ContactTrace
+    }
+  }
+}
+
+mutation updateContactTrace(
+  $storeId: String!
+  $input: UpdateContactTraceInput!
+) {
+  updateContactTrace(storeId: $storeId, input: $input) {
+    ... on ContactTraceNode {
+      __typename
+      ...ContactTrace
     }
   }
 }

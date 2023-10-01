@@ -12,38 +12,38 @@ import {
   InvoiceLineNodeType,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
-import { OutboundItem } from '../../types';
-import { OutboundLineFragment } from '../api/operations.generated';
 import { LocationRowFragment } from '@openmsupply-client/system';
+import { StockOutLineFragment } from '../../StockOut';
+import { StockOutItem } from '../../types';
 
 interface UseOutboundColumnOptions {
-  sortBy: SortBy<OutboundLineFragment | OutboundItem>;
-  onChangeSortBy: (column: Column<OutboundLineFragment | OutboundItem>) => void;
+  sortBy: SortBy<StockOutLineFragment | StockOutItem>;
+  onChangeSortBy: (column: Column<StockOutLineFragment | StockOutItem>) => void;
 }
 
 const expansionColumn = getRowExpandColumn<
-  OutboundLineFragment | OutboundItem
+  StockOutLineFragment | StockOutItem
 >();
 const notePopoverColumn = getNotePopoverColumn<
-  OutboundLineFragment | OutboundItem
+  StockOutLineFragment | StockOutItem
 >();
 
-const isDefaultPlaceholderRow = (row: OutboundLineFragment) =>
+const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
   row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
 
-const getPackSize = (row: OutboundLineFragment) =>
+const getPackSize = (row: StockOutLineFragment) =>
   isDefaultPlaceholderRow(row) ? '' : row.packSize;
 
-const getNumberOfPacks = (row: OutboundLineFragment) =>
+const getNumberOfPacks = (row: StockOutLineFragment) =>
   isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
 
-const getUnitQuantity = (row: OutboundLineFragment) =>
+const getUnitQuantity = (row: StockOutLineFragment) =>
   isDefaultPlaceholderRow(row) ? '' : row.packSize * row.numberOfPacks;
 
 export const useOutboundColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseOutboundColumnOptions): Column<OutboundLineFragment | OutboundItem>[] => {
+}: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const { c } = useCurrency();
   return useColumns(
     [

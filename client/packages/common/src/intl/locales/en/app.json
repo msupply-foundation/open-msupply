@@ -22,6 +22,8 @@
   "cmdk.goto-locations": "Go to: Locations",
   "cmdk.goto-master-lists": "Go to: Master Lists",
   "cmdk.goto-outbound": "Go to: Outbound Shipments",
+  "cmdk.goto-patients": "Go to: Patients",
+  "cmdk.goto-prescriptions": "Go to: Prescriptions",
   "cmdk.goto-reports": "Go to: Reports",
   "cmdk.goto-stock": "Go to: Stock",
   "cmdk.goto-stocktakes": "Go to: Stocktakes",
@@ -90,8 +92,9 @@
   "patients": "Patients",
   "dispensary": "Dispensary",
   "programs": "Programs",
+  "contact-trace": "Contact Tracing",
+  "prescription": "Prescriptions",
   "suppliers": "Suppliers",
   "sync": "Sync",
-  "tools": "Tools",
-  "cmdk.goto-patients": "Go to: Patients"
+  "tools": "Tools"
 }

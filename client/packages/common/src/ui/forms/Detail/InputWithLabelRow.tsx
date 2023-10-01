@@ -38,7 +38,14 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   const justify = `flex-${inputAlignment}`;
 
   return (
-    <Box display="flex" alignItems="center" gap={1} sx={{ ...sx }}>
+    <Box
+      display="flex"
+      // This class allows JSONForms to target the layout styling :)
+      className="input-with-label-row"
+      alignItems="center"
+      gap={1}
+      sx={{ ...sx }}
+    >
       <Box style={{ textAlign: 'end' }} flexBasis={labelFlexBasis}>
         <FormLabel sx={{ fontWeight: 'bold', ...labelSx }} {...labelPropsRest}>
           {labelWithPunctuation(label)}

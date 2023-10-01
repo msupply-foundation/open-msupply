@@ -1,5 +1,5 @@
+import { useInbound } from '..';
 import { InboundLineFragment } from '../../operations.generated';
-import { useInboundItems } from '../line/useInboundItems';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -8,14 +8,16 @@ export const useNextItem = (
 ): { next: InboundLineItem | null; disabled: boolean } => {
   const next: InboundLineItem | null = null;
   const disabled = true;
-  const { data } = useInboundItems();
+  const { items } = useInbound.lines.rows();
 
-  if (!data) return { next, disabled };
+  if (!items) return { next, disabled };
 
-  const numberOfItems = data.length;
-  const currentIndex = data.findIndex(({ itemId }) => itemId === currentItemId);
+  const numberOfItems = items.length;
+  const currentIndex = items.findIndex(
+    ({ itemId }) => itemId === currentItemId
+  );
   const nextIndex = currentIndex + 1;
-  const nextItem = data?.[nextIndex];
+  const nextItem = items?.[nextIndex];
   if (!nextItem) return { next, disabled };
 
   return {

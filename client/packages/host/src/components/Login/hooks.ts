@@ -41,7 +41,7 @@ export const useLoginForm = (
   const { data: initStatus } = useInitialisationStatus();
   const navigate = useNavigate();
   const location = useLocation();
-  const { mostRecentlyUsedCredentials, login, isLoggingIn } = useAuthContext();
+  const { mostRecentUsername, login, isLoggingIn } = useAuthContext();
   const { password, setPassword, setUsername, username, error, setError } =
     state;
 
@@ -62,11 +62,11 @@ export const useLoginForm = (
   const isValid = !!username && !!password;
 
   React.useEffect(() => {
-    if (mostRecentlyUsedCredentials?.username && !username) {
-      setUsername(mostRecentlyUsedCredentials.username);
+    if (mostRecentUsername && !username) {
+      setUsername(mostRecentUsername);
       setTimeout(() => passwordRef.current?.focus(), 100);
     }
-  }, [mostRecentlyUsedCredentials]);
+  }, [mostRecentUsername]);
 
   useEffect(() => {
     if (!initStatus) return;

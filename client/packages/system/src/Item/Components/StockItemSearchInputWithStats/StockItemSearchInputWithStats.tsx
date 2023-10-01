@@ -7,7 +7,10 @@ import {
   defaultOptionMapper,
 } from '@openmsupply-client/common';
 import { useStockItemsWithStats } from '../../api';
-import { itemFilterOptions, StockItemSearchInputWithStatsProps } from '../../utils';
+import {
+  itemFilterOptions,
+  StockItemSearchInputWithStatsProps,
+} from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 
 export const StockItemSearchInputWithStats: FC<
@@ -53,11 +56,18 @@ export const StockItemSearchInputWithStats: FC<
       onChange={(_, item) => onChange(item)}
       options={defaultOptionMapper(options, 'name')}
       getOptionLabel={option => `${option.code}     ${option.name}`}
-      renderOption={getItemOptionRenderer(t('label.units'), formatNumber.format)}
+      renderOption={getItemOptionRenderer(
+        t('label.units'),
+        formatNumber.format
+      )}
       width={width ? `${width}px` : '100%'}
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       open={selectControl.isOn}
+      sx={{
+        '.MuiInputBase-root': { paddingLeft: disabled ? 0 : undefined },
+        '.MuiBox-root': { justifyContent: 'flex-start' },
+      }}
     />
   );
 };

@@ -4,6 +4,7 @@ use crate::sync::{
     },
     translations::{IntegrationRecords, PullUpsertRecord},
 };
+use chrono::NaiveDate;
 use repository::{Gender, NameRow, NameStoreJoinRow, NameType, StoreMode, StoreRow};
 
 use serde_json::json;
@@ -24,7 +25,6 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             r.name = "facility".to_string();
             r.is_customer = true;
             r.is_supplier = true;
-            r.is_sync_update = true;
         });
         let facility_name_json = json!({
             "ID": facility_name_row.id,
@@ -58,7 +58,6 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             r.is_supplier = false;
             r.gender = Some(Gender::Male);
             r.supplying_store_id = Some(store_row.id.clone());
-            r.is_sync_update = true;
         });
         let patient_name_json = json!({
             "ID": patient_name_row.id,
@@ -77,7 +76,6 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
             store_id: store_row.id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
-            is_sync_update: true,
         };
         let patient_name_store_join_json = json!({
             "ID": patient_name_store_join_row.id,
@@ -104,7 +102,7 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         let patient_row = inline_edit(&patient_name_row, |mut p| {
             p.first_name = Some("Rebeus".to_string());
             p.last_name = Some("Hagrid".to_string());
-            p.is_sync_update = false;
+            p.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 09, 21).unwrap());
             p
         });
 

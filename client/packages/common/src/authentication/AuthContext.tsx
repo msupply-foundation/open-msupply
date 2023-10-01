@@ -42,11 +42,6 @@ type User = {
   jobTitle?: string | null;
 };
 
-type MRUCredentials = {
-  store?: UserStoreNodeFragment;
-  username?: string;
-};
-
 interface AuthControl {
   error?: AuthError | null;
   isLoggingIn: boolean;
@@ -55,7 +50,7 @@ interface AuthControl {
     password: string
   ) => Promise<AuthenticationResponse>;
   logout: () => void;
-  mostRecentlyUsedCredentials?: MRUCredentials | null;
+  mostRecentUsername?: string;
   setError?: (error: AuthError) => void;
   setStore: (store: UserStoreNodeFragment) => Promise<void>;
   store?: UserStoreNodeFragment;
@@ -101,27 +96,28 @@ const AuthContext = createContext<AuthControl>(authControl);
 const { Provider } = AuthContext;
 
 export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
-  const [mostRecentlyUsedCredentials, setMRUCredentials] =
-    useLocalStorage('/mru/credentials');
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
   const [error, setError] = useLocalStorage('/auth/error');
   const storeId = cookie?.store?.id ?? '';
-  const { login, isLoggingIn } = useLogin(setCookie);
+  const {
+    login,
+    isLoggingIn,
+    upsertMostRecentCredential,
+    mostRecentCredentials,
+  } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
   const { refreshToken } = useRefreshToken();
   const { setHeader } = useGql();
+  const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
 
   // initialise the auth header with the cookie value i.e. on page refresh
   setHeader('Authorization', `Bearer ${authCookie?.token}`);
-
   const setStore = async (store: UserStoreNodeFragment) => {
     if (!cookie?.token) return;
 
-    setMRUCredentials({
-      username: mostRecentlyUsedCredentials?.username ?? '',
-      store,
-    });
+    upsertMostRecentCredential(mostRecentUsername ?? '', store);
+
     const permissions = await getUserPermissions(cookie?.token, store);
     const user = {
       id: cookie.user?.id ?? '',
@@ -152,7 +148,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       token: cookie?.token || '',
       user: cookie?.user,
       store: cookie?.store,
-      mostRecentlyUsedCredentials,
+      mostRecentUsername,
       setStore,
       setError,
       userHasPermission,
@@ -161,7 +157,7 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
       login,
       cookie,
       error,
-      mostRecentlyUsedCredentials,
+      mostRecentUsername,
       isLoggingIn,
       setStore,
       setError,

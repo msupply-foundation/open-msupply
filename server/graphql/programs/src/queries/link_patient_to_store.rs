@@ -1,4 +1,5 @@
 use async_graphql::*;
+use graphql_core::simple_generic_errors::ConnectionError;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use service::programs::patient::link_patient_to_store as link_patient_to_store_service;
@@ -6,8 +7,6 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::{CentralPatientRequestError, NameStoreJoin},
 };
-
-use super::ConnectionError;
 
 pub struct NameStoreJoinNode {
     name_store_join: NameStoreJoin,

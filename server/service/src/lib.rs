@@ -191,7 +191,7 @@ pub fn get_default_pagination_unlimited(pagination_option: Option<PaginationOpti
         },
         None => Pagination {
             offset: 0,
-            limit: DEFAULT_PAGINATION_LIMIT,
+            limit: u32::MAX,
         },
     }
 }

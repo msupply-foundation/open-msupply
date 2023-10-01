@@ -1,24 +1,28 @@
 use chrono::{DateTime, Utc};
-use repository::RepositoryError;
-
-use crate::service_provider::{ServiceContext, ServiceProvider};
+use repository::{
+    DocumentFilter, DocumentRepository, RepositoryError, StorageConnection, StringFilter,
+};
 
 pub mod document_registry;
 pub mod document_service;
 pub mod form_schema_service;
 pub mod raw_document;
 
-/// Checks if the doc is the latest in the DB
+/// Checks that there is no document in the DB with a datetime greater than the provided `datetime`.
 pub(crate) fn is_latest_doc(
-    ctx: &ServiceContext,
-    service_provider: &ServiceProvider,
-    doc_name: &str,
-    doc_timestamp: DateTime<Utc>,
+    connection: &StorageConnection,
+    name: &str,
+    datetime: DateTime<Utc>,
 ) -> Result<bool, RepositoryError> {
-    let Some(latest_existing) = service_provider
-        .document_service
-        .document(ctx, doc_name, None)? else {
-        return Ok(true);
+    // Document repository will always return latest document for a name
+    let current_doc = DocumentRepository::new(connection)
+        .query_by_filter(DocumentFilter::new().name(StringFilter::equal_to(name)))?
+        .pop();
+    let new_doc_is_latest = if let Some(current_doc) = current_doc {
+        current_doc.datetime <= datetime
+    } else {
+        true
     };
-    Ok(latest_existing.datetime <= doc_timestamp)
+
+    Ok(new_doc_is_latest)
 }

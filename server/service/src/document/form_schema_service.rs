@@ -1,9 +1,11 @@
 use repository::{
-    FormSchema, FormSchemaFilter, FormSchemaRepository, FormSchemaRowRepository, Pagination,
-    RepositoryError,
+    FormSchema, FormSchemaFilter, FormSchemaRepository, FormSchemaRowRepository, FormSchemaSort,
+    PaginationOption, RepositoryError,
 };
 
-use crate::service_provider::ServiceContext;
+use crate::{
+    get_default_pagination_unlimited, i64_to_u32, service_provider::ServiceContext, ListResult,
+};
 
 pub enum InsertFormSchemaError {
     DatabaseError(RepositoryError),
@@ -11,14 +13,21 @@ pub enum InsertFormSchemaError {
 }
 
 pub trait FormSchemaServiceTrait: Sync + Send {
-    fn get_schema(
+    fn form_schemas(
         &self,
         ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
         filter: Option<FormSchemaFilter>,
-    ) -> Result<Option<FormSchema>, RepositoryError> {
-        Ok(FormSchemaRepository::new(&ctx.connection)
-            .query(Pagination::one(), filter, None)?
-            .pop())
+        sort: Option<FormSchemaSort>,
+    ) -> Result<ListResult<FormSchema>, RepositoryError> {
+        let pagination = get_default_pagination_unlimited(pagination);
+        let repository = FormSchemaRepository::new(&ctx.connection);
+        let rows = repository.query(pagination, filter.clone(), sort)?;
+
+        Ok(ListResult {
+            rows,
+            count: i64_to_u32(repository.count(filter)?),
+        })
     }
 
     fn insert(

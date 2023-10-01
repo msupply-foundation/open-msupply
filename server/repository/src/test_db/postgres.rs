@@ -3,6 +3,7 @@ use diesel::r2d2::{ConnectionManager, Pool};
 use crate::{
     database_settings::DatabaseSettings,
     migrations::{migrate, Version},
+    mock::{insert_all_mock_data, MockDataCollection, MockDataInserts},
     StorageConnectionManager,
 };
 
@@ -18,13 +19,16 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
 }
 
 pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
-    setup_with_version(db_settings, None).await
+    setup_with_version(db_settings, None, MockDataInserts::none())
+        .await
+        .0
 }
 
 pub(crate) async fn setup_with_version(
     db_settings: &DatabaseSettings,
     version: Option<Version>,
-) -> StorageConnectionManager {
+    inserts: MockDataInserts,
+) -> (StorageConnectionManager, MockDataCollection) {
     use diesel::{PgConnection, RunQueryDsl};
 
     use crate::get_storage_connection_manager;
@@ -52,5 +56,6 @@ pub(crate) async fn setup_with_version(
     let connection = connection_manager.connection().unwrap();
     migrate(&connection, version).unwrap();
 
-    connection_manager
+    let collection = insert_all_mock_data(&connection, inserts).await;
+    (connection_manager, collection)
 }

@@ -1,5 +1,6 @@
 import { Theme, SxProps } from '@openmsupply-client/common';
 
+export const FORM_COLUMN_MAX_WIDTH = 600;
 export const FORM_LABEL_WIDTH = 40;
 export const FORM_LABEL_COLUMN_WIDTH = `${FORM_LABEL_WIDTH}%`;
 export const FORM_INPUT_COLUMN_WIDTH = `${100 - FORM_LABEL_WIDTH}%`;

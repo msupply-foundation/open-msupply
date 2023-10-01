@@ -12,7 +12,7 @@ import {
   WizardStepper,
   useTranslation,
   useDebounceCallback,
-  DocumentRegistryTypeNode,
+  DocumentRegistryCategoryNode,
 } from '@openmsupply-client/common';
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
@@ -33,7 +33,7 @@ interface CreatePatientModal {
 }
 
 const newPatient = (
-  documentRegistry: DocumentRegistryFragment
+  documentRegistry: DocumentRegistryFragment | undefined
 ): CreateNewPatient => {
   return {
     id: FnUtils.generateUUID(),
@@ -42,9 +42,9 @@ const newPatient = (
 };
 
 export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
-  const { data: documentRegistryResponse } =
+  const { data: documentRegistryResponse, isLoading } =
     useDocumentRegistry.get.documentRegistries({
-      filter: { type: { equalTo: DocumentRegistryTypeNode.Patient } },
+      filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
     });
 
   const [documentRegistry, setDocumentRegistry] = useState<
@@ -56,7 +56,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   });
   const navigate = useNavigate();
   const { createNewPatient, setCreateNewPatient } = usePatientStore();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
 
   const onNext = useDebounceCallback(() => {
     onChangeTab(Tabs.SearchResults);
@@ -103,12 +103,10 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   }, []);
 
   useEffect(() => {
-    setCreateNewPatient(
-      documentRegistry ? newPatient(documentRegistry) : undefined
-    );
+    setCreateNewPatient(newPatient(documentRegistry));
   }, [documentRegistry]);
 
-  if (documentRegistry === undefined) {
+  if (isLoading) {
     return null;
   }
   return (

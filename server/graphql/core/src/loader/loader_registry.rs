@@ -217,13 +217,6 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
-    let doc_registry_children_loader = DataLoader::new(
-        DocumentRegistryChildrenLoader {
-            service_provider: service_provider.clone(),
-        },
-        async_std::task::spawn,
-    );
-
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -251,7 +244,6 @@ pub async fn get_loaders(
     loaders.insert(document_loader);
     loaders.insert(schema_loader);
     loaders.insert(doc_registry_loader);
-    loaders.insert(doc_registry_children_loader);
     loaders.insert(DataLoader::new(
         PatientLoader {
             service_provider: service_provider.clone(),
@@ -266,6 +258,12 @@ pub async fn get_loaders(
     ));
     loaders.insert(DataLoader::new(
         ProgramEnrolmentLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        DocumentByIdLoader {
             service_provider: service_provider.clone(),
         },
         async_std::task::spawn,

@@ -24,6 +24,11 @@ export const ToolbarActions = () => {
     message: t('messages.changing-min-mos'),
   });
 
+  const getMinMOSUnassignConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.unassign-min-mos'),
+  });
+
   const getMaxMOSConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: t('messages.changing-max-mos'),
@@ -40,21 +45,37 @@ export const ToolbarActions = () => {
               disabled={isDisabled || isProgram}
               clearIcon={null}
               isOptionEqualToValue={(a, b) => a.value === b.value}
-              value={{
-                label: t('label.number-months', { count: minMonthsOfStock }),
-                value: minMonthsOfStock,
-              }}
-              width="150px"
-              options={months.map(numberOfMonths => ({
-                label: t('label.number-months', { count: numberOfMonths }),
-                value: numberOfMonths,
-              }))}
-              onChange={(_, option) =>
-                option &&
-                getMinMOSConfirmation({
-                  onConfirm: () => update({ minMonthsOfStock: option.value }),
-                })
+              value={
+                minMonthsOfStock === 0
+                  ? { label: t('label.not-set'), value: 0 }
+                  : {
+                      label: t('label.number-months', {
+                        count: minMonthsOfStock,
+                      }),
+                      value: minMonthsOfStock,
+                    }
               }
+              width="150px"
+              options={[
+                { label: t('label.not-set'), value: 0 },
+                ...months.map(numberOfMonths => ({
+                  label: t('label.number-months', { count: numberOfMonths }),
+                  value: numberOfMonths,
+                })),
+              ]}
+              onChange={(_, option) => {
+                if (option && option.value === 0) {
+                  getMinMOSUnassignConfirmation({
+                    onConfirm: () => update({ minMonthsOfStock: option.value }),
+                  });
+                } else {
+                  option &&
+                    getMinMOSConfirmation({
+                      onConfirm: () =>
+                        update({ minMonthsOfStock: option.value }),
+                    });
+                }
+              }}
               getOptionDisabled={option => option.value > maxMonthsOfStock}
             />
           }

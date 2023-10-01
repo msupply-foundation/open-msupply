@@ -56,11 +56,11 @@ export const SearchWithUserSource = (
     500
   );
 
-  const handleDataUpdate = (selectedResult: Record<string, any> | null) => {
+  const handleDataUpdate = (selectedResult: Record<string, unknown> | null) => {
     if (selectedResult === null) return;
     if (!saveFields) handleChange(path, selectedResult);
     else {
-      const newObj: Record<string, any> = {};
+      const newObj: Record<string, unknown> = {};
       saveFields?.forEach(
         field => (newObj[field] = selectedResult[field] ?? null)
       );

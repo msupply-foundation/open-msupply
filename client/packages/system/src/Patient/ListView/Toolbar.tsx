@@ -11,7 +11,7 @@ import { PatientRowFragment } from '../api';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
 
   const firstNameFilterString =
     (filter.filterBy?.['firstName' as keyof PatientRowFragment]
