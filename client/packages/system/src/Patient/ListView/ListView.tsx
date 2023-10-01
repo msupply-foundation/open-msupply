@@ -8,7 +8,7 @@ import {
   useFormatDateTime,
   ColumnAlign,
   useUrlQueryParams,
-  ReadOnlyCheckboxCell,
+  DotCell,
   ColumnDataAccessor,
   useAuthContext,
   useNavigate,
@@ -89,8 +89,8 @@ const PatientListComponent: FC = () => {
   columnDefinitions.push({
     key: 'isDeceased',
     label: 'label.deceased',
-    align: ColumnAlign.Right,
-    Cell: ReadOnlyCheckboxCell,
+    align: ColumnAlign.Center,
+    Cell: DotCell,
     sortable: false,
   });
 
