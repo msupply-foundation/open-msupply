@@ -5,10 +5,12 @@ import {
   DetailInputWithLabelRow,
   useFormatDateTime,
   BaseDatePickerInput,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 const Options = z
   .object({
@@ -28,7 +30,7 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
-
+  const { customError, setCustomError } = useJSONFormsCustomError(path, 'Date');
   const disableFuture = options?.disableFuture ?? false;
 
   if (!props.visible) {
@@ -48,14 +50,16 @@ const UIComponent = (props: ControlProps) => {
       Input={
         <BaseDatePickerInput
           // undefined is displayed as "now" and null as unset
-          value={data ?? null}
+          value={DateUtils.getDateOrNull(data)}
           onChange={e => {
-            if (e) handleChange(path, dateFormatter(e, 'yyyy-MM-dd'));
+            handleChange(path, !e ? undefined : dateFormatter(e, 'yyyy-MM-dd'));
+            if (customError) setCustomError(undefined);
           }}
-          inputFormat="dd/MM/yyyy"
+          format="dd/MM/yyyy"
           disabled={!props.enabled}
-          error={props.errors ?? zErrors}
+          error={customError ?? props.errors ?? zErrors ?? ''}
           disableFuture={disableFuture}
+          onError={validationError => setCustomError(validationError)}
         />
       }
     />

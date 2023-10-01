@@ -1,12 +1,7 @@
-import { PatientSearchInput, useQuery } from '@openmsupply-client/common';
+import { PatientSearchInput, useMutation } from '@openmsupply-client/common';
 import { usePatientApi } from '../utils/usePatientApi';
 
-export const usePatientSearch = (
-  params: PatientSearchInput,
-  enabled?: boolean
-) => {
+export const usePatientSearch = () => {
   const api = usePatientApi();
-  return useQuery(api.keys.search(params), () => api.get.search(params), {
-    enabled,
-  });
+  return useMutation((params: PatientSearchInput) => api.get.search(params));
 };

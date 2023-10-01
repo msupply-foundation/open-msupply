@@ -43,7 +43,7 @@ export const SidePanel: FC<SidePanelProps> = ({ encounter, onChange }) => {
   );
   const { user } = useAuthContext();
   const { localisedDate } = useFormatDateTime();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
 
   const {
     data: otherEncounters,

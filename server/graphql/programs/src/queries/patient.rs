@@ -3,14 +3,13 @@ use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, Str
 use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_general::{EqualFilterGenderInput, GenderInput};
+use graphql_types::types::patient::PatientNode;
+use graphql_types::types::{EqualFilterGenderInput, GenderInput};
 use repository::{
     DateFilter, EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField,
     StringFilter,
 };
-use service::auth::{CapabilityTag, Resource, ResourceAccessRequest};
-
-use crate::types::patient::PatientNode;
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
 pub struct PatientConnector {
@@ -39,6 +38,8 @@ pub struct PatientFilterInput {
     pub country: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
     pub identifier: Option<StringFilterInput>,
+    pub name_or_code: Option<StringFilterInput>,
+    pub date_of_death: Option<DateFilterInput>,
 }
 
 impl PatientFilterInput {
@@ -58,6 +59,8 @@ impl PatientFilterInput {
             country,
             email,
             identifier,
+            name_or_code,
+            date_of_death,
         } = self;
         PatientFilter {
             id: id.map(EqualFilter::from),
@@ -74,6 +77,8 @@ impl PatientFilterInput {
             country: country.map(StringFilter::from),
             email: email.map(StringFilter::from),
             identifier: identifier.map(StringFilter::from),
+            name_or_code: name_or_code.map(StringFilter::from),
+            date_of_death: date_of_death.map(DateFilter::from),
         }
     }
 }
@@ -93,6 +98,7 @@ pub enum PatientSortFieldInput {
     Address2,
     Country,
     Email,
+    DateOfDeath,
 }
 
 #[derive(InputObject)]
@@ -120,6 +126,7 @@ impl PatientSortInput {
                 PatientSortFieldInput::Address2 => PatientSortField::Address2,
                 PatientSortFieldInput::Country => PatientSortField::Country,
                 PatientSortFieldInput::Email => PatientSortField::Email,
+                PatientSortFieldInput::DateOfDeath => PatientSortField::DateOfDeath,
             },
             desc: self.desc,
         }
@@ -140,7 +147,7 @@ pub fn patients(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
@@ -180,7 +187,7 @@ pub fn patient(
             store_id: Some(store_id.to_string()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;

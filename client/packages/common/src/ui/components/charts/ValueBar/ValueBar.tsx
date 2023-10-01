@@ -36,7 +36,23 @@ export const ValueBar: FC<ValueBarProps> = ({
       {startDivider ? <Divider /> : null}
       <Tooltip title={`${label}: ${formatNumber.round(value)}`} placement="top">
         <Box flexBasis={`${flexBasis}%`} flexGrow={1}>
-          <Box sx={{ backgroundColor: colour, height: '20px' }} />
+          <Box sx={{ backgroundColor: colour, height: '20px' }}>
+            {flexBasis > MIN_FLEX_BASIS_TO_SHOW_VALUE ? (
+              <Typography
+                fontSize={12}
+                sx={{
+                  color: 'primary.contrastText',
+                  flex: 1,
+                  justifyContent: 'center',
+                  display: 'flex',
+                  fontWeight: 'bold',
+                }}
+                component="div"
+              >
+                {formatNumber.round(value)}
+              </Typography>
+            ) : null}
+          </Box>
           <Box
             style={{
               textAlign: 'end',
@@ -51,9 +67,6 @@ export const ValueBar: FC<ValueBarProps> = ({
               >
                 {label}
               </Typography>
-            ) : null}
-            {flexBasis > MIN_FLEX_BASIS_TO_SHOW_VALUE ? (
-              <Typography fontSize={12}>{formatNumber.round(value)}</Typography>
             ) : null}
           </Box>
         </Box>

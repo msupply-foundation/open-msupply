@@ -1,6 +1,4 @@
 {
-  "button.delete-lines": "Supprimer les lignes sélectionnées",
-  "button.save-and-confirm-status": "Confirmer {{status}}",
   "label.suggested": "Suggéré",
   "messages.select-rows-to-delete-them": "Sélectionner les lignes pour les supprimer",
   "label.add-batch": "Ajouter lot",
@@ -40,7 +38,6 @@
   "messages.error-deleting-locations_one": "{{count}} emplacement n'a pas pu être supprimé",
   "messages.error-deleting-locations_other": "{{count}} emplacements n'ont pas pu être supprimés",
   "placeholder.enter-an-item-code-or-name": "Entrer le code ou le nom de l'article",
-  "messages.deleted-lines": "{{count}} lignes supprimées",
   "status.new": "Nouvel(le)",
   "status.finalised": "Finalisé(e)",
   "stocktake.description-template": "Créé(e) par {{username}} le {{date}}",

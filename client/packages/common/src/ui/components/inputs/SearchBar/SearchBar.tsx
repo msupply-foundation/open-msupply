@@ -1,10 +1,10 @@
 import React, { FC, useEffect, useState } from 'react';
 import { BasicTextInput } from '../TextInput';
 import { CloseIcon, SearchIcon } from '@common/icons';
-import { useDebounceCallback } from '@common/hooks';
+import { useDebouncedValueCallback } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
 import { Box } from '@mui/material';
-import { IconButton } from '@common/components';
+import { IconButton, InputAdornment } from '@common/components';
 import { useTranslation } from '@common/intl';
 
 interface SearchBarProps {
@@ -13,9 +13,10 @@ interface SearchBarProps {
   placeholder: string;
   isLoading?: boolean;
   debounceTime?: number;
+  expandOnFocus?: boolean;
 }
 
-const SearchBarAction: FC<{
+const EndAdornment: FC<{
   isLoading: boolean;
   hasValue: boolean;
   onClear: () => void;
@@ -23,16 +24,18 @@ const SearchBarAction: FC<{
   const t = useTranslation();
   if (isLoading) return <InlineSpinner />;
 
-  if (hasValue)
-    return (
+  if (!hasValue) return null;
+
+  return (
+    <InputAdornment position="end">
       <IconButton
+        sx={{ color: 'gray.main' }}
         label={t('label.clear-filter')}
         onClick={onClear}
         icon={<CloseIcon />}
       />
-    );
-
-  return null;
+    </InputAdornment>
+  );
 };
 
 export const SearchBar: FC<SearchBarProps> = ({
@@ -41,20 +44,16 @@ export const SearchBar: FC<SearchBarProps> = ({
   placeholder,
   isLoading = false,
   debounceTime = 500,
+  expandOnFocus = false,
 }) => {
   const [buffer, setBuffer] = useState(value);
   const [loading, setLoading] = useState(false);
-
-  // Sync the passed in isLoading state with the internal setLoading state
-  //   useEffect(() => {
-  //     setLoading(isLoading);
-  //   }, [isLoading]);
 
   useEffect(() => {
     setBuffer(value);
   }, [value]);
 
-  const debouncedOnChange = useDebounceCallback(
+  const debouncedOnChange = useDebouncedValueCallback(
     value => {
       onChange(value);
       setLoading(false);
@@ -83,7 +82,7 @@ export const SearchBar: FC<SearchBarProps> = ({
       <BasicTextInput
         InputProps={{
           endAdornment: (
-            <SearchBarAction
+            <EndAdornment
               isLoading={isLoading || loading}
               hasValue={!!buffer}
               onClear={() => handleChange('')}
@@ -92,12 +91,18 @@ export const SearchBar: FC<SearchBarProps> = ({
           sx: {
             paddingLeft: '6px',
             alignItems: 'center',
-            transition: theme => theme.transitions.create('width'),
             width: '220px',
-            '&.Mui-focused': {
-              width: '360px',
-            },
-
+            ...(expandOnFocus
+              ? {
+                  transition: theme =>
+                    theme.transitions.create('width', {
+                      delay: 100,
+                    }),
+                  '&.Mui-focused': {
+                    width: '360px',
+                  },
+                }
+              : {}),
             backgroundColor: theme => theme.palette.background.menu,
           },
         }}

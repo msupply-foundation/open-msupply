@@ -17,6 +17,8 @@ struct TableAndFieldName {
 
 fn get_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
+        ("contact_trace", "datetime"),
+        ("contact_trace", "date_of_birth"),
         ("document", "datetime"),
         ("program_enrolment", "enrolment_datetime"),
         ("program_event", "datetime"),
@@ -53,6 +55,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "integration_started_datetime"),
         ("sync_log", "integration_finished_datetime"),
         ("activity_log", "datetime"),
+        ("user_account", "last_successful_sync"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -80,6 +83,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
 fn get_date_fields() -> Vec<TableAndFieldName> {
     vec![
         ("name", "date_of_birth"),
+        ("name", "date_of_death"),
         ("stock_line", "expiry_date"),
         ("requisition", "expected_delivery_date"),
         ("invoice_line", "expiry_date"),

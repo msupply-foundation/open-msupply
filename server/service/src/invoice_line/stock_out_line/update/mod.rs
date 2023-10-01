@@ -359,6 +359,29 @@ mod test {
         let service = service_provider.invoice_line_service;
         let invoice_service = service_provider.invoice_service;
 
+        service
+            .update_stock_out_line(
+                &context,
+                inline_init(|r: &mut UpdateStockOutLine| {
+                    r.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
+                    r.r#type = Some(StockOutType::OutboundShipment);
+                    r.note = Some("new note".to_string());
+                }),
+            )
+            .unwrap();
+        let updated_invoice = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&mock_outbound_shipment_c_invoice_lines()[0].id)
+            .unwrap();
+
+        assert_eq!(
+            updated_invoice,
+            inline_edit(&mock_outbound_shipment_c_invoice_lines()[0], |mut u| {
+                u.id = mock_outbound_shipment_c_invoice_lines()[0].id.clone();
+                u.note = Some("new note".to_string());
+                u
+            })
+        );
+
         // New line on new outbound invoice
         let previous_available_number_of_packs = StockLineRowRepository::new(&connection)
             .find_one_by_id(

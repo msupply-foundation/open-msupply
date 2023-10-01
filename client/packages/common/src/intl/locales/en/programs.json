@@ -10,6 +10,5 @@
   "control.search.error.no-data": "Unable to extract path \"{{docPath}}\" from document",
   "control.search.error.no-patient-contact": "No matching patient contact found",
   "control.search.below-min-chars": "Please enter at least {{minChars}} characters",
-  "label.total-quantity": "Total Quantity",
   "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement"
 }

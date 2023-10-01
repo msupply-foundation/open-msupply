@@ -4,8 +4,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEventRow, RepositoryError, Sort,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -17,9 +18,10 @@ pub struct ProgramEventFilter {
     pub active_end_datetime: Option<DatetimeFilter>,
     pub patient_id: Option<EqualFilter<String>>,
     pub document_type: Option<EqualFilter<String>>,
-    pub context: Option<EqualFilter<String>>,
+    pub context_id: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<String>>,
+    pub data: Option<StringFilter>,
 }
 
 impl ProgramEventFilter {
@@ -30,9 +32,10 @@ impl ProgramEventFilter {
             active_end_datetime: None,
             patient_id: None,
             document_type: None,
-            context: None,
+            context_id: None,
             document_name: None,
             r#type: None,
+            data: None,
         }
     }
 
@@ -61,8 +64,8 @@ impl ProgramEventFilter {
         self
     }
 
-    pub fn context(mut self, filter: EqualFilter<String>) -> Self {
-        self.context = Some(filter);
+    pub fn context_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.context_id = Some(filter);
         self
     }
 
@@ -73,6 +76,11 @@ impl ProgramEventFilter {
 
     pub fn r#type(mut self, filter: EqualFilter<String>) -> Self {
         self.r#type = Some(filter);
+        self
+    }
+
+    pub fn data(mut self, filter: StringFilter) -> Self {
+        self.data = Some(filter);
         self
     }
 }
@@ -107,10 +115,11 @@ macro_rules! apply_filters {
                 program_event_dsl::active_end_datetime
             );
             apply_equal_filter!($query, f.patient_id, program_event_dsl::patient_id);
-            apply_equal_filter!($query, f.context, program_event_dsl::context);
+            apply_equal_filter!($query, f.context_id, program_event_dsl::context_id);
             apply_equal_filter!($query, f.document_type, program_event_dsl::document_type);
             apply_equal_filter!($query, f.document_name, program_event_dsl::document_name);
             apply_equal_filter!($query, f.r#type, program_event_dsl::type_);
+            apply_string_filter!($query, f.data, program_event_dsl::data);
         }
         $query
     }};

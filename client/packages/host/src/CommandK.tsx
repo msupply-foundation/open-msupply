@@ -257,10 +257,22 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
 
   if (store?.storeMode === StoreModeNodeType.Dispensary) {
     actions.push({
-      id: 'navigation:patients',
-      name: `${t('cmdk.goto-patients')} (p)`,
-      keywords: 'patient',
+      id: 'navigation:prescription',
+      name: `${t('cmdk.goto-prescriptions')} (p)`,
+      keywords: 'prescription',
       shortcut: ['p'],
+      perform: () =>
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Prescription)
+            .build()
+        ),
+    });
+    actions.push({
+      id: 'navigation:patients',
+      name: `${t('cmdk.goto-patients')} (g+p)`,
+      keywords: 'patient',
+      shortcut: ['g', 'p'],
       perform: () =>
         navigate(
           RouteBuilder.create(AppRoute.Dispensary)

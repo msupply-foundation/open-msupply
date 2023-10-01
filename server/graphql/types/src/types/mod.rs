@@ -75,8 +75,8 @@ pub use self::response_requisition_stats::*;
 pub mod inventory_adjustment_reason;
 pub use self::inventory_adjustment_reason::*;
 
-pub mod json_schema;
-pub use self::json_schema::*;
+pub mod form_schema;
+pub use self::form_schema::*;
 
 pub mod clinician;
 pub use self::clinician::*;
@@ -89,6 +89,12 @@ pub use self::store_preference::*;
 
 pub mod repack;
 pub use self::repack::*;
+
+pub mod program;
+pub use self::program::*;
+
+pub mod program_node;
+pub use self::program_node::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

@@ -1,7 +1,12 @@
 use chrono::NaiveDate;
-use repository::{DateFilter, EqualFilter, Gender, RepositoryError, StringFilter};
+use repository::{
+    DateFilter, EqualFilter, Gender, PatientSort, PatientSortField, RepositoryError, StringFilter,
+};
 
-use crate::service_provider::{ServiceContext, ServiceProvider};
+use crate::{
+    service_provider::{ServiceContext, ServiceProvider},
+    ListResult,
+};
 
 use super::{Patient, PatientFilter};
 
@@ -12,6 +17,7 @@ pub struct PatientSearch {
     pub last_name: Option<String>,
     pub date_of_birth: Option<NaiveDate>,
     pub gender: Option<Gender>,
+    pub name_or_code: Option<String>,
 }
 
 pub struct PatientSearchResult {
@@ -25,7 +31,7 @@ pub fn patient_search(
     service_provider: &ServiceProvider,
     input: PatientSearch,
     allowed_ctx: Option<&[String]>,
-) -> Result<Vec<PatientSearchResult>, RepositoryError> {
+) -> Result<ListResult<PatientSearchResult>, RepositoryError> {
     let mut filter = PatientFilter::new();
     let PatientSearch {
         code,
@@ -34,6 +40,7 @@ pub fn patient_search(
         last_name,
         date_of_birth,
         gender,
+        name_or_code,
     } = input;
 
     if let Some(code) = code {
@@ -61,17 +68,31 @@ pub fn patient_search(
             is_null: None,
         });
     }
+    if let Some(name_or_code) = name_or_code {
+        filter = filter.name_or_code(StringFilter::like(&name_or_code));
+    }
 
-    let results: Vec<PatientSearchResult> = service_provider
-        .patient_service
-        .get_patients(ctx, None, Some(filter), None, allowed_ctx)?
-        .rows
-        .into_iter()
-        .map(|patient| PatientSearchResult {
-            patient,
-            score: 1.0,
-        })
-        .collect();
+    let results = service_provider.patient_service.get_patients(
+        ctx,
+        None,
+        Some(filter),
+        Some(PatientSort {
+            key: PatientSortField::Code,
+            desc: Some(false),
+        }),
+        allowed_ctx,
+    )?;
 
+    let results = ListResult {
+        rows: results
+            .rows
+            .into_iter()
+            .map(|patient| PatientSearchResult {
+                patient,
+                score: 1.0,
+            })
+            .collect(),
+        count: results.count,
+    };
     Ok(results)
 }

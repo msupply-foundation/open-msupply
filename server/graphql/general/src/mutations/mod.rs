@@ -5,3 +5,4 @@ pub mod initialise_site;
 pub mod log;
 pub mod manual_sync;
 pub mod sync_settings;
+pub mod update_user;

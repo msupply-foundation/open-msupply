@@ -78,7 +78,7 @@ export const InboundListView: FC = () => {
 
       <DataTable
         id="inbound-line-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes ?? []}

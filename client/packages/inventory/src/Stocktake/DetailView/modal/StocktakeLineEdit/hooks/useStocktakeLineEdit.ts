@@ -99,7 +99,7 @@ export const useStocktakeLineEdit = (
 
   const addLine = () => {
     if (item) {
-      setDraftLines(lines => [...lines, DraftLine.fromItem(id, item)]);
+      setDraftLines(lines => [DraftLine.fromItem(id, item), ...lines]);
     }
   };
 

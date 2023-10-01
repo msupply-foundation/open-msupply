@@ -4,7 +4,7 @@ use repository::{
     EqualFilter, Pagination, Permission, RepositoryError, UserPermissionFilter,
     UserPermissionRepository, UserPermissionRow,
 };
-use util::uuid::uuid;
+use util::{constants::PATIENT_CONTEXT_ID, uuid::uuid};
 
 use crate::{
     auth_data::AuthData,
@@ -13,20 +13,12 @@ use crate::{
     token::{JWTValidationError, OmSupplyClaim, TokenService},
 };
 
-/// The enum provides some tags that can be used to tag dynamic permissions.
-/// This decouples the user permissions from the user's service capabilities.
-/// This can also be useful if there would be resources with multiple types of dynamic permissions.
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
-pub enum CapabilityTag {
-    /// Tags the list of capabilities to access documents by type
-    ContextType,
-}
-
 #[derive(Debug, Clone)]
 pub enum PermissionDSL {
     HasPermission(Permission),
-    /// The permission context will be extracted and tagged with the provided tag.
-    HasDynamicPermission(Permission, CapabilityTag),
+    /// The matching permission context for the Permission will be extracted and added to the user's
+    /// capabilities.
+    HasDynamicPermission(Permission),
     NoPermissionRequired,
     HasStoreAccess,
     And(Vec<PermissionDSL>),
@@ -107,8 +99,10 @@ pub enum Resource {
     // patient program
     QueryProgram,
     QueryEncounter,
+    QueryContactTrace,
     MutateProgram,
     MutateEncounter,
+    MutateContactTrace,
     SyncInfo,
     ManualSync,
     QueryInventoryAdjustmentReasons,
@@ -375,25 +369,22 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // TODO add permissions from central
     map.insert(
         Resource::QueryDocument,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentQuery, CapabilityTag::ContextType),
+        PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
     );
     map.insert(
         Resource::MutateDocument,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate, CapabilityTag::ContextType),
+        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
     );
     map.insert(
         Resource::QueryDocumentRegistry,
         PermissionDSL::And(vec![
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
             PermissionDSL::HasStoreAccess,
         ]),
     );
     map.insert(
         Resource::MutateDocumentRegistry,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate, CapabilityTag::ContextType),
+        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
     );
     map.insert(
         Resource::QueryJsonSchema,
@@ -410,10 +401,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::PatientQuery),
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
         ]),
     );
     map.insert(
@@ -422,50 +410,49 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::PatientMutate),
             // permission to read the related doc types when reading the mutated patient
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::QueryProgram,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::QueryEncounter,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentQuery,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryContactTrace,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::MutateProgram,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentMutate,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
         ]),
     );
     map.insert(
         Resource::MutateEncounter,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(
-                Permission::DocumentMutate,
-                CapabilityTag::ContextType,
-            ),
+            PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutateContactTrace,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
         ]),
     );
 
@@ -572,23 +559,13 @@ pub fn validate_auth(
 pub struct ValidatedUser {
     pub user_id: String,
     pub claims: OmSupplyClaim,
-    /// Contains a list of user capabilities grouped by tags
-    capabilities: HashMap<CapabilityTag, Vec<String>>,
+    /// Contains a list of user permission contexts
+    capabilities: Vec<String>,
 }
 
 impl<'a> ValidatedUser {
-    /// Returns a list of capabilities for a given CapabilityTag, e.g. which documents a user can
-    /// access.
-    pub fn capabilities(&'a self, tag: CapabilityTag) -> &'a Vec<String> {
-        if let Some(contexts) = self.capabilities.get(&tag) {
-            return contexts;
-        }
-        // This is really a dev error and should be caught by minimal testing. Moreover, the panic
-        // only kills the frontend request but doesn't kill the server.
-        panic!(
-            "Dev error: dynamic permission tag {:?} is not defined in the permission DSL",
-            tag
-        );
+    pub fn capabilities(&'a self) -> &'a Vec<String> {
+        &self.capabilities
     }
 }
 
@@ -605,7 +582,7 @@ fn validate_resource_permissions(
     user_permissions: &[UserPermissionRow],
     resource_request: &ResourceAccessRequest,
     required_permissions: &PermissionDSL,
-    dynamic_permissions: &mut HashMap<CapabilityTag, Vec<String>>,
+    dynamic_permissions: &mut Vec<String>,
 ) -> Result<(), String> {
     // When this code runs, user_permissions have already been filtered by store (if specified).
     // It is possible to mis-configure an API call and not specify a store_id when it is required which could result in incorrect permssion evaluation.
@@ -626,12 +603,7 @@ fn validate_resource_permissions(
             }
             return Err(format!("Missing permission: {:?}", permission));
         }
-        PermissionDSL::HasDynamicPermission(permission, tag) => {
-            // Always add an entry for the tag. This is later used to verify that the dev used
-            // ValidatedUser::capabilities with the correct parameter that matches the entry in the
-            // DSL
-            let capabilities = dynamic_permissions.entry(tag.clone()).or_insert(vec![]);
-
+        PermissionDSL::HasDynamicPermission(permission) => {
             let user_permissions = user_permissions
                 .into_iter()
                 .filter(|p| &p.permission == permission)
@@ -641,10 +613,10 @@ fn validate_resource_permissions(
             }
             let mut contexts = user_permissions
                 .into_iter()
-                .filter_map(|p| p.context.clone())
+                .filter_map(|p| p.context_id.clone())
                 .collect::<Vec<_>>();
 
-            capabilities.append(&mut contexts);
+            dynamic_permissions.append(&mut contexts);
 
             return Ok(());
         }
@@ -762,7 +734,7 @@ impl AuthServiceTrait for AuthService {
                 user_id: context.user_id.clone(),
                 store_id: Some(context.store_id.clone()),
                 permission: Permission::DocumentQuery,
-                context: Some("Patient".to_string()),
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
             })
         }
         if user_permissions
@@ -775,7 +747,7 @@ impl AuthServiceTrait for AuthService {
                 user_id: context.user_id.clone(),
                 store_id: Some(context.store_id.clone()),
                 permission: Permission::DocumentMutate,
-                context: Some("Patient".to_string()),
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
             })
         }
 
@@ -790,7 +762,7 @@ impl AuthServiceTrait for AuthService {
             }
         };
 
-        let mut dynamic_permissions = HashMap::new();
+        let mut dynamic_permissions = Vec::new();
         match validate_resource_permissions(
             &validated_auth.user_id,
             &user_permissions,
@@ -804,7 +776,7 @@ impl AuthServiceTrait for AuthService {
                     return Ok(ValidatedUser {
                         user_id: validated_auth.user_id,
                         claims: validated_auth.claims,
-                        capabilities: HashMap::new(),
+                        capabilities: Vec::new(),
                     });
                 }
                 return Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
@@ -830,8 +802,6 @@ impl From<RepositoryError> for AuthError {
 
 #[cfg(test)]
 mod validate_resource_permissions_test {
-    use std::collections::HashMap;
-
     use repository::{Permission, UserPermissionRow};
 
     use super::{validate_resource_permissions, PermissionDSL, Resource, ResourceAccessRequest};
@@ -854,7 +824,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_err());
 
@@ -864,14 +834,14 @@ mod validate_resource_permissions_test {
             user_id: user_id.to_string(),
             permission: Permission::ServerAdmin,
             store_id: None,
-            context: None,
+            context_id: None,
         }];
         let validation_result = validate_resource_permissions(
             user_id,
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -883,7 +853,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -897,7 +867,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -910,7 +880,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_err());
 
@@ -920,7 +890,7 @@ mod validate_resource_permissions_test {
             user_id: user_id.to_string(),
             permission: Permission::StocktakeMutate,
             store_id: Some(store_id.to_string()),
-            context: None,
+            context_id: None,
         }];
         let required_permissions = PermissionDSL::And(vec![
             PermissionDSL::HasPermission(Permission::ServerAdmin),
@@ -931,7 +901,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_err());
 
@@ -942,14 +912,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::ServerAdmin,
                 store_id: None,
-                context: None,
+                context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
         ];
         let required_permissions = PermissionDSL::And(vec![
@@ -961,7 +931,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -979,14 +949,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StoreAccess,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
         ];
         let validation_result = validate_resource_permissions(
@@ -994,7 +964,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -1010,14 +980,14 @@ mod validate_resource_permissions_test {
             user_id: user_id.to_string(),
             permission: Permission::ServerAdmin,
             store_id: None,
-            context: None,
+            context_id: None,
         }];
         let validation_result = validate_resource_permissions(
             user_id,
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -1035,14 +1005,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StoreAccess,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
         ];
         let validation_result = validate_resource_permissions(
@@ -1050,7 +1020,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
 
@@ -1060,14 +1030,14 @@ mod validate_resource_permissions_test {
                 user_id: user_id.to_string(),
                 permission: Permission::ServerAdmin,
                 store_id: None,
-                context: None,
+                context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
                 permission: Permission::StoreAccess,
                 store_id: Some(store_id.to_string()),
-                context: None,
+                context_id: None,
             },
         ];
         let validation_result = validate_resource_permissions(
@@ -1075,7 +1045,7 @@ mod validate_resource_permissions_test {
             &user_permissions,
             &resource_request,
             &required_permissions,
-            &mut HashMap::new(),
+            &mut Vec::new(),
         );
         assert!(validation_result.is_ok());
     }
@@ -1106,12 +1076,13 @@ mod permission_validation_test {
             debug_no_access_control: false,
         };
         let user_id = "test_user_id";
+        let password = "pass";
         let mut service = TokenService::new(
             &auth_data.token_bucket,
             auth_data.auth_token_secret.as_bytes(),
             true,
         );
-        let token_pair = service.jwt_token(user_id, 60, 120).unwrap();
+        let token_pair = service.jwt_token(user_id, password, 60, 120).unwrap();
 
         let (_, _, connection_manager, _) = setup_all(
             "basic_permission_validation",
@@ -1169,7 +1140,7 @@ mod permission_validation_test {
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
                 permission: Permission::InboundShipmentMutate,
-                context: None,
+                context_id: None,
             })
             .unwrap();
         assert!(service
@@ -1191,7 +1162,7 @@ mod permission_validation_test {
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
                 permission: Permission::StocktakeQuery,
-                context: None,
+                context_id: None,
             })
             .unwrap();
         assert!(service
@@ -1257,14 +1228,14 @@ mod permission_validation_test {
                     user_id: user().id,
                     store_id: Some(store().id),
                     permission: Permission::RequisitionMutate,
-                    context: None,
+                    context_id: None,
                 },
                 UserPermissionRow {
                     id: "permission_store_access".to_string(),
                     user_id: user().id,
                     store_id: Some(store().id),
                     permission: Permission::StoreAccess,
-                    context: None,
+                    context_id: None,
                 },
             ]
         }
@@ -1283,6 +1254,7 @@ mod permission_validation_test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
+        let password = "pass";
 
         let auth_data = AuthData {
             auth_token_secret: "some secret".to_string(),
@@ -1296,7 +1268,7 @@ mod permission_validation_test {
             auth_data.auth_token_secret.as_bytes(),
             true,
         )
-        .jwt_token(&user().id, 60, 120)
+        .jwt_token(&user().id, password, 60, 120)
         .unwrap()
         .token;
 
@@ -1318,7 +1290,7 @@ mod permission_validation_test {
             auth_data.auth_token_secret.as_bytes(),
             true,
         )
-        .jwt_token(&user_without_permission().id, 60, 120)
+        .jwt_token(&user_without_permission().id, password, 60, 120)
         .unwrap()
         .token;
         assert!(service_provider

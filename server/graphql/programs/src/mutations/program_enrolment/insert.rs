@@ -3,13 +3,12 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
+use graphql_types::types::program_enrolment::ProgramEnrolmentNode;
 use repository::{EqualFilter, ProgramEnrolmentFilter};
 use service::{
-    auth::{CapabilityTag, Resource, ResourceAccessRequest},
+    auth::{Resource, ResourceAccessRequest},
     programs::program_enrolment::{UpsertProgramEnrolment, UpsertProgramEnrolmentError},
 };
-
-use crate::types::program_enrolment::ProgramEnrolmentNode;
 
 #[derive(InputObject)]
 pub struct InsertProgramEnrolmentInput {
@@ -39,7 +38,7 @@ pub fn insert_program_enrolment(
             store_id: Some(store_id.clone()),
         },
     )?;
-    let allowed_ctx = user.capabilities(CapabilityTag::ContextType);
+    let allowed_ctx = user.capabilities();
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
@@ -54,7 +53,7 @@ pub fn insert_program_enrolment(
                 data: input.data,
                 schema_id: input.schema_id,
                 parent: None,
-                patient_id: input.patient_id,
+                patient_id: input.patient_id.clone(),
                 r#type: input.r#type,
             },
             allowed_ctx.clone(),
@@ -72,7 +71,7 @@ pub fn insert_program_enrolment(
                 UpsertProgramEnrolmentError::InvalidParentId => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
-                UpsertProgramEnrolmentError::ProgramExists => {
+                UpsertProgramEnrolmentError::ProgramEnrolmentExists => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 UpsertProgramEnrolmentError::InvalidDataSchema(_) => {
@@ -90,6 +89,9 @@ pub fn insert_program_enrolment(
                 UpsertProgramEnrolmentError::DocumentTypeDoesNotExit => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                UpsertProgramEnrolmentError::ProgramDoesNotExist => {
+                    StandardGraphqlError::InternalError(formatted_error)
+                }
             };
             return Err(std_err.extend());
         }
@@ -99,7 +101,9 @@ pub fn insert_program_enrolment(
         .program_enrolment_service
         .program_enrolment(
             &service_context,
-            ProgramEnrolmentFilter::new().context(EqualFilter::equal_to(&document.context)),
+            ProgramEnrolmentFilter::new()
+                .patient_id(EqualFilter::equal_to(&input.patient_id))
+                .context_id(EqualFilter::equal_to(&document.context_id)),
             allowed_ctx.clone(),
         )?
         .ok_or(
@@ -109,7 +113,7 @@ pub fn insert_program_enrolment(
     Ok(InsertProgramEnrolmentResponse::Response(
         ProgramEnrolmentNode {
             store_id,
-            program_row,
+            program_enrolment: program_row,
             allowed_ctx: allowed_ctx.clone(),
         },
     ))

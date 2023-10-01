@@ -11,19 +11,19 @@ import {
   NothingHere,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { OutboundItem } from '../../types';
 import { useOutbound } from '../api';
 import { useOutboundColumns } from './columns';
-import { OutboundLineFragment } from '../api/operations.generated';
+import { StockOutLineFragment } from '../../StockOut';
+import { StockOutItem } from '../../types';
 import { useExpansionColumns } from './OutboundLineEdit/columns';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick?: null | ((rowData: OutboundLineFragment | OutboundItem) => void);
+  onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
 }
 
 const Expand: FC<{
-  rowData: OutboundLineFragment | OutboundItem;
+  rowData: StockOutLineFragment | StockOutItem;
 }> = ({ rowData }) => {
   const expandoColumns = useExpansionColumns();
 
@@ -35,7 +35,7 @@ const Expand: FC<{
 };
 
 const useHighlightPlaceholderRows = (
-  rows: OutboundLineFragment[] | OutboundItem[] | undefined
+  rows: StockOutLineFragment[] | StockOutItem[] | undefined
 ) => {
   const { setRowStyles } = useRowStyle();
 

@@ -80,20 +80,8 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   const {
     isLoading: isLoadingLocal,
     data: localSearchData,
-    refetch: localRefetch,
-  } = usePatient.utils.search(
-    {
-      code: patient?.code,
-      code2: patient?.code2,
-      firstName: patient?.firstName,
-      lastName: patient?.lastName,
-      dateOfBirth: patient?.dateOfBirth,
-      gender: patient?.gender
-        ? genderToGenderInput(patient?.gender)
-        : undefined,
-    },
-    searchEnabled
-  );
+    mutate: search,
+  } = usePatient.utils.search();
   const {
     isFetching: isLoadingCentral,
     data: centralSearchData,
@@ -110,25 +98,17 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   const isCentralConnectionFailure =
     !isLoadingCentral && isConnectionError(centralSearchData);
 
-  useEffect(() => {
-    const patients: PatientColumnData[] = [];
-    if (localSearchData) {
-      patients.push(...localSearchData.map(node => node.patient));
-    }
-    if (
-      centralSearchData &&
-      centralSearchData.__typename === 'CentralPatientSearchConnector'
-    ) {
-      for (const node of centralSearchData.nodes) {
-        if (patients.find(p => p.id === node.id) === undefined) {
-          patients.push({ ...node, isOnCentral: true });
-        }
-      }
-    }
-    setData(patients);
-  }, [localSearchData, centralSearchData]);
+  const searchParams = {
+    code: patient?.code,
+    code2: patient?.code2,
+    firstName: patient?.firstName,
+    lastName: patient?.lastName,
+    dateOfBirth: patient?.dateOfBirth,
+    gender: patient?.gender ? genderToGenderInput(patient?.gender) : undefined,
+  };
+
   const { setCreateNewPatient } = usePatientStore();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const navigate = useNavigate();
   const { localisedDate } = useFormatDateTime();
 
@@ -171,6 +151,30 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     },
   ]);
 
+  const count = data?.length ?? 0;
+
+  useEffect(() => {
+    search(searchParams);
+  }, [patient]);
+
+  useEffect(() => {
+    const patients: PatientColumnData[] = [];
+    if (localSearchData) {
+      patients.push(...localSearchData.nodes.map(node => node.patient));
+    }
+    if (
+      centralSearchData &&
+      centralSearchData.__typename === 'CentralPatientSearchConnector'
+    ) {
+      for (const node of centralSearchData.nodes) {
+        if (patients.find(p => p.id === node.id) === undefined) {
+          patients.push({ ...node, isOnCentral: true });
+        }
+      }
+    }
+    setData(patients);
+  }, [localSearchData, centralSearchData]);
+
   if (!active) {
     return null;
   }
@@ -179,8 +183,6 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
     return <BasicSpinner />;
   }
 
-  const count = data?.length ?? 0;
-
   return (
     <PatientPanel value={value} patient={patient}>
       {fetchingPatient ? (
@@ -188,7 +190,7 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
           patient={fetchingPatient}
           onClose={() => {
             // refresh local list so that patient shows up to be in the current store
-            localRefetch();
+            search(searchParams);
             setFetchingPatient(undefined);
           }}
         />

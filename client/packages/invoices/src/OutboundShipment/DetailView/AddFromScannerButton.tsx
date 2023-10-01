@@ -11,8 +11,9 @@ import {
   Tooltip,
   Box,
 } from '@openmsupply-client/common';
-import { Draft, useOutbound } from '../api';
+import { useOutbound } from '../api';
 import { isOutboundDisabled } from '../../utils';
+import { Draft } from '../..';
 
 export const AddFromScannerButtonComponent = ({
   onAddItem,
@@ -27,8 +28,6 @@ export const AddFromScannerButtonComponent = ({
     useBarcodeScannerContext();
   const { error, warning } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
-
-  if (!isEnabled) return null;
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
@@ -87,6 +86,8 @@ export const AddFromScannerButtonComponent = ({
     ],
     [isScanning]
   );
+
+  if (!isEnabled) return null;
 
   return (
     <Tooltip title={isConnected ? '' : t('error.scanner-not-connected')}>

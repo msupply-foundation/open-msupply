@@ -17,7 +17,7 @@ import {
   TypedTFunction,
   Option,
   useIntlUtils,
-  DocumentRegistryTypeNode,
+  DocumentRegistryCategoryNode,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -54,7 +54,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   );
   const [startDatetime, setStartDatetime] = useState<string | undefined>();
   const [endDatetime, setEndDatetime] = useState<string | undefined | null>();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const { localisedDate } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const [clinician, setClinician] =
@@ -62,8 +62,8 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
   const { data: programEnrolmentRegistry } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
-        type: { equalTo: DocumentRegistryTypeNode.ProgramEnrolment },
-        documentContext: { equalTo: encounter?.context },
+        category: { equalTo: DocumentRegistryCategoryNode.ProgramEnrolment },
+        contextId: { equalTo: encounter?.contextId },
       },
     });
 

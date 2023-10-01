@@ -8,7 +8,7 @@ export type GroupByItem = {
   inboundShipment?: boolean;
   stocktake?: boolean;
 };
-type AuthenticationCredentials = {
+export type AuthenticationCredentials = {
   store?: UserStoreNodeFragment | undefined;
   username: string;
 };
@@ -22,7 +22,7 @@ export type LocalStorageRecord = {
   '/theme/customhash': string;
   '/theme/logo': string;
   '/theme/logohash': string;
-  '/mru/credentials': AuthenticationCredentials;
+  '/mru/credentials': AuthenticationCredentials | AuthenticationCredentials[];
   '/auth/error': AuthError | undefined;
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;

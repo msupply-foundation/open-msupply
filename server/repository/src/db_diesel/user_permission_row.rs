@@ -15,7 +15,7 @@ table! {
       user_id -> Text,
       store_id -> Nullable<Text>,
       permission -> crate::db_diesel::user_permission_row::PermissionMapping,
-      context -> Nullable<Text>,
+      context_id -> Nullable<Text>,
     }
 }
 
@@ -81,7 +81,7 @@ pub struct UserPermissionRow {
     pub permission: Permission,
     /// An optional resource associated with this permission.
     /// The resource value is only used for certain Permission variants.
-    pub context: Option<String>,
+    pub context_id: Option<String>,
 }
 
 pub struct UserPermissionRowRepository<'a> {

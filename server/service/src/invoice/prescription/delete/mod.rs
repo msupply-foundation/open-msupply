@@ -41,7 +41,7 @@ pub fn delete_prescription(
 
             activity_log_entry(
                 &ctx,
-                ActivityLogType::InvoiceDeleted,
+                ActivityLogType::PrescriptionDeleted,
                 Some(id.to_owned()),
                 None,
             )?;

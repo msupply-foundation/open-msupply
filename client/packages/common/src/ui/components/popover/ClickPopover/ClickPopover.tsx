@@ -4,7 +4,7 @@ import { Box, IconButton } from '@mui/material';
 import { BasePopoverProps } from '../BasePopover';
 
 export interface ClickPopoverProps {
-  Content: React.ReactElement<any, any>;
+  Content: React.ReactElement;
   placement?: 'top' | 'bottom' | 'left' | 'right';
   Popover: React.FC<Partial<PropsWithChildren<BasePopoverProps>>>;
   show: MouseEventHandler<HTMLDivElement | HTMLButtonElement>;

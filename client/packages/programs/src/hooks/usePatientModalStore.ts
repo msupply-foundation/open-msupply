@@ -12,6 +12,7 @@ export enum PatientModal {
   Program = 'PROGRAM',
   ProgramSearch = 'PROGRAM_SEARCH',
   Encounter = 'ENCOUNTER',
+  ContactTraceSearch = 'CONTACT_TRACE_SEARCH',
 }
 
 /**
@@ -22,7 +23,6 @@ export enum PatientModal {
 interface PatientModalState {
   current?: PatientModal;
   document?: PatientModalDocument;
-  programType?: string;
   reset: () => void;
   /** Just set the modal, the modal has to figure out what to do by itself */
   setModal: (current?: PatientModal) => void;
@@ -30,15 +30,13 @@ interface PatientModalState {
   setEditModal: (
     current: PatientModal,
     documentType: string,
-    documentName: string,
-    programType: string
+    documentName: string
   ) => void;
-  /** Modal state for creating a new document */
+  /** Modal state for creating a new document using some initial data (createDocument) */
   setCreationModal: (
     current: PatientModal,
     documentType: string,
-    createDocument: FormInputData,
-    programType: string
+    createDocument: FormInputData
   ) => void;
 }
 
@@ -50,39 +48,33 @@ export const usePatientModalStore = create<PatientModalState>(set => ({
       ...state,
       current: undefined,
       document: undefined,
-      programType: undefined,
     })),
   setModal: (current?: PatientModal) =>
     set(state => ({
       ...state,
       document: undefined,
-      programType: undefined,
       current,
     })),
 
   setEditModal: (
     current: PatientModal,
     documentType: string,
-    documentName: string,
-    programType: string
+    documentName: string
   ) =>
     set(state => ({
       ...state,
-      current: current,
+      current,
       document: { type: documentType, name: documentName },
-      programType: programType,
     })),
 
   setCreationModal: (
     current: PatientModal,
     documentType: string,
-    createDocument: FormInputData,
-    programType: string
+    createDocument: FormInputData
   ) =>
     set(state => ({
       ...state,
-      current: current,
+      current,
       document: { type: documentType, createDocument },
-      programType: programType,
     })),
 }));

@@ -48,7 +48,7 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   value,
   disabled = false,
 }) => {
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const patientId = usePatient.utils.id();
   const { data: enrolmentData, isLoading: isEnrolmentDataLoading } =
     useProgramEnrolments.document.list({

@@ -1,4 +1,7 @@
-import { useQuery } from '@openmsupply-client/common';
+import {
+  DocumentRegistryCategoryNode,
+  useQuery,
+} from '@openmsupply-client/common';
 import {
   DocumentRegistryFragment,
   useDocumentRegistryApi,
@@ -22,8 +25,11 @@ export const useEncounterRegistriesByPrograms = (
     api.get
       .documentRegistries({
         filter: {
-          parentId: {
-            equalAny: programIds,
+          category: {
+            equalTo: DocumentRegistryCategoryNode.Encounter,
+          },
+          contextId: {
+            equalAny: programs.map(it => it.contextId),
           },
         },
       })
@@ -31,7 +37,7 @@ export const useEncounterRegistriesByPrograms = (
         result.nodes
           .map(encounter => {
             const program = programs.find(
-              p => p.document?.documentRegistry?.id === encounter.parentId
+              p => p.contextId === encounter.contextId
             );
             if (!program) return undefined;
             const entry: EncounterRegistryByProgram = {

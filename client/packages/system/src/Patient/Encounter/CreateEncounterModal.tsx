@@ -23,31 +23,20 @@ import {
   usePatientModalStore,
   useEncounter,
   NoteSchema,
+  EncounterSchema,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { EncounterSearchInput } from './EncounterSearchInput';
 import {
-  Clinician,
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
 } from '../../Clinician';
 
-interface Encounter {
-  status?: EncounterNodeStatus;
-  createdDatetime: string;
-  createdBy?: { id: string; username: string };
-  startDatetime?: string;
-  endDatetime?: string;
-  clinician?: Clinician;
-  location?: { storeId?: string };
-  notes?: NoteSchema[];
-}
-
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
   const { user, storeId } = useAuthContext();
-  const t = useTranslation('patients');
+  const t = useTranslation('dispensary');
   const { getLocalisedFullName } = useIntlUtils();
   const { current, setModal: selectModal } = usePatientModalStore();
   const [encounterRegistry, setEncounterRegistry] = useState<
@@ -55,10 +44,10 @@ export const CreateEncounterModal: FC = () => {
   >();
   const [createdDatetime] = useState(new Date().toISOString());
   const [dataError, setDataError] = useState(false);
-  const [draft, setDraft] = useState<Encounter | undefined>(undefined);
+  const [draft, setDraft] = useState<EncounterSchema | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
-  const [startDateTimeError, setStartDateTimeError] = useState(false);
+  const [startDateTimeError, setStartDateTimeError] = useState<string>();
   const [note] = useState<NoteSchema | undefined>(undefined);
 
   const handleSave = useEncounter.document.upsert(
@@ -84,7 +73,7 @@ export const CreateEncounterModal: FC = () => {
     setEncounterRegistry(entry);
   };
 
-  const currentOrNewDraft = (): Encounter => {
+  const currentOrNewDraft = (): EncounterSchema => {
     return (
       draft ?? {
         createdDatetime,
@@ -104,7 +93,7 @@ export const CreateEncounterModal: FC = () => {
       ...currentOrNewDraft(),
       startDatetime,
     });
-    setStartDateTimeError(false);
+    setStartDateTimeError(undefined);
   };
 
   const setClinician = (option: ClinicianAutocompleteOption | null): void => {
@@ -174,9 +163,12 @@ export const CreateEncounterModal: FC = () => {
                   label={t('label.visit-date')}
                   Input={
                     <DatePickerInput
-                      value={draft?.startDatetime ?? null}
+                      value={DateUtils.getDateOrNull(draft?.startDatetime)}
                       onChange={setStartDatetime}
-                      onError={() => setStartDateTimeError(true)}
+                      onError={validationError =>
+                        setStartDateTimeError(validationError as string)
+                      }
+                      error={startDateTimeError}
                       width={250}
                     />
                   }

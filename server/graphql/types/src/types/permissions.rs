@@ -67,7 +67,7 @@ impl UserStorePermissionNode {
             .permissions
             .clone()
             .into_iter()
-            .filter_map(|c| c.context)
+            .filter_map(|c| c.context_id)
             .collect()
     }
 }

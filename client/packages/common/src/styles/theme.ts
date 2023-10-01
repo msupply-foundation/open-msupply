@@ -34,6 +34,8 @@ declare module '@mui/material/styles/createMixins' {
     drawer: {
       iconColor?: string;
       selectedBackgroundColor?: string;
+      hoverBackgroundColor?: string;
+      hoverTextColor?: string;
       textColor?: string;
     };
     gradient: {
@@ -133,6 +135,7 @@ export const themeOptions = {
     },
     drawer: {
       selectedBackgroundColor: '#fff',
+      hoverBackgroundColor: '#fafafc',
     },
     saveButtonRow: { height: 40 },
     footer: { height: 32 },
@@ -161,7 +164,12 @@ export const themeOptions = {
       pale: '#ccddff',
     },
     border: '#e4e4eb',
-    primary: { main: '#e95c30', light: '#ed7d59', dark: '#c43c11' },
+    primary: {
+      main: '#e95c30',
+      light: '#ed7d59',
+      dark: '#c43c11',
+      contrastText: '#fff',
+    },
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
     background: {
       drawer: '#f2f2f5',
@@ -190,16 +198,16 @@ export const themeOptions = {
   },
   typography: {
     body1: {
-      fontFamily: 'InterVariable',
+      fontFamily: 'Inter Variable',
       fontSize: 14,
       lineHeight: 1.71,
       color: '#1c1c28',
     },
     body2: { color: '#555770', fontSize: 12, fontWeight: 500 },
-    fontFamily: 'InterVariable',
+    fontFamily: 'Inter Variable',
     th: { color: '#1c1c28', fontSize: 14, fontWeight: 700 },
     h6: {
-      fontFamily: 'InterVariable',
+      fontFamily: 'Inter Variable',
       fontSize: 16,
       color: '#555770',
     },

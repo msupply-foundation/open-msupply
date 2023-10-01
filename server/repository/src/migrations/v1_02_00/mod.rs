@@ -1,11 +1,9 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
-mod invoice;
+mod context_table;
 mod log_settings;
-mod number_and_permission_type;
 mod sensor;
-mod store_preference;
 pub(crate) struct V1_02_00;
 
 impl Migration for V1_02_00 {
@@ -15,9 +13,7 @@ impl Migration for V1_02_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         log_settings::migrate(connection)?;
-        invoice::migrate(connection)?;
-        number_and_permission_type::migrate(connection)?;
-        store_preference::migrate(connection)?;
+        context_table::migrate(connection)?;
         sensor::migrate(connection)?;
         Ok(())
     }
