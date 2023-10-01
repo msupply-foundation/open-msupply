@@ -3,7 +3,9 @@ import { usePatients } from './usePatients';
 import { usePatientsAll } from './usePatientsAll';
 import { useInsertPatient } from './useInsertPatient';
 import { useUpdatePatient } from './useUpdatePatient';
-import { useDocumentHistory } from '@openmsupply-client/programs/src/api/hooks/document/useDocumentHistory';
+import { useInsertProgramPatient } from './useInsertProgramPatient';
+import { useUpdateProgramPatient } from './useUpdateProgramPatient';
+import { useDocument } from '@openmsupply-client/programs';
 
 export const Document = {
   usePatient,
@@ -11,5 +13,7 @@ export const Document = {
   usePatientsAll,
   useInsertPatient,
   useUpdatePatient,
-  useDocumentHistory,
+  useInsertProgramPatient,
+  useUpdateProgramPatient,
+  useDocumentHistory: useDocument.get.history,
 };

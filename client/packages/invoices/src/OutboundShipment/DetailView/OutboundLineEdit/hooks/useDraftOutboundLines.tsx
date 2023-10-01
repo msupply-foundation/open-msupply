@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
-  FnUtils,
   InvoiceLineNodeType,
   InvoiceNodeStatus,
   useConfirmOnLeaving,
@@ -8,105 +7,20 @@ import {
   SortUtils,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
-import { DraftOutboundLine } from '../../../../types';
-import { issueStock } from '../utils';
-import { DraftItem, useOutbound } from '../../../api';
+import { useOutbound } from '../../../api';
+import { DraftItem } from '../../../..';
+import { DraftStockOutLine } from '../../../../types';
 import {
-  OutboundLineFragment,
-  PartialStockLineFragment,
-} from '../../../api/operations.generated';
-
-export const createPlaceholderRow = (
-  invoiceId: string,
-  itemId: string,
-  id = FnUtils.generateUUID()
-): DraftOutboundLine => ({
-  __typename: 'InvoiceLineNode',
-  batch: '',
-  id,
-  packSize: 1,
-  sellPricePerPack: 0,
-  numberOfPacks: 0,
-  isCreated: true,
-  isUpdated: false,
-  invoiceId,
-  totalAfterTax: 0,
-  totalBeforeTax: 0,
-  expiryDate: undefined,
-  type: InvoiceLineNodeType.UnallocatedStock,
-  item: { id: itemId, code: '', name: '', __typename: 'ItemNode' },
-});
-
-interface DraftOutboundLineSeeds {
-  invoiceId: string;
-  invoiceLine: OutboundLineFragment;
-}
-
-export const createDraftOutboundLineFromStockLine = ({
-  invoiceId,
-  stockLine,
-}: {
-  invoiceId: string;
-  stockLine: PartialStockLineFragment;
-}): DraftOutboundLine => ({
-  isCreated: true,
-  isUpdated: false,
-  type: InvoiceLineNodeType.StockOut,
-  numberOfPacks: 0,
-  location: stockLine?.location,
-  expiryDate: stockLine?.expiryDate,
-  sellPricePerPack: stockLine?.sellPricePerPack ?? 0,
-  packSize: stockLine?.packSize ?? 0,
-  id: FnUtils.generateUUID(),
-  invoiceId,
-  totalAfterTax: 0,
-  totalBeforeTax: 0,
-  __typename: 'InvoiceLineNode',
-
-  // TODO: StockLineNode.Item needed from API to fill this correctly.
-  item: {
-    id: stockLine?.itemId ?? '',
-    name: '',
-    code: '',
-    __typename: 'ItemNode',
-  },
-
-  stockLine,
-});
-
-export const createDraftOutboundLine = ({
-  invoiceLine,
-}: DraftOutboundLineSeeds): DraftOutboundLine => ({
-  isCreated: !invoiceLine,
-  isUpdated: false,
-  ...invoiceLine,
-  // When creating a draft outbound from an existing outbound line, add the available quantity
-  // to the number of packs. This is because the available quantity has been adjusted for outbound
-  // lines that have been saved.
-  ...(invoiceLine.stockLine
-    ? {
-        stockLine: {
-          ...invoiceLine.stockLine,
-          availableNumberOfPacks:
-            invoiceLine.stockLine.availableNumberOfPacks +
-            invoiceLine.numberOfPacks,
-        },
-      }
-    : {}),
-});
-
-interface UseDraftOutboundLinesControl {
-  draftOutboundLines: DraftOutboundLine[];
-  updateQuantity: (batchId: string, quantity: number) => void;
-  isLoading: boolean;
-  setDraftOutboundLines: React.Dispatch<
-    React.SetStateAction<DraftOutboundLine[]>
-  >;
-}
+  UseDraftStockOutLinesControl,
+  createDraftStockOutLine,
+  createDraftStockOutLineFromStockLine,
+  createStockOutPlaceholderRow,
+  issueStock,
+} from '../../../../StockOut/utils';
 
 export const useDraftOutboundLines = (
   item: DraftItem | null
-): UseDraftOutboundLinesControl => {
+): UseDraftStockOutLinesControl => {
   const { id: invoiceId, status } = useOutbound.document.fields([
     'id',
     'status',
@@ -115,20 +29,23 @@ export const useDraftOutboundLines = (
     useOutbound.line.stockLines(item?.id ?? '');
   const { data, isLoading } = useStockLines(item?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
-  const [draftOutboundLines, setDraftOutboundLines] = useState<
-    DraftOutboundLine[]
+  const [draftStockOutLines, setDraftStockOutLines] = useState<
+    DraftStockOutLine[]
   >([]);
+  const noStockLines = !data?.nodes.length;
 
   useConfirmOnLeaving(isDirty);
 
   useEffect(() => {
-    if (!item) {
-      return setDraftOutboundLines([]);
+    // Check placed in since last else in the map is needed to show placeholder row,
+    // but also causes a placeholder row to be created when there is no stock lines.
+    if (!item || noStockLines) {
+      return setDraftStockOutLines([]);
     }
 
     if (!data) return;
 
-    setDraftOutboundLines(() => {
+    setDraftStockOutLines(() => {
       const rows = data.nodes
         .map(batch => {
           const invoiceLine = lines?.find(
@@ -136,12 +53,12 @@ export const useDraftOutboundLines = (
           );
 
           if (invoiceLine) {
-            return createDraftOutboundLine({
+            return createDraftStockOutLine({
               invoiceLine,
               invoiceId,
             });
           } else {
-            return createDraftOutboundLineFromStockLine({
+            return createDraftStockOutLineFromStockLine({
               stockLine: batch,
               invoiceId,
             });
@@ -154,7 +71,7 @@ export const useDraftOutboundLines = (
           ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
         );
         if (!placeholder) {
-          placeholder = draftOutboundLines.find(
+          placeholder = draftStockOutLines.find(
             ({ type }) => type === InvoiceLineNodeType.UnallocatedStock
           );
         }
@@ -162,10 +79,10 @@ export const useDraftOutboundLines = (
           const placeHolderItem = lines?.find(l => l.item.id === item.id)?.item;
           if (!!placeHolderItem) placeholder.item = placeHolderItem;
           rows.push(
-            createDraftOutboundLine({ invoiceId, invoiceLine: placeholder })
+            createDraftStockOutLine({ invoiceId, invoiceLine: placeholder })
           );
         } else {
-          rows.push(createPlaceholderRow(invoiceId, item.id));
+          rows.push(createStockOutPlaceholderRow(invoiceId, item.id));
         }
       }
 
@@ -176,15 +93,15 @@ export const useDraftOutboundLines = (
   const onChangeRowQuantity = useCallback(
     (batchId: string, value: number) => {
       setIsDirty(true);
-      setDraftOutboundLines(issueStock(draftOutboundLines, batchId, value));
+      setDraftStockOutLines(issueStock(draftStockOutLines, batchId, value));
     },
-    [draftOutboundLines]
+    [draftStockOutLines]
   );
 
   return {
-    draftOutboundLines,
+    draftStockOutLines,
     isLoading: isLoading || outboundLinesLoading,
-    setDraftOutboundLines,
+    setDraftStockOutLines,
     updateQuantity: onChangeRowQuantity,
   };
 };

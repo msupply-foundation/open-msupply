@@ -24,7 +24,6 @@ pub struct InsertInput {
     pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
-    pub total_before_tax: Option<f64>,
     pub note: Option<String>,
 }
 
@@ -157,7 +156,6 @@ impl InsertInput {
             item_id,
             stock_line_id,
             number_of_packs,
-            total_before_tax,
             note,
         } = self;
 
@@ -168,7 +166,7 @@ impl InsertInput {
             item_id,
             stock_line_id,
             number_of_packs,
-            total_before_tax,
+            total_before_tax: None,
             tax: None,
             note,
         }
@@ -232,7 +230,6 @@ mod test {
             "stockLineId": "n/a",
             "numberOfPacks": 0,
             "stockLineId": "n/a",
-            "totalBeforeTax": 0,
             "note": "n/a",
           }
         })
@@ -562,7 +559,7 @@ mod test {
                     item_id: "item input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
-                    total_before_tax: Some(1.1),
+                    total_before_tax: None,
                     note: None,
                     tax: None,
                 }
@@ -581,8 +578,7 @@ mod test {
                 "invoiceId": "invoice input",
                 "itemId": "item input",
                 "stockLineId": "stock line input",
-                "numberOfPacks": 1.0,
-                "totalBeforeTax": 1.1,
+                "numberOfPacks": 1.0
             },
             "storeId": "store_a"
         });

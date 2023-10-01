@@ -8,11 +8,13 @@ import {
   DetailInputWithLabelRow,
   DateTimePicker,
   DateTimePickerProps,
-  BaseDatePickerInput,
+  DateUtils,
+  DatePickerInput,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+import { useJSONFormsCustomError } from '../hooks/useJSONFormsCustomError';
 
 const Options = z
   .object({
@@ -26,26 +28,28 @@ const Options = z
 
 type Options = z.infer<typeof Options>;
 
+const TextField = (params: TextFieldProps) => {
+  const textInputProps: StandardTextFieldProps = {
+    ...params,
+    variant: 'standard',
+  };
+  return <BasicTextInput {...textInputProps} />;
+};
+
 const DateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date, Date>, 'renderInput'> & { error: string }
+  Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
 > = props => (
   <DateTimePicker
     disabled={props.disabled}
-    renderInput={(params: TextFieldProps) => {
-      const textInputProps: StandardTextFieldProps = {
-        ...params,
-        variant: 'standard',
-      };
-      return (
-        <BasicTextInput
-          error={!!props.error}
-          helperText={props.error}
-          FormHelperTextProps={
-            !!props.error ? { sx: { color: 'error.main' } } : undefined
-          }
-          {...textInputProps}
-        />
-      );
+    slots={{ textField: TextField }}
+    slotProps={{
+      textField: {
+        error: !!props.error,
+        helperText: props.error,
+        FormHelperTextProps: !!props.error
+          ? { sx: { color: 'error.main' } }
+          : undefined,
+      },
     }}
     {...props}
   />
@@ -60,6 +64,10 @@ const UIComponent = (props: ControlProps) => {
     Options,
     uischema.options
   );
+  const { customError, setCustomError } = useJSONFormsCustomError(
+    path,
+    'Date-Time'
+  );
 
   if (!props.visible) {
     return null;
@@ -71,6 +79,7 @@ const UIComponent = (props: ControlProps) => {
 
   const onChange = (e: Date | null) => {
     if (!e) return;
+    setCustomError(undefined);
 
     try {
       setError(undefined);
@@ -81,12 +90,12 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const sharedComponentProps = {
-    value: data ?? null,
+    value: DateUtils.getDateOrNull(data),
     onChange: (e: Date | null) => onChange(e),
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
     disabled: !props.enabled,
-    error: zErrors ?? error ?? props.errors,
+    error: zErrors ?? error ?? customError ?? props.errors,
   };
 
   return (
@@ -106,7 +115,10 @@ const UIComponent = (props: ControlProps) => {
             {...sharedComponentProps}
           />
         ) : (
-          <BaseDatePickerInput {...sharedComponentProps} />
+          <DatePickerInput
+            {...sharedComponentProps}
+            onError={validationError => setCustomError(validationError)}
+          />
         )
       }
     />

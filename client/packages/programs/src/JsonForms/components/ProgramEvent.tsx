@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
-import { withJsonFormsControlProps } from '@jsonforms/react';
+import { useJsonForms, withJsonFormsControlProps } from '@jsonforms/react';
 import {
   DetailInputWithLabelRow,
   NumericTextInput,
   noOtherVariants,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import {
+  DefaultFormRowSpacing,
   DefaultFormRowSx,
   FORM_LABEL_WIDTH,
+  JsonFormsConfig,
   useZodOptionsValidation,
 } from '../common';
 import {
@@ -17,9 +20,12 @@ import {
   useProgramEnrolments,
   useProgramEvents,
 } from '../../api';
-
+import { get as extractProperty } from 'lodash';
 import { z } from 'zod';
-import { ProgramEnrolmentFragment } from '../../api/operations.generated';
+import {
+  ProgramEnrolmentFragment,
+  ProgramEventFragment,
+} from '../../api/operations.generated';
 
 export const programEventTester = rankWith(10, uiTypeIs('ProgramEvent'));
 
@@ -55,6 +61,12 @@ const Options = z
     documentType: z.string().optional(),
     eventType: z.string(),
     /**
+     * Specifies a field pointing to a patientId.
+     * This patient id is then used to query for the program event.
+     * If there is no data at patientIdField nothing is displayed.
+     */
+    patientIdField: z.string().optional(),
+    /**
      * Display option based on type.
      */
     display: z
@@ -69,6 +81,12 @@ const Options = z
               .tuple([z.string(), z.string().optional()])
               .rest(z.string().optional())
           ),
+        }),
+        z.object({
+          /** Displays the event's activeStartDatetime */
+          type: z.literal('eventActiveStartDatetime'),
+          /** The date time format to display the datetime */
+          format: z.string().optional(),
         }),
       ])
       .optional(),
@@ -114,13 +132,23 @@ const extractAt = (
   return date;
 };
 
-const getDisplayOptions = (
-  data: string | null | undefined,
+const useDisplayValue = (
+  event: ProgramEventFragment | undefined,
   options?: Options
 ) => {
+  const { customDate } = useFormatDateTime();
+  if (!event) return '';
+
+  if (options?.display?.type === 'eventActiveStartDatetime') {
+    // 'P' is "Long localized date": https://date-fns.org/docs/format
+    const format = options?.display.format ?? 'P';
+    return customDate(new Date(event.activeStartDatetime), format);
+  }
+
   const show =
     options?.display?.type === 'string' ? options?.display?.show : null;
 
+  const data = event.data;
   if (!show) {
     return data;
   }
@@ -130,8 +158,9 @@ const getDisplayOptions = (
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { label, uischema, config } = props;
-  const patientId = config?.patientId;
+  const { label, uischema } = props;
+  const config: JsonFormsConfig = props.config;
+
   const [datetime, setDatetime] = useState<Date | undefined>();
 
   const { data: encounter } = useEncounter.document.byDocName(
@@ -146,9 +175,14 @@ const UIComponent = (props: ControlProps) => {
     uischema.options
   );
 
+  const { core } = useJsonForms();
+  const patientId = options?.patientIdField
+    ? extractProperty(core?.data, options.patientIdField, '') // use empty/invalid id if field is not set
+    : config?.patientId;
+
   useEffect(() => {
     setDatetime(extractAt(encounter, program, options));
-  }, [options?.at, encounter, program]);
+  }, [options, encounter, program]);
 
   const { data: events } = useProgramEvents.document.list({
     at: datetime ?? undefined,
@@ -175,12 +209,11 @@ const UIComponent = (props: ControlProps) => {
   const multiline =
     options?.display?.type === 'string' ? options?.display?.multiline : false;
   const rows = options?.display?.type === 'string' ? options?.display?.rows : 1;
+  const displayOption = useDisplayValue(event, options);
 
   if (!props.visible) {
     return null;
   }
-
-  const displayOption = getDisplayOptions(event?.data, options);
 
   return (
     <>
@@ -208,12 +241,10 @@ const UIComponent = (props: ControlProps) => {
       ) : (
         <DetailInputWithLabelRow
           label={label}
-          sx={DefaultFormRowSx}
           inputProps={{
             value: displayOption ?? '',
             disabled: true,
-            sx: { width: '100%' },
-            style: { flexBasis: '100%' },
+            sx: DefaultFormRowSpacing,
             error: !!errors,
             helperText: errors,
             multiline,

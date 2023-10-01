@@ -1,4 +1,4 @@
-use super::StorageConnection;
+use super::{program_row::program, StorageConnection};
 
 use crate::repository_error::RepositoryError;
 
@@ -22,7 +22,7 @@ table! {
         id -> Text,
         document_type -> Text,
         document_name -> Text,
-        context -> Text,
+        program_id -> Text,
         patient_id -> Text,
         created_datetime -> Timestamp,
         start_datetime -> Timestamp,
@@ -33,6 +33,9 @@ table! {
     }
 }
 
+joinable!(encounter -> program (program_id));
+allow_tables_to_appear_in_same_query!(encounter, program);
+
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "encounter"]
@@ -42,8 +45,7 @@ pub struct EncounterRow {
     pub document_type: String,
     /// The encounter document name
     pub document_name: String,
-    /// The document context for the associated document
-    pub context: String,
+    pub program_id: String,
     pub patient_id: String,
     pub created_datetime: NaiveDateTime,
     pub start_datetime: NaiveDateTime,

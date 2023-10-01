@@ -1,4 +1,4 @@
-use repository::{Permission, UserPermissionRow};
+use repository::{mock::context_program_a, Permission, UserPermissionRow};
 
 use crate::sync::{
     test::TestSyncPullRecord,
@@ -12,7 +12,7 @@ const USER_PERMISSION_1: (&'static str, &'static str) = (
     "user_ID": "user_account_a",
     "store_ID": "store_a",
     "permission": "DocumentQuery",
-    "context_ID": "RoutineImmunisationProgram"
+    "context_ID": "program_a"
 }"#,
 );
 
@@ -23,7 +23,7 @@ const USER_PERMISSION_2: (&'static str, &'static str) = (
     "user_ID": "user_account_a",
     "store_ID": "store_a",
     "permission": "DocumentMutate",
-    "context_ID": "RoutineImmunisationProgram"
+    "context_ID": "program_a"
 }"#,
 );
 
@@ -37,7 +37,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 user_id: "user_account_a".to_string(),
                 store_id: Some("store_a".to_string()),
                 permission: Permission::DocumentQuery,
-                context: Some("RoutineImmunisationProgram".to_string()),
+                context_id: Some(context_program_a().id.to_string()),
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -48,7 +48,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 user_id: "user_account_a".to_string(),
                 store_id: Some("store_a".to_string()),
                 permission: Permission::DocumentMutate,
-                context: Some("RoutineImmunisationProgram".to_string()),
+                context_id: Some(context_program_a().id.to_string()),
             }),
         ),
     ]

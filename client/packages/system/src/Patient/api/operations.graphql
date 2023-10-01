@@ -15,30 +15,30 @@ fragment PatientRow on PatientNode {
     type
   }
   isDeceased
+  dateOfDeath
   programEnrolments {
-    programEnrolmentId
-    document {
-      documentRegistry {
-        name
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        programEnrolmentId
+        document {
+          documentRegistry {
+            name
+          }
+        }
       }
+      totalCount
     }
   }
 }
 
 query patients(
   $storeId: String!
-  $key: PatientSortFieldInput!
-  $desc: Boolean
-  $first: Int
-  $offset: Int
+  $page: PaginationInput
+  $sort: PatientSortInput
   $filter: PatientFilterInput
 ) {
-  patients(
-    storeId: $storeId
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
+  patients(storeId: $storeId, page: $page, sort: $sort, filter: $filter) {
     ... on PatientConnector {
       __typename
       nodes {
@@ -118,6 +118,30 @@ mutation linkPatientToStore($storeId: String!, $nameId: String!) {
           description
         }
       }
+    }
+  }
+}
+
+mutation insertProgramPatient(
+  $storeId: String!
+  $input: InsertProgramPatientInput!
+) {
+  insertProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
+    }
+  }
+}
+
+mutation updateProgramPatient(
+  $storeId: String!
+  $input: UpdateProgramPatientInput!
+) {
+  updateProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...PatientRow
     }
   }
 }

@@ -102,7 +102,8 @@ const NAME_1: (&'static str, &'static str) = (
     "created_date": "2022-05-22",
     "isDeceased": false,
     "om_created_datetime": "",
-    "om_gender": "FEMALE"
+    "om_gender": "FEMALE",
+    "om_date_of_death": ""
 }"#,
 );
 
@@ -142,6 +143,7 @@ fn name_1() -> TestSyncPullRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             ),
+            date_of_death: None,
         }),
     )
 }
@@ -239,7 +241,8 @@ const NAME_2: (&'static str, &'static str) = (
     "isDeceased": false,
     "national_health_number": "",
     "om_created_datetime": "",
-    "om_gender": ""
+    "om_gender": "",
+    "om_date_of_death": ""
 }"#,
 );
 
@@ -273,6 +276,7 @@ fn name_2() -> TestSyncPullRecord {
             created_datetime: None,
             is_deceased: false,
             national_health_number: None,
+            date_of_death: None,
         }),
     )
 }
@@ -370,7 +374,8 @@ const NAME_3: (&'static str, &'static str) = (
     "created_date": "0000-00-00",
     "isDeceased": false,
     "om_created_datetime": "",
-    "om_gender": ""
+    "om_gender": "",
+    "om_date_of_death": ""
 }"#,
 );
 
@@ -404,6 +409,7 @@ fn name_3() -> TestSyncPullRecord {
             created_datetime: None,
             is_deceased: false,
             national_health_number: Some("NHN002".to_string()),
+            date_of_death: None,
         }),
     )
 }
@@ -502,7 +508,8 @@ const NAME_4: (&'static str, &'static str) = (
       "integration_ID": "",
       "isDeceased": true,
       "om_created_datetime": "",
-      "om_gender": "FEMALE"
+      "om_gender": "FEMALE",
+      "om_date_of_death": ""
   }"#,
 );
 
@@ -541,6 +548,7 @@ fn name_4() -> TestSyncPullRecord {
             ),
             is_deceased: true,
             national_health_number: Some("NHN003".to_string()),
+            date_of_death: None,
         }),
     )
 }
@@ -581,7 +589,8 @@ fn name_push_record_1() -> TestSyncPushRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
-            gender: Some(Gender::Female)
+            gender: Some(Gender::Female),
+            date_of_death: None,
         }),
     }
 }
@@ -622,7 +631,8 @@ fn name_push_record_2() -> TestSyncPushRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
-            gender: Some(Gender::Female)
+            gender: Some(Gender::Female),
+            date_of_death: None,
         }),
     }
 }

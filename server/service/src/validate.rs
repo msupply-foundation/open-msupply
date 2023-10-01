@@ -49,7 +49,9 @@ pub fn check_other_party(
     let other_party = get_other_party(connection, store_id, other_party_id)?
         .ok_or(OtherPartyErrors::OtherPartyDoesNotExist)?;
 
-    if !other_party.is_visible() {
+    // Error will only happen if other party is not a patient since you can prescribe
+    // to patients on the same site.
+    if !other_party.is_visible() && !other_party.is_patient() {
         return Err(OtherPartyErrors::OtherPartyNotVisible);
     }
 

@@ -14,7 +14,7 @@ export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
   const t = useTranslation('replenishment');
-  const onDelete = useInbound.document.delete();
+  const onDelete = useInbound.document.deleteRows();
 
   const key = 'otherPartyName' as keyof InboundRowFragment;
   const filterString = (filter.filterBy?.[key]?.like as string) || '';

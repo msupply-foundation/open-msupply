@@ -22,6 +22,7 @@ import {
   FORM_GAP,
   FORM_LABEL_WIDTH,
 } from '../common';
+import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError';
 
 export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 
@@ -31,21 +32,22 @@ const UIComponent = (props: ControlProps) => {
   const [dob, setDoB] = React.useState<Date | null>(null);
   const t = useTranslation('common');
   const dateFormatter = useFormatDateTime().customDate;
+  const { customError, setCustomError } = useJSONFormsCustomError(
+    path,
+    'Date of Birth'
+  );
 
   const dobPath = composePaths(path, 'dateOfBirth');
   const estimatedPath = composePaths(path, 'dateOfBirthIsEstimated');
-  const onChangeDoB = (dob: Date | null, keyBoardInputValue?: string) => {
-    // dob is returned from the date picker, the keyBoardInputValue is the TextInput value
-    // and will be populated if the user types in a date
-    const dateOfBirth =
-      dob !== null && DateUtils.isValid(dob)
-        ? dob
-        : DateUtils.getDateOrNull(keyBoardInputValue ?? null);
-    // if dob is invalid, clear age and don't update the form data
-    if (dateOfBirth === null) {
+  const onChangeDoB = (dob: Date | null) => {
+    const dateOfBirth = DateUtils.getDateOrNull(dob);
+    // if dob is invalid, clear age and don't update all the form data
+    if (dateOfBirth === null || !DateUtils.isValid(dateOfBirth)) {
       setAge('');
+      handleChange(dobPath, null); // required for validation to fire
       return;
     }
+    setCustomError(undefined);
     setAge(DateUtils.age(dateOfBirth));
     setDoB(dateOfBirth);
     handleChange(dobPath, dateFormatter(dateOfBirth, 'yyyy-MM-dd'));
@@ -57,6 +59,7 @@ const UIComponent = (props: ControlProps) => {
     setDoB(dob);
     handleChange(dobPath, dateFormatter(dob, 'yyyy-MM-dd'));
     handleChange(estimatedPath, true);
+    setCustomError(undefined);
     setAge(newAge);
   };
 
@@ -83,10 +86,12 @@ const UIComponent = (props: ControlProps) => {
             // undefined is displayed as "now" and null as unset
             value={dob ?? null}
             onChange={onChangeDoB}
-            inputFormat="dd/MM/yyyy"
-            InputProps={{ sx: { width: 135 } }}
+            format="dd/MM/yyyy"
+            width={135}
             disableFuture
             disabled={!props.enabled}
+            onError={validationError => setCustomError(validationError)}
+            error={customError}
           />
           <Box
             flex={0}

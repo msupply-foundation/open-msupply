@@ -3,7 +3,9 @@ use std::{collections::HashMap, ops::Index, vec};
 mod activity_log;
 mod barcode;
 pub mod common;
+mod context;
 mod document;
+mod document_registry;
 mod form_schema;
 mod full_invoice;
 mod full_master_list;
@@ -49,6 +51,7 @@ mod user_account;
 
 pub use barcode::*;
 use common::*;
+pub use context::*;
 pub use document::*;
 pub use form_schema::*;
 pub use full_invoice::*;
@@ -92,7 +95,8 @@ pub use user_account::*;
 
 use crate::{
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
-    ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, Document,
+    ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
+    ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
     DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
@@ -111,7 +115,9 @@ use crate::{
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
-use self::{activity_log::mock_activity_logs, unit::mock_units};
+use self::{
+    activity_log::mock_activity_logs, document_registry::mock_document_registries, unit::mock_units,
+};
 
 use super::{
     InvoiceRowRepository, ItemRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository,
@@ -151,6 +157,7 @@ pub struct MockData {
     pub stocktake_lines: Vec<StocktakeLineRow>,
     pub form_schemas: Vec<FormSchema>,
     pub documents: Vec<Document>,
+    pub document_registries: Vec<DocumentRegistryRow>,
     pub sync_buffer_rows: Vec<SyncBufferRow>,
     pub key_value_store_rows: Vec<KeyValueStoreRow>,
     pub activity_logs: Vec<ActivityLogRow>,
@@ -164,6 +171,7 @@ pub struct MockData {
     pub barcodes: Vec<BarcodeRow>,
     pub clinicians: Vec<ClinicianRow>,
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
+    pub contexts: Vec<ContextRow>,
 }
 
 impl MockData {
@@ -178,7 +186,7 @@ impl MockData {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default, PartialEq)]
 pub struct MockDataInserts {
     pub user_accounts: bool,
     pub user_store_joins: bool,
@@ -211,6 +219,7 @@ pub struct MockDataInserts {
     pub logs: bool,
     pub form_schemas: bool,
     pub documents: bool,
+    pub document_registries: bool,
     pub sync_buffer_rows: bool,
     pub key_value_store_rows: bool,
     pub activity_logs: bool,
@@ -222,6 +231,7 @@ pub struct MockDataInserts {
     pub program_order_types: bool,
     pub clinicians: bool,
     pub clinician_store_joins: bool,
+    pub contexts: bool,
 }
 
 impl MockDataInserts {
@@ -258,6 +268,7 @@ impl MockDataInserts {
             logs: true,
             form_schemas: true,
             documents: true,
+            document_registries: true,
             sync_buffer_rows: true,
             key_value_store_rows: true,
             activity_logs: true,
@@ -269,6 +280,7 @@ impl MockDataInserts {
             program_order_types: true,
             clinicians: true,
             clinician_store_joins: true,
+            contexts: true,
         }
     }
 
@@ -465,6 +477,11 @@ impl MockDataInserts {
         self.clinician_store_joins = true;
         self
     }
+
+    pub fn contexts(mut self) -> Self {
+        self.contexts = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -497,7 +514,7 @@ impl Index<&str> for MockDataCollection {
     }
 }
 
-fn all_mock_data() -> MockDataCollection {
+pub(crate) fn all_mock_data() -> MockDataCollection {
     let mut data: MockDataCollection = Default::default();
     data.insert(
         "base",
@@ -528,11 +545,13 @@ fn all_mock_data() -> MockDataCollection {
             stocktake_lines: mock_stocktake_line_data(),
             form_schemas: mock_form_schemas(),
             documents: mock_documents(),
+            document_registries: mock_document_registries(),
             activity_logs: mock_activity_logs(),
             programs: mock_programs(),
             program_requisition_settings: mock_program_requisition_settings(),
             program_order_types: mock_program_order_types(),
             name_tag_joins: mock_name_tag_joins(),
+            contexts: mock_contexts(),
             ..Default::default()
         },
     );
@@ -643,6 +662,13 @@ pub fn insert_mock_data(
         if inserts.user_store_joins {
             let repo = UserStoreJoinRowRepository::new(connection);
             for row in &mock_data.user_store_joins {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.contexts {
+            let repo = ContextRowRepository::new(connection);
+            for row in &mock_data.contexts {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -828,6 +854,14 @@ pub fn insert_mock_data(
                 repo.insert(row).unwrap();
             }
         }
+
+        if inserts.document_registries {
+            for row in &mock_data.document_registries {
+                let repo = DocumentRegistryRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
         if inserts.sync_logs {
             for row in &mock_data.sync_logs {
                 let repo = SyncLogRowRepository::new(connection);
@@ -926,6 +960,7 @@ impl MockData {
             user_permissions: _,
             mut form_schemas,
             mut documents,
+            mut document_registries,
             sync_buffer_rows: _,
             mut key_value_store_rows,
             mut activity_logs,
@@ -940,6 +975,7 @@ impl MockData {
             mut barcodes,
             mut clinicians,
             mut clinician_store_joins,
+            mut contexts,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -970,6 +1006,7 @@ impl MockData {
         self.stock_lines.append(&mut stock_lines);
         self.form_schemas.append(&mut form_schemas);
         self.documents.append(&mut documents);
+        self.document_registries.append(&mut document_registries);
         self.key_value_store_rows.append(&mut key_value_store_rows);
         self.activity_logs.append(&mut activity_logs);
         self.sync_logs.append(&mut sync_logs);
@@ -987,6 +1024,7 @@ impl MockData {
         self.clinicians.append(&mut clinicians);
         self.clinician_store_joins
             .append(&mut clinician_store_joins);
+        self.contexts.append(&mut contexts);
 
         self
     }

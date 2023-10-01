@@ -8,8 +8,9 @@ import {
   useDefaultServiceItem,
   ItemRowFragment,
 } from '@openmsupply-client/system';
-import { useOutbound, OutboundLineFragment } from '../../api';
-import { DraftOutboundLine } from './../../../types';
+import { useOutbound } from '../../api';
+import { DraftStockOutLine } from './../../../types';
+import { StockOutLineFragment } from '../../../StockOut';
 
 const createDraftLine = ({
   item,
@@ -18,8 +19,8 @@ const createDraftLine = ({
 }: {
   item: ItemRowFragment;
   invoiceId: string;
-  seed?: OutboundLineFragment;
-}): DraftOutboundLine => ({
+  seed?: StockOutLineFragment;
+}): DraftStockOutLine => ({
   __typename: 'InvoiceLineNode',
   id: FnUtils.generateUUID(),
   item,
@@ -43,7 +44,7 @@ export const useDraftServiceLines = () => {
   const { defaultServiceItem, isLoading } = useDefaultServiceItem();
   const { mutateAsync } = useOutbound.line.save();
 
-  const [draftLines, setDraftLines] = React.useState<DraftOutboundLine[]>([]);
+  const [draftLines, setDraftLines] = React.useState<DraftStockOutLine[]>([]);
 
   useEffect(() => {
     const hasFetchedData = !!lines?.length && !!defaultServiceItem;
@@ -68,7 +69,7 @@ export const useDraftServiceLines = () => {
     }
   }, [draftLines, lines, defaultServiceItem]);
 
-  const update = (patch: RecordPatch<DraftOutboundLine>) => {
+  const update = (patch: RecordPatch<DraftStockOutLine>) => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
         const taxAmount =
@@ -82,7 +83,7 @@ export const useDraftServiceLines = () => {
       return newLines;
     });
   };
-  
+
   const add = () => {
     setDraftLines(currLines => {
       if (defaultServiceItem) {

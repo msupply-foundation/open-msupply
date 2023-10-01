@@ -17,7 +17,7 @@ export const useRequestColumns = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const formatNumber = useFormatNumber();
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
 

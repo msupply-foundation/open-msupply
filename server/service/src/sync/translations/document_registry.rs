@@ -1,5 +1,5 @@
 use crate::sync::sync_serde::empty_str_as_option_string;
-use repository::{DocumentRegistryRow, DocumentRegistryType, StorageConnection, SyncBufferRow};
+use repository::{DocumentRegistryCategory, DocumentRegistryRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -9,10 +9,11 @@ use super::{
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-enum LegacyDocumentType {
+enum LegacyDocumentCategory {
     Patient,
     ProgramEnrolment,
     Encounter,
+    ContactTrace,
     Custom,
 }
 
@@ -21,13 +22,11 @@ enum LegacyDocumentType {
 struct LegacyDocumentRegistryRow {
     #[serde(rename = "ID")]
     pub id: String,
-    pub r#type: LegacyDocumentType,
+    pub category: LegacyDocumentCategory,
     pub document_type: String,
-    pub document_context: String,
+    #[serde(rename = "context_ID")]
+    pub context_id: String,
     pub name: Option<String>,
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    #[serde(rename = "parent_ID")]
-    pub parent_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "form_schema_ID")]
     pub form_schema_id: Option<String>,
@@ -43,7 +42,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::DOCUMENT_REGISTRY,
-            dependencies: vec![LegacyTableName::FORM_SCHEMA],
+            dependencies: vec![LegacyTableName::FORM_SCHEMA, LegacyTableName::LIST_MASTER],
         }
     }
 
@@ -59,10 +58,9 @@ impl SyncTranslation for DocumentRegistryTranslation {
         let LegacyDocumentRegistryRow {
             id,
             document_type,
-            document_context,
-            r#type,
+            context_id,
+            category,
             name,
-            parent_id,
             form_schema_id,
             config,
         } = serde_json::from_str::<LegacyDocumentRegistryRow>(&sync_record.data)?;
@@ -74,15 +72,17 @@ impl SyncTranslation for DocumentRegistryTranslation {
         let result = DocumentRegistryRow {
             id,
             document_type,
-            document_context,
-            r#type: match r#type {
-                LegacyDocumentType::Patient => DocumentRegistryType::Patient,
-                LegacyDocumentType::ProgramEnrolment => DocumentRegistryType::ProgramEnrolment,
-                LegacyDocumentType::Encounter => DocumentRegistryType::Encounter,
-                LegacyDocumentType::Custom => DocumentRegistryType::Custom,
+            context_id,
+            category: match category {
+                LegacyDocumentCategory::Patient => DocumentRegistryCategory::Patient,
+                LegacyDocumentCategory::ProgramEnrolment => {
+                    DocumentRegistryCategory::ProgramEnrolment
+                }
+                LegacyDocumentCategory::Encounter => DocumentRegistryCategory::Encounter,
+                LegacyDocumentCategory::ContactTrace => DocumentRegistryCategory::ContactTrace,
+                LegacyDocumentCategory::Custom => DocumentRegistryCategory::Custom,
             },
             name,
-            parent_id,
             form_schema_id,
             config: config_str,
         };

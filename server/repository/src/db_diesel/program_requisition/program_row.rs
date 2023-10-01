@@ -1,7 +1,9 @@
 use super::program_row::program::dsl as program_dsl;
 
 use crate::{
-    db_diesel::master_list_row::master_list, repository_error::RepositoryError, StorageConnection,
+    db_diesel::{context_row::context, document::document, master_list_row::master_list},
+    repository_error::RepositoryError,
+    StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -11,10 +13,13 @@ table! {
         id -> Text,
         master_list_id -> Text,
         name -> Text,
+        context_id -> Text,
     }
 }
 
 joinable!(program -> master_list (master_list_id));
+joinable!(program -> context (context_id));
+allow_tables_to_appear_in_same_query!(program, document);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "program"]
@@ -22,6 +27,7 @@ pub struct ProgramRow {
     pub id: String, // Master list id
     pub master_list_id: String,
     pub name: String,
+    pub context_id: String,
 }
 
 pub struct ProgramRowRepository<'a> {
