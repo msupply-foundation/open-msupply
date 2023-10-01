@@ -3,8 +3,8 @@ use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, Str
 use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::patient::PatientNode;
+use graphql_types::types::{EqualFilterGenderInput, GenderInput};
 use repository::{
     DateFilter, EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField,
     StringFilter,

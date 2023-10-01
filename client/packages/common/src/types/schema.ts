@@ -550,6 +550,7 @@ export type ContactTraceFilterInput = {
   lastName?: InputMaybe<StringFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<StringFilterInput>;
 };
 
 export type ContactTraceNode = {
@@ -3236,6 +3237,7 @@ export type PatientNode = {
   age?: Maybe<Scalars['Int']['output']>;
   code: Scalars['String']['output'];
   code2?: Maybe<Scalars['String']['output']>;
+  contactTraces: ContactTraceResponse;
   country?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
@@ -3248,8 +3250,15 @@ export type PatientNode = {
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   phone?: Maybe<Scalars['String']['output']>;
-  programEnrolments: Array<ProgramEnrolmentNode>;
+  programEnrolments: ProgramEnrolmentResponse;
   website?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type PatientNodeContactTracesArgs = {
+  filter?: InputMaybe<ContactTraceFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ContactTraceSortInput>;
 };
 
 
@@ -3384,6 +3393,7 @@ export type ProgramEnrolmentNode = {
   enrolmentDatetime: Scalars['DateTime']['output'];
   /** The program document name */
   name: Scalars['String']['output'];
+  patient: PatientNode;
   patientId: Scalars['String']['output'];
   programEnrolmentId?: Maybe<Scalars['String']['output']>;
   status: ProgramEnrolmentNodeStatus;
