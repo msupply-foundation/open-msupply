@@ -122,8 +122,8 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::MockDataInserts, temperature_breach::TemperatureBreach, StorageConnectionManager,
-        TemperatureBreachRow, TemperatureBreachRowType,
+        mock::MockDataInserts, temperature_breach::TemperatureBreach, SensorRow,
+        StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
     };
     use serde_json::json;
 
@@ -260,7 +260,6 @@ mod test {
             insertTemperatureBreach(input: $input, storeId: \"store_a\") {
               ... on TemperatureBreachNode {
                 id
-                sensorId
                 startTimestamp
                 endTimestamp
                 duration
@@ -273,11 +272,11 @@ mod test {
           "input": {
             "id": "n/a",
             "sensorId": "n/a",
-            "startTimestamp": NaiveDate::from_ymd_opt(2022, 7, 1)
+            "startTimestamp": NaiveDate::from_ymd_opt(1999, 1, 1)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
-            "endTimestamp": NaiveDate::from_ymd_opt(2022, 7, 1)
+            "endTimestamp": NaiveDate::from_ymd_opt(1999, 1, 1)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
@@ -310,13 +309,30 @@ mod test {
                         + Duration::seconds(50646),
                     threshold_duration: 3600,
                 },
+                sensor_row: SensorRow {
+                    id: "sensor_1".to_owned(),
+                    serial: "serial_sensor_1".to_owned(),
+                    name: "name_sensor_1".to_owned(),
+                    is_active: false,
+                    store_id: Some("store_a".to_string()),
+                    location_id: None,
+                    battery_level: Some(100),
+                    log_interval: Some(1),
+                    last_connection_timestamp: Some(
+                        NaiveDate::from_ymd_opt(2023, 7, 1)
+                            .unwrap()
+                            .and_hms_opt(0, 0, 0)
+                            .unwrap()
+                            + Duration::seconds(47046),
+                    ),
+                },
+                location_row: None,
             })
         }));
 
         let expected = json!({
             "insertTemperatureBreach": {
                 "id": "id",
-                "sensorId": "sensor_1",
                 "startTimestamp": "2022-07-01T13:04:06+00:00",
                 "endTimestamp": "2022-07-01T14:04:06+00:00",
                 "duration": 3600,

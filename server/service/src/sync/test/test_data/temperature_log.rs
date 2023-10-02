@@ -17,7 +17,8 @@ const TEMPERATURE_LOG_1: (&'static str, &'static str) = (
         "temperature": 10.6,
         "store_ID": "store_a",
         "date": "2023-07-01",
-        "time": 47046
+        "time": 47046,
+        "temperature_breach_ID": ""
     }"#,
 );
 

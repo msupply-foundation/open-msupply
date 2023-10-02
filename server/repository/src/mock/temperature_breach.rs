@@ -60,7 +60,7 @@ pub fn mock_temperature_breach_2() -> TemperatureBreachRow {
         id: "temperature_breach_2".to_owned(),
         acknowledged: false,
         r#type: TemperatureBreachRowType::ColdConsecutive,
-        store_id: Some("store_a".to_string()),
+        store_id: Some("store_b".to_string()),
         threshold_minimum: -273.0,
         threshold_maximum: 2.0,
         threshold_duration: 3600,

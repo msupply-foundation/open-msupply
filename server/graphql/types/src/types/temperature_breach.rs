@@ -3,7 +3,8 @@ use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
-    loader::SensorByIdLoader,
+    loader::{LocationByIdLoader, SensorByIdLoader},
+    map_filter,
     simple_generic_errors::NodeError,
     ContextExt,
 };
@@ -17,7 +18,7 @@ use repository::{
 };
 use service::{usize_to_u32, ListResult};
 
-use super::SensorNode;
+use super::{LocationNode, SensorNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum TemperatureBreachNodeType {
@@ -54,26 +55,30 @@ pub struct EqualFilterTemperatureBreachRowTypeInput {
 pub struct TemperatureBreachFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub sensor_id: Option<EqualFilterStringInput>,
-    //pub location_id: Option<EqualFilterStringInput>,
+    pub location_id: Option<EqualFilterStringInput>,
     pub start_timestamp: Option<DatetimeFilterInput>,
     pub end_timestamp: Option<DatetimeFilterInput>,
-    //pub r#type: Option<EqualFilterTemperatureBreachRowTypeInput>,
+    pub r#type: Option<EqualFilterTemperatureBreachRowTypeInput>,
     pub acknowledged: Option<bool>,
+    pub sensor_name: Option<EqualFilterStringInput>,
+    pub location_name: Option<EqualFilterStringInput>,
 }
 
 impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
     fn from(f: TemperatureBreachFilterInput) -> Self {
         TemperatureBreachFilter {
             sensor_id: f.sensor_id.map(EqualFilter::from),
-            //location_id: f.location_id.map(EqualFilter::from),
             acknowledged: f.acknowledged,
-            //r#type: f
-            //    .r#type
-            //    .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
+            r#type: f
+                .r#type
+                .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
             id: f.id.map(EqualFilter::from),
             start_timestamp: f.start_timestamp.map(DatetimeFilter::from),
             end_timestamp: f.end_timestamp.map(DatetimeFilter::from),
             store_id: None,
+            sensor_name: f.sensor_name.map(EqualFilter::from),
+            location_name: f.location_name.map(EqualFilter::from),
+            location_id: f.location_id.map(EqualFilter::from),
         }
     }
 }
@@ -93,6 +98,10 @@ pub struct TemperatureBreachConnector {
 impl TemperatureBreachNode {
     pub async fn id(&self) -> &str {
         &self.row().id
+    }
+
+    pub async fn sensor_id(&self) -> &str {
+        &self.row().sensor_id
     }
 
     pub async fn sensor(&self, ctx: &Context<'_>) -> Result<Option<SensorNode>> {
@@ -120,9 +129,23 @@ impl TemperatureBreachNode {
         self.row().duration
     }
 
-    //pub async fn r#type(&self) -> TemperatureBreachNodeType {
-    //    TemperatureBreachNodeType::from_domain(&self.row().r#type)
-    //}
+    pub async fn r#type(&self) -> TemperatureBreachNodeType {
+        TemperatureBreachNodeType::from_domain(&self.row().r#type)
+    }
+
+    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+        let location_id = match &self.row().location_id {
+            Some(location_id) => location_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+
+        Ok(loader
+            .load_one(location_id.clone())
+            .await?
+            .map(LocationNode::from_domain))
+    }
 }
 
 impl TemperatureBreachNodeType {

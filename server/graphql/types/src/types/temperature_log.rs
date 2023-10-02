@@ -90,6 +90,10 @@ impl TemperatureLogNode {
         DateTime::<Utc>::from_utc(self.row().timestamp, Utc)
     }
 
+    pub async fn sensor_id(&self) -> &str {
+        &self.row().sensor_id
+    }
+
     pub async fn sensor(&self, ctx: &Context<'_>) -> Result<Option<SensorNode>> {
         let loader = ctx.get_loader::<DataLoader<SensorByIdLoader>>();
 
