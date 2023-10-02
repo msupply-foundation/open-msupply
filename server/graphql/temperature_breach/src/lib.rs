@@ -98,7 +98,7 @@ mod test {
             TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort,
             TemperatureBreachSortField,
         },
-        StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
+        SensorRow, StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
@@ -193,6 +193,24 @@ mod test {
                             + Duration::seconds(50646),
                         threshold_duration: 3600,
                     },
+                    sensor_row: SensorRow {
+                        id: "sensor_1".to_owned(),
+                        serial: "serial_sensor_1".to_owned(),
+                        name: "name_sensor_1".to_owned(),
+                        is_active: false,
+                        store_id: Some("store_a".to_string()),
+                        location_id: None,
+                        battery_level: Some(100),
+                        log_interval: Some(1),
+                        last_connection_timestamp: Some(
+                            NaiveDate::from_ymd_opt(2023, 7, 1)
+                                .unwrap()
+                                .and_hms_opt(0, 0, 0)
+                                .unwrap()
+                                + Duration::seconds(47046),
+                        ),
+                    },
+                    location_row: None,
                 }],
                 count: 1,
             })

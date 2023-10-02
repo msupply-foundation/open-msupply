@@ -33,6 +33,8 @@ mod query {
             .query_by_filter(
                 TemperatureBreachFilter::new().store_id(EqualFilter::not_equal_to("store_a")),
             )
+            .unwrap()
+            .pop()
             .unwrap();
 
         // TemperatureBreach does not exist
@@ -52,7 +54,7 @@ mod query {
             service.update_temperature_breach(
                 &context,
                 UpdateTemperatureBreach {
-                    id: temperature_breaches_not_in_store[0]
+                    id: temperature_breaches_not_in_store
                         .temperature_breach_row
                         .id
                         .clone(),
