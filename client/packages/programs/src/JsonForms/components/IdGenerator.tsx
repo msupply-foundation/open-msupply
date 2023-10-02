@@ -43,10 +43,7 @@ type GeneratorOptions = {
    * This behaviour can be suppressed by setting this option to `false` (default `true`)
    */
   confirmRegenerate?: boolean;
-  /**
-   * Prevents the ID from *ever* being regenerated after first save (default `false`).
-   */
-  preventRegenerate?: boolean;
+
   /** If user can provide its own id */
   allowManualEntry?: boolean;
   /**
@@ -156,7 +153,6 @@ const GeneratorOptions: z.ZodType<GeneratorOptions> = z
   .object({
     parts: z.array(Part),
     confirmRegenerate: z.boolean().optional().default(true),
-    preventRegenerate: z.boolean().optional().default(false),
     allowManualEntry: z.boolean().optional(),
     validations: z
       .array(
@@ -329,7 +325,7 @@ const UIComponent = (props: ControlProps) => {
   );
 
   const savedDataField = extractProperty(savedData?.data ?? {}, path);
-  const canGenerate = !savedDataField || !options?.preventRegenerate;
+  const canGenerate = !savedDataField;
   const requireConfirmation = !options?.confirmRegenerate
     ? false
     : !!savedDataField;
