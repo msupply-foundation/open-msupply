@@ -188,8 +188,14 @@ mod test {
           "input": {
             "id": "n/a",
             "sensorId": "n/a",
-            "startTimestamp": "n/a",
-            "endTimestamp": "n/a",
+            "startTimestamp": NaiveDate::from_ymd_opt(2022, 7, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+            "endTimestamp": NaiveDate::from_ymd_opt(2022, 7, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
             "duration": 0,
           }
         }));
@@ -267,8 +273,14 @@ mod test {
           "input": {
             "id": "n/a",
             "sensorId": "n/a",
-            "startTimestamp": "n/a",
-            "endTimestamp": "n/a",
+            "startTimestamp": NaiveDate::from_ymd_opt(2022, 7, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
+            "endTimestamp": NaiveDate::from_ymd_opt(2022, 7, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap(),
             "duration": 0,
           }
         }));
@@ -304,9 +316,9 @@ mod test {
         let expected = json!({
             "insertTemperatureBreach": {
                 "id": "id",
-                "sensorID": "sensor_1",
-                "startTimestamp": "20220701130406",
-                "endTimestamp": "20220701140406",
+                "sensorId": "sensor_1",
+                "startTimestamp": "2022-07-01T13:04:06+00:00",
+                "endTimestamp": "2022-07-01T14:04:06+00:00",
                 "duration": 3600,
             }
           }
