@@ -14,8 +14,8 @@ This table can, for example, be used to find the current encounter status by que
 
 ## Event Config
 
-Which events are extracted can be configured using a JSON config.
-The event config is stored in the config column of the document registry, i.e. every document type can have an event config.
+Events are configured through a JSON config.
+The event config is stored in the config column of the document registry table, i.e. every document type can have an event config.
 The available config options are described in [document_registry_config.rs](../../../repository/src//db_diesel/document_registry_config.rs).
 
 For example, the following config schedules an event to become active in 90 days from the value in the `extension.dateTimeField` field.
