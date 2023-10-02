@@ -1,6 +1,5 @@
 import React from 'react';
 import { RegexUtils } from '@openmsupply-client/common';
-import { PatientRowFragment } from '@openmsupply-client/system';
 import { ControlProps, UISchemaElement } from '@jsonforms/core';
 import {
   useTranslation,
@@ -19,6 +18,7 @@ import {
 import { usePatientSearchQuery } from './usePatientSearchQuery';
 import { UserOptions } from './Search';
 import { JsonFormsDispatch } from '@jsonforms/react';
+import { PatientSchema } from '@openmsupply-client/programs';
 
 const { formatTemplateString } = RegexUtils;
 
@@ -45,7 +45,7 @@ export const SearchWithUserSource = (
 
   const { results, error: queryError } = usePatientSearchQuery(searchFilter);
 
-  const getOptionLabel = (data: PatientRowFragment) =>
+  const getOptionLabel = (data: PatientSchema) =>
     options?.optionString
       ? formatTemplateString(options?.optionString, data)
       : `${data['code']} - ${data['firstName']} ${data['lastName']}`;
@@ -154,7 +154,10 @@ const queryMatchTypes = {
   dateOfBirth: 'equalTo',
 };
 
-const createSearchFilter = (searchFields: string[], data: any) => {
+const createSearchFilter = (
+  searchFields: string[],
+  data: Record<string, string | undefined> | undefined
+) => {
   if (!data) return undefined;
 
   const searchFilter: FilterBy = {};
