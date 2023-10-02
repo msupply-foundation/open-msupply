@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod query {
     use repository::mock::mock_store_a;
-    use repository::EqualFilter;
     use repository::{
         mock::MockDataInserts,
         temperature_log::{TemperatureLog, TemperatureLogFilter, TemperatureLogRepository},
         test_db::setup_all,
         TemperatureLogRow,
     };
+    use repository::{EqualFilter, SensorRow};
 
     use crate::{
         service_provider::ServiceProvider,
@@ -101,7 +101,27 @@ mod query {
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
                     + Duration::seconds(47046),
+                temperature_breach_id: None,
             },
+            sensor_row: SensorRow {
+                id: "sensor_1".to_string(),
+                name: "name_sensor_1".to_string(),
+                serial: "serial_sensor_1".to_string(),
+                store_id: Some("store_a".to_string()),
+                is_active: false,
+                battery_level: Some(100),
+                log_interval: Some(1),
+                last_connection_timestamp: Some(
+                    NaiveDate::from_ymd_opt(2023, 7, 1)
+                        .unwrap()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap()
+                        + Duration::seconds(47046),
+                ),
+                location_id: None,
+            },
+            location_row: None,
+            temperature_breach_row: None,
         };
 
         assert_eq!(
