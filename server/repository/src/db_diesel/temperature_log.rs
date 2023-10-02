@@ -1,12 +1,21 @@
 use super::{
+    location_row::{location, location::dsl as location_dsl},
+    sensor_row::{sensor, sensor::dsl as sensor_dsl},
+    temperature_breach_row::{
+        temperature_breach, temperature_breach::dsl as temperature_breach_dsl,
+    },
     temperature_log_row::{temperature_log, temperature_log::dsl as temperature_log_dsl},
-    DBType, StorageConnection, TemperatureLogRow,
+    DBType, StorageConnection, TemperatureBreachRow, TemperatureLogRow,
 };
-use diesel::prelude::*;
+use diesel::{
+    helper_types::{InnerJoin, IntoBoxed, LeftJoin},
+    prelude::*,
+};
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     repository_error::RepositoryError,
+    LocationRow, SensorRow, TemperatureBreachRowType,
 };
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
@@ -14,7 +23,17 @@ use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 #[derive(PartialEq, Debug, Clone)]
 pub struct TemperatureLog {
     pub temperature_log_row: TemperatureLogRow,
+    pub sensor_row: SensorRow,
+    pub location_row: Option<LocationRow>,
+    pub temperature_breach_row: Option<TemperatureBreachRow>,
 }
+
+pub type TemperatureLogJoin = (
+    TemperatureLogRow,
+    SensorRow,
+    Option<LocationRow>,
+    Option<TemperatureBreachRow>,
+);
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct TemperatureLogFilter {
@@ -23,6 +42,9 @@ pub struct TemperatureLogFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub location_id: Option<EqualFilter<String>>,
     pub timestamp: Option<DatetimeFilter>,
+    pub sensor_name: Option<EqualFilter<String>>,
+    pub location_name: Option<EqualFilter<String>>,
+    pub breach_type: Option<EqualFilter<TemperatureBreachRowType>>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -44,7 +66,7 @@ impl<'a> TemperatureLogRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<TemperatureLogFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = create_filtered_query(filter)?;
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
@@ -61,7 +83,7 @@ impl<'a> TemperatureLogRepository<'a> {
         filter: Option<TemperatureLogFilter>,
         sort: Option<TemperatureLogSort>,
     ) -> Result<Vec<TemperatureLog>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = create_filtered_query(filter)?;
         if let Some(sort) = sort {
             match sort.key {
                 TemperatureLogSortField::Id => {
@@ -81,16 +103,29 @@ impl<'a> TemperatureLogRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<TemperatureLogRow>(&self.connection.connection)?;
+            .load::<TemperatureLogJoin>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedLogQuery = temperature_log::BoxedQuery<'static, DBType>;
+type BoxedTemperatureLogQuery = IntoBoxed<
+    'static,
+    LeftJoin<
+        LeftJoin<InnerJoin<temperature_log::table, sensor::table>, location::table>,
+        temperature_breach::table,
+    >,
+    DBType,
+>;
 
-fn create_filtered_query(filter: Option<TemperatureLogFilter>) -> BoxedLogQuery {
-    let mut query = temperature_log::table.into_boxed();
+fn create_filtered_query(
+    filter: Option<TemperatureLogFilter>,
+) -> Result<BoxedTemperatureLogQuery, RepositoryError> {
+    let mut query = temperature_log_dsl::temperature_log
+        .inner_join(sensor_dsl::sensor)
+        .left_join(location_dsl::location)
+        .left_join(temperature_breach_dsl::temperature_breach)
+        .into_boxed();
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, temperature_log_dsl::id);
@@ -98,14 +133,21 @@ fn create_filtered_query(filter: Option<TemperatureLogFilter>) -> BoxedLogQuery 
         apply_equal_filter!(query, filter.store_id, temperature_log_dsl::store_id);
         apply_equal_filter!(query, filter.location_id, temperature_log_dsl::location_id);
         apply_date_time_filter!(query, filter.timestamp, temperature_log_dsl::timestamp);
+        apply_equal_filter!(query, filter.sensor_name, sensor_dsl::name);
+        apply_equal_filter!(query, filter.location_name, location_dsl::name);
     }
 
-    query
+    Ok(query)
 }
 
-pub fn to_domain(temperature_log_row: TemperatureLogRow) -> TemperatureLog {
+pub fn to_domain(
+    (temperature_log_row, sensor_row, location_row, temperature_breach_row): TemperatureLogJoin,
+) -> TemperatureLog {
     TemperatureLog {
         temperature_log_row,
+        sensor_row,
+        location_row,
+        temperature_breach_row,
     }
 }
 
@@ -117,6 +159,9 @@ impl TemperatureLogFilter {
             store_id: None,
             location_id: None,
             timestamp: None,
+            sensor_name: None,
+            location_name: None,
+            breach_type: None,
         }
     }
 
@@ -142,6 +187,21 @@ impl TemperatureLogFilter {
 
     pub fn timestamp(mut self, filter: DatetimeFilter) -> Self {
         self.timestamp = Some(filter);
+        self
+    }
+
+    pub fn sensor_name(mut self, filter: EqualFilter<String>) -> Self {
+        self.sensor_name = Some(filter);
+        self
+    }
+
+    pub fn location_name(mut self, filter: EqualFilter<String>) -> Self {
+        self.location_name = Some(filter);
+        self
+    }
+
+    pub fn breach_type(mut self, filter: EqualFilter<TemperatureBreachRowType>) -> Self {
+        self.breach_type = Some(filter);
         self
     }
 }

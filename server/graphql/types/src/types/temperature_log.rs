@@ -1,7 +1,14 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
-use graphql_core::generic_filters::{DatetimeFilterInput, EqualFilterStringInput};
-use graphql_core::simple_generic_errors::NodeError;
+use chrono::{DateTime, Utc};
+use dataloader::DataLoader;
+use graphql_core::{
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    loader::{LocationByIdLoader, SensorByIdLoader, TemperatureBreachByIdLoader},
+    map_filter,
+    simple_generic_errors::NodeError,
+    ContextExt,
+};
+
 use repository::{
     temperature_log::{
         TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
@@ -9,6 +16,11 @@ use repository::{
     DatetimeFilter, EqualFilter, TemperatureLogRow,
 };
 use service::{usize_to_u32, ListResult};
+
+use super::{
+    temperature_breach::{EqualFilterTemperatureBreachRowTypeInput, TemperatureBreachNodeType},
+    LocationNode, SensorNode, TemperatureBreachNode,
+};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -31,6 +43,9 @@ pub struct TemperatureLogFilterInput {
     pub location_id: Option<EqualFilterStringInput>,
     pub timestamp: Option<DatetimeFilterInput>,
     pub id: Option<EqualFilterStringInput>,
+    pub sensor_name: Option<EqualFilterStringInput>,
+    pub location_name: Option<EqualFilterStringInput>,
+    pub breach_type: Option<EqualFilterTemperatureBreachRowTypeInput>,
 }
 
 impl From<TemperatureLogFilterInput> for TemperatureLogFilter {
@@ -41,6 +56,11 @@ impl From<TemperatureLogFilterInput> for TemperatureLogFilter {
             timestamp: f.timestamp.map(DatetimeFilter::from),
             id: f.id.map(EqualFilter::from),
             store_id: None,
+            sensor_name: f.sensor_name.map(EqualFilter::from),
+            location_name: f.location_name.map(EqualFilter::from),
+            breach_type: f
+                .breach_type
+                .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
         }
     }
 }
@@ -66,12 +86,48 @@ impl TemperatureLogNode {
         self.row().temperature
     }
 
-    pub async fn timestamp(&self) -> NaiveDateTime {
-        self.row().timestamp
+    pub async fn timestamp(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row().timestamp, Utc)
     }
 
-    pub async fn sensor_id(&self) -> &str {
-        &self.row().sensor_id
+    pub async fn sensor(&self, ctx: &Context<'_>) -> Result<Option<SensorNode>> {
+        let loader = ctx.get_loader::<DataLoader<SensorByIdLoader>>();
+
+        Ok(loader
+            .load_one(self.row().sensor_id.clone())
+            .await?
+            .map(SensorNode::from_domain))
+    }
+
+    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+        let location_id = match &self.row().location_id {
+            Some(location_id) => location_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+
+        Ok(loader
+            .load_one(location_id.clone())
+            .await?
+            .map(LocationNode::from_domain))
+    }
+
+    pub async fn temperature_breach(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<TemperatureBreachNode>> {
+        let temperature_breach_id = match &self.row().temperature_breach_id {
+            Some(temperature_breach_id) => temperature_breach_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<TemperatureBreachByIdLoader>>();
+
+        Ok(loader
+            .load_one(temperature_breach_id.to_string())
+            .await?
+            .map(TemperatureBreachNode::from_domain))
     }
 }
 
