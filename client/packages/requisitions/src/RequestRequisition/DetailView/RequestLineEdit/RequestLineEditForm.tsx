@@ -78,7 +78,13 @@ export const RequestLineEditFormLayout = ({
           direction="row"
           justifyContent="space-between"
         >
-          <Grid item xs={6}>
+          <Grid
+            item
+            xs={6}
+            flexDirection="column"
+            display="flex"
+            justifyContent="flex-end"
+          >
             {Left}
           </Grid>
           <Grid item xs={6}>
@@ -229,8 +235,7 @@ export const RequestLineEditForm = ({
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },
             }}
-            minRows={6.2}
-            maxRows={6.2}
+            rows={6.2}
           />
         </>
       }
