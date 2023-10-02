@@ -282,7 +282,7 @@ const useUniqueProgramPatientCodeValidation = () => {
     usePatient.document.usePatientsPromise();
 
   // returns error if validation fails (patient code already in use)
-  return async (code: string, name: string): Promise<string | undefined> => {
+  return async (code: string): Promise<string | undefined> => {
     const result = await fetchPatients({
       filterBy: {
         code: { equalTo: code },
@@ -292,16 +292,14 @@ const useUniqueProgramPatientCodeValidation = () => {
       return undefined;
     }
 
-    if (result?.patients.nodes[0]?.name === name) {
-      return undefined;
-    }
     return `Duplicated code: ${code}`;
   };
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { label, path, data, visible, handleChange, uischema, config } = props;
-  const t = useTranslation(['patients', 'common']);
+  const { label, path, data, visible, handleChange, uischema } = props;
+  const config: JsonFormsConfig = props.config;
+  const t = useTranslation('dispensary');
   const { core } = useJsonForms();
   const { mutateAsync: mutateGenerateId } = useMutation(
     async (input: GenerateIdInput): Promise<string> => generateId(input)
@@ -309,14 +307,10 @@ const UIComponent = (props: ControlProps) => {
   const { mutateAsync: allocateNumber } = useDocument.utils.allocateNumber();
   const validateUniqueProgramEnrolmentId =
     useUniqueProgramEnrolmentIdValidation();
-  const validateUniquePatientCodeId = useUniqueProgramPatientCodeValidation();
+  const validateUniquePatientCode = useUniqueProgramPatientCodeValidation();
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,
     'UIGenerator'
-  );
-
-  const { data: savedData } = useDocument.get.documentByName(
-    config.documentName
   );
 
   const { errors, options } = useZodOptionsValidation(
@@ -324,8 +318,7 @@ const UIComponent = (props: ControlProps) => {
     uischema.options
   );
 
-  const savedDataField = extractProperty(savedData?.data ?? {}, path);
-  const canGenerate = !savedDataField;
+  const savedDataField = extractProperty(config.initialData ?? {}, path);
   const requireConfirmation = !options?.confirmRegenerate
     ? false
     : !!savedDataField;
@@ -361,13 +354,13 @@ const UIComponent = (props: ControlProps) => {
       if (validation.type === 'UniqueEnrolmentId') {
         const error = await validateUniqueProgramEnrolmentId(
           id,
-          config.documentName
+          config.documentName ?? ''
         );
         if (error) {
           return error;
         }
       } else if (validation.type === 'UniquePatientCode') {
-        const error = await validateUniquePatientCodeId(id, config.name);
+        const error = await validateUniquePatientCode(id);
         if (error) {
           return error;
         }
@@ -430,7 +423,7 @@ const UIComponent = (props: ControlProps) => {
           />
           <Box>
             <Button
-              disabled={error || !canGenerate}
+              disabled={error}
               onClick={
                 requireConfirmation ? () => confirmRegenerate() : generate
               }
