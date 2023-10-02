@@ -33,7 +33,7 @@ mod query {
             .unwrap();
         let service = service_provider.temperature_breach_service;
 
-        let temperature_breachs_in_store = temperature_breach_repository
+        let temperature_breaches_in_store = temperature_breach_repository
             .query_by_filter(
                 TemperatureBreachFilter::new().store_id(EqualFilter::equal_to("store_a")),
             )
@@ -43,7 +43,7 @@ mod query {
             service.insert_temperature_breach(
                 &context,
                 InsertTemperatureBreach {
-                    id: mock_data["base"].temperature_breachs[0].id.clone(),
+                    id: mock_data["base"].temperature_breaches[0].id.clone(),
                     sensor_id: "invalid".to_owned(),
                     start_timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
                         .unwrap()
@@ -67,22 +67,22 @@ mod query {
                 &context,
                 InsertTemperatureBreach {
                     id: "new_id".to_owned(),
-                    sensor_id: temperature_breachs_in_store[0]
+                    sensor_id: temperature_breaches_in_store[0]
                         .temperature_breach_row
                         .sensor_id
                         .clone(),
-                    start_timestamp: temperature_breachs_in_store[0]
+                    start_timestamp: temperature_breaches_in_store[0]
                         .temperature_breach_row
                         .start_timestamp
                         .clone(),
-                    end_timestamp: temperature_breachs_in_store[0]
+                    end_timestamp: temperature_breaches_in_store[0]
                         .temperature_breach_row
                         .end_timestamp
                         .clone(),
-                    duration: temperature_breachs_in_store[0]
+                    duration: temperature_breaches_in_store[0]
                         .temperature_breach_row
                         .duration,
-                    //r#type: temperature_breachs_in_store[0].temperature_breach_row.r#type,
+                    //r#type: temperature_breaches_in_store[0].temperature_breach_row.r#type,
                 },
             ),
             Err(InsertTemperatureBreachError::TemperatureBreachNotUnique)

@@ -17,7 +17,7 @@ pub struct TemperatureBreachQueries;
 #[Object]
 impl TemperatureBreachQueries {
     /// Query omSupply "temperature_breach" entries
-    pub async fn temperature_breachs(
+    pub async fn temperature_breaches(
         &self,
         ctx: &Context<'_>,
         store_id: String,
@@ -25,7 +25,7 @@ impl TemperatureBreachQueries {
         #[graphql(desc = "Filter option")] filter: Option<TemperatureBreachFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<TemperatureBreachSortInput>>,
-    ) -> Result<TemperatureBreachsResponse> {
+    ) -> Result<TemperatureBreachesResponse> {
         let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
@@ -43,9 +43,9 @@ impl TemperatureBreachQueries {
             .unwrap_or(TemperatureBreachFilter::new())
             .store_id(EqualFilter::equal_to(&store_id));
 
-        let temperature_breachs = service_provider
+        let temperature_breaches = service_provider
             .temperature_breach_service
-            .get_temperature_breachs(
+            .get_temperature_breaches(
                 &service_context,
                 page.map(PaginationOption::from),
                 Some(filter),
@@ -55,8 +55,8 @@ impl TemperatureBreachQueries {
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
-        Ok(TemperatureBreachsResponse::Response(
-            TemperatureBreachConnector::from_domain(temperature_breachs),
+        Ok(TemperatureBreachesResponse::Response(
+            TemperatureBreachConnector::from_domain(temperature_breaches),
         ))
     }
 }
@@ -91,7 +91,7 @@ mod test {
     use chrono::{Duration, NaiveDate};
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
-    //use repository::mock::mock_temperature_breachs;
+    //use repository::mock::mock_temperature_breaches;
     use repository::{
         mock::MockDataInserts,
         temperature_breach::{
@@ -111,7 +111,7 @@ mod test {
 
     use crate::TemperatureBreachQueries;
 
-    type GetTemperatureBreachs = dyn Fn(
+    type GetTemperatureBreaches = dyn Fn(
             Option<PaginationOption>,
             Option<TemperatureBreachFilter>,
             Option<TemperatureBreachSort>,
@@ -119,10 +119,10 @@ mod test {
         + Sync
         + Send;
 
-    pub struct TestService(pub Box<GetTemperatureBreachs>);
+    pub struct TestService(pub Box<GetTemperatureBreaches>);
 
     impl TemperatureBreachServiceTrait for TestService {
-        fn get_temperature_breachs(
+        fn get_temperature_breaches(
             &self,
             _: &ServiceContext,
             pagination: Option<PaginationOption>,
@@ -143,18 +143,18 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_temperature_breachs_success() {
+    async fn test_graphql_temperature_breaches_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             TemperatureBreachQueries,
             EmptyMutation,
-            "test_graphql_temperature_breachs_success",
+            "test_graphql_temperature_breaches_success",
             MockDataInserts::all(),
         )
         .await;
 
         let query = r#"
         query {
-            temperatureBreachs(storeId: \"store_a\") {
+            temperatureBreaches(storeId: \"store_a\") {
               ... on TemperatureBreachConnector {
                 nodes {
                   id
@@ -199,7 +199,7 @@ mod test {
         }));
 
         let expected = json!({
-              "temperatureBreachs": {
+              "temperatureBreaches": {
                   "nodes": [
                       {
                           "id": "acknowledged_temperature_breach",
@@ -230,7 +230,7 @@ mod test {
         }));
 
         let expected = json!({
-              "temperatureBreachs": {
+              "temperatureBreaches": {
                   "nodes": [
 
                   ],
@@ -249,7 +249,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_temperature_breachs_inputs() {
+    async fn test_graphql_temperature_breaches_inputs() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             TemperatureBreachQueries,
             EmptyMutation,
@@ -263,7 +263,7 @@ mod test {
             $sort: [TemperatureBreachSortInput]
             $filter: TemperatureBreachFilterInput
           ) {
-            temperatureBreachs(sort: $sort, filter: $filter, storeId: \"store_a\") {
+            temperatureBreaches(sort: $sort, filter: $filter, storeId: \"store_a\") {
               __typename
             }
           }
@@ -271,7 +271,7 @@ mod test {
         "#;
 
         let expected = json!({
-              "temperatureBreachs": {
+              "temperatureBreaches": {
                   "__typename": "TemperatureBreachConnector"
               }
           }

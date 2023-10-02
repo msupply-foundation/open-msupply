@@ -1,8 +1,12 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
-use graphql_core::generic_filters::{DatetimeFilterInput, EqualFilterStringInput};
-use graphql_core::map_filter;
-use graphql_core::simple_generic_errors::NodeError;
+use chrono::{DateTime, Utc};
+use dataloader::DataLoader;
+use graphql_core::{
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    loader::SensorByIdLoader,
+    simple_generic_errors::NodeError,
+    ContextExt,
+};
 
 use repository::{
     temperature_breach::{
@@ -12,6 +16,8 @@ use repository::{
     DatetimeFilter, EqualFilter, TemperatureBreachRow, TemperatureBreachRowType,
 };
 use service::{usize_to_u32, ListResult};
+
+use super::SensorNode;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum TemperatureBreachNodeType {
@@ -89,20 +95,21 @@ impl TemperatureBreachNode {
         &self.row().id
     }
 
-    pub async fn sensor_id(&self) -> &str {
-        &self.row().sensor_id
+    pub async fn sensor(&self, ctx: &Context<'_>) -> Result<Option<SensorNode>> {
+        let loader = ctx.get_loader::<DataLoader<SensorByIdLoader>>();
+
+        Ok(loader
+            .load_one(self.row().sensor_id.clone())
+            .await?
+            .map(SensorNode::from_domain))
     }
 
-    //pub async fn location_id(&self) -> &str {
-    //    &self.row().location_id
-    //}
-
-    pub async fn start_timestamp(&self) -> NaiveDateTime {
-        self.row().start_timestamp
+    pub async fn start_timestamp(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row().start_timestamp, Utc)
     }
 
-    pub async fn end_timestamp(&self) -> NaiveDateTime {
-        self.row().end_timestamp
+    pub async fn end_timestamp(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row().end_timestamp, Utc)
     }
 
     pub async fn acknowledged(&self) -> bool {
@@ -145,7 +152,7 @@ impl TemperatureBreachNodeType {
 }
 
 #[derive(Union)]
-pub enum TemperatureBreachsResponse {
+pub enum TemperatureBreachesResponse {
     Response(TemperatureBreachConnector),
 }
 
@@ -167,11 +174,11 @@ impl TemperatureBreachNode {
 
 impl TemperatureBreachConnector {
     pub fn from_domain(
-        temperature_breachs: ListResult<TemperatureBreach>,
+        temperature_breaches: ListResult<TemperatureBreach>,
     ) -> TemperatureBreachConnector {
         TemperatureBreachConnector {
-            total_count: temperature_breachs.count,
-            nodes: temperature_breachs
+            total_count: temperature_breaches.count,
+            nodes: temperature_breaches
                 .rows
                 .into_iter()
                 .map(TemperatureBreachNode::from_domain)
@@ -179,10 +186,10 @@ impl TemperatureBreachConnector {
         }
     }
 
-    pub fn from_vec(temperature_breachs: Vec<TemperatureBreach>) -> TemperatureBreachConnector {
+    pub fn from_vec(temperature_breaches: Vec<TemperatureBreach>) -> TemperatureBreachConnector {
         TemperatureBreachConnector {
-            total_count: usize_to_u32(temperature_breachs.len()),
-            nodes: temperature_breachs
+            total_count: usize_to_u32(temperature_breaches.len()),
+            nodes: temperature_breaches
                 .into_iter()
                 .map(TemperatureBreachNode::from_domain)
                 .collect(),

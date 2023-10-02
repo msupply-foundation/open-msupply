@@ -94,10 +94,10 @@ pub fn check_temperature_breach_does_not_exist(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
-    let temperature_breachs = TemperatureBreachRepository::new(connection)
+    let temperature_breaches = TemperatureBreachRepository::new(connection)
         .query_by_filter(TemperatureBreachFilter::new().id(EqualFilter::equal_to(id)))?;
 
-    Ok(temperature_breachs.len() == 0)
+    Ok(temperature_breaches.len() == 0)
 }
 
 impl From<RepositoryError> for InsertTemperatureBreachError {

@@ -23,7 +23,7 @@ mod query {
         let service = service_provider.temperature_breach_service;
 
         assert_eq!(
-            service.get_temperature_breachs(
+            service.get_temperature_breaches(
                 &context,
                 Some(PaginationOption {
                     limit: Some(2000),
@@ -36,7 +36,7 @@ mod query {
         );
 
         assert_eq!(
-            service.get_temperature_breachs(
+            service.get_temperature_breaches(
                 &context,
                 Some(PaginationOption {
                     limit: Some(0),
@@ -87,7 +87,7 @@ mod query {
         let service = service_provider.temperature_breach_service;
 
         let result = service
-            .get_temperature_breachs(
+            .get_temperature_breaches(
                 &context,
                 None,
                 Some(
@@ -105,7 +105,7 @@ mod query {
         );
 
         let result = service
-            .get_temperature_breachs(
+            .get_temperature_breaches(
                 &context,
                 None,
                 Some(
@@ -139,7 +139,7 @@ mod query {
         let service = service_provider.temperature_breach_service;
         // Test StartTimestamp sort with default sort order
         let result = service
-            .get_temperature_breachs(
+            .get_temperature_breaches(
                 &context,
                 None,
                 None,
@@ -150,15 +150,15 @@ mod query {
             )
             .unwrap();
 
-        let mut temperature_breachs = mock_data["base"].temperature_breachs.clone();
-        temperature_breachs.sort_by(|a, b| a.start_timestamp.cmp(&b.start_timestamp));
+        let mut temperature_breaches = mock_data["base"].temperature_breaches.clone();
+        temperature_breaches.sort_by(|a, b| a.start_timestamp.cmp(&b.start_timestamp));
 
         let result_timestamps: Vec<NaiveDateTime> = result
             .rows
             .into_iter()
             .map(|temperature_breach| temperature_breach.temperature_breach_row.start_timestamp)
             .collect();
-        let sorted_timestamps: Vec<NaiveDateTime> = temperature_breachs
+        let sorted_timestamps: Vec<NaiveDateTime> = temperature_breaches
             .into_iter()
             .map(|temperature_breach| temperature_breach.start_timestamp)
             .collect();
@@ -167,7 +167,7 @@ mod query {
 
         // Test EndTimestamp sort with desc sort
         let result = service
-            .get_temperature_breachs(
+            .get_temperature_breaches(
                 &context,
                 None,
                 None,
@@ -178,15 +178,15 @@ mod query {
             )
             .unwrap();
 
-        let mut temperature_breachs = mock_data["base"].temperature_breachs.clone();
-        temperature_breachs.sort_by(|a, b| b.end_timestamp.cmp(&a.end_timestamp));
+        let mut temperature_breaches = mock_data["base"].temperature_breaches.clone();
+        temperature_breaches.sort_by(|a, b| b.end_timestamp.cmp(&a.end_timestamp));
 
         let result_timestamps: Vec<NaiveDateTime> = result
             .rows
             .into_iter()
             .map(|temperature_breach| temperature_breach.temperature_breach_row.end_timestamp)
             .collect();
-        let sorted_timestamps: Vec<NaiveDateTime> = temperature_breachs
+        let sorted_timestamps: Vec<NaiveDateTime> = temperature_breaches
             .into_iter()
             .map(|temperature_breach| temperature_breach.end_timestamp)
             .collect();

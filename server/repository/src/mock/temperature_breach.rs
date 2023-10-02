@@ -80,7 +80,7 @@ pub fn mock_temperature_breach_2() -> TemperatureBreachRow {
     }
 }
 
-pub fn mock_temperature_breachs() -> Vec<TemperatureBreachRow> {
+pub fn mock_temperature_breaches() -> Vec<TemperatureBreachRow> {
     vec![
         mock_temperature_breach_1(),
         mock_temperature_breach_acknowledged(),

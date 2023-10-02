@@ -11,7 +11,7 @@ use crate::{
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
-pub fn get_temperature_breachs(
+pub fn get_temperature_breaches(
     ctx: &ServiceContext,
     pagination: Option<PaginationOption>,
     filter: Option<TemperatureBreachFilter>,
