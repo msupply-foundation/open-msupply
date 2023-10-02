@@ -29,7 +29,7 @@ mod query {
             .unwrap();
         let service = service_provider.temperature_breach_service;
 
-        let temperature_breachs_not_in_store = temperature_breach_repository
+        let temperature_breaches_not_in_store = temperature_breach_repository
             .query_by_filter(
                 TemperatureBreachFilter::new().store_id(EqualFilter::not_equal_to("store_a")),
             )
@@ -52,7 +52,7 @@ mod query {
             service.update_temperature_breach(
                 &context,
                 UpdateTemperatureBreach {
-                    id: temperature_breachs_not_in_store[0]
+                    id: temperature_breaches_not_in_store[0]
                         .temperature_breach_row
                         .id
                         .clone(),
@@ -78,14 +78,14 @@ mod query {
             .unwrap();
         let service = service_provider.temperature_breach_service;
 
-        let temperature_breachs_in_store = temperature_breach_repository
+        let temperature_breaches_in_store = temperature_breach_repository
             .query_by_filter(
                 TemperatureBreachFilter::new().store_id(EqualFilter::equal_to("store_a")),
             )
             .unwrap();
 
         // Success with no changes
-        let temperature_breach = temperature_breachs_in_store[0].clone();
+        let temperature_breach = temperature_breaches_in_store[0].clone();
         assert_eq!(
             service.update_temperature_breach(
                 &context,
@@ -107,7 +107,7 @@ mod query {
         );
 
         // Success with all changes
-        let mut temperature_breach = temperature_breachs_in_store[1].clone();
+        let mut temperature_breach = temperature_breaches_in_store[1].clone();
         temperature_breach.temperature_breach_row.acknowledged =
             !temperature_breach.temperature_breach_row.acknowledged;
 
