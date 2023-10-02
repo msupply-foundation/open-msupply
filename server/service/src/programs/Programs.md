@@ -88,7 +88,7 @@ In this repository, JSON schemas can be defined conveniently in TypeScript and a
 The repository also contains helper scripts to import these schemas to the mSupply central server.
 
 The open mSupply codebase (this repo) also contains some default JSON schemas.
-These schemas are imported from the external `programschemas` repository, i.e. please don't edit these schemas in this repository.
+These schemas are imported from the external `programschemas` repository, please don't edit these schemas in this repository.
 
 ## Document registry
 
