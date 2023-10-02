@@ -83,7 +83,7 @@ For example:
 
 ## Managing JSON Schemas
 
-Within in the mSupply Foundation we have a [private git repository](https://github.com/openmsupply/programschemas) for managing JSON schemas, UI schemas and program event configs for different clients.
+We have a [private git repository](https://github.com/openmsupply/programschemas) for managing JSON schemas, UI schemas and program event configs for different clients.
 In this repository, JSON schemas can be defined conveniently in TypeScript and are then transformed into JSON schemas.
 The repository also contains helper scripts to import these schemas to the mSupply central server.
 
