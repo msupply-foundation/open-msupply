@@ -49,7 +49,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 sensor_id TEXT NOT NULL REFERENCES sensor(id),
                 store_id TEXT REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
-                timestamp {DATETIME} NOT NULL
+                timestamp {DATETIME} NOT NULL,
+                temperature_breach_id TEXT REFERENCES temperature_breach(id)
             );      
             "#
     )?;

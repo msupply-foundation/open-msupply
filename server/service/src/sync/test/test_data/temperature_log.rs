@@ -36,6 +36,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 .and_hms_opt(0, 0, 0)
                 .unwrap()
                 + Duration::seconds(47046),
+            temperature_breach_id: None,
         }),
     )]
 }
@@ -52,6 +53,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             location_id: None,
             date: NaiveDate::from_ymd_opt(2023, 7, 1).unwrap(),
             time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+            temperature_breach_id: None
         }),
     }]
 }

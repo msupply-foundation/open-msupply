@@ -72,7 +72,7 @@ mod test {
         temperature_log::{
             TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
         },
-        StorageConnectionManager, TemperatureLogRow,
+        SensorRow, StorageConnectionManager, TemperatureLogRow,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
@@ -156,7 +156,21 @@ mod test {
                             .and_hms_opt(0, 0, 0)
                             .unwrap()
                             + Duration::seconds(47046),
+                        temperature_breach_id: None,
                     },
+                    sensor_row: SensorRow {
+                        id: "sensor_a".to_string(),
+                        name: "sensor_a".to_string(),
+                        serial: "some_serial".to_string(),
+                        location_id: Some("location_a".to_string()),
+                        store_id: Some("store_a".to_string()),
+                        battery_level: None,
+                        log_interval: None,
+                        is_active: true,
+                        last_connection_timestamp: None,
+                    },
+                    location_row: None,
+                    temperature_breach_row: None,
                 }],
                 count: 1,
             })

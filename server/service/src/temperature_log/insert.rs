@@ -65,11 +65,12 @@ pub fn generate(
 ) -> TemperatureLogRow {
     TemperatureLogRow {
         id,
-        sensor_id: sensor_id,
+        sensor_id,
         store_id: Some(store_id.to_string()),
         location_id: None,
-        temperature: temperature,
-        timestamp: timestamp,
+        temperature,
+        timestamp,
+        temperature_breach_id: None,
     }
 }
 

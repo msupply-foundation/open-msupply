@@ -14,6 +14,7 @@ pub fn mock_temperature_log_1a() -> TemperatureLogRow {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(47046),
+        temperature_breach_id: None,
     }
 }
 
@@ -29,6 +30,7 @@ pub fn mock_temperature_log_1b() -> TemperatureLogRow {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(53046),
+        temperature_breach_id: None,
     }
 }
 
@@ -45,6 +47,7 @@ pub fn mock_temperature_log_2() -> TemperatureLogRow {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(47646),
+        temperature_breach_id: None,
     }
 }
 
@@ -61,6 +64,7 @@ pub fn mock_temperature_log_3a() -> TemperatureLogRow {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(48246),
+        temperature_breach_id: None,
     }
 }
 pub fn mock_temperature_log_3b() -> TemperatureLogRow {
@@ -75,6 +79,7 @@ pub fn mock_temperature_log_3b() -> TemperatureLogRow {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(54246),
+        temperature_breach_id: None,
     }
 }
 
@@ -91,6 +96,7 @@ pub fn mock_temperature_log_4() -> TemperatureLogRow {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(48846),
+        temperature_breach_id: None,
     }
 }
 
