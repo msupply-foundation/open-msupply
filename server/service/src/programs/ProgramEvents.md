@@ -9,8 +9,65 @@ For example, events are currently used for the following purposes:
 2. Based on encounter fields being set or not, the specific encounter is labelled as "Pending Lab Report" or "Lap Report Received"
 3. Extract / index data from a document so that it can be accessed without scanning through all documents
 
-When updating a document (currently only encounter documents) the backend extracts events from the document and puts these events into a `program_event` table.
+When updating a document (currently only program enrolment and encounter documents) the backend extracts events from the document and puts these events into a `program_event` table.
 This table can, for example, be used to find the current encounter status by querying the latest status event which is not scheduled in the future.
+
+## Event Config
+
+Which events are extracted can be configured using a JSON config.
+The event config is stored in the config column of the document registry, i.e. every document type can have an event config.
+The available config options are described in [document_registry_config.rs](../../../repository/src//db_diesel/document_registry_config.rs).
+
+For example, the following config schedules an event to become active in 90 days from the value in the `extension.dateTimeField` field.
+The event is only scheduled when the `extension.dateTimeField` field is set.
+
+```json
+{
+  "events": [
+    {
+      "type": "Schedule",
+      "conditions": [{ "field": "extension.dateTimeField", "isSet": true }],
+      "config": {
+        "datetimeField": "extension.dateTimeField",
+        "scheduleIn": { "days": 90 }
+      },
+      "event": {
+        "type": "status",
+        "data": "Status Data"
+      }
+    }
+  ]
+}
+```
+
+Similar an event can be configured to contain some data from a document when a certain condition is met.
+The following config extracts the value of a field `extension.dataField` if another field `extension.triggerField` is truthy:
+
+```json
+{
+  "events": [
+    {
+      "type": "Field",
+      "conditions": [
+        {
+          "field": "extension.triggerField",
+          "isTruthy": true
+        }
+      ],
+      "event": {
+        "type": "myEventName",
+        "dataField": "extension.dataField"
+      }
+    }
+  ]
+}
+```
+
+Note, how information can be extract using the event config is relatively limited.
+Thus, it's important that documents store data in a format that can easily be extracted into events.
+For example, the frontend implements some specialized components to calculated more complex values like `endOfSupply` which can then be extracted into events.
+
+Note, extracting events on the server has the advantage that the event config and the program event table can be updated without editing the documents (currently not implemented).
 
 ## Technical Details
 
