@@ -13,15 +13,17 @@ import {
   createQueryParamsStore,
   NonNegativeIntegerCell,
   CellProps,
-  getColumnLookup,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
   getLocationInputColumn,
   LocationRowFragment,
   useInitUnitStore,
+  useUnitVariant,
 } from '@openmsupply-client/system';
-import { getPackUnitEntryCell } from 'packages/system/src/Item/Components/ItemVariant';
+import { getPackUnitEntryCell } from '@openmsupply-client/system';
+import { InboundLineFragment } from '../../../api';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -79,14 +81,14 @@ const PackUnitEntryCell = getPackUnitEntryCell<DraftInboundLine>({
   getUnitName: r => r.item.unitName || null,
 });
 
-export const QuantityTableComponent: FC<TableProps> = ({
-  lines,
-  updateDraftLine,
-  isDisabled = false,
-}) => {
+export const QuantityTableComponent: FC<
+  TableProps & { item: InboundLineFragment['item'] | null }
+> = ({ item, lines, updateDraftLine, isDisabled = false }) => {
   // TODO this is not the right place for it, see comment in method
   useInitUnitStore();
+  const { unitVariantsExist } = useUnitVariant(item?.id || '', null);
   const theme = useTheme();
+
   const columns = useColumns<DraftInboundLine>(
     [
       getBatchColumn(updateDraftLine, theme),
@@ -101,7 +103,12 @@ export const QuantityTableComponent: FC<TableProps> = ({
         },
       ],
       {
-        ...getColumnLookup<DraftInboundLine>()['packSize'],
+        label: unitVariantsExist
+          ? 'label.unit-variant-and-pack-size'
+          : 'label.pack-size',
+        key: 'packSize',
+        width: 125,
+        align: ColumnAlign.Right,
         Cell: PackUnitEntryCell,
         setter: updateDraftLine,
       },
