@@ -43,6 +43,36 @@ interface OutboundLineEditFormProps {
   showZeroQuantityConfirmation: boolean;
 }
 
+const OutboundAlerts = ({
+  allocationWarning,
+  isAutoAllocated,
+  isZeroQuantity,
+}: {
+  allocationWarning?: string;
+  isAutoAllocated: boolean;
+  isZeroQuantity: boolean;
+}) => {
+  const showAllocationWarning = allocationWarning && isAutoAllocated;
+  const t = useTranslation('distribution');
+
+  if (!isZeroQuantity && !showAllocationWarning) return null;
+
+  return (
+    <Grid
+      display="flex"
+      justifyContent="center"
+      flex={1}
+      paddingTop={0.5}
+      paddingBottom={0.5}
+    >
+      {isZeroQuantity && (
+        <Alert severity="warning">{t('messages.confirm-zero-quantity')}</Alert>
+      )}
+      {showAllocationWarning && <InfoPanel message={allocationWarning} />}
+    </Grid>
+  );
+};
+
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   allocatedQuantity,
   onChangeItem,
@@ -179,18 +209,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
-          {showZeroQuantityConfirmation && (
-            <Grid display="flex" justifyContent="center" flex={1}>
-              <Alert severity="warning">
-                {t('messages.confirm-zero-quantity')}
-              </Alert>
-            </Grid>
-          )}
-          {allocationWarning && isAutoAllocated && (
-            <Grid display="flex" justifyContent="center" flex={1}>
-              <InfoPanel message={allocationWarning} />
-            </Grid>
-          )}
+          <OutboundAlerts
+            isZeroQuantity={showZeroQuantityConfirmation}
+            allocationWarning={allocationWarning}
+            isAutoAllocated={isAutoAllocated}
+          />
           <Grid container>
             <ModalLabel label={t('label.issue')} />
             <NonNegativeIntegerInput
