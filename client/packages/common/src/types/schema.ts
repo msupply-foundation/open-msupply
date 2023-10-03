@@ -60,11 +60,12 @@ export type ActivityLogFilterInput = {
 export type ActivityLogNode = {
   __typename: 'ActivityLogNode';
   datetime: Scalars['DateTime']['output'];
-  event?: Maybe<Scalars['String']['output']>;
+  from?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   recordId?: Maybe<Scalars['String']['output']>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
+  to?: Maybe<Scalars['String']['output']>;
   type: ActivityLogNodeType;
   user?: Maybe<UserNode>;
 };
