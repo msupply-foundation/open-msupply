@@ -90,6 +90,7 @@ export const useUnitVariant = (
   numberOfPacksFromQuantity: (totalQuantity: number) => number;
   numberOfPacksToTotalQuantity: (numPacks: number) => number;
   variantsControl?: VariantControl;
+  unitVariantsExist: boolean;
 } => {
   const [item, userSelectedVariantId, setUserSelectedVariant] = useUnitStore(
     state => [
@@ -106,6 +107,7 @@ export const useUnitVariant = (
       asPackUnit: packSize => commonAsPackUnit({ packSize, unitName, t }),
       numberOfPacksFromQuantity: totalQuantity => totalQuantity,
       numberOfPacksToTotalQuantity: numPacks => numPacks,
+      unitVariantsExist: false,
     };
   }
 
@@ -145,5 +147,6 @@ export const useUnitVariant = (
       setUserSelectedVariant: variantId =>
         setUserSelectedVariant({ itemId, variantId }),
     },
+    unitVariantsExist: true,
   };
 };

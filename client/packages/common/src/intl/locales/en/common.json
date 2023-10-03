@@ -233,6 +233,8 @@
   "label.packs-of_other": "packs of",
   "label.pack-quantity-issued": "# of packs Issued",
   "label.pack-size": "Pack Size",
+  "label.unit-variant-and-pack-size": "Unit Variant / Pack Size",
+  "label.enter-pack-size": "Enter Pack Size:",
   "label.patient": "Patient",
   "label.period": "Period",
   "label.phone": "Phone",
