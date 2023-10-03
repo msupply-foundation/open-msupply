@@ -11,6 +11,7 @@ import { usePrescription } from '../../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
 import {
+  DraftStockOutLineSeeds,
   UseDraftStockOutLinesControl,
   createDraftStockOutLine,
   createDraftStockOutLineFromStockLine,
@@ -22,6 +23,13 @@ export interface UseDraftPrescriptionLinesControl
   extends UseDraftStockOutLinesControl {
   updateNotes: (note: string) => void;
 }
+export const createDraftPrescriptionLine = ({
+  invoiceLine,
+}: DraftStockOutLineSeeds): DraftStockOutLine => ({
+  isCreated: !invoiceLine,
+  isUpdated: false,
+  ...invoiceLine,
+});
 
 export const useDraftPrescriptionLines = (
   item: DraftItem | null
@@ -54,7 +62,7 @@ export const useDraftPrescriptionLines = (
             ({ stockLine }) => stockLine?.id === batch.id
           );
           if (invoiceLine) {
-            return createDraftStockOutLine({
+            return createDraftPrescriptionLine({
               invoiceLine,
               invoiceId,
             });
