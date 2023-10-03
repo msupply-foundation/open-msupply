@@ -129,7 +129,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
             color="secondary"
             style={{ fontSize: 12, fontWeight: 500 }}
           >
-            {link ? <SimpleLink href={link}>{title}</SimpleLink> : title}
+            {link ? <SimpleLink to={link}>{title}</SimpleLink> : title}
           </Typography>
         </Grid>
       </Grid>
