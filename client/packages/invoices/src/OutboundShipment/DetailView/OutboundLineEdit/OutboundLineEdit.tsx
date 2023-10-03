@@ -129,20 +129,6 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     }
   };
 
-  const onNext = async () => {
-    await onSave();
-    if (!!placeholder) {
-      const infoSnack = info(t('message.placeholder-line'));
-      infoSnack();
-    }
-    if (mode === ModalMode.Update && next) setCurrentItem(next);
-    else if (mode === ModalMode.Create) setCurrentItem(null);
-    else onClose();
-    setIsDirty(false);
-    // Returning true here triggers the slide animation
-    return true;
-  };
-
   const onAllocate = (
     newVal: number,
     packSize: number | null,
@@ -165,7 +151,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
-  const handleSave = async () => {
+  const handleSave = async (onSaved: () => boolean | void) => {
     if (
       getAllocatedQuantity(draftStockOutLines) === 0 &&
       !showZeroQuantityConfirmation
@@ -181,10 +167,27 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         const infoSnack = info(t('message.placeholder-line'));
         infoSnack();
       }
-      onClose();
+      return onSaved();
     } catch (e) {
       // console.log(e);
     }
+  };
+
+  const onNext = async () => {
+    const onSaved = () => {
+      if (mode === ModalMode.Update && next) {
+        setCurrentItem(next);
+        return true;
+      }
+      if (mode === ModalMode.Create) {
+        setCurrentItem(null);
+        return true;
+      }
+      onClose();
+    };
+
+    // Returning true here triggers the slide animation
+    return await handleSave(onSaved);
   };
 
   return (
@@ -204,7 +207,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         <DialogButton
           disabled={!currentItem}
           variant="ok"
-          onClick={handleSave}
+          onClick={() => handleSave(onClose)}
         />
       }
       height={height}
