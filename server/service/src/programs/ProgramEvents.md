@@ -63,11 +63,11 @@ The following config extracts the value of a field `extension.dataField` if anot
 }
 ```
 
-Note, how information can be extract using the event config is relatively limited.
-Thus, it's important that documents store data in a format that can easily be extracted into events.
+Note, there are limited event config options available for extracting events.
+While this keeps the config simple, it's important that documents store data in a format that can easily be extracted into events.
 For example, the frontend implements some specialized components to calculated more complex values like `endOfSupply` which can then be extracted into events.
 
-Note, extracting events on the server has the advantage that the event config and the program event table can be updated without editing the documents (currently not implemented).
+Note, an advantage of extracting events on the server is that events can be updated without editing the documents (currently not implemented)
 
 ## Technical Details
 
