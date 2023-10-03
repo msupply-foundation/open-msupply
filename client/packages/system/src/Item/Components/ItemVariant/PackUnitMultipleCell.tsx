@@ -1,4 +1,5 @@
 import {
+  ArrayUtils,
   CellProps,
   InnerBasicCell,
   RecordWithId,
@@ -24,10 +25,11 @@ export const PackUnitMultipleCell =
       getUnitName(rowData)
     );
 
-    const packSizes = getPackSizes(rowData);
+    const packSizes = ArrayUtils.dedup(getPackSizes(rowData));
 
-    const packUnit =
-      packSizes.length > 1 ? '[multiple]' : asPackUnit(packSizes[0] ?? 0);
+    const displayValue =
+      packSizes.length > 1 ? '[muiltiple]' : asPackUnit(packSizes[0] ?? 1);
 
-    return <InnerBasicCell isError={isError} value={packUnit} />;
+    // Must have only one packSize
+    return <InnerBasicCell isError={isError} value={displayValue} />;
   };
