@@ -1,56 +1,35 @@
 import {
-  CellProps,
   ArrayUtils,
+  CellProps,
   InnerBasicCell,
+  RecordWithId,
 } from '@openmsupply-client/common';
 import { useUnitVariant } from '../../context';
-import { ItemRowFragment } from '../../api';
 import React from 'react';
 
-export interface PackUnitMultipleCellProps<T> {
-  id: string;
-  item?: ItemRowFragment | null;
-  lines?: T[];
-}
-
+// Shows '[multiple]' if there is more then one pack size
+// otherwise shows pack size or unit variant short name
 export const PackUnitMultipleCell =
-  <
-    L extends { packSize?: number | null; item?: ItemRowFragment | null },
-    T extends PackUnitMultipleCellProps<L>,
-  >({
+  <T extends RecordWithId>({
     getItemId,
-    getPackSize,
     getUnitName,
+    getPackSizes,
   }: {
     getItemId: (row: T) => string;
-    getPackSize: (row: T) => number;
+    getPackSizes: (row: T) => number[];
     getUnitName: (row: T) => string | null;
   }) =>
   ({ isError, rowData }: CellProps<T>) => {
-    if ('lines' in rowData) {
-      const { lines } = rowData;
-      if (!lines) return;
+    const { asPackUnit } = useUnitVariant(
+      getItemId(rowData),
+      getUnitName(rowData)
+    );
 
-      const packUnits = lines.map(line => {
-        const { asPackUnit } = useUnitVariant(
-          line.item?.id ?? '',
-          line.item?.unitName ?? null
-        );
+    const packSizes = ArrayUtils.dedup(getPackSizes(rowData));
 
-        return {
-          unit: asPackUnit(line?.packSize ?? 1),
-        };
-      });
-      return (
-        ArrayUtils.ifTheSameElseDefault(packUnits, 'unit', '[multiple]') ?? ''
-      );
-    } else {
-      const { asPackUnit } = useUnitVariant(
-        getItemId(rowData),
-        getUnitName(rowData)
-      );
-      const packUnit = asPackUnit(getPackSize(rowData));
+    const displayValue =
+      packSizes.length > 1 ? '[muiltiple]' : asPackUnit(packSizes[0] ?? 1);
 
-      return <InnerBasicCell isError={isError} value={packUnit} />;
-    }
+    // Must have only one packSize
+    return <InnerBasicCell isError={isError} value={displayValue} />;
   };
