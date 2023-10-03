@@ -562,7 +562,8 @@ mod test {
                     r#type: ActivityLogType::Repack,
                     record_id: Some(new_stock.id.clone()),
                     datetime: activity_log.activity_log_row.datetime,
-                    event: Some(updated_stock.id),
+                    change_from: Some(updated_stock.id),
+                    change_to: None
                 }
             }
         )

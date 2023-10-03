@@ -15,7 +15,8 @@ const ACTIVITY_LOG_1: (&'static str, &'static str) = (
     "store_ID": "store_b",
     "record_ID": "outbound_shipment_a",
     "datetime": "2020-01-01T00:00:00",
-    "event": ""
+    "change_to": "",
+    "change_from": ""
     }"#,
 );
 
@@ -28,7 +29,8 @@ const ACTIVITY_LOG_2: (&'static str, &'static str) = (
     "store_ID": "store_b",
     "record_ID": "inbound_shipment_a",
     "datetime": "2020-01-01T00:00:00",
-    "event": ""
+    "change_to": "",
+    "change_from": ""
     }"#,
 );
 
@@ -47,7 +49,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
-                event: None,
+                change_to: None,
+                change_from: None,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -63,7 +66,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
-                event: None,
+                change_to: None,
+                change_from: None,
             }),
         ),
     ]
@@ -84,7 +88,8 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
-                event: None,
+                change_to: None,
+                change_from: None,
             }),
         },
         TestSyncPushRecord {
@@ -100,7 +105,8 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
-                event: None,
+                change_to: None,
+                change_from: None,
             }),
         },
     ]
