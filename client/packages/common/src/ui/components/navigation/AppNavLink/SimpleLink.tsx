@@ -1,7 +1,7 @@
-import Link, { LinkProps } from '@mui/material/Link';
+import { Link } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
 
-export const SimpleLink = styled(Link)<LinkProps>(({}) => ({
+export const SimpleLink = styled(Link)(({}) => ({
   textDecoration: 'inherit',
   color: 'inherit',
   style: 'inherit',
