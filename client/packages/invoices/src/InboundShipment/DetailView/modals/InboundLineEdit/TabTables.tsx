@@ -13,7 +13,7 @@ import {
   createQueryParamsStore,
   NonNegativeIntegerCell,
   CellProps,
-  ColumnAlign,
+  getColumnLookupWithOverrides,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -102,16 +102,13 @@ export const QuantityTableComponent: FC<
           setter: updateDraftLine,
         },
       ],
-      {
+      getColumnLookupWithOverrides('packSize', {
         label: unitVariantsExist
           ? 'label.unit-variant-and-pack-size'
           : 'label.pack-size',
-        key: 'packSize',
-        width: 125,
-        align: ColumnAlign.Right,
         Cell: PackUnitEntryCell,
         setter: updateDraftLine,
-      },
+      }),
       [
         'unitQuantity',
         {
