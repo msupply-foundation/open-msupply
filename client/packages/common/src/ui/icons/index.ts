@@ -59,7 +59,6 @@ export { SidebarIcon } from './Sidebar';
 export { SearchIcon } from './Search';
 export { ZapIcon } from './Zap';
 export { LinkIcon } from './Link';
-export { FiberManualRecordIcon } from './FiberManualRecord';
 
 type Color =
   | 'inherit'
