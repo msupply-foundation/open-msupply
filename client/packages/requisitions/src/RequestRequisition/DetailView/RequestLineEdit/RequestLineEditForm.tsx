@@ -235,6 +235,7 @@ export const RequestLineEditForm = ({
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },
             }}
+
             minRows={7}
             maxRows={7}
           />

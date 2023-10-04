@@ -1,12 +1,10 @@
 import React, { useEffect } from 'react';
 import {
   AppSxProp,
-  CellProps,
   DataTable,
   NothingHere,
   useRowStyle,
   useTranslation,
-  Tooltip,
 } from '@openmsupply-client/common';
 import { RequestLineFragment, useHideOverStocked, useRequest } from '../api';
 import { isRequestLinePlaceholderRow } from '../../utils';
@@ -32,24 +30,6 @@ const useHighlightPlaceholderRows = (
     };
     setRowStyles(placeholders, style);
   }, [rows, setRowStyles]);
-};
-
-export const ItemCell = <T extends RequestLineFragment>({
-  rowData,
-}: CellProps<T>): React.ReactElement<CellProps<T>> => {
-  const itemName = rowData.item.name;
-  return (
-    <Tooltip title={String(itemName)} placement="bottom-start">
-      <div
-        style={{
-          overflow: 'hidden',
-          textOverflow: 'auto',
-        }}
-      >
-        {String(itemName)}
-      </div>
-    </Tooltip>
-  );
 };
 
 export const ContentArea = ({ onAddItem, onRowClick }: ContentAreaProps) => {

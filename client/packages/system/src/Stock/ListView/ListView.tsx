@@ -88,14 +88,14 @@ const StockListComponent: FC = () => {
         align: ColumnAlign.Center,
       },
       ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
-      {
-        key: 'itemName',
-        label: 'label.item_one',
-        Cell: ItemCell,
-        maxWidth: 350,
-        sortable: false,
-        align: ColumnAlign.Left,
-      },
+      [
+        'itemName',
+        {
+          accessor: ({ rowData }) => rowData.item.name,
+          Cell: ItemCell,
+          maxWidth: 350,
+        },
+      ],
       'batch',
       [
         'expiryDate',

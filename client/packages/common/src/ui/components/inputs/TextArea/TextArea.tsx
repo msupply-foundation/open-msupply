@@ -8,6 +8,7 @@ export const TextArea: FC<StandardTextFieldProps> = ({
   maxRows = 4,
   minRows = 4,
   InputProps,
+  rows,
   ...props
 }) => (
   <BasicTextInput
@@ -22,8 +23,9 @@ export const TextArea: FC<StandardTextFieldProps> = ({
     multiline
     value={value}
     onChange={onChange}
-    maxRows={maxRows}
-    minRows={minRows}
+    maxRows={rows ? undefined : maxRows}
+    minRows={rows ? undefined : minRows}
+    rows={rows}
     {...props}
   />
 );
