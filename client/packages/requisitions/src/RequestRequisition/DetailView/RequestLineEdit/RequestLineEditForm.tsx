@@ -68,7 +68,7 @@ export const RequestLineEditFormLayout = ({
       boxShadow={theme => theme.shadows[2]}
     >
       <Grid item xs={8} direction="column" justifyContent="space-between">
-        <Grid item xs={12}>
+        <Grid item xs={12} sx={{ mb: 2 }}>
           {Top}
         </Grid>
         <Grid
@@ -78,7 +78,13 @@ export const RequestLineEditFormLayout = ({
           direction="row"
           justifyContent="space-between"
         >
-          <Grid item xs={6}>
+          <Grid
+            item
+            xs={6}
+            flexDirection="column"
+            display="flex"
+            justifyContent="flex-end"
+          >
             {Left}
           </Grid>
           <Grid item xs={6}>
@@ -229,8 +235,8 @@ export const RequestLineEditForm = ({
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },
             }}
-            minRows={6.2}
-            maxRows={6.2}
+            minRows={7}
+            maxRows={7}
           />
         </>
       }
