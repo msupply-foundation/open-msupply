@@ -10,6 +10,7 @@ import {
   useUrlQueryParams,
   ColumnAlign,
   PositiveNumberCell,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
@@ -77,6 +78,7 @@ export const useInboundShipmentColumns = () => {
       [
         'itemName',
         {
+          Cell: TooltipTextCell,
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;

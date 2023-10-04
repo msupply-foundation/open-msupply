@@ -11,6 +11,7 @@ import {
   useCurrency,
   InvoiceLineNodeType,
   PositiveNumberCell,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { LocationRowFragment } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
@@ -94,6 +95,7 @@ export const useOutboundColumns = ({
       [
         'itemName',
         {
+          Cell: TooltipTextCell,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
