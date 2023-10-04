@@ -17,6 +17,7 @@ import {
   InvoiceLineNodeType,
   useNotification,
   InvoiceNodeStatus,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
@@ -190,6 +191,17 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     return await handleSave(onSaved);
   };
 
+  const hasOnHold = draftStockOutLines.some(
+    ({ stockLine }) =>
+      (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
+  );
+  const hasExpired = draftStockOutLines.some(
+    ({ stockLine }) =>
+      (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
+      !!stockLine?.expiryDate &&
+      DateUtils.isExpired(new Date(stockLine?.expiryDate))
+  );
+
   return (
     <Modal
       title={t(
@@ -228,6 +240,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           canAutoAllocate={canAutoAllocate}
           isAutoAllocated={isAutoAllocated}
           showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+          hasOnHold={hasOnHold}
+          hasExpired={hasExpired}
         />
 
         <TableWrapper

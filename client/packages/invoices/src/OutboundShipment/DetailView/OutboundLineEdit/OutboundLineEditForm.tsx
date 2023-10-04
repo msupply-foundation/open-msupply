@@ -11,10 +11,12 @@ import {
   Divider,
   Box,
   Typography,
-  InfoPanel,
   Alert,
   useFormatNumber,
   useDebounceCallback,
+  TypedTFunction,
+  LocaleKey,
+  AlertColor,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -41,21 +43,37 @@ interface OutboundLineEditFormProps {
   canAutoAllocate: boolean;
   isAutoAllocated: boolean;
   showZeroQuantityConfirmation: boolean;
+  hasOnHold: boolean;
+  hasExpired: boolean;
 }
 
-const OutboundAlerts = ({
-  allocationWarning,
-  isAutoAllocated,
-  isZeroQuantity,
-}: {
-  allocationWarning?: string;
-  isAutoAllocated: boolean;
-  isZeroQuantity: boolean;
-}) => {
-  const showAllocationWarning = allocationWarning && isAutoAllocated;
-  const t = useTranslation('distribution');
+type StockOutAlert = {
+  severity: AlertColor;
+  message: string;
+};
 
-  if (!isZeroQuantity && !showAllocationWarning) return null;
+const StockOutAlerts = ({
+  allocationAlerts,
+  showZeroQuantityConfirmation,
+  isAutoAllocated,
+}: {
+  allocationAlerts: StockOutAlert[];
+  showZeroQuantityConfirmation: boolean;
+  isAutoAllocated: boolean;
+}) => {
+  const t = useTranslation('distribution');
+  const alerts: StockOutAlert[] = showZeroQuantityConfirmation
+    ? [
+        {
+          message: t('messages.confirm-zero-quantity'),
+          severity: 'warning',
+        },
+      ]
+    : isAutoAllocated
+    ? allocationAlerts
+    : [];
+
+  if (alerts.length === 0) return null;
 
   return (
     <Grid
@@ -64,13 +82,58 @@ const OutboundAlerts = ({
       flex={1}
       paddingTop={0.5}
       paddingBottom={0.5}
+      flexDirection="column"
+      gap={0.5}
     >
-      {isZeroQuantity && (
-        <Alert severity="warning">{t('messages.confirm-zero-quantity')}</Alert>
-      )}
-      {showAllocationWarning && <InfoPanel message={allocationWarning} />}
+      {alerts.map(({ message, severity }) => (
+        <Alert severity={severity} key={message}>
+          {message}
+        </Alert>
+      ))}
     </Grid>
   );
+};
+
+const getAllocationAlerts = (
+  requestedQuantity: number,
+  allocatedQuantity: number,
+  placeholderQuantity: number,
+  hasOnHold: boolean,
+  hasExpired: boolean,
+  format: (value: number, options?: Intl.NumberFormatOptions) => string,
+  t: TypedTFunction<LocaleKey>
+) => {
+  const alerts: StockOutAlert[] = [];
+
+  const unavailableStockWarning = `${
+    hasOnHold ? t('messages.stock-on-hold') : ''
+  } ${hasExpired ? t('messages.stock-expired') : ''}`.trim();
+
+  if (unavailableStockWarning && requestedQuantity > 0) {
+    alerts.push({
+      message: unavailableStockWarning,
+      severity: 'info',
+    });
+  }
+
+  if (allocatedQuantity !== requestedQuantity && allocatedQuantity > 0) {
+    alerts.push({
+      message: t('messages.over-allocated', {
+        allocatedQuantity: format(allocatedQuantity),
+        requestedQuantity: format(requestedQuantity),
+      }),
+      severity: 'warning',
+    });
+    return alerts;
+  }
+  if (placeholderQuantity > 0) {
+    alerts.push({
+      message: t('messages.placeholder-allocated', { placeholderQuantity }),
+      severity: 'info',
+    });
+  }
+
+  return alerts;
 };
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -84,17 +147,13 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   canAutoAllocate,
   isAutoAllocated,
   showZeroQuantityConfirmation,
+  hasOnHold,
+  hasExpired,
 }) => {
   const t = useTranslation('distribution');
-  const [allocationWarning, setAllocationWarning] = useState<
-    string | undefined
-  >();
-  const { format } = useFormatNumber();
-  const quantity =
-    allocatedQuantity /
-    Math.abs(Number(packSizeController.selected?.value || 1));
-
+  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueQuantity, setIssueQuantity] = useState(0);
+  const { format } = useFormatNumber();
   const { items } = useOutbound.line.rows();
 
   const onChangePackSize = (newPackSize: number) => {
@@ -107,26 +166,15 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   };
 
   const unit = item?.unitName ?? t('label.unit');
-  const getAllocationWarning = (
-    requestedQuantity: number,
-    allocatedQuantity: number,
-    placeholderQuantity: number
-  ) => {
-    if (allocatedQuantity !== requestedQuantity) {
-      return t('messages.over-allocated', {
-        allocatedQuantity: format(allocatedQuantity),
-        requestedQuantity: format(requestedQuantity),
-      });
-    }
-    if (placeholderQuantity > 0) {
-      return t('messages.placeholder-allocated', { placeholderQuantity });
-    }
 
-    return undefined;
+  const updateIssueQuantity = (quantity: number) => {
+    setIssueQuantity(
+      quantity / Math.abs(Number(packSizeController.selected?.value || 1))
+    );
   };
 
-  const debouncedQuantityUpdate = useDebounceCallback(
-    quantity => setIssueQuantity(quantity),
+  const debouncedSetAllocationAlerts = useDebounceCallback(
+    warning => setAllocationAlerts(warning),
     []
   );
 
@@ -142,13 +190,17 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
         (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
         0
       ) ?? 0;
-    const warning = getAllocationWarning(
+    const alerts = getAllocationAlerts(
       quantity * (packSize === -1 ? 1 : packSize),
       allocatedQuantity,
-      placeholderLine?.numberOfPacks ?? 0
+      placeholderLine?.numberOfPacks ?? 0,
+      hasOnHold,
+      hasExpired,
+      format,
+      t
     );
-    setAllocationWarning(warning);
-    debouncedQuantityUpdate(allocatedQuantity);
+    debouncedSetAllocationAlerts(alerts);
+    updateIssueQuantity(allocatedQuantity);
   };
 
   const handleIssueQuantityChange = (quantity: number) => {
@@ -157,8 +209,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   };
 
   useEffect(() => {
-    if (!isAutoAllocated) setIssueQuantity(quantity);
-  }, [packSizeController.selected?.value, quantity]);
+    if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
+  }, [packSizeController.selected?.value, allocatedQuantity]);
 
   return (
     <Grid container gap="4px">
@@ -209,9 +261,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
-          <OutboundAlerts
-            isZeroQuantity={showZeroQuantityConfirmation}
-            allocationWarning={allocationWarning}
+          <StockOutAlerts
+            allocationAlerts={allocationAlerts}
+            showZeroQuantityConfirmation={showZeroQuantityConfirmation}
             isAutoAllocated={isAutoAllocated}
           />
           <Grid container>
