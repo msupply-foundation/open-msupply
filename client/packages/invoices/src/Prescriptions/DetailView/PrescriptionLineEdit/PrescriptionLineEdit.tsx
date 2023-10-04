@@ -55,8 +55,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
   const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
     useState(false);
-  const { mutateAsync } = usePrescription.line.save();
   const { status } = usePrescription.document.fields('status');
+  const { mutateAsync } = usePrescription.line.save(status);
   const isDisabled = usePrescription.utils.isDisabled();
   const {
     draftStockOutLines,
