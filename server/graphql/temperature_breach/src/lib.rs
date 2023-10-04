@@ -1,6 +1,3 @@
-mod mutations;
-use self::mutations::*;
-
 use async_graphql::*;
 use graphql_core::{
     pagination::PaginationInput,
@@ -61,30 +58,6 @@ impl TemperatureBreachQueries {
     }
 }
 
-#[derive(Default, Clone)]
-pub struct TemperatureBreachMutations;
-
-#[Object]
-impl TemperatureBreachMutations {
-    async fn insert_temperature_breach(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertTemperatureBreachInput,
-    ) -> Result<InsertTemperatureBreachResponse> {
-        insert_temperature_breach(ctx, &store_id, input)
-    }
-
-    async fn update_temperature_breach(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UpdateTemperatureBreachInput,
-    ) -> Result<UpdateTemperatureBreachResponse> {
-        update_temperature_breach(ctx, &store_id, input)
-    }
-}
-
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
@@ -92,15 +65,12 @@ mod test {
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
     //use repository::mock::mock_temperature_breachs;
+    use repository::PaginationOption;
     use repository::{
         mock::MockDataInserts,
-        temperature_breach::{
-            TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort,
-            TemperatureBreachSortField,
-        },
+        temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort},
         StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
     };
-    use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
 
     use service::{
@@ -243,116 +213,6 @@ mod test {
             &settings,
             query,
             &None,
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-    }
-
-    #[actix_rt::test]
-    async fn test_graphql_temperature_breachs_inputs() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
-            TemperatureBreachQueries,
-            EmptyMutation,
-            "test_graphql_temperature_breach_inputs",
-            MockDataInserts::all(),
-        )
-        .await;
-
-        let query = r#"
-        query(
-            $sort: [TemperatureBreachSortInput]
-            $filter: TemperatureBreachFilterInput
-          ) {
-            temperatureBreachs(sort: $sort, filter: $filter, storeId: \"store_a\") {
-              __typename
-            }
-          }
-
-        "#;
-
-        let expected = json!({
-              "temperatureBreachs": {
-                  "__typename": "TemperatureBreachConnector"
-              }
-          }
-        );
-
-        // Test sort by start_timestamp no desc
-        let test_service = TestService(Box::new(|_, _, sort| {
-            assert_eq!(
-                sort,
-                Some(Sort {
-                    key: TemperatureBreachSortField::StartTimestamp,
-                    desc: None
-                })
-            );
-            Ok(ListResult::empty())
-        }));
-
-        let variables = json!({
-          "sort": [{
-            "key": "startTimestamp",
-          }]
-        });
-
-        assert_graphql_query!(
-            &settings,
-            query,
-            &Some(variables),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // Test sort by end_timestamp with desc
-        let test_service = TestService(Box::new(|_, _, sort| {
-            assert_eq!(
-                sort,
-                Some(Sort {
-                    key: TemperatureBreachSortField::EndTimestamp,
-                    desc: Some(true)
-                })
-            );
-            Ok(ListResult::empty())
-        }));
-
-        let variables = json!({
-          "sort": [{
-            "key": "endTimestamp",
-            "desc": true
-          }]
-        });
-
-        assert_graphql_query!(
-            &settings,
-            query,
-            &Some(variables),
-            &expected,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        // Test filter
-        let test_service = TestService(Box::new(|_, filter, _| {
-            assert_eq!(
-                filter,
-                Some(
-                    TemperatureBreachFilter::new()
-                        .store_id(EqualFilter::equal_to("store_a"))
-                        .sensor_id(EqualFilter::equal_to("match_sensor"))
-                )
-            );
-            Ok(ListResult::empty())
-        }));
-
-        let variables = json!({
-          "filter": {
-            "sensorId": { "equalTo": "match_sensor"},
-          }
-        });
-
-        assert_graphql_query!(
-            &settings,
-            query,
-            &Some(variables),
             &expected,
             Some(service_provider(test_service, &connection_manager))
         );
