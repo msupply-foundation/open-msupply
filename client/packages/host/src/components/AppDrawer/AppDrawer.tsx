@@ -162,8 +162,6 @@ export const AppDrawer: React.FC = () => {
   const onHoverOver = () => {
     // Hover events not applicable on mobile devices
     if (EnvUtils.isTouchScreen) return;
-
-    if (EnvUtils.isTouchScreen) return;
     if (drawer.isOpen) return;
 
     drawer.open();
