@@ -24,7 +24,7 @@ export const programEnrolmentLabelAccessor: ColumnDataAccessor<
   PatientRowFragment,
   string[]
 > = ({ rowData }): string[] => {
-  return rowData.programEnrolments.map(it => {
+  return rowData.programEnrolments.nodes.map(it => {
     const programEnrolmentId = it.programEnrolmentId
       ? ` (${it.programEnrolmentId})`
       : '';

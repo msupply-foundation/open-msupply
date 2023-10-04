@@ -1,6 +1,7 @@
 import { usePatient } from './usePatient';
 import { usePatients, usePatientsPromise } from './usePatients';
 import { usePatientsAll } from './usePatientsAll';
+import { usePatientFullSearch } from './usePatientFullSearch';
 import { useInsertPatient } from './useInsertPatient';
 import { useUpdatePatient } from './useUpdatePatient';
 import { useInsertProgramPatient } from './useInsertProgramPatient';
@@ -11,6 +12,7 @@ export const Document = {
   usePatient,
   usePatients,
   usePatientsAll,
+  usePatientFullSearch,
   useInsertPatient,
   useUpdatePatient,
   useInsertProgramPatient,

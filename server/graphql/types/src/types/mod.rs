@@ -81,6 +81,9 @@ pub use self::repack::*;
 pub mod program;
 pub use self::program::*;
 
+pub mod program_node;
+pub use self::program_node::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]
