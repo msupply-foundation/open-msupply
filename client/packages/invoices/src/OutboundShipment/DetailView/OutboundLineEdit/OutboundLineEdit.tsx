@@ -76,7 +76,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     setDraftStockOutLines,
     isLoading,
   } = useDraftOutboundLines(currentItem);
-  const packSizeController = usePackSizeController(draftStockOutLines);
+  const packSizeController = usePackSizeController(
+    currentItem,
+    draftStockOutLines
+  );
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
