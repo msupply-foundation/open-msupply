@@ -100,6 +100,7 @@ const ScrollFix = () => {
 
 /** Config data to pass to all json form controls */
 export type JsonFormsConfig = {
+  /** Document name, if data is loaded from a document. */
   documentName?: string;
   patientId?: string;
   store?: UserStoreNodeFragment;
@@ -107,6 +108,10 @@ export type JsonFormsConfig = {
     id: string;
     name: string;
   };
+  /**
+   * The initial data of the form before doing any modifications.
+   */
+  initialData?: JsonData;
 };
 
 const FormComponent = ({
