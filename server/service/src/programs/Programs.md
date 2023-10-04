@@ -81,6 +81,15 @@ For example:
 }
 ```
 
+## Managing JSON Schemas
+
+We have a [private git repository](https://github.com/openmsupply/programschemas) for managing JSON schemas, UI schemas and program event configs for different clients.
+In this repository, JSON schemas can be defined conveniently in TypeScript and are then transformed into JSON schemas.
+The repository also contains helper scripts to import these schemas to the mSupply central server.
+
+The open mSupply codebase (this repo) also contains some default JSON schemas.
+These schemas are imported from the external `programschemas` repository, please don't edit these schemas in this repository.
+
 ## Document registry
 
 In general, documents are related to other documents, e.g. an encounter document is related to a certain type of program enrolment document.
