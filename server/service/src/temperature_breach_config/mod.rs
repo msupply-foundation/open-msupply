@@ -1,15 +1,4 @@
-use self::{
-    // no delete: temperature_breach_configs can't be deleted - just made inactive
-    insert::{
-        insert_temperature_breach_config, InsertTemperatureBreachConfig,
-        InsertTemperatureBreachConfigError,
-    },
-    query::{get_temperature_breach_config, get_temperature_breach_configs},
-    update::{
-        update_temperature_breach_config, UpdateTemperatureBreachConfig,
-        UpdateTemperatureBreachConfigError,
-    },
-};
+use self::query::{get_temperature_breach_config, get_temperature_breach_configs};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
@@ -18,10 +7,7 @@ use repository::temperature_breach_config::{
 };
 use repository::PaginationOption;
 
-pub mod insert;
 pub mod query;
-pub mod update;
-mod validate;
 
 pub trait TemperatureBreachConfigServiceTrait: Sync + Send {
     fn get_temperature_breach_configs(
@@ -40,22 +26,6 @@ pub trait TemperatureBreachConfigServiceTrait: Sync + Send {
         id: String,
     ) -> Result<TemperatureBreachConfig, SingleRecordError> {
         get_temperature_breach_config(ctx, id)
-    }
-
-    fn insert_temperature_breach_config(
-        &self,
-        ctx: &ServiceContext,
-        input: InsertTemperatureBreachConfig,
-    ) -> Result<TemperatureBreachConfig, InsertTemperatureBreachConfigError> {
-        insert_temperature_breach_config(ctx, input)
-    }
-
-    fn update_temperature_breach_config(
-        &self,
-        ctx: &ServiceContext,
-        input: UpdateTemperatureBreachConfig,
-    ) -> Result<TemperatureBreachConfig, UpdateTemperatureBreachConfigError> {
-        update_temperature_breach_config(ctx, input)
     }
 }
 
