@@ -330,10 +330,11 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
       const input = {
         insertOutboundShipmentLines: draftOutboundLines
           .filter(
-            ({ type, isCreated, numberOfPacks }) =>
+            ({ type, isCreated, numberOfPacks, isUpdated }) =>
               isCreated &&
               type === InvoiceLineNodeType.StockOut &&
-              (numberOfPacks > 0 || status === InvoiceNodeStatus.New)
+              (numberOfPacks > 0 ||
+                (status === InvoiceNodeStatus.New && isUpdated))
           )
           .map(outboundParsers.toInsertLine),
         updateOutboundShipmentLines: draftOutboundLines
@@ -351,7 +352,8 @@ export const getOutboundQueries = (sdk: Sdk, storeId: string) => ({
               !isCreated &&
               isUpdated &&
               type === InvoiceLineNodeType.StockOut &&
-              numberOfPacks === 0
+              numberOfPacks === 0 &&
+              !(status === InvoiceNodeStatus.New && isUpdated)
           )
           .map(outboundParsers.toDeleteLine),
         insertOutboundShipmentUnallocatedLines: draftOutboundLines

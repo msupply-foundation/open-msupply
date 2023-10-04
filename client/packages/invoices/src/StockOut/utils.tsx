@@ -167,6 +167,7 @@ export const allocateQuantities =
     const newDraftStockOutLines = draftStockOutLines.map(batch => ({
       ...batch,
       numberOfPacks: 0,
+      isUpdated: batch.numberOfPacks > 0,
     }));
     const validBatches = newDraftStockOutLines
       .filter(
