@@ -11,12 +11,8 @@ import {
   Divider,
   Box,
   Typography,
-  Alert,
   useFormatNumber,
   useDebounceCallback,
-  TypedTFunction,
-  LocaleKey,
-  AlertColor,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -24,7 +20,12 @@ import {
 } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';
 import { DraftItem } from '../../..';
-import { PackSizeController } from '../../../StockOut';
+import {
+  PackSizeController,
+  StockOutAlert,
+  StockOutAlerts,
+  getAllocationAlerts,
+} from '../../../StockOut';
 import { DraftStockOutLine } from '../../../types';
 import { isA } from '../../../utils';
 
@@ -46,95 +47,6 @@ interface OutboundLineEditFormProps {
   hasOnHold: boolean;
   hasExpired: boolean;
 }
-
-type StockOutAlert = {
-  severity: AlertColor;
-  message: string;
-};
-
-const StockOutAlerts = ({
-  allocationAlerts,
-  showZeroQuantityConfirmation,
-  isAutoAllocated,
-}: {
-  allocationAlerts: StockOutAlert[];
-  showZeroQuantityConfirmation: boolean;
-  isAutoAllocated: boolean;
-}) => {
-  const t = useTranslation('distribution');
-  const alerts: StockOutAlert[] = showZeroQuantityConfirmation
-    ? [
-        {
-          message: t('messages.confirm-zero-quantity'),
-          severity: 'warning',
-        },
-      ]
-    : isAutoAllocated
-    ? allocationAlerts
-    : [];
-
-  if (alerts.length === 0) return null;
-
-  return (
-    <Grid
-      display="flex"
-      justifyContent="center"
-      flex={1}
-      paddingTop={0.5}
-      paddingBottom={0.5}
-      flexDirection="column"
-      gap={0.5}
-    >
-      {alerts.map(({ message, severity }) => (
-        <Alert severity={severity} key={message}>
-          {message}
-        </Alert>
-      ))}
-    </Grid>
-  );
-};
-
-const getAllocationAlerts = (
-  requestedQuantity: number,
-  allocatedQuantity: number,
-  placeholderQuantity: number,
-  hasOnHold: boolean,
-  hasExpired: boolean,
-  format: (value: number, options?: Intl.NumberFormatOptions) => string,
-  t: TypedTFunction<LocaleKey>
-) => {
-  const alerts: StockOutAlert[] = [];
-
-  const unavailableStockWarning = `${
-    hasOnHold ? t('messages.stock-on-hold') : ''
-  } ${hasExpired ? t('messages.stock-expired') : ''}`.trim();
-
-  if (unavailableStockWarning && requestedQuantity > 0) {
-    alerts.push({
-      message: unavailableStockWarning,
-      severity: 'info',
-    });
-  }
-
-  if (allocatedQuantity !== requestedQuantity && allocatedQuantity > 0) {
-    alerts.push({
-      message: t('messages.over-allocated', {
-        allocatedQuantity: format(allocatedQuantity),
-        requestedQuantity: format(requestedQuantity),
-      }),
-      severity: 'warning',
-    });
-    return alerts;
-  }
-  if (placeholderQuantity > 0) {
-    alerts.push({
-      message: t('messages.placeholder-allocated', { placeholderQuantity }),
-      severity: 'info',
-    });
-  }
-
-  return alerts;
-};
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   allocatedQuantity,
@@ -160,8 +72,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     const packSize = newPackSize === -1 ? 1 : newPackSize;
     const newAllocatedQuantity =
       newPackSize === 0 ? 0 : Math.round(allocatedQuantity / packSize);
-    packSizeController.setPackSize(newPackSize);
 
+    packSizeController.setPackSize(newPackSize);
     allocate(newAllocatedQuantity, newPackSize);
   };
 
@@ -169,7 +81,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
   const updateIssueQuantity = (quantity: number) => {
     setIssueQuantity(
-      quantity / Math.abs(Number(packSizeController.selected?.value || 1))
+      Math.round(
+        quantity / Math.abs(Number(packSizeController.selected?.value || 1))
+      )
     );
   };
 
