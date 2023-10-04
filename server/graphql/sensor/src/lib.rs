@@ -66,15 +66,6 @@ pub struct SensorMutations;
 
 #[Object]
 impl SensorMutations {
-    async fn insert_sensor(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertSensorInput,
-    ) -> Result<InsertSensorResponse> {
-        insert_sensor(ctx, &store_id, input)
-    }
-
     async fn update_sensor(
         &self,
         ctx: &Context<'_>,
@@ -90,7 +81,6 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
-    //use repository::mock::mock_sensors;
     use repository::{
         mock::MockDataInserts,
         sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},

@@ -1,6 +1,4 @@
 use self::{
-    // no delete: sensors can't be deleted - just made inactive
-    insert::{insert_sensor, InsertSensor, InsertSensorError},
     query::{get_sensor, get_sensors},
     update::{update_sensor, UpdateSensor, UpdateSensorError},
 };
@@ -10,7 +8,6 @@ use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::sensor::{Sensor, SensorFilter, SensorSort};
 use repository::PaginationOption;
 
-pub mod insert;
 pub mod query;
 pub mod update;
 mod validate;
@@ -28,14 +25,6 @@ pub trait SensorServiceTrait: Sync + Send {
 
     fn get_sensor(&self, ctx: &ServiceContext, id: String) -> Result<Sensor, SingleRecordError> {
         get_sensor(ctx, id)
-    }
-
-    fn insert_sensor(
-        &self,
-        ctx: &ServiceContext,
-        input: InsertSensor,
-    ) -> Result<Sensor, InsertSensorError> {
-        insert_sensor(ctx, input)
     }
 
     fn update_sensor(

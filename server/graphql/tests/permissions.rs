@@ -23,7 +23,6 @@ mod permission_tests {
     use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
     use graphql_stocktake_line::StocktakeLineMutations;
     //use graphql_temperature_breach::TemperatureBreachQueries;
-    //use graphql_temperature_breach_config::{TemperatureBreachConfigMutations, TemperatureBreachConfigQueries};
     //use graphql_temperature_log::TemperatureLogQueries;
 
     // TODO for some reason Rust complained when using the Full{Query|Mutation} definition from
@@ -49,7 +48,6 @@ mod permission_tests {
         pub InvoiceLineMutations,
         pub LocationMutations,
         pub SensorMutations,
-        //pub TemperatureBreachConfigMutations,
         pub StocktakeMutations,
         pub StocktakeLineMutations,
         pub BatchMutations,
@@ -79,7 +77,6 @@ mod permission_tests {
             InvoiceLineMutations,
             LocationMutations,
             SensorMutations,
-            //TemperatureBreachConfigMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,
@@ -763,36 +760,6 @@ mod permission_tests {
               }"#,
                 expected: ResourceAccessRequest {
                     resource: Resource::MutateLocation,
-                    store_id: Some("some".to_string()),
-                },
-            },
-            TestData {
-                name: "insertSensor",
-                query: r#"mutation Mutation {
-              insertSensor(input: {id: "", serial: ""}, storeId: "") {
-                ... on SensorNode {
-                  id
-                  name
-                }
-              }
-            }"#,
-                expected: ResourceAccessRequest {
-                    resource: Resource::MutateSensor,
-                    store_id: Some("some".to_string()),
-                },
-            },
-            TestData {
-                name: "insertSensor",
-                query: r#"mutation Mutation {
-              insertSensor(input: {id: "", serial: ""}, storeId: "") {
-                ... on SensorNode {
-                  id
-                  name
-                }
-              }
-            }"#,
-                expected: ResourceAccessRequest {
-                    resource: Resource::MutateSensor,
                     store_id: Some("some".to_string()),
                 },
             },
