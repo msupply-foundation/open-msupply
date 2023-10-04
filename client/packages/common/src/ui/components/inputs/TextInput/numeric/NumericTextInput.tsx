@@ -4,6 +4,7 @@ import { BasicTextInput } from '../BasicTextInput';
 export interface NumericTextInputProps
   extends Omit<StandardTextFieldProps, 'onChange'> {
   onChange?: (value: number | undefined) => void;
+  focusOnRender?: boolean;
   width?: number;
 }
 

@@ -20,9 +20,8 @@ import {
   useUnitVariant,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
-import { DraftItem } from '../../..';
+import { DraftItem, DraftStockOutLine } from '../../..';
 import { PackSizeController } from '../../../StockOut';
-import { DraftStockOutLine } from 'packages/invoices/src/types';
 
 interface PrescriptionLineEditFormProps {
   allocatedQuantity: number;

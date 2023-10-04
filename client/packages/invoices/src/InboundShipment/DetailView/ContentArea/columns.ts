@@ -13,8 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   LocationRowFragment,
-  PackUnitMultipleCell,
-  getPackUnitCell,
+  PackUnitCell,
   useInitUnitStore,
 } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
@@ -239,14 +238,14 @@ export const useInboundShipmentColumns = () => {
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackUnitMultipleCell({
+        Cell: PackUnitCell({
           getItemId: row => {
             if ('lines' in row) return '';
             else return row?.item?.id;
           },
-          getPackSize: row => {
-            if ('lines' in row) return 1;
-            else return row?.packSize || 1;
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row?.packSize ?? 1];
           },
           getUnitName: row => {
             if ('lines' in row) return null;
@@ -301,10 +300,10 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
       key: 'packUnit',
       label: 'label.pack',
       sortable: false,
-      Cell: getPackUnitCell({
+      Cell: PackUnitCell({
         getItemId: row => row?.item.id,
-        getPackSize: row => {
-          return row?.packSize || 1;
+        getPackSizes: row => {
+          return [row?.packSize ?? 1];
         },
         getUnitName: row => row?.item.unitName ?? null,
       }),
