@@ -5,11 +5,11 @@ import {
   ExpiryDateCell,
   CheckCell,
   CurrencyCell,
-  Column,
   useCurrency,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
-import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
+import { PackQuantityCell } from '../../../StockOut';
+import { PackUnitCell } from '@openmsupply-client/system';
 
 export const useOutboundLineEditColumns = ({
   onChange,
@@ -41,15 +41,6 @@ export const useOutboundLineEditColumns = ({
           width: 70,
         },
       ],
-      ['packSize', { width: 90 }],
-      [
-        'sellPricePerPack',
-        {
-          Cell: CurrencyCell,
-          formatter: sellPrice => c(Number(sellPrice)).format(),
-          width: 120,
-        },
-      ],
       {
         label: 'label.on-hold',
         key: 'onHold',
@@ -58,6 +49,14 @@ export const useOutboundLineEditColumns = ({
         align: ColumnAlign.Center,
         width: 80,
       },
+      [
+        'sellPricePerPack',
+        {
+          Cell: CurrencyCell,
+          formatter: sellPrice => c(Number(sellPrice)).format(),
+          width: 120,
+        },
+      ],
       {
         Cell: PositiveNumberCell,
         label: 'label.in-store',
@@ -73,6 +72,16 @@ export const useOutboundLineEditColumns = ({
         align: ColumnAlign.Right,
         width: 85,
         accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
+      },
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackUnitCell({
+          getItemId: row => row?.item.id,
+          getPackSizes: row => [row.packSize ?? 1],
+          getUnitName: row => row?.item.unitName ?? null,
+        }),
       },
       [
         'unitQuantity',
@@ -100,35 +109,3 @@ export const useOutboundLineEditColumns = ({
 
   return columns;
 };
-
-export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
-  useColumns([
-    'batch',
-    'expiryDate',
-    [
-      'locationName',
-      {
-        accessor: ({ rowData }) => rowData.location?.name,
-      },
-    ],
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item?.unitName,
-      },
-    ],
-    'numberOfPacks',
-    'packSize',
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
-      },
-    ],
-    [
-      'sellPricePerUnit',
-      {
-        accessor: ({ rowData }) => rowData.sellPricePerPack,
-      },
-    ],
-  ]);
