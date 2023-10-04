@@ -10,10 +10,18 @@ export default {
 
 const Template: ComponentStory<typeof Alert> = () => (
   <Box sx={{ width: '80%' }} gap={2}>
-    <Alert severity="success">This is a success message</Alert>
-    <Alert severity="info">This is an info message</Alert>
-    <Alert severity="warning">This is a warning message</Alert>
-    <Alert severity="error">This is an error message</Alert>
+    <Box paddingBottom={1} display="flex">
+      <Alert severity="success">This is a success message</Alert>
+    </Box>
+    <Box paddingBottom={1} display="flex">
+      <Alert severity="info">This is an info message</Alert>
+    </Box>
+    <Box paddingBottom={1} display="flex">
+      <Alert severity="warning">This is a warning message</Alert>
+    </Box>
+    <Box paddingBottom={1} display="flex">
+      <Alert severity="error">This is an error message</Alert>
+    </Box>
   </Box>
 );
 
