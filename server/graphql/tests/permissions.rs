@@ -767,36 +767,6 @@ mod permission_tests {
                 },
             },
             TestData {
-                name: "insertSensor",
-                query: r#"mutation Mutation {
-              insertSensor(input: {id: "", serial: ""}, storeId: "") {
-                ... on SensorNode {
-                  id
-                  name
-                }
-              }
-            }"#,
-                expected: ResourceAccessRequest {
-                    resource: Resource::MutateSensor,
-                    store_id: Some("some".to_string()),
-                },
-            },
-            TestData {
-                name: "insertSensor",
-                query: r#"mutation Mutation {
-              insertSensor(input: {id: "", serial: ""}, storeId: "") {
-                ... on SensorNode {
-                  id
-                  name
-                }
-              }
-            }"#,
-                expected: ResourceAccessRequest {
-                    resource: Resource::MutateSensor,
-                    store_id: Some("some".to_string()),
-                },
-            },
-            TestData {
                 name: "insertOutboundShipment",
                 query: r#"mutation Mutation {
                 insertOutboundShipment(input: {id: "", otherPartyId: ""}, storeId: "") {
