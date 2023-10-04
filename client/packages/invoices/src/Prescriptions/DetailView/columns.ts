@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   LocationRowFragment,
-  PackUnitMultipleCell,
+  PackUnitCell,
   useInitUnitStore,
 } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
@@ -241,14 +241,14 @@ export const usePrescriptionColumn = ({
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackUnitMultipleCell({
+        Cell: PackUnitCell({
           getItemId: row => {
             if ('lines' in row) return '';
             else return row?.item?.id;
           },
-          getPackSize: row => {
-            if ('lines' in row) return 1;
-            else return row?.packSize || 1;
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row.packSize ?? 1];
           },
           getUnitName: row => {
             if ('lines' in row) return null;

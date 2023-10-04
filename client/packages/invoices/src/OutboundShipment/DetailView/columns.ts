@@ -14,8 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   LocationRowFragment,
-  PackUnitMultipleCell,
-  getPackUnitCell,
+  PackUnitCell,
   useInitUnitStore,
 } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
@@ -271,14 +270,14 @@ export const useOutboundColumns = ({
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackUnitMultipleCell({
+        Cell: PackUnitCell({
           getItemId: row => {
             if ('lines' in row) return '';
             else return row?.item?.id;
           },
-          getPackSize: row => {
-            if ('lines' in row) return 1;
-            else return row?.packSize || 1;
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row.packSize ?? 1];
           },
           getUnitName: row => {
             if ('lines' in row) return null;
@@ -381,11 +380,9 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
       key: 'packUnit',
       label: 'label.pack',
       sortable: false,
-      Cell: getPackUnitCell({
+      Cell: PackUnitCell({
         getItemId: row => row?.item.id,
-        getPackSize: row => {
-          return row?.packSize || 1;
-        },
+        getPackSizes: row => [row.packSize ?? 1],
         getUnitName: row => row?.item.unitName ?? null,
       }),
     },

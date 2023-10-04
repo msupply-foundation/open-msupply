@@ -26,7 +26,7 @@ interface RequestLineEditFormProps {
   draftLine: DraftRequestLine | null;
   variantsControl?: VariantControl;
   numberOfPacksFromQuantity: (totalQuantity: number) => number;
-  numberOfPacksToQuantity: (numPacks: number) => number;
+  numberOfPacksToTotalQuantity: (numPacks: number) => number;
 }
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => {
@@ -96,7 +96,7 @@ export const RequestLineEditForm = ({
   draftLine,
   variantsControl,
   numberOfPacksFromQuantity,
-  numberOfPacksToQuantity,
+  numberOfPacksToTotalQuantity,
 }: RequestLineEditFormProps) => {
   // TODO this is not the right place for it, see comment in method
   useInitUnitStore();
@@ -186,7 +186,7 @@ export const RequestLineEditForm = ({
                 onChange={requestedQuantity =>
                   update({
                     requestedQuantity:
-                      numberOfPacksToQuantity(requestedQuantity),
+                      numberOfPacksToTotalQuantity(requestedQuantity),
                   })
                 }
               />

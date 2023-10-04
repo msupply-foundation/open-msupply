@@ -54,7 +54,7 @@ export const RequestLineEdit = ({
   const {
     variantsControl,
     numberOfPacksFromQuantity,
-    numberOfPacksToQuantity,
+    numberOfPacksToTotalQuantity,
   } = useUnitVariant(item?.id ?? '', item?.name ?? null);
 
   const deletePreviousLine = () => {
@@ -124,7 +124,7 @@ export const RequestLineEdit = ({
             item={currentItem}
             variantsControl={variantsControl}
             numberOfPacksFromQuantity={numberOfPacksFromQuantity}
-            numberOfPacksToQuantity={numberOfPacksToQuantity}
+            numberOfPacksToTotalQuantity={numberOfPacksToTotalQuantity}
           />
           {!!draft && (
             <StockDistribution
