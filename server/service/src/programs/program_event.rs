@@ -758,6 +758,16 @@ mod test {
         // An earlier stack is inserted after a later stack.
         // When inserting the earlier stack all events of the earlier stack should finish before
         // the datetime of the later stack.
+
+        // Final target setup with g2 inserted first:
+        // ---g1-------------g2-----------
+        //                  18/09---->16/12
+        //                  18/09--------------->13/1
+        //                  18/09--------------------------->15/3
+        //   17/6-->14/09--|
+        //   17/6---------->16/09          // end datetime = 18/09 (previously set to 13/12)
+        //   17/6------------|----->13/12  // end datetime = 18/09
+
         let later_stack_datetime = datetime_from_date(2023, 09, 18);
         service
             .upsert_events(
