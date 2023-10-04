@@ -66,15 +66,10 @@ export const PrescriptionLineEditForm: React.FC<
   const [issueQuantity, setIssueQuantity] = useState(0);
   const { items } = usePrescription.line.rows();
 
-  const { variantsControl, asPackUnit } = useUnitVariant(
+  const { activePackUnit } = useUnitVariant(
     item?.id ?? '',
     item?.unitName ?? null
   );
-
-  packSizeController.options = packSizeController.options.map(option => ({
-    ...option,
-    label: option.value === -1 ? t('label.any') : asPackUnit(option.value),
-  }));
 
   const onChangePackSize = (newPackSize: number) => {
     const newAllocatedQuantity =
@@ -154,7 +149,7 @@ export const PrescriptionLineEditForm: React.FC<
               <BasicTextInput
                 disabled
                 sx={{ width: 150 }}
-                value={asPackUnit(variantsControl?.activeVariant.packSize ?? 1)}
+                value={activePackUnit}
               />
             </Grid>
           </ModalRow>

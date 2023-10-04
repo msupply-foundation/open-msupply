@@ -29,7 +29,7 @@ export const Statistics: FC<Statistics> = ({ numberOfPacksFromQuantity }) => {
           {
             label: t('label.units'),
             value: formatNumber.round(
-              numberOfPacksFromQuantity(stats?.availableStockOnHand ?? 0)
+              numberOfPacksFromQuantity(stats.availableStockOnHand)
             ),
           },
         ]}
@@ -42,7 +42,7 @@ export const Statistics: FC<Statistics> = ({ numberOfPacksFromQuantity }) => {
           {
             label: t('label.units'),
             value: formatNumber.round(
-              numberOfPacksFromQuantity(stats?.averageMonthlyConsumption ?? 0),
+              numberOfPacksFromQuantity(stats.averageMonthlyConsumption),
               2
             ),
           },
