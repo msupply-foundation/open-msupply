@@ -12,7 +12,6 @@ import {
   PositiveNumberCell,
   useTranslation,
 } from '@openmsupply-client/common';
-import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
@@ -190,9 +189,9 @@ export const useInboundShipmentColumns = () => {
         {
           getSortValue: row => {
             if ('lines' in row) {
-              const locations = row.lines
-                .map(({ location }) => location)
-                .filter(Boolean) as LocationRowFragment[];
+              const locations = row.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
               if (locations.length !== 0) {
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
@@ -208,9 +207,9 @@ export const useInboundShipmentColumns = () => {
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
-              const locations = rowData.lines
-                .map(({ location }) => location)
-                .filter(Boolean) as LocationRowFragment[];
+              const locations = rowData.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
 
               if (locations.length !== 0) {
                 return ArrayUtils.ifTheSameElseDefault(

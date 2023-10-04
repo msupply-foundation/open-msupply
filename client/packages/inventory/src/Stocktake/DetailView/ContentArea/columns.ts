@@ -11,10 +11,7 @@ import {
   getLinesFromRow,
   useTranslation,
 } from '@openmsupply-client/common';
-import {
-  InventoryAdjustmentReasonRowFragment,
-  LocationRowFragment,
-} from '@openmsupply-client/system';
+import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
@@ -170,9 +167,9 @@ export const useStocktakeColumns = ({
         {
           getSortValue: row => {
             if ('lines' in row) {
-              const locations = row.lines
-                .map(({ location }) => location)
-                .filter(Boolean) as LocationRowFragment[];
+              const locations = row.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
               if (locations.length !== 0) {
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
@@ -188,9 +185,9 @@ export const useStocktakeColumns = ({
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
-              const locations = rowData.lines
-                .map(({ location }) => location)
-                .filter(Boolean) as LocationRowFragment[];
+              const locations = rowData.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
 
               if (locations.length !== 0) {
                 return ArrayUtils.ifTheSameElseDefault(
