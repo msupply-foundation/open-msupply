@@ -7,12 +7,12 @@ import { RecordWithId } from '@common/types';
 export const DotCell = <T extends RecordWithId>({
   rowData,
   column,
-}: CellProps<T>): React.ReactElement<CellProps<T>> => {
-  return (
-    <>
-      {column.accessor({ rowData }) === true && (
-        <CircleIcon sx={{ color: 'black', transform: 'scale(0.5)' }} />
-      )}
-    </>
-  );
-};
+}: CellProps<T>) =>
+  column.accessor({ rowData }) === true ? (
+    <CircleIcon
+      sx={{
+        color: theme => theme.typography.body1.color,
+        transform: 'scale(0.5)',
+      }}
+    />
+  ) : null;
