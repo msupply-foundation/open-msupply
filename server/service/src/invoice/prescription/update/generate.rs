@@ -135,7 +135,7 @@ fn lines_to_trim(
 
     // If new status is Verified and previous invoice status is Picked
     // add all lines to be deleted
-    let mut empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
+    let empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
             .number_of_packs(EqualFilter::equal_to_f64(0.0)),
