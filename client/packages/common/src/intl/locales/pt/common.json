@@ -208,7 +208,6 @@
   "label.pack-quantity": "Quantidade de pacotes",
   "label.on-hold": "Retido",
   "messages.cant-delete-generic": "Você não pode excluir um ou mais dos itens selecionados",
-  "label.pack-quantity-issued": "Quantidade de Pacotes Emitida",
   "label.pack-size": "Tamanho do Pacote",
   "label.phone": "Telefone",
   "messages.native-mode": "Selecione o modelo que você gostaria de rodar. Note que você pode mudar essa opção mais tarde se você tiver acesso administrativo.",
