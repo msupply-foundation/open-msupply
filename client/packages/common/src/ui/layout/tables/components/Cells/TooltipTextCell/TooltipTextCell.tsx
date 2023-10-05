@@ -11,7 +11,7 @@ export const TooltipTextCell = <T extends RecordWithId>({
       <div
         style={{
           overflow: 'hidden',
-          textOverflow: 'auto',
+          textOverflow: 'ellipsis',
         }}
       >
         {text}
