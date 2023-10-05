@@ -1,6 +1,6 @@
 use super::{
     query::get_sensor,
-    validate::{check_location_on_hold, check_sensor_exists, check_sensor_serial_is_unique},
+    validate::{check_location_on_hold, check_sensor_exists},
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::{
@@ -10,7 +10,6 @@ use repository::{
 #[derive(PartialEq, Debug)]
 pub enum UpdateSensorError {
     SensorDoesNotExist,
-    SerialAlreadyExists,
     SensorDoesNotBelongToCurrentStore,
     UpdatedRecordNotFound,
     LocationIsOnHold,

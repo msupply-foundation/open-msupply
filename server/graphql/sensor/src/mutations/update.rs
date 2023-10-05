@@ -91,16 +91,16 @@ pub enum UpdateSensorErrorInterface {
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateSensorErrorInterface> {
-    use StandardGraphqlError::*;
+    use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Standard Graphql Errors
-        ServiceError::SensorDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::SerialAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::SensorDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
-        ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        SensorDoesNotExist | LocationIsOnHold | SensorDoesNotBelongToCurrentStore => {
+            StandardGraphqlError::BadUserInput(formatted_error)
+        }
+        ServiceError::UpdatedRecordNotFound => StandardGraphqlError::InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => StandardGraphqlError::InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
