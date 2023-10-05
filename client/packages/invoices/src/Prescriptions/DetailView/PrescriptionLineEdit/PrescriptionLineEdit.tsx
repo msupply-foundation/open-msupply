@@ -16,8 +16,8 @@ import {
   useKeyboardHeightAdjustment,
   InvoiceLineNodeType,
   useNotification,
-  useFormatNumber,
   InvoiceNodeStatus,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { useDraftPrescriptionLines, useNextItem } from './hooks';
 import { usePrescription } from '../../api';
@@ -32,6 +32,7 @@ import {
 import { DraftStockOutLine } from '../../../types';
 import { PrescriptionLineEditForm } from './PrescriptionLineEditForm';
 import { PrescriptionLineEditTable } from './PrescriptionLineEditTable';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 interface PrescriptionLineEditModalProps {
   isOpen: boolean;
@@ -48,17 +49,18 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
 }) => {
   const item = !draft ? null : draft.item ?? null;
   const t = useTranslation(['dispensary']);
-  const { info, warning } = useNotification();
+  const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
-
-  const { mutateAsync } = usePrescription.line.save();
-  const { mutateAsync: mutateStatus } = usePrescription.document.update();
+  const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
+    useState(false);
   const { status, id: invoiceId } = usePrescription.document.fields([
     'status',
     'id',
   ]);
+  const { mutateAsync } = usePrescription.line.save(status);
+  const { mutateAsync: mutateStatus } = usePrescription.document.update();
   const isDisabled = usePrescription.utils.isDisabled();
   const {
     draftStockOutLines,
@@ -71,7 +73,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
-  const { format } = useFormatNumber();
 
   const placeholder = draftStockOutLines?.find(
     ({ type, numberOfPacks }) =>
@@ -111,20 +112,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     if (!draft) return;
   };
 
-  const onNext = async () => {
-    await onSave();
-    if (!!placeholder) {
-      const infoSnack = info(t('message.placeholder-line'));
-      infoSnack();
-    }
-    if (mode === ModalMode.Update && next) setCurrentItem(next);
-    else if (mode === ModalMode.Create) setCurrentItem(null);
-    else onClose();
-    setIsDirty(false);
-    // Returning true here triggers the slide animation
-    return true;
-  };
-
   const onAllocate = (
     newVal: number,
     packSize: number | null,
@@ -137,32 +124,65 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     setIsDirty(true);
     setDraftStockOutLines(newAllocateQuantities ?? draftStockOutLines);
     setIsAutoAllocated(autoAllocated);
+    if (showZeroQuantityConfirmation && newVal !== 0)
+      setShowZeroQuantityConfirmation(false);
 
-    const allocateInUnits = packSize === null;
-    const newAllocatedTotal = newAllocateQuantities?.reduce(
-      (acc, { numberOfPacks, packSize }) =>
-        acc + numberOfPacks * (allocateInUnits ? packSize : 1),
-      0
-    );
-    const difference = newVal - (newAllocatedTotal ?? 0);
-    if (difference > 0 && newAllocatedTotal !== undefined) {
-      const warningSnack = warning(
-        t(
-          allocateInUnits
-            ? 'warning.cannot-create-placeholder-units'
-            : 'warning.cannot-create-placeholder-packs',
-          {
-            quantity: format(newAllocatedTotal),
-          }
-        )
-      );
-      warningSnack();
-    }
+    return newAllocateQuantities;
   };
 
   const canAutoAllocate = !!(currentItem && draftStockOutLines.length);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
+
+  const handleSave = async (onSaved: () => boolean | void) => {
+    if (
+      getAllocatedQuantity(draftStockOutLines) === 0 &&
+      !showZeroQuantityConfirmation
+    ) {
+      setShowZeroQuantityConfirmation(true);
+      return;
+    }
+
+    try {
+      await onSave();
+      setIsDirty(false);
+      if (!!placeholder) {
+        const infoSnack = info(t('message.placeholder-line'));
+        infoSnack();
+      }
+      return onSaved();
+    } catch (e) {
+      // console.log(e);
+    }
+  };
+
+  const onNext = async () => {
+    const onSaved = () => {
+      if (mode === ModalMode.Update && next) {
+        setCurrentItem(next);
+        return true;
+      }
+      if (mode === ModalMode.Create) {
+        setCurrentItem(null);
+        return true;
+      }
+      onClose();
+    };
+
+    // Returning true here triggers the slide animation
+    return await handleSave(onSaved);
+  };
+
+  const hasOnHold = draftStockOutLines.some(
+    ({ stockLine }) =>
+      (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
+  );
+  const hasExpired = draftStockOutLines.some(
+    ({ stockLine }) =>
+      (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
+      !!stockLine?.expiryDate &&
+      DateUtils.isExpired(new Date(stockLine?.expiryDate))
+  );
 
   return (
     <Modal
@@ -181,19 +201,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
         <DialogButton
           disabled={!currentItem}
           variant="ok"
-          onClick={async () => {
-            try {
-              onSave();
-              setIsDirty(false);
-              if (!!placeholder) {
-                const infoSnack = info(t('message.placeholder-line'));
-                infoSnack();
-              }
-              onClose();
-            } catch (e) {
-              // console.log(e);
-            }
-          }}
+          onClick={() => handleSave(onClose)}
         />
       }
       height={height}
@@ -203,7 +211,10 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
         <PrescriptionLineEditForm
           disabled={mode === ModalMode.Update || isDisabled}
           packSizeController={packSizeController}
-          onChangeItem={setCurrentItem}
+          onChangeItem={(item: ItemRowFragment | null) => {
+            if (status === InvoiceNodeStatus.New) setIsDirty(true);
+            setCurrentItem(item);
+          }}
           item={currentItem}
           allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
           availableQuantity={sumAvailableQuantity(draftStockOutLines)}
@@ -212,6 +223,9 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
           isAutoAllocated={isAutoAllocated}
           updateNotes={onUpdateNotes}
           draftPrescriptionLines={draftStockOutLines}
+          showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+          hasOnHold={hasOnHold}
+          hasExpired={hasExpired}
         />
 
         <TableWrapper
