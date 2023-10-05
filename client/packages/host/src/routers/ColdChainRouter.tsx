@@ -11,7 +11,7 @@ const fullSensorPath = RouteBuilder.create(AppRoute.Coldchain)
   .addWildCard()
   .build();
 
-export const ColdchainRouter: FC = () => {
+export const ColdChainRouter: FC = () => {
   const gotoSensor = useMatch(fullSensorPath);
 
   if (gotoSensor) {

@@ -1,11 +1,15 @@
-use async_graphql::*;
-use graphql_core::generic_filters::EqualFilterStringInput;
+use async_graphql::{dataloader::DataLoader, *};
+use chrono::{DateTime, Utc};
 use graphql_core::simple_generic_errors::NodeError;
+use graphql_core::ContextExt;
+use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
 use repository::{
     sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
     EqualFilter, SensorRow,
 };
 use service::{usize_to_u32, ListResult};
+
+use super::LocationNode;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -69,6 +73,34 @@ impl SensorNode {
 
     pub async fn is_active(&self) -> bool {
         self.row().is_active
+    }
+
+    pub async fn battery_level(&self) -> Option<i32> {
+        self.row().battery_level
+    }
+
+    pub async fn log_interval(&self) -> Option<i32> {
+        self.row().log_interval
+    }
+
+    pub async fn last_connection_timestamp(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .last_connection_timestamp
+            .map(|timestamp| DateTime::<Utc>::from_utc(timestamp, Utc))
+    }
+
+    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+        let location_id = match &self.row().location_id {
+            Some(location_id) => location_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+
+        Ok(loader
+            .load_one(location_id.clone())
+            .await?
+            .map(LocationNode::from_domain))
     }
 }
 
