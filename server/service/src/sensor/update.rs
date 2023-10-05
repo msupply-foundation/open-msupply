@@ -1,6 +1,6 @@
 use super::{
     query::get_sensor,
-    validate::{check_sensor_exists, check_sensor_serial_is_unique},
+    validate::{check_location_on_hold, check_sensor_exists, check_sensor_serial_is_unique},
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::{
@@ -13,14 +13,15 @@ pub enum UpdateSensorError {
     SerialAlreadyExists,
     SensorDoesNotBelongToCurrentStore,
     UpdatedRecordNotFound,
+    LocationIsOnHold,
     DatabaseError(RepositoryError),
 }
 
 pub struct UpdateSensor {
     pub id: String,
-    pub serial: Option<String>,
     pub name: Option<String>,
     pub is_active: Option<bool>,
+    pub location_id: Option<String>,
 }
 
 pub fn update_sensor(
@@ -49,13 +50,16 @@ pub fn validate(
         Some(sensor_row) => sensor_row,
         None => return Err(UpdateSensorError::SensorDoesNotExist),
     };
-
-    if !check_sensor_serial_is_unique(&input.id, input.serial.clone(), connection)? {
-        return Err(UpdateSensorError::SerialAlreadyExists);
-    }
-
     if sensor_row.store_id != Some(store_id.to_string()) {
         return Err(UpdateSensorError::SensorDoesNotBelongToCurrentStore);
+    }
+
+    if let Some(location_id) = &input.location_id {
+        match check_location_on_hold(&location_id, connection) {
+            Ok(true) => return Err(UpdateSensorError::LocationIsOnHold),
+            Err(e) => return Err(UpdateSensorError::DatabaseError(e)),
+            _ => (),
+        }
     }
 
     Ok(sensor_row)
@@ -64,13 +68,13 @@ pub fn validate(
 pub fn generate(
     UpdateSensor {
         id: _,
-        serial,
         name,
         is_active,
+        location_id,
     }: UpdateSensor,
     mut sensor_row: SensorRow,
 ) -> SensorRow {
-    sensor_row.serial = serial.unwrap_or(sensor_row.serial);
+    sensor_row.location_id = location_id;
     sensor_row.name = name.unwrap_or(sensor_row.name);
     sensor_row.is_active = is_active.unwrap_or(sensor_row.is_active);
     sensor_row

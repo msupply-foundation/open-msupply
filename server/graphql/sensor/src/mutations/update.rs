@@ -46,7 +46,7 @@ pub fn update_sensor(
 #[derive(InputObject)]
 pub struct UpdateSensorInput {
     pub id: String,
-    pub serial: Option<String>,
+    pub location_id: Option<String>,
     pub name: Option<String>,
     pub is_active: Option<bool>,
 }
@@ -55,14 +55,14 @@ impl From<UpdateSensorInput> for UpdateSensor {
     fn from(
         UpdateSensorInput {
             id,
-            serial,
+            location_id,
             name,
             is_active,
         }: UpdateSensorInput,
     ) -> Self {
         UpdateSensor {
             id,
-            serial,
+            location_id,
             name,
             is_active,
         }
