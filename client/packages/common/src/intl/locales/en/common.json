@@ -378,5 +378,6 @@
   "sync-status.push": "Push",
   "sync-status.integrate": "Integrate",
   "table.show-columns": "Show / hide columns",
-  "warning.caps-lock": "Warning: Caps lock is on"
+  "warning.caps-lock": "Warning: Caps lock is on",
+  "multiple": "[multiple]"
 }
