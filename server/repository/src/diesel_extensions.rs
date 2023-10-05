@@ -101,11 +101,17 @@ pub trait OrderByExtensions: Sized {
 
 impl<T> OrderByExtensions for T where T: Expression {}
 
+pub mod date_coalesce {
+    use diesel::sql_types::{Date, Nullable};
+    sql_function! { fn coalesce(x: Nullable<Date>, y: Date) -> Date; }
+}
+
 #[cfg(test)]
 mod tests {
-    use diesel::{debug_query, sqlite::Sqlite, QueryDsl};
+    use chrono::NaiveDate;
+    use diesel::{debug_query, prelude::*, sqlite::Sqlite, QueryDsl};
 
-    use crate::diesel_extensions::OrderByExtensions;
+    use crate::diesel_extensions::{date_coalesce, OrderByExtensions};
 
     table! {
         item (id) {
@@ -172,6 +178,22 @@ mod tests {
         assert_eq!(
             sql,
             r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` ORDER BY `item`.`name` COLLATE NOCASE ASC NULLS FIRST -- binds: []"#
+        );
+    }
+
+    #[test]
+    fn date_coalesce_test() {
+        let query = item::dsl::item.filter(
+            date_coalesce::coalesce(
+                item::dsl::expiry_date,
+                NaiveDate::from_ymd_opt(9999, 12, 31).unwrap(),
+            )
+            .eq(NaiveDate::from_ymd_opt(2023, 12, 31).unwrap()),
+        );
+        let sql = debug_query::<Sqlite, _>(&query).to_string();
+        assert_eq!(
+            sql,
+            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` WHERE coalesce(`item`.`expiry_date`, ?) = ? -- binds: [9999-12-31, 2023-12-31]"#
         );
     }
 }

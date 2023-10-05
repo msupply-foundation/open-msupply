@@ -62,7 +62,7 @@ export const Toolbar: FC = () => {
             label={t('label.stocktake-date')}
             Input={
               <DatePickerInput
-                disabled={isDisabled}
+                disabled={true}
                 value={DateUtils.getDateOrNull(stocktakeDate)}
                 onChange={date => {
                   if (DateUtils.isValid(date))

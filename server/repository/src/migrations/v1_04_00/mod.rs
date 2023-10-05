@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 pub(crate) struct V1_04_00;
 mod contact_trace;
+mod date_of_death;
 
 impl Migration for V1_04_00 {
     fn version(&self) -> Version {
@@ -11,6 +12,7 @@ impl Migration for V1_04_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         contact_trace::migrate(connection)?;
+        date_of_death::migrate(connection)?;
         Ok(())
     }
 }
