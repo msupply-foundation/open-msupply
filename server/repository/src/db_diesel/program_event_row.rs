@@ -36,8 +36,8 @@ pub struct ProgramEventRow {
     /// when other events are insert.
     pub active_start_datetime: NaiveDateTime,
     /// Keeps track when the event becomes superseded by a later event.
-    /// Its possible that active_end_datetime < active_start_datetime in which case the event never
-    /// became active.
+    /// It's possible that active_end_datetime < active_start_datetime in which case the event will
+    /// never become active.
     /// Other than the active_start_datetime the active_end_datetime might get updated when other
     /// events are inserted, i.e. it depends on other events in the system.
     pub active_end_datetime: NaiveDateTime,
