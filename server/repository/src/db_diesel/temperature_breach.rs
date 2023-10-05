@@ -14,8 +14,9 @@ use util::inline_init;
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
+    location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    LocationRow, SensorRow,
+    LocationRow, SensorFilter, SensorRepository, SensorRow,
 };
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
@@ -33,14 +34,12 @@ pub type TemperatureBreachJoin = (TemperatureBreachRow, SensorRow, Option<Locati
 pub struct TemperatureBreachFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
-    pub sensor_id: Option<EqualFilter<String>>,
-    pub location_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub start_timestamp: Option<DatetimeFilter>,
     pub end_timestamp: Option<DatetimeFilter>,
     pub acknowledged: Option<bool>,
-    pub sensor_name: Option<EqualFilter<String>>,
-    pub location_name: Option<EqualFilter<String>>,
+    pub sensor: Option<SensorFilter>,
+    pub location: Option<LocationFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -112,28 +111,43 @@ impl<'a> TemperatureBreachRepository<'a> {
             .left_join(location_dsl::location)
             .into_boxed();
 
-        if let Some(filter) = filter {
-            apply_equal_filter!(query, filter.id, temperature_breach_dsl::id);
-            apply_equal_filter!(query, filter.sensor_id, temperature_breach_dsl::sensor_id);
-            apply_equal_filter!(
-                query,
-                filter.location_id,
-                temperature_breach_dsl::location_id
-            );
-            apply_equal_filter!(query, filter.store_id, temperature_breach_dsl::store_id);
-            apply_equal_filter!(query, filter.r#type, temperature_breach_dsl::type_);
+        if let Some(f) = filter {
+            let TemperatureBreachFilter {
+                id,
+                store_id,
+                acknowledged,
+                start_timestamp,
+                end_timestamp,
+                r#type,
+                sensor,
+                location,
+            } = f;
+
+            apply_equal_filter!(query, id, temperature_breach_dsl::id);
+            apply_equal_filter!(query, store_id, temperature_breach_dsl::store_id);
+            apply_equal_filter!(query, r#type, temperature_breach_dsl::type_);
             apply_date_time_filter!(
                 query,
-                filter.start_timestamp,
+                start_timestamp,
                 temperature_breach_dsl::start_timestamp
             );
-            apply_date_time_filter!(
-                query,
-                filter.end_timestamp,
-                temperature_breach_dsl::end_timestamp
-            );
-            apply_equal_filter!(query, filter.sensor_name, sensor_dsl::name);
-            apply_equal_filter!(query, filter.location_name, location_dsl::name);
+            apply_date_time_filter!(query, end_timestamp, temperature_breach_dsl::end_timestamp);
+
+            if let Some(value) = acknowledged {
+                query = query.filter(temperature_breach_dsl::acknowledged.eq(value));
+            }
+
+            if sensor.is_some() {
+                let sensor_ids =
+                    SensorRepository::create_filtered_query(sensor).select(sensor_dsl::id);
+                query = query.filter(temperature_breach_dsl::sensor_id.eq_any(sensor_ids));
+            }
+
+            if location.is_some() {
+                let location_ids = LocationRepository::create_filtered_query(location)
+                    .select(location_dsl::id.nullable());
+                query = query.filter(temperature_breach_dsl::location_id.eq_any(location_ids));
+            }
         }
 
         Ok(query)
@@ -174,30 +188,18 @@ impl TemperatureBreachFilter {
     pub fn new() -> TemperatureBreachFilter {
         TemperatureBreachFilter {
             id: None,
-            sensor_id: None,
             store_id: None,
             acknowledged: None,
             start_timestamp: None,
             end_timestamp: None,
             r#type: None,
-            sensor_name: None,
-            location_name: None,
-            location_id: None,
+            sensor: None,
+            location: None,
         }
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
-        self
-    }
-
-    pub fn sensor_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.sensor_id = Some(filter);
-        self
-    }
-
-    pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.location_id = Some(filter);
         self
     }
 
@@ -226,13 +228,13 @@ impl TemperatureBreachFilter {
         self
     }
 
-    pub fn sensor_name(mut self, filter: EqualFilter<String>) -> Self {
-        self.sensor_name = Some(filter);
+    pub fn sensor(mut self, filter: SensorFilter) -> Self {
+        self.sensor = Some(filter);
         self
     }
 
-    pub fn location_name(mut self, filter: EqualFilter<String>) -> Self {
-        self.location_name = Some(filter);
+    pub fn location(mut self, filter: LocationFilter) -> Self {
+        self.location = Some(filter);
         self
     }
 }
