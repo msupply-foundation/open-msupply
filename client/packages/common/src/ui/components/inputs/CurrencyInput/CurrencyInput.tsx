@@ -37,11 +37,13 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   defaultValue = 0,
   onChangeNumber,
   maxWidth,
+  value,
   ...restOfProps
 }) => {
   const { c, options, language } = useCurrency();
   const prefix = language !== 'fr' ? options.symbol : '';
   const suffix = language === 'fr' ? options.symbol : '';
+  const [rawValue, setRawValue] = React.useState(value);
 
   return (
     <StyledCurrencyInput
@@ -53,7 +55,11 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
             : theme.palette.background.menu,
       }}
       defaultValue={defaultValue}
-      onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
+      onValueChange={newValue => {
+        onChangeNumber(c(newValue || '').value);
+        setRawValue(newValue);
+      }}
+      value={rawValue}
       onFocus={e => e.target.select()}
       allowNegativeValue={allowNegativeValue}
       prefix={prefix}
