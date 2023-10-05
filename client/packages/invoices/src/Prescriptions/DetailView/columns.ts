@@ -134,7 +134,7 @@ export const usePrescriptionColumn = ({
                 ArrayUtils.ifTheSameElseDefault(
                   lines,
                   'batch',
-                  `${t('multiple')}`
+                  t('multiple')
                 ) ?? ''
               );
             } else {
@@ -147,7 +147,7 @@ export const usePrescriptionColumn = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'batch',
-                `${t('multiple')}`
+                t('multiple')
               );
             } else {
               return rowData.batch;
@@ -196,7 +196,7 @@ export const usePrescriptionColumn = ({
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  `${t('multiple')}`
+                  t('multiple')
                 );
               } else {
                 return '';
@@ -215,7 +215,7 @@ export const usePrescriptionColumn = ({
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  `${t('multiple')}`
+                  t('multiple')
                 );
               }
             } else {

@@ -42,7 +42,7 @@ const getStocktakeReasons = (
         ArrayUtils.ifTheSameElseDefault(
           inventoryAdjustmentReasons,
           'reason',
-          `${t('multiple')}`
+          t('multiple')
         ) ?? ''
       );
     } else {
@@ -107,7 +107,7 @@ export const useStocktakeColumns = ({
                 ArrayUtils.ifTheSameElseDefault(
                   lines,
                   'batch',
-                  `${t('multiple')}`
+                  t('multiple')
                 ) ?? ''
               );
             } else {
@@ -120,7 +120,7 @@ export const useStocktakeColumns = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'batch',
-                `${t('multiple')}`
+                t('multiple')
               );
             } else {
               return rowData.batch;
@@ -139,7 +139,7 @@ export const useStocktakeColumns = ({
                 '';
               return (
                 (expiryDate && Formatter.expiryDate(new Date(expiryDate))) ||
-                `${t('multiple')}`
+                t('multiple')
               );
             } else {
               return row.expiryDate
@@ -153,7 +153,7 @@ export const useStocktakeColumns = ({
               const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
-                `${t('multiple')}`
+                t('multiple')
               );
               return expiryDate;
             } else {
@@ -174,7 +174,7 @@ export const useStocktakeColumns = ({
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  `${t('multiple')}`
+                  t('multiple')
                 );
               } else {
                 return '';
@@ -193,7 +193,7 @@ export const useStocktakeColumns = ({
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  `${t('multiple')}`
+                  t('multiple')
                 );
               }
             } else {
@@ -212,7 +212,7 @@ export const useStocktakeColumns = ({
                 ArrayUtils.ifTheSameElseDefault(
                   lines,
                   'packSize',
-                  `${t('multiple')}`
+                  t('multiple')
                 ) ?? ''
               );
             } else {
@@ -225,7 +225,7 @@ export const useStocktakeColumns = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'packSize',
-                `${t('multiple')}`
+                t('multiple')
               );
             } else {
               return rowData.packSize;
@@ -366,7 +366,7 @@ export const useStocktakeColumns = ({
               ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'comment',
-                `${t('multiple')}`
+                t('multiple')
               ) ?? ''
             );
           } else {
@@ -379,7 +379,7 @@ export const useStocktakeColumns = ({
             return ArrayUtils.ifTheSameElseDefault(
               lines,
               'comment',
-              `${t('multiple')}`
+              t('multiple')
             );
           } else {
             return rowData.comment;

@@ -129,7 +129,7 @@ export const useInboundShipmentColumns = () => {
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'batch',
-                `${t('multiple')}`
+                t('multiple')
               );
             } else {
               return rowData.batch;
@@ -142,7 +142,7 @@ export const useInboundShipmentColumns = () => {
                 ArrayUtils.ifTheSameElseDefault(
                   lines,
                   'batch',
-                  `${t('multiple')}`
+                  t('multiple')
                 ) ?? ''
               );
             } else {
@@ -196,7 +196,7 @@ export const useInboundShipmentColumns = () => {
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  `${t('multiple')}`
+                  t('multiple')
                 );
               } else {
                 return '';
@@ -215,7 +215,7 @@ export const useInboundShipmentColumns = () => {
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  `${t('multiple')}`
+                  t('multiple')
                 );
               }
             } else {
