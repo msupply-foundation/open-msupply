@@ -168,6 +168,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         const infoSnack = info(t('message.placeholder-line'));
         infoSnack();
       }
+      setShowZeroQuantityConfirmation(false);
+
       return onSaved();
     } catch (e) {
       // console.log(e);
