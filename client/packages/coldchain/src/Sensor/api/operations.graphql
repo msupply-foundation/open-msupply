@@ -1,0 +1,23 @@
+fragment Sensor on SensorNode {
+  __typename
+  id
+  isActive
+  name
+  serial
+}
+
+query sensors(
+  $page: PaginationInput
+  $sort: [SensorSortInput!]
+  $filter: SensorFilterInput
+  $storeId: String!
+) {
+  sensors(page: $page, sort: $sort, filter: $filter, storeId: $storeId) {
+    ... on SensorConnector {
+      totalCount
+      nodes {
+        ...Sensor
+      }
+    }
+  }
+}
