@@ -55,8 +55,12 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
   const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
     useState(false);
-  const { status } = usePrescription.document.fields('status');
+  const { status, id: invoiceId } = usePrescription.document.fields([
+    'status',
+    'id',
+  ]);
   const { mutateAsync } = usePrescription.line.save(status);
+  const { mutateAsync: mutateStatus } = usePrescription.document.update();
   const isDisabled = usePrescription.utils.isDisabled();
   const {
     draftStockOutLines,
@@ -88,7 +92,23 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   const onSave = async () => {
     if (!isDirty) return;
 
+    // needed since placeholders aren't being created for prescriptions yet, but still adding to array
+    const isOnHold = draftStockOutLines.some(
+      ({ stockLine, location }) => stockLine?.onHold || location?.onHold
+    );
+
+    if (
+      status !== InvoiceNodeStatus.Picked &&
+      draftStockOutLines.length >= 1 &&
+      !isOnHold
+    ) {
+      await mutateStatus({
+        id: invoiceId,
+        status: InvoiceNodeStatus.Picked,
+      });
+    }
     await mutateAsync(draftStockOutLines);
+
     if (!draft) return;
   };
 
