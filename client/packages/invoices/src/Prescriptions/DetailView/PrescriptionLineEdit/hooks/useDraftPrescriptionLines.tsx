@@ -23,6 +23,10 @@ export interface UseDraftPrescriptionLinesControl
   extends UseDraftStockOutLinesControl {
   updateNotes: (note: string) => void;
 }
+
+// Not using createDraftStockOutLine here since availableNumberOfPacks is reduced
+// when prescription's status is >= Picked and we do not want to add back the numberOfPacks from
+// invoice line for display in UI
 export const createDraftPrescriptionLine = ({
   invoiceLine,
 }: DraftStockOutLineSeeds): DraftStockOutLine => ({

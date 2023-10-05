@@ -92,14 +92,14 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     if (!isDirty) return;
 
     // needed since placeholders aren't being created for prescriptions yet, but still adding to array
-    const hasOnHold = draftStockOutLines.some(
+    const isOnHold = draftStockOutLines.some(
       ({ stockLine, location }) => stockLine?.onHold || location?.onHold
     );
 
     if (
       status !== InvoiceNodeStatus.Picked &&
       draftStockOutLines.length >= 1 &&
-      !hasOnHold
+      !isOnHold
     ) {
       await mutateStatus({
         id: invoiceId,
