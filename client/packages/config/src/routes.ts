@@ -12,6 +12,8 @@ export enum AppRoute {
   Encounter = 'encounter',
   ContactTrace = 'contact-trace',
   Prescription = 'prescription',
+  Coldchain = 'cold-chain',
+  Sensors = 'sensors',
 
   Discovery = 'discovery',
 
