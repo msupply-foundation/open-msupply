@@ -4,7 +4,6 @@ use dataloader::DataLoader;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     loader::{LocationByIdLoader, SensorByIdLoader, TemperatureBreachByIdLoader},
-    map_filter,
     simple_generic_errors::NodeError,
     ContextExt,
 };
@@ -18,8 +17,8 @@ use repository::{
 use service::{usize_to_u32, ListResult};
 
 use super::{
-    temperature_breach::{EqualFilterTemperatureBreachRowTypeInput, TemperatureBreachNodeType},
-    LocationNode, SensorNode, TemperatureBreachNode,
+    LocationFilterInput, LocationNode, SensorFilterInput, SensorNode, TemperatureBreachFilterInput,
+    TemperatureBreachNode,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -39,28 +38,22 @@ pub struct TemperatureLogSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct TemperatureLogFilterInput {
-    pub sensor_id: Option<EqualFilterStringInput>,
-    pub location_id: Option<EqualFilterStringInput>,
     pub timestamp: Option<DatetimeFilterInput>,
     pub id: Option<EqualFilterStringInput>,
-    pub sensor_name: Option<EqualFilterStringInput>,
-    pub location_name: Option<EqualFilterStringInput>,
-    pub breach_type: Option<EqualFilterTemperatureBreachRowTypeInput>,
+    pub sensor: Option<SensorFilterInput>,
+    pub location: Option<LocationFilterInput>,
+    pub temperature_breach: Option<TemperatureBreachFilterInput>,
 }
 
 impl From<TemperatureLogFilterInput> for TemperatureLogFilter {
     fn from(f: TemperatureLogFilterInput) -> Self {
         TemperatureLogFilter {
-            sensor_id: f.sensor_id.map(EqualFilter::from),
-            location_id: f.location_id.map(EqualFilter::from),
             timestamp: f.timestamp.map(DatetimeFilter::from),
             id: f.id.map(EqualFilter::from),
             store_id: None,
-            sensor_name: f.sensor_name.map(EqualFilter::from),
-            location_name: f.location_name.map(EqualFilter::from),
-            breach_type: f
-                .breach_type
-                .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
+            sensor: f.sensor.map(SensorFilterInput::into),
+            location: f.location.map(LocationFilterInput::into),
+            temperature_breach: f.temperature_breach.map(TemperatureBreachFilterInput::into),
         }
     }
 }

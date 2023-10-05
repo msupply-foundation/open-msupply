@@ -65,12 +65,12 @@ mod test {
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
     //use repository::mock::mock_temperature_breachs;
-    use repository::PaginationOption;
     use repository::{
         mock::MockDataInserts,
         temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort},
         StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
     };
+    use repository::{PaginationOption, SensorRow};
     use serde_json::json;
 
     use service::{
