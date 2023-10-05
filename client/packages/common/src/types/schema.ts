@@ -4401,8 +4401,12 @@ export type SensorFilterInput = {
 
 export type SensorNode = {
   __typename: 'SensorNode';
+  batteryLevel?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
+  lastConnectionTimestamp?: Maybe<Scalars['DateTime']['output']>;
+  location?: Maybe<LocationNode>;
+  logInterval?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   serial: Scalars['String']['output'];
 };
