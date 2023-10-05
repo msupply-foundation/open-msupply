@@ -18,7 +18,7 @@ use repository::{
 };
 use service::{usize_to_u32, ListResult};
 
-use super::{LocationNode, SensorNode};
+use super::{LocationFilterInput, LocationNode, SensorFilterInput, SensorNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum TemperatureBreachNodeType {
@@ -54,20 +54,17 @@ pub struct EqualFilterTemperatureBreachRowTypeInput {
 #[derive(InputObject, Clone)]
 pub struct TemperatureBreachFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub sensor_id: Option<EqualFilterStringInput>,
-    pub location_id: Option<EqualFilterStringInput>,
     pub start_timestamp: Option<DatetimeFilterInput>,
     pub end_timestamp: Option<DatetimeFilterInput>,
     pub r#type: Option<EqualFilterTemperatureBreachRowTypeInput>,
     pub acknowledged: Option<bool>,
-    pub sensor_name: Option<EqualFilterStringInput>,
-    pub location_name: Option<EqualFilterStringInput>,
+    pub sensor: Option<SensorFilterInput>,
+    pub location: Option<LocationFilterInput>,
 }
 
 impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
     fn from(f: TemperatureBreachFilterInput) -> Self {
         TemperatureBreachFilter {
-            sensor_id: f.sensor_id.map(EqualFilter::from),
             acknowledged: f.acknowledged,
             r#type: f
                 .r#type
@@ -76,9 +73,8 @@ impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
             start_timestamp: f.start_timestamp.map(DatetimeFilter::from),
             end_timestamp: f.end_timestamp.map(DatetimeFilter::from),
             store_id: None,
-            sensor_name: f.sensor_name.map(EqualFilter::from),
-            location_name: f.location_name.map(EqualFilter::from),
-            location_id: f.location_id.map(EqualFilter::from),
+            sensor: f.sensor.map(SensorFilterInput::into),
+            location: f.location.map(LocationFilterInput::into),
         }
     }
 }
