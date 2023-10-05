@@ -1,4 +1,4 @@
-use self::query::{get_temperature_breach, get_temperature_breachs};
+use self::query::{get_temperature_breach, get_temperature_breaches};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};

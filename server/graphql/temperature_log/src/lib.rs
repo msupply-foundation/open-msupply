@@ -72,7 +72,7 @@ mod test {
         temperature_log::{
             TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
         },
-        SensorRow, StorageConnectionManager, TemperatureLogRow,
+        SensorFilter, SensorRow, StorageConnectionManager, TemperatureLogRow,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
@@ -314,7 +314,7 @@ mod test {
                 Some(
                     TemperatureLogFilter::new()
                         .store_id(EqualFilter::equal_to("store_a"))
-                        .sensor_id(EqualFilter::equal_to("match_sensor"))
+                        .sensor(SensorFilter::new().id(EqualFilter::equal_to("match_sensor")))
                 )
             );
             Ok(ListResult::empty())
@@ -322,7 +322,7 @@ mod test {
 
         let variables = json!({
           "filter": {
-            "sensorId": { "equalTo": "match_sensor"},
+            "sensor": { "id": { "equalTo": "match_sensor"}},
           }
         });
 

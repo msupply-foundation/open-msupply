@@ -66,15 +66,6 @@ pub struct SensorMutations;
 
 #[Object]
 impl SensorMutations {
-    async fn insert_sensor(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertSensorInput,
-    ) -> Result<InsertSensorResponse> {
-        insert_sensor(ctx, &store_id, input)
-    }
-
     async fn update_sensor(
         &self,
         ctx: &Context<'_>,

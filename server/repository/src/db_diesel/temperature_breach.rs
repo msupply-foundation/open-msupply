@@ -62,7 +62,7 @@ impl<'a> TemperatureBreachRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<TemperatureBreachFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter)?;
+        let query = Self::create_filtered_query(filter)?;
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
@@ -79,7 +79,7 @@ impl<'a> TemperatureBreachRepository<'a> {
         filter: Option<TemperatureBreachFilter>,
         sort: Option<TemperatureBreachSort>,
     ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
-        let mut query = create_filtered_query(filter)?;
+        let mut query = Self::create_filtered_query(filter)?;
         if let Some(sort) = sort {
             match sort.key {
                 TemperatureBreachSortField::Id => {
@@ -103,6 +103,41 @@ impl<'a> TemperatureBreachRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
+
+    pub fn create_filtered_query(
+        filter: Option<TemperatureBreachFilter>,
+    ) -> Result<BoxedTemperatureBreachQuery, RepositoryError> {
+        let mut query = temperature_breach_dsl::temperature_breach
+            .inner_join(sensor_dsl::sensor)
+            .left_join(location_dsl::location)
+            .into_boxed();
+
+        if let Some(filter) = filter {
+            apply_equal_filter!(query, filter.id, temperature_breach_dsl::id);
+            apply_equal_filter!(query, filter.sensor_id, temperature_breach_dsl::sensor_id);
+            apply_equal_filter!(
+                query,
+                filter.location_id,
+                temperature_breach_dsl::location_id
+            );
+            apply_equal_filter!(query, filter.store_id, temperature_breach_dsl::store_id);
+            apply_equal_filter!(query, filter.r#type, temperature_breach_dsl::type_);
+            apply_date_time_filter!(
+                query,
+                filter.start_timestamp,
+                temperature_breach_dsl::start_timestamp
+            );
+            apply_date_time_filter!(
+                query,
+                filter.end_timestamp,
+                temperature_breach_dsl::end_timestamp
+            );
+            apply_equal_filter!(query, filter.sensor_name, sensor_dsl::name);
+            apply_equal_filter!(query, filter.location_name, location_dsl::name);
+        }
+
+        Ok(query)
+    }
 }
 
 type BoxedTemperatureBreachQuery = IntoBoxed<
@@ -110,41 +145,6 @@ type BoxedTemperatureBreachQuery = IntoBoxed<
     LeftJoin<InnerJoin<temperature_breach::table, sensor::table>, location::table>,
     DBType,
 >;
-
-fn create_filtered_query(
-    filter: Option<TemperatureBreachFilter>,
-) -> Result<BoxedTemperatureBreachQuery, RepositoryError> {
-    let mut query = temperature_breach_dsl::temperature_breach
-        .inner_join(sensor_dsl::sensor)
-        .left_join(location_dsl::location)
-        .into_boxed();
-
-    if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, temperature_breach_dsl::id);
-        apply_equal_filter!(query, filter.sensor_id, temperature_breach_dsl::sensor_id);
-        apply_equal_filter!(
-            query,
-            filter.location_id,
-            temperature_breach_dsl::location_id
-        );
-        apply_equal_filter!(query, filter.store_id, temperature_breach_dsl::store_id);
-        apply_equal_filter!(query, filter.r#type, temperature_breach_dsl::type_);
-        apply_date_time_filter!(
-            query,
-            filter.start_timestamp,
-            temperature_breach_dsl::start_timestamp
-        );
-        apply_date_time_filter!(
-            query,
-            filter.end_timestamp,
-            temperature_breach_dsl::end_timestamp
-        );
-        apply_equal_filter!(query, filter.sensor_name, sensor_dsl::name);
-        apply_equal_filter!(query, filter.location_name, location_dsl::name);
-    }
-
-    Ok(query)
-}
 
 impl TemperatureBreachRowType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
