@@ -1,4 +1,5 @@
-use std::{fs, io::Error, path::PathBuf, str::FromStr};
+use serde::Deserialize;
+use std::{fs, path::PathBuf, str::FromStr};
 
 #[derive(Debug, PartialEq)]
 pub struct PluginFile {
@@ -14,18 +15,18 @@ pub struct PluginFileService {
     pub dir: PathBuf,
 }
 
+#[derive(Deserialize)]
+pub struct PluginInfo {
+    plugin: String,
+    filename: String,
+}
+
 impl PluginFileService {
     pub fn find_file(
         base_dir: &Option<String>,
-        plugin: &str,
-        filename: Option<&str>,
+        PluginInfo { plugin, filename }: &PluginInfo,
     ) -> anyhow::Result<Option<PluginFile>> {
         let (plugin_dir_path, _plugin_dir) = get_plugin_dir(base_dir)?;
-
-        let filename = match filename {
-            Some(filename) => filename.to_string(),
-            None => format!("{}.js", plugin).clone(),
-        };
 
         let file_path = plugin_dir_path.join(plugin).join(filename);
         if !file_path.exists() {
