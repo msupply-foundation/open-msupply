@@ -147,7 +147,7 @@ export const useOutboundColumns = ({
                 ArrayUtils.ifTheSameElseDefault(
                   lines,
                   'batch',
-                  `${t('multiple')}`
+                  t('multiple')
                 ) ?? ''
               );
             } else {
@@ -160,7 +160,7 @@ export const useOutboundColumns = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'batch',
-                `${t('multiple')}`
+                t('multiple')
               );
             } else {
               return rowData.batch;
@@ -209,7 +209,7 @@ export const useOutboundColumns = ({
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  `${t('multiple')}`
+                  t('multiple')
                 );
               } else {
                 return '';
@@ -228,7 +228,7 @@ export const useOutboundColumns = ({
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
                   'name',
-                  `${t('multiple')}`
+                  t('multiple')
                 );
               }
             } else {
