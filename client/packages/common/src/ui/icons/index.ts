@@ -58,6 +58,7 @@ export { MedicineIcon } from './MedicineIcon';
 export { SidebarIcon } from './Sidebar';
 export { SearchIcon } from './Search';
 export { ZapIcon } from './Zap';
+export { ThermometerIcon } from './Thermometer';
 export { LinkIcon } from './Link';
 
 type Color =
