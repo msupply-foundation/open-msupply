@@ -32,7 +32,7 @@ pub struct ProgramEventRow {
     /// An event could never become active if there is another event e2 if
     /// e.active_datetime > e2.datetime && e.datetime < e2.datetime
     /// i.e. e2 superseded the event.
-    /// The active_start_datetime a constant property of the event, e.g. it will not be updated
+    /// The active_start_datetime is a constant property of the event, i.e. it will not be updated
     /// when other events are insert.
     pub active_start_datetime: NaiveDateTime,
     /// Keeps track when the event becomes superseded by a later event.
