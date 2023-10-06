@@ -8,13 +8,7 @@ import {
 import { Environment } from '@openmsupply-client/config';
 import { useReportApi } from './useReportApi';
 import { Printer } from '@bcyesil/capacitor-plugin-printer';
-import { JsonData } from '@openmsupply-client/programs';
-
-type PrintReportParams = {
-  reportId: string;
-  dataId?: string;
-  args?: JsonData;
-};
+import { PrintReportParams } from '../../api';
 
 const setClose = (frame: HTMLIFrameElement) => () => {
   document.body.removeChild(frame);
