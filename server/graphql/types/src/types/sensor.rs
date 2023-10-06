@@ -1,15 +1,18 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::simple_generic_errors::NodeError;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
 use repository::{
     sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
     EqualFilter, SensorRow,
 };
+use repository::{PaginationOption, TemperatureLogFilter};
+use service::temperature_log::query::get_temperature_logs;
 use service::{usize_to_u32, ListResult};
 
-use super::LocationNode;
+use super::{LocationNode, TemperatureLogConnector};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -101,6 +104,27 @@ impl SensorNode {
             .load_one(location_id.clone())
             .await?
             .map(LocationNode::from_domain))
+    }
+
+    pub async fn latest_temperature_log(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<TemperatureLogConnector>> {
+        let filter = TemperatureLogFilter::new()
+            .sensor(SensorFilter::new().id(EqualFilter::equal_to(&self.row().id)));
+
+        let latest_log = get_temperature_logs(
+            &ctx.get_connection_manager().connection()?,
+            Some(PaginationOption {
+                limit: Some(1),
+                offset: None,
+            }),
+            Some(filter),
+            None,
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(Some(TemperatureLogConnector::from_domain(latest_log)))
     }
 }
 

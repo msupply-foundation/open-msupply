@@ -4405,6 +4405,7 @@ export type SensorNode = {
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
   lastConnectionTimestamp?: Maybe<Scalars['DateTime']['output']>;
+  latestTemperatureLog?: Maybe<TemperatureLogConnector>;
   location?: Maybe<LocationNode>;
   logInterval?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
