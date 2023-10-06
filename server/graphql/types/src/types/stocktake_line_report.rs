@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::StocktakeLine;
+use repository::StocktakeLineReport;
 use service::{i32_to_u32, usize_to_u32};
 
 use graphql_core::{
@@ -14,12 +14,14 @@ use graphql_core::{
 
 use super::{InventoryAdjustmentReasonNode, ItemNode, LocationNode, StockLineNode};
 
-pub struct StocktakeLineNode {
-    pub line: StocktakeLine,
+/// This struct is used to represent stocktake line report in graphql schema
+pub struct StocktakeLineReportNode {
+    /// Stocktake line for reporting
+    pub line: StocktakeLineReport,
 }
 
 #[Object]
-impl StocktakeLineNode {
+impl StocktakeLineReportNode {
     pub async fn id(&self) -> &str {
         &self.line.line.id
     }
@@ -131,33 +133,39 @@ impl StocktakeLineNode {
     }
 }
 
+/// This struct is used to represent stocktake line report connector in graphql schema
 #[derive(SimpleObject)]
-pub struct StocktakeLineConnector {
+pub struct StocktakeLineReportConnector {
+    /// Total count of stocktake line for reporting
     total_count: u32,
-    nodes: Vec<StocktakeLineNode>,
+    /// List of stocktake line for reporting
+    nodes: Vec<StocktakeLineReportNode>,
 }
 
-impl StocktakeLineConnector {
-    pub fn empty() -> StocktakeLineConnector {
-        StocktakeLineConnector {
+impl StocktakeLineReportConnector {
+    /// Create an empty stocktake line report connector
+    pub fn empty() -> StocktakeLineReportConnector {
+        StocktakeLineReportConnector {
             total_count: 0,
             nodes: Vec::new(),
         }
     }
 
-    pub fn from_domain_vec(from: Vec<StocktakeLine>) -> StocktakeLineConnector {
-        StocktakeLineConnector {
+    /// Create a stocktake line report connector from a vector of stocktake line for reporting
+    pub fn from_domain_vec(from: Vec<StocktakeLineReport>) -> StocktakeLineReportConnector {
+        StocktakeLineReportConnector {
             total_count: usize_to_u32(from.len()),
             nodes: from
                 .into_iter()
-                .map(|line| StocktakeLineNode { line })
+                .map(|line| StocktakeLineReportNode { line })
                 .collect(),
         }
     }
 }
 
-impl StocktakeLineNode {
-    pub fn from_domain(line: StocktakeLine) -> StocktakeLineNode {
-        StocktakeLineNode { line }
+impl StocktakeLineReportNode {
+    /// Create a stocktake line report node from a stocktake line for reporting
+    pub fn from_domain(line: StocktakeLineReport) -> StocktakeLineReportNode {
+        StocktakeLineReportNode { line }
     }
 }
