@@ -136,15 +136,15 @@ query InvoiceQuery($storeId: String, $dataId: String) {
 }
 "#;
 
-const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId: String) {
-  stocktake(storeId: $storeId, id: $dataId) {
+const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId: String, $sort: DataSortInput) {
+  stocktakeReport(storeId: $storeId, id: $dataId) {
     ... on NodeError {
       __typename
       error {
         description
       }
     }
-    ... on StocktakeNode {
+    ... on StocktakeReportNode {
       id
       storeId
       stocktakeNumber
@@ -174,7 +174,7 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
         type
         verifiedDatetime
       }
-      lines {
+      lines(sort: $sort) {
         totalCount
         nodes {
           batch
