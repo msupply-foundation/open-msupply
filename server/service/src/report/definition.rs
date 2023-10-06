@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
+use repository::DataSort;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -18,6 +19,7 @@ impl GraphQlQuery {
         store_id: &str,
         data_id: Option<String>,
         arguments: Option<Value>,
+        sort: Option<DataSort>,
     ) -> Value {
         let mut variables = match &self.variables {
             Some(variables) => {
@@ -41,6 +43,16 @@ impl GraphQlQuery {
                 variables[key] = value;
             }
         };
+
+        if let Some(sort) = sort {
+            let mut sort_value = serde_json::json!({});
+            sort_value["key"] = Value::String(sort.key);
+            if let Some(desc) = sort.desc {
+                sort_value["desc"] = Value::Bool(desc);
+            }
+            variables["sort"] = sort_value;
+        }
+
         variables["storeId"] = Value::String(store_id.to_string());
         variables["now"] = Value::String(Utc::now().to_rfc3339());
 
