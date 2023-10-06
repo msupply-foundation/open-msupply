@@ -40,6 +40,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("requisition", "sent_datetime"),
         ("requisition", "finalised_datetime"),
         ("requisition_line", "snapshot_datetime"),
+        ("sensor", "last_connection_timestamp"),
         ("stocktake", "created_datetime"),
         ("stocktake", "finalised_datetime"),
         ("sync_log", "started_datetime"),
@@ -54,6 +55,9 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "pull_remote_finished_datetime"),
         ("sync_log", "integration_started_datetime"),
         ("sync_log", "integration_finished_datetime"),
+        ("temperature_breach", "start_timestamp"),
+        ("temperature_breach", "end_timestamp"),
+        ("temperature_log", "timestamp"),
         ("activity_log", "datetime"),
         ("user_account", "last_successful_sync"),
     ]
