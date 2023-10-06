@@ -19,6 +19,16 @@ impl StocktakeQueries {
         stocktake(ctx, &store_id, &id)
     }
 
+    /// Queries a list of stocktake lines and its associated items with stocks
+    pub async fn stocktake_report(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<StocktakeReportResponse> {
+        stocktake_report(ctx, &store_id, &id)
+    }
+
     pub async fn stocktake_by_number(
         &self,
         ctx: &Context<'_>,
