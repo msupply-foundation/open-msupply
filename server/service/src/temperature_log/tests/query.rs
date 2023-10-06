@@ -12,19 +12,18 @@ mod query {
 
     #[actix_rt::test]
     async fn temperature_log_service_pagination() {
-        let (_, _, connection_manager, _) = setup_all(
+        let (_, connection, connection_manager, _) = setup_all(
             "test_temperature_log_service_pagination",
             MockDataInserts::all(),
         )
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.basic_context().unwrap();
         let service = service_provider.temperature_log_service;
 
         assert_eq!(
             service.get_temperature_logs(
-                &context,
+                &connection,
                 Some(PaginationOption {
                     limit: Some(2000),
                     offset: None
@@ -37,7 +36,7 @@ mod query {
 
         assert_eq!(
             service.get_temperature_logs(
-                &context,
+                &connection,
                 Some(PaginationOption {
                     limit: Some(0),
                     offset: None,
@@ -73,16 +72,15 @@ mod query {
 
     #[actix_rt::test]
     async fn temperature_log_service_filter() {
-        let (_, _, connection_manager, _) =
+        let (_, connection, connection_manager, _) =
             setup_all("test_temperature_log_filter", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.basic_context().unwrap();
         let service = service_provider.temperature_log_service;
 
         let result = service
             .get_temperature_logs(
-                &context,
+                &connection,
                 None,
                 Some(TemperatureLogFilter::new().id(EqualFilter::equal_to("temperature_log_1a"))),
                 None,
@@ -94,7 +92,7 @@ mod query {
 
         let result = service
             .get_temperature_logs(
-                &context,
+                &connection,
                 None,
                 Some(TemperatureLogFilter::new().id(EqualFilter::equal_any(vec![
                     "temperature_log_1a".to_owned(),
@@ -105,22 +103,21 @@ mod query {
             .unwrap();
 
         assert_eq!(result.count, 2);
-        assert_eq!(result.rows[0].temperature_log_row.id, "temperature_log_1a");
-        assert_eq!(result.rows[1].temperature_log_row.id, "temperature_log_1b");
+        assert_eq!(result.rows[0].temperature_log_row.id, "temperature_log_1b");
+        assert_eq!(result.rows[1].temperature_log_row.id, "temperature_log_1a");
     }
 
     #[actix_rt::test]
     async fn temperature_log_service_sort() {
-        let (mock_data, _, connection_manager, _) =
+        let (mock_data, connection, connection_manager, _) =
             setup_all("test_temperature_log_sort", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.basic_context().unwrap();
         let service = service_provider.temperature_log_service;
         // Test Timestamp sort with default sort order
         let result = service
             .get_temperature_logs(
-                &context,
+                &connection,
                 None,
                 None,
                 Some(Sort {
@@ -148,7 +145,7 @@ mod query {
         // Test Temperature sort with desc sort
         let result = service
             .get_temperature_logs(
-                &context,
+                &connection,
                 None,
                 None,
                 Some(Sort {

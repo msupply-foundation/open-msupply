@@ -97,7 +97,7 @@ impl<'a> TemperatureLogRepository<'a> {
                 }
             }
         } else {
-            query = query.order(temperature_log_dsl::timestamp.asc())
+            query = query.order(temperature_log_dsl::timestamp.desc())
         }
 
         let result = query
