@@ -15,7 +15,6 @@ import {
   DialogButton,
   ButtonWithIcon,
   SaveIcon,
-  EncounterSortFieldInput,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
@@ -205,8 +204,6 @@ export const DetailView: FC = () => {
               .addPart(encounter.patient.id)
               .addQuery({
                 tab: PatientTabValue.Encounters,
-                sort: EncounterSortFieldInput.StartDatetime,
-                dir: 'desc',
               })
               .build()}
           >
