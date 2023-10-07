@@ -1,5 +1,5 @@
 use async_graphql::*;
-use repository::DataSort;
+use service::report::data_sort_inputs::DataSort;
 
 #[derive(InputObject)]
 pub struct TaxInput {
