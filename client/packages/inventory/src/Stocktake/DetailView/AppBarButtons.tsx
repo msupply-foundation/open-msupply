@@ -57,7 +57,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   // Note: The `sortBy` from the `useUrlQueryParams` doesn't seem to be updating
   // when it is used as directly or being passed as an argument to the `printReport` function.
   // It is always the same value as when the component was first rendered,
-  // even when the value changes when he user clicks on the table header.
+  // even when the value changes when the user clicks on the table header.
   // It seems to behave as a side effect of the `useUrlQueryParams` hook.
   // So needed to handle it in the `useEffect` below and then update it here.
   useEffect(() => {
