@@ -12,7 +12,9 @@ use diesel::{
 };
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
+    diesel_macros::{
+        apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
+    },
     DBType, EqualFilter, ItemRow, Pagination, RepositoryError, Sort,
 };
 
@@ -192,7 +194,7 @@ impl<'a> StocktakeLineRepository<'a> {
                     apply_sort_no_case!(query, sort, stock_line_dsl::batch);
                 }
                 StocktakeLineSortField::ExpiryDate => {
-                    apply_sort!(query, sort, stock_line_dsl::expiry_date);
+                    apply_sort_asc_nulls_last!(query, sort, stock_line_dsl::expiry_date);
                 }
                 StocktakeLineSortField::PackSize => {
                     apply_sort!(query, sort, stock_line_dsl::pack_size);
