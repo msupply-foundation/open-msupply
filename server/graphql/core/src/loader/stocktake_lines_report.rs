@@ -2,9 +2,10 @@ use async_graphql::dataloader::*;
 use async_graphql::*;
 use repository::EqualFilter;
 use repository::{
-    DataSort, RepositoryError, StocktakeLineFilter, StocktakeLineReport, StocktakeLineRepository,
+    RepositoryError, StocktakeLineFilter, StocktakeLineReport, StocktakeLineRepository,
     StorageConnectionManager,
 };
+use service::report::data_sort_inputs::DataSort;
 use std::collections::HashMap;
 use std::hash::Hash;
 

@@ -2,8 +2,8 @@ use async_graphql::*;
 use graphql_core::generic_inputs::DataSortInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
-use repository::DataSort;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::report::data_sort_inputs::DataSort;
 use service::report::definition::{GraphQlQuery, ReportDefinition};
 use service::report::report_service::{PrintFormat, ReportError};
 

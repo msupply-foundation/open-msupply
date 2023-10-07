@@ -1,9 +1,10 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
-use repository::DataSort;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use super::data_sort_inputs::DataSort;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct GraphQlQuery {
