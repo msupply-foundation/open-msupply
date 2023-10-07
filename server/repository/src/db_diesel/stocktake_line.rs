@@ -205,8 +205,6 @@ impl<'a> StocktakeLineRepository<'a> {
             query = query.order_by(stocktake_line_dsl::id.asc());
         }
 
-        println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
-
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
