@@ -59,6 +59,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'sensor';
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach';
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach_config';
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_log';
+
+
                 CREATE TRIGGER sensor_trigger
                 AFTER INSERT OR UPDATE OR DELETE ON sensor
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog();
