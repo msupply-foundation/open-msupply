@@ -76,14 +76,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   const tabs = [
     {
       Component: (
-        <StockLineForm
-          draft={draft}
-          onUpdate={p => {
-            console.info(p);
-            onUpdate(p);
-          }}
-          plugins={plugins}
-        />
+        <StockLineForm draft={draft} onUpdate={onUpdate} plugins={plugins} />
       ),
       value: 'label.details',
     },
@@ -97,8 +90,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
 
   useEffect(() => {
     const listener: PluginEventListener = {
-      eventType: 'onChange',
-      pluginType: 'StockEditForm',
+      eventType: 'onChangeStockEditForm',
       listener: onChange,
     };
 
@@ -121,7 +113,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
             getConfirmation({
               onConfirm: async () => {
                 await onSave();
-                dispatchEvent('onSave', 'StockEditForm', new Event(draft.id));
+                dispatchEvent('onSaveStockEditForm', new Event(draft.id));
                 onClose();
               },
             })

@@ -4,13 +4,11 @@ import {
   create,
   ArrayUtils,
   EventType,
-  ComponentPluginType,
 } from '@openmsupply-client/common';
 
 export type PluginEventListener = {
   eventType: EventType;
   listener: EventListener;
-  pluginType: ComponentPluginType;
 };
 
 type PluginProvider = {
@@ -19,11 +17,7 @@ type PluginProvider = {
   addEventListener: (listener: PluginEventListener) => void;
   columnPlugins: ColumnPlugin[];
   componentPlugins: ComponentPlugin[];
-  dispatchEvent: (
-    eventType: EventType,
-    pluginType: ComponentPluginType,
-    event: Event
-  ) => void;
+  dispatchEvent: (eventType: EventType, event: Event) => void;
   eventListeners: PluginEventListener[];
   getComponentPlugins: <T extends ComponentPlugin['type']>(
     type: T
@@ -53,17 +47,10 @@ export const usePluginProvider = create<PluginProvider>((set, get) => ({
     set(({ eventListeners }) => ({
       eventListeners: [...eventListeners, listener],
     })),
-  dispatchEvent: (
-    eventType: EventType,
-    pluginType: ComponentPluginType,
-    event: Event
-  ) => {
-    // console.debug(`*** dispatching event ${eventType} for ${pluginType} ***`);
+  dispatchEvent: (eventType: EventType, event: Event) => {
+    // console.debug(`*** dispatching event ${eventType} ***`);
     get()
-      .eventListeners.filter(
-        listener =>
-          listener.pluginType === pluginType && listener.eventType === eventType
-      )
+      .eventListeners.filter(listener => listener.eventType === eventType)
       .forEach(listener => listener.listener(event));
   },
   getColumnPlugins: <T extends ColumnPlugin['type']>(type: T) => {
@@ -80,10 +67,10 @@ export const usePluginProvider = create<PluginProvider>((set, get) => ({
         plugin.type === type
     );
   },
-  removeEventListener: ({ eventType, pluginType }) =>
+  removeEventListener: ({ eventType, listener }) =>
     set(({ eventListeners }) => ({
       eventListeners: eventListeners.filter(
-        l => !(l.eventType === eventType && l.pluginType === pluginType)
+        l => !(l.eventType === eventType && l.listener === listener)
       ),
     })),
 }));

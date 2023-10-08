@@ -37,7 +37,7 @@ export type ComponentPluginType =
 
 export type ColumnPluginType = 'Stock';
 
-export type EventType = 'onSave' | 'onCancel' | 'onChange';
+export type EventType = 'onSaveStockEditForm' | 'onChangeStockEditForm';
 
 export type StockComponentPlugin = {
   type: 'StockEditForm';
