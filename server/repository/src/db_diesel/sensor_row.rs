@@ -18,7 +18,7 @@ table! {
         battery_level -> Nullable<Integer>,
         log_interval -> Nullable<Integer>,
         is_active -> Bool,
-        last_connection_timestamp -> Nullable<Timestamp>,
+        last_connection_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -45,7 +45,7 @@ pub struct SensorRow {
     pub battery_level: Option<i32>,
     pub log_interval: Option<i32>,
     pub is_active: bool,
-    pub last_connection_timestamp: Option<NaiveDateTime>,
+    pub last_connection_datetime: Option<NaiveDateTime>,
 }
 
 impl Default for SensorRow {
@@ -59,7 +59,7 @@ impl Default for SensorRow {
             battery_level: None,
             log_interval: None,
             is_active: false,
-            last_connection_timestamp: None,
+            last_connection_datetime: None,
         }
     }
 }

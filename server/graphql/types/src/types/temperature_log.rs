@@ -24,7 +24,7 @@ use super::{
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum TemperatureLogSortFieldInput {
-    Timestamp,
+    Datetime,
     Temperature,
 }
 #[derive(InputObject)]
@@ -38,7 +38,7 @@ pub struct TemperatureLogSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct TemperatureLogFilterInput {
-    pub timestamp: Option<DatetimeFilterInput>,
+    pub datetime: Option<DatetimeFilterInput>,
     pub id: Option<EqualFilterStringInput>,
     pub sensor: Option<SensorFilterInput>,
     pub location: Option<LocationFilterInput>,
@@ -48,7 +48,7 @@ pub struct TemperatureLogFilterInput {
 impl From<TemperatureLogFilterInput> for TemperatureLogFilter {
     fn from(f: TemperatureLogFilterInput) -> Self {
         TemperatureLogFilter {
-            timestamp: f.timestamp.map(DatetimeFilter::from),
+            datetime: f.datetime.map(DatetimeFilter::from),
             id: f.id.map(EqualFilter::from),
             store_id: None,
             sensor: f.sensor.map(SensorFilterInput::into),
@@ -79,8 +79,8 @@ impl TemperatureLogNode {
         self.row().temperature
     }
 
-    pub async fn timestamp(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().timestamp, Utc)
+    pub async fn datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row().datetime, Utc)
     }
 
     pub async fn sensor_id(&self) -> &str {
@@ -177,7 +177,7 @@ impl TemperatureLogSortInput {
         use TemperatureLogSortField as to;
         use TemperatureLogSortFieldInput as from;
         let key = match self.key {
-            from::Timestamp => to::Timestamp,
+            from::Datetime => to::Datetime,
             from::Temperature => to::Temperature,
         };
 

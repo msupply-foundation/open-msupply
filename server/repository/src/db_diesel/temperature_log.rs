@@ -41,7 +41,7 @@ pub type TemperatureLogJoin = (
 pub struct TemperatureLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
-    pub timestamp: Option<DatetimeFilter>,
+    pub datetime: Option<DatetimeFilter>,
     pub sensor: Option<SensorFilter>,
     pub location: Option<LocationFilter>,
     pub temperature_breach: Option<TemperatureBreachFilter>,
@@ -50,7 +50,7 @@ pub struct TemperatureLogFilter {
 #[derive(PartialEq, Debug)]
 pub enum TemperatureLogSortField {
     Id,
-    Timestamp,
+    Datetime,
     Temperature,
 }
 
@@ -89,15 +89,15 @@ impl<'a> TemperatureLogRepository<'a> {
                 TemperatureLogSortField::Id => {
                     apply_sort_no_case!(query, sort, temperature_log_dsl::id)
                 }
-                TemperatureLogSortField::Timestamp => {
-                    apply_sort!(query, sort, temperature_log_dsl::timestamp)
+                TemperatureLogSortField::Datetime => {
+                    apply_sort!(query, sort, temperature_log_dsl::datetime)
                 }
                 TemperatureLogSortField::Temperature => {
                     apply_sort!(query, sort, temperature_log_dsl::temperature)
                 }
             }
         } else {
-            query = query.order(temperature_log_dsl::timestamp.asc())
+            query = query.order(temperature_log_dsl::datetime.asc())
         }
 
         let result = query
@@ -131,7 +131,7 @@ fn create_filtered_query(
         let TemperatureLogFilter {
             id,
             store_id,
-            timestamp,
+            datetime,
             sensor,
             location,
             temperature_breach,
@@ -139,7 +139,7 @@ fn create_filtered_query(
 
         apply_equal_filter!(query, id, temperature_log_dsl::id);
         apply_equal_filter!(query, store_id, temperature_log_dsl::store_id);
-        apply_date_time_filter!(query, timestamp, temperature_log_dsl::timestamp);
+        apply_date_time_filter!(query, datetime, temperature_log_dsl::datetime);
 
         if sensor.is_some() {
             let sensor_ids = SensorRepository::create_filtered_query(sensor).select(sensor_dsl::id);
@@ -179,7 +179,7 @@ impl TemperatureLogFilter {
         TemperatureLogFilter {
             id: None,
             store_id: None,
-            timestamp: None,
+            datetime: None,
             sensor: None,
             location: None,
             temperature_breach: None,
@@ -195,8 +195,8 @@ impl TemperatureLogFilter {
         self
     }
 
-    pub fn timestamp(mut self, filter: DatetimeFilter) -> Self {
-        self.timestamp = Some(filter);
+    pub fn datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.datetime = Some(filter);
         self
     }
 

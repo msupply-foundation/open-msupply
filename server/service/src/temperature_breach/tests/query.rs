@@ -137,58 +137,58 @@ mod query {
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
         let service = service_provider.temperature_breach_service;
-        // Test StartTimestamp sort with default sort order
+        // Test StartDatetime sort with default sort order
         let result = service
             .get_temperature_breaches(
                 &context,
                 None,
                 None,
                 Some(Sort {
-                    key: TemperatureBreachSortField::StartTimestamp,
+                    key: TemperatureBreachSortField::StartDatetime,
                     desc: None,
                 }),
             )
             .unwrap();
 
         let mut temperature_breaches = mock_data["base"].temperature_breaches.clone();
-        temperature_breaches.sort_by(|a, b| a.start_timestamp.cmp(&b.start_timestamp));
+        temperature_breaches.sort_by(|a, b| a.start_datetime.cmp(&b.start_datetime));
 
         let result_timestamps: Vec<NaiveDateTime> = result
             .rows
             .into_iter()
-            .map(|temperature_breach| temperature_breach.temperature_breach_row.start_timestamp)
+            .map(|temperature_breach| temperature_breach.temperature_breach_row.start_datetime)
             .collect();
         let sorted_timestamps: Vec<NaiveDateTime> = temperature_breaches
             .into_iter()
-            .map(|temperature_breach| temperature_breach.start_timestamp)
+            .map(|temperature_breach| temperature_breach.start_datetime)
             .collect();
 
         assert_eq!(result_timestamps, sorted_timestamps);
 
-        // Test EndTimestamp sort with desc sort
+        // Test EndDatetime sort with desc sort
         let result = service
             .get_temperature_breaches(
                 &context,
                 None,
                 None,
                 Some(Sort {
-                    key: TemperatureBreachSortField::EndTimestamp,
+                    key: TemperatureBreachSortField::EndDatetime,
                     desc: Some(true),
                 }),
             )
             .unwrap();
 
         let mut temperature_breaches = mock_data["base"].temperature_breaches.clone();
-        temperature_breaches.sort_by(|a, b| b.end_timestamp.cmp(&a.end_timestamp));
+        temperature_breaches.sort_by(|a, b| b.end_datetime.cmp(&a.end_datetime));
 
         let result_timestamps: Vec<NaiveDateTime> = result
             .rows
             .into_iter()
-            .map(|temperature_breach| temperature_breach.temperature_breach_row.end_timestamp)
+            .map(|temperature_breach| temperature_breach.temperature_breach_row.end_datetime)
             .collect();
         let sorted_timestamps: Vec<NaiveDateTime> = temperature_breaches
             .into_iter()
-            .map(|temperature_breach| temperature_breach.end_timestamp)
+            .map(|temperature_breach| temperature_breach.end_datetime)
             .collect();
 
         assert_eq!(result_timestamps, sorted_timestamps);

@@ -151,12 +151,12 @@ mod test {
                         threshold_minimum: -273.0,
                         threshold_maximum: 2.0,
                         sensor_id: "sensor_1".to_owned(),
-                        start_timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+                        start_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
                             .unwrap()
                             .and_hms_opt(0, 0, 0)
                             .unwrap()
                             + Duration::seconds(47046),
-                        end_timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+                        end_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
                             .unwrap()
                             .and_hms_opt(0, 0, 0)
                             .unwrap()
@@ -172,7 +172,7 @@ mod test {
                         location_id: None,
                         battery_level: Some(100),
                         log_interval: Some(1),
-                        last_connection_timestamp: Some(
+                        last_connection_datetime: Some(
                             NaiveDate::from_ymd_opt(2023, 7, 1)
                                 .unwrap()
                                 .and_hms_opt(0, 0, 0)
