@@ -66,13 +66,12 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
-    //use repository::mock::mock_temperature_logs;
     use repository::{
         mock::MockDataInserts,
         temperature_log::{
             TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
         },
-        SensorFilter, SensorRow, StorageConnectionManager, TemperatureLogRow,
+        SensorFilter, StorageConnectionManager, TemperatureLogRow,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
@@ -158,19 +157,6 @@ mod test {
                             + Duration::seconds(47046),
                         temperature_breach_id: None,
                     },
-                    sensor_row: SensorRow {
-                        id: "sensor_a".to_string(),
-                        name: "sensor_a".to_string(),
-                        serial: "some_serial".to_string(),
-                        location_id: Some("location_a".to_string()),
-                        store_id: Some("store_a".to_string()),
-                        battery_level: None,
-                        log_interval: None,
-                        is_active: true,
-                        last_connection_datetime: None,
-                    },
-                    location_row: None,
-                    temperature_breach_row: None,
                 }],
                 count: 1,
             })

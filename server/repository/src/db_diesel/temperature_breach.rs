@@ -1,22 +1,19 @@
 use super::{
-    location_row::{location, location::dsl as location_dsl},
-    sensor_row::{sensor, sensor::dsl as sensor_dsl},
+    location_row::location::dsl as location_dsl,
+    sensor_row::sensor::dsl as sensor_dsl,
     temperature_breach_row::{
         temperature_breach, temperature_breach::dsl as temperature_breach_dsl,
     },
     DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachRowType,
 };
-use diesel::{
-    helper_types::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
+use diesel::prelude::*;
 use util::inline_init;
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    LocationRow, SensorFilter, SensorRepository, SensorRow,
+    SensorFilter, SensorRepository,
 };
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
@@ -24,11 +21,7 @@ use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 #[derive(PartialEq, Debug, Clone)]
 pub struct TemperatureBreach {
     pub temperature_breach_row: TemperatureBreachRow,
-    pub sensor_row: SensorRow,
-    pub location_row: Option<LocationRow>,
 }
-
-pub type TemperatureBreachJoin = (TemperatureBreachRow, SensorRow, Option<LocationRow>);
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct TemperatureBreachFilter {
@@ -98,7 +91,7 @@ impl<'a> TemperatureBreachRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<TemperatureBreachJoin>(&self.connection.connection)?;
+            .load::<TemperatureBreachRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -106,10 +99,7 @@ impl<'a> TemperatureBreachRepository<'a> {
     pub fn create_filtered_query(
         filter: Option<TemperatureBreachFilter>,
     ) -> Result<BoxedTemperatureBreachQuery, RepositoryError> {
-        let mut query = temperature_breach_dsl::temperature_breach
-            .inner_join(sensor_dsl::sensor)
-            .left_join(location_dsl::location)
-            .into_boxed();
+        let mut query = temperature_breach_dsl::temperature_breach.into_boxed();
 
         if let Some(f) = filter {
             let TemperatureBreachFilter {
@@ -154,11 +144,7 @@ impl<'a> TemperatureBreachRepository<'a> {
     }
 }
 
-type BoxedTemperatureBreachQuery = IntoBoxed<
-    'static,
-    LeftJoin<InnerJoin<temperature_breach::table, sensor::table>, location::table>,
-    DBType,
->;
+type BoxedTemperatureBreachQuery = temperature_breach::BoxedQuery<'static, DBType>;
 
 impl TemperatureBreachRowType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
@@ -174,13 +160,9 @@ impl TemperatureBreachRowType {
     }
 }
 
-pub fn to_domain(
-    (temperature_breach_row, sensor_row, location_row): TemperatureBreachJoin,
-) -> TemperatureBreach {
+pub fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
     TemperatureBreach {
         temperature_breach_row,
-        sensor_row,
-        location_row,
     }
 }
 
