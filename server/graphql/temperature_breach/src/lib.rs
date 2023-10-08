@@ -155,11 +155,13 @@ mod test {
                             .and_hms_opt(0, 0, 0)
                             .unwrap()
                             + Duration::seconds(47046),
-                        end_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
-                            .unwrap()
-                            .and_hms_opt(0, 0, 0)
-                            .unwrap()
-                            + Duration::seconds(50646),
+                        end_datetime: Some(
+                            NaiveDate::from_ymd_opt(2022, 7, 1)
+                                .unwrap()
+                                .and_hms_opt(0, 0, 0)
+                                .unwrap()
+                                + Duration::seconds(50646),
+                        ),
                         threshold_duration: 3600,
                     },
                 }],

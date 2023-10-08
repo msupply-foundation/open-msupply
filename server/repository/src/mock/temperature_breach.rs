@@ -20,11 +20,13 @@ pub fn mock_temperature_breach_1() -> TemperatureBreachRow {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(47046),
-        end_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(53046),
+        end_datetime: Some(
+            NaiveDate::from_ymd_opt(2022, 7, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(53046),
+        ),
     }
 }
 
@@ -46,11 +48,13 @@ pub fn mock_temperature_breach_acknowledged() -> TemperatureBreachRow {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(48246),
-        end_datetime: NaiveDate::from_ymd_opt(2022, 8, 2)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(48246),
+        end_datetime: Some(
+            NaiveDate::from_ymd_opt(2022, 8, 2)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(48246),
+        ),
     }
 }
 
@@ -72,11 +76,13 @@ pub fn mock_temperature_breach_2() -> TemperatureBreachRow {
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(48246),
-        end_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(54246),
+        end_datetime: Some(
+            NaiveDate::from_ymd_opt(2022, 7, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(54246),
+        ),
     }
 }
 

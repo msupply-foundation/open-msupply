@@ -36,7 +36,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 store_id TEXT REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
                 start_datetime {DATETIME} NOT NULL,
-                end_datetime {DATETIME} NOT NULL,
+                end_datetime {DATETIME},
                 acknowledged BOOLEAN,
                 threshold_minimum {DOUBLE} NOT NULL,
                 threshold_maximum {DOUBLE} NOT NULL,
