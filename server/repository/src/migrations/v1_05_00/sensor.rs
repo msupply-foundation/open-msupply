@@ -14,7 +14,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 location_id TEXT REFERENCES location(id),
                 battery_level INTEGER,
                 log_interval INTEGER,
-                last_connection_timestamp {DATETIME}
+                last_connection_datetime {DATETIME}
             );
 
             CREATE TABLE temperature_breach_config (
@@ -35,8 +35,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 sensor_id TEXT NOT NULL REFERENCES sensor(id),
                 store_id TEXT REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
-                start_timestamp {DATETIME} NOT NULL,
-                end_timestamp {DATETIME} NOT NULL,
+                start_datetime {DATETIME} NOT NULL,
+                end_datetime {DATETIME} NOT NULL,
                 acknowledged BOOLEAN,
                 threshold_minimum {DOUBLE} NOT NULL,
                 threshold_maximum {DOUBLE} NOT NULL,
@@ -49,7 +49,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 sensor_id TEXT NOT NULL REFERENCES sensor(id),
                 store_id TEXT REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
-                timestamp {DATETIME} NOT NULL,
+                datetime {DATETIME} NOT NULL,
                 temperature_breach_id TEXT REFERENCES temperature_breach(id)
             );      
             "#

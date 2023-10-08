@@ -44,12 +44,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             threshold_minimum: -273.0,
             threshold_maximum: 2.0,
             threshold_duration: 3600,
-            start_timestamp: NaiveDate::from_ymd_opt(2023, 7, 1)
+            start_datetime: NaiveDate::from_ymd_opt(2023, 7, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap()
                 + Duration::seconds(47046),
-            end_timestamp: NaiveDate::from_ymd_opt(2023, 7, 2)
+            end_datetime: NaiveDate::from_ymd_opt(2023, 7, 2)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap()

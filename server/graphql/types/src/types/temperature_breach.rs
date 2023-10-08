@@ -31,8 +31,8 @@ pub enum TemperatureBreachNodeType {
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum TemperatureBreachSortFieldInput {
-    StartTimestamp,
-    EndTimestamp,
+    StartDatetime,
+    EndDatetime,
 }
 
 #[derive(InputObject)]
@@ -54,8 +54,8 @@ pub struct EqualFilterTemperatureBreachRowTypeInput {
 #[derive(InputObject, Clone)]
 pub struct TemperatureBreachFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub start_timestamp: Option<DatetimeFilterInput>,
-    pub end_timestamp: Option<DatetimeFilterInput>,
+    pub start_datetime: Option<DatetimeFilterInput>,
+    pub end_datetime: Option<DatetimeFilterInput>,
     pub r#type: Option<EqualFilterTemperatureBreachRowTypeInput>,
     pub acknowledged: Option<bool>,
     pub sensor: Option<SensorFilterInput>,
@@ -70,8 +70,8 @@ impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
                 .r#type
                 .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
             id: f.id.map(EqualFilter::from),
-            start_timestamp: f.start_timestamp.map(DatetimeFilter::from),
-            end_timestamp: f.end_timestamp.map(DatetimeFilter::from),
+            start_datetime: f.start_datetime.map(DatetimeFilter::from),
+            end_datetime: f.end_datetime.map(DatetimeFilter::from),
             store_id: None,
             sensor: f.sensor.map(SensorFilterInput::into),
             location: f.location.map(LocationFilterInput::into),
@@ -109,12 +109,12 @@ impl TemperatureBreachNode {
             .map(SensorNode::from_domain))
     }
 
-    pub async fn start_timestamp(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().start_timestamp, Utc)
+    pub async fn start_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row().start_datetime, Utc)
     }
 
-    pub async fn end_timestamp(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().end_timestamp, Utc)
+    pub async fn end_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row().end_datetime, Utc)
     }
 
     pub async fn acknowledged(&self) -> bool {
@@ -221,8 +221,8 @@ impl TemperatureBreachSortInput {
         use TemperatureBreachSortField as to;
         use TemperatureBreachSortFieldInput as from;
         let key = match self.key {
-            from::StartTimestamp => to::StartTimestamp,
-            from::EndTimestamp => to::EndTimestamp,
+            from::StartDatetime => to::StartDatetime,
+            from::EndDatetime => to::EndDatetime,
         };
 
         TemperatureBreachSort {

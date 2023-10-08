@@ -9,7 +9,7 @@ pub fn mock_temperature_log_1a() -> TemperatureLogRow {
         store_id: Some("store_a".to_string()),
         temperature: 10.6,
         location_id: None,
-        timestamp: NaiveDate::from_ymd_opt(2023, 7, 1)
+        datetime: NaiveDate::from_ymd_opt(2023, 7, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap()
@@ -25,7 +25,7 @@ pub fn mock_temperature_log_1b() -> TemperatureLogRow {
         store_id: Some("store_a".to_string()),
         temperature: 8.6,
         location_id: None,
-        timestamp: NaiveDate::from_ymd_opt(2023, 7, 1)
+        datetime: NaiveDate::from_ymd_opt(2023, 7, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap()
@@ -42,7 +42,7 @@ pub fn mock_temperature_log_2() -> TemperatureLogRow {
         store_id: Some("store_a".to_string()),
         temperature: 5.6,
         location_id: None,
-        timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+        datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap()
@@ -59,7 +59,7 @@ pub fn mock_temperature_log_3a() -> TemperatureLogRow {
         store_id: Some("store_b".to_string()),
         temperature: -1.6,
         location_id: None,
-        timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+        datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap()
@@ -74,7 +74,7 @@ pub fn mock_temperature_log_3b() -> TemperatureLogRow {
         store_id: Some("store_b".to_string()),
         temperature: 1.6,
         location_id: None,
-        timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+        datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap()
@@ -91,7 +91,7 @@ pub fn mock_temperature_log_4() -> TemperatureLogRow {
         store_id: Some("store_b".to_string()),
         temperature: 4.6,
         location_id: None,
-        timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+        datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap()
