@@ -46,6 +46,8 @@ fn generate(existing: NameRow, update: UpdatePatient) -> NameRow {
         date_of_birth,
         address1,
         phone,
+        is_deceased,
+        date_of_death,
     } = update;
 
     NameRow {
@@ -57,6 +59,11 @@ fn generate(existing: NameRow, update: UpdatePatient) -> NameRow {
         date_of_birth,
         address1,
         phone,
+        date_of_death,
+        is_deceased: match is_deceased {
+            Some(is_deceased) => is_deceased,
+            None => false,
+        },
         national_health_number: code_2,
         ..existing
     }
@@ -73,6 +80,8 @@ pub struct UpdatePatient {
     pub date_of_birth: Option<NaiveDate>,
     pub address1: Option<String>,
     pub phone: Option<String>,
+    pub is_deceased: Option<bool>,
+    pub date_of_death: Option<NaiveDate>,
 }
 
 pub(crate) fn update_patient(

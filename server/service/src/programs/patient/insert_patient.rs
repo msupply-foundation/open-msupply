@@ -19,6 +19,8 @@ pub struct InsertPatient {
     pub date_of_birth: Option<NaiveDate>,
     pub address1: Option<String>,
     pub phone: Option<String>,
+    pub is_deceased: Option<bool>,
+    pub date_of_death: Option<NaiveDate>,
     pub r#type: NameType,
 }
 
@@ -60,6 +62,8 @@ fn generate(input: InsertPatient, store_id: &str) -> NameRow {
         date_of_birth,
         address1,
         phone,
+        date_of_death,
+        is_deceased,
         r#type,
     } = input;
 
@@ -77,6 +81,11 @@ fn generate(input: InsertPatient, store_id: &str) -> NameRow {
         date_of_birth,
         address1,
         phone,
+        date_of_death,
+        is_deceased: match is_deceased {
+            Some(is_deceased) => is_deceased,
+            None => false,
+        },
         national_health_number: code_2,
         created_datetime: Some(Utc::now().naive_utc()),
         ..Default::default()
