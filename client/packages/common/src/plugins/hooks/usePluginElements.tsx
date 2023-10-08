@@ -40,7 +40,9 @@ export function usePluginElements<T extends ComponentPluginType>({
   type: T;
   data?: ComponentPluginData<T>;
 }) {
-  const { getComponentPlugins } = usePluginProvider();
+  const getComponentPlugins = usePluginProvider(
+    state => state.getComponentPlugins
+  );
   const plugins = getComponentPlugins(type);
 
   return plugins.map((plugin: Extract<ComponentPlugin, { type: T }>) =>

@@ -1,4 +1,4 @@
-// import { FunctionComponent } from 'react';
+import { FunctionComponent } from 'react';
 import { ColumnDefinition, RecordWithId } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '@openmsupply-client/system';
 import { InboundFragment } from '@openmsupply-client/invoices';
@@ -11,7 +11,7 @@ export type ComponentPluginData<T> = extractDataType<
   Extract<ComponentPlugin, { type: T }>
 >;
 
-// export type PluginComponent<T> = FunctionComponent<{ data: T }>;
+export type PluginComponent<T> = FunctionComponent<{ data: T }>;
 
 export type PluginModule<DataType> = {
   default: React.ComponentType<{ data?: DataType | undefined }>;
@@ -36,6 +36,8 @@ export type ComponentPluginType =
   | 'StockEditForm';
 
 export type ColumnPluginType = 'Stock';
+
+export type EventType = 'onSaveStockEditForm' | 'onChangeStockEditForm';
 
 export type StockComponentPlugin = {
   type: 'StockEditForm';
