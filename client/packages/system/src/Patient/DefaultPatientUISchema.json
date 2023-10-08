@@ -66,6 +66,16 @@
               ["UNKOWN", "Unknown"]
             ]
           }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/address1",
+          "label": "Address"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/phone",
+          "label": "Phone"
         }
       ]
     }
