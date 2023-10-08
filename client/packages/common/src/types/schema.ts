@@ -1655,9 +1655,11 @@ export type InsertPatientInput = {
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
@@ -5049,9 +5051,11 @@ export type UpdatePatientInput = {
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
 };
