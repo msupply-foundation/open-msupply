@@ -1,16 +1,11 @@
 use super::{
-    location_row::{location, location::dsl as location_dsl},
-    sensor_row::{sensor, sensor::dsl as sensor_dsl},
-    temperature_breach_row::{
-        temperature_breach, temperature_breach::dsl as temperature_breach_dsl,
-    },
+    location_row::location::dsl as location_dsl,
+    sensor_row::sensor::dsl as sensor_dsl,
+    temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl,
     temperature_log_row::{temperature_log, temperature_log::dsl as temperature_log_dsl},
     DBType, StorageConnection, TemperatureBreachRow, TemperatureLogRow,
 };
-use diesel::{
-    helper_types::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
+use diesel::prelude::*;
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
@@ -25,9 +20,6 @@ use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 #[derive(PartialEq, Debug, Clone)]
 pub struct TemperatureLog {
     pub temperature_log_row: TemperatureLogRow,
-    pub sensor_row: SensorRow,
-    pub location_row: Option<LocationRow>,
-    pub temperature_breach_row: Option<TemperatureBreachRow>,
 }
 
 pub type TemperatureLogJoin = (
@@ -103,29 +95,18 @@ impl<'a> TemperatureLogRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<TemperatureLogJoin>(&self.connection.connection)?;
+            .load::<TemperatureLogRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedTemperatureLogQuery = IntoBoxed<
-    'static,
-    LeftJoin<
-        LeftJoin<InnerJoin<temperature_log::table, sensor::table>, location::table>,
-        temperature_breach::table,
-    >,
-    DBType,
->;
+type BoxedTemperatureLogQuery = temperature_log::BoxedQuery<'static, DBType>;
 
 fn create_filtered_query(
     filter: Option<TemperatureLogFilter>,
 ) -> Result<BoxedTemperatureLogQuery, RepositoryError> {
-    let mut query = temperature_log_dsl::temperature_log
-        .inner_join(sensor_dsl::sensor)
-        .left_join(location_dsl::location)
-        .left_join(temperature_breach_dsl::temperature_breach)
-        .into_boxed();
+    let mut query = temperature_log_dsl::temperature_log.into_boxed();
 
     if let Some(f) = filter {
         let TemperatureLogFilter {
@@ -163,14 +144,9 @@ fn create_filtered_query(
     Ok(query)
 }
 
-pub fn to_domain(
-    (temperature_log_row, sensor_row, location_row, temperature_breach_row): TemperatureLogJoin,
-) -> TemperatureLog {
+pub fn to_domain(temperature_log_row: TemperatureLogRow) -> TemperatureLog {
     TemperatureLog {
         temperature_log_row,
-        sensor_row,
-        location_row,
-        temperature_breach_row,
     }
 }
 
