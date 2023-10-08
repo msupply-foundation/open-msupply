@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { styled } from '@mui/material/styles';
 import RCInput, {
   CurrencyInputProps as RCInputProps,
@@ -43,7 +43,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   const { c, options, language } = useCurrency();
   const prefix = language !== 'fr' ? options.symbol : '';
   const suffix = language === 'fr' ? options.symbol : '';
-  const [rawValue, setRawValue] = React.useState(value);
+  const [rawValue, setRawValue] = useState(value);
 
   return (
     <StyledCurrencyInput
