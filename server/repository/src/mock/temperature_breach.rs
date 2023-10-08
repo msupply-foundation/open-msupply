@@ -15,16 +15,18 @@ pub fn mock_temperature_breach_1() -> TemperatureBreachRow {
         sensor_id: "sensor_1".to_owned(),
         duration: 6000,
         location_id: None,
-        start_timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+        start_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(47046),
-        end_timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(53046),
+        end_datetime: Some(
+            NaiveDate::from_ymd_opt(2022, 7, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(53046),
+        ),
     }
 }
 
@@ -41,16 +43,18 @@ pub fn mock_temperature_breach_acknowledged() -> TemperatureBreachRow {
         sensor_id: "sensor_1".to_owned(),
         duration: 86400,
         location_id: None,
-        start_timestamp: NaiveDate::from_ymd_opt(2022, 8, 1)
+        start_datetime: NaiveDate::from_ymd_opt(2022, 8, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(48246),
-        end_timestamp: NaiveDate::from_ymd_opt(2022, 8, 2)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(48246),
+        end_datetime: Some(
+            NaiveDate::from_ymd_opt(2022, 8, 2)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(48246),
+        ),
     }
 }
 
@@ -67,16 +71,18 @@ pub fn mock_temperature_breach_2() -> TemperatureBreachRow {
         sensor_id: "sensor_1".to_owned(),
         duration: 6000,
         location_id: None,
-        start_timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+        start_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap()
             + Duration::seconds(48246),
-        end_timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
-            .unwrap()
-            .and_hms_opt(0, 0, 0)
-            .unwrap()
-            + Duration::seconds(54246),
+        end_datetime: Some(
+            NaiveDate::from_ymd_opt(2022, 7, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap()
+                + Duration::seconds(54246),
+        ),
     }
 }
 

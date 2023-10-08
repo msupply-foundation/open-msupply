@@ -114,30 +114,30 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let service = service_provider.temperature_log_service;
-        // Test Timestamp sort with default sort order
+        // Test Datetime sort with default sort order
         let result = service
             .get_temperature_logs(
                 &connection,
                 None,
                 None,
                 Some(Sort {
-                    key: TemperatureLogSortField::Timestamp,
+                    key: TemperatureLogSortField::Datetime,
                     desc: None,
                 }),
             )
             .unwrap();
 
         let mut temperature_logs = mock_data["base"].temperature_logs.clone();
-        temperature_logs.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+        temperature_logs.sort_by(|a, b| a.datetime.cmp(&b.datetime));
 
         let result_timestamps: Vec<NaiveDateTime> = result
             .rows
             .into_iter()
-            .map(|temperature_log| temperature_log.temperature_log_row.timestamp)
+            .map(|temperature_log| temperature_log.temperature_log_row.datetime)
             .collect();
         let sorted_timestamps: Vec<NaiveDateTime> = temperature_logs
             .into_iter()
-            .map(|temperature_log| temperature_log.timestamp)
+            .map(|temperature_log| temperature_log.datetime)
             .collect();
 
         assert_eq!(result_timestamps, sorted_timestamps);
