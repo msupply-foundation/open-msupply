@@ -1651,6 +1651,7 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
 };
 
 export type InsertPatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -1658,6 +1659,7 @@ export type InsertPatientInput = {
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPatientResponse = PatientNode;
@@ -5043,6 +5045,7 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
  * For example, if the last_name is not provided, the last_name in the patient record will be cleared.
  */
 export type UpdatePatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -5050,6 +5053,7 @@ export type UpdatePatientInput = {
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePatientResponse = PatientNode;
