@@ -26,7 +26,7 @@ impl Loader<String> for PatientLoader {
             .patient_service
             .get_patients(
                 &service_context,
-                None, // TODO this needs to be ALL without limit
+                None,
                 Some(PatientFilter::new().id(EqualFilter::equal_any(patient_ids.to_owned()))),
                 None,
                 None,
