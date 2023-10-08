@@ -283,8 +283,8 @@ fn log_stock_changes(
             &ctx,
             ActivityLogType::StockOnHold,
             Some(new.id.to_owned()),
-            Some("\u{2705}".to_string()), // tick unicode
-            Some("\u{274C}".to_string()), // cross unicode
+            None,
+            None,
         )?;
     }
     if existing.on_hold != new.on_hold && !new.on_hold {
@@ -292,8 +292,8 @@ fn log_stock_changes(
             &ctx,
             ActivityLogType::StockOffHold,
             Some(new.id),
-            Some("\u{274C}".to_string()),
-            Some("\u{2705}".to_string()),
+            None,
+            None,
         )?;
     }
 
