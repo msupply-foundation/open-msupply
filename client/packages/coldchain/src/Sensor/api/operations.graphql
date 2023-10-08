@@ -1,9 +1,31 @@
+fragment LocationRow on LocationNode {
+  __typename
+  id
+  name
+  onHold
+  code
+}
+
 fragment Sensor on SensorNode {
   __typename
   id
   isActive
   name
   serial
+  batteryLevel
+  breach
+
+  location {
+    ...LocationRow
+  }
+
+  latestTemperatureLog {
+    totalCount
+    nodes {
+      temperature
+      timestamp
+    }
+  }
 }
 
 query sensors(

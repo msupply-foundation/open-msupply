@@ -375,5 +375,13 @@
   "sync-status.push": "Push",
   "sync-status.integrate": "Integrate",
   "table.show-columns": "Show / hide columns",
-  "warning.caps-lock": "Warning: Caps lock is on"
+  "warning.caps-lock": "Warning: Caps lock is on",
+  "error.no-sensors": "No sensors found",
+  "label.serial": "Serial Number",
+  "label.battery-level": "Battery Level",
+  "label.sensor-type": "Sensor type",
+  "label.cce": "CCE",
+  "label.last-reading": "Last Reading",
+  "label.breach": "Breach",
+  "label.last-record": "Last recording date / time"
 }
