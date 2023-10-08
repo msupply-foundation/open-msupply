@@ -217,13 +217,6 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
-    let temperature_breach_loader = DataLoader::new(
-        TemperatureBreachByIdLoader {
-            connection_manager: connection_manager.clone(),
-        },
-        async_std::task::spawn,
-    );
-
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -275,7 +268,11 @@ pub async fn get_loaders(
         },
         async_std::task::spawn,
     ));
-    loaders.insert(temperature_breach_loader);
-
+    loaders.insert(DataLoader::new(
+        TemperatureBreachByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
     loaders
 }
