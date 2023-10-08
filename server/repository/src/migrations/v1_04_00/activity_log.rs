@@ -5,9 +5,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"
         ALTER TABLE activity_log ADD COLUMN change_to TEXT;
-        ALTER TABLE activity_log ADD COLUMN change_from TEXT;
-        UPDATE activity_log SET change_from = event;
-        ALTER TABLE activity_log DROP COLUMN event;
+        ALTER TABLE activity_log RENAME COLUMN event TO change_from;
         "#,
     )?;
 
