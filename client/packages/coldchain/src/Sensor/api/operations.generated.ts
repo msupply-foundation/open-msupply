@@ -4,7 +4,9 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type SensorFragment = { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string };
+export type LocationRowFragment = { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string };
+
+export type SensorFragment = { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, timestamp: string }> } | null };
 
 export type SensorsQueryVariables = Types.Exact<{
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -14,8 +16,17 @@ export type SensorsQueryVariables = Types.Exact<{
 }>;
 
 
-export type SensorsQuery = { __typename: 'Queries', sensors: { __typename: 'SensorConnector', totalCount: number, nodes: Array<{ __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string }> } };
+export type SensorsQuery = { __typename: 'Queries', sensors: { __typename: 'SensorConnector', totalCount: number, nodes: Array<{ __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, timestamp: string }> } | null }> } };
 
+export const LocationRowFragmentDoc = gql`
+    fragment LocationRow on LocationNode {
+  __typename
+  id
+  name
+  onHold
+  code
+}
+    `;
 export const SensorFragmentDoc = gql`
     fragment Sensor on SensorNode {
   __typename
@@ -23,8 +34,20 @@ export const SensorFragmentDoc = gql`
   isActive
   name
   serial
+  batteryLevel
+  breach
+  location {
+    ...LocationRow
+  }
+  latestTemperatureLog {
+    totalCount
+    nodes {
+      temperature
+      timestamp
+    }
+  }
 }
-    `;
+    ${LocationRowFragmentDoc}`;
 export const SensorsDocument = gql`
     query sensors($page: PaginationInput, $sort: [SensorSortInput!], $filter: SensorFilterInput, $storeId: String!) {
   sensors(page: $page, sort: $sort, filter: $filter, storeId: $storeId) {
