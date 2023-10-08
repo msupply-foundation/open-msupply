@@ -5,4 +5,5 @@ export * from './CheckboxCell';
 export * from './ExpiryDateCell';
 export * from './CurrencyCell';
 export * from './CheckCell';
+export * from './TooltipTextCell';
 export * from './DotCell';

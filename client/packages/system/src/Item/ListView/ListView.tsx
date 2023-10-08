@@ -10,6 +10,7 @@ import {
   useUrlQueryParams,
   ColumnAlign,
   useFormatNumber,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { useItems, ItemRowFragment } from '../api';
 import { Toolbar } from './Toolbar';
@@ -41,7 +42,13 @@ const ItemListComponent: FC = () => {
   const columns = useColumns<ItemWithStats>(
     [
       'code',
-      'name',
+      [
+        'name',
+        {
+          Cell: TooltipTextCell,
+          maxWidth: 350,
+        },
+      ],
       {
         accessor: ({ rowData }) => rowData.unitName ?? '',
         align: ColumnAlign.Right,

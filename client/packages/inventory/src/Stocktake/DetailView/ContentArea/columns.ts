@@ -9,6 +9,7 @@ import {
   SortBy,
   PositiveNumberCell,
   getLinesFromRow,
+  TooltipTextCell,
   useTranslation,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
@@ -78,6 +79,7 @@ export const useStocktakeColumns = ({
       [
         'itemName',
         {
+          Cell: TooltipTextCell,
           getSortValue: row => {
             return row.item?.name ?? '';
           },
