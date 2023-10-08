@@ -105,7 +105,8 @@ const NAME_1: (&'static str, &'static str) = (
         "isDeceased": false,
         "is_deleted": false,
         "om_created_datetime": "",
-        "om_gender": ""
+        "om_gender": "",
+        "om_date_of_death": ""
     }"#,
 );
 

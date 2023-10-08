@@ -10,6 +10,7 @@ import {
   PositiveNumberCell,
   getLinesFromRow,
   TooltipTextCell,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -30,18 +31,24 @@ const expandColumn = getRowExpandColumn<
 const getStocktakeReasons = (
   rowData: StocktakeLineFragment | StocktakeSummaryItem
 ) => {
+  const t = useTranslation();
+
   if ('lines' in rowData) {
     const { lines } = rowData;
     const inventoryAdjustmentReasons = lines
       .map(({ inventoryAdjustmentReason }) => inventoryAdjustmentReason)
       .filter(Boolean) as InventoryAdjustmentReasonRowFragment[];
-    return (
-      ArrayUtils.ifTheSameElseDefault(
-        inventoryAdjustmentReasons,
-        'reason',
-        '[multiple]'
-      ) ?? ''
-    );
+    if (inventoryAdjustmentReasons.length !== 0) {
+      return (
+        ArrayUtils.ifTheSameElseDefault(
+          inventoryAdjustmentReasons,
+          'reason',
+          t('multiple')
+        ) ?? ''
+      );
+    } else {
+      return '';
+    }
   } else {
     return rowData.inventoryAdjustmentReason?.reason ?? '';
   }
@@ -54,6 +61,7 @@ export const useStocktakeColumns = ({
   StocktakeLineFragment | StocktakeSummaryItem
 >[] => {
   const { getError } = useStocktakeLineErrorContext();
+  const t = useTranslation();
 
   return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [
@@ -98,8 +106,11 @@ export const useStocktakeColumns = ({
             if ('lines' in row) {
               const { lines } = row;
               return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'batch', '[multiple]') ??
-                ''
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'batch',
+                  t('multiple')
+                ) ?? ''
               );
             } else {
               return row.batch ?? '';
@@ -111,7 +122,7 @@ export const useStocktakeColumns = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'batch',
-                '[multiple]'
+                t('multiple')
               );
             } else {
               return rowData.batch;
@@ -130,7 +141,7 @@ export const useStocktakeColumns = ({
                 '';
               return (
                 (expiryDate && Formatter.expiryDate(new Date(expiryDate))) ||
-                '[multiple]'
+                t('multiple')
               );
             } else {
               return row.expiryDate
@@ -144,11 +155,51 @@ export const useStocktakeColumns = ({
               const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
-                '[multiple]'
+                t('multiple')
               );
               return expiryDate;
             } else {
               return rowData.expiryDate;
+            }
+          },
+        },
+      ],
+      [
+        'locationName',
+        {
+          getSortValue: row => {
+            if ('lines' in row) {
+              const locations = row.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  t('multiple')
+                );
+              } else {
+                return '';
+              }
+            } else {
+              return row.location?.name ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const locations = rowData.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
+
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  t('multiple')
+                );
+              }
+            } else {
+              return rowData.location?.name ?? '';
             }
           },
         },
@@ -163,7 +214,7 @@ export const useStocktakeColumns = ({
                 ArrayUtils.ifTheSameElseDefault(
                   lines,
                   'packSize',
-                  '[multiple]'
+                  t('multiple')
                 ) ?? ''
               );
             } else {
@@ -176,7 +227,7 @@ export const useStocktakeColumns = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'packSize',
-                '[multiple]'
+                t('multiple')
               );
             } else {
               return rowData.packSize;
@@ -314,8 +365,11 @@ export const useStocktakeColumns = ({
           if ('lines' in row) {
             const { lines } = row;
             return (
-              ArrayUtils.ifTheSameElseDefault(lines, 'comment', '[multiple]') ??
-              ''
+              ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'comment',
+                t('multiple')
+              ) ?? ''
             );
           } else {
             return row.comment ?? '';
@@ -327,7 +381,7 @@ export const useStocktakeColumns = ({
             return ArrayUtils.ifTheSameElseDefault(
               lines,
               'comment',
-              '[multiple]'
+              t('multiple')
             );
           } else {
             return rowData.comment;
@@ -347,6 +401,12 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
   return useColumns([
     'batch',
     'expiryDate',
+    [
+      'locationName',
+      {
+        accessor: ({ rowData }) => rowData.location?.name,
+      },
+    ],
     'packSize',
     {
       key: 'snapshotNumPacks',

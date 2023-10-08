@@ -37,6 +37,7 @@ table! {
         created_datetime -> Nullable<Timestamp>,
         is_deceased -> Bool,
         national_health_number -> Nullable<Text>,
+        date_of_death -> Nullable<Date>,
     }
 }
 
@@ -139,6 +140,7 @@ pub struct NameRow {
 
     pub is_deceased: bool,
     pub national_health_number: Option<String>,
+    pub date_of_death: Option<NaiveDate>,
 }
 
 pub struct NameRowRepository<'a> {
