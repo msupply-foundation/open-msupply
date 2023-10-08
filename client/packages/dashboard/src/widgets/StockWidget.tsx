@@ -5,6 +5,7 @@ import {
   FnUtils,
   Grid,
   PlusCircleIcon,
+  RouteBuilder,
   StatsPanel,
   useFormatNumber,
   useNotification,
@@ -15,6 +16,7 @@ import {
 import { useDashboard } from '../api';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 import { useRequest } from '@openmsupply-client/requisitions';
+import { AppRoute } from 'packages/config';
 
 const LOW_MOS_THRESHOLD = 3;
 
@@ -90,7 +92,10 @@ export const StockWidget: React.FC = () => {
                   value: formatNumber.round(expiryData?.expiringSoon),
                 },
               ]}
-            />            
+              link={RouteBuilder.create(AppRoute.Inventory)
+                .addPart(AppRoute.Stock)
+                .build()}
+            />
             <StatsPanel
               error={itemCountsError as ApiException}
               isError={hasItemStatsError}
@@ -117,11 +122,18 @@ export const StockWidget: React.FC = () => {
                 },
                 {
                   label: t('label.more-than-six-months-stock-items', {
-                    count: Math.round(itemCountsData?.moreThanSixMonthsStock || 0),
+                    count: Math.round(
+                      itemCountsData?.moreThanSixMonthsStock || 0
+                    ),
                   }),
-                  value: formatNumber.round(itemCountsData?.moreThanSixMonthsStock || 0),
+                  value: formatNumber.round(
+                    itemCountsData?.moreThanSixMonthsStock || 0
+                  ),
                 },
               ]}
+              link={RouteBuilder.create(AppRoute.Inventory)
+                .addPart(AppRoute.Stock)
+                .build()}
             />
           </Grid>
           <Grid
