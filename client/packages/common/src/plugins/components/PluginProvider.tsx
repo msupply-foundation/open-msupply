@@ -7,7 +7,7 @@ import {
   ComponentPluginType,
 } from '@openmsupply-client/common';
 
-type PluginEventListener = {
+export type PluginEventListener = {
   eventType: EventType;
   listener: EventListener;
   pluginType: ComponentPluginType;
@@ -16,11 +16,7 @@ type PluginEventListener = {
 type PluginProvider = {
   addColumnPlugin: (plugin: ColumnPlugin) => void;
   addComponentPlugin: (plugin: ComponentPlugin) => void;
-  addEventListener: (
-    eventType: EventType,
-    pluginType: ComponentPluginType,
-    listener: EventListener
-  ) => void;
+  addEventListener: (listener: PluginEventListener) => void;
   columnPlugins: ColumnPlugin[];
   componentPlugins: ComponentPlugin[];
   dispatchEvent: (
@@ -35,11 +31,7 @@ type PluginProvider = {
   getColumnPlugins: <T extends ColumnPlugin['type']>(
     type: T
   ) => Extract<ColumnPlugin, { type: T }>[];
-  removeEventListener: (
-    eventType: EventType,
-    pluginType: ComponentPluginType,
-    listener: EventListener
-  ) => void;
+  removeEventListener: (listener: PluginEventListener) => void;
 };
 
 export const usePluginProvider = create<PluginProvider>((set, get) => ({
@@ -57,13 +49,9 @@ export const usePluginProvider = create<PluginProvider>((set, get) => ({
         'module'
       ),
     })),
-  addEventListener: (
-    eventType: EventType,
-    pluginType: ComponentPluginType,
-    listener: EventListener
-  ) =>
+  addEventListener: (listener: PluginEventListener) =>
     set(({ eventListeners }) => ({
-      eventListeners: [...eventListeners, { eventType, pluginType, listener }],
+      eventListeners: [...eventListeners, listener],
     })),
   dispatchEvent: (
     eventType: EventType,
@@ -92,17 +80,10 @@ export const usePluginProvider = create<PluginProvider>((set, get) => ({
         plugin.type === type
     );
   },
-  removeEventListener: (
-    eventType: EventType,
-    pluginType: ComponentPluginType,
-    listener: EventListener
-  ) =>
+  removeEventListener: ({ eventType, pluginType }) =>
     set(({ eventListeners }) => ({
       eventListeners: eventListeners.filter(
-        l =>
-          l.eventType !== eventType ||
-          l.pluginType !== pluginType ||
-          l.listener !== listener
+        l => !(l.eventType === eventType && l.pluginType === pluginType)
       ),
     })),
 }));

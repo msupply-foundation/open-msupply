@@ -10,6 +10,7 @@ import {
   ModalTabs,
   usePluginEvents,
   usePluginElements,
+  PluginEventListener,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useStock } from '../api';
 import { LogList } from '../../Log';
@@ -36,7 +37,9 @@ const useDraftStockLine = (
   const { mutate, isLoading } = useStock.line.update();
 
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
-    setStockLine({ ...stockLine, ...patch });
+    const newStockLine = { ...stockLine, ...patch };
+    if (ObjUtils.isEqual(stockLine, newStockLine)) return;
+    setStockLine(newStockLine);
   };
 
   const onSave = async () => mutate(stockLine);
@@ -73,7 +76,14 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   const tabs = [
     {
       Component: (
-        <StockLineForm draft={draft} onUpdate={onUpdate} plugins={plugins} />
+        <StockLineForm
+          draft={draft}
+          onUpdate={p => {
+            console.info(p);
+            onUpdate(p);
+          }}
+          plugins={plugins}
+        />
       ),
       value: 'label.details',
     },
@@ -86,10 +96,16 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   const onChange = () => setHasChanged(true);
 
   useEffect(() => {
-    addEventListener('onChange', 'StockEditForm', onChange);
+    const listener: PluginEventListener = {
+      eventType: 'onChange',
+      pluginType: 'StockEditForm',
+      listener: onChange,
+    };
 
-    return () => removeEventListener('onChange', 'StockEditForm', onChange);
-  }, []);
+    addEventListener(listener);
+
+    return () => removeEventListener(listener);
+  }, [addEventListener, removeEventListener]);
 
   return (
     <Modal
