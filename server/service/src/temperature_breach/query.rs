@@ -1,7 +1,7 @@
 use repository::temperature_breach::{
     TemperatureBreach, TemperatureBreachFilter, TemperatureBreachRepository, TemperatureBreachSort,
 };
-use repository::{EqualFilter, PaginationOption};
+use repository::{EqualFilter, PaginationOption, StorageConnection};
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
@@ -12,13 +12,13 @@ pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_temperature_breaches(
-    ctx: &ServiceContext,
+    connection: &StorageConnection,
     pagination: Option<PaginationOption>,
     filter: Option<TemperatureBreachFilter>,
     sort: Option<TemperatureBreachSort>,
 ) -> Result<ListResult<TemperatureBreach>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = TemperatureBreachRepository::new(&ctx.connection);
+    let repository = TemperatureBreachRepository::new(&connection);
 
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,

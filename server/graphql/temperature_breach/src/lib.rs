@@ -43,7 +43,7 @@ impl TemperatureBreachQueries {
         let temperature_breaches = service_provider
             .temperature_breach_service
             .get_temperature_breaches(
-                &service_context,
+                &service_context.connection,
                 page.map(PaginationOption::from),
                 Some(filter),
                 // Currently only one sort option is supported, use the first from the list.
@@ -68,7 +68,8 @@ mod test {
     use repository::{
         mock::MockDataInserts,
         temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort},
-        StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
+        StorageConnection, StorageConnectionManager, TemperatureBreachRow,
+        TemperatureBreachRowType,
     };
     use repository::{PaginationOption, SensorRow};
     use serde_json::json;
@@ -94,7 +95,7 @@ mod test {
     impl TemperatureBreachServiceTrait for TestService {
         fn get_temperature_breaches(
             &self,
-            _: &ServiceContext,
+            _: &StorageConnection,
             pagination: Option<PaginationOption>,
             filter: Option<TemperatureBreachFilter>,
             sort: Option<TemperatureBreachSort>,
