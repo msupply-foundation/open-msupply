@@ -81,7 +81,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             temperature_breach_id,
         } = data;
 
-        let timestamp = NaiveDateTime::new(date, time);
+        let datetime = NaiveDateTime::new(date, time);
 
         let result = TemperatureLogRow {
             id,
@@ -89,7 +89,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             sensor_id,
             location_id,
             store_id,
-            timestamp,
+            datetime,
             temperature_breach_id,
         };
 
@@ -113,7 +113,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             sensor_id,
             location_id,
             store_id,
-            timestamp,
+            datetime,
             temperature_breach_id,
         } = TemperatureLogRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
@@ -122,8 +122,8 @@ impl SyncTranslation for TemperatureLogTranslation {
                 changelog.record_id
             )))?;
 
-        let date = timestamp.date();
-        let time = timestamp.time();
+        let date = datetime.date();
+        let time = datetime.time();
 
         let legacy_row = LegacyTemperatureLogRow {
             id,

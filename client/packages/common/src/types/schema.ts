@@ -4854,11 +4854,11 @@ export type TemperatureBreachConnector = {
 
 export type TemperatureBreachFilterInput = {
   acknowledged?: InputMaybe<Scalars['Boolean']['input']>;
-  endTimestamp?: InputMaybe<DatetimeFilterInput>;
+  endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   location?: InputMaybe<LocationFilterInput>;
   sensor?: InputMaybe<SensorFilterInput>;
-  startTimestamp?: InputMaybe<DatetimeFilterInput>;
+  startDatetime?: InputMaybe<DatetimeFilterInput>;
   type?: InputMaybe<EqualFilterTemperatureBreachRowTypeInput>;
 };
 
@@ -4866,12 +4866,12 @@ export type TemperatureBreachNode = {
   __typename: 'TemperatureBreachNode';
   acknowledged: Scalars['Boolean']['output'];
   duration: Scalars['Int']['output'];
-  endTimestamp: Scalars['DateTime']['output'];
+  endDatetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
   sensor?: Maybe<SensorNode>;
   sensorId: Scalars['String']['output'];
-  startTimestamp: Scalars['DateTime']['output'];
+  startDatetime: Scalars['DateTime']['output'];
   type: TemperatureBreachNodeType;
 };
 
@@ -4883,8 +4883,8 @@ export enum TemperatureBreachNodeType {
 }
 
 export enum TemperatureBreachSortFieldInput {
-  EndTimestamp = 'endTimestamp',
-  StartTimestamp = 'startTimestamp'
+  EndDatetime = 'endDatetime',
+  StartDatetime = 'startDatetime'
 }
 
 export type TemperatureBreachSortInput = {
@@ -4906,27 +4906,27 @@ export type TemperatureLogConnector = {
 };
 
 export type TemperatureLogFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   location?: InputMaybe<LocationFilterInput>;
   sensor?: InputMaybe<SensorFilterInput>;
   temperatureBreach?: InputMaybe<TemperatureBreachFilterInput>;
-  timestamp?: InputMaybe<DatetimeFilterInput>;
 };
 
 export type TemperatureLogNode = {
   __typename: 'TemperatureLogNode';
+  datetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
   sensor?: Maybe<SensorNode>;
   sensorId: Scalars['String']['output'];
   temperature: Scalars['Float']['output'];
   temperatureBreach?: Maybe<TemperatureBreachNode>;
-  timestamp: Scalars['DateTime']['output'];
 };
 
 export enum TemperatureLogSortFieldInput {
-  Temperature = 'temperature',
-  Timestamp = 'timestamp'
+  Datetime = 'datetime',
+  Temperature = 'temperature'
 }
 
 export type TemperatureLogSortInput = {

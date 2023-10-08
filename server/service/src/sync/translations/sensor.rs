@@ -87,7 +87,7 @@ impl SyncTranslation for SensorTranslation {
             last_connection_time,
         } = data;
 
-        let last_connection_timestamp = last_connection_date.map(|last_connection_date| {
+        let last_connection_datetime = last_connection_date.map(|last_connection_date| {
             NaiveDateTime::new(last_connection_date, last_connection_time)
         });
 
@@ -100,7 +100,7 @@ impl SyncTranslation for SensorTranslation {
             battery_level,
             log_interval,
             is_active,
-            last_connection_timestamp,
+            last_connection_datetime,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -126,7 +126,7 @@ impl SyncTranslation for SensorTranslation {
             battery_level,
             log_interval,
             is_active,
-            last_connection_timestamp,
+            last_connection_datetime,
         } = SensorRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -134,10 +134,10 @@ impl SyncTranslation for SensorTranslation {
                 changelog.record_id
             )))?;
 
-        let last_connection_date = last_connection_timestamp.map(|t| t.date());
+        let last_connection_date = last_connection_datetime.map(|t| t.date());
 
-        let last_connection_time = last_connection_timestamp
-            .map(|last_connection_timestamp: NaiveDateTime| last_connection_timestamp.time())
+        let last_connection_time = last_connection_datetime
+            .map(|last_connection_datetime: NaiveDateTime| last_connection_datetime.time())
             .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
 
         let legacy_row = LegacySensorRow {

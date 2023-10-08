@@ -1,22 +1,19 @@
 use super::{
-    location_row::{location, location::dsl as location_dsl},
-    sensor_row::{sensor, sensor::dsl as sensor_dsl},
+    location_row::location::dsl as location_dsl,
+    sensor_row::sensor::dsl as sensor_dsl,
     temperature_breach_row::{
         temperature_breach, temperature_breach::dsl as temperature_breach_dsl,
     },
     DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachRowType,
 };
-use diesel::{
-    helper_types::{InnerJoin, IntoBoxed, LeftJoin},
-    prelude::*,
-};
+use diesel::prelude::*;
 use util::inline_init;
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    LocationRow, SensorFilter, SensorRepository, SensorRow,
+    SensorFilter, SensorRepository,
 };
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
@@ -24,19 +21,15 @@ use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 #[derive(PartialEq, Debug, Clone)]
 pub struct TemperatureBreach {
     pub temperature_breach_row: TemperatureBreachRow,
-    pub sensor_row: SensorRow,
-    pub location_row: Option<LocationRow>,
 }
-
-pub type TemperatureBreachJoin = (TemperatureBreachRow, SensorRow, Option<LocationRow>);
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct TemperatureBreachFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
     pub store_id: Option<EqualFilter<String>>,
-    pub start_timestamp: Option<DatetimeFilter>,
-    pub end_timestamp: Option<DatetimeFilter>,
+    pub start_datetime: Option<DatetimeFilter>,
+    pub end_datetime: Option<DatetimeFilter>,
     pub acknowledged: Option<bool>,
     pub sensor: Option<SensorFilter>,
     pub location: Option<LocationFilter>,
@@ -45,8 +38,8 @@ pub struct TemperatureBreachFilter {
 #[derive(PartialEq, Debug)]
 pub enum TemperatureBreachSortField {
     Id,
-    StartTimestamp,
-    EndTimestamp,
+    StartDatetime,
+    EndDatetime,
 }
 
 pub type TemperatureBreachSort = Sort<TemperatureBreachSortField>;
@@ -84,21 +77,21 @@ impl<'a> TemperatureBreachRepository<'a> {
                 TemperatureBreachSortField::Id => {
                     apply_sort_no_case!(query, sort, temperature_breach_dsl::id)
                 }
-                TemperatureBreachSortField::StartTimestamp => {
-                    apply_sort!(query, sort, temperature_breach_dsl::start_timestamp)
+                TemperatureBreachSortField::StartDatetime => {
+                    apply_sort!(query, sort, temperature_breach_dsl::start_datetime)
                 }
-                TemperatureBreachSortField::EndTimestamp => {
-                    apply_sort!(query, sort, temperature_breach_dsl::end_timestamp)
+                TemperatureBreachSortField::EndDatetime => {
+                    apply_sort!(query, sort, temperature_breach_dsl::end_datetime)
                 }
             }
         } else {
-            query = query.order(temperature_breach_dsl::start_timestamp.asc())
+            query = query.order(temperature_breach_dsl::start_datetime.asc())
         }
 
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<TemperatureBreachJoin>(&self.connection.connection)?;
+            .load::<TemperatureBreachRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -106,18 +99,15 @@ impl<'a> TemperatureBreachRepository<'a> {
     pub fn create_filtered_query(
         filter: Option<TemperatureBreachFilter>,
     ) -> Result<BoxedTemperatureBreachQuery, RepositoryError> {
-        let mut query = temperature_breach_dsl::temperature_breach
-            .inner_join(sensor_dsl::sensor)
-            .left_join(location_dsl::location)
-            .into_boxed();
+        let mut query = temperature_breach_dsl::temperature_breach.into_boxed();
 
         if let Some(f) = filter {
             let TemperatureBreachFilter {
                 id,
                 store_id,
                 acknowledged,
-                start_timestamp,
-                end_timestamp,
+                start_datetime,
+                end_datetime,
                 r#type,
                 sensor,
                 location,
@@ -128,10 +118,10 @@ impl<'a> TemperatureBreachRepository<'a> {
             apply_equal_filter!(query, r#type, temperature_breach_dsl::type_);
             apply_date_time_filter!(
                 query,
-                start_timestamp,
-                temperature_breach_dsl::start_timestamp
+                start_datetime,
+                temperature_breach_dsl::start_datetime
             );
-            apply_date_time_filter!(query, end_timestamp, temperature_breach_dsl::end_timestamp);
+            apply_date_time_filter!(query, end_datetime, temperature_breach_dsl::end_datetime);
 
             if let Some(value) = acknowledged {
                 query = query.filter(temperature_breach_dsl::acknowledged.eq(value));
@@ -154,11 +144,7 @@ impl<'a> TemperatureBreachRepository<'a> {
     }
 }
 
-type BoxedTemperatureBreachQuery = IntoBoxed<
-    'static,
-    LeftJoin<InnerJoin<temperature_breach::table, sensor::table>, location::table>,
-    DBType,
->;
+type BoxedTemperatureBreachQuery = temperature_breach::BoxedQuery<'static, DBType>;
 
 impl TemperatureBreachRowType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
@@ -174,13 +160,9 @@ impl TemperatureBreachRowType {
     }
 }
 
-pub fn to_domain(
-    (temperature_breach_row, sensor_row, location_row): TemperatureBreachJoin,
-) -> TemperatureBreach {
+pub fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
     TemperatureBreach {
         temperature_breach_row,
-        sensor_row,
-        location_row,
     }
 }
 
@@ -190,8 +172,8 @@ impl TemperatureBreachFilter {
             id: None,
             store_id: None,
             acknowledged: None,
-            start_timestamp: None,
-            end_timestamp: None,
+            start_datetime: None,
+            end_datetime: None,
             r#type: None,
             sensor: None,
             location: None,
@@ -213,13 +195,13 @@ impl TemperatureBreachFilter {
         self
     }
 
-    pub fn start_timestamp(mut self, filter: DatetimeFilter) -> Self {
-        self.start_timestamp = Some(filter);
+    pub fn start_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.start_datetime = Some(filter);
         self
     }
 
-    pub fn end_timestamp(mut self, filter: DatetimeFilter) -> Self {
-        self.end_timestamp = Some(filter);
+    pub fn end_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.end_datetime = Some(filter);
         self
     }
 

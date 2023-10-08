@@ -70,7 +70,7 @@ pub fn generate(
         location_id: None,
         battery_level: Some(99),
         log_interval: Some(10),
-        last_connection_timestamp: None,
+        last_connection_datetime: None,
     }
 }
 
