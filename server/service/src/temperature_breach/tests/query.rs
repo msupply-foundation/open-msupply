@@ -12,19 +12,18 @@ mod query {
 
     #[actix_rt::test]
     async fn temperature_breach_service_pagination() {
-        let (_, _, connection_manager, _) = setup_all(
+        let (_, connection, connection_manager, _) = setup_all(
             "test_temperature_breach_service_pagination",
             MockDataInserts::all(),
         )
         .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.basic_context().unwrap();
         let service = service_provider.temperature_breach_service;
 
         assert_eq!(
             service.get_temperature_breaches(
-                &context,
+                &connection,
                 Some(PaginationOption {
                     limit: Some(2000),
                     offset: None
@@ -37,7 +36,7 @@ mod query {
 
         assert_eq!(
             service.get_temperature_breaches(
-                &context,
+                &connection,
                 Some(PaginationOption {
                     limit: Some(0),
                     offset: None,
@@ -79,16 +78,15 @@ mod query {
 
     #[actix_rt::test]
     async fn temperature_breach_service_filter() {
-        let (_, _, connection_manager, _) =
+        let (_, connection, connection_manager, _) =
             setup_all("test_temperature_breach_filter", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.basic_context().unwrap();
         let service = service_provider.temperature_breach_service;
 
         let result = service
             .get_temperature_breaches(
-                &context,
+                &connection,
                 None,
                 Some(
                     TemperatureBreachFilter::new()
@@ -106,7 +104,7 @@ mod query {
 
         let result = service
             .get_temperature_breaches(
-                &context,
+                &connection,
                 None,
                 Some(
                     TemperatureBreachFilter::new().id(EqualFilter::equal_any(vec![
@@ -131,16 +129,15 @@ mod query {
 
     #[actix_rt::test]
     async fn temperature_breach_service_sort() {
-        let (mock_data, _, connection_manager, _) =
+        let (mock_data, connection, connection_manager, _) =
             setup_all("test_temperature_breach_sort", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider.basic_context().unwrap();
         let service = service_provider.temperature_breach_service;
         // Test StartTimestamp sort with default sort order
         let result = service
             .get_temperature_breaches(
-                &context,
+                &connection,
                 None,
                 None,
                 Some(Sort {
@@ -168,7 +165,7 @@ mod query {
         // Test EndTimestamp sort with desc sort
         let result = service
             .get_temperature_breaches(
-                &context,
+                &connection,
                 None,
                 None,
                 Some(Sort {

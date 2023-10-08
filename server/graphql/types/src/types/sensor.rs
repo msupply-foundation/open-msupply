@@ -8,11 +8,15 @@ use repository::{
     sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
     EqualFilter, SensorRow,
 };
-use repository::{PaginationOption, TemperatureLogFilter};
+use repository::{
+    DatetimeFilter, PaginationOption, TemperatureBreachFilter, TemperatureLogFilter,
+    TemperatureLogSort, TemperatureLogSortField,
+};
+use service::temperature_breach::query::get_temperature_breaches;
 use service::temperature_log::query::get_temperature_logs;
 use service::{usize_to_u32, ListResult};
 
-use super::{LocationNode, TemperatureLogConnector};
+use super::{LocationNode, TemperatureBreachNodeType, TemperatureLogConnector};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -120,11 +124,35 @@ impl SensorNode {
                 offset: None,
             }),
             Some(filter),
-            None,
+            Some(TemperatureLogSort {
+                key: TemperatureLogSortField::Timestamp,
+                desc: Some(true),
+            }),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
 
         Ok(Some(TemperatureLogConnector::from_domain(latest_log)))
+    }
+
+    pub async fn breach(&self, ctx: &Context<'_>) -> Result<Option<TemperatureBreachNodeType>> {
+        let filter = TemperatureBreachFilter::new()
+            .end_timestamp(DatetimeFilter::is_null(true))
+            .sensor(SensorFilter::new().id(EqualFilter::equal_to(&self.row().id)));
+
+        let breach = get_temperature_breaches(
+            &ctx.get_connection_manager().connection()?,
+            Some(PaginationOption {
+                limit: Some(1),
+                offset: None,
+            }),
+            Some(filter),
+            None,
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(breach.rows.into_iter().next().map(|breach| {
+            TemperatureBreachNodeType::from_domain(&breach.temperature_breach_row.r#type)
+        }))
     }
 }
 
