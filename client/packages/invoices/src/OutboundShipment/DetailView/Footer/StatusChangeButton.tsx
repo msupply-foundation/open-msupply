@@ -23,7 +23,7 @@ const getStatusOptions = (
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>
+    SplitButtonOption<InvoiceNodeStatus>,
   ] = [
     {
       value: InvoiceNodeStatus.New,
@@ -101,6 +101,10 @@ const useStatusChangeButton = () => {
   ]);
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
+  const { data } = useOutbound.document.get();
+  const hasLinesToPrune =
+    data?.status === InvoiceNodeStatus.New &&
+    (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -124,11 +128,13 @@ const useStatusChangeButton = () => {
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-status-as', {
-      status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
-        : '',
-    }),
+    message: hasLinesToPrune
+      ? t('messages.confirm-zero-quantity-status')
+      : t('messages.confirm-status-as', {
+          status: selectedOption?.value
+            ? getStatusTranslation(selectedOption?.value)
+            : '',
+        }),
     onConfirm: onConfirmStatusChange,
   });
 
