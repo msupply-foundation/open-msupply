@@ -124,6 +124,8 @@ const PatientDetailView = ({
           dateOfBirth: createNewPatient.dateOfBirth,
           phone: createNewPatient.phone,
           address1: createNewPatient.address1,
+          isDeceased: createNewPatient.isDeceased,
+          dateOfDeath: createNewPatient.dateOfDeath,
         },
         isCreating: true,
       };
@@ -141,6 +143,7 @@ const PatientDetailView = ({
           gender: currentPatient.gender ?? undefined,
           dateOfBirth: currentPatient.dateOfBirth ?? undefined,
           dateOfDeath: currentPatient.dateOfDeath ?? undefined,
+          isDeceased: currentPatient.isDeceased ?? undefined,
           phone: currentPatient.phone ?? undefined,
           address1: currentPatient.address1 ?? undefined,
         },

@@ -29,6 +29,8 @@ export interface CreateNewPatient {
   gender?: Gender;
   address1?: string;
   phone?: string;
+  dateOfDeath?: string;
+  isDeceased?: boolean;
 }
 /**
  * Stores:
