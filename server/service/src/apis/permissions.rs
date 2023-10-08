@@ -112,7 +112,7 @@ pub enum Permissions {
     DeleteBatchDocument,
     AddStocktakeLines,
     /// ViewStocktakeLines has been removed from mSupply
-    // ViewStocktakeLines,
+    /// ViewStocktakeLines,
     EditStocktakeLines,
     DeleteStocktakeLines,
     CreateStocktake,
@@ -307,7 +307,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (108, Permissions::DeleteBatchDocument),
         (109, Permissions::AddStocktakeLines),
         /// ViewStocktakeLines has been removed from mSupply
-        // (110, Permissions::ViewStocktakeLines),
+        /// (110, Permissions::ViewStocktakeLines),
         (111, Permissions::EditStocktakeLines),
         (112, Permissions::DeleteStocktakeLines),
         (113, Permissions::CreateStocktake),
