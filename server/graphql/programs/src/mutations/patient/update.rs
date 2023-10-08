@@ -23,6 +23,8 @@ pub struct UpdatePatientInput {
     pub last_name: Option<String>,
     pub gender: Option<GenderInput>,
     pub date_of_birth: Option<NaiveDate>,
+    pub address1: Option<String>,
+    pub phone: Option<String>,
 }
 
 #[derive(Union)]
@@ -41,6 +43,8 @@ pub fn update_patient(
         last_name,
         gender,
         date_of_birth,
+        address1,
+        phone,
     }: UpdatePatientInput,
 ) -> Result<UpdatePatientResponse> {
     let user = validate_auth(
@@ -66,6 +70,8 @@ pub fn update_patient(
             n.last_name = last_name;
             n.gender = gender.map(|g| g.to_domain());
             n.date_of_birth = date_of_birth;
+            n.address1 = address1;
+            n.phone = phone;
         }),
     ) {
         Ok(patient) => Ok(UpdatePatientResponse::Response(PatientNode {

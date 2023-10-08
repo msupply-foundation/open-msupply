@@ -44,6 +44,8 @@ fn generate(existing: NameRow, update: UpdatePatient) -> NameRow {
         last_name,
         gender,
         date_of_birth,
+        address1,
+        phone,
     } = update;
 
     NameRow {
@@ -53,6 +55,8 @@ fn generate(existing: NameRow, update: UpdatePatient) -> NameRow {
         last_name,
         gender,
         date_of_birth,
+        address1,
+        phone,
         national_health_number: code_2,
         ..existing
     }
@@ -67,6 +71,8 @@ pub struct UpdatePatient {
     pub last_name: Option<String>,
     pub gender: Option<Gender>,
     pub date_of_birth: Option<NaiveDate>,
+    pub address1: Option<String>,
+    pub phone: Option<String>,
 }
 
 pub(crate) fn update_patient(
