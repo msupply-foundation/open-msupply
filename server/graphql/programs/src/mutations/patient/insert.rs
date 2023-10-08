@@ -22,6 +22,8 @@ pub struct InsertPatientInput {
     pub date_of_birth: Option<NaiveDate>,
     pub address1: Option<String>,
     pub phone: Option<String>,
+    pub is_deceased: Option<bool>,
+    pub date_of_death: Option<NaiveDate>,
 }
 
 #[derive(Union)]
@@ -90,6 +92,8 @@ impl InsertPatientInput {
             date_of_birth,
             address1,
             phone,
+            date_of_death,
+            is_deceased,
         } = self;
 
         ServiceInput {
@@ -102,6 +106,8 @@ impl InsertPatientInput {
             date_of_birth,
             address1,
             phone,
+            date_of_death,
+            is_deceased,
             r#type: NameType::Patient,
         }
     }
