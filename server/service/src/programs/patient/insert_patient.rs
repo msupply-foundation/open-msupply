@@ -17,6 +17,8 @@ pub struct InsertPatient {
     pub last_name: Option<String>,
     pub gender: Option<Gender>,
     pub date_of_birth: Option<NaiveDate>,
+    pub address1: Option<String>,
+    pub phone: Option<String>,
     pub r#type: NameType,
 }
 
@@ -56,6 +58,8 @@ fn generate(input: InsertPatient, store_id: &str) -> NameRow {
         last_name,
         gender,
         date_of_birth,
+        address1,
+        phone,
         r#type,
     } = input;
 
@@ -71,6 +75,8 @@ fn generate(input: InsertPatient, store_id: &str) -> NameRow {
         last_name,
         gender,
         date_of_birth,
+        address1,
+        phone,
         national_health_number: code_2,
         created_datetime: Some(Utc::now().naive_utc()),
         ..Default::default()
