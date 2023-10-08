@@ -1,6 +1,5 @@
 use super::{
-    location_row::location, sensor_row::sensor, store_row::store,
-    temperature_breach_row::temperature_breach,
+    sensor_row::sensor, store_row::store,
     temperature_log_row::temperature_log::dsl as temperature_log_dsl, StorageConnection,
 };
 
@@ -31,8 +30,6 @@ table! {
 
 joinable!(temperature_log -> sensor (sensor_id));
 joinable!(temperature_log -> store (store_id));
-joinable!(temperature_log -> location (location_id));
-joinable!(temperature_log -> temperature_breach (temperature_breach_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
