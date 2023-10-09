@@ -82,10 +82,7 @@ fn generate(input: InsertPatient, store_id: &str) -> NameRow {
         address1,
         phone,
         date_of_death,
-        is_deceased: match is_deceased {
-            Some(is_deceased) => is_deceased,
-            None => false,
-        },
+        is_deceased: is_deceased.unwrap_or(false),
         national_health_number: code_2,
         created_datetime: Some(Utc::now().naive_utc()),
         ..Default::default()
