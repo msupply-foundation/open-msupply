@@ -88,8 +88,8 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
-                change_to: None,
-                change_from: None,
+                changed_to: None,
+                changed_from: None,
             }),
         },
         TestSyncPushRecord {
@@ -105,8 +105,8 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
-                change_to: None,
-                change_from: None,
+                changed_to: None,
+                changed_from: None,
             }),
         },
     ]
