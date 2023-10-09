@@ -262,8 +262,8 @@ mod repository_test {
                 store_id: None,
                 record_id: None,
                 datetime: NaiveDateTime::from_timestamp_opt(2000, 0).unwrap(),
-                change_to: None,
-                change_from: None,
+                changed_to: None,
+                changed_from: None,
             }
         }
     }
