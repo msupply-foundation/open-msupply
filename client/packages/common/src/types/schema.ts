@@ -4405,7 +4405,7 @@ export type SensorNode = {
   breach?: Maybe<TemperatureBreachNodeType>;
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
-  lastConnectionTimestamp?: Maybe<Scalars['DateTime']['output']>;
+  lastConnectionDatetime?: Maybe<Scalars['DateTime']['output']>;
   latestTemperatureLog?: Maybe<TemperatureLogConnector>;
   location?: Maybe<LocationNode>;
   logInterval?: Maybe<Scalars['Int']['output']>;
@@ -4866,7 +4866,7 @@ export type TemperatureBreachNode = {
   __typename: 'TemperatureBreachNode';
   acknowledged: Scalars['Boolean']['output'];
   duration: Scalars['Int']['output'];
-  endDatetime: Scalars['DateTime']['output'];
+  endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
   sensor?: Maybe<SensorNode>;

@@ -74,8 +74,7 @@ mod test {
     use serde_json::json;
 
     use service::{
-        service_provider::{ServiceContext, ServiceProvider},
-        temperature_breach::TemperatureBreachServiceTrait,
+        service_provider::ServiceProvider, temperature_breach::TemperatureBreachServiceTrait,
         ListError, ListResult,
     };
 

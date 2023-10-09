@@ -43,4 +43,6 @@ export const Formatter = {
       .join(' '),
   logTypeTranslation: (logType: string): LocaleKey =>
     `log.${logType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
+  breachTypeTranslation: (breachType: string): LocaleKey =>
+    `cold-chain.${breachType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
 };
