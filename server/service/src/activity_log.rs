@@ -35,7 +35,8 @@ pub fn activity_log_entry(
     ctx: &ServiceContext,
     log_type: ActivityLogType,
     record_id: Option<String>,
-    event: Option<String>,
+    changed_from: Option<String>,
+    changed_to: Option<String>,
 ) -> Result<(), RepositoryError> {
     let log = &ActivityLogRow {
         id: uuid(),
@@ -52,26 +53,11 @@ pub fn activity_log_entry(
         },
         record_id,
         datetime: Utc::now().naive_utc(),
-        event,
+        changed_to,
+        changed_from,
     };
 
     Ok(ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?)
-}
-
-pub fn activity_log_stock_entry(
-    ctx: &ServiceContext,
-    log_type: ActivityLogType,
-    record_id: Option<String>,
-    from: Option<String>,
-    to: Option<String>,
-) -> Result<(), RepositoryError> {
-    let event = Some(format!(
-        "Changed from [{}] to [{}]",
-        from.unwrap_or_default(),
-        to.unwrap_or_default()
-    ));
-
-    Ok(activity_log_entry(ctx, log_type, record_id, event)?)
 }
 
 pub fn system_activity_log_entry(
@@ -87,7 +73,8 @@ pub fn system_activity_log_entry(
         store_id: Some(store_id.to_string()),
         record_id: Some(record_id.to_string()),
         datetime: Utc::now().naive_utc(),
-        event: None,
+        changed_from: None,
+        changed_to: None,
     };
 
     Ok(ActivityLogRowRepository::new(&connection).insert_one(log)?)

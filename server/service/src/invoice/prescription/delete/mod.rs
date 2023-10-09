@@ -44,6 +44,7 @@ pub fn delete_prescription(
                 ActivityLogType::PrescriptionDeleted,
                 Some(id.to_owned()),
                 None,
+                None,
             )?;
 
             match InvoiceRowRepository::new(&connection).delete(&id) {

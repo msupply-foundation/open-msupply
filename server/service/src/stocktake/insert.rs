@@ -382,6 +382,7 @@ pub fn insert_stocktake(
                 ActivityLogType::StocktakeCreated,
                 Some(new_stocktake.id.to_owned()),
                 None,
+                None,
             )?;
             let stocktake = get_stocktake(ctx, new_stocktake.id)?;
             stocktake.ok_or(InsertStocktakeError::InternalError(

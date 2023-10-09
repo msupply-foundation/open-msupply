@@ -302,6 +302,8 @@
   "label.add-another": "Add another",
   "label.remove": "Remove",
   "link.copy-to-clipboard": "Copy to Clipboard",
+  "log.changed-to": "to",
+  "log.changed-from": "From",
   "log.invoice-created": "Shipment created",
   "log.user-logged-in": "User logged in",
   "log.invoice-deleted": "Shipment deleted",

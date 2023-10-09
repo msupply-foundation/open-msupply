@@ -135,7 +135,13 @@ impl LoginService {
         };
         service_ctx.user_id = user_account.id.clone();
 
-        activity_log_entry(&service_ctx, ActivityLogType::UserLoggedIn, None, None)?;
+        activity_log_entry(
+            &service_ctx,
+            ActivityLogType::UserLoggedIn,
+            None,
+            None,
+            None,
+        )?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,

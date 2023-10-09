@@ -102,6 +102,7 @@ pub fn update_outbound_shipment(
                     log_type_from_invoice_status(&update_invoice.status, false),
                     Some(update_invoice.id.to_owned()),
                     None,
+                    None,
                 )?;
             }
 
