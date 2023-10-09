@@ -182,13 +182,5 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             "#
         )?;
     }
-
-    sql!(
-        connection,
-        r#"
-            ALTER TABLE store_preference ADD COLUMN vaccine_module bool NOT NULL DEFAULT false;
-        "#
-    )?;
-
     Ok(())
 }
