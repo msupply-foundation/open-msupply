@@ -33,8 +33,8 @@ impl DataSort {
                 key: StocktakeLineSortField::PackSize,
                 desc: self.desc,
             },
-            "locationCode" => StocktakeLineReportSort {
-                key: StocktakeLineSortField::LocationCode,
+            "locationName" => StocktakeLineReportSort {
+                key: StocktakeLineSortField::LocationName,
                 desc: self.desc,
             },
             _ => StocktakeLineReportSort {

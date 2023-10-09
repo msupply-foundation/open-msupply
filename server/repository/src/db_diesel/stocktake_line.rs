@@ -59,8 +59,8 @@ pub enum StocktakeLineSortField {
     ExpiryDate,
     /// Stocktake line pack size
     PackSize,
-    /// Stocktake line item stock location code
-    LocationCode,
+    /// Stocktake line item stock location name
+    LocationName,
 }
 
 pub type StocktakeLineSort = Sort<()>;
@@ -90,8 +90,8 @@ impl StocktakeLineReportSort {
                 key: StocktakeLineSortField::PackSize,
                 desc: self.desc,
             },
-            StocktakeLineSortField::LocationCode => StocktakeLineReportSort {
-                key: StocktakeLineSortField::LocationCode,
+            StocktakeLineSortField::LocationName => StocktakeLineReportSort {
+                key: StocktakeLineSortField::LocationName,
                 desc: self.desc,
             },
         }
@@ -199,8 +199,8 @@ impl<'a> StocktakeLineRepository<'a> {
                 StocktakeLineSortField::PackSize => {
                     apply_sort!(query, sort, stock_line_dsl::pack_size);
                 }
-                StocktakeLineSortField::LocationCode => {
-                    apply_sort_no_case!(query, sort, location_dsl::code);
+                StocktakeLineSortField::LocationName => {
+                    apply_sort_no_case!(query, sort, location_dsl::name);
                 }
             };
         } else {
