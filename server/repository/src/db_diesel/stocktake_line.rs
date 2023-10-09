@@ -191,13 +191,13 @@ impl<'a> StocktakeLineRepository<'a> {
                     apply_sort_no_case!(query, sort, item_dsl::code);
                 }
                 StocktakeLineSortField::Batch => {
-                    apply_sort_no_case!(query, sort, stock_line_dsl::batch);
+                    apply_sort_no_case!(query, sort, stocktake_line_dsl::batch);
                 }
                 StocktakeLineSortField::ExpiryDate => {
-                    apply_sort_asc_nulls_last!(query, sort, stock_line_dsl::expiry_date);
+                    apply_sort_asc_nulls_last!(query, sort, stocktake_line_dsl::expiry_date);
                 }
                 StocktakeLineSortField::PackSize => {
-                    apply_sort!(query, sort, stock_line_dsl::pack_size);
+                    apply_sort!(query, sort, stocktake_line_dsl::pack_size);
                 }
                 StocktakeLineSortField::LocationName => {
                     apply_sort_no_case!(query, sort, location_dsl::name);
