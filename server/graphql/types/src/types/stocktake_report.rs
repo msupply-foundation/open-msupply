@@ -185,14 +185,14 @@ mod test {
     use crate::types::StocktakeReportNode;
 
     #[actix_rt::test]
-    async fn graphql_stocktake_user_loader() {
+    async fn graphql_stocktake_report_user_loader() {
         #[derive(Clone)]
         struct TestQuery;
 
         let (_, _, _, settings) = setup_graphl_test(
             TestQuery,
             EmptyMutation,
-            "graphql_stocktake_user_loader",
+            "graphql_stocktake_report_user_loader",
             MockDataInserts::none().user_accounts(),
         )
         .await;

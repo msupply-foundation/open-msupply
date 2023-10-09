@@ -65,7 +65,7 @@ mod tests {
         let query = get_default_gql_query(DefaultQuery::Stocktake).query;
         let mock_stocktake = mock_stocktake_a();
         let expected = json!({
-          "stocktake": {
+          "stocktakeReport": {
             "id": mock_stocktake.id
           },
           "store": {
@@ -75,6 +75,10 @@ mod tests {
         let variables = Some(json!({
             "storeId": mock_stocktake.store_id,
             "dataId": mock_stocktake.id,
+            "sort": {
+                "key": "itemName",
+                "desc": false
+            }
         }));
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
 
