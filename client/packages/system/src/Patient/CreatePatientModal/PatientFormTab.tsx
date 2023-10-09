@@ -21,6 +21,8 @@ type Patient = {
   lastName?: string;
   dateOfBirth?: string;
   gender?: Gender;
+  address1?: string;
+  phone?: string;
 };
 
 export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
@@ -49,6 +51,8 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
         lastName: patientData?.lastName,
         dateOfBirth: patientData?.dateOfBirth,
         gender: patientData?.gender,
+        address1: patientData?.address1,
+        phone: patientData?.phone,
       });
     }
   };
