@@ -78,16 +78,18 @@ export const SensorListView: FC = () => {
         key: 'breach',
         label: 'label.breach',
         accessor: ({ rowData }) => {
-          return rowData.breach;
+          return rowData?.breach
+            ? t(Formatter.breachTypeTranslation(rowData.breach))
+            : null;
         },
       },
       {
         key: 'lastRecording',
         label: 'label.last-record',
         accessor: ({ rowData }) => {
-          return rowData.latestTemperatureLog?.nodes[0]?.timestamp
+          return rowData.latestTemperatureLog?.nodes[0]?.datetime
             ? Formatter.naiveDateTime(
-                new Date(rowData.latestTemperatureLog?.nodes[0]?.timestamp)
+                new Date(rowData.latestTemperatureLog?.nodes[0]?.datetime)
               )
             : null;
         },

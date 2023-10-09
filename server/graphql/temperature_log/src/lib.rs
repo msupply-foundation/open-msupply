@@ -71,7 +71,7 @@ mod test {
         temperature_log::{
             TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
         },
-        SensorFilter, StorageConnectionManager, TemperatureLogRow,
+        SensorFilter, StorageConnection, StorageConnectionManager, TemperatureLogRow,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;

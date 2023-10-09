@@ -90,10 +90,10 @@ impl SensorNode {
         self.row().log_interval
     }
 
-    pub async fn last_connection_timestamp(&self) -> Option<DateTime<Utc>> {
+    pub async fn last_connection_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
-            .last_connection_timestamp
-            .map(|timestamp| DateTime::<Utc>::from_utc(timestamp, Utc))
+            .last_connection_datetime
+            .map(|datetime| DateTime::<Utc>::from_utc(datetime, Utc))
     }
 
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
@@ -125,7 +125,7 @@ impl SensorNode {
             }),
             Some(filter),
             Some(TemperatureLogSort {
-                key: TemperatureLogSortField::Timestamp,
+                key: TemperatureLogSortField::Datetime,
                 desc: Some(true),
             }),
         )
@@ -136,7 +136,7 @@ impl SensorNode {
 
     pub async fn breach(&self, ctx: &Context<'_>) -> Result<Option<TemperatureBreachNodeType>> {
         let filter = TemperatureBreachFilter::new()
-            .end_timestamp(DatetimeFilter::is_null(true))
+            .end_datetime(DatetimeFilter::is_null(true))
             .sensor(SensorFilter::new().id(EqualFilter::equal_to(&self.row().id)));
 
         let breach = get_temperature_breaches(

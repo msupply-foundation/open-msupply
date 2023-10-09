@@ -23,7 +23,7 @@ fragment Sensor on SensorNode {
     totalCount
     nodes {
       temperature
-      timestamp
+      datetime
     }
   }
 }
