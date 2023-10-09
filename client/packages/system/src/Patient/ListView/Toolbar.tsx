@@ -3,6 +3,7 @@ import {
   useTranslation,
   AppBarContentPortal,
   SearchBar,
+  FilterRoot,
   FilterController,
   Box,
 } from '@openmsupply-client/common';
@@ -33,14 +34,40 @@ export const Toolbar: FC<{
       }}
     >
       <Box display="flex" gap={1}>
-        <SearchBar
+        <FilterRoot
+          filters={[
+            {
+              type: 'text',
+              name: 'First Name',
+              urlParameter: 'firstName',
+              placeholder: 'Search by first name',
+            },
+            {
+              type: 'text',
+              name: 'LastName',
+              urlParameter: 'lastName',
+              placeholder: 'Search by last name',
+            },
+            {
+              type: 'enum',
+              name: 'Gender',
+              urlParameter: 'gender',
+              placeholder: 'Search by Gender',
+              options: [
+                { label: 'Male', value: 'MALE' },
+                { label: 'Female', value: 'FEMALE' },
+              ],
+            },
+          ]}
+        />
+        {/* <SearchBar
           placeholder={t('placeholder.search-by-first-name')}
           value={firstNameFilterString}
           onChange={newValue => {
             filter.onChangeStringFilterRule('firstName', 'like', newValue);
           }}
-        />
-        <SearchBar
+        /> */}
+        {/* <SearchBar
           placeholder={t('placeholder.search-by-last-name')}
           value={lastNameFilterString}
           onChange={newValue => {
@@ -53,7 +80,7 @@ export const Toolbar: FC<{
           onChange={newValue => {
             filter.onChangeStringFilterRule('identifier', 'like', newValue);
           }}
-        />
+        /> */}
       </Box>
     </AppBarContentPortal>
   );
