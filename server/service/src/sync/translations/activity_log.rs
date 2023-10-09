@@ -35,9 +35,9 @@ pub struct LegacyActivityLogRow {
     pub record_id: String,
     pub datetime: NaiveDateTime,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub change_to: Option<String>,
+    pub changed_to: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub change_from: Option<String>,
+    pub changed_from: Option<String>,
 }
 
 pub(crate) struct ActivityLogTranslation {}
@@ -67,8 +67,8 @@ impl SyncTranslation for ActivityLogTranslation {
             store_id: Some(data.store_id),
             record_id: Some(data.record_id),
             datetime: data.datetime,
-            change_to: data.change_to,
-            change_from: data.change_from,
+            changed_to: data.changed_to,
+            changed_from: data.changed_from,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -92,8 +92,8 @@ impl SyncTranslation for ActivityLogTranslation {
             store_id,
             record_id,
             datetime,
-            change_to,
-            change_from,
+            changed_to,
+            changed_from,
         } = ActivityLogRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -113,8 +113,8 @@ impl SyncTranslation for ActivityLogTranslation {
             store_id,
             record_id,
             datetime,
-            change_to,
-            change_from,
+            changed_to,
+            changed_from,
         };
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,

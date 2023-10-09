@@ -35,8 +35,8 @@ pub fn activity_log_entry(
     ctx: &ServiceContext,
     log_type: ActivityLogType,
     record_id: Option<String>,
-    change_from: Option<String>,
-    change_to: Option<String>,
+    changed_from: Option<String>,
+    changed_to: Option<String>,
 ) -> Result<(), RepositoryError> {
     let log = &ActivityLogRow {
         id: uuid(),
@@ -53,8 +53,8 @@ pub fn activity_log_entry(
         },
         record_id,
         datetime: Utc::now().naive_utc(),
-        change_to,
-        change_from,
+        changed_to,
+        changed_from,
     };
 
     Ok(ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?)
@@ -73,8 +73,8 @@ pub fn system_activity_log_entry(
         store_id: Some(store_id.to_string()),
         record_id: Some(record_id.to_string()),
         datetime: Utc::now().naive_utc(),
-        change_from: None,
-        change_to: None,
+        changed_from: None,
+        changed_to: None,
     };
 
     Ok(ActivityLogRowRepository::new(&connection).insert_one(log)?)

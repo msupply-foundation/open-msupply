@@ -77,11 +77,11 @@ impl ActivityLogNode {
     }
 
     pub async fn to(&self) -> &Option<String> {
-        &self.row().change_to
+        &self.row().changed_to
     }
 
     pub async fn from(&self) -> &Option<String> {
-        &self.row().change_from
+        &self.row().changed_from
     }
 
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
