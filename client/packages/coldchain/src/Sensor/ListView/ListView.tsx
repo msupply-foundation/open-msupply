@@ -36,6 +36,7 @@ export const SensorListView: FC = () => {
         key: 'locationName',
         label: 'label.location',
         accessor: ({ rowData }) => rowData.location?.name,
+        sortable: false,
       },
       {
         key: 'serial',
@@ -57,12 +58,14 @@ export const SensorListView: FC = () => {
             ? `${batteryLevel}%`
             : t('messages.not-initialised');
         },
+        sortable: false,
       },
       {
         key: 'lastReading',
         label: 'label.last-reading',
         accessor: ({ rowData }) =>
           rowData.latestTemperatureLog?.nodes[0]?.temperature,
+        sortable: false,
       },
       {
         key: 'type',
@@ -73,6 +76,7 @@ export const SensorListView: FC = () => {
 
           return serialSplit[1];
         },
+        sortable: false,
       },
       {
         key: 'breach',
@@ -82,6 +86,7 @@ export const SensorListView: FC = () => {
             ? t(Formatter.breachTypeTranslation(rowData.breach))
             : null;
         },
+        sortable: false,
       },
       {
         key: 'lastRecording',
@@ -93,6 +98,7 @@ export const SensorListView: FC = () => {
               )
             : null;
         },
+        sortable: false,
       },
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
