@@ -60,7 +60,9 @@ export const SensorListView: FC = () => {
         key: 'lastReading',
         label: 'label.last-reading',
         accessor: ({ rowData }) => {
-          return `${rowData.latestTemperatureLog?.nodes[0]?.temperature}°C`;
+          return `${rowData.latestTemperatureLog?.nodes[0]?.temperature}${t(
+            'cold-chain.temperature-unit'
+          )}`;
         },
         sortable: false,
       },

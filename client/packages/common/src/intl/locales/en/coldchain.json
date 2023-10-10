@@ -1,3 +1,4 @@
 {
-    "error.no-sensors": "No sensors found"
+    "error.no-sensors": "No sensors found",
+    "cold-chain.temperature-unit": "°C"
 }
