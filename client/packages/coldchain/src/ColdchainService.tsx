@@ -1,6 +1,6 @@
+import React, { FC } from 'react';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import React, { FC } from 'react';
 import { ListView } from './Sensor/ListView';
 
 export const ColdchainService: FC = () => {
