@@ -31,6 +31,7 @@ export const SensorListView: FC = () => {
       {
         key: 'cce',
         label: 'label.cce',
+        sortable: false,
       },
       {
         key: 'locationName',
@@ -68,6 +69,16 @@ export const SensorListView: FC = () => {
         sortable: false,
       },
       {
+        key: 'lastRecording',
+        label: 'label.date-time',
+        accessor: ({ rowData }) => {
+          return Formatter.csvDateTimeString(
+            rowData.latestTemperatureLog?.nodes[0]?.datetime
+          );
+        },
+        sortable: false,
+      },
+      {
         key: 'type',
         label: 'label.sensor-type',
         accessor: ({ rowData }) => {
@@ -84,18 +95,6 @@ export const SensorListView: FC = () => {
         accessor: ({ rowData }) => {
           return rowData?.breach
             ? t(Formatter.breachTypeTranslation(rowData.breach))
-            : null;
-        },
-        sortable: false,
-      },
-      {
-        key: 'lastRecording',
-        label: 'label.last-record',
-        accessor: ({ rowData }) => {
-          return rowData.latestTemperatureLog?.nodes[0]?.datetime
-            ? Formatter.naiveDateTime(
-                new Date(rowData.latestTemperatureLog?.nodes[0]?.datetime)
-              )
             : null;
         },
         sortable: false,
