@@ -18,6 +18,13 @@ export type SensorsQueryVariables = Types.Exact<{
 
 export type SensorsQuery = { __typename: 'Queries', sensors: { __typename: 'SensorConnector', totalCount: number, nodes: Array<{ __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null }> } };
 
+export type UpdateSensorMutationVariables = Types.Exact<{
+  input: Types.UpdateSensorInput;
+}>;
+
+
+export type UpdateSensorMutation = { __typename: 'Mutations', updateSensor: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null } | { __typename: 'UpdateSensorError' } };
+
 export const LocationRowFragmentDoc = gql`
     fragment LocationRow on LocationNode {
   __typename
@@ -60,6 +67,13 @@ export const SensorsDocument = gql`
   }
 }
     ${SensorFragmentDoc}`;
+export const UpdateSensorDocument = gql`
+    mutation updateSensor($input: UpdateSensorInput!) {
+  updateSensor(input: $input) {
+    ...Sensor
+  }
+}
+    ${SensorFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -70,6 +84,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     sensors(variables: SensorsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<SensorsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<SensorsQuery>(SensorsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'sensors', 'query');
+    },
+    updateSensor(variables: UpdateSensorMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateSensorMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateSensorMutation>(UpdateSensorDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateSensor', 'mutation');
     }
   };
 }
@@ -89,5 +106,22 @@ export type Sdk = ReturnType<typeof getSdk>;
 export const mockSensorsQuery = (resolver: ResponseResolver<GraphQLRequest<SensorsQueryVariables>, GraphQLContext<SensorsQuery>, any>) =>
   graphql.query<SensorsQuery, SensorsQueryVariables>(
     'sensors',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateSensorMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateSensor })
+ *   )
+ * })
+ */
+export const mockUpdateSensorMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateSensorMutationVariables>, GraphQLContext<UpdateSensorMutation>, any>) =>
+  graphql.mutation<UpdateSensorMutation, UpdateSensorMutationVariables>(
+    'updateSensor',
     resolver
   )

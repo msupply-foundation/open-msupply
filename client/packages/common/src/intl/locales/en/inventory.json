@@ -81,5 +81,6 @@
   "stocktake.comment-location-template": "Created using items in location '{{location}}'",
   "stocktake-comment-items-have-stock-template": "Created using items that have stock",
   "title.stock-line-details": "Stock Line Details",
+  "title.edit-sensor-details": "Edit Sensor Details",
   "title.repack-details": "Repack Details"
 }
