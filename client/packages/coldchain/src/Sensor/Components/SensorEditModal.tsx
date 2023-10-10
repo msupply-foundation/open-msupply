@@ -4,6 +4,9 @@ import { useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
 import { DialogButton, useConfirmationModal } from '@common/components';
 import { ObjUtils } from '@common/utils';
+import { Grid } from 'packages/common/src';
+import { EditableSensorTab } from './EditableSensorTab';
+import { NonEditableSensorTab } from './NonEditableSensorTab';
 
 interface SensorEditModalProps {
   isOpen: boolean;
@@ -42,16 +45,17 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
 }) => {
   const t = useTranslation('inventory');
   const { Modal } = useDialog({ isOpen, onClose });
-  const { draft, onSave } = useDraftSensor(sensor);
+  const { draft, onSave, onUpdate } = useDraftSensor(sensor);
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
     message: 'need to update this string',
   });
 
+  console.log('sensor', sensor);
+
   return (
     <Modal
-      width={1400}
-      height={700}
+      width={700}
       slideAnimation={false}
       title={t('title.edit-sensor-details')}
       okButton={
@@ -70,7 +74,32 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <div>This is an emptry mvp modal</div>
+      <Grid
+        container
+        paddingBottom={4}
+        flexDirection="row"
+        justifyContent="space-evenly"
+      >
+        <Grid
+          item
+          alignItems="center"
+          justifyContent="space-around"
+          display="flex"
+          flexDirection="column"
+          padding={2}
+        >
+          <EditableSensorTab draft={draft} onUpdate={onUpdate} />
+        </Grid>
+        <Grid
+          item
+          alignItems="right"
+          display="flex"
+          flexDirection="column"
+          padding={2}
+        >
+          <NonEditableSensorTab draft={draft} />
+        </Grid>
+      </Grid>
     </Modal>
   );
 };

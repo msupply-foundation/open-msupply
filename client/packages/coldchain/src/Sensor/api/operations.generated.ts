@@ -20,6 +20,7 @@ export type SensorsQuery = { __typename: 'Queries', sensors: { __typename: 'Sens
 
 export type UpdateSensorMutationVariables = Types.Exact<{
   input: Types.UpdateSensorInput;
+  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -68,8 +69,8 @@ export const SensorsDocument = gql`
 }
     ${SensorFragmentDoc}`;
 export const UpdateSensorDocument = gql`
-    mutation updateSensor($input: UpdateSensorInput!) {
-  updateSensor(input: $input) {
+    mutation updateSensor($input: UpdateSensorInput!, $storeId: String!) {
+  updateSensor(input: $input, storeId: $storeId) {
     ...Sensor
   }
 }
@@ -114,7 +115,7 @@ export const mockSensorsQuery = (resolver: ResponseResolver<GraphQLRequest<Senso
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockUpdateSensorMutation((req, res, ctx) => {
- *   const { input } = req.variables;
+ *   const { input, storeId } = req.variables;
  *   return res(
  *     ctx.data({ updateSensor })
  *   )
