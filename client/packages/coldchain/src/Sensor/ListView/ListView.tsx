@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import {
-  useNavigate,
   DataTable,
   useColumns,
   TableProvider,
@@ -9,8 +8,10 @@ import {
   NothingHere,
   useUrlQueryParams,
   Formatter,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { useSensor, SensorFragment } from '../api';
+import { SensorEditModal } from '../Components';
 
 export const SensorListView: FC = () => {
   const {
@@ -20,7 +21,6 @@ export const SensorListView: FC = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({ filterKey: 'serial' });
 
-  const navigate = useNavigate();
   const { data, isError, isLoading } = useSensor.document.list();
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
@@ -105,21 +105,26 @@ export const SensorListView: FC = () => {
     [sortBy]
   );
 
+  const { isOpen, entity, onClose, onOpen } = useEditModal<SensorFragment>();
+
   return (
-    <DataTable
-      id="sensor-list"
-      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={data?.nodes ?? []}
-      isLoading={isLoading}
-      onRowClick={row => {
-        navigate(String(row.name));
-      }}
-      isError={isError}
-      noDataElement={<NothingHere body={t('error.no-sensors')} />}
-      enableColumnSelection
-    />
+    <>
+      {isOpen && entity && (
+        <SensorEditModal isOpen={isOpen} onClose={onClose} sensor={entity} />
+      )}
+      <DataTable
+        id="sensor-list"
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+        onChangePage={updatePaginationQuery}
+        columns={columns}
+        data={data?.nodes ?? []}
+        isLoading={isLoading}
+        onRowClick={onOpen}
+        isError={isError}
+        noDataElement={<NothingHere body={t('error.no-sensors')} />}
+        enableColumnSelection
+      />
+    </>
   );
 };
 

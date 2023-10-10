@@ -43,3 +43,9 @@ query sensors(
     }
   }
 }
+
+mutation updateSensor($input: UpdateSensorInput!) {
+  updateSensor(input: $input) {
+    ...Sensor
+  }
+}
