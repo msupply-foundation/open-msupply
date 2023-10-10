@@ -76,7 +76,11 @@ impl<'a> TemperatureBreachConfigRepository<'a> {
                 }
             }
         } else {
-            query = query.order(temperature_breach_config_dsl::description.asc())
+            let sort = TemperatureBreachConfigSort {
+                key: TemperatureBreachConfigSortField::Description,
+                desc: Some(false),
+            };
+            apply_sort_no_case!(query, sort, temperature_breach_config_dsl::description)
         }
 
         let result = query
