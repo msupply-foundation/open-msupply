@@ -4411,7 +4411,13 @@ export type SensorNode = {
   logInterval?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   serial: Scalars['String']['output'];
+  type: SensorNodeType;
 };
+
+export enum SensorNodeType {
+  BlueMaestro = 'BLUE_MAESTRO',
+  Laird = 'LAIRD'
+}
 
 export enum SensorSortFieldInput {
   Name = 'name',

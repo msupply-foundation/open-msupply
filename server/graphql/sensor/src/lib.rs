@@ -85,7 +85,7 @@ mod test {
     use repository::{
         mock::MockDataInserts,
         sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
-        SensorRow, StorageConnectionManager,
+        SensorRow, SensorType, StorageConnectionManager,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
@@ -176,6 +176,7 @@ mod test {
                                 .unwrap()
                                 + Duration::seconds(47046),
                         ),
+                        r#type: SensorType::BlueMaestro,
                     },
                 }],
                 count: 1,

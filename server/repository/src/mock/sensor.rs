@@ -1,4 +1,4 @@
-use crate::SensorRow;
+use crate::{SensorRow, SensorType};
 use chrono::{Duration, NaiveDate};
 
 pub fn mock_sensor_1() -> SensorRow {
@@ -18,6 +18,7 @@ pub fn mock_sensor_1() -> SensorRow {
                 .unwrap()
                 + Duration::seconds(47046),
         ),
+        r#type: SensorType::BlueMaestro,
     }
 }
 
@@ -38,6 +39,7 @@ pub fn mock_sensor_is_active() -> SensorRow {
                 .unwrap()
                 + Duration::seconds(47046),
         ),
+        r#type: SensorType::BlueMaestro,
     }
 }
 
@@ -59,6 +61,7 @@ pub fn mock_sensor_2() -> SensorRow {
                 .unwrap()
                 + Duration::seconds(47046),
         ),
+        r#type: SensorType::BlueMaestro,
     }
 }
 
@@ -80,6 +83,7 @@ pub fn mock_sensor_in_another_store() -> SensorRow {
                 .unwrap()
                 + Duration::seconds(47046),
         ),
+        r#type: SensorType::BlueMaestro,
     }
 }
 

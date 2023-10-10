@@ -9,7 +9,7 @@ use repository::{
     EqualFilter, SensorRow,
 };
 use repository::{
-    DatetimeFilter, PaginationOption, TemperatureBreachFilter, TemperatureLogFilter,
+    DatetimeFilter, PaginationOption, SensorType, TemperatureBreachFilter, TemperatureLogFilter,
     TemperatureLogSort, TemperatureLogSortField,
 };
 use service::temperature_breach::query::get_temperature_breaches;
@@ -64,6 +64,12 @@ pub struct SensorConnector {
     nodes: Vec<SensorNode>,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+pub enum SensorNodeType {
+    BlueMaestro,
+    Laird,
+}
+
 #[Object]
 impl SensorNode {
     pub async fn id(&self) -> &str {
@@ -76,6 +82,10 @@ impl SensorNode {
 
     pub async fn serial(&self) -> &str {
         &self.row().serial
+    }
+
+    pub async fn r#type(&self) -> SensorNodeType {
+        SensorNodeType::from_domain(&self.row().r#type)
     }
 
     pub async fn is_active(&self) -> bool {
@@ -209,6 +219,28 @@ impl SensorSortInput {
         SensorSort {
             key,
             desc: self.desc,
+        }
+    }
+}
+
+impl SensorNodeType {
+    pub fn from_domain(from: &SensorType) -> SensorNodeType {
+        use SensorNodeType as to;
+        use SensorType as from;
+
+        match from {
+            from::BlueMaestro => to::BlueMaestro,
+            from::Laird => to::Laird,
+        }
+    }
+
+    pub fn to_domain(self) -> SensorType {
+        use SensorNodeType as from;
+        use SensorType as to;
+
+        match self {
+            from::BlueMaestro => to::BlueMaestro,
+            from::Laird => to::Laird,
         }
     }
 }
