@@ -20,15 +20,13 @@ export const EnumFilter: FC<{
 }> = ({ filterDefinition, remove }) => {
   const { urlParameter, options, name } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
-  const [value, setValue] = useState<EnumOption | undefined | ''>(
-    options.find(option => option.value === urlQuery[urlParameter]) ?? undefined
-  );
+  const [value, setValue] = useState<string>(urlQuery[urlParameter]);
 
   const handleChange = (selection: string) => {
     const option = options.find(opt => opt.value === selection);
     if (!option) return;
 
-    setValue(option);
+    setValue(option.value);
     updateQuery({ [urlParameter]: option.value });
   };
 
