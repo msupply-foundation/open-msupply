@@ -29,6 +29,7 @@ export const getSensorQueries = (sdk: Sdk, storeId: string) => ({
   },
   update: async (patch: RecordPatch<SensorFragment>) => {
     const result = await sdk.updateSensor({
+      storeId,
       input: {
         id: patch.id,
         isActive: patch.isActive,
