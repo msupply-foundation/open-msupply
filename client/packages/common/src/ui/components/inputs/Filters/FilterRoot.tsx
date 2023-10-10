@@ -8,17 +8,16 @@ import {
   InputAdornment,
   DropdownMenu,
   DropdownMenuItem,
+  Divider,
 } from '@common/components';
 import { useTranslation } from '@common/intl';
 import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
-
-// type FilterType = 'text' | 'enum' | 'date' | 'dateTime' | 'number';
+import { t } from 'i18next';
 
 export interface FilterDefinitionCommon {
   name: string;
   urlParameter: string;
-  placeholder: string;
 }
 
 type FilterDefinition = TextFilterDefinition | EnumFilterDefinition;
@@ -27,9 +26,12 @@ interface FilterDefinitions {
   filters: FilterDefinition[];
 }
 
+// CONSTANTS
 const RESET_KEYWORD = 'RESET';
+export const FILTER_WIDTH = '220px';
 
 export const FilterRoot: FC<FilterDefinitions> = ({ filters }) => {
+  const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const [activeFilters, setActiveFilters] = useState<FilterDefinition[]>(
     filters.filter(fil => Object.keys(urlQuery).includes(fil.urlParameter))
@@ -71,6 +73,18 @@ export const FilterRoot: FC<FilterDefinitions> = ({ filters }) => {
             {option.label}
           </DropdownMenuItem>
         ))}
+        {activeFilters.length > 0 && (
+          <>
+            <Divider />
+            <DropdownMenuItem
+              key={'clear-filters'}
+              onClick={() => handleSelect(RESET_KEYWORD)}
+              sx={{ fontSize: 14 }}
+            >
+              {t('label.clear-all-filters')}
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenu>
       {activeFilters.map(filter => getFilterComponent(filter, removeFilter))}
     </Box>
@@ -83,13 +97,9 @@ const getFilterOptions = (
 ) => {
   const activeFilterCodes = activeFilters.map(fil => fil.urlParameter);
 
-  const filterOptions = filters
+  return filters
     .filter(fil => !activeFilterCodes.includes(fil.urlParameter))
     .map(fil => ({ label: fil.name, value: fil.urlParameter }));
-
-  if (activeFilterCodes.length > 0)
-    filterOptions.push({ label: 'Clear all filters', value: RESET_KEYWORD });
-  return filterOptions;
 };
 
 const getFilterComponent = (
@@ -128,8 +138,8 @@ export const EndAdornment: FC<{
     <InputAdornment position="end">
       <IconButton
         sx={{ color: 'gray.main' }}
-        label={t('label.clear-filter')}
-        onClick={onClear}
+        label={hasValue ? t('label.clear-filter') : ''}
+        onClick={hasValue ? onClear : () => {}}
         icon={hasValue ? <CloseIcon /> : <SearchIcon fontSize="small" />}
       />
     </InputAdornment>

@@ -1,11 +1,15 @@
 import React, { FC, useState } from 'react';
 import { BasicTextInput } from '../TextInput';
 import { useDebouncedValueCallback, useUrlQuery } from '@common/hooks';
-// import { useTranslation } from '@common/intl';
-import { EndAdornment, FilterDefinitionCommon } from './FilterRoot';
+import {
+  EndAdornment,
+  FILTER_WIDTH,
+  FilterDefinitionCommon,
+} from './FilterRoot';
 
 export interface TextFilterDefinition extends FilterDefinitionCommon {
   type: 'text';
+  placeholder?: string;
 }
 
 export const TextFilter: FC<{
@@ -43,12 +47,12 @@ export const TextFilter: FC<{
             onClear={remove}
           />
         ),
-        sx: { width: '220px' },
+        sx: { width: FILTER_WIDTH },
       }}
       value={value}
       onChange={e => handleChange(e.target.value)}
       label={filterDefinition.name}
-      placeholder={filterDefinition.placeholder}
+      placeholder={filterDefinition.placeholder ?? ''}
       sx={{
         '& .MuiInputLabel-root': {
           zIndex: 100,
