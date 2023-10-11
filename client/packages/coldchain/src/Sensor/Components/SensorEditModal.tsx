@@ -51,8 +51,6 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
     message: 'need to update this string',
   });
 
-  console.log('sensor', sensor);
-
   return (
     <Modal
       width={700}
@@ -65,6 +63,7 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
           onClick={() =>
             getConfirmation({
               onConfirm: async () => {
+                console.log('sensor', sensor);
                 await onSave();
                 onClose();
               },
@@ -76,29 +75,12 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
     >
       <Grid
         container
-        paddingBottom={4}
+        padding={4}
         flexDirection="row"
         justifyContent="space-evenly"
       >
-        <Grid
-          item
-          alignItems="center"
-          justifyContent="space-around"
-          display="flex"
-          flexDirection="column"
-          padding={2}
-        >
-          <EditableSensorTab draft={draft} onUpdate={onUpdate} />
-        </Grid>
-        <Grid
-          item
-          alignItems="right"
-          display="flex"
-          flexDirection="column"
-          padding={2}
-        >
-          <NonEditableSensorTab draft={draft} />
-        </Grid>
+        <EditableSensorTab draft={draft} onUpdate={onUpdate} />
+        <NonEditableSensorTab draft={draft} />
       </Grid>
     </Modal>
   );

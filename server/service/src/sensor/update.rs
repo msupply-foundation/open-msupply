@@ -31,6 +31,7 @@ pub fn update_sensor(
         .connection
         .transaction_sync(|connection| {
             let sensor_row = validate(connection, &ctx.store_id, &input)?;
+            println!("sensor_row: {:?}", sensor_row);
             let updated_sensor_row = generate(input, sensor_row);
             SensorRowRepository::new(&connection).upsert_one(&updated_sensor_row)?;
 
@@ -54,6 +55,10 @@ pub fn validate(
     }
 
     if let Some(location_id) = &input.location_id {
+        if location_id == &("None".to_string()) {
+            // return OK if location_id is None (unassigning this sensor from a location)
+            return Ok(sensor_row);
+        }
         match check_location_on_hold(&location_id, connection) {
             Ok(true) => return Err(UpdateSensorError::LocationIsOnHold),
             Err(e) => return Err(UpdateSensorError::DatabaseError(e)),
@@ -73,7 +78,11 @@ pub fn generate(
     }: UpdateSensor,
     mut sensor_row: SensorRow,
 ) -> SensorRow {
-    sensor_row.location_id = location_id;
+    if location_id == Some("None".to_string()) {
+        sensor_row.location_id = None;
+    } else {
+        sensor_row.location_id = location_id;
+    }
     sensor_row.name = name.unwrap_or(sensor_row.name);
     sensor_row.is_active = is_active.unwrap_or(sensor_row.is_active);
     sensor_row
