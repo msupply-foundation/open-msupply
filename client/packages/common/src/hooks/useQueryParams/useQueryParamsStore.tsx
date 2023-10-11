@@ -112,7 +112,6 @@ export const createQueryParamsStore = <T extends RecordWithId>({
         condition: FilterByConditionByType['string'],
         value: string
       ) => {
-        console.log('Value', value);
         if (value === '') {
           get().filter.onClearFilterRule(key);
         } else {
