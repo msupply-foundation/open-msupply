@@ -28,9 +28,8 @@ export const useUrlQueryParams = ({
   filterCondition = 'like',
 }: UrlQueryParams = {}) => {
   // do not coerce the filter parameter if the user enters a numeric value
-  // if this is parsed as numeric, the query param changes filter=0300 to
-  // filter=300 which then does not match against codes, as the filter is
-  // usually a 'startsWith'
+  // if this is parsed as numeric, the query param changes filter=0300 to filter=300
+  // which then does not match against codes, as the filter is usually a 'startsWith'
   const skipParse = filterKey
     ? typeof filterKey === 'string'
       ? [filterKey]
