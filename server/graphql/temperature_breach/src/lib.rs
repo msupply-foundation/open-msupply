@@ -64,13 +64,12 @@ mod test {
     use chrono::{Duration, NaiveDate};
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
-    //use repository::mock::mock_temperature_breachs;
+    use repository::PaginationOption;
     use repository::{
         mock::MockDataInserts,
         temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort},
         StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
     };
-    use repository::{PaginationOption, SensorRow};
     use serde_json::json;
 
     use service::{
@@ -156,31 +155,15 @@ mod test {
                             .and_hms_opt(0, 0, 0)
                             .unwrap()
                             + Duration::seconds(47046),
-                        end_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
-                            .unwrap()
-                            .and_hms_opt(0, 0, 0)
-                            .unwrap()
-                            + Duration::seconds(50646),
-                        threshold_duration: 3600,
-                    },
-                    sensor_row: SensorRow {
-                        id: "sensor_1".to_owned(),
-                        serial: "serial_sensor_1".to_owned(),
-                        name: "name_sensor_1".to_owned(),
-                        is_active: false,
-                        store_id: Some("store_a".to_string()),
-                        location_id: None,
-                        battery_level: Some(100),
-                        log_interval: Some(1),
-                        last_connection_datetime: Some(
-                            NaiveDate::from_ymd_opt(2023, 7, 1)
+                        end_datetime: Some(
+                            NaiveDate::from_ymd_opt(2022, 7, 1)
                                 .unwrap()
                                 .and_hms_opt(0, 0, 0)
                                 .unwrap()
-                                + Duration::seconds(47046),
+                                + Duration::seconds(50646),
                         ),
+                        threshold_duration: 3600,
                     },
-                    location_row: None,
                 }],
                 count: 1,
             })
