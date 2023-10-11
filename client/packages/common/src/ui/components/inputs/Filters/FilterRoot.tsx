@@ -13,7 +13,6 @@ import {
 import { useTranslation } from '@common/intl';
 import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
-import { t } from 'i18next';
 
 export interface FilterDefinitionCommon {
   name: string;
