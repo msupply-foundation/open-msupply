@@ -1,6 +1,7 @@
 import React, { FC, useEffect } from 'react';
 import {
   Autocomplete,
+  LocationNode,
   defaultOptionMapper,
   getDefaultOptionRenderer,
 } from '@openmsupply-client/common';
@@ -34,17 +35,21 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
 
   let options = data?.nodes ?? [];
 
+  const unassignOption: LocationNode = {
+    __typename: 'LocationNode',
+    id: 'None',
+    name: 'No location',
+    onHold: false,
+    code: 'No location',
+    stock: {
+      __typename: 'StockLineConnector',
+      nodes: [],
+      totalCount: 0,
+    },
+  };
+
   if (allowUnassign) {
-    options = [
-      ...options,
-      {
-        __typename: 'LocationNode',
-        id: 'None',
-        name: 'No location',
-        onHold: false,
-        code: 'No location',
-      },
-    ];
+    options = [...options, unassignOption];
   }
 
   return (
@@ -54,10 +59,15 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       width={`${width}px`}
       clearable={false}
       value={
-        value && {
-          ...value,
-          label: value.name,
-        }
+        value
+          ? {
+              ...value,
+              label: value.name,
+            }
+          : {
+              ...unassignOption,
+              label: unassignOption.name,
+            }
       }
       loading={isLoading}
       onChange={(_, location) => {
