@@ -31,9 +31,9 @@ export const Toolbar: FC<{
       <SearchBar
         placeholder={t('placeholder.search-by-name')}
         value={filterString}
-        onChange={newValue => {
-          filter.onChangeStringFilterRule('otherPartyName', 'like', newValue);
-        }}
+        onChange={newValue =>
+          filter.onChangeStringFilterRule('otherPartyName', 'like', newValue)
+        }
       />
       <DropdownMenu label="Select">
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
