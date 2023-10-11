@@ -125,14 +125,15 @@ mod query {
             )
             .unwrap();
 
+        // On default, sorted by description
         assert_eq!(result.count, 2);
         assert_eq!(
             result.rows[0].temperature_breach_config_row.id,
-            "temperature_breach_config_1"
+            "temperature_breach_config_is_active"
         );
         assert_eq!(
             result.rows[1].temperature_breach_config_row.id,
-            "temperature_breach_config_is_active"
+            "temperature_breach_config_1"
         );
     }
 

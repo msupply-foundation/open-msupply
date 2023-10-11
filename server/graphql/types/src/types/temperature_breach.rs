@@ -113,8 +113,10 @@ impl TemperatureBreachNode {
         DateTime::<Utc>::from_utc(self.row().start_datetime, Utc)
     }
 
-    pub async fn end_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().end_datetime, Utc)
+    pub async fn end_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .end_datetime
+            .map(|t| DateTime::<Utc>::from_utc(t, Utc))
     }
 
     pub async fn acknowledged(&self) -> bool {

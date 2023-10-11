@@ -184,11 +184,17 @@ mod query {
         let result_timestamps: Vec<NaiveDateTime> = result
             .rows
             .into_iter()
-            .map(|temperature_breach| temperature_breach.temperature_breach_row.end_datetime)
+            .map(|temperature_breach| {
+                temperature_breach
+                    .temperature_breach_row
+                    .end_datetime
+                    .unwrap()
+            })
             .collect();
+
         let sorted_timestamps: Vec<NaiveDateTime> = temperature_breaches
             .into_iter()
-            .map(|temperature_breach| temperature_breach.end_datetime)
+            .map(|temperature_breach| temperature_breach.end_datetime.unwrap())
             .collect();
 
         assert_eq!(result_timestamps, sorted_timestamps);
