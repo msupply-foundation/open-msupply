@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import { useUrlQuery } from '@common/hooks';
 import { Select } from '@common/components';
 import {
@@ -20,13 +20,13 @@ export const EnumFilter: FC<{
 }> = ({ filterDefinition, remove }) => {
   const { urlParameter, options, name } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
-  const [value, setValue] = useState<string>(urlQuery[urlParameter]);
+
+  const value = urlQuery[urlParameter] as string | undefined;
 
   const handleChange = (selection: string) => {
     const option = options.find(opt => opt.value === selection);
     if (!option) return;
 
-    setValue(option.value);
     updateQuery({ [urlParameter]: option.value });
   };
 
