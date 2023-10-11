@@ -35,7 +35,8 @@ export const SensorListView: FC = () => {
       {
         key: 'locationName',
         label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) =>
+          rowData.location?.name ?? 'No location assigned',
         sortable: false,
       },
       {
