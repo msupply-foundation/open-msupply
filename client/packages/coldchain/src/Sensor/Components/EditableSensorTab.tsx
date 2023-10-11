@@ -52,16 +52,18 @@ export const EditableSensorTab: FC<EditableSensorTabProps> = ({
           />
         }
       />
-      <StyledInputRow
+      <InputWithLabelRow
         label={'Storage Location'}
+        labelWidth="100%"
         Input={
           <LocationSearchInput
             value={draft.location ?? null}
             onChange={location => {
-              console.log('location changed', location);
               onUpdate({ location });
             }}
             disabled={false}
+            width={'100%'}
+            allowUnassign={true}
           ></LocationSearchInput>
         }
       />

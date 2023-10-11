@@ -12,6 +12,7 @@ interface LocationSearchInputProps {
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
   autoFocus?: boolean;
+  allowUnassign?: boolean;
 }
 
 export const LocationSearchInput: FC<LocationSearchInputProps> = ({
@@ -20,6 +21,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   onChange,
   disabled,
   autoFocus = false,
+  allowUnassign = false,
 }) => {
   const { fetchAsync, data, isLoading } = useLocation.document.listAll({
     direction: 'asc',
@@ -29,6 +31,21 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   useEffect(() => {
     fetchAsync();
   }, []);
+
+  let options = data?.nodes ?? [];
+
+  if (allowUnassign) {
+    options = [
+      ...options,
+      {
+        __typename: 'LocationNode',
+        id: 'None',
+        name: 'No location',
+        onHold: false,
+        code: 'No location',
+      },
+    ];
+  }
 
   return (
     <Autocomplete<LocationRowFragment>
@@ -46,7 +63,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       onChange={(_, location) => {
         onChange(location);
       }}
-      options={defaultOptionMapper(data?.nodes ?? [], 'name')}
+      options={defaultOptionMapper(options, 'name')}
       renderOption={getDefaultOptionRenderer('name')}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
     />
