@@ -20,7 +20,7 @@ export const SensorLineForm: FC<SensorLineFormProps> = ({
   const inputTextAlign = { sx: { textAlign: 'end' } };
 
   return (
-    <Box display="flex" flexDirection="column" gap={2} justifySelf="center">
+    <Box display="flex" flexDirection="column" gap={2}>
       <InputWithLabelRow
         label={t('label.sensor-name')}
         labelProps={inputTextAlign}
