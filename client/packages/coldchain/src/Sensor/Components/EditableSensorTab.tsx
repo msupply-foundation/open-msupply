@@ -8,6 +8,7 @@ import {
 } from '@common/components';
 
 import { LocationSearchInput } from 'packages/system/src';
+import { useTranslation } from '@common/intl';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   <InputWithLabelRow
@@ -34,10 +35,11 @@ export const EditableSensorTab: FC<EditableSensorTabProps> = ({
   draft,
   onUpdate,
 }) => {
+  const t = useTranslation('coldchain');
   return (
     <Grid>
       <StyledInputRow
-        label={'Sensor Name'}
+        label={t('label.sensor-name')}
         Input={
           <BasicTextInput
             value={draft.name ?? ''}
@@ -46,7 +48,7 @@ export const EditableSensorTab: FC<EditableSensorTabProps> = ({
         }
       />
       <InputWithLabelRow
-        label={'Storage Location'}
+        label={t('label.storage-location')}
         labelWidth="140px"
         labelProps={{ sx: { textAlign: 'end', padding: '4' } }}
         sx={{
