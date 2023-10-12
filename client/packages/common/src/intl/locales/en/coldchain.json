@@ -9,5 +9,6 @@
   "label.breach": "Breach",
   "label.last-record": "Last recording date / time",
   "label.sensor-name": "Sensor Name",
-  "label.storage-location": "Storage Location"
+  "label.storage-location": "Storage Location",
+  "message.conform-sensor-update": "This will confirm changes you have made to this sensor"
 }

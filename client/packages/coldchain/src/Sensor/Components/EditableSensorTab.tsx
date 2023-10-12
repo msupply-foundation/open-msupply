@@ -7,7 +7,7 @@ import {
   InputWithLabelRowProps,
 } from '@common/components';
 
-import { LocationSearchInput } from 'packages/system/src';
+import { LocationSearchInput } from '@openmsupply-client/system/src';
 import { useTranslation } from '@common/intl';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (

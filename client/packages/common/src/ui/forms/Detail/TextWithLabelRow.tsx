@@ -30,7 +30,7 @@ export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
   console.log('textProps', textProps);
   return (
     <Box display="flex" sx={sx}>
-      <Box style={sx ? { textAlign: 'end', whiteSpace: 'nowrap' } : {}}>
+      <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
         <FormLabel
           sx={{
             fontWeight: 'bold',
