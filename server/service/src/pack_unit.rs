@@ -59,7 +59,7 @@ pub fn get_pack_units(
             .iter()
             .filter(|p| p.item_id == item_id)
             .max_by(|a, b| {
-                total_number_of_packs
+                let ordering_by_packs = total_number_of_packs
                     .get(&(a.item_id.clone(), a.pack_size))
                     .unwrap_or(&0.0)
                     .partial_cmp(
@@ -67,18 +67,19 @@ pub fn get_pack_units(
                             .get(&(b.item_id.clone(), b.pack_size))
                             .unwrap_or(&0.0),
                     )
-                    .unwrap()
-                    .then(
+                    .unwrap();
+
+                let ordering_by_lines = total_number_of_lines
+                    .get(&(a.item_id.clone(), a.pack_size))
+                    .unwrap_or(&0.0)
+                    .partial_cmp(
                         total_number_of_lines
-                            .get(&(a.item_id.clone(), a.pack_size))
-                            .unwrap_or(&0.0)
-                            .partial_cmp(
-                                total_number_of_lines
-                                    .get(&(b.item_id.clone(), b.pack_size))
-                                    .unwrap_or(&0.0),
-                            )
-                            .unwrap(),
+                            .get(&(b.item_id.clone(), b.pack_size))
+                            .unwrap_or(&0.0),
                     )
+                    .unwrap();
+
+                ordering_by_packs.then(ordering_by_lines)
             })
             .map(|p| p.id.clone())
             .unwrap_or("".to_string());
