@@ -78,14 +78,14 @@ export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemC
 
 export type UnitFragment = { __typename: 'UnitNode', id: string, longName: string, packSize: number, shortName: string };
 
-export type PackUnitFragment = { __typename: 'PackUnitNode', itemId: string, mostUsedPackUnitId: string, packUnits: Array<{ __typename: 'UnitNode', id: string, longName: string, packSize: number, shortName: string }> };
+export type PackUnitFragment = { __typename: 'ItemPackUnitNode', itemId: string, mostUsedPackUnitId: string, packUnits: Array<{ __typename: 'UnitNode', id: string, longName: string, packSize: number, shortName: string }> };
 
 export type PackUnitsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type PackUnitsQuery = { __typename: 'Queries', packUnits: { __typename: 'PackUnitConnector', totalCount: number, nodes: Array<{ __typename: 'PackUnitNode', itemId: string, mostUsedPackUnitId: string, packUnits: Array<{ __typename: 'UnitNode', id: string, longName: string, packSize: number, shortName: string }> }> } };
+export type PackUnitsQuery = { __typename: 'Queries', packUnits: { __typename: 'PackUnitConnector', totalCount: number, nodes: Array<{ __typename: 'ItemPackUnitNode', itemId: string, mostUsedPackUnitId: string, packUnits: Array<{ __typename: 'UnitNode', id: string, longName: string, packSize: number, shortName: string }> }> } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -219,7 +219,7 @@ export const UnitFragmentDoc = gql`
 }
     `;
 export const PackUnitFragmentDoc = gql`
-    fragment PackUnit on PackUnitNode {
+    fragment PackUnit on ItemPackUnitNode {
   itemId
   mostUsedPackUnitId
   packUnits {

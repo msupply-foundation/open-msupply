@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_types::types::PackUnitNode;
+use graphql_types::types::ItemPackUnitNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     pack_unit::get_pack_units,
@@ -9,7 +9,7 @@ use service::{
 #[derive(SimpleObject)]
 pub struct PackUnitConnector {
     total_count: u32,
-    nodes: Vec<PackUnitNode>,
+    nodes: Vec<ItemPackUnitNode>,
 }
 
 pub fn pack_units(ctx: &Context<'_>, store_id: &str) -> Result<PackUnitConnector> {
@@ -27,6 +27,6 @@ pub fn pack_units(ctx: &Context<'_>, store_id: &str) -> Result<PackUnitConnector
 
     Ok(PackUnitConnector {
         total_count: pack_units.len() as u32,
-        nodes: PackUnitNode::from_vec(pack_units),
+        nodes: ItemPackUnitNode::from_vec(pack_units),
     })
 }

@@ -1,6 +1,6 @@
 import { usePackUnits } from '../api';
 import { create } from 'zustand';
-import { PackUnitNode, UnitNode } from '@common/types';
+import { ItemPackUnitNode, UnitNode } from '@common/types';
 import { ArrayUtils, NumUtils, isEqual } from '@common/utils';
 import { useEffect } from 'react';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
@@ -11,12 +11,12 @@ type UserSelectedVariants = {
 interface UnitState {
   // From back end
   items: {
-    [itemId: string]: PackUnitNode;
+    [itemId: string]: ItemPackUnitNode;
   };
   userSelectedVariants: UserSelectedVariants;
   setUserSelectedVariant: (_: { itemId: string; variantId: string }) => void;
   // Should be called on startup when fetching multi unit variants
-  setItems: (newItems: PackUnitNode[]) => void;
+  setItems: (newItems: ItemPackUnitNode[]) => void;
 }
 
 const useUnitStore = create<UnitState>(set => {

@@ -1,23 +1,24 @@
 use std::collections::HashMap;
 
 use repository::{
-    EqualFilter, PackUnitRow, PackUnitRowRepository, RepositoryError, StockLineFilter,
-    StockLineRepository, StockOnHandFilter, StockOnHandRepository, StorageConnection,
+    EqualFilter, PackUnitRow, PackUnitRowRepository, RepositoryError, StockLineRowRepository,
+    StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
-pub struct PackUnit {
+pub struct ItemPackUnit {
     pub item_id: String,
     pub most_used_pack_unit_id: String,
     pub pack_units: Vec<PackUnitRow>,
 }
 
+// For a particular store, this method returns all pack units grouped by item_id and a reference to the most
+// used pack unit for each item (see ItemPackUnit return type).
 pub fn get_pack_units(
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<Vec<PackUnit>, RepositoryError> {
-    let stock_lines = StockLineRepository::new(connection)
-        .query_by_filter(StockLineFilter::new(), Some(store_id.to_string()))?;
+) -> Result<Vec<ItemPackUnit>, RepositoryError> {
+    let stock_lines = StockLineRowRepository::new(connection).find_by_store_id(store_id)?;
     let stock_on_hand = StockOnHandRepository::new(connection).query(Some(
         StockOnHandFilter::new().store_id(EqualFilter::equal_to(store_id)),
     ))?;
@@ -25,12 +26,12 @@ pub fn get_pack_units(
 
     // Calculate the most used variant for each item and pack size by total number of packs
     // if item has stock on hand else by empty line count. HashMap keys are (item_id, pack_size)
-    // for easier management of totals.
+    // for easier management.
     let mut total_number_of_packs: HashMap<(String, i32), f64> = HashMap::new();
     let mut total_number_of_lines: HashMap<(String, i32), f64> = HashMap::new();
     for stock_line in stock_lines {
-        let item_id = stock_line.stock_line_row.item_id.clone();
-        let pack_size = stock_line.stock_line_row.pack_size;
+        let item_id = stock_line.item_id.clone();
+        let pack_size = stock_line.pack_size;
 
         if stock_on_hand
             .iter()
@@ -38,7 +39,7 @@ pub fn get_pack_units(
         {
             total_number_of_packs
                 .entry((item_id, pack_size))
-                .and_modify(|e| *e += stock_line.stock_line_row.total_number_of_packs)
+                .and_modify(|e| *e += stock_line.total_number_of_packs)
                 .or_insert(0.0);
         } else {
             total_number_of_lines
@@ -90,7 +91,7 @@ pub fn get_pack_units(
 
     Ok(pack_units_grouped
         .into_iter()
-        .map(|(item_id, pack_units)| PackUnit {
+        .map(|(item_id, pack_units)| ItemPackUnit {
             item_id: item_id.clone(),
             most_used_pack_unit_id: pack_units.0,
             pack_units: pack_units.1,
@@ -109,10 +110,10 @@ mod test {
         StorageConnection,
     };
 
-    use super::{get_pack_units, PackUnit};
+    use super::{get_pack_units, ItemPackUnit};
 
     // only testing item_a and item_b since both have SOH in store
-    fn pack_units_for_item_helper(connection: &StorageConnection, item_id: &str) -> PackUnit {
+    fn pack_units_for_item_helper(connection: &StorageConnection, item_id: &str) -> ItemPackUnit {
         let stock_lines = StockLineRepository::new(connection)
             .query_by_filter(
                 StockLineFilter::new().item_id(EqualFilter::equal_to(item_id)),
@@ -150,7 +151,7 @@ mod test {
             .map(|p| p.id.clone())
             .unwrap_or("".to_string());
 
-        PackUnit {
+        ItemPackUnit {
             item_id: item_id.to_string(),
             most_used_pack_unit_id,
             pack_units: pack_units
