@@ -122,7 +122,7 @@
   "label.cant-delete-disabled-requisition": "Can only delete lines when requisition is in Draft",
   "label.chargeCode": "Charge Code",
   "label.clear-filter": "Clear filter",
-  "label.clear-all-filters": "Clear all filters",
+  "label.remove-all-filters": "Remove all filters",
   "label.click-to-sort": "Click to sort by this column",
   "label.client": "Client",
   "label.code": "Code",

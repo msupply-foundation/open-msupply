@@ -80,7 +80,7 @@ export const FilterRoot: FC<FilterDefinitions> = ({ filters }) => {
               onClick={() => handleSelect(RESET_KEYWORD)}
               sx={{ fontSize: 14 }}
             >
-              {t('label.clear-all-filters')}
+              {t('label.remove-all-filters')}
             </DropdownMenuItem>
           </>
         )}
