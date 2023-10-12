@@ -98,30 +98,6 @@ impl LoginService {
         }
     }
 
-    /// Attempt to login by authenticating against local data
-    /// if the user does not exist locally, authenticate against the central server
-    /// If successfully authenticated against the central server, create a local user
-    pub async fn local_login(
-        service_provider: &ServiceProvider,
-        auth_data: &AuthData,
-        input: LoginInput,
-        min_err_response_time_sec: u64,
-    ) -> Result<TokenPair, LoginError> {
-        let now = SystemTime::now();
-        match LoginService::do_local_login(service_provider, auth_data, input).await {
-            Ok(result) => Ok(result),
-            Err(err) => {
-                let elapsed = now.elapsed().unwrap_or(Duration::from_secs(0));
-                let minimum = Duration::from_secs(min_err_response_time_sec);
-                if elapsed < minimum {
-                    tokio::time::sleep(minimum - elapsed).await;
-                }
-
-                Err(err)
-            }
-        }
-    }
-
     async fn do_login(
         service_provider: &ServiceProvider,
         auth_data: &AuthData,
@@ -168,77 +144,9 @@ impl LoginService {
         );
         let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
         let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
+
         let pair = match token_service.jwt_token(
             &user_account.id,
-            &input.password,
-            max_age_token,
-            max_age_refresh,
-        ) {
-            Ok(pair) => pair,
-            Err(err) => return Err(LoginError::FailedToGenerateToken(err)),
-        };
-        Ok(pair)
-    }
-
-    async fn do_local_login(
-        service_provider: &ServiceProvider,
-        auth_data: &AuthData,
-        input: LoginInput,
-    ) -> Result<TokenPair, LoginError> {
-        let username = input.username.clone();
-        let service_ctx = service_provider.basic_context()?;
-        let user_service = UserAccountService::new(&service_ctx.connection);
-        let user_account = match user_service.verify_password(&username, &input.password) {
-            Ok(user) => Some(user),
-            Err(err) => match err {
-                VerifyPasswordError::UsernameDoesNotExist => {
-                    info!("User {} does not exist locally", username.clone());
-                    None
-                }
-                VerifyPasswordError::InvalidCredentials => return Err(LoginError::LoginFailure),
-                VerifyPasswordError::InvalidCredentialsBackend(_) => {
-                    return Err(LoginError::InternalError(
-                        "Failed to read credentials".to_string(),
-                    ))
-                }
-                VerifyPasswordError::DatabaseError(e) => {
-                    info!("{:?}", e);
-                    None
-                }
-            },
-        };
-
-        if user_account.is_none() {
-            match LoginService::fetch_user_from_central(&input).await {
-                Ok(user_info) => {
-                    let service_ctx =
-                        service_provider.context("".to_string(), user_info.user.id.clone())?;
-                    LoginService::update_user(&service_ctx, &input.password, user_info)
-                        .map_err(|e| LoginError::UpdateUserError(e))?;
-                }
-                Err(err) => {
-                    info!("{:?}", err);
-                    return Err(LoginError::LoginFailure);
-                }
-            };
-        }
-        activity_log_entry(
-            &service_ctx,
-            ActivityLogType::UserLoggedIn,
-            None,
-            None,
-            Some(username),
-        )?;
-
-        let mut token_service = TokenService::new(
-            &auth_data.token_bucket,
-            auth_data.auth_token_secret.as_bytes(),
-            !is_develop(),
-        );
-        let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
-        let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
-        let pair = match token_service.jwt_token(
-            "user_account.id",
             &input.password,
             max_age_token,
             max_age_refresh,
