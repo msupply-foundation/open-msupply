@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import { SensorFragment } from '../api';
-import { Grid, TextWithLabelRow, useTranslation } from 'packages/common/src';
+import { Grid } from '@mui/material';
+import { TextWithLabelRow, useTranslation } from 'packages/common/src';
 
 interface NonEditableSensorTabProps {
   draft: SensorFragment;
