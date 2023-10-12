@@ -1,4 +1,4 @@
-import { useUnitVariantList } from '../api';
+import { usePackUnits } from '../api';
 import { create } from 'zustand';
 import { PackUnitNode, UnitNode } from '@common/types';
 import { ArrayUtils, NumUtils, isEqual } from '@common/utils';
@@ -46,7 +46,7 @@ export const useInitUnitStore = () => {
   // Suggested places:
   // https://github.com/openmsupply/open-msupply/blob/312b837c3d17a1ead05e140b7668cd5f45dffbc3/client/packages/common/src/authentication/api/hooks/useLogin.ts#L107
   // https://github.com/openmsupply/open-msupply/blob/312b837c3d17a1ead05e140b7668cd5f45dffbc3/client/packages/common/src/authentication/AuthContext.tsx#L125
-  const { data } = useUnitVariantList();
+  const { data } = usePackUnits();
 
   useEffect(() => {
     if (!data) return;
@@ -119,9 +119,9 @@ export const useUnitVariant = (
     };
   }
 
-  const { packUnits, mostUsedVariantId } = item;
+  const { packUnits, mostUsedPackUnitId } = item;
 
-  const mostUsedVariant = packUnits.find(({ id }) => id === mostUsedVariantId);
+  const mostUsedVariant = packUnits.find(({ id }) => id === mostUsedPackUnitId);
   const userSelectedVariant = packUnits.find(
     ({ id }) => id === userSelectedVariantId
   );

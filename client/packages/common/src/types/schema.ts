@@ -3081,7 +3081,7 @@ export type PackUnitConnector = {
 export type PackUnitNode = {
   __typename: 'PackUnitNode';
   itemId: Scalars['String']['output'];
-  mostUsedVariantId: Scalars['String']['output'];
+  mostUsedPackUnitId: Scalars['String']['output'];
   packUnits: Array<UnitNode>;
 };
 

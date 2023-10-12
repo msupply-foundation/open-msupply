@@ -246,7 +246,7 @@ fragment Unit on UnitNode {
 
 fragment PackUnit on PackUnitNode {
   itemId
-  mostUsedVariantId
+  mostUsedPackUnitId
   packUnits {
     ...Unit
   }
