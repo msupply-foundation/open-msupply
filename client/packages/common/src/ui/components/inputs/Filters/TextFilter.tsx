@@ -5,7 +5,7 @@ import {
   EndAdornment,
   FILTER_WIDTH,
   FilterDefinitionCommon,
-} from './FilterRoot';
+} from './FilterMenu';
 
 export interface TextFilterDefinition extends FilterDefinitionCommon {
   type: 'text';

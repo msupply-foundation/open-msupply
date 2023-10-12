@@ -29,7 +29,7 @@ interface FilterDefinitions {
 const RESET_KEYWORD = 'RESET';
 export const FILTER_WIDTH = '220px';
 
-export const FilterRoot: FC<FilterDefinitions> = ({ filters }) => {
+export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const [activeFilters, setActiveFilters] = useState<FilterDefinition[]>(

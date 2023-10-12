@@ -2,7 +2,7 @@ import React, { FC } from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
-  FilterRoot,
+  FilterMenu,
   FilterController,
   Box,
 } from '@openmsupply-client/common';
@@ -20,7 +20,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
       }}
     >
       <Box display="flex" gap={1}>
-        <FilterRoot
+        <FilterMenu
           filters={[
             {
               type: 'text',
