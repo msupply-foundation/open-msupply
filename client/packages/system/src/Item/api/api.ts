@@ -159,10 +159,10 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
-    unitVariantsList: async () => {
-      const result = await sdk.itemVariantsList({ storeId });
+    packUnits: async () => {
+      const result = await sdk.packUnits({ storeId });
 
-      return result.itemVariantsList;
+      return result.packUnits;
     },
   },
 });

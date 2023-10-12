@@ -1,6 +1,6 @@
 import { useUnitVariantList } from '../api';
 import { create } from 'zustand';
-import { UnitVariantNode, VariantNode } from '@common/types';
+import { PackUnitNode, UnitNode } from '@common/types';
 import { ArrayUtils, NumUtils, isEqual } from '@common/utils';
 import { useEffect } from 'react';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
@@ -11,12 +11,12 @@ type UserSelectedVariants = {
 interface UnitState {
   // From back end
   items: {
-    [itemId: string]: UnitVariantNode;
+    [itemId: string]: PackUnitNode;
   };
   userSelectedVariants: UserSelectedVariants;
   setUserSelectedVariant: (_: { itemId: string; variantId: string }) => void;
   // Should be called on startup when fetching multi unit variants
-  setItems: (newItems: UnitVariantNode[]) => void;
+  setItems: (newItems: PackUnitNode[]) => void;
 }
 
 const useUnitStore = create<UnitState>(set => {
@@ -50,7 +50,7 @@ export const useInitUnitStore = () => {
 
   useEffect(() => {
     if (!data) return;
-    setItems(data || []);
+    setItems(data.nodes || []);
   }, [data]);
 
   // TODO add user selected from app data
@@ -79,9 +79,9 @@ const commonAsPackUnit: CommonAsPackUnit = ({
 };
 
 export interface VariantControl {
-  variants: VariantNode[];
+  variants: UnitNode[];
   // Selected by user or mostUsed (calculated by backend)
-  activeVariant: VariantNode;
+  activeVariant: UnitNode;
   setUserSelectedVariant: (variantId: string) => void;
 }
 
@@ -108,7 +108,7 @@ export const useUnitVariant = (
   );
   const t = useTranslation();
 
-  if (!item || item.variants.length == 0) {
+  if (!item || item.packUnits.length == 0) {
     return {
       asPackUnit: (packSize, defaultPackUnit) =>
         commonAsPackUnit({ packSize, unitName, t, defaultPackUnit }),
@@ -119,22 +119,22 @@ export const useUnitVariant = (
     };
   }
 
-  const { variants, mostUsedVariantId } = item;
+  const { packUnits, mostUsedVariantId } = item;
 
-  const mostUsedVariant = variants.find(({ id }) => id === mostUsedVariantId);
-  const userSelectedVariant = variants.find(
+  const mostUsedVariant = packUnits.find(({ id }) => id === mostUsedVariantId);
+  const userSelectedVariant = packUnits.find(
     ({ id }) => id === userSelectedVariantId
   );
 
   const activeVariant =
     userSelectedVariant ||
     mostUsedVariant ||
-    (variants[0] as VariantNode); /* item.variants.length === 0 above confirms that it's safe to assume it will not be undefined */
+    (packUnits[0] as UnitNode); /* item.variants.length === 0 above confirms that it's safe to assume it will not be undefined */
 
   return {
     asPackUnit: (packSize, defaultPackUnit) => {
-      const foundVariant = variants.find(
-        variant => variant.packSize === packSize
+      const foundVariant = packUnits.find(
+        packUnits => packUnits.packSize === packSize
       );
 
       return commonAsPackUnit({
@@ -151,7 +151,7 @@ export const useUnitVariant = (
       NumUtils.round(numPacks * activeVariant.packSize, 2),
     // TODO what if variants were soft deleted ?
     variantsControl: {
-      variants: variants,
+      variants: packUnits,
       activeVariant,
       setUserSelectedVariant: variantId =>
         setUserSelectedVariant({ itemId, variantId }),
