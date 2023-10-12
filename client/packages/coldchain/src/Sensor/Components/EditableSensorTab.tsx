@@ -14,11 +14,12 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
     label={label}
     Input={Input}
     labelProps={{ sx: { textAlign: 'end', padding: '4' } }}
-    labelWidth="100px"
+    labelWidth="140px"
     sx={{
-      justifyContent: 'space-between',
+      padding: '4',
+      gap: '46px',
       '.MuiFormControl-root > .MuiInput-root, > input': {
-        maxWidth: '160px',
+        maxWidth: '200px',
       },
     }}
   />
@@ -34,17 +35,9 @@ export const EditableSensorTab: FC<EditableSensorTabProps> = ({
   onUpdate,
 }) => {
   return (
-    <Grid
-      display="flex"
-      flexDirection={'column'}
-      flex={1}
-      container
-      paddingTop={2}
-      paddingBottom={2}
-      width="100%"
-    >
+    <Grid>
       <StyledInputRow
-        label={'name'}
+        label={'Sensor Name'}
         Input={
           <BasicTextInput
             value={draft.name ?? ''}
@@ -54,7 +47,15 @@ export const EditableSensorTab: FC<EditableSensorTabProps> = ({
       />
       <InputWithLabelRow
         label={'Storage Location'}
-        labelWidth="100%"
+        labelWidth="140px"
+        labelProps={{ sx: { textAlign: 'end', padding: '4' } }}
+        sx={{
+          padding: '4',
+          gap: '46px',
+          '.MuiFormControl-root > .MuiInput-root, > input': {
+            maxWidth: '180px',
+          },
+        }}
         Input={
           <LocationSearchInput
             value={draft.location ?? null}
@@ -62,7 +63,7 @@ export const EditableSensorTab: FC<EditableSensorTabProps> = ({
               onUpdate({ location });
             }}
             disabled={false}
-            width={'100%'}
+            width={'200'}
             allowUnassign={true}
           ></LocationSearchInput>
         }
