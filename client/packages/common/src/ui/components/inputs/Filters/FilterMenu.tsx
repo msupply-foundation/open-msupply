@@ -68,24 +68,20 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
     >
       <DropdownMenu label="Filters">
         {filterOptions.map(option => (
-          <DropdownMenuItem
+          <FilterMenuItem
             key={option.value}
             onClick={() => handleSelect(option.value)}
-            sx={{ fontSize: 14 }}
-          >
-            {option.label}
-          </DropdownMenuItem>
+            label={option.label}
+          />
         ))}
         {activeFilters.length > 0 && (
           <>
             <Divider />
-            <DropdownMenuItem
-              key={'clear-filters'}
+            <FilterMenuItem
+              key="remove-filters"
               onClick={() => handleSelect(RESET_KEYWORD)}
-              sx={{ fontSize: 14 }}
-            >
-              {t('label.remove-all-filters')}
-            </DropdownMenuItem>
+              label={t('label.remove-all-filters')}
+            />
           </>
         )}
       </DropdownMenu>
@@ -93,6 +89,15 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
     </Box>
   );
 };
+
+const FilterMenuItem: FC<{ onClick: () => void; label: string }> = ({
+  onClick,
+  label,
+}) => (
+  <DropdownMenuItem onClick={onClick} sx={{ fontSize: 14 }}>
+    {label}
+  </DropdownMenuItem>
+);
 
 const getFilterOptions = (
   filters: FilterDefinition[],
