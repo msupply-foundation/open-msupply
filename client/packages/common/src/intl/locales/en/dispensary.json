@@ -28,9 +28,6 @@
   "label.patient": "Patient",
   "label.patients": "Patients",
   "label.search-results": "Search results",
-  "label.search-first-name": "First name",
-  "label.search-last-name": "Last name",
-  "label.search-identifier": "Identifier",
   "label.visit-date": "Visit Date",
   "label.visit-start": "Start",
   "label.visit-end": "End",
@@ -86,7 +83,7 @@
   "messages.no-stock-available": "There is no stock available",
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-last-name": "Search by last name",
-  "placeholder.search-by-identifier": "Search by id",
+  "placeholder.search-by-identifier": "Search by ID",
   "warning.cannot-create-placeholder-packs": "There is a total of {{quantity}} packs available. Unable to allocate the full amount requested.",
   "warning.cannot-create-placeholder-units": "There is a total of {{quantity}} units available. Unable to allocate the full amount requested."
 }
