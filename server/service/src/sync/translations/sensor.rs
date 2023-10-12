@@ -7,8 +7,8 @@ use crate::sync::{
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, SensorType,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -91,6 +91,13 @@ impl SyncTranslation for SensorTranslation {
             NaiveDateTime::new(last_connection_date, last_connection_time)
         });
 
+        let serial = serial.split(" |").nth(0).unwrap_or_default().to_string();
+        let r#type = match serial.split('|').nth(1) {
+            Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
+            Some("LAIRD") => SensorType::Laird,
+            _ => SensorType::BlueMaestro,
+        };
+
         let result = SensorRow {
             id,
             name,
@@ -101,6 +108,7 @@ impl SyncTranslation for SensorTranslation {
             log_interval,
             is_active,
             last_connection_datetime,
+            r#type,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -127,6 +135,7 @@ impl SyncTranslation for SensorTranslation {
             log_interval,
             is_active,
             last_connection_datetime,
+            r#type,
         } = SensorRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -139,6 +148,14 @@ impl SyncTranslation for SensorTranslation {
         let last_connection_time = last_connection_datetime
             .map(|last_connection_datetime: NaiveDateTime| last_connection_datetime.time())
             .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
+
+        let r#type = match r#type {
+            SensorType::BlueMaestro => "BLUE_MAESTRO",
+            SensorType::Laird => "LAIRD",
+        }
+        .to_string();
+
+        let serial = [serial, r#type].join(" | ");
 
         let legacy_row = LegacySensorRow {
             id,

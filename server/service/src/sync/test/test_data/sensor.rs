@@ -1,7 +1,7 @@
 use crate::sync::translations::{sensor::LegacySensorRow, LegacyTableName, PullUpsertRecord};
 
 use chrono::{Duration, NaiveDate, NaiveTime};
-use repository::SensorRow;
+use repository::{SensorRow, SensorType};
 use serde_json::json;
 
 use super::{TestSyncPullRecord, TestSyncPushRecord};
@@ -10,7 +10,7 @@ const SENSOR_1: (&'static str, &'static str) = (
     "cf5812e0c33911eb9757779d39ae2dbd",
     r#"{
         "ID": "cf5812e0c33911eb9757779d39ae2dbd",
-        "macAddress": "SerialRed.02",
+        "macAddress": "SerialRed.02 | BLUE_MAESTRO",
         "name": "NameRed.02",
         "locationID": "",
         "batteryLevel": 100,
@@ -42,6 +42,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     .unwrap()
                     + Duration::seconds(47046),
             ),
+            r#type: SensorType::BlueMaestro,
         }),
     )]
 }
@@ -53,7 +54,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
         push_data: json!(LegacySensorRow {
             id: SENSOR_1.0.to_string(),
             name: "NameRed.02".to_string(),
-            serial: "SerialRed.02".to_string(),
+            serial: "SerialRed.02 | BLUE_MAESTRO".to_string(),
             is_active: true,
             store_id: Some("store_a".to_string()),
             location_id: None,
