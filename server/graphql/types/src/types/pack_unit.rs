@@ -16,8 +16,8 @@ impl PackUnitNode {
         &self.pack_units.item_id
     }
 
-    pub async fn most_used_variant_id(&self) -> &String {
-        &self.pack_units.most_used_variant_id
+    pub async fn most_used_pack_size_id(&self) -> &String {
+        &self.pack_units.most_used_pack_size_id
     }
 
     pub async fn pack_units(&self) -> Vec<UnitNode> {
