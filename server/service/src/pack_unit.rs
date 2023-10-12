@@ -24,7 +24,8 @@ pub fn get_pack_units(
     let pack_units = PackUnitRowRepository::new(connection).load_all()?;
 
     // Calculate the most used variant for each item and pack size by total number of packs
-    // if item has stock on hand else by empty line count
+    // if item has stock on hand else by empty line count. HashMap keys are (item_id, pack_size)
+    // for easier management of totals.
     let mut total_number_of_packs: HashMap<(String, i32), f64> = HashMap::new();
     let mut total_number_of_lines: HashMap<(String, i32), f64> = HashMap::new();
     for stock_line in stock_lines {
