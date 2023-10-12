@@ -53,7 +53,7 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
 
   return (
     <Modal
-      width={700}
+      width={600}
       slideAnimation={false}
       title={t('title.edit-sensor-details')}
       okButton={
@@ -74,10 +74,14 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <Grid
+        display="flex"
+        flex={1}
         container
         padding={4}
-        flexDirection="row"
-        justifyContent="space-evenly"
+        width="100%"
+        flexDirection="column"
+        justifyContent={'space-around'}
+        gap={1}
       >
         <EditableSensorTab draft={draft} onUpdate={onUpdate} />
         <NonEditableSensorTab draft={draft} />
