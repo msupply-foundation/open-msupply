@@ -5,8 +5,6 @@ import {
   FormLabelProps,
   Typography,
   TypographyProps,
-  SxProps,
-  Theme,
 } from '@mui/material';
 
 interface TextWithLabelRowProps {
@@ -15,7 +13,7 @@ interface TextWithLabelRowProps {
   labelWidth?: string;
   text: string;
   textProps?: TypographyProps;
-  sx?: SxProps<Theme>;
+  sensorStyle?: boolean;
 }
 
 export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
@@ -24,13 +22,14 @@ export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
   labelWidth = '100px',
   text,
   textProps,
-  sx,
+  sensorStyle,
 }) => {
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
-  console.log('textProps', textProps);
   return (
-    <Box display="flex" sx={sx}>
-      <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
+    <Box display="flex">
+      <Box
+        style={sensorStyle ? {} : { textAlign: 'end', whiteSpace: 'nowrap' }}
+      >
         <FormLabel
           sx={{
             fontWeight: 'bold',
@@ -43,7 +42,7 @@ export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
           {label}:
         </FormLabel>
       </Box>
-      <Box flex={1} sx={sx}>
+      <Box flex={1}>
         <Typography paddingRight={1.5} {...textProps}>
           {text}
         </Typography>

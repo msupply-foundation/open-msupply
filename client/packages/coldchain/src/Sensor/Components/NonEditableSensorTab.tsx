@@ -28,6 +28,7 @@ export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
           paddingBottom: '4',
         }}
         labelProps={{ sx: { padding: '4', textAlign: 'end' } }}
+        sensorStyle={true}
       />
       <TextWithLabelRow
         label={t('label.serial')}
@@ -40,6 +41,7 @@ export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
           paddingBottom: '4',
         }}
         labelProps={{ sx: { padding: '4', textAlign: 'end' } }}
+        sensorStyle={true}
       />
       <TextWithLabelRow
         label={t('label.battery-level')}
@@ -52,6 +54,7 @@ export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
           paddingBottom: '4',
         }}
         labelProps={{ sx: { padding: '4', textAlign: 'end' } }}
+        sensorStyle={true}
       />
       <TextWithLabelRow
         label={t('label.last-recording-value')}
@@ -66,6 +69,7 @@ export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
           paddingBottom: '4',
         }}
         labelProps={{ sx: { padding: '4', textAlign: 'end' } }}
+        sensorStyle={true}
       />
       <TextWithLabelRow
         label={t('label.last-record')}
@@ -78,6 +82,7 @@ export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
           paddingBottom: '4',
         }}
         labelProps={{ sx: { padding: '4', textAlign: 'end' } }}
+        sensorStyle={true}
       />
     </Grid>
   );
