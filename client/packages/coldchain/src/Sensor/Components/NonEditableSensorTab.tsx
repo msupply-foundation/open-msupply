@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { SensorFragment } from '../api';
-import { Grid, TextWithLabelRow } from 'packages/common/src';
+import { Grid, TextWithLabelRow, useTranslation } from 'packages/common/src';
 
 interface NonEditableSensorTabProps {
   draft: SensorFragment;
@@ -9,10 +9,12 @@ interface NonEditableSensorTabProps {
 export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
   draft,
 }) => {
+  const t = useTranslation('coldchain');
+
   return (
     <Grid container display="flex" flex={1} flexDirection="column" gap={1}>
       <TextWithLabelRow
-        label={'CCE'}
+        label={t('label.cce')}
         labelWidth="140px"
         text={''}
         textProps={{
@@ -24,7 +26,7 @@ export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
         labelProps={{ sx: { padding: '4', textAlign: 'end' } }}
       />
       <TextWithLabelRow
-        label={'Serial Number'}
+        label={t('label.serial')}
         labelWidth="140px"
         text={draft.serial ?? ''}
         textProps={{
@@ -36,7 +38,7 @@ export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
         labelProps={{ sx: { padding: '4', textAlign: 'end' } }}
       />
       <TextWithLabelRow
-        label={'Battery Level'}
+        label={t('label.battery-level')}
         labelWidth="140px"
         text={draft.batteryLevel?.toString() ?? ''}
         textProps={{
@@ -48,7 +50,7 @@ export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
         labelProps={{ sx: { padding: '4', textAlign: 'end' } }}
       />
       <TextWithLabelRow
-        label={'Last temperature recording value'}
+        label={t('label.last-recording-value')}
         labelWidth="140px"
         text={
           draft.latestTemperatureLog?.nodes[0]?.temperature.toString() ?? ''
@@ -62,7 +64,7 @@ export const NonEditableSensorTab: FC<NonEditableSensorTabProps> = ({
         labelProps={{ sx: { padding: '4', textAlign: 'end' } }}
       />
       <TextWithLabelRow
-        label={'Last recording date / time'}
+        label={t('label.last-record')}
         labelWidth="140px"
         text={draft.latestTemperatureLog?.nodes[0]?.datetime ?? ''}
         textProps={{
