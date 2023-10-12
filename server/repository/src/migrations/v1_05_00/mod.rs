@@ -1,6 +1,7 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
+mod cold_chain;
 mod sensor;
 pub(crate) struct V1_05_00;
 
@@ -11,6 +12,8 @@ impl Migration for V1_05_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sensor::migrate(connection)?;
+        cold_chain::migrate(connection)?;
+
         Ok(())
     }
 }

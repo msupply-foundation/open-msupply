@@ -195,6 +195,7 @@ pub enum Permissions {
     HISEditEncounterDiseases,
     HISAddProcedure,
     ConfirmInternalOrderSent,
+    ColdChainApi,
 }
 
 pub fn permission_mapping() -> HashMap<i16, Permissions> {
