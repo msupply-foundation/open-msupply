@@ -24,25 +24,25 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
           filters={[
             {
               type: 'text',
-              name: t('label.search-first-name'),
+              name: t('label.first-name'),
               urlParameter: 'firstName',
               placeholder: t('placeholder.search-by-first-name'),
             },
             {
               type: 'text',
-              name: t('label.search-last-name'),
+              name: t('label.last-name'),
               urlParameter: 'lastName',
               placeholder: t('placeholder.search-by-last-name'),
             },
             {
               type: 'text',
-              name: t('label.search-identifier'),
+              name: t('label.patient-id'),
               urlParameter: 'identifier',
               placeholder: t('placeholder.search-by-identifier'),
             },
             // {
             //   type: 'enum',
-            //   name: 'Gender',
+            //   name: t('label.gender'),
             //   urlParameter: 'gender',
             //   options: [
             //     { label: 'Male', value: 'MALE' },
