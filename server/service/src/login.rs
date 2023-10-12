@@ -400,6 +400,10 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::EditItems => {
                 output.insert(Permission::ItemMutate);
             }
+            // cold chain
+            Permissions::ColdChainApi => {
+                output.insert(Permission::ColdChainApi);
+            }
             _ => continue,
         }
     }
