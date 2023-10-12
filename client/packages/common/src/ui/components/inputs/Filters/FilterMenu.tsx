@@ -66,7 +66,7 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
       gap={2}
       sx={{ alignItems: 'flex-end', minHeight: 50, flexWrap: 'wrap' }}
     >
-      <DropdownMenu label="Filters">
+      <DropdownMenu label={t('label.filters')}>
         {filterOptions.map(option => (
           <FilterMenuItem
             key={option.value}
