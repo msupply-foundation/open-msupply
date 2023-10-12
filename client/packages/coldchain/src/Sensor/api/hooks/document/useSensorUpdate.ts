@@ -1,4 +1,4 @@
-import { useQueryClient, useMutation } from 'packages/common/src';
+import { useQueryClient, useMutation } from '@openmsupply-client/common';
 import { useSensorApi } from '../utils/useSensorApi';
 
 export const useSensorUpdate = () => {

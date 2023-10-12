@@ -4,7 +4,7 @@ import { useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
 import { DialogButton, useConfirmationModal } from '@common/components';
 import { ObjUtils } from '@common/utils';
-import { Grid } from '@mui/material';
+import { Grid } from '@openmsupply-client/common/src';
 import { EditableSensorTab } from './EditableSensorTab';
 import { NonEditableSensorTab } from './NonEditableSensorTab';
 
@@ -43,12 +43,12 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const t = useTranslation('inventory');
+  const t = useTranslation('coldchain');
   const { Modal } = useDialog({ isOpen, onClose });
   const { draft, onSave, onUpdate } = useDraftSensor(sensor);
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: 'need to update this string',
+    message: t('message.conform-sensor-update'),
   });
 
   return (
@@ -63,7 +63,6 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
           onClick={() =>
             getConfirmation({
               onConfirm: async () => {
-                console.log('sensor', sensor);
                 await onSave();
                 onClose();
               },
