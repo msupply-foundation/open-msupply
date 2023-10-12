@@ -4,6 +4,7 @@ import {
   LocationNode,
   defaultOptionMapper,
   getDefaultOptionRenderer,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useLocation, LocationRowFragment } from '../api';
 
@@ -28,6 +29,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     direction: 'asc',
     key: 'name',
   });
+  const t = useTranslation('coldchain');
 
   useEffect(() => {
     fetchAsync();
@@ -38,7 +40,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   const unassignOption: LocationNode = {
     __typename: 'LocationNode',
     id: 'None',
-    name: 'No location',
+    name: t('label.no-location'),
     onHold: false,
     code: 'No location',
     stock: {
