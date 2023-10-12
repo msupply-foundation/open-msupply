@@ -1,8 +1,8 @@
 import { useQuery } from 'react-query';
 import { useItemApi } from '../useItemApi';
 
-export const useUnitVariantList = () => {
+export const usePackUnits = () => {
   const api = useItemApi();
 
-  return useQuery(api.keys.packUnits(), () => api.get.packUnits());
+  return useQuery(api.keys.packUnits(), api.get.packUnits);
 };
