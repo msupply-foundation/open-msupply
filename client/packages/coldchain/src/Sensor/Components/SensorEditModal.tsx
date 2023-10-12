@@ -4,7 +4,7 @@ import { useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
 import { DialogButton, useConfirmationModal } from '@common/components';
 import { ObjUtils } from '@common/utils';
-import { Grid } from 'packages/common/src';
+import { Grid } from '@mui/material';
 import { EditableSensorTab } from './EditableSensorTab';
 import { NonEditableSensorTab } from './NonEditableSensorTab';
 
