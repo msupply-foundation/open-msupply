@@ -61,7 +61,11 @@ export const FilterRoot: FC<FilterDefinitions> = ({ filters }) => {
   };
 
   return (
-    <Box display="flex" gap={2} sx={{ alignItems: 'flex-end', minHeight: 50 }}>
+    <Box
+      display="flex"
+      gap={2}
+      sx={{ alignItems: 'flex-end', minHeight: 50, flexWrap: 'wrap' }}
+    >
       <DropdownMenu label="Filters">
         {filterOptions.map(option => (
           <DropdownMenuItem
