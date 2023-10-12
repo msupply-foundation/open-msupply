@@ -8,7 +8,7 @@ use repository::{
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct PackUnit {
     pub item_id: String,
-    pub most_used_variant_id: String,
+    pub most_used_pack_size_id: String,
     pub pack_units: Vec<PackUnitRow>,
 }
 
@@ -53,7 +53,7 @@ pub fn get_pack_units(
     for pack_unit in pack_units.clone() {
         let item_id = pack_unit.item_id.clone();
 
-        let most_used_variant_id = pack_units
+        let most_used_pack_size_id = pack_units
             .iter()
             .filter(|p| p.item_id == item_id)
             .max_by(|a, b| {
@@ -84,14 +84,14 @@ pub fn get_pack_units(
         pack_units_grouped
             .entry(item_id)
             .and_modify(|e| e.1.push(pack_unit.clone()))
-            .or_insert((most_used_variant_id, vec![pack_unit]));
+            .or_insert((most_used_pack_size_id, vec![pack_unit]));
     }
 
     Ok(pack_units_grouped
         .into_iter()
         .map(|(item_id, pack_units)| PackUnit {
             item_id: item_id.clone(),
-            most_used_variant_id: pack_units.0,
+            most_used_pack_size_id: pack_units.0,
             pack_units: pack_units.1,
         })
         .collect())
@@ -132,7 +132,7 @@ mod test {
                 .or_insert(0.0);
         }
 
-        let most_used_variant_id = pack_units
+        let most_used_pack_size_id = pack_units
             .iter()
             .filter(|p| p.item_id == item_id)
             .max_by(|a, b| {
@@ -151,7 +151,7 @@ mod test {
 
         PackUnit {
             item_id: item_id.to_string(),
-            most_used_variant_id,
+            most_used_pack_size_id,
             pack_units: pack_units
                 .into_iter()
                 .filter(|p| p.item_id == item_id)
