@@ -54,10 +54,14 @@ pub fn validate(
     }
 
     if let Some(location_id) = &input.location_id {
-        match check_location_on_hold(&location_id, connection) {
-            Ok(true) => return Err(UpdateSensorError::LocationIsOnHold),
-            Err(e) => return Err(UpdateSensorError::DatabaseError(e)),
-            _ => (),
+        // Check if location on hold only if location is not "none" value
+        // None passed from client is the unassignment of location from sensor node
+        if location_id != &"None".to_string() {
+            match check_location_on_hold(&location_id, connection) {
+                Ok(true) => return Err(UpdateSensorError::LocationIsOnHold),
+                Err(e) => return Err(UpdateSensorError::DatabaseError(e)),
+                _ => (),
+            }
         }
     }
 
