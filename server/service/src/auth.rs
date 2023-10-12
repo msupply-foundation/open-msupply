@@ -96,6 +96,7 @@ pub enum Resource {
     ManualSync,
     QueryInventoryAdjustmentReasons,
     QueryStorePreferences,
+    ColdChainApi,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -384,6 +385,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
+        ]),
+    );
+    map.insert(
+        Resource::ColdChainApi,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(Permission::ColdChainApi),
         ]),
     );
 

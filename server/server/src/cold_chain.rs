@@ -122,8 +122,7 @@ pub fn validate_access(
     };
 
     let access_request = ResourceAccessRequest {
-        // TODO: Implement new resource
-        resource: Resource::CreateRepack,
+        resource: Resource::ColdChainApi,
         store_id,
     };
 

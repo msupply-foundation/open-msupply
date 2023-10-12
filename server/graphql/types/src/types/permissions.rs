@@ -39,6 +39,7 @@ pub enum UserPermission {
     PatientMutate,
     DocumentQuery,
     DocumentMutate,
+    ColdChainApi,
 }
 
 #[Object]
@@ -105,6 +106,7 @@ impl UserPermission {
             Permission::PatientMutate => UserPermission::PatientMutate,
             Permission::DocumentQuery => UserPermission::DocumentQuery,
             Permission::DocumentMutate => UserPermission::DocumentMutate,
+            Permission::ColdChainApi => UserPermission::ColdChainApi,
         }
     }
 
@@ -134,6 +136,7 @@ impl UserPermission {
             UserPermission::PatientMutate => Permission::PatientMutate,
             UserPermission::DocumentQuery => Permission::DocumentQuery,
             UserPermission::DocumentMutate => Permission::DocumentMutate,
+            UserPermission::ColdChainApi => Permission::ColdChainApi,
         }
     }
 }

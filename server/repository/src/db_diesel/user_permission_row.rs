@@ -60,6 +60,8 @@ pub enum Permission {
     // Document
     DocumentQuery,
     DocumentMutate,
+    // Cold chain
+    ColdChainApi,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
