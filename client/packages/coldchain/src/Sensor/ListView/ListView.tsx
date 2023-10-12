@@ -31,6 +31,7 @@ export const SensorListView: FC = () => {
       {
         key: 'cce',
         label: 'label.cce',
+        sortable: false,
       },
       {
         key: 'locationName',
@@ -42,12 +43,7 @@ export const SensorListView: FC = () => {
       {
         key: 'serial',
         label: 'label.serial',
-        accessor: ({ rowData }) => {
-          const serial = rowData.serial;
-          const serialSplit = serial.split('|');
-
-          return serialSplit[0];
-        },
+        accessor: ({ rowData }) => rowData?.serial,
       },
       {
         key: 'battery',
@@ -64,18 +60,28 @@ export const SensorListView: FC = () => {
       {
         key: 'lastReading',
         label: 'label.last-reading',
-        accessor: ({ rowData }) =>
-          rowData.latestTemperatureLog?.nodes[0]?.temperature,
+        accessor: ({ rowData }) => {
+          return `${rowData.latestTemperatureLog?.nodes[0]?.temperature}${t(
+            'cold-chain.temperature-unit'
+          )}`;
+        },
+        sortable: false,
+      },
+      {
+        key: 'lastRecording',
+        label: 'label.date-time',
+        accessor: ({ rowData }) => {
+          return Formatter.csvDateTimeString(
+            rowData.latestTemperatureLog?.nodes[0]?.datetime
+          );
+        },
         sortable: false,
       },
       {
         key: 'type',
         label: 'label.sensor-type',
         accessor: ({ rowData }) => {
-          const serial = rowData.serial;
-          const serialSplit = serial.split('|');
-
-          return serialSplit[1];
+          return Formatter.enumCase(rowData?.type);
         },
         sortable: false,
       },
@@ -85,18 +91,6 @@ export const SensorListView: FC = () => {
         accessor: ({ rowData }) => {
           return rowData?.breach
             ? t(Formatter.breachTypeTranslation(rowData.breach))
-            : null;
-        },
-        sortable: false,
-      },
-      {
-        key: 'lastRecording',
-        label: 'label.last-record',
-        accessor: ({ rowData }) => {
-          return rowData.latestTemperatureLog?.nodes[0]?.datetime
-            ? Formatter.naiveDateTime(
-                new Date(rowData.latestTemperatureLog?.nodes[0]?.datetime)
-              )
             : null;
         },
         sortable: false,

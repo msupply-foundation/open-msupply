@@ -8,7 +8,7 @@ Cold chain Domain
 
 The intention is that this package is responsible for cold chain domain features:
 
-- Sensors
+- Temperature logs
 - Monitoring
 - CCE
 
