@@ -16,7 +16,9 @@ table! {
 
 joinable!(pack_unit -> item (item_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Eq)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Eq, Ord, PartialOrd,
+)]
 #[table_name = "pack_unit"]
 pub struct PackUnitRow {
     pub id: String,

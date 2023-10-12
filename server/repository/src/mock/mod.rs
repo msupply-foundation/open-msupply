@@ -17,6 +17,7 @@ mod name;
 mod name_store_join;
 mod name_tag;
 mod number;
+mod pack_unit;
 mod period_and_period_schedule;
 mod program;
 mod program_order_types;
@@ -60,6 +61,7 @@ pub use name::*;
 pub use name_store_join::*;
 pub use name_tag::*;
 pub use number::*;
+pub use pack_unit::*;
 pub use period_and_period_schedule::*;
 pub use program::*;
 pub use program_order_types::*;
@@ -94,8 +96,8 @@ use crate::{
     ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
     MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
     NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
-    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
+    NumberRowRepository, PackUnitRow, PackUnitRowRepository, PeriodRow, PeriodRowRepository,
+    PeriodScheduleRow, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StockLineRowRepository,
@@ -157,6 +159,7 @@ pub struct MockData {
     pub clinicians: Vec<ClinicianRow>,
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
+    pub pack_units: Vec<PackUnitRow>,
 }
 
 impl MockData {
@@ -213,6 +216,7 @@ pub struct MockDataInserts {
     pub clinicians: bool,
     pub clinician_store_joins: bool,
     pub contexts: bool,
+    pub pack_units: bool,
 }
 
 impl MockDataInserts {
@@ -258,6 +262,7 @@ impl MockDataInserts {
             clinicians: true,
             clinician_store_joins: true,
             contexts: true,
+            pack_units: true,
         }
     }
 
@@ -439,6 +444,11 @@ impl MockDataInserts {
         self.contexts = true;
         self
     }
+
+    pub fn pack_units(mut self) -> Self {
+        self.pack_units = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -505,6 +515,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             program_order_types: mock_program_order_types(),
             name_tag_joins: mock_name_tag_joins(),
             contexts: mock_contexts(),
+            pack_units: mock_pack_units(),
             ..Default::default()
         },
     );
@@ -849,6 +860,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(&row).unwrap();
             }
         }
+
+        if inserts.pack_units {
+            let repo = PackUnitRowRepository::new(connection);
+            for row in &mock_data.pack_units {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -897,6 +915,7 @@ impl MockData {
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
+            mut pack_units,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -941,6 +960,7 @@ impl MockData {
         self.clinician_store_joins
             .append(&mut clinician_store_joins);
         self.contexts.append(&mut contexts);
+        self.pack_units.append(&mut pack_units);
 
         self
     }
