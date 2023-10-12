@@ -4,9 +4,8 @@ import { useTranslation } from '@common/intl';
 import { useDialog } from '@common/hooks';
 import { DialogButton, useConfirmationModal } from '@common/components';
 import { ObjUtils } from '@common/utils';
-import { Grid } from '@openmsupply-client/common/src';
-import { EditableSensorTab } from './EditableSensorTab';
-import { NonEditableSensorTab } from './NonEditableSensorTab';
+import { Box } from '@openmsupply-client/common';
+import { SensorLineForm } from './SensorLineForm';
 
 interface SensorEditModalProps {
   isOpen: boolean;
@@ -55,7 +54,7 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
     <Modal
       width={600}
       slideAnimation={false}
-      title={t('title.edit-sensor-details')}
+      title={t('title.sensor-details')}
       okButton={
         <DialogButton
           variant="ok"
@@ -72,19 +71,9 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <Grid
-        display="flex"
-        flex={1}
-        container
-        padding={4}
-        width="100%"
-        flexDirection="column"
-        justifyContent={'space-around'}
-        gap={1}
-      >
-        <EditableSensorTab draft={draft} onUpdate={onUpdate} />
-        <NonEditableSensorTab draft={draft} />
-      </Grid>
+      <Box display="flex" width="100%" justifyContent="center" padding={3}>
+        <SensorLineForm draft={draft} onUpdate={onUpdate} />
+      </Box>
     </Modal>
   );
 };

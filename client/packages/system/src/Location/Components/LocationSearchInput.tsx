@@ -4,6 +4,7 @@ import {
   LocationNode,
   defaultOptionMapper,
   getDefaultOptionRenderer,
+  useTranslation,
 } from '@openmsupply-client/common';
 import { useLocation, LocationRowFragment } from '../api';
 
@@ -13,7 +14,6 @@ interface LocationSearchInputProps {
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
   autoFocus?: boolean;
-  allowUnassign?: boolean;
 }
 
 export const LocationSearchInput: FC<LocationSearchInputProps> = ({
@@ -22,8 +22,8 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   onChange,
   disabled,
   autoFocus = false,
-  allowUnassign = false,
 }) => {
+  const t = useTranslation();
   const { fetchAsync, data, isLoading } = useLocation.document.listAll({
     direction: 'asc',
     key: 'name',
@@ -33,12 +33,10 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     fetchAsync();
   }, []);
 
-  let options = data?.nodes ?? [];
-
   const unassignOption: LocationNode = {
     __typename: 'LocationNode',
     id: 'None',
-    name: 'No location',
+    name: t('label.remove'),
     onHold: false,
     code: 'No location',
     stock: {
@@ -48,9 +46,8 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     },
   };
 
-  if (allowUnassign) {
-    options = [...options, unassignOption];
-  }
+  let options = data?.nodes ?? [];
+  options = [...options, unassignOption];
 
   return (
     <Autocomplete<LocationRowFragment>
@@ -59,15 +56,10 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       width={`${width}px`}
       clearable={false}
       value={
-        value
-          ? {
-              ...value,
-              label: value.name,
-            }
-          : {
-              ...unassignOption,
-              label: unassignOption.name,
-            }
+        value && {
+          ...value,
+          label: value.name,
+        }
       }
       loading={isLoading}
       onChange={(_, location) => {
