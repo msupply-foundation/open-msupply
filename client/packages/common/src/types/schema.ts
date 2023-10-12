@@ -2096,6 +2096,13 @@ export enum ItemNodeType {
   Stock = 'STOCK'
 }
 
+export type ItemPackUnitNode = {
+  __typename: 'ItemPackUnitNode';
+  itemId: Scalars['String']['output'];
+  mostUsedPackUnitId: Scalars['String']['output'];
+  packUnits: Array<UnitNode>;
+};
+
 export enum ItemSortFieldInput {
   Code = 'code',
   Name = 'name',
@@ -3074,15 +3081,8 @@ export type OutboundInvoiceCounts = {
 
 export type PackUnitConnector = {
   __typename: 'PackUnitConnector';
-  nodes: Array<PackUnitNode>;
+  nodes: Array<ItemPackUnitNode>;
   totalCount: Scalars['Int']['output'];
-};
-
-export type PackUnitNode = {
-  __typename: 'PackUnitNode';
-  itemId: Scalars['String']['output'];
-  mostUsedPackUnitId: Scalars['String']['output'];
-  packUnits: Array<UnitNode>;
 };
 
 /**

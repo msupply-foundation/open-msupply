@@ -1,17 +1,17 @@
 use async_graphql::*;
 use repository::PackUnitRow;
-use service::pack_unit::PackUnit;
+use service::pack_unit::ItemPackUnit;
 
 pub struct UnitNode {
     pub unit: PackUnitRow,
 }
 
-pub struct PackUnitNode {
-    pub pack_units: PackUnit,
+pub struct ItemPackUnitNode {
+    pub pack_units: ItemPackUnit,
 }
 
 #[Object]
-impl PackUnitNode {
+impl ItemPackUnitNode {
     pub async fn item_id(&self) -> &String {
         &self.pack_units.item_id
     }
@@ -25,13 +25,16 @@ impl PackUnitNode {
     }
 }
 
-impl PackUnitNode {
-    pub fn from_domain(pack_units: PackUnit) -> PackUnitNode {
-        PackUnitNode { pack_units }
+impl ItemPackUnitNode {
+    pub fn from_domain(pack_units: ItemPackUnit) -> ItemPackUnitNode {
+        ItemPackUnitNode { pack_units }
     }
 
-    pub fn from_vec(units: Vec<PackUnit>) -> Vec<PackUnitNode> {
-        units.into_iter().map(PackUnitNode::from_domain).collect()
+    pub fn from_vec(units: Vec<ItemPackUnit>) -> Vec<ItemPackUnitNode> {
+        units
+            .into_iter()
+            .map(ItemPackUnitNode::from_domain)
+            .collect()
     }
 }
 
