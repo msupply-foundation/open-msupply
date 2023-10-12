@@ -121,6 +121,7 @@
   "label.batch": "Batch",
   "label.cant-delete-disabled-requisition": "Can only delete lines when requisition is in Draft",
   "label.chargeCode": "Charge Code",
+  "label.filters": "Filters",
   "label.clear-filter": "Clear filter",
   "label.remove-all-filters": "Remove all filters",
   "label.click-to-sort": "Click to sort by this column",
