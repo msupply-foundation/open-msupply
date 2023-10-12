@@ -11,5 +11,6 @@
   "label.sensor-name": "Sensor Name",
   "label.storage-location": "Storage Location",
   "message.conform-sensor-update": "This will confirm changes you have made to this sensor",
-  "cold-chain.temperature-unit": "°C"
+  "cold-chain.temperature-unit": "°C",
+  "title.sensor-details": "Sensor Details"
 }

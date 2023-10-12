@@ -27,7 +27,6 @@ export const TextWithLabelRow: FC<TextWithLabelRowProps> = ({
   sx,
 }) => {
   const { sx: labelSx, ...labelPropsRest } = labelProps || {};
-  console.log('textProps', textProps);
   return (
     <Box display="flex" sx={sx}>
       <Box style={{ textAlign: 'end', whiteSpace: 'nowrap' }}>
