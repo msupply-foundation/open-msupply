@@ -76,16 +76,16 @@ export type ItemByIdQueryVariables = Types.Exact<{
 
 export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null } }> } }> } };
 
-export type VariantFragment = { __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string };
+export type UnitFragment = { __typename: 'UnitNode', id: string, longName: string, packSize: number, shortName: string };
 
-export type UnitVariantFragment = { __typename: 'UnitVariantNode', itemId: string, mostUsedVariantId: string, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> };
+export type PackUnitFragment = { __typename: 'PackUnitNode', itemId: string, mostUsedVariantId: string, packUnits: Array<{ __typename: 'UnitNode', id: string, longName: string, packSize: number, shortName: string }> };
 
-export type ItemVariantsListQueryVariables = Types.Exact<{
+export type PackUnitsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type ItemVariantsListQuery = { __typename: 'Queries', itemVariantsList: Array<{ __typename: 'UnitVariantNode', itemId: string, mostUsedVariantId: string, variants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> }> };
+export type PackUnitsQuery = { __typename: 'Queries', packUnits: { __typename: 'PackUnitConnector', totalCount: number, nodes: Array<{ __typename: 'PackUnitNode', itemId: string, mostUsedVariantId: string, packUnits: Array<{ __typename: 'UnitNode', id: string, longName: string, packSize: number, shortName: string }> }> } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -210,23 +210,23 @@ export const ItemsWithStatsFragmentDoc = gql`
   }
 }
     `;
-export const VariantFragmentDoc = gql`
-    fragment Variant on VariantNode {
+export const UnitFragmentDoc = gql`
+    fragment Unit on UnitNode {
   id
   longName
   packSize
   shortName
 }
     `;
-export const UnitVariantFragmentDoc = gql`
-    fragment UnitVariant on UnitVariantNode {
+export const PackUnitFragmentDoc = gql`
+    fragment PackUnit on PackUnitNode {
   itemId
   mostUsedVariantId
-  variants {
-    ...Variant
+  packUnits {
+    ...Unit
   }
 }
-    ${VariantFragmentDoc}`;
+    ${UnitFragmentDoc}`;
 export const ItemsWithStockLinesDocument = gql`
     query itemsWithStockLines($first: Int, $offset: Int, $key: ItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
   items(
@@ -331,13 +331,17 @@ export const ItemByIdDocument = gql`
 }
     ${ItemFragmentDoc}
 ${StockLineFragmentDoc}`;
-export const ItemVariantsListDocument = gql`
-    query itemVariantsList($storeId: String!) {
-  itemVariantsList(storeId: $storeId) {
-    ...UnitVariant
+export const PackUnitsDocument = gql`
+    query packUnits($storeId: String!) {
+  packUnits(storeId: $storeId) {
+    __typename
+    nodes {
+      ...PackUnit
+    }
+    totalCount
   }
 }
-    ${UnitVariantFragmentDoc}`;
+    ${PackUnitFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -361,8 +365,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     itemById(variables: ItemByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ItemByIdQuery>(ItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemById', 'query');
     },
-    itemVariantsList(variables: ItemVariantsListQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ItemVariantsListQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ItemVariantsListQuery>(ItemVariantsListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'itemVariantsList', 'query');
+    packUnits(variables: PackUnitsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PackUnitsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PackUnitsQuery>(PackUnitsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'packUnits', 'query');
     }
   };
 }
@@ -457,15 +461,15 @@ export const mockItemByIdQuery = (resolver: ResponseResolver<GraphQLRequest<Item
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockItemVariantsListQuery((req, res, ctx) => {
+ * mockPackUnitsQuery((req, res, ctx) => {
  *   const { storeId } = req.variables;
  *   return res(
- *     ctx.data({ itemVariantsList })
+ *     ctx.data({ packUnits })
  *   )
  * })
  */
-export const mockItemVariantsListQuery = (resolver: ResponseResolver<GraphQLRequest<ItemVariantsListQueryVariables>, GraphQLContext<ItemVariantsListQuery>, any>) =>
-  graphql.query<ItemVariantsListQuery, ItemVariantsListQueryVariables>(
-    'itemVariantsList',
+export const mockPackUnitsQuery = (resolver: ResponseResolver<GraphQLRequest<PackUnitsQueryVariables>, GraphQLContext<PackUnitsQuery>, any>) =>
+  graphql.query<PackUnitsQuery, PackUnitsQueryVariables>(
+    'packUnits',
     resolver
   )
