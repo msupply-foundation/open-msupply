@@ -1,1 +1,1 @@
-export * from './FilterRoot';
+export * from './FilterMenu';
