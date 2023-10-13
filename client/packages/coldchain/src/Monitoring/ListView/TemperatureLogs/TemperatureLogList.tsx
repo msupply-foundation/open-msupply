@@ -83,7 +83,7 @@ const ListView: FC = () => {
       data={data?.nodes ?? []}
       isLoading={isLoading}
       isError={isError}
-      noDataElement={<NothingHere body={t('error.no-sensors')} />}
+      noDataElement={<NothingHere body={t('error.no-temperature-logs')} />}
       enableColumnSelection
     />
   );
