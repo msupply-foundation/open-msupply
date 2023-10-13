@@ -1,0 +1,45 @@
+fragment TemperatureBreachRow on TemperatureBreachNode {
+  __typename
+  id
+  type
+}
+
+fragment TemperatureLog on TemperatureLogNode {
+  __typename
+  id
+  datetime
+  temperature
+
+  sensor {
+    ...Sensor
+  }
+
+  location {
+    ...LocationRow
+  }
+
+  temperatureBreach {
+    ...TemperatureBreachRow
+  }
+}
+
+query temperature_logs(
+  $page: PaginationInput
+  $sort: [TemperatureLogSortInput!]
+  $filter: TemperatureLogFilterInput
+  $storeId: String!
+) {
+  temperatureLogs(
+    page: $page
+    sort: $sort
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on TemperatureLogConnector {
+      totalCount
+      nodes {
+        ...TemperatureLog
+      }
+    }
+  }
+}
