@@ -387,5 +387,7 @@
   "label.cce": "CCE",
   "label.last-reading": "Last reading",
   "label.breach": "Breach",
-  "label.date-time": "Date time"
+  "label.date-time": "Date time",
+  "label.temperature": "Temperature",
+  "label.sensor-name": "Sensor name"
 }
