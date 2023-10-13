@@ -1,4 +1,6 @@
 {
+    "cold-chain.temperature-unit": "°C",
     "error.no-sensors": "No sensors found",
-    "cold-chain.temperature-unit": "°C"
+    "label.breaches": "Breaches",
+    "label.chart": "Chart"
 }
