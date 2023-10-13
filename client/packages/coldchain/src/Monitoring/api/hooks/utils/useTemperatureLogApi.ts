@@ -4,7 +4,7 @@ import { TemperatureLogFragment, getSdk } from '../../operations.generated';
 
 export const useTemperatureLogApi = () => {
   const keys = {
-    base: () => ['sensor'] as const,
+    base: () => ['temperatureLog'] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     sortedList: (sortBy: SortBy<TemperatureLogFragment>) =>
       [...keys.list(), sortBy] as const,
