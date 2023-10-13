@@ -51,7 +51,11 @@ pub fn generate_batch(
         id: stock_line_id,
         item_id,
         store_id: store_id.to_string(),
-        location_id,
+        location_id: match location_id {
+            Some(location_id) if location_id == "None" => None,
+            Some(location_id) => Some(location_id),
+            None => None,
+        },
         batch,
         pack_size,
         cost_price_per_pack,

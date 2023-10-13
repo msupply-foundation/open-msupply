@@ -94,7 +94,11 @@ fn generate_line(
 
     update_line.pack_size = pack_size.map(u32_to_i32).unwrap_or(update_line.pack_size);
     update_line.batch = batch.or(update_line.batch);
-    update_line.location_id = location_id.or(update_line.location_id);
+    if location_id == Some("None".to_string()) {
+        update_line.location_id = None;
+    } else {
+        update_line.location_id = location_id.or(update_line.location_id)
+    };
     update_line.expiry_date = expiry_date.or(update_line.expiry_date);
     update_line.sell_price_per_pack =
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);

@@ -104,7 +104,7 @@ fn generate_line(
         id,
         invoice_id,
         item_id,
-        location_id,
+        location_id: location_id.clone(),
         pack_size,
         batch,
         expiry_date,
@@ -121,6 +121,10 @@ fn generate_line(
         note: input.note,
         inventory_adjustment_reason_id: None,
     };
+
+    if location_id == Some("None".to_string()) {
+        update_line.location_id = None;
+    }
 
     if let Some(number_of_packs) = input.number_of_packs {
         update_line.number_of_packs = number_of_packs;

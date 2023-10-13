@@ -240,7 +240,7 @@ pub fn generate_lines_and_stock_lines(
         }: InvoiceLineRow = invoice_lines;
 
         if number_of_packs > 0.0 {
-            let stock_line = StockLineRow {
+            let mut stock_line = StockLineRow {
                 id: stock_line_id,
                 item_id,
                 store_id: store_id.to_string(),
@@ -257,6 +257,9 @@ pub fn generate_lines_and_stock_lines(
                 supplier_id: Some(supplier_id.to_string()),
                 barcode_id: None,
             };
+            if stock_line.location_id == Some("None".to_string()) {
+                stock_line.location_id = None;
+            }
             result.push(LineAndStockLine { line, stock_line });
         }
     }

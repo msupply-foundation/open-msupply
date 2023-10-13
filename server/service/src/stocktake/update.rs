@@ -139,6 +139,7 @@ fn validate(
     if !check_store_id_matches(store_id, &existing.store_id) {
         return Err(UpdateStocktakeError::InvalidStore);
     }
+
     let stocktake_lines = load_stocktake_lines(connection, &input.id)?;
 
     let status_changed = input.status.is_some();
@@ -213,7 +214,7 @@ fn generate_stock_line_update(
         .counted_number_of_packs
         .unwrap_or(stocktake_line.line.snapshot_number_of_packs);
     let delta = counted_number_of_packs - stocktake_line.line.snapshot_number_of_packs;
-    let updated_line = StockLineRow {
+    let mut updated_line = StockLineRow {
         id: stock_line.id.clone(),
         item_id: stock_line.item_id.clone(),
         store_id: stock_line.store_id.clone(),
@@ -240,6 +241,9 @@ fn generate_stock_line_update(
         supplier_id: stock_line.supplier_id.clone(),
         barcode_id: stock_line.barcode_id.clone(),
     };
+    if updated_line.location_id == Some("None".to_string()) {
+        updated_line.location_id = None;
+    }
 
     let item = match ItemRowRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
         Some(item) => item,
@@ -337,7 +341,11 @@ fn generate_new_stock_line(
         id: stock_line_id,
         item_id: item_id.clone(),
         store_id: store_id.to_string(),
-        location_id: row.location_id.clone(),
+        location_id: match row.location_id.clone() {
+            Some(location_id) if location_id == "None".to_string() => None,
+            Some(location_id) => Some(location_id),
+            None => None,
+        },
         batch: row.batch.clone(),
         pack_size,
         cost_price_per_pack,
@@ -369,7 +377,11 @@ fn generate_new_stock_line(
             item_name: item.name,
             item_code: item.code,
             stock_line_id: Some(new_line.id.clone()),
-            location_id: row.location_id,
+            location_id: match row.location_id {
+                Some(location_id) if location_id == "None".to_string() => None,
+                Some(location_id) => Some(location_id),
+                None => None,
+            },
             batch: row.batch,
             expiry_date: row.expiry_date,
             pack_size,
@@ -413,7 +425,11 @@ fn generate_enter_location_movements(
         id: uuid(),
         store_id,
         stock_line_id,
-        location_id,
+        location_id: match location_id {
+            Some(location_id) if location_id == "None" => None,
+            Some(location_id) => Some(location_id),
+            None => None,
+        },
         enter_datetime: Some(Utc::now().naive_utc()),
         exit_datetime: None,
     }

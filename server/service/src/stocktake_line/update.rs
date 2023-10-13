@@ -81,8 +81,12 @@ fn validate(
     }
 
     if let Some(location_id) = &input.location_id {
-        if !check_location_exists(connection, location_id)? {
-            return Err(LocationDoesNotExist);
+        // Check if location on hold only if location is not "none" value
+        // None passed from client is the unassignment of location from sensor node
+        if location_id != &"None".to_string() {
+            if !check_location_exists(connection, location_id)? {
+                return Err(LocationDoesNotExist);
+            }
         }
     }
 

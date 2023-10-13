@@ -94,7 +94,7 @@ fn generate_invoice_and_lines(
         .find_one_by_id(&stock_line_to_update.item_id)?
         .ok_or(RepositoryError::NotFound)?;
 
-    let stock_in = InvoiceLineRow {
+    let mut stock_in = InvoiceLineRow {
         id: uuid(),
         invoice_id: invoice.id.clone(),
         item_id: stock_line_to_update.item_id.clone(),
@@ -115,6 +115,10 @@ fn generate_invoice_and_lines(
             * new_stock_line.total_number_of_packs as f64,
         ..Default::default()
     };
+
+    if stock_in.location_id == Some("None".to_string()) {
+        stock_in.location_id = None;
+    }
 
     let stock_out = InvoiceLineRow {
         id: uuid(),

@@ -44,10 +44,12 @@ pub fn validate(
     if !check_batch(&line, connection)? {
         return Err(BatchIsReserved);
     }
-
-    if !check_location_exists(&input.location_id, connection)? {
-        return Err(LocationDoesNotExist);
+    if &input.location_id != &Some("None".to_string()) {
+        if !check_location_exists(&input.location_id, connection)? {
+            return Err(LocationDoesNotExist);
+        }
     }
+
     if !check_line_belongs_to_invoice(&line, &invoice) {
         return Err(NotThisInvoiceLine(line.invoice_id));
     }

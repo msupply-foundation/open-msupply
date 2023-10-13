@@ -87,7 +87,11 @@ fn generate_line(
         id,
         invoice_id,
         item_id,
-        location_id,
+        location_id: match location_id {
+            Some(location_id) if location_id == "None" => None,
+            Some(location_id) => Some(location_id),
+            None => None,
+        },
         pack_size: u32_to_i32(pack_size),
         batch,
         expiry_date,
