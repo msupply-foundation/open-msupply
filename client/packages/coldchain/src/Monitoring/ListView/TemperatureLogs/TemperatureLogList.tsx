@@ -1,7 +1,10 @@
 import React, { FC } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { TemperatureLogFragment, useTemperatureLog } from '../../api';
+import {
+  TemperatureLogFragment,
+  useTemperatureLog,
+} from '../../api/TemperatureLog';
 import {
   DataTable,
   Formatter,
