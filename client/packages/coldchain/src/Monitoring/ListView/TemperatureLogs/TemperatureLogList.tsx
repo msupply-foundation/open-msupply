@@ -1,7 +1,10 @@
 import React, { FC } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { TemperatureLogFragment, useTemperatureLog } from '../../api';
+import {
+  TemperatureLogFragment,
+  useTemperatureLog,
+} from '../../api/TemperatureLog';
 import {
   DataTable,
   Formatter,
@@ -80,7 +83,7 @@ const ListView: FC = () => {
       data={data?.nodes ?? []}
       isLoading={isLoading}
       isError={isError}
-      noDataElement={<NothingHere body={t('error.no-sensors')} />}
+      noDataElement={<NothingHere body={t('error.no-temperature-logs')} />}
       enableColumnSelection
     />
   );
