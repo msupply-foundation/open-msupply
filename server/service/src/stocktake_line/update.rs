@@ -152,7 +152,10 @@ fn generate(
         id: existing.id,
         stocktake_id: existing.stocktake_id,
         stock_line_id: existing.stock_line_id,
-        location_id: location_id.or(existing.location_id),
+        location_id: match location_id {
+            Some(location_id) if location_id == "None" => None,
+            _ => location_id.or(existing.location_id),
+        },
         comment: comment.or(existing.comment),
 
         snapshot_number_of_packs: snapshot_number_of_packs
