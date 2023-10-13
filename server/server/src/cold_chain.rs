@@ -1,9 +1,8 @@
 use actix_web::{
     cookie::Cookie,
-    guard,
     http::header,
     web::{self, Data},
-    HttpResponse, Result,
+    HttpRequest, HttpResponse, Result,
 };
 use mime_guess::mime;
 use repository::RepositoryError;
@@ -20,13 +19,17 @@ use service::{
 // Fixed login response time in case of an error (see service)
 const MIN_ERR_RESPONSE_TIME_SEC: u64 = 6;
 const URL_PATH: &str = "/coldchain/v1";
+const COOKIE_NAME: &str = "coldchain";
+
+#[derive(serde::Deserialize)]
+struct LoginRequest {
+    username: String,
+    password: String,
+}
 
 pub fn config_cold_chain(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::resource(format!("{}/login", URL_PATH))
-            .guard(guard::Post())
-            .to(login),
-    );
+    cfg.route(&format!("{}/login", URL_PATH), web::post().to(login));
+    cfg.route(&format!("{}/sensor", URL_PATH), web::put().to(sensor));
 }
 
 async fn login(
@@ -40,6 +43,41 @@ async fn login(
     };
 
     Ok(response)
+}
+
+async fn sensor(
+    request: HttpRequest,
+    service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+) -> Result<HttpResponse> {
+    let response = match validate_request(request, &service_provider, &auth_data) {
+        Ok(_) => match upsert_sensors(service_provider, auth_data).await {
+            Ok(response) => response,
+            Err(error) => HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+        },
+        Err(error) => {
+            let formatted_error = format!("{:#?}", error);
+            HttpResponse::Unauthorized().body(formatted_error)
+        }
+    };
+
+    Ok(response)
+}
+
+fn validate_request(
+    request: HttpRequest,
+    service_provider: &ServiceProvider,
+    auth_data: &AuthData,
+) -> Result<ValidatedUser, AuthError> {
+    let service_context = service_provider
+        .basic_context()
+        .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
+    let token = match request.cookie(COOKIE_NAME) {
+        Some(cookie) => Some(cookie.value().to_string()),
+        None => None,
+    };
+
+    validate_access(&service_provider, &service_context, &auth_data, token)
 }
 
 async fn do_login(
@@ -72,7 +110,7 @@ async fn do_login(
                 Some(token.token.clone()),
             ) {
                 Ok(_) => {
-                    let cookie = Cookie::build("coldchain", token.token)
+                    let cookie = Cookie::build(COOKIE_NAME, token.token)
                         .path(URL_PATH)
                         .secure(true)
                         .http_only(true)
@@ -134,8 +172,11 @@ pub fn validate_access(
     )
 }
 
-#[derive(serde::Deserialize)]
-struct LoginRequest {
-    username: String,
-    password: String,
+async fn upsert_sensors(
+    service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+) -> Result<HttpResponse, RepositoryError> {
+    Ok(HttpResponse::Ok()
+        .append_header(header::ContentType(mime::APPLICATION_JSON))
+        .body(r#"{ "success": true }"#))
 }
