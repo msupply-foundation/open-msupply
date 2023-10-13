@@ -12,8 +12,8 @@ pub struct ItemPackUnit {
     pub pack_units: Vec<PackUnitRow>,
 }
 
-// For a particular store, this method returns all pack units grouped by item_id and a reference to the most
-// used pack unit for each item (see ItemPackUnit return type).
+/// For a particular store, this method returns all pack units grouped by item_id and a reference to the most
+/// used pack unit for each item (see ItemPackUnit return type).
 pub fn get_pack_units(
     connection: &StorageConnection,
     store_id: &str,
