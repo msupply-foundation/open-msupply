@@ -158,7 +158,10 @@ fn generate(
         Some(_) => barcode_row.as_ref().map(|b| b.id.clone()),
     };
 
-    existing.location_id = location_id.or(existing.location_id);
+    existing.location_id = match location_id {
+        Some(location_id) if location_id == "None" => None,
+        _ => location_id.or(existing.location_id),
+    };
     existing.batch = batch.or(existing.batch);
     existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
@@ -205,7 +208,11 @@ fn generate_location_movement(
     movement.push(LocationMovementRow {
         id: uuid(),
         store_id,
-        location_id,
+        location_id: match location_id {
+            Some(location_id) if location_id == "None" => None,
+            Some(location_id) => Some(location_id),
+            None => None,
+        },
         stock_line_id: existing.id,
         enter_datetime: Some(Utc::now().naive_utc()),
         exit_datetime: None,
