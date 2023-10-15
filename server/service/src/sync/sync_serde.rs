@@ -66,11 +66,3 @@ pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error
     Ok(NaiveTime::from_num_seconds_from_midnight_opt(secs, 0)
         .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()))
 }
-
-pub fn naive_time_option<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveTime>, D::Error> {
-    let secs: Option<u32> = Option::deserialize(d)?;
-    Ok(secs.map(|secs| {
-        NaiveTime::from_num_seconds_from_midnight_opt(secs, 0)
-            .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-    }))
-}
