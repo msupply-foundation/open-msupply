@@ -31,6 +31,10 @@
   "button.select-a-color": "Select a colour",
   "button.try-again": "Try again",
   "button.view": "View",
+  "cold-chain.cold-consecutive": "Cold consecutive",
+  "cold-chain.hot-consecutive": "Hot consecutive",
+  "cold-chain.cold-cumulative": "Cold cumulative",
+  "cold-chain.hot-cumulative": "Cold cumulative",
   "description.average-monthly-consumption": "Average Monthly Consumption",
   "description.customer-reference": "Customer reference",
   "description.customer-soh": "Customer Stock on Hand",
@@ -375,5 +379,13 @@
   "sync-status.push": "Push",
   "sync-status.integrate": "Integrate",
   "table.show-columns": "Show / hide columns",
-  "warning.caps-lock": "Warning: Caps lock is on"
+  "warning.caps-lock": "Warning: Caps lock is on",
+  "error.no-sensors": "No sensors found",
+  "label.serial": "Serial Number",
+  "label.battery-level": "Battery level",
+  "label.sensor-type": "Sensor type",
+  "label.cce": "CCE",
+  "label.last-reading": "Last reading",
+  "label.breach": "Breach",
+  "label.date-time": "Date time"
 }

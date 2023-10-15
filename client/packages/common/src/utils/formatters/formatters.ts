@@ -41,6 +41,13 @@ export const Formatter = {
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' '),
+  enumCase: (str: string): string =>
+    str
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' '),
   logTypeTranslation: (logType: string): LocaleKey =>
     `log.${logType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
+  breachTypeTranslation: (breachType: string): LocaleKey =>
+    `cold-chain.${breachType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
 };

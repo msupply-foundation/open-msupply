@@ -1,10 +1,10 @@
 use super::{query::get_sensor, validate::check_sensor_serial_is_unique};
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use repository::EqualFilter;
 use repository::{
     sensor::{Sensor, SensorFilter, SensorRepository},
     RepositoryError, SensorRow, SensorRowRepository, StorageConnection,
 };
+use repository::{EqualFilter, SensorType};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertSensorError {
@@ -19,6 +19,7 @@ pub struct InsertSensor {
     pub serial: String,
     pub name: Option<String>,
     pub is_active: Option<bool>,
+    pub r#type: SensorType,
 }
 
 pub fn insert_sensor(
@@ -59,6 +60,7 @@ pub fn generate(
         serial,
         name,
         is_active,
+        r#type,
     }: InsertSensor,
 ) -> SensorRow {
     SensorRow {
@@ -71,6 +73,7 @@ pub fn generate(
         battery_level: Some(99),
         log_interval: Some(10),
         last_connection_datetime: None,
+        r#type,
     }
 }
 
