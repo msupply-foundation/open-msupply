@@ -15,26 +15,22 @@ export interface TextFilterDefinition extends FilterDefinitionCommon {
 export const TextFilter: FC<{
   filterDefinition: TextFilterDefinition;
   remove: () => void;
-}> = ({ filterDefinition, remove }) => {
-  const [loading, setLoading] = useState(false);
+}> = ({ filterDefinition }) => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const [value, setValue] = useState(
     urlQuery[filterDefinition.urlParameter] ?? ''
   );
 
   const debouncedOnChange = useDebouncedValueCallback(
-    value => {
-      updateQuery({ [filterDefinition.urlParameter]: value });
-      setLoading(false);
-    },
+    value => updateQuery({ [filterDefinition.urlParameter]: value }),
     [],
-    500
+    200
   );
 
   const handleChange = (newValue: string) => {
-    setLoading(true);
     setValue(newValue);
-    debouncedOnChange(newValue);
+    if (newValue === '') updateQuery({ [filterDefinition.urlParameter]: '' });
+    else debouncedOnChange(newValue);
   };
 
   return (
@@ -42,9 +38,9 @@ export const TextFilter: FC<{
       InputProps={{
         endAdornment: (
           <EndAdornment
-            isLoading={loading}
+            isLoading={false}
             hasValue={!!value}
-            onClear={remove}
+            onClear={() => handleChange('')}
           />
         ),
         sx: { width: FILTER_WIDTH },
