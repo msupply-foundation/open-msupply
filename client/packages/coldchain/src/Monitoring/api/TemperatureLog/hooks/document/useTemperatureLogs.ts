@@ -1,14 +1,14 @@
 import { useUrlQueryParams } from '@common/hooks';
-import { useSensorApi } from '../utils/useSensorApi';
+import { useTemperatureLogApi } from '../utils/useTemperatureLogApi';
 import { useQuery } from '@openmsupply-client/common';
 
-export const useSensors = () => {
+export const useTemperatureLogs = () => {
   const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'serial', dir: 'desc' },
-    filterKey: 'serial',
+    initialSort: { key: 'datetime', dir: 'desc' },
+    filterKey: 'datetime',
   });
 
-  const api = useSensorApi();
+  const api = useTemperatureLogApi();
 
   return {
     ...useQuery(api.keys.paramList(queryParams), api.get.list(queryParams)),

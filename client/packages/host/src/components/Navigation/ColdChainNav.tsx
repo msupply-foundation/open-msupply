@@ -36,10 +36,18 @@ export const ColdChainNav: FC<ColdChainNavProps> = ({ store }) => {
       <Collapse
         in={isActive}
         sx={{
-          marginBotton: 2,
+          marginBottom: 2,
         }}
       >
         <List>
+          <AppNavLink
+            visible={visible}
+            end
+            to={RouteBuilder.create(AppRoute.Coldchain)
+              .addPart(AppRoute.Monitoring)
+              .build()}
+            text={t('monitoring')}
+          />
           <AppNavLink
             visible={visible}
             end
