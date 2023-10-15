@@ -363,6 +363,7 @@
   "messages.scanner-disconnected": "Not connected",
   "messages.fetching-report-data": "Fetching report data...",
   "message.copy-success": "Copied to clipboard successfully",
+  "message.coming-soon": "Coming soon...",
   "placeholder.filter-by-status": "Filter by status",
   "placeholder.filter-items": "Filter items",
   "placeholder.search-by-name": "Search by name",
@@ -387,5 +388,7 @@
   "label.cce": "CCE",
   "label.last-reading": "Last reading",
   "label.breach": "Breach",
-  "label.date-time": "Date time"
+  "label.date-time": "Date time",
+  "label.temperature": "Temperature",
+  "label.sensor-name": "Sensor name"
 }

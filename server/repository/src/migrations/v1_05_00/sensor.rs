@@ -10,7 +10,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-            CREATE TYPE {TEST_ENUM_TYPE} AS ENUM (
+            CREATE TYPE {SENSOR_TYPE} AS ENUM (
                 'BLUE_MAESTRO',
                 'LAIRD'
             );
