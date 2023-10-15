@@ -60,6 +60,8 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
     setActiveFilters(newActiveFilters);
   };
 
+  const showRemoveOption = activeFilters.length > 0;
+
   return (
     <Box
       display="flex"
@@ -74,15 +76,12 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
             label={option.label}
           />
         ))}
-        {activeFilters.length > 0 && (
-          <>
-            <Divider />
-            <FilterMenuItem
-              key="remove-filters"
-              onClick={() => handleSelect(RESET_KEYWORD)}
-              label={t('label.remove-all-filters')}
-            />
-          </>
+        {showRemoveOption && <Divider />}
+        {showRemoveOption && (
+          <FilterMenuItem
+            onClick={() => handleSelect(RESET_KEYWORD)}
+            label={t('label.remove-all-filters')}
+          />
         )}
       </DropdownMenu>
       {activeFilters.map(filter => getFilterComponent(filter, removeFilter))}
@@ -118,6 +117,7 @@ const getFilterComponent = (
     case 'text':
       return (
         <TextFilter
+          key={filter.urlParameter}
           filterDefinition={filter}
           remove={() => removeFilter(filter)}
         />
@@ -125,6 +125,7 @@ const getFilterComponent = (
     case 'enum':
       return (
         <EnumFilter
+          key={filter.urlParameter}
           filterDefinition={filter}
           remove={() => removeFilter(filter)}
         />

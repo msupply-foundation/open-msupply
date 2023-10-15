@@ -1,11 +1,7 @@
 import React, { FC } from 'react';
 import { useUrlQuery } from '@common/hooks';
 import { Select } from '@common/components';
-import {
-  EndAdornment,
-  FILTER_WIDTH,
-  FilterDefinitionCommon,
-} from './FilterMenu';
+import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 
 export interface EnumFilterDefinition extends FilterDefinitionCommon {
   type: 'enum';
@@ -17,13 +13,17 @@ type EnumOption = { label: string; value: string };
 export const EnumFilter: FC<{
   filterDefinition: EnumFilterDefinition;
   remove: () => void;
-}> = ({ filterDefinition, remove }) => {
+}> = ({ filterDefinition }) => {
   const { urlParameter, options, name } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
 
   const value = urlQuery[urlParameter] as string | undefined;
 
   const handleChange = (selection: string) => {
+    if (!selection) {
+      updateQuery({ [urlParameter]: '' });
+      return;
+    }
     const option = options.find(opt => opt.value === selection);
     if (!option) return;
 
@@ -35,9 +35,6 @@ export const EnumFilter: FC<{
       options={options}
       placeholder={name}
       InputProps={{
-        endAdornment: (
-          <EndAdornment isLoading={false} hasValue={!!value} onClear={remove} />
-        ),
         sx: {
           width: FILTER_WIDTH,
         },
@@ -54,7 +51,7 @@ export const EnumFilter: FC<{
         },
       }}
       label={name}
-      value={value}
+      value={value ?? ''}
       onChange={e => handleChange(e.target.value)}
     />
   );
