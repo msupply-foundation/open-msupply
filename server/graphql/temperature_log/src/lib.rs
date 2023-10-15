@@ -46,7 +46,7 @@ impl TemperatureLogQueries {
         let temperature_logs = service_provider
             .temperature_log_service
             .get_temperature_logs(
-                &service_context,
+                &service_context.connection,
                 page.map(PaginationOption::from),
                 Some(filter),
                 // Currently only one sort option is supported, use the first from the list.
@@ -71,15 +71,14 @@ mod test {
         temperature_log::{
             TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
         },
-        SensorFilter, StorageConnectionManager, TemperatureLogRow,
+        SensorFilter, StorageConnection, StorageConnectionManager, TemperatureLogRow,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
 
     use service::{
-        service_provider::{ServiceContext, ServiceProvider},
-        temperature_log::TemperatureLogServiceTrait,
-        ListError, ListResult,
+        service_provider::ServiceProvider, temperature_log::TemperatureLogServiceTrait, ListError,
+        ListResult,
     };
 
     use crate::TemperatureLogQueries;
@@ -98,7 +97,7 @@ mod test {
     impl TemperatureLogServiceTrait for TestService {
         fn get_temperature_logs(
             &self,
-            _: &ServiceContext,
+            _: &StorageConnection,
             pagination: Option<PaginationOption>,
             filter: Option<TemperatureLogFilter>,
             sort: Option<TemperatureLogSort>,
