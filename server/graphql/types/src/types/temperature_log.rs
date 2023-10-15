@@ -1,7 +1,13 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
-use graphql_core::generic_filters::{DatetimeFilterInput, EqualFilterStringInput};
-use graphql_core::simple_generic_errors::NodeError;
+use chrono::{DateTime, Utc};
+use dataloader::DataLoader;
+use graphql_core::{
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    loader::{LocationByIdLoader, SensorByIdLoader, TemperatureBreachByIdLoader},
+    simple_generic_errors::NodeError,
+    ContextExt,
+};
+
 use repository::{
     temperature_log::{
         TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
@@ -10,10 +16,15 @@ use repository::{
 };
 use service::{usize_to_u32, ListResult};
 
+use super::{
+    LocationFilterInput, LocationNode, SensorFilterInput, SensorNode, TemperatureBreachFilterInput,
+    TemperatureBreachNode,
+};
+
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum TemperatureLogSortFieldInput {
-    Timestamp,
+    Datetime,
     Temperature,
 }
 #[derive(InputObject)]
@@ -27,20 +38,22 @@ pub struct TemperatureLogSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct TemperatureLogFilterInput {
-    pub sensor_id: Option<EqualFilterStringInput>,
-    pub location_id: Option<EqualFilterStringInput>,
-    pub timestamp: Option<DatetimeFilterInput>,
+    pub datetime: Option<DatetimeFilterInput>,
     pub id: Option<EqualFilterStringInput>,
+    pub sensor: Option<SensorFilterInput>,
+    pub location: Option<LocationFilterInput>,
+    pub temperature_breach: Option<TemperatureBreachFilterInput>,
 }
 
 impl From<TemperatureLogFilterInput> for TemperatureLogFilter {
     fn from(f: TemperatureLogFilterInput) -> Self {
         TemperatureLogFilter {
-            sensor_id: f.sensor_id.map(EqualFilter::from),
-            location_id: f.location_id.map(EqualFilter::from),
-            timestamp: f.timestamp.map(DatetimeFilter::from),
+            datetime: f.datetime.map(DatetimeFilter::from),
             id: f.id.map(EqualFilter::from),
             store_id: None,
+            sensor: f.sensor.map(SensorFilterInput::into),
+            location: f.location.map(LocationFilterInput::into),
+            temperature_breach: f.temperature_breach.map(TemperatureBreachFilterInput::into),
         }
     }
 }
@@ -66,12 +79,52 @@ impl TemperatureLogNode {
         self.row().temperature
     }
 
-    pub async fn timestamp(&self) -> NaiveDateTime {
-        self.row().timestamp
+    pub async fn datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row().datetime, Utc)
     }
 
     pub async fn sensor_id(&self) -> &str {
         &self.row().sensor_id
+    }
+
+    pub async fn sensor(&self, ctx: &Context<'_>) -> Result<Option<SensorNode>> {
+        let loader = ctx.get_loader::<DataLoader<SensorByIdLoader>>();
+
+        Ok(loader
+            .load_one(self.row().sensor_id.clone())
+            .await?
+            .map(SensorNode::from_domain))
+    }
+
+    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+        let location_id = match &self.row().location_id {
+            Some(location_id) => location_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+
+        Ok(loader
+            .load_one(location_id.clone())
+            .await?
+            .map(LocationNode::from_domain))
+    }
+
+    pub async fn temperature_breach(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<TemperatureBreachNode>> {
+        let temperature_breach_id = match &self.row().temperature_breach_id {
+            Some(temperature_breach_id) => temperature_breach_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<TemperatureBreachByIdLoader>>();
+
+        Ok(loader
+            .load_one(temperature_breach_id.to_string())
+            .await?
+            .map(TemperatureBreachNode::from_domain))
     }
 }
 
@@ -124,7 +177,7 @@ impl TemperatureLogSortInput {
         use TemperatureLogSortField as to;
         use TemperatureLogSortFieldInput as from;
         let key = match self.key {
-            from::Timestamp => to::Timestamp,
+            from::Datetime => to::Datetime,
             from::Temperature => to::Temperature,
         };
 

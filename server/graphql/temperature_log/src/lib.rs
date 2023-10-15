@@ -66,13 +66,12 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
-    //use repository::mock::mock_temperature_logs;
     use repository::{
         mock::MockDataInserts,
         temperature_log::{
             TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
         },
-        StorageConnectionManager, TemperatureLogRow,
+        SensorFilter, StorageConnectionManager, TemperatureLogRow,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
@@ -151,11 +150,12 @@ mod test {
                         store_id: Some("store_a".to_string()),
                         location_id: None,
                         temperature: 2.4,
-                        timestamp: NaiveDate::from_ymd_opt(2022, 7, 1)
+                        datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
                             .unwrap()
                             .and_hms_opt(0, 0, 0)
                             .unwrap()
                             + Duration::seconds(47046),
+                        temperature_breach_id: None,
                     },
                 }],
                 count: 1,
@@ -266,12 +266,12 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        // Test sort by timestamp with desc
+        // Test sort by datetime with desc
         let test_service = TestService(Box::new(|_, _, sort| {
             assert_eq!(
                 sort,
                 Some(Sort {
-                    key: TemperatureLogSortField::Timestamp,
+                    key: TemperatureLogSortField::Datetime,
                     desc: Some(true)
                 })
             );
@@ -280,7 +280,7 @@ mod test {
 
         let variables = json!({
           "sort": [{
-            "key": "timestamp",
+            "key": "datetime",
             "desc": true
           }]
         });
@@ -300,7 +300,7 @@ mod test {
                 Some(
                     TemperatureLogFilter::new()
                         .store_id(EqualFilter::equal_to("store_a"))
-                        .sensor_id(EqualFilter::equal_to("match_sensor"))
+                        .sensor(SensorFilter::new().id(EqualFilter::equal_to("match_sensor")))
                 )
             );
             Ok(ListResult::empty())
@@ -308,7 +308,7 @@ mod test {
 
         let variables = json!({
           "filter": {
-            "sensorId": { "equalTo": "match_sensor"},
+            "sensor": { "id": { "equalTo": "match_sensor"}},
           }
         });
 

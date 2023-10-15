@@ -44,16 +44,18 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             threshold_minimum: -273.0,
             threshold_maximum: 2.0,
             threshold_duration: 3600,
-            start_timestamp: NaiveDate::from_ymd_opt(2023, 7, 1)
+            start_datetime: NaiveDate::from_ymd_opt(2023, 7, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap()
                 + Duration::seconds(47046),
-            end_timestamp: NaiveDate::from_ymd_opt(2023, 7, 2)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap()
-                + Duration::seconds(47046),
+            end_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 7, 2)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046),
+            ),
         }),
     )]
 }
@@ -75,7 +77,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             threshold_duration: 3600,
             start_date: NaiveDate::from_ymd_opt(2023, 7, 1).unwrap(),
             start_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
-            end_date: NaiveDate::from_ymd_opt(2023, 7, 2).unwrap(),
+            end_date: Some(NaiveDate::from_ymd_opt(2023, 7, 2).unwrap()),
             end_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
         }),
     }]

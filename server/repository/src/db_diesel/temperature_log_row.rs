@@ -1,5 +1,5 @@
 use super::{
-    location_row::location, sensor_row::sensor, store_row::store,
+    sensor_row::sensor, store_row::store,
     temperature_log_row::temperature_log::dsl as temperature_log_dsl, StorageConnection,
 };
 
@@ -15,7 +15,8 @@ table! {
         sensor_id -> Text,
         location_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
-        timestamp -> Timestamp,
+        datetime -> Timestamp,
+        temperature_breach_id -> Nullable<Text>,
     }
 }
 
@@ -29,7 +30,6 @@ table! {
 
 joinable!(temperature_log -> sensor (sensor_id));
 joinable!(temperature_log -> store (store_id));
-joinable!(temperature_log -> location (location_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
@@ -40,7 +40,8 @@ pub struct TemperatureLogRow {
     pub sensor_id: String,
     pub location_id: Option<String>,
     pub store_id: Option<String>,
-    pub timestamp: NaiveDateTime,
+    pub datetime: NaiveDateTime,
+    pub temperature_breach_id: Option<String>,
 }
 
 pub struct TemperatureLogRowRepository<'a> {

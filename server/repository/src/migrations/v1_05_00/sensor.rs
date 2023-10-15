@@ -14,7 +14,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 location_id TEXT REFERENCES location(id),
                 battery_level INTEGER,
                 log_interval INTEGER,
-                last_connection_timestamp {DATETIME}
+                last_connection_datetime {DATETIME}
             );
 
             CREATE TABLE temperature_breach_config (
@@ -35,8 +35,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 sensor_id TEXT NOT NULL REFERENCES sensor(id),
                 store_id TEXT REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
-                start_timestamp {DATETIME} NOT NULL,
-                end_timestamp {DATETIME} NOT NULL,
+                start_datetime {DATETIME} NOT NULL,
+                end_datetime {DATETIME},
                 acknowledged BOOLEAN,
                 threshold_minimum {DOUBLE} NOT NULL,
                 threshold_maximum {DOUBLE} NOT NULL,
@@ -49,7 +49,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 sensor_id TEXT NOT NULL REFERENCES sensor(id),
                 store_id TEXT REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
-                timestamp {DATETIME} NOT NULL
+                datetime {DATETIME} NOT NULL,
+                temperature_breach_id TEXT REFERENCES temperature_breach(id)
             );      
             "#
     )?;
@@ -58,6 +59,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'sensor';
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach';
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach_config';
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_log';
+
+
                 CREATE TRIGGER sensor_trigger
                 AFTER INSERT OR UPDATE OR DELETE ON sensor
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog();
@@ -175,6 +182,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             "#
         )?;
     }
+
+    sql!(
+        connection,
+        r#"
+            ALTER TABLE store_preference ADD COLUMN vaccine_module bool NOT NULL DEFAULT false;
+        "#
+    )?;
 
     Ok(())
 }

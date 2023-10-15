@@ -139,7 +139,7 @@ pub struct MockData {
     pub locations: Vec<LocationRow>,
     pub sensors: Vec<SensorRow>,
     pub temperature_breach_configs: Vec<TemperatureBreachConfigRow>,
-    pub temperature_breachs: Vec<TemperatureBreachRow>,
+    pub temperature_breaches: Vec<TemperatureBreachRow>,
     pub temperature_logs: Vec<TemperatureLogRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
     pub full_requisitions: Vec<FullMockRequisition>,
@@ -201,7 +201,7 @@ pub struct MockDataInserts {
     pub items: bool,
     pub locations: bool,
     pub sensors: bool,
-    pub temperature_breachs: bool,
+    pub temperature_breaches: bool,
     pub temperature_breach_configs: bool,
     pub temperature_logs: bool,
     pub name_store_joins: bool,
@@ -251,7 +251,7 @@ impl MockDataInserts {
             locations: true,
             sensors: true,
             temperature_breach_configs: true,
-            temperature_breachs: true,
+            temperature_breaches: true,
             temperature_logs: true,
             name_store_joins: true,
             full_requisitions: true,
@@ -358,8 +358,8 @@ impl MockDataInserts {
         self
     }
 
-    pub fn temperature_breachs(mut self) -> Self {
-        self.temperature_breachs = true;
+    pub fn temperature_breaches(mut self) -> Self {
+        self.temperature_breaches = true;
         self
     }
 
@@ -533,7 +533,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             sensors: mock_sensors(),
             temperature_breach_configs: mock_temperature_breach_configs(),
             temperature_logs: mock_temperature_logs(),
-            temperature_breachs: mock_temperature_breachs(),
+            temperature_breaches: mock_temperature_breaches(),
             name_store_joins: mock_name_store_joins(),
             invoices: mock_invoices(),
             stock_lines: mock_stock_lines(),
@@ -722,9 +722,9 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.temperature_breachs {
+        if inserts.temperature_breaches {
             let repo = TemperatureBreachRowRepository::new(connection);
-            for row in &mock_data.temperature_breachs {
+            for row in &mock_data.temperature_breaches {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -942,7 +942,7 @@ impl MockData {
             mut locations,
             mut sensors,
             mut temperature_breach_configs,
-            mut temperature_breachs,
+            mut temperature_breaches,
             mut temperature_logs,
             mut name_store_joins,
             mut full_requisitions,
@@ -991,7 +991,7 @@ impl MockData {
         self.temperature_logs.append(&mut temperature_logs);
         self.temperature_breach_configs
             .append(&mut temperature_breach_configs);
-        self.temperature_breachs.append(&mut temperature_breachs);
+        self.temperature_breaches.append(&mut temperature_breaches);
         self.full_requisitions.append(&mut full_requisitions);
         self.invoices.append(&mut invoices);
         self.invoice_lines.append(&mut invoice_lines);

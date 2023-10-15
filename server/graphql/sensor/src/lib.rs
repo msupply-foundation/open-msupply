@@ -66,15 +66,6 @@ pub struct SensorMutations;
 
 #[Object]
 impl SensorMutations {
-    async fn insert_sensor(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertSensorInput,
-    ) -> Result<InsertSensorResponse> {
-        insert_sensor(ctx, &store_id, input)
-    }
-
     async fn update_sensor(
         &self,
         ctx: &Context<'_>,
@@ -178,7 +169,7 @@ mod test {
                         location_id: None,
                         battery_level: Some(90),
                         log_interval: Some(5),
-                        last_connection_timestamp: Some(
+                        last_connection_datetime: Some(
                             NaiveDate::from_ymd_opt(2022, 7, 1)
                                 .unwrap()
                                 .and_hms_opt(0, 0, 0)

@@ -46,7 +46,7 @@ pub fn update_sensor(
 #[derive(InputObject)]
 pub struct UpdateSensorInput {
     pub id: String,
-    pub serial: Option<String>,
+    pub location_id: Option<String>,
     pub name: Option<String>,
     pub is_active: Option<bool>,
 }
@@ -55,14 +55,14 @@ impl From<UpdateSensorInput> for UpdateSensor {
     fn from(
         UpdateSensorInput {
             id,
-            serial,
+            location_id,
             name,
             is_active,
         }: UpdateSensorInput,
     ) -> Self {
         UpdateSensor {
             id,
-            serial,
+            location_id,
             name,
             is_active,
         }
@@ -91,16 +91,16 @@ pub enum UpdateSensorErrorInterface {
 }
 
 fn map_error(error: ServiceError) -> Result<UpdateSensorErrorInterface> {
-    use StandardGraphqlError::*;
+    use ServiceError::*;
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
         // Standard Graphql Errors
-        ServiceError::SensorDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::SerialAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::SensorDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
-        ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        SensorDoesNotExist | LocationIsOnHold | SensorDoesNotBelongToCurrentStore => {
+            StandardGraphqlError::BadUserInput(formatted_error)
+        }
+        ServiceError::UpdatedRecordNotFound => StandardGraphqlError::InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => StandardGraphqlError::InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())

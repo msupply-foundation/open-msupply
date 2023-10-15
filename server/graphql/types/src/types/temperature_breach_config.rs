@@ -8,17 +8,11 @@ use repository::{
         TemperatureBreachConfig, TemperatureBreachConfigFilter, TemperatureBreachConfigSort,
         TemperatureBreachConfigSortField,
     },
-    EqualFilter, TemperatureBreachConfigRow, TemperatureBreachRowType,
+    EqualFilter, TemperatureBreachConfigRow,
 };
 use service::{usize_to_u32, ListResult};
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq)]
-pub enum TemperatureBreachNodeType {
-    ColdConsecutive,
-    ColdCumulative,
-    HotConsecutive,
-    HotCumulative,
-}
+use super::{EqualFilterTemperatureBreachRowTypeInput, TemperatureBreachNodeType};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -33,13 +27,6 @@ pub struct TemperatureBreachConfigSortInput {
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterTemperatureBreachRowTypeInput {
-    pub equal_to: Option<TemperatureBreachNodeType>,
-    pub equal_any: Option<Vec<TemperatureBreachNodeType>>,
-    pub not_equal_to: Option<TemperatureBreachNodeType>,
 }
 
 #[derive(InputObject, Clone)]
@@ -91,32 +78,6 @@ impl TemperatureBreachConfigNode {
 
     pub async fn r#type(&self) -> TemperatureBreachNodeType {
         TemperatureBreachNodeType::from_domain(&self.row().r#type)
-    }
-}
-
-impl TemperatureBreachNodeType {
-    pub fn from_domain(from: &TemperatureBreachRowType) -> TemperatureBreachNodeType {
-        use TemperatureBreachNodeType as to;
-        use TemperatureBreachRowType as from;
-
-        match from {
-            from::ColdConsecutive => to::ColdConsecutive,
-            from::ColdCumulative => to::ColdCumulative,
-            from::HotConsecutive => to::HotConsecutive,
-            from::HotCumulative => to::HotCumulative,
-        }
-    }
-
-    pub fn to_domain(self) -> TemperatureBreachRowType {
-        use TemperatureBreachNodeType as from;
-        use TemperatureBreachRowType as to;
-
-        match self {
-            from::ColdConsecutive => to::ColdConsecutive,
-            from::ColdCumulative => to::ColdCumulative,
-            from::HotConsecutive => to::HotConsecutive,
-            from::HotCumulative => to::HotCumulative,
-        }
     }
 }
 

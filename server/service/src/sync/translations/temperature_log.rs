@@ -41,6 +41,9 @@ pub struct LegacyTemperatureLogRow {
     pub date: NaiveDate,
     #[serde(deserialize_with = "naive_time")]
     pub time: NaiveTime,
+    #[serde(rename = "temperature_breach_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub temperature_breach_id: Option<String>,
 }
 
 pub(crate) struct TemperatureLogTranslation {}
@@ -75,9 +78,10 @@ impl SyncTranslation for TemperatureLogTranslation {
             store_id,
             date,
             time,
+            temperature_breach_id,
         } = data;
 
-        let timestamp = NaiveDateTime::new(date, time);
+        let datetime = NaiveDateTime::new(date, time);
 
         let result = TemperatureLogRow {
             id,
@@ -85,7 +89,8 @@ impl SyncTranslation for TemperatureLogTranslation {
             sensor_id,
             location_id,
             store_id,
-            timestamp,
+            datetime,
+            temperature_breach_id,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -108,7 +113,8 @@ impl SyncTranslation for TemperatureLogTranslation {
             sensor_id,
             location_id,
             store_id,
-            timestamp,
+            datetime,
+            temperature_breach_id,
         } = TemperatureLogRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -116,8 +122,8 @@ impl SyncTranslation for TemperatureLogTranslation {
                 changelog.record_id
             )))?;
 
-        let date = timestamp.date();
-        let time = timestamp.time();
+        let date = datetime.date();
+        let time = datetime.time();
 
         let legacy_row = LegacyTemperatureLogRow {
             id,
@@ -127,6 +133,7 @@ impl SyncTranslation for TemperatureLogTranslation {
             store_id,
             date,
             time,
+            temperature_breach_id,
         };
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,

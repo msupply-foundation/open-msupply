@@ -1,8 +1,13 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
-use graphql_core::generic_filters::{DatetimeFilterInput, EqualFilterStringInput};
-use graphql_core::map_filter;
-use graphql_core::simple_generic_errors::NodeError;
+use chrono::{DateTime, Utc};
+use dataloader::DataLoader;
+use graphql_core::{
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    loader::{LocationByIdLoader, SensorByIdLoader},
+    map_filter,
+    simple_generic_errors::NodeError,
+    ContextExt,
+};
 
 use repository::{
     temperature_breach::{
@@ -12,6 +17,8 @@ use repository::{
     DatetimeFilter, EqualFilter, TemperatureBreachRow, TemperatureBreachRowType,
 };
 use service::{usize_to_u32, ListResult};
+
+use super::{LocationFilterInput, LocationNode, SensorFilterInput, SensorNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum TemperatureBreachNodeType {
@@ -24,8 +31,8 @@ pub enum TemperatureBreachNodeType {
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum TemperatureBreachSortFieldInput {
-    StartTimestamp,
-    EndTimestamp,
+    StartDatetime,
+    EndDatetime,
 }
 
 #[derive(InputObject)]
@@ -47,27 +54,27 @@ pub struct EqualFilterTemperatureBreachRowTypeInput {
 #[derive(InputObject, Clone)]
 pub struct TemperatureBreachFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub sensor_id: Option<EqualFilterStringInput>,
-    //pub location_id: Option<EqualFilterStringInput>,
-    pub start_timestamp: Option<DatetimeFilterInput>,
-    pub end_timestamp: Option<DatetimeFilterInput>,
-    //pub r#type: Option<EqualFilterTemperatureBreachRowTypeInput>,
+    pub start_datetime: Option<DatetimeFilterInput>,
+    pub end_datetime: Option<DatetimeFilterInput>,
+    pub r#type: Option<EqualFilterTemperatureBreachRowTypeInput>,
     pub acknowledged: Option<bool>,
+    pub sensor: Option<SensorFilterInput>,
+    pub location: Option<LocationFilterInput>,
 }
 
 impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
     fn from(f: TemperatureBreachFilterInput) -> Self {
         TemperatureBreachFilter {
-            sensor_id: f.sensor_id.map(EqualFilter::from),
-            //location_id: f.location_id.map(EqualFilter::from),
             acknowledged: f.acknowledged,
-            //r#type: f
-            //    .r#type
-            //    .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
+            r#type: f
+                .r#type
+                .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
             id: f.id.map(EqualFilter::from),
-            start_timestamp: f.start_timestamp.map(DatetimeFilter::from),
-            end_timestamp: f.end_timestamp.map(DatetimeFilter::from),
+            start_datetime: f.start_datetime.map(DatetimeFilter::from),
+            end_datetime: f.end_datetime.map(DatetimeFilter::from),
             store_id: None,
+            sensor: f.sensor.map(SensorFilterInput::into),
+            location: f.location.map(LocationFilterInput::into),
         }
     }
 }
@@ -93,16 +100,23 @@ impl TemperatureBreachNode {
         &self.row().sensor_id
     }
 
-    //pub async fn location_id(&self) -> &str {
-    //    &self.row().location_id
-    //}
+    pub async fn sensor(&self, ctx: &Context<'_>) -> Result<Option<SensorNode>> {
+        let loader = ctx.get_loader::<DataLoader<SensorByIdLoader>>();
 
-    pub async fn start_timestamp(&self) -> NaiveDateTime {
-        self.row().start_timestamp
+        Ok(loader
+            .load_one(self.row().sensor_id.clone())
+            .await?
+            .map(SensorNode::from_domain))
     }
 
-    pub async fn end_timestamp(&self) -> NaiveDateTime {
-        self.row().end_timestamp
+    pub async fn start_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.row().start_datetime, Utc)
+    }
+
+    pub async fn end_datetime(&self) -> Option<DateTime<Utc>> {
+        self.row()
+            .end_datetime
+            .map(|t| DateTime::<Utc>::from_utc(t, Utc))
     }
 
     pub async fn acknowledged(&self) -> bool {
@@ -113,9 +127,23 @@ impl TemperatureBreachNode {
         self.row().duration
     }
 
-    //pub async fn r#type(&self) -> TemperatureBreachNodeType {
-    //    TemperatureBreachNodeType::from_domain(&self.row().r#type)
-    //}
+    pub async fn r#type(&self) -> TemperatureBreachNodeType {
+        TemperatureBreachNodeType::from_domain(&self.row().r#type)
+    }
+
+    pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
+        let location_id = match &self.row().location_id {
+            Some(location_id) => location_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+
+        Ok(loader
+            .load_one(location_id.clone())
+            .await?
+            .map(LocationNode::from_domain))
+    }
 }
 
 impl TemperatureBreachNodeType {
@@ -145,7 +173,7 @@ impl TemperatureBreachNodeType {
 }
 
 #[derive(Union)]
-pub enum TemperatureBreachsResponse {
+pub enum TemperatureBreachesResponse {
     Response(TemperatureBreachConnector),
 }
 
@@ -167,11 +195,11 @@ impl TemperatureBreachNode {
 
 impl TemperatureBreachConnector {
     pub fn from_domain(
-        temperature_breachs: ListResult<TemperatureBreach>,
+        temperature_breaches: ListResult<TemperatureBreach>,
     ) -> TemperatureBreachConnector {
         TemperatureBreachConnector {
-            total_count: temperature_breachs.count,
-            nodes: temperature_breachs
+            total_count: temperature_breaches.count,
+            nodes: temperature_breaches
                 .rows
                 .into_iter()
                 .map(TemperatureBreachNode::from_domain)
@@ -179,10 +207,10 @@ impl TemperatureBreachConnector {
         }
     }
 
-    pub fn from_vec(temperature_breachs: Vec<TemperatureBreach>) -> TemperatureBreachConnector {
+    pub fn from_vec(temperature_breaches: Vec<TemperatureBreach>) -> TemperatureBreachConnector {
         TemperatureBreachConnector {
-            total_count: usize_to_u32(temperature_breachs.len()),
-            nodes: temperature_breachs
+            total_count: usize_to_u32(temperature_breaches.len()),
+            nodes: temperature_breaches
                 .into_iter()
                 .map(TemperatureBreachNode::from_domain)
                 .collect(),
@@ -195,8 +223,8 @@ impl TemperatureBreachSortInput {
         use TemperatureBreachSortField as to;
         use TemperatureBreachSortFieldInput as from;
         let key = match self.key {
-            from::StartTimestamp => to::StartTimestamp,
-            from::EndTimestamp => to::EndTimestamp,
+            from::StartDatetime => to::StartDatetime,
+            from::EndDatetime => to::EndDatetime,
         };
 
         TemperatureBreachSort {

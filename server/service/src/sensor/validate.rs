@@ -1,8 +1,8 @@
-use repository::EqualFilter;
 use repository::{
     sensor::{SensorFilter, SensorRepository},
     RepositoryError, SensorRow, SensorRowRepository, StorageConnection,
 };
+use repository::{EqualFilter, LocationRowRepository};
 
 pub fn check_sensor_serial_is_unique(
     id: &str,
@@ -29,4 +29,15 @@ pub fn check_sensor_exists(
     connection: &StorageConnection,
 ) -> Result<Option<SensorRow>, RepositoryError> {
     Ok(SensorRowRepository::new(connection).find_one_by_id(id)?)
+}
+
+pub fn check_location_on_hold(
+    location_id: &str,
+    connection: &StorageConnection,
+) -> Result<bool, RepositoryError> {
+    let location = LocationRowRepository::new(connection)
+        .find_one_by_id(location_id)?
+        .ok_or(RepositoryError::NotFound)?;
+
+    Ok(location.on_hold)
 }

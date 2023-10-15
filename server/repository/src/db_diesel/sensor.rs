@@ -44,7 +44,7 @@ impl<'a> SensorRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<SensorFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = Self::create_filtered_query(filter);
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
@@ -58,7 +58,7 @@ impl<'a> SensorRepository<'a> {
         filter: Option<SensorFilter>,
         sort: Option<SensorSort>,
     ) -> Result<Vec<Sensor>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = Self::create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
                 SensorSortField::Id => {
@@ -82,27 +82,27 @@ impl<'a> SensorRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
-}
 
-type BoxedLogQuery = sensor::BoxedQuery<'static, DBType>;
+    pub fn create_filtered_query(filter: Option<SensorFilter>) -> BoxedSensorQuery {
+        let mut query = sensor::table.into_boxed();
 
-fn create_filtered_query(filter: Option<SensorFilter>) -> BoxedLogQuery {
-    let mut query = sensor::table.into_boxed();
+        if let Some(filter) = filter {
+            apply_equal_filter!(query, filter.id, sensor_dsl::id);
+            apply_equal_filter!(query, filter.name, sensor_dsl::name);
+            apply_equal_filter!(query, filter.serial, sensor_dsl::serial);
 
-    if let Some(filter) = filter {
-        apply_equal_filter!(query, filter.id, sensor_dsl::id);
-        apply_equal_filter!(query, filter.name, sensor_dsl::name);
-        apply_equal_filter!(query, filter.serial, sensor_dsl::serial);
+            if let Some(value) = filter.is_active {
+                query = query.filter(sensor_dsl::is_active.eq(value));
+            }
 
-        if let Some(value) = filter.is_active {
-            query = query.filter(sensor_dsl::is_active.eq(value));
+            apply_equal_filter!(query, filter.store_id, sensor_dsl::store_id);
         }
 
-        apply_equal_filter!(query, filter.store_id, sensor_dsl::store_id);
+        query
     }
-
-    query
 }
+
+type BoxedSensorQuery = sensor::BoxedQuery<'static, DBType>;
 
 pub fn to_domain(sensor_row: SensorRow) -> Sensor {
     Sensor { sensor_row }

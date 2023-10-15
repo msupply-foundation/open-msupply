@@ -17,7 +17,8 @@ const TEMPERATURE_LOG_1: (&'static str, &'static str) = (
         "temperature": 10.6,
         "store_ID": "store_a",
         "date": "2023-07-01",
-        "time": 47046
+        "time": 47046,
+        "temperature_breach_ID": ""
     }"#,
 );
 
@@ -31,11 +32,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             location_id: None,
             temperature: 10.6,
             sensor_id: "cf5812e0c33911eb9757779d39ae2dbd".to_string(),
-            timestamp: NaiveDate::from_ymd_opt(2023, 7, 1)
+            datetime: NaiveDate::from_ymd_opt(2023, 7, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap()
                 + Duration::seconds(47046),
+            temperature_breach_id: None,
         }),
     )]
 }
@@ -52,6 +54,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             location_id: None,
             date: NaiveDate::from_ymd_opt(2023, 7, 1).unwrap(),
             time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+            temperature_breach_id: None
         }),
     }]
 }
