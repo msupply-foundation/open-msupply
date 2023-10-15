@@ -62,8 +62,9 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       suffix={suffix}
       decimalSeparator={options.decimal}
       groupSeparator={options.separator}
-      decimalsLimit={2}
+      decimalsLimit={options.precision}
       allowDecimals={allowDecimals}
+      fixedDecimalLength={allowDecimals ? options.precision : undefined}
       {...restOfProps}
     />
   );
