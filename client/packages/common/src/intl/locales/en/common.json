@@ -363,6 +363,7 @@
   "messages.scanner-disconnected": "Not connected",
   "messages.fetching-report-data": "Fetching report data...",
   "message.copy-success": "Copied to clipboard successfully",
+  "message.coming-soon": "Coming soon...",
   "placeholder.filter-by-status": "Filter by status",
   "placeholder.filter-items": "Filter items",
   "placeholder.search-by-name": "Search by name",

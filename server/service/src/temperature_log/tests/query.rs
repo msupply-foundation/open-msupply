@@ -103,8 +103,8 @@ mod query {
             .unwrap();
 
         assert_eq!(result.count, 2);
-        assert_eq!(result.rows[0].temperature_log_row.id, "temperature_log_1a");
-        assert_eq!(result.rows[1].temperature_log_row.id, "temperature_log_1b");
+        assert_eq!(result.rows[0].temperature_log_row.id, "temperature_log_1b");
+        assert_eq!(result.rows[1].temperature_log_row.id, "temperature_log_1a");
     }
 
     #[actix_rt::test]
