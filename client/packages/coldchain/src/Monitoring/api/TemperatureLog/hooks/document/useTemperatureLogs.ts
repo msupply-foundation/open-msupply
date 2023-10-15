@@ -4,7 +4,7 @@ import { useQuery } from '@openmsupply-client/common';
 
 export const useTemperatureLogs = () => {
   const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'datetime', dir: 'asc' },
+    initialSort: { key: 'datetime', dir: 'desc' },
     filterKey: 'datetime',
   });
 
