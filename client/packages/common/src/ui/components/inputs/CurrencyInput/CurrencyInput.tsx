@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import { styled } from '@mui/material/styles';
 import RCInput, {
   CurrencyInputProps as RCInputProps,
@@ -34,7 +34,7 @@ const StyledCurrencyInput = styled(RCInput)(({ theme }) => ({
 export const CurrencyInput: FC<CurrencyInputProps> = ({
   allowNegativeValue = false,
   allowDecimals = true,
-  defaultValue = 0,
+  defaultValue,
   onChangeNumber,
   maxWidth,
   value,
@@ -43,7 +43,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   const { c, options, language } = useCurrency();
   const prefix = language !== 'fr' ? options.symbol : '';
   const suffix = language === 'fr' ? options.symbol : '';
-  const [rawValue, setRawValue] = useState(value);
+  const valueAsNumber = Number.isNaN(value) ? 0 : Number(value);
 
   return (
     <StyledCurrencyInput
@@ -54,20 +54,17 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
             ? theme.palette.background.toolbar
             : theme.palette.background.menu,
       }}
-      defaultValue={defaultValue}
-      onValueChange={newValue => {
-        onChangeNumber(c(newValue || '').value);
-        setRawValue(newValue);
-      }}
-      value={rawValue}
+      defaultValue={defaultValue ?? valueAsNumber}
+      onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
       onFocus={e => e.target.select()}
       allowNegativeValue={allowNegativeValue}
       prefix={prefix}
       suffix={suffix}
       decimalSeparator={options.decimal}
       groupSeparator={options.separator}
-      decimalsLimit={2}
+      decimalsLimit={options.precision}
       allowDecimals={allowDecimals}
+      fixedDecimalLength={allowDecimals ? options.precision : undefined}
       {...restOfProps}
     />
   );
