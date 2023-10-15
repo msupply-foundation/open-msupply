@@ -21,6 +21,7 @@ pub struct TemperatureLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub sensor_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub location_id: Option<EqualFilter<String>>,
     pub timestamp: Option<DatetimeFilter>,
 }
 
@@ -95,6 +96,7 @@ fn create_filtered_query(filter: Option<TemperatureLogFilter>) -> BoxedLogQuery 
         apply_equal_filter!(query, filter.id, temperature_log_dsl::id);
         apply_equal_filter!(query, filter.sensor_id, temperature_log_dsl::sensor_id);
         apply_equal_filter!(query, filter.store_id, temperature_log_dsl::store_id);
+        apply_equal_filter!(query, filter.location_id, temperature_log_dsl::location_id);
         apply_date_time_filter!(query, filter.timestamp, temperature_log_dsl::timestamp);
     }
 
@@ -113,6 +115,7 @@ impl TemperatureLogFilter {
             id: None,
             sensor_id: None,
             store_id: None,
+            location_id: None,
             timestamp: None,
         }
     }
@@ -129,6 +132,11 @@ impl TemperatureLogFilter {
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
         self.store_id = Some(filter);
+        self
+    }
+
+    pub fn location_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.location_id = Some(filter);
         self
     }
 

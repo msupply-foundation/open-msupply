@@ -24,6 +24,15 @@ pub use self::location::*;
 pub mod sensor;
 pub use self::sensor::*;
 
+pub mod temperature_breach;
+pub use self::temperature_breach::*;
+
+pub mod temperature_breach_config;
+pub use self::temperature_breach_config::*;
+
+pub mod temperature_log;
+pub use self::temperature_log::*;
+
 pub mod master_list;
 pub use self::master_list::*;
 

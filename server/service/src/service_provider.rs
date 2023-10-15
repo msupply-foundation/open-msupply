@@ -47,6 +47,11 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     system_user::create_system_user,
+    temperature_breach::{TemperatureBreachService, TemperatureBreachServiceTrait},
+    temperature_breach_config::{
+        TemperatureBreachConfigService, TemperatureBreachConfigServiceTrait,
+    },
+    temperature_log::{TemperatureLogService, TemperatureLogServiceTrait},
     ListError, ListResult,
 };
 use repository::{
@@ -60,6 +65,9 @@ pub struct ServiceProvider {
 
     pub location_service: Box<dyn LocationServiceTrait>,
     pub sensor_service: Box<dyn SensorServiceTrait>,
+    pub temperature_breach_service: Box<dyn TemperatureBreachServiceTrait>,
+    pub temperature_breach_config_service: Box<dyn TemperatureBreachConfigServiceTrait>,
+    pub temperature_log_service: Box<dyn TemperatureLogServiceTrait>,
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stocktake_service: Box<dyn StocktakeServiceTrait>,
@@ -143,6 +151,9 @@ impl ServiceProvider {
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
             sensor_service: Box::new(SensorService {}),
+            temperature_breach_service: Box::new(TemperatureBreachService {}),
+            temperature_breach_config_service: Box::new(TemperatureBreachConfigService {}),
+            temperature_log_service: Box::new(TemperatureLogService {}),
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),

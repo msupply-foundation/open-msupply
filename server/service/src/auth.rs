@@ -37,6 +37,14 @@ pub enum Resource {
     // sensor
     QuerySensor,
     MutateSensor,
+    // temperature log
+    QueryTemperatureLog,
+    // temperature breach
+    QueryTemperatureBreach,
+    MutateTemperatureBreach,
+    // temperature breach config
+    QueryTemperatureBreachConfig,
+    MutateTemperatureBreachConfig,
     // store
     QueryStore,
     // master list
@@ -137,6 +145,48 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::SensorMutate),
+        ]),
+    );
+
+    // temperature breach config (uses sensor permissions)
+    map.insert(
+        Resource::QueryTemperatureBreachConfig,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::SensorQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateTemperatureBreachConfig,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::SensorMutate),
+        ]),
+    );
+
+    // temperature breach (uses sensor permissions)
+    map.insert(
+        Resource::QueryTemperatureBreach,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::SensorQuery),
+        ]),
+    );
+
+    map.insert(
+        Resource::MutateTemperatureBreach,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::SensorMutate),
+        ]),
+    );
+
+    // temperature log (uses sensor permissions)
+    map.insert(
+        Resource::QueryTemperatureLog,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::SensorQuery),
         ]),
     );
 
