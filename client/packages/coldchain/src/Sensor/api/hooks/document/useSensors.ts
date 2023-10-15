@@ -1,6 +1,6 @@
 import { useUrlQueryParams } from '@common/hooks';
 import { useSensorApi } from '../utils/useSensorApi';
-import { useQuery } from 'packages/common/src';
+import { useQuery } from '@openmsupply-client/common';
 
 export const useSensors = () => {
   const { queryParams } = useUrlQueryParams({
