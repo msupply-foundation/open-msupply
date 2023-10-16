@@ -6,7 +6,7 @@ import {
   filterByNameAndCode,
 } from '../../utils';
 import { getPatientOptionRenderer } from '../PatientOptionRenderer';
-import { searchPatient } from '../utils';
+import { useSearchPatient } from '../utils';
 
 export const PatientSearchInput: FC<NameSearchInputProps> = ({
   onChange,
@@ -15,7 +15,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
   disabled = false,
 }) => {
   const PatientOptionRenderer = getPatientOptionRenderer();
-  const { isLoading, patients, search } = searchPatient();
+  const { isLoading, patients, search } = useSearchPatient();
 
   return (
     <Autocomplete

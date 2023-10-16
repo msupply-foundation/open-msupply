@@ -2,7 +2,7 @@ import React from 'react';
 import { PaperProps } from '@mui/material/Paper';
 
 export interface PaperPopoverProps {
-  Content: React.ReactElement<any, any>;
+  Content: React.ReactElement;
   paperProps?: PaperProps;
   width?: number;
   height?: number;

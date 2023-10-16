@@ -5,7 +5,8 @@
   "private": true,
   "main": "./src/index.ts",
   "scripts": {
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "eslint": "eslint ./src"
   },
   "peerDependencies": {
     "react": "^17.0.2"

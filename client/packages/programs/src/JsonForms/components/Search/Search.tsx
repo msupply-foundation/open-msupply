@@ -3,38 +3,40 @@ import { ControlProps, rankWith, uiTypeIs } from '@jsonforms/core';
 import { withJsonFormsControlProps } from '@jsonforms/react';
 import { z } from 'zod';
 import { useZodOptionsValidation } from '../../common/hooks/useZodOptionsValidation';
+import { Typography } from '@openmsupply-client/common';
 import { SearchWithUserSource } from './SearchWithUserSource';
 import { SearchWithDocumentSource } from './SearchWithDocumentSource';
-import { QueryValues } from './useSearchQueries';
 import { SearchWithPatientContactSource } from './SearchWithPatientContactSource';
 
+/**
+ * Specifies the search options when doing a user input type search
+ */
 const UserOptions = z.object({
   /**
    * Source of the search data -- user input or extract it from document
    */
   source: z.literal('user'),
   /**
-   * Which pre-defined query to use (in useSearchQueries)
-   */
-  query: z.enum(QueryValues),
-  /**
    * Pattern for formatting options list items (e.g. "${firstName} ${lastName}")
    */
   optionString: z.string().optional(),
-  /**
-   * Pattern for formatting selected result (as above)
-   */
-  displayString: z.string().optional(),
   /**
    * List of fields to save in document data (from selected item object)
    */
   saveFields: z.array(z.string()).optional(),
   /**
-   * Text to show in input field before user entry
+   * Child form elements
    */
-  placeholderText: z.string().optional(),
+  elements: z.array(z.any()),
+  /**
+   * List of fields to match against when searching Patients
+   */
+  searchFields: z.array(z.string()),
 });
 
+/**
+ * Specifies the search options when doing a search using a document source
+ */
 const DocumentOptions = z.object({
   source: z.literal('document'),
   /**
@@ -80,6 +82,8 @@ const UIComponent = (props: ControlProps) => {
     Options,
     props.uischema.options
   );
+
+  if (zErrors) return <Typography color="error">{zErrors}</Typography>;
 
   const childProps = { ...props, errors: props.errors ?? zErrors };
 

@@ -15,7 +15,7 @@ export const Toolbar: FC<{
 }> = ({ filter }) => {
   const t = useTranslation();
 
-  const onDelete = usePrescription.document.delete();
+  const onDelete = usePrescription.document.deleteRows();
 
   const key = 'otherPartyName' as keyof PrescriptionRowFragment;
   const filterString = (filter.filterBy?.[key]?.like as string) || '';

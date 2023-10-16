@@ -9,6 +9,7 @@ import {
   ProgramEnrolmentSortFieldInput,
   useAuthContext,
   InsertPatientInput,
+  ContactTraceSortFieldInput,
   UpdatePatientInput,
   BasicSpinner,
 } from '@openmsupply-client/common';
@@ -33,6 +34,7 @@ import {
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
+import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 
 import defaultPatientSchema from '../DefaultPatientSchema.json';
 import defaultPatientUISchema from '../DefaultPatientUISchema.json';
@@ -120,6 +122,10 @@ const PatientDetailView = ({
           lastName: createNewPatient.lastName,
           gender: createNewPatient.gender,
           dateOfBirth: createNewPatient.dateOfBirth,
+          phone: createNewPatient.phone,
+          address1: createNewPatient.address1,
+          isDeceased: createNewPatient.isDeceased,
+          dateOfDeath: createNewPatient.dateOfDeath,
         },
         isCreating: true,
       };
@@ -136,6 +142,10 @@ const PatientDetailView = ({
           lastName: currentPatient.lastName ?? undefined,
           gender: currentPatient.gender ?? undefined,
           dateOfBirth: currentPatient.dateOfBirth ?? undefined,
+          dateOfDeath: currentPatient.dateOfDeath ?? undefined,
+          isDeceased: currentPatient.isDeceased ?? undefined,
+          phone: currentPatient.phone ?? undefined,
+          address1: currentPatient.address1 ?? undefined,
         },
         isCreating: false,
       };
@@ -217,6 +227,13 @@ const PatientDetailView = ({
   );
 };
 
+export enum PatientTabValue {
+  Details = 'Details',
+  Programs = 'Programs',
+  Encounters = 'Encounters',
+  ContactTracing = 'Contact Tracing',
+}
+
 /**
  * Main patient view containing patient details and program tabs
  */
@@ -232,7 +249,7 @@ export const PatientView = () => {
   const { store } = useAuthContext();
 
   const requiresConfirmation = (tab: string) => {
-    return tab === 'Details' && isDirtyPatient;
+    return tab === PatientTabValue.Details && isDirtyPatient;
   };
 
   useEffect(() => {
@@ -243,12 +260,12 @@ export const PatientView = () => {
   const tabs = [
     {
       Component: <PatientDetailView onEdit={setIsDirtyPatient} />,
-      value: 'Details',
+      value: PatientTabValue.Details,
       confirmOnLeaving: isDirtyPatient,
     },
     {
       Component: <ProgramListView />,
-      value: 'Programs',
+      value: PatientTabValue.Programs,
       sort: {
         key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
         dir: 'desc' as 'desc' | 'asc',
@@ -256,9 +273,17 @@ export const PatientView = () => {
     },
     {
       Component: <EncounterListView />,
-      value: 'Encounters',
+      value: PatientTabValue.Encounters,
       sort: {
         key: EncounterSortFieldInput.StartDatetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
+    },
+    {
+      Component: <ContactTraceListView />,
+      value: PatientTabValue.ContactTracing,
+      sort: {
+        key: ContactTraceSortFieldInput.Datetime,
         dir: 'desc' as 'desc' | 'asc',
       },
     },
@@ -287,12 +312,15 @@ export const PatientView = () => {
             setCreationModal(
               PatientModal.Program,
               documentRegistry.documentType,
-              createDocument,
-              documentRegistry.documentType
+              createDocument
             );
           }}
         />
       ) : null}
+      {current === PatientModal.ContactTraceSearch ? (
+        <CreateContactTraceModal />
+      ) : null}
+
       <AppBarButtons disabled={!!createNewPatient} store={store} />
       <PatientSummary />
       {/* Only show tabs if program module is on and patient is saved.

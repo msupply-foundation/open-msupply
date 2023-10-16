@@ -88,7 +88,8 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
   const drawer = useDrawer();
 
   const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
-  const isSelectedParentItem = inactive && !!useMatch({ path: `${to}/*` });
+  const match = useMatch({ path: `${to}/*` });
+  const isSelectedParentItem = inactive && !!match;
   const showMenuSectionIcon = inactive && drawer.isOpen;
   const handleClick = () => {
     // reset the clicked nav path when navigating

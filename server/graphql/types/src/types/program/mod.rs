@@ -1,3 +1,4 @@
+pub mod contact_trace;
 pub mod document;
 pub mod document_registry;
 pub mod encounter;

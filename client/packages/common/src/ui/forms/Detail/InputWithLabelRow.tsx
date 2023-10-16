@@ -38,7 +38,14 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   const justify = `flex-${inputAlignment}`;
 
   return (
-    <Box display="flex" alignItems="center" gap={1} sx={{ ...sx }}>
+    <Box
+      display="flex"
+      // This class allows JSONForms to target the layout styling :)
+      className="input-with-label-row"
+      alignItems="center"
+      gap={1}
+      sx={{ ...sx }}
+    >
       <Box style={{ textAlign: 'end' }} flexBasis={labelFlexBasis}>
         <FormLabel sx={{ fontWeight: 'bold', ...labelSx }} {...labelPropsRest}>
           {labelWithPunctuation(label)}
@@ -51,8 +58,10 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   );
 };
 
-// Adds a final ":" to the label, but not if it already ends in "?" or ":"
+// Adds a final ":" to the label, but not if it already ends in "?" or ":", or
+// if there is no label value
 export const labelWithPunctuation = (labelString: string) => {
   if (/[\?:]$/.test(labelString)) return labelString;
+  if (labelString === '') return '';
   else return labelString + ':';
 };

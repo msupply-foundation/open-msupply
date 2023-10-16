@@ -44,6 +44,14 @@
         "lastName": {
           "description": "Patient Surname",
           "type": "string"
+        },
+        "address1": {
+          "description": "Address",
+          "type": "string"
+        },
+        "phone": {
+          "description": "Phone number",
+          "type": "string"
         }
       },
       "required": ["id", "code"],

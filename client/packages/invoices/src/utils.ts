@@ -156,7 +156,7 @@ export const isInboundListItemDisabled = (
 export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
 
-export const useIsInboundStatusChangeDisabled = (
+export const isInboundStatusChangeDisabled = (
   inbound: InboundFragment
 ): boolean => {
   if (inbound.onHold) return true;
@@ -195,6 +195,12 @@ export const inboundLinesToSummaryItems = (
 export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;
+
+export const canDeletePrescription = (
+  invoice: PrescriptionRowFragment
+): boolean =>
+  invoice.status === InvoiceNodeStatus.New ||
+  invoice.status === InvoiceNodeStatus.Picked;
 
 export const isA = {
   stockOutLine: (line: { type: InvoiceLineNodeType }) =>

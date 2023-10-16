@@ -6,6 +6,8 @@ fragment PatientRow on PatientNode {
   lastName
   name
   dateOfBirth
+  address1
+  phone
   gender
   email
   document {
@@ -15,30 +17,30 @@ fragment PatientRow on PatientNode {
     type
   }
   isDeceased
+  dateOfDeath
   programEnrolments {
-    programEnrolmentId
-    document {
-      documentRegistry {
-        name
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        programEnrolmentId
+        document {
+          documentRegistry {
+            name
+          }
+        }
       }
+      totalCount
     }
   }
 }
 
 query patients(
   $storeId: String!
-  $key: PatientSortFieldInput!
-  $desc: Boolean
-  $first: Int
-  $offset: Int
+  $page: PaginationInput
+  $sort: PatientSortInput
   $filter: PatientFilterInput
 ) {
-  patients(
-    storeId: $storeId
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
+  patients(storeId: $storeId, page: $page, sort: $sort, filter: $filter) {
     ... on PatientConnector {
       __typename
       nodes {

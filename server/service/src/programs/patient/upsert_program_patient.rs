@@ -295,7 +295,7 @@ pub mod test {
 
         let service = &service_provider.patient_service;
         let err = service
-            .upsert_patient(
+            .upsert_program_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
@@ -321,7 +321,7 @@ pub mod test {
             .pop()
             .is_none());
         service
-            .upsert_patient(
+            .upsert_program_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
@@ -344,7 +344,7 @@ pub mod test {
 
         assert_eq!(
             service
-                .upsert_patient(
+                .upsert_program_patient(
                     &ctx,
                     &service_provider,
                     "store_a",
@@ -362,7 +362,7 @@ pub mod test {
 
         assert_eq!(
             service
-                .upsert_patient(
+                .upsert_program_patient(
                     &ctx,
                     &service_provider,
                     "store_a",
@@ -392,7 +392,7 @@ pub mod test {
             .pop()
             .unwrap();
         service
-            .upsert_patient(
+            .upsert_program_patient(
                 &ctx,
                 &service_provider,
                 "store_a",
