@@ -35,11 +35,56 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               placeholder: t('placeholder.search-by-last-name'),
             },
             {
+              type: 'group',
+              name: 'Full name',
+              elements: [
+                {
+                  type: 'text',
+                  name: t('label.first-name'),
+                  urlParameter: 'firstName',
+                  placeholder: t('placeholder.search-by-first-name'),
+                },
+                {
+                  type: 'text',
+                  name: t('label.last-name'),
+                  urlParameter: 'lastName',
+                  placeholder: t('placeholder.search-by-last-name'),
+                },
+              ],
+            },
+            {
               type: 'text',
               name: t('label.patient-id'),
               urlParameter: 'identifier',
               placeholder: t('placeholder.search-by-identifier'),
             },
+            // {
+            //   type: 'date',
+            //   name: 'Date',
+            //   urlParameter: 'dateSingle',
+            //   // placeholder: t('placeholder.search-by-identifier'),
+            // },
+            // {
+            //   type: 'group',
+            //   name: 'Date Range',
+            //   items: [
+            //     {
+            //       type: 'date',
+            //       name: 'From date',
+            //       urlParameter: 'dateRange',
+            //     },
+            //     {
+            //       type: 'date',
+            //       name: 'To date',
+            //       urlParameter: 'dateRange',
+            //     },
+            //   ],
+            // },
+            // {
+            //   type: 'dateRange',
+            //   name: 'Date Range',
+            //   urlParameter: 'dateRangeAlt',
+            // },
             // {
             //   type: 'enum',
             //   name: t('label.gender'),

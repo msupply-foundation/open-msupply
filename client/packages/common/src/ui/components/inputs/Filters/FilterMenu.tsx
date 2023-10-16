@@ -13,16 +13,24 @@ import {
 import { useTranslation } from '@common/intl';
 import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
+// import { DateFilterDefinition, DateFilter } from './DateFilter';
 
 export interface FilterDefinitionCommon {
   name: string;
   urlParameter: string;
 }
 
+interface GroupFilterDefinition {
+  type: 'group';
+  name: string;
+  elements: FilterDefinition[];
+}
+
 type FilterDefinition = TextFilterDefinition | EnumFilterDefinition;
+// | DateFilterDefinition;
 
 interface FilterDefinitions {
-  filters: FilterDefinition[];
+  filters: (FilterDefinition | GroupFilterDefinition)[];
 }
 
 // CONSTANTS
@@ -33,12 +41,16 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const [activeFilters, setActiveFilters] = useState<FilterDefinition[]>(
-    filters.filter(fil => Object.keys(urlQuery).includes(fil.urlParameter))
+    flattenFilterDefinitions(filters).filter(fil =>
+      Object.keys(urlQuery).includes(fil.urlParameter)
+    )
   );
 
   const filterOptions = getFilterOptions(filters, activeFilters);
 
-  const handleSelect = (selected: string) => {
+  const handleSelect = (
+    selected: FilterDefinition | GroupFilterDefinition | typeof RESET_KEYWORD
+  ) => {
     if (selected === RESET_KEYWORD) {
       const queryPatch = Object.fromEntries(
         activeFilters.map(({ urlParameter }) => [urlParameter, ''])
@@ -47,9 +59,18 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
       setActiveFilters([]);
       return;
     }
-    const selectedFilter = filters.find(fil => fil.urlParameter === selected);
-    if (selectedFilter)
-      setActiveFilters(current => [...current, selectedFilter]);
+    if (selected.type === 'group') {
+      const newFilters = selected.elements.filter(
+        f =>
+          activeFilters.findIndex(
+            fil => fil.urlParameter === f.urlParameter
+          ) === -1
+      );
+      setActiveFilters(current => [...current, ...newFilters]);
+      return;
+    }
+
+    setActiveFilters(current => [...current, selected]);
   };
 
   const removeFilter = (filterDefinition: FilterDefinition) => {
@@ -71,7 +92,11 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
       <DropdownMenu label={t('label.filters')}>
         {filterOptions.map(option => (
           <FilterMenuItem
-            key={option.value}
+            key={
+              option.value.type === 'group'
+                ? option.value.name
+                : option.value.urlParameter
+            }
             onClick={() => handleSelect(option.value)}
             label={option.label}
           />
@@ -99,14 +124,34 @@ const FilterMenuItem: FC<{ onClick: () => void; label: string }> = ({
 );
 
 const getFilterOptions = (
-  filters: FilterDefinition[],
+  filters: (FilterDefinition | GroupFilterDefinition)[],
   activeFilters: FilterDefinition[]
 ) => {
   const activeFilterCodes = activeFilters.map(fil => fil.urlParameter);
 
   return filters
-    .filter(fil => !activeFilterCodes.includes(fil.urlParameter))
-    .map(fil => ({ label: fil.name, value: fil.urlParameter }));
+    .filter(fil =>
+      fil.type === 'group'
+        ? !fil.elements.every(flatFil =>
+            activeFilterCodes.includes(flatFil.urlParameter)
+          )
+        : !activeFilterCodes.includes(fil.urlParameter)
+    )
+    .map(fil => ({
+      label: fil.name,
+      value: fil,
+    }));
+};
+
+const flattenFilterDefinitions = (
+  filters: (FilterDefinition | GroupFilterDefinition)[]
+) => {
+  const flattened: FilterDefinition[] = [];
+  filters.forEach(fil => {
+    if ('urlParameter' in fil) flattened.push(fil);
+    else flattened.push(...fil.elements);
+  });
+  return flattened;
 };
 
 const getFilterComponent = (
@@ -130,6 +175,17 @@ const getFilterComponent = (
           remove={() => removeFilter(filter)}
         />
       );
+    // case 'date':
+    //   return (
+    //     <DateFilter
+    //       key={filter.urlParameter}
+    //       filterDefinition={filter}
+    //       remove={() => removeFilter(filter)}
+    //     />
+    //   );
+    // case 'group':
+    //   const { elements } = filter;
+    //   return elements.map(fil => getFilterComponent(fil, removeFilter));
     default:
       return null;
   }
