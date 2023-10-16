@@ -7,7 +7,10 @@ mod test {
     };
     use util::{inline_edit, inline_init};
 
-    use crate::{service_provider::ServiceProvider, stock_line::UpdateStockLine};
+    use crate::{
+        service_provider::ServiceProvider,
+        stock_line::{LocationUpdate, UpdateStockLine},
+    };
 
     type ServiceError = crate::stock_line::UpdateStockLineError;
 
@@ -39,7 +42,9 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateStockLine| {
                     r.id = mock_stock_line_a().id;
-                    r.location_id = Some("invalid".to_string());
+                    r.location = Some(LocationUpdate {
+                        location_id: Some("invalid".to_string()),
+                    });
                 })
             ),
             Err(ServiceError::LocationDoesNotExist)
@@ -52,7 +57,9 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateStockLine| {
                     r.id = mock_stock_line_a().id;
-                    r.location_id = Some("location_1".to_string());
+                    r.location = Some(LocationUpdate {
+                        location_id: Some("invalid".to_string()),
+                    });
                 })
             ),
             Err(ServiceError::StockDoesNotBelongToStore)
@@ -76,7 +83,9 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateStockLine| {
                     r.id = mock_stock_line_a().id;
-                    r.location_id = Some("location_1".to_string());
+                    r.location = Some(LocationUpdate {
+                        location_id: Some("invalid".to_string()),
+                    });
                 }),
             )
             .unwrap();
