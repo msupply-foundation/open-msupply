@@ -4878,6 +4878,7 @@ export type TemperatureBreachNode = {
   sensor?: Maybe<SensorNode>;
   sensorId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
+  temperatureLog?: Maybe<TemperatureLogNode>;
   type: TemperatureBreachNodeType;
 };
 

@@ -13,6 +13,7 @@ import {
   createTableStore,
   useColumns,
 } from '@openmsupply-client/common';
+import { BreachTypeCell } from '../../../common';
 
 const ListView: FC = () => {
   const { data, isLoading, isError } = useTemperatureLog.document.list();
@@ -56,17 +57,14 @@ const ListView: FC = () => {
         key: 'temperature',
         label: 'label.temperature',
         accessor: ({ rowData }) => {
-          return `${rowData.temperature}${t('cold-chain.temperature-unit')}`;
+          return `${rowData.temperature}${t('label.temperature-unit')}`;
         },
       },
       {
         key: 'breach',
-        label: 'label.breach',
-        accessor: ({ rowData }) => {
-          return rowData?.temperatureBreach?.type
-            ? t(Formatter.breachTypeTranslation(rowData.temperatureBreach.type))
-            : null;
-        },
+        label: 'label.type',
+        accessor: ({ rowData }) => rowData?.temperatureBreach?.type,
+        Cell: BreachTypeCell,
         sortable: false,
       },
     ],
@@ -76,7 +74,7 @@ const ListView: FC = () => {
 
   return (
     <DataTable
-      id="sensor-list"
+      id="temperature-log-list"
       pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
       onChangePage={updatePaginationQuery}
       columns={columns}
