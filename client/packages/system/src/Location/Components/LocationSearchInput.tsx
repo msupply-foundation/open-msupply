@@ -35,7 +35,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
 
   const unassignOption: LocationNode = {
     __typename: 'LocationNode',
-    id: 'None',
+    id: 'null',
     name: t('label.remove'),
     onHold: false,
     code: 'No location',
