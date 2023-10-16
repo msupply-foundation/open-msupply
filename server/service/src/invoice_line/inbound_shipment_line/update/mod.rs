@@ -1,5 +1,5 @@
 use crate::{
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
+    invoice_line::{query::get_invoice_line, LocationUpdate, ShipmentTaxUpdate},
     service_provider::ServiceContext,
     WithDBError,
 };
@@ -19,7 +19,7 @@ use validate::validate;
 pub struct UpdateInboundShipmentLine {
     pub id: String,
     pub item_id: Option<String>,
-    pub location_id: Option<String>,
+    pub location: Option<LocationUpdate>,
     pub pack_size: Option<u32>,
     pub batch: Option<String>,
     pub cost_price_per_pack: Option<f64>,
@@ -118,8 +118,11 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice_line::inbound_shipment_line::{
-            update::UpdateInboundShipmentLine, UpdateInboundShipmentLineError as ServiceError,
+        invoice_line::{
+            inbound_shipment_line::{
+                update::UpdateInboundShipmentLine, UpdateInboundShipmentLineError as ServiceError,
+            },
+            LocationUpdate,
         },
         service_provider::ServiceProvider,
     };
@@ -155,7 +158,9 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
-                    r.location_id = Some("invalid".to_string());
+                    r.location = Some(LocationUpdate {
+                        location_id: Some("invalid".to_string()),
+                    });
                 }),
             ),
             Err(ServiceError::LocationDoesNotExist)
