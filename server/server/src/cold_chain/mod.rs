@@ -3,9 +3,7 @@ use actix_web::{
     HttpRequest, Result,
 };
 use service::{
-    auth::{
-        validate_auth, AuthDeniedKind, AuthError, Resource, ResourceAccessRequest, ValidatedUser,
-    },
+    auth::{validate_auth, AuthDeniedKind, AuthError, Resource, ResourceAccessRequest},
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
     user_account::UserAccountService,
@@ -14,21 +12,21 @@ use service::{
 mod login;
 mod sensor;
 use login::login;
-use sensor::sensor;
+use sensor::sensors;
 
 const URL_PATH: &str = "/coldchain/v1";
 const COOKIE_NAME: &str = "coldchain";
 
 pub fn config_cold_chain(cfg: &mut web::ServiceConfig) {
     cfg.route(&format!("{}/login", URL_PATH), web::post().to(login));
-    cfg.route(&format!("{}/sensor", URL_PATH), web::put().to(sensor));
+    cfg.route(&format!("{}/sensor", URL_PATH), web::put().to(sensors));
 }
 
 fn validate_request(
     request: HttpRequest,
     service_provider: &ServiceProvider,
     auth_data: &AuthData,
-) -> Result<ValidatedUser, AuthError> {
+) -> Result<(String, Option<String>), AuthError> {
     let service_context = service_provider
         .basic_context()
         .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
@@ -46,7 +44,7 @@ pub fn validate_access(
     service_context: &ServiceContext,
     auth_data: &AuthData,
     token: Option<String>,
-) -> Result<ValidatedUser, AuthError> {
+) -> Result<(String, Option<String>), AuthError> {
     let user_service = UserAccountService::new(&service_context.connection);
     let validated_user = validate_auth(auth_data, &token)?;
     let store_id = match user_service.find_user(&validated_user.user_id)? {
@@ -66,13 +64,14 @@ pub fn validate_access(
 
     let access_request = ResourceAccessRequest {
         resource: Resource::ColdChainApi,
-        store_id,
+        store_id: store_id.clone(),
     };
 
-    service_provider.validation_service.validate(
+    let validated_user = service_provider.validation_service.validate(
         service_context,
         auth_data,
         &token,
         &access_request,
-    )
+    )?;
+    Ok((validated_user.user_id, store_id))
 }

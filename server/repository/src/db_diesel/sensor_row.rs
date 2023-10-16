@@ -33,7 +33,7 @@ table! {
 joinable!(sensor -> store (store_id));
 joinable!(sensor -> location (location_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(serde::Serialize, Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "sensor"]
 pub struct SensorRow {

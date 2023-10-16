@@ -11,7 +11,7 @@ use crate::{
 
 use crate::{EqualFilter, Pagination, Sort};
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(serde::Serialize, PartialEq, Debug, Clone)]
 pub struct Sensor {
     pub sensor_row: SensorRow,
 }
