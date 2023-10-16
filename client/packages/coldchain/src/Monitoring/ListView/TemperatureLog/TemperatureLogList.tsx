@@ -62,7 +62,8 @@ const ListView: FC = () => {
       },
       {
         key: 'breach',
-        label: 'label.type',
+        label: 'label.breach-type',
+        description: 'description.breach-type',
         accessor: ({ rowData }) => rowData?.temperatureBreach?.type,
         Cell: BreachTypeCell,
         sortable: false,
