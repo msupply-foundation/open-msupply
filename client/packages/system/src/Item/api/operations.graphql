@@ -22,6 +22,7 @@ fragment StockLine on StockLineNode {
   item {
     name
     code
+    unitName
   }
   note
   onHold

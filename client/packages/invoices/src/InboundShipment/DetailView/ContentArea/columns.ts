@@ -11,7 +11,11 @@ import {
   ColumnAlign,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
-import { LocationRowFragment } from '@openmsupply-client/system';
+import {
+  LocationRowFragment,
+  PackUnitCell,
+  useInitUnitStore,
+} from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
@@ -27,6 +31,8 @@ export const useInboundShipmentColumns = () => {
   const { c } = useCurrency();
   const getSellPrice = (row: InboundLineFragment) =>
     isInboundPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
@@ -93,28 +99,6 @@ export const useInboundShipmentColumns = () => {
               return ArrayUtils.ifTheSameElseDefault(items, 'name', '');
             } else {
               return rowData.item.name;
-            }
-          },
-        },
-      ],
-      [
-        'itemUnit',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              return row.lines[0]?.item.unitName ?? '';
-            } else {
-              return row.item.unitName ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const items = rowData.lines.map(({ item }) => item);
-              return (
-                ArrayUtils.ifTheSameElseDefault(items, 'unitName', '') ?? ''
-              );
-            } else {
-              return rowData.item.unitName ?? '';
             }
           },
         },
@@ -207,55 +191,6 @@ export const useInboundShipmentColumns = () => {
           },
         },
       ],
-      {
-        label: 'label.sell',
-        key: 'sellPricePerPack',
-        align: ColumnAlign.Right,
-        width: 120,
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(
-              lines.map(line => ({ sell: getSellPrice(line) })),
-              'sell',
-              ''
-            );
-          } else {
-            return getSellPrice(rowData);
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return c(
-              ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
-            ).format();
-          } else {
-            return getSellPrice(rowData);
-          }
-        },
-      },
-      [
-        'packSize',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return rowData.packSize ?? '';
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return rowData.packSize ?? '';
-            }
-          },
-        },
-      ],
       [
         'unitQuantity',
         {
@@ -299,6 +234,53 @@ export const useInboundShipmentColumns = () => {
           },
         },
       ],
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackUnitCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
+          },
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row?.packSize ?? 1];
+          },
+          getUnitName: row => {
+            if ('lines' in row) return null;
+            else return row?.item?.unitName ?? null;
+          },
+        }),
+      },
+      {
+        label: 'label.sell',
+        key: 'sellPricePerPack',
+        align: ColumnAlign.Right,
+        width: 120,
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.ifTheSameElseDefault(
+              lines.map(line => ({ sell: getSellPrice(line) })),
+              'sell',
+              ''
+            );
+          } else {
+            return getSellPrice(rowData);
+          }
+        },
+        getSortValue: rowData => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return c(
+              ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
+            ).format();
+          } else {
+            return getSellPrice(rowData);
+          }
+        },
+      },
       getRowExpandColumn(),
       GenericColumnKey.Selection,
     ],
@@ -314,7 +296,18 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
     'batch',
     'expiryDate',
     'locationName',
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: PackUnitCell({
+        getItemId: row => row?.item.id,
+        getPackSizes: row => {
+          return [row?.packSize ?? 1];
+        },
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
+    },
     'numberOfPacks',
-    'packSize',
     'costPricePerPack',
   ]);

@@ -12,10 +12,9 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
-import { useOutboundColumns } from './columns';
+import { useExpansionColumns, useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
-import { useExpansionColumns } from './OutboundLineEdit/columns';
 
 interface ContentAreaProps {
   onAddItem: () => void;

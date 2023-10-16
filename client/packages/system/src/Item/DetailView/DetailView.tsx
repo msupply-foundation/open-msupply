@@ -14,12 +14,19 @@ import { Toolbar } from './Toolbar';
 import { GeneralTab } from './Tabs/General';
 import { MasterListsTab } from './Tabs/MasterLists';
 import { AppRoute } from '@openmsupply-client/config';
+import { useInitUnitStore, useUnitVariant } from '../context';
 
 export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { setSuffix } = useBreadcrumbs();
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
+  const { variantsControl, numberOfPacksFromQuantity } = useUnitVariant(
+    data?.id ?? '',
+    data?.name ?? null
+  );
 
   React.useEffect(() => {
     setSuffix(data?.name ?? '');
@@ -29,7 +36,7 @@ export const ItemDetailView: FC = () => {
 
   const tabs = [
     {
-      Component: <GeneralTab />,
+      Component: <GeneralTab variantControl={variantsControl} />,
       value: 'General',
     },
     {
@@ -40,7 +47,7 @@ export const ItemDetailView: FC = () => {
 
   return !!data ? (
     <Box style={{ width: '100%' }}>
-      <Toolbar />
+      <Toolbar numberOfPacksFromQuantity={numberOfPacksFromQuantity} />
       <DetailTabs tabs={tabs} />
     </Box>
   ) : (

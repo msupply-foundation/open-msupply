@@ -10,7 +10,11 @@ import {
   PositiveNumberCell,
   getLinesFromRow,
 } from '@openmsupply-client/common';
-import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
+import {
+  InventoryAdjustmentReasonRowFragment,
+  PackUnitCell,
+  useInitUnitStore,
+} from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
@@ -53,6 +57,8 @@ export const useStocktakeColumns = ({
   StocktakeLineFragment | StocktakeSummaryItem
 >[] => {
   const { getError } = useStocktakeLineErrorContext();
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
 
   return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [
@@ -75,17 +81,6 @@ export const useStocktakeColumns = ({
           },
           accessor: ({ rowData }) => {
             return rowData.item?.name ?? '';
-          },
-        },
-      ],
-      [
-        'itemUnit',
-        {
-          getSortValue: row => {
-            return row.item?.unitName ?? '';
-          },
-          accessor: ({ rowData }) => {
-            return rowData.item?.unitName ?? '';
           },
         },
       ],
@@ -151,37 +146,6 @@ export const useStocktakeColumns = ({
           },
         },
       ],
-      [
-        'packSize',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(
-                  lines,
-                  'packSize',
-                  '[multiple]'
-                ) ?? ''
-              );
-            } else {
-              return row.packSize ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'packSize',
-                '[multiple]'
-              );
-            } else {
-              return rowData.packSize;
-            }
-          },
-        },
-      ],
       {
         key: 'snapshotNumPacks',
         label: 'label.snapshot-num-of-packs',
@@ -218,6 +182,19 @@ export const useStocktakeColumns = ({
             return rowData.snapshotNumberOfPacks;
           }
         },
+      },
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackUnitCell({
+          getItemId: row => row?.item?.id ?? '',
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row.packSize ?? 1];
+          },
+          getUnitName: row => row?.item?.unitName ?? null,
+        }),
       },
       {
         key: 'countedNumPacks',
@@ -345,7 +322,18 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
   return useColumns([
     'batch',
     'expiryDate',
-    'packSize',
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: PackUnitCell({
+        getItemId: row => row?.itemId,
+        getPackSizes: row => {
+          return [row?.packSize ?? 1];
+        },
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
+    },
     {
       key: 'snapshotNumPacks',
       width: 150,

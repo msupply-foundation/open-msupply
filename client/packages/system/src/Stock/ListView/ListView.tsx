@@ -18,8 +18,7 @@ import {
 import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
-import { getPackUnitCell } from '../../Item/Components/ItemVariant';
-import { useInitUnitStore } from '../../Item';
+import { PackUnitCell, useInitUnitStore } from '@openmsupply-client/system';
 
 const StockListComponent: FC = () => {
   const {
@@ -87,9 +86,9 @@ const StockListComponent: FC = () => {
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: getPackUnitCell({
+        Cell: PackUnitCell({
           getItemId: r => r.itemId,
-          getPackSize: r => r.packSize,
+          getPackSizes: r => [r.packSize],
           getUnitName: r => r.item.unitName || null,
         }),
       },
