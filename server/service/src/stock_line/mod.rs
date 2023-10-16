@@ -43,3 +43,9 @@ impl StockLineServiceTrait for StockLineService {}
 
 #[cfg(test)]
 mod tests;
+
+#[derive(Clone, Debug, PartialEq)]
+
+pub struct LocationUpdate {
+    pub location_id: Option<String>,
+}

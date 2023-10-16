@@ -1,6 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
+    generic_inputs::LocationInput,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -9,14 +10,16 @@ use graphql_types::types::StockLineNode;
 use repository::StockLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    stock_line::{UpdateStockLine as ServiceInput, UpdateStockLineError as ServiceError},
+    stock_line::{
+        LocationUpdate, UpdateStockLine as ServiceInput, UpdateStockLineError as ServiceError,
+    },
 };
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateStockLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub location_id: Option<String>,
+    pub location: Option<LocationInput>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
@@ -82,7 +85,7 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
-            location_id,
+            location,
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
@@ -93,7 +96,11 @@ impl UpdateInput {
 
         ServiceInput {
             id,
-            location_id,
+            location: location.and_then(|location| {
+                Some(LocationUpdate {
+                    location_id: location.location_id,
+                })
+            }),
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
@@ -142,7 +149,7 @@ mod test {
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
         stock_line::{
-            StockLineServiceTrait, UpdateStockLine as ServiceInput,
+            LocationUpdate, StockLineServiceTrait, UpdateStockLine as ServiceInput,
             UpdateStockLineError as ServiceError,
         },
     };
@@ -259,7 +266,9 @@ mod test {
                 input,
                 ServiceInput {
                     id: mock_stock_line_a().id,
-                    location_id: Some("some location".to_string()),
+                    location: Some(LocationUpdate {
+                        location_id: Some("some location".to_string()),
+                    }),
                     cost_price_per_pack: None,
                     sell_price_per_pack: None,
                     expiry_date: None,

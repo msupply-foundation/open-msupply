@@ -16,12 +16,12 @@ use crate::{
     SingleRecordError,
 };
 
-use super::query::get_stock_line;
+use super::{query::get_stock_line, LocationUpdate};
 
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct UpdateStockLine {
     pub id: String,
-    pub location_id: Option<String>,
+    pub location: Option<LocationUpdate>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
@@ -90,9 +90,13 @@ fn validate(
             CommonStockLineError::DatabaseError(error) => DatabaseError(error),
         })?;
 
-    if let Some(location_id) = input.location_id.clone() {
-        if !check_location_exists(connection, &location_id)? {
-            return Err(LocationDoesNotExist);
+    if let Some(location) = &input.location {
+        // First checks if location has been included in the update
+        if let Some(location_id) = &location.location_id {
+            // only check if location exists
+            if !check_location_exists(connection, &location_id)? {
+                return Err(LocationDoesNotExist);
+            }
         }
     }
 
@@ -105,7 +109,7 @@ fn generate(
     mut existing: StockLineRow,
     UpdateStockLine {
         id: _,
-        location_id,
+        location,
         cost_price_per_pack,
         sell_price_per_pack,
         expiry_date,
@@ -121,15 +125,20 @@ fn generate(
     ),
     UpdateStockLineError,
 > {
-    let location_movements = if location_id != existing.location_id {
-        Some(generate_location_movement(
-            store_id,
-            connection,
-            existing.clone(),
-            location_id.clone(),
-        )?)
-    } else {
-        None
+    let location_movements = match location.clone() {
+        Some(location) => {
+            if location.location_id != existing.location_id {
+                Some(generate_location_movement(
+                    store_id,
+                    connection,
+                    existing.clone(),
+                    location.location_id.clone(),
+                )?)
+            } else {
+                None
+            }
+        }
+        _ => None,
     };
 
     let barcode_row = match &barcode {
@@ -153,8 +162,11 @@ fn generate(
         None => existing.barcode_id,
         Some(_) => barcode_row.as_ref().map(|b| b.id.clone()),
     };
-
-    existing.location_id = location_id.or(existing.location_id);
+    if let Some(location) = location {
+        existing.location_id = location.location_id
+    } else {
+        existing.location_id = existing.location_id
+    };
     existing.batch = batch.or(existing.batch);
     existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
     existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
