@@ -111,4 +111,11 @@ impl<'a> StockLineRowRepository<'a> {
             .optional()?;
         Ok(result)
     }
+
+    pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
+        stock_line_dsl::stock_line
+            .filter(stock_line_dsl::store_id.eq(store_id))
+            .load::<StockLineRow>(&self.connection.connection)
+            .map_err(RepositoryError::from)
+    }
 }

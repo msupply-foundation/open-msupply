@@ -42,8 +42,8 @@ pub mod log;
 pub use self::log::*;
 pub mod last_successful_user_sync;
 pub use self::last_successful_user_sync::*;
-pub mod item_variant;
-pub use self::item_variant::*;
+pub mod pack_unit;
+pub use self::pack_unit::*;
 
 #[cfg(test)]
 mod tests;

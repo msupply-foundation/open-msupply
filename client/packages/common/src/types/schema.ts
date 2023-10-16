@@ -2096,6 +2096,13 @@ export enum ItemNodeType {
   Stock = 'STOCK'
 }
 
+export type ItemPackUnitNode = {
+  __typename: 'ItemPackUnitNode';
+  itemId: Scalars['String']['output'];
+  mostUsedPackUnitId: Scalars['String']['output'];
+  packUnits: Array<UnitNode>;
+};
+
 export enum ItemSortFieldInput {
   Code = 'code',
   Name = 'name',
@@ -3072,6 +3079,12 @@ export type OutboundInvoiceCounts = {
   notShipped: Scalars['Int']['output'];
 };
 
+export type PackUnitConnector = {
+  __typename: 'PackUnitConnector';
+  nodes: Array<ItemPackUnitNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 /**
  * Pagination input.
  *
@@ -3408,7 +3421,6 @@ export type Queries = {
   invoiceCounts: InvoiceCounts;
   invoices: InvoicesResponse;
   itemCounts: ItemCounts;
-  itemVariantsList: Array<UnitVariantNode>;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
   lastSuccessfulUserSync: UpdateUserNode;
@@ -3425,6 +3437,7 @@ export type Queries = {
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
+  packUnits: PackUnitConnector;
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
@@ -3612,11 +3625,6 @@ export type QueriesItemCountsArgs = {
 };
 
 
-export type QueriesItemVariantsListArgs = {
-  storeId: Scalars['String']['input'];
-};
-
-
 export type QueriesItemsArgs = {
   filter?: InputMaybe<ItemFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -3650,6 +3658,11 @@ export type QueriesNamesArgs = {
   filter?: InputMaybe<NameFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<NameSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesPackUnitsArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4594,11 +4607,12 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   field: UniqueValueKey;
 };
 
-export type UnitVariantNode = {
-  __typename: 'UnitVariantNode';
-  itemId: Scalars['String']['output'];
-  mostUsedVariantId: Scalars['String']['output'];
-  variants: Array<VariantNode>;
+export type UnitNode = {
+  __typename: 'UnitNode';
+  id: Scalars['String']['output'];
+  longName: Scalars['String']['output'];
+  packSize: Scalars['Int']['output'];
+  shortName: Scalars['String']['output'];
 };
 
 export type UpdateDisplaySettingsError = {
@@ -5274,12 +5288,4 @@ export type UserStorePermissionNode = {
   context: Array<Scalars['String']['output']>;
   permissions: Array<UserPermission>;
   storeId: Scalars['String']['output'];
-};
-
-export type VariantNode = {
-  __typename: 'VariantNode';
-  id: Scalars['String']['output'];
-  longName: Scalars['String']['output'];
-  packSize: Scalars['Int']['output'];
-  shortName: Scalars['String']['output'];
 };
