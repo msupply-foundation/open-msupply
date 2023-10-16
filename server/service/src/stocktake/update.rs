@@ -187,6 +187,7 @@ struct StocktakeGenerateJob {
     // list of stock_line upserts
     stock_lines: Vec<StockLineRow>,
 
+    stocktake_lines_to_trim: Option<Vec<StocktakeLineRow>>,
     location_movements: Option<Vec<LocationMovementRow>>,
 }
 
@@ -450,6 +451,31 @@ fn generate_exit_location_movements(
     };
 }
 
+fn unallocated_lines_to_trim(
+    connection: &StorageConnection,
+    stocktake: &StocktakeRow,
+) -> Result<Option<Vec<StocktakeLineRow>>, RepositoryError> {
+    if stocktake.status != StocktakeStatus::Finalised {
+        return Ok(None);
+    }
+    let stocktake_lines = StocktakeLineRepository::new(connection).query_by_filter(
+        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake.id)),
+    )?;
+    if stocktake_lines.is_empty() {
+        return Ok(None);
+    }
+    let mut lines_to_trim = Vec::new();
+    for line in stocktake_lines {
+        if line.line.counted_number_of_packs.is_none() {
+            lines_to_trim.push(line.line);
+        }
+    }
+    if lines_to_trim.is_empty() {
+        return Ok(None);
+    }
+    Ok(Some(lines_to_trim))
+}
+
 fn generate(
     ctx: &ServiceContext,
     UpdateStocktake {
@@ -606,13 +632,14 @@ fn generate(
     });
 
     Ok(StocktakeGenerateJob {
-        stocktake,
+        stocktake: stocktake.clone(),
         stocktake_lines: stocktake_line_updates,
         inventory_addition,
         inventory_reduction,
         inventory_adjustment_lines: [inventory_addition_lines, inventory_reduction_lines].concat(),
         stock_lines,
         location_movements: Some(location_movements),
+        stocktake_lines_to_trim: unallocated_lines_to_trim(connection, &stocktake)?,
     })
 }
 
@@ -654,6 +681,12 @@ pub fn update_stocktake(
                 shipment_line_repo.upsert_one(&line)?;
             }
             StocktakeRowRepository::new(connection).upsert_one(&result.stocktake)?;
+            // trim uncounted stocktake lines
+            if let Some(lines_to_trim) = result.stocktake_lines_to_trim {
+                for line in lines_to_trim {
+                    stocktake_line_repo.delete(&line.id)?;
+                }
+            }
 
             if let Some(location_movements) = result.location_movements {
                 let location_movement_repo = LocationMovementRowRepository::new(connection);
@@ -667,6 +700,7 @@ pub fn update_stocktake(
                     &ctx,
                     ActivityLogType::StocktakeStatusFinalised,
                     Some(stocktake_id.to_owned()),
+                    None,
                     None,
                 )?;
             }

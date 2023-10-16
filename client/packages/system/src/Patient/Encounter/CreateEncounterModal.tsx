@@ -23,26 +23,15 @@ import {
   usePatientModalStore,
   useEncounter,
   NoteSchema,
+  EncounterSchema,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { EncounterSearchInput } from './EncounterSearchInput';
 import {
-  Clinician,
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
 } from '../../Clinician';
-
-interface Encounter {
-  status?: EncounterNodeStatus;
-  createdDatetime: string;
-  createdBy?: { id: string; username: string };
-  startDatetime?: string;
-  endDatetime?: string;
-  clinician?: Clinician;
-  location?: { storeId?: string };
-  notes?: NoteSchema[];
-}
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -55,7 +44,7 @@ export const CreateEncounterModal: FC = () => {
   >();
   const [createdDatetime] = useState(new Date().toISOString());
   const [dataError, setDataError] = useState(false);
-  const [draft, setDraft] = useState<Encounter | undefined>(undefined);
+  const [draft, setDraft] = useState<EncounterSchema | undefined>(undefined);
   const navigate = useNavigate();
   const { error } = useNotification();
   const [startDateTimeError, setStartDateTimeError] = useState<string>();
@@ -84,7 +73,7 @@ export const CreateEncounterModal: FC = () => {
     setEncounterRegistry(entry);
   };
 
-  const currentOrNewDraft = (): Encounter => {
+  const currentOrNewDraft = (): EncounterSchema => {
     return (
       draft ?? {
         createdDatetime,

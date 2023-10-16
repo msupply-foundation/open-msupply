@@ -4,14 +4,12 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_general::GenderInput;
-use graphql_types::types::patient::PatientNode;
-use repository::{NameRow, NameType};
+use graphql_types::types::{patient::PatientNode, GenderInput};
+use repository::NameType;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    programs::patient::{patient_updated::patient_name, InsertPatientError},
+    programs::patient::{InsertPatient as ServiceInput, InsertPatientError},
 };
-use util::inline_init;
 
 #[derive(InputObject)]
 pub struct InsertPatientInput {
@@ -22,6 +20,10 @@ pub struct InsertPatientInput {
     pub last_name: Option<String>,
     pub gender: Option<GenderInput>,
     pub date_of_birth: Option<NaiveDate>,
+    pub address1: Option<String>,
+    pub phone: Option<String>,
+    pub is_deceased: Option<bool>,
+    pub date_of_death: Option<NaiveDate>,
 }
 
 #[derive(Union)]
@@ -32,15 +34,7 @@ pub enum InsertPatientResponse {
 pub fn insert_patient(
     ctx: &Context<'_>,
     store_id: String,
-    InsertPatientInput {
-        id,
-        code,
-        code_2,
-        first_name,
-        last_name,
-        gender,
-        date_of_birth,
-    }: InsertPatientInput,
+    input: InsertPatientInput,
 ) -> Result<InsertPatientResponse> {
     let user = validate_auth(
         ctx,
@@ -54,21 +48,11 @@ pub fn insert_patient(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
 
-    match service_provider.patient_service.insert_name_patient(
+    match service_provider.patient_service.insert_patient(
         &service_context,
         service_provider,
         &store_id,
-        inline_init(|n: &mut NameRow| {
-            n.id = id;
-            n.r#type = NameType::Patient;
-            n.name = patient_name(&first_name, &last_name);
-            n.code = code;
-            n.national_health_number = code_2;
-            n.first_name = first_name;
-            n.last_name = last_name;
-            n.gender = gender.map(|g| g.to_domain());
-            n.date_of_birth = date_of_birth;
-        }),
+        input.to_domain(),
     ) {
         Ok(patient) => Ok(InsertPatientResponse::Response(PatientNode {
             store_id,
@@ -92,6 +76,39 @@ pub fn insert_patient(
                 }
             };
             Err(std_err.extend())
+        }
+    }
+}
+
+impl InsertPatientInput {
+    pub fn to_domain(self) -> ServiceInput {
+        let InsertPatientInput {
+            id,
+            code,
+            code_2,
+            first_name,
+            last_name,
+            gender,
+            date_of_birth,
+            address1,
+            phone,
+            date_of_death,
+            is_deceased,
+        } = self;
+
+        ServiceInput {
+            id,
+            code,
+            code_2,
+            first_name,
+            last_name,
+            gender: gender.map(|g| g.to_domain()),
+            date_of_birth,
+            address1,
+            phone,
+            date_of_death,
+            is_deceased,
+            r#type: NameType::Patient,
         }
     }
 }

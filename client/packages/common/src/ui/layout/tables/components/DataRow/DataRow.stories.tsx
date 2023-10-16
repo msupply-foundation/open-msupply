@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentMeta, Story } from '@storybook/react';
+import { Args, ComponentMeta, Story } from '@storybook/react';
 import { TableBody, Table } from '@mui/material';
 import { DataRow } from './DataRow';
 import { useColumns } from '../../hooks';
@@ -62,6 +62,6 @@ WithRowClick.args = {
 export const WithTooltip = Template.bind({});
 WithTooltip.args = {
   onClick: () => {},
-  generateRowTooltip: (row: any) =>
-    `This tooltip is not very helpful. It just says that the status is ${row.status}`,
+  generateRowTooltip: (row: Args) =>
+    `This tooltip is not very helpful. It just says that the status is ${row['status']}`,
 };

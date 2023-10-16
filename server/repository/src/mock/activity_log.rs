@@ -13,7 +13,8 @@ pub fn activity_log_a() -> ActivityLogRow {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap(),
-        event: None,
+        changed_to: None,
+        changed_from: None,
     }
 }
 
@@ -28,7 +29,8 @@ pub fn activity_log_b() -> ActivityLogRow {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap(),
-        event: None,
+        changed_to: None,
+        changed_from: None,
     }
 }
 
@@ -43,7 +45,8 @@ pub fn activity_log_c() -> ActivityLogRow {
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap(),
-        event: None,
+        changed_to: None,
+        changed_from: None,
     }
 }
 

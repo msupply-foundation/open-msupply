@@ -2,7 +2,7 @@ import React, { PropsWithChildren } from 'react';
 import { usePopover } from '../BasePopover';
 
 interface PopoverProps {
-  Content: React.ReactElement<any, any>;
+  Content: React.ReactElement;
   placement?: 'top' | 'bottom' | 'left' | 'right';
 }
 

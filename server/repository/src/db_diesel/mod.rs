@@ -9,6 +9,8 @@ mod clinician;
 mod clinician_row;
 mod clinician_store_join_row;
 mod consumption;
+pub mod contact_trace;
+pub mod contact_trace_row;
 mod context_row;
 pub mod diesel_schema;
 mod document;

@@ -10,7 +10,7 @@ import {
 
 interface TaxEditProps {
   tax: number;
-  update: (newTax: number) => Promise<any>;
+  update: (newTax: number) => Promise<unknown>;
   disabled?: boolean;
 }
 

@@ -262,6 +262,12 @@ pub async fn get_loaders(
         },
         async_std::task::spawn,
     ));
+    loaders.insert(DataLoader::new(
+        DocumentByIdLoader {
+            service_provider: service_provider.clone(),
+        },
+        async_std::task::spawn,
+    ));
 
     loaders
 }

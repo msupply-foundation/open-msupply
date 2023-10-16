@@ -2,7 +2,7 @@ use repository::{
     Document, EncounterFilter, EncounterRepository, EncounterRow, EncounterRowRepository,
     EncounterStatus, EqualFilter, ProgramRow, RepositoryError, StorageConnection,
 };
-use util::uuid::uuid;
+use util::hash::sha256;
 
 use super::{encounter_schema, validate_misc::ValidatedSchemaEncounter};
 
@@ -29,9 +29,12 @@ pub(crate) fn update_encounter_row(
     let row = repo
         .query_by_filter(EncounterFilter::new().document_name(EqualFilter::equal_to(&doc.name)))?
         .pop();
+    // Documents are identified by a human readable name. Thus, use hash(name) as an ID.
+    // For example, an ID works better in an web URL.
+    // This also makes sure the table row gets the same ID when the whole site is re-synced.
     let id = match row {
         Some(row) => row.0.id,
-        None => uuid(),
+        None => sha256(&doc.name),
     };
     let row = EncounterRow {
         id,

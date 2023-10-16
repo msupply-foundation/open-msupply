@@ -152,17 +152,12 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
   averageMonthlyConsumption = 0,
   suggestedQuantity = 0,
 }) => {
-  if (averageMonthlyConsumption === 0) return <CalculationError isAmcZero />;
-
   const { maxMonthsOfStock, minMonthsOfStock } = useRequest.document.fields([
     'maxMonthsOfStock',
     'minMonthsOfStock',
   ]);
   const targetQuantity = maxMonthsOfStock * averageMonthlyConsumption;
   const t = useTranslation('replenishment');
-
-  if (suggestedQuantity === 0 && availableStockOnHand === 0)
-    return <CalculationError isSohAndQtyZero />;
 
   const targetQuantityWidth =
     availableStockOnHand > targetQuantity
@@ -176,7 +171,7 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
       : '100%';
   const showText = targetQuantityWidth > MIN_MC_WIDTH_TO_SHOW_TEXT;
 
-  return useMemo(
+  const DistributionBars = useMemo(
     () => (
       <>
         <Typography variant="body1" fontWeight={700} fontSize={12}>
@@ -202,7 +197,7 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
               flexBasis={`${100 / maxMonthsOfStock}%`}
               averageMonthlyConsumption={averageMonthlyConsumption}
               showText={showText}
-              isThreshold={i + 1 === minMonthsOfStock}
+              isThreshold={i + 1 === (minMonthsOfStock ?? maxMonthsOfStock)}
               isTarget={i + 1 === maxMonthsOfStock}
             />
           ))}
@@ -226,6 +221,15 @@ const StockDistributionContent: React.FC<StockDistributionProps> = ({
       </>
     ),
     [availableStockOnHand, averageMonthlyConsumption, suggestedQuantity]
+  );
+
+  const isAmcZero = averageMonthlyConsumption === 0;
+  const isSohAndQtyZero = suggestedQuantity === 0 && availableStockOnHand === 0;
+
+  return isAmcZero || isSohAndQtyZero ? (
+    <CalculationError isAmcZero={isAmcZero} isSohAndQtyZero={isSohAndQtyZero} />
+  ) : (
+    DistributionBars
   );
 };
 

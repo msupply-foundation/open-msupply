@@ -2,7 +2,7 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
-    loader::DocumentLoader,
+    loader::{DocumentLoader, PatientLoader},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
@@ -17,7 +17,10 @@ use repository::{
 use super::{
     document::DocumentNode,
     encounter::{EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput},
-    program_event::ProgramEventNode,
+    patient::PatientNode,
+    program_event::{
+        ProgramEventConnector, ProgramEventNode, ProgramEventResponse, ProgramEventSortInput,
+    },
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -110,6 +113,7 @@ pub struct ProgramEventFilterInput {
     pub document_name: Option<EqualFilterStringInput>,
     /// The event type
     pub r#type: Option<EqualFilterStringInput>,
+    pub data: Option<StringFilterInput>,
     pub active_start_datetime: Option<DatetimeFilterInput>,
     pub active_end_datetime: Option<DatetimeFilterInput>,
 }
@@ -121,6 +125,7 @@ impl ProgramEventFilterInput {
             document_type,
             document_name,
             r#type,
+            data,
             active_start_datetime,
             active_end_datetime,
         } = self;
@@ -131,6 +136,7 @@ impl ProgramEventFilterInput {
             document_type: document_type.map(EqualFilter::from),
             document_name: document_name.map(EqualFilter::from),
             r#type: r#type.map(EqualFilter::from),
+            data: data.map(StringFilter::from),
             datetime: None,
             context_id: None,
         }
@@ -177,6 +183,17 @@ pub struct ProgramEnrolmentNode {
     pub allowed_ctx: Vec<String>,
 }
 
+#[derive(SimpleObject)]
+pub struct ProgramEnrolmentConnector {
+    pub total_count: u32,
+    pub nodes: Vec<ProgramEnrolmentNode>,
+}
+
+#[derive(Union)]
+pub enum ProgramEnrolmentResponse {
+    Response(ProgramEnrolmentConnector),
+}
+
 #[Object]
 impl ProgramEnrolmentNode {
     /// The program type
@@ -195,6 +212,22 @@ impl ProgramEnrolmentNode {
 
     pub async fn patient_id(&self) -> &str {
         &self.program_enrolment.0.patient_id
+    }
+
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
+
+        let result = loader
+            .load_one(self.program_enrolment.0.patient_id.clone())
+            .await?
+            .map(|patient| PatientNode {
+                store_id: self.store_id.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
+                patient,
+            })
+            .ok_or(Error::new("Program enrolment without patient"))?;
+
+        Ok(result)
     }
 
     pub async fn enrolment_datetime(&self) -> DateTime<Utc> {
@@ -272,7 +305,9 @@ impl ProgramEnrolmentNode {
         ctx: &Context<'_>,
         at: Option<DateTime<Utc>>,
         filter: Option<ProgramEventFilterInput>,
-    ) -> Result<Vec<ProgramEventNode>> {
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
+    ) -> Result<ProgramEventResponse> {
         // TODO use loader?
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
@@ -282,29 +317,32 @@ impl ProgramEnrolmentNode {
             .document_type(EqualFilter::equal_to(
                 &self.program_enrolment.0.document_type,
             ));
-        let entries = ctx
+        let list_result = ctx
             .service_provider()
             .program_event_service
             .active_events(
                 &context,
                 at.map(|at| at.naive_utc())
                     .unwrap_or(Utc::now().naive_utc()),
-                None,
+                page.map(PaginationOption::from),
                 Some(filter),
-                Some(Sort {
+                Some(sort.map(ProgramEventSortInput::to_domain).unwrap_or(Sort {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),
-                }),
+                })),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
-        Ok(entries
-            .rows
-            .into_iter()
-            .map(|row| ProgramEventNode {
-                store_id: self.store_id.clone(),
-                row,
-                allowed_ctx: self.allowed_ctx.clone(),
-            })
-            .collect())
+        Ok(ProgramEventResponse::Response(ProgramEventConnector {
+            total_count: list_result.count,
+            nodes: list_result
+                .rows
+                .into_iter()
+                .map(|row| ProgramEventNode {
+                    store_id: self.store_id.clone(),
+                    row,
+                    allowed_ctx: self.allowed_ctx.clone(),
+                })
+                .collect(),
+        }))
     }
 }

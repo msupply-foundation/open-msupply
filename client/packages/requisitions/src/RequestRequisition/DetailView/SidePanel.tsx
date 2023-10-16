@@ -18,6 +18,9 @@ import {
   useFormatDateTime,
   RouteBuilder,
   InfoTooltipIcon,
+  DeleteIcon,
+  RequisitionNodeStatus,
+  useDeleteConfirmation,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -134,9 +137,16 @@ const RelatedDocumentsSection: FC = () => {
 };
 
 export const SidePanel: FC = () => {
+  const t = useTranslation('replenishment');
+  const { mutateAsync } = useRequest.document.delete();
   const { data } = useRequest.document.get();
   const { success } = useNotification();
-  const t = useTranslation(['replenishment', 'common']);
+  const canDelete = data?.status === RequisitionNodeStatus.Draft;
+
+  const deleteAction = async () => {
+    if (!data) return;
+    await mutateAsync([data]);
+  };
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -144,14 +154,35 @@ export const SidePanel: FC = () => {
       .then(() => success('Copied to clipboard successfully')());
   };
 
+  const onDelete = useDeleteConfirmation({
+    selectedRows: [data],
+    deleteAction,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-requisition', {
+        number: data?.requisitionNumber,
+      }),
+      deleteSuccess: t('messages.deleted-requisitions', {
+        count: 1,
+      }),
+    },
+  });
+
   return (
     <DetailPanelPortal
       Actions={
-        <DetailPanelAction
-          icon={<CopyIcon />}
-          title={t('link.copy-to-clipboard')}
-          onClick={copyToClipboard}
-        />
+        <>
+          <DetailPanelAction
+            icon={<DeleteIcon />}
+            title={t('label.delete')}
+            onClick={onDelete}
+            disabled={!canDelete}
+          />
+          <DetailPanelAction
+            icon={<CopyIcon />}
+            title={t('link.copy-to-clipboard')}
+            onClick={copyToClipboard}
+          />
+        </>
       }
     >
       <AdditionalInfoSection />

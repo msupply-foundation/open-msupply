@@ -32,6 +32,17 @@ export type Scalars = {
   NaiveDate: { input: string; output: string; }
 };
 
+export type ActiveEncounterEventFilterInput = {
+  data?: InputMaybe<StringFilterInput>;
+  /**
+   * 	Only include events that are for the current encounter, i.e. have matching encounter type
+   * and matching encounter name of the current encounter. If not set all events with matching
+   * encounter type are returned.
+   */
+  isCurrentEncounter?: InputMaybe<Scalars['Boolean']['input']>;
+  type?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type ActivityLogConnector = {
   __typename: 'ActivityLogConnector';
   nodes: Array<ActivityLogNode>;
@@ -49,11 +60,12 @@ export type ActivityLogFilterInput = {
 export type ActivityLogNode = {
   __typename: 'ActivityLogNode';
   datetime: Scalars['DateTime']['output'];
-  event?: Maybe<Scalars['String']['output']>;
+  from?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   recordId?: Maybe<Scalars['String']['output']>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
+  to?: Maybe<Scalars['String']['output']>;
   type: ActivityLogNodeType;
   user?: Maybe<UserNode>;
 };
@@ -521,6 +533,74 @@ export type ConsumptionOptionsInput = {
   numberOfDataPoints?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type ContactTraceConnector = {
+  __typename: 'ContactTraceConnector';
+  nodes: Array<ContactTraceNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ContactTraceFilterInput = {
+  contactPatientId?: InputMaybe<EqualFilterStringInput>;
+  contactTraceId?: InputMaybe<StringFilterInput>;
+  dateOfBirth?: InputMaybe<DateFilterInput>;
+  datetime?: InputMaybe<DatetimeFilterInput>;
+  documentName?: InputMaybe<StringFilterInput>;
+  firstName?: InputMaybe<StringFilterInput>;
+  gender?: InputMaybe<EqualFilterGenderInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  lastName?: InputMaybe<StringFilterInput>;
+  patientId?: InputMaybe<EqualFilterStringInput>;
+  programId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<StringFilterInput>;
+};
+
+export type ContactTraceNode = {
+  __typename: 'ContactTraceNode';
+  age?: Maybe<Scalars['Int']['output']>;
+  contactPatient?: Maybe<PatientNode>;
+  contactPatientId?: Maybe<Scalars['String']['output']>;
+  contactTraceId?: Maybe<Scalars['String']['output']>;
+  dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
+  datetime: Scalars['DateTime']['output'];
+  /** The encounter document */
+  document: DocumentNode;
+  documentId: Scalars['String']['output'];
+  firstName?: Maybe<Scalars['String']['output']>;
+  gender?: Maybe<GenderType>;
+  id: Scalars['String']['output'];
+  lastName?: Maybe<Scalars['String']['output']>;
+  patient: PatientNode;
+  patientId: Scalars['String']['output'];
+  program: ProgramNode;
+  /** Returns the matching program enrolment for the root patient of this contact trace */
+  programEnrolment?: Maybe<ProgramEnrolmentNode>;
+  programId: Scalars['String']['output'];
+  storeId?: Maybe<Scalars['String']['output']>;
+};
+
+export type ContactTraceResponse = ContactTraceConnector;
+
+export enum ContactTraceSortFieldInput {
+  ContactTraceId = 'contactTraceId',
+  DateOfBirth = 'dateOfBirth',
+  Datetime = 'datetime',
+  FirstName = 'firstName',
+  Gender = 'gender',
+  LastName = 'lastName',
+  PatientId = 'patientId',
+  ProgramId = 'programId'
+}
+
+export type ContactTraceSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ContactTraceSortFieldInput;
+};
+
 export type CreateRequisitionShipmentError = {
   __typename: 'CreateRequisitionShipmentError';
   error: CreateRequisitionShipmentErrorInterface;
@@ -881,7 +961,7 @@ export type DocumentFilterInput = {
    */
   data?: InputMaybe<StringFilterInput>;
   datetime?: InputMaybe<DatetimeFilterInput>;
-  name?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
   owner?: InputMaybe<EqualFilterStringInput>;
   type?: InputMaybe<EqualFilterStringInput>;
 };
@@ -903,6 +983,7 @@ export type DocumentNode = {
 };
 
 export enum DocumentRegistryCategoryNode {
+  ContactTrace = 'CONTACT_TRACE',
   Custom = 'CUSTOM',
   Encounter = 'ENCOUNTER',
   Patient = 'PATIENT',
@@ -979,6 +1060,10 @@ export type EncounterConnector = {
 };
 
 export type EncounterEventFilterInput = {
+  activeEndDatetime?: InputMaybe<DatetimeFilterInput>;
+  activeStartDatetime?: InputMaybe<DatetimeFilterInput>;
+  data?: InputMaybe<StringFilterInput>;
+  datetime?: InputMaybe<DatetimeFilterInput>;
   /**
    * 	Only include events that are for the current encounter, i.e. have matching encounter type
    * and matching encounter name of the current encounter. If not set all events with matching
@@ -1023,7 +1108,7 @@ export type EncounterFilterInput = {
 
 export type EncounterNode = {
   __typename: 'EncounterNode';
-  activeProgramEvents: Array<ProgramEventNode>;
+  activeProgramEvents: ProgramEventResponse;
   clinician?: Maybe<ClinicianNode>;
   contextId: Scalars['String']['output'];
   createdDatetime: Scalars['DateTime']['output'];
@@ -1032,10 +1117,11 @@ export type EncounterNode = {
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
-  patient: NameNode;
+  patient: PatientNode;
   patientId: Scalars['String']['output'];
   /** Returns the matching program enrolment for the patient of this encounter */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
+  programEvents: ProgramEventResponse;
   programId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
   status?: Maybe<EncounterNodeStatus>;
@@ -1045,7 +1131,16 @@ export type EncounterNode = {
 
 export type EncounterNodeActiveProgramEventsArgs = {
   at?: InputMaybe<Scalars['DateTime']['input']>;
+  filter?: InputMaybe<ActiveEncounterEventFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ProgramEventSortInput>;
+};
+
+
+export type EncounterNodeProgramEventsArgs = {
   filter?: InputMaybe<EncounterEventFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ProgramEventSortInput>;
 };
 
 export enum EncounterNodeStatus {
@@ -1302,6 +1397,19 @@ export type InsertBarcodeInput = {
 
 export type InsertBarcodeResponse = BarcodeNode;
 
+export type InsertContactTraceInput = {
+  /** Contact trace document data */
+  data: Scalars['JSON']['input'];
+  /** The patient ID the contact belongs to */
+  patientId: Scalars['String']['input'];
+  /** The schema id used for the encounter data */
+  schemaId: Scalars['String']['input'];
+  /** The contact trace document type */
+  type: Scalars['String']['input'];
+};
+
+export type InsertContactTraceResponse = ContactTraceNode;
+
 export type InsertDocumentRegistryInput = {
   category: DocumentRegistryCategoryNode;
   contextId: Scalars['String']['input'];
@@ -1544,13 +1652,17 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
 };
 
 export type InsertPatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPatientResponse = PatientNode;
@@ -2348,6 +2460,7 @@ export type Mutations = {
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
   insertBarcode: InsertBarcodeResponse;
+  insertContactTrace: InsertContactTraceResponse;
   insertDocumentRegistry: InsertDocumentResponse;
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
@@ -2385,6 +2498,7 @@ export type Mutations = {
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
   undeleteDocument: UndeleteDocumentResponse;
+  updateContactTrace: UpdateContactTraceResponse;
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateDocument: UpdateDocumentResponse;
   updateEncounter: UpdateEncounterResponse;
@@ -2590,6 +2704,12 @@ export type MutationsInsertBarcodeArgs = {
 };
 
 
+export type MutationsInsertContactTraceArgs = {
+  input: InsertContactTraceInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsInsertDocumentRegistryArgs = {
   input: InsertDocumentRegistryInput;
 };
@@ -2734,6 +2854,12 @@ export type MutationsSupplyRequestedQuantityArgs = {
 
 export type MutationsUndeleteDocumentArgs = {
   input: UndeleteDocumentInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateContactTraceArgs = {
+  input: UpdateContactTraceInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -3097,6 +3223,7 @@ export type PatientFilterInput = {
   code2?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
+  dateOfDeath?: InputMaybe<DateFilterInput>;
   email?: InputMaybe<StringFilterInput>;
   firstName?: InputMaybe<StringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderInput>;
@@ -3115,8 +3242,10 @@ export type PatientNode = {
   age?: Maybe<Scalars['Int']['output']>;
   code: Scalars['String']['output'];
   code2?: Maybe<Scalars['String']['output']>;
+  contactTraces: ContactTraceResponse;
   country?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
+  dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
@@ -3126,8 +3255,15 @@ export type PatientNode = {
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   phone?: Maybe<Scalars['String']['output']>;
-  programEnrolments: Array<ProgramEnrolmentNode>;
+  programEnrolments: ProgramEnrolmentResponse;
   website?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type PatientNodeContactTracesArgs = {
+  filter?: InputMaybe<ContactTraceFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ContactTraceSortInput>;
 };
 
 
@@ -3170,6 +3306,7 @@ export enum PatientSortFieldInput {
   Code2 = 'code2',
   Country = 'country',
   DateOfBirth = 'dateOfBirth',
+  DateOfDeath = 'dateOfDeath',
   Email = 'email',
   FirstName = 'firstName',
   Gender = 'gender',
@@ -3252,7 +3389,7 @@ export type ProgramEnrolmentFilterInput = {
 
 export type ProgramEnrolmentNode = {
   __typename: 'ProgramEnrolmentNode';
-  activeProgramEvents: Array<ProgramEventNode>;
+  activeProgramEvents: ProgramEventResponse;
   contextId: Scalars['String']['output'];
   /** The encounter document */
   document: DocumentNode;
@@ -3261,6 +3398,7 @@ export type ProgramEnrolmentNode = {
   enrolmentDatetime: Scalars['DateTime']['output'];
   /** The program document name */
   name: Scalars['String']['output'];
+  patient: PatientNode;
   patientId: Scalars['String']['output'];
   programEnrolmentId?: Maybe<Scalars['String']['output']>;
   status: ProgramEnrolmentNodeStatus;
@@ -3272,6 +3410,8 @@ export type ProgramEnrolmentNode = {
 export type ProgramEnrolmentNodeActiveProgramEventsArgs = {
   at?: InputMaybe<Scalars['DateTime']['input']>;
   filter?: InputMaybe<ProgramEventFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ProgramEventSortInput>;
 };
 
 
@@ -3317,6 +3457,7 @@ export type ProgramEventConnector = {
 export type ProgramEventFilterInput = {
   activeEndDatetime?: InputMaybe<DatetimeFilterInput>;
   activeStartDatetime?: InputMaybe<DatetimeFilterInput>;
+  data?: InputMaybe<StringFilterInput>;
   documentName?: InputMaybe<EqualFilterStringInput>;
   documentType?: InputMaybe<EqualFilterStringInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
@@ -3326,7 +3467,8 @@ export type ProgramEventFilterInput = {
 
 export type ProgramEventNode = {
   __typename: 'ProgramEventNode';
-  activeDatetime: Scalars['DateTime']['output'];
+  activeEndDatetime: Scalars['DateTime']['output'];
+  activeStartDatetime: Scalars['DateTime']['output'];
   data?: Maybe<Scalars['String']['output']>;
   datetime: Scalars['DateTime']['output'];
   /** The document associated with the document_name */
@@ -3341,6 +3483,8 @@ export type ProgramEventNode = {
 export type ProgramEventResponse = ProgramEventConnector;
 
 export enum ProgramEventSortFieldInput {
+  ActiveEndDatetime = 'activeEndDatetime',
+  ActiveStartDatetime = 'activeStartDatetime',
   Datetime = 'datetime',
   DocumentName = 'documentName',
   DocumentType = 'documentType',
@@ -3355,6 +3499,12 @@ export type ProgramEventSortInput = {
   desc?: InputMaybe<Scalars['Boolean']['input']>;
   /** Sort query result by `key` */
   key: ProgramEventSortFieldInput;
+};
+
+export type ProgramNode = {
+  __typename: 'ProgramNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
 };
 
 export type ProgramRequisitionOrderTypeNode = {
@@ -3391,6 +3541,7 @@ export type Queries = {
   barcodeByGtin: BarcodeResponse;
   centralPatientSearch: CentralPatientSearchResponse;
   clinicians: CliniciansResponse;
+  contactTraces: ContactTraceResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
@@ -3505,6 +3656,14 @@ export type QueriesCliniciansArgs = {
   filter?: InputMaybe<ClinicianFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesContactTracesArgs = {
+  filter?: InputMaybe<ContactTraceFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ContactTraceSortInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -4588,6 +4747,21 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   field: UniqueValueKey;
 };
 
+export type UpdateContactTraceInput = {
+  /** Contact trace document data */
+  data: Scalars['JSON']['input'];
+  /** The document ID of the contact trace document which should be updated */
+  parent: Scalars['String']['input'];
+  /** The patient ID the contact belongs to */
+  patientId: Scalars['String']['input'];
+  /** The schema id used for the contact trace data */
+  schemaId: Scalars['String']['input'];
+  /** The contact trace document type */
+  type: Scalars['String']['input'];
+};
+
+export type UpdateContactTraceResponse = ContactTraceNode;
+
 export type UpdateDisplaySettingsError = {
   __typename: 'UpdateDisplaySettingsError';
   error: Scalars['String']['output'];
@@ -4622,7 +4796,7 @@ export type UpdateEncounterInput = {
   data: Scalars['JSON']['input'];
   /** The document id of the encounter document which should be updated */
   parent: Scalars['String']['input'];
-  /** The schema id used for the counter data */
+  /** The schema id used for the encounter data */
   schemaId: Scalars['String']['input'];
   /** The encounter type */
   type: Scalars['String']['input'];
@@ -4874,13 +5048,17 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
  * For example, if the last_name is not provided, the last_name in the patient record will be cleared.
  */
 export type UpdatePatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePatientResponse = PatientNode;

@@ -1,4 +1,3 @@
-use repository::NameRow;
 use repository::{PaginationOption, Patient, PatientFilter, PatientSort, RepositoryError};
 use util::constants::PATIENT_TYPE;
 
@@ -48,7 +47,7 @@ pub trait PatientServiceTrait: Sync + Send {
         get_patients(ctx, pagination, filter, sort, allowed_ctx)
     }
 
-    fn upsert_patient(
+    fn upsert_program_patient(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
@@ -69,23 +68,23 @@ pub trait PatientServiceTrait: Sync + Send {
         patient_search(ctx, service_provider, input, allowed_ctx)
     }
 
-    fn insert_name_patient(
+    fn insert_patient(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
         store_id: &str,
-        input: NameRow,
+        input: InsertPatient,
     ) -> Result<Patient, InsertPatientError> {
         insert_patient(ctx, service_provider, store_id, input)
     }
 
-    fn update_name_patient(
+    fn update_patient(
         &self,
         ctx: &ServiceContext,
         service_provider: &ServiceProvider,
         input: UpdatePatient,
     ) -> Result<Patient, UpdatePatientError> {
-        update_name_patient(ctx, service_provider, input)
+        update_patient(ctx, service_provider, input)
     }
 }
 

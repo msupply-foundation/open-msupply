@@ -3,7 +3,7 @@ use repository::{
     Document, ProgramEnrolmentRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
     ProgramEnrolmentStatus, ProgramRow, StorageConnection,
 };
-use util::uuid::uuid;
+use util::hash::sha256;
 
 use super::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolmentError};
 
@@ -29,7 +29,7 @@ pub(crate) fn update_program_enrolment_row(
         repo.find_one_by_program_id_and_patient(&program_row.id, patient_id)?;
     let id = match program_enrolment_row {
         Some(program_enrolment_row) => program_enrolment_row.0.id,
-        None => uuid(),
+        None => sha256(&document.name),
     };
 
     let status = match program.status {

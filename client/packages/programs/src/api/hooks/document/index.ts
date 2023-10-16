@@ -19,7 +19,10 @@ import { useInsertProgramEnrolment } from './useInsertProgramEnrolment';
 import { useUpdateProgramEnrolment } from './useUpdateProgramEnrolment';
 
 import { useEncounters } from './useEncounters';
-import { useUpsertEncounter } from './useUpsertEncounter';
+import {
+  useUpsertEncounter,
+  useUpsertEncounterDocument,
+} from './useUpsertEncounter';
 
 import { useClinicians } from './useClinicians';
 import { useProgramEvents } from './useProgramEvents';
@@ -27,6 +30,10 @@ import { useFormSchemaByType } from './useFormSchemaByType';
 import { useDocumentRegistries } from './useDocumentRegistries';
 import { useEncounterByDocName } from './useEncounterByDocName';
 import { useProgramEnrolmentByDocName } from './useProgramEnrolmentByDocName';
+import { useContactTraces } from './useContactTraces';
+import { useInsertContactTrace } from './useInsertContactTrace';
+import { useUpdateContactTrace } from './useUpdateContactTrace';
+import { useUpsertContactTrace } from './useUpsertContactTrace';
 
 export const Document = {
   useDocumentByName,
@@ -52,9 +59,16 @@ export const Document = {
   useEncounterFields,
   useEncounterPrevious,
   useUpsertEncounter,
+  useUpsertEncounterDocument,
 
   useClinicians,
 
   useFormSchemaByType,
   useProgramEvents,
+
+  useContactTraces,
+  useInsertContactTrace,
+  useUpdateContactTrace,
+  useUpsertContactTrace,
+  useUpsertContactTraceDocument: useUpsertContactTrace,
 };
