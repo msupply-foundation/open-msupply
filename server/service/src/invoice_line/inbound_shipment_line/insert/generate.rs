@@ -69,7 +69,7 @@ fn generate_line(
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
-        location_id,
+        location,
         total_before_tax,
         tax: _,
     }: InsertInboundShipmentLine,
@@ -80,28 +80,34 @@ fn generate_line(
     }: ItemRow,
     InvoiceRow { tax, .. }: InvoiceRow,
 ) -> InvoiceLineRow {
+    let mut invoice_line_row: InvoiceLineRow = InvoiceLineRow::default();
+    // if location has been passed, update sensor_row to the value passed (including if this is null)
+    // A null value being passed as the LocationUpdate is the unassignment of location
+    // no LocationUpdate being passed is the location not being updated
+
+    if let Some(location) = location {
+        invoice_line_row.location_id = location.location_id;
+    };
+
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
-
-    InvoiceLineRow {
-        id,
-        invoice_id,
-        item_id,
-        location_id,
-        pack_size: u32_to_i32(pack_size),
-        batch,
-        expiry_date,
-        sell_price_per_pack,
-        cost_price_per_pack,
-        r#type: InvoiceLineRowType::StockIn,
-        number_of_packs,
-        item_name,
-        item_code,
-        stock_line_id: None,
-        total_before_tax,
-        total_after_tax,
-        tax,
-        note: None,
-        inventory_adjustment_reason_id: None,
-    }
+    invoice_line_row.id = id;
+    invoice_line_row.invoice_id = invoice_id;
+    invoice_line_row.item_id = item_id;
+    invoice_line_row.pack_size = u32_to_i32(pack_size);
+    invoice_line_row.batch = batch;
+    invoice_line_row.expiry_date = expiry_date;
+    invoice_line_row.sell_price_per_pack = sell_price_per_pack;
+    invoice_line_row.cost_price_per_pack = cost_price_per_pack;
+    invoice_line_row.r#type = InvoiceLineRowType::StockIn;
+    invoice_line_row.number_of_packs = number_of_packs;
+    invoice_line_row.item_name = item_name;
+    invoice_line_row.item_code = item_code;
+    invoice_line_row.stock_line_id = None;
+    invoice_line_row.total_before_tax = total_before_tax;
+    invoice_line_row.total_after_tax = total_after_tax;
+    invoice_line_row.tax = tax;
+    invoice_line_row.note = None;
+    invoice_line_row.inventory_adjustment_reason_id = None;
+    invoice_line_row
 }

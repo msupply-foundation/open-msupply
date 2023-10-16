@@ -180,3 +180,9 @@ pub struct ShipmentTaxUpdate {
     /// Set or unset the tax value
     pub percentage: Option<f64>,
 }
+
+#[derive(Clone, Debug, PartialEq)]
+
+pub struct LocationUpdate {
+    pub location_id: Option<String>,
+}
