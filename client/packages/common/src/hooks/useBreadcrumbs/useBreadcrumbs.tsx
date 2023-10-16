@@ -4,6 +4,7 @@ import { LocaleKey } from '@common/intl';
 import { create } from 'zustand';
 
 export interface UrlPart {
+  disabled?: boolean;
   path: string;
   key: LocaleKey;
   value: string;
