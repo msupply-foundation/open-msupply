@@ -13,6 +13,8 @@ mod query {
         service_provider::ServiceProvider,
     };
 
+    use crate::sensor::LocationUpdate;
+
     #[actix_rt::test]
     async fn sensor_service_update_errors() {
         let (_, _, connection_manager, _) =
@@ -36,7 +38,7 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: "invalid".to_owned(),
-                    location_id: None,
+                    location: None,
                     name: None,
                     is_active: None
                 },
@@ -50,7 +52,7 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensors_not_in_store[0].sensor_row.id.clone(),
-                    location_id: None,
+                    location: None,
                     name: None,
                     is_active: None
                 },
@@ -83,7 +85,7 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensor.sensor_row.id.clone(),
-                    location_id: None,
+                    location: None,
                     name: None,
                     is_active: None
                 },
@@ -111,7 +113,9 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensor.sensor_row.id.clone(),
-                    location_id: Some("location_1".to_string()),
+                    location: Some(LocationUpdate {
+                        location_id: Some("location_1".to_string())
+                    }),
                     name: Some(sensor.sensor_row.name.clone()),
                     is_active: Some(sensor.sensor_row.is_active),
                 },
@@ -126,6 +130,22 @@ mod query {
                 )
                 .unwrap()[0],
             sensor
+        );
+
+        // Success with unassigning location from sensor
+        let mut sensor = sensors_in_store[0].clone();
+        sensor.sensor_row.location_id = None;
+        assert_eq!(
+            service.update_sensor(
+                &context,
+                UpdateSensor {
+                    id: sensor.sensor_row.id.clone(),
+                    location: Some(LocationUpdate { location_id: None }),
+                    name: None,
+                    is_active: None
+                },
+            ),
+            Ok(sensor.clone())
         );
     }
 }
