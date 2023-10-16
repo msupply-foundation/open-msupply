@@ -11,6 +11,7 @@ import {
   Formatter,
 } from '@openmsupply-client/common';
 import { useSensor, SensorFragment } from '../api';
+import { BreachTypeCell } from '../../common';
 
 export const SensorListView: FC = () => {
   const {
@@ -61,7 +62,7 @@ export const SensorListView: FC = () => {
         label: 'label.last-reading',
         accessor: ({ rowData }) => {
           return `${rowData.latestTemperatureLog?.nodes[0]?.temperature}${t(
-            'cold-chain.temperature-unit'
+            'label.temperature-unit'
           )}`;
         },
         sortable: false,
@@ -86,12 +87,9 @@ export const SensorListView: FC = () => {
       },
       {
         key: 'breach',
-        label: 'label.breach',
-        accessor: ({ rowData }) => {
-          return rowData?.breach
-            ? t(Formatter.breachTypeTranslation(rowData.breach))
-            : null;
-        },
+        label: 'label.type',
+        accessor: ({ rowData }) => rowData?.breach,
+        Cell: BreachTypeCell,
         sortable: false,
       },
     ],
