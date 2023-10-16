@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
-    loader::{LocationByIdLoader, SensorByIdLoader},
+    loader::{LocationByIdLoader, SensorByIdLoader, TemperatureLogByBreachIdLoader},
     map_filter,
     simple_generic_errors::NodeError,
     ContextExt,
@@ -18,7 +18,7 @@ use repository::{
 };
 use service::{usize_to_u32, ListResult};
 
-use super::{LocationFilterInput, LocationNode, SensorFilterInput, SensorNode};
+use super::{LocationFilterInput, LocationNode, SensorFilterInput, SensorNode, TemperatureLogNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum TemperatureBreachNodeType {
@@ -143,6 +143,15 @@ impl TemperatureBreachNode {
             .load_one(location_id.clone())
             .await?
             .map(LocationNode::from_domain))
+    }
+
+    pub async fn temperature_log(&self, ctx: &Context<'_>) -> Result<Option<TemperatureLogNode>> {
+        let loader = ctx.get_loader::<DataLoader<TemperatureLogByBreachIdLoader>>();
+
+        Ok(loader
+            .load_one(self.row().id.clone())
+            .await?
+            .map(TemperatureLogNode::from_domain))
     }
 }
 

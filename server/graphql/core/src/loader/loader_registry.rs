@@ -280,5 +280,11 @@ pub async fn get_loaders(
         },
         async_std::task::spawn,
     ));
+    loaders.insert(DataLoader::new(
+        TemperatureLogByBreachIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
     loaders
 }
