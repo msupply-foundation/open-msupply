@@ -60,33 +60,42 @@ type CommonAsPackUnit = (_: {
   packSize: number;
   packUnitName?: string;
   unitName: string | null;
+  defaultPackUnit?: string;
   t: TypedTFunction<LocaleKey>;
 }) => string;
 const commonAsPackUnit: CommonAsPackUnit = ({
   packSize,
   packUnitName,
   unitName,
+  defaultPackUnit,
   t,
 }) => {
   if (packUnitName) return packUnitName;
+  if (defaultPackUnit) return defaultPackUnit;
   if (unitName) return `${packSize} ${unitName}`;
 
   const defaultUnit = t('label.unit');
   return `${packSize} ${defaultUnit}`;
 };
 
+export interface VariantControl {
+  variants: VariantNode[];
+  // Selected by user or mostUsed (calculated by backend)
+  activeVariant: VariantNode;
+  setUserSelectedVariant: (variantId: string) => void;
+}
+
 export const useUnitVariant = (
   itemId: string,
   unitName: string | null
 ): {
-  asPackUnit: (packSize: number) => string;
+  // If pack unit variant not found, use defaultPackUnit rathern then
+  // {packSize} {unitName or 'Unit'}
+  asPackUnit: (packSize: number, defaultPackUnit?: string) => string;
+  activePackUnit: string;
   numberOfPacksFromQuantity: (totalQuantity: number) => number;
-  variantsControl?: {
-    variants: VariantNode[];
-    // Selected by user or mostUsed (calculated by backend)
-    activeVariant: VariantNode;
-    setUserSelectedVariant: (variantId: string) => void;
-  };
+  numberOfPacksToTotalQuantity: (numPacks: number) => number;
+  variantsControl?: VariantControl;
   unitVariantsExist: boolean;
 } => {
   const [item, userSelectedVariantId, setUserSelectedVariant] = useUnitStore(
@@ -97,13 +106,16 @@ export const useUnitVariant = (
     ],
     isEqual
   );
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   if (!item || item.variants.length == 0) {
     return {
-      asPackUnit: packSize => commonAsPackUnit({ packSize, unitName, t }),
+      asPackUnit: (packSize, defaultPackUnit) =>
+        commonAsPackUnit({ packSize, unitName, t, defaultPackUnit }),
       numberOfPacksFromQuantity: totalQuantity => totalQuantity,
+      numberOfPacksToTotalQuantity: numPacks => numPacks,
       unitVariantsExist: false,
+      activePackUnit: commonAsPackUnit({ packSize: 1, unitName, t }),
     };
   }
 
@@ -120,7 +132,7 @@ export const useUnitVariant = (
     (variants[0] as VariantNode); /* item.variants.length === 0 above confirms that it's safe to assume it will not be undefined */
 
   return {
-    asPackUnit: packSize => {
+    asPackUnit: (packSize, defaultPackUnit) => {
       const foundVariant = variants.find(
         variant => variant.packSize === packSize
       );
@@ -129,11 +141,14 @@ export const useUnitVariant = (
         packSize,
         unitName,
         packUnitName: foundVariant?.shortName,
+        defaultPackUnit,
         t,
       });
     },
     numberOfPacksFromQuantity: totalQuantity =>
       NumUtils.round(totalQuantity / activeVariant.packSize, 2),
+    numberOfPacksToTotalQuantity: numPacks =>
+      NumUtils.round(numPacks * activeVariant.packSize, 2),
     // TODO what if variants were soft deleted ?
     variantsControl: {
       variants: variants,
@@ -142,5 +157,10 @@ export const useUnitVariant = (
         setUserSelectedVariant({ itemId, variantId }),
     },
     unitVariantsExist: true,
+    activePackUnit: commonAsPackUnit({
+      packSize: activeVariant.packSize,
+      unitName,
+      t,
+    }),
   };
 };

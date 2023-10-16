@@ -1,30 +1,35 @@
-import React, { ReactElement } from 'react';
 import {
-  RecordWithId,
+  ArrayUtils,
   CellProps,
   InnerBasicCell,
+  RecordWithId,
 } from '@openmsupply-client/common';
 import { useUnitVariant } from '../../context';
+import React from 'react';
 
-// Adjust pack size
-export const getPackUnitCell =
+// Shows '[multiple]' if there is more then one pack size
+// otherwise shows pack size or unit variant short name
+export const PackUnitCell =
   <T extends RecordWithId>({
     getItemId,
-    getPackSize,
     getUnitName,
+    getPackSizes,
   }: {
     getItemId: (row: T) => string;
-    getPackSize: (row: T) => number;
+    getPackSizes: (row: T) => number[];
     getUnitName: (row: T) => string | null;
   }) =>
-  ({ isError, rowData }: CellProps<T>): ReactElement => {
+  ({ isError, rowData }: CellProps<T>) => {
     const { asPackUnit } = useUnitVariant(
       getItemId(rowData),
       getUnitName(rowData)
     );
 
-    const packSize = getPackSize(rowData);
-    const packUnit = asPackUnit(packSize);
+    const packSizes = ArrayUtils.dedup(getPackSizes(rowData));
 
-    return <InnerBasicCell isError={isError} value={packUnit} />;
+    const displayValue =
+      packSizes.length > 1 ? '[muiltiple]' : asPackUnit(packSizes[0] ?? 1);
+
+    // Must have only one packSize
+    return <InnerBasicCell isError={isError} value={displayValue} />;
   };
