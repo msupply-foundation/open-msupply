@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import {
   RecordWithId,
   CellProps,
@@ -8,6 +8,7 @@ import {
   Box,
   useTranslation,
   InnerBasicCell,
+  DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
 } from '@openmsupply-client/common';
 import { useUnitVariant } from '../../context';
 
@@ -29,17 +30,25 @@ export const getPackUnitEntryCell =
     );
     const t = useTranslation();
     const [isEnterPackSize, setIsEnterPackSize] = useState(false);
+    const [shouldFocusInput, setShouldFocusInput] = useState(false);
     const [packSize, setPackSize] = useState(
       Number(column.accessor({ rowData }))
     );
 
     const updater = useDebounceCallback(column.setter, [column.setter], 250);
 
+    // Make sure manual pack size is auto selected on load if packSize does not match variant
+    useEffect(() => {
+      setIsEnterPackSize(
+        !variantsControl?.variants.some(v => v.packSize === packSize)
+      );
+    }, []);
+
     // This is shared between input with drop down and without drop down
     const numberInput = () => {
       return (
         <PositiveNumberInput
-          focusOnRender={isEnterPackSize}
+          focusOnRender={shouldFocusInput}
           value={packSize}
           onChange={newValue => {
             setPackSize(newValue || 1);
@@ -66,9 +75,14 @@ export const getPackUnitEntryCell =
         value: ENTER_PACK_SIZE,
       },
     ];
-
     return (
-      <Box display="flex" flexDirection="row" alignItems="center">
+      <Box
+        display="flex"
+        flexDirection="row"
+        alignItems="center"
+        minWidth={180 + DEFAULT_NUMERIC_TEXT_INPUT_WIDTH}
+      >
+        {/* reduce the chance that column changes size with minWidth */}
         <Select
           sx={{ flexGrow: 1, marginLeft: '-2px' }}
           options={options}
@@ -83,6 +97,7 @@ export const getPackUnitEntryCell =
 
             setPackSize(newPackSize);
             setIsEnterPackSize(isEnterPackSizeSelected);
+            setShouldFocusInput(isEnterPackSizeSelected);
             updater({ ...rowData, [column.key]: newPackSize });
           }}
         />
@@ -94,7 +109,11 @@ export const getPackUnitEntryCell =
           isEnterPackSize ? (
             numberInput()
           ) : (
-            <InnerBasicCell value={String(packSize)} />
+            /* reduce the chance that column changes size by matching width of input*/
+            <InnerBasicCell
+              width={DEFAULT_NUMERIC_TEXT_INPUT_WIDTH}
+              value={String(packSize)}
+            />
           )
         }
       </Box>

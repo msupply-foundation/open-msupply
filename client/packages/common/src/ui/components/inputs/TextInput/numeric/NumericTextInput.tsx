@@ -8,8 +8,19 @@ export interface NumericTextInputProps
   width?: number;
 }
 
+export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
+
 export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
-  ({ sx, InputProps, width = 75, onChange, ...props }, ref) => (
+  (
+    {
+      sx,
+      InputProps,
+      width = DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
+      onChange,
+      ...props
+    },
+    ref
+  ) => (
     <BasicTextInput
       ref={ref}
       sx={{
