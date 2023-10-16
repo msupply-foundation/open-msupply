@@ -28,9 +28,11 @@ export const BasicCell = <T extends RecordWithId>({
 export const InnerBasicCell = ({
   isError,
   value,
+  width
 }: {
   isError?: boolean;
   value: string;
+  width?: number;
 }): ReactElement => (
   <Box
     sx={{
@@ -42,6 +44,7 @@ export const InnerBasicCell = ({
   >
     <div
       style={{
+        width,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
       }}
