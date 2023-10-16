@@ -85,7 +85,7 @@ impl<'a> TemperatureBreachRepository<'a> {
                 }
             }
         } else {
-            query = query.order(temperature_breach_dsl::start_datetime.asc())
+            query = query.order(temperature_breach_dsl::start_datetime.desc())
         }
 
         let result = query
