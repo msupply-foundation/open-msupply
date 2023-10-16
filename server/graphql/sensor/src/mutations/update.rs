@@ -1,5 +1,6 @@
 use async_graphql::*;
 
+use graphql_core::generic_inputs::LocationInput;
 use graphql_core::{
     simple_generic_errors::{
         DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound,
@@ -9,6 +10,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::SensorNode;
+use service::sensor::LocationUpdate;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     sensor::update::{UpdateSensor, UpdateSensorError as ServiceError},
@@ -46,7 +48,7 @@ pub fn update_sensor(
 #[derive(InputObject)]
 pub struct UpdateSensorInput {
     pub id: String,
-    pub location_id: Option<String>,
+    pub location: Option<LocationInput>,
     pub name: Option<String>,
     pub is_active: Option<bool>,
 }
@@ -55,14 +57,18 @@ impl From<UpdateSensorInput> for UpdateSensor {
     fn from(
         UpdateSensorInput {
             id,
-            location_id,
+            location,
             name,
             is_active,
         }: UpdateSensorInput,
     ) -> Self {
         UpdateSensor {
             id,
-            location_id,
+            location: location.and_then(|location| {
+                Some(LocationUpdate {
+                    location_id: location.location_id,
+                })
+            }),
             name,
             is_active,
         }

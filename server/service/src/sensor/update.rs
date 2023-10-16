@@ -1,6 +1,7 @@
 use super::{
     query::get_sensor,
     validate::{check_location_on_hold, check_sensor_exists},
+    LocationUpdate,
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::{
@@ -20,7 +21,7 @@ pub struct UpdateSensor {
     pub id: String,
     pub name: Option<String>,
     pub is_active: Option<bool>,
-    pub location_id: Option<String>,
+    pub location: Option<LocationUpdate>,
 }
 
 pub fn update_sensor(
@@ -53,10 +54,10 @@ pub fn validate(
         return Err(UpdateSensorError::SensorDoesNotBelongToCurrentStore);
     }
 
-    if let Some(location_id) = &input.location_id {
-        // Check if location on hold only if location is not "none" value
-        // None passed from client is the unassignment of location from sensor node
-        if location_id != &"None".to_string() {
+    if let Some(location) = &input.location {
+        // First checks if location has been included in the update
+        if let Some(location_id) = &location.location_id {
+            // only check if location exists if not null has been passed
             match check_location_on_hold(&location_id, connection) {
                 Ok(true) => return Err(UpdateSensorError::LocationIsOnHold),
                 Err(e) => return Err(UpdateSensorError::DatabaseError(e)),
@@ -73,14 +74,15 @@ pub fn generate(
         id: _,
         name,
         is_active,
-        location_id,
+        location,
     }: UpdateSensor,
     mut sensor_row: SensorRow,
 ) -> SensorRow {
-    if location_id == Some("None".to_string()) {
-        sensor_row.location_id = None;
-    } else {
-        sensor_row.location_id = location_id;
+    // if location has been passed, update sensor_row to the value passed (including if this is null)
+    // A null value being passed as the LocationUpdate is the unassignment of location
+    // no LocationUpdate being passed is the location not being updated
+    if let Some(location) = location {
+        sensor_row.location_id = location.location_id;
     }
     sensor_row.name = name.unwrap_or(sensor_row.name);
     sensor_row.is_active = is_active.unwrap_or(sensor_row.is_active);
