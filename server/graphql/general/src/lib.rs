@@ -275,8 +275,12 @@ impl GeneralQueries {
         last_successful_user_sync(ctx)
     }
 
-    pub async fn item_variants_list(&self, _store_id: String) -> Vec<UnitVariantNode> {
-        item_variants_list(&_store_id)
+    pub async fn pack_units(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<PackUnitConnector> {
+        pack_units(ctx, &store_id)
     }
 }
 
