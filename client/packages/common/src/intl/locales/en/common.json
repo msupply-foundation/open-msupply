@@ -235,6 +235,8 @@
   "label.pack-quantity": "Pack Qty",
   "label.pack-quantity-issued": "Pack Qty Issued",
   "label.pack-size": "Pack Size",
+  "label.unit-variant-and-pack-size": "Unit Variant / Pack Size",
+  "label.enter-pack-size": "Enter pack size:",
   "label.patient": "Patient",
   "label.period": "Period",
   "label.phone": "Phone",

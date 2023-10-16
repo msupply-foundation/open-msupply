@@ -13,12 +13,17 @@ import {
   createQueryParamsStore,
   NonNegativeIntegerCell,
   CellProps,
+  getColumnLookupWithOverrides,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
   getLocationInputColumn,
   LocationRowFragment,
+  useInitUnitStore,
+  useUnitVariant,
 } from '@openmsupply-client/system';
+import { getPackUnitEntryCell } from '@openmsupply-client/system';
+import { InboundLineFragment } from '../../../api';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -68,12 +73,22 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
   />
 );
 
-export const QuantityTableComponent: FC<TableProps> = ({
-  lines,
-  updateDraftLine,
-  isDisabled = false,
-}) => {
+// If this is not extracted to it's own component and used directly in Cell:
+// cell will be re rendered anytime rowData changes, which causes it to loose focus
+// if number of packs is changed and tab is pressed (in quick succession)
+const PackUnitEntryCell = getPackUnitEntryCell<DraftInboundLine>({
+  getItemId: r => r.item.id,
+  getUnitName: r => r.item.unitName || null,
+});
+
+export const QuantityTableComponent: FC<
+  TableProps & { item: InboundLineFragment['item'] | null }
+> = ({ item, lines, updateDraftLine, isDisabled = false }) => {
+  // TODO this is not the right place for it, see comment in method
+  useInitUnitStore();
+  const { unitVariantsExist } = useUnitVariant(item?.id || '', null);
   const theme = useTheme();
+
   const columns = useColumns<DraftInboundLine>(
     [
       getBatchColumn(updateDraftLine, theme),
@@ -87,7 +102,13 @@ export const QuantityTableComponent: FC<TableProps> = ({
           setter: updateDraftLine,
         },
       ],
-      ['packSize', { Cell: NonNegativeIntegerCell, setter: updateDraftLine }],
+      getColumnLookupWithOverrides('packSize', {
+        label: unitVariantsExist
+          ? 'label.unit-variant-and-pack-size'
+          : 'label.pack-size',
+        Cell: PackUnitEntryCell,
+        setter: updateDraftLine,
+      }),
       [
         'unitQuantity',
         {

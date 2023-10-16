@@ -1,4 +1,4 @@
-import { ItemRowFragment } from 'packages/system/src';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 export { default as InvoiceService } from './InvoiceService';
 export { useOutbound } from './OutboundShipment/api';
@@ -10,3 +10,5 @@ export type Draft = {
   item?: DraftItem;
   barcode?: { id?: string; gtin: string; batch?: string };
 };
+
+export { DraftStockOutLine } from './types';

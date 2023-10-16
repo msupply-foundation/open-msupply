@@ -47,6 +47,14 @@ export type ColumnKey =
   | 'stockOnHand'
   | 'theirReference';
 
+export const getColumnLookupWithOverrides = <T extends RecordWithId>(
+  columnKey: ColumnKey,
+  overrides: Partial<ColumnDefinition<T>>
+): ColumnDefinition<T> => ({
+  ...getColumnLookup<T>()[columnKey],
+  ...overrides,
+});
+
 const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
   ColumnDefinition<T>

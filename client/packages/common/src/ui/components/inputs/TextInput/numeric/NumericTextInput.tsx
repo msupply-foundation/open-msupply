@@ -4,11 +4,23 @@ import { BasicTextInput } from '../BasicTextInput';
 export interface NumericTextInputProps
   extends Omit<StandardTextFieldProps, 'onChange'> {
   onChange?: (value: number | undefined) => void;
+  focusOnRender?: boolean;
   width?: number;
 }
 
+export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
+
 export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
-  ({ sx, InputProps, width = 75, onChange, ...props }, ref) => (
+  (
+    {
+      sx,
+      InputProps,
+      width = DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
+      onChange,
+      ...props
+    },
+    ref
+  ) => (
     <BasicTextInput
       ref={ref}
       sx={{

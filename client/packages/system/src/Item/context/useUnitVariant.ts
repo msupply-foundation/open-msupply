@@ -87,6 +87,7 @@ export const useUnitVariant = (
     activeVariant: VariantNode;
     setUserSelectedVariant: (variantId: string) => void;
   };
+  unitVariantsExist: boolean;
 } => {
   const [item, userSelectedVariantId, setUserSelectedVariant] = useUnitStore(
     state => [
@@ -102,6 +103,7 @@ export const useUnitVariant = (
     return {
       asPackUnit: packSize => commonAsPackUnit({ packSize, unitName, t }),
       numberOfPacksFromQuantity: totalQuantity => totalQuantity,
+      unitVariantsExist: false,
     };
   }
 
@@ -139,5 +141,6 @@ export const useUnitVariant = (
       setUserSelectedVariant: variantId =>
         setUserSelectedVariant({ itemId, variantId }),
     },
+    unitVariantsExist: true,
   };
 };
