@@ -34,7 +34,9 @@ export const getSensorQueries = (sdk: Sdk, storeId: string) => ({
         id: patch.id,
         isActive: patch.isActive,
         name: patch.name,
-        locationId: patch?.location?.id,
+        location: patch?.location
+          ? { locationId: patch.location.id }
+          : undefined,
       },
     });
 

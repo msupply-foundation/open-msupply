@@ -2282,6 +2282,10 @@ export type LocationInUse = DeleteLocationErrorInterface & {
   stockLines: StockLineConnector;
 };
 
+export type LocationInput = {
+  locationId?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type LocationIsOnHold = InsertOutboundShipmentLineErrorInterface & InsertPrescriptionLineErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdatePrescriptionLineErrorInterface & {
   __typename: 'LocationIsOnHold';
   description: Scalars['String']['output'];
@@ -5484,7 +5488,7 @@ export type UpdateSensorErrorInterface = {
 export type UpdateSensorInput = {
   id: Scalars['String']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<LocationInput>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 

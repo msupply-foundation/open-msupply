@@ -24,7 +24,7 @@ export type UpdateSensorMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateSensorMutation = { __typename: 'Mutations', updateSensor: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null } | { __typename: 'UpdateSensorError' } };
+export type UpdateSensorMutation = { __typename: 'Mutations', updateSensor: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null } | { __typename: 'UpdateSensorError' } };
 
 export const LocationRowFragmentDoc = gql`
     fragment LocationRow on LocationNode {
