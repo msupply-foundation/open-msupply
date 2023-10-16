@@ -37,10 +37,9 @@ export const Formatter = {
     return date && isValid(date) ? format(date, 'dd/MM/yyyy') : '';
   },
   milliseconds: (milliseconds: number): string => {
-    const hour = Math.floor(milliseconds / 3600000);
     const minute = Math.floor((milliseconds % 3600000) / 60000);
     const second = Math.floor(((milliseconds % 360000) % 60000) / 1000);
-    return `${hour}:${minute}:${second}`;
+    return `${minute}:${second}`;
   },
   sentenceCase: (str: string): string =>
     str

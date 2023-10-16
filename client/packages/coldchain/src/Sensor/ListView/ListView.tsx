@@ -70,6 +70,7 @@ export const SensorListView: FC = () => {
       {
         key: 'lastRecording',
         label: 'label.date-time',
+        description: 'description-last-reading-datetime',
         accessor: ({ rowData }) => {
           return Formatter.csvDateTimeString(
             rowData.latestTemperatureLog?.nodes[0]?.datetime
@@ -87,7 +88,8 @@ export const SensorListView: FC = () => {
       },
       {
         key: 'breach',
-        label: 'label.type',
+        label: 'label.breach-type',
+        description: 'description.breach-type',
         accessor: ({ rowData }) => rowData?.breach,
         Cell: BreachTypeCell,
         sortable: false,
