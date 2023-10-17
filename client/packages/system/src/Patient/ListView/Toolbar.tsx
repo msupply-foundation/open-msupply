@@ -58,28 +58,30 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               urlParameter: 'identifier',
               placeholder: t('placeholder.search-by-identifier'),
             },
-            // {
-            //   type: 'date',
-            //   name: 'Date',
-            //   urlParameter: 'dateSingle',
-            //   // placeholder: t('placeholder.search-by-identifier'),
-            // },
-            // {
-            //   type: 'group',
-            //   name: 'Date Range',
-            //   items: [
-            //     {
-            //       type: 'date',
-            //       name: 'From date',
-            //       urlParameter: 'dateRange',
-            //     },
-            //     {
-            //       type: 'date',
-            //       name: 'To date',
-            //       urlParameter: 'dateRange',
-            //     },
-            //   ],
-            // },
+            {
+              type: 'date',
+              name: 'Date',
+              urlParameter: 'dateSingle',
+              // placeholder: t('placeholder.search-by-identifier'),
+            },
+            {
+              type: 'group',
+              name: 'Date Range',
+              elements: [
+                {
+                  type: 'date',
+                  name: 'From date',
+                  urlParameter: 'dateRange',
+                  range: 'from',
+                },
+                {
+                  type: 'date',
+                  name: 'To date',
+                  urlParameter: 'dateRange',
+                  range: 'to',
+                },
+              ],
+            },
             // {
             //   type: 'dateRange',
             //   name: 'Date Range',

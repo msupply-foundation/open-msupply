@@ -13,7 +13,7 @@ import {
 import { useTranslation } from '@common/intl';
 import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
-// import { DateFilterDefinition, DateFilter } from './DateFilter';
+import { DateFilterDefinition, DateFilter } from './DateFilter';
 
 export interface FilterDefinitionCommon {
   name: string;
@@ -26,8 +26,10 @@ interface GroupFilterDefinition {
   elements: FilterDefinition[];
 }
 
-type FilterDefinition = TextFilterDefinition | EnumFilterDefinition;
-// | DateFilterDefinition;
+type FilterDefinition =
+  | TextFilterDefinition
+  | EnumFilterDefinition
+  | DateFilterDefinition;
 
 interface FilterDefinitions {
   filters: (FilterDefinition | GroupFilterDefinition)[];
@@ -175,17 +177,14 @@ const getFilterComponent = (
           remove={() => removeFilter(filter)}
         />
       );
-    // case 'date':
-    //   return (
-    //     <DateFilter
-    //       key={filter.urlParameter}
-    //       filterDefinition={filter}
-    //       remove={() => removeFilter(filter)}
-    //     />
-    //   );
-    // case 'group':
-    //   const { elements } = filter;
-    //   return elements.map(fil => getFilterComponent(fil, removeFilter));
+    case 'date':
+      return (
+        <DateFilter
+          key={filter.urlParameter}
+          filterDefinition={filter}
+          remove={() => removeFilter(filter)}
+        />
+      );
     default:
       return null;
   }

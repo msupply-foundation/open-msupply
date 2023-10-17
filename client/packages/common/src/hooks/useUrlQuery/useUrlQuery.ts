@@ -4,7 +4,7 @@ export interface UrlQueryObject {
   [key: string]: string | number | boolean | RangeObject;
 }
 
-interface RangeObject {
+export interface RangeObject {
   from?: string | number;
   to?: string | number;
 }
@@ -33,9 +33,12 @@ export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
         if (typeof value === 'object' && ('from' in value || 'to' in value)) {
           const range = parseRangeString(newQueryObject[key]) as RangeObject;
           const { from, to } = value;
-          if (from) range.from = from;
-          if (to) range.to = to;
-          newQueryObject[key] = stringifyRange(range);
+          if (from !== undefined) range.from = from;
+          if (to !== undefined) range.to = to;
+
+          const rangeString = stringifyRange(range);
+          if (rangeString === '') delete newQueryObject[key];
+          else newQueryObject[key] = stringifyRange(range);
         } else newQueryObject[key] = String(value);
       }
     });
@@ -70,12 +73,15 @@ const unStringify = (input: string | undefined) => {
   return input;
 };
 
-// Split a range string (e.g. "low:high") into a range object( {from: low, to:
+// Split a range string (e.g. "low_high") into a range object( {from: low, to:
 // high} )
 const parseRangeString = (value: string | undefined) => {
   if (!value) return { from: undefined, to: undefined };
   const values = value.split(RANGE_SPLIT_CHAR);
-  return { from: unStringify(values[0]), to: unStringify(values[1]) };
+  return {
+    from: unStringify(values[0]),
+    to: unStringify(values[1]),
+  } as RangeObject;
 };
 
 const stringifyRange = (range: RangeObject) => {
