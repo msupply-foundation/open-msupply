@@ -5,6 +5,7 @@ use actix_web::{
 };
 use log::error;
 use mime_guess::mime;
+use regex::Regex;
 use repository::RepositoryError;
 use service::{
     auth_data::AuthData,
@@ -20,14 +21,14 @@ pub struct Sensor {
     #[serde(rename = "macAddress")]
     mac_address: String,
     #[serde(rename = "logInterval")]
-    log_interval: u32,
+    log_interval: i32,
     #[serde(rename = "programmedDate")]
     programmed_date: usize,
     name: String,
     #[serde(rename = "logDelay")]
-    log_delay: Option<u32>,
+    log_delay: Option<i32>,
     #[serde(rename = "batteryLevel")]
-    battery_level: u32,
+    battery_level: i32,
 }
 
 pub async fn sensors(
@@ -36,24 +37,61 @@ pub async fn sensors(
     auth_data: Data<AuthData>,
     sensors: web::Json<Vec<Sensor>>,
 ) -> HttpResponse {
-    match validate_request(request, &service_provider, &auth_data) {
-        Ok((_user, store_id)) => {
-            match upsert_sensors(service_provider, store_id, sensors.into_inner()).await {
-                Ok(response) => response,
-                Err(error) => HttpResponse::InternalServerError().body(format!("{:#?}", error)),
-            }
-        }
+    let store_id = match validate_request(request, &service_provider, &auth_data) {
+        Ok((_user, store_id)) => store_id,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
-            HttpResponse::Unauthorized().body(formatted_error)
+            return HttpResponse::Unauthorized().body(formatted_error);
         }
+    };
+    let sensors = sensors.into_inner();
+    if !validate_input(&sensors) {
+        return HttpResponse::BadRequest().body("Expecting a body with the array of sensors");
+    };
+
+    match upsert_sensors(service_provider, store_id, &sensors).await {
+        Ok(response) => response,
+        Err(error) => HttpResponse::InternalServerError().body(format!("{:#?}", error)),
     }
+}
+
+fn validate_input(sensors: &Vec<Sensor>) -> bool {
+    sensors.into_iter().all(|sensor| validate_sensor(sensor))
+}
+
+fn validate_sensor(sensor: &Sensor) -> bool {
+    let mac_regex = Regex::new(r"^([A-F0-9]{2}:){5}[A-F0-9]{2}( \| [\w]*)?$").unwrap();
+
+    if !mac_regex.is_match(&sensor.mac_address) {
+        return false;
+    }
+    if sensor.log_interval < 1 {
+        return false;
+    }
+    if sensor.programmed_date < 1 {
+        return false;
+    }
+    if sensor.name.len() < 1 {
+        return false;
+    }
+    if sensor.battery_level < 1 || sensor.battery_level > 100 {
+        return false;
+    }
+    match sensor.log_delay {
+        Some(log_delay) => {
+            if log_delay < 1 {
+                return false;
+            }
+        }
+        None => {}
+    };
+    true
 }
 
 async fn upsert_sensors(
     service_provider: Data<ServiceProvider>,
     store_id: Option<String>,
-    sensors: Vec<Sensor>,
+    sensors: &Vec<Sensor>,
 ) -> Result<HttpResponse, RepositoryError> {
     let mut ctx = service_provider.basic_context()?;
     if store_id.is_some() {
@@ -65,10 +103,12 @@ async fn upsert_sensors(
     sensors.into_iter().for_each(|sensor| {
         if service.get_sensor(&ctx, sensor.id.clone()).is_ok() {
             let sensor = UpdateSensor {
-                id: sensor.id,
-                name: Some(sensor.name),
+                id: sensor.id.clone(),
+                name: Some(sensor.name.clone()),
                 is_active: Some(true),
                 location_id: None,
+                log_interval: Some(sensor.log_interval),
+                battery_level: Some(sensor.battery_level),
             };
             match service.update_sensor(&ctx, sensor) {
                 Ok(updated) => results.push(updated),
@@ -76,10 +116,12 @@ async fn upsert_sensors(
             }
         } else {
             let sensor = InsertSensor {
-                id: sensor.id,
-                serial: sensor.mac_address,
-                name: Some(sensor.name),
+                id: sensor.id.clone(),
+                serial: sensor.mac_address.clone(),
+                name: Some(sensor.name.clone()),
                 is_active: Some(true),
+                log_interval: Some(sensor.log_interval),
+                battery_level: Some(sensor.battery_level),
             };
             match service.insert_sensor(&ctx, sensor) {
                 Ok(inserted) => results.push(inserted),
