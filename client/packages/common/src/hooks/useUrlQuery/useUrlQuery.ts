@@ -10,7 +10,7 @@ export interface RangeObject {
 }
 
 // CONSTANTS
-const RANGE_SPLIT_CHAR = '_';
+export const RANGE_SPLIT_CHAR = '_';
 
 interface useUrlQueryProps {
   // an array of keys - the values of which should not be parsed before

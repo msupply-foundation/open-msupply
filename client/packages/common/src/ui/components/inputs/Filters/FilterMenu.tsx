@@ -178,13 +178,8 @@ const getFilterComponent = (
         />
       );
     case 'date':
-      return (
-        <DateFilter
-          key={filter.urlParameter}
-          filterDefinition={filter}
-          remove={() => removeFilter(filter)}
-        />
-      );
+    case 'dateTime':
+      return <DateFilter key={filter.urlParameter} filterDefinition={filter} />;
     default:
       return null;
   }

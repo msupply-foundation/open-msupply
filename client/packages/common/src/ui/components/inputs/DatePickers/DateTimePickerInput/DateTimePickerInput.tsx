@@ -1,8 +1,10 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
 import { BasicTextInput } from '../../TextInput/BasicTextInput';
 import { useAppTheme } from '@common/styles';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
+import { DateUtils, useTranslation } from '@common/intl';
+import { getFormattedDateError } from '../BaseDatePickerInput';
 
 const TextField = (params: TextFieldProps) => {
   const textInputProps: StandardTextFieldProps = {
@@ -14,15 +16,49 @@ const TextField = (params: TextFieldProps) => {
 };
 
 export const DateTimePickerInput: FC<
-  DateTimePickerProps<Date>
-> = (props) => {
+  Omit<DateTimePickerProps<Date>, 'onChange'> & {
+    error?: string | undefined;
+    width?: number | string;
+    label?: string;
+    onChange: (value: Date | null) => void;
+    onError?: (validationError: string, date?: Date | null) => void;
+    textFieldProps?: TextFieldProps;
+  }
+> = ({
+  error,
+  onChange,
+  onError,
+  width,
+  label,
+  textFieldProps,
+  format = 'dd/MM/yyyy HH:mm',
+  ...props
+}) => {
   const theme = useAppTheme();
+  const [internalError, setInternalError] = useState<string | null>(null);
+  const [isInitialEntry, setIsInitialEntry] = useState(true);
+  const t = useTranslation('common');
 
   return (
     <DateTimePicker
-      format="dd/MM/yyyy HH:mm"
+      format={format}
       slots={{
         textField: TextField,
+      }}
+      // onAccept={date => onChange(date)}
+      onChange={(date, context) => {
+        const { validationError } = context;
+
+        if (validationError) {
+          const translatedError = getFormattedDateError(t, validationError);
+          if (onError) onError(translatedError, date);
+          else setInternalError(validationError ? translatedError : null);
+        }
+        if (!validationError) {
+          setIsInitialEntry(false);
+          setInternalError(null);
+          onChange(date);
+        }
       }}
       slotProps={{
         popper: {
@@ -55,10 +91,22 @@ export const DateTimePickerInput: FC<
           },
         },
         textField: {
-          sx: { width: 250 },
+          error: !isInitialEntry && (!!error || !!internalError),
+          helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
+          onBlur: () => setIsInitialEntry(false),
+          label,
+          ...textFieldProps,
+          sx: {
+            width,
+            '& .MuiFormHelperText-root': {
+              color: 'error.main',
+            },
+            ...textFieldProps?.sx,
+          },
         },
       }}
       {...props}
+      value={DateUtils.getDateOrNull(props.value)}
     />
   );
 };
