@@ -92,7 +92,7 @@ export const DateTimePickerInput: FC<
           error: !isInitialEntry && (!!error || !!internalError),
           helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
           onBlur: e => {
-            onChange(new Date(e.target.value));
+            onChange(DateUtils.getDateOrNull(e.target.value, format));
             setIsInitialEntry(false);
           },
           label,
