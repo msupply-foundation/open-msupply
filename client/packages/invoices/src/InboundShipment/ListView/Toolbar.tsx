@@ -35,7 +35,6 @@ export const Toolbar: FC<{
           filter.onChangeStringFilterRule('otherPartyName', 'like', newValue)
         }
       />
-
       <DropdownMenu label="Select">
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
           {t('button.delete-lines')}

@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod query {
     use repository::mock::mock_store_a;
-    use repository::EqualFilter;
     use repository::{
         mock::MockDataInserts,
         sensor::{Sensor, SensorFilter, SensorRepository},
         test_db::setup_all,
         SensorRow,
     };
+    use repository::{EqualFilter, SensorType};
 
     use crate::{
         sensor::insert::{InsertSensor, InsertSensorError},
@@ -38,7 +38,8 @@ mod query {
                     id: mock_data["base"].sensors[0].id.clone(),
                     serial: "invalid".to_owned(),
                     name: None,
-                    is_active: None
+                    is_active: None,
+                    r#type: SensorType::BlueMaestro,
                 },
             ),
             Err(InsertSensorError::SensorAlreadyExists)
@@ -51,7 +52,8 @@ mod query {
                     id: "new_id".to_owned(),
                     serial: sensors_in_store[0].sensor_row.serial.clone(),
                     name: None,
-                    is_active: None
+                    is_active: None,
+                    r#type: SensorType::BlueMaestro,
                 },
             ),
             Err(InsertSensorError::SensorWithSerialAlreadyExists)
@@ -82,6 +84,7 @@ mod query {
                 battery_level: Some(99),
                 log_interval: Some(10),
                 last_connection_datetime: None,
+                r#type: SensorType::BlueMaestro,
             },
         };
 
@@ -92,7 +95,8 @@ mod query {
                     id: "new_id".to_owned(),
                     serial: "new_serial".to_owned(),
                     name: Some("new_name".to_owned()),
-                    is_active: None
+                    is_active: None,
+                    r#type: SensorType::BlueMaestro
                 },
             ),
             Ok(result_sensor.clone())
@@ -118,6 +122,7 @@ mod query {
                     serial: "store_b_sensor_serial".to_owned(),
                     name: Some("new_sensor_name".to_owned()),
                     is_active: Some(true),
+                    r#type: SensorType::BlueMaestro
                 },
             ),
             Ok(Sensor {
@@ -131,6 +136,7 @@ mod query {
                     battery_level: Some(99),
                     log_interval: Some(10),
                     last_connection_datetime: None,
+                    r#type: SensorType::BlueMaestro,
                 }
             })
         );

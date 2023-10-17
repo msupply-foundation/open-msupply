@@ -7,6 +7,8 @@ use crate::repository_error::RepositoryError;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 
 table! {
     sensor (id) {
@@ -19,6 +21,7 @@ table! {
         log_interval -> Nullable<Integer>,
         is_active -> Bool,
         last_connection_datetime -> Nullable<Timestamp>,
+        #[sql_name = "type"] type_ -> crate::db_diesel::sensor_row::SensorTypeMapping,
     }
 }
 
@@ -33,7 +36,22 @@ table! {
 joinable!(sensor -> store (store_id));
 joinable!(sensor -> location (location_id));
 
-#[derive(serde::Serialize, Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum SensorType {
+    BlueMaestro,
+    Laird,
+}
+
+pub fn get_sensor_type(serial: String) -> SensorType {
+    match serial.split('|').nth(1) {
+        Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
+        Some("LAIRD") => SensorType::Laird,
+        _ => SensorType::BlueMaestro,
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "sensor"]
 pub struct SensorRow {
@@ -46,6 +64,8 @@ pub struct SensorRow {
     pub log_interval: Option<i32>,
     pub is_active: bool,
     pub last_connection_datetime: Option<NaiveDateTime>,
+    #[column_name = "type_"]
+    pub r#type: SensorType,
 }
 
 impl Default for SensorRow {
@@ -60,6 +80,7 @@ impl Default for SensorRow {
             log_interval: None,
             is_active: false,
             last_connection_datetime: None,
+            r#type: SensorType::BlueMaestro,
         }
     }
 }

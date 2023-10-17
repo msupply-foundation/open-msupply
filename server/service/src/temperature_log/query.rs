@@ -1,7 +1,7 @@
 use repository::temperature_log::{
     TemperatureLog, TemperatureLogFilter, TemperatureLogRepository, TemperatureLogSort,
 };
-use repository::{EqualFilter, PaginationOption};
+use repository::{EqualFilter, PaginationOption, StorageConnection};
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
@@ -12,13 +12,13 @@ pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
 pub fn get_temperature_logs(
-    ctx: &ServiceContext,
+    connection: &StorageConnection,
     pagination: Option<PaginationOption>,
     filter: Option<TemperatureLogFilter>,
     sort: Option<TemperatureLogSort>,
 ) -> Result<ListResult<TemperatureLog>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = TemperatureLogRepository::new(&ctx.connection);
+    let repository = TemperatureLogRepository::new(&connection);
 
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,
