@@ -2,6 +2,21 @@ use crate::migrations::{DATETIME, DOUBLE};
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+    #[cfg(not(feature = "postgres"))]
+    const SENSOR_TYPE: &'static str = "TEXT";
+    #[cfg(feature = "postgres")]
+    const SENSOR_TYPE: &'static str = "sensor_type";
+    #[cfg(feature = "postgres")]
+    sql!(
+        connection,
+        r#"
+            CREATE TYPE {SENSOR_TYPE} AS ENUM (
+                'BLUE_MAESTRO',
+                'LAIRD'
+            );
+        "#
+    )?;
+
     sql!(
         connection,
         r#"
@@ -14,7 +29,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 location_id TEXT REFERENCES location(id),
                 battery_level INTEGER,
                 log_interval INTEGER,
-                last_connection_datetime {DATETIME}
+                last_connection_datetime {DATETIME},
+                type {SENSOR_TYPE}
             );
 
             CREATE TABLE temperature_breach_config (
@@ -182,13 +198,5 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             "#
         )?;
     }
-
-    sql!(
-        connection,
-        r#"
-            ALTER TABLE store_preference ADD COLUMN vaccine_module bool NOT NULL DEFAULT false;
-        "#
-    )?;
-
     Ok(())
 }

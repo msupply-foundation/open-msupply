@@ -33,6 +33,7 @@ import {
 } from '../Navigation';
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
+import { ColdChainNav } from '../Navigation/ColdChainNav';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -196,6 +197,7 @@ export const AppDrawer: React.FC = () => {
           <CatalogueNav />
           <InventoryNav />
           <DispensaryNav store={store} />
+          <ColdChainNav store={store} />
 
           {/* <AppNavLink
             to={AppRoute.Tools}
