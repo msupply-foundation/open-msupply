@@ -16,19 +16,21 @@ use crate::{
     validate::check_store_id_matches,
 };
 
-use super::validate::{
-    check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
-    stocktake_reduction_amount,
+use super::{
+    validate::{
+        check_active_adjustment_reasons, check_reason_is_valid,
+        check_stock_line_reduced_below_zero, stocktake_reduction_amount,
+    },
+    LocationUpdate,
 };
 
 #[derive(Default, Debug, Clone)]
 pub struct UpdateStocktakeLine {
     pub id: String,
-    pub location_id: Option<String>,
+    pub location: Option<LocationUpdate>,
     pub comment: Option<String>,
     pub snapshot_number_of_packs: Option<f64>,
     pub counted_number_of_packs: Option<f64>,
-
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: Option<u32>,
@@ -80,9 +82,11 @@ fn validate(
         return Err(InvalidStore);
     }
 
-    if let Some(location_id) = &input.location_id {
-        if !check_location_exists(connection, location_id)? {
-            return Err(LocationDoesNotExist);
+    if let Some(location) = &input.location {
+        if let Some(location_id) = &location.location_id {
+            if !check_location_exists(connection, location_id)? {
+                return Err(LocationDoesNotExist);
+            }
         }
     }
 
@@ -131,7 +135,7 @@ fn generate(
     existing: StocktakeLineRow,
     UpdateStocktakeLine {
         id: _,
-        location_id,
+        location,
         comment,
         snapshot_number_of_packs,
         counted_number_of_packs,
@@ -148,7 +152,11 @@ fn generate(
         id: existing.id,
         stocktake_id: existing.stocktake_id,
         stock_line_id: existing.stock_line_id,
-        location_id: location_id.or(existing.location_id),
+        location_id: if let Some(location) = location {
+            location.location_id
+        } else {
+            existing.location_id
+        },
         comment: comment.or(existing.comment),
 
         snapshot_number_of_packs: snapshot_number_of_packs
@@ -211,7 +219,10 @@ mod stocktake_line_test {
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake_line::update::{UpdateStocktakeLine, UpdateStocktakeLineError},
+        stocktake_line::{
+            update::{UpdateStocktakeLine, UpdateStocktakeLineError},
+            LocationUpdate,
+        },
     };
 
     #[actix_rt::test]
@@ -362,7 +373,9 @@ mod stocktake_line_test {
                 &context,
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id;
-                    r.location_id = Some("invalid".to_string());
+                    r.location = Some(LocationUpdate {
+                        location_id: Some("invalid".to_string()),
+                    });
                 }),
             )
             .unwrap_err();
@@ -450,7 +463,9 @@ mod stocktake_line_test {
                 &context,
                 inline_init(|r: &mut UpdateStocktakeLine| {
                     r.id = stocktake_line_a.id.clone();
-                    r.location_id = Some(location.id.clone());
+                    r.location = Some(LocationUpdate {
+                        location_id: Some(location.id.clone()),
+                    });
                     r.batch = Some("test_batch".to_string());
                     r.comment = Some("test comment".to_string());
                     r.cost_price_per_pack = Some(20.0);
