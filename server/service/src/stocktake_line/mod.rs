@@ -64,3 +64,9 @@ pub trait StocktakeLineServiceTrait: Sync + Send {
 
 pub struct StocktakeLineService {}
 impl StocktakeLineServiceTrait for StocktakeLineService {}
+
+#[derive(Clone, Debug, PartialEq)]
+
+pub struct LocationUpdate {
+    pub location_id: Option<String>,
+}
