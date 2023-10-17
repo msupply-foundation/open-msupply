@@ -35,6 +35,12 @@ pub struct TemperatureBreachFilter {
     pub location: Option<LocationFilter>,
 }
 
+impl EqualFilter<TemperatureBreachRowType> {
+    pub fn equal_to_breach_type(value: &TemperatureBreachRowType) -> Self {
+        inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub enum TemperatureBreachSortField {
     Id,
