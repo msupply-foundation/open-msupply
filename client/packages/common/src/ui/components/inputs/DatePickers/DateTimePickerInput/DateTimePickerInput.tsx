@@ -10,7 +10,6 @@ const TextField = (params: TextFieldProps) => {
   const textInputProps: StandardTextFieldProps = {
     ...params,
     variant: 'standard',
-    sx: { width: '150px', ...params.sx },
   };
   return <BasicTextInput {...textInputProps} />;
 };
@@ -45,7 +44,7 @@ export const DateTimePickerInput: FC<
       slots={{
         textField: TextField,
       }}
-      // onAccept={date => onChange(date)}
+      onAccept={onChange}
       onChange={(date, context) => {
         const { validationError } = context;
 
@@ -57,7 +56,6 @@ export const DateTimePickerInput: FC<
         if (!validationError) {
           setIsInitialEntry(false);
           setInternalError(null);
-          onChange(date);
         }
       }}
       slotProps={{
@@ -93,15 +91,18 @@ export const DateTimePickerInput: FC<
         textField: {
           error: !isInitialEntry && (!!error || !!internalError),
           helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
-          onBlur: () => setIsInitialEntry(false),
+          onBlur: e => {
+            onChange(new Date(e.target.value));
+            setIsInitialEntry(false);
+          },
           label,
           ...textFieldProps,
           sx: {
-            width,
             '& .MuiFormHelperText-root': {
               color: 'error.main',
             },
             ...textFieldProps?.sx,
+            width,
           },
         },
       }}
