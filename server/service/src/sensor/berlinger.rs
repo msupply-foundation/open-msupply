@@ -90,7 +90,17 @@ pub fn get_breaches_for_sensor(
     sensor_id: &str,
 ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
     TemperatureBreachRepository::new(connection).query_by_filter(
-        TemperatureBreachFilter::new().sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id))),
+        TemperatureBreachFilter::new().sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
+        .acknowledged(false),
+    )
+}
+
+pub fn get_breach_configs_for_sensor(
+    connection: &StorageConnection,
+    _sensor_id: &str,
+) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
+    TemperatureBreachConfigRepository::new(connection).query_by_filter(
+        TemperatureBreachConfigFilter::new().is_active(true),
     )
 }
 
@@ -178,7 +188,7 @@ fn sensor_add_breach_config_if_new(connection: &StorageConnection, sensor_row: &
             is_active: true,
             description: config_description.clone(),
             duration: temperature_breach_config.duration.num_seconds() as i32,
-            r#type: TemperatureBreachRowType::ColdConsecutive,
+            r#type: breach_row_type,
             minimum_temperature: temperature_breach_config.minimum_temperature,
             maximum_temperature: temperature_breach_config.maximum_temperature, 
         };
@@ -245,7 +255,19 @@ pub fn read_sensors(
             let sensor_id = &record.sensor_row.id;
             let last_connected = record.sensor_row.last_connection_datetime;
             temperature_sensor = temperature_sensor::filter_sensor(temperature_sensor, last_connected, None);           
-        
+            
+            let mut temperature_breach_configs = get_breach_configs_for_sensor(connection, sensor_id)?;
+            println!("{} temperature breach configs before",temperature_breach_configs.len());
+
+            if let Some(temperature_breach_configs) = temperature_sensor.configs {
+                for temperature_breach_config in temperature_breach_configs {
+                    sensor_add_breach_config_if_new(connection, &record.sensor_row, temperature_breach_config)?;
+                }
+            }
+            
+            temperature_breach_configs = get_breach_configs_for_sensor(connection, sensor_id)?;
+            println!("{} temperature breach configs after",temperature_breach_configs.len());
+
             let mut temperature_logs = get_logs_for_sensor(connection, sensor_id)?;
             println!("{} temperature logs before",temperature_logs.len());
 
