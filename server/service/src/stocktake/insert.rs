@@ -13,7 +13,7 @@ use crate::{
     validate::check_store_exists,
 };
 
-use super::query::get_stocktake;
+use super::{query::get_stocktake, LocationUpdate};
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct InsertStocktake {
@@ -23,7 +23,7 @@ pub struct InsertStocktake {
     pub stocktake_date: Option<NaiveDate>,
     pub is_locked: Option<bool>,
     pub master_list_id: Option<String>,
-    pub location_id: Option<String>,
+    pub location: Option<LocationUpdate>,
     pub items_have_stock: Option<bool>,
 }
 
@@ -84,7 +84,7 @@ fn validate(
     if !check_store_exists(connection, store_id)? {
         return Err(InsertStocktakeError::InvalidStore);
     }
-    if stocktake.master_list_id.is_some() && stocktake.location_id.is_some() {
+    if stocktake.master_list_id.is_some() && stocktake.location.is_some() {
         return Err(InsertStocktakeError::InvalidArguments);
     }
     if let Some(master_list_id) = &stocktake.master_list_id {
@@ -92,11 +92,14 @@ fn validate(
             return Err(InsertStocktakeError::InvalidMasterList);
         }
     }
-    if let Some(location_id) = &stocktake.location_id {
-        if !check_location_exists(connection, store_id, location_id)? {
-            return Err(InsertStocktakeError::InvalidLocation);
+    if let Some(location) = &stocktake.location {
+        if let Some(location) = &location.location_id {
+            if !check_location_exists(connection, store_id, location)? {
+                return Err(InsertStocktakeError::InvalidLocation);
+            }
         }
     }
+
     Ok(())
 }
 
@@ -110,7 +113,7 @@ fn generate(
         description,
         stocktake_date,
         is_locked,
-        location_id,
+        location,
         master_list_id,
         items_have_stock,
     }: InsertStocktake,
@@ -123,8 +126,13 @@ fn generate(
         }
         None => Vec::new(),
     };
-    let location_lines = match location_id {
-        Some(location_id) => generate_lines_from_location(connection, store_id, &id, &location_id)?,
+    let location_lines = match location {
+        Some(location) => match location.location_id {
+            Some(location_id) => {
+                generate_lines_from_location(connection, store_id, &id, &location_id)?
+            }
+            None => Vec::new(),
+        },
         None => Vec::new(),
     };
     let items_have_stock_lines = match items_have_stock {
@@ -411,7 +419,10 @@ mod test {
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake::insert::{InsertStocktake, InsertStocktakeError},
+        stocktake::{
+            insert::{InsertStocktake, InsertStocktakeError},
+            LocationUpdate,
+        },
     };
 
     #[actix_rt::test]
@@ -461,7 +472,7 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location_id: None,
+                    location: None,
                     master_list_id: None,
                     items_have_stock: None,
                 },
@@ -516,7 +527,7 @@ mod test {
                 description: Some("description".to_string()),
                 stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                 is_locked: Some(true),
-                location_id: None,
+                location: None,
                 master_list_id: Some("master_list_filter_test".to_string()),
                 items_have_stock: None,
             },
@@ -542,7 +553,7 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location_id: None,
+                    location: None,
                     master_list_id: Some(master_list_id.clone()),
                     items_have_stock: None,
                 },
@@ -591,7 +602,7 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location_id: None,
+                    location: None,
                     master_list_id: Some(master_list_id.clone()),
                     items_have_stock: None,
                 },
@@ -639,7 +650,9 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location_id: Some(location_id.clone()),
+                    location: Some(LocationUpdate {
+                        location_id: Some(location_id.clone()),
+                    }),
                     master_list_id: None,
                     items_have_stock: None,
                 },
@@ -676,7 +689,9 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location_id: Some(location_id.clone()),
+                    location: Some(LocationUpdate {
+                        location_id: Some(location_id.clone()),
+                    }),
                     master_list_id: None,
                     items_have_stock: None,
                 },
@@ -763,7 +778,7 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location_id: None,
+                    location: Some(LocationUpdate { location_id: None }),
                     master_list_id: None,
                     items_have_stock: None,
                 },
@@ -787,7 +802,7 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location_id: None,
+                    location: Some(LocationUpdate { location_id: None }),
                     master_list_id: None,
                     items_have_stock: Some(true),
                 },
