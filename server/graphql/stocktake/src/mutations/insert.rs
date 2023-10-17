@@ -106,9 +106,9 @@ impl InsertInput {
             description,
             stocktake_date,
             is_locked,
-            location: location.and_then(|locatioln| {
+            location: location.and_then(|location| {
                 Some(LocationUpdate {
-                    location_id: locatioln.location_id,
+                    location_id: location.location_id,
                 })
             }),
             master_list_id,

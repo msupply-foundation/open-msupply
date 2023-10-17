@@ -18,16 +18,16 @@ use crate::{
 use super::validate::{
     check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
 };
+use super::LocationUpdate;
 
 #[derive(Default, Debug, Clone)]
 pub struct InsertStocktakeLine {
     pub id: String,
     pub stocktake_id: String,
     pub stock_line_id: Option<String>,
-    pub location_id: Option<String>,
+    pub location: Option<LocationUpdate>,
     pub comment: Option<String>,
     pub counted_number_of_packs: Option<f64>,
-
     pub item_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
@@ -181,9 +181,13 @@ fn validate(
         }
     }
 
-    if let Some(location_id) = &input.location_id {
-        if !check_location_exists(connection, location_id)? {
-            return Err(LocationDoesNotExist);
+    if let Some(location) = &input.location {
+        // First checks if location has been included in the update
+        if let Some(location_id) = &location.location_id {
+            // only check if location exists if not null has been passed
+            if !check_location_exists(connection, &location_id)? {
+                return Err(LocationDoesNotExist);
+            }
         }
     }
 
@@ -224,7 +228,7 @@ fn generate(
         id,
         stocktake_id,
         stock_line_id,
-        location_id,
+        location,
         comment,
         counted_number_of_packs,
         item_id: _,
@@ -246,7 +250,10 @@ fn generate(
         id,
         stocktake_id,
         stock_line_id,
-        location_id,
+        location_id: match location {
+            Some(location) => location.location_id,
+            None => None,
+        },
         comment,
         snapshot_number_of_packs,
         counted_number_of_packs,
@@ -306,7 +313,10 @@ mod stocktake_line_test {
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake_line::insert::{InsertStocktakeLine, InsertStocktakeLineError},
+        stocktake_line::{
+            insert::{InsertStocktakeLine, InsertStocktakeLineError},
+            LocationUpdate,
+        },
     };
 
     #[actix_rt::test]
@@ -502,7 +512,9 @@ mod stocktake_line_test {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
-                    r.location_id = Some("invalid".to_string());
+                    r.location = Some(LocationUpdate {
+                        location_id: Some("invalid".to_string()),
+                    });
                     r.counted_number_of_packs = Some(17.0);
                 }),
             )

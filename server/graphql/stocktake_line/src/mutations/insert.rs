@@ -1,12 +1,14 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
+use graphql_core::generic_inputs::LocationInput;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::StockLineReducedBelowZero;
 use graphql_types::types::StocktakeLineNode;
 use repository::StocktakeLine;
+use service::stocktake_line::LocationUpdate;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     stocktake_line::{
@@ -22,7 +24,7 @@ pub struct InsertInput {
     pub id: String,
     pub stocktake_id: String,
     pub stock_line_id: Option<String>,
-    pub location_id: Option<String>,
+    pub location: Option<LocationInput>,
     pub comment: Option<String>,
     pub counted_number_of_packs: Option<f64>,
     pub item_id: Option<String>,
@@ -140,7 +142,7 @@ impl InsertInput {
             id,
             stocktake_id,
             stock_line_id,
-            location_id,
+            location,
             comment,
             counted_number_of_packs,
             item_id,
@@ -157,7 +159,11 @@ impl InsertInput {
             id,
             stocktake_id,
             stock_line_id,
-            location_id,
+            location: location.and_then(|location| {
+                Some(LocationUpdate {
+                    location_id: location.location_id,
+                })
+            }),
             comment,
             counted_number_of_packs,
             item_id,
