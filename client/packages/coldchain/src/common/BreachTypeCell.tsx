@@ -5,7 +5,6 @@ import {
   SnowflakeIcon,
   SunIcon,
   Typography,
-  useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
 
@@ -14,7 +13,6 @@ export const BreachTypeCell = <T extends RecordWithId>({
   column,
 }: CellProps<T>): ReactElement => {
   const t = useTranslation('coldchain');
-  const theme = useTheme();
 
   const breachType = column.accessor({
     rowData,
@@ -27,10 +25,7 @@ export const BreachTypeCell = <T extends RecordWithId>({
       {breachType && (
         <Typography
           sx={{
-            color:
-              temperature === 'HOT'
-                ? theme.palette.warning.main
-                : theme.palette.secondary.dark,
+            color: temperature === 'HOT' ? 'warning.main' : 'secondary.dark',
             display: 'flex',
             gap: '2px',
           }}
