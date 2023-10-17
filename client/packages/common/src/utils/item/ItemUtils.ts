@@ -7,7 +7,7 @@ export const useItemUtils = () => {
     skipParse: ['codeOrName'],
   });
 
-  const itemFilter = urlQuery.codeOrName ?? '';
+  const itemFilter = (urlQuery['codeOrName'] as string) ?? '';
 
   const setItemFilter = (itemFilter: string) =>
     updateQuery({ codeOrName: itemFilter });
