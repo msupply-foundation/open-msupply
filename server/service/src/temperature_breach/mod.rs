@@ -5,19 +5,19 @@ use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::temperature_breach::{
     TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort,
 };
-use repository::PaginationOption;
+use repository::{PaginationOption, StorageConnection};
 
 pub mod query;
 
 pub trait TemperatureBreachServiceTrait: Sync + Send {
     fn get_temperature_breaches(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         pagination: Option<PaginationOption>,
         filter: Option<TemperatureBreachFilter>,
         sort: Option<TemperatureBreachSort>,
     ) -> Result<ListResult<TemperatureBreach>, ListError> {
-        get_temperature_breaches(ctx, pagination, filter, sort)
+        get_temperature_breaches(connection, pagination, filter, sort)
     }
 
     fn get_temperature_breach(
