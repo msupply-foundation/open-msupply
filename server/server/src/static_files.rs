@@ -1,4 +1,5 @@
 use std::io::ErrorKind;
+use std::sync::Mutex;
 
 use actix_files as fs;
 use actix_web::error::InternalError;
@@ -7,7 +8,8 @@ use actix_web::web::Data;
 use actix_web::{guard, web, Error, HttpRequest, HttpResponse};
 use reqwest::StatusCode;
 use serde::Deserialize;
-use service::plugin_files::PluginFileService;
+use service::plugin::plugin_files::PluginFileService;
+use service::plugin::validation::ValidatedPluginBucket;
 use service::settings::Settings;
 use service::static_files::StaticFileService;
 
@@ -51,18 +53,27 @@ async fn files(
     Ok(response)
 }
 
-async fn plugins(req: HttpRequest, settings: Data<Settings>) -> Result<HttpResponse, Error> {
+async fn plugins(
+    req: HttpRequest,
+    settings: Data<Settings>,
+    plugin_bucket: Data<Mutex<ValidatedPluginBucket>>,
+) -> Result<HttpResponse, Error> {
     let path = req.match_info();
     let plugin = path
         .get("plugin")
         .ok_or(std::io::Error::new(ErrorKind::NotFound, "Plugin not found"))?;
     let filename = path.get("filename");
 
-    let file = PluginFileService::find_file(&settings.server.base_dir, plugin, filename)
-        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
-        .ok_or(std::io::Error::new(ErrorKind::NotFound, "Plugin not found"))?;
+    let file = PluginFileService::find_file(
+        plugin_bucket.as_ref(),
+        &settings.server.base_dir,
+        plugin,
+        filename,
+    )
+    .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
+    .ok_or(std::io::Error::new(ErrorKind::NotFound, "Plugin not found"))?;
 
-    let response = fs::NamedFile::open(file.path)?
+    let response = fs::NamedFile::open(file)?
         .set_content_type("application/javascript; charset=utf-8".parse().unwrap())
         .into_response(&req);
 

@@ -22,6 +22,32 @@ pub struct Manifest {
     pub signature: ManifestSignatureInfo,
 }
 
+impl Manifest {
+    /// Validates that the file matches the file in the manifest and returns its content
+    /// # Arguments:
+    /// * `filename`: filename as listed in the manifest
+    /// * `file_path`: path to the matching file
+    pub(crate) fn read_and_validate_file(
+        &self,
+        filename: &str,
+        file_path: &PathBuf,
+    ) -> anyhow::Result<Option<String>> {
+        let Some(manifest_file_hash) = self.files.get(filename) else {
+            return Ok(None);
+        };
+
+        let content = fs::read_to_string(&file_path)?;
+        let mut hasher = Sha256::new();
+        hasher.update(content.as_bytes());
+        let file_hash = hex::encode(hasher.finalize());
+
+        if manifest_file_hash != &file_hash {
+            return Ok(None);
+        }
+        Ok(Some(content))
+    }
+}
+
 pub(crate) fn create_manifest(
     plugin_path: &Path,
     signature: ManifestSignatureInfo,
