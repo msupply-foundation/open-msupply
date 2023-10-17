@@ -36,9 +36,9 @@ export const BreachTypeCell = <T extends RecordWithId>({
           }}
         >
           {temperature === 'HOT' ? (
-            <SunIcon stroke={theme.palette.warning.main} />
+            <SunIcon sx={{ stroke: 'warning.main' }} />
           ) : (
-            <SnowflakeIcon stroke={theme.palette.secondary.dark} />
+            <SnowflakeIcon sx={{ stroke: 'secondary.dark' }} />
           )}
           {type === 'CUMULATIVE'
             ? t('label.cumulative')

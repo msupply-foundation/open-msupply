@@ -6,6 +6,7 @@ fragment TemperatureBreach on TemperatureBreachNode {
   endDatetime
   startDatetime
   type
+  maxOrMinTemperature
 
   sensor {
     ...Sensor
@@ -13,11 +14,6 @@ fragment TemperatureBreach on TemperatureBreachNode {
 
   location {
     ...LocationRow
-  }
-
-  temperatureLog {
-    id
-    temperature
   }
 }
 

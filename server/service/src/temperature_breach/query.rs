@@ -1,7 +1,11 @@
 use repository::temperature_breach::{
     TemperatureBreach, TemperatureBreachFilter, TemperatureBreachRepository, TemperatureBreachSort,
 };
-use repository::{EqualFilter, PaginationOption, StorageConnection};
+use repository::{
+    EqualFilter, PaginationOption, RepositoryError, StorageConnection,
+    TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLogFilter,
+    TemperatureLogRepository,
+};
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
@@ -39,5 +43,34 @@ pub fn get_temperature_breach(
         Ok(record)
     } else {
         Err(SingleRecordError::NotFound(id))
+    }
+}
+
+pub fn get_max_or_min_breach_temperature(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Option<f64>, RepositoryError> {
+    let breach = TemperatureBreachRowRepository::new(&connection)
+        .find_one_by_id(id)?
+        .ok_or(RepositoryError::NotFound)?;
+    let logs =
+        TemperatureLogRepository::new(&connection)
+            .query_by_filter(TemperatureLogFilter::new().temperature_breach(
+                TemperatureBreachFilter::new().id(EqualFilter::equal_to(id)),
+            ))?;
+
+    match breach.r#type {
+        TemperatureBreachRowType::HotConsecutive | TemperatureBreachRowType::HotCumulative => {
+            Ok(logs
+                .iter()
+                .map(|log| log.temperature_log_row.temperature)
+                .max_by(|a, b| a.partial_cmp(b).unwrap()))
+        }
+        TemperatureBreachRowType::ColdConsecutive | TemperatureBreachRowType::ColdCumulative => {
+            Ok(logs
+                .iter()
+                .map(|log| log.temperature_log_row.temperature)
+                .min_by(|a, b| a.partial_cmp(b).unwrap()))
+        }
     }
 }
