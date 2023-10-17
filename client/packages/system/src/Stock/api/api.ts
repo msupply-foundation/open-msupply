@@ -36,7 +36,11 @@ const stockLineParsers = {
     patch: RecordPatch<StockLineRowFragment>
   ): UpdateStockLineInput => ({
     id: patch?.id,
-    locationId: patch.locationId,
+    location: patch?.location
+      ? {
+          locationId: patch.location.id == 'null' ? null : patch.location.id,
+        }
+      : undefined,
     costPricePerPack: patch.costPricePerPack,
     sellPricePerPack: patch.sellPricePerPack,
     expiryDate: patch.expiryDate,

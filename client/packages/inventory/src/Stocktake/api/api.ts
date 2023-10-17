@@ -48,7 +48,11 @@ const stocktakeParser = {
       id: line.id,
     }),
     toUpdate: (line: DraftStocktakeLine): UpdateStocktakeLineInput => ({
-      locationId: line.location?.id,
+      location: line.location
+        ? {
+            locationId: line.location.id == 'null' ? null : line.location.id,
+          }
+        : undefined,
       batch: line.batch ?? '',
       packSize: line.packSize ?? 1,
       costPricePerPack: line.costPricePerPack,
@@ -62,7 +66,11 @@ const stocktakeParser = {
       inventoryAdjustmentReasonId: line.inventoryAdjustmentReason?.id,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
-      locationId: line.location?.id,
+      location: line.location
+        ? {
+            locationId: line.location.id == 'null' ? null : line.location.id,
+          }
+        : undefined,
       batch: line.batch ?? '',
       packSize: line.packSize ?? 1,
       costPricePerPack: line.costPricePerPack,

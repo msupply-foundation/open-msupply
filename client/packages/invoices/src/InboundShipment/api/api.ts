@@ -97,7 +97,11 @@ const inboundParsers = {
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
-      locationId: line.location?.id,
+      location: line.location
+        ? {
+            locationId: line.location.id == 'null' ? null : line.location.id,
+          }
+        : undefined,
     };
   },
   toUpdateLine: (line: DraftInboundLine): UpdateInboundShipmentLineInput => ({
@@ -111,7 +115,11 @@ const inboundParsers = {
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
-    locationId: line.location?.id,
+    location: line.location
+      ? {
+          locationId: line.location.id == 'null' ? null : line.location.id,
+        }
+      : undefined,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
