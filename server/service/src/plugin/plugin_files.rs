@@ -1,5 +1,7 @@
 use std::{fs, path::PathBuf, str::FromStr, sync::Mutex};
 
+use serde::Deserialize;
+
 use crate::settings::is_develop;
 
 use super::{validation::ValidatedPluginBucket, PLUGIN_FILE_DIR};
@@ -20,30 +22,31 @@ pub struct PluginFileService {
     pub dir: PathBuf,
 }
 
+#[derive(Deserialize)]
+pub struct PluginInfo {
+    plugin: String,
+    filename: String,
+}
+
 impl PluginFileService {
     /// Returns the path to the file
     pub fn find_file(
         plugin_bucket: &Mutex<ValidatedPluginBucket>,
         base_dir: &Option<String>,
-        plugin: &str,
-        filename: Option<&str>,
+        PluginInfo { plugin, filename }: &PluginInfo,
     ) -> anyhow::Result<Option<PathBuf>> {
         let plugin_base_dir = get_plugin_dir(base_dir)?;
         let plugin_dir = plugin_base_dir.join(plugin);
-        let filename = match filename {
-            Some(filename) => filename.to_string(),
-            None => format!("{}.js", plugin).clone(),
-        };
-        let file_path = plugin_dir.join(&filename);
+        let file_path = plugin_dir.join(filename);
 
-        let Some(_) = read_plugin_file(plugin_bucket, &plugin_dir, &filename, &file_path)? else {
+        let Some(_) = read_plugin_file(plugin_bucket, &plugin_dir, filename, &file_path)? else {
             return Ok(None);
         };
 
         Ok(Some(file_path))
     }
 
-    pub fn find_files(
+    pub fn plugin_files(
         plugin_bucket: &Mutex<ValidatedPluginBucket>,
         base_dir: &Option<String>,
     ) -> anyhow::Result<Vec<PluginFile>> {
