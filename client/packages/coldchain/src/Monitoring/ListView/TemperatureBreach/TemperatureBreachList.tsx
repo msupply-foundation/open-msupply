@@ -102,9 +102,9 @@ const ListView: FC = () => {
         key: 'temperature',
         label: 'label.temperature',
         accessor: ({ rowData }) => {
-          return `${rowData.temperatureLog?.temperature}${t(
-            'label.temperature-unit'
-          )}`;
+          return !!rowData.maxOrMinTemperature
+            ? `${rowData.maxOrMinTemperature}${t('label.temperature-unit')}`
+            : null;
         },
       },
     ],

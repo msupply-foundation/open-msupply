@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
-    loader::{LocationByIdLoader, SensorByIdLoader, TemperatureLogByBreachIdLoader},
+    loader::{LocationByIdLoader, SensorByIdLoader},
     map_filter,
     simple_generic_errors::NodeError,
     ContextExt,
@@ -16,9 +16,11 @@ use repository::{
     },
     DatetimeFilter, EqualFilter, TemperatureBreachRow, TemperatureBreachRowType,
 };
-use service::{usize_to_u32, ListResult};
+use service::{
+    temperature_breach::query::get_max_or_min_breach_temperature, usize_to_u32, ListResult,
+};
 
-use super::{LocationFilterInput, LocationNode, SensorFilterInput, SensorNode, TemperatureLogNode};
+use super::{LocationFilterInput, LocationNode, SensorFilterInput, SensorNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum TemperatureBreachNodeType {
@@ -145,13 +147,11 @@ impl TemperatureBreachNode {
             .map(LocationNode::from_domain))
     }
 
-    pub async fn temperature_log(&self, ctx: &Context<'_>) -> Result<Option<TemperatureLogNode>> {
-        let loader = ctx.get_loader::<DataLoader<TemperatureLogByBreachIdLoader>>();
-
-        Ok(loader
-            .load_one(self.row().id.clone())
-            .await?
-            .map(TemperatureLogNode::from_domain))
+    pub async fn max_or_min_temperature(&self, ctx: &Context<'_>) -> Result<Option<f64>> {
+        Ok(get_max_or_min_breach_temperature(
+            &ctx.get_connection_manager().connection()?,
+            &self.row().id,
+        )?)
     }
 }
 
