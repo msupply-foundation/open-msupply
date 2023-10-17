@@ -38,7 +38,7 @@ export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
 
           const rangeString = stringifyRange(range);
           if (rangeString === '') delete newQueryObject[key];
-          else newQueryObject[key] = stringifyRange(range);
+          else newQueryObject[key] = rangeString;
         } else newQueryObject[key] = String(value);
       }
     });
