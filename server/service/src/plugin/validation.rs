@@ -18,8 +18,8 @@ use x509_parser::prelude::{FromDer, X509Certificate};
 
 use super::manifest::{create_manifest, Manifest, ManifestSignatureInfo};
 use super::{
-    CERTIFICATE_TAG, MANIFEST_FILE, MANIFEST_SIGNATURE_FILE, PLUGIN_FILE_DIR, PRIVATE_KEY_TAG,
-    SHA256_NAME, SIGNATURE_TAG, VERIFICATION_ALGO_PSS,
+    CERTIFICATE_TAG, MANIFEST_FILE, MANIFEST_SIGNATURE_FILE, PLUGIN_CERT_DIR, PLUGIN_FILE_DIR,
+    PRIVATE_KEY_TAG, SHA256_NAME, SIGNATURE_TAG, VERIFICATION_ALGO_PSS,
 };
 
 #[derive(Clone)]
@@ -39,8 +39,6 @@ pub struct ValidatedPluginBucket {
     /// Mapping the absolute plugin to a ValidatedPlugin
     manifests: HashMap<String, ValidatedPlugin>,
 }
-
-const PLUGIN_CERT_DIR: &str = "plugin_certs";
 
 impl ValidatedPluginBucket {
     pub fn new(base_dir: &Option<String>) -> anyhow::Result<Self> {
