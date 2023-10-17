@@ -83,7 +83,7 @@ enum Action {
 
     SignPlugin {
         /// Path to the plugin.
-        /// The plugin signature will be placed into the plugin directory
+        /// The plugin manifest and signature will be placed into the plugin directory
         #[clap(short, long)]
         path: String,
 
@@ -91,6 +91,7 @@ enum Action {
         #[clap(short, long)]
         key: String,
 
+        /// Path to the certificate file matching the private key
         #[clap(short, long)]
         cert: String,
     },
