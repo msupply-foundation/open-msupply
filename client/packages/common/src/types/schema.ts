@@ -4875,10 +4875,10 @@ export type TemperatureBreachNode = {
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
+  maxOrMinTemperature?: Maybe<Scalars['Float']['output']>;
   sensor?: Maybe<SensorNode>;
   sensorId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
-  temperatureLog?: Maybe<TemperatureLogNode>;
   type: TemperatureBreachNodeType;
 };
 
