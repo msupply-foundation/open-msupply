@@ -43,7 +43,7 @@ pub enum SensorType {
     Laird,
 }
 
-pub fn get_sensor_type(serial: String) -> SensorType {
+pub fn get_sensor_type(serial: &String) -> SensorType {
     match serial.split('|').nth(1) {
         Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
         Some("LAIRD") => SensorType::Laird,
