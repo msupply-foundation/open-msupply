@@ -38,7 +38,7 @@ const ListView: FC = () => {
           return !rowData?.acknowledged ? (
             <CircleAlertIcon
               fill={theme.palette.error.main}
-              sx={{ color: '#fff' }}
+              sx={{ color: 'background.white' }}
             />
           ) : null;
         },
@@ -90,6 +90,7 @@ const ListView: FC = () => {
         accessor: ({ rowData }) => {
           return Formatter.milliseconds(rowData.duration);
         },
+        sortable: false,
       },
       {
         key: 'breach',
@@ -102,10 +103,11 @@ const ListView: FC = () => {
         key: 'temperature',
         label: 'label.temperature',
         accessor: ({ rowData }) => {
-          return `${rowData.temperatureLog?.temperature}${t(
-            'label.temperature-unit'
-          )}`;
+          return !!rowData.maxOrMinTemperature
+            ? `${rowData.maxOrMinTemperature}${t('label.temperature-unit')}`
+            : null;
         },
+        sortable: false,
       },
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
