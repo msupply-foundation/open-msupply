@@ -92,7 +92,7 @@ impl SyncTranslation for SensorTranslation {
         });
 
         let serial = serial.split(" |").nth(0).unwrap_or_default().to_string();
-        let r#type = get_sensor_type(serial);
+        let r#type = get_sensor_type(&serial);
 
         let result = SensorRow {
             id,

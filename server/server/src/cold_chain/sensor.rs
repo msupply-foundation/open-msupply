@@ -122,7 +122,7 @@ async fn upsert_sensors(
                 is_active: Some(true),
                 log_interval: Some(sensor.log_interval),
                 battery_level: Some(sensor.battery_level),
-                r#type: get_sensor_type(sensor.mac_address.clone()),
+                r#type: get_sensor_type(&sensor.mac_address),
             };
             match service.insert_sensor(&ctx, sensor) {
                 Ok(inserted) => results.push(inserted),
