@@ -4594,6 +4594,7 @@ dependencies = [
  "mime_guess",
  "openssl",
  "rcgen",
+ "regex",
  "repository",
  "reqwest",
  "rust-embed",
