@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::settings::is_develop;
 
-use super::{validation::ValidatedPluginBucket, PLUGIN_FILE_DIR};
+use super::{validation::ValidatedPluginBucket, PLUGIN_FILE, PLUGIN_FILE_DIR};
 
 #[derive(Debug, PartialEq)]
 pub struct PluginFile {
@@ -15,8 +15,6 @@ pub struct PluginFile {
     /// Path of the plugin file relative to the plugin dir, e.g. `Dashboard/plugin.json`
     pub path: String,
 }
-
-const PLUGIN_FILE_NAME: &'static str = "plugin.json";
 
 pub struct PluginFileService {
     pub dir: PathBuf,
@@ -59,13 +57,13 @@ impl PluginFileService {
             if !plugin_dir.is_dir() {
                 continue;
             }
-            let file_path = plugin_dir.join(PLUGIN_FILE_NAME);
+            let file_path = plugin_dir.join(PLUGIN_FILE);
             if !file_path.clone().exists() {
                 continue;
             }
 
             let Some(config) =
-                read_plugin_file(plugin_bucket, &plugin_dir, PLUGIN_FILE_NAME, &file_path)?
+                read_plugin_file(plugin_bucket, &plugin_dir, PLUGIN_FILE, &file_path)?
             else {
                 continue;
             };
@@ -77,7 +75,7 @@ impl PluginFileService {
 
             files.push(PluginFile {
                 config,
-                path: format!("{}/{}", plugin_name, PLUGIN_FILE_NAME),
+                path: format!("{}/{}", plugin_name, PLUGIN_FILE),
                 name: plugin_name,
             });
         }
