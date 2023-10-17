@@ -1485,7 +1485,7 @@ export type InsertInboundShipmentLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<LocationInput>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Int']['input'];
   sellPricePerPack: Scalars['Float']['input'];
@@ -1838,7 +1838,7 @@ export type InsertStocktakeInput = {
   id: Scalars['String']['input'];
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<LocationInput>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
@@ -1861,7 +1861,7 @@ export type InsertStocktakeLineInput = {
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<LocationInput>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -5079,7 +5079,7 @@ export type UpdateInboundShipmentLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<LocationInput>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -5510,7 +5510,7 @@ export type UpdateStockLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<LocationInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
 };
@@ -5552,7 +5552,7 @@ export type UpdateStocktakeLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<LocationInput>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
