@@ -152,6 +152,7 @@ impl SyncTranslation for SensorTranslation {
         let r#type = match r#type {
             SensorType::BlueMaestro => "BLUE_MAESTRO",
             SensorType::Laird => "LAIRD",
+            SensorType::Berlinger => "BERLINGER",
         }
         .to_string();
 

@@ -1517,6 +1517,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "derivative"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.100",
+]
+
+[[package]]
 name = "derive_builder"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3026,6 +3037,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "json"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "078e285eafdfb6c4b434e0d31e8cfcb5115b651496faca5749b88fafd4f23bfd"
+
+[[package]]
 name = "jsonschema"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4231,6 +4248,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "rs-drivelist"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f978042716f80a3323d09a63b1ed292b37b6d3225da1148fc8d355e2db9edfc"
+dependencies = [
+ "anyhow",
+ "derivative",
+ "json",
+ "regex",
+ "winapi",
+]
+
+[[package]]
 name = "rust-embed"
 version = "6.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4637,6 +4667,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "simple-log",
+ "temperature-sensor",
  "tera",
  "thiserror",
  "tokio",
@@ -4904,6 +4935,18 @@ dependencies = [
  "quote",
  "syn 1.0.100",
  "unicode-xid",
+]
+
+[[package]]
+name = "temperature-sensor"
+version = "0.1.0"
+source = "git+https://github.com/openmsupply/temperature-sensor.git#7ec3f48402d06e76d556c4bc59bc575651aefa8f"
+dependencies = [
+ "chrono",
+ "json",
+ "rand",
+ "rs-drivelist",
+ "serde_json",
 ]
 
 [[package]]

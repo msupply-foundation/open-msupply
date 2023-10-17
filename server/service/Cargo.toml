@@ -35,6 +35,9 @@ pretty_assertions = "1.3.0"
 flate2 = "1.0.26"
 simple-log = { version = "1.6" }
 
+# dependencies for temperature_sensor
+temperature-sensor = {git = "https://github.com/openmsupply/temperature-sensor.git" }
+
 [dev-dependencies]
 actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
