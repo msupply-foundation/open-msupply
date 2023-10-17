@@ -309,12 +309,12 @@ fn validate_document_undelete(
         None => "",
     };
 
-    let deleted_document_parent =
-        match DocumentRepository::new(connection).find_one_by_id(&parent.clone()) {
-            Ok(Some(doc)) => doc,
-            Ok(None) => return Err(DocumentUndeleteError::ParentDoesNotExist),
-            Err(err) => return Err(DocumentUndeleteError::DatabaseError(err)),
-        };
+    let deleted_document_parent = match DocumentRepository::new(connection).find_one_by_id(&parent)
+    {
+        Ok(Some(doc)) => doc,
+        Ok(None) => return Err(DocumentUndeleteError::ParentDoesNotExist),
+        Err(err) => return Err(DocumentUndeleteError::DatabaseError(err)),
+    };
 
     Ok(deleted_document_parent)
 }
