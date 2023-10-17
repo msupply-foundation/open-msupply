@@ -3,6 +3,7 @@ use std::convert::TryFrom;
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::time::SystemTime;
 
 use pem::Pem;
@@ -17,8 +18,8 @@ use x509_parser::prelude::{FromDer, X509Certificate};
 
 use super::manifest::{create_manifest, Manifest, ManifestSignatureInfo};
 use super::{
-    CERTIFICATE_TAG, MANIFEST_FILE, MANIFEST_SIGNATURE_FILE, PRIVATE_KEY_TAG, SHA256_NAME,
-    SIGNATURE_TAG, VERIFICATION_ALGO_PSS,
+    CERTIFICATE_TAG, MANIFEST_FILE, MANIFEST_SIGNATURE_FILE, PLUGIN_FILE_DIR, PRIVATE_KEY_TAG,
+    SHA256_NAME, SIGNATURE_TAG, VERIFICATION_ALGO_PSS,
 };
 
 #[derive(Clone)]
@@ -29,26 +30,38 @@ pub struct ValidatedPlugin {
     pub manifest: Manifest,
 }
 
+#[derive(Clone)]
 pub struct ValidatedPluginBucket {
     /// plugin base directory
-    plugin_dir: String,
+    plugin_dir: PathBuf,
     /// Dir containing all trusted public plugin certs
-    trusted_cert_path: String,
+    trusted_cert_path: PathBuf,
     /// Mapping the absolute plugin to a ValidatedPlugin
     manifests: HashMap<String, ValidatedPlugin>,
 }
 
+const PLUGIN_CERT_DIR: &str = "plugin_certs";
+
 impl ValidatedPluginBucket {
-    pub fn new(plugin_dir: String, trusted_cert_path: String) -> Self {
-        ValidatedPluginBucket {
+    pub fn new(base_dir: &Option<String>) -> anyhow::Result<Self> {
+        let plugin_dir = match base_dir {
+            Some(base_dir) => PathBuf::from_str(base_dir)?.join(PLUGIN_FILE_DIR),
+            None => PathBuf::from_str(PLUGIN_FILE_DIR)?,
+        };
+        let trusted_cert_path = match base_dir {
+            Some(base_dir) => PathBuf::from_str(base_dir)?.join(PLUGIN_CERT_DIR),
+            None => PathBuf::from_str(PLUGIN_CERT_DIR)?,
+        };
+
+        Ok(ValidatedPluginBucket {
             plugin_dir,
             trusted_cert_path,
             manifests: HashMap::new(),
-        }
+        })
     }
 
-    pub fn validate_plugin(&mut self, path: String) -> anyhow::Result<ValidatedPlugin> {
-        let path = PathBuf::from(&path).canonicalize()?;
+    pub fn validate_plugin(&mut self, path: &PathBuf) -> anyhow::Result<ValidatedPlugin> {
+        let path = path.canonicalize()?;
         let path_string = path.as_os_str().to_string_lossy().to_string();
         if let Some(plugin) = self.manifests.get(&path_string) {
             let metadata = File::open(path.join(MANIFEST_FILE))?.metadata()?;
@@ -61,7 +74,7 @@ impl ValidatedPluginBucket {
             return Ok(plugin.clone());
         }
         Err(anyhow::Error::msg(format!(
-            "Failed validated plugin: {:?}",
+            "Failed to validate plugin: {:?}",
             path
         )))
     }
@@ -73,6 +86,7 @@ impl ValidatedPluginBucket {
         let walker = WalkDir::new(&self.plugin_dir).max_depth(1);
         for entry in walker {
             let entry = entry?;
+
             // be conservative and take manifest the timestamp before validating the plugin
             let manifest_path = entry.path().join(MANIFEST_FILE);
             if !manifest_path.exists() {
@@ -156,19 +170,13 @@ pub fn sign_plugin(
     out_file.write_all(signature_pem.as_bytes())?;
 
     // Double check that we can verify the plugin (not strictly needed)
-    let trusted_certs = load_trusted_certs_from_dir(
-        &PathBuf::from(public_cert_path)
-            .parent()
-            .unwrap()
-            .as_os_str()
-            .to_string_lossy()
-            .to_string(),
-    )?;
+    let trusted_certs =
+        load_trusted_certs_from_dir(&PathBuf::from(public_cert_path).parent().unwrap())?;
     verify_plugin_manifest(plugin_path, &trusted_certs)?;
     Ok(())
 }
 
-fn load_trusted_certs_from_dir(cert_path: &str) -> anyhow::Result<HashMap<String, Pem>> {
+fn load_trusted_certs_from_dir(cert_path: &Path) -> anyhow::Result<HashMap<String, Pem>> {
     let walker = WalkDir::new(cert_path);
     let mut out = HashMap::<String, Pem>::new();
     for entry in walker {

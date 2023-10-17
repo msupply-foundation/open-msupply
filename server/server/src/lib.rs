@@ -19,6 +19,7 @@ use repository::{get_storage_connection_manager, migrations::migrate};
 
 use service::{
     auth_data::AuthData,
+    plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
@@ -27,7 +28,7 @@ use service::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 pub mod certs;
 pub mod configuration;
@@ -201,12 +202,17 @@ pub async fn start_server(
             false => "initialisation",
         }
     );
+
+    let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
+    let validated_plugins = Data::new(Mutex::new(validated_plugins));
+
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
             connection_manager: Data::new(connection_manager),
             loader_registry: Data::new(LoaderRegistry { loaders }),
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
+            validated_plugins: validated_plugins.clone(),
             auth,
         },
         is_operational,
@@ -273,7 +279,7 @@ pub async fn start_server(
             .wrap(cors_policy(&closure_settings))
             .wrap(compress_middleware())
             // needed for static files service
-            .app_data(Data::new(closure_settings.clone()))
+            .app_data(validated_plugins.clone())
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
             .configure(config_server_frontend)
