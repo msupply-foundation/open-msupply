@@ -135,7 +135,13 @@ impl LoginService {
         };
         service_ctx.user_id = user_account.id.clone();
 
-        activity_log_entry(&service_ctx, ActivityLogType::UserLoggedIn, None, None)?;
+        activity_log_entry(
+            &service_ctx,
+            ActivityLogType::UserLoggedIn,
+            None,
+            None,
+            None,
+        )?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
@@ -315,8 +321,10 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
                 output.insert(Permission::SensorQuery);
             }
             // stock line
+            // stock line & stocktake lines
             Permissions::ViewStock => {
                 output.insert(Permission::StockLineQuery);
+                output.insert(Permission::StocktakeQuery);
             }
             Permissions::EditStock => {
                 output.insert(Permission::StockLineMutate);
@@ -330,10 +338,6 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             }
             Permissions::DeleteStocktake => {
                 output.insert(Permission::StocktakeMutate);
-            }
-            // stocktake lines
-            Permissions::ViewStocktakeLines => {
-                output.insert(Permission::StocktakeQuery);
             }
             Permissions::AddStocktakeLines => {
                 output.insert(Permission::StocktakeMutate);

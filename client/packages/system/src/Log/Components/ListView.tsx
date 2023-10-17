@@ -42,8 +42,15 @@ export const LogList: FC<{ recordId: string }> = ({ recordId }) => {
         }),
     },
     {
-      key: 'event',
+      key: 'changeDetails',
       label: 'label.details',
+      accessor: ({ rowData }) => {
+        if (rowData?.from && rowData.to) {
+          return `[${rowData.from}] ${t('log.changed-to')} [${rowData.to}]`;
+        } else if (rowData?.from) {
+          return `${t('log.changed-from')} [${rowData.from}]`;
+        }
+      },
     },
   ]);
 
