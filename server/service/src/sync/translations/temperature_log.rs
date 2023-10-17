@@ -52,9 +52,9 @@ impl SyncTranslation for TemperatureLogTranslation {
         PullDependency {
             table: LegacyTableName::TEMPERATURE_LOG,
             dependencies: vec![
+                LegacyTableName::STORE,
                 LegacyTableName::LOCATION,
                 LegacyTableName::SENSOR,
-                LegacyTableName::STORE,
             ],
         }
     }
