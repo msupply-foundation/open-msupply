@@ -6,7 +6,7 @@ use actix_web::{
 use log::error;
 use mime_guess::mime;
 use regex::Regex;
-use repository::RepositoryError;
+use repository::{get_sensor_type, RepositoryError};
 use service::{
     auth_data::AuthData,
     sensor::{insert::InsertSensor, update::UpdateSensor},
@@ -122,6 +122,7 @@ async fn upsert_sensors(
                 is_active: Some(true),
                 log_interval: Some(sensor.log_interval),
                 battery_level: Some(sensor.battery_level),
+                r#type: get_sensor_type(sensor.mac_address.clone()),
             };
             match service.insert_sensor(&ctx, sensor) {
                 Ok(inserted) => results.push(inserted),
