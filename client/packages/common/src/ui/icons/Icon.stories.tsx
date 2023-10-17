@@ -33,8 +33,9 @@ import { InfoIcon } from './Info';
 import { InfoOutlineIcon } from './InfoOutline';
 import { InvoiceIcon } from './Invoice';
 import { LinkIcon } from './Link';
-import { MedicineIcon } from './MedicineIcon';
+import { ListIcon } from './List';
 import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
+import { MedicineIcon } from './MedicineIcon';
 import { MenuDotsIcon } from './MenuDots';
 import { MessagesIcon } from './Messages';
 import { MessageSquareIcon } from './MessageSquare';
@@ -43,9 +44,9 @@ import { PlusCircleIcon } from './PlusCircle';
 import { PowerIcon } from './Power';
 import { PrinterIcon } from './Printer';
 import { RadioIcon } from './Radio';
+import { RefreshIcon } from './Refresh';
 import { ReportsIcon } from './Reports';
 import { RewindIcon } from './Rewind';
-import { RefreshIcon } from './Refresh';
 import { SaveIcon } from './Save';
 import { ScanIcon } from './Scan';
 import { SearchIcon } from './Search';
@@ -55,6 +56,7 @@ import { SortAscIcon } from './SortAsc';
 import { SortDescIcon } from './SortDesc';
 import { StockIcon } from './Stock';
 import { SuppliersIcon } from './Suppliers';
+import { ThermometerIcon } from './Thermometer';
 import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
 import { TruckIcon } from './Truck';
@@ -92,6 +94,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <CartIcon {...args} />, name: 'Cart' },
     { icon: <CheckIcon {...args} />, name: 'Check' },
     { icon: <CheckboxCheckedIcon {...args} />, name: 'CheckboxChecked' },
+    { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },
     {
       icon: <CheckboxIndeterminateIcon {...args} />,
       name: 'Checkbox Indeterminate',
@@ -118,6 +121,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <InfoOutlineIcon {...args} />, name: 'InfoOutline' },
     { icon: <InvoiceIcon {...args} />, name: 'Invoice' },
     { icon: <LinkIcon {...args} />, name: 'Link' },
+    { icon: <ListIcon {...args} />, name: 'List' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     {
       icon: <AnimatedMSupplyGuy {...args} size="medium" />,
@@ -144,6 +148,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <SortDescIcon {...args} />, name: 'SortDesc' },
     { icon: <StockIcon {...args} />, name: 'Stock' },
     { icon: <SuppliersIcon {...args} />, name: 'Suppliers' },
+    { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
     { icon: <TruckIcon {...args} />, name: 'Truck' },

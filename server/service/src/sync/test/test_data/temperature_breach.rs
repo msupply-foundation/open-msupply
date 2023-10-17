@@ -78,7 +78,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             start_date: NaiveDate::from_ymd_opt(2023, 7, 1).unwrap(),
             start_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             end_date: Some(NaiveDate::from_ymd_opt(2023, 7, 2).unwrap()),
-            end_time: Some(NaiveTime::from_hms_opt(13, 4, 6).unwrap()),
+            end_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
         }),
     }]
 }
