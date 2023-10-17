@@ -9,7 +9,7 @@ use std::time::SystemTime;
 use pem::Pem;
 use rsa::pkcs8::{DecodePrivateKey, DecodePublicKey};
 use rsa::pss::{Signature, SigningKey, VerifyingKey};
-use rsa::sha2::{Digest, Sha256};
+use rsa::sha2::Sha256;
 use rsa::signature::{RandomizedSigner, SignatureEncoding, Verifier};
 use rsa::{RsaPrivateKey, RsaPublicKey};
 
@@ -128,14 +128,10 @@ pub fn sign_plugin(
     let plugin_path = Path::new(plugin_path);
     // public cert
     let cert_data = fs::read_to_string(public_cert_path)?;
-    let pem = pem::parse(cert_data)?;
+    let pem = pem::parse(&cert_data)?;
     if pem.tag() != CERTIFICATE_TAG {
         return Err(anyhow::Error::msg("Not a certificate"));
     }
-    let mut hasher = Sha256::new();
-    hasher.update(pem.contents());
-    let fingerprint = hex::encode(hasher.finalize());
-
     // private key
     let key_data = fs::read_to_string(key_path)?;
     let pem = pem::parse(key_data)?;
@@ -148,7 +144,7 @@ pub fn sign_plugin(
     let manifest = create_manifest(
         plugin_path,
         ManifestSignatureInfo {
-            fingerprint,
+            cert: cert_data,
             algo: VERIFICATION_ALGO_PSS.to_string(),
             hash: SHA256_NAME.to_string(),
         },
@@ -176,9 +172,9 @@ pub fn sign_plugin(
     Ok(())
 }
 
-fn load_trusted_certs_from_dir(cert_path: &Path) -> anyhow::Result<HashMap<String, Pem>> {
+fn load_trusted_certs_from_dir(cert_path: &Path) -> anyhow::Result<Vec<Pem>> {
     let walker = WalkDir::new(cert_path);
-    let mut out = HashMap::<String, Pem>::new();
+    let mut out = Vec::<Pem>::new();
     for entry in walker {
         let entry = entry?;
         let metadata = entry.metadata()?;
@@ -204,33 +200,43 @@ fn load_trusted_certs_from_dir(cert_path: &Path) -> anyhow::Result<HashMap<Strin
             continue;
         }
 
-        let mut hasher = Sha256::new();
-        hasher.update(pem.contents());
-        let fingerprint = hex::encode(hasher.finalize());
-        out.insert(fingerprint, pem);
+        out.push(pem);
     }
     Ok(out)
 }
 
+fn verify_manifest_certificate(
+    manifest_cert: &X509Certificate,
+    trusted_certs: &Vec<Pem>,
+) -> anyhow::Result<bool> {
+    for trusted_cert in trusted_certs {
+        let trusted_certificate = X509Certificate::from_der(trusted_cert.contents())?;
+        let public_key = trusted_certificate.1.public_key();
+        match manifest_cert.verify_signature(Some(public_key)) {
+            Ok(_) => return Ok(true),
+            Err(_) => continue,
+        }
+    }
+    Ok(false)
+}
+
 fn verify_plugin_manifest(
     plugin_path: &Path,
-    trusted_certs: &HashMap<String, Pem>,
+    trusted_certs: &Vec<Pem>,
 ) -> anyhow::Result<Manifest> {
     let manifest_raw = fs::read_to_string(PathBuf::from(plugin_path).join(MANIFEST_FILE))?;
     let manifest: Manifest = serde_json::from_str(&manifest_raw)?;
 
-    let cert_pem = trusted_certs
-        .iter()
-        .find(|cert| &manifest.signature.fingerprint == cert.0);
-    let Some(cert_pem) = cert_pem else {
-        return Err(anyhow::Error::msg("No matching trusted certificate"));
-    };
+    let pem = pem::parse(&manifest.signature.cert)?;
+    if pem.tag() != CERTIFICATE_TAG {
+        return Err(anyhow::Error::msg("Not a certificate"));
+    }
+    let manifest_cert = X509Certificate::from_der(pem.contents())?.1;
+    if !verify_manifest_certificate(&manifest_cert, trusted_certs)? {
+        return Err(anyhow::Error::msg("Plugin certificate is not trusted"));
+    }
 
-    // Verify the signature using provided key
-    let certificate = X509Certificate::from_der(cert_pem.1.contents())?;
-    let public_key = certificate.1.public_key();
-    certificate.1.verify_signature(Some(public_key))?;
-
+    // Load the manifest signature
     let manifest_signature =
         fs::read_to_string(PathBuf::from(plugin_path).join(MANIFEST_SIGNATURE_FILE))?;
     let manifest_signature = pem::parse(manifest_signature)?;
@@ -239,6 +245,8 @@ fn verify_plugin_manifest(
     }
 
     // Verify
+    // Manifest cert is now trusted. Use the manifest cert's public key to validate the manifest
+    let public_key = manifest_cert.public_key();
     let _ = match public_key.parsed()? {
         x509_parser::public_key::PublicKey::RSA(_) => {
             verify_rsa_signature(
