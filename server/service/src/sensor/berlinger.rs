@@ -50,9 +50,10 @@ pub fn get_matching_sensor_breach_config(
     breach_type: &TemperatureBreachRowType,
 ) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
 
-    let filter = TemperatureBreachConfigFilter::new()
+        let filter = TemperatureBreachConfigFilter::new()
         .description(EqualFilter::equal_to(description))
-        .r#type(EqualFilter::equal_to_breach_type(&breach_type));
+        .r#type(EqualFilter::equal_to_breach_type(&breach_type))
+        .is_active(true);
 
     TemperatureBreachConfigRepository::new(connection)
         .query_by_filter(filter)
@@ -104,15 +105,15 @@ pub fn get_breach_configs_for_sensor(
     )
 }
 
-fn sensor_add_log_if_new(connection: &StorageConnection, sensor_row: &SensorRow, temperature_log: temperature_sensor::TemperatureLog) -> Result<(), RepositoryError> {
+fn sensor_add_log_if_new(connection: &StorageConnection, sensor_row: &SensorRow, temperature_log: &temperature_sensor::TemperatureLog) -> Result<(), RepositoryError> {
 
     let result = get_matching_sensor_log(connection, &sensor_row.id, temperature_log.timestamp)?;
 
-    if let Some(record) = result.clone().pop() {
-        println!("Sensor log {:?} exists in DB: {:?}", temperature_log, record);
+    if let Some(_record) = result.clone().pop() {
+        //println!("Sensor log {:?} exists in DB: {:?}", temperature_log, record);
         Ok(())
     } else {
-        println!("Sensor log {:?} does not exist in DB", temperature_log);
+        //println!("Sensor log {:?} does not exist in DB", temperature_log);
 
         let new_temperature_log = TemperatureLogRow {
             id: uuid(),
@@ -124,23 +125,23 @@ fn sensor_add_log_if_new(connection: &StorageConnection, sensor_row: &SensorRow,
             temperature_breach_id: None,
         };
         TemperatureLogRowRepository::new(connection).upsert_one(&new_temperature_log)?;
-        println!("added sensor log {:?} ",new_temperature_log);
+        println!("Added sensor log {:?} ",new_temperature_log);
         Ok(())
     }
     
 }
 
-fn sensor_add_breach_if_new(connection: &StorageConnection, sensor_row: &SensorRow, temperature_breach: temperature_sensor::TemperatureBreach) -> Result<(), RepositoryError> {
+fn sensor_add_breach_if_new(connection: &StorageConnection, sensor_row: &SensorRow, temperature_breach: &temperature_sensor::TemperatureBreach, breach_config: &temperature_sensor::TemperatureBreachConfig) -> Result<(), RepositoryError> {
 
     let breach_row_type = get_breach_row_type(&temperature_breach.breach_type);
     let result = get_matching_sensor_breach(connection, &sensor_row.id, temperature_breach.start_timestamp, temperature_breach.end_timestamp, &breach_row_type)?;
 
-    if let Some(record) = result.clone().pop() {
-        println!("Sensor breach {:?} exists in DB: {:?}", temperature_breach, record);
+    if let Some(_record) = result.clone().pop() {
+        //println!("Sensor breach {:?} exists in DB: {:?}", temperature_breach, record);
         Ok(())
     } else {
-        println!("Sensor breach {:?} does not exist in DB", temperature_breach);
-
+        //println!("Sensor breach {:?} does not exist in DB", temperature_breach);
+        
         let new_temperature_breach = TemperatureBreachRow {
             id: uuid(),
             store_id: sensor_row.store_id.clone(),
@@ -151,36 +152,36 @@ fn sensor_add_breach_if_new(connection: &StorageConnection, sensor_row: &SensorR
             acknowledged: false,
             duration: temperature_breach.duration.num_seconds() as i32,
             r#type: breach_row_type,
-            threshold_duration: 3600,
-            threshold_minimum: -273.0,
-            threshold_maximum: 2.0,  
+            threshold_duration: breach_config.duration.num_seconds() as i32,
+            threshold_minimum: breach_config.minimum_temperature,
+            threshold_maximum: breach_config.maximum_temperature,  
         };
         TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
-        println!("added sensor breach {:?} ",new_temperature_breach);
+        println!("Added sensor breach {:?} ",new_temperature_breach);
         Ok(())
     }
     
 }
 
-fn sensor_add_breach_config_if_new(connection: &StorageConnection, sensor_row: &SensorRow, temperature_breach_config: temperature_sensor::TemperatureBreachConfig) -> Result<(), RepositoryError> {
+fn sensor_add_breach_config_if_new(connection: &StorageConnection, sensor_row: &SensorRow, temperature_breach_config: &temperature_sensor::TemperatureBreachConfig) -> Result<(), RepositoryError> {
 
-    let mut config_description = format!("More than {} seconds", temperature_breach_config.duration.num_seconds());
+    let mut config_description = format!("for {} minutes", temperature_breach_config.duration.num_minutes());
     let breach_row_type = get_breach_row_type(&temperature_breach_config.breach_type);
 
     match temperature_breach_config.breach_type {
-        BreachType::ColdConsecutive |
-        BreachType::ColdCumulative => {config_description = format!("{} colder than {}",config_description,temperature_breach_config.minimum_temperature)} 
-        BreachType::HotConsecutive |
-        BreachType::HotCumulative => {config_description = format!("{} hotter than {}",config_description,temperature_breach_config.maximum_temperature)} 
+        BreachType::ColdConsecutive => {config_description = format!("Consecutive {} colder than {}",config_description,temperature_breach_config.minimum_temperature)}
+        BreachType::ColdCumulative => {config_description = format!("Cumulative {} colder than {}",config_description,temperature_breach_config.minimum_temperature)} 
+        BreachType::HotConsecutive => {config_description = format!("Consecutive {} hotter than {}",config_description,temperature_breach_config.maximum_temperature)}
+        BreachType::HotCumulative => {config_description = format!("Cumulative {} hotter than {}",config_description,temperature_breach_config.maximum_temperature)} 
     }
 
     let result = get_matching_sensor_breach_config(connection, &config_description, &breach_row_type)?;
 
-    if let Some(record) = result.clone().pop() {
-        println!("Sensor breach config {:?} exists in DB: {:?}", temperature_breach_config, record);
+    if let Some(_record) = result.clone().pop() {
+        //println!("Sensor breach config {:?} exists in DB: {:?}", temperature_breach_config, record);
         Ok(())
     } else {
-        println!("Sensor breach config {:?} does not exist in DB", temperature_breach_config);
+        //println!("Sensor breach config {:?} does not exist in DB", temperature_breach_config);
 
         let new_temperature_breach_config = TemperatureBreachConfigRow {
             id: uuid(),
@@ -193,7 +194,7 @@ fn sensor_add_breach_config_if_new(connection: &StorageConnection, sensor_row: &
             maximum_temperature: temperature_breach_config.maximum_temperature, 
         };
         TemperatureBreachConfigRowRepository::new(connection).upsert_one(&new_temperature_breach_config)?;
-        println!("added sensor breach config {:?} ",new_temperature_breach_config);
+        println!("Added sensor breach config {:?} ",new_temperature_breach_config);
         Ok(())
     }
     
@@ -203,11 +204,11 @@ fn sensor_add_if_new(connection: &StorageConnection, store_id: &str, temperature
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
-    if let Some(record) = result.clone().pop() {
-        println!("Sensor {:?} exists in DB: {:?}", &temperature_sensor.serial, record);
+    if let Some(_record) = result.clone().pop() {
+        //println!("Sensor {:?} exists in DB: {:?}", &temperature_sensor.serial, record);
         Ok(())
     } else {
-        println!("Sensor {:?} does not exist in DB", &temperature_sensor.serial);
+        //println!("Sensor {:?} does not exist in DB", &temperature_sensor.serial);
 
         let mut interval_seconds = None;
         if let Some(interval_duration) = temperature_sensor.log_interval {
@@ -227,7 +228,7 @@ fn sensor_add_if_new(connection: &StorageConnection, store_id: &str, temperature
             r#type: SensorType::Berlinger,
         };
         SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
-        println!("added sensor {:?} ",new_sensor);
+        println!("Added sensor {:?} ",new_sensor);
         Ok(())
     }
     
@@ -259,29 +260,52 @@ pub fn read_sensors(
             let mut temperature_breach_configs = get_breach_configs_for_sensor(connection, sensor_id)?;
             println!("{} temperature breach configs before",temperature_breach_configs.len());
 
-            if let Some(temperature_breach_configs) = temperature_sensor.configs {
-                for temperature_breach_config in temperature_breach_configs {
-                    sensor_add_breach_config_if_new(connection, &record.sensor_row, temperature_breach_config)?;
+            if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
+                for temperature_sensor_config in temperature_sensor_configs {
+                    sensor_add_breach_config_if_new(connection, &record.sensor_row, temperature_sensor_config)?;
                 }
             }
             
             temperature_breach_configs = get_breach_configs_for_sensor(connection, sensor_id)?;
             println!("{} temperature breach configs after",temperature_breach_configs.len());
 
+            let mut temperature_breaches = get_breaches_for_sensor(connection, sensor_id)?;
+            println!("{} temperature breaches before",temperature_breaches.len());
+
+            if let Some(temperature_sensor_breaches) = &temperature_sensor.breaches {
+                for temperature_sensor_breach in temperature_sensor_breaches {
+
+                    println!("Read breach: {:?}",temperature_sensor_breach);
+                    if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
+
+
+
+
+                        if let Some(temperature_sensor_config) = temperature_sensor_configs.iter().find(|&t| t.breach_type == temperature_sensor_breach.breach_type) {
+                            println!("Matching config found {:?} for breach {:?}",temperature_sensor_config, temperature_sensor_breach);
+                        }
+                        
+                    }
+                    
+                    
+                    //sensor_add_breach_if_new(connection, &record.sensor_row, &temperature_sensor_breach, &temperature_sensor_config)?;
+                }
+            }
+            
+            temperature_breaches = get_breaches_for_sensor(connection, sensor_id)?;
+            println!("{} temperature breaches after",temperature_breaches.len());
+
             let mut temperature_logs = get_logs_for_sensor(connection, sensor_id)?;
             println!("{} temperature logs before",temperature_logs.len());
 
-            if let Some(temperature_logs) = temperature_sensor.logs {
-                for temperature_log in temperature_logs {
-                    sensor_add_log_if_new(connection, &record.sensor_row, temperature_log)?;
+            if let Some(temperature_sensor_logs) = &temperature_sensor.logs {
+                for temperature_sensor_log in temperature_sensor_logs {
+                    sensor_add_log_if_new(connection, &record.sensor_row, temperature_sensor_log)?;
                 }
             }
             
             temperature_logs = get_logs_for_sensor(connection, sensor_id)?;
             println!("{} temperature logs after",temperature_logs.len());
-            
-            let temperature_breaches = get_breaches_for_sensor(connection, sensor_id)?;
-            println!("and with {} temperature breaches",temperature_breaches.len());
             
             record.sensor_row.last_connection_datetime = temperature_sensor.last_connected_timestamp;
             SensorRowRepository::new(connection).upsert_one(&record.sensor_row)?;
