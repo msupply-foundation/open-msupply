@@ -41,6 +41,7 @@ joinable!(sensor -> location (location_id));
 pub enum SensorType {
     BlueMaestro,
     Laird,
+    Berlinger,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
