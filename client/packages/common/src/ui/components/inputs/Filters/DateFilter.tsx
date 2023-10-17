@@ -38,7 +38,7 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   );
 
   const dateTimeFormat =
-    type === 'dateTime' ? 'yyyy-MM-dd HH:MM' : 'yyyy-MM-dd';
+    type === 'dateTime' ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd';
 
   const handleChange = (selection: Date | null) => {
     if (range) {
