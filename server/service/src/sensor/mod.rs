@@ -13,6 +13,7 @@ use repository::PaginationOption;
 pub mod insert;
 pub mod query;
 pub mod update;
+pub mod berlinger;
 mod validate;
 
 pub trait SensorServiceTrait: Sync + Send {
