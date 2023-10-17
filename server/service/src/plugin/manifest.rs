@@ -10,8 +10,8 @@ use super::{MANIFEST_FILE, MANIFEST_SIGNATURE_FILE};
 /// Various details about how the manifest is signed
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ManifestSignatureInfo {
-    /// Signing public key fingerprint
-    pub fingerprint: String,
+    /// PEM encoded certificate containing the public key for the signature validation
+    pub cert: String,
     pub algo: String,
     pub hash: String,
 }

@@ -1,4 +1,4 @@
-pub(crate) const MANIFEST_FILE: &str = "manifest.txt";
+pub(crate) const MANIFEST_FILE: &str = "manifest.json";
 pub(crate) const MANIFEST_SIGNATURE_FILE: &str = "manifest.signature";
 pub(crate) const SIGNATURE_TAG: &str = "SIGNATURE";
 pub(crate) const CERTIFICATE_TAG: &str = "CERTIFICATE";
