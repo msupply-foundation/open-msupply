@@ -4940,7 +4940,7 @@ dependencies = [
 [[package]]
 name = "temperature-sensor"
 version = "0.1.0"
-source = "git+https://github.com/openmsupply/temperature-sensor.git#7ec3f48402d06e76d556c4bc59bc575651aefa8f"
+source = "git+https://github.com/openmsupply/temperature-sensor.git#f7bf6ec888c9d036a1dbc1e72e0c8fb72ac1e2ae"
 dependencies = [
  "chrono",
  "json",
