@@ -1,21 +1,33 @@
 import React, { FC } from 'react';
-import { RangeObject, useUrlQuery } from '@common/hooks';
-import { DatePickerInput } from '@common/components';
+import { RangeObject, useUrlQuery, RANGE_SPLIT_CHAR } from '@common/hooks';
+import { DatePickerInput, DateTimePickerInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { DateUtils, useFormatDateTime } from '@common/intl';
 
 export interface DateFilterDefinition extends FilterDefinitionCommon {
-  type: 'date';
+  type: 'date' | 'dateTime';
   range?: RangeOption;
 }
 
 type RangeOption = 'from' | 'to';
 
-export const DateFilter: FC<{
-  filterDefinition: DateFilterDefinition;
-  remove: () => void;
-}> = ({ filterDefinition }) => {
-  const { urlParameter, name, range } = filterDefinition;
+// Matches range strings for either just dates or date/times, with "_" as the
+// splitting character. Both the start date and end date are optional, but
+// must be the same (date / dateTime) if both present
+//
+// E.g the following will all match
+// 2023-10-02 03:10_2023-10-03 02:10
+// 2023-10-02_2023-10-03
+// 2023-10-02 03:10_
+// _2023-10-03
+const dateRangeRegex = new RegExp(
+  `^(\\d{4}-\\d{2}-\\d{2})?_(\\d{4}-\\d{2}-\\d{2})?|(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?${RANGE_SPLIT_CHAR}(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?$`
+);
+
+export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
+  filterDefinition,
+}) => {
+  const { type, urlParameter, name, range } = filterDefinition;
   const { urlQuery, updateQuery, parseRangeString } = useUrlQuery();
   const { customDate } = useFormatDateTime();
 
@@ -25,6 +37,9 @@ export const DateFilter: FC<{
     parseRangeString
   );
 
+  const dateTimeFormat =
+    type === 'dateTime' ? 'yyyy-MM-dd HH:MM' : 'yyyy-MM-dd';
+
   const handleChange = (selection: Date | null) => {
     if (range) {
       if (!selection) {
@@ -32,38 +47,41 @@ export const DateFilter: FC<{
         return;
       }
       updateQuery({
-        [urlParameter]: { [range]: customDate(selection, 'yyyy-MM-dd') },
+        [urlParameter]: { [range]: customDate(selection, dateTimeFormat) },
       });
     } else {
       if (!selection) {
         updateQuery({ [urlParameter]: '' });
         return;
       }
-
-      updateQuery({ [urlParameter]: customDate(selection, 'yyyy-MM-dd') });
+      updateQuery({ [urlParameter]: customDate(selection, dateTimeFormat) });
     }
   };
 
-  return (
-    <DatePickerInput
-      label={name}
-      value={value}
-      width={FILTER_WIDTH}
-      onChange={handleChange}
-      textFieldProps={{
-        sx: {
-          '& .MuiInputLabel-root': {
-            zIndex: 100,
-            top: '4px',
-            left: '8px',
-            color: 'gray.main',
-          },
-          '& .MuiInputLabel-root.Mui-focused': {
-            color: 'secondary.main',
-          },
+  const componentProps = {
+    label: name,
+    value,
+    width: FILTER_WIDTH,
+    onChange: handleChange,
+    textFieldProps: {
+      sx: {
+        '& .MuiInputLabel-root': {
+          zIndex: 100,
+          top: '4px',
+          left: '8px',
+          color: 'gray.main',
         },
-      }}
-    />
+        '& .MuiInputLabel-root.Mui-focused': {
+          color: 'secondary.main',
+        },
+      },
+    },
+  };
+
+  return type === 'dateTime' ? (
+    <DateTimePickerInput {...componentProps} />
+  ) : (
+    <DatePickerInput {...componentProps} />
   );
 };
 
@@ -72,8 +90,8 @@ const getDateFromUrl = (
   range: RangeOption | undefined,
   parseRangeString: (val: string | undefined) => RangeObject
 ) => {
-  if (urlString) return null;
-  if (urlString?.match(/^(\d{4}-\d{2}-\d{2})?_(\d{4}-\d{2}-\d{2})?$/)) {
+  if (!urlString) return null;
+  if (urlString?.match(dateRangeRegex)) {
     const rangeData = parseRangeString(urlString);
     return DateUtils.getDateOrNull(rangeData[range as RangeOption] as string);
   }

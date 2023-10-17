@@ -62,20 +62,24 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               type: 'date',
               name: 'Date',
               urlParameter: 'dateSingle',
-              // placeholder: t('placeholder.search-by-identifier'),
+            },
+            {
+              type: 'dateTime',
+              name: 'Date/Time',
+              urlParameter: 'dateTime',
             },
             {
               type: 'group',
-              name: 'Date Range',
+              name: 'Date/Time Range',
               elements: [
                 {
-                  type: 'date',
+                  type: 'dateTime',
                   name: 'From date',
                   urlParameter: 'dateRange',
                   range: 'from',
                 },
                 {
-                  type: 'date',
+                  type: 'dateTime',
                   name: 'To date',
                   urlParameter: 'dateRange',
                   range: 'to',

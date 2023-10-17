@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import {
   DatePicker,
   DatePickerProps,
+  DateTimeValidationError,
   DateValidationError,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
@@ -22,9 +23,9 @@ const TextField = (params: TextFieldProps) => {
   return <BasicTextInput {...textInputProps} />;
 };
 
-const getFormattedDateError = (
+export const getFormattedDateError = (
   t: TypedTFunction<LocaleKey>,
-  validationError: DateValidationError
+  validationError: DateValidationError | DateTimeValidationError
 ) => {
   switch (validationError) {
     case 'invalidDate':
