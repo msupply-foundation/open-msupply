@@ -20,7 +20,7 @@ use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundS
 pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
     pub(crate) update_invoice: InvoiceRow,
-    pub(crate) unallocated_lines_to_trim: Option<Vec<InvoiceLineRow>>,
+    pub(crate) lines_to_trim: Option<Vec<InvoiceLineRow>>,
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
 }
@@ -93,13 +93,11 @@ pub(crate) fn generate(
         None
     };
 
+    let lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
+
     Ok(GenerateResult {
         batches_to_update,
-        unallocated_lines_to_trim: unallocated_lines_to_trim(
-            connection,
-            &existing_invoice,
-            &input_status,
-        )?,
+        lines_to_trim,
         update_invoice,
         location_movements,
         update_tax_for_lines,
@@ -121,8 +119,8 @@ fn should_update_batches_total_number_of_packs(
     }
 }
 
-// If status changed to allocated and above, remove unallocated lines
-fn unallocated_lines_to_trim(
+// If status changed to allocated and above, remove unallocated and empty lines
+fn lines_to_trim(
     connection: &StorageConnection,
     invoice: &InvoiceRow,
     status: &Option<UpdateOutboundShipmentStatus>,
@@ -144,15 +142,23 @@ fn unallocated_lines_to_trim(
     // If new invoice status is not new and previous invoice status is new
     // add all unallocated lines to be deleted
 
-    let lines = InvoiceLineRepository::new(connection).query_by_filter(
+    let mut lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
             .r#type(InvoiceLineRowType::UnallocatedStock.equal_to()),
     )?;
 
-    if lines.is_empty() {
+    let mut empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(&invoice.id))
+            .number_of_packs(EqualFilter::equal_to_f64(0.0)),
+    )?;
+
+    if lines.is_empty() && empty_lines.is_empty() {
         return Ok(None);
     }
+
+    lines.append(&mut empty_lines);
 
     let invoice_line_rows = lines.into_iter().map(|l| l.invoice_line_row).collect();
     return Ok(Some(invoice_line_rows));

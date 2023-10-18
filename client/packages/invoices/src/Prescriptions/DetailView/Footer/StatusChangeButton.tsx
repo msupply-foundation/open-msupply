@@ -21,7 +21,7 @@ const getStatusOptions = (
   const options: [
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>
+    SplitButtonOption<InvoiceNodeStatus>,
   ] = [
     {
       value: InvoiceNodeStatus.New,
@@ -75,6 +75,10 @@ const useStatusChangeButton = () => {
   const { status, update } = usePrescription.document.fields(['status']);
   const { success, error } = useNotification();
   const t = useTranslation('dispensary');
+  const { data } = usePrescription.document.get();
+  const hasLinesToPrune =
+    data?.status !== InvoiceNodeStatus.Verified &&
+    (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -98,11 +102,13 @@ const useStatusChangeButton = () => {
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-status-as', {
-      status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
-        : '',
-    }),
+    message: hasLinesToPrune
+      ? t('messages.confirm-zero-quantity-status')
+      : t('messages.confirm-status-as', {
+          status: selectedOption?.value
+            ? getStatusTranslation(selectedOption?.value)
+            : '',
+        }),
     onConfirm: onConfirmStatusChange,
   });
 
