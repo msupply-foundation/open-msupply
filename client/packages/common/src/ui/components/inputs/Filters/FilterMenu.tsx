@@ -179,7 +179,14 @@ const getFilterComponent = (
       );
     case 'date':
     case 'dateTime':
-      return <DateFilter key={filter.urlParameter} filterDefinition={filter} />;
+      return (
+        <DateFilter
+          key={`${filter.urlParameter}${
+            filter.range ? '_' + filter.range : ''
+          }`}
+          filterDefinition={filter}
+        />
+      );
     default:
       return null;
   }
