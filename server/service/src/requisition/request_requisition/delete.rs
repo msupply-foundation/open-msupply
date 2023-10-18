@@ -69,6 +69,7 @@ pub fn delete_request_requisition(
                 ActivityLogType::RequisitionDeleted,
                 Some(input.id.to_owned()),
                 None,
+                None,
             )?;
 
             match RequisitionRowRepository::new(&connection).delete(&input.id) {
