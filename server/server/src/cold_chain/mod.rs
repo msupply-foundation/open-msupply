@@ -11,8 +11,10 @@ use service::{
 
 mod login;
 mod sensor;
+mod temperature_log;
 use login::login;
 use sensor::sensors;
+use temperature_log::temperature_logs;
 
 const URL_PATH: &str = "/coldchain/v1";
 const COOKIE_NAME: &str = "coldchain";
@@ -20,6 +22,10 @@ const COOKIE_NAME: &str = "coldchain";
 pub fn config_cold_chain(cfg: &mut web::ServiceConfig) {
     cfg.route(&format!("{}/login", URL_PATH), web::post().to(login));
     cfg.route(&format!("{}/sensor", URL_PATH), web::put().to(sensors));
+    cfg.route(
+        &format!("{}/temperature-log", URL_PATH),
+        web::put().to(temperature_logs),
+    );
 }
 
 fn validate_request(
