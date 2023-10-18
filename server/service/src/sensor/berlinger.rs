@@ -140,7 +140,9 @@ fn sensor_add_breach_if_new(
         &breach_row_type,
     )?;
 
-    if let Some(_record) = result.clone().pop() {
+    if let Some(mut record) = result.clone().pop() {
+        record.temperature_breach_row.end_datetime = Some(temperature_breach.end_timestamp);
+        TemperatureBreachRowRepository::new(connection).upsert_one(&record.temperature_breach_row)?;
         Ok(())
     } else {
         let new_temperature_breach = TemperatureBreachRow {
@@ -278,6 +280,7 @@ pub fn read_sensors(
 
         if let Some(mut record) = result.clone().pop() {
             let sensor_id = &record.sensor_row.id;
+            // Filter sensor data by previous last connected time
             let last_connected = record.sensor_row.last_connection_datetime;
             temperature_sensor =
                 temperature_sensor::filter_sensor(temperature_sensor, last_connected, None, true);
@@ -310,6 +313,7 @@ pub fn read_sensors(
 
             if let Some(temperature_sensor_breaches) = &temperature_sensor.breaches {
                 for temperature_sensor_breach in temperature_sensor_breaches {
+                    // Look up matching config from the USB data and snapshot it as part of the breach
                     if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
                         if let Some(temperature_sensor_config) = temperature_sensor_configs
                             .iter()
@@ -341,6 +345,7 @@ pub fn read_sensors(
             temperature_logs = get_logs_for_sensor(connection, sensor_id)?;
             println!("{} temperature logs after", temperature_logs.len());
 
+            // Finally, update sensor's last connected time 
             record.sensor_row.last_connection_datetime =
                 temperature_sensor.last_connected_timestamp;
             SensorRowRepository::new(connection).upsert_one(&record.sensor_row)?;
