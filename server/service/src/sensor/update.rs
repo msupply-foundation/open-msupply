@@ -43,8 +43,8 @@ pub fn update_sensor(
                     ctx,
                     ActivityLogType::SensorLocationChanged,
                     Some(sensor_row.id),
-                    sensor_row.location_id.clone(),
                     sensor_row.location_id,
+                    input.location_id,
                 )?
             };
 
