@@ -39,7 +39,7 @@ export const SensorLineForm: FC<SensorLineFormProps> = ({
           <LocationSearchInput
             autoFocus={false}
             disabled={false}
-            value={draft.location ?? null}
+            selectedLocation={draft.location ?? null}
             width={180}
             onChange={location => {
               onUpdate({ location });
