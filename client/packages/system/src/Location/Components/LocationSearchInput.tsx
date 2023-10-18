@@ -1,15 +1,9 @@
 import React, { FC, useEffect } from 'react';
-import {
-  Autocomplete,
-  LocationNode,
-  defaultOptionMapper,
-  getDefaultOptionRenderer,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Autocomplete, useTranslation } from '@openmsupply-client/common';
 import { useLocation, LocationRowFragment } from '../api';
 
 interface LocationSearchInputProps {
-  value: LocationRowFragment | null;
+  selectedLocation: LocationRowFragment | null;
   width?: number | string;
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
@@ -17,7 +11,7 @@ interface LocationSearchInputProps {
 }
 
 export const LocationSearchInput: FC<LocationSearchInputProps> = ({
-  value,
+  selectedLocation,
   width,
   onChange,
   disabled,
@@ -33,41 +27,29 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     fetchAsync();
   }, []);
 
-  const unassignOption: LocationNode = {
-    __typename: 'LocationNode',
-    id: 'null',
-    name: t('label.remove'),
-    onHold: false,
-    code: 'No location',
-    stock: {
-      __typename: 'StockLineConnector',
-      nodes: [],
-      totalCount: 0,
-    },
-  };
-
-  let options = data?.nodes ?? [];
-  options = [...options, unassignOption];
+  const locations = data?.nodes || [];
+  const options = [
+    ...locations.map(l => ({ value: l.id, label: l.name })),
+    { value: null, label: t('label.remove') },
+  ];
 
   return (
-    <Autocomplete<LocationRowFragment>
+    <Autocomplete
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
       clearable={false}
       value={
-        value && {
-          ...value,
-          label: value.name,
+        selectedLocation && {
+          value: selectedLocation.id,
+          label: selectedLocation.name,
         }
       }
       loading={isLoading}
-      onChange={(_, location) => {
-        onChange(location);
+      onChange={(_, option) => {
+        onChange(locations.find(l => l.id === option?.value) || null);
       }}
-      options={defaultOptionMapper(options, 'name')}
-      renderOption={getDefaultOptionRenderer('name')}
-      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+      options={options}
     />
   );
 };
