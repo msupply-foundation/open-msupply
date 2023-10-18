@@ -5,6 +5,7 @@ import {
   StockLineSortFieldInput,
   RecordPatch,
   UpdateStockLineInput,
+  setOptionString,
 } from '@openmsupply-client/common';
 import { getSdk, StockLineRowFragment } from './operations.generated';
 import { Repack } from '../types';
@@ -36,11 +37,9 @@ const stockLineParsers = {
     patch: RecordPatch<StockLineRowFragment>
   ): UpdateStockLineInput => ({
     id: patch?.id,
-    location: patch?.location
-      ? {
-          locationId: patch.location.id == 'null' ? null : patch.location.id,
-        }
-      : undefined,
+    location: setOptionString('id' as keyof typeof patch.location, {
+      ...patch.location,
+    }),
     costPricePerPack: patch.costPricePerPack,
     sellPricePerPack: patch.sellPricePerPack,
     expiryDate: patch.expiryDate,
