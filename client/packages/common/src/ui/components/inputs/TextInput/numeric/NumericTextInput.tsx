@@ -4,7 +4,7 @@ import { BasicTextInput } from '../BasicTextInput';
 export interface NumericTextInputProps
   extends Omit<StandardTextFieldProps, 'onChange'> {
   onChange?: (value: number | undefined) => void;
-  width?: number;
+  width?: number | string;
 }
 
 export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
