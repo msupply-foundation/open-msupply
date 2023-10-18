@@ -52,6 +52,10 @@ export const Breadcrumbs = ({
       }
     }
 
+    if (part.disabled) {
+      return <span key={part.key}>{parseTitle(part)}</span>;
+    }
+
     return (
       <Breadcrumb to={part.path} key={part.key}>
         {t(part.key)}

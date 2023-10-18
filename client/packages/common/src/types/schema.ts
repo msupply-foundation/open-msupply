@@ -60,11 +60,12 @@ export type ActivityLogFilterInput = {
 export type ActivityLogNode = {
   __typename: 'ActivityLogNode';
   datetime: Scalars['DateTime']['output'];
-  event?: Maybe<Scalars['String']['output']>;
+  from?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   recordId?: Maybe<Scalars['String']['output']>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
+  to?: Maybe<Scalars['String']['output']>;
   type: ActivityLogNodeType;
   user?: Maybe<UserNode>;
 };
@@ -550,6 +551,7 @@ export type ContactTraceFilterInput = {
   lastName?: InputMaybe<StringFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<StringFilterInput>;
 };
 
 export type ContactTraceNode = {
@@ -1660,13 +1662,17 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
 };
 
 export type InsertPatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPatientResponse = PatientNode;
@@ -3246,6 +3252,7 @@ export type PatientNode = {
   age?: Maybe<Scalars['Int']['output']>;
   code: Scalars['String']['output'];
   code2?: Maybe<Scalars['String']['output']>;
+  contactTraces: ContactTraceResponse;
   country?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
@@ -3258,8 +3265,15 @@ export type PatientNode = {
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   phone?: Maybe<Scalars['String']['output']>;
-  programEnrolments: Array<ProgramEnrolmentNode>;
+  programEnrolments: ProgramEnrolmentResponse;
   website?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type PatientNodeContactTracesArgs = {
+  filter?: InputMaybe<ContactTraceFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ContactTraceSortInput>;
 };
 
 
@@ -3394,6 +3408,7 @@ export type ProgramEnrolmentNode = {
   enrolmentDatetime: Scalars['DateTime']['output'];
   /** The program document name */
   name: Scalars['String']['output'];
+  patient: PatientNode;
   patientId: Scalars['String']['output'];
   programEnrolmentId?: Maybe<Scalars['String']['output']>;
   status: ProgramEnrolmentNodeStatus;
@@ -5111,13 +5126,17 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
  * For example, if the last_name is not provided, the last_name in the patient record will be cleared.
  */
 export type UpdatePatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePatientResponse = PatientNode;
