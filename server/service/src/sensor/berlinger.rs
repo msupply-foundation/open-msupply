@@ -141,8 +141,10 @@ fn sensor_add_breach_if_new(
     )?;
 
     if let Some(mut record) = result.clone().pop() {
-        record.temperature_breach_row.end_datetime = Some(temperature_breach.end_timestamp);
-        TemperatureBreachRowRepository::new(connection).upsert_one(&record.temperature_breach_row)?;
+        if record.temperature_breach_row.end_datetime != Some(temperature_breach.end_timestamp) { // Update breach end time if it has changed
+            record.temperature_breach_row.end_datetime = Some(temperature_breach.end_timestamp);
+            TemperatureBreachRowRepository::new(connection).upsert_one(&record.temperature_breach_row)?;
+        }
         Ok(())
     } else {
         let new_temperature_breach = TemperatureBreachRow {
@@ -345,11 +347,11 @@ pub fn read_sensors(
             temperature_logs = get_logs_for_sensor(connection, sensor_id)?;
             println!("{} temperature logs after", temperature_logs.len());
 
-            // Finally, update sensor's last connected time 
-            record.sensor_row.last_connection_datetime =
-                temperature_sensor.last_connected_timestamp;
-            SensorRowRepository::new(connection).upsert_one(&record.sensor_row)?;
-
+            // Finally, update sensor's last connected time if it has changed
+            if record.sensor_row.last_connection_datetime != temperature_sensor.last_connected_timestamp {
+                record.sensor_row.last_connection_datetime = temperature_sensor.last_connected_timestamp;
+                SensorRowRepository::new(connection).upsert_one(&record.sensor_row)?;
+            }
             sensors_processed.push(current_serial);
         } else {
             println!("Sensor {} does not exist in DB", &current_serial);
