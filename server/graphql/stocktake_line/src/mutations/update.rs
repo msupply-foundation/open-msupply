@@ -232,7 +232,7 @@ mod test {
             "storeId": "store id",
             "input": {
                 "id": "id1",
-                "locationId": "location id",
+                "location": {"value": "location id"},
                 "snapshotNumberOfPacks": 20,
                 "countedNumberOfPacks": 20,
                 "comment": "comment",
