@@ -20,6 +20,10 @@ pub struct InsertPatientInput {
     pub last_name: Option<String>,
     pub gender: Option<GenderInput>,
     pub date_of_birth: Option<NaiveDate>,
+    pub address1: Option<String>,
+    pub phone: Option<String>,
+    pub is_deceased: Option<bool>,
+    pub date_of_death: Option<NaiveDate>,
 }
 
 #[derive(Union)]
@@ -86,6 +90,10 @@ impl InsertPatientInput {
             last_name,
             gender,
             date_of_birth,
+            address1,
+            phone,
+            date_of_death,
+            is_deceased,
         } = self;
 
         ServiceInput {
@@ -96,6 +104,10 @@ impl InsertPatientInput {
             last_name,
             gender: gender.map(|g| g.to_domain()),
             date_of_birth,
+            address1,
+            phone,
+            date_of_death,
+            is_deceased,
             r#type: NameType::Patient,
         }
     }

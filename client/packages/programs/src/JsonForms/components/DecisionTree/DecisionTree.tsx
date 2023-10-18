@@ -5,8 +5,9 @@ import { DetailInputWithLabelRow } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, useZodOptionsValidation } from '../../common';
 import { z } from 'zod';
 import { get as extractProperty } from 'lodash';
-import { DocumentFragment, useEncounter, usePatient } from '../../../api';
+import { useEncounter } from '../../../api';
 import { useDecisionTreeValidation } from './useDecisionTreeValidation';
+import { usePatient, PatientRowFragment } from '@openmsupply-client/system';
 
 /** The condition that should be evaluated on the specified field */
 export type Condition = {
@@ -16,9 +17,12 @@ export type Condition = {
 };
 
 export type DecisionBranch = {
-  /** If set apply condition on a field from the document data */
+  /** If set, apply condition on a field from the document data */
   dataField?: string;
-  /** If set apply condition on a field from the patient document a*/
+  /**
+   * If set, apply condition on a field from the patient node as returned by the patient GraphQl
+   * endpoint
+   */
   patientField?: string;
   /** The id of the next tree node that should be checked if the condition evaluates to true */
   node?: string;
@@ -126,13 +130,13 @@ const matchCondition = (
 const getBranchField = (
   branch: DecisionBranch,
   data: Record<string, string | number | boolean | undefined> | undefined,
-  patientDoc: DocumentFragment
+  patientNode: PatientRowFragment
 ): string | number | boolean | undefined => {
   if (branch.dataField) {
     return extractProperty(data, branch.dataField);
   }
   if (branch.patientField) {
-    return extractProperty(patientDoc.data, branch.patientField);
+    return extractProperty(patientNode, branch.patientField);
   }
 
   return undefined;
@@ -141,7 +145,7 @@ const getBranchField = (
 const evaluateDecisionTree = (
   tree: DecisionTree,
   data: Record<string, string | number | boolean | undefined> | undefined,
-  patientDoc: DocumentFragment
+  patientNode: PatientRowFragment
 ): string | undefined => {
   let current = tree.nodes[tree.root];
   if (!current) {
@@ -153,7 +157,7 @@ const evaluateDecisionTree = (
   while (current) {
     let newCurrent = undefined;
     for (const branch of current.branches ?? []) {
-      const field = getBranchField(branch, data, patientDoc);
+      const field = getBranchField(branch, data, patientNode);
       if (matchCondition(branch, field)) {
         if (branch.value !== undefined) {
           return branch.value;
@@ -195,22 +199,22 @@ const UIComponent = (props: ControlProps) => {
   // get patient data assuming we are in an encounter...
   const encounterId = useEncounter.utils.idFromUrl();
   const { data: currentEncounter } = useEncounter.document.byId(encounterId);
-  const { data: patientDoc } = usePatient.get.patientDocument(
+  const { data: patientNode } = usePatient.document.get(
     currentEncounter?.patient.id
   );
 
   useEffect(() => {
-    if (!options || !core?.data || !patientDoc) {
+    if (!options || !core?.data || !patientNode) {
       return;
     }
 
     const basePath = options.basePath ?? '';
     const baseData = extractProperty(core.data, basePath);
-    const value = evaluateDecisionTree(options.tree, baseData, patientDoc);
+    const value = evaluateDecisionTree(options.tree, baseData, patientNode);
     if (value !== data) {
       handleChange(path, value);
     }
-  }, [options, core?.data, patientDoc]);
+  }, [options, core?.data, patientNode, data, handleChange, path]);
 
   if (!visible) {
     return null;

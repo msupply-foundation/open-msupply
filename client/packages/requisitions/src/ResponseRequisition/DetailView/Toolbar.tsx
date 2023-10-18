@@ -9,10 +9,9 @@ import {
   DeleteIcon,
   useTranslation,
   SearchBar,
-  InfoPanel,
   Typography,
   BufferedTextInput,
-  
+  Alert,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -118,7 +117,7 @@ export const Toolbar: FC = () => {
           </Box>
           {showInfo && (
             <Box padding={2}>
-              <InfoPanel message={t('info.no-shipment')} />
+              <Alert severity="info">{t('info.no-shipment')}</Alert>
             </Box>
           )}
         </Grid>
