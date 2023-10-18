@@ -3178,6 +3178,21 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
   description: Scalars['String']['output'];
 };
 
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
+export type NullableStringUpdate = {
+  value?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type NumberNode = {
   __typename: 'NumberNode';
   number: Scalars['Int']['output'];
@@ -5488,7 +5503,7 @@ export type UpdateSensorErrorInterface = {
 export type UpdateSensorInput = {
   id: Scalars['String']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<LocationInput>;
+  location?: InputMaybe<NullableStringUpdate>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 

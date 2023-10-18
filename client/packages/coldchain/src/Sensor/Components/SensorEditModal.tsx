@@ -24,6 +24,9 @@ const useDraftSensor = (seed: SensorFragment): useDraftSensorControl => {
   const [sensor, setSensor] = useState<SensorFragment>({ ...seed });
   const { mutate, isLoading } = useSensor.document.update();
   const onUpdate = (patch: Partial<SensorFragment>) => {
+    if (patch.location?.id === 'null') {
+      patch.location = null;
+    }
     setSensor({ ...sensor, ...patch });
   };
 

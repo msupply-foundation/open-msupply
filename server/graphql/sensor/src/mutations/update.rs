@@ -1,6 +1,6 @@
 use async_graphql::*;
 
-use graphql_core::generic_inputs::LocationInput;
+use graphql_core::generic_inputs::NullableUpdate;
 use graphql_core::{
     simple_generic_errors::{
         DatabaseError, InternalError, RecordBelongsToAnotherStore, RecordNotFound,
@@ -48,7 +48,7 @@ pub fn update_sensor(
 #[derive(InputObject)]
 pub struct UpdateSensorInput {
     pub id: String,
-    pub location: Option<LocationInput>,
+    pub location: Option<NullableUpdate<String>>,
     pub name: Option<String>,
     pub is_active: Option<bool>,
 }
@@ -66,7 +66,7 @@ impl From<UpdateSensorInput> for UpdateSensor {
             id,
             location: location.and_then(|location| {
                 Some(LocationUpdate {
-                    location_id: location.location_id,
+                    location_id: location.value,
                 })
             }),
             name,
