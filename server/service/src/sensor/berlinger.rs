@@ -52,8 +52,7 @@ pub fn get_matching_sensor_breach_config(
 
         let filter = TemperatureBreachConfigFilter::new()
         .description(EqualFilter::equal_to(description))
-        .r#type(EqualFilter::equal_to_breach_type(&breach_type))
-        .is_active(true);
+        .r#type(EqualFilter::equal_to_breach_type(&breach_type));
 
     TemperatureBreachConfigRepository::new(connection)
         .query_by_filter(filter)
@@ -63,15 +62,14 @@ pub fn get_matching_sensor_breach(
     connection: &StorageConnection,
     sensor_id: &str,
     start_datetime: NaiveDateTime,
-    end_datetime: NaiveDateTime,
+    _end_datetime: NaiveDateTime,
     breach_type: &TemperatureBreachRowType,
 ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
 
     let filter = TemperatureBreachFilter::new()
         .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
         .r#type(EqualFilter::equal_to_breach_type(&breach_type))
-        .start_datetime(DatetimeFilter::equal_to(start_datetime))
-        .end_datetime(DatetimeFilter::equal_to(end_datetime));
+        .start_datetime(DatetimeFilter::equal_to(start_datetime));
 
     TemperatureBreachRepository::new(connection)
         .query_by_filter(filter)
@@ -255,7 +253,7 @@ pub fn read_sensors(
 
             let sensor_id = &record.sensor_row.id;
             let last_connected = record.sensor_row.last_connection_datetime;
-            temperature_sensor = temperature_sensor::filter_sensor(temperature_sensor, last_connected, None);           
+            //temperature_sensor = temperature_sensor::filter_sensor(temperature_sensor, last_connected, None);           
             
             let mut temperature_breach_configs = get_breach_configs_for_sensor(connection, sensor_id)?;
             println!("{} temperature breach configs before",temperature_breach_configs.len());
@@ -272,23 +270,17 @@ pub fn read_sensors(
             let mut temperature_breaches = get_breaches_for_sensor(connection, sensor_id)?;
             println!("{} temperature breaches before",temperature_breaches.len());
 
+            println!("Read breaches: {:?}",temperature_sensor.breaches);
             if let Some(temperature_sensor_breaches) = &temperature_sensor.breaches {
                 for temperature_sensor_breach in temperature_sensor_breaches {
 
-                    println!("Read breach: {:?}",temperature_sensor_breach);
                     if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
-
-
-
 
                         if let Some(temperature_sensor_config) = temperature_sensor_configs.iter().find(|&t| t.breach_type == temperature_sensor_breach.breach_type) {
                             println!("Matching config found {:?} for breach {:?}",temperature_sensor_config, temperature_sensor_breach);
+                            sensor_add_breach_if_new(connection, &record.sensor_row, &temperature_sensor_breach, &temperature_sensor_config)?;
                         }
-                        
-                    }
-                    
-                    
-                    //sensor_add_breach_if_new(connection, &record.sensor_row, &temperature_sensor_breach, &temperature_sensor_config)?;
+                    }  
                 }
             }
             
