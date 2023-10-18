@@ -122,6 +122,10 @@ const PatientDetailView = ({
           lastName: createNewPatient.lastName,
           gender: createNewPatient.gender,
           dateOfBirth: createNewPatient.dateOfBirth,
+          phone: createNewPatient.phone,
+          address1: createNewPatient.address1,
+          isDeceased: createNewPatient.isDeceased,
+          dateOfDeath: createNewPatient.dateOfDeath,
         },
         isCreating: true,
       };
@@ -138,8 +142,10 @@ const PatientDetailView = ({
           lastName: currentPatient.lastName ?? undefined,
           gender: currentPatient.gender ?? undefined,
           dateOfBirth: currentPatient.dateOfBirth ?? undefined,
-          isDeceased: currentPatient.isDeceased ?? undefined,
           dateOfDeath: currentPatient.dateOfDeath ?? undefined,
+          isDeceased: currentPatient.isDeceased ?? undefined,
+          phone: currentPatient.phone ?? undefined,
+          address1: currentPatient.address1 ?? undefined,
         },
         isCreating: false,
       };

@@ -22,7 +22,7 @@ const EncounterListComponent: FC = () => {
     queryParams: { sortBy, page, first, offset, filterBy },
     updatePaginationQuery,
     updateSortQuery,
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({ initialSort: { key: 'startDatetime', dir: 'desc' } });
 
   const patientId = usePatient.utils.id();
   const { data, isError, isLoading } = useEncounter.document.list({

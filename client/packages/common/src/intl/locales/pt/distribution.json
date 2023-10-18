@@ -15,7 +15,7 @@
   "error.no-outbound-items": "Nenhum item foi adicionado a este envio.",
   "error.no-outbound-shipments": "Nenhuma saída para mostrar.",
   "error.no-requisitions": "Nenhuma Requisição para mostrar.",
-  "error.requisition-not-found": "Requisição não encontrada",
+  "error.requisition-not-found": "Requisição não foi encontrada",
   "error.unable-to-start-scanning": "Não foi possível começar a escanear: {{error}}",
   "heading.are-you-sure": "Você está certo disso?",
   "heading.cannot-do-that": "Não é possível fazer isso!",
@@ -100,5 +100,8 @@
   "messages.must-allocate-all-lines": "Não é possível trocar o status até que todas as linhas tenham sido alocadas.",
   "messages.shipment-saved": "Envio salvo 🥳",
   "warning.nothing-to-supply": "Nada para fornecer!",
-  "info.no-shipment": "Ao finalizar essa requisição você não poderá criar um envio para ela."
+  "info.no-shipment": "Ao finalizar essa requisição você não poderá criar um envio para ela.",
+  "heading.supply-to-requested": "Estabelecer o fornecimento como requisitado",
+  "label.issue": "Assunto",
+  "messages.supply-to-requested": "Você tem certeza de que gostaria de estabelecer a quantidade fornecida como a quantidade solicitada para todas as linhas?"
 }
