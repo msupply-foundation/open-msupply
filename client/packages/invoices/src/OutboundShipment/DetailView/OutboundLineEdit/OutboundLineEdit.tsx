@@ -16,6 +16,8 @@ import {
   useKeyboardHeightAdjustment,
   InvoiceLineNodeType,
   useNotification,
+  InvoiceNodeStatus,
+  DateUtils,
 } from '@openmsupply-client/common';
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
@@ -31,6 +33,7 @@ import {
   usePackSizeController,
 } from '../../../StockOut';
 import { DraftStockOutLine } from '../../../types';
+import { ItemRowFragment } from '@openmsupply-client/system';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
@@ -66,9 +69,9 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
 
-  const { mutateAsync } = useOutbound.line.save();
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
   const { status } = useOutbound.document.fields('status');
+  const { mutateAsync } = useOutbound.line.save(status);
   const isDisabled = useOutbound.utils.isDisabled();
   const {
     draftStockOutLines,
@@ -81,6 +84,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
   const { warning } = useNotification();
+  const [showZeroQuantityConfirmation, setShowZeroQuantityConfirmation] =
+    useState(false);
   useFocusNumberOfPacksInput(draft);
 
   const placeholder = draftStockOutLines?.find(
@@ -125,20 +130,6 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     }
   };
 
-  const onNext = async () => {
-    await onSave();
-    if (!!placeholder) {
-      const infoSnack = info(t('message.placeholder-line'));
-      infoSnack();
-    }
-    if (mode === ModalMode.Update && next) setCurrentItem(next);
-    else if (mode === ModalMode.Create) setCurrentItem(null);
-    else onClose();
-    setIsDirty(false);
-    // Returning true here triggers the slide animation
-    return true;
-  };
-
   const onAllocate = (
     newVal: number,
     packSize: number | null,
@@ -151,6 +142,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     setIsDirty(true);
     setDraftStockOutLines(newAllocateQuantities ?? draftStockOutLines);
     setIsAutoAllocated(autoAllocated);
+    if (showZeroQuantityConfirmation && newVal !== 0)
+      setShowZeroQuantityConfirmation(false);
 
     return newAllocateQuantities;
   };
@@ -158,6 +151,58 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const canAutoAllocate = !!(currentItem && draftStockOutLines.length);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
+
+  const handleSave = async (onSaved: () => boolean | void) => {
+    if (
+      getAllocatedQuantity(draftStockOutLines) === 0 &&
+      !showZeroQuantityConfirmation
+    ) {
+      setShowZeroQuantityConfirmation(true);
+      return;
+    }
+
+    try {
+      await onSave();
+      setIsDirty(false);
+      if (!!placeholder) {
+        const infoSnack = info(t('message.placeholder-line'));
+        infoSnack();
+      }
+      setShowZeroQuantityConfirmation(false);
+
+      return onSaved();
+    } catch (e) {
+      // console.log(e);
+    }
+  };
+
+  const onNext = async () => {
+    const onSaved = () => {
+      if (mode === ModalMode.Update && next) {
+        setCurrentItem(next);
+        return true;
+      }
+      if (mode === ModalMode.Create) {
+        setCurrentItem(null);
+        return true;
+      }
+      onClose();
+    };
+
+    // Returning true here triggers the slide animation
+    return await handleSave(onSaved);
+  };
+
+  const hasOnHold = draftStockOutLines.some(
+    ({ stockLine }) =>
+      (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
+  );
+  const hasExpired = draftStockOutLines.some(
+    ({ stockLine }) =>
+      (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
+      !!stockLine?.expiryDate &&
+      DateUtils.isExpired(new Date(stockLine?.expiryDate))
+  );
 
   return (
     <Modal
@@ -176,19 +221,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         <DialogButton
           disabled={!currentItem}
           variant="ok"
-          onClick={async () => {
-            try {
-              onSave();
-              setIsDirty(false);
-              if (!!placeholder) {
-                const infoSnack = info(t('message.placeholder-line'));
-                infoSnack();
-              }
-              onClose();
-            } catch (e) {
-              // console.log(e);
-            }
-          }}
+          onClick={() => handleSave(onClose)}
         />
       }
       height={height}
@@ -198,13 +231,19 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
         <OutboundLineEditForm
           disabled={mode === ModalMode.Update || isDisabled}
           packSizeController={packSizeController}
-          onChangeItem={setCurrentItem}
+          onChangeItem={(item: ItemRowFragment | null) => {
+            if (status === InvoiceNodeStatus.New) setIsDirty(true);
+            setCurrentItem(item);
+          }}
           item={currentItem}
           allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
           availableQuantity={sumAvailableQuantity(draftStockOutLines)}
           onChangeQuantity={onAllocate}
           canAutoAllocate={canAutoAllocate}
           isAutoAllocated={isAutoAllocated}
+          showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+          hasOnHold={hasOnHold}
+          hasExpired={hasExpired}
         />
 
         <TableWrapper

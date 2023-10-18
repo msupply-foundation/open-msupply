@@ -11,10 +11,8 @@ import {
   Divider,
   Box,
   Typography,
-  ButtonWithIcon,
-  ZapIcon,
-  InfoPanel,
   useFormatNumber,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -22,7 +20,12 @@ import {
 } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';
 import { DraftItem } from '../../..';
-import { PackSizeController } from '../../../StockOut';
+import {
+  PackSizeController,
+  StockOutAlert,
+  StockOutAlerts,
+  getAllocationAlerts,
+} from '../../../StockOut';
 import { DraftStockOutLine } from '../../../types';
 import { isA } from '../../../utils';
 
@@ -40,6 +43,9 @@ interface OutboundLineEditFormProps {
   disabled: boolean;
   canAutoAllocate: boolean;
   isAutoAllocated: boolean;
+  showZeroQuantityConfirmation: boolean;
+  hasOnHold: boolean;
+  hasExpired: boolean;
 }
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -52,52 +58,73 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   disabled,
   canAutoAllocate,
   isAutoAllocated,
+  showZeroQuantityConfirmation,
+  hasOnHold,
+  hasExpired,
 }) => {
   const t = useTranslation('distribution');
-  const [showAllocationWarning, setShowAllocationWarning] = useState(false);
-  const [placeholderQuantity, setPlaceholderQuantity] = useState(0);
-  const { format } = useFormatNumber();
-  const quantity =
-    allocatedQuantity /
-    Math.abs(Number(packSizeController.selected?.value || 1));
-
+  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueQuantity, setIssueQuantity] = useState(0);
+  const { format } = useFormatNumber();
   const { items } = useOutbound.line.rows();
 
   const onChangePackSize = (newPackSize: number) => {
+    const packSize = newPackSize === -1 ? 1 : newPackSize;
     const newAllocatedQuantity =
-      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / newPackSize);
+      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / packSize);
+
     packSizeController.setPackSize(newPackSize);
-    onChangeQuantity(
-      newAllocatedQuantity,
-      newPackSize === -1 ? null : newPackSize,
-      false
-    );
-    setShowAllocationWarning(false);
+    allocate(newAllocatedQuantity, newPackSize);
   };
 
   const unit = item?.unitName ?? t('label.unit');
-  const allocate = () => {
+
+  const updateIssueQuantity = (quantity: number) => {
+    setIssueQuantity(
+      Math.round(
+        quantity / Math.abs(Number(packSizeController.selected?.value || 1))
+      )
+    );
+  };
+
+  const debouncedSetAllocationAlerts = useDebounceCallback(
+    warning => setAllocationAlerts(warning),
+    []
+  );
+
+  const allocate = (quantity: number, packSize: number) => {
     const newAllocateQuantities = onChangeQuantity(
-      issueQuantity,
-      packSizeController.selected?.value === -1
-        ? null
-        : Number(packSizeController.selected?.value),
+      quantity,
+      packSize === -1 ? null : packSize,
       true
     );
     const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
-    setPlaceholderQuantity(placeholderLine?.numberOfPacks ?? 0);
-    setShowAllocationWarning(!!placeholderLine?.numberOfPacks);
+    const allocatedQuantity =
+      newAllocateQuantities?.reduce(
+        (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+        0
+      ) ?? 0;
+    const alerts = getAllocationAlerts(
+      quantity * (packSize === -1 ? 1 : packSize),
+      allocatedQuantity,
+      placeholderLine?.numberOfPacks ?? 0,
+      hasOnHold,
+      hasExpired,
+      format,
+      t
+    );
+    debouncedSetAllocationAlerts(alerts);
+    updateIssueQuantity(allocatedQuantity);
   };
 
   const handleIssueQuantityChange = (quantity: number) => {
     setIssueQuantity(quantity);
-    setShowAllocationWarning(false);
+    allocate(quantity, Number(packSizeController.selected?.value));
   };
 
   useEffect(() => {
-    setIssueQuantity(quantity);
-  }, [packSizeController.selected?.value]);
+    if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
+  }, [packSizeController.selected?.value, allocatedQuantity]);
 
   return (
     <Grid container gap="4px">
@@ -148,27 +175,18 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
       {item && canAutoAllocate ? (
         <>
           <Divider margin={10} />
-          {showAllocationWarning && isAutoAllocated && (
-            <Grid display="flex" justifyContent="center" flex={1}>
-              <InfoPanel
-                message={t('messages.over-allocated', {
-                  quantity: format(placeholderQuantity),
-                  issueQuantity: format(
-                    issueQuantity *
-                      (packSizeController.selected?.value === -1
-                        ? 1
-                        : packSizeController.selected?.value ?? 1)
-                  ),
-                })}
-              />
-            </Grid>
-          )}
+          <StockOutAlerts
+            allocationAlerts={allocationAlerts}
+            showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+            isAutoAllocated={isAutoAllocated}
+          />
           <Grid container>
             <ModalLabel label={t('label.issue')} />
             <NonNegativeIntegerInput
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
+              defaultValue={0}
             />
 
             <Box marginLeft={1} />
@@ -221,14 +239,6 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                 <Box marginLeft="auto" />
               </>
             ) : null}
-            <Box flex={1} display="flex" justifyContent="flex-end">
-              <ButtonWithIcon
-                disabled={issueQuantity === 0}
-                onClick={allocate}
-                label={t('button.allocate')}
-                Icon={<ZapIcon />}
-              />
-            </Box>
           </Grid>
         </>
       ) : (

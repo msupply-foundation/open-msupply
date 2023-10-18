@@ -90,6 +90,7 @@ pub fn update_request_requisition(
                     ActivityLogType::RequisitionStatusSent,
                     Some(updated_requisition_row.id.to_owned()),
                     None,
+                    None,
                 )?;
             }
 

@@ -1,4 +1,4 @@
-use repository::{InvoiceRow, ItemRow, StockLineRow, StorageConnection};
+use repository::{InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow, StorageConnection};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -22,10 +22,6 @@ pub fn validate(
     if !check_line_does_not_exist(connection, &input.id)? {
         return Err(LineAlreadyExists);
     }
-    if !check_number_of_packs(Some(input.number_of_packs)) {
-        return Err(NumberOfPacksBelowOne);
-    }
-
     let batch = check_batch_exists(&input.stock_line_id, connection)?.ok_or(StockLineNotFound)?;
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
 
@@ -35,6 +31,12 @@ pub fn validate(
 
     let invoice =
         check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+
+    if invoice.status != InvoiceRowStatus::New
+        && !check_number_of_packs(Some(input.number_of_packs))
+    {
+        return Err(NumberOfPacksBelowOne);
+    }
 
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);

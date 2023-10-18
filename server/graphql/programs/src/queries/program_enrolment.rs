@@ -1,24 +1,14 @@
 use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::program_enrolment::{
-    ProgramEnrolmentFilterInput, ProgramEnrolmentNode, ProgramEnrolmentSortInput,
+    ProgramEnrolmentConnector, ProgramEnrolmentFilterInput, ProgramEnrolmentNode,
+    ProgramEnrolmentResponse, ProgramEnrolmentSortInput,
 };
 use repository::Pagination;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     usize_to_u32,
 };
-
-#[derive(SimpleObject)]
-pub struct ProgramEnrolmentConnector {
-    pub total_count: u32,
-    pub nodes: Vec<ProgramEnrolmentNode>,
-}
-
-#[derive(Union)]
-pub enum ProgramEnrolmentResponse {
-    Response(ProgramEnrolmentConnector),
-}
 
 pub fn program_enrolments(
     ctx: &Context<'_>,

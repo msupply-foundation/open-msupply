@@ -81,9 +81,11 @@
   "messages.results-over-limit": "Showing the first 100 results only - please refine your search",
   "messages.save-encounter-as-visited": "Save encounter as Visited?",
   "messages.no-stock-available": "There is no stock available",
+  "messages.stock-on-hold": "Some stock lines are hold and cannot be allocated.",
+  "messages.stock-expired": "Some stock lines are expired and cannot be allocated.",
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-last-name": "Search by last name",
   "placeholder.search-by-identifier": "Search by id",
-  "warning.cannot-create-placeholder-packs": "There is a total of {{quantity}} packs available. Unable to allocate the full amount requested.",
-  "warning.cannot-create-placeholder-units": "There is a total of {{quantity}} units available. Unable to allocate the full amount requested."
+  "warning.cannot-create-placeholder-packs": "There is a total of {{allocatedQuantity}} packs available. Unable to allocate all {{requestedQuantity}} packs.",
+  "warning.cannot-create-placeholder-units": "There is a total of {{allocatedQuantity}} units available. Unable to allocate all {{requestedQuantity}} units."
 }
