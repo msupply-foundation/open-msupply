@@ -11,19 +11,6 @@ export interface DateFilterDefinition extends FilterDefinitionCommon {
 
 type RangeOption = 'from' | 'to';
 
-// Matches range strings for either just dates or date/times, with "_" as the
-// splitting character. Both the start date and end date are optional, but
-// must be the same (date / dateTime) if both present
-//
-// E.g the following will all match
-// 2023-10-02 03:10_2023-10-03 02:10
-// 2023-10-02_2023-10-03
-// 2023-10-02 03:10_
-// _2023-10-03
-const dateRangeRegex = new RegExp(
-  `^(\\d{4}-\\d{2}-\\d{2})?_(\\d{4}-\\d{2}-\\d{2})?|(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?${RANGE_SPLIT_CHAR}(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?$`
-);
-
 export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   filterDefinition,
 }) => {
@@ -90,6 +77,18 @@ const getDateFromUrl = (
   range: RangeOption | undefined,
   parseRangeString: (val: string | undefined) => RangeObject
 ) => {
+  // Matches range strings for either just dates or date/times, with "_" as the
+  // splitting character. Both the start date and end date are optional, but
+  // must be the same (date / dateTime) if both present
+  //
+  // E.g the following will all match
+  // 2023-10-02 03:10_2023-10-03 02:10
+  // 2023-10-02_2023-10-03
+  // 2023-10-02 03:10_
+  // _2023-10-03
+  const dateRangeRegex = new RegExp(
+    `^(\\d{4}-\\d{2}-\\d{2})?_(\\d{4}-\\d{2}-\\d{2})?|(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?${RANGE_SPLIT_CHAR}(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?$`
+  );
   if (!urlString) return null;
   if (urlString?.match(dateRangeRegex)) {
     const rangeData = parseRangeString(urlString);
