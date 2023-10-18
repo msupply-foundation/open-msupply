@@ -21,12 +21,18 @@ impl Loader<String> for TemperatureBreachByIdLoader {
         let connection = self.connection_manager.connection()?;
         let repo = TemperatureBreachRepository::new(&connection);
 
-        let result =
-            repo.query_by_filter(TemperatureBreachFilter::new().id(EqualFilter::equal_any(ids.to_owned())))?;
+        let result = repo.query_by_filter(
+            TemperatureBreachFilter::new().id(EqualFilter::equal_any(ids.to_owned())),
+        )?;
 
         Ok(result
             .into_iter()
-            .map(|temperature_breach| (temperature_breach.temperature_breach_row.id.clone(), temperature_breach))
+            .map(|temperature_breach| {
+                (
+                    temperature_breach.temperature_breach_row.id.clone(),
+                    temperature_breach,
+                )
+            })
             .collect())
     }
 }

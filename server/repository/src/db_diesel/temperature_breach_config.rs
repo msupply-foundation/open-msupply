@@ -100,7 +100,11 @@ fn create_filtered_query(filter: Option<TemperatureBreachConfigFilter>) -> Boxed
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, temperature_breach_config_dsl::id);
         apply_equal_filter!(query, filter.r#type, temperature_breach_config_dsl::type_);
-        apply_equal_filter!(query, filter.description, temperature_breach_config_dsl::description);
+        apply_equal_filter!(
+            query,
+            filter.description,
+            temperature_breach_config_dsl::description
+        );
 
         if let Some(value) = filter.is_active {
             query = query.filter(temperature_breach_config_dsl::is_active.eq(value));
