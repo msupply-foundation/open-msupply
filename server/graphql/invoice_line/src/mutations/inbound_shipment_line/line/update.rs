@@ -226,7 +226,7 @@ mod test {
           "input": {
             "id": "n/a",
             "itemId": "n/a",
-            "locationId": "n/a",
+            "location": {"value": "n/a"},
             "packSize": 0,
             "batch": "n/a",
             "costPricePerPack": 0.0,
@@ -468,7 +468,7 @@ mod test {
                     id: "id input".to_string(),
                     item_id: Some("item_id input".to_string()),
                     location: Some(LocationUpdate {
-                        location_id: Some("location_1".to_string())
+                        location_id: Some("location 1".to_string())
                     }),
                     pack_size: Some(1),
                     batch: Some("batch input".to_string()),
@@ -492,7 +492,7 @@ mod test {
           "input": {
             "id": "id input",
             "itemId": "item_id input",
-            "locationId": "location id input",
+            "location": {"value": "location 1"},
             "packSize": 1,
             "batch": "batch input",
             "costPricePerPack": 1,

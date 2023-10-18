@@ -289,7 +289,7 @@ mod test {
         let variables = json!({
           "input": {
             "id": "item_a_line_a",
-            "locationId": "some location"
+            "location": {"value":"some location"}
           },
           "storeId": "store_a"
         });

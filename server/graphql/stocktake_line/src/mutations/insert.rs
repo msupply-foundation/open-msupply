@@ -246,7 +246,7 @@ mod test {
                 "id": "id1",
                 "stocktakeId": "stocktake id",
                 "stockLineId": "stock line id",
-                "locationId": "location id",
+                "location": {"value": "location id"},
                 "countedNumberOfPacks": 20,
                 "comment": "comment",
                 "itemId": "item id",
