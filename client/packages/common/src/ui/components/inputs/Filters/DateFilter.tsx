@@ -24,8 +24,6 @@ const dateRangeRegex = new RegExp(
   `^(\\d{4}-\\d{2}-\\d{2})?_(\\d{4}-\\d{2}-\\d{2})?|(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?${RANGE_SPLIT_CHAR}(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?$`
 );
 
-console.log('dateRangeRegex', dateRangeRegex);
-
 export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   filterDefinition,
 }) => {
