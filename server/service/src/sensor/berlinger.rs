@@ -251,7 +251,7 @@ fn sensor_add_if_new(
             name: temperature_sensor.name.clone(),
             store_id: Some(store_id.to_string()),
             location_id: None,
-            last_connection_datetime: temperature_sensor.last_connected_timestamp,
+            last_connection_datetime: None,
             battery_level: None,
             is_active: true,
             log_interval: interval_seconds,
