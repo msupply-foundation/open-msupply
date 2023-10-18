@@ -1,4 +1,4 @@
-mod changelog;
+pub mod changelog;
 pub use self::changelog::*;
 
 #[cfg(test)]
