@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use graphql_core::generic_inputs::LocationInput;
+use graphql_core::generic_inputs::NullableUpdate;
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -22,7 +22,7 @@ pub struct InsertInput {
     pub item_id: String,
     pub pack_size: u32,
     pub batch: Option<String>,
-    pub location: Option<LocationInput>,
+    pub location: Option<NullableUpdate<String>>,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
@@ -92,9 +92,9 @@ impl InsertInput {
             id,
             invoice_id,
             item_id,
-            location: location.and_then(|locatioln| {
+            location: location.and_then(|location| {
                 Some(LocationUpdate {
-                    location_id: locatioln.location_id,
+                    location_id: location.value,
                 })
             }),
             pack_size,

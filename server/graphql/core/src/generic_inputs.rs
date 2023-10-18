@@ -6,11 +6,6 @@ pub struct TaxInput {
     pub percentage: Option<f64>,
 }
 
-#[derive(InputObject)]
-
-pub struct LocationInput {
-    pub location_id: Option<String>,
-}
 /// Update a nullable value
 ///
 /// This struct is usually used as an optional value.
