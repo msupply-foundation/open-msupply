@@ -67,6 +67,7 @@ const parseSearchParams = (
 
 // Coerce a string (from url) to a value of the correct data type
 const unStringify = (input: string | undefined) => {
+  if (input === '') return undefined;
   if (!isNaN(Number(input))) return Number(input);
   if (input === 'true') return true;
   if (input === 'false') return false;

@@ -1,60 +1,55 @@
-import React, { FC } from 'react';
-import { RangeObject, useUrlQuery, RANGE_SPLIT_CHAR } from '@common/hooks';
+import React, { FC, useState } from 'react';
+import {
+  RangeObject,
+  useUrlQuery,
+  useDebouncedValueCallback,
+  RANGE_SPLIT_CHAR,
+} from '@common/hooks';
 import { NumericTextInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
+import { RangeOption } from './DateFilter';
 
 export interface NumberFilterDefinition extends FilterDefinitionCommon {
   type: 'number';
   range?: RangeOption;
   minValue?: number;
   maxValue?: number;
-  allowDecimal?: boolean;
+  decimalLimit?: number;
 }
-
-type RangeOption = 'from' | 'to';
-
-// Matches range strings for numbers, with "_" as the splitting character. Both
-// the start date and end date are optional.
-// A "number" can contain a negative (-) prefix, and a single decimal point
-// within it (which must be followed by additional digits)
-const numberRangeRegex = new RegExp(
-  `^-?\\d+(\\.\\d+)?${RANGE_SPLIT_CHAR}-?\\d+(\\.\\d+)?$`
-);
 
 export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
   filterDefinition,
 }) => {
-  const { urlParameter, name, range, minValue, maxValue, allowDecimal } =
+  const { urlParameter, name, range, minValue, maxValue, decimalLimit } =
     filterDefinition;
   const { urlQuery, updateQuery, parseRangeString } = useUrlQuery();
-
-  const value = getNumberFromUrl(
-    urlQuery[urlParameter] as any,
-    range,
-    parseRangeString
+  const [value, setValue] = useState(
+    getNumberFromUrl(
+      urlQuery[urlParameter] as string | number,
+      range,
+      parseRangeString
+    )
   );
 
-  console.log('Value', value);
-  const handleChange = (num: number | undefined) => {
-    console.log('Num', num);
-    if (range) {
-      if (num === undefined) {
-        updateQuery({ [urlParameter]: { [range]: '' } });
-        return;
+  const debouncedOnChange = useDebouncedValueCallback(
+    val => {
+      if (range) {
+        // Handle value that is part of a range
+        if (val === undefined) updateQuery({ [urlParameter]: { [range]: '' } });
+        else updateQuery({ [urlParameter]: { [range]: val } });
+      } else {
+        // Handle standalone value
+        if (val === undefined) updateQuery({ [urlParameter]: '' });
+        else updateQuery({ [urlParameter]: val });
       }
-      console.log({
-        [urlParameter]: { [range]: num },
-      });
-      updateQuery({
-        [urlParameter]: { [range]: num },
-      });
-    } else {
-      if (!num) {
-        updateQuery({ [urlParameter]: '' });
-        return;
-      }
-      updateQuery({ [urlParameter]: num });
-    }
+    },
+    [],
+    400
+  );
+
+  const handleChange = (newValue: number | undefined) => {
+    setValue(newValue);
+    debouncedOnChange(newValue);
   };
 
   return (
@@ -74,27 +69,31 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
       }}
       onChange={handleChange}
       value={value}
+      max={maxValue}
+      min={minValue}
+      decimalLimit={decimalLimit}
       // placeholder="Do placeholders work?"
     />
   );
 };
-
-console.log('numberRangeRegex', numberRangeRegex);
 
 const getNumberFromUrl = (
   urlValue: string | number | undefined,
   range: RangeOption | undefined,
   parseRangeString: (val: string | undefined) => RangeObject
 ) => {
-  console.log('urlValue', urlValue);
+  // Matches range strings for numbers, with "_" as the splitting character.
+  // Both the start date and end date are optional.
+  // A "number" can contain a negative (-) prefix, and a single decimal point
+  // within it (which must be followed by additional digits)
+  const numberRangeRegex = new RegExp(
+    `^(-?\\d+(\\.\\d+)?)?${RANGE_SPLIT_CHAR}(-?\\d+(\\.\\d+)?)?$`
+  );
   if (!urlValue) return null;
   if (typeof urlValue === 'number') return urlValue;
   if (urlValue?.match(numberRangeRegex)) {
-    console.log('MATCH');
     const rangeData = parseRangeString(urlValue);
-    console.log('rangeData', rangeData);
     return rangeData[range as RangeOption];
   }
-  console.log('NO MATCH');
   return Number(urlValue);
 };
