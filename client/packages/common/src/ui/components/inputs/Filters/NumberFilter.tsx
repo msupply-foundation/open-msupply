@@ -72,7 +72,6 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
       max={maxValue}
       min={minValue}
       decimalLimit={decimalLimit}
-      // placeholder="Do placeholders work?"
     />
   );
 };
