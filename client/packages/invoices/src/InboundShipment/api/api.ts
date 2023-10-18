@@ -12,7 +12,7 @@ import {
   UpdateInboundShipmentInput,
   Formatter,
   UpdateInboundShipmentStatusInput,
-  setOptionString,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -98,9 +98,7 @@ const inboundParsers = {
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
-      location: setOptionString('id' as keyof typeof line.location, {
-        ...line.location,
-      }),
+      location: setNullableInput('id', line.location),
     };
   },
   toUpdateLine: (line: DraftInboundLine): UpdateInboundShipmentLineInput => ({
@@ -114,9 +112,7 @@ const inboundParsers = {
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
-    location: setOptionString('id' as keyof typeof line.location, {
-      ...line.location,
-    }),
+    location: setNullableInput('id', line.location),
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };
