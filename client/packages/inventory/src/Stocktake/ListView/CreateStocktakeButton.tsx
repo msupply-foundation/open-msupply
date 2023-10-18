@@ -102,7 +102,7 @@ export const CreateStocktakeButton: React.FC<{
       masterListId: masterListId ? masterListId : undefined,
       location: locationId
         ? {
-            locationId: locationId,
+            value: locationId,
           }
         : undefined,
       itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,

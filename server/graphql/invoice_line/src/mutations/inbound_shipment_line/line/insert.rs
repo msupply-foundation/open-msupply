@@ -451,7 +451,7 @@ mod test {
                 "id": "new id",
                 "invoiceId": "invoice input",
                 "itemId": "item input",
-                "locationId": "location input",
+                "value": {"locationId": "location input"},
                 "packSize": 2,
                 "batch": "batch",
                 "costPricePerPack": 1.1,
