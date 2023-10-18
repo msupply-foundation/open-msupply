@@ -134,8 +134,8 @@ const getFilterOptions = (
   return filters
     .filter(fil =>
       fil.type === 'group'
-        ? !fil.elements.every(flatFil =>
-            activeFilterCodes.includes(flatFil.urlParameter)
+        ? !fil.elements.every(innerFil =>
+            activeFilterCodes.includes(innerFil.urlParameter)
           )
         : !activeFilterCodes.includes(fil.urlParameter)
     )
