@@ -139,7 +139,13 @@ fn generate(
             stocktake_number,
             comment,
             description,
-            stocktake_date,
+            // TODO: Changing this to be same as created datetime for now since function is disabled in frontend
+            // but will need to remove this later when functionality is
+            stocktake_date: if stocktake_date.is_some() {
+                stocktake_date
+            } else {
+                Some(Utc::now().naive_utc().date())
+            },
             status: StocktakeStatus::New,
             created_datetime: Utc::now().naive_utc(),
             user_id: user_id.to_string(),
@@ -375,6 +381,7 @@ pub fn insert_stocktake(
                 &ctx,
                 ActivityLogType::StocktakeCreated,
                 Some(new_stocktake.id.to_owned()),
+                None,
                 None,
             )?;
             let stocktake = get_stocktake(ctx, new_stocktake.id)?;

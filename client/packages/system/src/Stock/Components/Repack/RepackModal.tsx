@@ -190,7 +190,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           </Typography>
           {showLogEvent && (
             <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
-              {`${t('messages.repack-log-info')} : ${logData?.nodes[0]?.event}`}
+              {`${t('messages.repack-log-info')} : ${logData?.nodes[0]?.to}`}
             </Typography>
           )}
         </Grid>

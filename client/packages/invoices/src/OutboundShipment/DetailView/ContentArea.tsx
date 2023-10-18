@@ -49,7 +49,10 @@ const useHighlightPlaceholderRows = (
     // https://github.com/microsoft/TypeScript/issues/44373
     for (const row of rows) {
       if ('type' in row) {
-        if (row.type === InvoiceLineNodeType.UnallocatedStock) {
+        if (
+          row.type === InvoiceLineNodeType.UnallocatedStock ||
+          row.numberOfPacks === 0
+        ) {
           placeholders.push(row.id);
         }
       } else {

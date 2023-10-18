@@ -4,6 +4,7 @@ import {
   FnUtils,
   Grid,
   PlusCircleIcon,
+  RouteBuilder,
   StatsPanel,
   useNotification,
   useToggle,
@@ -14,6 +15,7 @@ import { ApiException, PropsWithChildrenOnly } from '@common/types';
 import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
+import { AppRoute } from 'packages/config';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
@@ -82,6 +84,9 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                   value: formatNumber.round(data?.notDelivered),
                 },
               ]}
+              link={RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InboundShipment)
+                .build()}
             />
           </Grid>
           <Grid item>
@@ -96,6 +101,9 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                   value: formatNumber.round(requisitionCount?.request?.draft),
                 },
               ]}
+              link={RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InternalOrder)
+                .build()}
             />
           </Grid>
           <Grid
