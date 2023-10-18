@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use graphql_core::generic_inputs::LocationInput;
+use graphql_core::generic_inputs::NullableUpdate;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -22,7 +22,7 @@ pub struct InsertInput {
     pub is_locked: Option<bool>,
     pub stocktake_date: Option<NaiveDate>,
     pub master_list_id: Option<String>,
-    pub location: Option<LocationInput>,
+    pub location: Option<NullableUpdate<String>>,
     pub items_have_stock: Option<bool>,
 }
 
@@ -108,7 +108,7 @@ impl InsertInput {
             is_locked,
             location: location.and_then(|location| {
                 Some(LocationUpdate {
-                    location_id: location.location_id,
+                    location_id: location.value,
                 })
             }),
             master_list_id,

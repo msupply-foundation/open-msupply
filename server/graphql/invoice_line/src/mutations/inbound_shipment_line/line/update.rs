@@ -1,6 +1,6 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::generic_inputs::{LocationInput, TaxInput};
+use graphql_core::generic_inputs::{NullableUpdate, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, ForeignKey, ForeignKeyError, NotAnInboundShipment, RecordNotFound,
 };
@@ -22,7 +22,7 @@ use super::BatchIsReserved;
 pub struct UpdateInput {
     pub id: String,
     pub item_id: Option<String>,
-    pub location: Option<LocationInput>,
+    pub location: Option<NullableUpdate<String>>,
     pub pack_size: Option<u32>,
     pub batch: Option<String>,
     pub cost_price_per_pack: Option<f64>,
@@ -103,7 +103,7 @@ impl UpdateInput {
             item_id,
             location: location.and_then(|location| {
                 Some(LocationUpdate {
-                    location_id: location.location_id,
+                    location_id: location.value,
                 })
             }),
             pack_size,

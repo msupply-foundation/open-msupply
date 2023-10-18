@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    generic_inputs::LocationInput,
+    generic_inputs::NullableUpdate,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -19,7 +19,7 @@ use service::{
 #[graphql(name = "UpdateStockLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub location: Option<LocationInput>,
+    pub location: Option<NullableUpdate<String>>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
@@ -98,7 +98,7 @@ impl UpdateInput {
             id,
             location: location.and_then(|location| {
                 Some(LocationUpdate {
-                    location_id: location.location_id,
+                    location_id: location.value,
                 })
             }),
             cost_price_per_pack,
