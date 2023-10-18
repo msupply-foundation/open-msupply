@@ -55,6 +55,7 @@ impl SyncTranslation for TemperatureLogTranslation {
                 LegacyTableName::STORE,
                 LegacyTableName::LOCATION,
                 LegacyTableName::SENSOR,
+                LegacyTableName::TEMPERATURE_BREACH,
             ],
         }
     }
