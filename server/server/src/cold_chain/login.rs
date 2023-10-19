@@ -66,7 +66,6 @@ async fn do_login(
                 Ok(_) => {
                     let cookie = Cookie::build(COOKIE_NAME, token.token)
                         .path(URL_PATH)
-                        .secure(true)
                         .http_only(true)
                         .finish();
                     HttpResponse::Ok()
