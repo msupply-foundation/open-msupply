@@ -51,14 +51,16 @@ pub fn validate_access(
         Some(user) => {
             let store_id = match user.default_store() {
                 Some(store) => Some(store.store_row.id.clone()),
-                None => None,
+                None => return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
+                    "No default store found for user, or default store is not active on current site".to_string(),
+                ))),
             };
             store_id
         }
         None => {
-            return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
-                "No default store".to_string(),
-            )))
+            return Err(AuthError::InternalError(
+                "User not found in database".to_string(),
+            ))
         }
     };
 
