@@ -13,13 +13,13 @@ interface SensorEditModalProps {
   sensor: SensorFragment;
 }
 
-interface useDraftSensorControl {
+interface UseDraftSensorControl {
   draft: SensorFragment;
   onUpdate: (patch: Partial<SensorFragment>) => void;
   onSave: () => Promise<void>;
 }
 
-const useDraftSensor = (seed: SensorFragment): useDraftSensorControl => {
+const useDraftSensor = (seed: SensorFragment): UseDraftSensorControl => {
   const [sensor, setSensor] = useState<SensorFragment>(seed);
   const { mutate } = useSensor.document.update();
   const onUpdate = (patch: Partial<SensorFragment>) => {
