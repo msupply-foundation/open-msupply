@@ -2,7 +2,7 @@
 
 Plugins can modify the behaviour of mSupply and can potentially leak confidential information.
 For this reason its important that plugins come from a trusted party.
-For example, a malicious user could tricky an mSupply user to install a modified plugin.
+For example, a malicious user could trick an mSupply user to install a modified plugin.
 To avoid this, plugins are signed and only plugins that can be verified to come from a trusted party are loaded.
 
 To sign a plugin, a trusted party needs a private key for signing a plugin and a matching public certificate which is later used for verifying that the plugin hasn't been modified.
