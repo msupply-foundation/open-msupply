@@ -38,7 +38,7 @@ In this example, the `public.pem` file needs to be copied to the `app_data/plugi
 
 A 3rd party plugin developer can generate their own keypair and then let sign their certificate by mSupply:
 
-1. A private singing key and public certificate signing request (CSR) needs to be generated:
+1. A private signing key and public certificate signing request (CSR) needs to be generated:
 
 ```bash
 openssl req -newkey rsa:2048 -keyout private_3rd.pem -out public_3rd.csr -nodes
