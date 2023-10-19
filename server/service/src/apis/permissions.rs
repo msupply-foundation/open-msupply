@@ -111,7 +111,8 @@ pub enum Permissions {
     DownloadBatchDocument,
     DeleteBatchDocument,
     AddStocktakeLines,
-    ViewStocktakeLines,
+    /// ViewStocktakeLines has been removed from mSupply
+    /// ViewStocktakeLines,
     EditStocktakeLines,
     DeleteStocktakeLines,
     CreateStocktake,

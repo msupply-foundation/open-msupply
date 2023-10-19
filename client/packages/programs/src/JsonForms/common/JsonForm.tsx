@@ -100,6 +100,7 @@ const ScrollFix = () => {
 
 /** Config data to pass to all json form controls */
 export type JsonFormsConfig = {
+  /** Document name, if data is loaded from a document. */
   documentName?: string;
   patientId?: string;
   store?: UserStoreNodeFragment;
@@ -107,6 +108,10 @@ export type JsonFormsConfig = {
     id: string;
     name: string;
   };
+  /**
+   * The initial data of the form before doing any modifications.
+   */
+  initialData?: JsonData;
 };
 
 const FormComponent = ({
@@ -234,8 +239,8 @@ export const JsonForm: FC<PropsWithChildren<JsonFormProps>> = ({
       gap={2}
       paddingX={5}
       sx={{
-        alignItems: 'flex-start',
         '& .input-with-label-row': {
+          alignItems: 'flex-start',
           maxWidth: FORM_COLUMN_MAX_WIDTH,
         },
         '& h1, h2, h3, h4, h5, h6': {
