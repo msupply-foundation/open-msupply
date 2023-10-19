@@ -9,8 +9,7 @@ To sign a plugin, a trusted party needs a private key for signing a plugin and a
 The public certificate can either be self-signed or signed by another trusted party.
 Using this key pair, a plugin can be signed using the mSupply cli.
 A signed plugin contains a `manifest.json` and `manifest.signature` file.
-Besides others, the `manifest.json` file contains a list of plugin files and their hashes.
-Moreover, it contains the public certificate.
+The `manifest.json` file contains a list of plugin files along with their hashes, along with the public certificate.
 
 To validate a plugin, the mSupply remote server needs to validate that it trusts the certificate that comes with the plugin (which is stored in the `manifest.json`).
 This is done by verifying the certificate against a list of trusted certificates which are stored in the `app_data/plugin_certs` directory.
@@ -36,7 +35,10 @@ In this example, the `public.pem` file needs to be copied to the `app_data/plugi
 
 ## Certificates that are signed by a trusted party
 
-A 3rd party plugin developer can generate their own keypair and then let sign their certificate by mSupply:
+A 3rd party plugin developer can generate their own private key & signing request and then let mSupply generate a public certificate.
+This 3rd party certificate can be used to sign the 3rd party plugin but doesn't need to be added to the remote server.
+However, the remote server needs to have the mSupply certificate installed (the one used to sign the 3rd party certificate).
+I.e., the mSupply "root" certificate is used to validates the 3rd party certificate shipped with the plugin which in turn is used to validate that the plugin hasn't been modified.
 
 1. A private signing key and public certificate signing request (CSR) needs to be generated:
 
@@ -63,7 +65,7 @@ This will place the `manifest.json` and the `manifest.signature` file into the p
 For example:
 
 ```bash
-cargo run --profile fast --bin remote_server_cli -- sign-plugin -p ./app_data/plugins/StockDonor/ -k pathtokeys/private.pem -c pathtokeyskey/public.pem
+cargo run --bin remote_server_cli -- sign-plugin -p ./app_data/plugins/StockDonor/ -k pathtokeys/private.pem -c pathtokeyskey/public.pem
 ```
 
 # Development
