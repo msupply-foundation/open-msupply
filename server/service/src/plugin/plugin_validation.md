@@ -15,7 +15,7 @@ Moreover, it contains the public certificate.
 To validate a plugin, the mSupply remote server needs to validate that it trusts the certificate that comes with the plugin (which is stored in the `manifest.json`).
 This is done by verifying the certificate against a list of trusted certificates which are stored in the `app_data/plugin_certs` directory.
 If the plugin certificate is trusted, it is then validated that the `manifest.json` file matches the `manifest.signature`.
-The `manifest.json` file is then used to only server plugin files that are listed in the manifest.
+The `manifest.json` file is then used to only serve plugin files that are listed in the manifest.
 
 # Generating Keys
 
