@@ -267,8 +267,13 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                         .collect::<Vec<_>>();
                     // adjust end times within the stack
                     for n in 0..events.len() - 1 {
-                        let active_datetime = events[n].active_start_datetime;
-                        events[n + 1].active_end_datetime = active_datetime;
+                        let active_start_datetime = events[n].active_start_datetime;
+                        let active_end_datetime = events[n].active_end_datetime;
+                        // End time of the whole stack might be already before the start time of an
+                        // individual event.
+                        // Thus take the min(start, end):
+                        events[n + 1].active_end_datetime =
+                            std::cmp::min(active_start_datetime, active_end_datetime);
                     }
                     for event in events {
                         ProgramEventRowRepository::new(con).upsert_one(&event)?;
@@ -287,6 +292,7 @@ impl ProgramEventServiceTrait for ProgramEventService {}
 
 #[cfg(test)]
 mod test {
+    use chrono::NaiveTime;
     use repository::{
         mock::{mock_program_a, MockDataInserts},
         test_db::setup_all,
@@ -728,5 +734,143 @@ mod test {
             .unwrap();
         assert_names!(service, ctx, 26, vec!["G1_1"]);
         assert_names!(service, ctx, 31, vec!["G1_2"]);
+    }
+
+    #[actix_rt::test]
+    async fn test_program_events_bug() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_program_events_bug",
+            MockDataInserts::none().names().contexts(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let ctx = service_provider.basic_context().unwrap();
+
+        let service = service_provider.program_event_service;
+
+        let datetime_from_date = |year: i32, month: u32, day: u32| {
+            NaiveDate::from_ymd_opt(year, month, day)
+                .unwrap()
+                .and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+        };
+
+        // An earlier stack is inserted after a later stack.
+        // When inserting the earlier stack all events of the earlier stack should finish before
+        // the datetime of the later stack.
+
+        // Final target setup with g2 inserted first:
+        // ---g1-------------g2-----------
+        //                  18/09---->16/12
+        //                  18/09--------------->13/1
+        //                  18/09--------------------------->15/3
+        //   17/6-->14/09--|
+        //   17/6---------->16/09          // end datetime = 18/09 (previously set to 13/12)
+        //   17/6------------|----->13/12  // end datetime = 18/09
+
+        let later_stack_datetime = datetime_from_date(2023, 09, 18);
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                later_stack_datetime,
+                &mock_program_a().context_id,
+                vec![
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2023, 12, 16),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2024, 01, 13),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_2".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2024, 03, 15),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_3".to_string()),
+                    },
+                ],
+            )
+            .unwrap();
+
+        let earlier_stack_datetime = datetime_from_date(2023, 06, 17);
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                earlier_stack_datetime,
+                &mock_program_a().context_id,
+                vec![
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2023, 09, 14),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2023, 09, 16),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_2".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2023, 12, 13),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_3".to_string()),
+                    },
+                ],
+            )
+            .unwrap();
+
+        let events = service
+            .active_events(
+                &ctx,
+                datetime_from_date(2023, 10, 5),
+                None,
+                Some(ProgramEventFilter::new()),
+                None,
+            )
+            .unwrap();
+        assert_eq!(events.count, 0);
+
+        // check end times for the earlier group
+        let event_end_datetimes = service
+            .events(
+                &ctx,
+                None,
+                Some(
+                    ProgramEventFilter::new()
+                        .datetime(DatetimeFilter::equal_to(earlier_stack_datetime)),
+                ),
+                Some(ProgramEventSort {
+                    key: ProgramEventSortField::ActiveStartDatetime,
+                    desc: Some(false),
+                }),
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|e| e.active_end_datetime)
+            .collect::<Vec<_>>();
+        assert_eq!(
+            event_end_datetimes,
+            vec![
+                datetime_from_date(2023, 09, 16),
+                later_stack_datetime,
+                later_stack_datetime
+            ]
+        )
     }
 }

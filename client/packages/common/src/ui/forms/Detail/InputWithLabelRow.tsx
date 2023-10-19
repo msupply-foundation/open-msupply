@@ -58,8 +58,10 @@ export const DetailInputWithLabelRow: FC<InputWithLabelRowProps> = ({
   );
 };
 
-// Adds a final ":" to the label, but not if it already ends in "?" or ":"
+// Adds a final ":" to the label, but not if it already ends in "?" or ":", or
+// if there is no label value
 export const labelWithPunctuation = (labelString: string) => {
   if (/[\?:]$/.test(labelString)) return labelString;
+  if (labelString === '') return '';
   else return labelString + ':';
 };
