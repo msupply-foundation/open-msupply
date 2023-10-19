@@ -11,22 +11,22 @@ use service::{
 
 mod login;
 mod sensor;
-use login::login;
-use sensor::sensors;
+use login::post_login;
+use sensor::put_sensors;
 
 const URL_PATH: &str = "/coldchain/v1";
 const COOKIE_NAME: &str = "coldchain";
 
 pub fn config_cold_chain(cfg: &mut web::ServiceConfig) {
-    cfg.route(&format!("{}/login", URL_PATH), web::post().to(login));
-    cfg.route(&format!("{}/sensor", URL_PATH), web::put().to(sensors));
+    cfg.route(&format!("{}/login", URL_PATH), web::post().to(post_login));
+    cfg.route(&format!("{}/sensor", URL_PATH), web::put().to(put_sensors));
 }
 
 fn validate_request(
     request: HttpRequest,
     service_provider: &ServiceProvider,
     auth_data: &AuthData,
-) -> Result<(String, Option<String>), AuthError> {
+) -> Result<(String, String), AuthError> {
     let service_context = service_provider
         .basic_context()
         .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
@@ -44,13 +44,13 @@ pub fn validate_access(
     service_context: &ServiceContext,
     auth_data: &AuthData,
     token: Option<String>,
-) -> Result<(String, Option<String>), AuthError> {
+) -> Result<(String, String), AuthError> {
     let user_service = UserAccountService::new(&service_context.connection);
     let validated_user = validate_auth(auth_data, &token)?;
     let store_id = match user_service.find_user(&validated_user.user_id)? {
         Some(user) => {
             let store_id = match user.default_store() {
-                Some(store) => Some(store.store_row.id.clone()),
+                Some(store) => store.store_row.id.clone(),
                 None => return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
                     "No default store found for user, or default store is not active on current site".to_string(),
                 ))),
@@ -66,7 +66,7 @@ pub fn validate_access(
 
     let access_request = ResourceAccessRequest {
         resource: Resource::ColdChainApi,
-        store_id: store_id.clone(),
+        store_id: Some(store_id.clone()),
     };
 
     let validated_user = service_provider.validation_service.validate(

@@ -16,22 +16,18 @@ use service::{
 use super::validate_request;
 
 #[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Sensor {
     id: String,
-    #[serde(rename = "macAddress")]
     mac_address: String,
-    #[serde(rename = "logInterval")]
     log_interval: i32,
-    #[serde(rename = "programmedDate")]
-    programmed_date: usize,
+    programmed_date: i32,
     name: String,
-    #[serde(rename = "logDelay")]
     log_delay: Option<i32>,
-    #[serde(rename = "batteryLevel")]
     battery_level: i32,
 }
 
-pub async fn sensors(
+pub async fn put_sensors(
     request: HttpRequest,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
@@ -45,91 +41,128 @@ pub async fn sensors(
         }
     };
     let sensors = sensors.into_inner();
-    if !validate_input(&sensors) {
-        return HttpResponse::BadRequest().body("Expecting a body with the array of sensors");
+    match validate_input(&sensors) {
+        Ok(_) => {}
+        Err(error) => {
+            return HttpResponse::BadRequest().body(format!(
+                "The following sensors failed validation: \n{}",
+                error
+            ))
+        }
     };
 
-    match upsert_sensors(service_provider, store_id, &sensors).await {
+    match upsert_sensors(service_provider, store_id, sensors).await {
         Ok(response) => response,
         Err(error) => HttpResponse::InternalServerError().body(format!("{:#?}", error)),
     }
 }
 
-fn validate_input(sensors: &Vec<Sensor>) -> bool {
-    sensors.into_iter().all(|sensor| validate_sensor(sensor))
+fn validate_input(sensors: &Vec<Sensor>) -> Result<(), String> {
+    let (_, errors): (Vec<_>, Vec<_>) = sensors
+        .iter()
+        .map(|sensor| validate_sensor(sensor))
+        .partition(Result::is_ok);
+
+    if errors.len() > 0 {
+        let error = errors
+            .into_iter()
+            .map(Result::unwrap_err)
+            .collect::<Vec<String>>()
+            .join("\n");
+        return Err(error);
+    }
+    Ok(())
 }
 
-fn validate_sensor(sensor: &Sensor) -> bool {
+fn validate_sensor(sensor: &Sensor) -> Result<(), String> {
     let mac_regex = Regex::new(r"^([A-F0-9]{2}:){5}[A-F0-9]{2}( \| [\w]*)?$").unwrap();
 
     if !mac_regex.is_match(&sensor.mac_address) {
-        return false;
+        return Err(format!(" {}: Mac address is not valid", sensor.id));
     }
     if sensor.log_interval < 1 {
-        return false;
+        return Err(format!(
+            " {}: Log interval must be greater than zero",
+            sensor.id
+        ));
     }
     if sensor.programmed_date < 1 {
-        return false;
+        return Err(format!(
+            " {}: Programmed date must be greater than zero",
+            sensor.id
+        ));
     }
     if sensor.name.len() < 1 {
-        return false;
+        return Err(format!(" {}: Sensor name must be specified", sensor.id));
     }
-    if sensor.battery_level < 1 || sensor.battery_level > 100 {
-        return false;
+    if sensor.battery_level < 0 || sensor.battery_level > 100 {
+        return Err(format!(
+            " {}: Battery level must be between 0 and 100",
+            sensor.id
+        ));
     }
     match sensor.log_delay {
         Some(log_delay) => {
             if log_delay < 1 {
-                return false;
+                return Err(format!(" {}: Log delay must be positive", sensor.id));
             }
         }
         None => {}
     };
-    true
+    Ok(())
 }
 
 async fn upsert_sensors(
     service_provider: Data<ServiceProvider>,
-    store_id: Option<String>,
-    sensors: &Vec<Sensor>,
+    store_id: String,
+    sensors: Vec<Sensor>,
 ) -> Result<HttpResponse, RepositoryError> {
     let mut ctx = service_provider.basic_context()?;
-    if store_id.is_some() {
-        ctx.store_id = store_id.unwrap();
-    }
+    ctx.store_id = store_id;
     let service = &service_provider.sensor_service;
-
-    let mut results: Vec<repository::Sensor> = Vec::new();
-    sensors.into_iter().for_each(|sensor| {
-        if service.get_sensor(&ctx, sensor.id.clone()).is_ok() {
-            let sensor = UpdateSensor {
-                id: sensor.id.clone(),
-                name: Some(sensor.name.clone()),
-                is_active: Some(true),
-                location_id: None,
-                log_interval: Some(sensor.log_interval),
-                battery_level: Some(sensor.battery_level),
-            };
-            match service.update_sensor(&ctx, sensor) {
-                Ok(updated) => results.push(updated),
-                Err(e) => error!("Unable to insert sensor: {:#?}", e),
+    let results = sensors
+        .iter()
+        .map(|sensor| {
+            let id = sensor.id.clone();
+            match service.get_sensor(&ctx, id.clone()) {
+                Ok(_) => {
+                    let sensor = UpdateSensor {
+                        id: id.clone(),
+                        name: Some(sensor.name.clone()),
+                        is_active: Some(true),
+                        location_id: None,
+                        log_interval: Some(sensor.log_interval),
+                        battery_level: Some(sensor.battery_level),
+                    };
+                    match service.update_sensor(&ctx, sensor) {
+                        Ok(updated) => Ok(updated),
+                        Err(e) => {
+                            error!("Unable to update sensor {}: {:#?}", &id, e);
+                            Err(format!("Unable to update sensor {}: {:#?}", &id, e))
+                        }
+                    }
+                }
+                Err(_) => {
+                    let sensor = InsertSensor {
+                        r#type: get_sensor_type(&sensor.mac_address),
+                        id: id.clone(),
+                        serial: sensor.mac_address.clone(),
+                        name: Some(sensor.name.clone()),
+                        is_active: Some(true),
+                        log_interval: Some(sensor.log_interval),
+                        battery_level: Some(sensor.battery_level),
+                    };
+                    match service.insert_sensor(&ctx, sensor) {
+                        Ok(inserted) => Ok(inserted),
+                        Err(e) => {
+                            error!("Unable to insert sensor {}: {:#?}", &id, e);
+                            Err(format!("Unable to insert sensor {}: {:#?}", &id, e))
+                        }
+                    }
+                }
             }
-        } else {
-            let sensor = InsertSensor {
-                id: sensor.id.clone(),
-                serial: sensor.mac_address.clone(),
-                name: Some(sensor.name.clone()),
-                is_active: Some(true),
-                log_interval: Some(sensor.log_interval),
-                battery_level: Some(sensor.battery_level),
-                r#type: get_sensor_type(&sensor.mac_address),
-            };
-            match service.insert_sensor(&ctx, sensor) {
-                Ok(inserted) => results.push(inserted),
-                Err(e) => error!("Unable to update sensor: {:#?}", e),
-            }
-        }
-    });
+        })
+        .collect::<Vec<Result<repository::Sensor, String>>>();
 
     Ok(HttpResponse::Ok()
         .append_header(header::ContentType(mime::APPLICATION_JSON))
