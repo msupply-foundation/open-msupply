@@ -56,12 +56,6 @@ async fn plugins(
     plugin_info: web::Path<PluginInfo>,
     plugin_bucket: Data<Mutex<ValidatedPluginBucket>>,
 ) -> Result<HttpResponse, Error> {
-    let path = req.match_info();
-    let plugin = path
-        .get("plugin")
-        .ok_or(std::io::Error::new(ErrorKind::NotFound, "Plugin not found"))?;
-    let filename = path.get("filename");
-
     let file = PluginFileService::find_file(
         plugin_bucket.as_ref(),
         &settings.server.base_dir,
