@@ -13,10 +13,10 @@ interface SensorEditModalProps {
   sensor: SensorFragment;
 }
 
-interface UseDraftSensorControl {
+export interface UseDraftSensorControl {
   draft: SensorFragment;
   onUpdate: (patch: Partial<SensorFragment>) => void;
-  onSave: () => Promise<void>;
+  onSave?: () => Promise<void>;
 }
 
 const useDraftSensor = (seed: SensorFragment): UseDraftSensorControl => {
@@ -63,7 +63,7 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
           onClick={() =>
             getConfirmation({
               onConfirm: async () => {
-                await onSave();
+                await onSave?.();
                 onClose();
               },
             })
