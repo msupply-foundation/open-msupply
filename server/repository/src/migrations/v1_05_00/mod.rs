@@ -14,7 +14,6 @@ impl Migration for V1_05_00 {
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sensor::migrate(connection)?;
         cold_chain::migrate(connection)?;
-
         permissions_preferences::migrate(connection)?;
         Ok(())
     }
