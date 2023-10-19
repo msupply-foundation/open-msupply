@@ -3,7 +3,6 @@ import {
   Grid,
   InputWithLabelRow,
   NumericTextInput,
-  NonNegativeIntegerInput,
   TextArea,
   Typography,
   Switch,
@@ -192,12 +191,13 @@ export const RequestLineEditForm = ({
           />
           <InputWithLabelRow
             Input={
-              <NonNegativeIntegerInput
+              <NumericTextInput
                 autoFocus
                 disabled={isPacks}
                 value={requestedQuantity}
                 width={100}
                 onChange={requestedQuantity => update({ requestedQuantity })}
+                integer
               />
             }
             labelWidth="750px"
@@ -206,16 +206,18 @@ export const RequestLineEditForm = ({
           {isPacksEnabled && (
             <InputWithLabelRow
               Input={
-                <NonNegativeIntegerInput
+                <NumericTextInput
                   autoFocus
                   disabled={!isPacks}
                   value={NumUtils.round(requestedQuantity / defaultPackSize, 2)}
                   width={100}
-                  onChange={quantity =>
+                  onChange={quantity => {
+                    if (quantity === undefined) return;
                     update({
                       requestedQuantity: quantity * defaultPackSize,
-                    })
-                  }
+                    });
+                  }}
+                  integer
                 />
               }
               labelWidth="750px"
@@ -235,7 +237,6 @@ export const RequestLineEditForm = ({
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },
             }}
-
             minRows={7}
             maxRows={7}
           />

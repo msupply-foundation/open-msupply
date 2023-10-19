@@ -7,12 +7,12 @@ import {
   Select,
   useTranslation,
   InputLabel,
-  NonNegativeIntegerInput,
   Divider,
   Box,
   Typography,
   useFormatNumber,
   useDebounceCallback,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -117,7 +117,8 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     updateIssueQuantity(allocatedQuantity);
   };
 
-  const handleIssueQuantityChange = (quantity: number) => {
+  const handleIssueQuantityChange = (quantity?: number) => {
+    if (quantity === undefined) return;
     setIssueQuantity(quantity);
     allocate(quantity, Number(packSizeController.selected?.value));
   };
@@ -182,13 +183,14 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
           />
           <Grid container>
             <ModalLabel label={t('label.issue')} />
-            <NonNegativeIntegerInput
+            <NumericTextInput
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
-              defaultValue={0}
+              defaultValue={1}
+              min={1}
+              integer
             />
-
             <Box marginLeft={1} />
 
             {packSizeController.options.length ? (

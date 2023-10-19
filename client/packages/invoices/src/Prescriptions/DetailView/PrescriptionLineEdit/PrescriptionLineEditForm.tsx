@@ -7,7 +7,7 @@ import {
   Select,
   useTranslation,
   InputLabel,
-  NonNegativeIntegerInput,
+  NumericTextInput,
   Divider,
   Box,
   Typography,
@@ -139,7 +139,8 @@ export const PrescriptionLineEditForm: React.FC<
     updateIssueQuantity(allocatedQuantity);
   };
 
-  const handleIssueQuantityChange = (quantity: number) => {
+  const handleIssueQuantityChange = (quantity?: number) => {
+    if (quantity === undefined) return;
     setIssueQuantity(quantity);
     allocate(quantity, Number(packSizeController.selected?.value));
   };
@@ -229,11 +230,13 @@ export const PrescriptionLineEditForm: React.FC<
           />
           <Grid container>
             <ModalLabel label={t('label.issue')} />
-            <NonNegativeIntegerInput
+            <NumericTextInput
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
-              defaultValue={0}
+              defaultValue={1}
+              min={1}
+              integer
             />
 
             <Box marginLeft={1} />

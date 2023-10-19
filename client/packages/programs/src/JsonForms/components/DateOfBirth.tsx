@@ -9,12 +9,12 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   BaseDatePickerInput,
   DateUtils,
-  NonNegativeIntegerInput,
   useFormatDateTime,
   useTranslation,
   FormLabel,
   Box,
   DetailInputWithLabelRow,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -54,7 +54,7 @@ const UIComponent = (props: ControlProps) => {
     handleChange(estimatedPath, false);
   };
 
-  const onChangeAge = (newAge: number) => {
+  const onChangeAge = (newAge: number | string = '') => {
     const dob = DateUtils.startOfYear(DateUtils.addYears(new Date(), -newAge));
     setDoB(dob);
     handleChange(dobPath, dateFormatter(dob, 'yyyy-MM-dd'));
@@ -104,11 +104,12 @@ const UIComponent = (props: ControlProps) => {
             <FormLabel sx={{ fontWeight: 'bold' }}>{t('label.age')}:</FormLabel>
           </Box>
           <Box flex={0}>
-            <NonNegativeIntegerInput
+            <NumericTextInput
               value={age}
               sx={{ width: 65 }}
               onChange={onChangeAge}
               disabled={!props.enabled}
+              integer
             />
           </Box>
         </Box>
