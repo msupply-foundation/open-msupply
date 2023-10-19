@@ -21,7 +21,7 @@ The `manifest.json` file is then used to only serve plugin files that are listed
 
 There are two types of public validation certificates.
 
-1. Self-singed certificates: These self-signed certificates need to be copied to the `app_data/plugin_certs`
+1. Self-signed certificates: These self-signed certificates need to be copied to the `app_data/plugin_certs`
 2. Certificates that are signed by a trusted party: These certificated must be signed by a certificate already in the `app_data/plugin_certs` server directory
 
 ## Self-signed Certificates
