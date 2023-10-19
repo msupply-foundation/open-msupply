@@ -90,7 +90,7 @@ impl ValidatedPluginBucket {
                 continue;
             }
             // Be conservative and record the manifest timestamp before validating the plugin.
-            // For example, when the plugin changes while validating it, the older timestamp would
+            // For example, when the plugin changes while validating it, the older timestamp will
             // trigger a reload when fetching a plugin (in validate_plugin()).
             let metadata = File::open(&manifest_path)?.metadata()?;
             let manifest_datetime = metadata.modified()?;
