@@ -23,7 +23,7 @@ pub struct LoginRequest {
     password: String,
 }
 
-pub async fn login(
+pub async fn post_login(
     user_info: web::Json<LoginRequest>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
