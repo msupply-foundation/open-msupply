@@ -19,13 +19,18 @@ interface useUrlQueryProps {
   // to opt out of this
   skipParse?: string[];
 }
+
 export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const updateQuery = (values: UrlQueryObject, overwrite = false) => {
+    // We use this rather than searchParams as this function uses a stale
+    // version of searchParams (closure from when the hook was first called)
+    const urlSearchParams = new URLSearchParams(window.location.search);
+
     const newQueryObject = overwrite
       ? {}
-      : Object.fromEntries(searchParams.entries());
+      : Object.fromEntries(urlSearchParams.entries());
 
     Object.entries(values).forEach(([key, value]) => {
       if (!value) delete newQueryObject[key];
