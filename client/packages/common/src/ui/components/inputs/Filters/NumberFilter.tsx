@@ -71,7 +71,7 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
       value={value}
       max={maxValue}
       min={minValue}
-      decimalLimit={decimalLimit}
+      decimalPrecision={decimalLimit}
     />
   );
 };
