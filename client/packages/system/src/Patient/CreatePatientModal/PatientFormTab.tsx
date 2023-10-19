@@ -12,6 +12,7 @@ import { ObjUtils } from '@common/utils';
 import defaultPatientSchema from '../DefaultPatientSchema.json';
 import defaultPatientUISchema from '../DefaultPatientUISchema.json';
 import { BasicSpinner } from '@openmsupply-client/common';
+import { IdGenerator, idGeneratorTester } from '@openmsupply-client/programs';
 
 type Patient = {
   code?: string;
@@ -20,6 +21,8 @@ type Patient = {
   lastName?: string;
   dateOfBirth?: string;
   gender?: Gender;
+  address1?: string;
+  phone?: string;
 };
 
 export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
@@ -48,6 +51,8 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
         lastName: patientData?.lastName,
         dateOfBirth: patientData?.dateOfBirth,
         gender: patientData?.gender,
+        address1: patientData?.address1,
+        phone: patientData?.phone,
       });
     }
   };
@@ -63,6 +68,9 @@ export const PatientFormTab: FC<PatientPanel> = ({ patient, value }) => {
         isError={patientCreationUI ? isError : false}
         isLoading={patientCreationUI ? isLoading : false}
         updateData={setPatient}
+        additionalRenderers={[
+          { tester: idGeneratorTester, renderer: IdGenerator },
+        ]}
       />
     </PatientPanel>
   );

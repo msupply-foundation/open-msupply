@@ -6,6 +6,8 @@ fragment PatientRow on PatientNode {
   lastName
   name
   dateOfBirth
+  address1
+  phone
   gender
   email
   document {

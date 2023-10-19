@@ -5,7 +5,7 @@ import {
   RecordWithId,
   useLocalStorage,
 } from '@openmsupply-client/common';
-import { FilterBy, FilterController } from '../useQueryParams';
+import { FilterBy, FilterController, SortBy } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
@@ -21,6 +21,13 @@ interface UrlQueryParams {
   initialSort?: UrlQuerySort;
   filterCondition?: string;
 }
+
+export type ListParams<T> = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<T>;
+  filterBy: FilterBy | null;
+};
 
 export const useUrlQueryParams = ({
   filterKey,
@@ -96,14 +103,20 @@ export const useUrlQueryParams = ({
     }, {}),
   };
   const queryParams = {
-    page: urlQuery.page ? urlQuery.page - 1 : 0,
-    offset: urlQuery.page ? (urlQuery.page - 1) * rowsPerPage : 0,
+    page:
+      urlQuery['page'] && typeof urlQuery['page'] === 'number'
+        ? urlQuery['page'] - 1
+        : 0,
+    offset:
+      urlQuery['page'] && typeof urlQuery['page'] === 'number'
+        ? (urlQuery['page'] - 1) * rowsPerPage
+        : 0,
     first: rowsPerPage,
     sortBy: {
-      key: urlQuery.sort ?? '',
-      direction: urlQuery.dir ?? 'asc',
-      isDesc: urlQuery.dir === 'desc',
-    },
+      key: urlQuery['sort'] ?? '',
+      direction: urlQuery['dir'] ?? 'asc',
+      isDesc: urlQuery['dir'] === 'desc',
+    } as SortBy<unknown>,
     filterBy: filter.filterBy,
   };
 

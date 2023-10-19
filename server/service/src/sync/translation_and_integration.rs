@@ -215,9 +215,6 @@ impl PullUpsertRecord {
             TemperatureBreach(record) => {
                 TemperatureBreachRowRepository::new(con).upsert_one(record)
             }
-            TemperatureBreachConfig(record) => {
-                TemperatureBreachConfigRowRepository::new(con).upsert_one(record)
-            }
             Clinician(record) => ClinicianRowRepository::new(con).sync_upsert_one(record),
             ClinicianStoreJoin(record) => {
                 ClinicianStoreJoinRowRepository::new(con).sync_upsert_one(record)
