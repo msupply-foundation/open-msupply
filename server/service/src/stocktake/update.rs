@@ -701,6 +701,7 @@ pub fn update_stocktake(
                     ActivityLogType::StocktakeStatusFinalised,
                     Some(stocktake_id.to_owned()),
                     None,
+                    None,
                 )?;
             }
 

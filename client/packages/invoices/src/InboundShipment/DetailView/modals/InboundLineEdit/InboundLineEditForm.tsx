@@ -28,7 +28,10 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
   return (
     <>
       <ModalRow>
-        <ModalLabel label={t('label.item', { count: 1 })} justifyContent="flex-end" />
+        <ModalLabel
+          label={t('label.item', { count: 1 })}
+          justifyContent="flex-end"
+        />
         <Grid item flex={1}>
           <StockItemSearchInput
             autoFocus={!item}
@@ -44,7 +47,6 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
           />
         </Grid>
       </ModalRow>
-
       {item && (
         <ModalRow margin={3}>
           <ModalLabel label={t('label.unit')} justifyContent="flex-end" />

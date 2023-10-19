@@ -5,7 +5,7 @@ import {
   useTableStore,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { canDeleteInvoice } from '../../../../utils';
+import { canDeletePrescription } from '../../../../utils';
 import { usePrescriptionApi } from '../../utils/usePrescriptionApi';
 import { PrescriptionRowFragment } from '../../operations.generated';
 import { usePrescriptions } from './usePrescriptions';
@@ -35,7 +35,7 @@ export const usePrescriptionDeleteRows = () => {
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction,
-    canDelete: selectedRows.every(canDeleteInvoice),
+    canDelete: selectedRows.every(canDeletePrescription),
     messages: {
       confirmMessage: t('messages.confirm-delete-prescriptions', {
         count: selectedRows.length,
