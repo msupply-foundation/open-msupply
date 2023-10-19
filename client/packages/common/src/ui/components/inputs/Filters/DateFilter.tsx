@@ -9,7 +9,7 @@ export interface DateFilterDefinition extends FilterDefinitionCommon {
   range?: RangeOption;
 }
 
-type RangeOption = 'from' | 'to';
+export type RangeOption = 'from' | 'to';
 
 export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   filterDefinition,

@@ -14,6 +14,7 @@ import { useTranslation } from '@common/intl';
 import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
 import { DateFilterDefinition, DateFilter } from './DateFilter';
+import { NumberFilter, NumberFilterDefinition } from './NumberFilter';
 
 export interface FilterDefinitionCommon {
   name: string;
@@ -29,7 +30,8 @@ interface GroupFilterDefinition {
 type FilterDefinition =
   | TextFilterDefinition
   | EnumFilterDefinition
-  | DateFilterDefinition;
+  | DateFilterDefinition
+  | NumberFilterDefinition;
 
 interface FilterDefinitions {
   filters: (FilterDefinition | GroupFilterDefinition)[];
@@ -37,7 +39,7 @@ interface FilterDefinitions {
 
 // CONSTANTS
 const RESET_KEYWORD = 'RESET';
-export const FILTER_WIDTH = '220px';
+export const FILTER_WIDTH = 220;
 
 export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   const t = useTranslation();
@@ -182,6 +184,15 @@ const getFilterComponent = (
     case 'dateTime':
       return (
         <DateFilter
+          key={`${filter.urlParameter}${
+            filter.range ? '_' + filter.range : ''
+          }`}
+          filterDefinition={filter}
+        />
+      );
+    case 'number':
+      return (
+        <NumberFilter
           key={`${filter.urlParameter}${
             filter.range ? '_' + filter.range : ''
           }`}
