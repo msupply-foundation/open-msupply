@@ -89,9 +89,10 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
     <Box
       display="flex"
       gap={2}
-      sx={{ alignItems: 'flex-end', minHeight: 50, flexWrap: 'wrap' }}
+      sx={{ alignItems: 'flex-start', flexWrap: 'wrap' }}
     >
-      <DropdownMenu label={t('label.filters')}>
+      {/* 13px margin to make menu match the individual filter inputs */}
+      <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
         {filterOptions.map(option => (
           <FilterMenuItem
             key={
