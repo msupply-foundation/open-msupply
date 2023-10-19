@@ -54,7 +54,7 @@ openssl x509 -req -in public_3rd.csr -CA public.pem -CAkey private.pem -out publ
 
 The `public_3rd.pem` file is sent back to the 3rd plugin developer.
 
-3. The 3rd developer can now sign their plugin using `private_3rd.pem`and`public_3rd.pem`.
+3. The 3rd developer can now sign their plugin using `private_3rd.pem` and `public_3rd.pem`.
 
 # Plugin Signing
 
