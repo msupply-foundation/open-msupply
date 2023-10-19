@@ -20,8 +20,6 @@ pub enum UserPermission {
     LocationMutate,
     SensorMutate,
     SensorQuery,
-    TemperatureBreachConfigMutate,
-    TemperatureBreachConfigQuery,
     TemperatureBreachQuery,
     TemperatureLogQuery,
     StockLineQuery,
@@ -92,12 +90,6 @@ impl UserPermission {
             Permission::LocationMutate => UserPermission::LocationMutate,
             Permission::SensorMutate => UserPermission::SensorMutate,
             Permission::SensorQuery => UserPermission::SensorQuery,
-            Permission::TemperatureBreachConfigMutate => {
-                UserPermission::TemperatureBreachConfigMutate
-            }
-            Permission::TemperatureBreachConfigQuery => {
-                UserPermission::TemperatureBreachConfigQuery
-            }
             Permission::TemperatureBreachQuery => UserPermission::TemperatureBreachQuery,
             Permission::TemperatureLogQuery => UserPermission::TemperatureLogQuery,
             Permission::StockLineQuery => UserPermission::StockLineQuery,
@@ -131,12 +123,6 @@ impl UserPermission {
             UserPermission::LocationMutate => Permission::LocationMutate,
             UserPermission::SensorMutate => Permission::SensorMutate,
             UserPermission::SensorQuery => Permission::SensorQuery,
-            UserPermission::TemperatureBreachConfigMutate => {
-                Permission::TemperatureBreachConfigMutate
-            }
-            UserPermission::TemperatureBreachConfigQuery => {
-                Permission::TemperatureBreachConfigQuery
-            }
             UserPermission::TemperatureBreachQuery => Permission::TemperatureBreachQuery,
             UserPermission::TemperatureLogQuery => Permission::TemperatureLogQuery,
             UserPermission::StockLineQuery => Permission::StockLineQuery,
