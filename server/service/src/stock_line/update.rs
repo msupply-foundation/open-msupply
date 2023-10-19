@@ -8,7 +8,7 @@ use repository::{
 use util::uuid::uuid;
 
 use crate::{
-    activity_log::activity_log_stock_entry,
+    activity_log::activity_log_entry,
     barcode::{self, BarcodeInput},
     common_stock::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
@@ -231,10 +231,10 @@ fn log_stock_changes(
         let previous_location = if let Some(location_id) = existing.location_id {
             Some(location_id)
         } else {
-            Some("no location".to_string())
+            Some("-".to_string())
         };
 
-        activity_log_stock_entry(
+        activity_log_entry(
             &ctx,
             ActivityLogType::StockLocationChange,
             Some(new.id.to_owned()),
@@ -246,10 +246,10 @@ fn log_stock_changes(
         let previous_batch = if let Some(batch) = existing.batch {
             Some(batch)
         } else {
-            Some("no batch".to_string())
+            Some("-".to_string())
         };
 
-        activity_log_stock_entry(
+        activity_log_entry(
             &ctx,
             ActivityLogType::StockBatchChange,
             Some(new.id.to_owned()),
@@ -258,7 +258,7 @@ fn log_stock_changes(
         )?;
     }
     if existing.cost_price_per_pack != new.cost_price_per_pack {
-        activity_log_stock_entry(
+        activity_log_entry(
             &ctx,
             ActivityLogType::StockCostPriceChange,
             Some(new.id.to_owned()),
@@ -267,7 +267,7 @@ fn log_stock_changes(
         )?;
     }
     if existing.sell_price_per_pack != new.sell_price_per_pack {
-        activity_log_stock_entry(
+        activity_log_entry(
             &ctx,
             ActivityLogType::StockSellPriceChange,
             Some(new.id.to_owned()),
@@ -279,10 +279,10 @@ fn log_stock_changes(
         let previous_expiry_date = if let Some(expiry_date) = existing.expiry_date {
             Some(expiry_date.to_string())
         } else {
-            Some("no expiry date".to_string())
+            Some("-".to_string())
         };
 
-        activity_log_stock_entry(
+        activity_log_entry(
             &ctx,
             ActivityLogType::StockExpiryDateChange,
             Some(new.id.to_owned()),
@@ -291,21 +291,21 @@ fn log_stock_changes(
         )?;
     }
     if existing.on_hold != new.on_hold && new.on_hold {
-        activity_log_stock_entry(
+        activity_log_entry(
             &ctx,
             ActivityLogType::StockOnHold,
             Some(new.id.to_owned()),
-            Some("off hold".to_string()),
-            Some("on hold".to_string()),
+            None,
+            None,
         )?;
     }
     if existing.on_hold != new.on_hold && !new.on_hold {
-        activity_log_stock_entry(
+        activity_log_entry(
             &ctx,
             ActivityLogType::StockOffHold,
             Some(new.id),
-            Some("on hold".to_string()),
-            Some("off hold".to_string()),
+            None,
+            None,
         )?;
     }
 

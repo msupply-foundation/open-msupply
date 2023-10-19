@@ -1,0 +1,1 @@
+export { BreachTypeCell } from './BreachTypeCell';

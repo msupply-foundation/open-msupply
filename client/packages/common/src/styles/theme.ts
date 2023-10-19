@@ -183,6 +183,7 @@ export const themeOptions = {
       field: '#555770',
       label: '#28293d',
     },
+    info: { main: '#3e7bfa', light: '#3e7bfa', dark: '#3568d4' },
   },
   zIndex: {
     tableHeader: 1000,

@@ -1,8 +1,8 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_option_to_isostring, date_to_isostring, empty_str_as_option_string, naive_time,
-        naive_time_option, zero_date_as_option,
+        date_from_date_time, date_option_to_isostring, date_to_isostring,
+        empty_str_as_option_string, naive_time, zero_date_as_option,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -58,8 +58,8 @@ pub struct LegacyTemperatureBreachRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub end_date: Option<NaiveDate>,
-    #[serde(deserialize_with = "naive_time_option")]
-    pub end_time: Option<NaiveTime>,
+    #[serde(deserialize_with = "naive_time")]
+    pub end_time: NaiveTime,
     pub acknowledged: bool,
     #[serde(rename = "threshold_minimum_temperature")]
     pub threshold_minimum: f64,
@@ -74,9 +74,9 @@ impl SyncTranslation for TemperatureBreachTranslation {
         PullDependency {
             table: LegacyTableName::TEMPERATURE_BREACH,
             dependencies: vec![
+                LegacyTableName::STORE,
                 LegacyTableName::LOCATION,
                 LegacyTableName::SENSOR,
-                LegacyTableName::STORE,
             ],
         }
     }
@@ -94,12 +94,9 @@ impl SyncTranslation for TemperatureBreachTranslation {
         let r#type = from_legacy_breach_type(&data.r#type);
         let start_datetime = NaiveDateTime::new(data.start_date, data.start_time);
 
-        let end_datetime = if let (Some(end_date), Some(end_time)) = (data.end_date, data.end_time)
-        {
-            Some(NaiveDateTime::new(end_date, end_time))
-        } else {
-            None
-        };
+        let end_datetime = data
+            .end_date
+            .map(|end_date| NaiveDateTime::new(end_date, data.end_time));
 
         let result = TemperatureBreachRow {
             id: data.id,
@@ -154,11 +151,6 @@ impl SyncTranslation for TemperatureBreachTranslation {
         let start_time = start_datetime.time();
 
         let r#type = to_legacy_breach_type(&r#type);
-        let (end_date, end_time) = if let Some(end_datetime) = end_datetime {
-            (Some(end_datetime.date()), Some(end_datetime.time()))
-        } else {
-            (None, None)
-        };
 
         let legacy_row = LegacyTemperatureBreachRow {
             id,
@@ -169,8 +161,10 @@ impl SyncTranslation for TemperatureBreachTranslation {
             store_id,
             start_date,
             start_time,
-            end_date,
-            end_time,
+            end_date: end_datetime.map(|end_datetime| date_from_date_time(&end_datetime)),
+            end_time: end_datetime
+                .map(|datetime| datetime.time())
+                .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
             acknowledged,
             threshold_minimum,
             threshold_maximum,

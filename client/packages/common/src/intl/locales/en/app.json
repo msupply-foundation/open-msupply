@@ -98,5 +98,6 @@
   "sync": "Sync",
   "tools": "Tools",
   "cold-chain": "Cold chain",
-  "sensors": "Sensors"
+  "sensors": "Sensors",
+  "monitoring": "Monitoring"
 }
