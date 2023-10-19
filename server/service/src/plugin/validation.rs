@@ -85,12 +85,15 @@ impl ValidatedPluginBucket {
         for entry in walker {
             let entry = entry?;
 
-            // be conservative and take manifest the timestamp before validating the plugin
             let manifest_path = entry.path().join(MANIFEST_FILE);
             if !manifest_path.exists() {
                 continue;
             }
+            // Be conservative and record the manifest timestamp before validating the plugin.
+            // For example, when the plugin changes while validating it, the older timestamp would
+            // trigger a reload when fetching a plugin (in validate_plugin()).
             let metadata = File::open(&manifest_path)?.metadata()?;
+            let manifest_datetime = metadata.modified()?;
 
             let manifest = match verify_plugin_manifest(entry.path(), &certs) {
                 Ok(manifest) => manifest,
@@ -108,7 +111,7 @@ impl ValidatedPluginBucket {
                     .to_string(),
                 ValidatedPlugin {
                     manifest,
-                    manifest_datetime: metadata.modified()?,
+                    manifest_datetime,
                 },
             );
         }
