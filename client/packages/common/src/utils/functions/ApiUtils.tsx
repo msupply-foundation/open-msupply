@@ -1,13 +1,7 @@
-type NullableStringInput = undefined | { value: string | undefined };
-
-export const setOptionString = <
-  NODE,
-  KEY extends keyof NODE,
-  NODE_WITH_STIRNG_KEY extends Record<KEY, string>,
->(
+export const setNullableInput = <NODE, KEY extends keyof NODE>(
   key: KEY,
-  entity?: NODE_WITH_STIRNG_KEY | null
-): NullableStringInput => {
+  entity?: NODE | null | undefined
+) => {
   if (!entity) return undefined;
 
   if (entity == null) return { value: undefined };
