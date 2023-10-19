@@ -187,7 +187,7 @@
   "link.copy-to-clipboard": "Copiar para a Área de Transferência",
   "label.manufacturer": "Fabricante",
   "label.mode": "Modo",
-  "label.months-of-stock": "OCM",
+  "label.months-of-stock": "Ordem de compra mínima (OCM)",
   "label.months_one": "mês",
   "label.months_other": "meses",
   "label.my-store": "Meu Armazém",
@@ -304,5 +304,11 @@
   "sync-status.push": "Sincronizar",
   "sync-status.integrate": "Integrar",
   "table.show-columns": "Mostrar / ocultar colunas",
-  "warning.caps-lock": "Advertência: Caps Lock está ativada"
+  "warning.caps-lock": "Advertência: Caps Lock está ativada",
+  "label.repack": "Reempacotar",
+  "label.dps": "Padrão de Desempenho de Entrega (PDE)",
+  "label.issue": "Assunto",
+  "label.settings-central-site-id": "ID de Localização do Servidor Central",
+  "label.settings-site-id": "ID do local",
+  "label.settings-username": "Nome do local"
 }

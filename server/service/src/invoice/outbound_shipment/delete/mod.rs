@@ -46,6 +46,7 @@ pub fn delete_outbound_shipment(
                 ActivityLogType::InvoiceDeleted,
                 Some(id.to_owned()),
                 None,
+                None,
             )?;
 
             match InvoiceRowRepository::new(&connection).delete(&id) {
