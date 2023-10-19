@@ -10,7 +10,7 @@
   "label.last-record": "Last recording date / time",
   "label.sensor-name": "Sensor Name",
   "label.storage-location": "Storage Location",
-  "message.conform-sensor-update": "This will confirm changes you have made to this sensor",
+  "message.confirm-sensor-update": "This will confirm changes you have made to this sensor",
   "cold-chain.temperature-unit": "°C",
   "title.sensor-details": "Sensor Details"
 }
