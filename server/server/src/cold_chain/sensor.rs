@@ -135,7 +135,7 @@ async fn upsert_sensors(
                     let sensor = UpdateSensor {
                         id: id.clone(),
                         name: Some(sensor.name.clone()),
-                        is_active: Some(true),
+                        is_active: None,
                         location_id: None,
                         log_interval: Some(sensor.log_interval),
                         battery_level: Some(sensor.battery_level),
