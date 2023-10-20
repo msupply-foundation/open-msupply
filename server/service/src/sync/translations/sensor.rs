@@ -7,7 +7,7 @@ use crate::sync::{
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
 use repository::{
-    ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, SensorType,
+    get_sensor_type, ChangelogRow, ChangelogTableName, SensorRow, SensorRowRepository, SensorType,
     StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -92,11 +92,7 @@ impl SyncTranslation for SensorTranslation {
         });
 
         let serial = serial.split(" |").nth(0).unwrap_or_default().to_string();
-        let r#type = match serial.split('|').nth(1) {
-            Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
-            Some("LAIRD") => SensorType::Laird,
-            _ => SensorType::BlueMaestro,
-        };
+        let r#type = get_sensor_type(&serial);
 
         let result = SensorRow {
             id,
