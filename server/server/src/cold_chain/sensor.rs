@@ -51,10 +51,16 @@ pub async fn put_sensors(
         }
     };
 
-    match upsert_sensors(service_provider, store_id, sensors).await {
+    let results = match upsert_sensors(service_provider, store_id, sensors).await {
         Ok(response) => response,
-        Err(error) => HttpResponse::InternalServerError().body(format!("{:#?}", error)),
-    }
+        Err(error) => return HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+    };
+
+    HttpResponse::Ok()
+        .append_header(header::ContentType(mime::APPLICATION_JSON))
+        .body(
+            serde_json::to_string(&results).unwrap_or("Unable to deserialise results".to_string()),
+        )
 }
 
 fn validate_input(sensors: &Vec<Sensor>) -> Result<(), String> {
@@ -116,7 +122,7 @@ async fn upsert_sensors(
     service_provider: Data<ServiceProvider>,
     store_id: String,
     sensors: Vec<Sensor>,
-) -> Result<HttpResponse, RepositoryError> {
+) -> Result<Vec<Result<repository::Sensor, String>>, RepositoryError> {
     let mut ctx = service_provider.basic_context()?;
     ctx.store_id = store_id;
     let service = &service_provider.sensor_service;
@@ -164,9 +170,5 @@ async fn upsert_sensors(
         })
         .collect::<Vec<Result<repository::Sensor, String>>>();
 
-    Ok(HttpResponse::Ok()
-        .append_header(header::ContentType(mime::APPLICATION_JSON))
-        .body(
-            serde_json::to_string(&results).unwrap_or("Unable to deserialise results".to_string()),
-        ))
+    Ok(results)
 }
