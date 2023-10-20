@@ -4,6 +4,7 @@ use actix_web::{
     web::{self, Data},
     HttpResponse,
 };
+use log::error;
 use mime_guess::mime;
 use repository::RepositoryError;
 use service::{
@@ -28,9 +29,16 @@ pub async fn post_login(
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
 ) -> HttpResponse {
-    match do_login(user_info, service_provider, auth_data).await {
-        Ok(response) => response,
-        Err(error) => HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+    let cookie = match do_login(user_info, service_provider, auth_data).await {
+        Ok(cookie) => cookie,
+        Err(error) => return HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+    };
+    match cookie {
+        Some(cookie) => HttpResponse::Ok()
+            .append_header(header::ContentType(mime::APPLICATION_JSON))
+            .cookie(cookie)
+            .body(r#"{ "success": true }"#),
+        None => HttpResponse::Unauthorized().body("Login failed"),
     }
 }
 
@@ -38,13 +46,13 @@ async fn do_login(
     user_info: web::Json<LoginRequest>,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
-) -> Result<HttpResponse, RepositoryError> {
+) -> Result<Option<Cookie<'static>>, RepositoryError> {
     let service_context = service_provider.basic_context()?;
     let sync_settings = service_provider
         .settings
         .sync_settings(&service_context)?
         .unwrap();
-    let response = match LoginService::login(
+    let cookie = match LoginService::login(
         &service_provider,
         &auth_data,
         LoginInput {
@@ -63,27 +71,23 @@ async fn do_login(
                 &auth_data,
                 Some(token.token.clone()),
             ) {
-                Ok(_) => {
-                    let cookie = Cookie::build(COOKIE_NAME, token.token)
+                Ok(_) => Some(
+                    Cookie::build(COOKIE_NAME, token.token)
                         .path(URL_PATH)
                         .http_only(true)
-                        .finish();
-                    HttpResponse::Ok()
-                        .append_header(header::ContentType(mime::APPLICATION_JSON))
-                        .cookie(cookie)
-                        .body(r#"{ "success": true }"#)
-                }
+                        .finish(),
+                ),
                 Err(error) => {
-                    let formatted_error = format!("{:#?}", error);
-                    HttpResponse::Unauthorized().body(formatted_error)
+                    error!("{:#?}", error);
+                    None
                 }
             }
         }
         Err(error) => {
-            let formatted_error = format!("{:#?}", error);
-            HttpResponse::Unauthorized().body(formatted_error)
+            error!("{:#?}", error);
+            None
         }
     };
 
-    Ok(response)
+    Ok(cookie)
 }
