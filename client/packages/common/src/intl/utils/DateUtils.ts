@@ -158,6 +158,9 @@ export const useFormatDateTime = () => {
   const dayMonthShort = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'dd MMM', { locale });
 
+  const dayMonthTime = (date: Date | string | number): string =>
+    formatIfValid(dateInputHandler(date), 'dd/MM HH:mm', { locale });
+
   const customDate = (
     date: Date | string | number,
     formatString: string
@@ -179,6 +182,7 @@ export const useFormatDateTime = () => {
   return {
     customDate,
     dayMonthShort,
+    dayMonthTime,
     localisedDate,
     localisedDateTime,
     localisedDistanceToNow,

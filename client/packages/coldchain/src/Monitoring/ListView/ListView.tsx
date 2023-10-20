@@ -1,24 +1,20 @@
 import React, { FC } from 'react';
-import { DetailTabs, Typography } from '@common/components';
+import { DetailTabs } from '@common/components';
 import { TemperatureLogList } from './TemperatureLog';
 import { useTranslation } from '@common/intl';
 import {
-  Box,
   TemperatureBreachSortFieldInput,
   TemperatureLogSortFieldInput,
 } from '@openmsupply-client/common';
 import { TemperatureBreachList } from './TemperatureBreach';
+import { TemperatureChart } from './TemperatureChart';
 
 export const ListView: FC = () => {
   const t = useTranslation('coldchain');
 
   const tabs = [
     {
-      Component: (
-        <Box padding={4}>
-          <Typography variant="h5">{t('message.coming-soon')}</Typography>
-        </Box>
-      ),
+      Component: <TemperatureChart />,
       value: t('label.chart'),
     },
     {
