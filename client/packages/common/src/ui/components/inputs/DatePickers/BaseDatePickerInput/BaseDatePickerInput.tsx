@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import {
   DatePicker,
   DatePickerProps,
+  DateTimeValidationError,
   DateValidationError,
 } from '@mui/x-date-pickers';
 import { useAppTheme } from '@common/styles';
@@ -22,9 +23,9 @@ const TextField = (params: TextFieldProps) => {
   return <BasicTextInput {...textInputProps} />;
 };
 
-const getFormattedDateError = (
+export const getFormattedDateError = (
   t: TypedTFunction<LocaleKey>,
-  validationError: DateValidationError
+  validationError: DateValidationError | DateTimeValidationError
 ) => {
   switch (validationError) {
     case 'invalidDate':
@@ -45,10 +46,12 @@ const getFormattedDateError = (
 export const BaseDatePickerInput: FC<
   Omit<DatePickerProps<Date>, 'onError'> & {
     error?: string | undefined;
-    width?: number;
+    width?: number | string;
+    label?: string;
     onError?: (validationError: string, date?: Date | null) => void;
+    textFieldProps?: TextFieldProps;
   }
-> = ({ error, onChange, onError, width, ...props }) => {
+> = ({ error, onChange, onError, width, label, textFieldProps, ...props }) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
@@ -106,8 +109,16 @@ export const BaseDatePickerInput: FC<
         textField: {
           error: !isInitialEntry && (!!error || !!internalError),
           helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
-          sx: { width, '& .MuiFormHelperText-root': { color: 'error.main' } },
+          label,
           onBlur: () => setIsInitialEntry(false),
+          ...textFieldProps,
+          sx: {
+            width,
+            '& .MuiFormHelperText-root': {
+              color: 'error.main',
+            },
+            ...textFieldProps?.sx,
+          },
         },
       }}
       {...props}

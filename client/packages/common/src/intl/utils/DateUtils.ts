@@ -17,6 +17,7 @@ import {
   isBefore,
   isEqual,
   format,
+  parse,
   parseISO,
   fromUnixTime,
   startOfToday,
@@ -84,10 +85,16 @@ export const DateUtils = {
   addDays,
   addYears,
   addCurrentTime,
-  getDateOrNull: (date?: Date | string | null): Date | null => {
+  getDateOrNull: (
+    date?: Date | string | null,
+    format?: string
+  ): Date | null => {
     if (!date) return null;
     if (date instanceof Date) return date;
-    const maybeDate = new Date(date);
+    const maybeDate =
+      format && typeof date === 'string'
+        ? parse(date, format, new Date())
+        : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
   isPast,

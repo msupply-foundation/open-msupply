@@ -307,7 +307,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (107, Permissions::DownloadBatchDocument),
         (108, Permissions::DeleteBatchDocument),
         (109, Permissions::AddStocktakeLines),
-        // ViewStocktakeLines has been removed from mSupply
+        // ViewStocktakeLines has been removed from mSupply UI
         // (110, Permissions::ViewStocktakeLines),
         (111, Permissions::EditStocktakeLines),
         (112, Permissions::DeleteStocktakeLines),

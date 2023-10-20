@@ -32,10 +32,6 @@ pub enum Permission {
     // sensor,
     SensorMutate,
     SensorQuery,
-    // no existing mSupply permissions for temperature log/breach (which shouldn't be user editable)
-    // but one for temperature_breach_config,
-    TemperatureBreachConfigMutate,
-    TemperatureBreachConfigQuery,
     TemperatureBreachQuery,
     TemperatureLogQuery,
     // stock line

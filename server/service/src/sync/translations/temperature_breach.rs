@@ -74,9 +74,9 @@ impl SyncTranslation for TemperatureBreachTranslation {
         PullDependency {
             table: LegacyTableName::TEMPERATURE_BREACH,
             dependencies: vec![
+                LegacyTableName::STORE,
                 LegacyTableName::LOCATION,
                 LegacyTableName::SENSOR,
-                LegacyTableName::STORE,
             ],
         }
     }
