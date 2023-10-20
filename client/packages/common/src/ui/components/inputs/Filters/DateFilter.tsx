@@ -75,7 +75,7 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
 const getDateFromUrl = (
   urlString: string | undefined,
   range: RangeOption | undefined,
-  parseRangeString: (val: string | undefined) => RangeObject
+  parseRangeString: (val: string | undefined) => RangeObject<string | number>
 ) => {
   // Matches range strings for either just dates or date/times, with "_" as the
   // splitting character. Both the start date and end date are optional, but
