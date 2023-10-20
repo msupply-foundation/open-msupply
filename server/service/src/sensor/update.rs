@@ -25,6 +25,8 @@ pub struct UpdateSensor {
     pub name: Option<String>,
     pub is_active: Option<bool>,
     pub location_id: Option<String>,
+    pub log_interval: Option<i32>,
+    pub battery_level: Option<i32>,
 }
 
 pub fn update_sensor(
@@ -84,12 +86,16 @@ pub fn generate(
         name,
         is_active,
         location_id,
+        log_interval,
+        battery_level,
     }: UpdateSensor,
     mut sensor_row: SensorRow,
 ) -> SensorRow {
     sensor_row.location_id = location_id;
     sensor_row.name = name.unwrap_or(sensor_row.name);
     sensor_row.is_active = is_active.unwrap_or(sensor_row.is_active);
+    sensor_row.log_interval = log_interval;
+    sensor_row.battery_level = battery_level;
     sensor_row
 }
 
