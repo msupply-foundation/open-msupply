@@ -1,8 +1,13 @@
 import React, { FC } from 'react';
 import { DetailTabs, Typography } from '@common/components';
-import { TemperatureLogList } from './TemperatureLogs';
+import { TemperatureLogList } from './TemperatureLog';
 import { useTranslation } from '@common/intl';
-import { Box } from '@openmsupply-client/common';
+import {
+  Box,
+  TemperatureBreachSortFieldInput,
+  TemperatureLogSortFieldInput,
+} from '@openmsupply-client/common';
+import { TemperatureBreachList } from './TemperatureBreach';
 
 export const ListView: FC = () => {
   const t = useTranslation('coldchain');
@@ -17,16 +22,20 @@ export const ListView: FC = () => {
       value: t('label.chart'),
     },
     {
-      Component: (
-        <Box padding={4}>
-          <Typography variant="h5">{t('message.coming-soon')}</Typography>
-        </Box>
-      ),
+      Component: <TemperatureBreachList />,
       value: t('label.breaches'),
+      sort: {
+        key: TemperatureBreachSortFieldInput.StartDatetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
     },
     {
       Component: <TemperatureLogList />,
       value: t('label.log'),
+      sort: {
+        key: TemperatureLogSortFieldInput.Datetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
     },
   ];
 

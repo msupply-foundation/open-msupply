@@ -1,2 +1,2 @@
 export * from './ListView';
-export * from './TemperatureLogs';
+export * from './TemperatureLog';

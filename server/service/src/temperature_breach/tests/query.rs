@@ -119,11 +119,11 @@ mod query {
         assert_eq!(result.count, 2);
         assert_eq!(
             result.rows[0].temperature_breach_row.id,
-            "temperature_breach_1"
+            "temperature_breach_acknowledged"
         );
         assert_eq!(
             result.rows[1].temperature_breach_row.id,
-            "temperature_breach_acknowledged"
+            "temperature_breach_1"
         );
     }
 

@@ -2,9 +2,12 @@ use super::{
     query::get_sensor,
     validate::{check_location_on_hold, check_sensor_exists},
 };
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+};
 use repository::{
-    sensor::Sensor, RepositoryError, SensorRow, SensorRowRepository, StorageConnection,
+    sensor::Sensor, ActivityLogType, RepositoryError, SensorRow, SensorRowRepository,
+    StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -16,6 +19,7 @@ pub enum UpdateSensorError {
     DatabaseError(RepositoryError),
 }
 
+#[derive(Clone)]
 pub struct UpdateSensor {
     pub id: String,
     pub name: Option<String>,
@@ -31,8 +35,18 @@ pub fn update_sensor(
         .connection
         .transaction_sync(|connection| {
             let sensor_row = validate(connection, &ctx.store_id, &input)?;
-            let updated_sensor_row = generate(input, sensor_row);
+            let updated_sensor_row = generate(input.clone(), sensor_row.clone());
             SensorRowRepository::new(&connection).upsert_one(&updated_sensor_row)?;
+
+            if sensor_row.location_id != input.location_id {
+                activity_log_entry(
+                    ctx,
+                    ActivityLogType::SensorLocationChanged,
+                    Some(sensor_row.id),
+                    sensor_row.location_id,
+                    input.location_id,
+                )?
+            };
 
             get_sensor(ctx, updated_sensor_row.id).map_err(UpdateSensorError::from)
         })
