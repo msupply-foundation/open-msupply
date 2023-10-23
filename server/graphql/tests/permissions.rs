@@ -23,7 +23,6 @@ mod permission_tests {
     use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
     use graphql_stocktake_line::StocktakeLineMutations;
     //use graphql_temperature_breach::TemperatureBreachQueries;
-    //use graphql_temperature_breach_config::{TemperatureBreachConfigMutations, TemperatureBreachConfigQueries};
     //use graphql_temperature_log::TemperatureLogQueries;
 
     // TODO for some reason Rust complained when using the Full{Query|Mutation} definition from

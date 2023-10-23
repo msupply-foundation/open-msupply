@@ -9,9 +9,9 @@ import {
   DropdownMenuItem,
   DeleteIcon,
   useTranslation,
-  InfoPanel,
   Switch,
   InvoiceNodeStatus,
+  Alert,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
@@ -34,7 +34,7 @@ const InboundInfoPanel = ({
     return t('info.automatic-shipment');
   };
 
-  return <InfoPanel message={loadMessage(shipment)} />;
+  return <Alert severity="info">{loadMessage(shipment)}</Alert>;
 };
 
 export const Toolbar: FC = () => {
