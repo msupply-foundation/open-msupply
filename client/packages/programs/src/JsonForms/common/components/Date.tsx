@@ -60,6 +60,11 @@ const UIComponent = (props: ControlProps) => {
           error={customError ?? props.errors ?? zErrors ?? ''}
           disableFuture={disableFuture}
           onError={validationError => setCustomError(validationError)}
+          slotProps={{
+            actionBar: {
+              actions: ['clear'],
+            },
+          }}
         />
       }
     />
