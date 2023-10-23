@@ -152,6 +152,8 @@ export const AppDrawer: React.FC = () => {
   }, [isMediumScreen]);
 
   const onHoverOut = () => {
+    // Hover events not applicable on mobile devices
+    if (EnvUtils.isTouchScreen) return;
     if (!drawer.hoverOpen) return;
 
     drawer.close();
@@ -159,6 +161,8 @@ export const AppDrawer: React.FC = () => {
   };
 
   const onHoverOver = () => {
+    // Hover events not applicable on mobile devices
+    if (EnvUtils.isTouchScreen) return;
     if (drawer.isOpen) return;
 
     drawer.open();

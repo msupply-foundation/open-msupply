@@ -1,7 +1,11 @@
 {
-    "cold-chain.temperature-unit": "°C",
     "error.no-sensors": "No sensors found",
     "error.no-temperature-logs": "No temperature logs found",
+    "label.acknowledged": "Acknowledged",
     "label.breaches": "Breaches",
-    "label.chart": "Chart"
+    "label.chart": "Chart",
+    "label.consecutive": "Consecutive",
+    "label.cumulative": "Cumulative",
+    "label.temperature-unit": "°C",
+    "label.unacknowledged": "Unacknowledged"
 }

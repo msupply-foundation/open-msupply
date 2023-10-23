@@ -16,7 +16,9 @@ use repository::{
     },
     DatetimeFilter, EqualFilter, TemperatureBreachRow, TemperatureBreachRowType,
 };
-use service::{usize_to_u32, ListResult};
+use service::{
+    temperature_breach::query::get_max_or_min_breach_temperature, usize_to_u32, ListResult,
+};
 
 use super::{LocationFilterInput, LocationNode, SensorFilterInput, SensorNode};
 
@@ -143,6 +145,13 @@ impl TemperatureBreachNode {
             .load_one(location_id.clone())
             .await?
             .map(LocationNode::from_domain))
+    }
+
+    pub async fn max_or_min_temperature(&self, ctx: &Context<'_>) -> Result<Option<f64>> {
+        Ok(get_max_or_min_breach_temperature(
+            &ctx.get_connection_manager().connection()?,
+            &self.row().id,
+        )?)
     }
 }
 
