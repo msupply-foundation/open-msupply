@@ -1,4 +1,5 @@
-import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
+import React from 'react';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Box,
   CartesianGrid,
@@ -8,62 +9,46 @@ import {
   Legend,
   Line,
   ResponsiveContainer,
+  TooltipProps,
   Typography,
   XAxis,
   YAxis,
   useTheme,
 } from '@openmsupply-client/common';
-import React from 'react';
-import { useTemperatureLog } from '../../api/TemperatureLog';
+import { useTemperatureChartData } from './temperatureUtils';
+import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 
-type Log = {
-  temperature: number;
-  date: Date | null;
-};
-
-type Sensor = {
-  colour: string | undefined;
-  id: string;
-  name: string;
-  logs: Log[];
-};
+const formatTemperature = (value: number | null) =>
+  value === null ? '-' : `${value}°C`;
 
 export const TemperatureChart = () => {
-  // TODO isError ??
-  const { data, isLoading } = useTemperatureLog.document.list();
   const t = useTranslation('coldchain');
   const theme = useTheme();
-  const sensors: Sensor[] = [];
-  const logs: Log[] = [];
-  data?.nodes?.forEach(({ datetime, temperature, sensor }) => {
-    if (!sensor) return;
-    let sensorIndex = sensors.findIndex(s => s.id === sensor.id);
-    if (sensorIndex === -1) {
-      sensors.push({
-        colour:
-          theme.palette.chartLine[
-            sensors.length % theme.palette.chartLine.length
-          ],
-        id: sensor.id,
-        name: sensor.name,
-        logs: [],
-      });
-      sensorIndex = sensors.length - 1;
-    }
-
-    sensors[sensorIndex]?.logs.push({
-      date: DateUtils.getDateOrNull(datetime),
-      temperature,
-    });
-    logs.push({
-      date: DateUtils.getDateOrNull(datetime),
-      temperature,
-    });
-  });
-
+  const { hasData, isLoading, sensors } = useTemperatureChartData();
   const { dayMonthTime } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
-  const tooltipLabelFormatter = (date: string) => dateFormatter(date);
+
+  const TemperatureTooltip = ({
+    active,
+    payload,
+    label,
+  }: TooltipProps<number, string>) => {
+    if (!active || !payload?.length) return null;
+
+    const date = payload[0]?.payload?.date.getTime();
+    const entries = sensors.map(sensor => {
+      const entry = sensor.logs.find(log => log.date.getTime() === date);
+      if (!entry) return null;
+      return {
+        name: sensor.name,
+        value: formatTemperature(entry.temperature),
+        id: sensor.id,
+        color: sensor.colour,
+      };
+    });
+
+    return <TemperatureTooltipLayout entries={entries} label={label} />;
+  };
 
   return isLoading ? (
     <CircularProgress />
@@ -79,9 +64,7 @@ export const TemperatureChart = () => {
         </Typography>
       </Box>
       <Box>
-        {data?.nodes?.length === 0 ? (
-          <Typography width={450}>{t('error.no-data')}</Typography>
-        ) : (
+        {hasData ? (
           <ResponsiveContainer width="90%" height="90%">
             <ComposedChart>
               <CartesianGrid vertical={false} />
@@ -89,16 +72,13 @@ export const TemperatureChart = () => {
                 dataKey="date"
                 tickFormatter={dateFormatter}
                 tick={{ fontSize: 12 }}
+                allowDuplicatedCategory={false}
               />
               <YAxis
                 tick={{ fontSize: 12 }}
-                tickFormatter={value => `${value}°C`}
+                tickFormatter={formatTemperature}
               />
-              <ChartTooltip
-                // formatter={tooltipFormatter}
-                labelFormatter={tooltipLabelFormatter}
-                labelStyle={{ fontWeight: 700 }}
-              />
+              <ChartTooltip content={TemperatureTooltip} />
               <Legend
                 align="right"
                 verticalAlign="top"
@@ -160,6 +140,8 @@ export const TemperatureChart = () => {
               ))}
             </ComposedChart>
           </ResponsiveContainer>
+        ) : (
+          <Typography width={450}>{t('error.no-data')}</Typography>
         )}
       </Box>
     </Box>

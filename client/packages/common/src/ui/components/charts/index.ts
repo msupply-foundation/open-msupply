@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   ScatterChart,
   Tooltip as ChartTooltip,
+  TooltipProps,
   XAxis,
   YAxis,
 } from 'recharts';
@@ -28,6 +29,7 @@ export {
   PieChart,
   ResponsiveContainer,
   ScatterChart,
+  TooltipProps,
   XAxis,
   YAxis,
 };
