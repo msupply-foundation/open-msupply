@@ -26,7 +26,7 @@ pub struct TemperatureLog {
     pub temperature_breach_id: Option<String>,
 }
 
-pub async fn temperature_logs(
+pub async fn put_logs(
     request: HttpRequest,
     service_provider: Data<ServiceProvider>,
     auth_data: Data<AuthData>,
@@ -45,14 +45,18 @@ pub async fn temperature_logs(
             .body("Expecting a body with the array of temperature logs");
     };
 
-    match upsert_temperature_logs(service_provider, store_id, &logs).await {
+    let results = match upsert_temperature_logs(service_provider, store_id, &logs).await {
         Ok(response) => response,
-        Err(error) => HttpResponse::InternalServerError().body(format!("{:#?}", error)),
-    }
+        Err(error) => return HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+    };
+
+    HttpResponse::Ok()
+        .append_header(header::ContentType(mime::APPLICATION_JSON))
+        .json(&results)
 }
 
 fn validate_input(logs: &Vec<TemperatureLog>) -> bool {
-    logs.into_iter().all(|log| validate_log(log))
+    logs.iter().all(|log| validate_log(log))
 }
 
 fn validate_log(log: &TemperatureLog) -> bool {
@@ -64,56 +68,76 @@ fn validate_log(log: &TemperatureLog) -> bool {
 
 async fn upsert_temperature_logs(
     service_provider: Data<ServiceProvider>,
-    store_id: Option<String>,
+    store_id: String,
     logs: &Vec<TemperatureLog>,
-) -> Result<HttpResponse, RepositoryError> {
+) -> Result<Vec<Result<repository::TemperatureLog, String>>, RepositoryError> {
     let mut ctx = service_provider.basic_context()?;
-    if store_id.is_some() {
-        ctx.store_id = store_id.unwrap().clone();
-    }
+    ctx.store_id = store_id;
     let service = &service_provider.temperature_log_service;
 
-    let mut results: Vec<repository::TemperatureLog> = Vec::new();
-    logs.into_iter().for_each(|log| {
-        let datetime = match NaiveDateTime::from_timestamp_opt(log.timestamp, 0) {
-            Some(datetime) => datetime,
-            None => {
-                error!("Unable to parse timestamp: {}", log.timestamp);
-                return;
-            }
-        };
-        if service.get_temperature_log(&ctx, log.id.clone()).is_ok() {
-            let log = UpdateTemperatureLog {
-                id: log.id.clone(),
-                datetime,
-                location_id: None,
-                sensor_id: log.sensor_id.clone(),
-                temperature: log.temperature,
-                temperature_breach_id: log.temperature_breach_id.clone(),
+    let results = logs
+        .iter()
+        .map(|log| {
+            let id = log.id.clone();
+            let datetime = match NaiveDateTime::from_timestamp_opt(log.timestamp, 0) {
+                Some(datetime) => datetime,
+                None => {
+                    error!(
+                        "Unable to parse timestamp for log {}: {}",
+                        log.id, log.timestamp
+                    );
+                    return Err(format!(
+                        "Unable to parse timestamp for log {}: {}",
+                        log.id, log.timestamp
+                    ));
+                }
             };
-            match service.update_temperature_log(&ctx, log) {
-                Ok(updated) => results.push(updated),
-                Err(e) => error!("Unable to insert temperature log: {:#?}", e),
+            match service.get_temperature_log(&ctx, log.id.clone()) {
+                Ok(_) => {
+                    let log = UpdateTemperatureLog {
+                        id: id.clone(),
+                        datetime,
+                        location_id: None,
+                        sensor_id: log.sensor_id.clone(),
+                        temperature: log.temperature,
+                        temperature_breach_id: log.temperature_breach_id.clone(),
+                    };
+                    match service.update_temperature_log(&ctx, log) {
+                        Ok(updated) => Ok(updated),
+                        Err(e) => {
+                            error!("Unable to insert temperature log {}: {:#?}", id.clone(), e);
+                            Err(format!(
+                                "Unable to insert temperature log {}: {:#?}",
+                                id.clone(),
+                                e
+                            ))
+                        }
+                    }
+                }
+                Err(_) => {
+                    let log = InsertTemperatureLog {
+                        id: id.clone(),
+                        datetime,
+                        location_id: None,
+                        sensor_id: log.sensor_id.clone(),
+                        temperature: log.temperature,
+                        temperature_breach_id: log.temperature_breach_id.clone(),
+                    };
+                    match service.insert_temperature_log(&ctx, log) {
+                        Ok(inserted) => Ok(inserted),
+                        Err(e) => {
+                            error!("Unable to update temperature log {}: {:#?}", id.clone(), e);
+                            Err(format!(
+                                "Unable to update temperature log {}: {:#?}",
+                                id.clone(),
+                                e
+                            ))
+                        }
+                    }
+                }
             }
-        } else {
-            let log = InsertTemperatureLog {
-                id: log.id.clone(),
-                datetime,
-                location_id: None,
-                sensor_id: log.sensor_id.clone(),
-                temperature: log.temperature,
-                temperature_breach_id: log.temperature_breach_id.clone(),
-            };
-            match service.insert_temperature_log(&ctx, log) {
-                Ok(inserted) => results.push(inserted),
-                Err(e) => error!("Unable to update temperature log: {:#?}", e),
-            }
-        }
-    });
+        })
+        .collect::<Vec<Result<repository::TemperatureLog, String>>>();
 
-    Ok(HttpResponse::Ok()
-        .append_header(header::ContentType(mime::APPLICATION_JSON))
-        .body(
-            serde_json::to_string(&results).unwrap_or("Unable to deserialise results".to_string()),
-        ))
+    Ok(results)
 }

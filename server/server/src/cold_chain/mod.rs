@@ -24,7 +24,7 @@ pub fn config_cold_chain(cfg: &mut web::ServiceConfig) {
     cfg.route(&format!("{}/sensor", URL_PATH), web::put().to(put_sensors));
     cfg.route(
         &format!("{}/temperature-log", URL_PATH),
-        web::put().to(temperature_logs),
+        web::put().to(put_logs),
     );
 }
 

@@ -58,9 +58,7 @@ pub async fn put_sensors(
 
     HttpResponse::Ok()
         .append_header(header::ContentType(mime::APPLICATION_JSON))
-        .body(
-            serde_json::to_string(&results).unwrap_or("Unable to deserialise results".to_string()),
-        )
+        .json(&results)
 }
 
 fn validate_input(sensors: &Vec<Sensor>) -> Result<(), String> {
