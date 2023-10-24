@@ -16,6 +16,10 @@ export const ListView: FC = () => {
     {
       Component: <TemperatureChart />,
       value: t('label.chart'),
+      sort: {
+        key: TemperatureLogSortFieldInput.Datetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
     },
     {
       Component: <TemperatureBreachList />,

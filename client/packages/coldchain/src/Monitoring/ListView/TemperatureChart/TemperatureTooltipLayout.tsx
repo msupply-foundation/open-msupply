@@ -26,12 +26,11 @@ export const TemperatureTooltipLayout = ({
     <Box
       sx={{
         margin: 0,
-        padding: 1,
+        padding: 2,
         backgroundColor: 'background.white',
-        border: '1px solid',
-        borderColor: 'gray.light',
         whiteSpace: 'nowrap',
         boxShadow: theme.shadows[3],
+        borderRadius: 3,
       }}
     >
       <Typography sx={{ fontWeight: 'bold' }}>

@@ -1,10 +1,12 @@
 import React from 'react';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
+  Area,
+  BasicSpinner,
   Box,
   CartesianGrid,
   ChartTooltip,
-  CircularProgress,
+  CircleAlertIcon,
   ComposedChart,
   Legend,
   Line,
@@ -15,18 +17,70 @@ import {
   YAxis,
   useTheme,
 } from '@openmsupply-client/common';
-import { useTemperatureChartData } from './temperatureUtils';
+import { useTemperatureChartData } from './useTemperatureChartData';
 import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
+
+import { TemperatureBreachRowFragment } from '../../api';
+import { BreachPopper } from './BreachPopper';
 
 const formatTemperature = (value: number | null) =>
   value === null ? '-' : `${value}°C`;
 
+type DotPayload = {
+  date: Date;
+  temperature: number;
+  breach?: TemperatureBreachRowFragment;
+  sensorId: string;
+};
+export type PopperProps = {
+  x: number;
+  y: number;
+  visible: boolean;
+  payload?: DotPayload;
+};
+
 export const TemperatureChart = () => {
   const t = useTranslation('coldchain');
   const theme = useTheme();
-  const { hasData, isLoading, sensors } = useTemperatureChartData();
+  const { breachConfig, hasData, isLoading, sensors } =
+    useTemperatureChartData();
   const { dayMonthTime } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
+  const [popperProps, setPopperProps] = React.useState<PopperProps>({
+    x: 0,
+    y: 0,
+    visible: false,
+  });
+
+  const BreachIcon = (props: {
+    cx: number;
+    cy: number;
+    payload: DotPayload;
+  }) => {
+    const { cx, cy, payload } = props;
+    const theme = useTheme();
+
+    if (payload.breach === undefined) return null;
+
+    return (
+      <CircleAlertIcon
+        onClick={event =>
+          setPopperProps({
+            x: event.clientX + 5,
+            y: event.clientY + 5,
+            visible: true,
+            payload,
+          })
+        }
+        x={cx - 13.5}
+        y={cy + 13.5}
+        fill={theme.palette.error.main}
+        sx={{ color: 'background.white', cursor: 'pointer' }}
+        width={27}
+        height={27}
+      />
+    );
+  };
 
   const TemperatureTooltip = ({
     active,
@@ -35,9 +89,11 @@ export const TemperatureChart = () => {
   }: TooltipProps<number, string>) => {
     if (!active || !payload?.length) return null;
 
-    const date = payload[0]?.payload?.date.getTime();
+    const date = payload[0]?.payload?.date;
     const entries = sensors.map(sensor => {
-      const entry = sensor.logs.find(log => log.date.getTime() === date);
+      const entry = sensor.logs.find(
+        log => log.date.getTime() === date.getTime()
+      );
       if (!entry) return null;
       return {
         name: sensor.name,
@@ -51,7 +107,7 @@ export const TemperatureChart = () => {
   };
 
   return isLoading ? (
-    <CircularProgress />
+    <BasicSpinner />
   ) : (
     <Box flex={1}>
       <Box flex={1} padding={2} sx={{ textAlign: 'center' }}>
@@ -134,16 +190,36 @@ export const TemperatureChart = () => {
                   dataKey="temperature"
                   stroke={sensor.colour}
                   type="monotone"
-                  dot={false}
+                  dot={props => <BreachIcon {...props} />}
                   strokeWidth={2}
                 />
               ))}
+              <Area
+                data={breachConfig.hot}
+                type="monotone"
+                dataKey="temperature"
+                stroke={theme.palette.chart.hot.main}
+                fill={theme.palette.chart.hot.light}
+                baseValue="dataMax"
+              />
+              <Area
+                data={breachConfig.cold}
+                type="monotone"
+                dataKey="temperature"
+                stroke={theme.palette.chart.cold.main}
+                fill={theme.palette.chart.cold.light}
+              />
             </ComposedChart>
           </ResponsiveContainer>
         ) : (
           <Typography width={450}>{t('error.no-data')}</Typography>
         )}
       </Box>
+      <BreachPopper
+        {...popperProps}
+        onClose={() => setPopperProps({ ...popperProps, visible: false })}
+        sensors={sensors}
+      />
     </Box>
   );
 };

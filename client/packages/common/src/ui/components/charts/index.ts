@@ -1,4 +1,5 @@
 import {
+  Area,
   Bar,
   BarChart,
   CartesianGrid,
@@ -17,6 +18,7 @@ import {
 } from 'recharts';
 
 export {
+  Area,
   Bar,
   BarChart,
   CartesianGrid,
