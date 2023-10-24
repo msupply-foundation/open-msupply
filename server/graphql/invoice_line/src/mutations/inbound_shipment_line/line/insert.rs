@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use graphql_core::generic_inputs::NullableUpdate;
+use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
@@ -12,7 +12,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::inbound_shipment_line::{
     InsertInboundShipmentLine as ServiceInput, InsertInboundShipmentLineError as ServiceError,
 };
-use service::invoice_line::LocationUpdate;
+use service::NullableUpdate;
 
 #[derive(InputObject)]
 #[graphql(name = "InsertInboundShipmentLineInput")]
@@ -22,7 +22,7 @@ pub struct InsertInput {
     pub item_id: String,
     pub pack_size: u32,
     pub batch: Option<String>,
-    pub location: Option<NullableUpdate<String>>,
+    pub location: Option<NullableUpdateInput<String>>,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
@@ -92,10 +92,8 @@ impl InsertInput {
             id,
             invoice_id,
             item_id,
-            location: location.and_then(|location| {
-                Some(LocationUpdate {
-                    location_id: location.value,
-                })
+            location: location.map(|location| NullableUpdate {
+                value: location.value,
             }),
             pack_size,
             batch,
@@ -174,9 +172,10 @@ mod test {
                 InsertInboundShipmentLine as ServiceInput,
                 InsertInboundShipmentLineError as ServiceError,
             },
-            InvoiceLineServiceTrait, LocationUpdate,
+            InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
+        NullableUpdate,
     };
 
     use crate::InvoiceLineMutations;
@@ -425,8 +424,8 @@ mod test {
                     id: "new id".to_string(),
                     invoice_id: "invoice input".to_string(),
                     item_id: "item input".to_string(),
-                    location: Some(LocationUpdate {
-                        location_id: Some("location input".to_string())
+                    location: Some(NullableUpdate {
+                        value: Some("location input".to_string())
                     }),
                     pack_size: 2,
                     batch: Some("batch".to_string()),

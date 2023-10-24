@@ -86,11 +86,7 @@ fn generate_line(
         id,
         invoice_id,
         item_id,
-        location_id: if let Some(location) = location {
-            location.location_id
-        } else {
-            None
-        },
+        location_id: location.map(|l| l.value).unwrap_or_default(),
         pack_size: u32_to_i32(pack_size),
         batch,
         expiry_date,

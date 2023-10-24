@@ -91,15 +91,10 @@ fn generate_line(
     new_item_option: Option<ItemRow>,
 ) -> InvoiceLineRow {
     let mut update_line = current_line;
-    // if location has been passed, update sensor_row to the value passed (including if this is null)
-    // A null value being passed as the LocationUpdate is the unassignment of location
-    // no LocationUpdate being passed is the location not being updated
-    if let Some(location) = location {
-        update_line.location_id = location.location_id
-    } else {
-        update_line.location_id = update_line.location_id
-    }
+
     update_line.pack_size = pack_size.map(u32_to_i32).unwrap_or(update_line.pack_size);
+    update_line.batch = batch.or(update_line.batch);
+    update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);
     update_line.expiry_date = expiry_date.or(update_line.expiry_date);
     update_line.sell_price_per_pack =
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);

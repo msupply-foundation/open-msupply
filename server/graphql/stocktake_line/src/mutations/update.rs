@@ -1,14 +1,14 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
-use graphql_core::generic_inputs::NullableUpdate;
+use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::StockLineReducedBelowZero;
 use graphql_types::types::StocktakeLineNode;
 use repository::StocktakeLine;
-use service::stocktake_line::LocationUpdate;
+use service::NullableUpdate;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     stocktake_line::{
@@ -24,7 +24,7 @@ use super::AdjustmentReasonNotProvided;
 #[graphql(name = "UpdateStocktakeLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub location: Option<NullableUpdate<String>>,
+    pub location: Option<NullableUpdateInput<String>>,
     pub comment: Option<String>,
     pub snapshot_number_of_packs: Option<f64>,
     pub counted_number_of_packs: Option<f64>,
@@ -108,10 +108,8 @@ impl UpdateInput {
 
         ServiceInput {
             id,
-            location: location.and_then(|location| {
-                Some(LocationUpdate {
-                    location_id: location.value,
-                })
+            location: location.map(|location| NullableUpdate {
+                value: location.value,
             }),
             comment,
             snapshot_number_of_packs,
