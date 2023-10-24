@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, LocationRowRepository, RepositoryError, StorageConnection, TemperatureLogFilter,
+    EqualFilter, RepositoryError, StorageConnection, TemperatureLogFilter,
     TemperatureLogRepository, TemperatureLogRow, TemperatureLogRowRepository,
 };
 
@@ -18,15 +18,4 @@ pub fn check_temperature_log_exists(
     connection: &StorageConnection,
 ) -> Result<Option<TemperatureLogRow>, RepositoryError> {
     Ok(TemperatureLogRowRepository::new(connection).find_one_by_id(id)?)
-}
-
-pub fn check_location_on_hold(
-    location_id: &str,
-    connection: &StorageConnection,
-) -> Result<bool, RepositoryError> {
-    let location = LocationRowRepository::new(connection)
-        .find_one_by_id(location_id)?
-        .ok_or(RepositoryError::NotFound)?;
-
-    Ok(location.on_hold)
 }
