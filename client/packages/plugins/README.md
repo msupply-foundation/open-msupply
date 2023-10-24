@@ -1,35 +1,38 @@
 # Client plugin framework
 
 Plugins are a way of extending front end functionality without altering the base code. Some examples of possible plugin usages:
-- Adding a button to a toolbar of a detail view, which is provided with details of the object being viewed (such as `id`) and performs an external action like looking up shipping details from an external API
+- Adding a button to a toolbar of a detail view which performs an external action like looking up shipping details from an external API. The plugin is provided with details of the object being viewed (e.g. draft shipment object) and can use that data when performing actions.
 - Adding a new widget to the dashboard
 - Adding a column to a list view for particular objects, and adding editing support for that new field
 
 Plugins are written as [react](https://react.dev/) components and compiled to distributable packages. These are copied to the server and then are available to all clients using that server.
 
-A plugin can interact with the app framework, access language translations, call the data API or use the current theme. 
+A plugin can interact with the app framework, access language translations, call the data API or use the current theme. For example, a plugin can use shared UI components and utility functions from the app framework.
 
-For example, a plugin can use shared UI components and utility functions from the app framework.
+Note that the plugins do need to be implemented for a given area of the app - currently a plugin can be created to add a column to a list view, but only the stock list view has implemented this functionality and is the only area of the site for which this plugin will operate. It is a simple task to support plugins in other areas, it is just that we are implementing only as required.
 
 ## Plugin structure
 
-When the app is loaded, all available plugins are read (the process differs slightly between development and production mode, see more below), validated and stored within a plugin provider.
+When the app is loaded, all available plugins are read (the process differs slightly between development and production mode, see more below), validated and then stored within a centrally accessible plugin provider.
 
-A component of the site can query the provider for any plugins which are applicable for the component's environment (e.g. any plugins which relate to the Inbound Shipment detail view page) and render them. When rendered, the plugins are passed the data object associated with the type of plugin (for the Inbound Shipment detail view plugin, this is the draft Inbound Shipment object).
+A component of the site can query the provider for any plugins which are applicable for that component's environment (e.g. any plugins which relate to the Inbound Shipment detail view page) and render them. When rendered, the plugins are passed the data object associated with the type of plugin (for the Inbound Shipment detail view plugin, this is the draft Inbound Shipment object). Errors are handled and a message is shown to the user if the plugin fails to load or render correctly.
 
-Plugins and standard site components can both interact using events. The plugin provider has methods to register & remove an event listener and to dispatch an event.
+Plugins and standard site components can interact with each other using events. The plugin provider has methods to register & remove an event listener and to dispatch an event.
+
+Webpack module federation is used to bundle and serve the plugins.
 
 When running in development mode, the required plugin files are loaded directly from disk. HMR / fast reload is available and the plugins have access to the full application context. All plugins are available in the PluginProvider - with no need to fetch additional files or components.
-
-Webpack module federation is used to bundle and serve the plugins when running in development mode.
 
 In production mode the process differs
 
 - the server provides an endpoint to fetch the list of available plugins
 - the client app fetches the full list on startup and populates the PluginProvider
 - this fetches only the plugin definitions. When a plugin is rendered for the first time, the component is fetched from the server and cached in the PluginProvider.
+- column definitions do not require additional loading, though if the column is using a custom component for rendering, that may require fetching
 
 ### Plugin validation
+
+Plugins are signed by the developer and require validation before they are able to be run in production mode - validation is ignored when running in developer mode; an error is logged but the plugin loaded regardless of validation failures.
 
 See the readme on plugin validation for details of how to sign plugins and the process of loading and validating plugins.
 
@@ -77,7 +80,7 @@ The following types of plugins are currently supported:
 - `onChangeStockEditForm`
 
 
-The components array lists all of the components exported by the plugin, the columns array lists all of the columns. The `name` property must match the name of the directory, as this is used to link the exported js file.
+The components array lists all of the components exported by the plugin, the columns array lists all of the columns. The `name` property must match the name of the directory, as this is used to link the exported js file. See the examples for how this is implemented in the `webpack.config.js` file.
 
 ### Types of plugin
 
@@ -108,13 +111,55 @@ This is defined in the plugin provider by the following object shape:
 
 ```
 
-There is a difference in behaviour when the app is running in development or production mode. See the **Development process** section for more on this.
-A `PluginProvider` stores a list of available plugins. A component within the app can ****
+There is a difference in behaviour when the app is running in development or production mode. See the **Plugin structure** section for more on this.
+A `PluginProvider` stores a list of available plugins. A component within the app can retrieve a list of applicable plugins by calling the `getComponentPlugins` or `getColumnPlugins` method, passing in the type of plugin required. Even simpler, use the hook provided to fetch components like this:
+
+```
+  const pluginButtons = usePluginElements({
+    type: 'InboundShipmentAppBar',
+    data,
+  });
+```
+
+which are then rendered directly:
+
+```
+{pluginButtons}
+```
+
+Similarly, the columns have a hook provided as well:
+
+```
+  const pluginColumns = usePluginColumns<StockLineRowFragment>({
+    type: 'Stock',
+  });
+```
+
+```
+  const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
+    [standard column definitions go here],
+    ...pluginColumns,
+  ];
+
+...
+
+  const columns = useColumns<StockLineRowFragment>(
+    columnDefinitions,
+    {
+      sortBy,
+      onChangeSortBy: updateSortQuery,
+    },
+    [sortBy, pluginColumns]
+  );
+```
 
 
 ### Events
 
+Events can be used to interact between the app and a plugin.
 To register for an event use the `usePluginEvents` hook.
+
+For example, here is how you can call the `onSave` method within a plugin, when the `onSaveTockEditForm` event is dispatched:
 
 ```
   const { addEventListener, removeEventListener, dispatchEvent } = usePluginEvents();
@@ -133,6 +178,31 @@ To register for an event use the `usePluginEvents` hook.
 
 ```
 
+A component within the app can react to events which are raised by plugins. For example, here is how an edit form can trigger the validation method when the plugin data is changed:
+
+```
+  const { dispatchEvent, addEventListener, removeEventListener } =
+    usePluginEvents();
+
+...
+
+  const onChange = () => setHasChanged(true);
+
+  useEffect(() => {
+    const listener: PluginEventListener = {
+      eventType: 'onChangeStockEditForm',
+      listener: onChange,
+    };
+
+    addEventListener(listener);
+
+    return () => removeEventListener(listener);
+  }, [addEventListener, removeEventListener]);
+
+```
+
+In this example, the `hasChanged` variable is used to enable the `Ok` button, which needs to be enabled when data in the plugin input is changed by the user.
+
 
 ### Plugin data
 
@@ -148,6 +218,8 @@ The querying and mutating of data follows the standard pattern used throughout o
   const { data } = usePluginData.data(stockLine?.id ?? '');
   const { mutate } = data?.id ? usePluginData.update() : usePluginData.insert();
 ```
+
+These functions can be implemented within your plugin and used to fetch and update data.
 
 
 ## Creating a plugin
@@ -221,6 +293,12 @@ Create a react component and update webpack.config.js, adding the component file
       },
     }),
 ```
+
+In development mode simply run as usual (`yarn start` or `yarn start-local`) and webpack will read any plugin files from the `client/packages/plugins` directly and include them in the bundled javascript.
+
+When you are ready, run `yarn build-plugins` from the `./client` directory. This will compile and bundle all of the plugins. The contents of the `./client/packages/plugins/[your plugin name]/dist` folder can then be copied to the `./server/app_data/plugins/[your plugin name]` - available to be read by the server.
+
+The server will read all folders under `./server/app_data/plugins` and for any folders that have a `plugin.json` file, will make that plugin available in the list.
 
 ### Things to note
 
