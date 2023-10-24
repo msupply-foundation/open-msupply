@@ -23,47 +23,6 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
         <FilterMenu
           filters={[
             {
-              type: 'number',
-              name: 'Single Number',
-              urlParameter: 'number',
-            },
-            {
-              type: 'group',
-              name: 'Date range',
-              elements: [
-                {
-                  type: 'dateTime',
-                  name: 'From Date',
-                  range: 'from',
-                  urlParameter: 'dateRange',
-                },
-                {
-                  type: 'dateTime',
-                  name: 'To Date',
-                  range: 'to',
-                  urlParameter: 'dateRange',
-                },
-              ],
-            },
-            {
-              type: 'group',
-              name: 'Number range',
-              elements: [
-                {
-                  type: 'number',
-                  name: 'Low',
-                  range: 'from',
-                  urlParameter: 'numberRange',
-                },
-                {
-                  type: 'number',
-                  name: 'High',
-                  range: 'to',
-                  urlParameter: 'numberRange',
-                },
-              ],
-            },
-            {
               type: 'text',
               name: t('label.first-name'),
               urlParameter: 'firstName',
