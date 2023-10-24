@@ -92,11 +92,7 @@ const getRangeBoundary = (
 ) => {
   if (typeof query !== 'object' || !range) return limit;
   const { from, to } = query;
-  return range === 'from'
-    ? to
-      ? Math.min(to, limit)
-      : limit
-    : from
-    ? Math.max(from, limit)
-    : limit;
+
+  if (range === 'from') return to ? Math.min(to, limit) : limit;
+  else return from ? Math.max(from, limit) : limit;
 };
