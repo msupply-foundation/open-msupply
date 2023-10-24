@@ -29,9 +29,8 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
     decimalLimit,
   } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
-  const [value, setValue] = useState(
-    getNumberFromUrl(urlQuery[urlParameter], range)
-  );
+  const urlValue = urlQuery[urlParameter] as number;
+  const [value, setValue] = useState(getNumberFromUrl(urlValue, range));
 
   const debouncedOnChange = useDebouncedValueCallback(
     val => {
@@ -71,8 +70,8 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
       }}
       onChange={handleChange}
       value={value}
-      max={getRangeBoundary(urlQuery[urlParameter], range, maxValue)}
-      min={getRangeBoundary(urlQuery[urlParameter], range, minValue)}
+      min={getRangeBoundary(urlValue, range, minValue)}
+      max={getRangeBoundary(urlValue, range, maxValue)}
       decimalLimit={decimalLimit}
     />
   );
@@ -87,12 +86,12 @@ const getNumberFromUrl = (
 };
 
 const getRangeBoundary = (
-  query: UrlQueryValue,
+  query: number | RangeObject<number>,
   range: RangeOption | undefined,
   limit: number
 ) => {
   if (typeof query !== 'object' || !range) return limit;
-  const { from, to } = query as RangeObject<number>;
+  const { from, to } = query;
   return range === 'from'
     ? to
       ? Math.min(to, limit)
