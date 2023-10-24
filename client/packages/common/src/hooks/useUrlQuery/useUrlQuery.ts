@@ -19,12 +19,23 @@ export type UrlQueryValue =
 // CONSTANTS
 export const RANGE_SPLIT_CHAR = '_';
 
-// const dateRangeRegex = new RegExp(
-//   `^(\\d{4}-\\d{2}-\\d{2})?_(\\d{4}-\\d{2}-\\d{2})?|(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?${RANGE_SPLIT_CHAR}(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?$`
-// );
+// The following Regex are used to split range strings, either "Date/Time" or
+// "Number", and use RANGE_SPLIT_CHAR to separate. Both the start and end values
+// of the range are optional, but must be the same (date/dateTime/number) if
+// both present
 
-// Matches range strings for numbers, with "_" as the splitting character.
-// Both the start date and end date are optional.
+// Date/Date-Time range Regex
+// Will match ISO Date or Date/Time ranges
+// e.g. the following will all match
+// 2023-10-02 03:10_2023-10-03 02:10
+// 2023-10-02_2023-10-03
+// 2023-10-02 03:10_
+// _2023-10-03
+const dateRangeRegex = new RegExp(
+  `^(\\d{4}-\\d{2}-\\d{2})?_(\\d{4}-\\d{2}-\\d{2})?|(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?${RANGE_SPLIT_CHAR}(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?$`
+);
+
+// Number range Regex
 // A "number" can contain a negative (-) prefix, and a single decimal point
 // within it (which must be followed by additional digits)
 const numberRangeRegex = new RegExp(
@@ -97,11 +108,8 @@ const unStringify = (input: string | undefined): UrlQueryValue => {
   if (!isNaN(Number(input))) return Number(input);
   if (input === 'true') return true;
   if (input === 'false') return false;
-  if (typeof input === 'string' && input?.match(numberRangeRegex)) {
-    console.log('HELLO');
-    // console.log(parseRangeString(input));
-    return parseRangeString(input);
-  }
+  if (input?.match(numberRangeRegex)) return parseRangeString(input);
+  if (input?.match(dateRangeRegex)) return parseRangeString(input);
   return input;
 };
 
