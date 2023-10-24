@@ -1,7 +1,4 @@
-use super::{
-    query::get_temperature_log,
-    validate::{check_location_on_hold, check_temperature_log_exists},
-};
+use super::{query::get_temperature_log, validate::check_temperature_log_exists};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::NaiveDateTime;
 use repository::{
@@ -57,14 +54,6 @@ pub fn validate(
     };
     if temperature_log_row.store_id != Some(store_id.to_string()) {
         return Err(UpdateTemperatureLogError::TemperatureLogDoesNotBelongToCurrentStore);
-    }
-
-    if let Some(location_id) = &input.location_id {
-        match check_location_on_hold(&location_id, connection) {
-            Ok(true) => return Err(UpdateTemperatureLogError::LocationIsOnHold),
-            Err(e) => return Err(UpdateTemperatureLogError::DatabaseError(e)),
-            _ => (),
-        }
     }
 
     Ok(temperature_log_row)

@@ -1,7 +1,4 @@
-use super::{
-    query::get_sensor,
-    validate::{check_location_on_hold, check_sensor_exists},
-};
+use super::{query::get_sensor, validate::check_sensor_exists};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
@@ -67,14 +64,6 @@ pub fn validate(
     };
     if sensor_row.store_id != Some(store_id.to_string()) {
         return Err(UpdateSensorError::SensorDoesNotBelongToCurrentStore);
-    }
-
-    if let Some(location_id) = &input.location_id {
-        match check_location_on_hold(&location_id, connection) {
-            Ok(true) => return Err(UpdateSensorError::LocationIsOnHold),
-            Err(e) => return Err(UpdateSensorError::DatabaseError(e)),
-            _ => (),
-        }
     }
 
     Ok(sensor_row)
