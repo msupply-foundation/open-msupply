@@ -1,6 +1,8 @@
 {
+  "button.view-all-breaches": "View all breaches",
   "error.no-sensors": "No sensors found",
   "error.no-temperature-logs": "No temperature logs found",
+  "heading.breach": "Breach",
   "heading.chart": "Temperature by Sensor",
   "label.acknowledged": "Acknowledged",
   "label.breaches": "Breaches",
