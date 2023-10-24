@@ -8,24 +8,24 @@ use repository::{
 use crate::common_stock::{check_stock_line_exists, CommonStockLineError};
 use crate::item::check_item_exists;
 use crate::validate::check_store_id_matches;
+use crate::{check_location_exists, NullableUpdate};
 use crate::{
     service_provider::ServiceContext,
     stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
-    stocktake_line::{query::get_stocktake_line, validate::check_location_exists},
+    stocktake_line::query::get_stocktake_line,
     u32_to_i32,
 };
 
 use super::validate::{
     check_active_adjustment_reasons, check_reason_is_valid, check_stock_line_reduced_below_zero,
 };
-use super::LocationUpdate;
 
 #[derive(Default, Debug, Clone)]
 pub struct InsertStocktakeLine {
     pub id: String,
     pub stocktake_id: String,
     pub stock_line_id: Option<String>,
-    pub location: Option<LocationUpdate>,
+    pub location: Option<NullableUpdate<String>>,
     pub comment: Option<String>,
     pub counted_number_of_packs: Option<f64>,
     pub item_id: Option<String>,
@@ -180,15 +180,8 @@ fn validate(
             return Err(ItemDoesNotExist);
         }
     }
-
-    if let Some(location) = &input.location {
-        // First checks if location has been included in the update
-        if let Some(location_id) = &location.location_id {
-            // only check if location exists if not null has been passed
-            if !check_location_exists(connection, &location_id)? {
-                return Err(LocationDoesNotExist);
-            }
-        }
+    if !check_location_exists(connection, store_id, &input.location)? {
+        return Err(LocationDoesNotExist);
     }
 
     let stocktake_reduction_amount =
@@ -250,10 +243,7 @@ fn generate(
         id,
         stocktake_id,
         stock_line_id,
-        location_id: match location {
-            Some(location) => location.location_id,
-            None => None,
-        },
+        location_id: location.map(|l| l.value).unwrap_or_default(),
         comment,
         snapshot_number_of_packs,
         counted_number_of_packs,
@@ -313,10 +303,8 @@ mod stocktake_line_test {
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake_line::{
-            insert::{InsertStocktakeLine, InsertStocktakeLineError},
-            LocationUpdate,
-        },
+        stocktake_line::insert::{InsertStocktakeLine, InsertStocktakeLineError},
+        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -512,8 +500,8 @@ mod stocktake_line_test {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
-                    r.location = Some(LocationUpdate {
-                        location_id: Some("invalid".to_string()),
+                    r.location = Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
                     });
                     r.counted_number_of_packs = Some(17.0);
                 }),

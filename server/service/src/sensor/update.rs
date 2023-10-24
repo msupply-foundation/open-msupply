@@ -1,10 +1,10 @@
 use super::{
     query::get_sensor,
     validate::{check_location_on_hold, check_sensor_exists},
-    LocationUpdate,
 };
 use crate::{
-    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+    activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
+    SingleRecordError,
 };
 use repository::{
     sensor::Sensor, ActivityLogType, RepositoryError, SensorRow, SensorRowRepository,
@@ -25,7 +25,7 @@ pub struct UpdateSensor {
     pub id: String,
     pub name: Option<String>,
     pub is_active: Option<bool>,
-    pub location: Option<LocationUpdate>,
+    pub location: Option<NullableUpdate<String>>,
     pub log_interval: Option<i32>,
     pub battery_level: Option<i32>,
 }
@@ -41,16 +41,17 @@ pub fn update_sensor(
             let updated_sensor_row = generate(input.clone(), sensor_row.clone());
             SensorRowRepository::new(&connection).upsert_one(&updated_sensor_row)?;
 
-            if sensor_row.location_id != input.location_id {
-                activity_log_entry(
-                    ctx,
-                    ActivityLogType::SensorLocationChanged,
-                    Some(sensor_row.id),
-                    sensor_row.location_id,
-                    input.location_id,
-                )?
-            };
-
+            if let Some(location_update) = input.location {
+                if sensor_row.location_id == location_update.value {
+                    activity_log_entry(
+                        ctx,
+                        ActivityLogType::SensorLocationChanged,
+                        Some(sensor_row.id),
+                        sensor_row.location_id,
+                        location_update.value,
+                    )?;
+                }
+            }
             get_sensor(ctx, updated_sensor_row.id).map_err(UpdateSensorError::from)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -72,7 +73,7 @@ pub fn validate(
 
     if let Some(location) = &input.location {
         // First checks if location has been included in the update
-        if let Some(location_id) = &location.location_id {
+        if let Some(location_id) = &location.value {
             // only check if location exists if not null has been passed
             match check_location_on_hold(&location_id, connection) {
                 Ok(true) => return Err(UpdateSensorError::LocationIsOnHold),
@@ -100,12 +101,12 @@ pub fn generate(
     // A null value being passed as the LocationUpdate is the unassignment of location
     // no LocationUpdate being passed is the location not being updated
     if let Some(location) = location {
-        sensor_row.location_id = location.location_id;
+        sensor_row.location_id = location.value;
     }
     sensor_row.name = name.unwrap_or(sensor_row.name);
     sensor_row.is_active = is_active.unwrap_or(sensor_row.is_active);
-    sensor_row.log_interval = log_interval;
-    sensor_row.battery_level = battery_level;
+    sensor_row.log_interval = log_interval.or(sensor_row.log_interval);
+    sensor_row.battery_level = battery_level.or(sensor_row.battery_level);
     sensor_row
 }
 

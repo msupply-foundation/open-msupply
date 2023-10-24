@@ -52,9 +52,3 @@ impl SensorServiceTrait for SensorService {}
 
 #[cfg(test)]
 mod tests;
-
-#[derive(Clone, Debug)]
-
-pub struct LocationUpdate {
-    pub location_id: Option<String>,
-}

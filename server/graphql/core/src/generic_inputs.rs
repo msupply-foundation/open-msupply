@@ -17,6 +17,6 @@ pub struct TaxInput {
 ///   b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
 #[derive(InputObject)]
 #[graphql(concrete(name = "NullableStringUpdate", params(String)))]
-pub struct NullableUpdate<T: InputType> {
+pub struct NullableUpdateInput<T: InputType> {
     pub value: Option<T>,
 }

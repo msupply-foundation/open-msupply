@@ -45,7 +45,7 @@ pub fn validate(
         return Err(BatchIsReserved);
     }
     if let Some(location) = &input.location {
-        if !check_location_exists(&location.location_id, connection)? {
+        if !check_location_exists(&location.value, connection)? {
             return Err(LocationDoesNotExist);
         }
     }

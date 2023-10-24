@@ -29,7 +29,7 @@ pub fn validate(
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
     if let Some(location) = &input.location {
-        if !check_location_exists(&location.location_id, connection)? {
+        if !check_location_exists(&location.value, connection)? {
             return Err(LocationDoesNotExist);
         }
     }

@@ -1,6 +1,5 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    location::{LocationFilter, LocationRepository},
     ActivityLogType, EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
     MasterListRepository, NumberRowType, RepositoryError, StockLineFilter, StockLineRepository,
     StockLineRow, Stocktake, StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository,
@@ -9,11 +8,11 @@ use repository::{
 use util::uuid::uuid;
 
 use crate::{
-    activity_log::activity_log_entry, number::next_number, service_provider::ServiceContext,
-    validate::check_store_exists,
+    activity_log::activity_log_entry, check_location_exists, number::next_number,
+    service_provider::ServiceContext, validate::check_store_exists, NullableUpdate,
 };
 
-use super::{query::get_stocktake, LocationUpdate};
+use super::query::get_stocktake;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct InsertStocktake {
@@ -23,7 +22,7 @@ pub struct InsertStocktake {
     pub stocktake_date: Option<NaiveDate>,
     pub is_locked: Option<bool>,
     pub master_list_id: Option<String>,
-    pub location: Option<LocationUpdate>,
+    pub location: Option<NullableUpdate<String>>,
     pub items_have_stock: Option<bool>,
 }
 
@@ -60,19 +59,6 @@ fn check_master_list_exists(
     Ok(count > 0)
 }
 
-fn check_location_exists(
-    connection: &StorageConnection,
-    store_id: &str,
-    location_id: &str,
-) -> Result<bool, RepositoryError> {
-    let count = LocationRepository::new(connection).count(Some(
-        LocationFilter::new()
-            .id(EqualFilter::equal_to(location_id))
-            .store_id(EqualFilter::equal_to(store_id)),
-    ))?;
-    Ok(count > 0)
-}
-
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
@@ -92,12 +78,9 @@ fn validate(
             return Err(InsertStocktakeError::InvalidMasterList);
         }
     }
-    if let Some(location) = &stocktake.location {
-        if let Some(location) = &location.location_id {
-            if !check_location_exists(connection, store_id, location)? {
-                return Err(InsertStocktakeError::InvalidLocation);
-            }
-        }
+
+    if !check_location_exists(connection, store_id, &stocktake.location)? {
+        return Err(InsertStocktakeError::InvalidLocation);
     }
 
     Ok(())
@@ -127,13 +110,11 @@ fn generate(
         None => Vec::new(),
     };
     let location_lines = match location {
-        Some(location) => match location.location_id {
-            Some(location_id) => {
-                generate_lines_from_location(connection, store_id, &id, &location_id)?
-            }
-            None => Vec::new(),
-        },
-        None => Vec::new(),
+        Some(NullableUpdate {
+            value: Some(location_id),
+            ..
+        }) => generate_lines_from_location(connection, store_id, &id, &location_id)?,
+        _ => Vec::new(),
     };
     let items_have_stock_lines = match items_have_stock {
         Some(_) => generate_lines_with_stock(connection, store_id, &id)?,
@@ -426,10 +407,8 @@ mod test {
 
     use crate::{
         service_provider::ServiceProvider,
-        stocktake::{
-            insert::{InsertStocktake, InsertStocktakeError},
-            LocationUpdate,
-        },
+        stocktake::insert::{InsertStocktake, InsertStocktakeError},
+        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -657,8 +636,8 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location: Some(LocationUpdate {
-                        location_id: Some(location_id.clone()),
+                    location: Some(NullableUpdate {
+                        value: Some(location_id.clone()),
                     }),
                     master_list_id: None,
                     items_have_stock: None,
@@ -696,8 +675,8 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location: Some(LocationUpdate {
-                        location_id: Some(location_id.clone()),
+                    location: Some(NullableUpdate {
+                        value: Some(location_id.clone()),
                     }),
                     master_list_id: None,
                     items_have_stock: None,
@@ -785,7 +764,7 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location: Some(LocationUpdate { location_id: None }),
+                    location: Some(NullableUpdate { value: None }),
                     master_list_id: None,
                     items_have_stock: None,
                 },
@@ -809,7 +788,7 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                     is_locked: Some(true),
-                    location: Some(LocationUpdate { location_id: None }),
+                    location: Some(NullableUpdate { value: None }),
                     master_list_id: None,
                     items_have_stock: Some(true),
                 },

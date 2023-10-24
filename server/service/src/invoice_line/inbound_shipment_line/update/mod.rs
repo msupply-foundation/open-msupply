@@ -1,7 +1,7 @@
 use crate::{
-    invoice_line::{query::get_invoice_line, LocationUpdate, ShipmentTaxUpdate},
+    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
-    WithDBError,
+    NullableUpdate, WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{
@@ -19,7 +19,7 @@ use validate::validate;
 pub struct UpdateInboundShipmentLine {
     pub id: String,
     pub item_id: Option<String>,
-    pub location: Option<LocationUpdate>,
+    pub location: Option<NullableUpdate<String>>,
     pub pack_size: Option<u32>,
     pub batch: Option<String>,
     pub cost_price_per_pack: Option<f64>,
@@ -118,13 +118,11 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice_line::{
-            inbound_shipment_line::{
-                update::UpdateInboundShipmentLine, UpdateInboundShipmentLineError as ServiceError,
-            },
-            LocationUpdate,
+        invoice_line::inbound_shipment_line::{
+            update::UpdateInboundShipmentLine, UpdateInboundShipmentLineError as ServiceError,
         },
         service_provider::ServiceProvider,
+        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -158,8 +156,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipmentLine| {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
-                    r.location = Some(LocationUpdate {
-                        location_id: Some("invalid".to_string()),
+                    r.location = Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
                     });
                 }),
             ),

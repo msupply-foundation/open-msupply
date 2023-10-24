@@ -1,7 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    generic_inputs::NullableUpdate,
+    generic_inputs::NullableUpdateInput,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -10,16 +10,15 @@ use graphql_types::types::StockLineNode;
 use repository::StockLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    stock_line::{
-        LocationUpdate, UpdateStockLine as ServiceInput, UpdateStockLineError as ServiceError,
-    },
+    stock_line::{UpdateStockLine as ServiceInput, UpdateStockLineError as ServiceError},
+    NullableUpdate,
 };
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateStockLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub location: Option<NullableUpdate<String>>,
+    pub location: Option<NullableUpdateInput<String>>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
@@ -96,10 +95,8 @@ impl UpdateInput {
 
         ServiceInput {
             id,
-            location: location.and_then(|location| {
-                Some(LocationUpdate {
-                    location_id: location.value,
-                })
+            location: location.map(|location| NullableUpdate {
+                value: location.value,
             }),
             cost_price_per_pack,
             sell_price_per_pack,
@@ -149,9 +146,10 @@ mod test {
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
         stock_line::{
-            LocationUpdate, StockLineServiceTrait, UpdateStockLine as ServiceInput,
+            StockLineServiceTrait, UpdateStockLine as ServiceInput,
             UpdateStockLineError as ServiceError,
         },
+        NullableUpdate,
     };
 
     type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<StockLine, ServiceError> + Sync + Send;
@@ -266,8 +264,8 @@ mod test {
                 input,
                 ServiceInput {
                     id: mock_stock_line_a().id,
-                    location: Some(LocationUpdate {
-                        location_id: Some("some location".to_string()),
+                    location: Some(NullableUpdate {
+                        value: Some("some location".to_string()),
                     }),
                     cost_price_per_pack: None,
                     sell_price_per_pack: None,

@@ -8,12 +8,11 @@ mod query {
         test_db::setup_all,
     };
 
+    use crate::NullableUpdate;
     use crate::{
         sensor::update::{UpdateSensor, UpdateSensorError},
         service_provider::ServiceProvider,
     };
-
-    use crate::sensor::LocationUpdate;
 
     #[actix_rt::test]
     async fn sensor_service_update_errors() {
@@ -40,7 +39,9 @@ mod query {
                     id: "invalid".to_owned(),
                     location: None,
                     name: None,
-                    is_active: None
+                    is_active: None,
+                    log_interval: None,
+                    battery_level: None
                 },
             ),
             Err(UpdateSensorError::SensorDoesNotExist)
@@ -54,7 +55,9 @@ mod query {
                     id: sensors_not_in_store[0].sensor_row.id.clone(),
                     location: None,
                     name: None,
-                    is_active: None
+                    is_active: None,
+                    log_interval: None,
+                    battery_level: None
                 },
             ),
             Err(UpdateSensorError::SensorDoesNotBelongToCurrentStore)
@@ -80,6 +83,7 @@ mod query {
 
         // Success with no changes
         let sensor = sensors_in_store[0].clone();
+
         assert_eq!(
             service.update_sensor(
                 &context,
@@ -87,7 +91,9 @@ mod query {
                     id: sensor.sensor_row.id.clone(),
                     location: None,
                     name: None,
-                    is_active: None
+                    is_active: None,
+                    log_interval: None,
+                    battery_level: None
                 },
             ),
             Ok(sensor.clone())
@@ -113,11 +119,13 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensor.sensor_row.id.clone(),
-                    location: Some(LocationUpdate {
-                        location_id: Some("location_1".to_string())
+                    location: Some(NullableUpdate {
+                        value: Some("location_1".to_string())
                     }),
                     name: Some(sensor.sensor_row.name.clone()),
                     is_active: Some(sensor.sensor_row.is_active),
+                    log_interval: None,
+                    battery_level: None
                 },
             ),
             Ok(sensor.clone())
@@ -140,9 +148,11 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensor.sensor_row.id.clone(),
-                    location: Some(LocationUpdate { location_id: None }),
+                    location: Some(NullableUpdate { value: None }),
                     name: None,
-                    is_active: None
+                    is_active: None,
+                    log_interval: None,
+                    battery_level: None
                 },
             ),
             Ok(sensor.clone())
