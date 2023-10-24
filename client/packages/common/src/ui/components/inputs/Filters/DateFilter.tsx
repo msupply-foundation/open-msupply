@@ -94,13 +94,12 @@ const getRangeBoundary = (
   if (typeof query !== 'object' || !range) return limitDate || undefined;
   const { from, to } = query as RangeObject<string>;
 
-  return (
-    (range === 'from'
-      ? to
-        ? DateUtils.minDate(DateUtils.getDateOrNull(to), limitDate)
-        : limitDate
-      : from
-      ? DateUtils.maxDate(DateUtils.getDateOrNull(from), limitDate)
-      : limitDate) ?? undefined
-  );
+  if (range === 'from')
+    return to
+      ? DateUtils.minDate(DateUtils.getDateOrNull(to), limitDate) ?? undefined
+      : limitDate ?? undefined;
+  else
+    return from
+      ? DateUtils.maxDate(DateUtils.getDateOrNull(from), limitDate) ?? undefined
+      : limitDate ?? undefined;
 };
