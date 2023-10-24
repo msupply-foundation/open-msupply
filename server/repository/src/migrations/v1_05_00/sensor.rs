@@ -22,7 +22,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
             CREATE TABLE sensor (
                 id TEXT NOT NULL PRIMARY KEY,
-                serial TEXT NOT NULL UNIQUE,
+                serial TEXT NOT NULL,
                 name TEXT NOT NULL,
                 is_active BOOLEAN,
                 store_id TEXT REFERENCES store(id),
