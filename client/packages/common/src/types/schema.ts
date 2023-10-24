@@ -89,6 +89,7 @@ export enum ActivityLogNodeType {
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
+  SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
@@ -3645,8 +3646,6 @@ export type Queries = {
   storePreferences: StorePreferenceNode;
   stores: StoresResponse;
   syncSettings?: Maybe<SyncSettingsNode>;
-  /** Query omSupply "temperature_breach_config" entries */
-  temperatureBreachConfigs: TemperatureBreachConfigsResponse;
   /** Query omSupply "temperature_breach" entries */
   temperatureBreaches: TemperatureBreachesResponse;
   /** Query omSupply "temperature_log" entries */
@@ -4018,14 +4017,6 @@ export type QueriesStoresArgs = {
   filter?: InputMaybe<StoreFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<StoreSortInput>>;
-};
-
-
-export type QueriesTemperatureBreachConfigsArgs = {
-  filter?: InputMaybe<TemperatureBreachConfigFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<TemperatureBreachConfigSortInput>>;
-  storeId: Scalars['String']['input'];
 };
 
 
@@ -4835,43 +4826,6 @@ export type TaxInput = {
   percentage?: InputMaybe<Scalars['Float']['input']>;
 };
 
-export type TemperatureBreachConfigConnector = {
-  __typename: 'TemperatureBreachConfigConnector';
-  nodes: Array<TemperatureBreachConfigNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type TemperatureBreachConfigFilterInput = {
-  description?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  type?: InputMaybe<EqualFilterTemperatureBreachRowTypeInput>;
-};
-
-export type TemperatureBreachConfigNode = {
-  __typename: 'TemperatureBreachConfigNode';
-  description: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  type: TemperatureBreachNodeType;
-};
-
-export enum TemperatureBreachConfigSortFieldInput {
-  Description = 'description'
-}
-
-export type TemperatureBreachConfigSortInput = {
-  /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Sort query result by `key` */
-  key: TemperatureBreachConfigSortFieldInput;
-};
-
-export type TemperatureBreachConfigsResponse = TemperatureBreachConfigConnector;
-
 export type TemperatureBreachConnector = {
   __typename: 'TemperatureBreachConnector';
   nodes: Array<TemperatureBreachNode>;
@@ -5656,6 +5610,7 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',
   DocumentQuery = 'DOCUMENT_QUERY',
@@ -5682,8 +5637,6 @@ export enum UserPermission {
   StockLineMutate = 'STOCK_LINE_MUTATE',
   StockLineQuery = 'STOCK_LINE_QUERY',
   StoreAccess = 'STORE_ACCESS',
-  TemperatureBreachConfigMutate = 'TEMPERATURE_BREACH_CONFIG_MUTATE',
-  TemperatureBreachConfigQuery = 'TEMPERATURE_BREACH_CONFIG_QUERY',
   TemperatureBreachQuery = 'TEMPERATURE_BREACH_QUERY',
   TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY'
 }

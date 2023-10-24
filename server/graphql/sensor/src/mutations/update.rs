@@ -50,8 +50,7 @@ pub struct UpdateSensorInput {
     pub id: String,
     pub location: Option<NullableUpdateInput<String>>,
     pub name: Option<String>,
-    pub log_interval: Option<i32>,
-    pub battery_level: Option<i32>,
+    pub is_active: Option<bool>,
 }
 
 impl From<UpdateSensorInput> for UpdateSensor {
@@ -60,8 +59,7 @@ impl From<UpdateSensorInput> for UpdateSensor {
             id,
             location,
             name,
-            log_interval,
-            battery_level,
+            is_active,
         }: UpdateSensorInput,
     ) -> Self {
         UpdateSensor {
@@ -70,9 +68,9 @@ impl From<UpdateSensorInput> for UpdateSensor {
                 value: location.value,
             }),
             name,
-            is_active: None,
-            log_interval,
-            battery_level,
+            is_active,
+            log_interval: None,
+            battery_level: None,
         }
     }
 }
