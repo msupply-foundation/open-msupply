@@ -8,6 +8,7 @@ mod query {
         test_db::setup_all,
     };
 
+    use crate::NullableUpdate;
     use crate::{
         sensor::update::{UpdateSensor, UpdateSensorError},
         service_provider::ServiceProvider,
@@ -36,9 +37,11 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: "invalid".to_owned(),
-                    location_id: None,
+                    location: None,
                     name: None,
-                    is_active: None
+                    is_active: None,
+                    log_interval: None,
+                    battery_level: None
                 },
             ),
             Err(UpdateSensorError::SensorDoesNotExist)
@@ -50,9 +53,11 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensors_not_in_store[0].sensor_row.id.clone(),
-                    location_id: None,
+                    location: None,
                     name: None,
-                    is_active: None
+                    is_active: None,
+                    log_interval: None,
+                    battery_level: None
                 },
             ),
             Err(UpdateSensorError::SensorDoesNotBelongToCurrentStore)
@@ -78,14 +83,17 @@ mod query {
 
         // Success with no changes
         let sensor = sensors_in_store[0].clone();
+
         assert_eq!(
             service.update_sensor(
                 &context,
                 UpdateSensor {
                     id: sensor.sensor_row.id.clone(),
-                    location_id: None,
+                    location: None,
                     name: None,
-                    is_active: None
+                    is_active: None,
+                    log_interval: None,
+                    battery_level: None
                 },
             ),
             Ok(sensor.clone())
@@ -111,9 +119,13 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensor.sensor_row.id.clone(),
-                    location_id: Some("location_1".to_string()),
+                    location: Some(NullableUpdate {
+                        value: Some("location_1".to_string())
+                    }),
                     name: Some(sensor.sensor_row.name.clone()),
                     is_active: Some(sensor.sensor_row.is_active),
+                    log_interval: None,
+                    battery_level: None
                 },
             ),
             Ok(sensor.clone())
@@ -126,6 +138,24 @@ mod query {
                 )
                 .unwrap()[0],
             sensor
+        );
+
+        // Success with unassigning location from sensor
+        let mut sensor = sensors_in_store[0].clone();
+        sensor.sensor_row.location_id = None;
+        assert_eq!(
+            service.update_sensor(
+                &context,
+                UpdateSensor {
+                    id: sensor.sensor_row.id.clone(),
+                    location: Some(NullableUpdate { value: None }),
+                    name: None,
+                    is_active: None,
+                    log_interval: None,
+                    battery_level: None
+                },
+            ),
+            Ok(sensor.clone())
         );
     }
 }
