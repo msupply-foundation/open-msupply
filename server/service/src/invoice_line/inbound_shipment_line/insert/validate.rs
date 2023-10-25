@@ -28,9 +28,10 @@ pub fn validate(
     }
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
-
-    if !check_location_exists(&input.location_id, connection)? {
-        return Err(LocationDoesNotExist);
+    if let Some(location) = &input.location {
+        if !check_location_exists(&location.value, connection)? {
+            return Err(LocationDoesNotExist);
+        }
     }
 
     let invoice =
