@@ -16,6 +16,7 @@ export type Sensor = {
   colour: string | undefined;
   id: string;
   name: string;
+  location?: string | null;
   logs: Log[];
 };
 
@@ -38,6 +39,7 @@ export const useTemperatureChartData = () => {
           id: sensor.id,
           name: sensor.name,
           logs: [],
+          location: sensor.location?.name,
         });
         sensorIndex = sensors.length - 1;
       }
@@ -75,7 +77,8 @@ export const useTemperatureChartData = () => {
           l.date <= periodEnd &&
           l.sensorId === sensor.id
       );
-      const breach = logsInPeriod.filter(l => !!l.temperatureBreach)[0];
+      const breach = logsInPeriod.filter(l => !!l.temperatureBreach)[0]
+        ?.temperatureBreach;
 
       return {
         date: periodStart,
@@ -93,14 +96,18 @@ export const useTemperatureChartData = () => {
   });
 
   const breachConfig = {
-    cold: [
-      { date: fromDate, temperature: 2 },
-      { date: toDate, temperature: 2 },
-    ],
-    hot: [
-      { date: fromDate, temperature: 8 },
-      { date: toDate, temperature: 8 },
-    ],
+    cold: Array.from({
+      length: numOfDataPoints,
+    }).map((_, i) => ({
+      date: new Date(fromDate.getTime() + periodDuration * i),
+      temperature: 2,
+    })),
+    hot: Array.from({
+      length: numOfDataPoints,
+    }).map((_, i) => ({
+      date: new Date(fromDate.getTime() + periodDuration * i),
+      temperature: 8,
+    })),
   };
 
   return {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Area,
   BasicSpinner,
@@ -11,6 +11,7 @@ import {
   Legend,
   Line,
   ResponsiveContainer,
+  TemperatureBreachNodeType,
   TooltipProps,
   Typography,
   XAxis,
@@ -32,12 +33,20 @@ type DotPayload = {
   breach?: TemperatureBreachRowFragment;
   sensorId: string;
 };
-export type PopperProps = {
-  x: number;
-  y: number;
-  visible: boolean;
-  payload?: DotPayload;
-};
+
+interface PopoverVirtualElement {
+  getBoundingClientRect: () => DOMRect;
+  nodeType: Node['ELEMENT_NODE'];
+}
+
+export interface Breach {
+  anchor: PopoverVirtualElement | null;
+  date: Date;
+  sensorId: string;
+  type: TemperatureBreachNodeType;
+  breachId: string;
+  endDateTime: Date | null;
+}
 
 export const TemperatureChart = () => {
   const t = useTranslation('coldchain');
@@ -46,11 +55,7 @@ export const TemperatureChart = () => {
     useTemperatureChartData();
   const { dayMonthTime } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
-  const [popperProps, setPopperProps] = React.useState<PopperProps>({
-    x: 0,
-    y: 0,
-    visible: false,
-  });
+  const [currentBreach, setCurrentBreach] = React.useState<Breach | null>(null);
 
   const BreachIcon = (props: {
     cx: number;
@@ -64,14 +69,22 @@ export const TemperatureChart = () => {
 
     return (
       <CircleAlertIcon
-        onClick={event =>
-          setPopperProps({
-            x: event.clientX + 5,
-            y: event.clientY + 5,
-            visible: true,
-            payload,
-          })
-        }
+        onClick={event => {
+          const boundingClientRect =
+            event.currentTarget.getBoundingClientRect();
+          return setCurrentBreach({
+            anchor: {
+              nodeType: 1,
+              getBoundingClientRect: () => boundingClientRect,
+            },
+            date: payload.date,
+            sensorId: payload.sensorId,
+            type:
+              payload.breach?.type ?? TemperatureBreachNodeType.ColdConsecutive,
+            breachId: payload.breach?.id ?? '',
+            endDateTime: DateUtils.getDateOrNull(payload.breach?.endDatetime),
+          });
+        }}
         x={cx - 13.5}
         y={cy + 13.5}
         fill={theme.palette.error.main}
@@ -183,17 +196,6 @@ export const TemperatureChart = () => {
                   color: sensor.colour,
                 }))}
               />
-              {sensors.map(sensor => (
-                <Line
-                  data={sensor.logs}
-                  key={sensor.id}
-                  dataKey="temperature"
-                  stroke={sensor.colour}
-                  type="monotone"
-                  dot={props => <BreachIcon {...props} />}
-                  strokeWidth={2}
-                />
-              ))}
               <Area
                 data={breachConfig.hot}
                 type="monotone"
@@ -209,6 +211,17 @@ export const TemperatureChart = () => {
                 stroke={theme.palette.chart.cold.main}
                 fill={theme.palette.chart.cold.light}
               />
+              {sensors.map(sensor => (
+                <Line
+                  data={sensor.logs}
+                  key={sensor.id}
+                  dataKey="temperature"
+                  stroke={sensor.colour}
+                  type="monotone"
+                  dot={props => <BreachIcon {...props} />}
+                  strokeWidth={4}
+                />
+              ))}
             </ComposedChart>
           </ResponsiveContainer>
         ) : (
@@ -216,9 +229,9 @@ export const TemperatureChart = () => {
         )}
       </Box>
       <BreachPopper
-        {...popperProps}
-        onClose={() => setPopperProps({ ...popperProps, visible: false })}
-        sensors={sensors}
+        breach={currentBreach}
+        onClose={() => setCurrentBreach(null)}
+        sensor={sensors.find(s => s.id === currentBreach?.sensorId)}
       />
     </Box>
   );
