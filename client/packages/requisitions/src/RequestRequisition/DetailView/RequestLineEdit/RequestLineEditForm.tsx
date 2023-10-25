@@ -12,7 +12,6 @@ import {
   StockItemSearchInputWithStats,
   ItemRowWithStatsFragment,
   VariantControl,
-  useInitUnitStore,
   PackUnitSelect,
 } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
@@ -98,8 +97,6 @@ export const RequestLineEditForm = ({
   numberOfPacksFromQuantity,
   numberOfPacksToTotalQuantity,
 }: RequestLineEditFormProps) => {
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
   const t = useTranslation('replenishment');
   const formatNumber = useFormatNumber();
   const { lines } = useRequest.line.list();

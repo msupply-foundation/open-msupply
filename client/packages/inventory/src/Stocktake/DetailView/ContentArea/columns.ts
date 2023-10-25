@@ -13,7 +13,6 @@ import {
 import {
   InventoryAdjustmentReasonRowFragment,
   PackUnitCell,
-  useInitUnitStore,
 } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
@@ -57,8 +56,6 @@ export const useStocktakeColumns = ({
   StocktakeLineFragment | StocktakeSummaryItem
 >[] => {
   const { getError } = useStocktakeLineErrorContext();
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
 
   return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [

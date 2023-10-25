@@ -12,11 +12,7 @@ import {
   InvoiceLineNodeType,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
-import {
-  LocationRowFragment,
-  PackUnitCell,
-  useInitUnitStore,
-} from '@openmsupply-client/system';
+import { LocationRowFragment, PackUnitCell } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -46,8 +42,6 @@ export const useOutboundColumns = ({
   onChangeSortBy,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const { c } = useCurrency();
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
   return useColumns(
     [
       [

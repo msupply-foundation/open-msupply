@@ -10,7 +10,6 @@ import {
 import { ResponseLineFragment, useResponse } from './../api';
 import {
   getPackUnitQuantityCell,
-  useInitUnitStore,
   useUnitVariant,
 } from '@openmsupply-client/system';
 
@@ -19,8 +18,6 @@ export const useResponseColumns = () => {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     getCommentPopoverColumn(),

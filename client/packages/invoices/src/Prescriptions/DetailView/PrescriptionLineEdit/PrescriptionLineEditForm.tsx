@@ -16,7 +16,6 @@ import {
 import {
   StockItemSearchInput,
   ItemRowFragment,
-  useInitUnitStore,
   useUnitVariant,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
@@ -56,8 +55,6 @@ export const PrescriptionLineEditForm: React.FC<
   draftPrescriptionLines,
 }) => {
   const t = useTranslation('dispensary');
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
 
   const quantity =
     allocatedQuantity /

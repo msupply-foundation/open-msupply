@@ -11,11 +11,7 @@ import {
   ColumnAlign,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
-import {
-  LocationRowFragment,
-  PackUnitCell,
-  useInitUnitStore,
-} from '@openmsupply-client/system';
+import { LocationRowFragment, PackUnitCell } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
@@ -31,8 +27,6 @@ export const useInboundShipmentColumns = () => {
   const { c } = useCurrency();
   const getSellPrice = (row: InboundLineFragment) =>
     isInboundPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [

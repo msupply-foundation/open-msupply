@@ -17,7 +17,6 @@ import {
   getPackUnitQuantityCell,
   getPackUnitSelectCell,
 } from '../Components/ItemVariant';
-import { useInitUnitStore } from '../context';
 
 const ItemListComponent: FC = () => {
   const {
@@ -29,8 +28,6 @@ const ItemListComponent: FC = () => {
     initialSort: { key: 'name', dir: 'asc' },
     filterKey: 'codeOrName',
   });
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
   const { data, isError, isLoading } = useItems();
   const pagination = { page, first, offset };
   const navigate = useNavigate();

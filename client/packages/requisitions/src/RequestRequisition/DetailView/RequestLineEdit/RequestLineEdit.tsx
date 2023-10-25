@@ -10,7 +10,6 @@ import {
 } from '@openmsupply-client/common';
 import {
   ItemRowWithStatsFragment,
-  useInitUnitStore,
   useUnitVariant,
 } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
@@ -33,9 +32,6 @@ export const RequestLineEdit = ({
   mode,
   item,
 }: RequestLineEditProps) => {
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
-
   const disabled = useRequest.utils.isDisabled();
   const { Modal } = useDialog({ onClose, isOpen, animationTimeout: 100 });
   const [currentItem, setCurrentItem] = useBufferState(item);
