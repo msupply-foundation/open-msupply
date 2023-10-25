@@ -11,9 +11,11 @@ use service::{
 
 mod login;
 mod sensor;
+mod temperature_breach;
 mod temperature_log;
 use login::post_login;
 use sensor::put_sensors;
+use temperature_breach::put_breaches;
 use temperature_log::put_logs;
 
 const URL_PATH: &str = "/coldchain/v1";
@@ -25,6 +27,10 @@ pub fn config_cold_chain(cfg: &mut web::ServiceConfig) {
     cfg.route(
         &format!("{}/temperature-log", URL_PATH),
         web::put().to(put_logs),
+    );
+    cfg.route(
+        &format!("{}/temperature-breach", URL_PATH),
+        web::put().to(put_breaches),
     );
 }
 
