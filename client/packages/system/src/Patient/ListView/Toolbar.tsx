@@ -40,15 +40,20 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               urlParameter: 'identifier',
               placeholder: t('placeholder.search-by-identifier'),
             },
-            // {
-            //   type: 'enum',
-            //   name: t('label.gender'),
-            //   urlParameter: 'gender',
-            //   options: [
-            //     { label: 'Male', value: 'MALE' },
-            //     { label: 'Female', value: 'FEMALE' },
-            //   ],
-            // },
+            {
+              type: 'date',
+              name: 'Date',
+              urlParameter: 'dateOfBirth',
+            },
+            {
+              type: 'enum',
+              name: t('label.gender'),
+              urlParameter: 'gender',
+              options: [
+                { label: 'Male', value: 'MALE' },
+                { label: 'Female', value: 'FEMALE' },
+              ],
+            },
           ]}
         />
       </Box>
