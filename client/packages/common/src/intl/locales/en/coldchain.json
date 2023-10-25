@@ -6,6 +6,8 @@
   "heading.chart": "Temperature by Sensor",
   "label.acknowledged": "Acknowledged",
   "label.breaches": "Breaches",
+  "label.breach-start": "Breach start",
+  "label.breach-end": "Breach end",
   "label.chart": "Chart",
   "label.consecutive": "Consecutive",
   "label.cumulative": "Cumulative",
