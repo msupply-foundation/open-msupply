@@ -17,7 +17,7 @@ use crate::{
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, serde::Serialize)]
 pub struct TemperatureLog {
     pub temperature_log_row: TemperatureLogRow,
 }
