@@ -1487,7 +1487,7 @@ export type InsertInboundShipmentLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Int']['input'];
   sellPricePerPack: Scalars['Float']['input'];
@@ -1844,7 +1844,7 @@ export type InsertStocktakeInput = {
   id: Scalars['String']['input'];
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
@@ -1867,7 +1867,7 @@ export type InsertStocktakeLineInput = {
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -3178,6 +3178,21 @@ export type NotEnoughStockForReduction = InsertOutboundShipmentLineErrorInterfac
 export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface & {
   __typename: 'NothingRemainingToSupply';
   description: Scalars['String']['output'];
+};
+
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
+export type NullableStringUpdate = {
+  value?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type NumberNode = {
@@ -5035,7 +5050,7 @@ export type UpdateInboundShipmentLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -5446,9 +5461,9 @@ export type UpdateSensorErrorInterface = {
 };
 
 export type UpdateSensorInput = {
-  batteryLevel?: InputMaybe<Scalars['Int']['input']>;
   id: Scalars['String']['input'];
-  logInterval?: InputMaybe<Scalars['Int']['input']>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -5470,7 +5485,7 @@ export type UpdateStockLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
 };
@@ -5512,7 +5527,7 @@ export type UpdateStocktakeLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
