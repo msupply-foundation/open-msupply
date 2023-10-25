@@ -11,6 +11,7 @@ export type TemperatureBreachRowFragment = {
   id: string;
   acknowledged: boolean;
   endDatetime?: string | null;
+  startDatetime: string;
   type: Types.TemperatureBreachNodeType;
 };
 
@@ -57,6 +58,7 @@ export type TemperatureLogFragment = {
     id: string;
     acknowledged: boolean;
     endDatetime?: string | null;
+    startDatetime: string;
     type: Types.TemperatureBreachNodeType;
   } | null;
 };
@@ -118,6 +120,7 @@ export type Temperature_LogsQuery = {
         id: string;
         acknowledged: boolean;
         endDatetime?: string | null;
+        startDatetime: string;
         type: Types.TemperatureBreachNodeType;
       } | null;
     }>;
@@ -130,6 +133,7 @@ export const TemperatureBreachRowFragmentDoc = gql`
     id
     acknowledged
     endDatetime
+    startDatetime
     type
   }
 `;

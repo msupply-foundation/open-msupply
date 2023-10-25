@@ -42,10 +42,13 @@ export const BreachIcon = ({
             payload.breach?.type ?? TemperatureBreachNodeType.ColdConsecutive,
           breachId: payload.breach?.id ?? '',
           endDateTime: DateUtils.getDateOrNull(payload.breach?.endDatetime),
+          startDateTime:
+            DateUtils.getDateOrNull(payload.breach?.startDatetime) ??
+            payload.date,
         });
       }}
       x={cx - 13.5}
-      y={cy + 13.5}
+      y={cy - 13.5}
       fill={
         payload.breach?.acknowledged
           ? theme.palette.gray.main

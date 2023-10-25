@@ -96,6 +96,7 @@ export const useTemperatureChartData = () => {
     });
   });
 
+  // creating the full range of datetimes, otherwise it isn't showing full width
   const breachConfig = {
     cold: Array.from({
       length: numOfDataPoints,

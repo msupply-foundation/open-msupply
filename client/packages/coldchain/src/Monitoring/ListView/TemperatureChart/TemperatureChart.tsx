@@ -19,7 +19,7 @@ import {
 } from '@openmsupply-client/common';
 import { useTemperatureChartData } from './useTemperatureChartData';
 import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
-import { BreachPopper } from './BreachPopper';
+import { BreachPopover } from './BreachPopover';
 import { BreachIcon } from './BreachIcon';
 
 interface PopoverVirtualElement {
@@ -34,6 +34,7 @@ export interface Breach {
   type: TemperatureBreachNodeType;
   breachId: string;
   endDateTime: Date | null;
+  startDateTime: Date;
 }
 
 export const TemperatureChart = () => {
@@ -184,7 +185,7 @@ export const TemperatureChart = () => {
           <Typography width={450}>{t('error.no-data')}</Typography>
         )}
       </Box>
-      <BreachPopper
+      <BreachPopover
         breach={currentBreach}
         onClose={() => setCurrentBreach(null)}
         sensor={sensors.find(s => s.id === currentBreach?.sensorId)}

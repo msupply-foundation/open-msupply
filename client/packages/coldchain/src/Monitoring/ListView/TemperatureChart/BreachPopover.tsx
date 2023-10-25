@@ -25,7 +25,7 @@ interface BreachPopperProps {
   sensor?: Sensor;
   onClose: () => void;
 }
-export const BreachPopper = ({
+export const BreachPopover = ({
   breach,
   onClose,
   sensor,
@@ -64,7 +64,7 @@ export const BreachPopper = ({
         <Row label={t('label.location')} value={sensor?.location ?? ''} />
         <Row
           label={t('label.breach-start')}
-          value={Formatter.dateTime(breach.date)}
+          value={Formatter.dateTime(breach.startDateTime)}
         />
         <Row
           label={t('label.breach-end')}
