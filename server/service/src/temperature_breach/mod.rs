@@ -1,4 +1,10 @@
+use self::insert::{
+    insert_temperature_breach, InsertTemperatureBreach, InsertTemperatureBreachError,
+};
 use self::query::{get_temperature_breach, get_temperature_breaches};
+use self::update::{
+    update_temperature_breach, UpdateTemperatureBreach, UpdateTemperatureBreachError,
+};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
@@ -7,7 +13,10 @@ use repository::temperature_breach::{
 };
 use repository::{PaginationOption, StorageConnection};
 
+pub mod insert;
 pub mod query;
+pub mod update;
+mod validate;
 
 pub trait TemperatureBreachServiceTrait: Sync + Send {
     fn get_temperature_breaches(
@@ -26,6 +35,22 @@ pub trait TemperatureBreachServiceTrait: Sync + Send {
         id: String,
     ) -> Result<TemperatureBreach, SingleRecordError> {
         get_temperature_breach(ctx, id)
+    }
+
+    fn insert_temperature_breach(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertTemperatureBreach,
+    ) -> Result<TemperatureBreach, InsertTemperatureBreachError> {
+        insert_temperature_breach(ctx, input)
+    }
+
+    fn update_temperature_breach(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateTemperatureBreach,
+    ) -> Result<TemperatureBreach, UpdateTemperatureBreachError> {
+        update_temperature_breach(ctx, input)
     }
 }
 

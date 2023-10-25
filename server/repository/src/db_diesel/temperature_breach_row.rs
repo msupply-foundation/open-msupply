@@ -50,7 +50,9 @@ pub enum TemperatureBreachRowType {
     HotCumulative,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "temperature_breach"]
 pub struct TemperatureBreachRow {
