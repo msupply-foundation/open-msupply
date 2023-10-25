@@ -18,7 +18,7 @@ import {
 import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
-import { PackUnitCell, useInitUnitStore } from '@openmsupply-client/system';
+import { PackUnitCell } from '@openmsupply-client/system';
 
 const StockListComponent: FC = () => {
   const {
@@ -32,8 +32,6 @@ const StockListComponent: FC = () => {
   });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
   const { data, isLoading, isError } = useStock.line.list();
   const [repackId, setRepackId] = React.useState<string | null>(null);
   const EditStockLineCell = <T extends StockLineRowFragment>({

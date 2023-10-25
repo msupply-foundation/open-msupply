@@ -40,22 +40,6 @@ const useUnitStore = create<UnitState>(set => {
   };
 });
 
-export const useInitUnitStore = () => {
-  const { setItems } = useUnitStore();
-  // This should happen on startup and when store is changed (when the store changed, calculated values of mostUsedVariant and app data userSelected would change)
-  // Suggested places:
-  // https://github.com/openmsupply/open-msupply/blob/312b837c3d17a1ead05e140b7668cd5f45dffbc3/client/packages/common/src/authentication/api/hooks/useLogin.ts#L107
-  // https://github.com/openmsupply/open-msupply/blob/312b837c3d17a1ead05e140b7668cd5f45dffbc3/client/packages/common/src/authentication/AuthContext.tsx#L125
-  const { data } = usePackUnits();
-
-  useEffect(() => {
-    if (!data) return;
-    setItems(data.nodes || []);
-  }, [data]);
-
-  // TODO add user selected from app data
-};
-
 type CommonAsPackUnit = (_: {
   packSize: number;
   packUnitName?: string;
@@ -98,14 +82,21 @@ export const useUnitVariant = (
   variantsControl?: VariantControl;
   unitVariantsExist: boolean;
 } => {
-  const [item, userSelectedVariantId, setUserSelectedVariant] = useUnitStore(
-    state => [
-      state.items[itemId],
-      state.userSelectedVariants[itemId],
-      state.setUserSelectedVariant,
-    ],
-    isEqual
-  );
+  const [setItems, item, userSelectedVariantId, setUserSelectedVariant] =
+    useUnitStore(
+      state => [
+        state.setItems,
+        state.items[itemId],
+        state.userSelectedVariants[itemId],
+        state.setUserSelectedVariant,
+      ],
+      isEqual
+    );
+  const { data: packUnitsData } = usePackUnits();
+  useEffect(() => {
+    setItems(packUnitsData?.nodes || []);
+  }, [packUnitsData, setItems]);
+
   const t = useTranslation();
 
   if (!item || item.packUnits.length == 0) {
