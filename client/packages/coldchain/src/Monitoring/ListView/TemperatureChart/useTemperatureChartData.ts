@@ -6,7 +6,7 @@ import { NumUtils } from '@common/utils';
 const MAX_DATA_POINTS = 30;
 
 export type Log = {
-  date: Date;
+  date: number;
   sensorId: string;
   temperature: number | null;
   temperatureBreach?: TemperatureBreachRowFragment | null;
@@ -48,7 +48,7 @@ export const useTemperatureChartData = () => {
       if (date === null) return;
 
       logs.push({
-        date,
+        date: date.getTime(),
         sensorId: sensor.id,
         temperature,
         temperatureBreach,
@@ -58,19 +58,20 @@ export const useTemperatureChartData = () => {
   const numOfDataPoints = Math.min(MAX_DATA_POINTS, logs.length);
   // the fromDate & toDate will come from filters
   // until that is implemented, we will use the first and last log dates
-  const sortedLogs = logs.sort((a, b) => a.date.getTime() - b.date.getTime());
-  const fromDate = sortedLogs[0]?.date ?? new Date();
-  const toDate = sortedLogs[sortedLogs.length - 1]?.date ?? new Date();
+  const sortedLogs = logs.sort((a, b) => a.date - b.date);
+  const fromDate = sortedLogs[0]?.date ?? new Date().getTime();
+  const toDate =
+    sortedLogs[sortedLogs.length - 1]?.date ?? new Date().getTime();
 
-  const chartDuration = toDate.getTime() - fromDate.getTime();
+  const chartDuration = toDate - fromDate;
   const periodDuration = chartDuration / numOfDataPoints;
 
   sensors.forEach(sensor => {
     sensor.logs = Array.from({
       length: numOfDataPoints,
     }).map((_, i) => {
-      const periodStart = new Date(fromDate.getTime() + periodDuration * i);
-      const periodEnd = new Date(fromDate.getTime() + periodDuration * (i + 1));
+      const periodStart = new Date(fromDate + periodDuration * i).getTime();
+      const periodEnd = new Date(fromDate + periodDuration * (i + 1)).getTime();
       const logsInPeriod = logs.filter(
         l =>
           l.date >= periodStart &&
@@ -99,13 +100,13 @@ export const useTemperatureChartData = () => {
     cold: Array.from({
       length: numOfDataPoints,
     }).map((_, i) => ({
-      date: new Date(fromDate.getTime() + periodDuration * i),
+      date: new Date(fromDate + periodDuration * i),
       temperature: 2,
     })),
     hot: Array.from({
       length: numOfDataPoints,
     }).map((_, i) => ({
-      date: new Date(fromDate.getTime() + periodDuration * i),
+      date: new Date(fromDate + periodDuration * i),
       temperature: 8,
     })),
   };
