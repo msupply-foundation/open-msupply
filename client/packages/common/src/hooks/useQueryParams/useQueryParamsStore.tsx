@@ -122,7 +122,7 @@ export const createQueryParamsStore = <T extends RecordWithId>({
       onChangeDateFilterRule: (
         key: string,
         condition: FilterByConditionByType['date'],
-        value: Date | Date[] | null
+        value: Date | Date[]
       ) => {
         if (null) {
           get().filter.onClearFilterRule(key);
