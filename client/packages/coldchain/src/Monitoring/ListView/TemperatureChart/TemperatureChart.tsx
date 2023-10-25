@@ -22,9 +22,6 @@ import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 import { BreachPopper } from './BreachPopper';
 import { BreachIcon } from './BreachIcon';
 
-const formatTemperature = (value: number | null) =>
-  value === null ? '-' : `${value}°C`;
-
 interface PopoverVirtualElement {
   getBoundingClientRect: () => DOMRect;
   nodeType: Node['ELEMENT_NODE'];
@@ -47,6 +44,9 @@ export const TemperatureChart = () => {
   const { dayMonthTime } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
   const [currentBreach, setCurrentBreach] = React.useState<Breach | null>(null);
+
+  const formatTemperature = (value: number | null) =>
+    value === null ? '-' : `${value}${t('label.temperature-unit')}`;
 
   const TemperatureTooltip = ({
     active,
