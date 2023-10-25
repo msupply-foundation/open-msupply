@@ -1,12 +1,11 @@
 import React from 'react';
-import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Area,
   BasicSpinner,
   Box,
   CartesianGrid,
   ChartTooltip,
-  CircleAlertIcon,
   ComposedChart,
   Legend,
   Line,
@@ -20,19 +19,11 @@ import {
 } from '@openmsupply-client/common';
 import { useTemperatureChartData } from './useTemperatureChartData';
 import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
-
-import { TemperatureBreachRowFragment } from '../../api';
 import { BreachPopper } from './BreachPopper';
+import { BreachIcon } from './BreachIcon';
 
 const formatTemperature = (value: number | null) =>
   value === null ? '-' : `${value}°C`;
-
-type DotPayload = {
-  date: Date;
-  temperature: number;
-  breach?: TemperatureBreachRowFragment;
-  sensorId: string;
-};
 
 interface PopoverVirtualElement {
   getBoundingClientRect: () => DOMRect;
@@ -57,44 +48,6 @@ export const TemperatureChart = () => {
   const dateFormatter = (date: string) => dayMonthTime(date);
   const [currentBreach, setCurrentBreach] = React.useState<Breach | null>(null);
 
-  const BreachIcon = (props: {
-    cx: number;
-    cy: number;
-    payload: DotPayload;
-  }) => {
-    const { cx, cy, payload } = props;
-    const theme = useTheme();
-
-    if (payload.breach === undefined) return null;
-
-    return (
-      <CircleAlertIcon
-        onClick={event => {
-          const boundingClientRect =
-            event.currentTarget.getBoundingClientRect();
-          return setCurrentBreach({
-            anchor: {
-              nodeType: 1,
-              getBoundingClientRect: () => boundingClientRect,
-            },
-            date: payload.date,
-            sensorId: payload.sensorId,
-            type:
-              payload.breach?.type ?? TemperatureBreachNodeType.ColdConsecutive,
-            breachId: payload.breach?.id ?? '',
-            endDateTime: DateUtils.getDateOrNull(payload.breach?.endDatetime),
-          });
-        }}
-        x={cx - 13.5}
-        y={cy + 13.5}
-        fill={theme.palette.error.main}
-        sx={{ color: 'background.white', cursor: 'pointer' }}
-        width={27}
-        height={27}
-      />
-    );
-  };
-
   const TemperatureTooltip = ({
     active,
     payload,
@@ -104,9 +57,7 @@ export const TemperatureChart = () => {
 
     const date = payload[0]?.payload?.date;
     const entries = sensors.map(sensor => {
-      const entry = sensor.logs.find(
-        log => log.date.getTime() === date.getTime()
-      );
+      const entry = sensor.logs.find(log => log.date === date.getTime());
       if (!entry) return null;
       return {
         name: sensor.name,
@@ -218,7 +169,12 @@ export const TemperatureChart = () => {
                   dataKey="temperature"
                   stroke={sensor.colour}
                   type="monotone"
-                  dot={props => <BreachIcon {...props} />}
+                  dot={props => (
+                    <BreachIcon
+                      {...props}
+                      setCurrentBreach={setCurrentBreach}
+                    />
+                  )}
                   strokeWidth={4}
                 />
               ))}

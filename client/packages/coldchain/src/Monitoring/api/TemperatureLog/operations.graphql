@@ -1,6 +1,8 @@
 fragment TemperatureBreachRow on TemperatureBreachNode {
   __typename
   id
+  acknowledged
+  endDatetime
   type
 }
 

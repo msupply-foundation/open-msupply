@@ -5,7 +5,6 @@ import {
   CloseIcon,
   Formatter,
   IconButton,
-  Paper,
   Popover,
   RouteBuilder,
   SnowflakeIcon,
@@ -42,58 +41,55 @@ export const BreachPopper = ({
         vertical: 'bottom',
         horizontal: 'left',
       }}
+      slotProps={{ paper: { sx: { borderRadius: 4 } } }}
     >
-      <Paper
-        sx={{
-          borderRadius: 3,
-          padding: 2,
-          width: '290px',
-        }}
+      <Box flex={1} justifyContent="flex-end" display="flex">
+        <IconButton
+          color="primary"
+          onClick={onClose}
+          icon={<CloseIcon />}
+          label={t('button.close')}
+        />
+      </Box>
+      <Box
+        display="flex"
+        flexDirection="column"
+        sx={{ width: '290px' }}
+        paddingX={3}
       >
-        <Box display="flex" flexDirection="column">
-          <Box flex={1} justifyContent="flex-end" display="flex">
-            <IconButton
-              color="primary"
-              onClick={onClose}
-              icon={<CloseIcon />}
-              label={t('button.close')}
-            />
-          </Box>
-
-          <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
-            {sensor && sensor.name} {t('heading.breach')}
-            <BreachIcon type={breach.type} />
-          </Typography>
-          <Row label={t('label.location')} value={sensor?.location ?? ''} />
-          <Row
-            label={t('label.breach-start')}
-            value={Formatter.dateTime(breach.date)}
-          />
-          <Row
-            label={t('label.breach-end')}
-            value={Formatter.dateTime(breach.endDateTime)}
-          />
-          <Box flex={1} justifyContent="center" display="flex" paddingY={2}>
-            <BaseButton
-              variant="contained"
-              onClick={() =>
-                navigate(
-                  RouteBuilder.create(AppRoute.Coldchain)
-                    .addPart(AppRoute.Monitoring)
-                    .addQuery({ tab: t('label.breaches') })
-                    .addQuery({
-                      sort: TemperatureBreachSortFieldInput.StartDatetime,
-                    })
-                    .build()
-                )
-              }
-              sx={{ padding: 2 }}
-            >
-              {t('button.view-all-breaches')}
-            </BaseButton>
-          </Box>
+        <Typography sx={{ fontSize: 14, fontWeight: 600, paddingBottom: 1 }}>
+          {sensor && sensor.name} {t('heading.breach')}
+          <BreachIcon type={breach.type} />
+        </Typography>
+        <Row label={t('label.location')} value={sensor?.location ?? ''} />
+        <Row
+          label={t('label.breach-start')}
+          value={Formatter.dateTime(breach.date)}
+        />
+        <Row
+          label={t('label.breach-end')}
+          value={Formatter.dateTime(breach.endDateTime)}
+        />
+        <Box flex={1} justifyContent="center" display="flex" paddingY={2}>
+          <BaseButton
+            variant="contained"
+            onClick={() =>
+              navigate(
+                RouteBuilder.create(AppRoute.Coldchain)
+                  .addPart(AppRoute.Monitoring)
+                  .addQuery({ tab: t('label.breaches') })
+                  .addQuery({
+                    sort: TemperatureBreachSortFieldInput.StartDatetime,
+                  })
+                  .build()
+              )
+            }
+            sx={{ padding: 2 }}
+          >
+            {t('button.view-all-breaches')}
+          </BaseButton>
         </Box>
-      </Paper>
+      </Box>
     </Popover>
   );
 };

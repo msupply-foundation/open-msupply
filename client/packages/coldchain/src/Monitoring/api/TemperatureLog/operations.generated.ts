@@ -9,8 +9,9 @@ import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw';
 export type TemperatureBreachRowFragment = {
   __typename: 'TemperatureBreachNode';
   id: string;
-  type: Types.TemperatureBreachNodeType;
+  acknowledged: boolean;
   endDatetime?: string | null;
+  type: Types.TemperatureBreachNodeType;
 };
 
 export type TemperatureLogFragment = {
@@ -54,8 +55,9 @@ export type TemperatureLogFragment = {
   temperatureBreach?: {
     __typename: 'TemperatureBreachNode';
     id: string;
-    type: Types.TemperatureBreachNodeType;
+    acknowledged: boolean;
     endDatetime?: string | null;
+    type: Types.TemperatureBreachNodeType;
   } | null;
 };
 
@@ -114,8 +116,9 @@ export type Temperature_LogsQuery = {
       temperatureBreach?: {
         __typename: 'TemperatureBreachNode';
         id: string;
-        type: Types.TemperatureBreachNodeType;
+        acknowledged: boolean;
         endDatetime?: string | null;
+        type: Types.TemperatureBreachNodeType;
       } | null;
     }>;
   };
@@ -125,8 +128,9 @@ export const TemperatureBreachRowFragmentDoc = gql`
   fragment TemperatureBreachRow on TemperatureBreachNode {
     __typename
     id
-    type
+    acknowledged
     endDatetime
+    type
   }
 `;
 export const TemperatureLogFragmentDoc = gql`
