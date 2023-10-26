@@ -9,13 +9,15 @@ Plugins are written as [react](https://react.dev/) components and compiled to di
 
 A plugin can interact with the app framework, access language translations, call the data API or use the current theme. For example, a plugin can use shared UI components and utility functions from the app framework.
 
-Note that the plugins do need to be implemented for a given area of the app - currently a plugin can be created to add a column to a list view, but only the stock list view has implemented this functionality and is the only area of the site for which this plugin will operate. It is a simple task to support plugins in other areas, it is just that we are implementing only as required.
+Note that the plugins do need to be implemented for a given area of the app - currently a plugin can be created to add a column to a list view, but only the Stock list view has implemented this functionality and is the only area of the site for which this plugin will operate. It is a simple task to support plugins in other areas, however we are only implementing plugin support as required.
+
+For some working examples, see the [plugin feature example branch](https://github.com/openmsupply/open-msupply/tree/feature/front-end-plugins-example).
 
 ## Plugin structure
 
 When the app is loaded, all available plugins are read (the process differs slightly between development and production mode, see more below), validated and then stored within a centrally accessible plugin provider.
 
-A component of the site can query the provider for any plugins which are applicable for that component's environment (e.g. any plugins which relate to the Inbound Shipment detail view page) and render them. When rendered, the plugins are passed the data object associated with the type of plugin (for the Inbound Shipment detail view plugin, this is the draft Inbound Shipment object). Errors are handled and a message is shown to the user if the plugin fails to load or render correctly.
+A component of the site can query the provider for any plugins which are applicable for that component's environment (e.g. any plugins which relate to the Inbound Shipment detail view page) and render them. When rendered, the plugins are passed to the data object associated with the type of plugin (for the Inbound Shipment detail view plugin, this is the draft Inbound Shipment object). Errors are handled and a message is shown to the user if the plugin fails to load or render correctly.
 
 Plugins and standard site components can interact with each other using events. The plugin provider has methods to register & remove an event listener and to dispatch an event.
 
@@ -23,7 +25,7 @@ Webpack module federation is used to bundle and serve the plugins.
 
 When running in development mode, the required plugin files are loaded directly from disk. HMR / fast reload is available and the plugins have access to the full application context. All plugins are available in the PluginProvider - with no need to fetch additional files or components.
 
-In production mode the process differs
+In production mode the process differs:
 
 - the server provides an endpoint to fetch the list of available plugins
 - the client app fetches the full list on startup and populates the PluginProvider
@@ -32,7 +34,7 @@ In production mode the process differs
 
 ### Plugin validation
 
-Plugins are signed by the developer and require validation before they are able to be run in production mode - validation is ignored when running in developer mode; an error is logged but the plugin loaded regardless of validation failures.
+Plugins are signed by the developer and require validation before they are able to be run in production mode - validation is ignored when running in developer mode; an error is logged but the plugin is loaded regardless of validation failures.
 
 See the readme on plugin validation for details of how to sign plugins and the process of loading and validating plugins.
 
@@ -40,7 +42,7 @@ See the readme on plugin validation for details of how to sign plugins and the p
 
 Each plugin is defined in a `plugin.json` file which has the following structure
 
-```
+```json
 {
   "name": "StockDonor",
   "version": "1.0.0",
@@ -90,7 +92,7 @@ There are two types of plugin:
 The column plugin exports a `ColumnDefinition` for the given data type.
 This is defined in the plugin provider by the following object shape:
 
-```
+```typescript
   type: ColumnPluginType;
   column: () => Promise<ColumnDefinition<T>>;
   module: string;
@@ -102,7 +104,7 @@ A component plugin exports a react component for the given data type.
 This is defined in the plugin provider by the following object shape:
 
 
-```
+```typescript
   type: ComponentPluginType;
   component: () => Promise<PluginModule<T>>;
   module: string;
@@ -114,7 +116,7 @@ This is defined in the plugin provider by the following object shape:
 There is a difference in behaviour when the app is running in development or production mode. See the **Plugin structure** section for more on this.
 A `PluginProvider` stores a list of available plugins. A component within the app can retrieve a list of applicable plugins by calling the `getComponentPlugins` or `getColumnPlugins` method, passing in the type of plugin required. Even simpler, use the hook provided to fetch components like this:
 
-```
+```typescript
   const pluginButtons = usePluginElements({
     type: 'InboundShipmentAppBar',
     data,
@@ -123,19 +125,19 @@ A `PluginProvider` stores a list of available plugins. A component within the ap
 
 which are then rendered directly:
 
-```
+```typescript
 {pluginButtons}
 ```
 
 Similarly, the columns have a hook provided as well:
 
-```
+```typescript
   const pluginColumns = usePluginColumns<StockLineRowFragment>({
     type: 'Stock',
   });
 ```
 
-```
+```typescript
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
     [standard column definitions go here],
     ...pluginColumns,
@@ -159,9 +161,9 @@ Similarly, the columns have a hook provided as well:
 Events can be used to interact between the app and a plugin.
 To register for an event use the `usePluginEvents` hook.
 
-For example, here is how you can call the `onSave` method within a plugin, when the `onSaveTockEditForm` event is dispatched:
+For example, here is how you can call the `onSave` method within a plugin, when the `onSaveStockEditForm` event is dispatched:
 
-```
+```typescript
   const { addEventListener, removeEventListener, dispatchEvent } = usePluginEvents();
 
 ...
@@ -169,39 +171,67 @@ For example, here is how you can call the `onSave` method within a plugin, when 
    useEffect(() => {
     const listener: PluginEventListener = {
       eventType: 'onSaveStockEditForm', // see the event types for available options
-      listener: onSave, // provide a method here with no parameters
+      listener: onSave, // provide a method here with no parameters. This method will be called when plugins dispatch onSaveStockEditFormEvent, see example below
     };
     addEventListener(listener);
 
     return () => removeEventListener(listener); // remove the event listener when the component is unmounted
   }, [onSave, addEventListener, removeEventListener]);
-
 ```
 
-A component within the app can react to events which are raised by plugins. For example, here is how an edit form can trigger the validation method when the plugin data is changed:
+In the above code, the plugin is listening for an `onSave` event within the `StockEditForm` (which has a specific event type of `onSaveStockEditForm`).
+When that event is dispatched, the plugin responds by calling its `onSave` method.
 
+The corresponding code in the `StockLineEditModal` looks like this:
+
+```typescript
+const { dispatchEvent, addEventListener, removeEventListener } = usePluginEvents();
+
+// and then, the `dispatchEvent` call is added to the save button's onClick method:
+onClick={() =>
+    getConfirmation({
+      onConfirm: async () => {
+        await onSave();
+        dispatchEvent('onSaveStockEditForm', new Event(draft.id));
+        onClose();
+      },
+    })
+  }
 ```
-  const { dispatchEvent, addEventListener, removeEventListener } =
-    usePluginEvents();
+
+Events can be dispatched and handled in the other direction too - raised by a plugin, and responded to within the main application.
+For example, here is how an edit form can trigger the validation method when the plugin data is changed:
+
+```typescript
+  const { dispatchEvent, addEventListener, removeEventListener } = usePluginEvents();
+
+  // then the `onChange` event for the text input is updated, to call the `dispatchEvent` method
+  onChange={e => {
+    setDonor(e.target.value);
+    dispatchEvent('onChangeStockEditForm', new Event(stockLine.id));
+  }}
+```
+
+The form within the app can listen for events with the following changes:
+
+```typescript
+  const { dispatchEvent, addEventListener, removeEventListener } = usePluginEvents();
 
 ...
-
-  const onChange = () => setHasChanged(true);
 
   useEffect(() => {
     const listener: PluginEventListener = {
       eventType: 'onChangeStockEditForm',
-      listener: onChange,
+      listener: () => setHasChanged(true) // the plugin is indicating that its data has changed, so this form will need to update its changed status
     };
 
     addEventListener(listener);
 
     return () => removeEventListener(listener);
   }, [addEventListener, removeEventListener]);
-
 ```
 
-In this example, the `hasChanged` variable is used to enable the `Ok` button, which needs to be enabled when data in the plugin input is changed by the user.
+In this example, the `hasChanged` variable is used to enable the `Ok` button, which needs to be enabled when data in the plugin input is changed by the user. The method `setHasChanged` is called to set `hasChanged` to true which enables the button.
 
 
 ### Plugin data
@@ -214,7 +244,7 @@ Plugins can store data in the `plugin_data` table. The following methods are ava
 
 The querying and mutating of data follows the standard pattern used throughout open mSupply:
 
-```
+```typescript
   const { data } = usePluginData.data(stockLine?.id ?? '');
   const { mutate } = data?.id ? usePluginData.update() : usePluginData.insert();
 ```
@@ -227,7 +257,7 @@ These functions can be implemented within your plugin and used to fetch and upda
 The simplest way to begin is by copying one of the examples from the branch `feature/front-end-plugins-example`. There are three in this branch currently:
 
 **ShippingStatus**
-This adds a simple toolbar button to the detail view of inbound shipments. The plugin demonstrates:
+This adds a simple toolbar button to the detail view of Inbound Shipments. The plugin demonstrates:
 - creating a plugin
 - receiving data from the host environment
 - using standard app components
@@ -267,7 +297,7 @@ Create a new directory under the `client/packages/plugins` directory. In this yo
 
 Create a react component and update webpack.config.js, adding the component files to the `exposes` section:
 
-```
+```json
   plugins: [
     new ModuleFederationPlugin({
       name: 'StockDonor',
@@ -302,7 +332,7 @@ The server will read all folders under `./server/app_data/plugins` and for any f
 
 ### Things to note
 
-When plugins are running in 'production' mode, the standard react contexts are not available. The package `react-singleton-context` is used instead of the standard react context in order to share the context across the two app environments in this case. It requires the use of proxy providers for example:
+When plugins are running in 'production' mode, the standard react contexts are not available. The package `react-singleton-context` is used instead of the standard react context in order to share the context across the two app environments. It requires the use of proxy providers:
 
 - ThemeProviderProxy
 - QueryClientProviderProxy
