@@ -43,9 +43,8 @@ const PatientListComponent: FC = () => {
 
   const { setDocumentName } = usePatientStore();
   const { queryParams } = useUrlQueryParams({
-    filterKey: ['firstName', 'identifier', 'lastName'],
     initialSort: { key: 'code', dir: 'asc' },
-    additionalFilters: [
+    filters: [
       {
         key: 'dateOfBirth',
         condition: 'between',
@@ -54,6 +53,9 @@ const PatientListComponent: FC = () => {
         key: 'gender',
         condition: 'equalTo',
       },
+      { key: 'firstName' },
+      { key: 'identifier' },
+      { key: 'lastName' },
     ],
   });
   const { data, isError, isLoading } = usePatient.document.list(queryParams);
