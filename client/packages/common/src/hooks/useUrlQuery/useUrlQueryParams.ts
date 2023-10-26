@@ -115,7 +115,6 @@ export const useUrlQueryParams = ({
     onClearFilterRule: key => updateFilterQuery(key, ''),
     filterBy: getFilterBy(),
   };
-  console.info('-- FILTER BY --', getFilterBy());
   const queryParams = {
     page:
       urlQuery['page'] && typeof urlQuery['page'] === 'number'
