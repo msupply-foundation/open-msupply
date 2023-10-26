@@ -12,11 +12,11 @@ import LocalStorage from './LocalStorage';
 type LocalStorageSetter<T> = [
   value: T | null,
   setItem: (value: T) => void,
-  removeItem: () => void
+  removeItem: () => void,
 ];
 
 export const useLocalStorage = <
-  StorageKey extends Extract<LocalStorageKey, string>
+  StorageKey extends Extract<LocalStorageKey, string>,
 >(
   key: StorageKey,
   defaultValue: LocalStorageRecord[StorageKey] | null = null
