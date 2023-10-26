@@ -12,6 +12,9 @@ export type AuthenticationCredentials = {
   store?: UserStoreNodeFragment | undefined;
   username: string;
 };
+export type UserSelectedVariants = {
+  [itemId: string]: /* userSelectedVariantId */ string;
+};
 
 export type LocalStorageRecord = {
   '/appdrawer/open': boolean;
@@ -26,6 +29,9 @@ export type LocalStorageRecord = {
   '/auth/error': AuthError | undefined;
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
-};
+} & Record<
+  `/user/${string}/store/${string}/selectedVariants`,
+  UserSelectedVariants
+>;
 
 export type LocalStorageKey = keyof LocalStorageRecord;
