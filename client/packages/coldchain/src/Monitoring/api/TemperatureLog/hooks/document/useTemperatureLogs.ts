@@ -6,7 +6,7 @@ import { ListParams } from '../../api';
 export const useTemperatureLogs = () => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'datetime', dir: 'desc' },
-    filterKey: 'datetime',
+    filters: [{ key: 'datetime' }],
   });
 
   const api = useTemperatureLogApi();

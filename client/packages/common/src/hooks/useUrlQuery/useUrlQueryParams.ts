@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useUrlQuery } from './useUrlQuery';
 import {
   Column,
+  Formatter,
   RecordWithId,
   useLocalStorage,
 } from '@openmsupply-client/common';
@@ -16,10 +17,15 @@ export interface UrlQuerySort {
   key: string;
   dir: 'desc' | 'asc';
 }
+
+interface Filter {
+  key: string;
+  condition?: string;
+  value?: string;
+}
 interface UrlQueryParams {
-  filterKey?: string | string[];
   initialSort?: UrlQuerySort;
-  filterCondition?: string;
+  filters?: Filter[];
 }
 
 export type ListParams<T> = {
@@ -30,18 +36,13 @@ export type ListParams<T> = {
 };
 
 export const useUrlQueryParams = ({
-  filterKey,
   initialSort,
-  filterCondition = 'like',
+  filters = [],
 }: UrlQueryParams = {}) => {
   // do not coerce the filter parameter if the user enters a numeric value
   // if this is parsed as numeric, the query param changes filter=0300 to filter=300
   // which then does not match against codes, as the filter is usually a 'startsWith'
-  const skipParse = filterKey
-    ? typeof filterKey === 'string'
-      ? [filterKey]
-      : filterKey
-    : ['filter'];
+  const skipParse = filters.length > 0 ? filters.map(f => f.key) : ['filter'];
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse,
   });
@@ -81,26 +82,38 @@ export const useUrlQueryParams = ({
     updateQuery({ [key]: value });
   };
 
-  const filterKeyArray: string[] = !filterKey
-    ? []
-    : typeof filterKey === 'string'
-    ? [filterKey]
-    : filterKey;
+  const getFilterBy = (): FilterBy =>
+    filters.reduce<FilterBy>((prev, filter) => {
+      const filterValue = getFilterValue(urlQuery, filter.key);
+      if (!filterValue) return prev;
+
+      prev[filter.key] = getFilterEntry(filter, filterValue);
+      return prev;
+    }, {});
 
   const filter: FilterController = {
     onChangeStringFilterRule: (key: string, _, value: string) =>
       updateFilterQuery(key, value),
-    onChangeDateFilterRule: () => {},
-    onClearFilterRule: key => updateFilterQuery(key, ''),
-    filterBy: filterKeyArray.reduce<FilterBy>((prev, key) => {
-      const queryValue = urlQuery[key];
-      if (!queryValue) return prev;
+    onChangeDateFilterRule: (key: string, _, value: Date | Date[]) => {
+      if (Array.isArray(value)) {
+        const startDate =
+          typeof value[0] == 'string' ? value[0] : value[0]?.toISOString();
+        const endDate =
+          typeof value[1] == 'string' ? value[1] : value[1]?.toISOString();
 
-      prev[key] = {
-        [filterCondition]: String(queryValue),
-      };
-      return prev;
-    }, {}),
+        updateQuery({
+          [key]: {
+            from: startDate,
+            to: endDate,
+          },
+        });
+      } else {
+        const d = typeof value == 'string' ? value : value?.toISOString();
+        updateQuery({ [key]: d });
+      }
+    },
+    onClearFilterRule: key => updateFilterQuery(key, ''),
+    filterBy: getFilterBy(),
   };
   const queryParams = {
     page:
@@ -127,5 +140,45 @@ export const useUrlQueryParams = ({
     updatePaginationQuery,
     updateFilterQuery,
     filter,
+  };
+};
+
+const getFilterValue = (
+  urlQuery: Record<string, string | number | boolean | undefined>,
+  key: string
+) => {
+  switch (urlQuery[key]) {
+    case 'true':
+      return true;
+    case 'false':
+      return false;
+    default:
+      return urlQuery[key];
+  }
+};
+
+const getFilterEntry = (
+  filter: Filter,
+  filterValue: string | number | boolean | undefined
+) => {
+  if (filter.condition === 'between' && filter.key) {
+    const filterItems = String(filterValue).split('_');
+    const dateAfter = filterItems[0] ? new Date(filterItems[0]) : null;
+    const dateBefore = filterItems[1] ? new Date(filterItems[1]) : null;
+
+    if (filter.key.includes('datetime')) {
+      return {
+        afterOrEqualTo: Formatter.naiveDateTime(dateAfter),
+        beforeOrEqualTo: Formatter.naiveDateTime(dateBefore),
+      };
+    }
+    return {
+      afterOrEqualTo: Formatter.naiveDate(dateAfter),
+      beforeOrEqualTo: Formatter.naiveDate(dateBefore),
+    };
+  }
+  const condition = filter.condition ? filter.condition : 'like';
+  return {
+    [condition]: filterValue,
   };
 };
