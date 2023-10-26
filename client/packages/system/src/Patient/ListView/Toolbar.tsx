@@ -42,7 +42,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             },
             {
               type: 'date',
-              name: 'Date',
+              name: t('label.date-of-birth'),
               urlParameter: 'dateOfBirth',
             },
             {

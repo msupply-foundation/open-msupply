@@ -17,11 +17,15 @@ export interface UrlQuerySort {
   key: string;
   dir: 'desc' | 'asc';
 }
+
+interface Filter {
+  key: string;
+  condition?: string;
+  value?: string;
+}
 interface UrlQueryParams {
-  filterKey?: string | string[];
   initialSort?: UrlQuerySort;
-  filterCondition?: string;
-  additionalFilters?: { key: string; condition?: string; value?: string }[];
+  filters?: Filter[];
 }
 
 export type ListParams<T> = {
@@ -32,19 +36,13 @@ export type ListParams<T> = {
 };
 
 export const useUrlQueryParams = ({
-  filterKey,
   initialSort,
-  filterCondition = 'like',
-  additionalFilters = [],
+  filters = [],
 }: UrlQueryParams = {}) => {
   // do not coerce the filter parameter if the user enters a numeric value
   // if this is parsed as numeric, the query param changes filter=0300 to filter=300
   // which then does not match against codes, as the filter is usually a 'startsWith'
-  const skipParse = filterKey
-    ? typeof filterKey === 'string'
-      ? [filterKey]
-      : filterKey
-    : ['filter'];
+  const skipParse = filters.length > 0 ? filters.map(f => f.key) : ['filter'];
   const { urlQuery, updateQuery } = useUrlQuery({
     skipParse,
   });
@@ -84,71 +82,14 @@ export const useUrlQueryParams = ({
     updateQuery({ [key]: value });
   };
 
-  const getFilterBy = () => {
-    const filterBy: FilterBy = {};
+  const getFilterBy = (): FilterBy =>
+    filters.reduce<FilterBy>((prev, filter) => {
+      const filterValue = getFilterValue(urlQuery, filter.key);
+      if (!filterValue) return prev;
 
-    const filterKeyArray: string[] = !filterKey
-      ? []
-      : typeof filterKey === 'string'
-      ? [filterKey]
-      : filterKey;
-
-    filterKeyArray.reduce<FilterBy>((prev, key) => {
-      const queryValue = urlQuery[key];
-      if (!queryValue) return prev;
-
-      filterBy[key] = {
-        [filterCondition]: String(queryValue),
-      };
+      prev[filter.key] = getFilterEntry(filter, filterValue);
       return prev;
-    }, {}),
-      additionalFilters.forEach(filter => {
-        if (urlQuery[filter.key]) {
-          let filterValue = urlQuery[filter.key];
-          switch (filterValue) {
-            case 'true':
-              filterValue = true;
-              break;
-            case 'false':
-              filterValue = false;
-              break;
-          }
-          if (filter.condition === 'between') {
-            if (filter.key) {
-              const filterItems = String(urlQuery[filter.key]).split('_');
-              const dateAfter = filterItems[0]
-                ? new Date(filterItems[0])
-                : null;
-              const dateBefore = filterItems[1]
-                ? new Date(filterItems[1])
-                : null;
-
-              if (filter.key.includes('datetime')) {
-                filterBy[filter.key] = {
-                  afterOrEqualTo: Formatter.naiveDateTime(dateAfter),
-                  beforeOrEqualTo: Formatter.naiveDateTime(dateBefore),
-                };
-              } else {
-                filterBy[filter.key] = {
-                  afterOrEqualTo: Formatter.naiveDate(dateAfter),
-                  beforeOrEqualTo: Formatter.naiveDate(dateBefore),
-                };
-              }
-            }
-          } else if (filter.condition) {
-            filterBy[filter.key] = {
-              [filter.condition]: filterValue,
-            };
-          } else {
-            filterBy[filter.key] = {
-              like: filterValue,
-            };
-          }
-        }
-      });
-
-    return filterBy;
-  };
+    }, {});
 
   const filter: FilterController = {
     onChangeStringFilterRule: (key: string, _, value: string) =>
@@ -174,6 +115,7 @@ export const useUrlQueryParams = ({
     onClearFilterRule: key => updateFilterQuery(key, ''),
     filterBy: getFilterBy(),
   };
+  console.info('-- FILTER BY --', getFilterBy());
   const queryParams = {
     page:
       urlQuery['page'] && typeof urlQuery['page'] === 'number'
@@ -199,5 +141,45 @@ export const useUrlQueryParams = ({
     updatePaginationQuery,
     updateFilterQuery,
     filter,
+  };
+};
+
+const getFilterValue = (
+  urlQuery: Record<string, string | number | boolean | undefined>,
+  key: string
+) => {
+  switch (urlQuery[key]) {
+    case 'true':
+      return true;
+    case 'false':
+      return false;
+    default:
+      return urlQuery[key];
+  }
+};
+
+const getFilterEntry = (
+  filter: Filter,
+  filterValue: string | number | boolean | undefined
+) => {
+  if (filter.condition === 'between' && filter.key) {
+    const filterItems = String(filterValue).split('_');
+    const dateAfter = filterItems[0] ? new Date(filterItems[0]) : null;
+    const dateBefore = filterItems[1] ? new Date(filterItems[1]) : null;
+
+    if (filter.key.includes('datetime')) {
+      return {
+        afterOrEqualTo: Formatter.naiveDateTime(dateAfter),
+        beforeOrEqualTo: Formatter.naiveDateTime(dateBefore),
+      };
+    }
+    return {
+      afterOrEqualTo: Formatter.naiveDate(dateAfter),
+      beforeOrEqualTo: Formatter.naiveDate(dateBefore),
+    };
+  }
+  const condition = filter.condition ? filter.condition : 'like';
+  return {
+    [condition]: filterValue,
   };
 };

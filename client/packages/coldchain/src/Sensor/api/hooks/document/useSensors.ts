@@ -5,7 +5,7 @@ import { useQuery } from '@openmsupply-client/common';
 export const useSensors = () => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'serial', dir: 'desc' },
-    filterKey: 'serial',
+    filters: [{ key: 'serial' }],
   });
 
   const api = useSensorApi();

@@ -19,7 +19,7 @@ export const SensorListView: FC = () => {
     updatePaginationQuery,
     // filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filterKey: 'serial' });
+  } = useUrlQueryParams({ filters: [{ key: 'serial' }] });
 
   const navigate = useNavigate();
   const { data, isError, isLoading } = useSensor.document.list();
