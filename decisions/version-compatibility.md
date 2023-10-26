@@ -98,7 +98,7 @@ In `Example 2`. -> Whole new API version is added with new logic keeping existin
 
 Both central and remote keep track of `from` version of compatibility, and during sync these are exchanged and checked (either on remote or central, prefer remote to reduce logic slightly on central).
 
-Basically for `Example 1.`, when new field is added on remote, we add it to central, and change `from version of central` on remote to this never version of central. (previous version of remote will still be supported)
+For `Example 1.`, when a new field is added on remote, we add it to central, and change `from version of central` on remote to this newer version of central. (previous version of remote will still be supported)
 
 For `Example 2.`, when api shape changes on central we update remote to use new api, and keep existing api support on remote, in this case `from version of remote` will now be updated to match new `remote` version (this new remote version will still be backwards compatible with older central versions)
 
