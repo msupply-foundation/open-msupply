@@ -4,13 +4,17 @@ import { ItemPackUnitNode, UnitNode } from '@common/types';
 import { ArrayUtils, NumUtils, isEqual } from '@common/utils';
 import { useEffect } from 'react';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
-import { useAuthContext, useLocalStorage } from '@openmsupply-client/common';
 
+type UserSelectedVariants = {
+  [itemId: string]: /* userSelectedVariantId */ string;
+};
 interface UnitState {
   // From back end
   items: {
     [itemId: string]: ItemPackUnitNode;
   };
+  userSelectedVariants: UserSelectedVariants;
+  setUserSelectedVariant: (_: { itemId: string; variantId: string }) => void;
   // Should be called on startup when fetching multi unit variants
   setItems: (newItems: ItemPackUnitNode[]) => void;
 }
@@ -18,11 +22,19 @@ interface UnitState {
 const useUnitStore = create<UnitState>(set => {
   return {
     items: {},
+    userSelectedVariants: {},
+    // TODO add user selected
+    setUserSelectedVariant: ({ itemId, variantId }) =>
+      set(({ userSelectedVariants, items }) => ({
+        items,
+        userSelectedVariants: { ...userSelectedVariants, [itemId]: variantId },
+      })),
     setItems: newItems =>
-      set(() => {
+      set(({ userSelectedVariants }) => {
         return {
           // Using function for iterator instead of just itemId for type safety
           items: ArrayUtils.keyBy(newItems, item => item.itemId),
+          userSelectedVariants,
         };
       }),
   };
@@ -86,14 +98,14 @@ export const useUnitVariant = (
   variantsControl?: VariantControl;
   unitVariantsExist: boolean;
 } => {
-  const authContext = useAuthContext();
-  const [userSelectedVariants, setUserSelectedVariant] = useLocalStorage(
-    `/user/${authContext.user?.id ?? '?'}/store/${
-      authContext.storeId
-    }/selectedVariants`
+  const [item, userSelectedVariantId, setUserSelectedVariant] = useUnitStore(
+    state => [
+      state.items[itemId],
+      state.userSelectedVariants[itemId],
+      state.setUserSelectedVariant,
+    ],
+    isEqual
   );
-  const userSelectedVariantId = userSelectedVariants?.[itemId];
-  const [item] = useUnitStore(state => [state.items[itemId]], isEqual);
   const t = useTranslation();
 
   if (!item || item.packUnits.length == 0) {
@@ -142,10 +154,7 @@ export const useUnitVariant = (
       variants: packUnits,
       activeVariant,
       setUserSelectedVariant: variantId =>
-        setUserSelectedVariant({
-          ...userSelectedVariants,
-          [itemId]: variantId,
-        }),
+        setUserSelectedVariant({ itemId, variantId }),
     },
     unitVariantsExist: true,
     activePackUnit: commonAsPackUnit({
