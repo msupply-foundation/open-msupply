@@ -37,17 +37,13 @@ const PatientListComponent: FC = () => {
     updateSortQuery,
     updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  const { store } = useAuthContext();
-
-  const { setDocumentName } = usePatientStore();
-  const { queryParams } = useUrlQueryParams({
+    queryParams: { page, first, offset, sortBy, filterBy },
+  } = useUrlQueryParams({
     initialSort: { key: 'code', dir: 'asc' },
     filters: [
       {
         key: 'dateOfBirth',
-        condition: 'between',
+        condition: 'equalTo',
       },
       {
         key: 'gender',
@@ -58,6 +54,15 @@ const PatientListComponent: FC = () => {
       { key: 'lastName' },
     ],
   });
+  const { store } = useAuthContext();
+  const queryParams = {
+    filterBy,
+    offset,
+    sortBy,
+  };
+
+  const { setDocumentName } = usePatientStore();
+
   const { data, isError, isLoading } = usePatient.document.list(queryParams);
   const pagination = { page, first, offset };
   const { localisedDate } = useFormatDateTime();
