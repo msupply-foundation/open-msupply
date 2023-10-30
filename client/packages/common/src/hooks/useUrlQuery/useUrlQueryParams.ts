@@ -1,5 +1,10 @@
 import { useEffect } from 'react';
-import { UrlQueryValue, useUrlQuery } from './useUrlQuery';
+import {
+  NESTED_SPLIT_CHAR,
+  RANGE_SPLIT_CHAR,
+  UrlQueryValue,
+  useUrlQuery,
+} from './useUrlQuery';
 import {
   Column,
   Formatter,
@@ -87,7 +92,12 @@ export const useUrlQueryParams = ({
       const filterValue = getFilterValue(urlQuery, filter.key);
       if (!filterValue) return prev;
 
-      prev[filter.key] = getFilterEntry(filter, filterValue);
+      const [key, nested_key] = filter.key.split(NESTED_SPLIT_CHAR);
+      if (filter.key.includes(NESTED_SPLIT_CHAR)) {
+        filter.key = key ?? '';
+      }
+
+      prev[filter.key] = getFilterEntry(filter, filterValue, nested_key);
       return prev;
     }, {});
 
@@ -157,9 +167,13 @@ const getFilterValue = (
   }
 };
 
-const getFilterEntry = (filter: Filter, filterValue: UrlQueryValue) => {
+const getFilterEntry = (
+  filter: Filter,
+  filterValue: UrlQueryValue,
+  nested_key?: string
+) => {
   if (filter.condition === 'between' && filter.key) {
-    const filterItems = String(filterValue).split('_');
+    const filterItems = String(filterValue).split(RANGE_SPLIT_CHAR);
     const dateAfter = filterItems[0] ? new Date(filterItems[0]) : null;
     const dateBefore = filterItems[1] ? new Date(filterItems[1]) : null;
 
@@ -175,7 +189,16 @@ const getFilterEntry = (filter: Filter, filterValue: UrlQueryValue) => {
     };
   }
   const condition = filter.condition ? filter.condition : 'like';
-  return {
-    [condition]: filterValue,
-  };
+
+  if (nested_key) {
+    return {
+      [nested_key]: {
+        [condition]: filterValue,
+      },
+    };
+  } else {
+    return {
+      [condition]: filterValue,
+    };
+  }
 };
