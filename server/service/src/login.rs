@@ -150,6 +150,7 @@ impl LoginService {
         );
         let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
         let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
+
         let pair = match token_service.jwt_token(
             &user_account.id,
             &input.password,
@@ -402,6 +403,10 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // items
             Permissions::EditItems => {
                 output.insert(Permission::ItemMutate);
+            }
+            // cold chain
+            Permissions::ColdChainApi => {
+                output.insert(Permission::ColdChainApi);
             }
             _ => continue,
         }

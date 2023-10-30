@@ -1,11 +1,16 @@
+use self::insert::{insert_temperature_log, InsertTemperatureLog, InsertTemperatureLogError};
 use self::query::{get_temperature_log, get_temperature_logs};
+use self::update::{update_temperature_log, UpdateTemperatureLog, UpdateTemperatureLogError};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::temperature_log::{TemperatureLog, TemperatureLogFilter, TemperatureLogSort};
 use repository::{PaginationOption, StorageConnection};
 
+pub mod insert;
 pub mod query;
+pub mod update;
+mod validate;
 
 pub trait TemperatureLogServiceTrait: Sync + Send {
     fn get_temperature_logs(
@@ -24,6 +29,22 @@ pub trait TemperatureLogServiceTrait: Sync + Send {
         id: String,
     ) -> Result<TemperatureLog, SingleRecordError> {
         get_temperature_log(ctx, id)
+    }
+
+    fn insert_temperature_log(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertTemperatureLog,
+    ) -> Result<TemperatureLog, InsertTemperatureLogError> {
+        insert_temperature_log(ctx, input)
+    }
+
+    fn update_temperature_log(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateTemperatureLog,
+    ) -> Result<TemperatureLog, UpdateTemperatureLogError> {
+        update_temperature_log(ctx, input)
     }
 }
 

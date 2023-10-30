@@ -40,6 +40,8 @@ mod query {
                     name: None,
                     is_active: None,
                     r#type: SensorType::BlueMaestro,
+                    log_interval: None,
+                    battery_level: None,
                 },
             ),
             Err(InsertSensorError::SensorAlreadyExists)
@@ -54,6 +56,8 @@ mod query {
                     name: None,
                     is_active: None,
                     r#type: SensorType::BlueMaestro,
+                    log_interval: None,
+                    battery_level: None,
                 },
             ),
             Err(InsertSensorError::SensorWithSerialAlreadyExists)
@@ -96,7 +100,9 @@ mod query {
                     serial: "new_serial".to_owned(),
                     name: Some("new_name".to_owned()),
                     is_active: None,
-                    r#type: SensorType::BlueMaestro
+                    r#type: SensorType::BlueMaestro,
+                    log_interval: Some(10),
+                    battery_level: Some(99),
                 },
             ),
             Ok(result_sensor.clone())
@@ -122,7 +128,9 @@ mod query {
                     serial: "store_b_sensor_serial".to_owned(),
                     name: Some("new_sensor_name".to_owned()),
                     is_active: Some(true),
-                    r#type: SensorType::BlueMaestro
+                    r#type: SensorType::BlueMaestro,
+                    log_interval: None,
+                    battery_level: None,
                 },
             ),
             Ok(Sensor {
@@ -133,8 +141,8 @@ mod query {
                     is_active: true,
                     store_id: Some("store_a".to_owned()),
                     location_id: None,
-                    battery_level: Some(99),
-                    log_interval: Some(10),
+                    battery_level: None,
+                    log_interval: None,
                     last_connection_datetime: None,
                     r#type: SensorType::BlueMaestro,
                 }

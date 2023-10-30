@@ -12,6 +12,7 @@ import {
   StocktakeNodeStatus,
   UpdateStocktakeStatusInput,
   InsertStocktakeInput,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -48,7 +49,7 @@ const stocktakeParser = {
       id: line.id,
     }),
     toUpdate: (line: DraftStocktakeLine): UpdateStocktakeLineInput => ({
-      locationId: line.location?.id,
+      location: setNullableInput('id', line.location),
       batch: line.batch ?? '',
       packSize: line.packSize ?? 1,
       costPricePerPack: line.costPricePerPack,
@@ -62,7 +63,7 @@ const stocktakeParser = {
       inventoryAdjustmentReasonId: line.inventoryAdjustmentReason?.id,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
-      locationId: line.location?.id,
+      location: setNullableInput('id', line.location),
       batch: line.batch ?? '',
       packSize: line.packSize ?? 1,
       costPricePerPack: line.costPricePerPack,
