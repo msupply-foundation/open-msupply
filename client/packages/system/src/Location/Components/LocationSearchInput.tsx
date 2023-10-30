@@ -1,13 +1,9 @@
 import React, { FC, useEffect } from 'react';
-import {
-  Autocomplete,
-  defaultOptionMapper,
-  getDefaultOptionRenderer,
-} from '@openmsupply-client/common';
+import { Autocomplete, useTranslation } from '@openmsupply-client/common';
 import { useLocation, LocationRowFragment } from '../api';
 
 interface LocationSearchInputProps {
-  value: LocationRowFragment | null;
+  selectedLocation: LocationRowFragment | null;
   width?: number | string;
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
@@ -15,12 +11,13 @@ interface LocationSearchInputProps {
 }
 
 export const LocationSearchInput: FC<LocationSearchInputProps> = ({
-  value,
+  selectedLocation,
   width,
   onChange,
   disabled,
   autoFocus = false,
 }) => {
+  const t = useTranslation();
   const { fetchAsync, data, isLoading } = useLocation.document.listAll({
     direction: 'asc',
     key: 'name',
@@ -30,25 +27,29 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     fetchAsync();
   }, []);
 
+  const locations = data?.nodes || [];
+  const options = [
+    ...locations.map(l => ({ value: l.id, label: l.name })),
+    { value: null, label: t('label.remove') },
+  ];
+
   return (
-    <Autocomplete<LocationRowFragment>
+    <Autocomplete
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
       clearable={false}
       value={
-        value && {
-          ...value,
-          label: value.name,
+        selectedLocation && {
+          value: selectedLocation.id,
+          label: selectedLocation.name,
         }
       }
       loading={isLoading}
-      onChange={(_, location) => {
-        onChange(location);
+      onChange={(_, option) => {
+        onChange(locations.find(l => l.id === option?.value) || null);
       }}
-      options={defaultOptionMapper(data?.nodes ?? [], 'name')}
-      renderOption={getDefaultOptionRenderer('name')}
-      isOptionEqualToValue={(option, value) => option?.id === value?.id}
+      options={options}
     />
   );
 };
