@@ -1,4 +1,4 @@
-import { FilterByWithBoolean, SortBy } from '@common/hooks';
+import { FilterBy, SortBy } from '@common/hooks';
 import { Sdk, TemperatureBreachFragment } from './operations.generated';
 import { TemperatureBreachSortFieldInput } from '@common/types';
 
@@ -6,7 +6,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<TemperatureBreachFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({

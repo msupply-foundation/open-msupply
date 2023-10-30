@@ -18,12 +18,7 @@ import {
 import { BreachTypeCell } from '../../../common';
 
 const ListView: FC = () => {
-  const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'startDatetime', dir: 'desc' },
-  });
-
-  const { data, isLoading, isError } =
-    useTemperatureBreach.document.list(queryParams);
+  const { data, isLoading, isError } = useTemperatureBreach.document.list();
   const {
     updateSortQuery,
     updatePaginationQuery,
