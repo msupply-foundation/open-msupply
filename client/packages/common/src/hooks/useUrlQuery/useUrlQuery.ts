@@ -18,6 +18,7 @@ export type UrlQueryValue =
 
 // CONSTANTS
 export const RANGE_SPLIT_CHAR = '_';
+export const NESTED_SPLIT_CHAR = '.';
 
 // The following Regex are used to split range strings, either "Date/Time" or
 // "Number", and use RANGE_SPLIT_CHAR to separate. Both the start and end values
