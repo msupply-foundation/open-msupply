@@ -2095,7 +2095,6 @@ dependencies = [
  "graphql_stocktake",
  "graphql_stocktake_line",
  "graphql_temperature_breach",
- "graphql_temperature_breach_config",
  "graphql_temperature_log",
  "graphql_types",
  "repository",
@@ -2512,29 +2511,6 @@ dependencies = [
 
 [[package]]
 name = "graphql_temperature_breach"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.137",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_breach_config"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
@@ -4594,6 +4570,7 @@ dependencies = [
  "mime_guess",
  "openssl",
  "rcgen",
+ "regex",
  "repository",
  "reqwest",
  "rust-embed",

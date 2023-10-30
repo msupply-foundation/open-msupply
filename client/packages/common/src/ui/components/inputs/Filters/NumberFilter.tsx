@@ -3,7 +3,7 @@ import {
   RangeObject,
   useUrlQuery,
   useDebouncedValueCallback,
-  RANGE_SPLIT_CHAR,
+  UrlQueryValue,
 } from '@common/hooks';
 import { NumericTextInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
@@ -20,16 +20,17 @@ export interface NumberFilterDefinition extends FilterDefinitionCommon {
 export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
   filterDefinition,
 }) => {
-  const { urlParameter, name, range, minValue, maxValue, decimalLimit } =
-    filterDefinition;
-  const { urlQuery, updateQuery, parseRangeString } = useUrlQuery();
-  const [value, setValue] = useState(
-    getNumberFromUrl(
-      urlQuery[urlParameter] as string | number,
-      range,
-      parseRangeString
-    )
-  );
+  const {
+    urlParameter,
+    name,
+    range,
+    minValue = -Infinity,
+    maxValue = Infinity,
+    decimalLimit,
+  } = filterDefinition;
+  const { urlQuery, updateQuery } = useUrlQuery();
+  const urlValue = urlQuery[urlParameter] as number;
+  const [value, setValue] = useState(getNumberFromUrl(urlValue, range));
 
   const debouncedOnChange = useDebouncedValueCallback(
     val => {
@@ -69,30 +70,29 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
       }}
       onChange={handleChange}
       value={value}
-      max={maxValue}
-      min={minValue}
-      decimalPrecision={decimalLimit}
+      min={getRangeBoundary(urlValue, range, minValue)}
+      max={getRangeBoundary(urlValue, range, maxValue)}
+      // decimalLimit={decimalLimit}
     />
   );
 };
 
 const getNumberFromUrl = (
-  urlValue: string | number | undefined,
-  range: RangeOption | undefined,
-  parseRangeString: (val: string | undefined) => RangeObject
+  query: UrlQueryValue,
+  range: RangeOption | undefined
 ) => {
-  // Matches range strings for numbers, with "_" as the splitting character.
-  // Both the start date and end date are optional.
-  // A "number" can contain a negative (-) prefix, and a single decimal point
-  // within it (which must be followed by additional digits)
-  const numberRangeRegex = new RegExp(
-    `^(-?\\d+(\\.\\d+)?)?${RANGE_SPLIT_CHAR}(-?\\d+(\\.\\d+)?)?$`
-  );
-  if (!urlValue) return null;
-  if (typeof urlValue === 'number') return urlValue;
-  if (urlValue?.match(numberRangeRegex)) {
-    const rangeData = parseRangeString(urlValue);
-    return rangeData[range as RangeOption];
-  }
-  return Number(urlValue);
+  if (typeof query !== 'object' || !range) return query;
+  return query[range];
+};
+
+const getRangeBoundary = (
+  query: number | RangeObject<number>,
+  range: RangeOption | undefined,
+  limit: number
+) => {
+  if (typeof query !== 'object' || !range) return limit;
+  const { from, to } = query;
+
+  if (range === 'from') return to ? Math.min(to, limit) : limit;
+  else return from ? Math.max(from, limit) : limit;
 };

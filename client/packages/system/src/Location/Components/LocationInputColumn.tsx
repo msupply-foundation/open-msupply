@@ -16,7 +16,7 @@ const hasRequiredFields = (
   'location' in (variableToCheck as LocationObject);
 
 export const getLocationInputColumn = <
-  T extends RecordWithId
+  T extends RecordWithId,
 >(): ColumnDefinition<T> => ({
   key: 'locationInput',
   label: 'label.location',
@@ -58,7 +58,7 @@ export const getLocationInputColumn = <
       <LocationSearchInput
         autoFocus={autoFocus}
         disabled={!!isDisabled}
-        value={value}
+        selectedLocation={value}
         width={column.width}
         onChange={onChange}
       />

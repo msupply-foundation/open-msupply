@@ -54,62 +54,10 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               urlParameter: 'identifier',
               placeholder: t('placeholder.search-by-identifier'),
             },
-            // A standalone "Date" input
             {
               type: 'date',
-              name: 'Date',
-              urlParameter: 'date',
-            },
-            // A standalone "Date/Time" input
-            {
-              type: 'dateTime',
-              name: 'Date/Time',
-              urlParameter: 'dateTime',
-            },
-            {
-              type: 'number',
-              name: 'Number',
-              urlParameter: 'numTest',
-            },
-            // Grouping two date inputs to form a "range". We define which
-            // element is which end of the range using the "range" property.
-            // Note they both update the same urlParameter
-            {
-              type: 'group',
-              name: 'Date Range',
-              elements: [
-                {
-                  type: 'date',
-                  name: 'From date',
-                  urlParameter: 'dateRange',
-                  range: 'from',
-                },
-                {
-                  type: 'date',
-                  name: 'To date',
-                  urlParameter: 'dateRange',
-                  range: 'to',
-                },
-              ],
-            },
-            // Same as above but using date/time
-            {
-              type: 'group',
-              name: 'Date/Time Range',
-              elements: [
-                {
-                  type: 'dateTime',
-                  name: 'From time',
-                  urlParameter: 'dateTimeRange',
-                  range: 'from',
-                },
-                {
-                  type: 'dateTime',
-                  name: 'To time',
-                  urlParameter: 'dateTimeRange',
-                  range: 'to',
-                },
-              ],
+              name: t('label.date-of-birth'),
+              urlParameter: 'dateOfBirth',
             },
             {
               type: 'enum',
