@@ -6,7 +6,7 @@ export const useStockLines = () => {
 
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'expiryDate', dir: 'desc' },
-    filterKey: 'itemCodeOrName',
+    filters: [{ key: 'itemCodeOrName' }],
   });
   return {
     ...useQuery(api.keys.paramList(queryParams), () =>

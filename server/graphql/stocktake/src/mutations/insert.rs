@@ -1,11 +1,13 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 
+use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::CannotEditStocktake;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::StocktakeNode;
 use repository::Stocktake;
+use service::NullableUpdate;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     stocktake::{InsertStocktake as ServiceInput, InsertStocktakeError as ServiceError},
@@ -20,7 +22,7 @@ pub struct InsertInput {
     pub is_locked: Option<bool>,
     pub stocktake_date: Option<NaiveDate>,
     pub master_list_id: Option<String>,
-    pub location_id: Option<String>,
+    pub location: Option<NullableUpdateInput<String>>,
     pub items_have_stock: Option<bool>,
 }
 
@@ -93,7 +95,7 @@ impl InsertInput {
             description,
             stocktake_date,
             is_locked,
-            location_id,
+            location,
             master_list_id,
             items_have_stock,
         } = self;
@@ -104,7 +106,9 @@ impl InsertInput {
             description,
             stocktake_date,
             is_locked,
-            location_id,
+            location: location.map(|location| NullableUpdate {
+                value: location.value,
+            }),
             master_list_id,
             items_have_stock,
         }
@@ -181,7 +185,7 @@ mod test {
                     description: Some("description".to_string()),
                     stocktake_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
                     is_locked: Some(true),
-                    location_id: None,
+                    location: None,
                     master_list_id: None,
                     items_have_stock: None,
                 }
