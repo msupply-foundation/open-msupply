@@ -1,5 +1,6 @@
 {
   "button.view-all-breaches": "View all breaches",
+  "button.view-details": "View Details",
   "error.no-sensors": "No sensors found",
   "error.no-temperature-logs": "No temperature logs found",
   "heading.breach": "Breach",
@@ -17,5 +18,9 @@
   "label.temperature-unit": "°C",
   "label.unacknowledged": "Unacknowledged",
   "message.confirm-sensor-update": "This will confirm changes you have made to this sensor",
+  "message.device": "Device:",
+  "message.last-temperature": "Last temperature reading: {{temperature}}°C",
+  "message.location": "Location:",
+  "message.notification-breach-detected": "Temperature breach detected! {{time}} ago",
   "title.sensor-details": "Sensor Details"
 }
