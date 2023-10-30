@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useUrlQuery } from './useUrlQuery';
+import { UrlQueryValue, useUrlQuery } from './useUrlQuery';
 import {
   Column,
   Formatter,
@@ -144,7 +144,7 @@ export const useUrlQueryParams = ({
 };
 
 const getFilterValue = (
-  urlQuery: Record<string, string | number | boolean | undefined>,
+  urlQuery: Record<string, UrlQueryValue>,
   key: string
 ) => {
   switch (urlQuery[key]) {
@@ -157,10 +157,7 @@ const getFilterValue = (
   }
 };
 
-const getFilterEntry = (
-  filter: Filter,
-  filterValue: string | number | boolean | undefined
-) => {
+const getFilterEntry = (filter: Filter, filterValue: UrlQueryValue) => {
   if (filter.condition === 'between' && filter.key) {
     const filterItems = String(filterValue).split('_');
     const dateAfter = filterItems[0] ? new Date(filterItems[0]) : null;
