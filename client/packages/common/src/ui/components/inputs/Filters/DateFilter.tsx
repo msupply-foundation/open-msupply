@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { RangeObject, useUrlQuery, RANGE_SPLIT_CHAR } from '@common/hooks';
+import { RangeObject, useUrlQuery } from '@common/hooks';
 import { DatePickerInput, DateTimePickerInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { DateUtils, useFormatDateTime } from '@common/intl';
@@ -7,6 +7,8 @@ import { DateUtils, useFormatDateTime } from '@common/intl';
 export interface DateFilterDefinition extends FilterDefinitionCommon {
   type: 'date' | 'dateTime';
   range?: RangeOption;
+  maxDate?: Date | string;
+  minDate?: Date | string;
 }
 
 export type RangeOption = 'from' | 'to';
@@ -14,15 +16,19 @@ export type RangeOption = 'from' | 'to';
 export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   filterDefinition,
 }) => {
-  const { type, urlParameter, name, range } = filterDefinition;
-  const { urlQuery, updateQuery, parseRangeString } = useUrlQuery();
+  const {
+    type,
+    urlParameter,
+    name,
+    range,
+    maxDate = '9999-12-31',
+    minDate = '0000-01-01',
+  } = filterDefinition;
+  const { urlQuery, updateQuery } = useUrlQuery();
   const { customDate } = useFormatDateTime();
 
-  const value = getDateFromUrl(
-    urlQuery[urlParameter] as string,
-    range,
-    parseRangeString
-  );
+  const urlValue = urlQuery[urlParameter] as string;
+  const value = getDateFromUrl(urlValue, range);
 
   const dateTimeFormat =
     type === 'dateTime' ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd';
@@ -63,6 +69,8 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
         },
       },
     },
+    minDate: getRangeBoundary(urlValue, range, minDate),
+    maxDate: getRangeBoundary(urlValue, range, maxDate),
   };
 
   return type === 'dateTime' ? (
@@ -72,27 +80,26 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   );
 };
 
-const getDateFromUrl = (
-  urlString: string | undefined,
+const getDateFromUrl = (query: string, range: RangeOption | undefined) => {
+  const value = typeof query !== 'object' || !range ? query : query[range];
+  return DateUtils.getDateOrNull(value);
+};
+
+const getRangeBoundary = (
+  query: string | RangeObject<string>,
   range: RangeOption | undefined,
-  parseRangeString: (val: string | undefined) => RangeObject
+  limit: Date | string | undefined
 ) => {
-  // Matches range strings for either just dates or date/times, with "_" as the
-  // splitting character. Both the start date and end date are optional, but
-  // must be the same (date / dateTime) if both present
-  //
-  // E.g the following will all match
-  // 2023-10-02 03:10_2023-10-03 02:10
-  // 2023-10-02_2023-10-03
-  // 2023-10-02 03:10_
-  // _2023-10-03
-  const dateRangeRegex = new RegExp(
-    `^(\\d{4}-\\d{2}-\\d{2})?_(\\d{4}-\\d{2}-\\d{2})?|(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?${RANGE_SPLIT_CHAR}(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})?$`
-  );
-  if (!urlString) return null;
-  if (urlString?.match(dateRangeRegex)) {
-    const rangeData = parseRangeString(urlString);
-    return DateUtils.getDateOrNull(rangeData[range as RangeOption] as string);
-  }
-  return DateUtils.getDateOrNull(urlString);
+  const limitDate = DateUtils.getDateOrNull(limit);
+  if (typeof query !== 'object' || !range) return limitDate || undefined;
+  const { from, to } = query as RangeObject<string>;
+
+  if (range === 'from')
+    return to
+      ? DateUtils.minDate(DateUtils.getDateOrNull(to), limitDate) ?? undefined
+      : limitDate ?? undefined;
+  else
+    return from
+      ? DateUtils.maxDate(DateUtils.getDateOrNull(from), limitDate) ?? undefined
+      : limitDate ?? undefined;
 };
