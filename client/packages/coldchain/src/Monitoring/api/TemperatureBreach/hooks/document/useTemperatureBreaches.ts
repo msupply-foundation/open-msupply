@@ -1,15 +1,11 @@
-import { useUrlQueryParams } from '@common/hooks';
 import { useTemperatureBreachApi } from '../utils/useTemperatureBreachesApi';
 import { useQuery } from '@openmsupply-client/common';
+import { ListParams } from '../../api';
 
-export const useTemperatureBreaches = () => {
-  const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'startDatetime', dir: 'desc' },
-  });
-
+export const useTemperatureBreaches = (query: ListParams) => {
   const api = useTemperatureBreachApi();
 
   return {
-    ...useQuery(api.keys.paramList(queryParams), api.get.list(queryParams)),
+    ...useQuery(api.keys.paramList(query), api.get.list(query)),
   };
 };
