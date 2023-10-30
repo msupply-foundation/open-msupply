@@ -43,14 +43,14 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               elements: [
                 {
                   type: 'dateTime',
-                  name: t('label.from-datetime'),
-                  urlParameter: 'datetime',
+                  name: t('label.from-start-datetime'),
+                  urlParameter: 'startDatetime',
                   range: 'from',
                 },
                 {
                   type: 'dateTime',
-                  name: t('label.to-datetime'),
-                  urlParameter: 'datetime',
+                  name: t('label.to-start-datetime'),
+                  urlParameter: 'startDatetime',
                   range: 'to',
                 },
               ],
@@ -58,7 +58,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             {
               type: 'enum',
               name: t('label.type'),
-              urlParameter: 'temperatureBreach.type',
+              urlParameter: 'type',
               options: [
                 { label: t('label.cold-cumulative'), value: 'COLD_CUMULATIVE' },
                 {
