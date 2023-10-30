@@ -27,14 +27,7 @@ pub struct LegacyListMasterRow {
 #[derive(Deserialize, Clone)]
 struct LegacyProgramSettings {
     #[serde(rename = "storeTags")]
-    store_tags: LegacyStoreTagAndProgramName,
-}
-
-#[derive(Deserialize, Clone)]
-struct LegacyStoreTagAndProgramName {
-    // HashMap key is the program name
-    #[serde(flatten)]
-    tags: HashMap<String, LegacyProgramSettingsStoreTag>,
+    store_tags: Option<HashMap<String, LegacyProgramSettingsStoreTag>>,
 }
 
 #[derive(Deserialize, Clone)]
@@ -78,8 +71,12 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
 
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        let Some(generate) = generate_requisition_program(connection, data.clone())? else {return Ok(None)};
-        let Some(delete) = delete_requisition_program(connection, data)? else {return Ok(None)};
+        let Some(generate) = generate_requisition_program(connection, data.clone())? else {
+            return Ok(None);
+        };
+        let Some(delete) = delete_requisition_program(connection, data)? else {
+            return Ok(None);
+        };
 
         let mut upserts = Vec::new();
         let mut deletes = Vec::new();
@@ -199,49 +196,53 @@ fn generate_requisition_program(
     let mut program_requisition_settings_rows = Vec::new();
     let mut program_requisition_order_type_rows = Vec::new();
 
-    for (tag, settings) in program_settings.store_tags.tags {
-        let name_tag = NameTagRowRepository::new(connection)
-            .find_one_by_name(&tag)?
-            .ok_or(anyhow::anyhow!(
-                "Name tag not found for program {}",
-                master_list.id
-            ))?;
+    if let Some(tags) = program_settings.store_tags {
+        for (tag, settings) in tags {
+            let name_tag = NameTagRowRepository::new(connection)
+                .find_one_by_name(&tag)?
+                .ok_or(anyhow::anyhow!(
+                    "Name tag not found for program {}",
+                    master_list.id
+                ))?;
 
-        let period_schedule = PeriodScheduleRowRepository::new(connection)
-            .find_one_by_name(&settings.period_schedule_name)?
-            .ok_or(anyhow::anyhow!(
-                "Period schedule not found for program {}",
-                master_list.id
-            ))?;
+            let period_schedule = PeriodScheduleRowRepository::new(connection)
+                .find_one_by_name(&settings.period_schedule_name)?
+                .ok_or(anyhow::anyhow!(
+                    "Period schedule not found for program {}",
+                    master_list.id
+                ))?;
 
-        let program_requisition_settings_row = ProgramRequisitionSettingsRow {
-            // Concatenate the program id and name tag id to create a unique id
-            // instead of using uuid since easier to test this way.
-            id: format!("{}{}", master_list.id, name_tag.id.clone()),
-            name_tag_id: name_tag.id.clone(),
-            program_id: master_list.id.clone(),
-            period_schedule_id: period_schedule.id.clone(),
-        };
+            let program_requisition_settings_row = ProgramRequisitionSettingsRow {
+                // Concatenate the program id and name tag id to create a unique id
+                // instead of using uuid since easier to test this way.
+                id: format!("{}{}", master_list.id, name_tag.id.clone()),
+                name_tag_id: name_tag.id.clone(),
+                program_id: master_list.id.clone(),
+                period_schedule_id: period_schedule.id.clone(),
+            };
 
-        program_requisition_settings_rows.push(program_requisition_settings_row.clone());
+            program_requisition_settings_rows.push(program_requisition_settings_row.clone());
 
-        if let Some(order_types) = settings.order_types {
-            for order_type in order_types {
-                let program_requisition_order_type_row = ProgramRequisitionOrderTypeRow {
-                    // Concatenate the program requisition setting id and order type name to create a unique id.
-                    id: format!(
-                        "{}{}",
-                        program_requisition_settings_row.id.clone(),
-                        order_type.name
-                    ),
-                    program_requisition_settings_id: program_requisition_settings_row.id.clone(),
-                    name: order_type.name.to_string(),
-                    threshold_mos: order_type.threshold_mos,
-                    max_mos: order_type.max_mos,
-                    max_order_per_period: order_type.max_order_per_period,
-                };
+            if let Some(order_types) = settings.order_types {
+                for order_type in order_types {
+                    let program_requisition_order_type_row = ProgramRequisitionOrderTypeRow {
+                        // Concatenate the program requisition setting id and order type name to create a unique id.
+                        id: format!(
+                            "{}{}",
+                            program_requisition_settings_row.id.clone(),
+                            order_type.name
+                        ),
+                        program_requisition_settings_id: program_requisition_settings_row
+                            .id
+                            .clone(),
+                        name: order_type.name.to_string(),
+                        threshold_mos: order_type.threshold_mos,
+                        max_mos: order_type.max_mos,
+                        max_order_per_period: order_type.max_order_per_period,
+                    };
 
-                program_requisition_order_type_rows.push(program_requisition_order_type_row);
+                    program_requisition_order_type_rows.push(program_requisition_order_type_row);
+                }
             }
         }
     }
