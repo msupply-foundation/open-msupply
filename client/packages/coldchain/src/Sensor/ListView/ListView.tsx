@@ -1,6 +1,5 @@
 import React, { FC } from 'react';
 import {
-  useNavigate,
   DataTable,
   useColumns,
   TableProvider,
@@ -9,8 +8,11 @@ import {
   NothingHere,
   useUrlQueryParams,
   Formatter,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { useSensor, SensorFragment } from '../api';
+import { SensorEditModal } from '../Components';
+import { BreachTypeCell } from '../../common';
 
 export const SensorListView: FC = () => {
   const {
@@ -18,9 +20,8 @@ export const SensorListView: FC = () => {
     updatePaginationQuery,
     // filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filterKey: 'serial' });
+  } = useUrlQueryParams({ filters: [{ key: 'serial' }] });
 
-  const navigate = useNavigate();
   const { data, isError, isLoading } = useSensor.document.list();
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
@@ -61,7 +62,7 @@ export const SensorListView: FC = () => {
         label: 'label.last-reading',
         accessor: ({ rowData }) => {
           return `${rowData.latestTemperatureLog?.nodes[0]?.temperature}${t(
-            'cold-chain.temperature-unit'
+            'label.temperature-unit'
           )}`;
         },
         sortable: false,
@@ -69,6 +70,7 @@ export const SensorListView: FC = () => {
       {
         key: 'lastRecording',
         label: 'label.date-time',
+        description: 'description-last-reading-datetime',
         accessor: ({ rowData }) => {
           return Formatter.csvDateTimeString(
             rowData.latestTemperatureLog?.nodes[0]?.datetime
@@ -86,12 +88,10 @@ export const SensorListView: FC = () => {
       },
       {
         key: 'breach',
-        label: 'label.breach',
-        accessor: ({ rowData }) => {
-          return rowData?.breach
-            ? t(Formatter.breachTypeTranslation(rowData.breach))
-            : null;
-        },
+        label: 'label.breach-type',
+        description: 'description.breach-type',
+        accessor: ({ rowData }) => rowData?.breach,
+        Cell: BreachTypeCell,
         sortable: false,
       },
     ],
@@ -99,21 +99,26 @@ export const SensorListView: FC = () => {
     [sortBy]
   );
 
+  const { isOpen, entity, onClose, onOpen } = useEditModal<SensorFragment>();
+
   return (
-    <DataTable
-      id="sensor-list"
-      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={data?.nodes ?? []}
-      isLoading={isLoading}
-      onRowClick={row => {
-        navigate(String(row.name));
-      }}
-      isError={isError}
-      noDataElement={<NothingHere body={t('error.no-sensors')} />}
-      enableColumnSelection
-    />
+    <>
+      {isOpen && entity && (
+        <SensorEditModal isOpen={isOpen} onClose={onClose} sensor={entity} />
+      )}
+      <DataTable
+        id="sensor-list"
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+        onChangePage={updatePaginationQuery}
+        columns={columns}
+        data={data?.nodes ?? []}
+        isLoading={isLoading}
+        onRowClick={onOpen}
+        isError={isError}
+        noDataElement={<NothingHere body={t('error.no-sensors')} />}
+        enableColumnSelection
+      />
+    </>
   );
 };
 

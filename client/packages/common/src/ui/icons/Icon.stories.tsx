@@ -14,6 +14,7 @@ import { CheckboxEmptyIcon } from './CheckboxEmpty';
 import { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
 import { ChevronDownIcon } from './ChevronDown';
 import { ChevronsDownIcon } from './ChevronsDown';
+import { CircleAlertIcon } from './CircleAlert';
 import { CircleIcon } from './Circle';
 import { ClockIcon } from './Clock';
 import { CloseIcon } from './Close';
@@ -52,9 +53,11 @@ import { ScanIcon } from './Scan';
 import { SearchIcon } from './Search';
 import { SettingsIcon } from './Settings';
 import { SidebarIcon } from './Sidebar';
+import { SnowflakeIcon } from './Snowflake';
 import { SortAscIcon } from './SortAsc';
 import { SortDescIcon } from './SortDesc';
 import { StockIcon } from './Stock';
+import { SunIcon } from './Sun';
 import { SuppliersIcon } from './Suppliers';
 import { ThermometerIcon } from './Thermometer';
 import { ToolsIcon } from './Tools';
@@ -102,6 +105,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },
     { icon: <ChevronDownIcon {...args} />, name: 'ChevronDown' },
     { icon: <ChevronsDownIcon {...args} />, name: 'ChevronsDown' },
+    { icon: <CircleAlertIcon {...args} />, name: 'CircleAlert' },
     { icon: <CircleIcon {...args} />, name: 'Circle' },
     { icon: <ClockIcon {...args} />, name: 'Clock' },
     { icon: <CloseIcon {...args} />, name: 'Close' },
@@ -144,9 +148,11 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <SearchIcon {...args} />, name: 'Search' },
     { icon: <SettingsIcon {...args} />, name: 'Settings' },
     { icon: <SidebarIcon {...args} />, name: 'Sidebar' },
+    { icon: <SnowflakeIcon {...args} />, name: 'Snowflake' },
     { icon: <SortAscIcon {...args} />, name: 'SortAsc' },
     { icon: <SortDescIcon {...args} />, name: 'SortDesc' },
     { icon: <StockIcon {...args} />, name: 'Stock' },
+    { icon: <SunIcon {...args} />, name: 'Sun' },
     { icon: <SuppliersIcon {...args} />, name: 'Suppliers' },
     { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },

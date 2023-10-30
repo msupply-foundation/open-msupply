@@ -1,4 +1,7 @@
-use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext, WithDBError};
+use crate::{
+    invoice_line::query::get_invoice_line, service_provider::ServiceContext, NullableUpdate,
+    WithDBError,
+};
 use chrono::NaiveDate;
 use repository::{
     InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
@@ -16,7 +19,7 @@ pub struct InsertInboundShipmentLine {
     pub id: String,
     pub invoice_id: String,
     pub item_id: String,
-    pub location_id: Option<String>,
+    pub location: Option<NullableUpdate<String>>,
     pub pack_size: u32,
     pub batch: Option<String>,
     pub cost_price_per_pack: f64,
@@ -108,6 +111,7 @@ mod test {
             insert::InsertInboundShipmentLine, InsertInboundShipmentLineError as ServiceError,
         },
         service_provider::ServiceProvider,
+        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -177,7 +181,9 @@ mod test {
                     r.invoice_id = mock_inbound_shipment_c_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.location_id = Some("invalid".to_string());
+                    r.location = Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    });
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
                     r.number_of_packs = 1.0;

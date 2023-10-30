@@ -31,6 +31,8 @@ export const DateTimePickerInput: FC<
   label,
   textFieldProps,
   format = 'dd/MM/yyyy HH:mm',
+  minDate,
+  maxDate,
   ...props
 }) => {
   const theme = useAppTheme();
@@ -38,13 +40,28 @@ export const DateTimePickerInput: FC<
   const [isInitialEntry, setIsInitialEntry] = useState(true);
   const t = useTranslation('common');
 
+  // Max/Min should be restricted by the UI, but it's not restricting TIME input
+  // (only Date component). So this function will enforce the max/min after
+  // input
+  const handleDateInput = (date: Date | null) => {
+    if (minDate && date && date < minDate) {
+      onChange(minDate);
+      return;
+    }
+    if (maxDate && date && date > maxDate) {
+      onChange(maxDate);
+      return;
+    }
+    onChange(date);
+  };
+
   return (
     <DateTimePicker
       format={format}
       slots={{
         textField: TextField,
       }}
-      onAccept={onChange}
+      onAccept={handleDateInput}
       onChange={(date, context) => {
         const { validationError } = context;
 
@@ -92,7 +109,7 @@ export const DateTimePickerInput: FC<
           error: !isInitialEntry && (!!error || !!internalError),
           helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
           onBlur: e => {
-            onChange(DateUtils.getDateOrNull(e.target.value, format));
+            handleDateInput(DateUtils.getDateOrNull(e.target.value, format));
             setIsInitialEntry(false);
           },
           label,
@@ -106,6 +123,8 @@ export const DateTimePickerInput: FC<
           },
         },
       }}
+      minDate={minDate}
+      maxDate={maxDate}
       {...props}
       value={DateUtils.getDateOrNull(props.value)}
     />
