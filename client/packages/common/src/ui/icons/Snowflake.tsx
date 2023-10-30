@@ -5,7 +5,7 @@ export const SnowflakeIcon = (
   props: SvgIconProps & { stroke?: string }
 ): JSX.Element => {
   const { stroke = 'currentColor', ...rest } = props;
-
+  console.log('stroke: ', stroke);
   return (
     <SvgIcon
       {...rest}
