@@ -45,6 +45,7 @@ export const BreachIcon = ({
           startDateTime:
             DateUtils.getDateOrNull(payload.breach?.startDatetime) ??
             payload.date,
+          location: payload.breach?.location?.name,
         });
       }}
       x={cx - 13.5}

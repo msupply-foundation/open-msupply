@@ -61,7 +61,7 @@ export const BreachPopover = ({
           {sensor && sensor.name} {t('heading.breach')}
           <BreachIcon type={breach.type} />
         </Typography>
-        <Row label={t('label.location')} value={sensor?.location ?? ''} />
+        <Row label={t('label.location')} value={breach?.location ?? ''} />
         <Row
           label={t('label.breach-start')}
           value={Formatter.dateTime(breach.startDateTime)}
