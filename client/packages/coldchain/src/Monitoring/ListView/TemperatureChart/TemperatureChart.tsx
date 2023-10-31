@@ -35,6 +35,7 @@ export interface Breach {
   breachId: string;
   endDateTime: Date | null;
   startDateTime: Date;
+  location?: string;
 }
 
 export const TemperatureChart = () => {
