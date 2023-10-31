@@ -88,12 +88,12 @@ export const useUnitVariant = (
 } => {
   const authContext = useAuthContext();
   const [userSelectedVariants, setUserSelectedVariant] = useLocalStorage(
-    `/user/${authContext.user?.id ?? '?'}/store/${
+    `/user/${authContext.user?.id ?? ''}/store/${
       authContext.storeId
     }/selectedVariants`
   );
   const userSelectedVariantId = userSelectedVariants?.[itemId];
-  const [item] = useUnitStore(state => [state.items[itemId]], isEqual);
+  const item = useUnitStore(state => state.items[itemId], isEqual);
   const t = useTranslation();
 
   if (!item || item.packUnits.length == 0) {
