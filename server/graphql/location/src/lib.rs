@@ -105,7 +105,7 @@ mod test {
         mock::MockDataInserts,
         LocationRow, StorageConnectionManager,
     };
-    use repository::{EqualFilter, PaginationOption, Sort};
+    use repository::{EqualFilter, PaginationOption, Sort, StringFilter};
     use serde_json::json;
 
     use service::{
@@ -343,7 +343,7 @@ mod test {
                 Some(
                     LocationFilter::new()
                         .store_id(EqualFilter::equal_to("store_a"))
-                        .name(EqualFilter::equal_to("match_name"))
+                        .name(StringFilter::equal_to("match_name"))
                 )
             );
             Ok(ListResult::empty())
