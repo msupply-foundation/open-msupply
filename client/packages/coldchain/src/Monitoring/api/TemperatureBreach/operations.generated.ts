@@ -3,10 +3,8 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { SensorFragmentDoc } from '../../../Sensor/api/operations.generated';
-import { LocationRowFragmentDoc } from '../../../../../system/src/Location/api/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type TemperatureBreachFragment = { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, duration: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null } | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null };
+export type TemperatureBreachFragment = { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, duration: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
 
 export type Temperature_BreachesQueryVariables = Types.Exact<{
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -16,7 +14,7 @@ export type Temperature_BreachesQueryVariables = Types.Exact<{
 }>;
 
 
-export type Temperature_BreachesQuery = { __typename: 'Queries', temperatureBreaches: { __typename: 'TemperatureBreachConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, duration: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null } | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null }> } };
+export type Temperature_BreachesQuery = { __typename: 'Queries', temperatureBreaches: { __typename: 'TemperatureBreachConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, duration: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null }> } };
 
 export const TemperatureBreachFragmentDoc = gql`
     fragment TemperatureBreach on TemperatureBreachNode {
@@ -29,14 +27,14 @@ export const TemperatureBreachFragmentDoc = gql`
   type
   maxOrMinTemperature
   sensor {
-    ...Sensor
+    id
+    name
   }
   location {
-    ...LocationRow
+    name
   }
 }
-    ${SensorFragmentDoc}
-${LocationRowFragmentDoc}`;
+    `;
 export const Temperature_BreachesDocument = gql`
     query temperature_breaches($page: PaginationInput, $sort: [TemperatureBreachSortInput!], $filter: TemperatureBreachFilterInput, $storeId: String!) {
   temperatureBreaches(
