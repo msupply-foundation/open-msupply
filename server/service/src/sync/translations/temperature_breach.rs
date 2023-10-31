@@ -40,7 +40,8 @@ pub enum LegacyTemperatureBreachType {
 pub struct LegacyTemperatureBreachRow {
     #[serde(rename = "ID")]
     pub id: String,
-    pub duration: i32,
+    #[serde(rename = "duration")]
+    pub duration_milliseconds: i32,
     #[serde(rename = "type")]
     pub r#type: LegacyTemperatureBreachType,
     #[serde(rename = "sensor_ID")]
@@ -65,7 +66,8 @@ pub struct LegacyTemperatureBreachRow {
     pub threshold_minimum: f64,
     #[serde(rename = "threshold_maximum_temperature")]
     pub threshold_maximum: f64,
-    pub threshold_duration: i32,
+    #[serde(rename = "threshold_duration")]
+    pub threshold_duration_milliseconds: i32,
 }
 
 pub(crate) struct TemperatureBreachTranslation {}
@@ -100,7 +102,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
 
         let result = TemperatureBreachRow {
             id: data.id,
-            duration: data.duration,
+            duration_milliseconds: data.duration_milliseconds,
             r#type,
             sensor_id: data.sensor_id,
             location_id: data.location_id,
@@ -110,7 +112,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             acknowledged: data.acknowledged,
             threshold_minimum: data.threshold_minimum,
             threshold_maximum: data.threshold_maximum,
-            threshold_duration: data.threshold_duration,
+            threshold_duration_milliseconds: data.threshold_duration_milliseconds,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -129,7 +131,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
 
         let TemperatureBreachRow {
             id,
-            duration,
+            duration_milliseconds,
             r#type,
             sensor_id,
             location_id,
@@ -139,7 +141,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             acknowledged,
             threshold_minimum,
             threshold_maximum,
-            threshold_duration,
+            threshold_duration_milliseconds,
         } = TemperatureBreachRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -154,7 +156,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
 
         let legacy_row = LegacyTemperatureBreachRow {
             id,
-            duration,
+            duration_milliseconds,
             r#type,
             sensor_id,
             location_id,
@@ -168,7 +170,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             acknowledged,
             threshold_minimum,
             threshold_maximum,
-            threshold_duration,
+            threshold_duration_milliseconds,
         };
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,
