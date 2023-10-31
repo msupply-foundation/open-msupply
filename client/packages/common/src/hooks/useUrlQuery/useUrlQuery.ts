@@ -65,7 +65,12 @@ export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
 
     Object.entries(values).forEach(([key, value]) => {
       if (!value) delete newQueryObject[key];
-      else {
+      else if (key === 'tab') {
+        newQueryObject[key] = String(value);
+        Object.entries(newQueryObject).forEach(([k, v]) => {
+          if (v !== value) delete newQueryObject[k];
+        });
+      } else {
         if (typeof value === 'object' && ('from' in value || 'to' in value)) {
           const range = parseRangeString(newQueryObject[key]) as RangeObject<
             string | number
