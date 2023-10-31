@@ -142,7 +142,7 @@ mod test {
                 rows: vec![TemperatureBreach {
                     temperature_breach_row: TemperatureBreachRow {
                         id: "acknowledged_temperature_breach".to_owned(),
-                        duration: 3600,
+                        duration_milliseconds: 3600,
                         acknowledged: true,
                         r#type: TemperatureBreachRowType::ColdConsecutive,
                         store_id: Some("store_a".to_string()),
@@ -162,7 +162,7 @@ mod test {
                                 .unwrap()
                                 + Duration::seconds(50646),
                         ),
-                        threshold_duration: 3600,
+                        threshold_duration_milliseconds: 3600,
                     },
                 }],
                 count: 1,

@@ -35,7 +35,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             CREATE TABLE temperature_breach (
                 id TEXT NOT NULL PRIMARY KEY,
-                duration INTEGER NOT NULL,
+                duration_milliseconds INTEGER NOT NULL,
                 type TEXT NOT NULL,
                 sensor_id TEXT NOT NULL REFERENCES sensor(id),
                 store_id TEXT REFERENCES store(id),
@@ -45,7 +45,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 acknowledged BOOLEAN,
                 threshold_minimum {DOUBLE} NOT NULL,
                 threshold_maximum {DOUBLE} NOT NULL,
-                threshold_duration INTEGER NOT NULL
+                threshold_duration_milliseconds INTEGER NOT NULL
             );
 
             CREATE TABLE temperature_log (
