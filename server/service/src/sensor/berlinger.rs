@@ -281,18 +281,10 @@ pub fn read_sensors(
         let result = get_matching_sensor_serial(connection, &current_serial)?;
 
         if let Some(mut record) = result.clone().pop() {
-            let sensor_id = &record.sensor_row.id;
             // Filter sensor data by previous last connected time
             let last_connected = record.sensor_row.last_connection_datetime;
             temperature_sensor =
                 temperature_sensor::filter_sensor(temperature_sensor, last_connected, None, true);
-
-            let mut temperature_breach_configs =
-                get_breach_configs_for_sensor(connection, sensor_id)?;
-            println!(
-                "{} temperature breach configs before",
-                temperature_breach_configs.len()
-            );
 
             if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
                 for temperature_sensor_config in temperature_sensor_configs {
@@ -303,15 +295,6 @@ pub fn read_sensors(
                     )?;
                 }
             }
-
-            temperature_breach_configs = get_breach_configs_for_sensor(connection, sensor_id)?;
-            println!(
-                "{} temperature breach configs after",
-                temperature_breach_configs.len()
-            );
-
-            let mut temperature_breaches = get_breaches_for_sensor(connection, sensor_id)?;
-            println!("{} temperature breaches before", temperature_breaches.len());
 
             if let Some(temperature_sensor_breaches) = &temperature_sensor.breaches {
                 for temperature_sensor_breach in temperature_sensor_breaches {
@@ -332,20 +315,11 @@ pub fn read_sensors(
                 }
             }
 
-            temperature_breaches = get_breaches_for_sensor(connection, sensor_id)?;
-            println!("{} temperature breaches after", temperature_breaches.len());
-
-            let mut temperature_logs = get_logs_for_sensor(connection, sensor_id)?;
-            println!("{} temperature logs before", temperature_logs.len());
-
             if let Some(temperature_sensor_logs) = &temperature_sensor.logs {
                 for temperature_sensor_log in temperature_sensor_logs {
                     sensor_add_log_if_new(connection, &record.sensor_row, temperature_sensor_log)?;
                 }
             }
-
-            temperature_logs = get_logs_for_sensor(connection, sensor_id)?;
-            println!("{} temperature logs after", temperature_logs.len());
 
             // Finally, update sensor's last connected time if it has changed
             if record.sensor_row.last_connection_datetime != temperature_sensor.last_connected_timestamp {
