@@ -20,7 +20,6 @@ mod requisition_line;
 mod requisition_supply_status;
 mod stock_line;
 mod stocktake_lines;
-mod stocktake_lines_report;
 mod store;
 mod user;
 
@@ -48,7 +47,6 @@ pub use requisition_line::*;
 pub use requisition_supply_status::*;
 pub use stock_line::*;
 pub use stocktake_lines::*;
-pub use stocktake_lines_report::*;
 pub use store::*;
 pub use user::*;
 

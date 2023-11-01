@@ -1,22 +1,16 @@
 import {
-  DataSortInput,
   EnvUtils,
   FilterBy,
   SortBy,
+  PrintReportSortInput,
 } from '@openmsupply-client/common';
-import { JsonData } from '@openmsupply-client/programs';
 import { ReportRowFragment, Sdk } from './operations.generated';
+import { JsonData } from 'packages/programs/src';
 
 export type ReportListParams = {
   filterBy: FilterBy | null;
   sortBy: SortBy<ReportRowFragment>;
   offset: number;
-};
-export type PrintReportParams = {
-  reportId: string;
-  dataId?: string;
-  args?: JsonData;
-  sortBy?: DataSortInput;
 };
 
 export const getReportQueries = (sdk: Sdk, storeId: string) => ({
@@ -31,7 +25,17 @@ export const getReportQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.reports || [];
     },
-    print: async ({ reportId, dataId, args, sortBy }: PrintReportParams) => {
+    print: async ({
+      reportId,
+      dataId,
+      args,
+      sort,
+    }: {
+      reportId: string;
+      dataId?: string;
+      args?: JsonData;
+      sort?: PrintReportSortInput;
+    }) => {
       const format = EnvUtils.printFormat;
       const result = await sdk.printReport({
         dataId,
@@ -39,7 +43,7 @@ export const getReportQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
         format,
         arguments: args,
-        sort: sortBy,
+        sort,
       });
       if (result?.printReport?.__typename === 'PrintReportNode') {
         return result.printReport.fileId;

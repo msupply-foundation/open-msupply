@@ -8,9 +8,10 @@ mod tests {
     use graphql_location::LocationQueries;
     use graphql_requisition::RequisitionQueries;
     use graphql_stocktake::StocktakeQueries;
+    use graphql_stocktake_line::StocktakeLineQueries;
     use repository::mock::{
         mock_outbound_shipment_a, mock_request_draft_requisition_all_fields, mock_stocktake_a,
-        MockDataInserts,
+        mock_stocktake_line_a, MockDataInserts,
     };
     use serde_json::json;
     use service::report::{default_queries::get_default_gql_query, definition::DefaultQuery};
@@ -20,6 +21,7 @@ mod tests {
         pub InvoiceQueries,
         pub LocationQueries,
         pub StocktakeQueries,
+        pub StocktakeLineQueries,
         pub GeneralQueries,
         pub RequisitionQueries,
     );
@@ -29,6 +31,7 @@ mod tests {
             InvoiceQueries,
             LocationQueries,
             StocktakeQueries,
+            StocktakeLineQueries,
             GeneralQueries,
             RequisitionQueries,
         )
@@ -65,8 +68,13 @@ mod tests {
         let query = get_default_gql_query(DefaultQuery::Stocktake).query;
         let mock_stocktake = mock_stocktake_a();
         let expected = json!({
-          "stocktakeReport": {
+          "stocktake": {
             "id": mock_stocktake.id
+          },
+          "stocktakeLines": {
+            "nodes": [{
+              "id": mock_stocktake_line_a().id
+            }]
           },
           "store": {
             "id": mock_stocktake.store_id

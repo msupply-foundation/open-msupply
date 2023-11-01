@@ -133,13 +133,6 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
-    let stocktake_line_report_loader = DataLoader::new(
-        StocktakeLineReportByStocktakeIdLoader {
-            connection_manager: connection_manager.clone(),
-        },
-        async_std::task::spawn,
-    );
-
     let requisitions_by_id_loader = DataLoader::new(
         RequisitionsByIdLoader {
             service_provider: service_provider.clone(),
@@ -243,7 +236,6 @@ pub async fn get_loaders(
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
-    loaders.insert(stocktake_line_report_loader);
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);

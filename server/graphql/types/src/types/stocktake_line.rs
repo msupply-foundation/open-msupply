@@ -133,8 +133,8 @@ impl StocktakeLineNode {
 
 #[derive(SimpleObject)]
 pub struct StocktakeLineConnector {
-    total_count: u32,
-    nodes: Vec<StocktakeLineNode>,
+    pub total_count: u32,
+    pub nodes: Vec<StocktakeLineNode>,
 }
 
 impl StocktakeLineConnector {
