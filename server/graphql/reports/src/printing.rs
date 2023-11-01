@@ -1,10 +1,9 @@
 use async_graphql::*;
-use graphql_core::generic_inputs::DataSortInput;
+use graphql_core::generic_inputs::PrintReportSortInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use service::auth::{Resource, ResourceAccessRequest};
-use service::report::data_sort_inputs::DataSort;
-use service::report::definition::{GraphQlQuery, ReportDefinition};
+use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition};
 use service::report::report_service::{PrintFormat, ReportError};
 
 pub struct FailedToFetchReportData {
@@ -59,7 +58,7 @@ pub async fn print_report(
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
     format: Option<PrintFormat>,
-    sort: Option<DataSortInput>,
+    sort: Option<PrintReportSortInput>,
 ) -> Result<PrintReportResponse> {
     let user = validate_auth(
         ctx,
@@ -201,7 +200,7 @@ async fn fetch_data(
     store_id: &str,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
-    sort: Option<DataSort>,
+    sort: Option<PrintReportSort>,
 ) -> anyhow::Result<FetchResult> {
     let user_data = ctx.data_unchecked::<RequestUserData>().clone();
     let self_requester = ctx.self_request().unwrap();

@@ -1,5 +1,5 @@
 use async_graphql::*;
-use service::report::data_sort_inputs::DataSort;
+use service::report::definition::PrintReportSort;
 
 #[derive(InputObject)]
 pub struct TaxInput {
@@ -7,8 +7,9 @@ pub struct TaxInput {
     pub percentage: Option<f64>,
 }
 
+/// This struct is used to sort report data by a key and in descending or ascending order
 #[derive(InputObject)]
-pub struct DataSortInput {
+pub struct PrintReportSortInput {
     /// Sort query result by `key`
     pub key: String,
     /// Sort query result is sorted descending or ascending (if not provided the default is
@@ -16,10 +17,10 @@ pub struct DataSortInput {
     pub desc: Option<bool>,
 }
 
-impl DataSortInput {
-    /// Convert the input object `DataSortInput` to domain `DataSort` object
-    pub fn to_domain(self) -> DataSort {
-        DataSort {
+impl PrintReportSortInput {
+    /// Convert the input object `PrintReportSortInput` to a domain object `PrintReportSort`
+    pub fn to_domain(self) -> PrintReportSort {
+        PrintReportSort {
             key: self.key,
             desc: self.desc,
         }

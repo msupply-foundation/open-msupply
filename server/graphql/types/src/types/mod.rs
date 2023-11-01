@@ -42,9 +42,6 @@ pub use self::store::*;
 pub mod stocktake;
 pub use self::stocktake::*;
 
-pub mod stocktake_report;
-pub use self::stocktake_report::*;
-
 pub mod stocktake_line;
 pub use self::stocktake_line::*;
 

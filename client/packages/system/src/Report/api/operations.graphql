@@ -38,7 +38,7 @@ query printReport(
   $dataId: String
   $arguments: JSON
   $format: PrintFormat
-  $sort: DataSortInput
+  $sort: PrintReportSortInput
 ) {
   printReport(
     dataId: $dataId

@@ -11,7 +11,7 @@ use graphql_core::standard_graphql_error::{
     list_error_to_gql_err, validate_auth, StandardGraphqlError,
 };
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{StocktakeNode, StocktakeNodeStatus, StocktakeReportNode};
+use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
 use repository::StocktakeFilter;
 use repository::*;
 use repository::{StocktakeSort, StocktakeSortField};
@@ -150,56 +150,6 @@ pub fn stocktake(ctx: &Context<'_>, store_id: &str, id: &str) -> Result<Stocktak
             let result = match stocktakes.rows.pop() {
                 Some(stocktake) => StocktakeResponse::Response(StocktakeNode { stocktake }),
                 None => StocktakeResponse::Error(ErrorWrapper {
-                    error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
-                }),
-            };
-            Ok(result)
-        }
-
-        Err(err) => Err(list_error_to_gql_err(err)),
-    }
-}
-
-/// This enum is used to represent stocktake report response in graphql schema
-#[derive(Union)]
-pub enum StocktakeReportResponse {
-    /// Stocktake report response
-    Response(StocktakeReportNode),
-    /// Error response
-    Error(NodeError),
-}
-
-/// Graphql query function for stocktake report
-pub fn stocktake_report(
-    ctx: &Context<'_>,
-    store_id: &str,
-    id: &str,
-) -> Result<StocktakeReportResponse> {
-    let user = validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::QueryStocktake,
-            store_id: Some(store_id.to_string()),
-        },
-    )?;
-
-    let service_provider = ctx.service_provider();
-    let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
-    let service = &service_provider.stocktake_service;
-
-    match service.get_stocktakes(
-        &service_ctx,
-        store_id,
-        None,
-        Some(StocktakeFilter::new().id(EqualFilter::equal_to(id))),
-        None,
-    ) {
-        Ok(mut stocktakes) => {
-            let result = match stocktakes.rows.pop() {
-                Some(stocktake) => {
-                    StocktakeReportResponse::Response(StocktakeReportNode { stocktake })
-                }
-                None => StocktakeReportResponse::Error(ErrorWrapper {
                     error: NodeErrorInterface::RecordNotFound(RecordNotFound {}),
                 }),
             };

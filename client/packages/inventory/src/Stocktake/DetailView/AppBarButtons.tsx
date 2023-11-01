@@ -45,7 +45,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
       reportId: report.id,
       dataId: data?.id,
       args,
-      sortBy: { key: sortBy.key, desc: sortBy.isDesc },
+      sort: { key: sortBy.key, desc: sortBy.isDesc },
     });
   };
 

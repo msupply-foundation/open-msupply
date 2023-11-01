@@ -32,7 +32,7 @@ fn find_project_files(dir: &Path) -> anyhow::Result<HashMap<String, PathBuf>> {
 fn parse_default_query(input: &str) -> anyhow::Result<DefaultQuery> {
     let query = match input {
         "invoice" => DefaultQuery::Invoice,
-        "stocktakeReport" => DefaultQuery::Stocktake,
+        "stocktake" => DefaultQuery::Stocktake,
         "requisition" => DefaultQuery::Requisition,
         _ => {
             return Err(anyhow::Error::msg(format!(

@@ -22,7 +22,7 @@ export type PrintReportQueryVariables = Types.Exact<{
   dataId?: Types.InputMaybe<Types.Scalars['String']['input']>;
   arguments?: Types.InputMaybe<Types.Scalars['JSON']['input']>;
   format?: Types.InputMaybe<Types.PrintFormat>;
-  sort?: Types.InputMaybe<Types.DataSortInput>;
+  sort?: Types.InputMaybe<Types.PrintReportSortInput>;
 }>;
 
 
@@ -56,7 +56,7 @@ export const ReportsDocument = gql`
 }
     ${ReportRowFragmentDoc}`;
 export const PrintReportDocument = gql`
-    query printReport($storeId: String!, $reportId: String!, $dataId: String, $arguments: JSON, $format: PrintFormat, $sort: DataSortInput) {
+    query printReport($storeId: String!, $reportId: String!, $dataId: String, $arguments: JSON, $format: PrintFormat, $sort: PrintReportSortInput) {
   printReport(
     dataId: $dataId
     reportId: $reportId

@@ -2,13 +2,21 @@ import {
   EnvUtils,
   Platform,
   PrintFormat,
+  PrintReportSortInput,
   useMutation,
   useNotification,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { useReportApi } from './useReportApi';
 import { Printer } from '@bcyesil/capacitor-plugin-printer';
-import { PrintReportParams } from '../../api';
+import { JsonData } from '@openmsupply-client/programs';
+
+type PrintReportParams = {
+  reportId: string;
+  dataId?: string;
+  args?: JsonData;
+  sort?: PrintReportSortInput;
+};
 
 const setClose = (frame: HTMLIFrameElement) => () => {
   document.body.removeChild(frame);

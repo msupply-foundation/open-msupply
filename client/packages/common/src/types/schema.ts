@@ -616,16 +616,6 @@ export type CreateRequisitionShipmentInput = {
 
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
-export type DataSortInput = {
-  /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Sort query result by `key` */
-  key: Scalars['String']['input'];
-};
-
 export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
@@ -3379,6 +3369,17 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
+/** This struct is used to sort report data by a key and in descending or ascending order */
+export type PrintReportSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: Scalars['String']['input'];
+};
+
 export type ProgramEnrolmentConnector = {
   __typename: 'ProgramEnrolmentConnector';
   nodes: Array<ProgramEnrolmentNode>;
@@ -3620,7 +3621,7 @@ export type Queries = {
   stockLines: StockLinesResponse;
   stocktake: StocktakeResponse;
   stocktakeByNumber: StocktakeResponse;
-  stocktakeReport: StocktakeReportResponse;
+  stocktakeLines: StocktakesLinesResponse;
   stocktakes: StocktakesResponse;
   store: StoreResponse;
   storePreferences: StorePreferenceNode;
@@ -3843,7 +3844,7 @@ export type QueriesPrintReportArgs = {
   dataId?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String']['input'];
-  sort?: InputMaybe<DataSortInput>;
+  sort?: InputMaybe<PrintReportSortInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -3964,8 +3965,10 @@ export type QueriesStocktakeByNumberArgs = {
 };
 
 
-export type QueriesStocktakeReportArgs = {
-  id: Scalars['String']['input'];
+export type QueriesStocktakeLinesArgs = {
+  reportSort?: InputMaybe<PrintReportSortInput>;
+  sort?: InputMaybe<Array<StocktakeLineSortInput>>;
+  stocktakeId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -4528,31 +4531,23 @@ export type StocktakeLineNode = {
   stocktakeId: Scalars['String']['output'];
 };
 
-export type StocktakeLineReportConnector = {
-  __typename: 'StocktakeLineReportConnector';
-  nodes: Array<StocktakeLineReportNode>;
-  totalCount: Scalars['Int']['output'];
-};
+export enum StocktakeLineSortFieldInput {
+  Batch = 'batch',
+  ExpiryDate = 'expiryDate',
+  ItemCode = 'itemCode',
+  ItemName = 'itemName',
+  LocationName = 'locationName',
+  PackSize = 'packSize'
+}
 
-export type StocktakeLineReportNode = {
-  __typename: 'StocktakeLineReportNode';
-  batch?: Maybe<Scalars['String']['output']>;
-  comment?: Maybe<Scalars['String']['output']>;
-  costPricePerPack?: Maybe<Scalars['Float']['output']>;
-  countedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  id: Scalars['String']['output'];
-  inventoryAdjustmentReason?: Maybe<InventoryAdjustmentReasonNode>;
-  inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
-  item: ItemNode;
-  itemId: Scalars['String']['output'];
-  location?: Maybe<LocationNode>;
-  note?: Maybe<Scalars['String']['output']>;
-  packSize?: Maybe<Scalars['Int']['output']>;
-  sellPricePerPack?: Maybe<Scalars['Float']['output']>;
-  snapshotNumberOfPacks: Scalars['Float']['output'];
-  stockLine?: Maybe<StockLineNode>;
-  stocktakeId: Scalars['String']['output'];
+export type StocktakeLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: StocktakeLineSortFieldInput;
 };
 
 export type StocktakeNode = {
@@ -4581,39 +4576,6 @@ export enum StocktakeNodeStatus {
   New = 'NEW'
 }
 
-export type StocktakeReportNode = {
-  __typename: 'StocktakeReportNode';
-  comment?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['DateTime']['output'];
-  description?: Maybe<Scalars['String']['output']>;
-  finalisedDatetime?: Maybe<Scalars['DateTime']['output']>;
-  id: Scalars['String']['output'];
-  inventoryAddition?: Maybe<InvoiceNode>;
-  inventoryAdditionId?: Maybe<Scalars['String']['output']>;
-  inventoryReduction?: Maybe<InvoiceNode>;
-  inventoryReductionId?: Maybe<Scalars['String']['output']>;
-  isLocked: Scalars['Boolean']['output'];
-  lines: StocktakeLineReportConnector;
-  status: StocktakeReportNodeStatus;
-  stocktakeDate?: Maybe<Scalars['NaiveDate']['output']>;
-  stocktakeNumber: Scalars['Int']['output'];
-  storeId: Scalars['String']['output'];
-  /** User that created stocktake, if user is not found in system default unknown user is returned */
-  user: UserNode;
-};
-
-
-export type StocktakeReportNodeLinesArgs = {
-  sort?: InputMaybe<DataSortInput>;
-};
-
-export enum StocktakeReportNodeStatus {
-  Finalised = 'FINALISED',
-  New = 'NEW'
-}
-
-export type StocktakeReportResponse = NodeError | StocktakeReportNode;
-
 export type StocktakeResponse = NodeError | StocktakeNode;
 
 export enum StocktakeSortFieldInput {
@@ -4635,6 +4597,8 @@ export type StocktakeSortInput = {
   /** Sort query result by `key` */
   key: StocktakeSortFieldInput;
 };
+
+export type StocktakesLinesResponse = StocktakeLineConnector;
 
 export type StocktakesResponse = StocktakeConnector;
 

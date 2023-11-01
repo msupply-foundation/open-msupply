@@ -63,7 +63,38 @@ pub enum StocktakeLineSortField {
     LocationName,
 }
 
-pub type StocktakeLineSort = Sort<()>;
+pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
+
+impl StocktakeLineSort {
+    pub fn to_domain1(&self) -> StocktakeLineSort {
+        match self.key {
+            StocktakeLineSortField::ItemCode => StocktakeLineSort {
+                key: StocktakeLineSortField::ItemCode,
+                desc: self.desc,
+            },
+            StocktakeLineSortField::ItemName => StocktakeLineSort {
+                key: StocktakeLineSortField::ItemName,
+                desc: self.desc,
+            },
+            StocktakeLineSortField::Batch => StocktakeLineSort {
+                key: StocktakeLineSortField::Batch,
+                desc: self.desc,
+            },
+            StocktakeLineSortField::ExpiryDate => StocktakeLineSort {
+                key: StocktakeLineSortField::ExpiryDate,
+                desc: self.desc,
+            },
+            StocktakeLineSortField::PackSize => StocktakeLineSort {
+                key: StocktakeLineSortField::PackSize,
+                desc: self.desc,
+            },
+            StocktakeLineSortField::LocationName => StocktakeLineSort {
+                key: StocktakeLineSortField::LocationName,
+                desc: self.desc,
+            },
+        }
+    }
+}
 
 pub type StocktakeLineReportSort = Sort<StocktakeLineSortField>;
 
@@ -98,9 +129,7 @@ impl StocktakeLineReportSort {
     }
 }
 
-type StocktakeLineJoin = (StocktakeLineRow, Option<StockLineRow>, Option<LocationRow>);
-
-type StocktakeLineReportJoin = (
+type StocktakeLineJoin = (
     StocktakeLineRow,
     Option<ItemRow>,
     Option<StockLineRow>,
@@ -110,6 +139,7 @@ type StocktakeLineReportJoin = (
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct StocktakeLine {
     pub line: StocktakeLineRow,
+    pub item: Option<ItemRow>,
     pub stock_line: Option<StockLineRow>,
     pub location: Option<LocationRow>,
 }
@@ -147,40 +177,9 @@ impl<'a> StocktakeLineRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<StocktakeLineFilter>,
-        _: Option<StocktakeLineSort>,
+        sort: Option<StocktakeLineSort>,
     ) -> Result<Vec<StocktakeLine>, RepositoryError> {
-        let query = create_filtered_query(filter);
-
-        let result = query
-            .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<StocktakeLineJoin>(&self.connection.connection)?;
-
-        Ok(result
-            .into_iter()
-            .map(|(line, stock_line, location)| StocktakeLine {
-                line,
-                stock_line,
-                location,
-            })
-            .collect())
-    }
-
-    pub fn report_query_by_filter(
-        &self,
-        filter: StocktakeLineFilter,
-        sort: Option<StocktakeLineReportSort>,
-    ) -> Result<Vec<StocktakeLineReport>, RepositoryError> {
-        self.report_query(Pagination::all(), Some(filter), sort)
-    }
-
-    pub fn report_query(
-        &self,
-        pagination: Pagination,
-        filter: Option<StocktakeLineFilter>,
-        sort: Option<StocktakeLineReportSort>,
-    ) -> Result<Vec<StocktakeLineReport>, RepositoryError> {
-        let mut query = create_report_filtered_query(filter);
+        let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -210,11 +209,11 @@ impl<'a> StocktakeLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<StocktakeLineReportJoin>(&self.connection.connection)?;
+            .load::<StocktakeLineJoin>(&self.connection.connection)?;
 
         Ok(result
             .into_iter()
-            .map(|(line, item, stock_line, location)| StocktakeLineReport {
+            .map(|(line, item, stock_line, location)| StocktakeLine {
                 line,
                 item,
                 stock_line,
@@ -226,27 +225,6 @@ impl<'a> StocktakeLineRepository<'a> {
 
 type BoxedStocktakeLineQuery = IntoBoxed<
     'static,
-    LeftJoin<LeftJoin<stocktake_line::table, stock_line::table>, location::table>,
-    DBType,
->;
-
-fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeLineQuery {
-    let mut query = stocktake_line_dsl::stocktake_line
-        .left_join(stock_line_dsl::stock_line)
-        .left_join(location_dsl::location)
-        .into_boxed();
-
-    if let Some(f) = filter {
-        apply_equal_filter!(query, f.id, stocktake_line_dsl::id);
-        apply_equal_filter!(query, f.stocktake_id, stocktake_line_dsl::stocktake_id);
-        apply_equal_filter!(query, f.location_id, stocktake_line_dsl::location_id);
-    }
-
-    query
-}
-
-type BoxedStocktakeLineReportQuery = IntoBoxed<
-    'static,
     LeftJoin<
         LeftJoin<LeftJoin<stocktake_line::table, item::table>, stock_line::table>,
         location::table,
@@ -254,9 +232,7 @@ type BoxedStocktakeLineReportQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_report_filtered_query(
-    filter: Option<StocktakeLineFilter>,
-) -> BoxedStocktakeLineReportQuery {
+fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeLineQuery {
     let mut query = stocktake_line_dsl::stocktake_line
         .left_join(item_dsl::item)
         .left_join(stock_line_dsl::stock_line)

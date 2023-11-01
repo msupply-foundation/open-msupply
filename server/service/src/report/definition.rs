@@ -4,13 +4,20 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::data_sort_inputs::DataSort;
-
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct GraphQlQuery {
     pub query: String,
     /// Must be an Object. If `dataId` is set it will be overwritten.
     pub variables: Option<Value>,
+}
+
+/// This struct is used to sort report data by a key and in descending or ascending order
+#[derive(Clone)]
+pub struct PrintReportSort {
+    /// Key to sort by
+    pub key: String,
+    /// Whether to sort in descending order
+    pub desc: Option<bool>,
 }
 
 impl GraphQlQuery {
@@ -20,7 +27,7 @@ impl GraphQlQuery {
         store_id: &str,
         data_id: Option<String>,
         arguments: Option<Value>,
-        sort: Option<DataSort>,
+        sort: Option<PrintReportSort>,
     ) -> Value {
         let mut variables = match &self.variables {
             Some(variables) => {
