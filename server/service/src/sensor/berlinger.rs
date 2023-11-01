@@ -208,27 +208,27 @@ fn sensor_add_breach_config_if_new(
     let result =
         get_matching_sensor_breach_config(connection, &config_description, &breach_row_type)?;
 
-    if let Some(_record) = result.clone().pop() {
-        Ok(())
-    } else {
-        let new_temperature_breach_config = TemperatureBreachConfigRow {
-            id: uuid(),
-            store_id: sensor_row.store_id.clone(),
-            is_active: true,
-            description: config_description.clone(),
-            duration: temperature_breach_config.duration.num_seconds() as i32,
-            r#type: breach_row_type,
-            minimum_temperature: temperature_breach_config.minimum_temperature,
-            maximum_temperature: temperature_breach_config.maximum_temperature,
-        };
-        TemperatureBreachConfigRowRepository::new(connection)
-            .upsert_one(&new_temperature_breach_config)?;
-        println!(
-            "Added sensor breach config {:?} ",
-            new_temperature_breach_config
-        );
-        Ok(())
-    }
+    if !result.is_empty() {
+        return Ok(());
+    };
+    
+    let new_temperature_breach_config = TemperatureBreachConfigRow {
+        id: uuid(),
+        store_id: sensor_row.store_id.clone(),
+        is_active: true,
+        description: config_description.clone(),
+        duration: temperature_breach_config.duration.num_seconds() as i32,
+        r#type: breach_row_type,
+        minimum_temperature: temperature_breach_config.minimum_temperature,
+        maximum_temperature: temperature_breach_config.maximum_temperature,
+    };
+    TemperatureBreachConfigRowRepository::new(connection)
+        .upsert_one(&new_temperature_breach_config)?;
+    println!(
+        "Added sensor breach config {:?} ",
+        new_temperature_breach_config
+    );
+    Ok(())
 }
 
 fn sensor_add_if_new(
@@ -238,29 +238,29 @@ fn sensor_add_if_new(
 ) -> Result<(), RepositoryError> {
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
-    if let Some(_record) = result.clone().pop() {
-        Ok(())
-    } else {
-        let mut interval_seconds = None;
-        if let Some(interval_duration) = temperature_sensor.log_interval {
-            interval_seconds = Some(interval_duration.num_seconds() as i32);
-        }
-        let new_sensor = SensorRow {
-            id: uuid(),
-            serial: temperature_sensor.serial.clone(),
-            name: temperature_sensor.name.clone(),
-            store_id: Some(store_id.to_string()),
-            location_id: None,
-            last_connection_datetime: None,
-            battery_level: None,
-            is_active: true,
-            log_interval: interval_seconds,
-            r#type: SensorType::Berlinger,
-        };
-        SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
-        println!("Added sensor {:?} ", new_sensor);
-        Ok(())
+    if !result.is_empty() {
+        return Ok(());
+    };
+
+    let mut interval_seconds = None;
+    if let Some(interval_duration) = temperature_sensor.log_interval {
+        interval_seconds = Some(interval_duration.num_seconds() as i32);
     }
+    let new_sensor = SensorRow {
+        id: uuid(),
+        serial: temperature_sensor.serial.clone(),
+        name: temperature_sensor.name.clone(),
+        store_id: Some(store_id.to_string()),
+        location_id: None,
+        last_connection_datetime: None,
+        battery_level: None,
+        is_active: true,
+        log_interval: interval_seconds,
+        r#type: SensorType::Berlinger,
+    };
+    SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
+    println!("Added sensor {:?} ", new_sensor);
+    Ok(())
 }
 
 pub fn read_sensors(
