@@ -177,7 +177,7 @@ const getFilterEntry = (
     const dateAfter = filterItems[0] ? new Date(filterItems[0]) : null;
     const dateBefore = filterItems[1] ? new Date(filterItems[1]) : null;
 
-    if (filter.key.includes('datetime')) {
+    if (filter.key.toLowerCase().includes('datetime')) {
       return {
         afterOrEqualTo: Formatter.naiveDateTime(dateAfter),
         beforeOrEqualTo: Formatter.naiveDateTime(dateBefore),
