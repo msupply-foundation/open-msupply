@@ -151,7 +151,7 @@ fn upsert_sensor(
                 id: id.clone(),
                 name: Some(sensor.name.clone()),
                 is_active: None,
-                location_id: None,
+                location: None,
                 log_interval: Some(sensor.log_interval),
                 battery_level: Some(sensor.battery_level),
             };

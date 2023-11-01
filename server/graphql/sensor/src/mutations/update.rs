@@ -48,7 +48,7 @@ pub fn update_sensor(
 #[derive(InputObject)]
 pub struct UpdateSensorInput {
     pub id: String,
-    pub location_id: Option<NullableUpdateInput<String>>,
+    pub location: Option<NullableUpdateInput<String>>,
     pub name: Option<String>,
     pub is_active: Option<bool>,
 }
@@ -57,15 +57,15 @@ impl From<UpdateSensorInput> for UpdateSensor {
     fn from(
         UpdateSensorInput {
             id,
-            location_id,
+            location,
             name,
             is_active,
         }: UpdateSensorInput,
     ) -> Self {
         UpdateSensor {
             id,
-            location_id: location_id.map(|location_id| NullableUpdate {
-                value: location_id.value,
+            location: location.map(|location| NullableUpdate {
+                value: location.value,
             }),
             name,
             is_active,

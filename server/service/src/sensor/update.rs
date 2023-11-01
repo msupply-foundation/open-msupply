@@ -22,7 +22,7 @@ pub struct UpdateSensor {
     pub id: String,
     pub name: Option<String>,
     pub is_active: Option<bool>,
-    pub location_id: Option<NullableUpdate<String>>,
+    pub location: Option<NullableUpdate<String>>,
     pub log_interval: Option<i32>,
     pub battery_level: Option<i32>,
 }
@@ -38,7 +38,7 @@ pub fn update_sensor(
             let updated_sensor_row = generate(input.clone(), sensor_row.clone());
             SensorRowRepository::new(&connection).upsert_one(&updated_sensor_row)?;
 
-            if let Some(location_update) = input.location_id {
+            if let Some(location_update) = input.location {
                 if sensor_row.location_id == location_update.value {
                     activity_log_entry(
                         ctx,
@@ -76,17 +76,17 @@ pub fn generate(
         id: _,
         name,
         is_active,
-        location_id,
+        location,
         log_interval,
         battery_level,
     }: UpdateSensor,
     mut sensor_row: SensorRow,
 ) -> SensorRow {
-    // if location_id has been passed, update sensor_row to the value passed (including if this is null)
-    // A null value being passed as the LocationUpdate is the unassignment of location_id
+    // if location has been passed, update sensor_row to the value passed (including if this is null)
+    // A null value being passed as the LocationUpdate is the unassignment of location
     // no LocationUpdate being passed is the location not being updated
-    if let Some(location_id) = location_id {
-        sensor_row.location_id = location_id.value;
+    if let Some(location) = location {
+        sensor_row.location_id = location.value;
     }
     sensor_row.name = name.unwrap_or(sensor_row.name);
     sensor_row.is_active = is_active.unwrap_or(sensor_row.is_active);
