@@ -278,6 +278,10 @@ impl ContactTraceNode {
             diff.num_days() / 365
         })
     }
+
+    pub async fn relationship(&self) -> Option<String> {
+        self.trace_row().relationship.clone()
+    }
 }
 
 #[derive(Union)]
