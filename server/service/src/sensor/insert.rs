@@ -19,6 +19,8 @@ pub struct InsertSensor {
     pub serial: String,
     pub name: Option<String>,
     pub is_active: Option<bool>,
+    pub log_interval: Option<i32>,
+    pub battery_level: Option<i32>,
     pub r#type: SensorType,
 }
 
@@ -60,6 +62,8 @@ pub fn generate(
         serial,
         name,
         is_active,
+        log_interval,
+        battery_level,
         r#type,
     }: InsertSensor,
 ) -> SensorRow {
@@ -70,8 +74,8 @@ pub fn generate(
         is_active: is_active.unwrap_or(false),
         store_id: Some(store_id.to_string()),
         location_id: None,
-        battery_level: Some(99),
-        log_interval: Some(10),
+        battery_level,
+        log_interval,
         last_connection_datetime: None,
         r#type,
     }

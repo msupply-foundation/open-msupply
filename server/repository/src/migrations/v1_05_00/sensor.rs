@@ -23,7 +23,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
             CREATE TABLE sensor (
                 id TEXT NOT NULL PRIMARY KEY,
-                serial TEXT NOT NULL UNIQUE,
+                serial TEXT NOT NULL,
                 name TEXT NOT NULL,
                 is_active BOOLEAN,
                 store_id TEXT REFERENCES store(id),
@@ -32,17 +32,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 log_interval INTEGER,
                 last_connection_datetime {DATETIME},
                 type {SENSOR_TYPE}
-            );
-
-            CREATE TABLE temperature_breach_config (
-                id TEXT NOT NULL PRIMARY KEY,
-                duration INTEGER NOT NULL,
-                type TEXT NOT NULL,
-                description TEXT NOT NULL UNIQUE,
-                is_active BOOLEAN,
-                store_id TEXT REFERENCES store(id),
-                minimum_temperature {DOUBLE} NOT NULL,
-                maximum_temperature {DOUBLE} NOT NULL
             );
 
             CREATE TABLE temperature_breach (
@@ -78,7 +67,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             r#"
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'sensor';
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach';
-                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach_config';
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_log';
 
                 CREATE TRIGGER sensor_trigger
@@ -87,10 +75,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
                 CREATE TRIGGER temperature_breach_trigger
                 AFTER INSERT OR UPDATE OR DELETE ON temperature_breach
-                FOR EACH ROW EXECUTE PROCEDURE update_changelog();
-
-                CREATE TRIGGER temperature_breach_config_trigger
-                AFTER INSERT OR UPDATE OR DELETE ON temperature_breach_config
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog();
                 
                 CREATE TRIGGER temperature_log_trigger
@@ -116,12 +100,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     VALUES ("temperature_breach", NEW.id, "UPSERT");
                 END;
 
-                CREATE TRIGGER temperature_breach_config_insert_trigger
-                AFTER INSERT ON temperature_breach_config
-                BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ("temperature_breach_config", NEW.id, "UPSERT");
-                END;
 
                 CREATE TRIGGER temperature_log_insert_trigger
                 AFTER INSERT ON temperature_log
@@ -149,13 +127,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     VALUES ('temperature_breach', NEW.id, 'UPSERT');
                 END;
 
-                CREATE TRIGGER temperature_breach_config_update_trigger
-                AFTER UPDATE ON temperature_breach_config
-                BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ('temperature_breach_config', NEW.id, 'UPSERT');
-                END;
-
                 CREATE TRIGGER temperature_log_update_trigger
                 AFTER UPDATE ON temperature_log
                 BEGIN
@@ -180,13 +151,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 BEGIN
                     INSERT INTO changelog (table_name, record_id, row_action)
                     VALUES ('temperature_breach', OLD.id, 'DELETE');
-                END;
-
-                CREATE TRIGGER temperature_breach_config_delete_trigger
-                AFTER DELETE ON temperature_breach_config
-                BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ('temperature_breach_config', OLD.id, 'DELETE');
                 END;
 
                 CREATE TRIGGER temperature_log_delete_trigger

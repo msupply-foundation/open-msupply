@@ -62,11 +62,11 @@ export const DetailTabs: FC<DetailTabsProps> = ({
     }
   };
 
-  const isValidTab = (tab?: string) =>
+  const isValidTab = (tab?: string): tab is string =>
     !!tab && tabs.some(({ value }) => value === tab);
 
   useEffect(() => {
-    const tab = urlQuery['tab'];
+    const tab = urlQuery['tab'] as string | undefined;
     if (isValidTab(tab)) {
       setCurrentTab(tab);
     }

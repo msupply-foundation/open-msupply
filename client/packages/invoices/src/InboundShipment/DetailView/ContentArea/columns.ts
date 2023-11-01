@@ -10,8 +10,9 @@ import {
   useUrlQueryParams,
   ColumnAlign,
   PositiveNumberCell,
+  TooltipTextCell,
+  useTranslation,
 } from '@openmsupply-client/common';
-import { LocationRowFragment } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
@@ -27,6 +28,7 @@ export const useInboundShipmentColumns = () => {
   const { c } = useCurrency();
   const getSellPrice = (row: InboundLineFragment) =>
     isInboundPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
+  const t = useTranslation();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
@@ -77,6 +79,7 @@ export const useInboundShipmentColumns = () => {
       [
         'itemName',
         {
+          Cell: TooltipTextCell,
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
@@ -128,7 +131,7 @@ export const useInboundShipmentColumns = () => {
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'batch',
-                '[multiple]'
+                t('multiple')
               );
             } else {
               return rowData.batch;
@@ -138,8 +141,11 @@ export const useInboundShipmentColumns = () => {
             if ('lines' in rowData) {
               const { lines } = rowData;
               return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'batch', '[multiple]') ??
-                ''
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'batch',
+                  t('multiple')
+                ) ?? ''
               );
             } else {
               return rowData.batch ?? '';
@@ -183,24 +189,37 @@ export const useInboundShipmentColumns = () => {
       [
         'locationName',
         {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              const locations = lines
-                .map(({ location }) => location)
-                .filter(Boolean) as LocationRowFragment[];
-              return ArrayUtils.ifTheSameElseDefault(locations, 'name', '');
+          getSortValue: row => {
+            if ('lines' in row) {
+              const locations = row.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  t('multiple')
+                );
+              } else {
+                return '';
+              }
             } else {
-              return rowData.location?.name ?? '';
+              return row.location?.name ?? '';
             }
           },
-          getSortValue: rowData => {
+          accessor: ({ rowData }) => {
             if ('lines' in rowData) {
-              const { lines } = rowData;
-              const locations = lines
-                .map(({ location }) => location)
-                .filter(Boolean) as LocationRowFragment[];
-              return ArrayUtils.ifTheSameElseDefault(locations, 'name', '');
+              const locations = rowData.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
+
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  t('multiple')
+                );
+              }
             } else {
               return rowData.location?.name ?? '';
             }

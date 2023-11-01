@@ -44,3 +44,9 @@ query sensors(
     }
   }
 }
+
+mutation updateSensor($input: UpdateSensorInput!, $storeId: String!) {
+  updateSensor(input: $input, storeId: $storeId) {
+    ...Sensor
+  }
+}

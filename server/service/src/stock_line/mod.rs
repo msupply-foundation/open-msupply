@@ -7,7 +7,6 @@ use repository::{PaginationOption, StockLine, StockLineFilter, StockLineSort};
 pub mod query;
 pub mod update;
 pub use self::update::*;
-mod validate;
 
 pub trait StockLineServiceTrait: Sync + Send {
     fn get_stock_lines(

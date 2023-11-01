@@ -30,11 +30,16 @@ export const Formatter = {
   ): string => Papa.unparse(data, config),
   csvDateTimeString: (dateString?: string | null | undefined): string => {
     const date = dateString ? new Date(dateString) : null;
-    return date && isValid(date) ? format(date, "yyyy-MM-dd' 'HH:mm:ss") : '';
+    return date && isValid(date) ? format(date, "dd/MM/yyyy' 'HH:mm:ss") : '';
   },
   csvDateString: (dateString?: string | null | undefined): string => {
     const date = dateString ? new Date(dateString) : null;
-    return date && isValid(date) ? format(date, 'yyyy-MM-dd') : '';
+    return date && isValid(date) ? format(date, 'dd/MM/yyyy') : '';
+  },
+  milliseconds: (milliseconds: number): string => {
+    const minute = Math.floor((milliseconds % 3600000) / 60000);
+    const second = Math.floor(((milliseconds % 360000) % 60000) / 1000);
+    return `${minute}:${second}`;
   },
   sentenceCase: (str: string): string =>
     str
@@ -48,6 +53,4 @@ export const Formatter = {
       .join(' '),
   logTypeTranslation: (logType: string): LocaleKey =>
     `log.${logType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
-  breachTypeTranslation: (breachType: string): LocaleKey =>
-    `cold-chain.${breachType.toLowerCase().replace(/_/g, '-')}` as LocaleKey,
 };

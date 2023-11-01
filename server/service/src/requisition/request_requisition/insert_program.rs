@@ -65,6 +65,7 @@ pub fn insert_program_request_requisition(
                 ActivityLogType::RequisitionCreated,
                 Some(new_requisition.id.to_owned()),
                 None,
+                None,
             )?;
 
             get_requisition(ctx, None, &new_requisition.id)
