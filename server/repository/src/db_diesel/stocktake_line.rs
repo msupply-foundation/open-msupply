@@ -65,37 +65,6 @@ pub enum StocktakeLineSortField {
 
 pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
 
-impl StocktakeLineSort {
-    pub fn to_domain(&self) -> StocktakeLineSort {
-        match self.key {
-            StocktakeLineSortField::ItemCode => StocktakeLineSort {
-                key: StocktakeLineSortField::ItemCode,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::ItemName => StocktakeLineSort {
-                key: StocktakeLineSortField::ItemName,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::Batch => StocktakeLineSort {
-                key: StocktakeLineSortField::Batch,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::ExpiryDate => StocktakeLineSort {
-                key: StocktakeLineSortField::ExpiryDate,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::PackSize => StocktakeLineSort {
-                key: StocktakeLineSortField::PackSize,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::LocationName => StocktakeLineSort {
-                key: StocktakeLineSortField::LocationName,
-                desc: self.desc,
-            },
-        }
-    }
-}
-
 type StocktakeLineJoin = (
     StocktakeLineRow,
     Option<ItemRow>,
