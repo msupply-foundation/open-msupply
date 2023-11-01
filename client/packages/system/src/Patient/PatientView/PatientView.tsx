@@ -26,7 +26,6 @@ import {
   SaveDocumentMutation,
   SavedDocument,
   SchemaData,
-  useDocumentDataAccessor,
   useDocumentRegistry,
   useJsonForms,
   usePatientModalStore,
@@ -113,7 +112,7 @@ const PatientDetailView = ({
       // Use the unsaved patient information from createNewPatient, i.e. from a "create patient"
       // request
       return {
-        schema: createNewPatient.documentRegistry ?? DEFAULT_SCHEMA,
+        schema: patientRegistry ?? DEFAULT_SCHEMA,
         data: {
           id: createNewPatient.id,
           code: createNewPatient.code,
@@ -149,18 +148,34 @@ const PatientDetailView = ({
         },
         isCreating: false,
       };
-    } else return undefined;
+    } else if (currentPatient?.document) {
+      // Take the data from the document
+      return {
+        schema: patientRegistry ?? DEFAULT_SCHEMA,
+        data: currentPatient.document.data,
+        isCreating: false,
+      };
+    }
   }, [createNewPatient, currentPatient, patientRegistry]);
 
   const handleProgramPatientSave = useUpsertProgramPatient();
   const handlePatientSave = useUpsertPatient(isCreatingPatient);
-  const documentDataAccessor = useDocumentDataAccessor(
-    createNewPatient ? undefined : documentName,
-    inputData,
-    handleProgramPatientSave
-  );
+
   const accessor: JsonFormData<SavedDocument | void> = patientRegistry
-    ? documentDataAccessor
+    ? {
+        loadedData: inputData?.data,
+        isLoading: false,
+        error: undefined,
+        isCreating: isCreatingPatient,
+        schema: patientRegistry,
+        save: async (data: unknown) => {
+          await handleProgramPatientSave(
+            data,
+            patientRegistry.formSchemaId,
+            currentPatient?.document?.id
+          );
+        },
+      }
     : {
         loadedData: inputData?.data,
         isLoading: false,
@@ -183,7 +198,7 @@ const PatientDetailView = ({
 
   useEffect(() => {
     return () => setCreateNewPatient(undefined);
-  }, []);
+  }, [setCreateNewPatient]);
 
   const save = useCallback(async () => {
     const savedDocument = await saveData();
@@ -192,17 +207,17 @@ const PatientDetailView = ({
     if (savedDocument) {
       setDocumentName(savedDocument.name);
     }
-  }, [saveData]);
+  }, [saveData, setCreateNewPatient, setDocumentName]);
 
   useEffect(() => {
     if (!documentName && currentPatient) {
       setDocumentName(currentPatient?.document?.name);
     }
-  }, [currentPatient]);
+  }, [currentPatient, documentName, setDocumentName]);
 
   useEffect(() => {
     onEdit(isDirty);
-  }, [isDirty]);
+  }, [isDirty, onEdit]);
 
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: save,
@@ -255,7 +270,7 @@ export const PatientView = () => {
   useEffect(() => {
     if (!currentPatient) return;
     setCurrentPatient(currentPatient);
-  }, [currentPatient]);
+  }, [currentPatient, setCurrentPatient]);
 
   const tabs = [
     {
