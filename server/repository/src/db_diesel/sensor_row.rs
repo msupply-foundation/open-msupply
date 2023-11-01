@@ -39,6 +39,7 @@ joinable!(sensor -> location (location_id));
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum SensorType {
+    Berlinger,
     BlueMaestro,
     Laird,
 }
