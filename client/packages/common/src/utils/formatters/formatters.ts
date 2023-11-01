@@ -14,7 +14,7 @@ export const Formatter = {
   },
   naiveDateTime: (date?: Date | null): string | null => {
     if (date && isValid(date))
-      return format(date, "yyyy-MM-dd'T'HH:mm:ss+00:00");
+      return format(date, "yyyy-MM-dd'T'HH:mm:ss+mm:mm");
     else return null;
   },
   expiryDate: (date?: Date | null): string | null => {

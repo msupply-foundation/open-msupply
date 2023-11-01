@@ -92,12 +92,12 @@ export const useUrlQueryParams = ({
       const filterValue = getFilterValue(urlQuery, filter.key);
       if (!filterValue) return prev;
 
-      const [key, nested_key] = filter.key.split(NESTED_SPLIT_CHAR);
+      const [key, nestedKey] = filter.key.split(NESTED_SPLIT_CHAR);
       if (filter.key.includes(NESTED_SPLIT_CHAR)) {
         filter.key = key ?? '';
       }
 
-      prev[filter.key] = getFilterEntry(filter, filterValue, nested_key);
+      prev[filter.key] = getFilterEntry(filter, filterValue, nestedKey);
       return prev;
     }, {});
 
@@ -170,7 +170,7 @@ const getFilterValue = (
 const getFilterEntry = (
   filter: Filter,
   filterValue: UrlQueryValue,
-  nested_key?: string
+  nestedKey?: string
 ) => {
   if (filter.condition === 'between' && filter.key) {
     const filterItems = String(filterValue).split(RANGE_SPLIT_CHAR);
@@ -190,9 +190,9 @@ const getFilterEntry = (
   }
   const condition = filter.condition ? filter.condition : 'like';
 
-  if (nested_key) {
+  if (nestedKey) {
     return {
-      [nested_key]: {
+      [nestedKey]: {
         [condition]: filterValue,
       },
     };

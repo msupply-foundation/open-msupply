@@ -32,11 +32,6 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.location'),
               urlParameter: 'location.name',
             },
-            // {
-            //   type: 'text',
-            //   name: t('label.cce'),
-            //   urlParameter: 'cce',
-            // },
             {
               type: 'group',
               name: 'Date/Time Range',
