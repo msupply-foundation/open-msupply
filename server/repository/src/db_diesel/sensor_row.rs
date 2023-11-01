@@ -44,7 +44,17 @@ pub enum SensorType {
     Berlinger,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+// TODO put this somewhere more sensible
+// perhaps the cold chain service
+pub fn get_sensor_type(serial: &String) -> SensorType {
+    match serial.split('|').nth(1) {
+        Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
+        Some("LAIRD") => SensorType::Laird,
+        _ => SensorType::BlueMaestro,
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "sensor"]
 pub struct SensorRow {

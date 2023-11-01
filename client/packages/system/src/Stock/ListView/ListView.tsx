@@ -14,6 +14,7 @@ import {
   useToggle,
   StockIcon,
   ColumnAlign,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
@@ -27,7 +28,7 @@ const StockListComponent: FC = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
     initialSort: { key: 'expiryDate', dir: 'asc' },
-    filterKey: 'itemCodeOrName',
+    filters: [{ key: 'itemCodeOrName' }],
   });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
@@ -69,7 +70,14 @@ const StockListComponent: FC = () => {
         align: ColumnAlign.Center,
       },
       ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
-      ['itemName', { accessor: ({ rowData }) => rowData.item.name }],
+      [
+        'itemName',
+        {
+          accessor: ({ rowData }) => rowData.item.name,
+          Cell: TooltipTextCell,
+          maxWidth: 350,
+        },
+      ],
       'batch',
       [
         'expiryDate',

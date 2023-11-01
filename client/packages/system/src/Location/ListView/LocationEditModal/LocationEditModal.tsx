@@ -90,7 +90,7 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
   const t = useTranslation('inventory');
   const { draft, onUpdate, onChangeLocation, onSave, isLoading } =
     useDraftLocation(location, mode);
-  const isInvalid = !draft.code || !draft.name;
+  const isInvalid = !draft.code.trim() || !draft.name.trim();
 
   return (
     <Modal

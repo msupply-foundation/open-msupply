@@ -60,11 +60,12 @@ export type ActivityLogFilterInput = {
 export type ActivityLogNode = {
   __typename: 'ActivityLogNode';
   datetime: Scalars['DateTime']['output'];
-  event?: Maybe<Scalars['String']['output']>;
+  from?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   recordId?: Maybe<Scalars['String']['output']>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
+  to?: Maybe<Scalars['String']['output']>;
   type: ActivityLogNodeType;
   user?: Maybe<UserNode>;
 };
@@ -88,6 +89,7 @@ export enum ActivityLogNodeType {
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
+  SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
@@ -1485,7 +1487,7 @@ export type InsertInboundShipmentLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Int']['input'];
   sellPricePerPack: Scalars['Float']['input'];
@@ -1657,13 +1659,17 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
 };
 
 export type InsertPatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPatientResponse = PatientNode;
@@ -1838,7 +1844,7 @@ export type InsertStocktakeInput = {
   id: Scalars['String']['input'];
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
@@ -1861,7 +1867,7 @@ export type InsertStocktakeLineInput = {
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -3174,6 +3180,21 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
   description: Scalars['String']['output'];
 };
 
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
+export type NullableStringUpdate = {
+  value?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type NumberNode = {
   __typename: 'NumberNode';
   number: Scalars['Int']['output'];
@@ -3625,8 +3646,6 @@ export type Queries = {
   storePreferences: StorePreferenceNode;
   stores: StoresResponse;
   syncSettings?: Maybe<SyncSettingsNode>;
-  /** Query omSupply "temperature_breach_config" entries */
-  temperatureBreachConfigs: TemperatureBreachConfigsResponse;
   /** Query omSupply "temperature_breach" entries */
   temperatureBreaches: TemperatureBreachesResponse;
   /** Query omSupply "temperature_log" entries */
@@ -3998,14 +4017,6 @@ export type QueriesStoresArgs = {
   filter?: InputMaybe<StoreFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<StoreSortInput>>;
-};
-
-
-export type QueriesTemperatureBreachConfigsArgs = {
-  filter?: InputMaybe<TemperatureBreachConfigFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<TemperatureBreachConfigSortInput>>;
-  storeId: Scalars['String']['input'];
 };
 
 
@@ -4815,43 +4826,6 @@ export type TaxInput = {
   percentage?: InputMaybe<Scalars['Float']['input']>;
 };
 
-export type TemperatureBreachConfigConnector = {
-  __typename: 'TemperatureBreachConfigConnector';
-  nodes: Array<TemperatureBreachConfigNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
-export type TemperatureBreachConfigFilterInput = {
-  description?: InputMaybe<EqualFilterStringInput>;
-  id?: InputMaybe<EqualFilterStringInput>;
-  isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  type?: InputMaybe<EqualFilterTemperatureBreachRowTypeInput>;
-};
-
-export type TemperatureBreachConfigNode = {
-  __typename: 'TemperatureBreachConfigNode';
-  description: Scalars['String']['output'];
-  id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
-  type: TemperatureBreachNodeType;
-};
-
-export enum TemperatureBreachConfigSortFieldInput {
-  Description = 'description'
-}
-
-export type TemperatureBreachConfigSortInput = {
-  /**
-   * 	Sort query result is sorted descending or ascending (if not provided the default is
-   * ascending)
-   */
-  desc?: InputMaybe<Scalars['Boolean']['input']>;
-  /** Sort query result by `key` */
-  key: TemperatureBreachConfigSortFieldInput;
-};
-
-export type TemperatureBreachConfigsResponse = TemperatureBreachConfigConnector;
-
 export type TemperatureBreachConnector = {
   __typename: 'TemperatureBreachConnector';
   nodes: Array<TemperatureBreachNode>;
@@ -4875,6 +4849,7 @@ export type TemperatureBreachNode = {
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
+  maxOrMinTemperature?: Maybe<Scalars['Float']['output']>;
   sensor?: Maybe<SensorNode>;
   sensorId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
@@ -5075,7 +5050,7 @@ export type UpdateInboundShipmentLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -5280,13 +5255,17 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
  * For example, if the last_name is not provided, the last_name in the patient record will be cleared.
  */
 export type UpdatePatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePatientResponse = PatientNode;
@@ -5484,7 +5463,7 @@ export type UpdateSensorErrorInterface = {
 export type UpdateSensorInput = {
   id: Scalars['String']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -5506,7 +5485,7 @@ export type UpdateStockLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
 };
@@ -5548,7 +5527,7 @@ export type UpdateStocktakeLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -5631,6 +5610,7 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',
   DocumentQuery = 'DOCUMENT_QUERY',
@@ -5657,8 +5637,6 @@ export enum UserPermission {
   StockLineMutate = 'STOCK_LINE_MUTATE',
   StockLineQuery = 'STOCK_LINE_QUERY',
   StoreAccess = 'STORE_ACCESS',
-  TemperatureBreachConfigMutate = 'TEMPERATURE_BREACH_CONFIG_MUTATE',
-  TemperatureBreachConfigQuery = 'TEMPERATURE_BREACH_CONFIG_QUERY',
   TemperatureBreachQuery = 'TEMPERATURE_BREACH_QUERY',
   TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY'
 }

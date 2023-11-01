@@ -31,7 +31,9 @@ table! {
 joinable!(temperature_log -> sensor (sensor_id));
 joinable!(temperature_log -> store (store_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "temperature_log"]
 pub struct TemperatureLogRow {

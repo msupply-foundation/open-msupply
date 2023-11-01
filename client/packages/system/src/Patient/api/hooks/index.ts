@@ -14,6 +14,7 @@ export const usePatient = {
     get: Document.usePatient,
     list: Document.usePatients,
     listAll: Document.usePatientsAll,
+    usePatientsPromise: Document.usePatientsPromise,
     insert: Document.useInsertPatient,
     update: Document.useUpdatePatient,
     insertProgramPatient: Document.useInsertProgramPatient,

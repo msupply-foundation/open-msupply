@@ -181,12 +181,15 @@ mod test {
         );
 
         // NumberOfPacksBelowOne
+        // invoice `mock_outbound_shipment_a` has status `Picked`
         assert_eq!(
             service.insert_stock_out_line(
                 &context,
                 inline_init(|r: &mut InsertStockOutLine| {
                     r.id = "new outbound line id".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
+                    r.stock_line_id = "item_b_line_a".to_string();
+                    r.item_id = "item_b".to_string();
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();

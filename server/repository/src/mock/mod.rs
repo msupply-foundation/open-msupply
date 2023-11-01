@@ -27,7 +27,6 @@ mod stocktake;
 mod stocktake_line;
 mod store;
 mod temperature_breach;
-mod temperature_breach_config;
 mod temperature_log;
 mod test_invoice_count_service;
 mod test_invoice_loaders;
@@ -74,7 +73,6 @@ pub use stocktake::*;
 pub use stocktake_line::*;
 pub use store::*;
 pub use temperature_breach::*;
-pub use temperature_breach_config::*;
 pub use temperature_log::*;
 pub use test_invoice_count_service::*;
 pub use test_invoice_loaders::*;
@@ -109,8 +107,7 @@ use crate::{
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow,
     SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
     StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
-    SyncLogRowRepository, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
+    SyncLogRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
     TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
@@ -138,7 +135,6 @@ pub struct MockData {
     pub items: Vec<ItemRow>,
     pub locations: Vec<LocationRow>,
     pub sensors: Vec<SensorRow>,
-    pub temperature_breach_configs: Vec<TemperatureBreachConfigRow>,
     pub temperature_breaches: Vec<TemperatureBreachRow>,
     pub temperature_logs: Vec<TemperatureLogRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
@@ -202,7 +198,6 @@ pub struct MockDataInserts {
     pub locations: bool,
     pub sensors: bool,
     pub temperature_breaches: bool,
-    pub temperature_breach_configs: bool,
     pub temperature_logs: bool,
     pub name_store_joins: bool,
     pub full_requisitions: bool,
@@ -250,7 +245,6 @@ impl MockDataInserts {
             items: true,
             locations: true,
             sensors: true,
-            temperature_breach_configs: true,
             temperature_breaches: true,
             temperature_logs: true,
             name_store_joins: true,
@@ -360,11 +354,6 @@ impl MockDataInserts {
 
     pub fn temperature_breaches(mut self) -> Self {
         self.temperature_breaches = true;
-        self
-    }
-
-    pub fn temperature_breach_configs(mut self) -> Self {
-        self.temperature_breach_configs = true;
         self
     }
 
@@ -531,7 +520,6 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             items: mock_items(),
             locations: mock_locations(),
             sensors: mock_sensors(),
-            temperature_breach_configs: mock_temperature_breach_configs(),
             temperature_logs: mock_temperature_logs(),
             temperature_breaches: mock_temperature_breaches(),
             name_store_joins: mock_name_store_joins(),
@@ -704,13 +692,6 @@ pub fn insert_mock_data(
         if inserts.sensors {
             let repo = SensorRowRepository::new(connection);
             for row in &mock_data.sensors {
-                repo.upsert_one(&row).unwrap();
-            }
-        }
-
-        if inserts.temperature_breach_configs {
-            let repo = TemperatureBreachConfigRowRepository::new(connection);
-            for row in &mock_data.temperature_breach_configs {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -941,7 +922,6 @@ impl MockData {
             mut items,
             mut locations,
             mut sensors,
-            mut temperature_breach_configs,
             mut temperature_breaches,
             mut temperature_logs,
             mut name_store_joins,
@@ -989,8 +969,6 @@ impl MockData {
         self.locations.append(&mut locations);
         self.sensors.append(&mut sensors);
         self.temperature_logs.append(&mut temperature_logs);
-        self.temperature_breach_configs
-            .append(&mut temperature_breach_configs);
         self.temperature_breaches.append(&mut temperature_breaches);
         self.full_requisitions.append(&mut full_requisitions);
         self.invoices.append(&mut invoices);
