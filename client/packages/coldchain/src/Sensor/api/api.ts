@@ -35,7 +35,7 @@ export const getSensorQueries = (sdk: Sdk, storeId: string) => ({
         id: patch.id,
         isActive: patch.isActive,
         name: patch.name,
-        location: setNullableInput('id', patch.location),
+        locationId: setNullableInput('id', patch.location),
       },
     });
 

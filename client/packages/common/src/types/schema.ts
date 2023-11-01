@@ -4845,7 +4845,7 @@ export type TemperatureBreachFilterInput = {
 export type TemperatureBreachNode = {
   __typename: 'TemperatureBreachNode';
   acknowledged: Scalars['Boolean']['output'];
-  duration: Scalars['Int']['output'];
+  durationMilliseconds: Scalars['Int']['output'];
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
@@ -5463,7 +5463,7 @@ export type UpdateSensorErrorInterface = {
 export type UpdateSensorInput = {
   id: Scalars['String']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  location?: InputMaybe<NullableStringUpdate>;
+  locationId?: InputMaybe<NullableStringUpdate>;
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
