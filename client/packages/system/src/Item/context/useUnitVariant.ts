@@ -90,7 +90,7 @@ export const useUnitVariant = (
   const [userSelectedVariants, setUserSelectedVariant] = useLocalStorage(
     `/user/${authContext.user?.id ?? ''}/store/${
       authContext.storeId
-    }/selectedVariants`
+    }/selectedunits`
   );
   const userSelectedVariantId = userSelectedVariants?.[itemId];
   const item = useUnitStore(state => state.items[itemId], isEqual);
