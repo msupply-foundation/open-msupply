@@ -88,7 +88,7 @@ const ListView: FC = () => {
         key: 'duration',
         label: 'label.duration',
         accessor: ({ rowData }) => {
-          return Formatter.milliseconds(rowData.duration);
+          return Formatter.milliseconds(rowData.durationMilliseconds);
         },
         sortable: false,
       },
