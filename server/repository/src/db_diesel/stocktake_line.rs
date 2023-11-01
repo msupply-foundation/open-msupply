@@ -66,7 +66,7 @@ pub enum StocktakeLineSortField {
 pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
 
 impl StocktakeLineSort {
-    pub fn to_domain1(&self) -> StocktakeLineSort {
+    pub fn to_domain(&self) -> StocktakeLineSort {
         match self.key {
             StocktakeLineSortField::ItemCode => StocktakeLineSort {
                 key: StocktakeLineSortField::ItemCode,
@@ -89,39 +89,6 @@ impl StocktakeLineSort {
                 desc: self.desc,
             },
             StocktakeLineSortField::LocationName => StocktakeLineSort {
-                key: StocktakeLineSortField::LocationName,
-                desc: self.desc,
-            },
-        }
-    }
-}
-
-pub type StocktakeLineReportSort = Sort<StocktakeLineSortField>;
-
-impl StocktakeLineReportSort {
-    pub fn to_domain(&self) -> StocktakeLineReportSort {
-        match self.key {
-            StocktakeLineSortField::ItemCode => StocktakeLineReportSort {
-                key: StocktakeLineSortField::ItemCode,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::ItemName => StocktakeLineReportSort {
-                key: StocktakeLineSortField::ItemName,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::Batch => StocktakeLineReportSort {
-                key: StocktakeLineSortField::Batch,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::ExpiryDate => StocktakeLineReportSort {
-                key: StocktakeLineSortField::ExpiryDate,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::PackSize => StocktakeLineReportSort {
-                key: StocktakeLineSortField::PackSize,
-                desc: self.desc,
-            },
-            StocktakeLineSortField::LocationName => StocktakeLineReportSort {
                 key: StocktakeLineSortField::LocationName,
                 desc: self.desc,
             },
