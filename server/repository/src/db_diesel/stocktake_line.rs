@@ -80,14 +80,6 @@ pub struct StocktakeLine {
     pub location: Option<LocationRow>,
 }
 
-#[derive(Debug, Clone, PartialEq, Default)]
-pub struct StocktakeLineReport {
-    pub line: StocktakeLineRow,
-    pub item: Option<ItemRow>,
-    pub stock_line: Option<StockLineRow>,
-    pub location: Option<LocationRow>,
-}
-
 pub struct StocktakeLineRepository<'a> {
     connection: &'a StorageConnection,
 }
