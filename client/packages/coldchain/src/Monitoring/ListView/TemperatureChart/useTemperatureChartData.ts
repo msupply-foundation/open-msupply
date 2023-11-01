@@ -16,7 +16,6 @@ export type Sensor = {
   colour: string | undefined;
   id: string;
   name: string;
-  location?: string | null;
   logs: Log[];
 };
 
@@ -39,7 +38,6 @@ export const useTemperatureChartData = () => {
           id: sensor.id,
           name: sensor.name,
           logs: [],
-          location: sensor.location?.name,
         });
         sensorIndex = sensors.length - 1;
       }
