@@ -58,6 +58,10 @@ const useContactTraceListColumns = ({
       label: 'label.gender',
     },
     {
+      key: 'relationship',
+      label: 'label.relationship',
+    },
+    {
       key: 'dateOfBirth',
       label: 'label.age',
       align: ColumnAlign.Right,
