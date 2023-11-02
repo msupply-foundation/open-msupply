@@ -2,7 +2,7 @@ use std::io::Error;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
 
-use util::perpare_file_dir;
+use util::prepare_file_dir;
 use util::uuid::uuid;
 
 #[derive(Debug, PartialEq)]
@@ -27,7 +27,7 @@ pub struct StaticFileService {
 impl StaticFileService {
     pub fn new(base_dir: &Option<String>) -> anyhow::Result<Self> {
         Ok(StaticFileService {
-            dir: perpare_file_dir(STATIC_FILE_DIR, base_dir)?,
+            dir: prepare_file_dir(STATIC_FILE_DIR, base_dir)?,
             max_lifetime_millis: 60 * 60 * 1000, // 1 hours
         })
     }

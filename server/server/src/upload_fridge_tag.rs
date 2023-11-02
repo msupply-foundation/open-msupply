@@ -13,11 +13,10 @@ use service::{
     service_provider::ServiceProvider,
     settings::Settings,
 };
-use util::perpare_file_dir;
+use util::prepare_file_dir;
 
 const TEMP_FRIDGETAG_FILE_DIR: &'static str = "fridge_tag";
 
-// this function could be located in different module
 pub fn config_upload_fridge_tag(cfg: &mut web::ServiceConfig) {
     cfg.service(upload);
 }
@@ -62,7 +61,7 @@ fn upload_fridge_tag(
     let file = form.files.pop().context("Cannot find attached file")?;
     let file_name = file.file_name.context("Filename is not specified")?;
 
-    let dir = perpare_file_dir(TEMP_FRIDGETAG_FILE_DIR, &settings.server.base_dir)?;
+    let dir = prepare_file_dir(TEMP_FRIDGETAG_FILE_DIR, &settings.server.base_dir)?;
 
     let new_file_path = dir.join(file_name);
 
