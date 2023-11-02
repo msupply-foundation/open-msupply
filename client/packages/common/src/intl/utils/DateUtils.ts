@@ -20,6 +20,7 @@ import {
   parse,
   parseISO,
   fromUnixTime,
+  getUnixTime,
   startOfToday,
   startOfDay,
   startOfYear,
@@ -97,6 +98,18 @@ export const DateUtils = {
         : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
+  minDate: (...dates: (Date | null)[]) => {
+    const maybeDate = fromUnixTime(
+      Math.min(
+        // Ignore nulls, as they'll return a minimum of 0
+        ...dates.filter(d => d !== null).map(d => getUnixTime(d as Date))
+      )
+    );
+    return isValid(maybeDate) ? maybeDate : null;
+  },
+
+  maxDate: (...dates: (Date | null)[]) =>
+    fromUnixTime(Math.max(...dates.map(d => getUnixTime(d as Date)))),
   isPast,
   isFuture,
   isExpired: (expiryDate: Date): boolean => isPast(expiryDate),
@@ -158,6 +171,9 @@ export const useFormatDateTime = () => {
   const dayMonthShort = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'dd MMM', { locale });
 
+  const dayMonthTime = (date: Date | string | number): string =>
+    formatIfValid(dateInputHandler(date), 'dd/MM HH:mm', { locale });
+
   const customDate = (
     date: Date | string | number,
     formatString: string
@@ -179,6 +195,7 @@ export const useFormatDateTime = () => {
   return {
     customDate,
     dayMonthShort,
+    dayMonthTime,
     localisedDate,
     localisedDateTime,
     localisedDistanceToNow,

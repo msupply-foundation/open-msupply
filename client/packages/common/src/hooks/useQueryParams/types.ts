@@ -3,7 +3,7 @@ import { Column } from '../../ui/layout/tables';
 
 export interface FilterByConditionByType {
   string: 'equalTo' | 'like' | 'notEqualTo';
-  date: 'beforeOrEqualTo' | 'afterOrEqualTo' | 'equalTo';
+  date: 'beforeOrEqualTo' | 'afterOrEqualTo' | 'equalTo' | 'between';
 }
 
 type FilterRule = {
@@ -21,7 +21,7 @@ export interface FilterController {
   onChangeDateFilterRule: (
     key: string,
     condition: FilterByConditionByType['date'],
-    value: Date
+    value: Date | Date[]
   ) => void;
 
   onChangeStringFilterRule: (
