@@ -8,7 +8,6 @@ import { LocationRowFragmentDoc } from '../../../../../system/src/Location/api/o
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type TemperatureBreachRowFragment = { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType };
 
-export type TemperatureLogFragment = {
 export type TemperatureLogFragment = { __typename: 'TemperatureLogNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null } | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, temperatureBreach?: { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType } | null };
 
 export type Temperature_LogsQueryVariables = Types.Exact<{
