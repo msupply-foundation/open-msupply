@@ -43,6 +43,25 @@ pub fn update_patient_row(
     patient: SchemaPatient,
     is_sync_update: bool,
 ) -> Result<(), UpdateProgramPatientError> {
+    let name_repo = NameRowRepository::new(con);
+    let existing_name = name_repo.find_one_by_id(&patient.id)?;
+
+    let name_upsert = patient_to_name_row(store_id, update_timestamp, patient, existing_name)?;
+    if is_sync_update {
+        name_repo.sync_upsert_one(&name_upsert)?;
+    } else {
+        name_repo.upsert_one(&name_upsert)?;
+    }
+
+    Ok(())
+}
+
+pub(crate) fn patient_to_name_row(
+    store_id: Option<String>,
+    update_timestamp: &DateTime<Utc>,
+    patient: SchemaPatient,
+    existing_name: Option<NameRow>,
+) -> Result<NameRow, UpdateProgramPatientError> {
     let SchemaPatient {
         id,
         code,
@@ -84,11 +103,9 @@ pub fn update_patient_row(
         })?),
         None => None,
     };
-    let name_repo = NameRowRepository::new(con);
-    let existing_name = name_repo.find_one_by_id(&id)?;
-    let existing_name = existing_name.as_ref();
 
-    let name_upsert = NameRow {
+    let existing_name = existing_name.as_ref();
+    Ok(NameRow {
         id: id.clone(),
         name: patient_name(&first_name, &last_name),
         code: code.unwrap_or("".to_string()),
@@ -132,15 +149,7 @@ pub fn update_patient_row(
         is_deceased: patient.is_deceased.unwrap_or(false),
         date_of_death,
         national_health_number: code_2,
-    };
-
-    if is_sync_update {
-        name_repo.sync_upsert_one(&name_upsert)?;
-    } else {
-        name_repo.upsert_one(&name_upsert)?;
-    }
-
-    Ok(())
+    })
 }
 
 /// Translates patient changes back to the document format, overwriting the document data.
@@ -228,11 +237,12 @@ pub fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
 
 #[cfg(test)]
 mod test {
+    use chrono::{NaiveDate, Utc};
     use repository::{
         mock::{mock_form_schema_empty, MockDataInserts},
         test_db::setup_all,
         DocumentRegistryCategory, DocumentRegistryRow, DocumentRegistryRowRepository, EqualFilter,
-        FormSchemaRowRepository,
+        FormSchemaRowRepository, Gender as GenderRepo, NameRow,
     };
     use util::{
         constants::{PATIENT_CONTEXT_ID, PATIENT_TYPE},
@@ -246,6 +256,8 @@ mod test {
         },
         service_provider::ServiceProvider,
     };
+
+    use super::{patient_draft_document, patient_to_name_row};
 
     #[actix_rt::test]
     async fn test_patient_table_update() {
@@ -363,5 +375,99 @@ mod test {
                 },
             )
             .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_document_draft_update() {
+        let contact_details = ContactDetails {
+            description: None,
+            email: Some("myemail".to_string()),
+            mobile: Some("45678".to_string()),
+            phone: Some("12345678".to_string()),
+            website: Some("mywebsite".to_string()),
+            address_1: Some("firstaddressline".to_string()),
+            address_2: Some("secondaddressline".to_string()),
+            city: None,
+            country: Some("mycountry".to_string()),
+            district: None,
+            region: None,
+            zip_code: None,
+        };
+        // Include a second contact details entry to check that it is not affected by the name_row
+        // change
+        let contact_details_2 = ContactDetails {
+            description: None,
+            email: Some("myemail2".to_string()),
+            mobile: Some("456782".to_string()),
+            phone: Some("123456782".to_string()),
+            website: Some("mywebsite2".to_string()),
+            address_1: Some("firstaddressline2".to_string()),
+            address_2: Some("secondaddressline2".to_string()),
+            city: None,
+            country: Some("mycountry2".to_string()),
+            district: None,
+            region: None,
+            zip_code: None,
+        };
+        let patient = inline_init(|p: &mut SchemaPatient| {
+            p.id = "testId".to_string();
+            p.contact_details = Some(vec![contact_details, contact_details_2]);
+            p.date_of_birth = Some("2000-03-04".to_string());
+            p.date_of_death = Some("2023-03-04".to_string());
+            p.first_name = Some("firstname".to_string());
+            p.last_name = Some("lastname".to_string());
+            p.gender = Some(Gender::TransgenderFemale);
+        });
+
+        let now = Utc::now();
+        // Derive a name_row from the original patient
+        let name_row = patient_to_name_row(None, &now, patient.clone(), None).unwrap();
+        // Create a update name row and apply it to the patient document
+        let name_row_update = NameRow {
+            id: name_row.id,
+            name: "new last, new first".to_string(),
+            code: "new code".to_string(),
+            r#type: name_row.r#type,
+            is_customer: name_row.is_customer,
+            is_supplier: name_row.is_supplier,
+            supplying_store_id: Some("new store".to_string()),
+            first_name: Some("new first".to_string()),
+            last_name: Some("new last".to_string()),
+            gender: Some(GenderRepo::Male),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(2001, 1, 2).unwrap()),
+            phone: Some("123456783".to_string()),
+            charge_code: name_row.charge_code,
+            comment: name_row.comment,
+            country: Some("new country".to_string()),
+            address1: Some("new address1".to_string()),
+            address2: Some("new address2".to_string()),
+            email: Some("new email".to_string()),
+            website: Some("new website".to_string()),
+            is_manufacturer: name_row.is_manufacturer,
+            is_donor: name_row.is_donor,
+            on_hold: name_row.on_hold,
+            created_datetime: Some(now.naive_utc()),
+            is_deceased: true,
+            national_health_number: Some("new nhn".to_string()),
+            date_of_death: Some(NaiveDate::from_ymd_opt(2001, 1, 2).unwrap()),
+        };
+        let updated_patient = patient_draft_document(&name_row_update, patient.clone());
+        // Check that 2nd contact_details entry is not affected by the name_row change
+        assert_eq!(
+            updated_patient.contact_details.as_ref().unwrap()[1],
+            patient.contact_details.as_ref().unwrap()[1]
+        );
+
+        // Some back end forth conversions between row and patient document
+        let name_row_update_2 = patient_to_name_row(
+            None,
+            &now,
+            updated_patient.clone(),
+            Some(name_row_update.clone()),
+        )
+        .unwrap();
+        assert_eq!(name_row_update, name_row_update_2);
+        let updated_patient_2 = patient_draft_document(&name_row_update, updated_patient.clone());
+        assert_eq!(updated_patient_2, updated_patient);
     }
 }
