@@ -2,18 +2,19 @@ fragment TemperatureBreach on TemperatureBreachNode {
   __typename
   id
   acknowledged
-  duration
+  durationMilliseconds
   endDatetime
   startDatetime
   type
   maxOrMinTemperature
 
   sensor {
-    ...Sensor
+    id
+    name
   }
 
   location {
-    ...LocationRow
+    name
   }
 }
 
