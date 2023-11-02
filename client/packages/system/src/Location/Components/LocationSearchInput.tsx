@@ -1,5 +1,11 @@
 import React, { FC, useEffect } from 'react';
-import { Autocomplete, useTranslation } from '@openmsupply-client/common';
+import {
+  Autocomplete,
+  AutocompleteOption,
+  CloseIcon,
+  MenuItem,
+  useTranslation,
+} from '@openmsupply-client/common';
 import { useLocation, LocationRowFragment } from '../api';
 
 interface LocationSearchInputProps {
@@ -8,7 +14,42 @@ interface LocationSearchInputProps {
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
   autoFocus?: boolean;
+  canRemove?: boolean;
 }
+
+interface LocationOption {
+  label: string;
+  value: string | null;
+}
+
+const optionRenderer = (
+  props: React.HTMLAttributes<HTMLLIElement>,
+  location: LocationOption
+) => {
+  const { style, ...rest } = props;
+
+  return location.value === null ? (
+    <MenuItem
+      {...rest}
+      sx={{
+        ...style,
+        display: 'inline-flex',
+        flex: 1,
+        width: '100%',
+        borderTop: '1px solid',
+        borderTopColor: 'divider',
+      }}
+      key={location.label}
+    >
+      <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{location.label}</span>
+      <CloseIcon sx={{ color: 'gray.dark' }} />
+    </MenuItem>
+  ) : (
+    <MenuItem {...props} key={location.label}>
+      <span style={{ whiteSpace: 'nowrap' }}>{location.label}</span>
+    </MenuItem>
+  );
+};
 
 export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   selectedLocation,
@@ -16,8 +57,9 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   onChange,
   disabled,
   autoFocus = false,
+  canRemove = false,
 }) => {
-  const t = useTranslation();
+  const t = useTranslation('inventory');
   const { fetchAsync, data, isLoading } = useLocation.document.listAll({
     direction: 'asc',
     key: 'name',
@@ -28,16 +70,21 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   }, []);
 
   const locations = data?.nodes || [];
-  const options = [
-    ...locations.map(l => ({ value: l.id, label: l.name })),
-    { value: null, label: t('label.remove') },
-  ];
+  const options: AutocompleteOption<LocationOption>[] = locations.map(l => ({
+    value: l.id,
+    label: l.name,
+  }));
+
+  if (canRemove && locations.length > 0 && selectedLocation !== null) {
+    options.push({ value: null, label: t('label.remove') });
+  }
 
   return (
     <Autocomplete
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
+      popperMinWidth={Number(width)}
       clearable={false}
       value={
         selectedLocation && {
@@ -50,6 +97,8 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
         onChange(locations.find(l => l.id === option?.value) || null);
       }}
       options={options}
+      noOptionsText={t('messages.no-locations')}
+      renderOption={optionRenderer}
     />
   );
 };
