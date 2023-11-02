@@ -16,7 +16,7 @@ pub enum InsertTemperatureBreachError {
 
 pub struct InsertTemperatureBreach {
     pub id: String,
-    pub duration: i32,
+    pub duration_milliseconds: i32,
     pub r#type: TemperatureBreachRowType,
     pub sensor_id: String,
     pub location_id: Option<String>,
@@ -25,7 +25,7 @@ pub struct InsertTemperatureBreach {
     pub acknowledged: bool,
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
-    pub threshold_duration: i32,
+    pub threshold_duration_milliseconds: i32,
 }
 
 pub fn insert_temperature_breach(
@@ -61,7 +61,7 @@ pub fn generate(
     store_id: &str,
     InsertTemperatureBreach {
         id,
-        duration,
+        duration_milliseconds,
         r#type,
         sensor_id,
         location_id,
@@ -70,7 +70,7 @@ pub fn generate(
         acknowledged,
         threshold_minimum,
         threshold_maximum,
-        threshold_duration,
+        threshold_duration_milliseconds,
     }: InsertTemperatureBreach,
 ) -> TemperatureBreachRow {
     TemperatureBreachRow {
@@ -78,14 +78,14 @@ pub fn generate(
         sensor_id,
         location_id,
         store_id: Some(store_id.to_string()),
-        duration,
+        duration_milliseconds,
         r#type,
         start_datetime,
         end_datetime,
         acknowledged,
         threshold_minimum,
         threshold_maximum,
-        threshold_duration,
+        threshold_duration_milliseconds,
     }
 }
 

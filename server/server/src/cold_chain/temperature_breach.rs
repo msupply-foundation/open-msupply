@@ -30,7 +30,8 @@ pub struct TemperatureBreach {
     sensor_id: String,
     #[serde(rename = "startTimestamp")]
     start_unix_timestamp: i64,
-    pub threshold_duration: i32,
+    #[serde(rename = "thresholdDuration")]
+    pub threshold_duration_milliseconds: i32,
     #[serde(rename = "thresholdMaximumTemperature")]
     pub threshold_maximum: f64,
     #[serde(rename = "thresholdMinimumTemperature")]
@@ -83,7 +84,7 @@ fn validate_breach(breach: &TemperatureBreach) -> bool {
     if breach.start_unix_timestamp < 0 {
         return false;
     }
-    if breach.threshold_duration < 0 {
+    if breach.threshold_duration_milliseconds < 0 {
         return false;
     }
     true
@@ -125,7 +126,7 @@ fn upsert_temperature_breach(
             breach.start_unix_timestamp
         ))?;
 
-    let duration = match breach.end_unix_timestamp {
+    let duration_milliseconds = match breach.end_unix_timestamp {
         Some(end_unix_timestamp) => (end_unix_timestamp - breach.start_unix_timestamp)
             .try_into()
             .unwrap_or(0),
@@ -143,12 +144,12 @@ fn upsert_temperature_breach(
                 id: id.clone(),
                 location_id: sensor.sensor_row.location_id,
                 sensor_id: sensor.sensor_row.id,
-                duration,
+                duration_milliseconds,
                 r#type: breach.r#type,
                 start_datetime,
                 end_datetime,
                 acknowledged: breach.acknowledged,
-                threshold_duration: breach.threshold_duration,
+                threshold_duration_milliseconds: breach.threshold_duration_milliseconds,
                 threshold_maximum: breach.threshold_maximum,
                 threshold_minimum: breach.threshold_minimum,
             };
@@ -161,12 +162,12 @@ fn upsert_temperature_breach(
                 id: id.clone(),
                 location_id: sensor.sensor_row.location_id,
                 sensor_id: sensor.sensor_row.id,
-                duration,
+                duration_milliseconds,
                 r#type: breach.r#type,
                 start_datetime,
                 end_datetime,
                 acknowledged: breach.acknowledged,
-                threshold_duration: breach.threshold_duration,
+                threshold_duration_milliseconds: breach.threshold_duration_milliseconds,
                 threshold_maximum: breach.threshold_maximum,
                 threshold_minimum: breach.threshold_minimum,
             };
