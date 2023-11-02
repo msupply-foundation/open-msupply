@@ -20,17 +20,16 @@ use util::constants::SYSTEM_USER_ID;
 
 use super::validate_request;
 
+#[serde(rename_all = "camelCase")]
 #[derive(serde::Deserialize, Debug, Clone)]
 pub struct TemperatureBreach {
     id: String,
     acknowledged: bool,
     #[serde(rename = "endTimestamp")]
     end_unix_timestamp: Option<i64>,
-    #[serde(rename = "sensorId")]
     sensor_id: String,
     #[serde(rename = "startTimestamp")]
     start_unix_timestamp: i64,
-    #[serde(rename = "thresholdDuration")]
     pub threshold_duration: i32,
     #[serde(rename = "thresholdMaximumTemperature")]
     pub threshold_maximum: f64,
