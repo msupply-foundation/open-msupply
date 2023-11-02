@@ -141,9 +141,11 @@ fn sensor_add_breach_if_new(
     )?;
 
     if let Some(mut record) = result.clone().pop() {
-        if record.temperature_breach_row.end_datetime != Some(temperature_breach.end_timestamp) { // Update breach end time if it has changed
+        if record.temperature_breach_row.end_datetime != Some(temperature_breach.end_timestamp) {
+            // Update breach end time if it has changed
             record.temperature_breach_row.end_datetime = Some(temperature_breach.end_timestamp);
-            TemperatureBreachRowRepository::new(connection).upsert_one(&record.temperature_breach_row)?;
+            TemperatureBreachRowRepository::new(connection)
+                .upsert_one(&record.temperature_breach_row)?;
         }
         Ok(())
     } else {
@@ -155,9 +157,9 @@ fn sensor_add_breach_if_new(
             start_datetime: temperature_breach.start_timestamp,
             end_datetime: Some(temperature_breach.end_timestamp),
             acknowledged: false,
-            duration: temperature_breach.duration.num_seconds() as i32,
+            duration_milliseconds: temperature_breach.duration.num_seconds() as i32,
             r#type: breach_row_type,
-            threshold_duration: breach_config.duration.num_seconds() as i32,
+            threshold_duration_milliseconds: breach_config.duration.num_seconds() as i32,
             threshold_minimum: breach_config.minimum_temperature,
             threshold_maximum: breach_config.maximum_temperature,
         };
@@ -211,13 +213,13 @@ fn sensor_add_breach_config_if_new(
     if !result.is_empty() {
         return Ok(());
     };
-    
+
     let new_temperature_breach_config = TemperatureBreachConfigRow {
         id: uuid(),
         store_id: sensor_row.store_id.clone(),
         is_active: true,
         description: config_description.clone(),
-        duration: temperature_breach_config.duration.num_seconds() as i32,
+        duration_milliseconds: temperature_breach_config.duration.num_seconds() as i32,
         r#type: breach_row_type,
         minimum_temperature: temperature_breach_config.minimum_temperature,
         maximum_temperature: temperature_breach_config.maximum_temperature,
@@ -322,8 +324,11 @@ pub fn read_sensors(
             }
 
             // Finally, update sensor's last connected time if it has changed
-            if record.sensor_row.last_connection_datetime != temperature_sensor.last_connected_timestamp {
-                record.sensor_row.last_connection_datetime = temperature_sensor.last_connected_timestamp;
+            if record.sensor_row.last_connection_datetime
+                != temperature_sensor.last_connected_timestamp
+            {
+                record.sensor_row.last_connection_datetime =
+                    temperature_sensor.last_connected_timestamp;
                 SensorRowRepository::new(connection).upsert_one(&record.sensor_row)?;
             }
             sensors_processed.push(current_serial);
