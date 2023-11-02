@@ -19,6 +19,7 @@ import {
 import { AppRoute } from 'packages/config/src';
 import { Breach } from './TemperatureChart';
 import { Sensor } from './useTemperatureChartData';
+import { parseBreachType } from 'packages/coldchain/src/common';
 
 interface BreachPopperProps {
   breach: Breach | null;
@@ -104,7 +105,7 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 );
 
 const BreachIcon = ({ type }: { type: TemperatureBreachNodeType }) => {
-  const temperature = type?.split('_')[0];
+  const { temperature } = parseBreachType(type);
   const theme = useTheme();
 
   return temperature === 'HOT' ? (
