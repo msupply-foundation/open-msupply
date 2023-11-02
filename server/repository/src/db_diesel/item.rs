@@ -473,12 +473,14 @@ mod tests {
                 name: "".to_owned(),
                 code: "".to_owned(),
                 description: "".to_owned(),
+                is_active: true,
             },
             MasterListRow {
                 id: "master_list2".to_owned(),
                 name: "".to_owned(),
                 code: "".to_owned(),
                 description: "".to_owned(),
+                is_active: true,
             },
         ];
 

@@ -22,6 +22,7 @@ const MASTER_LIST_WITH_PROGRAM_1: (&'static str, &'static str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": true,
+    "inactive": false,
     "programSettings": {
         "elmisCode": "",
         "storeTags": {
@@ -96,6 +97,7 @@ const MASTER_LIST_WITH_PROGRAM_2: (&'static str, &'static str) = (
     "gets_new_items": false,
     "tags": null,
     "isProgram": true,
+    "inactive": false,
     "programSettings": {
         "elmisCode": "",
         "storeTags": {
