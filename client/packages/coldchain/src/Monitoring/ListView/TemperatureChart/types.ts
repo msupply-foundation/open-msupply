@@ -27,7 +27,10 @@ export type Log = {
   date: number;
   sensorId: string;
   temperature: number | null;
-  breach: { row: TemperatureBreachRowFragment; sensor: SensorFragment } | null;
+  breach: {
+    row: TemperatureBreachRowFragment;
+    sensor: Pick<SensorFragment, 'id' | 'name'>;
+  } | null;
 };
 
 export type Sensor = {
