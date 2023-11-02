@@ -37,7 +37,18 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 location_id TEXT REFERENCES location(id),
                 datetime {DATETIME} NOT NULL,
                 temperature_breach_id TEXT REFERENCES temperature_breach(id)
-            );      
+            );   
+
+            CREATE TABLE temperature_breach_config (
+                id TEXT NOT NULL PRIMARY KEY,
+                duration_milliseconds INTEGER NOT NULL,
+                type TEXT NOT NULL,
+                description TEXT NOT NULL UNIQUE,
+                is_active BOOLEAN,
+                store_id TEXT REFERENCES store(id),
+                minimum_temperature {DOUBLE} NOT NULL,
+                maximum_temperature {DOUBLE} NOT NULL
+            );
             "#
     )?;
 
@@ -47,6 +58,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             r#"
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach';
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_log';
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach_config';
 
                 CREATE TRIGGER temperature_breach_trigger
                 AFTER INSERT OR UPDATE OR DELETE ON temperature_breach
@@ -55,6 +67,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 CREATE TRIGGER temperature_log_trigger
                 AFTER INSERT OR UPDATE OR DELETE ON temperature_log
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog();
+
+                CREATE TRIGGER temperature_breach_config_trigger
+                AFTER INSERT OR UPDATE OR DELETE ON temperature_breach_config
+                FOR EACH ROW EXECUTE PROCEDURE update_changelog();
+                
             "#
         )?;
     } else {
@@ -75,6 +92,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     INSERT INTO changelog (table_name, record_id, row_action)
                     VALUES ("temperature_log", NEW.id, "UPSERT");
                 END;
+
+                CREATE TRIGGER temperature_breach_config_insert_trigger
+                AFTER INSERT ON temperature_breach_config
+                BEGIN
+                    INSERT INTO changelog (table_name, record_id, row_action)
+                    VALUES ("temperature_breach_config", NEW.id, "UPSERT");
+                END;
             "#
         )?;
 
@@ -93,7 +117,14 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 BEGIN
                 INSERT INTO changelog (table_name, record_id, row_action)
                     VALUES ('temperature_log', NEW.id, 'UPSERT');
-                END;          
+                END; 
+
+                CREATE TRIGGER temperature_breach_config_update_trigger
+                AFTER UPDATE ON temperature_breach_config
+                BEGIN
+                INSERT INTO changelog (table_name, record_id, row_action)
+                    VALUES ('temperature_breach_config', NEW.id, 'UPSERT');
+                END;         
             "#
         )?;
 
@@ -112,6 +143,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 BEGIN
                     INSERT INTO changelog (table_name, record_id, row_action)
                     VALUES ('temperature_log', OLD.id, 'DELETE');
+                END;
+
+                CREATE TRIGGER temperature_breach_config_delete_trigger
+                AFTER DELETE ON temperature_breach_config
+                BEGIN
+                    INSERT INTO changelog (table_name, record_id, row_action)
+                    VALUES ('temperature_breach_config', OLD.id, 'DELETE');
                 END;
             "#
         )?;
