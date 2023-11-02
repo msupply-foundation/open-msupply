@@ -9,11 +9,12 @@ fragment TemperatureBreach on TemperatureBreachNode {
   maxOrMinTemperature
 
   sensor {
-    ...Sensor
+    id
+    name
   }
 
   location {
-    ...LocationRow
+    name
   }
 }
 
