@@ -30,7 +30,7 @@ simple-log = { version = "1.6" }
 log = "0.4.14"
 async-graphql = "3.0.35"
 
-anyhow.worspace = true
+anyhow.workspace = true
 
 [dev-dependencies]
 actix-rt = "2.6.0"
