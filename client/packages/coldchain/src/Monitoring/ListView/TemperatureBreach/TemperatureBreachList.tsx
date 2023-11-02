@@ -18,13 +18,18 @@ import {
 import { BreachTypeCell } from '../../../common';
 
 const ListView: FC = () => {
-  const { data, isLoading, isError } = useTemperatureBreach.document.list();
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'startDatetime', dir: 'desc' },
+  });
+
+  const { data, isLoading, isError } =
+    useTemperatureBreach.document.list(queryParams);
   const {
     updateSortQuery,
     updatePaginationQuery,
     // filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filterKey: 'startDatetime' });
+  } = useUrlQueryParams({ filters: [{ key: 'startDatetime' }] });
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
@@ -88,7 +93,7 @@ const ListView: FC = () => {
         key: 'duration',
         label: 'label.duration',
         accessor: ({ rowData }) => {
-          return Formatter.milliseconds(rowData.duration);
+          return Formatter.milliseconds(rowData.durationMilliseconds);
         },
         sortable: false,
       },

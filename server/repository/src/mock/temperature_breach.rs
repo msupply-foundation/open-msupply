@@ -11,9 +11,9 @@ pub fn mock_temperature_breach_1() -> TemperatureBreachRow {
         store_id: Some("store_a".to_string()),
         threshold_minimum: 8.0,
         threshold_maximum: 100.0,
-        threshold_duration: 3600,
+        threshold_duration_milliseconds: 3600,
         sensor_id: "sensor_1".to_owned(),
-        duration: 6000,
+        duration_milliseconds: 6000,
         location_id: None,
         start_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
             .unwrap()
@@ -39,9 +39,9 @@ pub fn mock_temperature_breach_acknowledged() -> TemperatureBreachRow {
         store_id: Some("store_a".to_string()),
         threshold_minimum: 8.0,
         threshold_maximum: 100.0,
-        threshold_duration: 3600,
+        threshold_duration_milliseconds: 3600,
         sensor_id: "sensor_1".to_owned(),
-        duration: 86400,
+        duration_milliseconds: 86400,
         location_id: None,
         start_datetime: NaiveDate::from_ymd_opt(2022, 8, 1)
             .unwrap()
@@ -67,9 +67,9 @@ pub fn mock_temperature_breach_2() -> TemperatureBreachRow {
         store_id: Some("store_b".to_string()),
         threshold_minimum: -273.0,
         threshold_maximum: 2.0,
-        threshold_duration: 3600,
+        threshold_duration_milliseconds: 3600,
         sensor_id: "sensor_1".to_owned(),
-        duration: 6000,
+        duration_milliseconds: 6000,
         location_id: None,
         start_datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
             .unwrap()

@@ -85,7 +85,6 @@ pub fn generate(
     // if location has been passed, update sensor_row to the value passed (including if this is null)
     // A null value being passed as the LocationUpdate is the unassignment of location_id
     // no LocationUpdate being passed is the location not being updated
-    // no LocationUpdate being passed is the location not being updated
     if let Some(location_id) = location_id {
         sensor_row.location_id = location_id.value;
     }

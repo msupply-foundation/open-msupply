@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 table! {
     temperature_breach (id) {
         id -> Text,
-        duration -> Integer,
+        duration_milliseconds -> Integer,
         #[sql_name = "type"] type_ -> crate::db_diesel::temperature_breach_row::TemperatureBreachRowTypeMapping,
         sensor_id -> Text,
         location_id -> Nullable<Text>,
@@ -23,7 +23,7 @@ table! {
         acknowledged -> Bool,
         threshold_minimum -> Double,
         threshold_maximum -> Double,
-        threshold_duration -> Integer,
+        threshold_duration_milliseconds -> Integer,
     }
 }
 
@@ -57,7 +57,7 @@ pub enum TemperatureBreachRowType {
 #[table_name = "temperature_breach"]
 pub struct TemperatureBreachRow {
     pub id: String,
-    pub duration: i32,
+    pub duration_milliseconds: i32,
     #[column_name = "type_"]
     pub r#type: TemperatureBreachRowType,
     pub sensor_id: String,
@@ -68,7 +68,7 @@ pub struct TemperatureBreachRow {
     pub acknowledged: bool,
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
-    pub threshold_duration: i32,
+    pub threshold_duration_milliseconds: i32,
 }
 
 pub struct TemperatureBreachRowRepository<'a> {

@@ -3,7 +3,7 @@ import { useItemApi } from '../useItemApi';
 
 export const useItems = () => {
   const { queryParams } = useUrlQueryParams({
-    filterKey: 'codeOrName',
+    filters: [{ key: 'codeOrName' }],
   });
   const api = useItemApi();
   return {

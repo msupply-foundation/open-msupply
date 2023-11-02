@@ -11,6 +11,8 @@ interface DatePickerInputProps {
   error?: string | undefined;
   label?: string;
   textFieldProps?: TextFieldProps;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 export const DatePickerInput: FC<DatePickerInputProps> = ({
@@ -21,6 +23,8 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
   width,
   error,
   label,
+  minDate,
+  maxDate,
   textFieldProps,
 }) => {
   return (
@@ -33,6 +37,8 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
       width={width}
       error={error}
       label={label}
+      minDate={minDate}
+      maxDate={maxDate}
       textFieldProps={textFieldProps}
     />
   );
