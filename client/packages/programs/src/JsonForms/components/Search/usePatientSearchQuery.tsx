@@ -13,7 +13,7 @@ export const usePatientSearchQuery = (searchFilter: FilterBy | undefined) => {
   const results: PatientRowFragment[] =
     // If patient has a full document field, use that since it'll make more data
     // available. Otherwise just use the basic Patient fields
-    data?.nodes.map(patient => patient.document?.data ?? patient) ?? [];
+    data?.nodes.map(patient => patient.documentDraft ?? patient) ?? [];
 
   return {
     results,

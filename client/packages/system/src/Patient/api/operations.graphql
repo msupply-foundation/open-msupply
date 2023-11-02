@@ -11,11 +11,11 @@ fragment PatientRow on PatientNode {
   gender
   email
   document {
-    data
     id
     name
     type
   }
+  documentDraft
   isDeceased
   dateOfDeath
   programEnrolments {
