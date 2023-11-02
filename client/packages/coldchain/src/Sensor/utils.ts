@@ -1,5 +1,5 @@
 import { SensorNodeType } from '@common/types';
 import { SensorFragment } from './api';
 
-export const isSensorNameEditable = (sensor: SensorFragment) =>
-  sensor.type === SensorNodeType.Berlinger;
+export const isSensorNameEditDisabled = (sensor: SensorFragment) =>
+  sensor.type === SensorNodeType.BlueMaestro || sensor.type === SensorNodeType.Laird;

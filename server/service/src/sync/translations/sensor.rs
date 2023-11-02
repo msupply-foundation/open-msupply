@@ -146,7 +146,6 @@ impl SyncTranslation for SensorTranslation {
             .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap());
 
         let r#type = match r#type {
-            SensorType::Berlinger => "BERLINGER",
             SensorType::BlueMaestro => "BLUE_MAESTRO",
             SensorType::Laird => "LAIRD",
         }

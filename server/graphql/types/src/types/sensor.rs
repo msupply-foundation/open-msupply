@@ -66,7 +66,6 @@ pub struct SensorConnector {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum SensorNodeType {
-    Berlinger,
     BlueMaestro,
     Laird,
 }
@@ -230,7 +229,6 @@ impl SensorNodeType {
         use SensorType as from;
 
         match from {
-            from::Berlinger => to::Berlinger,
             from::BlueMaestro => to::BlueMaestro,
             from::Laird => to::Laird,
         }
@@ -241,7 +239,6 @@ impl SensorNodeType {
         use SensorType as to;
 
         match self {
-            from::Berlinger => to::Berlinger,
             from::BlueMaestro => to::BlueMaestro,
             from::Laird => to::Laird,
         }
