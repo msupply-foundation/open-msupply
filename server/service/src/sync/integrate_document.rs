@@ -14,7 +14,6 @@ use crate::{
         encounter::{
             encounter_updated::update_encounter_row, validate_misc::validate_encounter_schema,
         },
-        patient::{patient_schema::SchemaPatient, patient_updated::update_patient_row},
         program_enrolment::program_enrolment_updated::update_program_enrolment_row,
         program_enrolment::program_schema::SchemaProgramEnrolment,
         update_program_document::update_program_events,
@@ -40,12 +39,15 @@ pub(crate) fn sync_upsert_document(
         .query_by_filter(
             DocumentRegistryFilter::new().document_type(EqualFilter::equal_to(&document.r#type)),
         )?
-        .pop() else {
+        .pop()
+    else {
         log::warn!("Received unknown document type: {}", document.r#type);
         return Ok(());
     };
     match registry.category {
-        DocumentRegistryCategory::Patient => update_patient(con, document)?,
+        DocumentRegistryCategory::Patient => {
+            // patient name row should already have been synced
+        }
         DocumentRegistryCategory::ProgramEnrolment => update_program_enrolment(con, document)?,
         DocumentRegistryCategory::Encounter => update_encounter(con, document)?,
         DocumentRegistryCategory::ContactTrace => update_contact_trace(con, document)?,
@@ -54,22 +56,15 @@ pub(crate) fn sync_upsert_document(
     Ok(())
 }
 
-fn update_patient(con: &StorageConnection, document: &Document) -> Result<(), RepositoryError> {
-    let patient: SchemaPatient = serde_json::from_value(document.data.clone()).map_err(|err| {
-        RepositoryError::as_db_error(&format!("Invalid patient data: {}", err), "")
-    })?;
-
-    update_patient_row(con, None, &document.datetime, patient, true)
-        .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
-    Ok(())
-}
-
 fn update_program_enrolment(
     con: &StorageConnection,
     document: &Document,
 ) -> Result<(), RepositoryError> {
     let Some(patient_id) = &document.owner_name_id else {
-        return Err(RepositoryError::as_db_error("Document owner id expected", ""));
+        return Err(RepositoryError::as_db_error(
+            "Document owner id expected",
+            "",
+        ));
     };
     let program_enrolment: SchemaProgramEnrolment = serde_json::from_value(document.data.clone())
         .map_err(|err| {
@@ -85,7 +80,10 @@ fn update_program_enrolment(
 
 fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), RepositoryError> {
     let Some(patient_id) = &document.owner_name_id else {
-        return Err(RepositoryError::as_db_error("Document owner id expected", ""));
+        return Err(RepositoryError::as_db_error(
+            "Document owner id expected",
+            "",
+        ));
     };
 
     let encounter: crate::programs::encounter::validate_misc::ValidatedSchemaEncounter =
@@ -134,7 +132,10 @@ fn update_contact_trace(
     document: &Document,
 ) -> Result<(), RepositoryError> {
     let Some(patient_id) = &document.owner_name_id else {
-        return Err(RepositoryError::as_db_error("Document owner id expected", ""));
+        return Err(RepositoryError::as_db_error(
+            "Document owner id expected",
+            "",
+        ));
     };
     let contact_trace: SchemaContactTrace =
         serde_json::from_value(document.data.clone()).map_err(|err| {

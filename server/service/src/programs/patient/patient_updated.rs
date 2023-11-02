@@ -1,13 +1,13 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
     EqualFilter, Gender, NameRow, NameRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    NameStoreJoinRow, NameType, RepositoryError, StorageConnection,
+    NameStoreJoinRow, NameType, Patient, RepositoryError, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
 
 use super::{
-    patient_schema::{SchemaGender, SchemaPatient},
+    patient_schema::{ContactDetails, SchemaGender, SchemaPatient},
     UpdateProgramPatientError,
 };
 
@@ -101,14 +101,18 @@ pub fn update_patient_row(
             .or(store_id),
         first_name,
         last_name,
-        gender: gender.and_then(|g| match g {
-            SchemaGender::Female => Some(Gender::Female),
-            SchemaGender::Male => Some(Gender::Male),
-            SchemaGender::Transgender => Some(Gender::Transgender),
-            SchemaGender::TransgenderMale => Some(Gender::TransgenderMale),
-            SchemaGender::TransgenderFemale => Some(Gender::TransgenderFemale),
-            SchemaGender::Unknown => Some(Gender::Unknown),
-            SchemaGender::NonBinary => Some(Gender::NonBinary),
+        gender: gender.map(|g| match g {
+            SchemaGender::Female => Gender::Female,
+            SchemaGender::Male => Gender::Male,
+            SchemaGender::Transgender => Gender::Transgender,
+            SchemaGender::TransgenderMale => Gender::TransgenderMale,
+            SchemaGender::TransgenderMaleHormone => Gender::TransgenderMaleHormone,
+            SchemaGender::TransgenderMaleSurgical => Gender::TransgenderMaleSurgical,
+            SchemaGender::TransgenderFemale => Gender::TransgenderFemale,
+            SchemaGender::TransgenderFemaleHormone => Gender::TransgenderFemaleHormone,
+            SchemaGender::TransgenderFemaleSurgical => Gender::TransgenderFemaleSurgical,
+            SchemaGender::Unknown => Gender::Unknown,
+            SchemaGender::NonBinary => Gender::NonBinary,
         }),
         date_of_birth,
         charge_code: existing_name.and_then(|n| n.charge_code.clone()),
@@ -116,7 +120,7 @@ pub fn update_patient_row(
         country: contact.and_then(|a| a.country.clone()),
         address1: contact.and_then(|a| a.address_1.clone()),
         address2: contact.and_then(|a| a.address_2.clone()),
-        phone: contact.and_then(|c| c.phone.clone().or(c.mobile.clone())),
+        phone: contact.and_then(|c| c.phone.clone()),
         email: contact.and_then(|c| c.email.clone()),
         website: contact.and_then(|c| c.website.clone()),
         is_manufacturer: existing_name.map(|n| n.is_manufacturer).unwrap_or(false),
@@ -137,6 +141,78 @@ pub fn update_patient_row(
     }
 
     Ok(())
+}
+
+/// Translates patient changes back to the document format, overwriting the document data.
+///
+/// The patient can divert from the document data when, for example, the patient details have been
+/// changed in mSupply.
+pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -> SchemaPatient {
+    let contact_details = document_data
+        .contact_details
+        .as_ref()
+        .and_then(|c| c.get(0).map(|c| c.clone()))
+        .unwrap_or(ContactDetails::default());
+    let draft_contact_details = ContactDetails {
+        address_1: patient.address1.clone(),
+        address_2: patient.address2.clone(),
+        country: patient.country.clone(),
+        email: patient.email.clone(),
+        phone: patient.phone.clone(),
+        website: patient.website.clone(),
+        ..contact_details.clone()
+    };
+    SchemaPatient {
+        id: patient.id.clone(),
+        code: if patient.code == "" {
+            document_data.code
+        } else {
+            Some(patient.code.clone())
+        },
+        code_2: patient.national_health_number.clone(),
+        first_name: patient.first_name.clone(),
+        last_name: patient.last_name.clone(),
+        gender: patient.gender.as_ref().map(|gender| match gender {
+            Gender::Female => SchemaGender::Female,
+            Gender::Male => SchemaGender::Male,
+            Gender::Transgender => SchemaGender::Transgender,
+            Gender::TransgenderMale => SchemaGender::TransgenderMale,
+            Gender::TransgenderMaleHormone => SchemaGender::TransgenderMaleHormone,
+            Gender::TransgenderMaleSurgical => SchemaGender::TransgenderMaleSurgical,
+            Gender::TransgenderFemale => SchemaGender::TransgenderFemale,
+            Gender::TransgenderFemaleHormone => SchemaGender::TransgenderFemaleHormone,
+            Gender::TransgenderFemaleSurgical => SchemaGender::TransgenderFemaleSurgical,
+            Gender::Unknown => SchemaGender::Unknown,
+            Gender::NonBinary => SchemaGender::NonBinary,
+        }),
+        contact_details: if contact_details == draft_contact_details {
+            document_data.contact_details
+        } else {
+            let mut contacts = vec![draft_contact_details];
+            if let Some(contact_details) = document_data.contact_details {
+                contacts.extend(contact_details.into_iter().skip(1));
+            }
+            Some(contacts)
+        },
+        date_of_birth: patient
+            .date_of_birth
+            .map(|date| date.format("%Y-%m-%d").to_string()),
+        date_of_death: patient
+            .date_of_death
+            .map(|date| date.format("%Y-%m-%d").to_string()),
+
+        middle_name: document_data.middle_name,
+        date_of_birth_is_estimated: document_data.date_of_birth_is_estimated,
+        is_deceased: Some(patient.is_deceased || document_data.is_deceased.unwrap_or(false)),
+        notes: document_data.notes,
+        passport_number: document_data.passport_number,
+        socio_economics: document_data.socio_economics,
+        allergies: document_data.allergies,
+        birth_place: document_data.birth_place,
+        marital_status: document_data.marital_status,
+        contacts: document_data.contacts,
+        extension: document_data.extension,
+    }
 }
 
 pub fn patient_name(first: &Option<String>, last: &Option<String>) -> String {
