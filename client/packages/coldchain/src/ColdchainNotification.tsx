@@ -62,7 +62,7 @@ const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
               sort: TemperatureBreachSortFieldInput.StartDatetime,
             })
             .addQuery({ acknowledged: false })
-            .addQuery({ sensorId: breach?.sensor?.id ?? '' })
+            .addQuery({ sensorId: breach.sensor?.id ?? '' })
             .build()
         )
       }
@@ -81,7 +81,7 @@ const Location = ({ breach }: { breach: TemperatureBreachFragment }) => {
       {!!breach?.location?.name && (
         <Text>
           {t('message.location')}
-          <b style={{ paddingLeft: 4 }}>{breach?.location?.name}</b>
+          <b style={{ paddingLeft: 4 }}>{breach.location.name}</b>
         </Text>
       )}
     </>
@@ -148,7 +148,7 @@ export const ColdchainNotification = () => {
       <Separator />
       <Text>
         {t('message.device')}
-        <b style={{ paddingLeft: 4 }}>{breach?.sensor?.name}</b>
+        <b style={{ paddingLeft: 4 }}>{breach.sensor?.name}</b>
       </Text>
       <Location breach={breach} />
       <Box

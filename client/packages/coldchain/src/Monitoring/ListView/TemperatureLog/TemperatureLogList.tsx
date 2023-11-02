@@ -22,7 +22,7 @@ const ListView: FC = () => {
     updatePaginationQuery,
     // filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filterKey: 'datetime' });
+  } = useUrlQueryParams({ filters: [{ key: 'datetime' }] });
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');

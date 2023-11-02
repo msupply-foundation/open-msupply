@@ -25,6 +25,7 @@ export const TemperatureBreachRowFragmentDoc = gql`
   acknowledged
   startDatetime
   endDatetime
+  startDatetime
   type
   location {
     name
