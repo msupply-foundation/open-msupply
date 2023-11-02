@@ -158,9 +158,9 @@ fn sensor_add_breach_if_new(
             start_datetime: temperature_breach.start_timestamp,
             end_datetime: Some(temperature_breach.end_timestamp),
             acknowledged: false,
-            duration: temperature_breach.duration.num_seconds() as i32,
+            duration_milliseconds: temperature_breach.duration.num_seconds() as i32,
             r#type: breach_row_type,
-            threshold_duration: breach_config.duration.num_seconds() as i32,
+            threshold_duration_milliseconds: breach_config.duration.num_seconds() as i32,
             threshold_minimum: breach_config.minimum_temperature,
             threshold_maximum: breach_config.maximum_temperature,
         };
@@ -220,7 +220,7 @@ fn sensor_add_breach_config_if_new(
         store_id: sensor_row.store_id.clone(),
         is_active: true,
         description: config_description.clone(),
-        duration: temperature_breach_config.duration.num_seconds() as i32,
+        duration_milliseconds: temperature_breach_config.duration.num_seconds() as i32,
         r#type: breach_row_type,
         minimum_temperature: temperature_breach_config.minimum_temperature,
         maximum_temperature: temperature_breach_config.maximum_temperature,
@@ -307,14 +307,13 @@ pub fn read_sensor(
     temperature_sensor =
         temperature_sensor::filter_sensor(temperature_sensor, last_connected, None, true);
 
-    if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
-        for temperature_sensor_config in temperature_sensor_configs {
-            sensor_add_breach_config_if_new(
-                connection,
-                &record.sensor_row,
-                temperature_sensor_config,
-            )?;
-        }
+    let temperature_sensor_configs = temperature_sensor.configs.unwrap_or_default();
+    for temperature_sensor_config in temperature_sensor_configs.iter() {
+        sensor_add_breach_config_if_new(
+            connection,
+            &record.sensor_row,
+            &temperature_sensor_config,
+        )?;
     }
 
     let temperature_sensor_breaches = temperature_sensor.breaches.unwrap_or_default();
@@ -327,18 +326,16 @@ pub fn read_sensor(
 
     for temperature_sensor_breach in temperature_sensor_breaches {
         // Look up matching config from the USB data and snapshot it as part of the breach
-        if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
-            if let Some(temperature_sensor_config) = temperature_sensor_configs
-                .iter()
-                .find(|&t| t.breach_type == temperature_sensor_breach.breach_type)
-            {
-                sensor_add_breach_if_new(
-                    connection,
-                    &record.sensor_row,
-                    &temperature_sensor_breach,
-                    &temperature_sensor_config,
-                )?;
-            }
+        if let Some(temperature_sensor_config) = temperature_sensor_configs
+            .iter()
+            .find(|&t| t.breach_type == temperature_sensor_breach.breach_type)
+        {
+            sensor_add_breach_if_new(
+                connection,
+                &record.sensor_row,
+                &temperature_sensor_breach,
+                &temperature_sensor_config,
+            )?;
         }
     }
 

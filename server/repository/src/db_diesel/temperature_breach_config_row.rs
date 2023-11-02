@@ -10,7 +10,7 @@ use diesel::prelude::*;
 table! {
     temperature_breach_config (id) {
         id -> Text,
-        duration -> Integer,
+        duration_milliseconds -> Integer,
         #[sql_name = "type"] type_ -> crate::db_diesel::temperature_breach_row::TemperatureBreachRowTypeMapping,
         description -> Text,
         is_active -> Bool,
@@ -35,7 +35,7 @@ joinable!(temperature_breach_config -> store (store_id));
 #[table_name = "temperature_breach_config"]
 pub struct TemperatureBreachConfigRow {
     pub id: String,
-    pub duration: i32,
+    pub duration_milliseconds: i32,
     #[column_name = "type_"]
     pub r#type: TemperatureBreachRowType,
     pub description: String,
