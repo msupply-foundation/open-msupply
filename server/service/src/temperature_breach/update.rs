@@ -17,7 +17,7 @@ pub enum UpdateTemperatureBreachError {
 
 pub struct UpdateTemperatureBreach {
     pub id: String,
-    pub duration: i32,
+    pub duration_milliseconds: i32,
     pub r#type: TemperatureBreachRowType,
     pub sensor_id: String,
     pub location_id: Option<String>,
@@ -26,7 +26,7 @@ pub struct UpdateTemperatureBreach {
     pub acknowledged: bool,
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
-    pub threshold_duration: i32,
+    pub threshold_duration_milliseconds: i32,
 }
 
 pub fn update_temperature_breach(
@@ -69,20 +69,20 @@ pub fn generate(
     store_id: &str,
     UpdateTemperatureBreach {
         id: _,
-        duration,
+        duration_milliseconds,
         r#type,
         sensor_id,
         location_id,
         start_datetime,
         end_datetime,
         acknowledged,
-        threshold_duration,
+        threshold_duration_milliseconds,
         threshold_maximum,
         threshold_minimum,
     }: UpdateTemperatureBreach,
     mut temperature_breach_row: TemperatureBreachRow,
 ) -> TemperatureBreachRow {
-    temperature_breach_row.duration = duration;
+    temperature_breach_row.duration_milliseconds = duration_milliseconds;
     temperature_breach_row.r#type = r#type;
     temperature_breach_row.sensor_id = sensor_id;
     temperature_breach_row.location_id = location_id;
@@ -90,7 +90,7 @@ pub fn generate(
     temperature_breach_row.start_datetime = start_datetime;
     temperature_breach_row.end_datetime = end_datetime;
     temperature_breach_row.acknowledged = acknowledged;
-    temperature_breach_row.threshold_duration = threshold_duration;
+    temperature_breach_row.threshold_duration_milliseconds = threshold_duration_milliseconds;
     temperature_breach_row.threshold_maximum = threshold_maximum;
     temperature_breach_row.threshold_minimum = threshold_minimum;
     temperature_breach_row
