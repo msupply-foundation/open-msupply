@@ -5,6 +5,9 @@ fragment TemperatureBreachRow on TemperatureBreachNode {
   endDatetime
   startDatetime
   type
+  location {
+    name
+  }
 }
 
 fragment TemperatureLog on TemperatureLogNode {

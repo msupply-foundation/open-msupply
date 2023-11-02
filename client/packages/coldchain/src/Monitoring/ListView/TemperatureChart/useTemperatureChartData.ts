@@ -1,24 +1,10 @@
 import { useTheme } from '@common/styles';
-import { TemperatureBreachRowFragment, useTemperatureLog } from '../../api';
+import { useTemperatureLog } from '../../api';
 import { DateUtils } from '@common/intl';
 import { NumUtils } from '@common/utils';
+import { Log, Sensor } from './types';
 
 const MAX_DATA_POINTS = 30;
-
-export type Log = {
-  date: number;
-  sensorId: string;
-  temperature: number | null;
-  temperatureBreach?: TemperatureBreachRowFragment | null;
-};
-
-export type Sensor = {
-  colour: string | undefined;
-  id: string;
-  name: string;
-  location?: string | null;
-  logs: Log[];
-};
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
@@ -51,7 +37,7 @@ export const useTemperatureChartData = () => {
         date: date.getTime(),
         sensorId: sensor.id,
         temperature,
-        temperatureBreach,
+        breach: temperatureBreach ? { row: temperatureBreach, sensor } : null,
       });
     }
   );
@@ -78,8 +64,7 @@ export const useTemperatureChartData = () => {
           l.date <= periodEnd &&
           l.sensorId === sensor.id
       );
-      const breach = logsInPeriod.filter(l => !!l.temperatureBreach)[0]
-        ?.temperatureBreach;
+      const breach = logsInPeriod.filter(l => !!l.breach)[0]?.breach || null;
 
       return {
         date: periodStart,
