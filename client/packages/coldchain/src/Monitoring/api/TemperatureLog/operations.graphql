@@ -3,6 +3,7 @@ fragment TemperatureBreachRow on TemperatureBreachNode {
   id
   acknowledged
   endDatetime
+  startDatetime
   type
 }
 
