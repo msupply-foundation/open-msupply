@@ -12,7 +12,8 @@ repository = { path = "../repository" }
 util = { path = "../util" }
 
 anymap = "0.12"
-anyhow = "1.0.56"
+
+anyhow.worspace = true
 async-trait = "0.1.57"
 thiserror = "1"
 topological-sort = "0.2.2"
