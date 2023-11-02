@@ -4,6 +4,7 @@ fragment TemperatureBreachRow on TemperatureBreachNode {
   acknowledged
   startDatetime
   endDatetime
+  startDatetime
   type
   location {
     name

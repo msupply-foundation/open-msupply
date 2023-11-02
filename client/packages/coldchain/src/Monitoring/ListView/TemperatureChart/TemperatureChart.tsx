@@ -10,7 +10,6 @@ import {
   Legend,
   Line,
   ResponsiveContainer,
-  TemperatureBreachNodeType,
   TooltipProps,
   Typography,
   XAxis,
@@ -20,23 +19,8 @@ import {
 import { useTemperatureChartData } from './useTemperatureChartData';
 import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 import { BreachPopover } from './BreachPopover';
-import { BreachIcon } from './BreachIcon';
-
-interface PopoverVirtualElement {
-  getBoundingClientRect: () => DOMRect;
-  nodeType: Node['ELEMENT_NODE'];
-}
-
-export interface Breach {
-  anchor: PopoverVirtualElement | null;
-  date: Date;
-  sensorId: string;
-  type: TemperatureBreachNodeType;
-  breachId: string;
-  endDateTime: Date | null;
-  startDateTime: Date;
-  location?: string;
-}
+import { BreachDot, DotProps } from './types';
+import { BreachIndicator } from './BreachIndicator';
 
 export const TemperatureChart = () => {
   const t = useTranslation('coldchain');
@@ -45,7 +29,9 @@ export const TemperatureChart = () => {
     useTemperatureChartData();
   const { dayMonthTime } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
-  const [currentBreach, setCurrentBreach] = React.useState<Breach | null>(null);
+  const [currentBreach, setCurrentBreach] = React.useState<BreachDot | null>(
+    null
+  );
 
   const formatTemperature = (value: number | null) =>
     value === null ? '-' : `${value}${t('label.temperature-unit')}`;
@@ -71,6 +57,23 @@ export const TemperatureChart = () => {
 
     return <TemperatureTooltipLayout entries={entries} label={label} />;
   };
+
+  // shows a breach icon if there is a breach
+  // and nothing otherwise
+  const TemperatureLineDot = React.useCallback(
+    ({ cx, cy, payload }: DotProps) =>
+      !payload?.breach ? (
+        <></>
+      ) : (
+        <BreachIndicator
+          cx={cx}
+          cy={cy}
+          payload={payload}
+          setCurrentBreach={setCurrentBreach}
+        />
+      ),
+    [setCurrentBreach]
+  );
 
   return isLoading ? (
     <BasicSpinner />
@@ -171,11 +174,8 @@ export const TemperatureChart = () => {
                   dataKey="temperature"
                   stroke={sensor.colour}
                   type="monotone"
-                  dot={props => (
-                    <BreachIcon
-                      {...props}
-                      setCurrentBreach={setCurrentBreach}
-                    />
+                  dot={({ key, ...rest }) => (
+                    <TemperatureLineDot {...rest} key={`${sensor.id}_${key}`} />
                   )}
                   strokeWidth={4}
                 />
@@ -186,11 +186,12 @@ export const TemperatureChart = () => {
           <Typography width={450}>{t('error.no-data')}</Typography>
         )}
       </Box>
-      <BreachPopover
-        breach={currentBreach}
-        onClose={() => setCurrentBreach(null)}
-        sensor={sensors.find(s => s.id === currentBreach?.sensorId)}
-      />
+      {currentBreach && (
+        <BreachPopover
+          breachDot={currentBreach}
+          onClose={() => setCurrentBreach(null)}
+        />
+      )}
     </Box>
   );
 };

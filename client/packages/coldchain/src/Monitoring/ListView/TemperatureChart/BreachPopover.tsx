@@ -3,6 +3,7 @@ import {
   BaseButton,
   Box,
   CloseIcon,
+  DateUtils,
   Formatter,
   IconButton,
   Popover,
@@ -17,26 +18,26 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { AppRoute } from 'packages/config/src';
-import { Breach } from './TemperatureChart';
-import { Sensor } from './useTemperatureChartData';
+import { BreachDot } from './types';
+import { parseBreachType } from 'packages/coldchain/src/common';
 
 interface BreachPopperProps {
-  breach: Breach | null;
-  sensor?: Sensor;
+  breachDot: BreachDot;
   onClose: () => void;
 }
-export const BreachPopover = ({
-  breach,
-  onClose,
-  sensor,
-}: BreachPopperProps) => {
+
+export const BreachPopover = ({ breachDot, onClose }: BreachPopperProps) => {
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
+  const {
+    position,
+    breach: { sensor, row: breach },
+  } = breachDot;
 
   return breach === null ? null : (
     <Popover
-      open={Boolean(breach?.anchor)}
-      anchorEl={breach?.anchor}
+      open={true}
+      anchorEl={{ nodeType: 1, getBoundingClientRect: () => position }}
       anchorOrigin={{
         vertical: 'bottom',
         horizontal: 'left',
@@ -58,17 +59,21 @@ export const BreachPopover = ({
         paddingX={3}
       >
         <Typography sx={{ fontSize: 14, fontWeight: 600, paddingBottom: 1 }}>
-          {sensor && sensor.name} {t('heading.breach')}
+          {sensor.name} {t('heading.breach')}
           <BreachIcon type={breach.type} />
         </Typography>
-        <Row label={t('label.location')} value={breach?.location ?? ''} />
+        <Row label={t('label.location')} value={breach?.location?.name ?? ''} />
         <Row
           label={t('label.breach-start')}
-          value={Formatter.dateTime(breach.startDateTime)}
+          value={Formatter.dateTime(
+            DateUtils.getDateOrNull(breach.startDatetime)
+          )}
         />
         <Row
           label={t('label.breach-end')}
-          value={Formatter.dateTime(breach.endDateTime)}
+          value={Formatter.dateTime(
+            DateUtils.getDateOrNull(breach.endDatetime)
+          )}
         />
         <Box flex={1} justifyContent="center" display="flex" paddingY={2}>
           <BaseButton
@@ -104,7 +109,7 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 );
 
 const BreachIcon = ({ type }: { type: TemperatureBreachNodeType }) => {
-  const temperature = type?.split('_')[0];
+  const { temperature } = parseBreachType(type);
   const theme = useTheme();
 
   return temperature === 'HOT' ? (
