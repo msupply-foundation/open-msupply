@@ -40,7 +40,8 @@ pub enum LegacyTemperatureBreachType {
 pub struct LegacyTemperatureBreachRow {
     #[serde(rename = "ID")]
     pub id: String,
-    pub duration: i32,
+    #[serde(rename = "duration")]
+    pub duration_milliseconds: i32,
     #[serde(rename = "type")]
     pub r#type: LegacyTemperatureBreachType,
     #[serde(rename = "sensor_ID")]
@@ -66,7 +67,8 @@ pub struct LegacyTemperatureBreachRow {
     pub threshold_minimum: f64,
     #[serde(rename = "threshold_maximum_temperature")]
     pub threshold_maximum: f64,
-    pub threshold_duration: i32,
+    #[serde(rename = "threshold_duration")]
+    pub threshold_duration_milliseconds: i32,
     #[serde(rename = "om_end_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub end_datetime: Option<NaiveDateTime>,
@@ -100,7 +102,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
         let data = serde_json::from_str::<LegacyTemperatureBreachRow>(&sync_record.data)?;
         let LegacyTemperatureBreachRow {
             id,
-            duration,
+            duration_milliseconds,
             r#type,
             sensor_id,
             location_id,
@@ -112,7 +114,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             acknowledged,
             threshold_minimum,
             threshold_maximum,
-            threshold_duration,
+            threshold_duration_milliseconds,
             end_datetime,
             start_datetime,
         } = data;
@@ -120,7 +122,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
         let r#type = from_legacy_breach_type(&r#type);
         let result = TemperatureBreachRow {
             id,
-            duration,
+            duration_milliseconds,
             r#type,
             sensor_id,
             location_id,
@@ -129,7 +131,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             acknowledged,
             threshold_minimum,
             threshold_maximum,
-            threshold_duration,
+            threshold_duration_milliseconds,
             start_datetime: start_datetime
                 .or(start_date.map(|date| NaiveDateTime::new(date, start_time)))
                 .unwrap(),
@@ -151,7 +153,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
 
         let TemperatureBreachRow {
             id,
-            duration,
+            duration_milliseconds,
             r#type,
             sensor_id,
             location_id,
@@ -161,7 +163,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             acknowledged,
             threshold_minimum,
             threshold_maximum,
-            threshold_duration,
+            threshold_duration_milliseconds,
         } = TemperatureBreachRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -173,7 +175,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
 
         let legacy_row = LegacyTemperatureBreachRow {
             id,
-            duration,
+            duration_milliseconds,
             r#type,
             sensor_id,
             location_id,
@@ -187,7 +189,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             acknowledged,
             threshold_minimum,
             threshold_maximum,
-            threshold_duration,
+            threshold_duration_milliseconds,
             start_datetime: Some(start_datetime),
             end_datetime,
         };

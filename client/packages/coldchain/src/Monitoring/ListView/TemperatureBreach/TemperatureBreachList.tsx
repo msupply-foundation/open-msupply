@@ -29,7 +29,7 @@ const ListView: FC = () => {
     updatePaginationQuery,
     // filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filterKey: 'startDatetime' });
+  } = useUrlQueryParams({ filters: [{ key: 'startDatetime' }] });
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
@@ -93,7 +93,7 @@ const ListView: FC = () => {
         key: 'duration',
         label: 'label.duration',
         accessor: ({ rowData }) => {
-          return Formatter.milliseconds(rowData.duration);
+          return Formatter.milliseconds(rowData.durationMilliseconds);
         },
         sortable: false,
       },
