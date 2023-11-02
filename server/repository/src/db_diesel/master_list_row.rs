@@ -10,6 +10,7 @@ table! {
         name -> Text,
         code -> Text,
         description -> Text,
+        is_active -> Bool,
     }
 }
 
@@ -20,6 +21,7 @@ pub struct MasterListRow {
     pub name: String,
     pub code: String,
     pub description: String,
+    pub is_active: bool,
 }
 
 pub struct MasterListRowRepository<'a> {
