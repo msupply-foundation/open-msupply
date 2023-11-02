@@ -310,5 +310,12 @@
   "label.default-pack-size": "Estándar de Desempeño de Entrega",
   "label.detect-scanners": "Detectar",
   "button.scan": "Escanear",
-  "label.repack": "Reempacar"
+  "label.repack": "Reempacar",
+  "button.delete-lines": "Borrar líneas seleccionadas",
+  "button.create": "Crear",
+  "error.date_invalidDate": "El valor de la fecha es inválido",
+  "error.date_minDate": "El valor de la fecha es demasiado bajo",
+  "error.date_maxDate": "El valor de la fecha es demasiado grande",
+  "error.date_disablePast": "La fecha no debe estar en el pasado",
+  "error.date_disableFuture": "La fecha no debe estar en el futuro"
 }
