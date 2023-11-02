@@ -25,7 +25,6 @@ pub mod location;
 pub mod log_service;
 pub mod login;
 pub mod master_list;
-pub mod missing_program;
 pub mod name;
 pub mod number;
 pub mod permission;
