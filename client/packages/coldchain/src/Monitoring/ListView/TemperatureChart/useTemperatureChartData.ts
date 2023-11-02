@@ -25,7 +25,6 @@ export const useTemperatureChartData = () => {
           id: sensor.id,
           name: sensor.name,
           logs: [],
-          location: sensor.location?.name,
         });
         sensorIndex = sensors.length - 1;
       }

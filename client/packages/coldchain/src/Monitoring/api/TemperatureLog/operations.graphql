@@ -2,6 +2,7 @@ fragment TemperatureBreachRow on TemperatureBreachNode {
   __typename
   id
   acknowledged
+  startDatetime
   endDatetime
   startDatetime
   type
@@ -17,11 +18,12 @@ fragment TemperatureLog on TemperatureLogNode {
   temperature
 
   sensor {
-    ...Sensor
+    id
+    name
   }
 
   location {
-    ...LocationRow
+    name
   }
 
   temperatureBreach {

@@ -3,12 +3,10 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { SensorFragmentDoc } from '../../../Sensor/api/operations.generated';
-import { LocationRowFragmentDoc } from '../../../../../system/src/Location/api/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type TemperatureBreachRowFragment = { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null };
+export type TemperatureBreachRowFragment = { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, startDatetime: string, endDatetime?: string | null, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null };
 
-export type TemperatureLogFragment = { __typename: 'TemperatureLogNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null } | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, temperatureBreach?: { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null } | null };
+export type TemperatureLogFragment = { __typename: 'TemperatureLogNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null, temperatureBreach?: { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, startDatetime: string, endDatetime?: string | null, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null } | null };
 
 export type Temperature_LogsQueryVariables = Types.Exact<{
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -18,13 +16,14 @@ export type Temperature_LogsQueryVariables = Types.Exact<{
 }>;
 
 
-export type Temperature_LogsQuery = { __typename: 'Queries', temperatureLogs: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null } | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, temperatureBreach?: { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null } | null }> } };
+export type Temperature_LogsQuery = { __typename: 'Queries', temperatureLogs: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null, temperatureBreach?: { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, startDatetime: string, endDatetime?: string | null, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null } | null }> } };
 
 export const TemperatureBreachRowFragmentDoc = gql`
     fragment TemperatureBreachRow on TemperatureBreachNode {
   __typename
   id
   acknowledged
+  startDatetime
   endDatetime
   startDatetime
   type
@@ -40,18 +39,17 @@ export const TemperatureLogFragmentDoc = gql`
   datetime
   temperature
   sensor {
-    ...Sensor
+    id
+    name
   }
   location {
-    ...LocationRow
+    name
   }
   temperatureBreach {
     ...TemperatureBreachRow
   }
 }
-    ${SensorFragmentDoc}
-${LocationRowFragmentDoc}
-${TemperatureBreachRowFragmentDoc}`;
+    ${TemperatureBreachRowFragmentDoc}`;
 export const Temperature_LogsDocument = gql`
     query temperature_logs($page: PaginationInput, $sort: [TemperatureLogSortInput!], $filter: TemperatureLogFilterInput, $storeId: String!) {
   temperatureLogs(page: $page, sort: $sort, filter: $filter, storeId: $storeId) {

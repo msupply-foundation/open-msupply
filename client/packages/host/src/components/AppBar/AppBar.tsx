@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SectionIcon } from './SectionIcon';
+import { ColdchainNotification } from '@openmsupply-client/coldchain';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
   marginRight: 0,
@@ -27,25 +28,31 @@ export const AppBar: React.FC = () => {
   const isDashboard = useMatch(AppRoute.Dashboard);
 
   return isDashboard ? (
-    <StyledContainer ref={ref} sx={{ borderBottom: 0, minHeight: '50px' }}>
-      <Toolbar disableGutters>
-        <AppBarButtons />
-      </Toolbar>
-      <AppBarContent />
-    </StyledContainer>
+    <>
+      <ColdchainNotification />
+      <StyledContainer ref={ref} sx={{ borderBottom: 0, minHeight: '50px' }}>
+        <Toolbar disableGutters>
+          <AppBarButtons />
+        </Toolbar>
+        <AppBarContent />
+      </StyledContainer>
+    </>
   ) : (
-    <StyledContainer ref={ref} sx={{ boxShadow: theme => theme.shadows[2] }}>
-      <Toolbar disableGutters>
-        <Box style={{ marginInlineEnd: 5 }}>
-          <SectionIcon />
-        </Box>
+    <>
+      <ColdchainNotification />
+      <StyledContainer ref={ref} sx={{ boxShadow: theme => theme.shadows[2] }}>
+        <Toolbar disableGutters>
+          <Box style={{ marginInlineEnd: 5 }}>
+            <SectionIcon />
+          </Box>
 
-        <Breadcrumbs />
-        <AppBarButtons />
-      </Toolbar>
-      <AppBarContent />
-      <AppBarTabs />
-    </StyledContainer>
+          <Breadcrumbs />
+          <AppBarButtons />
+        </Toolbar>
+        <AppBarContent />
+        <AppBarTabs />
+      </StyledContainer>
+    </>
   );
 };
 
