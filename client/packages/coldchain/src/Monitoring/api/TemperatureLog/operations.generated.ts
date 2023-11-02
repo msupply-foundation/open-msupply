@@ -92,4 +92,4 @@ export const mockTemperatureLogsQuery = (resolver: ResponseResolver<GraphQLReque
   graphql.query<Temperature_LogsQuery, Temperature_LogsQueryVariables>(
     'temperature_logs',
     resolver
-  );
+  )
