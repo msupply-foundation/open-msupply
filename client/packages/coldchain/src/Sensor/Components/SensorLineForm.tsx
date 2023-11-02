@@ -4,7 +4,7 @@ import { useTranslation } from '@common/intl';
 import { BasicTextInput, InputWithLabelRow } from '@common/components';
 import { Box, Formatter, TextWithLabelRow } from '@openmsupply-client/common';
 import { UseDraftSensorControl } from './SensorEditModal';
-import { isSensorNameEditable } from '../utils';
+import { isSensorNameEditDisabled } from '../utils';
 
 export const SensorLineForm: FC<UseDraftSensorControl> = ({
   draft,
@@ -26,7 +26,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
           <BasicTextInput
             value={draft.name ?? ''}
             onChange={e => onUpdate({ name: e.target.value })}
-            disabled={!isSensorNameEditable(draft)}
+            disabled={isSensorNameEditDisabled(draft)}
           />
         }
       />

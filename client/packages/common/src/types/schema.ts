@@ -4426,7 +4426,6 @@ export type SensorNode = {
 };
 
 export enum SensorNodeType {
-  Berlinger = 'BERLINGER',
   BlueMaestro = 'BLUE_MAESTRO',
   Laird = 'LAIRD'
 }
