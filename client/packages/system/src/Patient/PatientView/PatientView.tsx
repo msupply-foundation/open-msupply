@@ -152,7 +152,7 @@ const PatientDetailView = ({
       // Take the data from the document
       return {
         schema: patientRegistry ?? DEFAULT_SCHEMA,
-        data: currentPatient.document.data,
+        data: currentPatient.documentDraft,
         isCreating: false,
       };
     }
