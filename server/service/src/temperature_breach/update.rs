@@ -37,8 +37,7 @@ pub fn update_temperature_breach(
         .connection
         .transaction_sync(|connection| {
             let temperature_breach_row = validate(connection, &ctx.store_id, &input)?;
-            let updated_temperature_breach_row =
-                generate(&ctx.store_id, input, temperature_breach_row);
+            let updated_temperature_breach_row = generate(input, temperature_breach_row);
             TemperatureBreachRowRepository::new(&connection)
                 .upsert_one(&updated_temperature_breach_row)?;
 
@@ -66,7 +65,6 @@ pub fn validate(
 }
 
 pub fn generate(
-    store_id: &str,
     UpdateTemperatureBreach {
         id: _,
         duration_milliseconds,
@@ -80,20 +78,21 @@ pub fn generate(
         threshold_maximum,
         threshold_minimum,
     }: UpdateTemperatureBreach,
-    mut temperature_breach_row: TemperatureBreachRow,
+    existing_row: TemperatureBreachRow,
 ) -> TemperatureBreachRow {
-    temperature_breach_row.duration_milliseconds = duration_milliseconds;
-    temperature_breach_row.r#type = r#type;
-    temperature_breach_row.sensor_id = sensor_id;
-    temperature_breach_row.location_id = location_id;
-    temperature_breach_row.store_id = Some(store_id.to_string());
-    temperature_breach_row.start_datetime = start_datetime;
-    temperature_breach_row.end_datetime = end_datetime;
-    temperature_breach_row.acknowledged = acknowledged;
-    temperature_breach_row.threshold_duration_milliseconds = threshold_duration_milliseconds;
-    temperature_breach_row.threshold_maximum = threshold_maximum;
-    temperature_breach_row.threshold_minimum = threshold_minimum;
-    temperature_breach_row
+    TemperatureBreachRow {
+        duration_milliseconds,
+        r#type,
+        sensor_id,
+        location_id,
+        start_datetime,
+        end_datetime,
+        acknowledged,
+        threshold_duration_milliseconds,
+        threshold_maximum,
+        threshold_minimum,
+        ..existing_row
+    }
 }
 
 impl From<RepositoryError> for UpdateTemperatureBreachError {
