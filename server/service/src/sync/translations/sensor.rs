@@ -1,7 +1,8 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
+        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
+        zero_date_as_option,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -52,6 +53,9 @@ pub struct LegacySensorRow {
     #[serde(rename = "lastConnectionTime")]
     #[serde(deserialize_with = "naive_time")]
     pub last_connection_time: NaiveTime,
+    #[serde(rename = "om_last_connection_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub last_connection_datetime: Option<NaiveDateTime>,
 }
 
 pub(crate) struct SensorTranslation {}
@@ -85,11 +89,8 @@ impl SyncTranslation for SensorTranslation {
             is_active,
             last_connection_date,
             last_connection_time,
+            last_connection_datetime,
         } = data;
-
-        let last_connection_datetime = last_connection_date.map(|last_connection_date| {
-            NaiveDateTime::new(last_connection_date, last_connection_time)
-        });
 
         let serial = serial.split(" |").nth(0).unwrap_or_default().to_string();
         let r#type = get_sensor_type(&serial);
@@ -103,7 +104,10 @@ impl SyncTranslation for SensorTranslation {
             battery_level,
             log_interval,
             is_active,
-            last_connection_datetime,
+            last_connection_datetime:
+                last_connection_datetime
+                    .or(last_connection_date
+                        .map(|date| NaiveDateTime::new(date, last_connection_time))),
             r#type,
         };
 
@@ -164,6 +168,7 @@ impl SyncTranslation for SensorTranslation {
             is_active,
             last_connection_date,
             last_connection_time,
+            last_connection_datetime,
         };
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,

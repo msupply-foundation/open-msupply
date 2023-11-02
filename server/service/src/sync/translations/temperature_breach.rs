@@ -1,7 +1,7 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
     sync_serde::{
-        date_from_date_time, date_option_to_isostring, date_to_isostring,
+        date_from_date_time, date_option_to_isostring, empty_str_as_option,
         empty_str_as_option_string, naive_time, zero_date_as_option,
     },
 };
@@ -40,7 +40,8 @@ pub enum LegacyTemperatureBreachType {
 pub struct LegacyTemperatureBreachRow {
     #[serde(rename = "ID")]
     pub id: String,
-    pub duration: i32,
+    #[serde(rename = "duration")]
+    pub duration_milliseconds: i32,
     #[serde(rename = "type")]
     pub r#type: LegacyTemperatureBreachType,
     #[serde(rename = "sensor_ID")]
@@ -51,8 +52,9 @@ pub struct LegacyTemperatureBreachRow {
     #[serde(rename = "store_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub store_id: Option<String>,
-    #[serde(serialize_with = "date_to_isostring")]
-    pub start_date: NaiveDate,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub start_date: Option<NaiveDate>,
     #[serde(deserialize_with = "naive_time")]
     pub start_time: NaiveTime,
     #[serde(deserialize_with = "zero_date_as_option")]
@@ -65,7 +67,14 @@ pub struct LegacyTemperatureBreachRow {
     pub threshold_minimum: f64,
     #[serde(rename = "threshold_maximum_temperature")]
     pub threshold_maximum: f64,
-    pub threshold_duration: i32,
+    #[serde(rename = "threshold_duration")]
+    pub threshold_duration_milliseconds: i32,
+    #[serde(rename = "om_end_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub end_datetime: Option<NaiveDateTime>,
+    #[serde(rename = "om_start_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub start_datetime: Option<NaiveDateTime>,
 }
 
 pub(crate) struct TemperatureBreachTranslation {}
@@ -91,26 +100,41 @@ impl SyncTranslation for TemperatureBreachTranslation {
         }
 
         let data = serde_json::from_str::<LegacyTemperatureBreachRow>(&sync_record.data)?;
-        let r#type = from_legacy_breach_type(&data.r#type);
-        let start_datetime = NaiveDateTime::new(data.start_date, data.start_time);
-
-        let end_datetime = data
-            .end_date
-            .map(|end_date| NaiveDateTime::new(end_date, data.end_time));
-
-        let result = TemperatureBreachRow {
-            id: data.id,
-            duration: data.duration,
+        let LegacyTemperatureBreachRow {
+            id,
+            duration_milliseconds,
             r#type,
-            sensor_id: data.sensor_id,
-            location_id: data.location_id,
-            store_id: data.store_id,
-            start_datetime,
+            sensor_id,
+            location_id,
+            store_id,
+            start_date,
+            start_time,
+            end_date,
+            end_time,
+            acknowledged,
+            threshold_minimum,
+            threshold_maximum,
+            threshold_duration_milliseconds,
             end_datetime,
-            acknowledged: data.acknowledged,
-            threshold_minimum: data.threshold_minimum,
-            threshold_maximum: data.threshold_maximum,
-            threshold_duration: data.threshold_duration,
+            start_datetime,
+        } = data;
+
+        let r#type = from_legacy_breach_type(&r#type);
+        let result = TemperatureBreachRow {
+            id,
+            duration_milliseconds,
+            r#type,
+            sensor_id,
+            location_id,
+            store_id,
+            end_datetime: end_datetime.or(end_date.map(|date| NaiveDateTime::new(date, end_time))),
+            acknowledged,
+            threshold_minimum,
+            threshold_maximum,
+            threshold_duration_milliseconds,
+            start_datetime: start_datetime
+                .or(start_date.map(|date| NaiveDateTime::new(date, start_time)))
+                .unwrap(),
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -129,7 +153,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
 
         let TemperatureBreachRow {
             id,
-            duration,
+            duration_milliseconds,
             r#type,
             sensor_id,
             location_id,
@@ -139,7 +163,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             acknowledged,
             threshold_minimum,
             threshold_maximum,
-            threshold_duration,
+            threshold_duration_milliseconds,
         } = TemperatureBreachRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -147,20 +171,17 @@ impl SyncTranslation for TemperatureBreachTranslation {
                 changelog.record_id
             )))?;
 
-        let start_date = start_datetime.date();
-        let start_time = start_datetime.time();
-
         let r#type = to_legacy_breach_type(&r#type);
 
         let legacy_row = LegacyTemperatureBreachRow {
             id,
-            duration,
+            duration_milliseconds,
             r#type,
             sensor_id,
             location_id,
             store_id,
-            start_date,
-            start_time,
+            start_date: Some(start_datetime.date()),
+            start_time: start_datetime.time(),
             end_date: end_datetime.map(|end_datetime| date_from_date_time(&end_datetime)),
             end_time: end_datetime
                 .map(|datetime| datetime.time())
@@ -168,7 +189,9 @@ impl SyncTranslation for TemperatureBreachTranslation {
             acknowledged,
             threshold_minimum,
             threshold_maximum,
-            threshold_duration,
+            threshold_duration_milliseconds,
+            start_datetime: Some(start_datetime),
+            end_datetime,
         };
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,

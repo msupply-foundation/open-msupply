@@ -1,8 +1,13 @@
 {
-  "cold-chain.temperature-unit": "°C",
+  "button.view-all-breaches": "View all breaches",
+  "button.view-details": "View Details",
   "error.no-sensors": "No sensors found",
   "error.no-temperature-logs": "No temperature logs found",
+  "heading.breach": "Breach",
+  "heading.chart": "Temperature by Sensor",
   "label.acknowledged": "Acknowledged",
+  "label.breach-end": "Breach end",
+  "label.breach-start": "Breach start",
   "label.breaches": "Breaches",
   "label.cce": "CCE",
   "label.chart": "Chart",
@@ -19,5 +24,9 @@
   "label.to-start-datetime": "To start date / time",
   "label.unacknowledged": "Unacknowledged",
   "message.confirm-sensor-update": "This will confirm changes you have made to this sensor",
+  "message.device": "Device:",
+  "message.last-temperature": "Last temperature reading: {{temperature}}°C",
+  "message.location": "Location:",
+  "message.notification-breach-detected": "Temperature breach detected! {{time}} ago",
   "title.sensor-details": "Sensor Details"
 }
