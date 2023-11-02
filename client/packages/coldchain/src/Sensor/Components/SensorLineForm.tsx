@@ -33,6 +33,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
             onChange={location => {
               onUpdate({ location });
             }}
+            canRemove={true}
           />
         }
       />

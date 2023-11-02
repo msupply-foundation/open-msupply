@@ -25,6 +25,7 @@ const ListView: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
+    initialSort: { key: 'startDatetime', dir: 'desc' },
     filters: [
       { key: 'startDatetime', condition: 'between' },
       {
@@ -110,7 +111,7 @@ const ListView: FC = () => {
         key: 'duration',
         label: 'label.duration',
         accessor: ({ rowData }) => {
-          return Formatter.milliseconds(rowData.duration);
+          return Formatter.milliseconds(rowData.durationMilliseconds);
         },
         sortable: false,
       },

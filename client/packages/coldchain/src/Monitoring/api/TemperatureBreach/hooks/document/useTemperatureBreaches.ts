@@ -2,7 +2,7 @@ import { useTemperatureBreachApi } from '../utils/useTemperatureBreachesApi';
 import { useQuery } from '@openmsupply-client/common';
 import { ListParams } from '../../api';
 
-export const useTemperatureBreaches = (query: ListParams) => {
+export const useTemperatureBreaches = (queryParams: ListParams) => {
   const api = useTemperatureBreachApi();
 
   return {
