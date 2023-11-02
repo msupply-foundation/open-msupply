@@ -1,3 +1,4 @@
+use anyhow::Context;
 use chrono::NaiveDateTime;
 use repository::{DatetimeFilter, EqualFilter};
 use repository::{
@@ -8,11 +9,11 @@ use repository::{
     TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLog,
     TemperatureLogFilter, TemperatureLogRepository, TemperatureLogRow, TemperatureLogRowRepository,
 };
+use serde::Serialize;
+use std::path::PathBuf;
+use thiserror::Error;
 use util::uuid::uuid;
 
-use crate::{service_provider::ServiceContext, SingleRecordError};
-
-extern crate temperature_sensor;
 use temperature_sensor::*;
 
 pub fn get_breach_row_type(breach_type: &BreachType) -> TemperatureBreachRowType {
@@ -141,9 +142,11 @@ fn sensor_add_breach_if_new(
     )?;
 
     if let Some(mut record) = result.clone().pop() {
-        if record.temperature_breach_row.end_datetime != Some(temperature_breach.end_timestamp) { // Update breach end time if it has changed
+        if record.temperature_breach_row.end_datetime != Some(temperature_breach.end_timestamp) {
+            // Update breach end time if it has changed
             record.temperature_breach_row.end_datetime = Some(temperature_breach.end_timestamp);
-            TemperatureBreachRowRepository::new(connection).upsert_one(&record.temperature_breach_row)?;
+            TemperatureBreachRowRepository::new(connection)
+                .upsert_one(&record.temperature_breach_row)?;
         }
         Ok(())
     } else {
@@ -211,7 +214,7 @@ fn sensor_add_breach_config_if_new(
     if !result.is_empty() {
         return Ok(());
     };
-    
+
     let new_temperature_breach_config = TemperatureBreachConfigRow {
         id: uuid(),
         store_id: sensor_row.store_id.clone(),
@@ -263,92 +266,95 @@ fn sensor_add_if_new(
     Ok(())
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReadSensor {
+    number_of_logs: u32,
+    number_of_breaches: u32,
+}
+
+#[derive(Debug, Error)]
+pub enum ReadSensorError {
+    #[error(transparent)]
+    DatabaseError(#[from] RepositoryError),
+    #[error("Problem reading sensor data {0}")]
+    StringError(String),
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
+}
+
 pub fn read_sensors(
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<Vec<String>, SingleRecordError> {
-    let mut sensors_processed: Vec<String> = Vec::new();
+    fridgetag_file: PathBuf,
+) -> anyhow::Result<ReadSensor, ReadSensorError> {
+    let filename = fridgetag_file.to_string_lossy();
 
-    let sensor_serials =
-        read_connected_serials().map_err(|err| SingleRecordError::NotFound(err))?;
-    let expected_sensor_count = sensor_serials.len();
+    let mut temperature_sensor = temperature_sensor::read_sensor_file(&filename, true)
+        .map_err(ReadSensorError::StringError)?;
 
-    for current_serial in sensor_serials {
-        let mut temperature_sensor = temperature_sensor::read_sensor(&current_serial, true)
-            .map_err(|err| SingleRecordError::NotFound(err))?;
-        sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
+    sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
-        let result = get_matching_sensor_serial(connection, &current_serial)?;
+    let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
-        if let Some(mut record) = result.clone().pop() {
-            // Filter sensor data by previous last connected time
-            let last_connected = record.sensor_row.last_connection_datetime;
-            temperature_sensor =
-                temperature_sensor::filter_sensor(temperature_sensor, last_connected, None, true);
+    let record = result
+        .clone()
+        .pop()
+        .context("Sensor could not be inserted or found in database")?;
 
-            if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
-                for temperature_sensor_config in temperature_sensor_configs {
-                    sensor_add_breach_config_if_new(
-                        connection,
-                        &record.sensor_row,
-                        temperature_sensor_config,
-                    )?;
-                }
-            }
+    // Filter sensor data by previous last connected time
+    let last_connected = record.sensor_row.last_connection_datetime;
+    temperature_sensor =
+        temperature_sensor::filter_sensor(temperature_sensor, last_connected, None, true);
 
-            if let Some(temperature_sensor_breaches) = &temperature_sensor.breaches {
-                for temperature_sensor_breach in temperature_sensor_breaches {
-                    // Look up matching config from the USB data and snapshot it as part of the breach
-                    if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
-                        if let Some(temperature_sensor_config) = temperature_sensor_configs
-                            .iter()
-                            .find(|&t| t.breach_type == temperature_sensor_breach.breach_type)
-                        {
-                            sensor_add_breach_if_new(
-                                connection,
-                                &record.sensor_row,
-                                &temperature_sensor_breach,
-                                &temperature_sensor_config,
-                            )?;
-                        }
-                    }
-                }
-            }
-
-            if let Some(temperature_sensor_logs) = &temperature_sensor.logs {
-                for temperature_sensor_log in temperature_sensor_logs {
-                    sensor_add_log_if_new(connection, &record.sensor_row, temperature_sensor_log)?;
-                }
-            }
-
-            // Finally, update sensor's last connected time if it has changed
-            if record.sensor_row.last_connection_datetime != temperature_sensor.last_connected_timestamp {
-                record.sensor_row.last_connection_datetime = temperature_sensor.last_connected_timestamp;
-                SensorRowRepository::new(connection).upsert_one(&record.sensor_row)?;
-            }
-            sensors_processed.push(current_serial);
-        } else {
-            println!("Sensor {} does not exist in DB", &current_serial);
+    if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
+        for temperature_sensor_config in temperature_sensor_configs {
+            sensor_add_breach_config_if_new(
+                connection,
+                &record.sensor_row,
+                temperature_sensor_config,
+            )?;
         }
     }
 
-    if expected_sensor_count == 0 {
-        println!("No sensors found");
-        Err(SingleRecordError::NotFound(
-            "USB sensor not found".to_string(),
-        ))
-    } else if expected_sensor_count > sensors_processed.len() {
-        Err(SingleRecordError::NotFound(
-            "At least one sensor not processed".to_string(),
-        ))
-    } else {
-        Ok(sensors_processed)
+    let temperature_sensor_breaches = temperature_sensor.breaches.unwrap_or_default();
+    let temperature_sensor_logs = temperature_sensor.logs.unwrap_or_default();
+
+    let result = ReadSensor {
+        number_of_logs: temperature_sensor_logs.len() as u32,
+        number_of_breaches: temperature_sensor_breaches.len() as u32,
+    };
+
+    for temperature_sensor_breach in temperature_sensor_breaches {
+        // Look up matching config from the USB data and snapshot it as part of the breach
+        if let Some(temperature_sensor_configs) = &temperature_sensor.configs {
+            if let Some(temperature_sensor_config) = temperature_sensor_configs
+                .iter()
+                .find(|&t| t.breach_type == temperature_sensor_breach.breach_type)
+            {
+                sensor_add_breach_if_new(
+                    connection,
+                    &record.sensor_row,
+                    &temperature_sensor_breach,
+                    &temperature_sensor_config,
+                )?;
+            }
+        }
     }
+
+    for temperature_sensor_log in temperature_sensor_logs {
+        sensor_add_log_if_new(connection, &record.sensor_row, &temperature_sensor_log)?;
+    }
+
+    // Finally, update sensor's last connected time if it has changed
+    if record.sensor_row.last_connection_datetime != temperature_sensor.last_connected_timestamp {
+        SensorRowRepository::new(connection).upsert_one(&SensorRow {
+            last_connection_datetime: temperature_sensor.last_connected_timestamp,
+            ..record.sensor_row
+        })?;
+    }
+
+    Ok(result)
 }
 
-pub fn read_temperature_sensors(ctx: &ServiceContext) -> () {
-    let _result = match read_sensors(&ctx.connection, &ctx.store_id) {
-        Err(_) => println!("Sensor error"),
-        Ok(_sensor_record) => println!("Sensors read"),
-    };
-}
+// TODO tests
