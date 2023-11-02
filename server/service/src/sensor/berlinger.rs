@@ -283,7 +283,7 @@ pub enum ReadSensorError {
     Other(#[from] anyhow::Error),
 }
 
-pub fn read_sensors(
+pub fn read_sensor(
     connection: &StorageConnection,
     store_id: &str,
     fridgetag_file: PathBuf,

@@ -9,7 +9,7 @@ use anyhow::Context;
 use serde::Deserialize;
 
 use service::{
-    sensor::berlinger::{read_sensors, ReadSensor},
+    sensor::berlinger::{read_sensor, ReadSensor},
     service_provider::ServiceProvider,
     settings::Settings,
 };
@@ -70,7 +70,7 @@ fn upload_fridge_tag(
 
     ctx.connection
         .transaction_sync(|con| {
-            read_sensors(&con, &url_params.store_id, new_file_path)
+            read_sensor(&con, &url_params.store_id, new_file_path)
                 .context("Error while integrating sensor data")
         })
         .map_err(|error| error.to_inner_error())
