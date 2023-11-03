@@ -17,10 +17,12 @@ impl Migration for V1_05_00 {
         cold_chain::migrate(connection)?;
         permissions_preferences::migrate(connection)?;
         activity_log::migrate(connection)?;
+        sensor::migrate(connection)?;
         Ok(())
     }
 }
 
+#[cfg(test)]
 #[actix_rt::test]
 async fn migration_1_05_00() {
     use crate::migrations::*;
