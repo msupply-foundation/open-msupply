@@ -14,12 +14,10 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
   const textSx = { paddingLeft: 2 };
   const labelWrap = { sx: { whiteSpace: 'pre-wrap' } };
   const inputTextAlign = { sx: { textAlign: 'end' } };
-  console.info(draft);
 
   return (
     <Box display="flex" flexDirection="column" gap={2}>
       <InputWithLabelRow
-        sx={textSx}
         label={t('label.sensor-name')}
         labelProps={inputTextAlign}
         Input={
