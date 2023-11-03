@@ -11,7 +11,12 @@ import {
   RecordWithId,
   useLocalStorage,
 } from '@openmsupply-client/common';
-import { FilterBy, FilterByWithBoolean, FilterController, SortBy } from '../useQueryParams';
+import {
+  FilterBy,
+  FilterByWithBoolean,
+  FilterController,
+  SortBy,
+} from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
@@ -179,8 +184,8 @@ const getFilterEntry = (
 
     if (filter.key.toLowerCase().includes('datetime')) {
       return {
-        afterOrEqualTo: Formatter.naiveDateTime(dateAfter),
-        beforeOrEqualTo: Formatter.naiveDateTime(dateBefore),
+        afterOrEqualTo: Formatter.toIsoString(dateAfter),
+        beforeOrEqualTo: Formatter.toIsoString(dateBefore),
       };
     }
     return {
@@ -189,7 +194,7 @@ const getFilterEntry = (
     };
   }
   const condition = filter.condition ? filter.condition : 'like';
-  if(condition === '=') {
+  if (condition === '=') {
     return Boolean(filterValue);
   }
 
