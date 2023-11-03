@@ -3,7 +3,10 @@ use super::{
     LocationRow, StorageConnection,
 };
 
-use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
+use crate::{
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    StringFilter,
+};
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
 use diesel::prelude::*;
@@ -16,8 +19,8 @@ pub struct Location {
 #[derive(Clone, PartialEq, Debug)]
 pub struct LocationFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<EqualFilter<String>>,
-    pub code: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
     pub on_hold: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
 }
@@ -88,8 +91,8 @@ impl<'a> LocationRepository<'a> {
 
         if let Some(filter) = filter {
             apply_equal_filter!(query, filter.id, location_dsl::id);
-            apply_equal_filter!(query, filter.name, location_dsl::name);
-            apply_equal_filter!(query, filter.code, location_dsl::code);
+            apply_string_filter!(query, filter.name, location_dsl::name);
+            apply_string_filter!(query, filter.code, location_dsl::code);
 
             if let Some(value) = filter.on_hold {
                 query = query.filter(location_dsl::on_hold.eq(value));
@@ -124,12 +127,12 @@ impl LocationFilter {
         self
     }
 
-    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
 
-    pub fn code(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
         self
     }

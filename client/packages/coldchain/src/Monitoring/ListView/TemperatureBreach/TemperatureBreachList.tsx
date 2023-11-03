@@ -16,20 +16,42 @@ import {
   useTemperatureBreach,
 } from '../../api/TemperatureBreach';
 import { BreachTypeCell } from '../../../common';
+import { Toolbar } from './Toolbar';
 
 const ListView: FC = () => {
-  const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'startDatetime', dir: 'desc' },
-  });
-
-  const { data, isLoading, isError } =
-    useTemperatureBreach.document.list(queryParams);
   const {
     updateSortQuery,
     updatePaginationQuery,
-    // filter,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filters: [{ key: 'startDatetime' }] });
+    filter,
+    queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams({
+    initialSort: { key: 'startDatetime', dir: 'desc' },
+    filters: [
+      { key: 'startDatetime', condition: 'between' },
+      {
+        key: 'sensor.name',
+      },
+      {
+        key: 'location.name',
+      },
+      {
+        key: 'type',
+        condition: 'equalTo',
+      },
+      {
+        key: 'acknowledged',
+        condition: '=',
+      },
+    ],
+  });
+  const queryParams = {
+    filterBy,
+    offset,
+    sortBy,
+    first,
+  };
+  const { data, isLoading, isError } =
+    useTemperatureBreach.document.list(queryParams);
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
@@ -120,17 +142,22 @@ const ListView: FC = () => {
   );
 
   return (
-    <DataTable
-      id="temperature-breach-list"
-      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={data?.nodes ?? []}
-      isLoading={isLoading}
-      isError={isError}
-      noDataElement={<NothingHere body={t('error.no-temperature-breaches')} />}
-      enableColumnSelection
-    />
+    <>
+      <Toolbar filter={filter} />
+      <DataTable
+        id="temperature-breach-list"
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+        onChangePage={updatePaginationQuery}
+        columns={columns}
+        data={data?.nodes ?? []}
+        isLoading={isLoading}
+        isError={isError}
+        noDataElement={
+          <NothingHere body={t('error.no-temperature-breaches')} />
+        }
+        enableColumnSelection
+      />
+    </>
   );
 };
 

@@ -1,6 +1,6 @@
 import {
   SortBy,
-  FilterBy,
+  FilterByWithBoolean,
   StockLineNode,
   StockLineSortFieldInput,
   RecordPatch,
@@ -68,7 +68,7 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
       first: number;
       offset: number;
       sortBy: SortBy<StockLineNode>;
-      filterBy: FilterBy | null;
+      filterBy: FilterByWithBoolean | null;
     }): Promise<{
       nodes: StockLineRowFragment[];
       totalCount: number;

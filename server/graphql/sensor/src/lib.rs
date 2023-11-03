@@ -85,7 +85,7 @@ mod test {
     use repository::{
         mock::MockDataInserts,
         sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
-        SensorRow, SensorType, StorageConnectionManager,
+        SensorRow, SensorType, StorageConnectionManager, StringFilter,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
@@ -323,7 +323,7 @@ mod test {
                 Some(
                     SensorFilter::new()
                         .store_id(EqualFilter::equal_to("store_a"))
-                        .name(EqualFilter::equal_to("match_name"))
+                        .name(StringFilter::equal_to("match_name"))
                 )
             );
             Ok(ListResult::empty())
