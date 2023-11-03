@@ -1,9 +1,8 @@
 import { FilterBy } from '@openmsupply-client/common';
-import { Document } from '@openmsupply-client/system/src/Patient/api/hooks/document';
-import { PatientRowFragment } from 'packages/system/src';
+import { PatientRowFragment, usePatient } from '@openmsupply-client/system';
 
 export const usePatientSearchQuery = (searchFilter: FilterBy | undefined) => {
-  const { data, error, isLoading } = Document.usePatientFullSearch({
+  const { data, error, isLoading } = usePatient.document.fullSearch({
     first: 10,
     offset: 0,
     sortBy: { key: 'lastName', direction: 'asc' },
