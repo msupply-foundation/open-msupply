@@ -19,7 +19,7 @@ export const AppBarButtons = () => {
   const api = useSensorApi();
 
   const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    let file = e?.target?.files?.[0];
+    const file = e?.target?.files?.[0];
     if (!file) return;
 
     setIsUploadingFridgeTag(true);
