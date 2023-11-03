@@ -26,13 +26,16 @@ impl SyncRecordTester for ActivityLogRecordTester {
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
-            event: None,
+            changed_to: Some("from".to_string()),
+            changed_from: Some("to".to_string()),
         };
 
         let log_2 = inline_edit(&log_1, |mut l| {
             l.id = uuid();
             l.r#type = ActivityLogType::InvoiceStatusAllocated;
             l.record_id = Some("inbound_shipment_a".to_string());
+            l.changed_to = None;
+            l.changed_from = None;
             l
         });
 

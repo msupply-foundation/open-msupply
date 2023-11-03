@@ -2,7 +2,7 @@ use util::inline_init;
 
 use crate::{DateFilter, DatetimeFilter, EqualFilter, Sort, StringFilter};
 
-mod requisition;
+pub mod requisition;
 pub mod requisition_row;
 
 pub use self::requisition::*;
