@@ -2275,9 +2275,9 @@ export type LocationConnector = {
 };
 
 export type LocationFilterInput = {
-  code?: InputMaybe<EqualFilterStringInput>;
+  code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -4406,7 +4406,7 @@ export type SensorConnector = {
 export type SensorFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  name?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
   serial?: InputMaybe<EqualFilterStringInput>;
 };
 
