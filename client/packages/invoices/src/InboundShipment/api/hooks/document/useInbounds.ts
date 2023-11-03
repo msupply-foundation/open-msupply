@@ -3,7 +3,7 @@ import { useInboundApi } from '../utils/useInboundApi';
 
 export const useInbounds = () => {
   const { queryParams } = useUrlQueryParams({
-    filterKey: 'otherPartyName',
+    filters: [{ key: 'otherPartyName' }],
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const api = useInboundApi();
