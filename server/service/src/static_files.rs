@@ -126,7 +126,9 @@ fn delete_old_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Result<(),
 
 #[cfg(test)]
 mod test {
-    use std::{fs, path::PathBuf, str::FromStr, time::Duration};
+    use std::{fs, time::Duration};
+
+    use crate::static_files::STATIC_FILE_DIR;
 
     use super::StaticFileService;
 
@@ -134,13 +136,16 @@ mod test {
 
     #[test]
     fn test_static_file_storage() {
-        let mut service = StaticFileService::new(&None).unwrap();
-        service.dir = PathBuf::from_str(TEST_DIR).unwrap();
-        service.max_lifetime_millis = 100;
-        let test_dir = std::env::current_dir().unwrap().join(TEST_DIR);
+        let test_dir = std::env::current_dir()
+            .unwrap()
+            .join(TEST_DIR)
+            .join(STATIC_FILE_DIR);
         if fs::metadata(&test_dir).is_ok() {
             fs::remove_dir_all(&test_dir).unwrap();
         }
+
+        let mut service = StaticFileService::new(&Some(TEST_DIR.to_string())).unwrap();
+        service.max_lifetime_millis = 100;
 
         let file_in = service.store_file("test_file", "data".as_bytes()).unwrap();
         let file_out = service.find_file(&file_in.id).unwrap().unwrap();
