@@ -11,6 +11,7 @@ import {
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
   EncounterRowFragment,
+  getStatusEventData,
   useDocumentRegistry,
 } from '@openmsupply-client/programs';
 import { getLogicalStatus } from '../utils';
@@ -22,26 +23,27 @@ interface useEncounterListColumnsProps {
   includePatient?: boolean;
 }
 
-export const useEncounterAdditionalInfoAccessor: ColumnDataAccessor<
-  EncounterRowFragment,
-  string[]
-> = ({ rowData }): string[] => {
+const useEncounterAdditionalInfoAccessor: () => {
+  additionalInfoAccessor: ColumnDataAccessor<EncounterRowFragment, string[]>;
+} = () => {
   const t = useTranslation();
-  const additionalInfo = [];
+  return {
+    additionalInfoAccessor: ({ rowData }): string[] => {
+      const additionalInfo = getStatusEventData(
+        rowData.activeProgramEvents.nodes
+      );
 
-  if (rowData?.activeProgramEvents[0]?.data) {
-    additionalInfo.push(rowData.activeProgramEvents[0].data);
-  }
+      if (rowData?.status === EncounterNodeStatus.Pending) {
+        const startDatetime = new Date(rowData?.startDatetime);
+        const status = getLogicalStatus(startDatetime, t);
+        if (status) {
+          additionalInfo.push(status);
+        }
+      }
 
-  if (rowData?.status === EncounterNodeStatus.Pending) {
-    const startDatetime = new Date(rowData?.startDatetime);
-    const status = getLogicalStatus(startDatetime, t);
-    if (status) {
-      additionalInfo.push(status);
-    }
-  }
-
-  return additionalInfo;
+      return additionalInfo;
+    },
+  };
 };
 
 export const useEncounterListColumns = ({
@@ -60,11 +62,12 @@ export const useEncounterListColumns = ({
     });
   includePatient;
 
+  const { additionalInfoAccessor } = useEncounterAdditionalInfoAccessor();
+
   const columnList: ColumnDescription<EncounterRowFragment>[] = [
     {
-      key: 'encounter-type',
+      key: 'type',
       label: 'label.encounter-type',
-      sortable: false,
       accessor: ({ rowData }) => rowData?.document.documentRegistry?.name,
     },
     {
@@ -97,6 +100,7 @@ export const useEncounterListColumns = ({
         dateString ? localisedTime((dateString as string) || '') : '',
     },
   ];
+
   if (includePatient)
     columnList.push({
       key: 'patientId',
@@ -107,7 +111,7 @@ export const useEncounterListColumns = ({
     label: 'label.additional-info',
     key: 'events',
     sortable: false,
-    accessor: useEncounterAdditionalInfoAccessor,
+    accessor: additionalInfoAccessor,
     Cell: ChipTableCell,
     minWidth: 400,
   });

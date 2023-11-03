@@ -10,6 +10,7 @@ export const usePrescription = {
     insert: Document.usePrescriptionInsert,
     update: Document.usePrescriptionUpdate,
     delete: Document.usePrescriptionDelete,
+    deleteRows: Document.usePrescriptionDeleteRows,
   },
   line: {
     stockLines: Line.usePrescriptionLine,

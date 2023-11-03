@@ -3,8 +3,8 @@ use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, Str
 use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_general::{EqualFilterGenderInput, GenderInput};
 use graphql_types::types::patient::PatientNode;
+use graphql_types::types::{EqualFilterGenderInput, GenderInput};
 use repository::{
     DateFilter, EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField,
     StringFilter,
@@ -39,6 +39,7 @@ pub struct PatientFilterInput {
     pub email: Option<StringFilterInput>,
     pub identifier: Option<StringFilterInput>,
     pub name_or_code: Option<StringFilterInput>,
+    pub date_of_death: Option<DateFilterInput>,
 }
 
 impl PatientFilterInput {
@@ -59,6 +60,7 @@ impl PatientFilterInput {
             email,
             identifier,
             name_or_code,
+            date_of_death,
         } = self;
         PatientFilter {
             id: id.map(EqualFilter::from),
@@ -76,6 +78,7 @@ impl PatientFilterInput {
             email: email.map(StringFilter::from),
             identifier: identifier.map(StringFilter::from),
             name_or_code: name_or_code.map(StringFilter::from),
+            date_of_death: date_of_death.map(DateFilter::from),
         }
     }
 }
@@ -95,6 +98,7 @@ pub enum PatientSortFieldInput {
     Address2,
     Country,
     Email,
+    DateOfDeath,
 }
 
 #[derive(InputObject)]
@@ -122,6 +126,7 @@ impl PatientSortInput {
                 PatientSortFieldInput::Address2 => PatientSortField::Address2,
                 PatientSortFieldInput::Country => PatientSortField::Country,
                 PatientSortFieldInput::Email => PatientSortField::Email,
+                PatientSortFieldInput::DateOfDeath => PatientSortField::DateOfDeath,
             },
             desc: self.desc,
         }

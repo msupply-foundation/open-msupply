@@ -125,7 +125,7 @@ export const RequestRequisitionListView: FC = () => {
 
       <DataTable
         id="internal-order-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}

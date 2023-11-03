@@ -24,12 +24,11 @@ export const MasterListSearchModal: FC<MasterListSearchProps> = ({
     sortBy,
     filterBy
   );
-  const t = useTranslation(['app', 'common']);
+  const t = useTranslation('app');
 
-  // Only query for data once the modal has been opened
   useEffect(() => {
-    if (open && !data && !isLoading) mutate();
-  }, [open, data, isLoading]);
+    if (open) mutate();
+  }, [open]);
 
   return (
     <ListSearch

@@ -111,9 +111,10 @@ fragment EncounterFields on EncounterFieldsNode {
 }
 
 fragment ProgramEvent on ProgramEventNode {
-  activeDatetime
+  activeStartDatetime
   type
   data
+  documentName
 }
 
 query encounterFields(
@@ -159,6 +160,8 @@ fragment Encounter on EncounterNode {
     id
     firstName
     lastName
+    code
+    code2
     name
     dateOfBirth
   }
@@ -246,7 +249,12 @@ fragment EncounterRow on EncounterNode {
     name
   }
   activeProgramEvents(at: $eventTime, filter: { isCurrentEncounter: true }) {
-    ...ProgramEvent
+    ... on ProgramEventConnector {
+      nodes {
+        __typename
+        ...ProgramEvent
+      }
+    }
   }
 }
 
@@ -309,7 +317,12 @@ fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
     }
   }
   activeProgramEvents(at: $eventTime) {
-    ...ProgramEvent
+    ... on ProgramEventConnector {
+      nodes {
+        __typename
+        ...ProgramEvent
+      }
+    }
   }
 }
 
@@ -459,14 +472,97 @@ query activeProgramEvents(
       totalCount
       nodes {
         __typename
-        type
-        patientId
-        documentType
-        documentName
-        datetime
-        data
-        activeDatetime
+        ...ProgramEvent
       }
+    }
+  }
+}
+
+fragment ContactTraceRow on ContactTraceNode {
+  __typename
+  contactTraceId
+  storeId
+  datetime
+  document {
+    name
+    type
+    id
+  }
+  documentId
+  id
+  firstName
+  lastName
+  gender
+  dateOfBirth
+  age
+  patientId
+  patient {
+    id
+    name
+    firstName
+    lastName
+  }
+  contactPatient {
+    id
+    name
+    firstName
+    lastName
+  }
+  program {
+    id
+    name
+  }
+}
+
+query contactTraces(
+  $storeId: String!
+  $key: ContactTraceSortFieldInput
+  $desc: Boolean
+  $filter: ContactTraceFilterInput
+  $page: PaginationInput
+) {
+  contactTraces(
+    storeId: $storeId
+    filter: $filter
+    sort: { key: $key, desc: $desc }
+    page: $page
+  ) {
+    ... on ContactTraceConnector {
+      nodes {
+        ...ContactTraceRow
+      }
+      totalCount
+    }
+  }
+}
+
+fragment ContactTrace on ContactTraceNode {
+  id
+  document {
+    ...Document
+  }
+}
+
+mutation insertContactTrace(
+  $storeId: String!
+  $input: InsertContactTraceInput!
+) {
+  insertContactTrace(storeId: $storeId, input: $input) {
+    ... on ContactTraceNode {
+      __typename
+      ...ContactTrace
+    }
+  }
+}
+
+mutation updateContactTrace(
+  $storeId: String!
+  $input: UpdateContactTraceInput!
+) {
+  updateContactTrace(storeId: $storeId, input: $input) {
+    ... on ContactTraceNode {
+      __typename
+      ...ContactTrace
     }
   }
 }

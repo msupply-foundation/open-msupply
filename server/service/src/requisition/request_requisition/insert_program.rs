@@ -65,6 +65,7 @@ pub fn insert_program_request_requisition(
                 ActivityLogType::RequisitionCreated,
                 Some(new_requisition.id.to_owned()),
                 None,
+                None,
             )?;
 
             get_requisition(ctx, None, &new_requisition.id)
@@ -95,7 +96,7 @@ fn validate(
                 .order_types
                 .iter()
                 .find(|order_type| order_type.order_type.id == input.program_order_type_id)
-                .map(|order_type| (setting.clone(), order_type.clone()))
+                .map(|order_type| (setting, order_type))
         })
         .ok_or(OutError::ProgramOrderTypeDoesNotExist)?;
 

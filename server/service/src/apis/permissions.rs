@@ -47,6 +47,7 @@ pub enum Permissions {
     AddEditGoodsReceived,
     ManageTenders,
     AddPatients,
+    ViewPatients,
     /// not used
     EditRemoteData,
     ChooseDispensaryModeByDefaultOnLogIn,
@@ -110,7 +111,8 @@ pub enum Permissions {
     DownloadBatchDocument,
     DeleteBatchDocument,
     AddStocktakeLines,
-    ViewStocktakeLines,
+    /// ViewStocktakeLines has been removed from mSupply
+    /// ViewStocktakeLines,
     EditStocktakeLines,
     DeleteStocktakeLines,
     CreateStocktake,
@@ -304,7 +306,8 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (107, Permissions::DownloadBatchDocument),
         (108, Permissions::DeleteBatchDocument),
         (109, Permissions::AddStocktakeLines),
-        (110, Permissions::ViewStocktakeLines),
+        // ViewStocktakeLines has been removed from mSupply
+        // (110, Permissions::ViewStocktakeLines),
         (111, Permissions::EditStocktakeLines),
         (112, Permissions::DeleteStocktakeLines),
         (113, Permissions::CreateStocktake),
@@ -377,6 +380,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (177, Permissions::EditStoreCredentials),
         (178, Permissions::ChangeAssetStatus),
         (179, Permissions::AddEditVaccinators),
+        (190, Permissions::ViewPatients),
         (200, Permissions::ConfirmInternalOrderSent),
         (501, Permissions::HISAddPatients),
         (502, Permissions::HISEditPatientsInfo),

@@ -10,6 +10,8 @@ import {
   FileUtils,
   LoadingButton,
   SortBy,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
@@ -21,6 +23,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
   const { success, error } = useNotification();
   const t = useTranslation('dispensary');
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
+  const { userHasPermission } = useAuthContext();
   const [open, setOpen] = useState(false);
 
   const csvExport = async () => {
@@ -41,6 +44,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-patient')}
+          disabled={!userHasPermission(UserPermission.PatientMutate)}
           onClick={() => setOpen(true)}
         />
         <LoadingButton

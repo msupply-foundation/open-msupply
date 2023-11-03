@@ -110,7 +110,7 @@ const CategoryLayoutRenderer = React.memo(CategoryLayoutRendererComponent);
 const propertyPathFromError = (error: {
   instancePath: string;
   keyword: string;
-  params: Record<string, any>;
+  params: Record<string, string>;
 }): string | undefined => {
   // see https://ajv.js.org/api.html#error-objects
   switch (error.keyword) {
@@ -239,7 +239,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
       padding={2}
     >
       {categories.map((category: Category, idx: number) => (
-        <Grid item key={category.label} display="inline-flex">
+        <Grid item key={category.label}>
           <Button
             variant="outlined"
             startIcon={<Icon className={`${category.options?.['icon']}`} />}

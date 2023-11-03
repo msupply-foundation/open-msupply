@@ -3,6 +3,7 @@ use repository::{
     requisition_row::RequisitionRowType, RepositoryError, RequisitionLine, RequisitionLineRow,
     StorageConnection,
 };
+use util::{date_with_months_offset, last_day_of_the_month};
 mod historic_consumption;
 pub use historic_consumption::*;
 
@@ -86,10 +87,13 @@ pub fn get_requisition_line_chart(
         consumption_history_options,
     )?;
 
-    // Replace last consumption_history element with requisition line AMC (current AMC)
-    if let Some(last) = consumption_history.last_mut() {
-        last.consumption = average_monthly_consumption as u32;
-        last.average_monthly_consumption = average_monthly_consumption as f64;
+    // Add in the projected month which shows the requisition line AMC (current AMC)
+    if let Some(last) = consumption_history.last() {
+        consumption_history.push(ConsumptionHistory {
+            consumption: average_monthly_consumption as u32,
+            average_monthly_consumption: average_monthly_consumption as f64,
+            date: last_day_of_the_month(&date_with_months_offset(&last.date, 1)),
+        });
     }
 
     let StockEvolutionResult {
@@ -144,12 +148,17 @@ impl From<RepositoryError> for OutError {
 
 impl SuggestedQuantityCalculation {
     pub fn from_requisition_line(from: &RequisitionLine) -> Self {
+        let threshold = if from.requisition_row.min_months_of_stock == 0.0 {
+            from.requisition_row.max_months_of_stock as f64
+        } else {
+            from.requisition_row.min_months_of_stock as f64
+        };
         SuggestedQuantityCalculation {
             average_monthly_consumption: from.requisition_line_row.average_monthly_consumption
                 as f64,
             stock_on_hand: from.requisition_line_row.available_stock_on_hand as u32,
             minimum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
-                * from.requisition_row.min_months_of_stock,
+                * threshold,
             maximum_stock_on_hand: from.requisition_line_row.average_monthly_consumption as f64
                 * from.requisition_row.max_months_of_stock as f64,
             suggested: from.requisition_line_row.suggested_quantity as u32,
@@ -448,10 +457,22 @@ mod test {
                     date: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap()
                 },
                 ConsumptionHistory {
+                    // 2021-01-01 to 2021-01-31
+                    consumption: 20,
+                    // 2020-09-01 to 2021-01-31
+                    // average_monthly_consumption: 25.657894736842106,
+                    average_monthly_consumption: (20 + 10 + 30 + 40 + 5 + 5 + 20) as f64
+                        / (NaiveDate::from_ymd_opt(2021, 01, 31).unwrap()
+                            - NaiveDate::from_ymd_opt(2020, 09, 01).unwrap())
+                        .num_days() as f64
+                        * NUMBER_OF_DAYS_IN_A_MONTH,
+                    date: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap()
+                },
+                ConsumptionHistory {
                     // This is populated by requisition line amc
                     consumption: 333,
                     average_monthly_consumption: 333.0,
-                    date: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap()
+                    date: NaiveDate::from_ymd_opt(2021, 02, 28).unwrap()
                 },
             ]
         );

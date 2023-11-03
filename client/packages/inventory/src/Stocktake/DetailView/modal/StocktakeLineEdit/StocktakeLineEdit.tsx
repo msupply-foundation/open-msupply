@@ -13,8 +13,9 @@ import {
   createTableStore,
   createQueryParamsStore,
   QueryParamsProvider,
-  useRowStyle,
+  useRowHighlight,
   useNotification,
+  useIsGrouped,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -49,8 +50,12 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const isMediumScreen = useIsMediumScreen();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
-  const { setRowStyles } = useRowStyle();
+  const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
+  const { isGrouped } = useIsGrouped('stocktake');
+  // Order by newly added batch since new batches are now
+  // added to the top of the stocktake list instead of the bottom
+  const reversedDraftLines = [...draftLines].reverse();
 
   const onNext = async () => {
     if (isSaving) return;
@@ -76,12 +81,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
     }
 
     if (item) {
-      setRowStyles(
-        draftLines.map(line => line.id),
-        {
-          animation: 'highlight 1.5s',
-        }
+      const rowIds = draftLines.map(line =>
+        isGrouped ? line.itemId : line.id
       );
+
+      highlightRows({ rowIds });
     }
     onClose();
   };
@@ -134,7 +138,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                       <StyledTabContainer>
                         <BatchTable
                           isDisabled={isDisabled}
-                          batches={draftLines}
+                          batches={reversedDraftLines}
                           update={update}
                         />
                       </StyledTabContainer>
@@ -144,7 +148,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                       <StyledTabContainer>
                         <PricingTable
                           isDisabled={isDisabled}
-                          batches={draftLines}
+                          batches={reversedDraftLines}
                           update={update}
                         />
                       </StyledTabContainer>
@@ -161,7 +165,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
                         >
                           <LocationTable
                             isDisabled={isDisabled}
-                            batches={draftLines}
+                            batches={reversedDraftLines}
                             update={update}
                           />
                         </QueryParamsProvider>

@@ -7,7 +7,12 @@ import {
 import { useAppTheme } from '@common/styles';
 import { BasicTextInput } from '../../TextInput';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
-import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
+import {
+  DateUtils,
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
+} from '@common/intl';
 
 const TextField = (params: TextFieldProps) => {
   const textInputProps: StandardTextFieldProps = {
@@ -48,9 +53,6 @@ export const BaseDatePickerInput: FC<
   const [internalError, setInternalError] = useState<string | null>(null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
   const t = useTranslation('common');
-
-  const dateValue =
-    typeof props.value === 'string' ? new Date(props.value) : props.value;
 
   return (
     <DatePicker
@@ -109,7 +111,7 @@ export const BaseDatePickerInput: FC<
         },
       }}
       {...props}
-      value={dateValue}
+      value={DateUtils.getDateOrNull(props.value)}
     />
   );
 };

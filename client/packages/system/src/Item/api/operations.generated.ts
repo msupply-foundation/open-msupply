@@ -52,7 +52,7 @@ export type ItemStockOnHandQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemStockOnHandQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', code: string, id: string, name: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number }> } };
+export type ItemStockOnHandQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', code: string, id: string, name: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number }> } };
 
 export type ItemsWithStatsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -234,6 +234,7 @@ export const ItemStockOnHandDocument = gql`
         defaultPackSize
         availableStockOnHand(storeId: $storeId)
       }
+      totalCount
     }
   }
 }

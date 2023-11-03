@@ -15,6 +15,7 @@ import {
 import {
   PatientModal,
   ProgramEnrolmentRowFragmentWithId,
+  getStatusEventData,
   usePatientModalStore,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
@@ -27,12 +28,7 @@ const programAdditionalInfoAccessor: ColumnDataAccessor<
   ProgramEnrolmentRowFragmentWithId,
   string[]
 > = ({ rowData }): string[] => {
-  const additionalInfo = [];
-
-  if (rowData?.activeProgramEvents[0]?.data) {
-    additionalInfo.push(rowData.activeProgramEvents[0].data);
-  }
-
+  const additionalInfo = getStatusEventData(rowData.activeProgramEvents.nodes);
   return additionalInfo;
 };
 
@@ -104,14 +100,14 @@ const ProgramListComponent: FC = () => {
   return (
     <DataTable
       id="program-enrolment-list"
-      pagination={{ ...pagination, total: data?.totalCount }}
+      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
       onChangePage={updatePaginationQuery}
       columns={columns}
       data={data?.nodes}
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
-        setEditingModal(PatientModal.Program, row.type, row.name, row.type);
+        setEditingModal(PatientModal.Program, row.type, row.name);
       }}
       noDataElement={
         <NothingHere

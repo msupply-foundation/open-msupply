@@ -4,11 +4,8 @@ import {
   DataTable,
   createTableStore,
   NothingHere,
-  createQueryParamsStore,
   useNavigate,
   RouteBuilder,
-  useQueryParamsStore,
-  EncounterSortFieldInput,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -22,30 +19,26 @@ import { usePatient } from '../api';
 
 const EncounterListComponent: FC = () => {
   const {
-    sort: { sortBy, onChangeSortBy },
-  } = useQueryParamsStore();
-
-  const {
-    queryParams: { page, first, offset, filterBy },
+    queryParams: { sortBy, page, first, offset, filterBy },
     updatePaginationQuery,
-  } = useUrlQueryParams();
+    updateSortQuery,
+  } = useUrlQueryParams({ initialSort: { key: 'startDatetime', dir: 'desc' } });
 
   const patientId = usePatient.utils.id();
   const { data, isError, isLoading } = useEncounter.document.list({
     pagination: { first, offset },
     // enforce filtering by patient id
     filterBy: { ...filterBy, patientId: { equalTo: patientId } },
-    sortBy: {
-      key: sortBy.key as EncounterSortFieldInput,
-      isDesc: sortBy.isDesc,
-      direction: sortBy.isDesc ? 'desc' : 'asc',
-    },
+    sortBy,
   });
   const dataWithStatus: EncounterFragmentWithStatus[] | undefined =
     useEncounterFragmentWithStatus(data?.nodes);
   const navigate = useNavigate();
 
-  const columns = useEncounterListColumns({ onChangeSortBy, sortBy });
+  const columns = useEncounterListColumns({
+    onChangeSortBy: updateSortQuery,
+    sortBy,
+  });
 
   return (
     <DataTable
@@ -70,15 +63,7 @@ const EncounterListComponent: FC = () => {
 };
 
 export const EncounterListView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<EncounterFragmentWithStatus>({
-      initialSortBy: {
-        key: EncounterSortFieldInput.StartDatetime,
-        isDesc: true,
-      },
-    })}
-  >
+  <TableProvider createStore={createTableStore}>
     <EncounterListComponent />
   </TableProvider>
 );

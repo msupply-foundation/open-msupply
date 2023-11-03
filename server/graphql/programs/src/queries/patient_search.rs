@@ -1,8 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_general::GenderInput;
-use graphql_types::types::patient::PatientNode;
+use graphql_types::types::{patient::PatientNode, GenderInput};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::patient::PatientSearch,

@@ -1,6 +1,10 @@
 import { useEffect } from 'react';
 import { useUrlQuery } from './useUrlQuery';
-import { Column, useLocalStorage } from '@openmsupply-client/common';
+import {
+  Column,
+  RecordWithId,
+  useLocalStorage,
+} from '@openmsupply-client/common';
 import { FilterBy, FilterController } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
@@ -50,7 +54,7 @@ export const useUrlQueryParams = ({
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
   }, [initialSort]);
 
-  const updateSortQuery = (column: Column<any>) => {
+  const updateSortQuery = <T extends RecordWithId>(column: Column<T>) => {
     const currentSort = urlQuery['sort'];
     const sort = column.key as string;
     if (sort !== currentSort) {
@@ -96,8 +100,8 @@ export const useUrlQueryParams = ({
     offset: urlQuery.page ? (urlQuery.page - 1) * rowsPerPage : 0,
     first: rowsPerPage,
     sortBy: {
-      key: urlQuery.sort ?? initialSort?.key ?? '',
-      direction: urlQuery.dir ?? initialSort?.dir ?? 'asc',
+      key: urlQuery.sort ?? '',
+      direction: urlQuery.dir ?? 'asc',
       isDesc: urlQuery.dir === 'desc',
     },
     filterBy: filter.filterBy,

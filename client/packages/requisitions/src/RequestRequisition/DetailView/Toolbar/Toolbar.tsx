@@ -7,8 +7,8 @@ import {
   useTranslation,
   SearchBar,
   Typography,
-  InfoPanel,
   Box,
+  Alert,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
@@ -106,7 +106,9 @@ export const Toolbar: FC = () => {
         </Grid>
         {programName && (
           <Box padding={2} style={{ maxWidth: 500 }}>
-            <InfoPanel message={t('info.cannot-edit-program-requisition')} />
+            <Alert severity="info">
+              {t('info.cannot-edit-program-requisition')}
+            </Alert>
           </Box>
         )}
         <Grid

@@ -4,7 +4,7 @@ import {
   useNotification,
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
-import { JsonData, JsonForm } from './common';
+import { JsonData, JsonForm, JsonFormsConfig } from './common';
 import _ from 'lodash';
 import {
   JsonFormsRendererRegistryEntry,
@@ -35,6 +35,7 @@ import {
   historicEncounterDataTester,
   HistoricEncounterData,
 } from './components';
+import { EnrolmentId, enrolmentIdTester } from './components/EnrolmentId';
 
 // https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
 // TODO: handle undefined and empty string as equal? e.g. initial data is undefined and current data is ""
@@ -93,6 +94,7 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: searchTester, renderer: Search },
   { tester: programEventTester, renderer: ProgramEvent },
   { tester: historicEncounterDataTester, renderer: HistoricEncounterData },
+  { tester: enrolmentIdTester, renderer: EnrolmentId },
 ];
 
 /**
@@ -122,12 +124,8 @@ export type JsonFormData<R> = {
  * What data is shown and how it is saved can be customized through the `jsonFormData` form
  * parameter.
  */
-
 export const useJsonForms = <R,>(
-  config: {
-    documentName?: string;
-    patientId?: string;
-  },
+  config: JsonFormsConfig,
   jsonFormData: JsonFormData<R>
 ) => {
   const { loadedData, isLoading, error, save, isCreating } = jsonFormData;
@@ -210,7 +208,10 @@ export const useJsonForms = <R,>(
         setError={setValidationError}
         updateData={updateData}
         additionalRenderers={additionalRenderers}
-        config={config}
+        config={{
+          ...config,
+          initialData,
+        }}
       />
     ),
     data,

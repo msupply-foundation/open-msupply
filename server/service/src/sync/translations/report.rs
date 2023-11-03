@@ -67,7 +67,7 @@ impl SyncTranslation for ReportTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::REPORT,
-            dependencies: vec![],
+            dependencies: vec![LegacyTableName::FORM_SCHEMA],
         }
     }
 

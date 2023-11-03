@@ -7,21 +7,12 @@ use graphql_core::{
 };
 use graphql_types::types::{
     program_enrolment::ProgramEventFilterInput,
-    program_event::{ProgramEventNode, ProgramEventSortInput},
+    program_event::{
+        ProgramEventConnector, ProgramEventNode, ProgramEventResponse, ProgramEventSortInput,
+    },
 };
 use repository::{PaginationOption, ProgramEventFilter};
 use service::auth::{Resource, ResourceAccessRequest};
-
-#[derive(SimpleObject)]
-pub struct ProgramEventConnector {
-    pub total_count: u32,
-    pub nodes: Vec<ProgramEventNode>,
-}
-
-#[derive(Union)]
-pub enum ProgramEventResponse {
-    Response(ProgramEventConnector),
-}
 
 pub fn program_events(
     ctx: &Context<'_>,
@@ -74,7 +65,6 @@ pub fn program_events(
 
     Ok(ProgramEventResponse::Response(ProgramEventConnector {
         total_count: list_result.count,
-
         nodes,
     }))
 }
