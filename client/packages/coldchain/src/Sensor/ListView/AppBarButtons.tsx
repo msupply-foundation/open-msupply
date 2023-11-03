@@ -5,8 +5,7 @@ import { useTranslation } from '@common/intl';
 import { Environment } from 'packages/config/src';
 import { useNotification } from '@common/hooks';
 
-import { useAuthContext } from 'packages/common/src/authentication/AuthContext';
-import { useQueryClient } from 'packages/common/src';
+import { useAuthContext, useQueryClient } from '@openmsupply-client/common';
 import { useSensorApi } from '../api/hooks/utils/useSensorApi';
 
 export const AppBarButtons = () => {
