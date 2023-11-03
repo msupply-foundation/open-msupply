@@ -64,6 +64,15 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                 { label: t('label.hot-consecutive'), value: 'HOT_CONSECUTIVE' },
               ],
             },
+            {
+              type: 'enum',
+              name: t('label.acknowledged'),
+              urlParameter: 'acknowledged',
+              options: [
+                { label: t('label.acknowledged'), value: 'true' },
+                { label: t('label.unacknowledged'), value: 'false' },
+              ],
+            },
           ]}
         />
       </Box>

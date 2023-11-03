@@ -23,6 +23,7 @@ const ListView: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
+    initialSort: { key: 'datetime', dir: 'asc' },
     filters: [
       { key: 'datetime', condition: 'between' },
       {

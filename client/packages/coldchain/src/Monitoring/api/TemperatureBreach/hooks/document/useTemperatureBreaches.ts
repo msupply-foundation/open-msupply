@@ -6,6 +6,6 @@ export const useTemperatureBreaches = (queryParams: ListParams) => {
   const api = useTemperatureBreachApi();
 
   return {
-    ...useQuery(api.keys.paramList(query), api.get.list(query)),
+    ...useQuery(api.keys.paramList(queryParams), api.get.list(queryParams)),
   };
 };
