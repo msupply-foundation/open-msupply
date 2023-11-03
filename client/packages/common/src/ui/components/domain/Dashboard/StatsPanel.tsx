@@ -3,6 +3,7 @@ import { Grid, Paper, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
+import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
 
 export type Stat = {
   label: string;
@@ -15,6 +16,7 @@ export interface StatsPanelProps {
   stats: Stat[];
   title: string;
   width?: number;
+  link?: string;
 }
 
 const Statistic: FC<Stat> = ({ label, value }) => {
@@ -99,6 +101,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   stats,
   title,
   width,
+  link,
 }) => (
   <Paper
     sx={{
@@ -114,12 +117,11 @@ export const StatsPanel: FC<StatsPanelProps> = ({
       <Grid alignItems="center" display="flex">
         <Grid item style={{ marginInlineEnd: 8 }}>
           <StockIcon
-            color="secondary"
-            style={{
+            sx={theme => ({
+              fill: theme.palette.secondary.main,
               height: 16,
               width: 16,
-              fill: '#3568d4',
-            }}
+            })}
           />
         </Grid>
         <Grid item>
@@ -127,7 +129,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
             color="secondary"
             style={{ fontSize: 12, fontWeight: 500 }}
           >
-            {title}
+            {link ? <SimpleLink to={link}>{title}</SimpleLink> : title}
           </Typography>
         </Grid>
       </Grid>

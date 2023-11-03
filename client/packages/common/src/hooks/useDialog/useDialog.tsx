@@ -16,7 +16,7 @@ export interface ButtonProps {
 
 export interface ModalProps {
   contentProps?: DialogContentProps;
-  children: React.ReactElement<any, any>;
+  children: React.ReactElement;
   cancelButton?: JSX.Element;
   height?: number;
   nextButton?: React.ReactElement<{

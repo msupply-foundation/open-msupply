@@ -44,7 +44,7 @@ export const Footer: FC = () => {
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
-              <StatusChangeButton />
+              <StatusChangeButton requisition={data} />
             </Box>
           </Box>
         )

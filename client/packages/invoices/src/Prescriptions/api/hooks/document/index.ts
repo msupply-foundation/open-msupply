@@ -1,5 +1,6 @@
 import { usePrescription } from './usePrescription';
 import { usePrescriptionDelete } from './usePrescriptionDelete';
+import { usePrescriptionDeleteRows } from './usePrescriptionDeleteRows';
 import { usePrescriptionFields } from './usePrescriptionFields';
 import { usePrescriptionInsert } from './usePrescriptionInsert';
 import { usePrescriptionUpdate } from './usePrescriptionUpdate';
@@ -11,5 +12,6 @@ export const Document = {
   usePrescriptionInsert,
   usePrescriptionUpdate,
   usePrescriptionDelete,
+  usePrescriptionDeleteRows,
   usePrescriptionFields,
 };

@@ -67,5 +67,17 @@
   "messages.confirm-save-stock-line": "Você gostaria de salvar as alterações dessa linha do estoque? Todas as alterações serão registradas e podem ser revistas mais tarde nessa tela.",
   "messages.no-items-with-stock": "Nenhum item com estoque disponível",
   "stocktake.description-template": "Criado por {{username}} no dia {{date}}",
-  "messages.unlocked-description": "Isso habilitará novamente mudanças no Inventário."
+  "messages.unlocked-description": "Isso habilitará novamente mudanças no Inventário.",
+  "button.repack": "Reempacotar",
+  "error.repack-has-stock-reduced-below-zero": "Não foi possível reempacotar a linha de estoque. O novo número de pacotes excede o número de pacotes da linha de estoque.",
+  "messages.no-repacks": "Esta linha de estoque não foi reempacotada. Clique em \"Novo\" para criar um novo reempacotamento.",
+  "messages.all-packs-repacked": "Salvo. A janela anterior foi fechada pois todas as linhas de estoque foram reempacotadas.",
+  "error.repack-cannot-be-fractional": "Não foi possível reempacotar em um pacote fracionado",
+  "label.new": "Novo",
+  "label.new-pack-size": "Novo tamanho de pacote",
+  "label.new-num-packs": "Novo número de pacotes",
+  "label.packs-available": "Pacotes disponíveis",
+  "label.packs-to-repack": "Número de pacotes para reempacotar",
+  "messages.no-repack-detail": "Selecione uma linha para ver os detalhes de um reempacotamento e clique em \"Novo\" para criar um novo reempacotamento",
+  "title.repack-details": "Detalhes do reempacotamento"
 }

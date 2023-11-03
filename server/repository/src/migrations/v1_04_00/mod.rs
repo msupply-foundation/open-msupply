@@ -2,6 +2,9 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 pub(crate) struct V1_04_00;
+mod activity_log;
+mod contact_trace;
+mod date_of_death;
 mod plugin_data;
 
 impl Migration for V1_04_00 {
@@ -11,6 +14,9 @@ impl Migration for V1_04_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         plugin_data::migrate(connection)?;
+        contact_trace::migrate(connection)?;
+        date_of_death::migrate(connection)?;
+        activity_log::migrate(connection)?;
         Ok(())
     }
 }

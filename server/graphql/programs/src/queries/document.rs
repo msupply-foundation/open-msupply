@@ -19,7 +19,7 @@ pub enum DocumentResponse {
 
 #[derive(InputObject, Clone)]
 pub struct DocumentFilterInput {
-    pub name: Option<EqualFilterStringInput>,
+    pub name: Option<StringFilterInput>,
     pub r#type: Option<EqualFilterStringInput>,
     pub datetime: Option<DatetimeFilterInput>,
     pub owner: Option<EqualFilterStringInput>,
@@ -51,15 +51,8 @@ pub struct DocumentSortInput {
 impl DocumentFilterInput {
     pub fn to_domain_filter(self) -> DocumentFilter {
         DocumentFilter {
-            name: self.name.map(|f| repository::StringFilter {
-                equal_to: f.equal_to,
-                not_equal_to: f.not_equal_to,
-                equal_any: f.equal_any,
-                not_equal_all: None,
-                like: None,
-                starts_with: None,
-                ends_with: None,
-            }),
+            id: None,
+            name: self.name.map(StringFilter::from),
             r#type: self.r#type.map(EqualFilter::from),
             datetime: self.datetime.map(DatetimeFilter::from),
             owner: self.owner.map(EqualFilter::from),
