@@ -67,7 +67,7 @@ export const AppBarButtons = () => {
         onClick={() => hiddenFileInput?.current?.click()}
         isLoading={isUploadingFridgeTag}
       >
-        {t('button.fridge-tag')}
+        {t('button.import-fridge-tag')}
       </LoadingButton>
     </AppBarButtonsPortal>
   );
