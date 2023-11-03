@@ -11,6 +11,7 @@ export const usePatient = {
     linkPatientToStore: Utils.useLinkPatientToStore,
   },
   document: {
+    fullSearch: Document.usePatientFullSearch,
     get: Document.usePatient,
     list: Document.usePatients,
     listAll: Document.usePatientsAll,
