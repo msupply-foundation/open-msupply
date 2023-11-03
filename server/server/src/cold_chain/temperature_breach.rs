@@ -20,8 +20,8 @@ use util::constants::SYSTEM_USER_ID;
 
 use super::validate_request;
 
-#[serde(rename_all = "camelCase")]
 #[derive(serde::Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct TemperatureBreach {
     id: String,
     acknowledged: bool,

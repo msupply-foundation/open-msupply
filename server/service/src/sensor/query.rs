@@ -1,5 +1,6 @@
-use repository::sensor::{Sensor, SensorFilter, SensorRepository, SensorSort};
-use repository::{EqualFilter, PaginationOption};
+use repository::{
+    EqualFilter, PaginationOption, Sensor, SensorFilter, SensorRepository, SensorSort,
+};
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,

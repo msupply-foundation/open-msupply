@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{sensor::SensorFilter, EqualFilter, PaginationOption};
+use repository::{EqualFilter, PaginationOption, SensorFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -83,9 +83,8 @@ mod test {
     use graphql_core::test_helpers::setup_graphl_test;
     //use repository::mock::mock_sensors;
     use repository::{
-        mock::MockDataInserts,
-        sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
-        SensorRow, SensorType, StorageConnectionManager, StringFilter,
+        mock::MockDataInserts, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField,
+        SensorType, StorageConnectionManager, StringFilter,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;

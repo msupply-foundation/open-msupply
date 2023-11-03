@@ -25,7 +25,9 @@ const TEMPERATURE_BREACH_1: (&'static str, &'static str) = (
         "start_date": "2023-07-01",
         "start_time": 47046,
         "end_date": "2023-07-02",
-        "end_time": 47046
+        "end_time": 47046,
+        "om_end_datetime": "" ,
+        "om_start_datetime": ""
     }"#,
 );
 
@@ -75,10 +77,24 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             threshold_minimum: -273.0,
             threshold_maximum: 2.0,
             threshold_duration_milliseconds: 3600,
-            start_date: NaiveDate::from_ymd_opt(2023, 7, 1).unwrap(),
+            start_date: NaiveDate::from_ymd_opt(2023, 7, 1),
             start_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
             end_date: Some(NaiveDate::from_ymd_opt(2023, 7, 2).unwrap()),
             end_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+            start_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 7, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046)
+            ),
+            end_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 7, 2)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046),
+            ),
         }),
     }]
 }

@@ -1,10 +1,10 @@
 use super::{query::get_sensor, validate::check_sensor_serial_is_unique};
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use repository::{
-    sensor::{Sensor, SensorFilter, SensorRepository},
-    RepositoryError, SensorRow, SensorRowRepository, StorageConnection,
-};
 use repository::{EqualFilter, SensorType};
+use repository::{
+    RepositoryError, Sensor, SensorFilter, SensorRepository, SensorRow, SensorRowRepository,
+    StorageConnection,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertSensorError {

@@ -2,9 +2,7 @@
 mod query {
     use repository::mock::mock_store_a;
     use repository::{
-        mock::MockDataInserts,
-        sensor::{Sensor, SensorFilter, SensorRepository},
-        test_db::setup_all,
+        mock::MockDataInserts, test_db::setup_all, Sensor, SensorFilter, SensorRepository,
         SensorRow,
     };
     use repository::{EqualFilter, SensorType};

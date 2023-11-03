@@ -7,8 +7,7 @@ use self::{
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use repository::sensor::{Sensor, SensorFilter, SensorSort};
-use repository::PaginationOption;
+use repository::{PaginationOption, Sensor, SensorFilter, SensorSort};
 
 pub mod berlinger;
 pub mod insert;
