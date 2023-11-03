@@ -18,7 +18,8 @@ const SENSOR_1: (&'static str, &'static str) = (
         "storeID": "store_a",
         "is_active": true,
         "lastConnectionDate": "2023-07-01",
-        "lastConnectionTime": 47046
+        "lastConnectionTime": 47046,
+        "om_last_connection_datetime":""
     }"#,
 );
 
@@ -62,6 +63,13 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             log_interval: Some(1),
             last_connection_date: Some(NaiveDate::from_ymd_opt(2023, 7, 1).unwrap()),
             last_connection_time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),
+            last_connection_datetime: Some(
+                NaiveDate::from_ymd_opt(2023, 7, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046),
+            ),
         }),
     }]
 }

@@ -6,13 +6,10 @@ use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
 use repository::{
-    sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
-    EqualFilter, SensorRow,
-};
-use repository::{
     DatetimeFilter, PaginationOption, SensorType, StringFilter, TemperatureBreachFilter,
     TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
 };
+use repository::{EqualFilter, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField};
 use service::temperature_breach::query::get_temperature_breaches;
 use service::temperature_log::query::get_temperature_logs;
 use service::{usize_to_u32, ListResult};

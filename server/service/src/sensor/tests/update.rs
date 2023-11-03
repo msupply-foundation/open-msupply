@@ -2,11 +2,7 @@
 mod query {
     use repository::mock::mock_store_a;
     use repository::EqualFilter;
-    use repository::{
-        mock::MockDataInserts,
-        sensor::{SensorFilter, SensorRepository},
-        test_db::setup_all,
-    };
+    use repository::{mock::MockDataInserts, test_db::setup_all, SensorFilter, SensorRepository};
 
     use crate::NullableUpdate;
     use crate::{

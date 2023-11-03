@@ -4,8 +4,7 @@ use crate::{
     SingleRecordError,
 };
 use repository::{
-    sensor::Sensor, ActivityLogType, RepositoryError, SensorRow, SensorRowRepository,
-    StorageConnection,
+    ActivityLogType, RepositoryError, Sensor, SensorRow, SensorRowRepository, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]

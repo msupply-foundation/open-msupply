@@ -1,7 +1,6 @@
 use repository::EqualFilter;
 use repository::{
-    sensor::{Sensor, SensorFilter, SensorRepository},
-    RepositoryError, StorageConnectionManager,
+    RepositoryError, Sensor, SensorFilter, SensorRepository, StorageConnectionManager,
 };
 
 use async_graphql::dataloader::*;
