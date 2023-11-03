@@ -41,6 +41,7 @@ joinable!(sensor -> location (location_id));
 pub enum SensorType {
     BlueMaestro,
     Laird,
+    Berlinger,
 }
 
 // TODO put this somewhere more sensible
@@ -49,6 +50,7 @@ pub fn get_sensor_type(serial: &String) -> SensorType {
     match serial.split('|').nth(1) {
         Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
         Some("LAIRD") => SensorType::Laird,
+        Some("BERLINGER") => SensorType::Berlinger,
         _ => SensorType::BlueMaestro,
     }
 }

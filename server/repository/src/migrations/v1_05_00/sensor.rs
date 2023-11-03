@@ -12,7 +12,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
             CREATE TYPE {SENSOR_TYPE} AS ENUM (
                 'BLUE_MAESTRO',
-                'LAIRD'
+                'LAIRD', 
+                'BERLINGER'
             );
         "#
     )?;
