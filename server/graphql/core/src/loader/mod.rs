@@ -18,9 +18,12 @@ mod program_enrolment;
 mod requisition;
 mod requisition_line;
 mod requisition_supply_status;
+mod sensor;
 mod stock_line;
 mod stocktake_lines;
 mod store;
+mod temperature_breach;
+mod temperature_log;
 mod user;
 
 use std::{collections::HashSet, hash::Hasher};
@@ -45,9 +48,12 @@ pub use program_enrolment::*;
 pub use requisition::*;
 pub use requisition_line::*;
 pub use requisition_supply_status::*;
+pub use sensor::*;
 pub use stock_line::*;
 pub use stocktake_lines::*;
 pub use store::*;
+pub use temperature_breach::*;
+pub use temperature_log::*;
 pub use user::*;
 
 #[derive(Debug, Clone)]

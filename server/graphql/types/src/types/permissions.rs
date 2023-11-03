@@ -18,6 +18,10 @@ pub enum UserPermission {
     ServerAdmin,
     StoreAccess,
     LocationMutate,
+    SensorMutate,
+    SensorQuery,
+    TemperatureBreachQuery,
+    TemperatureLogQuery,
     StockLineQuery,
     CreateRepack,
     StocktakeQuery,
@@ -39,6 +43,7 @@ pub enum UserPermission {
     PatientMutate,
     DocumentQuery,
     DocumentMutate,
+    ColdChainApi,
 }
 
 #[Object]
@@ -84,6 +89,10 @@ impl UserPermission {
             Permission::ServerAdmin => UserPermission::ServerAdmin,
             Permission::StoreAccess => UserPermission::StoreAccess,
             Permission::LocationMutate => UserPermission::LocationMutate,
+            Permission::SensorMutate => UserPermission::SensorMutate,
+            Permission::SensorQuery => UserPermission::SensorQuery,
+            Permission::TemperatureBreachQuery => UserPermission::TemperatureBreachQuery,
+            Permission::TemperatureLogQuery => UserPermission::TemperatureLogQuery,
             Permission::StockLineQuery => UserPermission::StockLineQuery,
             Permission::CreateRepack => UserPermission::CreateRepack,
             Permission::StocktakeQuery => UserPermission::StocktakeQuery,
@@ -105,6 +114,7 @@ impl UserPermission {
             Permission::PatientMutate => UserPermission::PatientMutate,
             Permission::DocumentQuery => UserPermission::DocumentQuery,
             Permission::DocumentMutate => UserPermission::DocumentMutate,
+            Permission::ColdChainApi => UserPermission::ColdChainApi,
         }
     }
 
@@ -113,6 +123,10 @@ impl UserPermission {
             UserPermission::ServerAdmin => Permission::ServerAdmin,
             UserPermission::StoreAccess => Permission::StoreAccess,
             UserPermission::LocationMutate => Permission::LocationMutate,
+            UserPermission::SensorMutate => Permission::SensorMutate,
+            UserPermission::SensorQuery => Permission::SensorQuery,
+            UserPermission::TemperatureBreachQuery => Permission::TemperatureBreachQuery,
+            UserPermission::TemperatureLogQuery => Permission::TemperatureLogQuery,
             UserPermission::StockLineQuery => Permission::StockLineQuery,
             UserPermission::CreateRepack => Permission::CreateRepack,
             UserPermission::StocktakeQuery => Permission::StocktakeQuery,
@@ -134,6 +148,7 @@ impl UserPermission {
             UserPermission::PatientMutate => Permission::PatientMutate,
             UserPermission::DocumentQuery => Permission::DocumentQuery,
             UserPermission::DocumentMutate => Permission::DocumentMutate,
+            UserPermission::ColdChainApi => Permission::ColdChainApi,
         }
     }
 }
