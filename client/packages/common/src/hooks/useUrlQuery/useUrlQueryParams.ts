@@ -11,7 +11,7 @@ import {
   RecordWithId,
   useLocalStorage,
 } from '@openmsupply-client/common';
-import { FilterBy, FilterController, SortBy } from '../useQueryParams';
+import { FilterBy, FilterByWithBoolean, FilterController, SortBy } from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
@@ -87,10 +87,10 @@ export const useUrlQueryParams = ({
     updateQuery({ [key]: value });
   };
 
-  const getFilterBy = (): FilterBy =>
-    filters.reduce<FilterBy>((prev, filter) => {
+  const getFilterBy = (): FilterByWithBoolean =>
+    filters.reduce<FilterByWithBoolean>((prev, filter) => {
       const filterValue = getFilterValue(urlQuery, filter.key);
-      if (!filterValue) return prev;
+      if (filterValue === undefined) return prev;
 
       const [key, nestedKey] = filter.key.split(NESTED_SPLIT_CHAR);
       if (filter.key.includes(NESTED_SPLIT_CHAR)) {
@@ -189,6 +189,9 @@ const getFilterEntry = (
     };
   }
   const condition = filter.condition ? filter.condition : 'like';
+  if(condition === '=') {
+    return Boolean(filterValue);
+  }
 
   if (nestedKey) {
     return {

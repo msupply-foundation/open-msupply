@@ -62,7 +62,7 @@ const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
               sort: TemperatureBreachSortFieldInput.StartDatetime,
             })
             .addQuery({ acknowledged: false })
-            .addQuery({ sensorId: breach.sensor?.id ?? '' })
+            .addQuery({ 'sensor.name': breach.sensor?.name ?? '' })
             .build()
         )
       }

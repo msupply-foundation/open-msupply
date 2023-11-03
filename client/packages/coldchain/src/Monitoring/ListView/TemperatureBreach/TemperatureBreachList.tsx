@@ -38,6 +38,10 @@ const ListView: FC = () => {
         key: 'type',
         condition: 'equalTo',
       },
+      {
+        key: 'acknowledged',
+        condition: '=',
+      },
     ],
   });
   const queryParams = {
