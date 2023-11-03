@@ -1,8 +1,11 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
-mod contact_trace;
 
+mod activity_log;
+mod cold_chain;
+mod permissions_preferences;
+mod sensor;
 pub(crate) struct V1_05_00;
 
 impl Migration for V1_05_00 {
@@ -11,12 +14,13 @@ impl Migration for V1_05_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        contact_trace::migrate(connection)?;
+        cold_chain::migrate(connection)?;
+        permissions_preferences::migrate(connection)?;
+        activity_log::migrate(connection)?;
         Ok(())
     }
 }
 
-#[cfg(test)]
 #[actix_rt::test]
 async fn migration_1_05_00() {
     use crate::migrations::*;

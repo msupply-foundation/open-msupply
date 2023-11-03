@@ -3,10 +3,10 @@ import { Column } from '../../ui/layout/tables';
 
 export interface FilterByConditionByType {
   string: 'equalTo' | 'like' | 'notEqualTo';
-  date: 'beforeOrEqualTo' | 'afterOrEqualTo' | 'equalTo';
+  date: 'beforeOrEqualTo' | 'afterOrEqualTo' | 'equalTo' | 'between';
 }
 
-type FilterRule = {
+export type FilterRule = {
   [P in
     | FilterByConditionByType['string']
     | FilterByConditionByType['date']]?: unknown;
@@ -16,12 +16,12 @@ export type FilterBy = Record<string, FilterRule | null>;
 export type FilterByWithBoolean = Record<string, FilterRule | null | boolean>;
 
 export interface FilterController {
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 
   onChangeDateFilterRule: (
     key: string,
     condition: FilterByConditionByType['date'],
-    value: Date
+    value: Date | Date[]
   ) => void;
 
   onChangeStringFilterRule: (
