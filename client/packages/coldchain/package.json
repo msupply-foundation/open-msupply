@@ -1,0 +1,19 @@
+{
+  "name": "@openmsupply-client/coldchain",
+  "version": "0.0.0",
+  "sideEffects": false,
+  "private": true,
+  "main": "./src/index.ts",
+  "devDependencies": {},
+  "scripts": {
+    "tsc": "tsc",
+    "eslint": "eslint ./src"
+  },
+  "dependencies": {
+    "@openmsupply-client/common": "^0.0.1",
+    "@openmsupply-client/config": "^0.0.0",
+    "@openmsupply-client/system": "^0.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}
