@@ -100,7 +100,11 @@ export const CreateStocktakeButton: React.FC<{
       id: FnUtils.generateUUID(),
       description,
       masterListId: masterListId ? masterListId : undefined,
-      locationId: locationId ? locationId : undefined,
+      location: locationId
+        ? {
+            value: locationId,
+          }
+        : undefined,
       itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,
       comment: generateComment(),
     };

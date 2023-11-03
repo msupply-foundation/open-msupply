@@ -7,6 +7,7 @@ import {
   AppBarContentPortal,
   SearchBar,
   FilterController,
+  FilterRule,
 } from '@openmsupply-client/common';
 import { PrescriptionRowFragment, usePrescription } from '../api';
 
@@ -18,7 +19,8 @@ export const Toolbar: FC<{
   const onDelete = usePrescription.document.deleteRows();
 
   const key = 'otherPartyName' as keyof PrescriptionRowFragment;
-  const filterString = (filter.filterBy?.[key]?.like as string) || '';
+  const filterString =
+    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
 
   return (
     <AppBarContentPortal

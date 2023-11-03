@@ -1,16 +1,23 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
+
+mod activity_log;
+mod cold_chain;
+mod permissions_preferences;
+mod sensor;
 pub(crate) struct V1_05_00;
-mod master_list;
 
 impl Migration for V1_05_00 {
     fn version(&self) -> Version {
-        Version::from_str("1.5.0")
+        Version::from_str("1.5.00")
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        master_list::migrate(connection)?;
+        sensor::migrate(connection)?;
+        cold_chain::migrate(connection)?;
+        permissions_preferences::migrate(connection)?;
+        activity_log::migrate(connection)?;
         Ok(())
     }
 }
