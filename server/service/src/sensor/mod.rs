@@ -10,6 +10,7 @@ use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::sensor::{Sensor, SensorFilter, SensorSort};
 use repository::PaginationOption;
 
+pub mod berlinger;
 pub mod insert;
 pub mod query;
 pub mod update;

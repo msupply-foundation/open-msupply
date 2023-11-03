@@ -69,6 +69,7 @@ pub struct SensorConnector {
 pub enum SensorNodeType {
     BlueMaestro,
     Laird,
+    Berlinger,
 }
 
 #[Object]
@@ -232,6 +233,7 @@ impl SensorNodeType {
         match from {
             from::BlueMaestro => to::BlueMaestro,
             from::Laird => to::Laird,
+            from::Berlinger => to::Berlinger,
         }
     }
 
@@ -242,6 +244,7 @@ impl SensorNodeType {
         match self {
             from::BlueMaestro => to::BlueMaestro,
             from::Laird => to::Laird,
+            from::Berlinger => to::Berlinger,
         }
     }
 }
