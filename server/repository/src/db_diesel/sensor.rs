@@ -5,8 +5,9 @@ use super::{
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
+    StringFilter,
 };
 
 use crate::{EqualFilter, Pagination, Sort};
@@ -19,7 +20,7 @@ pub struct Sensor {
 #[derive(Clone, PartialEq, Debug)]
 pub struct SensorFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
     pub serial: Option<EqualFilter<String>>,
     pub is_active: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
@@ -88,7 +89,7 @@ impl<'a> SensorRepository<'a> {
 
         if let Some(filter) = filter {
             apply_equal_filter!(query, filter.id, sensor_dsl::id);
-            apply_equal_filter!(query, filter.name, sensor_dsl::name);
+            apply_string_filter!(query, filter.name, sensor_dsl::name);
             apply_equal_filter!(query, filter.serial, sensor_dsl::serial);
 
             if let Some(value) = filter.is_active {
@@ -124,7 +125,7 @@ impl SensorFilter {
         self
     }
 
-    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }

@@ -14,16 +14,39 @@ import {
   useColumns,
 } from '@openmsupply-client/common';
 import { BreachTypeCell } from '../../../common';
+import { Toolbar } from './Toolbar';
 
 const ListView: FC = () => {
-  const { data, isLoading, isError } = useTemperatureLog.document.list();
   const {
     updateSortQuery,
     updatePaginationQuery,
-    // filter,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filters: [{ key: 'datetime' }] });
+    filter,
+    queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams({
+    initialSort: { key: 'datetime', dir: 'asc' },
+    filters: [
+      { key: 'datetime', condition: 'between' },
+      {
+        key: 'sensor.name',
+      },
+      {
+        key: 'location.name',
+      },
+      {
+        key: 'temperatureBreach.type',
+        condition: 'equalTo',
+      },
+    ],
+  });
+  const queryParams = {
+    filterBy,
+    offset,
+    sortBy,
+    first,
+  };
 
+  const { data, isLoading, isError } =
+    useTemperatureLog.document.list(queryParams);
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
 
@@ -74,17 +97,19 @@ const ListView: FC = () => {
   );
 
   return (
-    <DataTable
-      id="temperature-log-list"
-      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={data?.nodes ?? []}
-      isLoading={isLoading}
-      isError={isError}
-      noDataElement={<NothingHere body={t('error.no-temperature-logs')} />}
-      enableColumnSelection
-    />
+    <>
+      <Toolbar filter={filter} />
+      <DataTable
+        id="temperature-log-list"
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+        onChangePage={updatePaginationQuery}
+        columns={columns}
+        data={data?.nodes ?? []}
+        isLoading={isLoading}
+        isError={isError}
+        noDataElement={<NothingHere body={t('error.no-temperature-logs')} />}
+      />
+    </>
   );
 };
 

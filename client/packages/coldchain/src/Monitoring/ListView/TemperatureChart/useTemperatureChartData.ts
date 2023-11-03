@@ -3,12 +3,19 @@ import { useTemperatureLog } from '../../api';
 import { DateUtils } from '@common/intl';
 import { NumUtils } from '@common/utils';
 import { Log, Sensor } from './types';
+import { useUrlQueryParams } from '@common/hooks';
 
 const MAX_DATA_POINTS = 30;
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
-  const { data, isLoading } = useTemperatureLog.document.list();
+  const {
+    queryParams,
+  } = useUrlQueryParams({
+    initialSort: {key: 'datetime', dir: 'desc'},
+  });
+
+  const { data, isLoading } = useTemperatureLog.document.list(queryParams);
   const sensors: Sensor[] = [];
   const logs: Log[] = [];
 

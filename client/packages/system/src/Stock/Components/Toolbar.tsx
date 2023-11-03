@@ -4,6 +4,7 @@ import {
   useTranslation,
   SearchBar,
   FilterController,
+  FilterRule,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 
@@ -14,7 +15,8 @@ interface ToolbarProps {
 export const Toolbar: FC<ToolbarProps> = ({ filter }) => {
   const t = useTranslation('inventory');
   const key = 'itemCodeOrName' as keyof StockLineRowFragment;
-  const filterString = (filter.filterBy?.[key]?.like as string) || '';
+  const filterString =
+    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
 
   return (
     <AppBarContentPortal

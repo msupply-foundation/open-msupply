@@ -1,4 +1,4 @@
-import { FilterBy, SortBy } from '@common/hooks';
+import { FilterByWithBoolean, SortBy } from '@common/hooks';
 import { Sdk, SensorFragment } from './operations.generated';
 import { RecordPatch, SensorSortFieldInput } from '@common/types';
 import { setNullableInput } from '@common/utils';
@@ -7,7 +7,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<SensorFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 export const getSensorQueries = (sdk: Sdk, storeId: string) => ({

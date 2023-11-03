@@ -18,6 +18,7 @@ export type UrlQueryValue =
 
 // CONSTANTS
 export const RANGE_SPLIT_CHAR = '_';
+export const NESTED_SPLIT_CHAR = '.';
 
 // The following Regex are used to split range strings, either "Date/Time" or
 // "Number", and use RANGE_SPLIT_CHAR to separate. Both the start and end values
@@ -64,7 +65,12 @@ export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
 
     Object.entries(values).forEach(([key, value]) => {
       if (!value) delete newQueryObject[key];
-      else {
+      else if (key === 'tab') {
+        newQueryObject[key] = String(value);
+        Object.entries(newQueryObject).forEach(([k, v]) => {
+          if (v !== value) delete newQueryObject[k];
+        });
+      } else {
         if (typeof value === 'object' && ('from' in value || 'to' in value)) {
           const range = parseRangeString(newQueryObject[key]) as RangeObject<
             string | number
