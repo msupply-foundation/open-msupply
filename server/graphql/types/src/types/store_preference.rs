@@ -30,6 +30,10 @@ impl StorePreferenceNode {
     pub async fn om_program_module(&self) -> &bool {
         &self.store_preference.om_program_module
     }
+
+    pub async fn vaccine_module(&self) -> &bool {
+        &self.store_preference.vaccine_module
+    }
 }
 
 impl StorePreferenceNode {

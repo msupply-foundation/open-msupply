@@ -1,4 +1,4 @@
-import { FilterBy, SortBy } from '@common/hooks';
+import { FilterByWithBoolean, SortBy } from '@common/hooks';
 import {
   InsertPrescriptionMutationVariables,
   PrescriptionRowFragment,
@@ -22,7 +22,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<PrescriptionRowFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 const prescriptionParsers = {

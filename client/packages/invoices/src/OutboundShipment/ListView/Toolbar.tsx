@@ -7,6 +7,7 @@ import {
   AppBarContentPortal,
   SearchBar,
   FilterController,
+  FilterRule,
 } from '@openmsupply-client/common';
 import { useOutbound, OutboundRowFragment } from '../api';
 
@@ -18,7 +19,8 @@ export const Toolbar: FC<{
   const onDelete = useOutbound.document.deleteRows();
 
   const key = 'otherPartyName' as keyof OutboundRowFragment;
-  const filterString = (filter.filterBy?.[key]?.like as string) || '';
+  const filterString =
+    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
 
   return (
     <AppBarContentPortal
