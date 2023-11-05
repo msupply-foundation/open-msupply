@@ -9,8 +9,21 @@ const MAX_DATA_POINTS = 30;
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
-  const { queryParams } = useUrlQueryParams({
+  const { filter, queryParams } = useUrlQueryParams({
     initialSort: { key: 'datetime', dir: 'desc' },
+    filters: [
+      { key: 'datetime', condition: 'between' },
+      {
+        key: 'sensor.name',
+      },
+      {
+        key: 'location.name',
+      },
+      {
+        key: 'temperatureBreach.type',
+        condition: 'equalTo',
+      },
+    ],
   });
 
   const { data, isLoading } = useTemperatureLog.document.list(queryParams);
@@ -102,6 +115,7 @@ export const useTemperatureChartData = () => {
   };
 
   return {
+    filter,
     hasData: logs.length > 0,
     isLoading,
     sensors,
