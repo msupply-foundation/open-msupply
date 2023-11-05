@@ -20,14 +20,23 @@ import {
 import { useTemperatureChartData } from './useTemperatureChartData';
 import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 import { BreachPopover } from './BreachPopover';
-import { BreachDot, DotProps } from './types';
+import { BreachConfig, BreachDot, DotProps, Sensor } from './types';
 import { BreachIndicator } from './BreachIndicator';
+import { Toolbar } from '../TemperatureLog/Toolbar';
 
-export const TemperatureChart = () => {
+const Chart = ({
+  breachConfig,
+  hasData,
+  isLoading,
+  sensors,
+}: {
+  breachConfig: BreachConfig;
+  hasData: boolean;
+  isLoading: boolean;
+  sensors: Sensor[];
+}) => {
   const t = useTranslation('coldchain');
   const theme = useTheme();
-  const { breachConfig, hasData, isLoading, sensors } =
-    useTemperatureChartData();
   const { dayMonthTime } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
   const [currentBreach, setCurrentBreach] = React.useState<BreachDot | null>(
@@ -186,5 +195,21 @@ export const TemperatureChart = () => {
         />
       )}
     </Box>
+  );
+};
+
+export const TemperatureChart = () => {
+  const { breachConfig, filter, hasData, isLoading, sensors } =
+    useTemperatureChartData();
+  return (
+    <>
+      <Toolbar filter={filter} />
+      <Chart
+        breachConfig={breachConfig}
+        hasData={hasData}
+        isLoading={isLoading}
+        sensors={sensors}
+      />
+    </>
   );
 };
