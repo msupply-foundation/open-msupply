@@ -9,10 +9,8 @@ const MAX_DATA_POINTS = 30;
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
-  const {
-    queryParams,
-  } = useUrlQueryParams({
-    initialSort: {key: 'datetime', dir: 'desc'},
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'datetime', dir: 'desc' },
   });
 
   const { data, isLoading } = useTemperatureLog.document.list(queryParams);
