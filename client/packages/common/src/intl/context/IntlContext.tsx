@@ -74,7 +74,7 @@ export const IntlProvider: FC<IntlProviderProps> = ({
           escapeValue: false, // not needed for react!!
         },
       });
-    console.log(`i18next initialized, language=${i18next.language}`);
+    console.info(`i18next initialized, language=${i18next.language}`);
   }, []);
 
   return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
