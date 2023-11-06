@@ -19,7 +19,6 @@ import { DraftInboundLine } from '../../../../types';
 import {
   getLocationInputColumn,
   LocationRowFragment,
-  useInitUnitStore,
   useUnitVariant,
 } from '@openmsupply-client/system';
 import { getPackUnitEntryCell } from '@openmsupply-client/system';
@@ -84,8 +83,6 @@ const PackUnitEntryCell = getPackUnitEntryCell<DraftInboundLine>({
 export const QuantityTableComponent: FC<
   TableProps & { item: InboundLineFragment['item'] | null }
 > = ({ item, lines, updateDraftLine, isDisabled = false }) => {
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
   const { unitVariantsExist } = useUnitVariant(item?.id || '', null);
   const theme = useTheme();
 

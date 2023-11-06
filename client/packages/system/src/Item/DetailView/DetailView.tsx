@@ -14,15 +14,13 @@ import { Toolbar } from './Toolbar';
 import { GeneralTab } from './Tabs/General';
 import { MasterListsTab } from './Tabs/MasterLists';
 import { AppRoute } from '@openmsupply-client/config';
-import { useInitUnitStore, useUnitVariant } from '../context';
+import { useUnitVariant } from '../context';
 
 export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { setSuffix } = useBreadcrumbs();
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
   const { variantsControl, numberOfPacksFromQuantity } = useUnitVariant(
     data?.id ?? '',
     data?.name ?? null

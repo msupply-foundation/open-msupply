@@ -29,6 +29,7 @@ import { Site } from './Site';
 import { AuthenticationAlert } from './components/AuthenticationAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
+import { useRefreshUnitVariant } from '@openmsupply-client/system';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -58,6 +59,17 @@ Bugsnag.start({
 const skipRequest = () =>
   LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned;
 
+/**
+ * Empty component which can be used to call startup hooks.
+ * For example, this component is called when auth information such as user or store id changed.
+ */
+const Init = () => {
+  // Fetch pack units at startup. Note, the units are cached, i.e. they are not fetched repeatedly.
+  // They will be refetched on page reload or when store is changed based on cache usePackUnits api keys
+  useRefreshUnitVariant();
+  return <></>;
+};
+
 const Host = () => (
   <React.Suspense fallback={<div />}>
     <IntlProvider>
@@ -69,6 +81,7 @@ const Host = () => (
               skipRequest={skipRequest}
             >
               <AuthProvider>
+                <Init />
                 <AppThemeProvider>
                   <ConfirmationModalProvider>
                     <AlertModalProvider>

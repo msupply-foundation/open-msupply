@@ -18,7 +18,6 @@ import {
 import {
   StockItemSearchInput,
   ItemRowFragment,
-  useInitUnitStore,
   useUnitVariant,
 } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';
@@ -54,8 +53,6 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   canAutoAllocate,
   isAutoAllocated,
 }) => {
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
   const t = useTranslation('distribution');
   const [showAllocationWarning, setShowAllocationWarning] = useState(false);
   const [placeholderQuantity, setPlaceholderQuantity] = useState(0);

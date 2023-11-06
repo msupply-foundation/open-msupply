@@ -15,7 +15,6 @@ import { useRequest } from '../api';
 import {
   getPackUnitQuantityCell,
   getPackUnitSelectCell,
-  useInitUnitStore,
   useUnitVariant,
 } from '@openmsupply-client/system';
 
@@ -48,8 +47,6 @@ export const useRequestColumns = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { usesRemoteAuthorisation } = useRequest.utils.isRemoteAuthorisation();
-  // TODO this is not the right place for it, see comment in method
-  useInitUnitStore();
 
   const columnDefinitions: ColumnDescription<RequestLineFragment>[] = [
     getCommentPopoverColumn(),
