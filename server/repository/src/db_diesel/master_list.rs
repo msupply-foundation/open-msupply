@@ -22,6 +22,8 @@ pub struct MasterListRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+// Not filtering out inactive master lists as we are not allowing the user to
+// undelete master lists for now.
 #[derive(Clone, Debug, PartialEq)]
 pub struct MasterListFilter {
     pub id: Option<EqualFilter<String>>,

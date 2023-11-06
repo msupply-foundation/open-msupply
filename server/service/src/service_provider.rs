@@ -21,6 +21,7 @@ use crate::{
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
+    missing_program::create_missing_master_list_and_program,
     name::get_names,
     processors::ProcessorsTrigger,
     programs::{
@@ -262,6 +263,13 @@ pub trait GeneralServiceTrait: Sync + Send {
         service_provider: &ServiceProvider,
     ) -> Result<(), RepositoryError> {
         create_system_user(service_provider)
+    }
+
+    fn create_missing_master_list_and_program(
+        &self,
+        service_provider: &ServiceProvider,
+    ) -> Result<(), RepositoryError> {
+        create_missing_master_list_and_program(service_provider)
     }
 }
 
