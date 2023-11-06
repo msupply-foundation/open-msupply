@@ -25,18 +25,18 @@ pub enum ProgramSortField {
 pub type ProgramSort = Sort<ProgramSortField>;
 
 pub struct ProgramRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ProgramRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ProgramRepository { connection }
     }
 
     pub fn count(&self, filter: Option<ProgramFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(&self, filter: ProgramFilter) -> Result<Vec<Program>, RepositoryError> {
@@ -75,7 +75,7 @@ impl<'a> ProgramRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<Program>(&self.connection.connection)?;
+        let result = final_query.load::<Program>(&mut self.connection.connection)?;
         Ok(result)
     }
 }

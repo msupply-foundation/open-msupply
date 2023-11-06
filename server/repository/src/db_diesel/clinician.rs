@@ -44,11 +44,11 @@ pub type ClinicianSort = Sort<ClinicianSortField>;
 pub type Clinician = ClinicianRow;
 
 pub struct ClinicianRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ClinicianRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ClinicianRepository { connection }
     }
 
@@ -58,7 +58,7 @@ impl<'a> ClinicianRepository<'a> {
         filter: Option<ClinicianFilter>,
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(store_id.to_string(), filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -125,7 +125,7 @@ impl<'a> ClinicianRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<Clinician>(&self.connection.connection)?;
+        let result = final_query.load::<Clinician>(&mut self.connection.connection)?;
 
         Ok(result)
     }
@@ -246,15 +246,15 @@ mod tests {
             MockDataInserts::none().names().stores(),
         )
         .await;
-        let repository = ClinicianRepository::new(&storage_connection);
+        let repository = ClinicianRepository::new(&mut storage_connection);
 
-        ClinicianRowRepository::new(&storage_connection)
+        ClinicianRowRepository::new(&mut storage_connection)
             .upsert_one(&inline_init(|r: &mut ClinicianRow| {
                 r.id = "clinician_store_a".to_string();
                 r.first_name = Some("First".to_string());
             }))
             .unwrap();
-        ClinicianRowRepository::new(&storage_connection)
+        ClinicianRowRepository::new(&mut storage_connection)
             .upsert_one(&inline_init(|r: &mut ClinicianRow| {
                 r.id = "clinician_store_b".to_string();
                 r.first_name = Some("First".to_string());
@@ -271,7 +271,7 @@ mod tests {
         assert!(result.is_empty());
 
         // add clinician store join to get query results:
-        ClinicianStoreJoinRowRepository::new(&storage_connection)
+        ClinicianStoreJoinRowRepository::new(&mut storage_connection)
             .upsert_one(&ClinicianStoreJoinRow {
                 id: "JoinId1".to_string(),
                 store_id: mock_store_a().id,

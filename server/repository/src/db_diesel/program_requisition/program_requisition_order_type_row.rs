@@ -21,7 +21,7 @@ table! {
 joinable!(program_requisition_order_type -> program_requisition_settings (program_requisition_settings_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "program_requisition_order_type"]
+#[diesel(table_name = program_requisition_order_type)]
 pub struct ProgramRequisitionOrderTypeRow {
     pub id: String,
     pub program_requisition_settings_id: String,
@@ -32,11 +32,11 @@ pub struct ProgramRequisitionOrderTypeRow {
 }
 
 pub struct ProgramRequisitionOrderTypeRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ProgramRequisitionOrderTypeRowRepository { connection }
     }
 
@@ -47,7 +47,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
             .on_conflict(program_requisition_order_type_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -55,7 +55,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     pub fn upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_requisition_order_type_dsl::program_requisition_order_type)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -65,7 +65,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     ) -> Result<Option<ProgramRequisitionOrderTypeRow>, RepositoryError> {
         let result = program_requisition_order_type_dsl::program_requisition_order_type
             .filter(program_requisition_order_type_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -76,7 +76,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     ) -> Result<Vec<ProgramRequisitionOrderTypeRow>, RepositoryError> {
         let result = program_requisition_order_type_dsl::program_requisition_order_type
             .filter(program_requisition_order_type_dsl::program_requisition_settings_id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
 
         Ok(result)
     }
@@ -86,7 +86,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
             program_requisition_order_type_dsl::program_requisition_order_type
                 .filter(program_requisition_order_type_dsl::id.eq(order_type_id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

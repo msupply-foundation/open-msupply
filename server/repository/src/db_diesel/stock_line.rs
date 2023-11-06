@@ -63,11 +63,11 @@ type StockLineJoin = (
     Option<BarcodeRow>,
 );
 pub struct StockLineRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> StockLineRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         StockLineRepository { connection }
     }
 
@@ -84,7 +84,7 @@ impl<'a> StockLineRepository<'a> {
             store_id.unwrap_or_default(),
         );
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -149,7 +149,7 @@ impl<'a> StockLineRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<StockLineJoin>(&self.connection.connection)?;
+        let result = final_query.load::<StockLineJoin>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -217,7 +217,7 @@ fn apply_item_filter(
             let mut item_filter = ItemFilter::new();
             item_filter.code_or_name = Some(item_code_or_name.clone());
             item_filter.is_visible = Some(true);
-            let items = ItemRepository::new(connection)
+            let items = ItemRepository::new(&mut connection)
                 .query_by_filter(item_filter, Some(store_id))
                 .unwrap();
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
@@ -373,7 +373,7 @@ mod test {
         )
         .await;
 
-        let repo = StockLineRepository::new(&connection);
+        let repo = StockLineRepository::new(&mut connection);
         // Asc by expiry date
         let sort = StockLineSort {
             key: StockLineSortField::ExpiryDate,
@@ -439,7 +439,7 @@ mod test {
         )
         .await;
 
-        let repo = StockLineRepository::new(&connection);
+        let repo = StockLineRepository::new(&mut connection);
 
         // Stock not available
         assert_eq!(

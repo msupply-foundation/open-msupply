@@ -50,7 +50,7 @@ impl Migration for V1_00_08 {
         use self::sync_buffer::dsl as sync_buffer_dsl;
 
         sql!(
-            connection,
+            &mut connection,
             r#"
             ALTER TABLE store ADD disabled BOOLEAN NOT NULL DEFAULT false
         "#
@@ -64,7 +64,7 @@ impl Migration for V1_00_08 {
                     .eq(SyncBufferAction::Upsert)
                     .and(sync_buffer_dsl::table_name.eq("store")),
             )
-            .load::<(String, String)>(&connection.connection)?;
+            .load::<(String, String)>(&mut connection.connection)?;
 
         for (id, data) in sync_buffer_rows {
             let legacy_row = serde_json::from_str::<LegacyStoreRow>(&data)
@@ -73,7 +73,7 @@ impl Migration for V1_00_08 {
             diesel::update(store_dsl::store)
                 .filter(store_dsl::id.eq(id))
                 .set(store_dsl::disabled.eq(legacy_row.disabled))
-                .execute(&connection.connection)?;
+                .execute(&mut connection.connection)?;
         }
 
         Ok(())
@@ -228,7 +228,7 @@ async fn migration_1_00_08() {
     let stores = store_dsl::store
         .select((store_dsl::id, store_dsl::disabled))
         .order_by(store_dsl::id.asc())
-        .load::<(String, bool)>(&connection.connection)
+        .load::<(String, bool)>(&mut connection.connection)
         .unwrap();
 
     assert_eq!(

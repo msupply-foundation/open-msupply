@@ -131,18 +131,18 @@ fn create_filtered_query<'a>(filter: Option<ProgramEventFilter>) -> BoxedProgram
 }
 
 pub struct ProgramEventRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ProgramEventRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ProgramEventRepository { connection }
     }
 
     pub fn count(&self, filter: Option<ProgramEventFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -192,7 +192,7 @@ impl<'a> ProgramEventRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramEventRow>(&self.connection.connection)?;
+            .load::<ProgramEventRow>(&mut self.connection.connection)?;
 
         Ok(result)
     }
@@ -200,7 +200,7 @@ impl<'a> ProgramEventRepository<'a> {
     pub fn delete(&self, filter: ProgramEventFilter) -> Result<(), RepositoryError> {
         let mut query = diesel::delete(program_event_dsl::program_event).into_boxed();
         query = apply_filters!(query, Some(filter));
-        query.execute(&self.connection.connection)?;
+        query.execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

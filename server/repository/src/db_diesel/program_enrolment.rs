@@ -136,18 +136,18 @@ pub(crate) fn create_filtered_query<'a>(
 }
 
 pub struct ProgramEnrolmentRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ProgramEnrolmentRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ProgramEnrolmentRepository { connection }
     }
 
     pub fn count(&self, filter: Option<ProgramEnrolmentFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -190,7 +190,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramEnrolment>(&self.connection.connection)?;
+            .load::<ProgramEnrolment>(&mut self.connection.connection)?;
 
         Ok(result)
     }

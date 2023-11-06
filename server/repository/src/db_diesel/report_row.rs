@@ -47,11 +47,11 @@ joinable!(report -> form_schema (argument_schema_id));
 allow_tables_to_appear_in_same_query!(report, form_schema);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "report"]
+#[diesel(table_name = report)]
 pub struct ReportRow {
     pub id: String,
     pub name: String,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: ReportType,
     /// The template format depends on the report type
     pub template: String,
@@ -78,18 +78,18 @@ impl Default for ReportRow {
 }
 
 pub struct ReportRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ReportRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ReportRowRepository { connection }
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReportRow>, RepositoryError> {
         let result = report_dsl::report
             .filter(report_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -101,7 +101,7 @@ impl<'a> ReportRowRepository<'a> {
             .on_conflict(report_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -109,13 +109,13 @@ impl<'a> ReportRowRepository<'a> {
     pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         diesel::replace_into(report_dsl::report)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(report_dsl::report.filter(report_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

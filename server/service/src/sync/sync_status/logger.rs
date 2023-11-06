@@ -42,7 +42,7 @@ pub struct SyncLogger<'a> {
 pub struct SyncLoggerError(#[from] RepositoryError);
 
 impl<'a> SyncLogger<'a> {
-    pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger, SyncLoggerError> {
+    pub fn start(connection: &'a mut StorageConnection) -> Result<SyncLogger, SyncLoggerError> {
         info!("Sync started");
         let row = SyncLogRow {
             id: util::uuid::uuid(),

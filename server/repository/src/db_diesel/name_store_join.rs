@@ -28,7 +28,7 @@ table! {
 }
 
 #[derive(Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Clone, Default)]
-#[table_name = "name_store_join"]
+#[diesel(table_name = name_store_join)]
 pub struct NameStoreJoinRow {
     pub id: String,
     pub name_id: String,
@@ -46,11 +46,11 @@ pub struct NameStoreJoinFilter {
 }
 
 pub struct NameStoreJoinRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> NameStoreJoinRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         NameStoreJoinRepository { connection }
     }
 
@@ -61,7 +61,7 @@ impl<'a> NameStoreJoinRepository<'a> {
             .on_conflict(name_store_join_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -69,14 +69,14 @@ impl<'a> NameStoreJoinRepository<'a> {
     fn _upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_store_join_dsl::name_store_join)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(name_store_join_is_sync_update::table.find(id))
             .set(name_store_join_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
 
         Ok(())
     }
@@ -90,14 +90,14 @@ impl<'a> NameStoreJoinRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameStoreJoinRow>, RepositoryError> {
         let result = name_store_join_dsl::name_store_join
             .filter(name_store_join_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(name_store_join_dsl::name_store_join.filter(name_store_join_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -114,7 +114,7 @@ impl<'a> NameStoreJoinRepository<'a> {
     ) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        let result = query.load::<NameStoreJoinRow>(&self.connection.connection)?;
+        let result = query.load::<NameStoreJoinRow>(&mut self.connection.connection)?;
 
         Ok(result)
     }
@@ -131,7 +131,7 @@ impl<'a> NameStoreJoinRepository<'a> {
         let result = name_store_join_is_sync_update::table
             .find(id)
             .select(name_store_join_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -180,7 +180,7 @@ mod test {
         )
         .await;
 
-        let repo = NameStoreJoinRepository::new(&connection);
+        let repo = NameStoreJoinRepository::new(&mut connection);
 
         let base_row = NameStoreJoinRow {
             name_id: mock_name_a().id,

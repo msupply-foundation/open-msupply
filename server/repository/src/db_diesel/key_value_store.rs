@@ -54,8 +54,8 @@ impl Default for KeyValueType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "key_value_store"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = key_value_store)]
 pub struct KeyValueStoreRow {
     pub id: KeyValueType,
     pub value_string: Option<String>,
@@ -66,11 +66,11 @@ pub struct KeyValueStoreRow {
 }
 
 pub struct KeyValueStoreRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> KeyValueStoreRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         KeyValueStoreRepository { connection }
     }
 
@@ -81,7 +81,7 @@ impl<'a> KeyValueStoreRepository<'a> {
             .on_conflict(kv_store_dsl::id)
             .do_update()
             .set(value)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -89,14 +89,14 @@ impl<'a> KeyValueStoreRepository<'a> {
     pub fn upsert_one(&self, value: &KeyValueStoreRow) -> Result<(), RepositoryError> {
         diesel::replace_into(kv_store_dsl::key_value_store)
             .values(value)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     fn get_row(&self, key: KeyValueType) -> Result<Option<KeyValueStoreRow>, RepositoryError> {
         let result = kv_store_dsl::key_value_store
             .filter(kv_store_dsl::id.eq(key))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }

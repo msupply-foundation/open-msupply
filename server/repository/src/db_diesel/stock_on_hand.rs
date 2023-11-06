@@ -28,11 +28,11 @@ pub struct StockOnHandFilter {
 }
 
 pub struct StockOnHandRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> StockOnHandRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         StockOnHandRepository { connection }
     }
 
@@ -63,7 +63,7 @@ impl<'a> StockOnHandRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        Ok(query.load::<StockOnHandRow>(&self.connection.connection)?)
+        Ok(query.load::<StockOnHandRow>(&mut self.connection.connection)?)
     }
 }
 

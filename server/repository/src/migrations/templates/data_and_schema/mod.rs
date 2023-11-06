@@ -40,7 +40,7 @@ impl Migration for V1_00_07 {
         use self::invoice::dsl as invoice_dsl;
 
         sql!(
-            connection,
+            &mut connection,
             r#"
             ALTER TABLE invoice ADD is_system_generated BOOLEAN NOT NULL DEFAULT false
         "#
@@ -53,7 +53,7 @@ impl Migration for V1_00_07 {
                     .eq("om_admin")
                     .and(activity_log_dsl::type_.eq(ActivityLogType::InvoiceCreated)),
             )
-            .load::<Option<String>>(&connection.connection)?;
+            .load::<Option<String>>(&mut connection.connection)?;
 
         for id in invoice_ids {
             let Some(id) = id else {
@@ -63,7 +63,7 @@ impl Migration for V1_00_07 {
             diesel::update(invoice_dsl::invoice)
                 .filter(invoice_dsl::id.eq(id))
                 .set(invoice_dsl::is_system_generated.eq(true))
-                .execute(&connection.connection)?;
+                .execute(&mut connection.connection)?;
         }
 
         Ok(())
@@ -193,7 +193,7 @@ async fn migration_1_00_07() {
     let invoices = invoice_dsl::invoice
         .select((invoice_dsl::id, invoice_dsl::is_system_generated))
         .order_by(invoice_dsl::id.asc())
-        .load::<(String, bool)>(&connection.connection)
+        .load::<(String, bool)>(&mut connection.connection)
         .unwrap();
 
     assert_eq!(

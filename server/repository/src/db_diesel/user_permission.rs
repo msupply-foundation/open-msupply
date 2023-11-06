@@ -30,18 +30,18 @@ pub enum UserPermissionSortField {
 pub type UserPermissionSort = Sort<UserPermissionSortField>;
 
 pub struct UserPermissionRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> UserPermissionRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         UserPermissionRepository { connection }
     }
 
     pub fn count(&self, filter: Option<UserPermissionFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -86,7 +86,7 @@ impl<'a> UserPermissionRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<UserPermission>(&self.connection.connection)?;
+        let result = final_query.load::<UserPermission>(&mut self.connection.connection)?;
         Ok(result)
     }
 }

@@ -31,8 +31,8 @@ table! {
 #[derive(
     Clone, Queryable, Insertable, Serialize, Deserialize, Debug, AsChangeset, PartialEq, Eq,
 )]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "sync_buffer"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = sync_buffer)]
 pub struct SyncBufferRow {
     pub record_id: String,
     pub received_datetime: NaiveDateTime,
@@ -58,7 +58,7 @@ impl Default for SyncBufferRow {
 }
 
 pub struct SyncBufferRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 use serde::{Deserialize, Serialize};
@@ -66,7 +66,7 @@ use sync_buffer::dsl as sync_buffer_dsl;
 use util::{inline_init, Defaults};
 
 impl<'a> SyncBufferRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         SyncBufferRowRepository { connection }
     }
 
@@ -81,7 +81,7 @@ impl<'a> SyncBufferRowRepository<'a> {
         // //   Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&statement).to_string());
 
-        statement.execute(&self.connection.connection)?;
+        statement.execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -89,7 +89,7 @@ impl<'a> SyncBufferRowRepository<'a> {
     pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_buffer_dsl::sync_buffer)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -101,7 +101,7 @@ impl<'a> SyncBufferRowRepository<'a> {
     }
 
     pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        Ok(sync_buffer_dsl::sync_buffer.load(&self.connection.connection)?)
+        Ok(sync_buffer_dsl::sync_buffer.load(&mut self.connection.connection)?)
     }
 
     pub fn find_one_by_record_id(
@@ -110,7 +110,7 @@ impl<'a> SyncBufferRowRepository<'a> {
     ) -> Result<Option<SyncBufferRow>, RepositoryError> {
         let result = sync_buffer_dsl::sync_buffer
             .filter(sync_buffer_dsl::record_id.eq(record_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -165,11 +165,11 @@ impl SyncBufferAction {
 type SyncBuffer = SyncBufferRow;
 
 pub struct SyncBufferRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> SyncBufferRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         SyncBufferRepository { connection }
     }
 
@@ -186,7 +186,7 @@ impl<'a> SyncBufferRepository<'a> {
     ) -> Result<Vec<SyncBuffer>, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        let result = query.load::<SyncBuffer>(&self.connection.connection)?;
+        let result = query.load::<SyncBuffer>(&mut self.connection.connection)?;
 
         Ok(result)
     }
@@ -264,7 +264,7 @@ mod test {
         )
         .await;
 
-        let repo = SyncBufferRepository::new(&connection);
+        let repo = SyncBufferRepository::new(&mut connection);
 
         assert_eq!(
             repo.query_by_filter(
@@ -299,7 +299,7 @@ mod test {
             r
         });
 
-        SyncBufferRowRepository::new(&connection)
+        SyncBufferRowRepository::new(&mut connection)
             .upsert_one(&new_a)
             .unwrap();
 

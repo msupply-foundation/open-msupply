@@ -4,11 +4,7 @@ use super::{get_connection, DBBackendConnection, DBConnection};
 
 use crate::repository_error::RepositoryError;
 
-use diesel::{
-    connection::TransactionManager,
-    r2d2::{ConnectionManager, Pool},
-    Connection,
-};
+use diesel::r2d2::{ConnectionManager, Pool};
 use futures_util::Future;
 use log::error;
 
@@ -76,31 +72,34 @@ impl StorageConnection {
     }
     /// Executes operations in transaction. A new transaction is only started if not already in a
     /// transaction.
-    pub async fn transaction<'a, T, E, F, Fut>(&'a self, f: F) -> Result<T, TransactionError<E>>
+    pub async fn transaction<'a, T, E, F, Fut>(&'a mut self, f: F) -> Result<T, TransactionError<E>>
     where
-        F: FnOnce(&'a StorageConnection) -> Fut,
+        F: FnOnce(&'a mut StorageConnection) -> Fut,
         Fut: Future<Output = Result<T, E>>,
     {
-        self.transaction_etc(f, true).await
+        &mut self.transaction_etc(f, true).await
     }
 
     pub async fn transaction_etc<'a, T, E, F, Fut>(
-        &'a self,
+        &'a mut self,
         f: F,
         reuse_tx: bool,
     ) -> Result<T, TransactionError<E>>
     where
-        F: FnOnce(&'a StorageConnection) -> Fut,
+        F: FnOnce(&'a mut StorageConnection) -> Fut,
         Fut: Future<Output = Result<T, E>>,
     {
         let current_level = self.transaction_level.get();
         if current_level > 0 && reuse_tx {
-            let result = f(self).await.map_err(|err| TransactionError::Inner(err))?;
+            let result = f(&mut self)
+                .await
+                .map_err(|err| TransactionError::Inner(err))?;
             return Ok(result);
         }
 
         let con = &self.connection;
-        let transaction_manager = con.transaction_manager();
+        // let transaction_manager = con.transaction_manager();
+        let transaction_manager = con.establish();
         if current_level == 0 {
             // sqlite can only have 1 writer at a time, so to avoid concurrency issues,
             // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
@@ -144,7 +143,7 @@ impl StorageConnection {
     /// transaction.
     pub fn transaction_sync<'a, T, E, F>(&'a self, f: F) -> Result<T, TransactionError<E>>
     where
-        F: FnOnce(&'a StorageConnection) -> Result<T, E>,
+        F: FnOnce(&'a mut StorageConnection) -> Result<T, E>,
     {
         self.transaction_sync_etc(f, true)
     }
@@ -153,16 +152,16 @@ impl StorageConnection {
     /// * `reuse_tx` - if true and the connection is currently in a transaction no new nested
     /// transaction is started.
     pub fn transaction_sync_etc<'a, T, E, F>(
-        &'a self,
+        &'a mut self,
         f: F,
         reuse_tx: bool,
     ) -> Result<T, TransactionError<E>>
     where
-        F: FnOnce(&'a StorageConnection) -> Result<T, E>,
+        F: FnOnce(&'a mut StorageConnection) -> Result<T, E>,
     {
         let current_level = self.transaction_level.get();
         if current_level > 0 && reuse_tx {
-            return match f(self) {
+            return match f(&mut self) {
                 Ok(ok) => Ok(ok),
                 Err(err) => Err(TransactionError::Inner(err)),
             };

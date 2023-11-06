@@ -21,7 +21,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "program_event"]
+#[diesel(table_name = program_event)]
 pub struct ProgramEventRow {
     /// The row id
     pub id: String,
@@ -49,25 +49,25 @@ pub struct ProgramEventRow {
     /// However, the status of a specific encounter is tied to a specific document.
     pub document_name: Option<String>,
     /// The type of the event data
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: String,
     /// The event data
     pub data: Option<String>,
 }
 
 pub struct ProgramEventRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ProgramEventRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ProgramEventRowRepository { connection }
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramEventRow>, RepositoryError> {
         let result = program_event::dsl::program_event
             .filter(program_event::dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -79,7 +79,7 @@ impl<'a> ProgramEventRowRepository<'a> {
             .on_conflict(program_event::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -87,7 +87,7 @@ impl<'a> ProgramEventRowRepository<'a> {
     pub fn upsert_one(&self, row: &ProgramEventRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_event::dsl::program_event)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

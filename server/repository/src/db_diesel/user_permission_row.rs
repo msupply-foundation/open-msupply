@@ -63,8 +63,8 @@ pub enum Permission {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "user_permission"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = user_permission)]
 pub struct UserPermissionRow {
     pub id: String,
     pub user_id: String,
@@ -76,11 +76,11 @@ pub struct UserPermissionRow {
 }
 
 pub struct UserPermissionRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> UserPermissionRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         UserPermissionRowRepository { connection }
     }
 
@@ -91,7 +91,7 @@ impl<'a> UserPermissionRowRepository<'a> {
             .on_conflict(user_permission_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -99,14 +99,14 @@ impl<'a> UserPermissionRowRepository<'a> {
     pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_permission_dsl::user_permission)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserPermissionRow>, RepositoryError> {
         let result = user_permission_dsl::user_permission
             .filter(user_permission_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -115,13 +115,13 @@ impl<'a> UserPermissionRowRepository<'a> {
         diesel::delete(
             user_permission_dsl::user_permission.filter(user_permission_dsl::user_id.eq(user_id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_permission_dsl::user_permission.filter(user_permission_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

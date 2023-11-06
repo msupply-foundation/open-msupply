@@ -73,8 +73,8 @@ pub enum InvoiceRowStatus {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "invoice"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = invoice)]
 pub struct InvoiceRow {
     pub id: String,
     pub name_id: String,
@@ -82,7 +82,7 @@ pub struct InvoiceRow {
     pub store_id: String,
     pub user_id: Option<String>,
     pub invoice_number: i64,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: InvoiceRowType,
     pub status: InvoiceRowStatus,
     pub on_hold: bool,
@@ -134,11 +134,11 @@ impl Default for InvoiceRow {
 }
 
 pub struct InvoiceRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> InvoiceRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         InvoiceRowRepository { connection }
     }
 
@@ -149,7 +149,7 @@ impl<'a> InvoiceRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -157,19 +157,20 @@ impl<'a> InvoiceRowRepository<'a> {
     pub fn upsert_one(&self, row: &InvoiceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn delete(&self, invoice_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(invoice.filter(id.eq(invoice_id))).execute(&self.connection.connection)?;
+        diesel::delete(invoice.filter(id.eq(invoice_id)))
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
         let result = invoice
             .filter(id.eq(invoice_id))
-            .first(&self.connection.connection);
+            .first(&mut self.connection.connection);
         result.map_err(|err| RepositoryError::from(err))
     }
 
@@ -180,7 +181,7 @@ impl<'a> InvoiceRowRepository<'a> {
     ) -> Result<Option<InvoiceRow>, RepositoryError> {
         let result = invoice
             .filter(id.eq(invoice_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -188,7 +189,7 @@ impl<'a> InvoiceRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceRow>, RepositoryError> {
         let result = invoice
             .filter(id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 
@@ -200,22 +201,22 @@ impl<'a> InvoiceRowRepository<'a> {
         let result = invoice
             .filter(type_.eq(r#type).and(store_id.eq(store)))
             .select(max(invoice_number))
-            .first(&self.connection.connection)?;
+            .first(&mut self.connection.connection)?;
         Ok(result)
     }
 }
 
 pub struct OutboundShipmentRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> OutboundShipmentRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         OutboundShipmentRowRepository { connection }
     }
 
     pub async fn find_many_by_name_id(
-        &self,
+        &mut self,
         name: &str,
     ) -> Result<Vec<InvoiceRow>, RepositoryError> {
         let result = invoice
@@ -224,7 +225,7 @@ impl<'a> OutboundShipmentRowRepository<'a> {
                     .eq(InvoiceRowType::OutboundShipment)
                     .and(name_id.eq(name)),
             )
-            .get_results(&self.connection.connection)?;
+            .get_results(&mut self.connection.connection)?;
         Ok(result)
     }
 
@@ -235,7 +236,7 @@ impl<'a> OutboundShipmentRowRepository<'a> {
                     .eq(InvoiceRowType::OutboundShipment)
                     .and(store_id.eq(store)),
             )
-            .get_results(&self.connection.connection)?;
+            .get_results(&mut self.connection.connection)?;
         Ok(result)
     }
 }

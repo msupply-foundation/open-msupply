@@ -93,11 +93,11 @@ impl ItemFilter {
 type ItemAndMasterList = (ItemRow, Option<UnitRow>);
 
 pub struct ItemRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ItemRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ItemRepository { connection }
     }
 
@@ -108,7 +108,7 @@ impl<'a> ItemRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(store_id, filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_one(
@@ -162,7 +162,7 @@ impl<'a> ItemRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<ItemAndMasterList>(&self.connection.connection)?;
+        let result = final_query.load::<ItemAndMasterList>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -275,11 +275,11 @@ mod tests {
         // Prepare
         let (_, storage_connection, _, _) =
             test_db::setup_all("test_item_query_repository", MockDataInserts::none()).await;
-        let item_query_repository = ItemRepository::new(&storage_connection);
+        let item_query_repository = ItemRepository::new(&mut storage_connection);
 
         let rows = data();
         for row in rows.iter() {
-            ItemRowRepository::new(&storage_connection)
+            ItemRowRepository::new(&mut storage_connection)
                 .upsert_one(row)
                 .unwrap();
         }
@@ -363,7 +363,7 @@ mod tests {
                 .full_master_list(),
         )
         .await;
-        let item_query_repository = ItemRepository::new(&storage_connection);
+        let item_query_repository = ItemRepository::new(&mut storage_connection);
 
         // test any id filter:
         let results = item_query_repository
@@ -432,7 +432,7 @@ mod tests {
             MockDataInserts::none(),
         )
         .await;
-        let item_query_repository = ItemRepository::new(&storage_connection);
+        let item_query_repository = ItemRepository::new(&mut storage_connection);
 
         let item_rows = vec![
             inline_init(|r: &mut ItemRow| {
@@ -525,28 +525,28 @@ mod tests {
         };
 
         for row in item_rows.iter() {
-            ItemRowRepository::new(&storage_connection)
+            ItemRowRepository::new(&mut storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
 
         for row in master_list_rows {
-            MasterListRowRepository::new(&storage_connection)
+            MasterListRowRepository::new(&mut storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
 
         for row in master_list_line_rows {
-            MasterListLineRowRepository::new(&storage_connection)
+            MasterListLineRowRepository::new(&mut storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
 
-        NameRowRepository::new(&storage_connection)
+        NameRowRepository::new(&mut storage_connection)
             .upsert_one(&name_row)
             .unwrap();
 
-        StoreRowRepository::new(&storage_connection)
+        StoreRowRepository::new(&mut storage_connection)
             .upsert_one(&store_row)
             .unwrap();
 
@@ -558,7 +558,7 @@ mod tests {
         assert_eq!(results0, item_rows);
 
         // item1 and item2 visible
-        MasterListNameJoinRepository::new(&storage_connection)
+        MasterListNameJoinRepository::new(&mut storage_connection)
             .upsert_one(&master_list_name_join_1)
             .unwrap();
 
@@ -589,7 +589,7 @@ mod tests {
     async fn test_item_query_sort() {
         let (_, connection, _, _) =
             test_db::setup_all("test_item_query_sort", MockDataInserts::all()).await;
-        let repo = ItemRepository::new(&connection);
+        let repo = ItemRepository::new(&mut connection);
 
         let mut items = repo.query(Pagination::new(), None, None, None).unwrap();
 

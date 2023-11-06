@@ -64,11 +64,11 @@ pub enum PatientSortField {
 pub type PatientSort = Sort<PatientSortField>;
 
 pub struct PatientRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> PatientRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         PatientRepository { connection }
     }
 
@@ -79,7 +79,7 @@ impl<'a> PatientRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter, allowed_ctx);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -146,7 +146,7 @@ impl<'a> PatientRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<NameRow>(&self.connection.connection)?;
+        let result = final_query.load::<NameRow>(&mut self.connection.connection)?;
 
         Ok(result)
     }
@@ -334,7 +334,7 @@ mod tests {
             MockDataInserts::none().names().stores().name_store_joins(),
         )
         .await;
-        let repo = PatientRepository::new(&connection);
+        let repo = PatientRepository::new(&mut connection);
         // Make sure we don't return names that are not patients
         let result = repo
             .query_by_filter(
@@ -344,7 +344,7 @@ mod tests {
             .unwrap();
         assert_eq!(result.get(0), None);
 
-        let name_row_repo = NameRowRepository::new(&connection);
+        let name_row_repo = NameRowRepository::new(&mut connection);
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
@@ -377,10 +377,10 @@ mod tests {
                 .programs(),
         )
         .await;
-        let repo = PatientRepository::new(&connection);
+        let repo = PatientRepository::new(&mut connection);
 
         // add name and name_store_join
-        let name_row_repo = NameRowRepository::new(&connection);
+        let name_row_repo = NameRowRepository::new(&mut connection);
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
@@ -390,7 +390,7 @@ mod tests {
         name_row_repo.upsert_one(&patient_row).unwrap();
 
         // Test identifier search
-        ProgramEnrolmentRowRepository::new(&connection)
+        ProgramEnrolmentRowRepository::new(&mut connection)
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
@@ -477,10 +477,10 @@ mod tests {
                 .programs(),
         )
         .await;
-        let repo = PatientRepository::new(&connection);
+        let repo = PatientRepository::new(&mut connection);
 
         // add name and name_store_join
-        let name_row_repo = NameRowRepository::new(&connection);
+        let name_row_repo = NameRowRepository::new(&mut connection);
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
@@ -490,7 +490,7 @@ mod tests {
         name_row_repo.upsert_one(&patient_row).unwrap();
 
         // Searching by program enrolment id requires correct context access
-        ProgramEnrolmentRowRepository::new(&connection)
+        ProgramEnrolmentRowRepository::new(&mut connection)
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),

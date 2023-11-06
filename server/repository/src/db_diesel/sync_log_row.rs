@@ -48,8 +48,8 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "sync_log"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = sync_log)]
 pub struct SyncLogRow {
     pub id: String,
     pub started_datetime: NaiveDateTime,
@@ -103,11 +103,11 @@ impl Default for SyncLogRow {
 }
 
 pub struct SyncLogRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> SyncLogRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         SyncLogRowRepository { connection }
     }
 
@@ -118,7 +118,7 @@ impl<'a> SyncLogRowRepository<'a> {
             .on_conflict(sync_log_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -126,14 +126,14 @@ impl<'a> SyncLogRowRepository<'a> {
     pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_log_dsl::sync_log)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogRow>, RepositoryError> {
         let result = sync_log_dsl::sync_log
             .filter(sync_log_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -153,7 +153,7 @@ mod test {
     async fn sync_log_row_enum() {
         let (_, connection, _, _) = setup_all("sync_log_row_enum", MockDataInserts::none()).await;
 
-        let repo = SyncLogRowRepository::new(&connection);
+        let repo = SyncLogRowRepository::new(&mut connection);
         // Try upsert all variants of SyncLogRowErrorCode, confirm that diesel enums match postgres
         for variant in SyncLogRowErrorCode::iter() {
             let result = repo.upsert_one(&inline_init(|r: &mut SyncLogRow| {

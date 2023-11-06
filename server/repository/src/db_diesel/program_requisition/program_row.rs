@@ -22,7 +22,7 @@ joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "program"]
+#[diesel(table_name = program)]
 pub struct ProgramRow {
     pub id: String, // Master list id
     pub master_list_id: String,
@@ -31,11 +31,11 @@ pub struct ProgramRow {
 }
 
 pub struct ProgramRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ProgramRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ProgramRowRepository { connection }
     }
 
@@ -46,7 +46,7 @@ impl<'a> ProgramRowRepository<'a> {
             .on_conflict(program_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -54,14 +54,14 @@ impl<'a> ProgramRowRepository<'a> {
     pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_dsl::program)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramRow>, RepositoryError> {
         let result = program_dsl::program
             .filter(program_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }

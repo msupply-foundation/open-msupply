@@ -32,7 +32,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq)]
-#[table_name = "invoice_stats"]
+#[diesel(table_name = invoice_stats)]
 pub struct PricingRow {
     pub invoice_id: String,
     pub total_before_tax: f64,
@@ -147,11 +147,11 @@ type InvoiceLineJoin = (
 );
 
 pub struct InvoiceLineRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> InvoiceLineRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         InvoiceLineRepository { connection }
     }
 
@@ -159,7 +159,7 @@ impl<'a> InvoiceLineRepository<'a> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -183,7 +183,7 @@ impl<'a> InvoiceLineRepository<'a> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
-        let result = query.load::<InvoiceLineJoin>(&self.connection.connection)?;
+        let result = query.load::<InvoiceLineJoin>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -192,7 +192,7 @@ impl<'a> InvoiceLineRepository<'a> {
     pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<PricingRow>, RepositoryError> {
         let results: Vec<PricingRow> = invoice_stats_dsl::invoice_stats
             .filter(invoice_stats_dsl::invoice_id.eq_any(invoice_ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(results)
     }
 }

@@ -19,11 +19,11 @@ pub struct MasterListLineFilter {
 }
 
 pub struct MasterListLineRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> MasterListLineRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         MasterListLineRepository { connection }
     }
 
@@ -31,7 +31,7 @@ impl<'a> MasterListLineRepository<'a> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter)?;
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -43,7 +43,7 @@ impl<'a> MasterListLineRepository<'a> {
 
         query = query.order(master_list_line_dsl::id.asc());
 
-        let result = query.load::<MasterListLineRow>(&self.connection.connection)?;
+        let result = query.load::<MasterListLineRow>(&mut self.connection.connection)?;
 
         Ok(result)
     }
@@ -61,7 +61,7 @@ impl<'a> MasterListLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<MasterListLineRow>(&self.connection.connection)?;
+            .load::<MasterListLineRow>(&mut self.connection.connection)?;
 
         Ok(result)
     }

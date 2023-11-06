@@ -20,8 +20,8 @@ async fn test_changelog() {
         test_db::setup_all("test_changelog", MockDataInserts::none().names().stores()).await;
 
     // Use location entries to populate the changelog (via the trigger)
-    let location_repo = LocationRowRepository::new(&connection);
-    let repo = ChangelogRepository::new(&connection);
+    let location_repo = LocationRowRepository::new(&mut connection);
+    let repo = ChangelogRepository::new(&mut connection);
     // Clear change log and get starting cursor
     let starting_cursor = repo.latest_cursor().unwrap();
     repo.drop_all().unwrap();
@@ -134,8 +134,8 @@ async fn test_changelog_iteration() {
         test_db::setup_all("test_changelog_2", MockDataInserts::none().names().stores()).await;
 
     // use names entries to populate the changelog (via the trigger)
-    let location_repo = LocationRowRepository::new(&connection);
-    let repo = ChangelogRepository::new(&connection);
+    let location_repo = LocationRowRepository::new(&mut connection);
+    let repo = ChangelogRepository::new(&mut connection);
     // Clear change log and get starting cursor
     let starting_cursor = repo.latest_cursor().unwrap();
     repo.drop_all().unwrap();
@@ -235,11 +235,11 @@ async fn test_changelog_filter() {
     for log in vec![&log1, &log2, &log3, &log4] {
         diesel::insert_into(changelog_dsl::changelog)
             .values(log)
-            .execute(&connection.connection)
+            .execute(&mut connection.connection)
             .unwrap();
     }
 
-    let repo = ChangelogRepository::new(&connection);
+    let repo = ChangelogRepository::new(&mut connection);
 
     // Filter by table name
 
@@ -296,14 +296,14 @@ struct TestRecord<T> {
 /// Helper method to test name and store id
 /// Does db operation passed in as a function and then queries changelog to confirm name_id and store_id are set correctly
 fn test_changelog_name_and_store_id<T, F>(
-    connection: &StorageConnection,
+    mut connection: &StorageConnection,
     record: TestRecord<T>,
     row_action: ChangelogAction,
     db_op: F,
 ) where
     F: Fn(&StorageConnection, &T),
 {
-    let repo = ChangelogRepository::new(&connection);
+    let repo = ChangelogRepository::new(&mut connection);
 
     db_op(connection, &record.record);
 
@@ -419,7 +419,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Upsert,
         |connection, r| {
-            InvoiceLineRowRepository::new(connection)
+            InvoiceLineRowRepository::new(&mut connection)
                 .upsert_one(r)
                 .unwrap()
         },
@@ -437,7 +437,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Delete,
         |connection, r| {
-            InvoiceLineRowRepository::new(connection)
+            InvoiceLineRowRepository::new(&mut connection)
                 .delete(&r.id)
                 .unwrap()
         },
@@ -470,7 +470,11 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
-        |connection, r| InvoiceRowRepository::new(connection).upsert_one(r).unwrap(),
+        |connection, r| {
+            InvoiceRowRepository::new(&mut connection)
+                .upsert_one(r)
+                .unwrap()
+        },
     );
 
     // Invoice Delete
@@ -484,7 +488,11 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             store_id: invoice().store_id,
         },
         ChangelogAction::Delete,
-        |connection, r| InvoiceRowRepository::new(connection).delete(&r.id).unwrap(),
+        |connection, r| {
+            InvoiceRowRepository::new(&mut connection)
+                .delete(&r.id)
+                .unwrap()
+        },
     );
 
     // Requisition Line Insert
@@ -515,7 +523,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Upsert,
         |connection, r| {
-            RequisitionLineRowRepository::new(connection)
+            RequisitionLineRowRepository::new(&mut connection)
                 .upsert_one(r)
                 .unwrap()
         },
@@ -533,7 +541,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Delete,
         |connection, r| {
-            RequisitionLineRowRepository::new(connection)
+            RequisitionLineRowRepository::new(&mut connection)
                 .delete(&r.id)
                 .unwrap()
         },
@@ -567,7 +575,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Upsert,
         |connection, r| {
-            RequisitionRowRepository::new(connection)
+            RequisitionRowRepository::new(&mut connection)
                 .upsert_one(r)
                 .unwrap()
         },
@@ -585,7 +593,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Delete,
         |connection, r| {
-            RequisitionRowRepository::new(connection)
+            RequisitionRowRepository::new(&mut connection)
                 .delete(&r.id)
                 .unwrap()
         },

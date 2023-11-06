@@ -49,11 +49,11 @@ pub struct StockMovementFilter {
 }
 
 pub struct StockMovementRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> StockMovementRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         StockMovementRepository { connection }
     }
 
@@ -89,7 +89,7 @@ impl<'a> StockMovementRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        Ok(query.load::<StockMovementRow>(&self.connection.connection)?)
+        Ok(query.load::<StockMovementRow>(&mut self.connection.connection)?)
     }
 }
 
@@ -252,7 +252,7 @@ mod test {
         )
         .await;
 
-        let repo = StockMovementRepository::new(&connection);
+        let repo = StockMovementRepository::new(&mut connection);
         let mut rows = repo
             .query(Some(StockMovementFilter {
                 store_id: Some(EqualFilter::equal_to(&store().id)),

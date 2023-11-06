@@ -14,7 +14,6 @@ use crate::{
 use diesel::{
     dsl::{And, Eq, IntoBoxed, LeftJoin},
     prelude::*,
-    query_source::joins::OnClauseWrapper,
 };
 use util::{constants::SYSTEM_NAME_CODES, inline_init};
 
@@ -68,11 +67,11 @@ pub type NameSort = Sort<NameSortField>;
 type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>, Option<StoreRow>);
 
 pub struct NameRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> NameRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         NameRepository { connection }
     }
 
@@ -83,7 +82,7 @@ impl<'a> NameRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(store_id.to_string(), filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -139,7 +138,7 @@ impl<'a> NameRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<NameAndNameStoreJoin>(&self.connection.connection)?;
+        let result = final_query.load::<NameAndNameStoreJoin>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(Name::from_join).collect())
     }
@@ -413,11 +412,11 @@ mod tests {
         // Prepare
         let (_, storage_connection, _, _) =
             test_db::setup_all("test_name_query_repository", MockDataInserts::none()).await;
-        let repository = NameRepository::new(&storage_connection);
+        let repository = NameRepository::new(&mut storage_connection);
 
         let (rows, queries) = data();
         for row in rows {
-            NameRowRepository::new(&storage_connection)
+            NameRowRepository::new(&mut storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
@@ -503,7 +502,7 @@ mod tests {
             MockDataInserts::none().names().stores(),
         )
         .await;
-        let repo = NameRepository::new(&connection);
+        let repo = NameRepository::new(&mut connection);
 
         let store_id = "store_a";
         let mut names = repo.query(store_id, Pagination::new(), None, None).unwrap();
@@ -568,7 +567,7 @@ mod tests {
             MockDataInserts::none().names().stores().name_store_joins(),
         )
         .await;
-        let repo = NameRepository::new(&connection);
+        let repo = NameRepository::new(&mut connection);
 
         let store_id = &mock_test_name_query_store_1().id;
         // test filter:

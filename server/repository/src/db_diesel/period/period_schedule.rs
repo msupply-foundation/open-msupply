@@ -29,17 +29,17 @@ pub enum PeriodScheduleSortField {
 pub type PeriodScheduleSort = Sort<PeriodScheduleSortField>;
 
 pub struct PeriodScheduleRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> PeriodScheduleRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         PeriodScheduleRepository { connection }
     }
 
     pub fn count(&self, filter: Option<PeriodScheduleFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -66,7 +66,7 @@ impl<'a> PeriodScheduleRepository<'a> {
             }
         };
 
-        let result = query.load::<PeriodScheduleRow>(&self.connection.connection)?;
+        let result = query.load::<PeriodScheduleRow>(&mut self.connection.connection)?;
 
         Ok(result)
     }

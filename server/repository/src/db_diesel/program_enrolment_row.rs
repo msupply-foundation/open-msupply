@@ -41,7 +41,7 @@ pub enum ProgramEnrolmentStatus {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "program_enrolment"]
+#[diesel(table_name = program_enrolment)]
 pub struct ProgramEnrolmentRow {
     /// The row id
     pub id: String,
@@ -76,18 +76,18 @@ impl Default for ProgramEnrolmentRow {
 }
 
 pub struct ProgramEnrolmentRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ProgramEnrolmentRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ProgramEnrolmentRowRepository { connection }
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramEnrolmentRow>, RepositoryError> {
         let result = program_enrolment::dsl::program_enrolment
             .filter(program_enrolment::dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -99,7 +99,7 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
             .on_conflict(program_enrolment::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -107,7 +107,7 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
     pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_enrolment::dsl::program_enrolment)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }
