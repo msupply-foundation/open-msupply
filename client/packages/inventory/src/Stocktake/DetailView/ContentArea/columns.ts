@@ -4,7 +4,6 @@ import {
   useColumns,
   ColumnAlign,
   ArrayUtils,
-  Formatter,
   Column,
   SortBy,
   PositiveNumberCell,
@@ -137,16 +136,14 @@ export const useStocktakeColumns = ({
             if ('lines' in row) {
               const { lines } = row;
               const expiryDate =
-                ArrayUtils.ifTheSameElseDefault(lines, 'expiryDate', null) ??
-                '';
-              return (
-                (expiryDate && Formatter.expiryDate(new Date(expiryDate))) ||
-                t('multiple')
-              );
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'expiryDate',
+                  t('multiple')
+                ) ?? '';
+              return expiryDate;
             } else {
-              return row.expiryDate
-                ? Formatter.expiryDate(new Date(row.expiryDate)) ?? ''
-                : '';
+              return row.expiryDate ?? '';
             }
           },
           accessor: ({ rowData }) => {
