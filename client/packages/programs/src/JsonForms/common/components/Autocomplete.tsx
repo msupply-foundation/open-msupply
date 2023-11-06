@@ -53,9 +53,10 @@ const UIComponent = (props: ControlProps) => {
     [schemaOptions]
   );
   useEffect(() => {
-    if (!schemaOptions?.freeText) {
-      setLocalData(options.find(option => option.value === data));
-    } else if (data) {
+    const matchingOption = options.find(option => option.value === data);
+    if (matchingOption) {
+      setLocalData(matchingOption);
+    } else if (schemaOptions?.freeText) {
       setLocalData({ value: data, label: data });
     }
   }, [data, options, schemaOptions]);
@@ -64,19 +65,10 @@ const UIComponent = (props: ControlProps) => {
     return null;
   }
 
-  // In free text mode we don't get an onChange update when changing focus; do an update manually
-  const onClose = () => {
-    if (!schemaOptions?.freeText) {
-      return;
-    }
-    handleChange(path, localData);
-  };
-
   const onInputChange = (_event: React.SyntheticEvent, value: string) => {
     if (schemaOptions?.freeText) {
-      // set the local data so that we have it in onClose; don't set it otherwise because it would
-      // affect the normal behaviour, i.e. the input wouldn't clear if the value is not valid
       setLocalData({ value, label: value });
+      handleChange(path, value);
     }
   };
 
@@ -84,17 +76,11 @@ const UIComponent = (props: ControlProps) => {
     _event: React.SyntheticEvent,
     option: DisplayOption | null
   ) => {
-    let s = '';
-    if (typeof option === 'string') {
-      // from freeText mode
-      s = option;
-    } else {
-      s = option?.label ?? '';
-    }
+    const inputString = option?.label ?? '';
     if (
       !schemaOptions?.freeText &&
       !(schemaOptions?.show ?? []).some(([value, label]) =>
-        label ? label === s : value === s
+        label ? label === inputString : value === inputString
       )
     ) {
       handleChange(path, undefined);
@@ -119,7 +105,6 @@ const UIComponent = (props: ControlProps) => {
           value={localData ?? { value: '', label: '' }}
           // some type problem here, freeSolo seems to have type `undefined`
           freeSolo={schemaOptions?.freeText as undefined}
-          onClose={onClose}
           onChange={onChange}
           onInputChange={onInputChange}
           clearable={!props.config?.required}
