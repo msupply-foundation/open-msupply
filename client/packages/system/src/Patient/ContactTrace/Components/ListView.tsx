@@ -60,6 +60,7 @@ const useContactTraceListColumns = ({
     {
       key: 'relationship',
       label: 'label.relationship',
+      sortable: false,
     },
     {
       key: 'dateOfBirth',
