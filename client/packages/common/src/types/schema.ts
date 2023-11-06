@@ -4502,6 +4502,7 @@ export type StockLineFilterInput = {
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  location?: InputMaybe<LocationFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
