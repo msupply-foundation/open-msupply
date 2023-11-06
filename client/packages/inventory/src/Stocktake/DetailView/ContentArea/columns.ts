@@ -4,13 +4,14 @@ import {
   useColumns,
   ColumnAlign,
   ArrayUtils,
-  Formatter,
   Column,
   SortBy,
   PositiveNumberCell,
   getLinesFromRow,
   TooltipTextCell,
   useTranslation,
+  TypedTFunction,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -29,10 +30,9 @@ const expandColumn = getRowExpandColumn<
 >();
 
 const getStocktakeReasons = (
-  rowData: StocktakeLineFragment | StocktakeSummaryItem
+  rowData: StocktakeLineFragment | StocktakeSummaryItem,
+  t: TypedTFunction<LocaleKey>
 ) => {
-  const t = useTranslation();
-
   if ('lines' in rowData) {
     const { lines } = rowData;
     const inventoryAdjustmentReasons = lines
@@ -158,16 +158,14 @@ export const useStocktakeColumns = ({
             if ('lines' in row) {
               const { lines } = row;
               const expiryDate =
-                ArrayUtils.ifTheSameElseDefault(lines, 'expiryDate', null) ??
-                '';
-              return (
-                (expiryDate && Formatter.expiryDate(new Date(expiryDate))) ||
-                t('multiple')
-              );
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'expiryDate',
+                  t('multiple')
+                ) ?? '';
+              return expiryDate;
             } else {
-              return row.expiryDate
-                ? Formatter.expiryDate(new Date(row.expiryDate)) ?? ''
-                : '';
+              return row.expiryDate ?? '';
             }
           },
           accessor: ({ rowData }) => {
@@ -376,8 +374,8 @@ export const useStocktakeColumns = ({
       {
         key: 'inventoryAdjustmentReason',
         label: 'label.reason',
-        accessor: ({ rowData }) => getStocktakeReasons(rowData),
-        getSortValue: rowData => getStocktakeReasons(rowData),
+        accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
+        getSortValue: rowData => getStocktakeReasons(rowData, t),
       },
       {
         key: 'comment',

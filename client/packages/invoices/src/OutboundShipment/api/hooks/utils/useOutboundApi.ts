@@ -1,6 +1,6 @@
 import {
   SortBy,
-  FilterBy,
+  FilterByWithBoolean,
   useGql,
   useAuthContext,
 } from '@openmsupply-client/common';
@@ -11,7 +11,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<OutboundRowFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 export const useOutboundApi = () => {

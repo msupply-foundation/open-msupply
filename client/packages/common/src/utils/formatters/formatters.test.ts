@@ -7,7 +7,7 @@ describe('Formatter', () => {
     expect(Formatter.expiryDate).toBeDefined();
     expect(Formatter.expiryDateString).toBeDefined();
     expect(Formatter.naiveDate).toBeDefined();
-    expect(Formatter.naiveDateTime).toBeDefined();
+    expect(Formatter.toIsoString).toBeDefined();
     expect(Formatter.tax).toBeDefined();
   });
 
@@ -15,8 +15,8 @@ describe('Formatter', () => {
     expect(Formatter.csvDateString(null)).toBe('');
     expect(Formatter.csvDateString(undefined)).toBe('');
     expect(Formatter.csvDateString('bah')).toBe('');
-    expect(Formatter.csvDateString('2022/03/30')).toBe('2022-03-30');
-    expect(Formatter.csvDateString('2020/10/12 04:30')).toBe('2020-10-12');
+    expect(Formatter.csvDateString('2022/03/30')).toBe('30/03/2022');
+    expect(Formatter.csvDateString('2020/10/12 04:30')).toBe('12/10/2020');
   });
 
   it('csvDateTimeString', () => {
@@ -24,10 +24,10 @@ describe('Formatter', () => {
     expect(Formatter.csvDateTimeString(undefined)).toBe('');
     expect(Formatter.csvDateTimeString('bah')).toBe('');
     expect(Formatter.csvDateTimeString('2022/03/30')).toBe(
-      '2022-03-30 00:00:00'
+      '30/03/2022 00:00:00'
     );
     expect(Formatter.csvDateTimeString('2020/10/12 04:30')).toBe(
-      '2020-10-12 04:30:00'
+      '12/10/2020 04:30:00'
     );
   });
 
@@ -48,12 +48,12 @@ describe('Formatter', () => {
   });
 
   it('naiveDateTime', () => {
-    expect(Formatter.naiveDateTime(null)).toBe(null);
-    expect(Formatter.naiveDateTime(new Date('1984/3/13'))).toBe(
-      '1984-03-13T00:00:00'
+    expect(Formatter.toIsoString(null)).toBe(null);
+    expect(Formatter.toIsoString(new Date('1984/3/13'))).toBe(
+      '1984-03-12T12:00:00.000Z'
     );
-    expect(Formatter.naiveDateTime(new Date('1984/3/13 11:12:13'))).toBe(
-      '1984-03-13T11:12:13'
+    expect(Formatter.toIsoString(new Date('1984/3/13 11:12:13'))).toBe(
+      '1984-03-12T23:12:13.000Z'
     );
   });
 
