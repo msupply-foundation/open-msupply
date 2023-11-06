@@ -12,7 +12,7 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
-#[table_name = "name_tag_join"]
+#[diesel(table_name = name_tag_join)]
 pub struct NameTagJoinRow {
     pub id: String,
     pub name_id: String,
@@ -22,11 +22,11 @@ pub struct NameTagJoinRow {
 joinable!(name_tag_join -> name (name_id));
 
 pub struct NameTagJoinRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> NameTagJoinRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         NameTagJoinRepository { connection }
     }
 
@@ -37,7 +37,7 @@ impl<'a> NameTagJoinRepository<'a> {
             .on_conflict(name_tag_join_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -45,21 +45,21 @@ impl<'a> NameTagJoinRepository<'a> {
     pub fn upsert_one(&self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_tag_join_dsl::name_tag_join)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameTagJoinRow>, RepositoryError> {
         let result = name_tag_join_dsl::name_tag_join
             .filter(name_tag_join_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(name_tag_join_dsl::name_tag_join.filter(name_tag_join_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }
@@ -90,7 +90,7 @@ mod test_name_tag_row {
 
         /* TESTS */
 
-        let name_tag_repo = NameTagRowRepository::new(&connection);
+        let name_tag_repo = NameTagRowRepository::new(&mut connection);
 
         // Check we can insert a name tag
         let name_tag_row = NameTagRow {
@@ -100,7 +100,7 @@ mod test_name_tag_row {
 
         name_tag_repo.upsert_one(&name_tag_row).unwrap();
 
-        let repo = NameTagJoinRepository::new(&connection);
+        let repo = NameTagJoinRepository::new(&mut connection);
 
         // Check we can insert a name tag join
         let name_tag_join_row = NameTagJoinRow {

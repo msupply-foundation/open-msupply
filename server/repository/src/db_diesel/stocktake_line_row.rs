@@ -38,8 +38,8 @@ joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "stocktake_line"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = stocktake_line)]
 pub struct StocktakeLineRow {
     pub id: String,
     pub stocktake_id: String,
@@ -64,11 +64,11 @@ pub struct StocktakeLineRow {
 }
 
 pub struct StocktakeLineRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> StocktakeLineRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         StocktakeLineRowRepository { connection }
     }
 
@@ -79,7 +79,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
             .on_conflict(stocktake_line_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -87,20 +87,20 @@ impl<'a> StocktakeLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stocktake_line_dsl::stocktake_line)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(stocktake_line_dsl::stocktake_line.filter(stocktake_line_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StocktakeLineRow>, RepositoryError> {
         let result = stocktake_line_dsl::stocktake_line
             .filter(stocktake_line_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional();
         result.map_err(|err| RepositoryError::from(err))
     }
@@ -111,7 +111,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
     ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
         let result = stocktake_line_dsl::stocktake_line
             .filter(stocktake_line_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 }

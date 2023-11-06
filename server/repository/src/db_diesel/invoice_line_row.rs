@@ -57,8 +57,8 @@ impl Default for InvoiceLineRowType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "invoice_line"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = invoice_line)]
 pub struct InvoiceLineRow {
     pub id: String,
     pub invoice_id: String,
@@ -77,7 +77,7 @@ pub struct InvoiceLineRow {
     pub total_after_tax: f64,
     /// Optional column to store line a line specific tax value
     pub tax: Option<f64>,
-    #[column_name = "type_"]
+    #[diesel(column_name =type_)]
     pub r#type: InvoiceLineRowType,
     pub number_of_packs: f64,
     pub note: Option<String>,
@@ -85,11 +85,11 @@ pub struct InvoiceLineRow {
 }
 
 pub struct InvoiceLineRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> InvoiceLineRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         InvoiceLineRowRepository { connection }
     }
 
@@ -100,7 +100,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -108,7 +108,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice_line)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -124,27 +124,27 @@ impl<'a> InvoiceLineRowRepository<'a> {
                 tax.eq(tax_input),
                 total_after_tax.eq(total_after_tax_calculation),
             ))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(invoice_line.filter(id.eq(invoice_line_id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
         let result = invoice_line
             .filter(id.eq(record_id))
-            .first(&self.connection.connection);
+            .first(&mut self.connection.connection);
         result.map_err(|err| RepositoryError::from(err))
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
         let result = invoice_line
             .filter(id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 
@@ -155,7 +155,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
         let result = invoice_line
             .filter(id.eq(invoice_line_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -168,7 +168,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(invoice_line
             .filter(invoice_id.eq(invoice_id_param))
             .filter(stock_line_id.eq(stock_line_id_param))
-            .load(&self.connection.connection)?)
+            .load(&mut self.connection.connection)?)
     }
 
     pub fn find_many_by_invoice_id(
@@ -177,7 +177,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
         let result = invoice_line
             .filter(invoice_id.eq(invoice_id_param))
-            .get_results(&self.connection.connection)?;
+            .get_results(&mut self.connection.connection)?;
         Ok(result)
     }
 }

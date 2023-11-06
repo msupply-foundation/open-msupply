@@ -77,7 +77,7 @@ impl Default for DocumentStatus {
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[cfg_attr(test, derive(Default))]
-#[table_name = "document"]
+#[diesel(table_name = document)]
 pub struct DocumentRow {
     /// The document data hash
     pub id: String,
@@ -90,7 +90,7 @@ pub struct DocumentRow {
     /// The timestamp of this document version
     pub datetime: NaiveDateTime,
     /// Type of the containing data
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: String,
     /// The actual document data
     pub data: String,
@@ -224,11 +224,11 @@ fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocu
 }
 
 pub struct DocumentRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> DocumentRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         DocumentRepository { connection }
     }
 
@@ -236,14 +236,14 @@ impl<'a> DocumentRepository<'a> {
     fn _insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(doc.to_row()?)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(document_is_sync_update::table.find(id))
             .set(document_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
 
         Ok(())
     }
@@ -251,7 +251,7 @@ impl<'a> DocumentRepository<'a> {
     pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(doc.to_row()?)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         self.toggle_is_sync_update(&doc.id, false)?;
         Ok(())
     }
@@ -260,7 +260,7 @@ impl<'a> DocumentRepository<'a> {
     pub fn find_one_by_id(&self, document_id: &str) -> Result<Option<Document>, RepositoryError> {
         let row: Option<DocumentRow> = document::dsl::document
             .filter(document::dsl::id.eq(document_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
 
         Ok(match row {
@@ -281,7 +281,7 @@ impl<'a> DocumentRepository<'a> {
         let result = document_is_sync_update::table
             .find(id)
             .select(document_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -289,7 +289,7 @@ impl<'a> DocumentRepository<'a> {
     pub fn count(&self, filter: Option<DocumentFilter>) -> Result<i64, RepositoryError> {
         let query = create_latest_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     /// Get the latest version of some documents
@@ -329,7 +329,7 @@ impl<'a> DocumentRepository<'a> {
         let rows: Vec<DocumentRow> = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
 
         let mut result = Vec::<Document>::new();
         for row in rows {
@@ -372,7 +372,7 @@ impl<'a> DocumentRepository<'a> {
         }
         let rows: Vec<DocumentRow> = query
             .order(document::dsl::datetime.desc())
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
 
         let mut result = Vec::<Document>::new();
         for row in rows {
@@ -475,11 +475,11 @@ mod test {
             id: "id".to_string(),
             name: "name".to_string(),
         };
-        ContextRowRepository::new(&connection)
+        ContextRowRepository::new(&mut connection)
             .upsert_one(&context_row)
             .unwrap();
 
-        let repo = DocumentRepository::new(&connection);
+        let repo = DocumentRepository::new(&mut connection);
 
         let base_row = DocumentRow {
             data: "{}".to_string(),

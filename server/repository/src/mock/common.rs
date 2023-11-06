@@ -14,13 +14,13 @@ pub struct FullMockRequisition {
 
 pub fn insert_full_mock_requisition(
     requisition: &FullMockRequisition,
-    connection: &StorageConnection,
+    mut connection: &StorageConnection,
 ) {
-    RequisitionRowRepository::new(&connection)
+    RequisitionRowRepository::new(&mut connection)
         .upsert_one(&requisition.requisition)
         .unwrap();
     for line in requisition.lines.iter() {
-        RequisitionLineRowRepository::new(&connection)
+        RequisitionLineRowRepository::new(&mut connection)
             .upsert_one(line)
             .unwrap();
     }
@@ -45,15 +45,15 @@ impl FullMockInvoice {
     }
 }
 
-pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, connection: &StorageConnection) {
-    InvoiceRowRepository::new(&connection)
+pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, mut connection: &StorageConnection) {
+    InvoiceRowRepository::new(&mut connection)
         .upsert_one(&invoice.invoice)
         .unwrap();
     for line in invoice.lines.iter() {
-        StockLineRowRepository::new(&connection)
+        StockLineRowRepository::new(&mut connection)
             .upsert_one(&line.stock_line)
             .unwrap();
-        InvoiceLineRowRepository::new(&connection)
+        InvoiceLineRowRepository::new(&mut connection)
             .upsert_one(&line.line)
             .unwrap();
     }
@@ -67,20 +67,20 @@ pub struct FullMockMasterList {
 
 pub fn insert_full_mock_master_list(
     full_master_list: &FullMockMasterList,
-    connection: &StorageConnection,
+    mut connection: &StorageConnection,
 ) {
-    MasterListRowRepository::new(&connection)
+    MasterListRowRepository::new(&mut connection)
         .upsert_one(&full_master_list.master_list)
         .unwrap();
 
     for line in full_master_list.lines.iter() {
-        MasterListLineRowRepository::new(&connection)
+        MasterListLineRowRepository::new(&mut connection)
             .upsert_one(line)
             .unwrap();
     }
 
     for join in full_master_list.joins.iter() {
-        MasterListNameJoinRepository::new(&connection)
+        MasterListNameJoinRepository::new(&mut connection)
             .upsert_one(join)
             .unwrap();
     }

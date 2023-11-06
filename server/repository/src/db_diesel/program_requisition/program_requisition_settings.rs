@@ -29,11 +29,11 @@ pub struct ProgramRequisitionSettingsFilter {
 }
 
 pub struct ProgramRequisitionSettingsRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ProgramRequisitionSettingsRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ProgramRequisitionSettingsRepository { connection }
     }
 
@@ -74,7 +74,8 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result = query.load::<ProgramRequisitionSettingsJoin>(&self.connection.connection)?;
+        let result =
+            query.load::<ProgramRequisitionSettingsJoin>(&mut self.connection.connection)?;
 
         Ok(result
             .into_iter()
@@ -177,7 +178,7 @@ mod test {
         )
         .await;
 
-        let repo = ProgramRequisitionSettingsRepository::new(&connection);
+        let repo = ProgramRequisitionSettingsRepository::new(&mut connection);
 
         // TEST that program_requisition_settings can be queried by name_tag belonging to a store
         let result = repo.query(Some(ProgramRequisitionSettingsFilter::new().name_tag(

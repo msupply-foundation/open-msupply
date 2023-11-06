@@ -11,7 +11,7 @@ use repository::*;
 use std::collections::HashMap;
 
 pub(crate) struct TranslationAndIntegration<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
     sync_buffer: &'a SyncBuffer<'a>,
 }
 
@@ -26,7 +26,7 @@ pub struct TranslationAndIntegrationResults(HashMap<TableName, TranslationAndInt
 
 impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(
-        connection: &'a StorageConnection,
+        connection: &'a mut StorageConnection,
         sync_buffer: &'a SyncBuffer,
     ) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {

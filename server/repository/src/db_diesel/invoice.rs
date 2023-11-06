@@ -72,13 +72,13 @@ pub enum InvoiceSortField {
 pub type InvoiceSort = Sort<InvoiceSortField>;
 
 pub struct InvoiceRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 type InvoiceJoin = (InvoiceRow, NameRow, StoreRow, Option<ClinicianRow>);
 
 impl<'a> InvoiceRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         InvoiceRepository { connection }
     }
 
@@ -86,7 +86,7 @@ impl<'a> InvoiceRepository<'a> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(&self, filter: InvoiceFilter) -> Result<Vec<Invoice>, RepositoryError> {
@@ -155,7 +155,7 @@ impl<'a> InvoiceRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<InvoiceJoin>(&self.connection.connection)?;
+            .load::<InvoiceJoin>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -166,7 +166,7 @@ impl<'a> InvoiceRepository<'a> {
             .inner_join(name_dsl::name)
             .inner_join(store_dsl::store)
             .left_join(clinician_dsl::clinician)
-            .first::<InvoiceJoin>(&self.connection.connection)?)
+            .first::<InvoiceJoin>(&mut self.connection.connection)?)
     }
 }
 
@@ -440,7 +440,7 @@ mod tests {
     async fn test_invoice_query_sort() {
         let (_, connection, _, _) =
             test_db::setup_all("test_invoice_query_sort", MockDataInserts::all()).await;
-        let repo = InvoiceRepository::new(&connection);
+        let repo = InvoiceRepository::new(&mut connection);
 
         let mut invoices = repo.query(Pagination::new(), None, None).unwrap();
 

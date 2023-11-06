@@ -4,7 +4,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // Split INVENTORY_ADJUSTMENT to INVENTORY_REDUCTION and INVENTORY_ADDITION
     if cfg!(feature = "postgres") {
         sql!(
-            connection,
+            &connection,
             r#"
                 ALTER TYPE invoice_type ADD VALUE IF NOT EXISTS 'INVENTORY_REDUCTION';
                 ALTER TYPE invoice_type RENAME VALUE 'INVENTORY_ADJUSTMENT' TO 'INVENTORY_ADDITION';
@@ -13,7 +13,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     } else {
         // For Sqlite need to migrate data
         sql!(
-            connection,
+            &connection,
             r#"
                 UPDATE invoice SET type = 'INVENTORY_ADDITION' WHERE type = 'INVENTORY_ADJUSTMENT';
             "#
@@ -21,7 +21,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     }
 
     sql!(
-        connection,
+        &connection,
         r#" ALTER TABLE stocktake 
                 RENAME COLUMN inventory_adjustment_id TO inventory_addition_id;
 
@@ -36,7 +36,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "DROP VIEW inventory_adjustment_stock_movement; CREATE VIEW"
     };
     sql!(
-        connection,
+        &connection,
         r#"
                 {create_or_replace_view} inventory_adjustment_stock_movement AS
                 SELECT 
@@ -122,7 +122,7 @@ async fn split_inventory_adjustment() {
     let invoices = invoice_dsl::invoice
         .select((invoice_dsl::id, invoice_dsl::type_))
         .order_by(invoice_dsl::id.asc())
-        .load::<(String, String)>(&connection.connection)
+        .load::<(String, String)>(&mut connection.connection)
         .unwrap();
 
     assert_eq!(
@@ -151,7 +151,7 @@ async fn split_inventory_adjustment() {
             stocktake_dsl::inventory_reduction_id,
         ))
         .order_by(stocktake_dsl::id.asc())
-        .load::<(String, Option<String>, Option<String>)>(&connection.connection)
+        .load::<(String, Option<String>, Option<String>)>(&mut connection.connection)
         .unwrap();
 
     assert_eq!(

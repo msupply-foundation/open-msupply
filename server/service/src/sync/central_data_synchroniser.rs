@@ -85,7 +85,7 @@ struct CentralSyncPullCursor<'a> {
 }
 
 impl<'a> CentralSyncPullCursor<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         CentralSyncPullCursor {
             key_value_store: KeyValueStoreRepository::new(connection),
         }

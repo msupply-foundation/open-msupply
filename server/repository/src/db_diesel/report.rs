@@ -82,17 +82,17 @@ impl ReportType {
 type ReportJoin = (ReportRow, Option<FormSchemaRow>);
 
 pub struct ReportRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ReportRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ReportRepository { connection }
     }
 
     pub fn count(&self, filter: Option<ReportFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(&self, filter: ReportFilter) -> Result<Vec<Report>, RepositoryError> {
@@ -119,7 +119,7 @@ impl<'a> ReportRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ReportJoin>(&self.connection.connection)?;
+            .load::<ReportJoin>(&mut self.connection.connection)?;
 
         result
             .into_iter()

@@ -17,7 +17,7 @@ table! {
 joinable!(location -> store (store_id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "location"]
+#[diesel(table_name = location)]
 pub struct LocationRow {
     pub id: String,
     pub name: String,
@@ -27,11 +27,11 @@ pub struct LocationRow {
 }
 
 pub struct LocationRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> LocationRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         LocationRowRepository { connection }
     }
 
@@ -42,7 +42,7 @@ impl<'a> LocationRowRepository<'a> {
             .on_conflict(location_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -50,14 +50,14 @@ impl<'a> LocationRowRepository<'a> {
     pub fn upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
         diesel::replace_into(location_dsl::location)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
         match location_dsl::location
             .filter(location_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
         {
             Ok(row) => Ok(Some(row)),
             Err(diesel::result::Error::NotFound) => Ok(None),
@@ -68,12 +68,12 @@ impl<'a> LocationRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationRow>, RepositoryError> {
         Ok(location_dsl::location
             .filter(location_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
+            .load(&mut self.connection.connection)?)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(location_dsl::location.filter(location_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

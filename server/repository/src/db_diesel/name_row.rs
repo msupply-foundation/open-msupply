@@ -100,14 +100,14 @@ impl Default for NameType {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "name"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = name)]
 pub struct NameRow {
     pub id: String,
-    #[column_name = "name_"]
+    #[diesel(column_name = name_)]
     pub name: String,
     pub code: String,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: NameType,
     pub is_customer: bool,
     pub is_supplier: bool,
@@ -142,11 +142,11 @@ pub struct NameRow {
 }
 
 pub struct NameRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> NameRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         NameRowRepository { connection }
     }
 
@@ -157,7 +157,7 @@ impl<'a> NameRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(name_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -165,7 +165,7 @@ impl<'a> NameRowRepository<'a> {
     fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name)
             .values(name_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -176,7 +176,7 @@ impl<'a> NameRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::update(name_is_sync_update::table.find(name_id))
             .set(name_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
 
         Ok(())
     }
@@ -188,21 +188,21 @@ impl<'a> NameRowRepository<'a> {
     }
 
     pub fn delete(&self, name_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(name.filter(id.eq(name_id))).execute(&self.connection.connection)?;
+        diesel::delete(name.filter(id.eq(name_id))).execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn insert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&mut self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name)
             .values(name_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, name_id: &str) -> Result<Option<NameRow>, RepositoryError> {
         let result = name
             .filter(id.eq(name_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -210,7 +210,7 @@ impl<'a> NameRowRepository<'a> {
     pub fn find_one_by_code(&self, name_code: &str) -> Result<Option<NameRow>, RepositoryError> {
         let result = name
             .filter(code.eq(name_code))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -218,7 +218,7 @@ impl<'a> NameRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
         let result = name
             .filter(id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 
@@ -234,7 +234,7 @@ impl<'a> NameRowRepository<'a> {
         let result = name_is_sync_update::table
             .find(name_id)
             .select(name_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -254,7 +254,7 @@ mod test {
         )
         .await;
 
-        let repo = NameRowRepository::new(&connection);
+        let repo = NameRowRepository::new(&mut connection);
 
         // Two rows, to make sure is_sync_update update only affects one row
         let row = NameRow {

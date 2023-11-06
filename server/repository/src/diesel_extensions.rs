@@ -1,11 +1,11 @@
 use diesel::Expression;
 
-diesel_postfix_operator!(AscNoCase, " COLLATE NOCASE ASC NULLS FIRST", ());
-diesel_postfix_operator!(DescNoCase, " COLLATE NOCASE DESC NULLS LAST", ());
-diesel_postfix_operator!(AscNullsFirst, " ASC NULLS FIRST", ());
-diesel_postfix_operator!(DescNullsLast, " DESC NULLS LAST", ());
-diesel_postfix_operator!(AscNullsLast, " ASC NULLS LAST", ());
-diesel_postfix_operator!(DescNullsFirst, " DESC NULLS FIRST", ());
+diesel::postfix_operator!(AscNoCase, " COLLATE NOCASE ASC NULLS FIRST");
+diesel::postfix_operator!(DescNoCase, " COLLATE NOCASE DESC NULLS LAST");
+diesel::postfix_operator!(AscNullsFirst, " ASC NULLS FIRST");
+diesel::postfix_operator!(DescNullsLast, " DESC NULLS LAST");
+diesel::postfix_operator!(AscNullsLast, " ASC NULLS LAST");
+diesel::postfix_operator!(DescNullsFirst, " DESC NULLS FIRST");
 
 // Expression extensions for order by
 pub trait OrderByExtensions: Sized {

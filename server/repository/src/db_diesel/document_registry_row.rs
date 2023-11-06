@@ -30,7 +30,7 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[table_name = "document_registry"]
+#[diesel(table_name = document_registry)]
 pub struct DocumentRegistryRow {
     pub id: String,
     /// The category of the document registry row, e.g. Patient or ProgramEnrolment.
@@ -48,11 +48,11 @@ joinable!(document_registry -> form_schema (form_schema_id));
 allow_tables_to_appear_in_same_query!(document_registry, form_schema);
 
 pub struct DocumentRegistryRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> DocumentRegistryRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         DocumentRegistryRowRepository { connection }
     }
 
@@ -63,7 +63,7 @@ impl<'a> DocumentRegistryRowRepository<'a> {
             .on_conflict(document_registry_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -71,14 +71,14 @@ impl<'a> DocumentRegistryRowRepository<'a> {
     pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
         diesel::replace_into(document_registry_dsl::document_registry)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<DocumentRegistryRow>, RepositoryError> {
         Ok(document_registry_dsl::document_registry
             .filter(document_registry_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?)
     }
 
@@ -88,14 +88,14 @@ impl<'a> DocumentRegistryRowRepository<'a> {
     ) -> Result<Vec<DocumentRegistryRow>, RepositoryError> {
         Ok(document_registry_dsl::document_registry
             .filter(document_registry_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
+            .load(&mut self.connection.connection)?)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             document_registry_dsl::document_registry.filter(document_registry_dsl::id.eq(id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

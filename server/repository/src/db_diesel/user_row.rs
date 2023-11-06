@@ -43,7 +43,7 @@ impl Default for Language {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "user_account"]
+#[diesel(table_name = user_account)]
 pub struct UserAccountRow {
     pub id: String,
     pub username: String,
@@ -75,11 +75,11 @@ impl Default for UserAccountRow {
 }
 
 pub struct UserAccountRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> UserAccountRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         UserAccountRowRepository { connection }
     }
 
@@ -90,7 +90,7 @@ impl<'a> UserAccountRowRepository<'a> {
             .on_conflict(user_account_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -98,14 +98,14 @@ impl<'a> UserAccountRowRepository<'a> {
     pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_account_dsl::user_account)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn insert_one(&self, user_account_row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_account_dsl::user_account)
             .values(user_account_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -115,7 +115,7 @@ impl<'a> UserAccountRowRepository<'a> {
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
         let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
             .filter(user_account_dsl::id.eq(account_id))
-            .first(&self.connection.connection);
+            .first(&mut self.connection.connection);
         match result {
             Ok(row) => Ok(Some(row)),
             Err(err) => match err {
@@ -131,7 +131,7 @@ impl<'a> UserAccountRowRepository<'a> {
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
         let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
             .filter(lower(user_account_dsl::username).eq(lower(username)))
-            .first(&self.connection.connection);
+            .first(&mut self.connection.connection);
 
         match result {
             Ok(row) => Ok(Some(row)),
@@ -145,14 +145,14 @@ impl<'a> UserAccountRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {
         let result = user_account_dsl::user_account
             .filter(user_account_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 
     pub fn delete_by_id(&self, id: &str) -> Result<usize, RepositoryError> {
         let result = diesel::delete(user_account_dsl::user_account)
             .filter(user_account_dsl::id.eq(id))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(result)
     }
 }
@@ -188,7 +188,7 @@ mod test {
         let (_, connection, _, _) =
             setup_all("user_row_language_enum", MockDataInserts::none()).await;
 
-        let repo = UserAccountRowRepository::new(&connection);
+        let repo = UserAccountRowRepository::new(&mut connection);
         // Try upsert all variants of Language, confirm that diesel enums match postgres
         for variant in Language::iter() {
             let id = format!("{:?}", variant);

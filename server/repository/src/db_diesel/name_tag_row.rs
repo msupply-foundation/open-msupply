@@ -12,18 +12,18 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
-#[table_name = "name_tag"]
+#[diesel(table_name = name_tag)]
 pub struct NameTagRow {
     pub id: String,
     pub name: String,
 }
 
 pub struct NameTagRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> NameTagRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         NameTagRowRepository { connection }
     }
 
@@ -34,7 +34,7 @@ impl<'a> NameTagRowRepository<'a> {
             .on_conflict(name_tag_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -42,14 +42,14 @@ impl<'a> NameTagRowRepository<'a> {
     pub fn upsert_one(&self, row: &NameTagRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_tag_dsl::name_tag)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameTagRow>, RepositoryError> {
         let result = name_tag_dsl::name_tag
             .filter(name_tag_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -57,14 +57,14 @@ impl<'a> NameTagRowRepository<'a> {
     pub fn find_one_by_name(&self, name: &str) -> Result<Option<NameTagRow>, RepositoryError> {
         let result = name_tag_dsl::name_tag
             .filter(name_tag_dsl::name.like(name))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(name_tag_dsl::name_tag.filter(name_tag_dsl::id.eq(id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }
@@ -95,7 +95,7 @@ mod test_name_tag_row {
 
         /* TESTS */
 
-        let repo = NameTagRowRepository::new(&connection);
+        let repo = NameTagRowRepository::new(&mut connection);
 
         // Check we can insert a name tag
         let name_tag_row = NameTagRow {
@@ -106,7 +106,7 @@ mod test_name_tag_row {
         repo.upsert_one(&name_tag_row).unwrap();
 
         // Check we can find the name tag by id
-        let found_name_tag = NameTagRowRepository::new(&connection)
+        let found_name_tag = NameTagRowRepository::new(&mut connection)
             .find_one_by_id(&name_tag_row.id)
             .unwrap()
             .unwrap();
@@ -123,7 +123,7 @@ mod test_name_tag_row {
 
         // Check the name tag has been updated
 
-        let found_name_tag = NameTagRowRepository::new(&connection)
+        let found_name_tag = NameTagRowRepository::new(&mut connection)
             .find_one_by_id(&name_tag_row.id)
             .unwrap()
             .unwrap();

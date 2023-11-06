@@ -27,11 +27,11 @@ pub struct ProgramSupplierFilter {
 }
 
 pub struct ProgramSupplierRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ProgramSupplierRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ProgramSupplierRepository { connection }
     }
 
@@ -78,7 +78,7 @@ impl<'a> ProgramSupplierRepository<'a> {
             store_dsl::store::all_columns(),
             program_dsl::program::all_columns(),
         ));
-        let result = query.load::<ProgramSupplierJoin>(&self.connection.connection)?;
+        let result = query.load::<ProgramSupplierJoin>(&mut self.connection.connection)?;
 
         Ok(result
             .into_iter()
@@ -247,7 +247,7 @@ mod test {
 
         // TEST 1 without master list join for store 1 and without name_store_join for store 2
         // should result in nothing (since name1 is not store)
-        let repo = ProgramSupplierRepository::new(&connection);
+        let repo = ProgramSupplierRepository::new(&mut connection);
 
         let filter = ProgramSupplierFilter::new().program_id(EqualFilter::equal_any(vec![
             program1.id.clone(),
@@ -265,7 +265,7 @@ mod test {
             program2.id.clone(),
         ]));
 
-        MasterListNameJoinRepository::new(&connection)
+        MasterListNameJoinRepository::new(&mut connection)
             .upsert_one(&master_list_name_join2)
             .unwrap();
 
@@ -290,7 +290,7 @@ mod test {
             program2.id.clone(),
         ]));
 
-        NameStoreJoinRepository::new(&connection)
+        NameStoreJoinRepository::new(&mut connection)
             .upsert_one(&name_store_join3)
             .unwrap();
 

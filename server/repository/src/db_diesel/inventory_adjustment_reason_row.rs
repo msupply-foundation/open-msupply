@@ -26,11 +26,11 @@ pub enum InventoryAdjustmentReasonType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "inventory_adjustment_reason"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = inventory_adjustment_reason)]
 pub struct InventoryAdjustmentReasonRow {
     pub id: String,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: InventoryAdjustmentReasonType,
     pub is_active: bool,
     pub reason: String,
@@ -48,11 +48,11 @@ impl Default for InventoryAdjustmentReasonRow {
 }
 
 pub struct InventoryAdjustmentReasonRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         InventoryAdjustmentReasonRowRepository { connection }
     }
 
@@ -63,7 +63,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
             .on_conflict(inventory_adjustment_reason_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -71,7 +71,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
         diesel::replace_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -81,7 +81,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     ) -> Result<Option<InventoryAdjustmentReasonRow>, RepositoryError> {
         let result = inventory_adjustment_reason_dsl::inventory_adjustment_reason
             .filter(inventory_adjustment_reason_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -89,7 +89,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     pub fn delete(&self, inventory_adjustment_reason_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .filter(inventory_adjustment_reason_dsl::id.eq(inventory_adjustment_reason_id))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

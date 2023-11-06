@@ -28,8 +28,8 @@ joinable!(contact_trace -> document (document_id));
 allow_tables_to_appear_in_same_query!(contact_trace, document);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "contact_trace"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = contact_trace)]
 pub struct ContactTraceRow {
     pub id: String,
     pub program_id: String,
@@ -50,11 +50,11 @@ pub struct ContactTraceRow {
 }
 
 pub struct ContactTraceRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ContactTraceRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ContactTraceRowRepository { connection }
     }
 
@@ -65,7 +65,7 @@ impl<'a> ContactTraceRowRepository<'a> {
             .on_conflict(contact_trace::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -73,26 +73,26 @@ impl<'a> ContactTraceRowRepository<'a> {
     pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(contact_trace::dsl::contact_trace)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn insert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&mut self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn find_all(&self) -> Result<Vec<ContactTraceRow>, RepositoryError> {
-        let result = contact_trace::dsl::contact_trace.load(&self.connection.connection);
+    pub async fn find_all(&mut self) -> Result<Vec<ContactTraceRow>, RepositoryError> {
+        let result = contact_trace::dsl::contact_trace.load(&mut self.connection.connection);
         Ok(result?)
     }
 
     pub fn find_one_by_id(&self, row_id: &str) -> Result<Option<ContactTraceRow>, RepositoryError> {
         let result = contact_trace::dsl::contact_trace
             .filter(contact_trace::dsl::id.eq(row_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }

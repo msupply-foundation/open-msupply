@@ -61,18 +61,18 @@ type UserAndUserStoreJoin = (
 );
 
 pub struct UserRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> UserRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         UserRepository { connection }
     }
 
     pub fn count(&self, filter: Option<UserFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(&self, filter: UserFilter) -> Result<Vec<User>, RepositoryError> {
@@ -111,7 +111,7 @@ impl<'a> UserRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<UserAndUserStoreJoin>(&self.connection.connection)?;
+        let result = final_query.load::<UserAndUserStoreJoin>(&mut self.connection.connection)?;
         Ok(to_domain(result))
     }
 }

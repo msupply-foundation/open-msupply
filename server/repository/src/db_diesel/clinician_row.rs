@@ -22,7 +22,7 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "clinician"]
+#[diesel(table_name = clinician)]
 pub struct ClinicianRow {
     pub id: String,
     pub code: String,
@@ -47,11 +47,11 @@ table! {
 }
 
 pub struct ClinicianRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ClinicianRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ClinicianRowRepository { connection }
     }
 
@@ -62,7 +62,7 @@ impl<'a> ClinicianRowRepository<'a> {
             .on_conflict(clinician::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -70,7 +70,7 @@ impl<'a> ClinicianRowRepository<'a> {
     fn _upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         diesel::replace_into(clinician::dsl::clinician)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -83,7 +83,7 @@ impl<'a> ClinicianRowRepository<'a> {
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(clinician_is_sync_update::table.find(id))
             .set(clinician_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
 
         Ok(())
     }
@@ -94,14 +94,14 @@ impl<'a> ClinicianRowRepository<'a> {
     ) -> Result<Option<ClinicianRow>, RepositoryError> {
         let result = clinician::dsl::clinician
             .filter(clinician::dsl::id.eq(row_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional();
         result.map_err(|err| RepositoryError::from(err))
     }
 
     pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(clinician::dsl::clinician.filter(clinician::dsl::id.eq(row_id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -117,7 +117,7 @@ impl<'a> ClinicianRowRepository<'a> {
         let result = clinician_is_sync_update::table
             .find(id)
             .select(clinician_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -137,7 +137,7 @@ mod test {
         )
         .await;
 
-        let repo = ClinicianRowRepository::new(&connection);
+        let repo = ClinicianRowRepository::new(&mut connection);
 
         // Two rows, to make sure is_sync_update update only affects one row
         let row = ClinicianRow {

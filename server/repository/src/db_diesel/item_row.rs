@@ -37,14 +37,14 @@ pub enum ItemRowType {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
-#[table_name = "item"]
+#[diesel(table_name = item)]
 pub struct ItemRow {
     pub id: String,
     pub name: String,
     pub code: String,
     pub unit_id: Option<String>,
     pub default_pack_size: i32,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: ItemRowType,
     // TODO, this is temporary, remove
     pub legacy_record: String,
@@ -65,11 +65,11 @@ impl Default for ItemRow {
 }
 
 pub struct ItemRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ItemRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ItemRowRepository { connection }
     }
 
@@ -80,7 +80,7 @@ impl<'a> ItemRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(item_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -88,26 +88,26 @@ impl<'a> ItemRowRepository<'a> {
     pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::replace_into(item)
             .values(item_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&mut self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item)
             .values(item_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn find_all(&self) -> Result<Vec<ItemRow>, RepositoryError> {
-        let result = item.load(&self.connection.connection);
+    pub async fn find_all(&mut self) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = item.load(&mut self.connection.connection);
         Ok(result?)
     }
 
     pub fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq(item_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -115,12 +115,12 @@ impl<'a> ItemRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 
     pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(item.filter(id.eq(item_id))).execute(&self.connection.connection)?;
+        diesel::delete(item.filter(id.eq(item_id))).execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

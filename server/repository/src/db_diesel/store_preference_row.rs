@@ -34,10 +34,10 @@ pub enum StorePreferenceType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
-#[table_name = "store_preference"]
+#[diesel(table_name = store_preference)]
 pub struct StorePreferenceRow {
     pub id: String, // store_id
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: StorePreferenceType,
     pub pack_to_one: bool,
     pub response_requisition_requires_authorisation: bool,
@@ -59,11 +59,11 @@ impl Default for StorePreferenceRow {
 }
 
 pub struct StorePreferenceRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> StorePreferenceRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         StorePreferenceRowRepository { connection }
     }
 
@@ -74,7 +74,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
             .on_conflict(store_preference_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -82,14 +82,14 @@ impl<'a> StorePreferenceRowRepository<'a> {
     pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(store_preference_dsl::store_preference)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<StorePreferenceRow>, RepositoryError> {
         let result = store_preference_dsl::store_preference
             .filter(store_preference_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional();
         result.map_err(|err| RepositoryError::from(err))
     }
@@ -100,7 +100,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
     ) -> Result<Vec<StorePreferenceRow>, RepositoryError> {
         let result = store_preference_dsl::store_preference
             .filter(store_preference_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 }

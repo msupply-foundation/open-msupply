@@ -24,17 +24,17 @@ pub struct RequisitionLine {
 }
 
 pub struct RequisitionLineRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> RequisitionLineRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         RequisitionLineRepository { connection }
     }
 
     pub fn count(&self, filter: Option<RequisitionLineFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter)?;
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_one(
@@ -59,7 +59,7 @@ impl<'a> RequisitionLineRepository<'a> {
 
         query = query.order(requisition_line_dsl::id.asc());
 
-        let result = query.load::<RequisitionLineJoin>(&self.connection.connection)?;
+        let result = query.load::<RequisitionLineJoin>(&mut self.connection.connection)?;
 
         Ok(result
             .into_iter()

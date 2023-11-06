@@ -30,8 +30,8 @@ joinable!(barcode -> item (item_id));
 joinable!(barcode -> invoice_line (id));
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "barcode"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = barcode)]
 pub struct BarcodeRow {
     pub id: String,
     pub gtin: String,
@@ -54,11 +54,11 @@ impl Default for BarcodeRow {
     }
 }
 pub struct BarcodeRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> BarcodeRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         BarcodeRowRepository { connection }
     }
 
@@ -69,7 +69,7 @@ impl<'a> BarcodeRowRepository<'a> {
             .on_conflict(barcode_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -77,14 +77,14 @@ impl<'a> BarcodeRowRepository<'a> {
     pub fn _upsert_one(&self, row: &BarcodeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(barcode_dsl::barcode)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(barcode_is_sync_update::table.find(id))
             .set(barcode_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
 
         Ok(())
     }
@@ -98,7 +98,7 @@ impl<'a> BarcodeRowRepository<'a> {
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<BarcodeRow>, RepositoryError> {
         let result = barcode_dsl::barcode
             .filter(barcode_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -106,7 +106,7 @@ impl<'a> BarcodeRowRepository<'a> {
     pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
         let result = barcode_dsl::barcode
             .filter(barcode_dsl::item_id.eq(item_id))
-            .get_results(&self.connection.connection)?;
+            .get_results(&mut self.connection.connection)?;
         Ok(result)
     }
 
@@ -122,7 +122,7 @@ impl<'a> BarcodeRowRepository<'a> {
         let result = barcode_is_sync_update::table
             .find(id)
             .select(barcode_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -160,7 +160,7 @@ mod test {
         )
         .await;
 
-        let repo = BarcodeRowRepository::new(&connection);
+        let repo = BarcodeRowRepository::new(&mut connection);
 
         // Two rows, to make sure is_sync_update update only affects one row
         let row = mock_barcode_row_1();

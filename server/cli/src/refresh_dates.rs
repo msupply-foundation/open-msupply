@@ -113,17 +113,17 @@ fn get_exclude_date_fields() -> Vec<TableAndFieldName> {
 
 #[derive(QueryableByName, Debug, PartialEq)]
 struct IdAndTimestamp {
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     id: String,
-    #[sql_type = "Timestamp"]
+    #[diesel(sql_type = Timestamp)]
     dt: NaiveDateTime,
 }
 
 #[derive(QueryableByName, Debug, PartialEq)]
 struct IdAndDate {
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     id: String,
-    #[sql_type = "Date"]
+    #[diesel(sql_type =Date)]
     d: NaiveDate,
 }
 #[derive(Debug, PartialEq)]
@@ -132,11 +132,11 @@ struct AllDateValues {
     dates: Vec<(IdAndDate, TableAndFieldName)>,
 }
 pub struct RefreshDatesRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> RefreshDatesRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         RefreshDatesRepository { connection }
     }
 
@@ -230,7 +230,7 @@ impl<'a> RefreshDatesRepository<'a> {
             field_name, table_name
         );
 
-        Ok(sql_query(&query).load::<IdAndTimestamp>(&self.connection.connection)?)
+        Ok(sql_query(&query).load::<IdAndTimestamp>(&mut self.connection.connection)?)
     }
 
     fn update_timestamps(
@@ -253,7 +253,7 @@ impl<'a> RefreshDatesRepository<'a> {
                 id
             );
 
-            sql_query(&query).execute(&self.connection.connection)?;
+            sql_query(&query).execute(&mut self.connection.connection)?;
         }
 
         Ok(())
@@ -269,7 +269,7 @@ impl<'a> RefreshDatesRepository<'a> {
             field_name, table_name
         );
 
-        Ok(sql_query(&query).load::<IdAndDate>(&self.connection.connection)?)
+        Ok(sql_query(&query).load::<IdAndDate>(&mut self.connection.connection)?)
     }
 
     fn update_dates(
@@ -292,7 +292,7 @@ impl<'a> RefreshDatesRepository<'a> {
                 id
             );
 
-            sql_query(&query).execute(&self.connection.connection)?;
+            sql_query(&query).execute(&mut self.connection.connection)?;
         }
 
         Ok(())
@@ -401,7 +401,7 @@ mod tests {
         )
         .await;
 
-        let repo = RefreshDatesRepository::new(&connection);
+        let repo = RefreshDatesRepository::new(&mut connection);
         // Test select timestamp
         let mut result = repo.get_timestamps("invoice", "created_datetime").unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
@@ -540,7 +540,7 @@ mod tests {
         )
         .unwrap();
 
-        let invoice1_result = InvoiceRowRepository::new(&connection)
+        let invoice1_result = InvoiceRowRepository::new(&mut connection)
             .find_one_by_id(&invoice1().id)
             .unwrap();
 
@@ -555,7 +555,7 @@ mod tests {
             })
         );
 
-        let invoice2_result = InvoiceRowRepository::new(&connection)
+        let invoice2_result = InvoiceRowRepository::new(&mut connection)
             .find_one_by_id(&invoice2().id)
             .unwrap();
 
@@ -576,7 +576,7 @@ mod tests {
             })
         );
 
-        let stock_line1_result = StockLineRowRepository::new(&connection)
+        let stock_line1_result = StockLineRowRepository::new(&mut connection)
             .find_one_by_id(&stock_line1().id)
             .unwrap();
 
@@ -591,9 +591,9 @@ mod tests {
 
     #[derive(QueryableByName, Debug, PartialEq)]
     struct TableNameAndFieldRow {
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         table_name: String,
-        #[sql_type = "Text"]
+        #[diesel(sql_type = Text)]
         column_name: String,
     }
 
@@ -617,7 +617,7 @@ mod tests {
             "#;
 
         let schema_table_and_fields = sql_query(query)
-            .load::<TableNameAndFieldRow>(&connection.connection)
+            .load::<TableNameAndFieldRow>(&mut connection.connection)
             .unwrap();
 
         let mut defined_table_and_fields = get_timestamp_fields();
@@ -661,7 +661,7 @@ mod tests {
         "#;
 
         let schema_table_and_fields = sql_query(query)
-            .load::<TableNameAndFieldRow>(&connection.connection)
+            .load::<TableNameAndFieldRow>(&mut connection.connection)
             .unwrap();
 
         let mut defined_table_and_fields = get_date_fields();

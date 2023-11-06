@@ -28,7 +28,7 @@ pub struct RequisitionsInPeriodFilter {
 }
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq)]
-#[table_name = "requisitions_in_period"]
+#[diesel(table_name = requisitions_in_period)]
 pub struct RequisitionsInPeriod {
     id: String,
     pub program_id: String,
@@ -36,7 +36,7 @@ pub struct RequisitionsInPeriod {
     store_id: String,
     pub order_type: String,
     pub count: i64,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: RequisitionRowType,
 }
 
@@ -56,13 +56,13 @@ impl Default for RequisitionsInPeriod {
 }
 
 pub struct RequisitionsInPeriodRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 use self::requisitions_in_period::dsl as requisitions_in_period_dsl;
 
 impl<'a> RequisitionsInPeriodRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         RequisitionsInPeriodRepository { connection }
     }
 
@@ -90,7 +90,7 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result = query.load::<RequisitionsInPeriod>(&self.connection.connection)?;
+        let result = query.load::<RequisitionsInPeriod>(&mut self.connection.connection)?;
 
         Ok(result)
     }
@@ -285,7 +285,7 @@ mod test {
         )
         .await;
 
-        let repo = RequisitionsInPeriodRepository::new(&connection);
+        let repo = RequisitionsInPeriodRepository::new(&mut connection);
 
         // TEST query for first program in first store, and all periods
         let mut filter = RequisitionsInPeriodFilter::new()

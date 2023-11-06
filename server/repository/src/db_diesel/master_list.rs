@@ -19,7 +19,7 @@ use diesel::prelude::*;
 pub type MasterList = MasterListRow;
 
 pub struct MasterListRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -43,7 +43,7 @@ pub enum MasterListSortField {
 pub type MasterListSort = Sort<MasterListSortField>;
 
 impl<'a> MasterListRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         MasterListRepository { connection }
     }
 
@@ -51,7 +51,7 @@ impl<'a> MasterListRepository<'a> {
         // TODO (beyond M1), check that store_id matches current store
         let query = Self::create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -135,7 +135,7 @@ impl<'a> MasterListRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<MasterListRow>(&self.connection.connection)?;
+            .load::<MasterListRow>(&mut self.connection.connection)?;
 
         Ok(result)
     }

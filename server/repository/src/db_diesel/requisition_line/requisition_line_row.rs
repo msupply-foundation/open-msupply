@@ -36,7 +36,7 @@ joinable!(requisition_line -> item (item_id));
 joinable!(requisition_line -> requisition (requisition_id));
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
-#[table_name = "requisition_line"]
+#[diesel(table_name = requisition_line)]
 pub struct RequisitionLineRow {
     pub id: String,
     pub requisition_id: String,
@@ -53,11 +53,11 @@ pub struct RequisitionLineRow {
 }
 
 pub struct RequisitionLineRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> RequisitionLineRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         RequisitionLineRowRepository { connection }
     }
 
@@ -68,7 +68,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .on_conflict(requisition_line_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -76,14 +76,14 @@ impl<'a> RequisitionLineRowRepository<'a> {
     pub fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(requisition_line_dsl::requisition_line)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(requistion_line_is_sync_update::table.find(id))
             .set(requistion_line_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
 
         Ok(())
     }
@@ -99,14 +99,14 @@ impl<'a> RequisitionLineRowRepository<'a> {
             requisition_line_dsl::requisition_line
                 .filter(requisition_line_dsl::id.eq(requisition_line_id)),
         )
-        .execute(&self.connection.connection)?;
+        .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionLineRow>, RepositoryError> {
         let result = requisition_line_dsl::requisition_line
             .filter(requisition_line_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -123,7 +123,7 @@ impl<'a> RequisitionLineRowRepository<'a> {
         let result = requistion_line_is_sync_update::table
             .find(id)
             .select(requistion_line_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -150,7 +150,7 @@ mod test {
         )
         .await;
 
-        let repo = RequisitionLineRowRepository::new(&connection);
+        let repo = RequisitionLineRowRepository::new(&mut connection);
 
         let row = mock_request_draft_requisition_all_fields().lines[0].clone();
         let row2 = mock_request_draft_requisition_all_fields().lines[1].clone();

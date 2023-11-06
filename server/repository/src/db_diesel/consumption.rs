@@ -50,11 +50,11 @@ pub struct ConsumptionFilter {
 }
 
 pub struct ConsumptionRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ConsumptionRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ConsumptionRepository { connection }
     }
 
@@ -90,7 +90,7 @@ impl<'a> ConsumptionRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        Ok(query.load::<ConsumptionRow>(&self.connection.connection)?)
+        Ok(query.load::<ConsumptionRow>(&mut self.connection.connection)?)
     }
 }
 

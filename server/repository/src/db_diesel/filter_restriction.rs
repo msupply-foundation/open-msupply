@@ -79,7 +79,7 @@ mod tests {
             }),
         )
         .await;
-        let repository = InvoiceRepository::new(&storage_connection);
+        let repository = InvoiceRepository::new(&mut storage_connection);
 
         let allowed = vec![
             mock_invoice_a().user_id.unwrap(),

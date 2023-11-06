@@ -16,7 +16,7 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[table_name = "period"]
+#[diesel(table_name = period)]
 pub struct PeriodRow {
     pub id: String,
     pub period_schedule_id: String,
@@ -26,11 +26,11 @@ pub struct PeriodRow {
 }
 
 pub struct PeriodRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> PeriodRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         PeriodRowRepository { connection }
     }
 
@@ -41,7 +41,7 @@ impl<'a> PeriodRowRepository<'a> {
             .on_conflict(period_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -49,14 +49,14 @@ impl<'a> PeriodRowRepository<'a> {
     pub fn upsert_one(&self, row: &PeriodRow) -> Result<(), RepositoryError> {
         diesel::replace_into(period_dsl::period)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<PeriodRow>, RepositoryError> {
         let result = period_dsl::period
             .filter(period_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -67,7 +67,7 @@ impl<'a> PeriodRowRepository<'a> {
     ) -> Result<Vec<PeriodRow>, RepositoryError> {
         let result = period_dsl::period
             .filter(period_dsl::period_schedule_id.eq_any(period_schedule_ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 }

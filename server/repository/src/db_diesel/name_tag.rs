@@ -22,20 +22,20 @@ pub struct NameTagFilter {
 }
 
 pub struct NameTagRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 pub type BoxedNameTagQuery = name_tag::BoxedQuery<'static, DBType>;
 
 impl<'a> NameTagRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         NameTagRepository { connection }
     }
 
     pub fn query(&self, filter: Option<NameTagFilter>) -> Result<Vec<NameTag>, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
-        let result = query.load::<NameTag>(&self.connection.connection)?;
+        let result = query.load::<NameTag>(&mut self.connection.connection)?;
 
         Ok(result)
     }

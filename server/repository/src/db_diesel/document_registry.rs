@@ -32,7 +32,7 @@ pub enum DocumentRegistrySortField {
 pub type DocumentRegistrySort = Sort<DocumentRegistrySortField>;
 
 pub struct DocumentRegistryRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -50,14 +50,14 @@ pub struct DocumentRegistry {
 }
 
 impl<'a> DocumentRegistryRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         DocumentRegistryRepository { connection }
     }
 
     pub fn count(&self, filter: Option<DocumentRegistryFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
@@ -92,7 +92,7 @@ impl<'a> DocumentRegistryRepository<'a> {
         let result: Result<Vec<DocumentRegistry>, RepositoryError> = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<DocumentRegistrySchemaJoin>(&self.connection.connection)?
+            .load::<DocumentRegistrySchemaJoin>(&mut self.connection.connection)?
             .into_iter()
             .map(|data| to_domain(data))
             .collect();

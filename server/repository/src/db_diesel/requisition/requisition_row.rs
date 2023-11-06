@@ -84,15 +84,15 @@ pub enum RequisitionRowApprovalStatus {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "requisition"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = requisition)]
 pub struct RequisitionRow {
     pub id: String,
     pub requisition_number: i64,
     pub name_id: String,
     pub store_id: String,
     pub user_id: Option<String>,
-    #[column_name = "type_"]
+    #[diesel(column_name = type_)]
     pub r#type: RequisitionRowType,
     pub status: RequisitionRowStatus,
     pub created_datetime: NaiveDateTime,
@@ -141,11 +141,11 @@ impl Default for RequisitionRow {
 }
 
 pub struct RequisitionRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> RequisitionRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         RequisitionRowRepository { connection }
     }
 
@@ -156,7 +156,7 @@ impl<'a> RequisitionRowRepository<'a> {
             .on_conflict(requisition_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -164,14 +164,14 @@ impl<'a> RequisitionRowRepository<'a> {
     fn _upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(requisition_dsl::requisition)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(requisition_is_sync_update::table.find(id))
             .set(requisition_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
 
         Ok(())
     }
@@ -184,14 +184,14 @@ impl<'a> RequisitionRowRepository<'a> {
 
     pub fn delete(&self, requisition_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(requisition_dsl::requisition.filter(requisition_dsl::id.eq(requisition_id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionRow>, RepositoryError> {
         let result = requisition_dsl::requisition
             .filter(requisition_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -208,7 +208,7 @@ impl<'a> RequisitionRowRepository<'a> {
                     .and(requisition_dsl::store_id.eq(store_id)),
             )
             .select(max(requisition_dsl::requisition_number))
-            .first(&self.connection.connection)?;
+            .first(&mut self.connection.connection)?;
         Ok(result)
     }
 
@@ -224,7 +224,7 @@ impl<'a> RequisitionRowRepository<'a> {
         let result = requisition_is_sync_update::table
             .find(id)
             .select(requisition_is_sync_update::dsl::is_sync_update)
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -250,7 +250,7 @@ mod test {
         )
         .await;
 
-        let repo = RequisitionRowRepository::new(&connection);
+        let repo = RequisitionRowRepository::new(&mut connection);
         // Try upsert all variants of RequisitionRowApprovalStatus, confirm that diesel enums match postgres
         for variant in RequisitionRowApprovalStatus::iter() {
             let row = RequisitionRow {
@@ -276,7 +276,7 @@ mod test {
         )
         .await;
 
-        let repo = RequisitionRowRepository::new(&connection);
+        let repo = RequisitionRowRepository::new(&mut connection);
         // Two rows, to make sure is_sync_update update only affects one row
         let row = mock_request_draft_requisition_all_fields().requisition;
         let row2 = mock_response_draft_requisition_all_fields().requisition;

@@ -16,7 +16,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
-#[table_name = "master_list_name_join"]
+#[diesel(table_name = master_list_name_join)]
 pub struct MasterListNameJoinRow {
     pub id: String,
     pub master_list_id: String,
@@ -27,11 +27,11 @@ joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name (name_id));
 
 pub struct MasterListNameJoinRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> MasterListNameJoinRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         MasterListNameJoinRepository { connection }
     }
 
@@ -42,7 +42,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -50,17 +50,17 @@ impl<'a> MasterListNameJoinRepository<'a> {
     pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list_name_join)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub async fn find_one_by_id(
-        &self,
+        &mut self,
         record_id: &str,
     ) -> Result<MasterListNameJoinRow, RepositoryError> {
         let result = master_list_name_join
             .filter(id.eq(record_id))
-            .first(&self.connection.connection)?;
+            .first(&mut self.connection.connection)?;
         Ok(result)
     }
 
@@ -70,14 +70,14 @@ impl<'a> MasterListNameJoinRepository<'a> {
     ) -> Result<Option<MasterListNameJoinRow>, RepositoryError> {
         let result = master_list_name_join
             .filter(id.eq(record_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
     pub fn delete(&self, record_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(master_list_name_join.filter(id.eq(record_id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

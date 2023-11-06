@@ -62,7 +62,7 @@ pub enum ChangelogTableName {
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
-#[table_name = "changelog"]
+#[diesel(table_name = changelog)]
 pub struct ChangelogRow {
     pub cursor: i64,
     pub table_name: ChangelogTableName,
@@ -84,11 +84,11 @@ pub struct ChangelogFilter {
 }
 
 pub struct ChangelogRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ChangelogRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ChangelogRepository { connection }
     }
 
@@ -113,7 +113,7 @@ impl<'a> ChangelogRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result = query.load(&self.connection.connection)?;
+        let result = query.load(&mut self.connection.connection)?;
         Ok(result)
     }
 
@@ -124,7 +124,7 @@ impl<'a> ChangelogRepository<'a> {
     ) -> Result<u64, RepositoryError> {
         let result = create_filtered_query(earliest, filter)
             .count()
-            .get_result::<i64>(&self.connection.connection)?;
+            .get_result::<i64>(&mut self.connection.connection)?;
         Ok(result as u64)
     }
 
@@ -133,13 +133,13 @@ impl<'a> ChangelogRepository<'a> {
     pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
         let result = changelog::dsl::changelog
             .select(diesel::dsl::max(changelog::dsl::cursor))
-            .first::<Option<i64>>(&self.connection.connection)?;
+            .first::<Option<i64>>(&mut self.connection.connection)?;
         Ok(result.unwrap_or(0) as u64)
     }
 
     // Drop all change logs (for tests), can't set test flag as it's used in another crate
     pub fn drop_all(&self) -> Result<(), RepositoryError> {
-        diesel::delete(changelog::dsl::changelog).execute(&self.connection.connection)?;
+        diesel::delete(changelog::dsl::changelog).execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -149,7 +149,7 @@ impl<'a> ChangelogRepository<'a> {
         diesel::update(changelog::dsl::changelog)
             .set(changelog::dsl::is_sync_update.eq(false))
             .filter(changelog::dsl::cursor.gt(from_cursor as i64))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }
