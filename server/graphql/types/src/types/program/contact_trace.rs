@@ -279,6 +279,8 @@ impl ContactTraceNode {
         })
     }
 
+    /// Relationship between the patient and the contact, e.g. mother, next of kin, etc.  
+
     pub async fn relationship(&self) -> Option<String> {
         self.trace_row().relationship.clone()
     }
