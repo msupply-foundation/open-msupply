@@ -10,6 +10,8 @@ import {
   FilterController,
   AlertModal,
   useConfirmationModal,
+  FilterMenu,
+  Box,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocation } from '../api';
 
@@ -89,10 +91,30 @@ export const Toolbar: FC<{
       sx={{
         paddingBottom: '16px',
         flex: 1,
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         display: 'flex',
       }}
     >
+      <Box display="flex" gap={1}>
+        <FilterMenu
+          filters={[
+            {
+              type: 'text',
+              name: t('label.name'),
+              urlParameter: 'name',
+            },
+            {
+              type: 'enum',
+              name: t('label.on-hold'),
+              urlParameter: 'onHold',
+              options: [
+                { label: t('label.yes'), value: 'true' },
+                { label: t('label.no'), value: 'false' },
+              ],
+            },
+          ]}
+        />
+      </Box>
       <AlertModal
         message={
           <ul>
