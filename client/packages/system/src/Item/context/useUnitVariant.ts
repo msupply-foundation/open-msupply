@@ -69,6 +69,18 @@ export interface VariantControl {
   setUserSelectedVariant: (variantId: string) => void;
 }
 
+// Will call API to refresh unit variant if cache is expired
+// or if store is change (based on api keys)
+export const useRefreshUnitVariant = () => {
+  const { setItems } = useUnitStore();
+
+  const { data } = usePackUnits();
+
+  useEffect(() => {
+    setItems(data?.nodes || []);
+  }, [data, setItems]);
+};
+
 export const useUnitVariant = (
   itemId: string,
   unitName: string | null
@@ -82,20 +94,14 @@ export const useUnitVariant = (
   variantsControl?: VariantControl;
   unitVariantsExist: boolean;
 } => {
-  const [setItems, item, userSelectedVariantId, setUserSelectedVariant] =
-    useUnitStore(
-      state => [
-        state.setItems,
-        state.items[itemId],
-        state.userSelectedVariants[itemId],
-        state.setUserSelectedVariant,
-      ],
-      isEqual
-    );
-  const { data: packUnitsData } = usePackUnits();
-  useEffect(() => {
-    setItems(packUnitsData?.nodes || []);
-  }, [packUnitsData, setItems]);
+  const [item, userSelectedVariantId, setUserSelectedVariant] = useUnitStore(
+    state => [
+      state.items[itemId],
+      state.userSelectedVariants[itemId],
+      state.setUserSelectedVariant,
+    ],
+    isEqual
+  );
 
   const t = useTranslation();
 
