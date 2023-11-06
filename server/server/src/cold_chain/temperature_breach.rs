@@ -126,8 +126,8 @@ fn upsert_temperature_breach(
             breach.start_unix_timestamp
         ))?;
 
-    let duration_milliseconds = match breach.end_unix_timestamp {
-        Some(end_unix_timestamp) => (end_unix_timestamp - breach.start_unix_timestamp)
+    let duration_milliseconds: i32 = match breach.end_unix_timestamp {
+        Some(end_unix_timestamp) => ((end_unix_timestamp - breach.start_unix_timestamp) * 1000)
             .try_into()
             .unwrap_or(0),
         None => 0,
