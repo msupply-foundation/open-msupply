@@ -1,14 +1,14 @@
 import {
   EnvUtils,
-  FilterBy,
+  FilterByWithBoolean,
   SortBy,
   PrintReportSortInput,
 } from '@openmsupply-client/common';
 import { ReportRowFragment, Sdk } from './operations.generated';
-import { JsonData } from 'packages/programs/src';
+import { JsonData } from '@openmsupply-client/programs';
 
 export type ReportListParams = {
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
   sortBy: SortBy<ReportRowFragment>;
   offset: number;
 };
