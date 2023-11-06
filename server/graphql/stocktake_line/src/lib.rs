@@ -5,8 +5,7 @@ use async_graphql::*;
 use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use mutations::{delete::*, insert::*, update::*};
 use stocktake_line_queries::{
-    report_sort_to_typed_sort, stocktake_lines, StocktakeLineFilterInput, StocktakeLineSortInput,
-    StocktakesLinesResponse,
+    stocktake_lines, StocktakeLineFilterInput, StocktakeLineSortInput, StocktakesLinesResponse,
 };
 
 #[derive(Default, Clone)]
@@ -23,11 +22,7 @@ impl StocktakeLineQueries {
         sort: Option<Vec<StocktakeLineSortInput>>,
         report_sort: Option<PrintReportSortInput>,
     ) -> Result<StocktakesLinesResponse> {
-        let sort = report_sort_to_typed_sort(report_sort)
-            .map(|(key, desc)| StocktakeLineSortInput { key, desc })
-            .or_else(|| sort.and_then(|mut sort_list| sort_list.pop()));
-
-        stocktake_lines(ctx, &store_id, page, filter, sort)
+        stocktake_lines(ctx, &store_id, page, filter, sort, report_sort)
     }
 }
 

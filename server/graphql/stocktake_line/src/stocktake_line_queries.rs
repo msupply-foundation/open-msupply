@@ -84,7 +84,8 @@ pub fn stocktake_lines(
     store_id: &str,
     page: Option<PaginationInput>,
     filter: Option<StocktakeLineFilterInput>,
-    sort: Option<StocktakeLineSortInput>,
+    sort: Option<Vec<StocktakeLineSortInput>>,
+    report_sort: Option<PrintReportSortInput>,
 ) -> Result<StocktakesLinesResponse> {
     let user = validate_auth(
         ctx,
@@ -108,6 +109,10 @@ pub fn stocktake_lines(
             }
         }
     }
+
+    let sort = report_sort_to_typed_sort(report_sort)
+        .map(|(key, desc)| StocktakeLineSortInput { key, desc })
+        .or_else(|| sort.and_then(|mut sort_list| sort_list.pop()));
 
     let stocktake_lines = service.get_stocktake_lines(
         &service_ctx,
