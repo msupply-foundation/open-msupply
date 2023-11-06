@@ -10,6 +10,8 @@ import {
   getLinesFromRow,
   TooltipTextCell,
   useTranslation,
+  TypedTFunction,
+  LocaleKey,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -28,10 +30,9 @@ const expandColumn = getRowExpandColumn<
 >();
 
 const getStocktakeReasons = (
-  rowData: StocktakeLineFragment | StocktakeSummaryItem
+  rowData: StocktakeLineFragment | StocktakeSummaryItem,
+  t: TypedTFunction<LocaleKey>
 ) => {
-  const t = useTranslation();
-
   if ('lines' in rowData) {
     const { lines } = rowData;
     const inventoryAdjustmentReasons = lines
@@ -352,8 +353,8 @@ export const useStocktakeColumns = ({
       {
         key: 'inventoryAdjustmentReason',
         label: 'label.reason',
-        accessor: ({ rowData }) => getStocktakeReasons(rowData),
-        getSortValue: rowData => getStocktakeReasons(rowData),
+        accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
+        getSortValue: rowData => getStocktakeReasons(rowData, t),
       },
       {
         key: 'comment',

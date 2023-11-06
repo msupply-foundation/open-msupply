@@ -7,7 +7,7 @@ describe('Formatter', () => {
     expect(Formatter.expiryDate).toBeDefined();
     expect(Formatter.expiryDateString).toBeDefined();
     expect(Formatter.naiveDate).toBeDefined();
-    expect(Formatter.naiveDateTime).toBeDefined();
+    expect(Formatter.toIsoString).toBeDefined();
     expect(Formatter.tax).toBeDefined();
   });
 
@@ -48,12 +48,12 @@ describe('Formatter', () => {
   });
 
   it('naiveDateTime', () => {
-    expect(Formatter.naiveDateTime(null)).toBe(null);
-    expect(Formatter.naiveDateTime(new Date('1984-03-13'))).toBe(
-      '1984-03-13T12:00:00+00:00'
+    expect(Formatter.toIsoString(null)).toBe(null);
+    expect(Formatter.toIsoString(new Date('1984/3/13'))).toBe(
+      '1984-03-12T12:00:00.000Z'
     );
-    expect(Formatter.naiveDateTime(new Date('1984-03-13 11:12:13'))).toBe(
-      '1984-03-13T11:12:13+12:12'
+    expect(Formatter.toIsoString(new Date('1984/3/13 11:12:13'))).toBe(
+      '1984-03-12T23:12:13.000Z'
     );
   });
 
