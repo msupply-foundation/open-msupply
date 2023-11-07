@@ -35,7 +35,6 @@ pub fn update_inbound_shipment_service_line(
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
-
     Ok(updated_line)
 }
 

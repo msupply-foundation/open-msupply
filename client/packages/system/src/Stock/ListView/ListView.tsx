@@ -30,7 +30,7 @@ const StockListComponent: FC = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
     initialSort: { key: 'expiryDate', dir: 'asc' },
-    filterKey: 'itemCodeOrName',
+    filters: [{ key: 'itemCodeOrName' }],
   });
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
