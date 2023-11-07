@@ -31,6 +31,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               type: 'text',
               name: t('label.location'),
               urlParameter: 'location.name',
+              placeholder: t('placeholder.search-by-location-name'),
             },
             {
               type: 'group',
