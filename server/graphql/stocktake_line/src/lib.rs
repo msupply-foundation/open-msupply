@@ -17,12 +17,21 @@ impl StocktakeLineQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
+        stocktake_id: String,
         page: Option<PaginationInput>,
         filter: Option<StocktakeLineFilterInput>,
         sort: Option<Vec<StocktakeLineSortInput>>,
         report_sort: Option<PrintReportSortInput>,
     ) -> Result<StocktakesLinesResponse> {
-        stocktake_lines(ctx, &store_id, page, filter, sort, report_sort)
+        stocktake_lines(
+            ctx,
+            &store_id,
+            &stocktake_id,
+            page,
+            filter,
+            sort,
+            report_sort,
+        )
     }
 }
 

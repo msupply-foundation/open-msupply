@@ -176,7 +176,7 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
       }
     }
   }
-  stocktakeLines(storeId: $storeId, filter: {stocktakeId: {equalTo: $dataId}}, reportSort: $sort) {
+  stocktakeLines(storeId: $storeId, stocktakeId: $dataId, reportSort: $sort) {
     ... on StocktakeLineConnector {
       nodes {
         batch
