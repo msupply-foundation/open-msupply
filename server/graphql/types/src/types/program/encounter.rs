@@ -102,7 +102,7 @@ pub struct EncounterFilterInput {
     pub document_name: Option<EqualFilterStringInput>,
     pub document_data: Option<StringFilterInput>,
     pub patient: Option<PatientFilterInput>,
-    pub program: Option<ProgramEnrolmentFilterInput>,
+    pub program_enrolment: Option<ProgramEnrolmentFilterInput>,
 }
 
 impl From<EncounterFilterInput> for EncounterFilter {
@@ -123,7 +123,7 @@ impl From<EncounterFilterInput> for EncounterFilter {
             document_data: f.document_data.map(StringFilter::from),
             program_context_id: None,
             patient: f.patient.map(PatientFilterInput::into),
-            program: f.program.map(ProgramEnrolmentFilterInput::into),
+            program_enrolment: f.program_enrolment.map(ProgramEnrolmentFilterInput::into),
         }
     }
 }

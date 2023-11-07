@@ -32,7 +32,7 @@ pub struct EncounterFilter {
     /// Filter by encounter data
     pub document_data: Option<StringFilter>,
     pub patient: Option<PatientFilter>,
-    pub program: Option<ProgramEnrolmentFilter>,
+    pub program_enrolment: Option<ProgramEnrolmentFilter>,
 }
 
 impl EncounterFilter {
@@ -105,8 +105,8 @@ impl EncounterFilter {
         self
     }
 
-    pub fn program(mut self, filter: ProgramEnrolmentFilter) -> Self {
-        self.program = Some(filter);
+    pub fn program_enrolment(mut self, filter: ProgramEnrolmentFilter) -> Self {
+        self.program_enrolment = Some(filter);
         self
     }
 }
@@ -147,7 +147,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             clinician_id,
             document_data,
             patient,
-            program,
+            program_enrolment,
         } = f;
 
         apply_equal_filter!(query, id, encounter_dsl::id);
@@ -176,8 +176,8 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             query = query.filter(encounter_dsl::patient_id.eq_any(patient_ids));
         }
 
-        if program.is_some() {
-            let program_ids = ProgramEnrolmentRepository::create_filtered_query(program)
+        if program_enrolment.is_some() {
+            let program_ids = ProgramEnrolmentRepository::create_filtered_query(program_enrolment)
                 .select(program_enrolment_dsl::program_id);
             query = query.filter(encounter_dsl::program_id.eq_any(program_ids));
         }

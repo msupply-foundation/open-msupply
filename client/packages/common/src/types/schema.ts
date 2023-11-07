@@ -1099,7 +1099,9 @@ export type EncounterFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  patient?: InputMaybe<PatientFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
+  programEnrolment?: InputMaybe<ProgramEnrolmentFilterInput>;
   /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -3411,6 +3413,7 @@ export type ProgramEnrolmentFilterInput = {
   programEnrolmentId?: InputMaybe<StringFilterInput>;
   /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
+  programName?: InputMaybe<StringFilterInput>;
   status?: InputMaybe<EqualFilterProgramEnrolmentStatusInput>;
   /** Same as program enrolment document type */
   type?: InputMaybe<EqualFilterStringInput>;
