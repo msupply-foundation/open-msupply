@@ -22,8 +22,6 @@ pub struct MasterListRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-// Not filtering out inactive master lists as we are not allowing the user to
-// undelete master lists for now.
 #[derive(Clone, Debug, PartialEq)]
 pub struct MasterListFilter {
     pub id: Option<EqualFilter<String>>,
@@ -67,6 +65,9 @@ impl<'a> MasterListRepository<'a> {
         let mut query = master_list_dsl::master_list.into_boxed();
 
         if let Some(f) = filter {
+            // Filter out inactive master lists by default
+            query = query.filter(master_list_dsl::is_active.eq(true));
+
             apply_equal_filter!(query, f.id, master_list_dsl::id);
             apply_string_filter!(query, f.name, master_list_dsl::name);
             apply_string_filter!(query, f.code, master_list_dsl::code);
