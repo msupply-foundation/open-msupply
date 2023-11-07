@@ -13,7 +13,7 @@ export type ListParams = {
   sortBy: SortBy<LocationRowFragment>;
   first?: number;
   offset?: number;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: LocationFilterInput | null;
 };
 
 const locationParsers = {
