@@ -12,7 +12,9 @@ repository = { path = "../repository" }
 util = { path = "../util" }
 
 anymap = "0.12"
-anyhow = "1.0.56"
+
+anyhow.workspace = true
+
 async-trait = "0.1.57"
 thiserror = "1"
 topological-sort = "0.2.2"
@@ -42,6 +44,9 @@ rsa = { version ="0.9", features = ["sha2"] }
 sha2 = "0.10.8"
 walkdir = "2"
 x509-parser = { version = "0.15", features = ["verify"] }
+
+# dependencies for temperature_sensor
+temperature-sensor = {git = "https://github.com/openmsupply/temperature-sensor.git" }
 
 [dev-dependencies]
 actix-rt = "2.6.0"

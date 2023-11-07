@@ -29,9 +29,12 @@ use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
+use graphql_sensor::{SensorMutations, SensorQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::StocktakeLineMutations;
+use graphql_temperature_breach::TemperatureBreachQueries;
+use graphql_temperature_log::TemperatureLogQueries;
 
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
@@ -52,6 +55,9 @@ pub type InitialisationSchema = async_graphql::Schema<
 pub struct Queries(
     pub InvoiceQueries,
     pub LocationQueries,
+    pub SensorQueries,
+    pub TemperatureBreachQueries,
+    pub TemperatureLogQueries,
     pub StocktakeQueries,
     pub GeneralQueries,
     pub RequisitionQueries,
@@ -69,6 +75,9 @@ impl Queries {
         Queries(
             InvoiceQueries,
             LocationQueries,
+            SensorQueries,
+            TemperatureBreachQueries,
+            TemperatureLogQueries,
             StocktakeQueries,
             GeneralQueries,
             RequisitionQueries,
@@ -88,6 +97,7 @@ pub struct Mutations(
     pub InvoiceMutations,
     pub InvoiceLineMutations,
     pub LocationMutations,
+    pub SensorMutations,
     pub StocktakeMutations,
     pub StocktakeLineMutations,
     pub BatchMutations,
@@ -107,6 +117,7 @@ impl Mutations {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
+            SensorMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,

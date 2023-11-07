@@ -20,7 +20,7 @@ const MasterListComponent: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filterKey: 'name' });
+  } = useUrlQueryParams({ filters: [{ key: 'name' }] });
   const { data, isError, isLoading } = useMasterList.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();

@@ -1,6 +1,6 @@
 import {
   InvoiceNodeType,
-  FilterBy,
+  FilterByWithBoolean,
   SortBy,
   UpdateOutboundShipmentUnallocatedLineInput,
   InsertOutboundShipmentUnallocatedLineInput,
@@ -30,7 +30,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<OutboundRowFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 const outboundParsers = {

@@ -26,7 +26,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 
-anyhow = "1.0.56"
+anyhow.workspace = true
 
 [dev-dependencies]
 actix-rt = { workspace = true }

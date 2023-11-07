@@ -26,6 +26,7 @@ const pluginUrl = `${apiHost}/plugins`;
 export const Environment = {
   API_HOST: apiHost,
   FILE_URL: `${apiHost}/files?id=`,
+  UPLOAD_FRIDGE_TAG: `${apiHost}/fridge-tag`,
   GRAPHQL_URL: `${apiHost}/graphql`,
   PLUGIN_URL: pluginUrl,
 };

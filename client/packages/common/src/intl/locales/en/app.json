@@ -96,5 +96,8 @@
   "prescription": "Prescriptions",
   "suppliers": "Suppliers",
   "sync": "Sync",
-  "tools": "Tools"
+  "tools": "Tools",
+  "cold-chain": "Cold chain",
+  "sensors": "Sensors",
+  "monitoring": "Monitoring"
 }
