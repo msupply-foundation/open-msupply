@@ -133,6 +133,7 @@ mod test {
         };
         let master_list = MasterListRow {
             id: "master_list1".to_string(),
+            is_active: true,
             ..Default::default()
         };
         let master_list_name_join = MasterListNameJoinRow {
