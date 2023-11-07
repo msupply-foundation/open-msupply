@@ -576,6 +576,7 @@ export type ContactTraceNode = {
   /** Returns the matching program enrolment for the root patient of this contact trace */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   programId: Scalars['String']['output'];
+  relationship?: Maybe<Scalars['String']['output']>;
   storeId?: Maybe<Scalars['String']['output']>;
 };
 
@@ -4502,6 +4503,7 @@ export type StockLineFilterInput = {
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  location?: InputMaybe<LocationFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
 };

@@ -21,6 +21,7 @@
   "label.add-new-line": "Add a new line",
   "label.batch": "Batch",
   "label.cant-delete-disabled": "Can only delete lines when status is New",
+  "label.code-or-name": "Code or Name",
   "label.cost-price": "Cost price",
   "label.counted-num-of-packs": "Counted # of Packs",
   "label.create-location": "Create Location",

@@ -221,7 +221,6 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
           )
           .map(prescriptionParsers.toDeleteLine),
       };
-
       const result = await sdk.upsertPrescription({ storeId, input });
 
       return result;
