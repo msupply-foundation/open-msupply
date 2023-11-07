@@ -29,6 +29,7 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, serde::Serialize, strum::EnumIter)]
+#[serde(rename_all = "lowercase")]
 #[graphql(rename_items = "camelCase")]
 pub enum StocktakeLineSortFieldInput {
     ItemCode,

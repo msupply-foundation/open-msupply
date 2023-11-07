@@ -49,11 +49,10 @@ pub fn report_sort_to_typed_sort<T: strum::IntoEnumIterator + serde::Serialize>(
         None => None,
         Some(PrintReportSortInput { key, desc }) => T::iter()
             .find(|variant| {
-                let variant_name = serde_json::to_string(variant)
+                serde_json::to_string(variant)
                     .unwrap_or_default()
                     .trim_matches('"')
-                    .to_lowercase();
-                variant_name == key.to_lowercase()
+                    == key.to_lowercase()
             })
             .map(|variant| (variant, desc)),
     }
