@@ -1,14 +1,11 @@
-import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import { useLocationApi } from '../utils/useLocationApi';
+import { ListParams } from '../../api';
 
-export const useLocations = () => {
+export const useLocations = (queryParams: ListParams) => {
   const api = useLocationApi();
-  const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
-  });
-  const result = useQuery(api.keys.paramList(queryParams), () =>
+
+  return useQuery(api.keys.paramList(queryParams), () =>
     api.get.list(queryParams)
   );
-
-  return { ...queryParams, ...result };
 };
