@@ -80,6 +80,7 @@ pub enum StocktakesLinesResponse {
 pub fn stocktake_lines(
     ctx: &Context<'_>,
     store_id: &str,
+    stocktake_id: &str,
     page: Option<PaginationInput>,
     filter: Option<StocktakeLineFilterInput>,
     sort: Option<Vec<StocktakeLineSortInput>>,
@@ -97,17 +98,6 @@ pub fn stocktake_lines(
     let service_ctx = service_provider.context(store_id.to_string(), user.user_id)?;
     let service = &service_provider.stocktake_line_service;
 
-    let stocktake_filter = filter.clone().map(StocktakeLineFilter::from);
-
-    let mut stocktake_id = "".to_string();
-    if let Some(f) = stocktake_filter {
-        if let Some(id) = f.stocktake_id {
-            if let Some(id) = id.equal_to {
-                stocktake_id = id;
-            }
-        }
-    }
-
     let sort = report_sort_to_typed_sort(report_sort)
         .map(|(key, desc)| StocktakeLineSortInput { key, desc })
         .or_else(|| sort.and_then(|mut sort_list| sort_list.pop()));
@@ -115,7 +105,7 @@ pub fn stocktake_lines(
     let stocktake_lines = service.get_stocktake_lines(
         &service_ctx,
         store_id,
-        &stocktake_id,
+        stocktake_id,
         page.map(PaginationOption::from),
         filter.map(StocktakeLineFilter::from),
         sort.map(|s| s.to_domain()),
@@ -251,8 +241,8 @@ mod test {
         )
         .await;
 
-        let query = r#"query QueryStocktakeLines($storeId: String, $page: PaginationInput, $filter: StocktakeLineFilterInput, $sort: [StocktakeLineSortInput!]) {
-            stocktakeLines(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {
+        let query = r#"query QueryStocktakeLines($storeId: String, $dataId: String, $page: PaginationInput, $filter: StocktakeLineFilterInput, $sort: [StocktakeLineSortInput!]) {
+            stocktakeLines(storeId: $storeId, stocktakeId: $dataId, page: $page, filter: $filter, sort: $sort) {
                 ... on StocktakeLineConnector {
                     totalCount
                     nodes {
@@ -302,6 +292,7 @@ mod test {
 
         let variables = Some(json!({
             "storeId": "store_id",
+            "dataId": "stocktake_id",
             "filter": {"stocktakeId": {"equalTo": "stocktake_id"}},
             "page": {
                 "first": 10,
