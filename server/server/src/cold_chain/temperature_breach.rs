@@ -9,7 +9,10 @@ use anyhow::Context;
 use chrono::NaiveDateTime;
 use log::error;
 use mime_guess::mime;
-use repository::{RepositoryError, TemperatureBreachRowType};
+use repository::{
+    EqualFilter, RepositoryError, TemperatureBreachFilter, TemperatureBreachRowType,
+    TemperatureLogFilter,
+};
 use service::{
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
@@ -117,6 +120,29 @@ fn upsert_temperature_breach(
     let id = breach.id.clone();
     let service = &service_provider.temperature_breach_service;
     let sensor_service = &service_provider.sensor_service;
+    let log_service = &service_provider.temperature_log_service;
+
+    if log_service
+        .get_temperature_logs(
+            &ctx.connection,
+            None,
+            Some(
+                TemperatureLogFilter::new().temperature_breach(
+                    TemperatureBreachFilter::new().id(EqualFilter::equal_to(&id)),
+                ),
+            ),
+            None,
+        )
+        .map_err(|e| anyhow::anyhow!("Unable to load logs for this breach {:?}", e))?
+        .count
+        == 0
+    {
+        return Err(anyhow::anyhow!(
+            "No temperature logs found for the breach id `{}`",
+            id
+        ));
+    }
+
     let sensor = sensor_service
         .get_sensor(&ctx, breach.sensor_id.clone())
         .map_err(|e| anyhow::anyhow!("Unable to get sensor {:?}", e))?;
