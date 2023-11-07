@@ -26,7 +26,7 @@ const permissionExceptions = [
   'invoiceCounts',
   'itemCounts',
   'requisitionCounts',
-  'temperatureBreaches',
+  'temperatureNotifications',
 ];
 interface ResponseError {
   message?: string;

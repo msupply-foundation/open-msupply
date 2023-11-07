@@ -4,28 +4,16 @@ import { DateUtils } from '@common/intl';
 import { NumUtils } from '@common/utils';
 import { Log, Sensor } from './types';
 import { useUrlQueryParams } from '@common/hooks';
+import { temperatureLogFilterAndSort } from '../TemperatureLog/TemperatureLogList';
 
 const MAX_DATA_POINTS = 30;
 const BREACH_RANGE = 2;
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
-  const { filter, queryParams } = useUrlQueryParams({
-    initialSort: { key: 'datetime', dir: 'desc' },
-    filters: [
-      { key: 'datetime', condition: 'between' },
-      {
-        key: 'sensor.name',
-      },
-      {
-        key: 'location.name',
-      },
-      {
-        key: 'temperatureBreach.type',
-        condition: 'equalTo',
-      },
-    ],
-  });
+  const { filter, queryParams } = useUrlQueryParams(
+    temperatureLogFilterAndSort
+  );
 
   const { data, isLoading } = useTemperatureLog.document.list(queryParams);
   const sensors: Sensor[] = [];
