@@ -53,12 +53,10 @@ impl GraphQlQuery {
         };
 
         if let Some(sort) = sort {
-            let mut sort_value = serde_json::json!({});
-            sort_value["key"] = Value::String(sort.key);
-            if let Some(desc) = sort.desc {
-                sort_value["desc"] = Value::Bool(desc);
-            }
-            variables["sort"] = sort_value;
+            variables["sort"] = serde_json::json!({
+                "key": sort.key,
+                "desc": sort.desc
+            });
         }
 
         variables["storeId"] = Value::String(store_id.to_string());
