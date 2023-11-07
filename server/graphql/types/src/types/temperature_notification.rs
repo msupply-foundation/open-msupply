@@ -2,31 +2,23 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
 use graphql_core::{
-    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
     loader::{LocationByIdLoader, SensorByIdLoader},
-    map_filter,
     simple_generic_errors::NodeError,
     ContextExt,
 };
 
 use repository::{
-    temperature_breach::{
-        TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort,
-        TemperatureBreachSortField,
-    },
-    DatetimeFilter, EqualFilter, TemperatureBreachRow, TemperatureBreachRowType,
+    temperature_breach::{TemperatureBreach, TemperatureBreachSort, TemperatureBreachSortField},
+    TemperatureBreachRow, TemperatureBreachRowType,
 };
 use service::{
     temperature_breach::query::get_max_or_min_breach_temperature, usize_to_u32, ListResult,
 };
 
-use super::{
-    LocationFilterInput, LocationNode, SensorFilterInput, SensorNode,
-    TemperatureNotificationFilterInput,
-};
+use super::{LocationNode, SensorNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-pub enum TemperatureBreachNodeType {
+pub enum TemperatureNotificationNodeType {
     ColdConsecutive,
     ColdCumulative,
     HotConsecutive,
@@ -35,83 +27,38 @@ pub enum TemperatureBreachNodeType {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
-pub enum TemperatureBreachSortFieldInput {
+pub enum TemperatureNotificationSortFieldInput {
     StartDatetime,
     EndDatetime,
 }
 
 #[derive(InputObject)]
-pub struct TemperatureBreachSortInput {
+pub struct TemperatureNotificationSortInput {
     /// Sort query result by `key`
-    key: TemperatureBreachSortFieldInput,
+    key: TemperatureNotificationSortFieldInput,
     /// Sort query result is sorted descending or ascending (if not provided the default is
     /// ascending)
     desc: Option<bool>,
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterTemperatureBreachRowTypeInput {
-    pub equal_to: Option<TemperatureBreachNodeType>,
-    pub equal_any: Option<Vec<TemperatureBreachNodeType>>,
-    pub not_equal_to: Option<TemperatureBreachNodeType>,
-}
-
-#[derive(InputObject, Clone)]
-pub struct TemperatureBreachFilterInput {
-    pub id: Option<EqualFilterStringInput>,
-    pub start_datetime: Option<DatetimeFilterInput>,
-    pub end_datetime: Option<DatetimeFilterInput>,
-    pub r#type: Option<EqualFilterTemperatureBreachRowTypeInput>,
+pub struct TemperatureNotificationFilterInput {
     pub acknowledged: Option<bool>,
-    pub sensor: Option<SensorFilterInput>,
-    pub location: Option<LocationFilterInput>,
-}
-
-impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
-    fn from(f: TemperatureBreachFilterInput) -> Self {
-        TemperatureBreachFilter {
-            acknowledged: f.acknowledged,
-            r#type: f
-                .r#type
-                .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
-            id: f.id.map(EqualFilter::from),
-            start_datetime: f.start_datetime.map(DatetimeFilter::from),
-            end_datetime: f.end_datetime.map(DatetimeFilter::from),
-            store_id: None,
-            sensor: f.sensor.map(SensorFilterInput::into),
-            location: f.location.map(LocationFilterInput::into),
-        }
-    }
-}
-
-impl From<TemperatureNotificationFilterInput> for TemperatureBreachFilter {
-    fn from(f: TemperatureNotificationFilterInput) -> Self {
-        TemperatureBreachFilter {
-            acknowledged: f.acknowledged,
-            id: None,
-            r#type: None,
-            store_id: None,
-            start_datetime: None,
-            end_datetime: None,
-            sensor: None,
-            location: None,
-        }
-    }
 }
 
 #[derive(PartialEq, Debug)]
-pub struct TemperatureBreachNode {
+pub struct TemperatureNotificationNode {
     pub temperature_breach: TemperatureBreach,
 }
 
 #[derive(SimpleObject)]
-pub struct TemperatureBreachConnector {
+pub struct TemperatureNotificationConnector {
     total_count: u32,
-    nodes: Vec<TemperatureBreachNode>,
+    nodes: Vec<TemperatureNotificationNode>,
 }
 
 #[Object]
-impl TemperatureBreachNode {
+impl TemperatureNotificationNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
@@ -147,8 +94,8 @@ impl TemperatureBreachNode {
         self.row().duration_milliseconds
     }
 
-    pub async fn r#type(&self) -> TemperatureBreachNodeType {
-        TemperatureBreachNodeType::from_domain(&self.row().r#type)
+    pub async fn r#type(&self) -> TemperatureNotificationNodeType {
+        TemperatureNotificationNodeType::from_domain(&self.row().r#type)
     }
 
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {
@@ -173,10 +120,10 @@ impl TemperatureBreachNode {
     }
 }
 
-impl TemperatureBreachNodeType {
-    pub fn from_domain(from: &TemperatureBreachRowType) -> TemperatureBreachNodeType {
-        use TemperatureBreachNodeType as to;
+impl TemperatureNotificationNodeType {
+    pub fn from_domain(from: &TemperatureBreachRowType) -> TemperatureNotificationNodeType {
         use TemperatureBreachRowType as from;
+        use TemperatureNotificationNodeType as to;
 
         match from {
             from::ColdConsecutive => to::ColdConsecutive,
@@ -187,8 +134,8 @@ impl TemperatureBreachNodeType {
     }
 
     pub fn to_domain(self) -> TemperatureBreachRowType {
-        use TemperatureBreachNodeType as from;
         use TemperatureBreachRowType as to;
+        use TemperatureNotificationNodeType as from;
 
         match self {
             from::ColdConsecutive => to::ColdConsecutive,
@@ -200,19 +147,19 @@ impl TemperatureBreachNodeType {
 }
 
 #[derive(Union)]
-pub enum TemperatureBreachesResponse {
-    Response(TemperatureBreachConnector),
+pub enum TemperatureNotificationsResponse {
+    Response(TemperatureNotificationConnector),
 }
 
 #[derive(Union)]
-pub enum TemperatureBreachResponse {
+pub enum TemperatureNotificationResponse {
     Error(NodeError),
-    Response(TemperatureBreachNode),
+    Response(TemperatureNotificationNode),
 }
 
-impl TemperatureBreachNode {
-    pub fn from_domain(temperature_breach: TemperatureBreach) -> TemperatureBreachNode {
-        TemperatureBreachNode { temperature_breach }
+impl TemperatureNotificationNode {
+    pub fn from_domain(temperature_breach: TemperatureBreach) -> TemperatureNotificationNode {
+        TemperatureNotificationNode { temperature_breach }
     }
 
     pub fn row(&self) -> &TemperatureBreachRow {
@@ -220,35 +167,37 @@ impl TemperatureBreachNode {
     }
 }
 
-impl TemperatureBreachConnector {
+impl TemperatureNotificationConnector {
     pub fn from_domain(
         temperature_breaches: ListResult<TemperatureBreach>,
-    ) -> TemperatureBreachConnector {
-        TemperatureBreachConnector {
+    ) -> TemperatureNotificationConnector {
+        TemperatureNotificationConnector {
             total_count: temperature_breaches.count,
             nodes: temperature_breaches
                 .rows
                 .into_iter()
-                .map(TemperatureBreachNode::from_domain)
+                .map(TemperatureNotificationNode::from_domain)
                 .collect(),
         }
     }
 
-    pub fn from_vec(temperature_breaches: Vec<TemperatureBreach>) -> TemperatureBreachConnector {
-        TemperatureBreachConnector {
+    pub fn from_vec(
+        temperature_breaches: Vec<TemperatureBreach>,
+    ) -> TemperatureNotificationConnector {
+        TemperatureNotificationConnector {
             total_count: usize_to_u32(temperature_breaches.len()),
             nodes: temperature_breaches
                 .into_iter()
-                .map(TemperatureBreachNode::from_domain)
+                .map(TemperatureNotificationNode::from_domain)
                 .collect(),
         }
     }
 }
 
-impl TemperatureBreachSortInput {
+impl TemperatureNotificationSortInput {
     pub fn to_domain(self) -> TemperatureBreachSort {
         use TemperatureBreachSortField as to;
-        use TemperatureBreachSortFieldInput as from;
+        use TemperatureNotificationSortFieldInput as from;
         let key = match self.key {
             from::StartDatetime => to::StartDatetime,
             from::EndDatetime => to::EndDatetime,

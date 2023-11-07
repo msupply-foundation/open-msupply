@@ -3650,6 +3650,8 @@ export type Queries = {
   temperatureBreaches: TemperatureBreachesResponse;
   /** Query omSupply "temperature_log" entries */
   temperatureLogs: TemperatureLogsResponse;
+  /** Query omSupply temperature notification entries */
+  temperatureNotifications: TemperatureNotificationsResponse;
 };
 
 
@@ -4032,6 +4034,14 @@ export type QueriesTemperatureLogsArgs = {
   filter?: InputMaybe<TemperatureLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<TemperatureLogSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesTemperatureNotificationsArgs = {
+  filter?: InputMaybe<TemperatureNotificationFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<TemperatureNotificationSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -4922,6 +4932,54 @@ export type TemperatureLogSortInput = {
 };
 
 export type TemperatureLogsResponse = TemperatureLogConnector;
+
+export type TemperatureNotificationConnector = {
+  __typename: 'TemperatureNotificationConnector';
+  nodes: Array<TemperatureNotificationNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type TemperatureNotificationFilterInput = {
+  acknowledged?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type TemperatureNotificationNode = {
+  __typename: 'TemperatureNotificationNode';
+  acknowledged: Scalars['Boolean']['output'];
+  durationMilliseconds: Scalars['Int']['output'];
+  endDatetime?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['String']['output'];
+  location?: Maybe<LocationNode>;
+  maxOrMinTemperature?: Maybe<Scalars['Float']['output']>;
+  sensor?: Maybe<SensorNode>;
+  sensorId: Scalars['String']['output'];
+  startDatetime: Scalars['DateTime']['output'];
+  type: TemperatureNotificationNodeType;
+};
+
+export enum TemperatureNotificationNodeType {
+  ColdConsecutive = 'COLD_CONSECUTIVE',
+  ColdCumulative = 'COLD_CUMULATIVE',
+  HotConsecutive = 'HOT_CONSECUTIVE',
+  HotCumulative = 'HOT_CUMULATIVE'
+}
+
+export enum TemperatureNotificationSortFieldInput {
+  EndDatetime = 'endDatetime',
+  StartDatetime = 'startDatetime'
+}
+
+export type TemperatureNotificationSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: TemperatureNotificationSortFieldInput;
+};
+
+export type TemperatureNotificationsResponse = TemperatureNotificationConnector;
 
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename: 'TokenExpired';
