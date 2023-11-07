@@ -34,7 +34,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
 
   const {
     queryParams: { sortBy },
-  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  } = useUrlQueryParams();
 
   const printReport = (
     report: ReportRowFragment,
