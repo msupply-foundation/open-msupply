@@ -5,7 +5,7 @@ import {
   InsertLocationInput,
   UpdateLocationInput,
   DeleteLocationInput,
-  FilterByWithBoolean,
+  LocationFilterInput,
 } from '@openmsupply-client/common';
 import { Sdk, LocationRowFragment } from './operations.generated';
 
