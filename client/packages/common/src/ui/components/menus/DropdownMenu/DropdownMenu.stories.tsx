@@ -49,9 +49,9 @@ const options = [
 ];
 
 const clickOptions = [
-  { label: 'One', onClick: () => console.log('one') },
-  { label: 'Two', onClick: () => console.log('two') },
-  { label: 'Three', onClick: () => console.log('three') },
+  { label: 'One', onClick: () => console.info('one') },
+  { label: 'Two', onClick: () => console.info('two') },
+  { label: 'Three', onClick: () => console.info('three') },
 ];
 
 const iconOptions = [
