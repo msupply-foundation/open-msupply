@@ -86,6 +86,7 @@ pub(crate) fn update_contact_trace_row(
             })
             .transpose()?,
         store_id,
+        relationship: contact.and_then(|c| c.relationship.clone()),
     };
     ContactTraceRowRepository::new(con).upsert_one(&row)?;
 
