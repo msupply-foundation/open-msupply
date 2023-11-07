@@ -1,17 +1,15 @@
 use async_graphql::*;
 use graphql_core::generic_filters::EqualFilterStringInput;
-use graphql_core::generic_inputs::PrintReportSortInput;
+use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::ContextExt;
 use graphql_types::types::{StocktakeLineConnector, StocktakeLineNode};
 use repository::*;
-use serde::Serialize;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::stocktake_line::query::GetStocktakeLinesError;
 use service::ListError;
-use strum::{EnumIter, IntoEnumIterator};
 
 #[derive(InputObject, Clone)]
 pub struct StocktakeLineFilterInput {
@@ -30,7 +28,7 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
     }
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Serialize, EnumIter)]
+#[derive(Enum, Copy, Clone, PartialEq, Eq, serde::Serialize, strum::EnumIter)]
 #[graphql(rename_items = "camelCase")]
 pub enum StocktakeLineSortFieldInput {
     ItemCode,
@@ -153,47 +151,27 @@ pub fn stocktake_lines(
     }
 }
 
-pub fn report_sort_to_typed_sort<T: IntoEnumIterator + Serialize>(
-    sort: Option<PrintReportSortInput>,
-) -> Option<(T, Option<bool>)> {
-    match sort {
-        None => None,
-        Some(PrintReportSortInput { key, desc }) => T::iter()
-            .find(|variant| {
-                let variant_name = serde_json::to_string(variant)
-                    .unwrap_or_default()
-                    .trim_matches('"')
-                    .to_lowercase();
-                variant_name == key.to_lowercase()
-            })
-            .map(|variant| (variant, desc)),
-    }
-}
-
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
     use async_graphql::*;
     use chrono::NaiveDate;
     use graphql_core::assert_graphql_query;
-    use graphql_core::generic_inputs::PrintReportSortInput;
+    use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
     use graphql_core::test_helpers::setup_graphl_test;
     use repository::mock::mock_stocktake_line_a;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use repository::{
         PaginationOption, StocktakeLine, StocktakeLineFilter, StocktakeLineRow, StocktakeLineSort,
     };
-    use serde::Serialize;
     use serde_json::json;
     use service::{
         service_provider::{ServiceContext, ServiceProvider},
         stocktake_line::{query::GetStocktakeLinesError, StocktakeLineServiceTrait},
         ListResult,
     };
-    use strum::EnumIter;
     use util::inline_init;
 
-    use crate::stocktake_line_queries::report_sort_to_typed_sort;
     use crate::StocktakeLineQueries;
 
     type ServiceMethod = dyn Fn(
@@ -234,7 +212,7 @@ mod test {
 
     #[test]
     fn test_report_sort_to_typed_sort() {
-        #[derive(Debug, Enum, Copy, Clone, PartialEq, Eq, Serialize, EnumIter)]
+        #[derive(Debug, Enum, Copy, Clone, PartialEq, Eq, serde::Serialize, strum::EnumIter)]
         enum SortField {
             ItemCode,
             ItemName,
