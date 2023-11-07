@@ -16,28 +16,30 @@ import {
 import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
 
+export const temperatureLogFilterAndSort = {
+  initialSort: { key: 'datetime', dir: 'asc' as 'asc' | 'desc' },
+  filters: [
+    { key: 'datetime', condition: 'between' },
+    {
+      key: 'sensor.name',
+    },
+    {
+      key: 'location.name',
+    },
+    {
+      key: 'temperatureBreach.type',
+      condition: 'equalTo',
+    },
+  ],
+};
+
 const ListView: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset, filterBy },
-  } = useUrlQueryParams({
-    initialSort: { key: 'datetime', dir: 'asc' },
-    filters: [
-      { key: 'datetime', condition: 'between' },
-      {
-        key: 'sensor.name',
-      },
-      {
-        key: 'location.name',
-      },
-      {
-        key: 'temperatureBreach.type',
-        condition: 'equalTo',
-      },
-    ],
-  });
+  } = useUrlQueryParams(temperatureLogFilterAndSort);
   const queryParams = {
     filterBy,
     offset,
