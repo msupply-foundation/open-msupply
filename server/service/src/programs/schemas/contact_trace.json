@@ -86,7 +86,7 @@
       "description": "Contact tracing information for a contact associated with a patient.",
       "properties": {
         "contact": {
-          "$ref": "#/definitions/Person",
+          "$ref": "#/definitions/RelatedPerson",
           "description": "Person details about the contact in this contact trace"
         },
         "contactTraceId": {
@@ -156,7 +156,7 @@
       "required": ["text"],
       "type": "object"
     },
-    "Person": {
+    "RelatedPerson": {
       "properties": {
         "birthPlace": {
           "$ref": "#/definitions/Address",
@@ -217,6 +217,10 @@
             "$ref": "#/definitions/Note"
           },
           "type": "array"
+        },
+        "relationship": {
+          "description": "Relationship with the patient, e.g. mother, brother, cousin, friend...",
+          "type": "string"
         },
         "passportNumber": {
           "description": "1601000122107 Passport Number",
