@@ -2,21 +2,13 @@ import React, { FC } from 'react';
 import {
   AppBarContentPortal,
   useTranslation,
-  SearchBar,
   FilterController,
-  FilterRule,
+  Box,
+  FilterMenu,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../api';
 
-interface ToolbarProps {
-  filter: FilterController;
-}
-
-export const Toolbar: FC<ToolbarProps> = ({ filter }) => {
+export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation('inventory');
-  const key = 'itemCodeOrName' as keyof StockLineRowFragment;
-  const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
 
   return (
     <AppBarContentPortal
@@ -27,20 +19,24 @@ export const Toolbar: FC<ToolbarProps> = ({ filter }) => {
         display: 'flex',
       }}
     >
-      <SearchBar
-        placeholder={t('placeholder.enter-an-item-code-or-name')}
-        value={filterString ?? ''}
-        onChange={newValue => {
-          if (!newValue) {
-            return filter.onClearFilterRule('itemCodeOrName');
-          }
-          return filter.onChangeStringFilterRule(
-            'itemCodeOrName',
-            'like',
-            newValue
-          );
-        }}
-      />
+      <Box display="flex" gap={1}>
+        <FilterMenu
+          filters={[
+            {
+              type: 'text',
+              name: t('label.code-or-name'),
+              urlParameter: 'itemCodeOrName',
+              placeholder: t('placeholder.enter-an-item-code-or-name'),
+            },
+            {
+              type: 'text',
+              name: t('label.location'),
+              urlParameter: 'location.name',
+              placeholder: t('placeholder.search-by-location-name'),
+            },
+          ]}
+        />
+      </Box>
     </AppBarContentPortal>
   );
 };
