@@ -25,7 +25,7 @@ import { BreachIndicator } from './BreachIndicator';
 export const TemperatureChart = () => {
   const t = useTranslation('coldchain');
   const theme = useTheme();
-  const { breachConfig, hasData, isLoading, sensors } =
+  const { breachConfig, hasData, isLoading, sensors, yAxisDomain } =
     useTemperatureChartData();
   const { dayMonthTime } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
@@ -102,6 +102,7 @@ export const TemperatureChart = () => {
               <YAxis
                 tick={{ fontSize: 12 }}
                 tickFormatter={formatTemperature}
+                domain={yAxisDomain}
               />
               <ChartTooltip content={TemperatureTooltip} />
               <Legend

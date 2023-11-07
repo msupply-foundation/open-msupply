@@ -6,6 +6,7 @@ import { Log, Sensor } from './types';
 import { useUrlQueryParams } from '@common/hooks';
 
 const MAX_DATA_POINTS = 30;
+const BREACH_RANGE = 2;
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
@@ -18,6 +19,8 @@ export const useTemperatureChartData = () => {
   const { data, isLoading } = useTemperatureLog.document.list(queryParams);
   const sensors: Sensor[] = [];
   const logs: Log[] = [];
+  let minTemperature = 2;
+  let maxTemperature = 2;
 
   data?.nodes?.forEach(
     ({ datetime, temperature, sensor, temperatureBreach }) => {
@@ -45,6 +48,8 @@ export const useTemperatureChartData = () => {
         temperature,
         breach: temperatureBreach ? { row: temperatureBreach, sensor } : null,
       });
+      minTemperature = Math.min(minTemperature, temperature);
+      maxTemperature = Math.max(maxTemperature, temperature);
     }
   );
   const numOfDataPoints = Math.min(MAX_DATA_POINTS, logs.length);
@@ -102,11 +107,16 @@ export const useTemperatureChartData = () => {
       temperature: 8,
     })),
   };
+  const yAxisDomain = [
+    minTemperature - BREACH_RANGE,
+    maxTemperature + BREACH_RANGE,
+  ];
 
   return {
     hasData: logs.length > 0,
     isLoading,
     sensors,
     breachConfig,
+    yAxisDomain,
   };
 };
