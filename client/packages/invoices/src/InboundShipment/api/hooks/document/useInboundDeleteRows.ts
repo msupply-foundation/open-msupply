@@ -5,13 +5,17 @@ import {
   useMutation,
   InvoiceNodeStatus,
   useDeleteConfirmation,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useInboundApi } from '../utils/useInboundApi';
 import { useInbounds } from './useInbounds';
 
 export const useInboundDeleteRows = () => {
   const queryClient = useQueryClient();
-  const { data: rows } = useInbounds();
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+  });
+  const { data: rows } = useInbounds(queryParams);
   const api = useInboundApi();
   const { mutateAsync } = useMutation(api.delete);
   const t = useTranslation('replenishment');
