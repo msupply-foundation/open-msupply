@@ -2,8 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 mod contact_trace;
-
-pub(crate) struct V1_06_00;
+mod plugin_data;
 
 impl Migration for V1_06_00 {
     fn version(&self) -> Version {
@@ -12,6 +11,7 @@ impl Migration for V1_06_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         contact_trace::migrate(connection)?;
+        plugin_data::migrate(connection)?;
         Ok(())
     }
 }
