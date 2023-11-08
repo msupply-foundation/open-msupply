@@ -149,7 +149,7 @@ export const RepackEditForm: FC<RepackEditFormProps> = ({
               <LocationSearchInput
                 autoFocus={false}
                 disabled={!isNew}
-                selectedLocation={location}
+                value={location}
                 width={160}
                 onChange={location => {
                   setLocation(location);

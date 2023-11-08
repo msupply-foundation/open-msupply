@@ -3,7 +3,7 @@ import {
   RecordPatch,
   InvoiceNodeType,
   InvoiceSortFieldInput,
-  FilterByWithBoolean,
+  FilterBy,
   SortBy,
   InvoiceNodeStatus,
   UpdateInboundShipmentLineInput,
@@ -12,7 +12,6 @@ import {
   UpdateInboundShipmentInput,
   Formatter,
   UpdateInboundShipmentStatusInput,
-  setNullableInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -28,7 +27,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<InboundRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 const inboundParsers = {
@@ -98,7 +97,7 @@ const inboundParsers = {
       packSize: line.packSize,
       numberOfPacks: line.numberOfPacks,
       invoiceId: line.invoiceId,
-      location: setNullableInput('id', line.location),
+      locationId: line.location?.id,
     };
   },
   toUpdateLine: (line: DraftInboundLine): UpdateInboundShipmentLineInput => ({
@@ -112,7 +111,7 @@ const inboundParsers = {
     sellPricePerPack: line.sellPricePerPack,
     packSize: line.packSize,
     numberOfPacks: line.numberOfPacks,
-    location: setNullableInput('id', line.location),
+    locationId: line.location?.id,
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
     return { id: line.id };

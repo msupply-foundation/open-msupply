@@ -4,7 +4,8 @@ import { useStocktakeApi } from '../utils/useStocktakeApi';
 export const useStocktakes = () => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
-    filters: [{ key: 'status', condition: 'equalTo' }],
+    filterKey: 'status',
+    filterCondition: 'equalTo',
   });
   const api = useStocktakeApi();
 

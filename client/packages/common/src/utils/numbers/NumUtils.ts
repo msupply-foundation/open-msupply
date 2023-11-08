@@ -13,7 +13,6 @@ export const NumUtils = {
     return constrain(parsed, min, max);
   },
   round: (value: number, dp = 0): number => {
-    if (dp === Infinity) return value;
     const multiplier = 10 ** dp;
     return Math.round(value * multiplier) / multiplier;
   },

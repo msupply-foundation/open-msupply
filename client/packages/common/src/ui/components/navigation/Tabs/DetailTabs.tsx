@@ -31,7 +31,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({
 }) => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
-  const t = useTranslation();
+  const t = useTranslation('common');
 
   // Inelegant hack to force the "Underline" indicator for the currently active
   // tab to re-render in the correct position when one of the side "drawers" is
@@ -62,11 +62,11 @@ export const DetailTabs: FC<DetailTabsProps> = ({
     }
   };
 
-  const isValidTab = (tab?: string): tab is string =>
+  const isValidTab = (tab?: string) =>
     !!tab && tabs.some(({ value }) => value === tab);
 
   useEffect(() => {
-    const tab = urlQuery['tab'] as string | undefined;
+    const tab = urlQuery['tab'];
     if (isValidTab(tab)) {
       setCurrentTab(tab);
     }

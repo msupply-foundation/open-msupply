@@ -3,7 +3,6 @@ import {
   AppBarContentPortal,
   SearchBar,
   FilterController,
-  FilterRule,
 } from '@openmsupply-client/common';
 import { ResponseRowFragment } from '../api';
 
@@ -11,8 +10,7 @@ export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
   const key = 'otherPartyName' as keyof ResponseRowFragment;
-  const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
+  const filterString = (filter.filterBy?.[key]?.like as string) || '';
 
   return (
     <AppBarContentPortal

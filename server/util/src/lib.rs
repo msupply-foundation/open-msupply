@@ -24,6 +24,3 @@ pub use json::*;
 
 mod error;
 pub use error::*;
-
-mod file;
-pub use file::*;

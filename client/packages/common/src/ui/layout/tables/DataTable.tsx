@@ -159,7 +159,7 @@ const DataTableComponent = <T extends RecordWithId>({
       shortcut: ['enter'],
       keywords: 'table, enter',
       perform: () => {
-        console.info('Press enter');
+        console.log('Press enter');
         setClickFocusedRow(true);
       },
     },

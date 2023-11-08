@@ -7,7 +7,6 @@ import {
   AppBarContentPortal,
   FilterController,
   SearchBar,
-  FilterRule,
 } from '@openmsupply-client/common';
 import { useInbound, InboundRowFragment } from '../api';
 
@@ -18,8 +17,7 @@ export const Toolbar: FC<{
   const onDelete = useInbound.document.deleteRows();
 
   const key = 'otherPartyName' as keyof InboundRowFragment;
-  const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
+  const filterString = (filter.filterBy?.[key]?.like as string) || '';
 
   return (
     <AppBarContentPortal
@@ -37,6 +35,7 @@ export const Toolbar: FC<{
           filter.onChangeStringFilterRule('otherPartyName', 'like', newValue)
         }
       />
+
       <DropdownMenu label="Select">
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
           {t('button.delete-lines')}

@@ -3,8 +3,8 @@ import { useMasterListApi } from '../utils/useMasterListApi';
 
 export const useMasterLists = ({ enabled } = { enabled: true }) => {
   const { queryParams } = useUrlQueryParams({
-    filters: [{ key: 'name' }],
-    initialSort: { key: 'name', dir: 'asc' },
+    filterKey: 'name',
+    initialSort: { key: 'name', dir: 'asc' } 
   });
   const api = useMasterListApi();
 

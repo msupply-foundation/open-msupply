@@ -39,7 +39,7 @@ export const ResponseRequisitionListView: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filters: [{ key: 'comment' }] });
+  } = useUrlQueryParams({ filterKey: 'comment' });
   const { data, isError, isLoading } = useResponse.document.list();
   const pagination = { page, first, offset };
   const { authoriseResponseRequisitions } = useResponse.utils.preferences();
