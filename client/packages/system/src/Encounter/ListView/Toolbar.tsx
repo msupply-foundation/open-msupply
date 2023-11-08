@@ -31,7 +31,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             {
               type: 'text',
               name: t('label.program'),
-              urlParameter: 'program.programName',
+              urlParameter: 'programEnrolment.programName',
             },
             {
               type: 'group',
