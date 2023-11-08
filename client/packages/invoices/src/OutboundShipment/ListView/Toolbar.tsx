@@ -1,26 +1,19 @@
 import React, { FC } from 'react';
 import {
+  AppBarContentPortal,
+  useTranslation,
+  FilterController,
+  Box,
+  FilterMenu,
   DropdownMenu,
   DropdownMenuItem,
-  useTranslation,
   DeleteIcon,
-  AppBarContentPortal,
-  SearchBar,
-  FilterController,
-  FilterRule,
 } from '@openmsupply-client/common';
-import { useOutbound, OutboundRowFragment } from '../api';
+import { useOutbound } from '../api';
 
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = ({ filter }) => {
+export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation('distribution');
-
   const onDelete = useOutbound.document.deleteRows();
-
-  const key = 'otherPartyName' as keyof OutboundRowFragment;
-  const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
 
   return (
     <AppBarContentPortal
@@ -31,14 +24,31 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <SearchBar
-        placeholder={t('placeholder.search-by-name')}
-        value={filterString}
-        onChange={newValue => {
-          filter.onChangeStringFilterRule('otherPartyName', 'like', newValue);
-        }}
-      />
-
+      <Box display="flex" gap={1}>
+        <FilterMenu
+          filters={[
+            {
+              type: 'text',
+              name: t('label.name'),
+              urlParameter: 'otherPartyName',
+              placeholder: t('placeholder.search-by-name'),
+            },
+            {
+              type: 'enum',
+              name: t('label.status'),
+              urlParameter: 'status',
+              options: [
+                { label: t('label.new'), value: 'NEW' },
+                { label: t('label.allocated'), value: 'ALLOCATED' },
+                { label: t('label.picked'), value: 'PICKED' },
+                { label: t('label.shipped'), value: 'SHIPPED' },
+                { label: t('label.delivered'), value: 'DELIVERED' },
+                { label: t('label.verified'), value: 'VERIFIED' },
+              ],
+            },
+          ]}
+        />
+      </Box>
       <DropdownMenu label="Select">
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
           {t('button.delete-lines')}
