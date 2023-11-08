@@ -15,7 +15,7 @@ export const Toolbar: FC<{
   filter: FilterController;
 }> = () => {
   const onDelete = useRequest.document.deleteSelected();
-  const t = useTranslation('replenishment');
+  const t = useTranslation();
 
   return (
     <AppBarContentPortal
