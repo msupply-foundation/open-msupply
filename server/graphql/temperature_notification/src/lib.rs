@@ -64,42 +64,36 @@ mod test {
     use chrono::{Duration, NaiveDate};
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
-    use repository::PaginationOption;
     use repository::{
-        mock::MockDataInserts,
-        temperature_breach::{
-            TemperatureBreach, TemperatureNotificationFilter, TemperatureNotificationSort,
-        },
-        StorageConnection, StorageConnectionManager, TemperatureBreachRow,
-        TemperatureBreachRowType,
+        mock::MockDataInserts, temperature_breach::TemperatureBreach, StorageConnection,
+        StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
     };
+    use repository::{PaginationOption, TemperatureBreachFilter, TemperatureBreachSort};
     use serde_json::json;
 
-    use service::{
-        service_provider::ServiceProvider, temperature_breach::TemperatureBreachServiceTrait,
-        ListError, ListResult,
-    };
+    use service::temperature_breach::TemperatureBreachServiceTrait;
+    use service::{service_provider::ServiceProvider, ListError, ListResult};
 
     use crate::TemperatureNotificationQueries;
 
     type GetTemperatureNotifications = dyn Fn(
             Option<PaginationOption>,
-            Option<TemperatureNotificationFilter>,
-            Option<TemperatureNotificationSort>,
+            Option<TemperatureBreachFilter>,
+            Option<TemperatureBreachSort>,
         ) -> Result<ListResult<TemperatureBreach>, ListError>
         + Sync
         + Send;
 
     pub struct TestService(pub Box<GetTemperatureNotifications>);
 
-    impl TemperatureNotificationServiceTrait for TestService {
+    impl TemperatureBreachServiceTrait for TestService {
         fn get_temperature_breaches(
             &self,
             _: &StorageConnection,
             pagination: Option<PaginationOption>,
-            filter: Option<TemperatureNotificationBreachFilter>,
-            sort: Option<TemperatureNotificationSort>,
-        ) -> Result<ListResult<TemperatureNotification>, ListError> {
+            filter: Option<TemperatureBreachFilter>,
+            sort: Option<TemperatureBreachSort>,
+        ) -> Result<ListResult<TemperatureBreach>, ListError> {
             (self.0)(pagination, filter, sort)
         }
     }
@@ -114,11 +108,11 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_temperature_breaches_success() {
+    async fn test_graphql_temperature_notifications_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
-            TemperatureBreachQueries,
+            TemperatureNotificationQueries,
             EmptyMutation,
-            "test_graphql_temperature_breaches_success",
+            "test_graphql_temperature_notifications_success",
             MockDataInserts::all(),
         )
         .await;
@@ -126,7 +120,7 @@ mod test {
         let query = r#"
         query {
             temperatureNotifications(storeId: \"store_a\") {
-              ... on TemperatureBreachConnector {
+              ... on TemperatureNotificationConnector {
                 nodes {
                   id
                   sensorId
