@@ -4,14 +4,24 @@ import {
   FnUtils,
   Grid,
   PlusCircleIcon,
+  RANGE_SPLIT_CHAR,
   RouteBuilder,
   StatsPanel,
   useNotification,
   useToggle,
   Widget,
 } from '@openmsupply-client/common';
-import { useFormatNumber, useTranslation } from '@common/intl';
-import { ApiException, PropsWithChildrenOnly } from '@common/types';
+import {
+  useFormatDateTime,
+  useFormatNumber,
+  useTranslation,
+} from '@common/intl';
+import {
+  ApiException,
+  InvoiceNodeStatus,
+  PropsWithChildrenOnly,
+  RequisitionNodeStatus,
+} from '@common/types';
 import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
@@ -29,6 +39,15 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
     isError: isRequisitionCountError,
     error: requisitionCountError,
   } = useDashboard.statistics.requisitions();
+
+  const { customDate } = useFormatDateTime();
+  const dateTimeFormat = 'yyyy-MM-dd HH:mm';
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const endDay = new Date(today);
+  endDay.setHours(23, 59, 59, 999);
+  const week = new Date(endDay);
+  week.setDate(week.getDate() + 7);
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {
@@ -74,14 +93,38 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 {
                   label: t('label.today', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.today),
+                  link: RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InboundShipment)
+                    .addQuery({
+                      createdDatetime: `${customDate(
+                        today,
+                        dateTimeFormat
+                      )}${RANGE_SPLIT_CHAR}${customDate(endDay, dateTimeFormat)}
+                        `,
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.this-week', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.thisWeek),
+                  link: RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InboundShipment)
+                    .addQuery({
+                      createdDatetime: `${customDate(
+                        today,
+                        dateTimeFormat
+                      )}${RANGE_SPLIT_CHAR}${customDate(week, dateTimeFormat)}
+                        `,
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.inbound-not-delivered', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.notDelivered),
+                  link: RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InboundShipment)
+                    .addQuery({ status: InvoiceNodeStatus.Shipped })
+                    .build(),
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Replenishment)
@@ -99,6 +142,10 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 {
                   label: t('label.new'),
                   value: formatNumber.round(requisitionCount?.request?.draft),
+                  link: RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InternalOrder)
+                    .addQuery({ status: RequisitionNodeStatus.Draft })
+                    .build(),
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Replenishment)
