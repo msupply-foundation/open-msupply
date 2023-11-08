@@ -32,7 +32,7 @@ const EncounterListComponent: FC = () => {
         key: 'patient.lastName',
       },
       {
-        key: 'program.programName',
+        key: 'programEnrolment.programName',
       },
       {
         key: 'startDatetime',
