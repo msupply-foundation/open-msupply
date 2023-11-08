@@ -11,6 +11,8 @@ import {
   useToggle,
   ApiException,
   RouteBuilder,
+  InvoiceNodeStatus,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import { useDashboard } from '../api';
@@ -79,6 +81,10 @@ export const DistributionWidget: React.FC = () => {
                 {
                   label: t('label.have-not-shipped'),
                   value: formatNumber.round(outboundCount?.notShipped),
+                  link: RouteBuilder.create(AppRoute.Distribution)
+                    .addPart(AppRoute.OutboundShipment)
+                    .addQuery({ status: InvoiceNodeStatus.Picked })
+                    .build(),
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Distribution)
@@ -96,6 +102,10 @@ export const DistributionWidget: React.FC = () => {
                 {
                   label: t('label.new'),
                   value: formatNumber.round(requisitionCount?.response?.new),
+                  link: RouteBuilder.create(AppRoute.Distribution)
+                    .addPart(AppRoute.CustomerRequisition)
+                    .addQuery({ status: RequisitionNodeStatus.New })
+                    .build(),
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Distribution)
