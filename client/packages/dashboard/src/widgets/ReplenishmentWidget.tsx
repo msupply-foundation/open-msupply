@@ -46,8 +46,8 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   today.setHours(0, 0, 0, 0);
   const endDay = new Date(today);
   endDay.setHours(23, 59, 59, 999);
-  const week = new Date(endDay);
-  week.setDate(week.getDate() + 7);
+  const inAWeek = new Date(endDay);
+  inAWeek.setDate(inAWeek.getDate() + 7);
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {
@@ -113,7 +113,10 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                       createdDatetime: `${customDate(
                         today,
                         dateTimeFormat
-                      )}${RANGE_SPLIT_CHAR}${customDate(week, dateTimeFormat)}
+                      )}${RANGE_SPLIT_CHAR}${customDate(
+                        inAWeek,
+                        dateTimeFormat
+                      )}
                         `,
                     })
                     .build(),

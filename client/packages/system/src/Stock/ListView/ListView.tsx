@@ -34,6 +34,10 @@ const StockListComponent: FC = () => {
       {
         key: 'location.name',
       },
+      {
+        key: 'expiryDate',
+        condition: 'between',
+      },
     ],
   });
   const queryParams = {

@@ -5,8 +5,10 @@ import {
   FnUtils,
   Grid,
   PlusCircleIcon,
+  RANGE_SPLIT_CHAR,
   RouteBuilder,
   StatsPanel,
+  useFormatDateTime,
   useFormatNumber,
   useNotification,
   useToggle,
@@ -47,6 +49,12 @@ export const StockWidget: React.FC = () => {
     errorSnack();
   };
 
+  const dateFormat = 'yyyy-MM-dd';
+  const { customDate } = useFormatDateTime();
+  const today = new Date();
+  const inAMonth = new Date(today);
+  inAMonth.setMonth(inAMonth.getMonth() + 1);
+
   return (
     <>
       {modalControl.isOn ? (
@@ -84,12 +92,30 @@ export const StockWidget: React.FC = () => {
                     count: Math.round(expiryData?.expired || 0),
                   }),
                   value: formatNumber.round(expiryData?.expired),
+                  link: RouteBuilder.create(AppRoute.Inventory)
+                    .addPart(AppRoute.Stock)
+                    .addQuery({
+                      expiryDate: `${RANGE_SPLIT_CHAR}${customDate(
+                        today,
+                        dateFormat
+                      )}`,
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.expiring-soon', {
                     count: Math.round(expiryData?.expiringSoon || 0),
                   }),
                   value: formatNumber.round(expiryData?.expiringSoon),
+                  link: RouteBuilder.create(AppRoute.Inventory)
+                    .addPart(AppRoute.Stock)
+                    .addQuery({
+                      expiryDate: `${customDate(
+                        today,
+                        dateFormat
+                      )}${RANGE_SPLIT_CHAR}${customDate(inAMonth, dateFormat)}`,
+                    })
+                    .build(),
                 },
               ]}
               link={RouteBuilder.create(AppRoute.Inventory)
