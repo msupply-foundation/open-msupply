@@ -1,19 +1,23 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{Local, NaiveDate};
+use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
 use graphql_core::loader::DocumentLoader;
-use graphql_core::ContextExt;
+use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use repository::contact_trace::ContactTraceFilter;
-use repository::{EqualFilter, Pagination, PaginationOption, Patient, ProgramEnrolmentFilter};
+use repository::{
+    DateFilter, EqualFilter, Pagination, PaginationOption, Patient, PatientFilter,
+    ProgramEnrolmentFilter, StringFilter,
+};
 use service::programs::patient::main_patient_doc_name;
 use service::usize_to_u32;
 
 use crate::types::document::DocumentNode;
 use crate::types::program_enrolment::ProgramEnrolmentNode;
-use crate::types::GenderType;
+use crate::types::{EqualFilterGenderInput, GenderInput, GenderType};
 
 use super::contact_trace::{
     ContactTraceConnector, ContactTraceFilterInput, ContactTraceNode, ContactTraceResponse,
@@ -22,6 +26,49 @@ use super::contact_trace::{
 use super::program_enrolment::{
     ProgramEnrolmentConnector, ProgramEnrolmentFilterInput, ProgramEnrolmentResponse,
 };
+
+#[derive(InputObject, Clone)]
+pub struct PatientFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub name: Option<StringFilterInput>,
+    pub code: Option<StringFilterInput>,
+    pub code_2: Option<StringFilterInput>,
+    pub first_name: Option<StringFilterInput>,
+    pub last_name: Option<StringFilterInput>,
+    pub gender: Option<EqualFilterGenderInput>,
+    pub date_of_birth: Option<DateFilterInput>,
+    pub phone: Option<StringFilterInput>,
+    pub address1: Option<StringFilterInput>,
+    pub address2: Option<StringFilterInput>,
+    pub country: Option<StringFilterInput>,
+    pub email: Option<StringFilterInput>,
+    pub identifier: Option<StringFilterInput>,
+    pub name_or_code: Option<StringFilterInput>,
+    pub date_of_death: Option<DateFilterInput>,
+}
+
+impl From<PatientFilterInput> for PatientFilter {
+    fn from(f: PatientFilterInput) -> Self {
+        PatientFilter {
+            id: f.id.map(EqualFilter::from),
+            name: f.name.map(StringFilter::from),
+            code: f.code.map(StringFilter::from),
+            code_2: f.code_2.map(StringFilter::from),
+            first_name: f.first_name.map(StringFilter::from),
+            last_name: f.last_name.map(StringFilter::from),
+            gender: f.gender.map(|t| map_filter!(t, GenderInput::to_domain)),
+            date_of_birth: f.date_of_birth.map(DateFilter::from),
+            phone: f.phone.map(StringFilter::from),
+            address1: f.address1.map(StringFilter::from),
+            address2: f.address2.map(StringFilter::from),
+            country: f.country.map(StringFilter::from),
+            email: f.email.map(StringFilter::from),
+            identifier: f.identifier.map(StringFilter::from),
+            name_or_code: f.name_or_code.map(StringFilter::from),
+            date_of_death: f.date_of_death.map(DateFilter::from),
+        }
+    }
+}
 
 pub struct PatientNode {
     pub store_id: String,
@@ -123,7 +170,7 @@ impl PatientNode {
     ) -> Result<ProgramEnrolmentResponse> {
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
-            .map(|f| f.to_domain_filter())
+            .map(ProgramEnrolmentFilter::from)
             .unwrap_or(ProgramEnrolmentFilter::new())
             .patient_id(EqualFilter::equal_to(&self.patient.id));
 
