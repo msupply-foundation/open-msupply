@@ -80,7 +80,7 @@ export const IntlProvider: FC<IntlProviderProps> = ({
           escapeValue: false, // not needed for react!!
         },
       });
-    console.info(`i18next initialized, language=${i18next.language}`);
+    console.log(`i18next initialized, language=${i18next.language}`);
   }, []);
 
   return (

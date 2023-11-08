@@ -1,5 +1,4 @@
 import {
-  Area,
   Bar,
   BarChart,
   CartesianGrid,
@@ -9,16 +8,13 @@ import {
   Line,
   LineChart,
   PieChart,
-  ResponsiveContainer,
   ScatterChart,
   Tooltip as ChartTooltip,
-  TooltipProps,
   XAxis,
   YAxis,
 } from 'recharts';
 
 export {
-  Area,
   Bar,
   BarChart,
   CartesianGrid,
@@ -29,9 +25,7 @@ export {
   Line,
   LineChart,
   PieChart,
-  ResponsiveContainer,
   ScatterChart,
-  TooltipProps,
   XAxis,
   YAxis,
 };

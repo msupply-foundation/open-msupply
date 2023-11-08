@@ -1,11 +1,10 @@
 import {
   SortBy,
-  FilterByWithBoolean,
+  FilterBy,
   StockLineNode,
   StockLineSortFieldInput,
   RecordPatch,
   UpdateStockLineInput,
-  setNullableInput,
 } from '@openmsupply-client/common';
 import { getSdk, StockLineRowFragment } from './operations.generated';
 import { Repack } from '../types';
@@ -37,7 +36,7 @@ const stockLineParsers = {
     patch: RecordPatch<StockLineRowFragment>
   ): UpdateStockLineInput => ({
     id: patch?.id,
-    location: setNullableInput('id', patch.location),
+    locationId: patch.locationId,
     costPricePerPack: patch.costPricePerPack,
     sellPricePerPack: patch.sellPricePerPack,
     expiryDate: patch.expiryDate,
@@ -68,7 +67,7 @@ export const getStockQueries = (stockApi: StockApi, storeId: string) => ({
       first: number;
       offset: number;
       sortBy: SortBy<StockLineNode>;
-      filterBy: FilterByWithBoolean | null;
+      filterBy: FilterBy | null;
     }): Promise<{
       nodes: StockLineRowFragment[];
       totalCount: number;

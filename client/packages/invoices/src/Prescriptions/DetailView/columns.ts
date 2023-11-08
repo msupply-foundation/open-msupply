@@ -1,4 +1,5 @@
 import {
+  Formatter,
   useColumns,
   getRowExpandColumn,
   getNotePopoverColumn,
@@ -161,14 +162,11 @@ export const usePrescriptionColumn = ({
             if ('lines' in row) {
               const { lines } = row;
               const expiryDate =
-                ArrayUtils.ifTheSameElseDefault(
-                  lines,
-                  'expiryDate',
-                  t('multiple')
-                ) ?? '';
-              return expiryDate;
+                ArrayUtils.ifTheSameElseDefault(lines, 'expiryDate', null) ??
+                '';
+              return Formatter.expiryDateString(expiryDate);
             } else {
-              return row.expiryDate ?? '';
+              return Formatter.expiryDateString(row.expiryDate);
             }
           },
           accessor: ({ rowData }) => {
@@ -177,7 +175,7 @@ export const usePrescriptionColumn = ({
               const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
-                t('multiple')
+                null
               );
               return expiryDate;
             } else {

@@ -1,7 +1,6 @@
 import React, { FC, PropsWithChildren, ReactNode } from 'react';
 import {
   createColumnWithDefaults,
-  FilterRule,
   TestingRouterContext,
 } from '@openmsupply-client/common';
 import { TestingProvider } from '../../utils/testing';
@@ -117,8 +116,7 @@ describe('filter', () => {
       );
     });
     expect(
-      (result.current.filter.filterBy?.['allocatedDatetime'] as FilterRule)
-        ?.beforeOrEqualTo
+      result.current.filter.filterBy?.['allocatedDatetime']?.beforeOrEqualTo
     ).toEqual(now);
   });
 
@@ -151,9 +149,9 @@ describe('filter', () => {
         'josh'
       );
     });
-    expect(
-      (result.current.filter.filterBy?.['comment'] as FilterRule)?.equalTo
-    ).toEqual('josh');
+    expect(result.current.filter.filterBy?.['comment']?.equalTo).toEqual(
+      'josh'
+    );
   });
 
   it('updates string filters', () => {

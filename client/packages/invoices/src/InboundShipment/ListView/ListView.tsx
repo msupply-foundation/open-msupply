@@ -35,7 +35,7 @@ export const InboundListView: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filters: [{ key: 'otherPartyName' }] });
+  } = useUrlQueryParams({ filterKey: 'otherPartyName' });
   const navigate = useNavigate();
   const modalController = useToggle();
   const { data, isError, isLoading } = useInbound.document.list();

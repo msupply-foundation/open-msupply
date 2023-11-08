@@ -4,7 +4,6 @@ import {
   AppBarContentPortal,
   SearchBar,
   FilterController,
-  FilterRule,
 } from '@openmsupply-client/common';
 import { MasterListRow } from '../types';
 
@@ -14,8 +13,7 @@ export const Toolbar: FC<{
   const t = useTranslation('common');
 
   const key = 'name' as keyof MasterListRow;
-  const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
+  const filterString = (filter.filterBy?.[key]?.like as string) || '';
   return (
     <AppBarContentPortal
       sx={{

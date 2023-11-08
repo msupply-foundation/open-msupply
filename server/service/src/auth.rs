@@ -34,14 +34,6 @@ pub enum Resource {
     // location
     QueryLocation,
     MutateLocation,
-    // sensor
-    QuerySensor,
-    MutateSensor,
-    // temperature log
-    QueryTemperatureLog,
-    // temperature breach
-    QueryTemperatureBreach,
-    MutateTemperatureBreach,
     // store
     QueryStore,
     // master list
@@ -104,7 +96,6 @@ pub enum Resource {
     ManualSync,
     QueryInventoryAdjustmentReasons,
     QueryStorePreferences,
-    ColdChainApi,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -127,48 +118,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::LocationMutate),
-        ]),
-    );
-
-    // sensor
-    map.insert(
-        Resource::QuerySensor,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorQuery),
-        ]),
-    );
-    map.insert(
-        Resource::MutateSensor,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorMutate),
-        ]),
-    );
-
-    // temperature breach (uses sensor permissions)
-    map.insert(
-        Resource::QueryTemperatureBreach,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorQuery),
-        ]),
-    );
-
-    map.insert(
-        Resource::MutateTemperatureBreach,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorMutate),
-        ]),
-    );
-
-    // temperature log (uses sensor permissions)
-    map.insert(
-        Resource::QueryTemperatureLog,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorQuery),
         ]),
     );
 
@@ -435,13 +384,6 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
-        ]),
-    );
-    map.insert(
-        Resource::ColdChainApi,
-        PermissionDSL::And(vec![
-            PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(Permission::ColdChainApi),
         ]),
     );
 

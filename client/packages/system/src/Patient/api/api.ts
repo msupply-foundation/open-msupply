@@ -12,7 +12,6 @@ import {
   CentralPatientSearchInput,
   InsertProgramPatientInput,
   UpdateProgramPatientInput,
-  FilterByWithBoolean,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -25,7 +24,7 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<PatientRowFragment>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: FilterBy | null;
 };
 
 export type ProgramEnrolmentListParams = {

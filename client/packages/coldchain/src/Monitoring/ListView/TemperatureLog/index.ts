@@ -1,1 +1,0 @@
-export { TemperatureLogList } from './TemperatureLogList';

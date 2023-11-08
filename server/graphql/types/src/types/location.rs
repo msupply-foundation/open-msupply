@@ -1,10 +1,9 @@
 use super::StockLineConnector;
 use async_graphql::*;
 use async_graphql::{dataloader::DataLoader, Context};
-use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
+use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
-use repository::StringFilter;
 use repository::{
     location::{Location, LocationFilter, LocationSort, LocationSortField},
     EqualFilter, LocationRow,
@@ -28,8 +27,8 @@ pub struct LocationSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct LocationFilterInput {
-    pub name: Option<StringFilterInput>,
-    pub code: Option<StringFilterInput>,
+    pub name: Option<EqualFilterStringInput>,
+    pub code: Option<EqualFilterStringInput>,
     pub on_hold: Option<bool>,
     pub id: Option<EqualFilterStringInput>,
 }
@@ -37,8 +36,8 @@ pub struct LocationFilterInput {
 impl From<LocationFilterInput> for LocationFilter {
     fn from(f: LocationFilterInput) -> Self {
         LocationFilter {
-            name: f.name.map(StringFilter::from),
-            code: f.code.map(StringFilter::from),
+            name: f.name.map(EqualFilter::from),
+            code: f.code.map(EqualFilter::from),
             id: f.id.map(EqualFilter::from),
             store_id: None,
             on_hold: f.on_hold,

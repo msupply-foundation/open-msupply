@@ -1,65 +1,26 @@
 import React, { FC, useEffect } from 'react';
 import {
   Autocomplete,
-  AutocompleteOption,
-  CloseIcon,
-  MenuItem,
-  useTranslation,
+  defaultOptionMapper,
+  getDefaultOptionRenderer,
 } from '@openmsupply-client/common';
 import { useLocation, LocationRowFragment } from '../api';
 
 interface LocationSearchInputProps {
-  selectedLocation: LocationRowFragment | null;
+  value: LocationRowFragment | null;
   width?: number | string;
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
   autoFocus?: boolean;
-  canRemove?: boolean;
 }
-
-interface LocationOption {
-  label: string;
-  value: string | null;
-}
-
-const optionRenderer = (
-  props: React.HTMLAttributes<HTMLLIElement>,
-  location: LocationOption
-) => {
-  const { style, ...rest } = props;
-
-  return location.value === null ? (
-    <MenuItem
-      {...rest}
-      sx={{
-        ...style,
-        display: 'inline-flex',
-        flex: 1,
-        width: '100%',
-        borderTop: '1px solid',
-        borderTopColor: 'divider',
-      }}
-      key={location.label}
-    >
-      <span style={{ whiteSpace: 'nowrap', flex: 1 }}>{location.label}</span>
-      <CloseIcon sx={{ color: 'gray.dark' }} />
-    </MenuItem>
-  ) : (
-    <MenuItem {...props} key={location.label}>
-      <span style={{ whiteSpace: 'nowrap' }}>{location.label}</span>
-    </MenuItem>
-  );
-};
 
 export const LocationSearchInput: FC<LocationSearchInputProps> = ({
-  selectedLocation,
+  value,
   width,
   onChange,
   disabled,
   autoFocus = false,
-  canRemove = false,
 }) => {
-  const t = useTranslation('inventory');
   const { fetchAsync, data, isLoading } = useLocation.document.listAll({
     direction: 'asc',
     key: 'name',
@@ -69,36 +30,25 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     fetchAsync();
   }, []);
 
-  const locations = data?.nodes || [];
-  const options: AutocompleteOption<LocationOption>[] = locations.map(l => ({
-    value: l.id,
-    label: l.name,
-  }));
-
-  if (canRemove && locations.length > 0 && selectedLocation !== null) {
-    options.push({ value: null, label: t('label.remove') });
-  }
-
   return (
-    <Autocomplete
+    <Autocomplete<LocationRowFragment>
       autoFocus={autoFocus}
       disabled={disabled}
       width={`${width}px`}
-      popperMinWidth={Number(width)}
       clearable={false}
       value={
-        selectedLocation && {
-          value: selectedLocation.id,
-          label: selectedLocation.name,
+        value && {
+          ...value,
+          label: value.name,
         }
       }
       loading={isLoading}
-      onChange={(_, option) => {
-        onChange(locations.find(l => l.id === option?.value) || null);
+      onChange={(_, location) => {
+        onChange(location);
       }}
-      options={options}
-      noOptionsText={t('messages.no-locations')}
-      renderOption={optionRenderer}
+      options={defaultOptionMapper(data?.nodes ?? [], 'name')}
+      renderOption={getDefaultOptionRenderer('name')}
+      isOptionEqualToValue={(option, value) => option?.id === value?.id}
     />
   );
 };

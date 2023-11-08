@@ -1,7 +1,6 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    generic_inputs::NullableUpdateInput,
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -11,14 +10,13 @@ use repository::StockLine;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     stock_line::{UpdateStockLine as ServiceInput, UpdateStockLineError as ServiceError},
-    NullableUpdate,
 };
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateStockLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    pub location: Option<NullableUpdateInput<String>>,
+    pub location_id: Option<String>,
     pub cost_price_per_pack: Option<f64>,
     pub sell_price_per_pack: Option<f64>,
     pub expiry_date: Option<NaiveDate>,
@@ -84,7 +82,7 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
-            location,
+            location_id,
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
@@ -95,9 +93,7 @@ impl UpdateInput {
 
         ServiceInput {
             id,
-            location: location.map(|location| NullableUpdate {
-                value: location.value,
-            }),
+            location_id,
             cost_price_per_pack,
             sell_price_per_pack,
             expiry_date,
@@ -149,7 +145,6 @@ mod test {
             StockLineServiceTrait, UpdateStockLine as ServiceInput,
             UpdateStockLineError as ServiceError,
         },
-        NullableUpdate,
     };
 
     type UpdateLineMethod = dyn Fn(ServiceInput) -> Result<StockLine, ServiceError> + Sync + Send;
@@ -264,9 +259,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: mock_stock_line_a().id,
-                    location: Some(NullableUpdate {
-                        value: Some("some location".to_string()),
-                    }),
+                    location_id: Some("some location".to_string()),
                     cost_price_per_pack: None,
                     sell_price_per_pack: None,
                     expiry_date: None,
@@ -287,7 +280,7 @@ mod test {
         let variables = json!({
           "input": {
             "id": "item_a_line_a",
-            "location": {"value":"some location"}
+            "locationId": "some location"
           },
           "storeId": "store_a"
         });

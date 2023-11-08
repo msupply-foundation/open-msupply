@@ -19,11 +19,8 @@ mod permission_tests {
     use graphql_reports::ReportQueries;
     use graphql_requisition::{RequisitionMutations, RequisitionQueries};
     use graphql_requisition_line::RequisitionLineMutations;
-    use graphql_sensor::{SensorMutations, SensorQueries};
     use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
     use graphql_stocktake_line::StocktakeLineMutations;
-    //use graphql_temperature_breach::TemperatureBreachQueries;
-    //use graphql_temperature_log::TemperatureLogQueries;
 
     // TODO for some reason Rust complained when using the Full{Query|Mutation} definition from
     // lib.rs. As a workaround these defs are copied here. Hopefully this should be possible but I
@@ -32,10 +29,6 @@ mod permission_tests {
     pub struct FullQuery(
         pub InvoiceQueries,
         pub LocationQueries,
-        pub SensorQueries,
-        //pub TemperatureBreachQueries,
-        //pub TemperatureBreachConfigQueries,
-        //pub TemperatureLogQueries,
         pub StocktakeQueries,
         pub GeneralQueries,
         pub RequisitionQueries,
@@ -47,8 +40,6 @@ mod permission_tests {
         pub InvoiceMutations,
         pub InvoiceLineMutations,
         pub LocationMutations,
-        pub SensorMutations,
-        //pub TemperatureBreachConfigMutations,
         pub StocktakeMutations,
         pub StocktakeLineMutations,
         pub BatchMutations,
@@ -61,10 +52,6 @@ mod permission_tests {
         FullQuery(
             InvoiceQueries,
             LocationQueries,
-            SensorQueries,
-            //TemperatureBreachQueries,
-            //TemperatureBreachConfigQueries,
-            //TemperatureLogQueries,
             StocktakeQueries,
             GeneralQueries,
             RequisitionQueries,
@@ -77,8 +64,6 @@ mod permission_tests {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
-            SensorMutations,
-            //TemperatureBreachConfigMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,
@@ -189,22 +174,6 @@ mod permission_tests {
               }"#,
                 expected: ResourceAccessRequest {
                     resource: Resource::QueryLocation,
-                    store_id: Some("some".to_string()),
-                },
-            },
-            TestData {
-                name: "sensors",
-                query: r#"query Query {
-              sensors(storeId: "") {
-                ... on SensorConnector {
-                  nodes {
-                    id
-                  }
-                }
-              }
-            }"#,
-                expected: ResourceAccessRequest {
-                    resource: Resource::QuerySensor,
                     store_id: Some("some".to_string()),
                 },
             },
@@ -947,21 +916,6 @@ mod permission_tests {
               }"#,
                 expected: ResourceAccessRequest {
                     resource: Resource::MutateLocation,
-                    store_id: Some("some".to_string()),
-                },
-            },
-            TestData {
-                name: "updateSensor",
-                query: r#"mutation Mutation {
-              updateSensor(input: {id: ""}, storeId: "") {
-                ... on SensorNode {
-                  id
-                  name
-                }
-              }
-            }"#,
-                expected: ResourceAccessRequest {
-                    resource: Resource::MutateSensor,
                     store_id: Some("some".to_string()),
                 },
             },

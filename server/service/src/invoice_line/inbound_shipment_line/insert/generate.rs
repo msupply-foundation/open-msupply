@@ -69,7 +69,7 @@ fn generate_line(
         sell_price_per_pack,
         cost_price_per_pack,
         number_of_packs,
-        location,
+        location_id,
         total_before_tax,
         tax: _,
     }: InsertInboundShipmentLine,
@@ -82,11 +82,12 @@ fn generate_line(
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
+
     InvoiceLineRow {
         id,
         invoice_id,
         item_id,
-        location_id: location.map(|l| l.value).unwrap_or_default(),
+        location_id,
         pack_size: u32_to_i32(pack_size),
         batch,
         expiry_date,

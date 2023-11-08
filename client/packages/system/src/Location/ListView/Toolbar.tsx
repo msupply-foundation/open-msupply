@@ -24,7 +24,7 @@ export const Toolbar: FC<{
 }> = ({ data }) => {
   const t = useTranslation('inventory');
   const { mutateAsync: deleteLocation } = useLocation.document.delete();
-  const { error, info, success } = useNotification();
+  const { success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -48,22 +48,16 @@ export const Toolbar: FC<{
             }
           });
         })
-      )
-        .then(() => {
-          setDeleteErrors(errors);
-          if (errors.length === 0) {
-            const deletedMessage = t('messages.deleted-locations', {
-              count: numberSelected,
-            });
-            const successSnack = success(deletedMessage);
-            successSnack();
-          }
-        })
-        .catch(_ =>
-          error(
-            t('messages.error-deleting-locations', { count: numberSelected })
-          )()
-        );
+      ).then(() => {
+        setDeleteErrors(errors);
+        if (errors.length === 0) {
+          const deletedMessage = t('messages.deleted-locations', {
+            count: numberSelected,
+          });
+          const successSnack = success(deletedMessage);
+          successSnack();
+        }
+      });
     } else {
       const selectRowsSnack = info(t('messages.select-rows-to-delete'));
       selectRowsSnack();

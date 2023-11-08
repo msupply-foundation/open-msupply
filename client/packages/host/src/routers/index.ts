@@ -4,4 +4,3 @@ export * from './DistributionRouter';
 export * from './InventoryRouter';
 export * from './ReplenishmentRouter';
 export * from './DispensaryRouter';
-export * from './ColdChainRouter';

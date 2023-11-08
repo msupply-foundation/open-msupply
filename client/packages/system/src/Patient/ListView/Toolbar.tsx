@@ -2,13 +2,26 @@ import React, { FC } from 'react';
 import {
   useTranslation,
   AppBarContentPortal,
-  FilterMenu,
+  SearchBar,
   FilterController,
   Box,
 } from '@openmsupply-client/common';
+import { PatientRowFragment } from '../api';
 
-export const Toolbar: FC<{ filter: FilterController }> = () => {
+export const Toolbar: FC<{
+  filter: FilterController;
+}> = ({ filter }) => {
   const t = useTranslation('dispensary');
+
+  const firstNameFilterString =
+    (filter.filterBy?.['firstName' as keyof PatientRowFragment]
+      ?.like as string) || '';
+  const lastNameFilterString =
+    (filter.filterBy?.['lastName' as keyof PatientRowFragment]
+      ?.like as string) || '';
+  const identifierFilterString =
+    (filter.filterBy?.['identifier' as keyof PatientRowFragment]
+      ?.like as string) || '';
 
   return (
     <AppBarContentPortal
@@ -20,41 +33,26 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
       }}
     >
       <Box display="flex" gap={1}>
-        <FilterMenu
-          filters={[
-            {
-              type: 'text',
-              name: t('label.first-name'),
-              urlParameter: 'firstName',
-              placeholder: t('placeholder.search-by-first-name'),
-            },
-            {
-              type: 'text',
-              name: t('label.last-name'),
-              urlParameter: 'lastName',
-              placeholder: t('placeholder.search-by-last-name'),
-            },
-            {
-              type: 'text',
-              name: t('label.patient-id'),
-              urlParameter: 'identifier',
-              placeholder: t('placeholder.search-by-identifier'),
-            },
-            {
-              type: 'date',
-              name: t('label.date-of-birth'),
-              urlParameter: 'dateOfBirth',
-            },
-            {
-              type: 'enum',
-              name: t('label.gender'),
-              urlParameter: 'gender',
-              options: [
-                { label: 'Male', value: 'MALE' },
-                { label: 'Female', value: 'FEMALE' },
-              ],
-            },
-          ]}
+        <SearchBar
+          placeholder={t('placeholder.search-by-first-name')}
+          value={firstNameFilterString}
+          onChange={newValue => {
+            filter.onChangeStringFilterRule('firstName', 'like', newValue);
+          }}
+        />
+        <SearchBar
+          placeholder={t('placeholder.search-by-last-name')}
+          value={lastNameFilterString}
+          onChange={newValue => {
+            filter.onChangeStringFilterRule('lastName', 'like', newValue);
+          }}
+        />
+        <SearchBar
+          placeholder={t('placeholder.search-by-identifier')}
+          value={identifierFilterString}
+          onChange={newValue => {
+            filter.onChangeStringFilterRule('identifier', 'like', newValue);
+          }}
         />
       </Box>
     </AppBarContentPortal>

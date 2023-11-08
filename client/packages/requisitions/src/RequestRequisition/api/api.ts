@@ -2,7 +2,7 @@ import {
   UpdateRequestRequisitionLineInput,
   InsertRequestRequisitionLineInput,
   RequisitionNodeType,
-  FilterByWithBoolean,
+  FilterBy,
   SortBy,
   RequisitionNodeStatus,
   UpdateRequestRequisitionInput,
@@ -22,7 +22,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<RequestRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 const requestParser = {
