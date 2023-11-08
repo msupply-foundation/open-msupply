@@ -41,7 +41,7 @@ const MASTER_LIST_2: (&'static str, &'static str) = (
     "isPatientList": false,
     "is_hiv": false,
     "isSupplierHubCatalog": false,
-    "inactive": true
+    "inactive": false
 }"#,
 );
 
@@ -66,7 +66,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 name: "District Store 2".to_owned(),
                 code: "".to_owned(),
                 description: "note 2".to_owned(),
-                is_active: false,
+                is_active: true,
             }),
         ),
     ]
