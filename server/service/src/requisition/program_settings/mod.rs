@@ -89,6 +89,7 @@ mod test {
         // Two programs, with master list both joined to store a
         let master_list1 = MasterListRow {
             id: "master_list1".to_string(),
+            is_active: true,
             ..Default::default()
         };
         let master_list_name_join1 = MasterListNameJoinRow {
@@ -108,6 +109,7 @@ mod test {
         };
         let master_list2 = MasterListRow {
             id: "master_list2".to_string(),
+            is_active: true,
             ..Default::default()
         };
         let master_list_name_join2 = MasterListNameJoinRow {
