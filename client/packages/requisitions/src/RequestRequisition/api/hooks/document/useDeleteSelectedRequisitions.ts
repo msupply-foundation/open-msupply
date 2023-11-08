@@ -3,13 +3,19 @@ import {
   useTableStore,
   RequisitionNodeStatus,
   useDeleteConfirmation,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { RequestRowFragment } from '../../operations.generated';
 import { useDeleteRequests } from './useDeleteRequests';
 import { useRequests } from './useRequests';
 
 export const useDeleteSelectedRequisitions = () => {
-  const { data: rows } = useRequests({ enabled: false });
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+  });
+  const { data: rows } = useRequests(queryParams, {
+    enabled: false,
+  });
   const { mutateAsync } = useDeleteRequests();
   const t = useTranslation('replenishment');
   const { selectedRows } = useTableStore(state => ({
