@@ -63,6 +63,8 @@ impl<'a> MasterListRepository<'a> {
 
     pub fn create_filtered_query(filter: Option<MasterListFilter>) -> BoxedMasterListQuery {
         let mut query = master_list_dsl::master_list.into_boxed();
+        // Filter out inactive master lists by default
+        query = query.filter(master_list_dsl::is_active.eq(true));
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, master_list_dsl::id);
