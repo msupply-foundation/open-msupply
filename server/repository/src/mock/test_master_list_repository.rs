@@ -75,6 +75,7 @@ pub fn mock_test_master_list_name_filter1() -> FullMockMasterList {
             name: id.clone(),
             code: id.clone(),
             description: id.clone(),
+            is_active: true,
         },
         joins: vec![
             MasterListNameJoinRow {
@@ -104,6 +105,7 @@ pub fn mock_test_master_list_name_filter2() -> FullMockMasterList {
             name: id.clone(),
             code: id.clone(),
             description: id.clone(),
+            is_active: true,
         },
         joins: vec![
             MasterListNameJoinRow {
@@ -133,6 +135,7 @@ pub fn mock_test_master_list_name_filter3() -> FullMockMasterList {
             name: id.clone(),
             code: id.clone(),
             description: id.clone(),
+            is_active: true,
         },
         joins: vec![
             MasterListNameJoinRow {
