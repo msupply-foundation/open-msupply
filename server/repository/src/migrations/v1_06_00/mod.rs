@@ -4,6 +4,8 @@ use crate::StorageConnection;
 mod contact_trace;
 mod plugin_data;
 
+pub(crate) struct V1_06_00;
+
 impl Migration for V1_06_00 {
     fn version(&self) -> Version {
         Version::from_str("1.6.0")
