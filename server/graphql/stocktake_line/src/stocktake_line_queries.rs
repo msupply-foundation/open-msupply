@@ -2,14 +2,15 @@ use async_graphql::*;
 use graphql_core::generic_filters::EqualFilterStringInput;
 use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
 use graphql_core::pagination::PaginationInput;
-use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
+use graphql_core::standard_graphql_error::{
+    list_error_to_gql_err, validate_auth, StandardGraphqlError,
+};
 use graphql_core::ContextExt;
 use graphql_types::types::{StocktakeLineConnector, StocktakeLineNode};
 use repository::*;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::stocktake_line::query::GetStocktakeLinesError;
-use service::ListError;
 
 #[derive(InputObject, Clone)]
 pub struct StocktakeLineFilterInput {
@@ -132,11 +133,7 @@ pub fn stocktake_lines(
             GetStocktakeLinesError::InvalidStocktake => {
                 StandardGraphqlError::BadUserInput(formatted_error)
             }
-            GetStocktakeLinesError::ListError(err) => match err {
-                ListError::DatabaseError(err) => err.into(),
-                ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(formatted_error),
-                ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(formatted_error),
-            },
+            GetStocktakeLinesError::ListError(err) => return Err(list_error_to_gql_err(err)),
         };
         Err(graphql_error.extend())
     }
