@@ -42,9 +42,17 @@ export const RequestRequisitionListView: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filters: [{ key: 'otherPartyName' }] });
-  const { data, isError, isLoading } = useRequest.document.list();
+  } = useUrlQueryParams({
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+    filters: [
+      { key: 'otherPartyName' },
+      { key: 'status', condition: 'equalTo' },
+    ],
+  });
+  const queryParams = { ...filter, sortBy, first, offset };
   const pagination = { page, first, offset };
+
+  const { data, isError, isLoading } = useRequest.document.list(queryParams);
   useDisableRequestRows(data?.nodes);
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
 
