@@ -12,6 +12,7 @@ import {
   Widget,
 } from '@openmsupply-client/common';
 import {
+  DateUtils,
   useFormatDateTime,
   useFormatNumber,
   useTranslation,
@@ -40,14 +41,27 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
     error: requisitionCountError,
   } = useDashboard.statistics.requisitions();
 
-  const { customDate } = useFormatDateTime();
-  const dateTimeFormat = 'yyyy-MM-dd HH:mm';
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const endDay = new Date(today);
-  endDay.setHours(23, 59, 59, 999);
-  const inAWeek = new Date(endDay);
-  inAWeek.setDate(inAWeek.getDate() + 7);
+  const { customDate, urlQueryDateTime } = useFormatDateTime();
+
+  const getTodayUrlQuery = () => {
+    const startOfDay = DateUtils.startOfDay(new Date());
+    const endOfDay = DateUtils.endOfDay(new Date());
+
+    return `${customDate(
+      startOfDay,
+      urlQueryDateTime
+    )}${RANGE_SPLIT_CHAR}${customDate(endOfDay, urlQueryDateTime)}`;
+  };
+
+  const getThisWeekUrlQuery = () => {
+    const previoudMonday = DateUtils.previousMonday(new Date());
+    const endOfWeek = DateUtils.endOfWeek(new Date());
+
+    return `${customDate(
+      previoudMonday,
+      urlQueryDateTime
+    )}${RANGE_SPLIT_CHAR}${customDate(endOfWeek, urlQueryDateTime)}`;
+  };
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {
@@ -96,11 +110,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                   link: RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InboundShipment)
                     .addQuery({
-                      createdDatetime: `${customDate(
-                        today,
-                        dateTimeFormat
-                      )}${RANGE_SPLIT_CHAR}${customDate(endDay, dateTimeFormat)}
-                        `,
+                      createdDatetime: getTodayUrlQuery(),
                     })
                     .build(),
                 },
@@ -110,14 +120,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                   link: RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InboundShipment)
                     .addQuery({
-                      createdDatetime: `${customDate(
-                        today,
-                        dateTimeFormat
-                      )}${RANGE_SPLIT_CHAR}${customDate(
-                        inAWeek,
-                        dateTimeFormat
-                      )}
-                        `,
+                      createdDatetime: getThisWeekUrlQuery(),
                     })
                     .build(),
                 },

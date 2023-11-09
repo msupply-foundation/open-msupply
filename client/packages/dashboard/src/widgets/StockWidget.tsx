@@ -2,6 +2,7 @@ import React from 'react';
 import {
   ApiException,
   ButtonWithIcon,
+  DateUtils,
   FnUtils,
   Grid,
   PlusCircleIcon,
@@ -49,11 +50,18 @@ export const StockWidget: React.FC = () => {
     errorSnack();
   };
 
-  const dateFormat = 'yyyy-MM-dd';
-  const { customDate } = useFormatDateTime();
+  const { customDate, urlQueryDate } = useFormatDateTime();
   const today = new Date();
-  const inAMonth = new Date(today);
-  inAMonth.setMonth(inAMonth.getMonth() + 1);
+  const inAMonth = DateUtils.addMonths(today, 1);
+
+  const getExpiredUrlQuery = `${RANGE_SPLIT_CHAR}${customDate(
+    today,
+    urlQueryDate
+  )}`;
+  const getExpiredInAMonthUrlQuery = `${customDate(
+    today,
+    urlQueryDate
+  )}${RANGE_SPLIT_CHAR}${customDate(inAMonth, urlQueryDate)}`;
 
   return (
     <>
@@ -95,10 +103,7 @@ export const StockWidget: React.FC = () => {
                   link: RouteBuilder.create(AppRoute.Inventory)
                     .addPart(AppRoute.Stock)
                     .addQuery({
-                      expiryDate: `${RANGE_SPLIT_CHAR}${customDate(
-                        today,
-                        dateFormat
-                      )}`,
+                      expiryDate: getExpiredUrlQuery,
                     })
                     .build(),
                 },
@@ -110,10 +115,7 @@ export const StockWidget: React.FC = () => {
                   link: RouteBuilder.create(AppRoute.Inventory)
                     .addPart(AppRoute.Stock)
                     .addQuery({
-                      expiryDate: `${customDate(
-                        today,
-                        dateFormat
-                      )}${RANGE_SPLIT_CHAR}${customDate(inAMonth, dateFormat)}`,
+                      expiryDate: getExpiredInAMonthUrlQuery,
                     })
                     .build(),
                 },
