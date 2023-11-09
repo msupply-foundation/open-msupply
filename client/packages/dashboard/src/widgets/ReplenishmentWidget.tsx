@@ -54,11 +54,15 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   };
 
   const getThisWeekUrlQuery = () => {
-    const previoudMonday = DateUtils.previousMonday(new Date());
-    const endOfWeek = DateUtils.endOfWeek(new Date());
+    const previousMonday = DateUtils.startOfDay(
+      DateUtils.previousMonday(new Date())
+    );
+    const endOfWeek = DateUtils.endOfDay(
+      DateUtils.endOfWeek(new Date(), { weekStartsOn: 1 })
+    );
 
     return `${customDate(
-      previoudMonday,
+      previousMonday,
       urlQueryDateTime
     )}${RANGE_SPLIT_CHAR}${customDate(endOfWeek, urlQueryDateTime)}`;
   };
