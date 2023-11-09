@@ -67,8 +67,8 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             },
             {
               type: 'boolean',
-              name: t('label.acknowledged'),
-              urlParameter: 'acknowledged',
+              name: t('label.unacknowledged'),
+              urlParameter: 'unacknowledged',
             },
           ]}
         />
