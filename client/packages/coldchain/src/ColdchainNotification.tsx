@@ -98,7 +98,7 @@ export const ColdchainNotification = () => {
     filterBy: { acknowledged: false },
   });
   const { localisedDistanceToNow } = useFormatDateTime();
-  const breach = breaches?.nodes[0];
+  const breach = breaches?.nodes?.[0];
 
   if (!breach) return null;
 
