@@ -27,6 +27,7 @@ import {
   endOfDay,
   startOfYear,
   formatRelative,
+  formatDistance,
   formatDistanceToNow,
   formatRFC3339,
   previousMonday,
@@ -203,6 +204,17 @@ export const useFormatDateTime = () => {
     return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
   };
 
+  const localisedDistance = (
+    startDate: Date | string | number,
+    endDate: Date | string | number
+  ) => {
+    const from = dateInputHandler(startDate);
+    const to = dateInputHandler(endDate);
+    return isValid(from) && isValid(to)
+      ? formatDistance(from, to, { locale })
+      : '';
+  };
+
   return {
     urlQueryDate,
     urlQueryDateTime,
@@ -211,6 +223,7 @@ export const useFormatDateTime = () => {
     dayMonthTime,
     localisedDate,
     localisedDateTime,
+    localisedDistance,
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,
