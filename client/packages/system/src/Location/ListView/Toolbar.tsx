@@ -104,13 +104,9 @@ export const Toolbar: FC<{
               urlParameter: 'name',
             },
             {
-              type: 'enum',
+              type: 'boolean',
               name: t('label.on-hold'),
               urlParameter: 'onHold',
-              options: [
-                { label: t('label.yes'), value: 'true' },
-                { label: t('label.no'), value: 'false' },
-              ],
             },
           ]}
         />
