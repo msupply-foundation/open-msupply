@@ -12,6 +12,7 @@ import {
   ContactTraceSortFieldInput,
   UpdatePatientInput,
   BasicSpinner,
+  DocumentRegistryCategoryNode,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -101,7 +102,7 @@ const PatientDetailView = ({
   const { data: patientRegistries, isLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
-        documentType: { equalTo: 'Patient' },
+        category: { equalTo: DocumentRegistryCategoryNode.Patient },
       },
     });
   const patientRegistry = patientRegistries?.nodes[0];
