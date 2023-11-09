@@ -25,6 +25,7 @@ import {
   startOfDay,
   startOfYear,
   formatRelative,
+  formatDistance,
   formatDistanceToNow,
   formatRFC3339,
 } from 'date-fns';
@@ -192,12 +193,24 @@ export const useFormatDateTime = () => {
     return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
   };
 
+  const localisedDistance = (
+    startDate: Date | string | number,
+    endDate: Date | string | number
+  ) => {
+    const from = dateInputHandler(startDate);
+    const to = dateInputHandler(endDate);
+    return isValid(from) && isValid(to)
+      ? formatDistance(from, to, { locale })
+      : '';
+  };
+
   return {
     customDate,
     dayMonthShort,
     dayMonthTime,
     localisedDate,
     localisedDateTime,
+    localisedDistance,
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,

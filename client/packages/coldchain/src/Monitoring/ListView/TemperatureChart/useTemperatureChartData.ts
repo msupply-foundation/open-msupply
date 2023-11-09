@@ -10,10 +10,21 @@ const BREACH_RANGE = 2;
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
-  const {
-    queryParams,
-  } = useUrlQueryParams({
-    initialSort: {key: 'datetime', dir: 'desc'},
+  const { filter, queryParams } = useUrlQueryParams({
+    initialSort: { key: 'datetime', dir: 'desc' },
+    filters: [
+      { key: 'datetime', condition: 'between' },
+      {
+        key: 'sensor.name',
+      },
+      {
+        key: 'location.name',
+      },
+      {
+        key: 'temperatureBreach.type',
+        condition: 'equalTo',
+      },
+    ],
   });
 
   const { data, isLoading } = useTemperatureLog.document.list(queryParams);
@@ -107,12 +118,13 @@ export const useTemperatureChartData = () => {
       temperature: 8,
     })),
   };
-  const yAxisDomain = [
+  const yAxisDomain: [number, number] = [
     minTemperature - BREACH_RANGE,
     maxTemperature + BREACH_RANGE,
   ];
 
   return {
+    filter,
     hasData: logs.length > 0,
     isLoading,
     sensors,

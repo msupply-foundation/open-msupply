@@ -9,6 +9,8 @@ import {
   AppBarButtons,
   useMatch,
   AppBarTabs,
+  useAuthContext,
+  Theme,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SectionIcon } from './SectionIcon';
@@ -26,31 +28,30 @@ const StyledContainer = styled(Box)(({ theme }) => ({
 export const AppBar: React.FC = () => {
   const { ref } = useAppBarRect();
   const isDashboard = useMatch(AppRoute.Dashboard);
+  const { store } = useAuthContext();
+  const hasVaccineModule = store?.preferences.vaccineModule ?? false;
+  const containerStyle = isDashboard
+    ? { borderBottom: 0, minHeight: '50px' }
+    : { boxShadow: (theme: Theme) => theme.shadows[2] };
 
-  return isDashboard ? (
+  return (
     <>
-      <ColdchainNotification />
-      <StyledContainer ref={ref} sx={{ borderBottom: 0, minHeight: '50px' }}>
+      {hasVaccineModule && <ColdchainNotification />}
+      <StyledContainer ref={ref} sx={containerStyle}>
         <Toolbar disableGutters>
+          {!isDashboard && (
+            <>
+              <Box style={{ marginInlineEnd: 5 }}>
+                <SectionIcon />
+              </Box>
+
+              <Breadcrumbs />
+            </>
+          )}
           <AppBarButtons />
         </Toolbar>
         <AppBarContent />
-      </StyledContainer>
-    </>
-  ) : (
-    <>
-      <ColdchainNotification />
-      <StyledContainer ref={ref} sx={{ boxShadow: theme => theme.shadows[2] }}>
-        <Toolbar disableGutters>
-          <Box style={{ marginInlineEnd: 5 }}>
-            <SectionIcon />
-          </Box>
-
-          <Breadcrumbs />
-          <AppBarButtons />
-        </Toolbar>
-        <AppBarContent />
-        <AppBarTabs />
+        {!isDashboard && <AppBarTabs />}
       </StyledContainer>
     </>
   );
