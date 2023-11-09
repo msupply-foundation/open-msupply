@@ -52,6 +52,7 @@ pub fn report_sort_to_typed_sort<T: strum::IntoEnumIterator + serde::Serialize>(
                 serde_json::to_string(variant)
                     .unwrap_or_default()
                     .trim_matches('"')
+                    .to_lowercase()
                     == key.to_lowercase()
             })
             .map(|variant| (variant, desc)),
