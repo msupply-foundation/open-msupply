@@ -2,13 +2,13 @@ import {
   UpdateRequestRequisitionLineInput,
   InsertRequestRequisitionLineInput,
   RequisitionNodeType,
-  FilterByWithBoolean,
   SortBy,
   RequisitionNodeStatus,
   UpdateRequestRequisitionInput,
   UpdateRequestRequisitionStatusInput,
   RequisitionSortFieldInput,
   InsertProgramRequestRequisitionInput,
+  RequisitionFilterInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import {
@@ -22,7 +22,7 @@ export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<RequestRowFragment>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: RequisitionFilterInput | null;
 };
 
 const requestParser = {

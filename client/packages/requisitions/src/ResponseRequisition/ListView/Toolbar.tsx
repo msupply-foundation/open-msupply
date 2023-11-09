@@ -5,6 +5,7 @@ import {
   FilterMenu,
   Box,
   useTranslation,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{
@@ -35,8 +36,11 @@ export const Toolbar: FC<{
               name: t('label.status'),
               urlParameter: 'status',
               options: [
-                { label: t('label.new'), value: 'NEW' },
-                { label: t('label.finalised'), value: 'FINALISED' },
+                { label: t('label.new'), value: RequisitionNodeStatus.New },
+                {
+                  label: t('label.finalised'),
+                  value: RequisitionNodeStatus.Finalised,
+                },
               ],
             },
           ]}
