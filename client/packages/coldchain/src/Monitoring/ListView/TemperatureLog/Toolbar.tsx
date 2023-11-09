@@ -54,7 +54,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             },
             {
               type: 'enum',
-              name: t('label.type'),
+              name: t('label.breach-type'),
               urlParameter: 'temperatureBreach.type',
               options: [
                 {
