@@ -30,9 +30,6 @@ pub use self::temperature_breach::*;
 pub mod temperature_log;
 pub use self::temperature_log::*;
 
-pub mod temperature_notification;
-pub use self::temperature_notification::*;
-
 pub mod master_list;
 pub use self::master_list::*;
 

@@ -20,10 +20,7 @@ use service::{
     temperature_breach::query::get_max_or_min_breach_temperature, usize_to_u32, ListResult,
 };
 
-use super::{
-    LocationFilterInput, LocationNode, SensorFilterInput, SensorNode,
-    TemperatureNotificationFilterInput,
-};
+use super::{LocationFilterInput, LocationNode, SensorFilterInput, SensorNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum TemperatureBreachNodeType {
@@ -80,21 +77,6 @@ impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
             store_id: None,
             sensor: f.sensor.map(SensorFilterInput::into),
             location: f.location.map(LocationFilterInput::into),
-        }
-    }
-}
-
-impl From<TemperatureNotificationFilterInput> for TemperatureBreachFilter {
-    fn from(f: TemperatureNotificationFilterInput) -> Self {
-        TemperatureBreachFilter {
-            acknowledged: f.acknowledged,
-            id: None,
-            r#type: None,
-            store_id: None,
-            start_datetime: None,
-            end_datetime: None,
-            sensor: None,
-            location: None,
         }
     }
 }
