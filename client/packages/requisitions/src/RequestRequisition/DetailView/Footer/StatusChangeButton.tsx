@@ -21,7 +21,7 @@ const getStatusOptions = (
   const options: [
     SplitButtonOption<RequisitionNodeStatus>,
     SplitButtonOption<RequisitionNodeStatus>,
-    SplitButtonOption<RequisitionNodeStatus>
+    SplitButtonOption<RequisitionNodeStatus>,
   ] = [
     {
       value: RequisitionNodeStatus.Draft,
@@ -67,9 +67,10 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update, comment } = useRequest.document.fields([
+  const { status, update, comment, lines } = useRequest.document.fields([
     'status',
     'comment',
+    'lines',
   ]);
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
@@ -131,11 +132,11 @@ const useStatusChangeButton = () => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
-  return { options, selectedOption, setSelectedOption, getConfirmation };
+  return { options, selectedOption, setSelectedOption, getConfirmation, lines };
 };
 
 export const StatusChangeButton = () => {
-  const { selectedOption, getConfirmation } = useStatusChangeButton();
+  const { selectedOption, getConfirmation, lines } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission } = useAuthContext();
   const t = useTranslation('app');
@@ -155,7 +156,7 @@ export const StatusChangeButton = () => {
           <ButtonWithIcon
             color="secondary"
             variant="contained"
-            disabled={!hasPermission}
+            disabled={!hasPermission || lines?.totalCount === 0}
             label={selectedOption.label}
             Icon={<ArrowRightIcon />}
             onClick={() => getConfirmation()}
