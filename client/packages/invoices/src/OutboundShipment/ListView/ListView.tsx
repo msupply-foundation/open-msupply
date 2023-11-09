@@ -35,12 +35,19 @@ const OutboundShipmentListViewComponent: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
+  } = useUrlQueryParams({
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+    filters: [
+      { key: 'otherPartyName' },
+      { key: 'status', condition: 'equalTo' },
+    ],
+  });
   const navigate = useNavigate();
   const modalController = useToggle();
-
-  const { data, isError, isLoading } = useOutbound.document.list();
   const pagination = { page, first, offset };
+  const queryParams = { ...filter, sortBy, first, offset };
+
+  const { data, isError, isLoading } = useOutbound.document.list(queryParams);
   useDisableOutboundRows(data?.nodes);
 
   const columns = useColumns<OutboundRowFragment>(
