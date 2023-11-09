@@ -15,6 +15,7 @@ import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
 import { DateFilterDefinition, DateFilter } from './DateFilter';
 import { NumberFilter, NumberFilterDefinition } from './NumberFilter';
+import { BooleanFilter, BooleanFilterDefinition } from './BooleanFilter';
 
 export interface FilterDefinitionCommon {
   name: string;
@@ -31,7 +32,8 @@ type FilterDefinition =
   | TextFilterDefinition
   | EnumFilterDefinition
   | DateFilterDefinition
-  | NumberFilterDefinition;
+  | NumberFilterDefinition
+  | BooleanFilterDefinition;
 
 interface FilterDefinitions {
   filters: (FilterDefinition | GroupFilterDefinition)[];
@@ -198,6 +200,10 @@ const getFilterComponent = (
           }`}
           filterDefinition={filter}
         />
+      );
+    case 'boolean':
+      return (
+        <BooleanFilter key={filter.urlParameter} filterDefinition={filter} />
       );
     default:
       return null;
