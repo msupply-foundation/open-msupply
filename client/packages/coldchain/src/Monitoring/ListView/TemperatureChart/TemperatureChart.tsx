@@ -29,11 +29,13 @@ const Chart = ({
   hasData,
   isLoading,
   sensors,
+  yAxisDomain,
 }: {
   breachConfig: BreachConfig;
   hasData: boolean;
   isLoading: boolean;
   sensors: Sensor[];
+  yAxisDomain: [number, number];
 }) => {
   const t = useTranslation('coldchain');
   const theme = useTheme();
@@ -108,7 +110,11 @@ const Chart = ({
             tick={{ fontSize: 12 }}
             allowDuplicatedCategory={false}
           />
-          <YAxis tick={{ fontSize: 12 }} tickFormatter={formatTemperature} />
+          <YAxis
+            tick={{ fontSize: 12 }}
+            tickFormatter={formatTemperature}
+            domain={yAxisDomain}
+          />
           <ChartTooltip content={TemperatureTooltip} />
           <Legend
             align="right"
@@ -199,7 +205,7 @@ const Chart = ({
 };
 
 export const TemperatureChart = () => {
-  const { breachConfig, filter, hasData, isLoading, sensors } =
+  const { breachConfig, filter, hasData, isLoading, sensors, yAxisDomain } =
     useTemperatureChartData();
   return (
     <>
@@ -209,6 +215,7 @@ export const TemperatureChart = () => {
         hasData={hasData}
         isLoading={isLoading}
         sensors={sensors}
+        yAxisDomain={yAxisDomain}
       />
     </>
   );
