@@ -37,7 +37,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
       filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
     });
 
-  const [documentRegistry, setDocumentRegistry] = useState<
+  const [, setDocumentRegistry] = useState<
     DocumentRegistryFragment | undefined
   >();
   const { currentTab, onChangeTab } = useTabs(Tabs.Form);
@@ -96,7 +96,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
     setCreateNewPatient({
       id: FnUtils.generateUUID(),
     });
-  }, [documentRegistry, setCreateNewPatient]);
+  }, [setCreateNewPatient]);
 
   if (isLoading) {
     return null;
