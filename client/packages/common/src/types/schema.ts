@@ -576,6 +576,7 @@ export type ContactTraceNode = {
   /** Returns the matching program enrolment for the root patient of this contact trace */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   programId: Scalars['String']['output'];
+  /** Relationship between the patient and the contact, e.g. mother, next of kin, etc. */
   relationship?: Maybe<Scalars['String']['output']>;
   storeId?: Maybe<Scalars['String']['output']>;
 };
@@ -4839,18 +4840,17 @@ export type TemperatureBreachConnector = {
 };
 
 export type TemperatureBreachFilterInput = {
-  acknowledged?: InputMaybe<Scalars['Boolean']['input']>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   location?: InputMaybe<LocationFilterInput>;
   sensor?: InputMaybe<SensorFilterInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
   type?: InputMaybe<EqualFilterTemperatureBreachRowTypeInput>;
+  unacknowledged?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type TemperatureBreachNode = {
   __typename: 'TemperatureBreachNode';
-  acknowledged: Scalars['Boolean']['output'];
   durationMilliseconds: Scalars['Int']['output'];
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -4860,6 +4860,7 @@ export type TemperatureBreachNode = {
   sensorId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
   type: TemperatureBreachNodeType;
+  unacknowledged: Scalars['Boolean']['output'];
 };
 
 export enum TemperatureBreachNodeType {

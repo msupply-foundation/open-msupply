@@ -41,7 +41,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             location_id: None,
             r#type: TemperatureBreachRowType::ColdConsecutive,
             duration_milliseconds: 86400,
-            acknowledged: false,
+            unacknowledged: true,
             sensor_id: "cf5812e0c33911eb9757779d39ae2dbd".to_string(),
             threshold_minimum: -273.0,
             threshold_maximum: 2.0,

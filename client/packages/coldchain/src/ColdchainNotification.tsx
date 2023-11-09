@@ -61,7 +61,7 @@ const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
             .addQuery({
               sort: TemperatureBreachSortFieldInput.StartDatetime,
             })
-            .addQuery({ acknowledged: false })
+            .addQuery({ unacknowledged: true })
             .addQuery({ 'sensor.name': breach.sensor?.name ?? '' })
             .build()
         )
@@ -95,7 +95,7 @@ export const ColdchainNotification = () => {
     first: 1,
     offset: 0,
     sortBy: { key: 'startDatetime', direction: 'desc', isDesc: true },
-    filterBy: { acknowledged: false },
+    filterBy: { unacknowledged: true },
   });
   const { localisedDistanceToNow } = useFormatDateTime();
   const breach = breaches?.nodes[0];
