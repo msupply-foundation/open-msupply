@@ -20,7 +20,7 @@ const getStatusOptions = (
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>
+    SplitButtonOption<InvoiceNodeStatus>,
   ] = [
     {
       value: InvoiceNodeStatus.New,
@@ -71,7 +71,7 @@ const getManualStatusOptions = (
   const options: [
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>
+    SplitButtonOption<InvoiceNodeStatus>,
   ] = [
     {
       value: InvoiceNodeStatus.New,
@@ -124,9 +124,8 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, onHold, linkedShipment, update } = useInbound.document.fields(
-    ['status', 'onHold', 'linkedShipment']
-  );
+  const { status, onHold, linkedShipment, update, lines } =
+    useInbound.document.fields(['status', 'onHold', 'linkedShipment', 'lines']);
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
   const isManuallyCreated = !linkedShipment?.id;
@@ -176,6 +175,7 @@ const useStatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold,
+    lines,
   };
 };
 
@@ -186,6 +186,7 @@ export const StatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold,
+    lines,
   } = useStatusChangeButton();
   const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
 
@@ -194,7 +195,7 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
-      isDisabled={onHold}
+      isDisabled={lines?.totalCount === 0 || onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
