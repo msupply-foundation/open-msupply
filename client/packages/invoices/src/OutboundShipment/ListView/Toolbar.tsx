@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuItem,
   DeleteIcon,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
 
@@ -38,12 +39,21 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.status'),
               urlParameter: 'status',
               options: [
-                { label: t('label.new'), value: 'NEW' },
-                { label: t('label.allocated'), value: 'ALLOCATED' },
-                { label: t('label.picked'), value: 'PICKED' },
-                { label: t('label.shipped'), value: 'SHIPPED' },
-                { label: t('label.delivered'), value: 'DELIVERED' },
-                { label: t('label.verified'), value: 'VERIFIED' },
+                { label: t('label.new'), value: InvoiceNodeStatus.New },
+                {
+                  label: t('label.allocated'),
+                  value: InvoiceNodeStatus.Allocated,
+                },
+                { label: t('label.picked'), value: InvoiceNodeStatus.Picked },
+                { label: t('label.shipped'), value: InvoiceNodeStatus.Shipped },
+                {
+                  label: t('label.delivered'),
+                  value: InvoiceNodeStatus.Delivered,
+                },
+                {
+                  label: t('label.verified'),
+                  value: InvoiceNodeStatus.Verified,
+                },
               ],
             },
           ]}

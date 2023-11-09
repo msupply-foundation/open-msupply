@@ -8,6 +8,7 @@ import {
   FilterController,
   FilterMenu,
   Box,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 
@@ -40,9 +41,12 @@ export const Toolbar: FC<{
               name: t('label.status'),
               urlParameter: 'status',
               options: [
-                { label: t('label.draft'), value: 'DRAFT' },
-                { label: t('label.sent'), value: 'SENT' },
-                { label: t('label.finalised'), value: 'FINALISED' },
+                { label: t('label.draft'), value: RequisitionNodeStatus.Draft },
+                { label: t('label.sent'), value: RequisitionNodeStatus.Sent },
+                {
+                  label: t('label.finalised'),
+                  value: RequisitionNodeStatus.Finalised,
+                },
               ],
             },
           ]}

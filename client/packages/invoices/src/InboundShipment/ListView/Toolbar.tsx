@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuItem,
   DeleteIcon,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
 
@@ -56,10 +57,16 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.status'),
               urlParameter: 'status',
               options: [
-                { label: t('label.new'), value: 'NEW' },
-                { label: t('label.shipped'), value: 'SHIPPED' },
-                { label: t('label.delivered'), value: 'DELIVERED' },
-                { label: t('label.verified'), value: 'VERIFIED' },
+                { label: t('label.new'), value: InvoiceNodeStatus.New },
+                { label: t('label.shipped'), value: InvoiceNodeStatus.Shipped },
+                {
+                  label: t('label.delivered'),
+                  value: InvoiceNodeStatus.Delivered,
+                },
+                {
+                  label: t('label.verified'),
+                  value: InvoiceNodeStatus.Verified,
+                },
               ],
             },
           ]}

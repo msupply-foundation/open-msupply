@@ -5,6 +5,7 @@ import {
   FilterMenu,
   FilterController,
   Box,
+  GenderType,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
@@ -50,8 +51,8 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.gender'),
               urlParameter: 'gender',
               options: [
-                { label: 'Male', value: 'MALE' },
-                { label: 'Female', value: 'FEMALE' },
+                { label: 'Male', value: GenderType.Male },
+                { label: 'Female', value: GenderType.Female },
               ],
             },
           ]}
