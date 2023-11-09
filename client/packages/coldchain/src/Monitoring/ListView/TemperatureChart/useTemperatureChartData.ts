@@ -118,7 +118,7 @@ export const useTemperatureChartData = () => {
       temperature: 8,
     })),
   };
-  const yAxisDomain = [
+  const yAxisDomain: [number, number] = [
     minTemperature - BREACH_RANGE,
     maxTemperature + BREACH_RANGE,
   ];
