@@ -26,7 +26,7 @@ import { useFormatDateTime, useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
 interface RenderRowsProps<T extends RecordWithId> {
-  ref: React.RefObject<HTMLDivElement>;
+  mRef: React.RefObject<HTMLDivElement>;
   data: T[];
   ExpandContent?: React.FC<{ rowData: T }>;
   columnsToDisplay: Column<T>[];
@@ -38,7 +38,7 @@ interface RenderRowsProps<T extends RecordWithId> {
   additionalRows?: JSX.Element[];
 }
 const RenderRows = <T extends RecordWithId>({
-  ref,
+  mRef,
   data,
   ExpandContent,
   columnsToDisplay,
@@ -78,7 +78,7 @@ const RenderRows = <T extends RecordWithId>({
   return (
     <>
       <ViewportList
-        viewportRef={ref}
+        viewportRef={mRef}
         items={data}
         axis="y"
         itemSize={40}
@@ -255,7 +255,7 @@ const DataTableComponent = <T extends RecordWithId>({
         </TableHead>
         <TableBody>
           <RenderRows
-            ref={ref}
+            mRef={ref}
             data={data}
             ExpandContent={ExpandContent}
             columnsToDisplay={columnsToDisplay}
