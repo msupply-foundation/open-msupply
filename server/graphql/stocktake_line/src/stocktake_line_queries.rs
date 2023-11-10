@@ -201,6 +201,7 @@ mod test {
     #[test]
     fn test_report_sort_to_typed_sort() {
         #[derive(Debug, Enum, Copy, Clone, PartialEq, Eq, serde::Serialize, strum::EnumIter)]
+        #[serde(rename_all = "lowercase")]
         enum SortField {
             ItemCode,
             ItemName,
