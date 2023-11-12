@@ -14,7 +14,6 @@ interface LocationSearchInputProps {
   onChange: (location: LocationRowFragment | null) => void;
   disabled: boolean;
   autoFocus?: boolean;
-  canRemove?: boolean;
 }
 
 interface LocationOption {
@@ -57,7 +56,6 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   onChange,
   disabled,
   autoFocus = false,
-  canRemove = false,
 }) => {
   const t = useTranslation('inventory');
   const { fetchAsync, data, isLoading } = useLocation.document.listAll({
@@ -75,7 +73,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
     label: l.name,
   }));
 
-  if (canRemove && locations.length > 0 && selectedLocation !== null) {
+  if (locations.length > 0 && selectedLocation !== null) {
     options.push({ value: null, label: t('label.remove') });
   }
 
