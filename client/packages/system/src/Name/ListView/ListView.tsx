@@ -9,6 +9,9 @@ import {
   Fade,
   NothingHere,
   useUrlQueryParams,
+  HomeIcon,
+  Box,
+  Typography,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
@@ -27,7 +30,24 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   const { Modal, showDialog, hideDialog } = useDialog();
 
   const columns = useColumns<NameRowFragment>(
-    ['code', 'name'],
+    [
+      {
+        key: 'code',
+        label: 'label.code',
+        Cell: ({ rowData }) => {
+          return (
+            <Box display="flex" flexDirection="row" gap={1}>
+              <Box style={{ height: 24, width: 25 }}>
+                {!!rowData.store && <HomeIcon />}
+              </Box>
+              <Typography>{rowData.code}</Typography>
+            </Box>
+          );
+        },
+        width: 60,
+      },
+      'name',
+    ],
     {
       sortBy,
       onChangeSortBy: updateSortQuery,

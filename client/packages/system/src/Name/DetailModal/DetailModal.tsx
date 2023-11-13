@@ -12,6 +12,7 @@ import {
   Box,
   BasicSpinner,
   MuiLink,
+  HomeIcon,
 } from '@openmsupply-client/common';
 import { useName } from '../api';
 
@@ -35,9 +36,14 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
   return !!data ? (
     <DetailContainer>
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-        <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-          {data.name}
-        </Typography>
+        <Box display="flex" flexDirection="row" gap={1}>
+          <Box style={{ height: 24, minWidth: 20 }}>
+            {!!data.store && <HomeIcon />}
+          </Box>
+          <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
+            {data.name}
+          </Typography>
+        </Box>
         <Grid container flex={1} flexDirection="row" gap={4}>
           <DetailSection title="">
             <DetailInputWithLabelRow
