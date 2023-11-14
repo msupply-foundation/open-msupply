@@ -189,13 +189,16 @@ export const StatusChangeButton = () => {
     lines,
   } = useStatusChangeButton();
   const isStatusChangeDisabled = useInbound.utils.isStatusChangeDisabled();
+  const noLines = lines?.totalCount === 0;
+  const t = useTranslation();
 
   if (!selectedOption) return null;
   if (isStatusChangeDisabled) return null;
 
   return (
     <SplitButton
-      isDisabled={lines?.totalCount === 0 || onHold}
+      label={noLines ? t('messages.no-lines') : ''}
+      isDisabled={noLines || onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
