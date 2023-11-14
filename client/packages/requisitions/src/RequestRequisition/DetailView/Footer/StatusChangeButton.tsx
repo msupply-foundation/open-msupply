@@ -140,6 +140,7 @@ export const StatusChangeButton = () => {
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission } = useAuthContext();
   const t = useTranslation('app');
+  const noLines = lines?.totalCount === 0;
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -148,10 +149,12 @@ export const StatusChangeButton = () => {
     selectedOption.value === RequisitionNodeStatus.Sent
       ? userHasPermission(UserPermission.RequisitionSend)
       : true;
+  const permissionDenied = hasPermission ? '' : t('auth.permission-denied');
+  const disabledNoLines = noLines ? t('messages.no-lines') : '';
 
   return (
     <>
-      <Tooltip title={hasPermission ? '' : t('auth.permission-denied')}>
+      <Tooltip title={permissionDenied || disabledNoLines}>
         <div>
           <ButtonWithIcon
             color="secondary"

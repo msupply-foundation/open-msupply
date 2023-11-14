@@ -186,6 +186,8 @@ export const StatusChangeButton = () => {
   } = useStatusChangeButton();
   const { hasPlaceholder, alert } = useStatusChangePlaceholderCheck();
   const isDisabled = useOutbound.utils.isDisabled();
+  const t = useTranslation();
+  const noLines = lines?.totalCount === 0;
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -197,7 +199,8 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
-      isDisabled={lines?.totalCount === 0 || onHold}
+      label={noLines ? t('messages.no-lines') : ''}
+      isDisabled={noLines || onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}

@@ -132,6 +132,8 @@ export const StatusChangeButton = () => {
   const { options, selectedOption, setSelectedOption, getConfirmation, lines } =
     useStatusChangeButton();
   const isDisabled = usePrescription.utils.isDisabled();
+  const t = useTranslation();
+  const noLines = lines?.totalCount === 0;
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -142,7 +144,8 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
-      isDisabled={lines?.totalCount === 0}
+      label={noLines ? t('messages.no-lines') : ''}
+      isDisabled={noLines}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
