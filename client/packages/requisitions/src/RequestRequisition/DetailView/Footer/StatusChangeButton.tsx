@@ -159,7 +159,7 @@ export const StatusChangeButton = () => {
           <ButtonWithIcon
             color="secondary"
             variant="contained"
-            disabled={!hasPermission || lines?.totalCount === 0}
+            disabled={!hasPermission || noLines}
             label={selectedOption.label}
             Icon={<ArrowRightIcon />}
             onClick={() => getConfirmation()}
