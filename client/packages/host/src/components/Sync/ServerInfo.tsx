@@ -21,7 +21,7 @@ const ServerInfoComponent = () => {
     <AppBarButtonsPortal>
       <Box display="flex" flexDirection="column" padding={1}>
         <Box display="flex" justifyContent="flex-end">
-          <QRCode value={serverUrl} size={50}></QRCode>
+          <QRCode value={serverUrl} size={50} />
         </Box>
         <Box display="flex">
           <Typography color={'gray.dark'} fontWeight={'bold'} paddingRight={1}>
