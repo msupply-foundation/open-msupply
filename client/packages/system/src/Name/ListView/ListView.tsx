@@ -9,13 +9,11 @@ import {
   Fade,
   NothingHere,
   useUrlQueryParams,
-  HomeIcon,
-  Box,
-  Typography,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
 import { useName, NameRowFragment } from '../api';
+import { NameRenderer } from '../Components';
 
 const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   const [selectedId, setSelectedId] = useState<string>('');
@@ -34,16 +32,9 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
       {
         key: 'code',
         label: 'label.code',
-        Cell: ({ rowData }) => {
-          return (
-            <Box display="flex" flexDirection="row" gap={1}>
-              <Box style={{ height: 24, width: 25 }}>
-                {!!rowData.store && <HomeIcon />}
-              </Box>
-              <Typography>{rowData.code}</Typography>
-            </Box>
-          );
-        },
+        Cell: ({ rowData }) => (
+          <NameRenderer label={rowData.code} isStore={!!rowData.store} />
+        ),
         width: 60,
       },
       'name',
