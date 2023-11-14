@@ -14,7 +14,7 @@ table! {
         temperature -> Double,
         sensor_id -> Text,
         location_id -> Nullable<Text>,
-        store_id -> Nullable<Text>,
+        store_id -> Text,
         datetime -> Timestamp,
         temperature_breach_id -> Nullable<Text>,
     }
@@ -41,7 +41,7 @@ pub struct TemperatureLogRow {
     pub temperature: f64,
     pub sensor_id: String,
     pub location_id: Option<String>,
-    pub store_id: Option<String>,
+    pub store_id: String,
     pub datetime: NaiveDateTime,
     pub temperature_breach_id: Option<String>,
 }

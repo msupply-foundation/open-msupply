@@ -57,7 +57,7 @@ pub fn validate(
         Some(temperature_breach_row) => temperature_breach_row,
         None => return Err(UpdateTemperatureBreachError::TemperatureBreachDoesNotExist),
     };
-    if temperature_breach_row.store_id != Some(store_id.to_string()) {
+    if temperature_breach_row.store_id != store_id.to_string() {
         return Err(UpdateTemperatureBreachError::TemperatureBreachDoesNotBelongToCurrentStore);
     }
 

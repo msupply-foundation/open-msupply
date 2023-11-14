@@ -146,7 +146,7 @@ mod test {
                     temperature_log_row: TemperatureLogRow {
                         id: "temperature_log_1a".to_owned(),
                         sensor_id: "sensor_1".to_owned(),
-                        store_id: Some("store_a".to_string()),
+                        store_id: "store_a".to_string(),
                         location_id: None,
                         temperature: 2.4,
                         datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
