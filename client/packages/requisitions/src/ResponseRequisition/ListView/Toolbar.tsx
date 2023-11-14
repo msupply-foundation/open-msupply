@@ -1,18 +1,17 @@
 import React, { FC } from 'react';
 import {
   AppBarContentPortal,
-  SearchBar,
   FilterController,
-  FilterRule,
+  FilterMenu,
+  Box,
+  useTranslation,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import { ResponseRowFragment } from '../api';
 
 export const Toolbar: FC<{
   filter: FilterController;
-}> = ({ filter }) => {
-  const key = 'otherPartyName' as keyof ResponseRowFragment;
-  const filterString =
-    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
+}> = () => {
+  const t = useTranslation();
 
   return (
     <AppBarContentPortal
@@ -23,14 +22,30 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <SearchBar
-        placeholder="Search by comment..."
-        value={filterString}
-        onChange={newValue => {
-          if (!newValue) return filter.onClearFilterRule('comment');
-          return filter.onChangeStringFilterRule('comment', 'like', newValue);
-        }}
-      />
+      <Box display="flex" gap={1}>
+        <FilterMenu
+          filters={[
+            {
+              type: 'text',
+              name: t('label.name'),
+              urlParameter: 'otherPartyName',
+              placeholder: t('placeholder.search-by-name'),
+            },
+            {
+              type: 'enum',
+              name: t('label.status'),
+              urlParameter: 'status',
+              options: [
+                { label: t('label.new'), value: RequisitionNodeStatus.New },
+                {
+                  label: t('label.finalised'),
+                  value: RequisitionNodeStatus.Finalised,
+                },
+              ],
+            },
+          ]}
+        />
+      </Box>
     </AppBarContentPortal>
   );
 };

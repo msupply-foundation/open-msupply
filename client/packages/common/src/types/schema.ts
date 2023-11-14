@@ -3402,6 +3402,17 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
+/** This struct is used to sort report data by a key and in descending or ascending order */
+export type PrintReportSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: Scalars['String']['input'];
+};
+
 export type ProgramEnrolmentConnector = {
   __typename: 'ProgramEnrolmentConnector';
   nodes: Array<ProgramEnrolmentNode>;
@@ -3646,6 +3657,7 @@ export type Queries = {
   stockLines: StockLinesResponse;
   stocktake: StocktakeResponse;
   stocktakeByNumber: StocktakeResponse;
+  stocktakeLines: StocktakesLinesResponse;
   stocktakes: StocktakesResponse;
   store: StoreResponse;
   storePreferences: StorePreferenceNode;
@@ -3872,6 +3884,7 @@ export type QueriesPrintReportArgs = {
   dataId?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String']['input'];
+  sort?: InputMaybe<PrintReportSortInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -3996,6 +4009,14 @@ export type QueriesStocktakeArgs = {
 
 export type QueriesStocktakeByNumberArgs = {
   stocktakeNumber: Scalars['Int']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesStocktakeLinesArgs = {
+  reportSort?: InputMaybe<PrintReportSortInput>;
+  sort?: InputMaybe<Array<StocktakeLineSortInput>>;
+  stocktakeId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -4626,6 +4647,25 @@ export type StocktakeLineNode = {
   stocktakeId: Scalars['String']['output'];
 };
 
+export enum StocktakeLineSortFieldInput {
+  Batch = 'batch',
+  ExpiryDate = 'expiryDate',
+  ItemCode = 'itemCode',
+  ItemName = 'itemName',
+  LocationName = 'locationName',
+  PackSize = 'packSize'
+}
+
+export type StocktakeLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: StocktakeLineSortFieldInput;
+};
+
 export type StocktakeNode = {
   __typename: 'StocktakeNode';
   comment?: Maybe<Scalars['String']['output']>;
@@ -4673,6 +4713,8 @@ export type StocktakeSortInput = {
   /** Sort query result by `key` */
   key: StocktakeSortFieldInput;
 };
+
+export type StocktakesLinesResponse = StocktakeLineConnector;
 
 export type StocktakesResponse = StocktakeConnector;
 

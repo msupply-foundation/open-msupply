@@ -66,6 +66,27 @@ export const useStocktakeColumns = ({
   return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [
       [
+        'locationName',
+        {
+          getSortValue: row => {
+            if ('lines' in row) {
+              const { lines } = row;
+              return (
+                lines.reduce((_, line) => line.location?.name ?? '', '') ?? ''
+              );
+            }
+            return row.location?.name ?? '';
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return lines.reduce((_, line) => line.location?.name ?? '', '');
+            }
+            return rowData.location?.name;
+          },
+        },
+      ],
+      [
         'itemCode',
         {
           getSortValue: row => {

@@ -1,12 +1,15 @@
 import React, { FC } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
-import { useTranslation } from '@common/intl';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
+  Box,
+  CellProps,
   CircleAlertIcon,
   DataTable,
   Formatter,
   NothingHere,
   TableProvider,
+  Typography,
   createTableStore,
   useColumns,
   useTheme,
@@ -17,6 +20,41 @@ import {
 } from '../../api/TemperatureBreach';
 import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
+
+const DurationCell = ({ rowData }: CellProps<TemperatureBreachFragment>) => {
+  const t = useTranslation('coldchain');
+  const { localisedDistance } = useFormatDateTime();
+  const duration = !rowData.endDatetime
+    ? t('label.ongoing')
+    : localisedDistance(rowData.startDatetime, rowData.endDatetime);
+
+  return (
+    <Box
+      flexDirection="row"
+      display="flex"
+      flex={1}
+      sx={
+        !rowData.endDatetime
+          ? {
+              color: 'error.main',
+              fontStyle: 'italic',
+            }
+          : {}
+      }
+    >
+      <Typography
+        style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          color: 'inherit',
+          fontSize: 'inherit',
+        }}
+      >
+        {duration}
+      </Typography>
+    </Box>
+  );
+};
 
 const ListView: FC = () => {
   const {
@@ -56,7 +94,6 @@ const ListView: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
   const theme = useTheme();
-
   const columns = useColumns<TemperatureBreachFragment>(
     [
       {
@@ -114,9 +151,7 @@ const ListView: FC = () => {
       {
         key: 'duration',
         label: 'label.duration',
-        accessor: ({ rowData }) => {
-          return Formatter.milliseconds(rowData.durationMilliseconds);
-        },
+        Cell: DurationCell,
         sortable: false,
       },
       {

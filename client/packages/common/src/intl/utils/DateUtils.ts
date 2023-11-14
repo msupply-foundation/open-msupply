@@ -2,6 +2,7 @@ import { SupportedLocales, useIntlUtils } from '@common/intl';
 import {
   addMinutes,
   addDays,
+  addMonths,
   addYears,
   isValid,
   differenceInDays,
@@ -23,10 +24,14 @@ import {
   getUnixTime,
   startOfToday,
   startOfDay,
+  endOfDay,
   startOfYear,
   formatRelative,
+  formatDistance,
   formatDistanceToNow,
   formatRFC3339,
+  previousMonday,
+  endOfWeek,
 } from 'date-fns';
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -84,6 +89,7 @@ export const DateUtils = {
   differenceInMinutes,
   addMinutes,
   addDays,
+  addMonths,
   addYears,
   addCurrentTime,
   getDateOrNull: (
@@ -130,7 +136,10 @@ export const DateUtils = {
   ageInDays: (date: Date | string) =>
     differenceInDays(Date.now(), dateInputHandler(date)),
   startOfDay,
+  endOfDay,
   startOfYear,
+  previousMonday,
+  endOfWeek,
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
@@ -158,6 +167,9 @@ const getLocale = (language: SupportedLocales) => {
 export const useFormatDateTime = () => {
   const { currentLanguage } = useIntlUtils();
   const locale = getLocale(currentLanguage);
+
+  const urlQueryDate = 'yyyy-MM-dd';
+  const urlQueryDateTime = 'yyyy-MM-dd HH:mm';
 
   const localisedDate = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'P', { locale });
@@ -192,12 +204,26 @@ export const useFormatDateTime = () => {
     return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
   };
 
+  const localisedDistance = (
+    startDate: Date | string | number,
+    endDate: Date | string | number
+  ) => {
+    const from = dateInputHandler(startDate);
+    const to = dateInputHandler(endDate);
+    return isValid(from) && isValid(to)
+      ? formatDistance(from, to, { locale })
+      : '';
+  };
+
   return {
+    urlQueryDate,
+    urlQueryDateTime,
     customDate,
     dayMonthShort,
     dayMonthTime,
     localisedDate,
     localisedDateTime,
+    localisedDistance,
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,
