@@ -1,28 +1,28 @@
 use std::collections::HashMap;
 
 use repository::{
-    EqualFilter, PackUnitRow, PackUnitRowRepository, RepositoryError, StockLineRowRepository,
+    EqualFilter, PackVariantRow, PackVariantRowRepository, RepositoryError, StockLineRowRepository,
     StockOnHandFilter, StockOnHandRepository, StorageConnection,
 };
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
-pub struct ItemPackUnit {
+pub struct ItemPackVariant {
     pub item_id: String,
-    pub most_used_pack_unit_id: String,
-    pub pack_units: Vec<PackUnitRow>,
+    pub most_used_pack_variant_id: String,
+    pub pack_variants: Vec<PackVariantRow>,
 }
 
 /// For a particular store, this method returns all pack units grouped by item_id and a reference to the most
-/// used pack unit for each item (see ItemPackUnit return type).
-pub fn get_pack_units(
+/// used pack unit for each item (see ItemPackVariant return type).
+pub fn get_pack_variants(
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<Vec<ItemPackUnit>, RepositoryError> {
+) -> Result<Vec<ItemPackVariant>, RepositoryError> {
     let stock_lines = StockLineRowRepository::new(connection).find_by_store_id(store_id)?;
     let stock_on_hand = StockOnHandRepository::new(connection).query(Some(
         StockOnHandFilter::new().store_id(EqualFilter::equal_to(store_id)),
     ))?;
-    let pack_units = PackUnitRowRepository::new(connection).load_all()?;
+    let pack_variants = PackVariantRowRepository::new(connection).load_all()?;
 
     // Calculate the most used variant for each item and pack size by total number of packs
     // if item has stock on hand else by empty line count. HashMap keys are (item_id, pack_size)
@@ -50,12 +50,12 @@ pub fn get_pack_units(
     }
 
     // Find the most used variant id for each item based on total number of packs (if SOH) or total number of lines,
-    // and group all the pack units with their item
-    let mut pack_units_grouped: HashMap<String, (String, Vec<PackUnitRow>)> = HashMap::new();
-    for pack_unit in pack_units.clone() {
-        let item_id = pack_unit.item_id.clone();
+    // and group all the pack variants with their item
+    let mut pack_variants_grouped: HashMap<String, (String, Vec<PackVariantRow>)> = HashMap::new();
+    for pack_variant in pack_variants.clone() {
+        let item_id = pack_variant.item_id.clone();
 
-        let most_used_pack_unit_id = pack_units
+        let most_used_pack_variant_id = pack_variants
             .iter()
             .filter(|p| p.item_id == item_id)
             .max_by(|a, b| {
@@ -84,18 +84,18 @@ pub fn get_pack_units(
             .map(|p| p.id.clone())
             .unwrap_or("".to_string());
 
-        pack_units_grouped
+        pack_variants_grouped
             .entry(item_id)
-            .and_modify(|e| e.1.push(pack_unit.clone()))
-            .or_insert((most_used_pack_unit_id, vec![pack_unit]));
+            .and_modify(|e| e.1.push(pack_variant.clone()))
+            .or_insert((most_used_pack_variant_id, vec![pack_variant]));
     }
 
-    Ok(pack_units_grouped
+    Ok(pack_variants_grouped
         .into_iter()
-        .map(|(item_id, pack_units)| ItemPackUnit {
+        .map(|(item_id, pack_variants)| ItemPackVariant {
             item_id: item_id.clone(),
-            most_used_pack_unit_id: pack_units.0,
-            pack_units: pack_units.1,
+            most_used_pack_variant_id: pack_variants.0,
+            pack_variants: pack_variants.1,
         })
         .collect())
 }
@@ -107,21 +107,26 @@ mod test {
     use repository::{
         mock::{mock_store_a, MockDataInserts},
         test_db::setup_all,
-        EqualFilter, PackUnitRowRepository, StockLineFilter, StockLineRepository,
+        EqualFilter, PackVariantRowRepository, StockLineFilter, StockLineRepository,
         StorageConnection,
     };
 
-    use super::{get_pack_units, ItemPackUnit};
+    use super::{get_pack_variants, ItemPackVariant};
 
     // only testing item_a and item_b since both have SOH in store
-    fn pack_units_for_item_helper(connection: &StorageConnection, item_id: &str) -> ItemPackUnit {
+    fn pack_variants_for_item_helper(
+        connection: &StorageConnection,
+        item_id: &str,
+    ) -> ItemPackVariant {
         let stock_lines = StockLineRepository::new(connection)
             .query_by_filter(
                 StockLineFilter::new().item_id(EqualFilter::equal_to(item_id)),
                 Some(mock_store_a().id),
             )
             .unwrap();
-        let pack_units = PackUnitRowRepository::new(connection).load_all().unwrap();
+        let pack_variants = PackVariantRowRepository::new(connection)
+            .load_all()
+            .unwrap();
 
         let mut total_number_of_packs: HashMap<(String, i32), f64> = HashMap::new();
 
@@ -135,7 +140,7 @@ mod test {
                 .or_insert(0.0);
         }
 
-        let most_used_pack_unit_id = pack_units
+        let most_used_pack_variant_id = pack_variants
             .iter()
             .filter(|p| p.item_id == item_id)
             .max_by(|a, b| {
@@ -152,10 +157,10 @@ mod test {
             .map(|p| p.id.clone())
             .unwrap_or("".to_string());
 
-        ItemPackUnit {
+        ItemPackVariant {
             item_id: item_id.to_string(),
-            most_used_pack_unit_id,
-            pack_units: pack_units
+            most_used_pack_variant_id,
+            pack_variants: pack_variants
                 .into_iter()
                 .filter(|p| p.item_id == item_id)
                 .collect(),
@@ -163,16 +168,19 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn pack_units() {
-        let (_, connection, _, _) = setup_all("test_pack_units", MockDataInserts::all()).await;
+    async fn pack_variants() {
+        let (_, connection, _, _) = setup_all("test_pack_variants", MockDataInserts::all()).await;
 
-        let mut pack_units = get_pack_units(&connection, &mock_store_a().id).unwrap();
-        pack_units.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+        let mut pack_variants = get_pack_variants(&connection, &mock_store_a().id).unwrap();
+        pack_variants.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
-        let item_a_pack_units = pack_units_for_item_helper(&connection, "item_a");
-        let item_b_pack_units = pack_units_for_item_helper(&connection, "item_b");
+        let item_a_pack_variants = pack_variants_for_item_helper(&connection, "item_a");
+        let item_b_pack_variants = pack_variants_for_item_helper(&connection, "item_b");
 
-        assert_eq!(pack_units.len(), 2);
-        assert_eq!(pack_units, vec![item_a_pack_units, item_b_pack_units]);
+        assert_eq!(pack_variants.len(), 2);
+        assert_eq!(
+            pack_variants,
+            vec![item_a_pack_variants, item_b_pack_variants]
+        );
     }
 }

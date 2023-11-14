@@ -1,11 +1,11 @@
-use super::{item_row::item, pack_unit_row::pack_unit::dsl::*};
+use super::{item_row::item, pack_variant_row::pack_variant::dsl::*};
 
 use crate::{repository_error::RepositoryError, StorageConnection};
 
 use diesel::prelude::*;
 
 table! {
-    pack_unit (id) {
+    pack_variant (id) {
         id -> Text,
         item_id -> Text,
         short_name -> Text,
@@ -14,13 +14,13 @@ table! {
     }
 }
 
-joinable!(pack_unit -> item (item_id));
+joinable!(pack_variant -> item (item_id));
 
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Eq, Ord, PartialOrd,
 )]
-#[table_name = "pack_unit"]
-pub struct PackUnitRow {
+#[table_name = "pack_variant"]
+pub struct PackVariantRow {
     pub id: String,
     pub item_id: String,
     pub short_name: String,
@@ -28,20 +28,20 @@ pub struct PackUnitRow {
     pub pack_size: i32,
 }
 
-pub struct PackUnitRowRepository<'a> {
+pub struct PackVariantRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> PackUnitRowRepository<'a> {
+impl<'a> PackVariantRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        PackUnitRowRepository { connection }
+        PackVariantRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &PackUnitRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(pack_unit::dsl::pack_unit)
+    pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(pack_variant::dsl::pack_variant)
             .values(row)
-            .on_conflict(pack_unit::dsl::id)
+            .on_conflict(pack_variant::dsl::id)
             .do_update()
             .set(row)
             .execute(&self.connection.connection)?;
@@ -50,15 +50,15 @@ impl<'a> PackUnitRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &PackUnitRow) -> Result<(), RepositoryError> {
-        diesel::replace_into(pack_unit::dsl::pack_unit)
+    pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
+        diesel::replace_into(pack_variant::dsl::pack_variant)
             .values(row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
-    pub fn load_all(&self) -> Result<Vec<PackUnitRow>, RepositoryError> {
-        let result = pack_unit.load::<PackUnitRow>(&self.connection.connection)?;
+    pub fn load_all(&self) -> Result<Vec<PackVariantRow>, RepositoryError> {
+        let result = pack_variant.load::<PackVariantRow>(&self.connection.connection)?;
 
         Ok(result)
     }

@@ -275,12 +275,12 @@ impl GeneralQueries {
         last_successful_user_sync(ctx)
     }
 
-    pub async fn pack_units(
+    pub async fn pack_variants(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-    ) -> Result<PackUnitConnector> {
-        pack_units(ctx, &store_id)
+    ) -> Result<PackVariantConnector> {
+        pack_variants(ctx, &store_id)
     }
 }
 
