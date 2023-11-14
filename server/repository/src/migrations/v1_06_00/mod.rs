@@ -3,8 +3,9 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod contact_trace;
-mod plugin_data;
 mod master_list;
+mod plugin_data;
+mod temperature_breach;
 
 pub(crate) struct V1_06_00;
 
@@ -17,6 +18,7 @@ impl Migration for V1_06_00 {
         contact_trace::migrate(connection)?;
         plugin_data::migrate(connection)?;
         master_list::migrate(connection)?;
+        temperature_breach::migrate(connection)?;
         Ok(())
     }
 }

@@ -89,7 +89,7 @@ pub fn get_breaches_for_sensor(
     TemperatureBreachRepository::new(connection).query_by_filter(
         TemperatureBreachFilter::new()
             .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
-            .acknowledged(false),
+            .unacknowledged(true),
     )
 }
 
@@ -157,7 +157,7 @@ fn sensor_add_breach_if_new(
             location_id: sensor_row.location_id.clone(),
             start_datetime: temperature_breach.start_timestamp,
             end_datetime: Some(temperature_breach.end_timestamp),
-            acknowledged: false,
+            unacknowledged: true,
             duration_milliseconds: temperature_breach.duration.num_seconds() as i32,
             r#type: breach_row_type,
             threshold_duration_milliseconds: breach_config.duration.num_seconds() as i32,

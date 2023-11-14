@@ -1,5 +1,10 @@
 import React from 'react';
-import { FormControlLabel, Switch as MuiSwitch, Theme } from '@mui/material';
+import {
+  FormControlLabel,
+  Switch as MuiSwitch,
+  SxProps,
+  Theme,
+} from '@mui/material';
 
 type LabelPlacement = 'bottom' | 'end' | 'start' | 'top';
 type SwitchColor =
@@ -23,6 +28,8 @@ interface SwitchProps {
   ) => void;
   size?: 'medium' | 'small';
   value?: unknown;
+  switchSx?: SxProps;
+  labelSx?: SxProps;
 }
 
 const getLabelStyle = (
@@ -61,6 +68,8 @@ export const Switch: React.FC<SwitchProps> = ({
   onChange,
   size = 'medium',
   value,
+  switchSx,
+  labelSx,
 }) => {
   const isSmall = size === 'small';
   const switchStyle = {
@@ -103,7 +112,7 @@ export const Switch: React.FC<SwitchProps> = ({
       color={color}
       defaultChecked={defaultChecked}
       size={size}
-      sx={switchStyle}
+      sx={{ ...switchStyle, ...switchSx }}
       focusVisibleClassName=".Mui-focusVisibles"
     />
   );
@@ -116,7 +125,7 @@ export const Switch: React.FC<SwitchProps> = ({
       label={label ?? <span />}
       labelPlacement={labelPlacement}
       onChange={onChange}
-      sx={labelStyle}
+      sx={{ ...labelStyle, ...labelSx }}
       value={value}
     />
   );

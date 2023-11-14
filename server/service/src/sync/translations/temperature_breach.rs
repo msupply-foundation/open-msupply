@@ -128,7 +128,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             location_id,
             store_id,
             end_datetime: end_datetime.or(end_date.map(|date| NaiveDateTime::new(date, end_time))),
-            acknowledged,
+            unacknowledged: !acknowledged,
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,
@@ -160,7 +160,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             store_id,
             start_datetime,
             end_datetime,
-            acknowledged,
+            unacknowledged,
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,
@@ -186,7 +186,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             end_time: end_datetime
                 .map(|datetime| datetime.time())
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
-            acknowledged,
+            acknowledged: !unacknowledged,
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,

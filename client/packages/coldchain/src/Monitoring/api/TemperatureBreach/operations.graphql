@@ -1,7 +1,7 @@
 fragment TemperatureBreach on TemperatureBreachNode {
   __typename
   id
-  acknowledged
+  unacknowledged
   durationMilliseconds
   endDatetime
   startDatetime
