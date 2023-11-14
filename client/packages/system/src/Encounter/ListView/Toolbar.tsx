@@ -35,7 +35,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             },
             {
               type: 'group',
-              name: 'label.start-datetime',
+              name: t('label.start-datetime'),
               elements: [
                 {
                   type: 'dateTime',
