@@ -26,7 +26,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 serial TEXT NOT NULL,
                 name TEXT NOT NULL,
                 is_active BOOLEAN,
-                store_id TEXT REFERENCES store(id),
+                store_id TEXT NOT NULL REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
                 battery_level INTEGER,
                 log_interval INTEGER,
