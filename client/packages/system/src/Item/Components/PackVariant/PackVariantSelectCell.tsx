@@ -4,11 +4,11 @@ import {
   CellProps,
   InnerBasicCell,
 } from '@openmsupply-client/common';
-import { useUnitVariant } from '../../context';
-import { PackUnitSelect } from './PackUnitSelect';
+import { usePackVariant } from '../../context';
+import { PackVariantSelect } from './PackVariantSelect';
 
 // Drop down selector for unit variant
-export const getPackUnitSelectCell =
+export const PackVariantSelectCell =
   <T extends RecordWithId>({
     getItemId,
     getUnitName,
@@ -17,15 +17,15 @@ export const getPackUnitSelectCell =
     getUnitName: (row: T) => string | null;
   }) =>
   ({ isError, rowData }: CellProps<T>): ReactElement => {
-    const { asPackUnit, variantsControl } = useUnitVariant(
+    const { asPackVariant, variantsControl } = usePackVariant(
       getItemId(rowData),
       getUnitName(rowData)
     );
 
     if (!variantsControl) {
       // If no variants exist, then use number of packs = 1
-      return <InnerBasicCell isError={isError} value={asPackUnit(1)} />;
+      return <InnerBasicCell isError={isError} value={asPackVariant(1)} />;
     }
 
-    return <PackUnitSelect variantControl={variantsControl} />;
+    return <PackVariantSelect variantControl={variantsControl} />;
   };

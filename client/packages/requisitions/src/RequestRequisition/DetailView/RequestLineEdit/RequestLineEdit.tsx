@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   ItemRowWithStatsFragment,
-  useUnitVariant,
+  usePackVariant,
 } from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
 import { useRequest } from '../../api';
@@ -51,7 +51,7 @@ export const RequestLineEdit = ({
     variantsControl,
     numberOfPacksFromQuantity,
     numberOfPacksToTotalQuantity,
-  } = useUnitVariant(item?.id ?? '', item?.name ?? null);
+  } = usePackVariant(item?.id ?? '', item?.name ?? null);
 
   const deletePreviousLine = () => {
     if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);

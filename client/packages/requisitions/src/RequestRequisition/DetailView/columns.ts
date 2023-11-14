@@ -13,9 +13,9 @@ import {
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import {
-  getPackUnitQuantityCell,
-  getPackUnitSelectCell,
-  useUnitVariant,
+  PackVariantQuantityCell,
+  PackVariantSelectCell,
+  usePackVariant,
 } from '@openmsupply-client/system';
 
 const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
@@ -25,7 +25,7 @@ const useStockOnHand: ColumnDataAccessor<RequestLineFragment, string> = ({
   const formatNumber = useFormatNumber();
   const { itemStats } = rowData;
   const { availableStockOnHand, availableMonthsOfStockOnHand } = itemStats;
-  const { numberOfPacksFromQuantity } = useUnitVariant(rowData.itemId, null);
+  const { numberOfPacksFromQuantity } = usePackVariant(rowData.itemId, null);
 
   const packQuantity = numberOfPacksFromQuantity(availableStockOnHand);
 
@@ -70,7 +70,7 @@ export const useRequestColumns = () => {
       key: 'packUnit',
       label: 'label.pack',
       align: ColumnAlign.Right,
-      Cell: getPackUnitSelectCell({
+      Cell: PackVariantSelectCell({
         getItemId: r => r.itemId,
         getUnitName: r => r.item.unitName || null,
       }),
@@ -97,7 +97,7 @@ export const useRequestColumns = () => {
       {
         width: 150,
         align: ColumnAlign.Right,
-        Cell: getPackUnitQuantityCell({
+        Cell: PackVariantQuantityCell({
           getItemId: r => r.itemId,
           getQuantity: r =>
             NumUtils.round(r.itemStats.averageMonthlyConsumption),
@@ -110,7 +110,7 @@ export const useRequestColumns = () => {
       label: 'label.target-stock',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: getPackUnitQuantityCell({
+      Cell: PackVariantQuantityCell({
         getItemId: r => r.itemId,
         getQuantity: r =>
           NumUtils.round(
@@ -126,7 +126,7 @@ export const useRequestColumns = () => {
       description: 'description.forecast-quantity',
       align: ColumnAlign.Right,
       width: 200,
-      Cell: getPackUnitQuantityCell({
+      Cell: PackVariantQuantityCell({
         getItemId: r => r.itemId,
         getQuantity: r => NumUtils.round(r.suggestedQuantity),
       }),
@@ -137,7 +137,7 @@ export const useRequestColumns = () => {
       label: 'label.requested-quantity',
       align: ColumnAlign.Right,
       width: 150,
-      Cell: getPackUnitQuantityCell({
+      Cell: PackVariantQuantityCell({
         getItemId: r => r.itemId,
         getQuantity: r => NumUtils.round(r.requestedQuantity),
       }),
@@ -150,7 +150,7 @@ export const useRequestColumns = () => {
       key: 'approvedNumPacks',
       label: 'label.approved-packs',
       align: ColumnAlign.Right,
-      Cell: getPackUnitQuantityCell({
+      Cell: PackVariantQuantityCell({
         getItemId: r => r.itemId,
         getQuantity: r =>
           NumUtils.round(r.linkedRequisitionLine?.approvedQuantity ?? 0, 2),

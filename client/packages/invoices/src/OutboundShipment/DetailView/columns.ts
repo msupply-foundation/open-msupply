@@ -12,7 +12,10 @@ import {
   InvoiceLineNodeType,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
-import { LocationRowFragment, PackUnitCell } from '@openmsupply-client/system';
+import {
+  LocationRowFragment,
+  PackVariantCell,
+} from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -264,7 +267,7 @@ export const useOutboundColumns = ({
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackUnitCell({
+        Cell: PackVariantCell({
           getItemId: row => {
             if ('lines' in row) return '';
             else return row?.item?.id;
@@ -374,7 +377,7 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
       key: 'packUnit',
       label: 'label.pack',
       sortable: false,
-      Cell: PackUnitCell({
+      Cell: PackVariantCell({
         getItemId: row => row?.item.id,
         getPackSizes: row => [row.packSize ?? 1],
         getUnitName: row => row?.item.unitName ?? null,

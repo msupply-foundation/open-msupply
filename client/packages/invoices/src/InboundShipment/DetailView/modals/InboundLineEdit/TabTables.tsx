@@ -19,9 +19,9 @@ import { DraftInboundLine } from '../../../../types';
 import {
   getLocationInputColumn,
   LocationRowFragment,
-  useUnitVariant,
+  PackVariantEntryCell,
+  usePackVariant,
 } from '@openmsupply-client/system';
-import { getPackUnitEntryCell } from '@openmsupply-client/system';
 import { InboundLineFragment } from '../../../api';
 
 interface TableProps {
@@ -75,7 +75,7 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
 // If this is not extracted to it's own component and used directly in Cell:
 // cell will be re rendered anytime rowData changes, which causes it to loose focus
 // if number of packs is changed and tab is pressed (in quick succession)
-const PackUnitEntryCell = getPackUnitEntryCell<DraftInboundLine>({
+const PackUnitEntryCell = PackVariantEntryCell<DraftInboundLine>({
   getItemId: r => r.item.id,
   getUnitName: r => r.item.unitName || null,
 });
@@ -83,7 +83,7 @@ const PackUnitEntryCell = getPackUnitEntryCell<DraftInboundLine>({
 export const QuantityTableComponent: FC<
   TableProps & { item: InboundLineFragment['item'] | null }
 > = ({ item, lines, updateDraftLine, isDisabled = false }) => {
-  const { unitVariantsExist } = useUnitVariant(item?.id || '', null);
+  const { packVariantExists } = usePackVariant(item?.id || '', null);
   const theme = useTheme();
 
   const columns = useColumns<DraftInboundLine>(
@@ -100,7 +100,7 @@ export const QuantityTableComponent: FC<
         },
       ],
       getColumnLookupWithOverrides('packSize', {
-        label: unitVariantsExist
+        label: packVariantExists
           ? 'label.unit-variant-and-pack-size'
           : 'label.pack-size',
         Cell: PackUnitEntryCell,

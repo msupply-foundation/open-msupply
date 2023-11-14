@@ -11,7 +11,7 @@ import { useResponse, ResponseLineFragment } from '../../api';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 import { RequestStoreStats } from '../ReponseStats/RequestStoreStats';
 import { ResponseStoreStats } from '../ReponseStats/ResponseStoreStats';
-import { useUnitVariant } from '@openmsupply-client/system';
+import { usePackVariant } from '@openmsupply-client/system';
 
 interface ResponseLineEditProps {
   isOpen: boolean;
@@ -35,7 +35,7 @@ export const ResponseLineEdit = ({
     numberOfPacksToTotalQuantity,
     numberOfPacksFromQuantity,
     variantsControl,
-  } = useUnitVariant(draft.itemId, draft.item.unitName ?? null);
+  } = usePackVariant(draft.itemId, draft.item.unitName ?? null);
 
   const tabs = [
     {
