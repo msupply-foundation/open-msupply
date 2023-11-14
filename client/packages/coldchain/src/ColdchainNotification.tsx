@@ -91,14 +91,14 @@ const Location = ({ breach }: { breach: TemperatureBreachFragment }) => {
 export const ColdchainNotification = () => {
   const theme = useTheme();
   const t = useTranslation('coldchain');
-  const { data: breaches } = useTemperatureBreach.document.list({
+  const { data: breaches } = useTemperatureBreach.document.notifications({
     first: 1,
     offset: 0,
     sortBy: { key: 'startDatetime', direction: 'desc', isDesc: true },
     filterBy: { unacknowledged: true },
   });
   const { localisedDistanceToNow } = useFormatDateTime();
-  const breach = breaches?.nodes[0];
+  const breach = breaches?.nodes?.[0];
 
   if (!breach) return null;
 

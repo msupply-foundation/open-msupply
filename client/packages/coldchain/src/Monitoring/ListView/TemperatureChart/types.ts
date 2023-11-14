@@ -45,3 +45,8 @@ export type BreachDot = {
   position: DOMRect;
   breach: NonNullable<Log['breach']>;
 };
+
+export type BreachConfig = {
+  cold: { date: Date; temperature: number }[];
+  hot: { date: Date; temperature: number }[];
+};

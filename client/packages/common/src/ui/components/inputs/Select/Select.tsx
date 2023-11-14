@@ -30,7 +30,8 @@ export const Select: FC<SelectProps> = React.forwardRef(
   ) => {
     const t = useTranslation();
 
-    const showClearOption = !!props?.value && !!props?.onChange && clearable;
+    const showClearOption =
+      !!props?.value && !!props?.onChange && clearable && options.length > 1;
 
     return (
       <TextField
