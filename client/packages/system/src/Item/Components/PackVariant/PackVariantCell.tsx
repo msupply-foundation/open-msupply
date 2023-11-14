@@ -4,12 +4,12 @@ import {
   InnerBasicCell,
   RecordWithId,
 } from '@openmsupply-client/common';
-import { useUnitVariant } from '../../context';
+import { usePackVariant } from '../../context';
 import React from 'react';
 
 // Shows '[multiple]' if there is more then one pack size
 // otherwise shows pack size or unit variant short name
-export const PackUnitCell =
+export const PackVariantCell =
   <T extends RecordWithId>({
     getItemId,
     getUnitName,
@@ -20,7 +20,7 @@ export const PackUnitCell =
     getUnitName: (row: T) => string | null;
   }) =>
   ({ isError, rowData }: CellProps<T>) => {
-    const { asPackUnit } = useUnitVariant(
+    const { asPackVariant } = usePackVariant(
       getItemId(rowData),
       getUnitName(rowData)
     );
@@ -28,7 +28,7 @@ export const PackUnitCell =
     const packSizes = ArrayUtils.dedup(getPackSizes(rowData));
 
     const displayValue =
-      packSizes.length > 1 ? '[muiltiple]' : asPackUnit(packSizes[0] ?? 1);
+      packSizes.length > 1 ? '[muiltiple]' : asPackVariant(packSizes[0] ?? 1);
 
     // Must have only one packSize
     return <InnerBasicCell isError={isError} value={displayValue} />;

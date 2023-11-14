@@ -1,4 +1,4 @@
-export * from './ItemVariant';
+export * from './PackVariant';
 export * from './ServiceItemSearchInput';
 export * from './StockItemSearchInputWithStats';
 export * from './StockItemSelectModal';

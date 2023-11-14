@@ -4,10 +4,10 @@ import {
   CellProps,
   InnerBasicCell,
 } from '@openmsupply-client/common';
-import { useUnitVariant } from '../../context';
+import { usePackVariant } from '../../context';
 
-// Adjust quantity to reflect selected unit variant
-export const getPackUnitQuantityCell =
+// Adjust quantity to reflect selected pack variant
+export const PackVariantQuantityCell =
   <T extends RecordWithId>({
     getItemId,
     getQuantity,
@@ -16,7 +16,7 @@ export const getPackUnitQuantityCell =
     getQuantity: (row: T) => number;
   }) =>
   ({ isError, rowData }: CellProps<T>): ReactElement => {
-    const { numberOfPacksFromQuantity } = useUnitVariant(
+    const { numberOfPacksFromQuantity } = usePackVariant(
       getItemId(rowData),
       null
     );

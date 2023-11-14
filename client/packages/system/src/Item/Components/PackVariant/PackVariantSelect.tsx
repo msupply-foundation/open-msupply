@@ -8,7 +8,7 @@ interface PackUnitSelectProps {
   sx?: SxProps<Theme>;
 }
 
-export const PackUnitSelect: FC<PackUnitSelectProps> = ({
+export const PackVariantSelect: FC<PackUnitSelectProps> = ({
   variantControl,
   sx,
 }) => {

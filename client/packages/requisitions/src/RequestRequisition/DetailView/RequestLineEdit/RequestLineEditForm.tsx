@@ -12,7 +12,7 @@ import {
   StockItemSearchInputWithStats,
   ItemRowWithStatsFragment,
   VariantControl,
-  PackUnitSelect,
+  PackVariantSelect,
 } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { DraftRequestLine } from './hooks';
@@ -126,7 +126,7 @@ export const RequestLineEditForm = ({
             variantsControl ? (
               <Grid paddingTop={2}>
                 <InputWithLabelRow
-                  Input={<PackUnitSelect variantControl={variantsControl} />}
+                  Input={<PackVariantSelect variantControl={variantsControl} />}
                   label={t('label.pack')}
                 />
               </Grid>

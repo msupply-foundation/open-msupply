@@ -237,26 +237,26 @@ query itemById($storeId: String!, $itemId: String!) {
   }
 }
 
-fragment Unit on UnitNode {
+fragment Variant on VariantNode {
   id
   longName
   packSize
   shortName
 }
 
-fragment PackUnit on ItemPackUnitNode {
+fragment PackVariant on ItemPackVariantNode {
   itemId
-  mostUsedPackUnitId
-  packUnits {
-    ...Unit
+  mostUsedPackVariantId
+  packVariants {
+    ...Variant
   }
 }
 
-query packUnits($storeId: String!) {
-  packUnits(storeId: $storeId) {
+query packVariants($storeId: String!) {
+  packVariants(storeId: $storeId) {
     __typename
     nodes {
-      ...PackUnit
+      ...PackVariant
     }
     totalCount
   }

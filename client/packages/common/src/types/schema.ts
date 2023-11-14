@@ -2096,11 +2096,11 @@ export enum ItemNodeType {
   Stock = 'STOCK'
 }
 
-export type ItemPackUnitNode = {
-  __typename: 'ItemPackUnitNode';
+export type ItemPackVariantNode = {
+  __typename: 'ItemPackVariantNode';
   itemId: Scalars['String']['output'];
-  mostUsedPackUnitId: Scalars['String']['output'];
-  packUnits: Array<UnitNode>;
+  mostUsedPackVariantId: Scalars['String']['output'];
+  packVariants: Array<VariantNode>;
 };
 
 export enum ItemSortFieldInput {
@@ -3079,9 +3079,9 @@ export type OutboundInvoiceCounts = {
   notShipped: Scalars['Int']['output'];
 };
 
-export type PackUnitConnector = {
-  __typename: 'PackUnitConnector';
-  nodes: Array<ItemPackUnitNode>;
+export type PackVariantConnector = {
+  __typename: 'PackVariantConnector';
+  nodes: Array<ItemPackVariantNode>;
   totalCount: Scalars['Int']['output'];
 };
 
@@ -3437,7 +3437,7 @@ export type Queries = {
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
-  packUnits: PackUnitConnector;
+  packVariants: PackVariantConnector;
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
@@ -3662,7 +3662,7 @@ export type QueriesNamesArgs = {
 };
 
 
-export type QueriesPackUnitsArgs = {
+export type QueriesPackVariantsArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -4607,14 +4607,6 @@ export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocation
   field: UniqueValueKey;
 };
 
-export type UnitNode = {
-  __typename: 'UnitNode';
-  id: Scalars['String']['output'];
-  longName: Scalars['String']['output'];
-  packSize: Scalars['Int']['output'];
-  shortName: Scalars['String']['output'];
-};
-
 export type UpdateDisplaySettingsError = {
   __typename: 'UpdateDisplaySettingsError';
   error: Scalars['String']['output'];
@@ -5288,4 +5280,12 @@ export type UserStorePermissionNode = {
   context: Array<Scalars['String']['output']>;
   permissions: Array<UserPermission>;
   storeId: Scalars['String']['output'];
+};
+
+export type VariantNode = {
+  __typename: 'VariantNode';
+  id: Scalars['String']['output'];
+  longName: Scalars['String']['output'];
+  packSize: Scalars['Int']['output'];
+  shortName: Scalars['String']['output'];
 };

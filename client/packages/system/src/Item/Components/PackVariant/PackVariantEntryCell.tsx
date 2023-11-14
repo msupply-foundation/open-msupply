@@ -10,12 +10,12 @@ import {
   InnerBasicCell,
   DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
 } from '@openmsupply-client/common';
-import { useUnitVariant } from '../../context';
+import { usePackVariant } from '../../context';
 
 const ENTER_PACK_SIZE = -1;
 
 // This cell displays a packSize number input and unit pack drop down if unit pack variants exist
-export const getPackUnitEntryCell =
+export const PackVariantEntryCell =
   <T extends RecordWithId>({
     getItemId,
     getUnitName,
@@ -24,7 +24,7 @@ export const getPackUnitEntryCell =
     getUnitName: (row: T) => string | null;
   }) =>
   ({ rowData, column }: CellProps<T>): ReactElement => {
-    const { variantsControl } = useUnitVariant(
+    const { variantsControl } = usePackVariant(
       getItemId(rowData),
       getUnitName(rowData)
     );

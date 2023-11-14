@@ -12,7 +12,7 @@ export type AuthenticationCredentials = {
   store?: UserStoreNodeFragment | undefined;
   username: string;
 };
-export type UserSelectedUnits = {
+export type UserSelectedVariant = {
   [itemId: string]: /* userSelectedUnitId */ string;
 };
 
@@ -29,6 +29,9 @@ export type LocalStorageRecord = {
   '/auth/error': AuthError | undefined;
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
-} & Record<`/user/${string}/store/${string}/selectedunits`, UserSelectedUnits>;
+} & Record<
+  `/user/${string}/store/${string}/selectedvariant`,
+  UserSelectedVariant
+>;
 
 export type LocalStorageKey = keyof LocalStorageRecord;

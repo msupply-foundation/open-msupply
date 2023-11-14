@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   InventoryAdjustmentReasonRowFragment,
-  PackUnitCell,
+  PackVariantCell,
 } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
@@ -184,7 +184,7 @@ export const useStocktakeColumns = ({
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackUnitCell({
+        Cell: PackVariantCell({
           getItemId: row => row?.item?.id ?? '',
           getPackSizes: row => {
             if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
@@ -323,7 +323,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
       key: 'packUnit',
       label: 'label.pack',
       sortable: false,
-      Cell: PackUnitCell({
+      Cell: PackVariantCell({
         getItemId: row => row?.itemId,
         getPackSizes: row => {
           return [row?.packSize ?? 1];
