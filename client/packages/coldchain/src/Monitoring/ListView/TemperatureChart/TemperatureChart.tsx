@@ -102,12 +102,12 @@ const Chart = ({
   const tickSpace =
     (yAxisDomain[1] - yAxisDomain[0]) / (NUMBER_OF_HORIZONTAL_LINES + 1);
   const ticks = Array.from({ length: NUMBER_OF_HORIZONTAL_LINES }).map(
-    (_, index) => (index + 1) * tickSpace
+    (_, index) => Math.round((index + 1) * tickSpace)
   );
-  ticks.push(yAxisDomain[0]);
+  ticks.push(Math.round(yAxisDomain[0]));
   ticks.push(LOWER_THRESHOLD);
   ticks.push(UPPER_THRESHOLD);
-  ticks.push(yAxisDomain[1]);
+  ticks.push(Math.round(yAxisDomain[1]));
   ticks.sort((a, b) => (a > b ? 1 : -1));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,9 +136,7 @@ const Chart = ({
                 : '',
           }}
         >
-          <tspan dy="0.355em">
-            {formatTemperature(Math.round(payload.value))}
-          </tspan>
+          <tspan dy="0.355em">{formatTemperature(payload.value)}</tspan>
         </text>
       </g>
     );
@@ -159,12 +157,7 @@ const Chart = ({
             tick={{ fontSize: 12 }}
             allowDuplicatedCategory={false}
           />
-          <YAxis
-            ticks={ticks}
-            tick={<CustomisedTick />}
-            tickFormatter={formatTemperature}
-            domain={yAxisDomain}
-          />
+          <YAxis ticks={ticks} tick={<CustomisedTick />} domain={yAxisDomain} />
           <ChartTooltip content={TemperatureTooltip} />
           <Legend
             align="right"
