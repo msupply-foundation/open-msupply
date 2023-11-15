@@ -494,6 +494,13 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         JSObject data;
 
         public FrontEndHost(JSObject data) {
+            String ip = data.getString("ip");
+            // attempt to translate loopback addresses to an actual IP address
+            // so that we can display the local server IP for users to connect to the API
+            if (data.getBool("isLocal") && (ip.equals("127.0.0.1") || ip.equals("localhost"))) {
+                NsdServiceInfo serviceInfo = createLocalServiceInfo();
+                data.put("ip", getLocalAddress(serviceInfo));
+            }
             this.data = data;
         }
 
