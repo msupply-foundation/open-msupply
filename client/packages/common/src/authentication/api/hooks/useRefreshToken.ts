@@ -25,6 +25,8 @@ export const useRefreshToken = () => {
         })
       : 0;
 
+    // console.log('getLastRequestTime', getLastRequestTime());
+
     const minutesSinceLastRequest = DateUtils.differenceInMinutes(
       Date.now(),
       getLastRequestTime()
