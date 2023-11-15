@@ -253,7 +253,7 @@ fn sensor_add_if_new(
         id: uuid(),
         serial: temperature_sensor.serial.clone(),
         name: temperature_sensor.name.clone(),
-        store_id: Some(store_id.to_string()),
+        store_id: store_id.to_string(),
         location_id: None,
         last_connection_datetime: None,
         battery_level: None,

@@ -68,7 +68,7 @@ pub fn generate(
         temperature,
         sensor_id,
         location_id,
-        store_id: Some(store_id.to_string()),
+        store_id: store_id.to_string(),
         datetime,
         temperature_breach_id,
     }

@@ -130,7 +130,11 @@ const Chart = ({
           style={{
             fontSize: 12,
             fontWeight:
-              payload.value === LOWER_THRESHOLD || payload.value === UPPER_THRESHOLD ? 'bold' : '',
+
+              payload.value === LOWER_THRESHOLD ||
+              payload.value === UPPER_THRESHOLD
+                ? 'bold'
+                : '',
           }}
         >
           <tspan dy="0.355em">
@@ -141,7 +145,6 @@ const Chart = ({
     );
   };
 
-
   return (
     <Box flex={1} padding={2} sx={{ textAlign: 'center' }}>
       <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
@@ -150,9 +153,9 @@ const Chart = ({
 
       <ResponsiveContainer width="90%" height="90%">
         <ComposedChart>
-          <CartesianGrid
-            vertical={false}
-          />
+
+          <CartesianGrid vertical={false} />
+
           <XAxis
             dataKey="date"
             tickFormatter={dateFormatter}

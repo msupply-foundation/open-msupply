@@ -77,7 +77,7 @@ pub fn generate(
         id,
         sensor_id,
         location_id,
-        store_id: Some(store_id.to_string()),
+        store_id: store_id.to_string(),
         duration_milliseconds,
         r#type,
         start_datetime,
