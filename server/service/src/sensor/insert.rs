@@ -72,7 +72,7 @@ pub fn generate(
         name: name.unwrap_or(serial.clone()),
         serial,
         is_active: is_active.unwrap_or(false),
-        store_id: Some(store_id.to_string()),
+        store_id: store_id.to_string(),
         location_id: None,
         battery_level,
         log_interval,
