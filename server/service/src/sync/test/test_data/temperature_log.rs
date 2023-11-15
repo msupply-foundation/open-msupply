@@ -29,7 +29,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
         TEMPERATURE_LOG_1,
         PullUpsertRecord::TemperatureLog(TemperatureLogRow {
             id: TEMPERATURE_LOG_1.0.to_string(),
-            store_id: Some("store_a".to_string()),
+            store_id: "store_a".to_string(),
             location_id: None,
             temperature: 10.6,
             sensor_id: "cf5812e0c33911eb9757779d39ae2dbd".to_string(),
@@ -51,7 +51,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             id: TEMPERATURE_LOG_1.0.to_string(),
             temperature: 10.6,
             sensor_id: "cf5812e0c33911eb9757779d39ae2dbd".to_string(),
-            store_id: Some("store_a".to_string()),
+            store_id: "store_a".to_string(),
             location_id: None,
             date: NaiveDate::from_ymd_opt(2023, 7, 1),
             time: NaiveTime::from_hms_opt(13, 4, 6).unwrap(),

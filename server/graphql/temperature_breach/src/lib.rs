@@ -145,7 +145,7 @@ mod test {
                         duration_milliseconds: 3600,
                         acknowledged: true,
                         r#type: TemperatureBreachRowType::ColdConsecutive,
-                        store_id: Some("store_a".to_string()),
+                        store_id: "store_a".to_string(),
                         location_id: None,
                         threshold_minimum: -273.0,
                         threshold_maximum: 2.0,
