@@ -9,11 +9,15 @@ import {
   ListItemProps,
   BadgeProps,
 } from '@mui/material';
+
 import { styled } from '@mui/material/styles';
 import { useMatch, Link } from 'react-router-dom';
 import { useDrawer } from '@common/hooks';
 import { ChevronDownIcon } from '@common/icons';
-
+import {
+  useTranslation,
+  useConfirmationModal,
+} from '@openmsupply-client/common';
 const useSelectedNavMenuItem = (
   to: string,
   end: boolean,
@@ -72,6 +76,9 @@ export interface AppNavLinkProps {
   to: string;
   visible?: boolean;
   onClick?: () => void;
+  requireConfirmation?: boolean;
+  confirmMessage?: string;
+  confirmTitle?: string;
 }
 
 export const AppNavLink: FC<AppNavLinkProps> = props => {
@@ -84,9 +91,12 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     to,
     visible = true,
     onClick,
+    requireConfirmation,
+    confirmMessage,
+    confirmTitle,
   } = props;
   const drawer = useDrawer();
-
+  const t = useTranslation('common');
   const selected = useSelectedNavMenuItem(to, !!end, drawer.isOpen);
   const match = useMatch({ path: `${to}/*` });
   const isSelectedParentItem = inactive && !!match;
@@ -99,27 +109,46 @@ export const AppNavLink: FC<AppNavLinkProps> = props => {
     drawer.onClick();
   };
 
+  const showConfirmation = useConfirmationModal({
+    onConfirm: handleClick,
+    message: confirmMessage || t('messages.confirm-delete-generic'),
+    title: confirmTitle || t('heading.are-you-sure'),
+  });
+
   const CustomLink = React.useMemo(
     () =>
-      React.forwardRef<HTMLAnchorElement>((linkProps, ref) =>
-        !end && !!inactive ? (
-          <span
-            {...linkProps}
-            onClick={() => drawer.onExpand(to)}
-            data-testid={`${to}_hover`}
-          />
-        ) : (
-          <Link
-            {...linkProps}
-            ref={ref}
-            to={to}
-            role="link"
-            aria-label={text}
-            title={text}
-            onClick={handleClick}
-          />
-        )
-      ),
+      React.forwardRef<HTMLAnchorElement>((linkProps, ref) => {
+        if (!end && !!inactive) {
+          return (
+            <span
+              {...linkProps}
+              onClick={() => drawer.onExpand(to)}
+              data-testid={`${to}_hover`}
+            />
+          );
+        } else if (requireConfirmation) {
+          return (
+            <span
+              {...linkProps}
+              onClick={
+                showConfirmation as React.MouseEventHandler<HTMLSpanElement>
+              }
+            />
+          );
+        } else {
+          return (
+            <Link
+              {...linkProps}
+              ref={ref}
+              to={to}
+              role="link"
+              aria-label={text}
+              title={text}
+              onClick={handleClick}
+            />
+          );
+        }
+      }),
     [to]
   );
 
