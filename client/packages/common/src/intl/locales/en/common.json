@@ -417,6 +417,6 @@
   "sync-status.push": "Push",
   "table.show-columns": "Show / hide columns",
   "warning.caps-lock": "Warning: Caps lock is on",
-  "heading.logout-confirm": "Are you sure?",
+  "heading.logout-confirm": "Logout?",
   "messages.logout-confirm": "Are you sure you want to logout?"
 }
