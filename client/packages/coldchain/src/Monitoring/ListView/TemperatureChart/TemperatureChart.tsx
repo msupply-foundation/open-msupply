@@ -25,6 +25,8 @@ import { BreachIndicator } from './BreachIndicator';
 import { Toolbar } from '../TemperatureLog/Toolbar';
 
 const NUMBER_OF_HORIZONTAL_LINES = 4;
+const LOWER_THRESHOLD = 2;
+const UPPER_THRESHOLD = 8;
 
 const Chart = ({
   breachConfig,
@@ -100,21 +102,21 @@ const Chart = ({
   const tickSpace =
     (yAxisDomain[1] - yAxisDomain[0]) / (NUMBER_OF_HORIZONTAL_LINES + 1);
   const ticks = Array.from({ length: NUMBER_OF_HORIZONTAL_LINES }).map(
-    (_, index) => (index + 1) * tickSpace
+    (_, index) => Math.round((index + 1) * tickSpace)
   );
-  ticks.push(yAxisDomain[0]);
-  ticks.push(2);
-  ticks.push(8);
-  ticks.push(yAxisDomain[1]);
+  ticks.push(Math.round(yAxisDomain[0]));
+  ticks.push(LOWER_THRESHOLD);
+  ticks.push(UPPER_THRESHOLD);
+  ticks.push(Math.round(yAxisDomain[1]));
   ticks.sort((a, b) => (a > b ? 1 : -1));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const CustomisedTick = ({ x, y, payload }: any) => {
     const theme = useTheme();
     const textColour =
-      payload.value === 2
+      payload.value === LOWER_THRESHOLD
         ? theme.palette.chart.cold.main
-        : payload.value === 8
+        : payload.value === UPPER_THRESHOLD
         ? theme.palette.chart.hot.main
         : theme.palette.gray.dark;
     return (
@@ -128,30 +130,17 @@ const Chart = ({
           style={{
             fontSize: 12,
             fontWeight:
-              payload.value === 2 || payload.value === 8 ? 'bold' : '',
+              payload.value === LOWER_THRESHOLD || payload.value === UPPER_THRESHOLD ? 'bold' : '',
           }}
         >
           <tspan dy="0.355em">
-            {formatTemperature(Math.round(payload.value))}
+            {formatTemperature(payload.value)}
           </tspan>
         </text>
       </g>
     );
   };
 
-  const horizontalCoordinatesGenerator = ({
-    height,
-    offset,
-  }: {
-    height: number;
-    offset: { top: number; bottom: number };
-  }) => {
-    const spacing =
-      (offset.top + height - offset.bottom) / (NUMBER_OF_HORIZONTAL_LINES + 1);
-    return Array.from({ length: NUMBER_OF_HORIZONTAL_LINES }).map(
-      (_, index) => (index + 1) * spacing
-    );
-  };
 
   return (
     <Box flex={1} padding={2} sx={{ textAlign: 'center' }}>
@@ -163,7 +152,6 @@ const Chart = ({
         <ComposedChart>
           <CartesianGrid
             vertical={false}
-            horizontalCoordinatesGenerator={horizontalCoordinatesGenerator}
           />
           <XAxis
             dataKey="date"
@@ -174,7 +162,6 @@ const Chart = ({
           <YAxis
             ticks={ticks}
             tick={<CustomisedTick />}
-            tickFormatter={formatTemperature}
             domain={yAxisDomain}
           />
           <ChartTooltip content={TemperatureTooltip} />
