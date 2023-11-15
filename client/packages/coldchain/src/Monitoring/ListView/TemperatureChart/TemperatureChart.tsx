@@ -130,16 +130,13 @@ const Chart = ({
           style={{
             fontSize: 12,
             fontWeight:
-
               payload.value === LOWER_THRESHOLD ||
               payload.value === UPPER_THRESHOLD
                 ? 'bold'
                 : '',
           }}
         >
-          <tspan dy="0.355em">
-            {formatTemperature(payload.value)}
-          </tspan>
+          <tspan dy="0.355em">{formatTemperature(payload.value)}</tspan>
         </text>
       </g>
     );
@@ -153,20 +150,14 @@ const Chart = ({
 
       <ResponsiveContainer width="90%" height="90%">
         <ComposedChart>
-
           <CartesianGrid vertical={false} />
-
           <XAxis
             dataKey="date"
             tickFormatter={dateFormatter}
             tick={{ fontSize: 12 }}
             allowDuplicatedCategory={false}
           />
-          <YAxis
-            ticks={ticks}
-            tick={<CustomisedTick />}
-            domain={yAxisDomain}
-          />
+          <YAxis ticks={ticks} tick={<CustomisedTick />} domain={yAxisDomain} />
           <ChartTooltip content={TemperatureTooltip} />
           <Legend
             align="right"
