@@ -24,6 +24,10 @@ import { BreachConfig, BreachDot, DotProps, Sensor } from './types';
 import { BreachIndicator } from './BreachIndicator';
 import { Toolbar } from '../TemperatureLog/Toolbar';
 
+const NUMBER_OF_HORIZONTAL_LINES = 4;
+const LOWER_THRESHOLD = 2;
+const UPPER_THRESHOLD = 8;
+
 const Chart = ({
   breachConfig,
   hasData,
@@ -95,6 +99,51 @@ const Chart = ({
     return <NothingHere body={t('error.no-temperature-logs')} />;
   }
 
+  const tickSpace =
+    (yAxisDomain[1] - yAxisDomain[0]) / (NUMBER_OF_HORIZONTAL_LINES + 1);
+  const ticks = Array.from({ length: NUMBER_OF_HORIZONTAL_LINES }).map(
+    (_, index) => (index + 1) * tickSpace
+  );
+  ticks.push(yAxisDomain[0]);
+  ticks.push(LOWER_THRESHOLD);
+  ticks.push(UPPER_THRESHOLD);
+  ticks.push(yAxisDomain[1]);
+  ticks.sort((a, b) => (a > b ? 1 : -1));
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CustomisedTick = ({ x, y, payload }: any) => {
+    const theme = useTheme();
+    const textColour =
+      payload.value === LOWER_THRESHOLD
+        ? theme.palette.chart.cold.main
+        : payload.value === UPPER_THRESHOLD
+        ? theme.palette.chart.hot.main
+        : theme.palette.gray.dark;
+    return (
+      <g>
+        <line x={x} y={y} stroke={theme.palette.gray.dark}></line>
+        <text
+          x={x}
+          y={y}
+          fill={textColour}
+          textAnchor="end"
+          style={{
+            fontSize: 12,
+            fontWeight:
+              payload.value === LOWER_THRESHOLD ||
+              payload.value === UPPER_THRESHOLD
+                ? 'bold'
+                : '',
+          }}
+        >
+          <tspan dy="0.355em">
+            {formatTemperature(Math.round(payload.value))}
+          </tspan>
+        </text>
+      </g>
+    );
+  };
+
   return (
     <Box flex={1} padding={2} sx={{ textAlign: 'center' }}>
       <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
@@ -111,7 +160,8 @@ const Chart = ({
             allowDuplicatedCategory={false}
           />
           <YAxis
-            tick={{ fontSize: 12 }}
+            ticks={ticks}
+            tick={<CustomisedTick />}
             tickFormatter={formatTemperature}
             domain={yAxisDomain}
           />
