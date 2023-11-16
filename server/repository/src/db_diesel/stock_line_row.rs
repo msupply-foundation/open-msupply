@@ -1,5 +1,5 @@
 use super::{
-    item_row::item, location_row::location, name_row::name,
+    item_row::item_link, location_row::location, name_row::name,
     stock_line_row::stock_line::dsl as stock_line_dsl, store_row::store, StorageConnection,
 };
 
@@ -12,7 +12,7 @@ use chrono::NaiveDate;
 table! {
     stock_line (id) {
         id -> Text,
-        item_id -> Text,
+        item_link_id -> Text,
         store_id -> Text,
         location_id -> Nullable<Text>,
         batch -> Nullable<Text>,
@@ -29,7 +29,7 @@ table! {
     }
 }
 
-joinable!(stock_line -> item (item_id));
+joinable!(stock_line -> item_link (item_link_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
 joinable!(stock_line -> name (supplier_id));
@@ -40,6 +40,7 @@ joinable!(stock_line -> barcode (barcode_id));
 #[table_name = "stock_line"]
 pub struct StockLineRow {
     pub id: String,
+    #[column_name = "item_link_id"]
     pub item_id: String,
     pub store_id: String,
     pub location_id: Option<String>,
