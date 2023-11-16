@@ -29,6 +29,7 @@ import { ExternalLinkIcon } from './ExternalLink';
 import { EyeIcon } from './Eye';
 import { EyeOffIcon } from './EyeOff';
 import { FilterIcon } from './Filter';
+import { HelpIcon } from './Help';
 import { HomeIcon } from './Home';
 import { InfoIcon } from './Info';
 import { InfoOutlineIcon } from './InfoOutline';
@@ -120,6 +121,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <EyeIcon {...args} />, name: 'Eye' },
     { icon: <EyeOffIcon {...args} />, name: 'EyeOff' },
     { icon: <FilterIcon {...args} />, name: 'Filter' },
+    { icon: <HelpIcon {...args} />, name: 'Help' },
     { icon: <HomeIcon {...args} />, name: 'Home' },
     { icon: <InfoIcon {...args} />, name: 'Info' },
     { icon: <InfoOutlineIcon {...args} />, name: 'InfoOutline' },
