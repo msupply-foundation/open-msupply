@@ -195,11 +195,13 @@ impl TemperatureLogFilter {
 // Recursive expansion of table! macro
 // ====================================
 
-pub mod time_series {
+pub mod timeseries {
   #![allow(dead_code)]
   use diesel::{
     QuerySource,Table,JoinTo,
   };
+  use diesel::backend::Backend;
+  use diesel::result::QueryResult;
   use diesel::associations::HasTable;
   use diesel::insertable::Insertable;
   use diesel::query_builder::*;
@@ -217,24 +219,24 @@ pub mod time_series {
   #[doc = " glob imported for functions which only deal with one table."]
   pub mod dsl {
     macro_rules! __static_cond {
-      (time_series time_series) => {
+      (timeseries timeseries) => {
         compile_error!(concat!("Column `",stringify!(from_datetime),"` cannot be named the same as its table.\n \
                             You may use `#[sql_name = \"",stringify!(from_datetime),"\"]` to reference the table's `",stringify!(from_datetime),"` column. \n \
                             See the documentation of the `table!` macro for details`\n"));
       };
-      (time_series from_datetime) => {
+      (timeseries from_datetime) => {
         pub use super::columns::{
           from_datetime
         };
       }
     }
     macro_rules! __static_cond {
-      (time_series time_series) => {
+      (timeseries timeseries) => {
         compile_error!(concat!("Column `",stringify!(to_datetime),"` cannot be named the same as its table.\n \
                             You may use `#[sql_name = \"",stringify!(to_datetime),"\"]` to reference the table's `",stringify!(to_datetime),"` column. \n \
                             See the documentation of the `table!` macro for details`\n"));
       };
-      (time_series to_datetime) => {
+      (timeseries to_datetime) => {
         pub use super::columns::{
           to_datetime
         };
@@ -243,7 +245,7 @@ pub mod time_series {
     pub use super::columns::{
       to_datetime
     };
-    pub use super::table as time_series;
+    pub use super::table as timeseries;
   }#[allow(non_upper_case_globals,dead_code)]
   #[doc = " A tuple of all of the columns on this table"]
   pub const all_columns:(from_datetime,to_datetime,) = (from_datetime,to_datetime,);
@@ -269,11 +271,24 @@ pub mod time_series {
   pub type SqlType = (Timestamp,Timestamp,);
   #[doc = " Helper type for representing a boxed query from this table"]
   pub type BoxedQuery<'a,DB,ST = SqlType>  = BoxedSelectStatement<'a,ST,table,DB>;
+
+   impl <DB:Backend>QueryFragment<DB>for table{
+      fn walk_ast(&self,mut out:AstPass<DB>) -> QueryResult<()>{
+
+        out.push_sql(r#"
+            SELECT '2021-01-01T16:00:00' as from_datetime, '2021-01-01T17:00:00' as to_datetime
+            UNION SELECT '2021-01-01T17:00:00' as from_datetime, '2021-01-01T18:00:00' as to_datetime
+            UNION SELECT '2021-01-01T18:00:00' as from_datetime, '2021-01-01T19:00:00' as to_datetime"#);
+        Ok(())
+      }
+    
+      }
+
   impl QuerySource for table {
-    type FromClause = Identifier<'static>;
+    type FromClause = table;
     type DefaultSelection =  <Self as Table>::AllColumns;
     fn from_clause(&self) -> Self::FromClause {
-      Identifier(("time_series"))
+        table
     }
     fn default_selection(&self) -> Self::DefaultSelection {
       Self::all_columns()
@@ -419,8 +434,7 @@ pub mod time_series {
     }
     impl <DB>diesel::query_builder::QueryFragment<DB>for from_datetime where DB:diesel::backend::Backend, <table as QuerySource>::FromClause:QueryFragment<DB>,{
       fn walk_ast(&self,mut out:diesel::query_builder::AstPass<DB>) -> diesel::result::QueryResult<()>{
-        table.from_clause().walk_ast(out.reborrow())?;
-        out.push_sql(".");
+        out.push_sql("timeseries.");
         out.push_identifier(("from_datetime"))
       }
     
@@ -473,8 +487,7 @@ pub mod time_series {
     }
     impl <DB>diesel::query_builder::QueryFragment<DB>for to_datetime where DB:diesel::backend::Backend, <table as QuerySource>::FromClause:QueryFragment<DB>,{
       fn walk_ast(&self,mut out:diesel::query_builder::AstPass<DB>) -> diesel::result::QueryResult<()>{
-        table.from_clause().walk_ast(out.reborrow())?;
-        out.push_sql(".");
+        out.push_sql("timeseries.");
         out.push_identifier(("to_datetime"))
       }
     
@@ -520,4 +533,16 @@ pub mod time_series {
       }
     
   }
+}
+
+#[test]
+fn test() {
+    use super::timeseries;
+
+    let query = timeseries::table
+        .select(timeseries::from_datetime)
+        .group_by(timeseries::to_datetime)
+        .into_boxed();
+
+    println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 }
