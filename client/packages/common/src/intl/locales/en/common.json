@@ -5,6 +5,7 @@
   "approval-status.denied": "Denied",
   "approval-status.none": "None",
   "approval-status.pending": "Pending",
+  "auth.permission-denied": "Permission denied",
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Add Item",
   "button.allocate": "Allocate",
