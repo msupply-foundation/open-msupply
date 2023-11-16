@@ -23,7 +23,7 @@ export interface StatsPanelProps {
 const Statistic: FC<Stat> = ({ label, value, link }) => {
   const t = useTranslation();
   return (
-    <Grid container alignItems="center" style={{ height: 30 }}>
+    <Grid container alignItems="center" style={{ marginTop: '8px' }}>
       <Grid item>
         {value ? (
           <Typography style={{ fontSize: 24, fontWeight: 'bold' }}>
