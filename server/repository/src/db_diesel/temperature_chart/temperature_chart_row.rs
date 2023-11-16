@@ -201,7 +201,7 @@ fn test_basic_temperature_chart_query() {
     .into_boxed::<DBType>();
 
     let result = r#"
-                SELECT time_series.from_datetime, time_series.to_datetime, AVG(temperature_log.temperature) as average_temperature, temperature_log.id, sensor.id 
+                SELECT time_series.from_datetime, time_series.to_datetime, AVG(temperature_log.temperature) as average_temperature, temperature_log.id, temperature_log.sensor_id
                 FROM  
                 ( SELECT ? as from_datetime, ? as to_datetime  UNION  SELECT ? as from_datetime, ? as to_datetime ) AS time_series
                 JOIN temperature_log ON 
