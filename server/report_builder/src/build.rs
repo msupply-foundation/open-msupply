@@ -175,15 +175,10 @@ pub fn build(args: BuildArgs) -> anyhow::Result<()> {
 
     let output_path = args.output.unwrap_or("./generated/output.json".to_string());
     let output_path = Path::new(&output_path);
-    fs::create_dir_all(
+    fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
+        "Invalid output path: {:?}",
         output_path
-            .parent()
-            .ok_or(anyhow::Error::msg(format!(
-                "Invalid output path: {:?}",
-                output_path
-            )))?
-            .clone(),
-    )?;
+    )))?)?;
 
     fs::write(&output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
         anyhow::Error::msg(format!(

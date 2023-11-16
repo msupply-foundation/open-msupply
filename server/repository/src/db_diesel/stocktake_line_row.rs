@@ -1,7 +1,8 @@
 use super::{
-    inventory_adjustment_reason_row::inventory_adjustment_reason, location_row::location,
-    stock_line_row::stock_line, stocktake_line_row::stocktake_line::dsl as stocktake_line_dsl,
-    stocktake_row::stocktake, StorageConnection,
+    inventory_adjustment_reason_row::inventory_adjustment_reason, item_row::item,
+    location_row::location, stock_line_row::stock_line,
+    stocktake_line_row::stocktake_line::dsl as stocktake_line_dsl, stocktake_row::stocktake,
+    StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -32,6 +33,7 @@ table! {
     }
 }
 
+joinable!(stocktake_line -> item (item_id));
 joinable!(stocktake_line -> location (location_id));
 joinable!(stocktake_line -> stocktake (stocktake_id));
 joinable!(stocktake_line -> stock_line (stock_line_id));

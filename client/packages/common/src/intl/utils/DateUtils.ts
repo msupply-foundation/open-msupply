@@ -2,6 +2,7 @@ import { SupportedLocales, useIntlUtils } from '@common/intl';
 import {
   addMinutes,
   addDays,
+  addMonths,
   addYears,
   isValid,
   differenceInDays,
@@ -17,14 +18,20 @@ import {
   isBefore,
   isEqual,
   format,
+  parse,
   parseISO,
   fromUnixTime,
+  getUnixTime,
   startOfToday,
   startOfDay,
+  endOfDay,
   startOfYear,
   formatRelative,
+  formatDistance,
   formatDistanceToNow,
   formatRFC3339,
+  previousMonday,
+  endOfWeek,
 } from 'date-fns';
 // importing individually to reduce bundle size
 // the date-fns methods are tree shaking correctly
@@ -82,14 +89,33 @@ export const DateUtils = {
   differenceInMinutes,
   addMinutes,
   addDays,
+  addMonths,
   addYears,
   addCurrentTime,
-  getDateOrNull: (date?: Date | string | null): Date | null => {
+  getDateOrNull: (
+    date?: Date | string | null,
+    format?: string
+  ): Date | null => {
     if (!date) return null;
     if (date instanceof Date) return date;
-    const maybeDate = new Date(date);
+    const maybeDate =
+      format && typeof date === 'string'
+        ? parse(date, format, new Date())
+        : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
+  minDate: (...dates: (Date | null)[]) => {
+    const maybeDate = fromUnixTime(
+      Math.min(
+        // Ignore nulls, as they'll return a minimum of 0
+        ...dates.filter(d => d !== null).map(d => getUnixTime(d as Date))
+      )
+    );
+    return isValid(maybeDate) ? maybeDate : null;
+  },
+
+  maxDate: (...dates: (Date | null)[]) =>
+    fromUnixTime(Math.max(...dates.map(d => getUnixTime(d as Date)))),
   isPast,
   isFuture,
   isExpired: (expiryDate: Date): boolean => isPast(expiryDate),
@@ -110,7 +136,10 @@ export const DateUtils = {
   ageInDays: (date: Date | string) =>
     differenceInDays(Date.now(), dateInputHandler(date)),
   startOfDay,
+  endOfDay,
   startOfYear,
+  previousMonday,
+  endOfWeek,
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
@@ -139,6 +168,9 @@ export const useFormatDateTime = () => {
   const { currentLanguage } = useIntlUtils();
   const locale = getLocale(currentLanguage);
 
+  const urlQueryDate = 'yyyy-MM-dd';
+  const urlQueryDateTime = 'yyyy-MM-dd HH:mm';
+
   const localisedDate = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'P', { locale });
 
@@ -150,6 +182,9 @@ export const useFormatDateTime = () => {
 
   const dayMonthShort = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'dd MMM', { locale });
+
+  const dayMonthTime = (date: Date | string | number): string =>
+    formatIfValid(dateInputHandler(date), 'dd/MM HH:mm', { locale });
 
   const customDate = (
     date: Date | string | number,
@@ -169,11 +204,26 @@ export const useFormatDateTime = () => {
     return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
   };
 
+  const localisedDistance = (
+    startDate: Date | string | number,
+    endDate: Date | string | number
+  ) => {
+    const from = dateInputHandler(startDate);
+    const to = dateInputHandler(endDate);
+    return isValid(from) && isValid(to)
+      ? formatDistance(from, to, { locale })
+      : '';
+  };
+
   return {
+    urlQueryDate,
+    urlQueryDateTime,
     customDate,
     dayMonthShort,
+    dayMonthTime,
     localisedDate,
     localisedDateTime,
+    localisedDistance,
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,

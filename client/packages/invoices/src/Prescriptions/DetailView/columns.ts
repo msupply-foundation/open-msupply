@@ -1,5 +1,4 @@
 import {
-  Formatter,
   useColumns,
   getRowExpandColumn,
   getNotePopoverColumn,
@@ -12,7 +11,6 @@ import {
   PositiveNumberCell,
   useTranslation,
 } from '@openmsupply-client/common';
-import { LocationRowFragment } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -132,8 +130,11 @@ export const usePrescriptionColumn = ({
             if ('lines' in row) {
               const { lines } = row;
               return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'batch', '[multiple]') ??
-                ''
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'batch',
+                  t('multiple')
+                ) ?? ''
               );
             } else {
               return row.batch ?? '';
@@ -145,7 +146,7 @@ export const usePrescriptionColumn = ({
               return ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'batch',
-                '[multiple]'
+                t('multiple')
               );
             } else {
               return rowData.batch;
@@ -160,11 +161,14 @@ export const usePrescriptionColumn = ({
             if ('lines' in row) {
               const { lines } = row;
               const expiryDate =
-                ArrayUtils.ifTheSameElseDefault(lines, 'expiryDate', null) ??
-                '';
-              return Formatter.expiryDateString(expiryDate);
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'expiryDate',
+                  t('multiple')
+                ) ?? '';
+              return expiryDate;
             } else {
-              return Formatter.expiryDateString(row.expiryDate);
+              return row.expiryDate ?? '';
             }
           },
           accessor: ({ rowData }) => {
@@ -173,7 +177,7 @@ export const usePrescriptionColumn = ({
               const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
-                null
+                t('multiple')
               );
               return expiryDate;
             } else {
@@ -187,20 +191,35 @@ export const usePrescriptionColumn = ({
         {
           getSortValue: row => {
             if ('lines' in row) {
-              const locations = row.lines
-                .map(({ location }) => location)
-                .filter(Boolean) as LocationRowFragment[];
-              return ArrayUtils.ifTheSameElseDefault(locations, 'name', '');
+              const locations = row.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  t('multiple')
+                );
+              } else {
+                return '';
+              }
             } else {
               return row.location?.name ?? '';
             }
           },
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
-              const locations = rowData.lines
-                .map(({ location }) => location)
-                .filter(Boolean) as LocationRowFragment[];
-              return ArrayUtils.ifTheSameElseDefault(locations, 'name', '');
+              const locations = rowData.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
+
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'name',
+                  t('multiple')
+                );
+              }
             } else {
               return rowData.location?.name ?? '';
             }

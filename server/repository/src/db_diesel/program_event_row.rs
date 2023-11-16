@@ -28,14 +28,18 @@ pub struct ProgramEventRow {
     /// Time of the event. An event can be "invalidated" by a later event of same type.
     pub datetime: NaiveDateTime,
     /// Time when the event becomes active.
-    /// Must be <= datetime.
+    /// Must be >= datetime.
     /// An event could never become active if there is another event e2 if
     /// e.active_datetime > e2.datetime && e.datetime < e2.datetime
     /// i.e. e2 superseded the event.
+    /// The active_start_datetime is a constant property of the event, i.e. it will not be updated
+    /// when other events are insert.
     pub active_start_datetime: NaiveDateTime,
     /// Keeps track when the event becomes superseded by a later event.
-    /// Its possible that active_end_datetime < active_start_datetime in which case the event never
-    /// became active
+    /// It's possible that active_end_datetime < active_start_datetime in which case the event will
+    /// never become active.
+    /// Other than the active_start_datetime the active_end_datetime might get updated when other
+    /// events are inserted, i.e. it depends on other events in the system.
     pub active_end_datetime: NaiveDateTime,
     /// Patient id, if event is associated with a patient
     pub patient_id: Option<String>,

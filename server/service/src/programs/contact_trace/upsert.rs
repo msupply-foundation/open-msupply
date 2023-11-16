@@ -265,7 +265,7 @@ mod test {
     use crate::{
         programs::{
             contact_trace::{
-                contact_trace_schema::{Person, SchemaContactTrace},
+                contact_trace_schema::{RelatedPerson, SchemaContactTrace},
                 upsert::UpsertContactTrace,
             },
             patient::{test::mock_patient_1, UpdateProgramPatient},
@@ -401,9 +401,9 @@ mod test {
 
         // InvalidContactPatientId
         let contact_trace = inline_init(|v: &mut SchemaContactTrace| {
-            let contact = Person {
+            let contact = RelatedPerson {
                 id: Some("Invalid patient id".to_string()),
-                ..Person::default()
+                ..RelatedPerson::default()
             };
             v.contact = Some(contact);
         });

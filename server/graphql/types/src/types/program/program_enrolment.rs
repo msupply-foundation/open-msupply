@@ -2,7 +2,7 @@ use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
-    loader::DocumentLoader,
+    loader::{DocumentLoader, PatientLoader},
     map_filter,
     pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
@@ -17,6 +17,7 @@ use repository::{
 use super::{
     document::DocumentNode,
     encounter::{EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput},
+    patient::PatientNode,
     program_event::{
         ProgramEventConnector, ProgramEventNode, ProgramEventResponse, ProgramEventSortInput,
     },
@@ -80,27 +81,22 @@ pub struct ProgramEnrolmentFilterInput {
     /// The program id
     pub program_id: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
+    pub program_name: Option<StringFilterInput>,
 }
-impl ProgramEnrolmentFilterInput {
-    pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
-        let ProgramEnrolmentFilterInput {
-            patient_id,
-            enrolment_datetime,
-            program_enrolment_id,
-            status,
-            r#type,
-            program_id,
-            document_name,
-        } = self;
+impl From<ProgramEnrolmentFilterInput> for ProgramEnrolmentFilter {
+    fn from(f: ProgramEnrolmentFilterInput) -> Self {
         ProgramEnrolmentFilter {
-            patient_id: patient_id.map(EqualFilter::from),
-            enrolment_datetime: enrolment_datetime.map(DatetimeFilter::from),
-            program_enrolment_id: program_enrolment_id.map(StringFilter::from),
-            status: status.map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
-            document_name: document_name.map(EqualFilter::from),
-            document_type: r#type.map(EqualFilter::from),
-            program_id: program_id.map(EqualFilter::from),
+            patient_id: f.patient_id.map(EqualFilter::from),
+            enrolment_datetime: f.enrolment_datetime.map(DatetimeFilter::from),
+            program_enrolment_id: f.program_enrolment_id.map(StringFilter::from),
+            status: f
+                .status
+                .map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
+            document_name: f.document_name.map(EqualFilter::from),
+            document_type: f.r#type.map(EqualFilter::from),
+            program_id: f.program_id.map(EqualFilter::from),
             program_context_id: None,
+            program_name: f.program_name.map(StringFilter::from),
         }
     }
 }
@@ -182,6 +178,17 @@ pub struct ProgramEnrolmentNode {
     pub allowed_ctx: Vec<String>,
 }
 
+#[derive(SimpleObject)]
+pub struct ProgramEnrolmentConnector {
+    pub total_count: u32,
+    pub nodes: Vec<ProgramEnrolmentNode>,
+}
+
+#[derive(Union)]
+pub enum ProgramEnrolmentResponse {
+    Response(ProgramEnrolmentConnector),
+}
+
 #[Object]
 impl ProgramEnrolmentNode {
     /// The program type
@@ -200,6 +207,22 @@ impl ProgramEnrolmentNode {
 
     pub async fn patient_id(&self) -> &str {
         &self.program_enrolment.0.patient_id
+    }
+
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
+
+        let result = loader
+            .load_one(self.program_enrolment.0.patient_id.clone())
+            .await?
+            .map(|patient| PatientNode {
+                store_id: self.store_id.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
+                patient,
+            })
+            .ok_or(Error::new("Program enrolment without patient"))?;
+
+        Ok(result)
     }
 
     pub async fn enrolment_datetime(&self) -> DateTime<Utc> {
@@ -241,7 +264,7 @@ impl ProgramEnrolmentNode {
         // TODO use loader?
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
-            .map(|f| f.to_domain_filter())
+            .map(EncounterFilter::from)
             .unwrap_or(EncounterFilter::new())
             .patient_id(EqualFilter::equal_to(&self.program_enrolment.0.patient_id))
             .context_id(EqualFilter::equal_to(&self.program_enrolment.1.context_id));

@@ -18,17 +18,22 @@ import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
 
 export const Toolbar: FC = () => {
+  const t = useTranslation('distribution');
   const onDelete = useOutbound.line.deleteSelected();
   const { onAllocate } = useOutbound.line.allocateSelected();
-  const { id, otherParty, theirReference, update } =
-    useOutbound.document.fields(['id', 'otherParty', 'theirReference']);
+  const { id, otherParty, theirReference, update, requisition } =
+    useOutbound.document.fields([
+      'id',
+      'otherParty',
+      'theirReference',
+      'requisition',
+    ]);
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
   const { mutateAsync: updateName } = useOutbound.document.updateName();
 
   const isDisabled = useOutbound.utils.isDisabled();
-  const t = useTranslation('distribution');
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -46,7 +51,7 @@ export const Toolbar: FC = () => {
                 label={t('label.customer-name')}
                 Input={
                   <CustomerSearchInput
-                    disabled={isDisabled}
+                    disabled={isDisabled || !!requisition}
                     value={otherParty}
                     onChange={async ({ id: otherPartyId }) => {
                       await updateName({ id, otherPartyId });
