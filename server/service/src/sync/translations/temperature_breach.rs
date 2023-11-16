@@ -50,8 +50,7 @@ pub struct LegacyTemperatureBreachRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_id: Option<String>,
     #[serde(rename = "store_ID")]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub store_id: Option<String>,
+    pub store_id: String,
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub start_date: Option<NaiveDate>,
@@ -128,7 +127,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             location_id,
             store_id,
             end_datetime: end_datetime.or(end_date.map(|date| NaiveDateTime::new(date, end_time))),
-            acknowledged,
+            unacknowledged: !acknowledged,
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,
@@ -160,7 +159,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             store_id,
             start_datetime,
             end_datetime,
-            acknowledged,
+            unacknowledged,
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,
@@ -186,7 +185,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             end_time: end_datetime
                 .map(|datetime| datetime.time())
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
-            acknowledged,
+            acknowledged: !unacknowledged,
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,

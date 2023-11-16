@@ -216,6 +216,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                   sx={{ width: 110 }}
                   options={packSizeController.options}
                   value={packSizeController.selected?.value ?? ''}
+                  clearable={false}
                   onChange={e => {
                     const { value } = e.target;
                     onChangePackSize(Number(value));

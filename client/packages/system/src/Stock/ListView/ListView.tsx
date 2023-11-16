@@ -16,9 +16,10 @@ import {
   ColumnAlign,
   TooltipTextCell,
 } from '@openmsupply-client/common';
-import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
+import { RepackModal, StockLineEditModal } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 
 const StockListComponent: FC = () => {
   const {
@@ -32,6 +33,10 @@ const StockListComponent: FC = () => {
       { key: 'itemCodeOrName' },
       {
         key: 'location.name',
+      },
+      {
+        key: 'expiryDate',
+        condition: 'between',
       },
     ],
   });

@@ -38,6 +38,7 @@ query printReport(
   $dataId: String
   $arguments: JSON
   $format: PrintFormat
+  $sort: PrintReportSortInput
 ) {
   printReport(
     dataId: $dataId
@@ -45,6 +46,7 @@ query printReport(
     storeId: $storeId
     format: $format
     arguments: $arguments
+    sort: $sort
   ) {
     ... on PrintReportNode {
       __typename

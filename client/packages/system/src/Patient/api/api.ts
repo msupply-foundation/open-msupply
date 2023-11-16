@@ -37,7 +37,7 @@ export type EncounterListParams = {
   first?: number;
   offset?: number;
   sortBy: SortRule<EncounterSortFieldInput>;
-  filterBy?: FilterBy | null;
+  filterBy?: FilterByWithBoolean | null;
   pagination?: PaginationInput;
 };
 

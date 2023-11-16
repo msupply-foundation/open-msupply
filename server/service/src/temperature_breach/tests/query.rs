@@ -73,7 +73,7 @@ mod query {
             result.temperature_breach_row.id,
             "temperature_breach_acknowledged"
         );
-        assert_eq!(result.temperature_breach_row.acknowledged, true);
+        assert_eq!(result.temperature_breach_row.unacknowledged, false);
     }
 
     #[actix_rt::test]

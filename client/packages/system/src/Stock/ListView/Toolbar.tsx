@@ -34,6 +34,24 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               urlParameter: 'location.name',
               placeholder: t('placeholder.search-by-location-name'),
             },
+            {
+              type: 'group',
+              name: t('label.expiry'),
+              elements: [
+                {
+                  type: 'date',
+                  name: t('label.from-expiry'),
+                  urlParameter: 'expiryDate',
+                  range: 'from',
+                },
+                {
+                  type: 'date',
+                  name: t('label.to-expiry'),
+                  urlParameter: 'expiryDate',
+                  range: 'to',
+                },
+              ],
+            },
           ]}
         />
       </Box>
