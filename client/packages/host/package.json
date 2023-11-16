@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.0.5",
+    "@openmsupply-client/coldchain": "^0.0.0",
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/dashboard": "^0.0.0",
@@ -38,6 +39,7 @@
     "history": "^5.1.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "react-qr-code": "^2.0.12",
     "swc-loader": "^0.2.0",
     "webpack-bundle-analyzer": "^4.9.0"
   },

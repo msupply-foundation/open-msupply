@@ -196,6 +196,12 @@ export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;
 
+export const canDeletePrescription = (
+  invoice: PrescriptionRowFragment
+): boolean =>
+  invoice.status === InvoiceNodeStatus.New ||
+  invoice.status === InvoiceNodeStatus.Picked;
+
 export const isA = {
   stockOutLine: (line: { type: InvoiceLineNodeType }) =>
     line.type === InvoiceLineNodeType.StockOut,

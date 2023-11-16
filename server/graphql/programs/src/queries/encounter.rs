@@ -7,7 +7,7 @@ use graphql_core::{
 use graphql_types::types::encounter::{
     EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput,
 };
-use repository::PaginationOption;
+use repository::{EncounterFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
@@ -39,7 +39,7 @@ pub fn encounters(
         .encounters(
             &context,
             page.map(PaginationOption::from),
-            filter.map(|f| f.to_domain_filter()),
+            filter.map(EncounterFilter::from),
             sort.map(EncounterSortInput::to_domain),
             allowed_ctx.clone(),
         )

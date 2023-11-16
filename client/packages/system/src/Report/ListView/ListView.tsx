@@ -71,7 +71,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
-    filterKey: 'name',
+    filters: [{ key: 'name' }],
   });
   const queryParams = { filterBy, offset, sortBy };
   const { data, isError, isLoading } = useReport.document.list({

@@ -1,14 +1,8 @@
 use async_graphql::*;
-use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
-use graphql_core::map_filter;
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
-use graphql_general::{EqualFilterGenderInput, GenderInput};
-use graphql_types::types::patient::PatientNode;
-use repository::{
-    DateFilter, EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField,
-    StringFilter,
-};
+use graphql_types::types::patient::{PatientFilterInput, PatientNode};
+use repository::{EqualFilter, PaginationOption, PatientFilter, PatientSort, PatientSortField};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(SimpleObject)]
@@ -20,64 +14,6 @@ pub struct PatientConnector {
 #[derive(Union)]
 pub enum PatientResponse {
     Response(PatientConnector),
-}
-
-#[derive(InputObject, Clone)]
-pub struct PatientFilterInput {
-    pub id: Option<EqualFilterStringInput>,
-    pub name: Option<StringFilterInput>,
-    pub code: Option<StringFilterInput>,
-    pub code_2: Option<StringFilterInput>,
-    pub first_name: Option<StringFilterInput>,
-    pub last_name: Option<StringFilterInput>,
-    pub gender: Option<EqualFilterGenderInput>,
-    pub date_of_birth: Option<DateFilterInput>,
-    pub phone: Option<StringFilterInput>,
-    pub address1: Option<StringFilterInput>,
-    pub address2: Option<StringFilterInput>,
-    pub country: Option<StringFilterInput>,
-    pub email: Option<StringFilterInput>,
-    pub identifier: Option<StringFilterInput>,
-    pub name_or_code: Option<StringFilterInput>,
-}
-
-impl PatientFilterInput {
-    fn to_domain(self) -> PatientFilter {
-        let PatientFilterInput {
-            id,
-            name,
-            code,
-            code_2,
-            first_name,
-            last_name,
-            gender,
-            date_of_birth,
-            phone,
-            address1,
-            address2,
-            country,
-            email,
-            identifier,
-            name_or_code,
-        } = self;
-        PatientFilter {
-            id: id.map(EqualFilter::from),
-            name: name.map(StringFilter::from),
-            code: code.map(StringFilter::from),
-            code_2: code_2.map(StringFilter::from),
-            first_name: first_name.map(StringFilter::from),
-            last_name: last_name.map(StringFilter::from),
-            gender: gender.map(|t| map_filter!(t, GenderInput::to_domain)),
-            date_of_birth: date_of_birth.map(DateFilter::from),
-            phone: phone.map(StringFilter::from),
-            address1: address1.map(StringFilter::from),
-            address2: address2.map(StringFilter::from),
-            country: country.map(StringFilter::from),
-            email: email.map(StringFilter::from),
-            identifier: identifier.map(StringFilter::from),
-            name_or_code: name_or_code.map(StringFilter::from),
-        }
-    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -95,6 +31,7 @@ pub enum PatientSortFieldInput {
     Address2,
     Country,
     Email,
+    DateOfDeath,
 }
 
 #[derive(InputObject)]
@@ -122,6 +59,7 @@ impl PatientSortInput {
                 PatientSortFieldInput::Address2 => PatientSortField::Address2,
                 PatientSortFieldInput::Country => PatientSortField::Country,
                 PatientSortFieldInput::Email => PatientSortField::Email,
+                PatientSortFieldInput::DateOfDeath => PatientSortField::DateOfDeath,
             },
             desc: self.desc,
         }
@@ -150,7 +88,7 @@ pub fn patients(
     let patients = service_provider.patient_service.get_patients(
         &context,
         page.map(PaginationOption::from),
-        filter.map(PatientFilterInput::to_domain),
+        filter.map(PatientFilter::from),
         sort.and_then(|mut sort_list| sort_list.pop())
             .map(|sort| sort.to_domain()),
         Some(&allowed_ctx),

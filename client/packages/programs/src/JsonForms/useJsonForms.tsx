@@ -208,7 +208,10 @@ export const useJsonForms = <R,>(
         setError={setValidationError}
         updateData={updateData}
         additionalRenderers={additionalRenderers}
-        config={config}
+        config={{
+          ...config,
+          initialData,
+        }}
       />
     ),
     data,

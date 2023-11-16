@@ -78,7 +78,6 @@ export const ContentArea: FC<ContentAreaProps> = React.memo(
     const isDisabled = useInbound.utils.isDisabled();
     const { columns, rows } = useInbound.lines.rows();
     useHighlightPlaceholderRows(rows);
-
     return (
       <Box flexDirection="column" display="flex" flex={1}>
         <DataTable

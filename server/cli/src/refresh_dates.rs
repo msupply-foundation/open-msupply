@@ -40,6 +40,7 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("requisition", "sent_datetime"),
         ("requisition", "finalised_datetime"),
         ("requisition_line", "snapshot_datetime"),
+        ("sensor", "last_connection_datetime"),
         ("stocktake", "created_datetime"),
         ("stocktake", "finalised_datetime"),
         ("sync_log", "started_datetime"),
@@ -54,6 +55,9 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "pull_remote_finished_datetime"),
         ("sync_log", "integration_started_datetime"),
         ("sync_log", "integration_finished_datetime"),
+        ("temperature_breach", "start_datetime"),
+        ("temperature_breach", "end_datetime"),
+        ("temperature_log", "datetime"),
         ("activity_log", "datetime"),
         ("user_account", "last_successful_sync"),
     ]
@@ -83,6 +87,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
 fn get_date_fields() -> Vec<TableAndFieldName> {
     vec![
         ("name", "date_of_birth"),
+        ("name", "date_of_death"),
         ("stock_line", "expiry_date"),
         ("requisition", "expected_delivery_date"),
         ("invoice_line", "expiry_date"),

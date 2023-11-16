@@ -75,6 +75,7 @@ mod repository_test {
                 name: "Master List 1".to_string(),
                 code: "ML Code 1".to_string(),
                 description: "ML Description 1".to_string(),
+                is_active: true,
             }
         }
 
@@ -84,6 +85,7 @@ mod repository_test {
                 name: "Master List 1".to_string(),
                 code: "ML Code 1".to_string(),
                 description: "ML Description 1".to_string(),
+                is_active: true,
             }
         }
 
@@ -262,7 +264,8 @@ mod repository_test {
                 store_id: None,
                 record_id: None,
                 datetime: NaiveDateTime::from_timestamp_opt(2000, 0).unwrap(),
-                event: None,
+                changed_to: None,
+                changed_from: None,
             }
         }
     }

@@ -701,6 +701,7 @@ pub fn update_stocktake(
                     ActivityLogType::StocktakeStatusFinalised,
                     Some(stocktake_id.to_owned()),
                     None,
+                    None,
                 )?;
             }
 
@@ -882,6 +883,7 @@ mod test {
                 line: mock_stocktake_line_a(),
                 stock_line: Some(stock_line),
                 location: None,
+                item: Some(mock_item_a()),
             }])
         );
 

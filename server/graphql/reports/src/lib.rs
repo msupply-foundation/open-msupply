@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::pagination::PaginationInput;
+use graphql_core::{generic_inputs::PrintReportSortInput, pagination::PaginationInput};
 use printing::{print_report, print_report_definition, PrintReportResponse};
 use reports::{reports, ReportFilterInput, ReportSortInput, ReportsResponse};
 
@@ -46,6 +46,7 @@ impl ReportQueries {
         data_id: Option<String>,
         arguments: Option<serde_json::Value>,
         format: Option<PrintFormat>,
+        sort: Option<PrintReportSortInput>,
     ) -> Result<PrintReportResponse> {
         let report_format = match format {
             Some(PrintFormat::Html) => Some(service::report::report_service::PrintFormat::Html),
@@ -53,7 +54,16 @@ impl ReportQueries {
                 Some(service::report::report_service::PrintFormat::Pdf)
             }
         };
-        print_report(ctx, store_id, report_id, data_id, arguments, report_format).await
+        print_report(
+            ctx,
+            store_id,
+            report_id,
+            data_id,
+            arguments,
+            report_format,
+            sort,
+        )
+        .await
     }
 
     pub async fn print_report_definition(

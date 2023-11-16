@@ -14,24 +14,42 @@ import {
   useToggle,
   StockIcon,
   ColumnAlign,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
-import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
+import { RepackModal, StockLineEditModal } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 
 const StockListComponent: FC = () => {
   const {
     filter,
     updatePaginationQuery,
     updateSortQuery,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'expiryDate', dir: 'asc' },
-    filterKey: 'itemCodeOrName',
+    filters: [
+      { key: 'itemCodeOrName' },
+      {
+        key: 'location.name',
+      },
+      {
+        key: 'expiryDate',
+        condition: 'between',
+      },
+    ],
   });
+  const queryParams = {
+    filterBy,
+    offset,
+    sortBy,
+    first,
+  };
+
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const { data, isLoading, isError } = useStock.line.list();
+  const { data, isLoading, isError } = useStock.line.list(queryParams);
   const [repackId, setRepackId] = React.useState<string | null>(null);
   const EditStockLineCell = <T extends StockLineRowFragment>({
     rowData,
@@ -69,7 +87,14 @@ const StockListComponent: FC = () => {
         align: ColumnAlign.Center,
       },
       ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
-      ['itemName', { accessor: ({ rowData }) => rowData.item.name }],
+      [
+        'itemName',
+        {
+          accessor: ({ rowData }) => rowData.item.name,
+          Cell: TooltipTextCell,
+          maxWidth: 350,
+        },
+      ],
       'batch',
       [
         'expiryDate',

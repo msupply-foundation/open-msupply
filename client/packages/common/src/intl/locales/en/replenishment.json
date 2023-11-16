@@ -51,7 +51,6 @@
   "label.quantities": "Quantities",
   "label.amc": "AMC",
   "label.cant-delete-disabled": "Can only delete lines when status is New",
-  "label.sent": "Sent",
   "label.soh": "SOH",
   "label.stock-level": "Stock level",
   "label.stock-on-hand": "Stock on Hand",

@@ -38,7 +38,7 @@ export const DetailView: FC<DetailViewProps> = ({
 }) => {
   const t = useTranslation('dispensary');
   const navigate = useNavigate();
-  const { setSuffix } = useBreadcrumbs([AppRoute.ContactTrace]);
+  const { setSuffix, urlParts } = useBreadcrumbs([AppRoute.ContactTrace]);
   const dateFormat = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
   const id = useContactTraces.utils.idFromUrl();
@@ -109,6 +109,9 @@ export const DetailView: FC<DetailViewProps> = ({
       );
     }
   }, [isDirty, contactTraceId, id, navigate]);
+
+  const urlStart = urlParts[0];
+  if (urlStart) urlStart.disabled = true;
 
   const updateContactTrace = useDebounceCallback(
     (patch: Partial<ContactTrace>) =>

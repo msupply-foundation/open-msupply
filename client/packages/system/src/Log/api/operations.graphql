@@ -1,7 +1,8 @@
 fragment ActivityLogRow on ActivityLogNode {
   id
   datetime
-  event
+  to
+  from
   recordId
   storeId
   type

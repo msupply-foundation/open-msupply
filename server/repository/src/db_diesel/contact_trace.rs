@@ -21,6 +21,7 @@ use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
 pub struct ContactTraceFilter {
     pub id: Option<EqualFilter<String>>,
     pub program_id: Option<EqualFilter<String>>,
+    pub r#type: Option<StringFilter>,
     pub document_name: Option<StringFilter>,
     pub program_context_id: Option<EqualFilter<String>>,
     pub datetime: Option<DatetimeFilter>,
@@ -70,6 +71,7 @@ fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgram
         let ContactTraceFilter {
             id,
             program_id,
+            r#type,
             document_name,
             program_context_id,
             datetime,
@@ -92,6 +94,7 @@ fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgram
         );
         apply_equal_filter!(query, program_context_id, program_dsl::context_id);
         apply_equal_filter!(query, program_id, contact_trace_dsl::program_id);
+        apply_string_filter!(query, r#type, document_dsl::type_);
         apply_string_filter!(query, document_name, document_dsl::name);
         apply_string_filter!(query, contact_trace_id, contact_trace_dsl::contact_trace_id);
         apply_string_filter!(query, first_name, contact_trace_dsl::first_name);

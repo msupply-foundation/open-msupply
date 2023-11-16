@@ -34,14 +34,16 @@ const StyledCurrencyInput = styled(RCInput)(({ theme }) => ({
 export const CurrencyInput: FC<CurrencyInputProps> = ({
   allowNegativeValue = false,
   allowDecimals = true,
-  defaultValue = 0,
+  defaultValue,
   onChangeNumber,
   maxWidth,
+  value,
   ...restOfProps
 }) => {
   const { c, options, language } = useCurrency();
   const prefix = language !== 'fr' ? options.symbol : '';
   const suffix = language === 'fr' ? options.symbol : '';
+  const valueAsNumber = Number.isNaN(value) ? 0 : Number(value);
 
   return (
     <StyledCurrencyInput
@@ -52,7 +54,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
             ? theme.palette.background.toolbar
             : theme.palette.background.menu,
       }}
-      defaultValue={defaultValue}
+      defaultValue={defaultValue ?? valueAsNumber}
       onValueChange={newValue => onChangeNumber(c(newValue || '').value)}
       onFocus={e => e.target.select()}
       allowNegativeValue={allowNegativeValue}
@@ -60,8 +62,9 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       suffix={suffix}
       decimalSeparator={options.decimal}
       groupSeparator={options.separator}
-      decimalsLimit={2}
+      decimalsLimit={options.precision}
       allowDecimals={allowDecimals}
+      fixedDecimalLength={allowDecimals ? options.precision : undefined}
       {...restOfProps}
     />
   );

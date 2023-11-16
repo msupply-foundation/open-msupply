@@ -60,11 +60,12 @@ export type ActivityLogFilterInput = {
 export type ActivityLogNode = {
   __typename: 'ActivityLogNode';
   datetime: Scalars['DateTime']['output'];
-  event?: Maybe<Scalars['String']['output']>;
+  from?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   recordId?: Maybe<Scalars['String']['output']>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
+  to?: Maybe<Scalars['String']['output']>;
   type: ActivityLogNodeType;
   user?: Maybe<UserNode>;
 };
@@ -88,6 +89,7 @@ export enum ActivityLogNodeType {
   RequisitionNumberAllocated = 'REQUISITION_NUMBER_ALLOCATED',
   RequisitionStatusFinalised = 'REQUISITION_STATUS_FINALISED',
   RequisitionStatusSent = 'REQUISITION_STATUS_SENT',
+  SensorLocationChanged = 'SENSOR_LOCATION_CHANGED',
   StocktakeCreated = 'STOCKTAKE_CREATED',
   StocktakeDeleted = 'STOCKTAKE_DELETED',
   StocktakeStatusFinalised = 'STOCKTAKE_STATUS_FINALISED',
@@ -550,6 +552,7 @@ export type ContactTraceFilterInput = {
   lastName?: InputMaybe<StringFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<StringFilterInput>;
 };
 
 export type ContactTraceNode = {
@@ -573,6 +576,8 @@ export type ContactTraceNode = {
   /** Returns the matching program enrolment for the root patient of this contact trace */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   programId: Scalars['String']['output'];
+  /** Relationship between the patient and the contact, e.g. mother, next of kin, etc. */
+  relationship?: Maybe<Scalars['String']['output']>;
   storeId?: Maybe<Scalars['String']['output']>;
 };
 
@@ -614,7 +619,7 @@ export type CreateRequisitionShipmentInput = {
 
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
-export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & {
+export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1096,7 +1101,9 @@ export type EncounterFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  patient?: InputMaybe<PatientFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
+  programEnrolment?: InputMaybe<ProgramEnrolmentFilterInput>;
   /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
@@ -1263,6 +1270,12 @@ export type EqualFilterStringInput = {
   equalAny?: InputMaybe<Array<Scalars['String']['input']>>;
   equalTo?: InputMaybe<Scalars['String']['input']>;
   notEqualTo?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type EqualFilterTemperatureBreachRowTypeInput = {
+  equalAny?: InputMaybe<Array<TemperatureBreachNodeType>>;
+  equalTo?: InputMaybe<TemperatureBreachNodeType>;
+  notEqualTo?: InputMaybe<TemperatureBreachNodeType>;
 };
 
 export type EqualFilterTypeInput = {
@@ -1478,7 +1491,7 @@ export type InsertInboundShipmentLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Int']['input'];
   sellPricePerPack: Scalars['Float']['input'];
@@ -1650,13 +1663,17 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
 };
 
 export type InsertPatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPatientResponse = PatientNode;
@@ -1831,7 +1848,7 @@ export type InsertStocktakeInput = {
   id: Scalars['String']['input'];
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   masterListId?: InputMaybe<Scalars['String']['input']>;
   stocktakeDate?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
@@ -1854,7 +1871,7 @@ export type InsertStocktakeLineInput = {
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -1878,7 +1895,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & {
+export type InternalError = InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -2262,9 +2279,9 @@ export type LocationConnector = {
 };
 
 export type LocationFilterInput = {
-  code?: InputMaybe<EqualFilterStringInput>;
+  code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
-  name?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -2521,6 +2538,7 @@ export type Mutations = {
   updateRequestRequisitionLine: UpdateRequestRequisitionLineResponse;
   updateResponseRequisition: UpdateResponseRequisitionResponse;
   updateResponseRequisitionLine: UpdateResponseRequisitionLineResponse;
+  updateSensor: UpdateSensorResponse;
   updateStockLine: UpdateStockLineLineResponse;
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
@@ -2989,6 +3007,12 @@ export type MutationsUpdateResponseRequisitionLineArgs = {
 };
 
 
+export type MutationsUpdateSensorArgs = {
+  input: UpdateSensorInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsUpdateStockLineArgs = {
   input: UpdateStockLineInput;
   storeId: Scalars['String']['input'];
@@ -3160,6 +3184,21 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
   description: Scalars['String']['output'];
 };
 
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
+export type NullableStringUpdate = {
+  value?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type NumberNode = {
   __typename: 'NumberNode';
   number: Scalars['Int']['output'];
@@ -3217,6 +3256,7 @@ export type PatientFilterInput = {
   code2?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
+  dateOfDeath?: InputMaybe<DateFilterInput>;
   email?: InputMaybe<StringFilterInput>;
   firstName?: InputMaybe<StringFilterInput>;
   gender?: InputMaybe<EqualFilterGenderInput>;
@@ -3235,8 +3275,10 @@ export type PatientNode = {
   age?: Maybe<Scalars['Int']['output']>;
   code: Scalars['String']['output'];
   code2?: Maybe<Scalars['String']['output']>;
+  contactTraces: ContactTraceResponse;
   country?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
+  dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
@@ -3246,8 +3288,15 @@ export type PatientNode = {
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   phone?: Maybe<Scalars['String']['output']>;
-  programEnrolments: Array<ProgramEnrolmentNode>;
+  programEnrolments: ProgramEnrolmentResponse;
   website?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type PatientNodeContactTracesArgs = {
+  filter?: InputMaybe<ContactTraceFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<ContactTraceSortInput>;
 };
 
 
@@ -3290,6 +3339,7 @@ export enum PatientSortFieldInput {
   Code2 = 'code2',
   Country = 'country',
   DateOfBirth = 'dateOfBirth',
+  DateOfDeath = 'dateOfDeath',
   Email = 'email',
   FirstName = 'firstName',
   Gender = 'gender',
@@ -3352,6 +3402,17 @@ export type PrintReportNode = {
 
 export type PrintReportResponse = PrintReportError | PrintReportNode;
 
+/** This struct is used to sort report data by a key and in descending or ascending order */
+export type PrintReportSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: Scalars['String']['input'];
+};
+
 export type ProgramEnrolmentConnector = {
   __typename: 'ProgramEnrolmentConnector';
   nodes: Array<ProgramEnrolmentNode>;
@@ -3365,6 +3426,7 @@ export type ProgramEnrolmentFilterInput = {
   programEnrolmentId?: InputMaybe<StringFilterInput>;
   /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
+  programName?: InputMaybe<StringFilterInput>;
   status?: InputMaybe<EqualFilterProgramEnrolmentStatusInput>;
   /** Same as program enrolment document type */
   type?: InputMaybe<EqualFilterStringInput>;
@@ -3381,6 +3443,7 @@ export type ProgramEnrolmentNode = {
   enrolmentDatetime: Scalars['DateTime']['output'];
   /** The program document name */
   name: Scalars['String']['output'];
+  patient: PatientNode;
   patientId: Scalars['String']['output'];
   programEnrolmentId?: Maybe<Scalars['String']['output']>;
   status: ProgramEnrolmentNodeStatus;
@@ -3465,6 +3528,8 @@ export type ProgramEventNode = {
 export type ProgramEventResponse = ProgramEventConnector;
 
 export enum ProgramEventSortFieldInput {
+  ActiveEndDatetime = 'activeEndDatetime',
+  ActiveStartDatetime = 'activeStartDatetime',
   Datetime = 'datetime',
   DocumentName = 'documentName',
   DocumentType = 'documentType',
@@ -3585,16 +3650,23 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
+  /** Query omSupply "sensor" entries */
+  sensors: SensorsResponse;
   stockCounts: StockCounts;
   /** Query for "stock_line" entries */
   stockLines: StockLinesResponse;
   stocktake: StocktakeResponse;
   stocktakeByNumber: StocktakeResponse;
+  stocktakeLines: StocktakesLinesResponse;
   stocktakes: StocktakesResponse;
   store: StoreResponse;
   storePreferences: StorePreferenceNode;
   stores: StoresResponse;
   syncSettings?: Maybe<SyncSettingsNode>;
+  /** Query omSupply "temperature_breach" entries */
+  temperatureBreaches: TemperatureBreachesResponse;
+  /** Query omSupply "temperature_log" entries */
+  temperatureLogs: TemperatureLogsResponse;
 };
 
 
@@ -3812,6 +3884,7 @@ export type QueriesPrintReportArgs = {
   dataId?: InputMaybe<Scalars['String']['input']>;
   format?: InputMaybe<PrintFormat>;
   reportId: Scalars['String']['input'];
+  sort?: InputMaybe<PrintReportSortInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -3905,6 +3978,14 @@ export type QueriesResponseRequisitionStatsArgs = {
 };
 
 
+export type QueriesSensorsArgs = {
+  filter?: InputMaybe<SensorFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<SensorSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesStockCountsArgs = {
   daysTillExpired?: InputMaybe<Scalars['Int']['input']>;
   storeId: Scalars['String']['input'];
@@ -3928,6 +4009,14 @@ export type QueriesStocktakeArgs = {
 
 export type QueriesStocktakeByNumberArgs = {
   stocktakeNumber: Scalars['Int']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesStocktakeLinesArgs = {
+  reportSort?: InputMaybe<PrintReportSortInput>;
+  sort?: InputMaybe<Array<StocktakeLineSortInput>>;
+  stocktakeId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -3956,6 +4045,22 @@ export type QueriesStoresArgs = {
   sort?: InputMaybe<Array<StoreSortInput>>;
 };
 
+
+export type QueriesTemperatureBreachesArgs = {
+  filter?: InputMaybe<TemperatureBreachFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<TemperatureBreachSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesTemperatureLogsArgs = {
+  filter?: InputMaybe<TemperatureLogFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<TemperatureLogSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
 export type RawDocumentNode = {
   __typename: 'RawDocumentNode';
   author: Scalars['String']['output'];
@@ -3972,12 +4077,12 @@ export type RecordAlreadyExist = InsertLocationErrorInterface & {
   description: Scalars['String']['output'];
 };
 
-export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateLocationErrorInterface & {
+export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'RecordBelongsToAnotherStore';
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -4318,6 +4423,57 @@ export type ResponseStoreStatsNode = {
   stockOnOrder: Scalars['Int']['output'];
 };
 
+export type SensorConnector = {
+  __typename: 'SensorConnector';
+  nodes: Array<SensorNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SensorFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<StringFilterInput>;
+  serial?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type SensorNode = {
+  __typename: 'SensorNode';
+  batteryLevel?: Maybe<Scalars['Int']['output']>;
+  breach?: Maybe<TemperatureBreachNodeType>;
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  lastConnectionDatetime?: Maybe<Scalars['DateTime']['output']>;
+  latestTemperatureLog?: Maybe<TemperatureLogConnector>;
+  location?: Maybe<LocationNode>;
+  logInterval?: Maybe<Scalars['Int']['output']>;
+  name: Scalars['String']['output'];
+  serial: Scalars['String']['output'];
+  type: SensorNodeType;
+};
+
+export enum SensorNodeType {
+  Berlinger = 'BERLINGER',
+  BlueMaestro = 'BLUE_MAESTRO',
+  Laird = 'LAIRD'
+}
+
+export enum SensorSortFieldInput {
+  Name = 'name',
+  Serial = 'serial'
+}
+
+export type SensorSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: SensorSortFieldInput;
+};
+
+export type SensorsResponse = SensorConnector;
+
 export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & {
   __typename: 'SnapshotCountCurrentCountMismatch';
   description: Scalars['String']['output'];
@@ -4372,6 +4528,7 @@ export type StockLineFilterInput = {
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  location?: InputMaybe<LocationFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   storeId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -4490,6 +4647,25 @@ export type StocktakeLineNode = {
   stocktakeId: Scalars['String']['output'];
 };
 
+export enum StocktakeLineSortFieldInput {
+  Batch = 'batch',
+  ExpiryDate = 'expiryDate',
+  ItemCode = 'itemCode',
+  ItemName = 'itemName',
+  LocationName = 'locationName',
+  PackSize = 'packSize'
+}
+
+export type StocktakeLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: StocktakeLineSortFieldInput;
+};
+
 export type StocktakeNode = {
   __typename: 'StocktakeNode';
   comment?: Maybe<Scalars['String']['output']>;
@@ -4538,6 +4714,8 @@ export type StocktakeSortInput = {
   key: StocktakeSortFieldInput;
 };
 
+export type StocktakesLinesResponse = StocktakeLineConnector;
+
 export type StocktakesResponse = StocktakeConnector;
 
 export type StoreConnector = {
@@ -4585,6 +4763,7 @@ export type StorePreferenceNode = {
   packToOne: Scalars['Boolean']['output'];
   requestRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
   responseRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
+  vaccineModule: Scalars['Boolean']['output'];
 };
 
 export type StoreResponse = NodeError | StoreNode;
@@ -4696,6 +4875,102 @@ export type TaxInput = {
   percentage?: InputMaybe<Scalars['Float']['input']>;
 };
 
+export type TemperatureBreachConnector = {
+  __typename: 'TemperatureBreachConnector';
+  nodes: Array<TemperatureBreachNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type TemperatureBreachFilterInput = {
+  endDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  location?: InputMaybe<LocationFilterInput>;
+  sensor?: InputMaybe<SensorFilterInput>;
+  startDatetime?: InputMaybe<DatetimeFilterInput>;
+  type?: InputMaybe<EqualFilterTemperatureBreachRowTypeInput>;
+  unacknowledged?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type TemperatureBreachNode = {
+  __typename: 'TemperatureBreachNode';
+  durationMilliseconds: Scalars['Int']['output'];
+  endDatetime?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['String']['output'];
+  location?: Maybe<LocationNode>;
+  maxOrMinTemperature?: Maybe<Scalars['Float']['output']>;
+  sensor?: Maybe<SensorNode>;
+  sensorId: Scalars['String']['output'];
+  startDatetime: Scalars['DateTime']['output'];
+  type: TemperatureBreachNodeType;
+  unacknowledged: Scalars['Boolean']['output'];
+};
+
+export enum TemperatureBreachNodeType {
+  ColdConsecutive = 'COLD_CONSECUTIVE',
+  ColdCumulative = 'COLD_CUMULATIVE',
+  HotConsecutive = 'HOT_CONSECUTIVE',
+  HotCumulative = 'HOT_CUMULATIVE'
+}
+
+export enum TemperatureBreachSortFieldInput {
+  EndDatetime = 'endDatetime',
+  StartDatetime = 'startDatetime'
+}
+
+export type TemperatureBreachSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: TemperatureBreachSortFieldInput;
+};
+
+export type TemperatureBreachesResponse = TemperatureBreachConnector;
+
+export type TemperatureLogConnector = {
+  __typename: 'TemperatureLogConnector';
+  nodes: Array<TemperatureLogNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type TemperatureLogFilterInput = {
+  datetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  location?: InputMaybe<LocationFilterInput>;
+  sensor?: InputMaybe<SensorFilterInput>;
+  temperatureBreach?: InputMaybe<TemperatureBreachFilterInput>;
+};
+
+export type TemperatureLogNode = {
+  __typename: 'TemperatureLogNode';
+  datetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  location?: Maybe<LocationNode>;
+  sensor?: Maybe<SensorNode>;
+  sensorId: Scalars['String']['output'];
+  temperature: Scalars['Float']['output'];
+  temperatureBreach?: Maybe<TemperatureBreachNode>;
+};
+
+export enum TemperatureLogSortFieldInput {
+  Datetime = 'datetime',
+  Temperature = 'temperature'
+}
+
+export type TemperatureLogSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: TemperatureLogSortFieldInput;
+};
+
+export type TemperatureLogsResponse = TemperatureLogConnector;
+
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename: 'TokenExpired';
   description: Scalars['String']['output'];
@@ -4718,10 +4993,11 @@ export type UndeleteDocumentInput = {
 export type UndeleteDocumentResponse = DocumentNode;
 
 export enum UniqueValueKey {
-  Code = 'code'
+  Code = 'code',
+  Serial = 'serial'
 }
 
-export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocationErrorInterface & {
+export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'UniqueValueViolation';
   description: Scalars['String']['output'];
   field: UniqueValueKey;
@@ -4823,7 +5099,7 @@ export type UpdateInboundShipmentLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   itemId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -5028,13 +5304,17 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
  * For example, if the last_name is not provided, the last_name in the patient record will be cleared.
  */
 export type UpdatePatientInput = {
+  address1?: InputMaybe<Scalars['String']['input']>;
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  dateOfDeath?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
   id: Scalars['String']['input'];
+  isDeceased?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdatePatientResponse = PatientNode;
@@ -5220,6 +5500,24 @@ export type UpdateResult = {
   theme?: Maybe<Scalars['String']['output']>;
 };
 
+export type UpdateSensorError = {
+  __typename: 'UpdateSensorError';
+  error: UpdateSensorErrorInterface;
+};
+
+export type UpdateSensorErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateSensorInput = {
+  id: Scalars['String']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  locationId?: InputMaybe<NullableStringUpdate>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateSensorResponse = SensorNode | UpdateSensorError;
+
 export type UpdateStockLineError = {
   __typename: 'UpdateStockLineError';
   error: UpdateStockLineErrorInterface;
@@ -5236,7 +5534,7 @@ export type UpdateStockLineInput = {
   costPricePerPack?: InputMaybe<Scalars['Float']['input']>;
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
 };
@@ -5278,7 +5576,7 @@ export type UpdateStocktakeLineInput = {
   expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   note?: InputMaybe<Scalars['String']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -5361,6 +5659,7 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',
   DocumentQuery = 'DOCUMENT_QUERY',
@@ -5379,12 +5678,16 @@ export enum UserPermission {
   RequisitionMutate = 'REQUISITION_MUTATE',
   RequisitionQuery = 'REQUISITION_QUERY',
   RequisitionSend = 'REQUISITION_SEND',
+  SensorMutate = 'SENSOR_MUTATE',
+  SensorQuery = 'SENSOR_QUERY',
   ServerAdmin = 'SERVER_ADMIN',
   StocktakeMutate = 'STOCKTAKE_MUTATE',
   StocktakeQuery = 'STOCKTAKE_QUERY',
   StockLineMutate = 'STOCK_LINE_MUTATE',
   StockLineQuery = 'STOCK_LINE_QUERY',
-  StoreAccess = 'STORE_ACCESS'
+  StoreAccess = 'STORE_ACCESS',
+  TemperatureBreachQuery = 'TEMPERATURE_BREACH_QUERY',
+  TemperatureLogQuery = 'TEMPERATURE_LOG_QUERY'
 }
 
 export type UserResponse = UserNode;

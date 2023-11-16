@@ -5,6 +5,7 @@ import {
   useTranslation,
   Autocomplete,
   defaultOptionMapper,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { useStockItemsWithStats } from '../../api';
 import {
@@ -44,30 +45,34 @@ export const StockItemSearchInputWithStats: FC<
   }, []);
 
   return (
-    <Autocomplete
-      autoFocus={autoFocus}
-      disabled={disabled}
-      onOpen={selectControl.toggleOn}
-      onClose={selectControl.toggleOff}
-      filterOptionConfig={itemFilterOptions}
-      loading={isLoading}
-      value={value ? { ...value, label: value.name ?? '' } : null}
-      noOptionsText={t('error.no-items')}
-      onChange={(_, item) => onChange(item)}
-      options={defaultOptionMapper(options, 'name')}
-      getOptionLabel={option => `${option.code}     ${option.name}`}
-      renderOption={getItemOptionRenderer(
-        t('label.units'),
-        formatNumber.format
-      )}
-      width={width ? `${width}px` : '100%'}
-      popperMinWidth={width}
-      isOptionEqualToValue={(option, value) => option?.id === value?.id}
-      open={selectControl.isOn}
-      sx={{
-        '.MuiInputBase-root': { paddingLeft: disabled ? 0 : undefined },
-        '.MuiBox-root': { justifyContent: 'flex-start' },
-      }}
-    />
+    <Tooltip title={value?.name}>
+      <div>
+        <Autocomplete
+          autoFocus={autoFocus}
+          disabled={disabled}
+          onOpen={selectControl.toggleOn}
+          onClose={selectControl.toggleOff}
+          filterOptionConfig={itemFilterOptions}
+          loading={isLoading}
+          value={value ? { ...value, label: value.name ?? '' } : null}
+          noOptionsText={t('error.no-items')}
+          onChange={(_, item) => onChange(item)}
+          options={defaultOptionMapper(options, 'name')}
+          getOptionLabel={option => `${option.code}     ${option.name}`}
+          renderOption={getItemOptionRenderer(
+            t('label.units'),
+            formatNumber.format
+          )}
+          width={width ? `${width}px` : '100%'}
+          popperMinWidth={width}
+          isOptionEqualToValue={(option, value) => option?.id === value?.id}
+          open={selectControl.isOn}
+          sx={{
+            '.MuiInputBase-root': { paddingLeft: disabled ? 0 : undefined },
+            '.MuiBox-root': { justifyContent: 'flex-start' },
+          }}
+        />
+      </div>
+    </Tooltip>
   );
 };

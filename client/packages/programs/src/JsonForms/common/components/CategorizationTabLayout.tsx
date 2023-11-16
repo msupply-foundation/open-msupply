@@ -239,7 +239,7 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
       padding={2}
     >
       {categories.map((category: Category, idx: number) => (
-        <Grid item key={category.label} display="inline-flex">
+        <Grid item key={category.label}>
           <Button
             variant="outlined"
             startIcon={<Icon className={`${category.options?.['icon']}`} />}

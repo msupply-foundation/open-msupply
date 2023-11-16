@@ -81,6 +81,11 @@ declare module '@mui/material/styles/zIndex' {
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
+    chart: {
+      cold: PaletteColor;
+      hot: PaletteColor;
+      lines: string[];
+    };
     drawerDivider: string;
     gray: PaletteColor & { pale: string };
     outline: Palette['primary'];
@@ -182,6 +187,12 @@ export const themeOptions = {
     form: {
       field: '#555770',
       label: '#28293d',
+    },
+    info: { main: '#3e7bfa', light: '#3e7bfa', dark: '#3568d4' },
+    chart: {
+      cold: { main: '#aacae2', light: '#d9edfa' },
+      hot: { main: '#db6974', light: '#fbe2e4' },
+      lines: ['#EED600', '#922DD0', '#E1A200', '#59639C', '#E500EA', '#00DBCE'],
     },
   },
   zIndex: {

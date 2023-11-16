@@ -54,7 +54,7 @@ pub fn update_patient_row(
         gender,
         middle_name: _,
         date_of_birth_is_estimated: _,
-        date_of_death: _,
+        date_of_death,
         is_deceased: _,
         notes: _,
         passport_number: _,
@@ -70,6 +70,15 @@ pub fn update_patient_row(
         Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
             UpdateProgramPatientError::InternalError(format!(
                 "Invalid date of birth format: {}",
+                err
+            ))
+        })?),
+        None => None,
+    };
+    let date_of_death = match date_of_death {
+        Some(date_of_death) => Some(NaiveDate::from_str(&date_of_death).map_err(|err| {
+            UpdateProgramPatientError::InternalError(format!(
+                "Invalid date of death format: {}",
                 err
             ))
         })?),
@@ -117,6 +126,7 @@ pub fn update_patient_row(
             .and_then(|n| n.created_datetime.clone())
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased.unwrap_or(false),
+        date_of_death,
         national_health_number: code_2,
     };
 

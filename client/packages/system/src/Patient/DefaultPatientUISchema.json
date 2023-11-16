@@ -6,9 +6,28 @@
       "label": "Patient Information",
       "elements": [
         {
-          "type": "Control",
+          "type": "IdGenerator",
+          "label": "Code",
           "scope": "#/properties/code",
-          "label": "Code"
+          "options": {
+            "parts": [
+              {
+                "type": "StoreName",
+                "mutations": [{ "firstNChars": 3 }, { "toUpperCase": true }]
+              },
+              {
+                "type": "Number",
+                "numberName": "PatientCode",
+                "mutations": [{ "padString": "0000" }]
+              }
+            ],
+            "allowManualEntry": true,
+            "validations": [
+              {
+                "type": "UniquePatientCode"
+              }
+            ]
+          }
         },
         {
           "type": "Control",
@@ -47,6 +66,16 @@
               ["UNKOWN", "Unknown"]
             ]
           }
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/address1",
+          "label": "Address"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/phone",
+          "label": "Phone"
         }
       ]
     }

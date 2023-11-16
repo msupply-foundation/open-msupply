@@ -63,7 +63,12 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
   const config: JsonFormsConfig = props.config;
   const { localisedDateTime } = useFormatDateTime();
 
-  const options = NotesOptions.parse(props.uischema.options);
+  const { options } = useZodOptionsValidation(
+    NotesOptions,
+    props.uischema.options
+  );
+
+  if (!options) return;
 
   const inputData = (data as NoteSchema[]) ?? [];
 
@@ -125,7 +130,7 @@ const NotesComponent = (props: ArrayControlCustomProps) => {
     if (!child || typeof child !== 'object' || Array.isArray(child))
       return false;
     if (!enabled) return false;
-    if (!options?.['editRestrictions']) return true;
+    if (!options.editRestrictions) return true;
 
     const restrictions = options?.['editRestrictions'];
 

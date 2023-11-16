@@ -29,6 +29,11 @@ pub enum Permission {
     StoreAccess,
     // location,
     LocationMutate,
+    // sensor,
+    SensorMutate,
+    SensorQuery,
+    TemperatureBreachQuery,
+    TemperatureLogQuery,
     // stock line
     StockLineQuery,
     StockLineMutate,
@@ -60,6 +65,8 @@ pub enum Permission {
     // Document
     DocumentQuery,
     DocumentMutate,
+    // Cold chain
+    ColdChainApi,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]

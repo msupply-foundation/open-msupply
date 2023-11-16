@@ -9,6 +9,7 @@ import {
   ReportContext,
   LoadingButton,
   PrinterIcon,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 import {
@@ -31,12 +32,21 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { data } = useStocktake.document.get();
   const { print, isPrinting } = useReport.utils.print();
 
+  const {
+    queryParams: { sortBy },
+  } = useUrlQueryParams();
+
   const printReport = (
     report: ReportRowFragment,
     args: JsonData | undefined
   ) => {
     if (!data) return;
-    print({ reportId: report.id, dataId: data?.id, args });
+    print({
+      reportId: report.id,
+      dataId: data?.id,
+      args,
+      sort: { key: sortBy.key, desc: sortBy.isDesc },
+    });
   };
 
   return (

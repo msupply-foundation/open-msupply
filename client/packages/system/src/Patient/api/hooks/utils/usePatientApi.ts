@@ -19,7 +19,7 @@ export const usePatientApi = () => {
     sortedList: (sortBy: SortBy<PatientRowFragment>) =>
       [...keys.list(), sortBy] as const,
     search: (params: PatientSearchInput) =>
-      [...keys.list(), 'earch', params] as const,
+      [...keys.list(), 'search', params] as const,
     centralSearch: (params: CentralPatientSearchInput) =>
       [...keys.list(), 'centralSearch', params] as const,
   };

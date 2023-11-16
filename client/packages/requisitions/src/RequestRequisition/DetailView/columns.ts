@@ -8,6 +8,7 @@ import {
   useFormatNumber,
   useUrlQueryParams,
   ColumnDescription,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 
@@ -34,6 +35,7 @@ export const useRequestColumns = () => {
     [
       'itemName',
       {
+        Cell: TooltipTextCell,
         width: 350,
         accessor: ({ rowData }) => rowData.item.name,
         getSortValue: rowData => rowData.item.name,
