@@ -5,6 +5,7 @@ import {
   FilterMenu,
   FilterController,
   Box,
+  TemperatureBreachNodeType,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
@@ -56,23 +57,28 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               name: t('label.type'),
               urlParameter: 'type',
               options: [
-                { label: t('label.cold-cumulative'), value: 'COLD_CUMULATIVE' },
+                {
+                  label: t('label.cold-cumulative'),
+                  value: TemperatureBreachNodeType.ColdCumulative,
+                },
                 {
                   label: t('label.cold-consecutive'),
-                  value: 'COLD_CONSECUTIVE',
+                  value: TemperatureBreachNodeType.ColdConsecutive,
                 },
-                { label: t('label.hot-cumulative'), value: 'HOT_CUMULATIVE' },
-                { label: t('label.hot-consecutive'), value: 'HOT_CONSECUTIVE' },
+                {
+                  label: t('label.hot-cumulative'),
+                  value: TemperatureBreachNodeType.HotCumulative,
+                },
+                {
+                  label: t('label.hot-consecutive'),
+                  value: TemperatureBreachNodeType.HotConsecutive,
+                },
               ],
             },
             {
-              type: 'enum',
-              name: t('label.acknowledged'),
-              urlParameter: 'acknowledged',
-              options: [
-                { label: t('label.acknowledged'), value: 'true' },
-                { label: t('label.unacknowledged'), value: 'false' },
-              ],
+              type: 'boolean',
+              name: t('label.unacknowledged'),
+              urlParameter: 'unacknowledged',
             },
           ]}
         />

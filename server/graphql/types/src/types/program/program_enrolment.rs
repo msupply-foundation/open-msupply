@@ -81,27 +81,22 @@ pub struct ProgramEnrolmentFilterInput {
     /// The program id
     pub program_id: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
+    pub program_name: Option<StringFilterInput>,
 }
-impl ProgramEnrolmentFilterInput {
-    pub fn to_domain_filter(self) -> ProgramEnrolmentFilter {
-        let ProgramEnrolmentFilterInput {
-            patient_id,
-            enrolment_datetime,
-            program_enrolment_id,
-            status,
-            r#type,
-            program_id,
-            document_name,
-        } = self;
+impl From<ProgramEnrolmentFilterInput> for ProgramEnrolmentFilter {
+    fn from(f: ProgramEnrolmentFilterInput) -> Self {
         ProgramEnrolmentFilter {
-            patient_id: patient_id.map(EqualFilter::from),
-            enrolment_datetime: enrolment_datetime.map(DatetimeFilter::from),
-            program_enrolment_id: program_enrolment_id.map(StringFilter::from),
-            status: status.map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
-            document_name: document_name.map(EqualFilter::from),
-            document_type: r#type.map(EqualFilter::from),
-            program_id: program_id.map(EqualFilter::from),
+            patient_id: f.patient_id.map(EqualFilter::from),
+            enrolment_datetime: f.enrolment_datetime.map(DatetimeFilter::from),
+            program_enrolment_id: f.program_enrolment_id.map(StringFilter::from),
+            status: f
+                .status
+                .map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
+            document_name: f.document_name.map(EqualFilter::from),
+            document_type: f.r#type.map(EqualFilter::from),
+            program_id: f.program_id.map(EqualFilter::from),
             program_context_id: None,
+            program_name: f.program_name.map(StringFilter::from),
         }
     }
 }
@@ -269,7 +264,7 @@ impl ProgramEnrolmentNode {
         // TODO use loader?
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
-            .map(|f| f.to_domain_filter())
+            .map(EncounterFilter::from)
             .unwrap_or(EncounterFilter::new())
             .patient_id(EqualFilter::equal_to(&self.program_enrolment.0.patient_id))
             .context_id(EqualFilter::equal_to(&self.program_enrolment.1.context_id));

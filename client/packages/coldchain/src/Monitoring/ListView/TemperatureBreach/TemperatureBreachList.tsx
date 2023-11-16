@@ -1,12 +1,15 @@
 import React, { FC } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
-import { useTranslation } from '@common/intl';
+import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
+  Box,
+  CellProps,
   CircleAlertIcon,
   DataTable,
   Formatter,
   NothingHere,
   TableProvider,
+  Typography,
   createTableStore,
   useColumns,
   useTheme,
@@ -17,6 +20,41 @@ import {
 } from '../../api/TemperatureBreach';
 import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
+
+const DurationCell = ({ rowData }: CellProps<TemperatureBreachFragment>) => {
+  const t = useTranslation('coldchain');
+  const { localisedDistance } = useFormatDateTime();
+  const duration = !rowData.endDatetime
+    ? t('label.ongoing')
+    : localisedDistance(rowData.startDatetime, rowData.endDatetime);
+
+  return (
+    <Box
+      flexDirection="row"
+      display="flex"
+      flex={1}
+      sx={
+        !rowData.endDatetime
+          ? {
+              color: 'error.main',
+              fontStyle: 'italic',
+            }
+          : {}
+      }
+    >
+      <Typography
+        style={{
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          color: 'inherit',
+          fontSize: 'inherit',
+        }}
+      >
+        {duration}
+      </Typography>
+    </Box>
+  );
+};
 
 const ListView: FC = () => {
   const {
@@ -39,7 +77,7 @@ const ListView: FC = () => {
         condition: 'equalTo',
       },
       {
-        key: 'acknowledged',
+        key: 'unacknowledged',
         condition: '=',
       },
     ],
@@ -56,13 +94,12 @@ const ListView: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
   const theme = useTheme();
-
   const columns = useColumns<TemperatureBreachFragment>(
     [
       {
         key: 'acknowledgedIcon',
         Cell: ({ rowData }) => {
-          return !rowData?.acknowledged ? (
+          return !!rowData?.unacknowledged ? (
             <CircleAlertIcon
               fill={theme.palette.error.main}
               sx={{ color: 'background.white' }}
@@ -71,10 +108,10 @@ const ListView: FC = () => {
         },
       },
       {
-        key: 'acknowledged',
+        key: 'unacknowledged',
         label: 'label.status',
         accessor: ({ rowData }) => {
-          return !!rowData?.acknowledged
+          return !rowData?.unacknowledged
             ? t('label.acknowledged')
             : t('label.unacknowledged');
         },
@@ -114,9 +151,7 @@ const ListView: FC = () => {
       {
         key: 'duration',
         label: 'label.duration',
-        accessor: ({ rowData }) => {
-          return Formatter.milliseconds(rowData.durationMilliseconds);
-        },
+        Cell: DurationCell,
         sortable: false,
       },
       {

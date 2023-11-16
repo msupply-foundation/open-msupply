@@ -1,4 +1,3 @@
-// TODO: Delete whole file when soft delete for master list is implemented
 use repository::{
     ContextRow, ContextRowRepository, MasterListRow, MasterListRowRepository, ProgramRow,
     ProgramRowRepository, RepositoryError,
@@ -15,6 +14,7 @@ pub fn create_missing_master_list_and_program(
         name: MISSING_PROGRAM.to_string(),
         code: MISSING_PROGRAM.to_string(),
         description: MISSING_PROGRAM.to_string(),
+        is_active: false,
     };
 
     let missing_context = ContextRow {

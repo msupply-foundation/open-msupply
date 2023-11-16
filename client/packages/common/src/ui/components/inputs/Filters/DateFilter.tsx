@@ -25,13 +25,12 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
     minDate = '0000-01-01',
   } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
-  const { customDate } = useFormatDateTime();
+  const { customDate, urlQueryDate, urlQueryDateTime } = useFormatDateTime();
 
   const urlValue = urlQuery[urlParameter] as string;
   const value = getDateFromUrl(urlValue, range);
 
-  const dateTimeFormat =
-    type === 'dateTime' ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd';
+  const dateTimeFormat = type === 'dateTime' ? urlQueryDateTime : urlQueryDate;
 
   const handleChange = (selection: Date | null) => {
     if (range) {

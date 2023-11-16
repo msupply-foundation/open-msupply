@@ -14,7 +14,7 @@ table! {
         #[sql_name = "type"] type_ -> crate::db_diesel::temperature_breach_row::TemperatureBreachRowTypeMapping,
         description -> Text,
         is_active -> Bool,
-        store_id -> Nullable<Text>,
+        store_id -> Text,
         minimum_temperature -> Double,
         maximum_temperature -> Double,
     }
@@ -40,7 +40,7 @@ pub struct TemperatureBreachConfigRow {
     pub r#type: TemperatureBreachRowType,
     pub description: String,
     pub is_active: bool,
-    pub store_id: Option<String>,
+    pub store_id: String,
     pub minimum_temperature: f64,
     pub maximum_temperature: f64,
 }

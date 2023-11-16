@@ -6,18 +6,32 @@ import { Log, Sensor } from './types';
 import { useUrlQueryParams } from '@common/hooks';
 
 const MAX_DATA_POINTS = 30;
+const BREACH_RANGE = 2;
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
-  const {
-    queryParams,
-  } = useUrlQueryParams({
-    initialSort: {key: 'datetime', dir: 'desc'},
+  const { filter, queryParams } = useUrlQueryParams({
+    initialSort: { key: 'datetime', dir: 'desc' },
+    filters: [
+      { key: 'datetime', condition: 'between' },
+      {
+        key: 'sensor.name',
+      },
+      {
+        key: 'location.name',
+      },
+      {
+        key: 'temperatureBreach.type',
+        condition: 'equalTo',
+      },
+    ],
   });
 
   const { data, isLoading } = useTemperatureLog.document.list(queryParams);
   const sensors: Sensor[] = [];
   const logs: Log[] = [];
+  let minTemperature = 2;
+  let maxTemperature = 8;
 
   data?.nodes?.forEach(
     ({ datetime, temperature, sensor, temperatureBreach }) => {
@@ -45,6 +59,8 @@ export const useTemperatureChartData = () => {
         temperature,
         breach: temperatureBreach ? { row: temperatureBreach, sensor } : null,
       });
+      minTemperature = Math.min(minTemperature, temperature);
+      maxTemperature = Math.max(maxTemperature, temperature);
     }
   );
   const numOfDataPoints = Math.min(MAX_DATA_POINTS, logs.length);
@@ -102,11 +118,17 @@ export const useTemperatureChartData = () => {
       temperature: 8,
     })),
   };
+  const yAxisDomain: [number, number] = [
+    minTemperature - BREACH_RANGE,
+    maxTemperature + BREACH_RANGE,
+  ];
 
   return {
+    filter,
     hasData: logs.length > 0,
     isLoading,
     sensors,
     breachConfig,
+    yAxisDomain,
   };
 };

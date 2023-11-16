@@ -136,7 +136,7 @@ query InvoiceQuery($storeId: String, $dataId: String) {
 }
 "#;
 
-const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId: String) {
+const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId: String, $sort: PrintReportSortInput) {
   stocktake(storeId: $storeId, id: $dataId) {
     ... on NodeError {
       __typename
@@ -174,30 +174,32 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
         type
         verifiedDatetime
       }
-      lines {
-        totalCount
-        nodes {
-          batch
-          comment
-          costPricePerPack
-          countedNumberOfPacks
-          expiryDate
-          id
-          itemId
-          note
-          packSize
-          sellPricePerPack
-          snapshotNumberOfPacks
-          stocktakeId
-          item {
-            name
-            code
-          }
-          location {
-            code
-          }
+    }
+  }
+  stocktakeLines(storeId: $storeId, stocktakeId: $dataId, reportSort: $sort) {
+    ... on StocktakeLineConnector {
+      nodes {
+        batch
+        comment
+        costPricePerPack
+        countedNumberOfPacks
+        expiryDate
+        id
+        itemId
+        note
+        packSize
+        sellPricePerPack
+        snapshotNumberOfPacks
+        stocktakeId
+        item {
+          name
+          code
+        }
+        location {
+          code
         }
       }
+      totalCount
     }
   }
   store(id: $storeId) {
