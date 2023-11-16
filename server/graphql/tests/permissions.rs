@@ -16,6 +16,7 @@ mod permission_tests {
     use graphql_invoice::{InvoiceMutations, InvoiceQueries};
     use graphql_invoice_line::InvoiceLineMutations;
     use graphql_location::{LocationMutations, LocationQueries};
+    use graphql_pack_variant::PackVariantQueries;
     use graphql_reports::ReportQueries;
     use graphql_requisition::{RequisitionMutations, RequisitionQueries};
     use graphql_requisition_line::RequisitionLineMutations;
@@ -33,6 +34,7 @@ mod permission_tests {
         pub GeneralQueries,
         pub RequisitionQueries,
         pub ReportQueries,
+        pub PackVariantQueries,
     );
 
     #[derive(MergedObject, Default, Clone)]
@@ -56,6 +58,7 @@ mod permission_tests {
             GeneralQueries,
             RequisitionQueries,
             ReportQueries,
+            PackVariantQueries,
         )
     }
 
