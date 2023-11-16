@@ -2,6 +2,12 @@ use async_graphql::*;
 use repository::PackVariantRow;
 use service::pack_variant::ItemPackVariant;
 
+#[derive(SimpleObject)]
+pub struct ItemPackVariantConnector {
+    pub total_count: u32,
+    pub nodes: Vec<ItemPackVariantNode>,
+}
+
 pub struct VariantNode {
     pub variant: PackVariantRow,
 }
@@ -30,8 +36,8 @@ impl ItemPackVariantNode {
         ItemPackVariantNode { pack_variants }
     }
 
-    pub fn from_vec(units: Vec<ItemPackVariant>) -> Vec<ItemPackVariantNode> {
-        units
+    pub fn from_vec(variants: Vec<ItemPackVariant>) -> Vec<ItemPackVariantNode> {
+        variants
             .into_iter()
             .map(ItemPackVariantNode::from_domain)
             .collect()
@@ -42,6 +48,10 @@ impl ItemPackVariantNode {
 impl VariantNode {
     pub async fn id(&self) -> &String {
         &self.variant.id
+    }
+
+    pub async fn item_id(&self) -> &String {
+        &self.variant.item_id
     }
 
     pub async fn short_name(&self) -> &String {
@@ -62,7 +72,7 @@ impl VariantNode {
         VariantNode { variant }
     }
 
-    pub fn from_vec(units: Vec<PackVariantRow>) -> Vec<VariantNode> {
-        units.into_iter().map(VariantNode::from_domain).collect()
+    pub fn from_vec(variants: Vec<PackVariantRow>) -> Vec<VariantNode> {
+        variants.into_iter().map(VariantNode::from_domain).collect()
     }
 }
