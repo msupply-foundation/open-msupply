@@ -98,9 +98,10 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         isDesc: sortBy.isDesc,
         offset,
         storeId,
+        // the filter previously only showed type: { equalTo: ItemNodeType.Stock },
+        // because service items don't have SOH & AMC so it's odd to show them alongside stock items
         filter: {
           ...filterBy,
-          type: { equalTo: ItemNodeType.Stock },
           isVisible: true,
         },
       });
