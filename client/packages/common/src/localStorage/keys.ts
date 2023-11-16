@@ -12,8 +12,8 @@ export type AuthenticationCredentials = {
   store?: UserStoreNodeFragment | undefined;
   username: string;
 };
-export type UserSelectedVariant = {
-  [itemId: string]: /* userSelectedUnitId */ string;
+export type UserSelectedPackVariant = {
+  [itemId: string]: /* userSelectedPackVariantId */ string;
 };
 
 export type LocalStorageRecord = {
@@ -31,7 +31,7 @@ export type LocalStorageRecord = {
   '/columns/hidden': Record<string, string[]> | undefined;
 } & Record<
   `/user/${string}/store/${string}/selectedvariant`,
-  UserSelectedVariant
+  UserSelectedPackVariant
 >;
 
 export type LocalStorageKey = keyof LocalStorageRecord;

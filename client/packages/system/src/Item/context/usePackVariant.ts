@@ -54,7 +54,7 @@ export interface VariantControl {
   variants: VariantNode[];
   // Selected by user or mostUsed (calculated by backend)
   activeVariant: VariantNode;
-  setUserSelectedVariant: (variantId: string) => void;
+  setUserSelectedPackVariant: (variantId: string) => void;
 }
 
 // Will call API to refresh pack variant if cache is expired
@@ -84,12 +84,12 @@ export const usePackVariant = (
 } => {
   const authContext = useAuthContext();
   const t = useTranslation();
-  const [userSelectedVariant, setUserSelectedVariant] = useLocalStorage(
+  const [UserSelectedPackVariant, setUserSelectedPackVariant] = useLocalStorage(
     `/user/${authContext.user?.id ?? ''}/store/${
       authContext.storeId
     }/selectedvariant`
   );
-  const userSelectedVariantId = userSelectedVariant?.[itemId];
+  const UserSelectedPackVariantId = UserSelectedPackVariant?.[itemId];
   const item = usePackVariantStore(state => state.items[itemId], isEqual);
 
   if (!item || item.packVariants.length == 0) {
@@ -109,7 +109,7 @@ export const usePackVariant = (
     ({ id }) => id === mostUsedPackVariantId
   );
   const selectedVariant = packVariants.find(
-    ({ id }) => id === userSelectedVariantId
+    ({ id }) => id === UserSelectedPackVariantId
   );
 
   const activeVariant =
@@ -139,9 +139,9 @@ export const usePackVariant = (
     variantsControl: {
       variants: packVariants,
       activeVariant,
-      setUserSelectedVariant: variantId =>
-        setUserSelectedVariant({
-          ...userSelectedVariant,
+      setUserSelectedPackVariant: variantId =>
+        setUserSelectedPackVariant({
+          ...UserSelectedPackVariant,
           [itemId]: variantId,
         }),
     },
