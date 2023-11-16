@@ -1,9 +1,9 @@
-import { EnvUtils, FilterBy, SortBy } from '@openmsupply-client/common';
+import { EnvUtils, FilterByWithBoolean, SortBy } from '@openmsupply-client/common';
 import { JsonData } from '@openmsupply-client/programs';
 import { ReportRowFragment, Sdk } from './operations.generated';
 
 export type ReportListParams = {
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
   sortBy: SortBy<ReportRowFragment>;
   offset: number;
 };

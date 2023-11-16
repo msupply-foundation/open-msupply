@@ -81,7 +81,7 @@ fn generate_line(
         sell_price_per_pack,
         expiry_date,
         number_of_packs,
-        location_id,
+        location,
         id: _,
         item_id: _,
         total_before_tax,
@@ -94,7 +94,7 @@ fn generate_line(
 
     update_line.pack_size = pack_size.map(u32_to_i32).unwrap_or(update_line.pack_size);
     update_line.batch = batch.or(update_line.batch);
-    update_line.location_id = location_id.or(update_line.location_id);
+    update_line.location_id = location.map(|l| l.value).unwrap_or(update_line.location_id);
     update_line.expiry_date = expiry_date.or(update_line.expiry_date);
     update_line.sell_price_per_pack =
         sell_price_per_pack.unwrap_or(update_line.sell_price_per_pack);

@@ -16,44 +16,47 @@ const translateColor = (theme: Theme, color?: string) => {
   }
 };
 
-export const StyledBaseButton = styled(MuiButton)(
-  ({ theme, color, variant }) => {
-    const getHoverBgColor = () =>
-      variant === 'contained'
-        ? theme.palette.background.white
-        : translateColor(theme, color);
+export const StyledBaseButton = styled(MuiButton)(({
+  theme,
+  color,
+  variant,
+  style,
+}) => {
+  const getHoverBgColor = () =>
+    variant === 'contained'
+      ? theme.palette.background.white
+      : translateColor(theme, color);
 
-    const getHoverColor = () =>
-      variant === 'contained'
-        ? translateColor(theme, color)
-        : theme.palette.background.white;
+  const getHoverColor = () =>
+    variant === 'contained'
+      ? translateColor(theme, color)
+      : theme.palette.background.white;
 
-    const hoverBgColor = getHoverBgColor();
-    const hoverColor = getHoverColor();
+  const hoverBgColor = getHoverBgColor();
+  const hoverColor = getHoverColor();
 
-    return {
-      '&.MuiButton-outlined': {
-        backgroundColor: 'white',
-      },
+  return {
+    '&.MuiButton-outlined': {
+      backgroundColor: 'white',
+    },
 
-      borderRadius: 24,
-      fontWeight: 700,
-      height: 40,
-      textTransform: 'none' as Property.TextTransform,
-      boxShadow: theme.shadows[2],
+    borderRadius: 24,
+    fontWeight: 700,
+    height: style?.height ?? 40,
+    textTransform: 'none' as Property.TextTransform,
+    boxShadow: theme.shadows[2],
 
-      minWidth: '115px',
+    minWidth: '115px',
 
+    border: 'none',
+
+    '&:hover': {
       border: 'none',
-
-      '&:hover': {
-        border: 'none',
-        color: hoverColor,
-        backgroundColor: hoverBgColor,
-      },
-    };
-  }
-);
+      color: hoverColor,
+      backgroundColor: hoverBgColor,
+    },
+  };
+});
 
 export const BaseButton: React.FC<MuiButtonProps> = ({ onClick, ...rest }) => {
   return (

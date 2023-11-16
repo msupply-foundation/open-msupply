@@ -7,6 +7,7 @@ import {
   AppBarContentPortal,
   SearchBar,
   FilterController,
+  FilterRule,
 } from '@openmsupply-client/common';
 import { RequestRowFragment, useRequest } from '../api';
 
@@ -17,7 +18,8 @@ export const Toolbar: FC<{
   const t = useTranslation('replenishment');
 
   const key = 'otherPartyName' as keyof RequestRowFragment;
-  const filterString = (filter.filterBy?.[key]?.like as string) || '';
+  const filterString =
+    ((filter.filterBy?.[key] as FilterRule)?.like as string) || '';
 
   return (
     <AppBarContentPortal

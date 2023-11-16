@@ -173,7 +173,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
             <LocationSearchInput
               autoFocus={false}
               disabled={false}
-              value={location}
+              selectedLocation={location}
               width={160}
               onChange={location => {
                 onUpdate({ location, locationId: location?.id });
