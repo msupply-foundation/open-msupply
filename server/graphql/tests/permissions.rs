@@ -16,7 +16,7 @@ mod permission_tests {
     use graphql_invoice::{InvoiceMutations, InvoiceQueries};
     use graphql_invoice_line::InvoiceLineMutations;
     use graphql_location::{LocationMutations, LocationQueries};
-    use graphql_pack_variant::PackVariantQueries;
+    use graphql_pack_variant::{PackVariantMutations, PackVariantQueries};
     use graphql_reports::ReportQueries;
     use graphql_requisition::{RequisitionMutations, RequisitionQueries};
     use graphql_requisition_line::RequisitionLineMutations;
@@ -48,6 +48,7 @@ mod permission_tests {
         pub RequisitionMutations,
         pub RequisitionLineMutations,
         pub GeneralMutations,
+        pub PackVariantMutations,
     );
 
     pub fn full_query() -> FullQuery {
@@ -73,6 +74,7 @@ mod permission_tests {
             RequisitionMutations,
             RequisitionLineMutations,
             GeneralMutations,
+            PackVariantMutations,
         )
     }
 
