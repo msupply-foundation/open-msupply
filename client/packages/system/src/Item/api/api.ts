@@ -4,6 +4,7 @@ import {
   ItemSortFieldInput,
   FilterBy,
   InsertPackVariantInput,
+  UpdatePackVariantInput,
 } from '@openmsupply-client/common';
 import { Sdk, ItemRowFragment, VariantFragment } from './operations.generated';
 
@@ -31,6 +32,12 @@ const packVariantParses = {
     id: packVariant.id,
     itemId: packVariant.itemId,
     packSize: packVariant.packSize,
+    shortName: packVariant.shortName,
+    longName: packVariant.longName,
+  }),
+  toUpdate: (packVariant: VariantFragment): UpdatePackVariantInput => ({
+    id: packVariant.id,
+    itemId: packVariant.itemId,
     shortName: packVariant.shortName,
     longName: packVariant.longName,
   }),
@@ -183,5 +190,13 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
     });
 
     return result.insertPackVariant;
+  },
+  updatePackVariant: async (input: VariantFragment) => {
+    const result = await sdk.updatePackVariant({
+      storeId,
+      input: packVariantParses.toUpdate(input),
+    });
+
+    return result.updatePackVariant;
   },
 });

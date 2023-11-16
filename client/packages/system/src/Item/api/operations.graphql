@@ -269,3 +269,9 @@ mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
       ...Variant
   }
 }
+
+mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
+  updatePackVariant(storeId: $storeId, input: $input) {
+      ...Variant
+  }
+}
