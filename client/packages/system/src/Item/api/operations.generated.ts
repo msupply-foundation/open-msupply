@@ -95,6 +95,14 @@ export type InsertPackVariantMutationVariables = Types.Exact<{
 
 export type InsertPackVariantMutation = { __typename: 'Mutations', insertPackVariant: { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
 
+export type UpdatePackVariantMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdatePackVariantInput;
+}>;
+
+
+export type UpdatePackVariantMutation = { __typename: 'Mutations', updatePackVariant: { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
+
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
   __typename
@@ -359,6 +367,13 @@ export const InsertPackVariantDocument = gql`
   }
 }
     ${VariantFragmentDoc}`;
+export const UpdatePackVariantDocument = gql`
+    mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
+  updatePackVariant(storeId: $storeId, input: $input) {
+    ...Variant
+  }
+}
+    ${VariantFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -387,6 +402,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertPackVariant(variables: InsertPackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPackVariantMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertPackVariantMutation>(InsertPackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPackVariant', 'mutation');
+    },
+    updatePackVariant(variables: UpdatePackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdatePackVariantMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePackVariantMutation>(UpdatePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePackVariant', 'mutation');
     }
   };
 }
@@ -508,5 +526,22 @@ export const mockPackVariantsQuery = (resolver: ResponseResolver<GraphQLRequest<
 export const mockInsertPackVariantMutation = (resolver: ResponseResolver<GraphQLRequest<InsertPackVariantMutationVariables>, GraphQLContext<InsertPackVariantMutation>, any>) =>
   graphql.mutation<InsertPackVariantMutation, InsertPackVariantMutationVariables>(
     'insertPackVariant',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdatePackVariantMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updatePackVariant })
+ *   )
+ * })
+ */
+export const mockUpdatePackVariantMutation = (resolver: ResponseResolver<GraphQLRequest<UpdatePackVariantMutationVariables>, GraphQLContext<UpdatePackVariantMutation>, any>) =>
+  graphql.mutation<UpdatePackVariantMutation, UpdatePackVariantMutationVariables>(
+    'updatePackVariant',
     resolver
   )
