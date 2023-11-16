@@ -25,6 +25,7 @@ export { ExternalLinkIcon } from './ExternalLink';
 export { EyeIcon } from './Eye';
 export { EyeOffIcon } from './EyeOff';
 export { FilterIcon } from './Filter';
+export { HelpIcon } from './Help';
 export { HomeIcon } from './Home';
 export { InfoIcon } from './Info';
 export { InfoOutlineIcon } from './InfoOutline';
