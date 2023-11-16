@@ -13,8 +13,6 @@ import {
   FrontEndHost,
   useNativeClient,
   GqlProvider,
-  useInitialisationStatus,
-  InitialisationStatusType,
   frontEndHostDiscoveryGraphql,
   IconButton,
   RefreshIcon,
@@ -160,15 +158,8 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
   server,
   connect,
 }) => {
-  const { data: initStatus } = useInitialisationStatus();
   const t = useTranslation('app');
   const { error } = useNotification();
-
-  const getSiteName = () => {
-    if (initStatus?.status == InitialisationStatusType.Initialised)
-      return initStatus?.siteName;
-    return t('messages.not-initialised');
-  };
 
   const handleConnectionResult = async (result: ConnectionResult) => {
     if (result.success) return;
@@ -190,20 +181,7 @@ const DiscoveredServer: React.FC<DiscoveredServerProps> = ({
           <CheckboxEmptyIcon fontSize="small" color="primary" />
         </Box>
         <Box flexShrink={0} flexBasis="200px">
-          <Typography
-            sx={{
-              color:
-                initStatus?.status == InitialisationStatusType.Initialised
-                  ? 'inherit'
-                  : 'gray.light',
-              fontSize: 20,
-              fontWeight: 'bold',
-              lineHeight: 1,
-            }}
-          >
-            {getSiteName()}
-          </Typography>
-          <Typography sx={{ fontSize: 11 }}>
+          <Typography sx={{ fontSize: 14, fontWeight: 'bold' }}>
             {frontEndHostDisplay(server)}
           </Typography>
         </Box>
