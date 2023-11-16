@@ -76,16 +76,16 @@ export type ItemByIdQueryVariables = Types.Exact<{
 
 export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null } }> } }> } };
 
-export type VariantFragment = { __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string };
+export type VariantFragment = { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string };
 
-export type PackVariantFragment = { __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> };
+export type PackVariantFragment = { __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string }> };
 
 export type PackVariantsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type PackVariantsQuery = { __typename: 'Queries', packVariants: { __typename: 'PackVariantConnector', totalCount: number, nodes: Array<{ __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> }> } };
+export type PackVariantsQuery = { __typename: 'Queries', packVariants: { __typename: 'ItemPackVariantConnector', totalCount: number, nodes: Array<{ __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string }> }> } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -213,6 +213,7 @@ export const ItemsWithStatsFragmentDoc = gql`
 export const VariantFragmentDoc = gql`
     fragment Variant on VariantNode {
   id
+  itemId
   longName
   packSize
   shortName
