@@ -239,6 +239,7 @@ query itemById($storeId: String!, $itemId: String!) {
 
 fragment Variant on VariantNode {
   id
+  itemId
   longName
   packSize
   shortName
