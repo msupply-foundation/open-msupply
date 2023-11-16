@@ -21,7 +21,7 @@ use graphql_general::{
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
-use graphql_pack_variant::PackVariantQueries;
+use graphql_pack_variant::{PackVariantMutations, PackVariantQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
@@ -95,6 +95,7 @@ pub struct Mutations(
     pub GeneralMutations,
     pub ProgramsMutations,
     pub FormSchemaMutations,
+    pub PackVariantMutations,
 );
 
 impl Mutations {
@@ -113,6 +114,7 @@ impl Mutations {
             GeneralMutations,
             ProgramsMutations,
             FormSchemaMutations,
+            PackVariantMutations,
         )
     }
 }

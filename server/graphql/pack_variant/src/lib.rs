@@ -3,6 +3,9 @@ use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::*;
 use service::auth::{Resource, ResourceAccessRequest};
 
+mod mutations;
+use self::mutations::*;
+
 #[derive(Default, Clone)]
 pub struct PackVariantQueries;
 
@@ -31,5 +34,20 @@ impl PackVariantQueries {
             total_count: pack_variants.len() as u32,
             nodes: ItemPackVariantNode::from_vec(pack_variants),
         })
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct PackVariantMutations;
+
+#[Object]
+impl PackVariantMutations {
+    async fn insert_pack_variant(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertPackVariantInput,
+    ) -> Result<InsertPackVariantResponse> {
+        insert_pack_variant(ctx, store_id, input)
     }
 }
