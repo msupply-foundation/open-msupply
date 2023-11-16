@@ -50,4 +50,13 @@ impl PackVariantMutations {
     ) -> Result<InsertPackVariantResponse> {
         insert_pack_variant(ctx, store_id, input)
     }
+
+    async fn update_pack_variant(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdatePackVariantInput,
+    ) -> Result<UpdatePackVariantResponse> {
+        update_pack_variant(ctx, store_id, input)
+    }
 }
