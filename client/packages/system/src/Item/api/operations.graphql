@@ -265,7 +265,7 @@ query packVariants($storeId: String!) {
 }
 
 mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
-insertPackVariant(storeId: $storeId, input: $input) {
+  insertPackVariant(storeId: $storeId, input: $input) {
     __typename
     ... on VariantNode {
       ...Variant
@@ -280,16 +280,10 @@ insertPackVariant(storeId: $storeId, input: $input) {
 }
 
 mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
-updatePackVariant(storeId: $storeId, input: $input) {
+  updatePackVariant(storeId: $storeId, input: $input) {
     __typename
     ... on VariantNode {
       ...Variant
-    }
-    ... on MutatePackVariantError {
-      error {
-        __typename
-        description
-      }
     }
   }
 }
