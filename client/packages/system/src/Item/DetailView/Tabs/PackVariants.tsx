@@ -19,9 +19,9 @@ import {
 import { usePackVariant } from '../../context';
 import { PackVariantEditModal } from '../../Components/PackVariantEditModal';
 
-const PackVariantTable: FC<{ itemId?: string }> = ({ itemId }) => {
+const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
   const t = useTranslation('catalogue');
-  const { variantsControl } = usePackVariant(itemId ?? '', null);
+  const { variantsControl } = usePackVariant(itemId, null);
   const { isOpen, entity, mode, onClose, onOpen } =
     useEditModal<VariantFragment>();
   const { info } = useNotification();
@@ -77,7 +77,7 @@ const PackVariantTable: FC<{ itemId?: string }> = ({ itemId }) => {
 };
 
 interface PackVariantsTabProps {
-  itemId?: string;
+  itemId: string;
 }
 
 export const PackVariantsTab: FC<PackVariantsTabProps> = ({ itemId }) => {

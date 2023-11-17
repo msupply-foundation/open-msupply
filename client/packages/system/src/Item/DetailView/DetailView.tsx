@@ -22,16 +22,16 @@ export const ItemDetailView: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { setSuffix } = useBreadcrumbs();
-  const { variantsControl, numberOfPacksFromQuantity } = usePackVariant(
-    data?.id ?? '',
-    data?.name ?? null
-  );
 
   React.useEffect(() => {
     setSuffix(data?.name ?? '');
   }, [data]);
 
-  if (isLoading) return <DetailFormSkeleton />;
+  if (isLoading || !data) return <DetailFormSkeleton />;
+  const { variantsControl, numberOfPacksFromQuantity } = usePackVariant(
+    data.id,
+    data.name ?? null
+  );
 
   const tabs = [
     {
@@ -43,7 +43,7 @@ export const ItemDetailView: FC = () => {
       value: t('label.master-lists'),
     },
     {
-      Component: <PackVariantsTab itemId={data?.id} />,
+      Component: <PackVariantsTab itemId={data.id} />,
       value: t('label.pack-variants'),
     },
   ];
