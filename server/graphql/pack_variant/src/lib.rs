@@ -47,7 +47,7 @@ impl PackVariantMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: InsertPackVariantInput,
-    ) -> Result<InsertPackVariantResponse> {
+    ) -> Result<InsertResponse> {
         insert_pack_variant(ctx, store_id, input)
     }
 
@@ -56,7 +56,7 @@ impl PackVariantMutations {
         ctx: &Context<'_>,
         store_id: String,
         input: UpdatePackVariantInput,
-    ) -> Result<UpdatePackVariantResponse> {
+    ) -> Result<UpdateResponse> {
         update_pack_variant(ctx, store_id, input)
     }
 }

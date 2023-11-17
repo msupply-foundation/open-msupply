@@ -1,9 +1,10 @@
 {
   "error.item-not-found": "Item not found",
   "error.master-list-not-found": "Master list not found",
-  "error.no-item-variants": "This item does not have any item variants configured.",
   "error.no-items": "No items to display.",
   "error.no-master-lists": "No Master Lists to display.",
+  "error.no-pack-variants": "This item does not have any pack variants configured.",
+  "error.pack-variant-exists": "Pack variant with the same pack size already exists for item",
   "label.atc-category": "ATC category",
   "label.code": "Code",
   "label.create-pack-variant": "Create Pack Variant",

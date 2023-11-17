@@ -1551,7 +1551,7 @@ export type InsertPackVariantInput = {
   shortName: Scalars['String']['input'];
 };
 
-export type InsertPackVariantResponse = VariantNode;
+export type InsertPackVariantResponse = MutatePackVariantError | VariantNode;
 
 export type InsertPatientInput = {
   code: Scalars['String']['input'];
@@ -2330,6 +2330,15 @@ export type MaxOrdersReachedForPeriod = InsertProgramRequestRequisitionErrorInte
 export type MergeRequiredError = UpdateDocumentErrorInterface & {
   __typename: 'MergeRequiredError';
   autoMerge?: Maybe<RawDocumentNode>;
+  description: Scalars['String']['output'];
+};
+
+export type MutatePackVariantError = {
+  __typename: 'MutatePackVariantError';
+  error: MutatePackVariantErrorInterface;
+};
+
+export type MutatePackVariantErrorInterface = {
   description: Scalars['String']['output'];
 };
 
@@ -4913,7 +4922,6 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
 
 export type UpdatePackVariantInput = {
   id: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
   longName: Scalars['String']['input'];
   shortName: Scalars['String']['input'];
 };
@@ -5323,4 +5331,9 @@ export type VariantNode = {
   longName: Scalars['String']['output'];
   packSize: Scalars['Int']['output'];
   shortName: Scalars['String']['output'];
+};
+
+export type VariantWithPackSizeAlreadyExists = MutatePackVariantErrorInterface & {
+  __typename: 'VariantWithPackSizeAlreadyExists';
+  description: Scalars['String']['output'];
 };

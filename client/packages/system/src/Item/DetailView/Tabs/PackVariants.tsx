@@ -34,7 +34,7 @@ const PackVariantTable: FC<{ itemId?: string }> = ({ itemId }) => {
   const columns = useColumns<VariantFragment>([
     'packSize',
     {
-      key: 'abbreviation',
+      key: 'shortName',
       label: 'label.abbreviation',
       accessor: ({ rowData }) => rowData?.shortName,
       sortable: false,
@@ -69,7 +69,7 @@ const PackVariantTable: FC<{ itemId?: string }> = ({ itemId }) => {
         id="item-variants-detail"
         data={variantsControl?.variants ?? []}
         columns={columns}
-        noDataElement={<NothingHere body={t('error.no-item-variants')} />}
+        noDataElement={<NothingHere body={t('error.no-pack-variants')} />}
         onRowClick={hasPermission ? onOpen : infoSnack}
       />
     </>

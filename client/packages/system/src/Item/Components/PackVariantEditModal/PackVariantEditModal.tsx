@@ -9,6 +9,8 @@ import {
   FnUtils,
   InlineSpinner,
   NonNegativeIntegerInput,
+  useNotification,
+  noOtherVariants,
 } from '@openmsupply-client/common';
 import { VariantFragment } from '../../api';
 import { usePackVariantInsert } from '../../api/hooks/usePackVariantInsert';
@@ -22,23 +24,18 @@ interface PackVariantEditModalProps {
   packVariant: VariantFragment | null;
 }
 
-const createNewPackVariant = (
-  itemId: string,
-  seed?: VariantFragment | null
-): VariantFragment => ({
+const createNewPackVariant = (itemId: string): VariantFragment => ({
   __typename: 'VariantNode',
   id: FnUtils.generateUUID(),
   itemId,
   shortName: '',
   longName: '',
   packSize: 0,
-  ...seed,
 });
 
 interface UseDraftPackVariantControl {
   draft: VariantFragment;
   onUpdate: (patch: Partial<VariantFragment>) => void;
-  onChangePackVariant: () => void;
   onSave: () => Promise<void>;
   isLoading: boolean;
 }
@@ -48,35 +45,41 @@ const useDraftPackVariant = (
   seed: VariantFragment | null,
   mode: ModalMode | null
 ): UseDraftPackVariantControl => {
-  const [packVariant, setPackVariant] = useState<VariantFragment>(() =>
-    createNewPackVariant(itemId, seed)
+  const [packVariant, setPackVariant] = useState<VariantFragment>(
+    () => seed || createNewPackVariant(itemId)
   );
-
-  const { mutate: insert, isLoading: insertIsLoading } = usePackVariantInsert();
-  const { mutate: update, isLoading: updateIsLoading } = usePackVariantUpdate();
+  const t = useTranslation('catalogue');
+  const { error } = useNotification();
+  const { mutateAsync: insert, isLoading: insertIsLoading } =
+    usePackVariantInsert();
+  const { mutateAsync: update, isLoading: updateIsLoading } =
+    usePackVariantUpdate();
 
   const onUpdate = (patch: Partial<VariantFragment>) => {
     setPackVariant({ ...packVariant, ...patch });
   };
 
   const onSave = async () => {
-    if (mode === ModalMode.Create) {
-      return insert(packVariant);
-    } else {
-      return update(packVariant);
-    }
-  };
+    let result =
+      mode === ModalMode.Create
+        ? await insert(packVariant)
+        : await update(packVariant);
 
-  const onChangePackVariant = () => {
-    if (mode === ModalMode.Create) {
-      setPackVariant(createNewPackVariant(itemId));
+    if (result.__typename === 'VariantNode') return;
+    const structuredError = result.error;
+
+    switch (structuredError.__typename) {
+      case 'VariantWithPackSizeAlreadyExists':
+        error(t('error.pack-variant-exists'))();
+        throw Error();
+      default:
+        noOtherVariants(structuredError.__typename);
     }
   };
 
   return {
     draft: packVariant,
     onUpdate,
-    onChangePackVariant,
     onSave,
     isLoading: insertIsLoading || updateIsLoading,
   };
@@ -105,8 +108,13 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
           variant="ok"
           disabled={isInvalid}
           onClick={async () => {
-            await onSave();
-            onClose();
+            try {
+              await onSave();
+              onClose();
+            } catch (_) {
+              // Already handled and displayed in onSave
+              // caught to make sure modal is not closed on error
+            }
           }}
         />
       }

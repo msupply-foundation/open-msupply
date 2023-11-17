@@ -37,7 +37,6 @@ const packVariantParses = {
   }),
   toUpdate: (packVariant: VariantFragment): UpdatePackVariantInput => ({
     id: packVariant.id,
-    itemId: packVariant.itemId,
     shortName: packVariant.shortName,
     longName: packVariant.longName,
   }),
