@@ -23,6 +23,7 @@ import {
   EnvUtils,
   UserPermission,
   RouteBuilder,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -181,6 +182,12 @@ export const AppDrawer: React.FC = () => {
     logout();
   };
 
+  const showConfirmation = useConfirmationModal({
+    onConfirm: handleLogout,
+    message: t('messages.logout-confirm'),
+    title: t('heading.logout-confirm'),
+  });
+
   return (
     <StyledDrawer
       data-testid="drawer"
@@ -244,15 +251,15 @@ export const AppDrawer: React.FC = () => {
             text={t('admin')}
             visible={userHasPermission(UserPermission.ServerAdmin)}
           />
-          <AppNavLink
-            to={AppRoute.Login}
-            icon={<PowerIcon fontSize="small" color="primary" />}
-            text={t('logout')}
-            onClick={handleLogout}
-            requireConfirmation={true}
-            confirmMessage={t('messages.logout-confirm')}
-            confirmTitle={t('heading.logout-confirm')}
-          />
+          <Box onClick={() => showConfirmation({})}>
+            <AppNavLink
+              to={AppRoute.Login}
+              icon={<PowerIcon fontSize="small" color="primary" />}
+              text={t('logout')}
+              onClick={() => {}}
+              inactive
+            />
+          </Box>
         </List>
       </LowerListContainer>
     </StyledDrawer>
