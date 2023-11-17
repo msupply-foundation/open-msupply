@@ -383,12 +383,6 @@ export const UpdatePackVariantDocument = gql`
     ... on VariantNode {
       ...Variant
     }
-    ... on MutatePackVariantError {
-      error {
-        __typename
-        description
-      }
-    }
   }
 }
     ${VariantFragmentDoc}`;
