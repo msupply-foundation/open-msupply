@@ -7,7 +7,7 @@ export const HelpIcon = (props: SvgIconProps): JSX.Element => {
       {...props}
       style={{
         fill: 'currentColor',
-        strokeWidth: 2,
+        strokeWidth: 2.5,
         strokeLinecap: 'round',
         strokeLinejoin: 'round',
       }}
