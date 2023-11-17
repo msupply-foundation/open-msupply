@@ -14,14 +14,13 @@ use service::pack_variant::{
 #[graphql(name = "UpdatePackVariantInput")]
 pub struct UpdatePackVariantInput {
     pub id: String,
-    pub item_id: String,
     pub short_name: String,
     pub long_name: String,
 }
 
 #[derive(Union)]
 #[graphql(name = "UpdatePackVariantResponse")]
-pub enum UpdatePackVariantResponse {
+pub enum UpdateResponse {
     Response(VariantNode),
 }
 
@@ -29,7 +28,7 @@ pub fn update_pack_variant(
     ctx: &Context<'_>,
     store_id: String,
     input: UpdatePackVariantInput,
-) -> Result<UpdatePackVariantResponse> {
+) -> Result<UpdateResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -49,31 +48,27 @@ impl UpdatePackVariantInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdatePackVariantInput {
             id,
-            item_id,
             short_name,
             long_name,
         } = self;
 
         ServiceInput {
             id,
-            item_id,
             short_name,
             long_name,
         }
     }
 }
 
-fn map_resopnse(from: Result<PackVariantRow, ServiceError>) -> Result<UpdatePackVariantResponse> {
+fn map_resopnse(from: Result<PackVariantRow, ServiceError>) -> Result<UpdateResponse> {
     match from {
-        Ok(result) => Ok(UpdatePackVariantResponse::Response(
-            VariantNode::from_domain(result),
-        )),
+        Ok(result) => Ok(UpdateResponse::Response(VariantNode::from_domain(result))),
         Err(error) => {
             use ServiceError::*;
             let formatted_error = format!("{:#?}", error);
 
             let graphql_error = match error {
-                ItemDoesNotExist | PackVariantDoesNotExist => {
+                UpdatedRecordNotFound | PackVariantDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
                 ServiceError::DatabaseError(_) => {

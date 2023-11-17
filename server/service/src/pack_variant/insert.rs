@@ -2,7 +2,7 @@ use repository::{
     PackVariant, PackVariantRow, PackVariantRowRepository, RepositoryError, StorageConnection,
 };
 
-use crate::service_provider::ServiceContext;
+use crate::{item::check_item_exists, service_provider::ServiceContext};
 
 use super::validate::{check_pack_size_is_unique, check_pack_variant_exists};
 
@@ -12,6 +12,7 @@ pub enum InsertPackVariantError {
     VariantWithPackSizeAlreadyExists,
     PackVariantAlreadyExists,
     CreatedRecordNotFound,
+    ItemDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -30,7 +31,7 @@ pub fn insert_pack_variant(
     let pack_variant = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, connection)?;
+            validate(connection, &input, &ctx.store_id)?;
             let new_pack_variant = generate(input);
             let repo = PackVariantRowRepository::new(&connection);
             repo.upsert_one(&new_pack_variant)?;
@@ -67,8 +68,9 @@ pub fn generate(
 }
 
 fn validate(
-    input: &InsertPackVariant,
     connection: &StorageConnection,
+    input: &InsertPackVariant,
+    store_id: &str,
 ) -> Result<(), InsertPackVariantError> {
     match check_pack_variant_exists(connection, &input.id)? {
         Some(_) => return Err(InsertPackVariantError::PackVariantAlreadyExists),
@@ -77,6 +79,10 @@ fn validate(
 
     if !check_pack_size_is_unique(connection, &input.item_id, input.pack_size)? {
         return Err(InsertPackVariantError::VariantWithPackSizeAlreadyExists);
+    }
+
+    if !check_item_exists(connection, store_id.to_string(), &input.item_id)? {
+        return Err(InsertPackVariantError::ItemDoesNotExist);
     }
 
     Ok(())

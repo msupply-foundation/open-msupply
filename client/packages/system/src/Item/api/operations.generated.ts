@@ -93,7 +93,7 @@ export type InsertPackVariantMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertPackVariantMutation = { __typename: 'Mutations', insertPackVariant: { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
+export type InsertPackVariantMutation = { __typename: 'Mutations', insertPackVariant: { __typename: 'MutatePackVariantError', error: { __typename: 'VariantWithPackSizeAlreadyExists', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
 
 export type UpdatePackVariantMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -363,14 +363,32 @@ export const PackVariantsDocument = gql`
 export const InsertPackVariantDocument = gql`
     mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
   insertPackVariant(storeId: $storeId, input: $input) {
-    ...Variant
+    __typename
+    ... on VariantNode {
+      ...Variant
+    }
+    ... on MutatePackVariantError {
+      error {
+        __typename
+        description
+      }
+    }
   }
 }
     ${VariantFragmentDoc}`;
 export const UpdatePackVariantDocument = gql`
     mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
   updatePackVariant(storeId: $storeId, input: $input) {
-    ...Variant
+    __typename
+    ... on VariantNode {
+      ...Variant
+    }
+    ... on MutatePackVariantError {
+      error {
+        __typename
+        description
+      }
+    }
   }
 }
     ${VariantFragmentDoc}`;

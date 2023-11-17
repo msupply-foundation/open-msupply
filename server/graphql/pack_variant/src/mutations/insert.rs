@@ -1,3 +1,7 @@
+use crate::mutations::{
+    MutatePackVariantError as InsertError, MutatePackVariantErrorInterface as ErrorInterface,
+    VariantWithPackSizeAlreadyExists,
+};
 use async_graphql::*;
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -22,7 +26,8 @@ pub struct InsertPackVariantInput {
 
 #[derive(Union)]
 #[graphql(name = "InsertPackVariantResponse")]
-pub enum InsertPackVariantResponse {
+pub enum InsertResponse {
+    Error(InsertError),
     Response(VariantNode),
 }
 
@@ -30,7 +35,7 @@ pub fn insert_pack_variant(
     ctx: &Context<'_>,
     store_id: String,
     input: InsertPackVariantInput,
-) -> Result<InsertPackVariantResponse> {
+) -> Result<InsertResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -66,25 +71,34 @@ impl InsertPackVariantInput {
     }
 }
 
-fn map_resopnse(from: Result<PackVariantRow, ServiceError>) -> Result<InsertPackVariantResponse> {
-    match from {
-        Ok(result) => Ok(InsertPackVariantResponse::Response(
-            VariantNode::from_domain(result),
-        )),
-        Err(error) => {
-            use ServiceError::*;
-            let formatted_error = format!("{:#?}", error);
+fn map_resopnse(from: Result<PackVariantRow, ServiceError>) -> Result<InsertResponse> {
+    let result = match from {
+        Ok(variant) => InsertResponse::Response(VariantNode::from_domain(variant)),
+        Err(error) => InsertResponse::Error(InsertError {
+            error: map_error(error)?,
+        }),
+    };
 
-            let graphql_error = match error {
-                VariantWithPackSizeAlreadyExists
-                | PackVariantAlreadyExists
-                | CreatedRecordNotFound => StandardGraphqlError::BadUserInput(formatted_error),
-                ServiceError::DatabaseError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
-            };
+    Ok(result)
+}
 
-            Err(graphql_error.extend())
+fn map_error(error: ServiceError) -> Result<ErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        ServiceError::VariantWithPackSizeAlreadyExists => {
+            return Ok(ErrorInterface::VariantWithPackSizeAlreadyExists(
+                VariantWithPackSizeAlreadyExists,
+            ))
         }
-    }
+        ServiceError::ItemDoesNotExist | ServiceError::PackVariantAlreadyExists => {
+            BadUserInput(formatted_error)
+        }
+        ServiceError::DatabaseError(_) | ServiceError::CreatedRecordNotFound => {
+            InternalError(formatted_error)
+        }
+    };
+
+    Err(graphql_error.extend())
 }
