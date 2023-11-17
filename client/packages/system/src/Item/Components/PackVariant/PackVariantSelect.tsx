@@ -8,11 +8,12 @@ interface PackUnitSelectProps {
   sx?: SxProps<Theme>;
 }
 
-export const PackUnitSelect: FC<PackUnitSelectProps> = ({
+export const PackVariantSelect: FC<PackUnitSelectProps> = ({
   variantControl,
   sx,
 }) => {
-  const { variants, activeVariant, setUserSelectedVariant } = variantControl;
+  const { variants, activeVariant, setUserSelectedPackVariant } =
+    variantControl;
 
   return (
     <Select
@@ -24,7 +25,7 @@ export const PackUnitSelect: FC<PackUnitSelectProps> = ({
       value={activeVariant.id}
       onClick={e => e.stopPropagation()}
       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-        setUserSelectedVariant(e.target.value)
+        setUserSelectedPackVariant(e.target.value)
       }
     />
   );

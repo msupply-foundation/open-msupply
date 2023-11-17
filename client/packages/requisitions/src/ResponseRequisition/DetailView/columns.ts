@@ -9,8 +9,8 @@ import {
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
 import {
-  getPackUnitQuantityCell,
-  useUnitVariant,
+  PackVariantQuantityCell,
+  usePackVariant,
 } from '@openmsupply-client/system';
 
 export const useResponseColumns = () => {
@@ -40,7 +40,7 @@ export const useResponseColumns = () => {
       label: 'label.pack',
       sortable: false,
       accessor: ({ rowData }) => {
-        const { variantsControl } = useUnitVariant(
+        const { variantsControl } = usePackVariant(
           rowData.item.id,
           rowData.item.unitName ?? null
         );
@@ -55,7 +55,7 @@ export const useResponseColumns = () => {
         label: 'label.our-soh',
         description: 'description.our-soh',
         sortable: false,
-        Cell: getPackUnitQuantityCell({
+        Cell: PackVariantQuantityCell({
           getItemId: row => row.itemId,
           getQuantity: row =>
             NumUtils.round(row.itemStats.availableStockOnHand),
@@ -70,7 +70,7 @@ export const useResponseColumns = () => {
       align: ColumnAlign.Right,
       getSortValue: rowData =>
         rowData.linkedRequisitionLine?.itemStats?.availableStockOnHand ?? '',
-      Cell: getPackUnitQuantityCell({
+      Cell: PackVariantQuantityCell({
         getItemId: row => row.itemId,
         getQuantity: row =>
           NumUtils.round(
@@ -82,7 +82,7 @@ export const useResponseColumns = () => {
       'requestedQuantity',
       {
         getSortValue: rowData => rowData.requestedQuantity,
-        Cell: getPackUnitQuantityCell({
+        Cell: PackVariantQuantityCell({
           getItemId: row => row.itemId,
           getQuantity: row => NumUtils.round(row.requestedQuantity ?? 0),
         }),
@@ -95,7 +95,7 @@ export const useResponseColumns = () => {
       key: 'approvedQuantity',
       label: 'label.approved-quantity',
       sortable: false,
-      Cell: getPackUnitQuantityCell({
+      Cell: PackVariantQuantityCell({
         getItemId: row => row.itemId,
         getQuantity: row => NumUtils.round(row.approvedQuantity),
       }),
@@ -111,7 +111,7 @@ export const useResponseColumns = () => {
     'supplyQuantity',
     {
       getSortValue: rowData => rowData.supplyQuantity,
-      Cell: getPackUnitQuantityCell({
+      Cell: PackVariantQuantityCell({
         getItemId: row => row.itemId,
         getQuantity: row => NumUtils.round(row.supplyQuantity),
       }),
@@ -124,7 +124,7 @@ export const useResponseColumns = () => {
     width: 100,
     align: ColumnAlign.Right,
     getSortValue: rowData => rowData.remainingQuantityToSupply,
-    Cell: getPackUnitQuantityCell({
+    Cell: PackVariantQuantityCell({
       getItemId: row => row.itemId,
       getQuantity: row => NumUtils.round(row.remainingQuantityToSupply),
     }),

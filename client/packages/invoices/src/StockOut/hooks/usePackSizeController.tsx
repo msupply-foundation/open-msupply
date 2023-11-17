@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../types';
 import { DraftItem } from '../..';
-import { useUnitVariant } from '@openmsupply-client/system';
+import { usePackVariant } from '@openmsupply-client/system';
 
 // Helper to sort the pack sizes by value.
 const sortPackSizes = (a: PackSizeOption, b: PackSizeOption) => {
@@ -32,7 +32,7 @@ const isPlaceholder = (line: DraftStockOutLine): boolean =>
   line.type === InvoiceLineNodeType.UnallocatedStock;
 
 const createPackSizeOption = (
-  asPackUnit: (_: number, defautlPackUnit?: string) => string,
+  asPackVariant: (_: number, defautlPackUnit?: string) => string,
   line: DraftStockOutLine
 ) => ({
   packSize: line.packSize,
@@ -46,7 +46,7 @@ const createPackSizeOption = (
     : false,
   isOnHold: line.stockLine?.onHold,
   value: line.packSize,
-  label: asPackUnit(line.packSize, String(line.packSize)),
+  label: asPackVariant(line.packSize, String(line.packSize)),
 });
 
 const createAnyOption = (t: ReturnType<typeof useTranslation>) => () => ({
@@ -66,7 +66,10 @@ export const usePackSizeController = (
   lines: DraftStockOutLine[]
 ) => {
   const t = useTranslation('distribution');
-  const { asPackUnit } = useUnitVariant(item?.id ?? '', item?.unitName || null);
+  const { asPackVariant } = usePackVariant(
+    item?.id ?? '',
+    item?.unitName || null
+  );
 
   // The selected pack size for auto allocation. The initial value
   // will be determined by the lines in the invoice.
@@ -88,7 +91,9 @@ export const usePackSizeController = (
   };
 
   // Create the pack size options.
-  const packSizes = lines.map(line => createPackSizeOption(asPackUnit, line));
+  const packSizes = lines.map(line =>
+    createPackSizeOption(asPackVariant, line)
+  );
   // Valid pack sizes are the pack size of a line which
   // - is a placeholder and has allocated stock.
   // - is a placeholder and is the only line.

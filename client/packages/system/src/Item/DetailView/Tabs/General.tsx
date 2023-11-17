@@ -11,7 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { useItem } from '../../api';
 import { VariantControl } from '../../context';
-import { PackUnitSelect } from '../../Components';
+import { PackVariantSelect } from '../../Components';
 
 interface GeneralTabProps {
   variantControl?: VariantControl;
@@ -44,7 +44,7 @@ export const GeneralTab: FC<GeneralTabProps> = ({ variantControl }) => {
           {variantControl ? (
             <DetailInputWithLabelRow
               Input={
-                <PackUnitSelect
+                <PackVariantSelect
                   variantControl={variantControl}
                   sx={{ width: '185px' }}
                 />

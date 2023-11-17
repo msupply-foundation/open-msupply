@@ -14,14 +14,14 @@ import { Toolbar } from './Toolbar';
 import { GeneralTab } from './Tabs/General';
 import { MasterListsTab } from './Tabs/MasterLists';
 import { AppRoute } from '@openmsupply-client/config';
-import { useUnitVariant } from '../context';
+import { usePackVariant } from '../context';
 
 export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { setSuffix } = useBreadcrumbs();
-  const { variantsControl, numberOfPacksFromQuantity } = useUnitVariant(
+  const { variantsControl, numberOfPacksFromQuantity } = usePackVariant(
     data?.id ?? '',
     data?.name ?? null
   );

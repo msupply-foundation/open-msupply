@@ -4,7 +4,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-            CREATE TABLE pack_unit (
+            CREATE TABLE pack_variant (
                 id TEXT NOT NULL PRIMARY KEY,
                 item_id TEXT NOT NULL REFERENCES item(id),
                 short_name TEXT NOT NULL,

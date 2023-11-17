@@ -16,7 +16,7 @@ import {
 import {
   StockItemSearchInput,
   ItemRowFragment,
-  useUnitVariant,
+  usePackVariant,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
 import { DraftItem, DraftStockOutLine } from '../../..';
@@ -63,7 +63,7 @@ export const PrescriptionLineEditForm: React.FC<
   const [issueQuantity, setIssueQuantity] = useState(0);
   const { items } = usePrescription.line.rows();
 
-  const { activePackUnit } = useUnitVariant(
+  const { activePackVariant } = usePackVariant(
     item?.id ?? '',
     item?.unitName ?? null
   );
@@ -146,7 +146,7 @@ export const PrescriptionLineEditForm: React.FC<
               <BasicTextInput
                 disabled
                 sx={{ width: 150 }}
-                value={activePackUnit}
+                value={activePackVariant}
               />
             </Grid>
           </ModalRow>

@@ -11,7 +11,10 @@ import {
   useCurrency,
   PositiveNumberCell,
 } from '@openmsupply-client/common';
-import { LocationRowFragment, PackUnitCell } from '@openmsupply-client/system';
+import {
+  LocationRowFragment,
+  PackVariantCell,
+} from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -235,7 +238,7 @@ export const usePrescriptionColumn = ({
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackUnitCell({
+        Cell: PackVariantCell({
           getItemId: row => {
             if ('lines' in row) return '';
             else return row?.item?.id;

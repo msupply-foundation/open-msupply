@@ -20,7 +20,7 @@ import { DraftStocktakeLine } from './utils';
 import {
   Adjustment,
   getLocationInputColumn,
-  PackUnitCell,
+  PackVariantCell,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
 } from '@openmsupply-client/system';
@@ -174,7 +174,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       key: 'packUnit',
       label: 'label.pack',
       sortable: false,
-      Cell: PackUnitCell({
+      Cell: PackVariantCell({
         getItemId: row => row?.itemId,
         getPackSizes: row => {
           return [row?.packSize ?? 1];

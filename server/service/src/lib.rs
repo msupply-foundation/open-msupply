@@ -28,7 +28,7 @@ pub mod master_list;
 pub mod missing_program;
 pub mod name;
 pub mod number;
-pub mod pack_unit;
+pub mod pack_variant;
 pub mod permission;
 pub mod processors;
 pub mod programs;
