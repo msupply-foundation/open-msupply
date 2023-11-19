@@ -251,15 +251,12 @@ export const AppDrawer: React.FC = () => {
             text={t('admin')}
             visible={userHasPermission(UserPermission.ServerAdmin)}
           />
-          <Box onClick={() => showConfirmation({})}>
-            <AppNavLink
-              to={AppRoute.Login}
-              icon={<PowerIcon fontSize="small" color="primary" />}
-              text={t('logout')}
-              onClick={() => {}}
-              inactive
-            />
-          </Box>
+          <AppNavLink
+            to={'#'}
+            icon={<PowerIcon fontSize="small" color="primary" />}
+            text={t('logout')}
+            onClick={() => showConfirmation({})}
+          />
         </List>
       </LowerListContainer>
     </StyledDrawer>
