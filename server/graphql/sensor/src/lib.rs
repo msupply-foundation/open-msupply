@@ -164,7 +164,7 @@ mod test {
                         name: "test_name".to_owned(),
                         serial: "test_serial".to_owned(),
                         is_active: true,
-                        store_id: Some("store_a".to_string()),
+                        store_id: "store_a".to_string(),
                         location_id: None,
                         battery_level: Some(90),
                         log_interval: Some(5),

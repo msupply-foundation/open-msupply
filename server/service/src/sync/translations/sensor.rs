@@ -39,8 +39,7 @@ pub struct LegacySensorRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_id: Option<String>,
     #[serde(rename = "storeID")]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub store_id: Option<String>,
+    pub store_id: String,
     #[serde(rename = "batteryLevel")]
     pub battery_level: Option<i32>,
     #[serde(rename = "logInterval")]
