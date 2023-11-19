@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { useGetRefreshToken } from './useGetRefreshToken';
 
-export const useRefreshToken = () => {
+export const useRefreshToken = (onTimeout: () => void) => {
   const { mutateAsync } = useGetRefreshToken();
   const {
     setHeader,
@@ -25,8 +25,6 @@ export const useRefreshToken = () => {
         })
       : 0;
 
-    // console.log('getLastRequestTime', getLastRequestTime());
-
     const minutesSinceLastRequest = DateUtils.differenceInMinutes(
       Date.now(),
       getLastRequestTime()
@@ -42,6 +40,7 @@ export const useRefreshToken = () => {
         setHeader('Authorization', `Bearer ${token}`);
       });
     }
+    if (minutesSinceLastRequest >= COOKIE_LIFETIME_MINUTES) onTimeout();
   };
   return { refreshToken };
 };

@@ -107,7 +107,10 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     mostRecentCredentials,
   } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
-  const { refreshToken } = useRefreshToken();
+  const { refreshToken } = useRefreshToken(() => {
+    Cookies.remove('auth');
+    setError(AuthError.Timeout);
+  });
   const { setHeader } = useGql();
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
 
