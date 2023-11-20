@@ -11,7 +11,8 @@ pub fn check_pack_size_is_unique(
     let pack_variants = PackVariantRepository::new(connection).query_by_filter(
         PackVariantFilter::new()
             .item_id(EqualFilter::equal_to(item_id))
-            .pack_size(EqualFilter::equal_to_i32(pack_size)),
+            .pack_size(EqualFilter::equal_to_i32(pack_size))
+            .is_active(true),
     )?;
 
     Ok(pack_variants.len() == 0)

@@ -24,6 +24,7 @@ pub struct PackVariantFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub pack_size: Option<EqualFilter<i32>>,
+    pub is_active: Option<bool>,
 }
 
 pub enum PackVariantSortField {
@@ -58,6 +59,10 @@ impl<'a> PackVariantRepository<'a> {
             apply_equal_filter!(query, f.id, pack_variant_dsl::id);
             apply_equal_filter!(query, f.item_id, pack_variant_dsl::item_id);
             apply_equal_filter!(query, f.pack_size, pack_variant_dsl::pack_size);
+
+            if let Some(is_active) = f.is_active {
+                query = query.filter(pack_variant_dsl::is_active.eq(is_active));
+            }
         }
 
         query
@@ -96,6 +101,7 @@ impl PackVariantFilter {
             id: None,
             item_id: None,
             pack_size: None,
+            is_active: None,
         }
     }
 
@@ -111,6 +117,11 @@ impl PackVariantFilter {
 
     pub fn pack_size(mut self, filter: EqualFilter<i32>) -> Self {
         self.pack_size = Some(filter);
+        self
+    }
+
+    pub fn is_active(mut self, filter: bool) -> Self {
+        self.is_active = Some(filter);
         self
     }
 }
