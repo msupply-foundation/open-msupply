@@ -4,7 +4,6 @@
   "auth.no-store-assigned": "No está asignado a ningún almacén. Inicie sesión como un usuario diferente o comuníquese con su administrador.",
   "app": "mSupply",
   "auth.alert-title": "Error de autenticación",
-  "auth.permission-denied": "Permiso denegado",
   "auth.timeout-message": "Ha sido desconectado de su sesión debido a la inactividad. Haga clic en OK para volver a la pantalla de inicio de sesión.",
   "button.close-the-menu": "Cerrar el menú",
   "button.open-the-menu": "Abrir el menú",
