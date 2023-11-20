@@ -27,11 +27,11 @@ export const ItemDetailView: FC = () => {
     setSuffix(data?.name ?? '');
   }, [data]);
 
-  if (isLoading || !data) return <DetailFormSkeleton />;
   const { variantsControl, numberOfPacksFromQuantity } = usePackVariant(
-    data.id,
-    data.name ?? null
+    data?.id ?? '',
+    data?.name ?? null
   );
+  if (isLoading || !data) return <DetailFormSkeleton />;
 
   const tabs = [
     {
