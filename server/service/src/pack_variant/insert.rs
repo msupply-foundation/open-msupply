@@ -64,6 +64,7 @@ pub fn generate(
         pack_size,
         short_name,
         long_name,
+        is_active: true,
     }
 }
 
