@@ -1,5 +1,6 @@
 {
   "app.login": "Connexion",
+  "auth.permission-denied": "Permission refusée",
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Ajouter un article",
   "button.allocate": "Allouer",

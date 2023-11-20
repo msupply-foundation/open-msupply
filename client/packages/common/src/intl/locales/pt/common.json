@@ -1,5 +1,6 @@
 {
   "app.login": "Inicie sessão",
+  "auth.permission-denied": "Permissão negada",
   "approval-status.approved": "Aprovado",
   "approval-status.denied": "Negado",
   "approval-status.none": "Nenhum(a)",

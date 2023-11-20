@@ -6,7 +6,6 @@
   "admin": "Admin",
   "app": "mSupply",
   "auth.alert-title": "Erreur d'authentification",
-  "auth.permission-denied": "Permission refusée",
   "cmdk.goto-customer-requisition": "Aller à : Commandes Client",
   "cmdk.goto-inbound": "Aller à : Bons de livraison",
   "cmdk.goto-items": "Aller à : Articles",

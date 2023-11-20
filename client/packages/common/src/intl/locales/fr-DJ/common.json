@@ -1,4 +1,5 @@
 {
+  "auth.permission-denied": "Permission refusée",
   "description.requested-packs": "Nombre de packs demandé (environ)",
   "label.dps": "Cond.",
   "label.requisition-general": "Général",
