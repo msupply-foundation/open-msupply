@@ -4014,8 +4014,6 @@ export type QueriesStocktakeByNumberArgs = {
 
 
 export type QueriesStocktakeLinesArgs = {
-  filter?: InputMaybe<StocktakeLineFilterInput>;
-  page?: InputMaybe<PaginationInput>;
   reportSort?: InputMaybe<PrintReportSortInput>;
   sort?: InputMaybe<Array<StocktakeLineSortInput>>;
   stocktakeId: Scalars['String']['input'];
@@ -4626,12 +4624,6 @@ export type StocktakeLineConnector = {
   __typename: 'StocktakeLineConnector';
   nodes: Array<StocktakeLineNode>;
   totalCount: Scalars['Int']['output'];
-};
-
-export type StocktakeLineFilterInput = {
-  id?: InputMaybe<EqualFilterStringInput>;
-  locationId?: InputMaybe<EqualFilterStringInput>;
-  stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
 
 export type StocktakeLineNode = {
