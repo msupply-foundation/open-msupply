@@ -12,12 +12,10 @@ doctest = false
 util = { path = "../util" }
 
 chrono = { workspace = true }
-diesel = { version = "2.1.0", default-features = false, features = [
+diesel = { version = "2.1.4", default-features = false, features = [
     "r2d2",
     "numeric",
     "chrono",
-    "postgres_backend",
-    "sqlite_backend",
 ] }
 diesel-derive-enum = { version = "2.1.0", default-features = false }
 diesel_migrations = "2.1.0"
@@ -44,18 +42,8 @@ strum = { version = "0.24", features = ["derive"] }
 
 [features]
 default = ["sqlite"]
-sqlite = [
-    "diesel/sqlite",
-    "diesel/sqlite_backend",
-    "libsqlite3-sys",
-    "diesel-derive-enum/sqlite",
-]
-memory = [
-    "diesel/sqlite",
-    "diesel/sqlite_backend",
-    "libsqlite3-sys",
-    "diesel-derive-enum/sqlite",
-]
+sqlite = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
+memory = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
 postgres = [
     "diesel/postgres",
     "diesel/postgres_backend",
