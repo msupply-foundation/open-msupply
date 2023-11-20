@@ -7,15 +7,16 @@ This work is best outsource to database, to avoid excessive serialisations and u
 
 Temperature logs are aggregated across a series of intervals, grouped by sensor id, we want to achieve a query similar to this:
 ```sql
-
 SELECT avg(temperature), sensor_id, from_datetime, to_datetime FROM 
-    SELECT {interval_1_start} as from_datetime, {interval_2_end_datetime} as to_datetime
-    UNION SELECT {interval_1_end_datetime} as from_datetime, {interval_2_end_datetime} as to_datetime 
-    UNION SELECT {interval_2_end_datetime} as from_datetime, {interval_3_end_datetime} as to_datetime 
+    SELECT {interval_1_start} as from_datetime, {interval_1_end_datetime} as to_datetime
+    UNION SELECT {interval_2_start_datetime} as from_datetime, {interval_2_end_datetime} as to_datetime 
+    UNION SELECT {interval_3_start_datetime} as from_datetime, {interval_3_end_datetime} as to_datetime 
 JOIN temperature_log ON (datetime >= from_datetime and datetime < to_datetime)
 GROUP BY sensor_id, from_datetime, to_datetime
 WHERE {temperature_log_filter}
 ```
+
+In the above statement, `interval_2_start_datetime == interval_1_end_datetime` and `interval_3_start_datetime ==interval_2_end_datetime`.
 
 Time series method can probably be used, but due to sqlite versions compatibility, we use text field for datetime columns in sqlite, thus it's easier to just contruct raw sql. 
 Either way raw sql would need to be used in diesel, and in order to use existing diesel filter (TemperatureLog::create_filter_query) we need to create basic diesel types.
@@ -33,8 +34,7 @@ table!(
         to_datetime -> Timestamp,
     }
 );
-``
-
+```
 [This diff](https://github.com/msupply-foundation/open-msupply/compare/4744c298335e7fa2de999e9155627cff86723919...2a775d105ef49a0490a21d7df950ab1dd35864d8) shows the changes to make diesel typed raw sql query resulting in:
 
 ```sql
