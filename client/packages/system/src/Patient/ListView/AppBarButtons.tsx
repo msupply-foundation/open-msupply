@@ -9,29 +9,31 @@ import {
   useTranslation,
   FileUtils,
   LoadingButton,
+  SortBy,
   useAuthContext,
   UserPermission,
 } from '@openmsupply-client/common';
-import { PatientRowFragment } from '../api';
+import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
 import { CreatePatientModal } from '../CreatePatientModal';
 
-export const AppBarButtons: FC<{
-  patients?: PatientRowFragment[];
-  isLoading: boolean;
-}> = ({ patients, isLoading }) => {
+export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
+  sortBy,
+}) => {
   const { success, error } = useNotification();
   const t = useTranslation('dispensary');
+  const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const { userHasPermission } = useAuthContext();
   const [open, setOpen] = useState(false);
 
   const csvExport = async () => {
-    if (!patients || !patients.length) {
+    const data = await mutateAsync();
+    if (!data || !data?.nodes.length) {
       error(t('error.no-data'))();
       return;
     }
 
-    const csv = patientsToCsv(patients, t);
+    const csv = patientsToCsv(data.nodes, t);
     FileUtils.exportCSV(csv, t('filename.patients'));
     success(t('success'))();
   };
