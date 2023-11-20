@@ -1,7 +1,7 @@
 ### Aggregated temperature chart
 
-The purpose of this repository is to provide aggregated temperature chart data to front end.
-This work is best outsource to database, to avoid excessive serialisations and use power of DB engine.
+The purpose of this repository is to provide aggregated temperature chart data to the front end.
+This work is best outsourced to the database, to avoid excessive serialisations and use the power of the DB engine.
 
 ## Details
 
@@ -18,10 +18,10 @@ WHERE {temperature_log_filter}
 
 In the above statement, `interval_2_start_datetime == interval_1_end_datetime` and `interval_3_start_datetime ==interval_2_end_datetime`.
 
-Time series method can probably be used, but due to sqlite versions compatibility, we use text field for datetime columns in sqlite, thus it's easier to just contruct raw sql. 
+Time series method can probably be used, but due to sqlite versions compatibility, we use text field for datetime columns in sqlite, thus it's easier to just construct raw sql. 
 Either way raw sql would need to be used in diesel, and in order to use existing diesel filter (TemperatureLog::create_filter_query) we need to create basic diesel types.
 
-temperature_chart_row.rs reduces expanded `diesel::table!` macoro to bare minimum to be used in tempearture_chart repository.
+temperature_chart_row.rs reduces expanded `diesel::table!` macro to bare minimum to be used in temperature_chart repository.
 
 ## Diesel types
 
@@ -44,6 +44,6 @@ SELECT timeseries.`from_datetime` FROM
             UNION SELECT '2021-01-01T18:00:00' as from_datetime, '2021-01-01T19:00:00' as to_datetime GROUP BY timeseries.`to_datetime` -- binds: []
 ```
 
-The main difference in the diff is that `QueryFragment` was created for `from_clause` rathern then using Identifier for table. And also `QueryFragment` for columns adjusted to account for from_clause being changed.
+The main difference in the diff is that `QueryFragment` was created for `from_clause` rather than using the `Identifier` for the table. Also `QueryFragment` for the columns is adjusted to account for the  `from_clause` being changed.
 
 Expanded macro was reduced to bare minimum and `temperature_chart_column!` macro create to help with column generation
