@@ -1,13 +1,12 @@
 use crate::{
     db_diesel::temperature_log_row::temperature_log::dsl as temperature_log_dsl, DBType,
-    RepositoryError, StorageConnection, TemperatureChartRow, TemperatureLogFilter,
-    TemperatureLogRepository,
+    RepositoryError, StorageConnection, TemperatureLogFilter, TemperatureLogRepository,
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use util::datetime_with_offset;
 
-use super::temperature_chart_row::*;
+use super::temperature_chart_row::{Interval, *};
 
 pub struct TemperatureChartRepository<'a> {
     connection: &'a StorageConnection,
