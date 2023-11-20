@@ -41,7 +41,7 @@ pub fn update_pack_variant(
     let service_context = service_provider.basic_context()?;
     let pack_variant_service = &service_provider.pack_variant_service;
 
-    map_resopnse(pack_variant_service.update_pack_variant(&service_context, input.to_domain()))
+    map_response(pack_variant_service.update_pack_variant(&service_context, input.to_domain()))
 }
 
 impl UpdatePackVariantInput {
@@ -60,7 +60,7 @@ impl UpdatePackVariantInput {
     }
 }
 
-fn map_resopnse(from: Result<PackVariantRow, ServiceError>) -> Result<UpdateResponse> {
+fn map_response(from: Result<PackVariantRow, ServiceError>) -> Result<UpdateResponse> {
     match from {
         Ok(result) => Ok(UpdateResponse::Response(VariantNode::from_domain(result))),
         Err(error) => {
