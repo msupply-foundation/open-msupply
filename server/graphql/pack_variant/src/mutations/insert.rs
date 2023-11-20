@@ -48,7 +48,7 @@ pub fn insert_pack_variant(
     let service_context = service_provider.basic_context()?;
     let pack_variant_service = &service_provider.pack_variant_service;
 
-    map_resopnse(pack_variant_service.insert_pack_variant(&service_context, input.to_domain()))
+    map_response(pack_variant_service.insert_pack_variant(&service_context, input.to_domain()))
 }
 
 impl InsertPackVariantInput {
@@ -71,7 +71,7 @@ impl InsertPackVariantInput {
     }
 }
 
-fn map_resopnse(from: Result<PackVariantRow, ServiceError>) -> Result<InsertResponse> {
+fn map_response(from: Result<PackVariantRow, ServiceError>) -> Result<InsertResponse> {
     let result = match from {
         Ok(variant) => InsertResponse::Response(VariantNode::from_domain(variant)),
         Err(error) => InsertResponse::Error(InsertError {
