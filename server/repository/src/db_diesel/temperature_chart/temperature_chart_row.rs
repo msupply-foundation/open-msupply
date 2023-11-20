@@ -27,6 +27,7 @@ pub struct Interval {
     pub to_datetime: NaiveDateTime,
 }
 
+// See README.md in this direcotry for explanation of diesel types
 impl QueryFragment<DBType> for TemperatureChart {
     fn walk_ast(&self, mut out: AstPass<DBType>) -> QueryResult<()> {
         // Below should produces something like
