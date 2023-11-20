@@ -123,7 +123,7 @@ const PatientListComponent: FC = () => {
   return (
     <>
       <Toolbar filter={filter} />
-      <AppBarButtons sortBy={sortBy} />
+      <AppBarButtons patients={data?.nodes} isLoading={isLoading} />
       <DataTable
         id="patients"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
