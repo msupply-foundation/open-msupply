@@ -41,6 +41,9 @@ table!(
     }
 );
 ```
+
+This macro can be expanded with rust analyzer in vscode (cursor on the macro instance, command pallet -> expand macro..)
+
 [This diff](https://github.com/msupply-foundation/open-msupply/compare/4744c298335e7fa2de999e9155627cff86723919...2a775d105ef49a0490a21d7df950ab1dd35864d8) shows the changes to make diesel typed raw sql query resulting in:
 
 ```sql
