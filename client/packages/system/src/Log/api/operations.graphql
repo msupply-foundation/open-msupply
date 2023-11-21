@@ -1,32 +1,37 @@
-fragment ActivityLogRow on ActivityLogNode {
-  id
-  datetime
-  to
-  from
-  recordId
-  storeId
-  type
-  user {
-    username
+fragment logLevelRow on LogLevelNode {
+  __typename
+  level
+}
+
+fragment logRow on LogNode {
+  __typename
+  fileContent
+  fileNames
+}
+
+query logLevel {
+  logLevel {
+    __typename
+    ... on LogLevelNode {
+      ...logLevelRow
+    }
   }
 }
 
-query activityLogs(
-  $first: Int
-  $offset: Int
-  $sort: ActivityLogSortInput
-  $filter: ActivityLogFilterInput
-) {
-  activityLogs(
-    filter: $filter
-    page: { first: $first, offset: $offset }
-    sort: $sort
-  ) {
-    ... on ActivityLogConnector {
-      nodes {
-        ...ActivityLogRow
-      }
-      totalCount
+query logFileNames {
+  logContents {
+    __typename
+    ... on LogNode {
+      ...logRow
+    }
+  }
+}
+
+query logContentsByFileName($fileName: String!) {
+  logContents(fileName: $fileName) {
+    __typename
+    ... on LogNode {
+      ...logRow
     }
   }
 }

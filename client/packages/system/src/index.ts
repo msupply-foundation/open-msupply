@@ -1,5 +1,5 @@
 export * from './Item';
-export * from './Log';
+export * from './ActivityLog';
 export * from './Stock';
 export * from './Sync';
 export * from './Name';
