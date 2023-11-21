@@ -4,7 +4,7 @@ import { useDialog, useNativeClient } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import { BasicSpinner, DialogButton, Typography } from '@common/components';
 
-export const LogFileModal = ({
+export const AndroidLogFileModal = ({
   isOpen,
   onClose,
 }: {
