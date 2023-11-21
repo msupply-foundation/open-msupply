@@ -13,13 +13,13 @@ import {
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
-// import { Capacitor } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 import { AppRoute } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
-import { LogFileModal } from './LogFileModal';
+import { AndroidLogFileModal } from './AndroidLogFileModal';
 
-export const AndroidSettings = () => {
+export const ServerSettings = () => {
   const [nativeMode, setNativeMode] = useState(NativeMode.None);
   const navigate = useNavigate();
   const t = useTranslation('common');
@@ -41,8 +41,7 @@ export const AndroidSettings = () => {
   useEffect(() => {
     getPreference('mode', 'none').then(setNativeMode);
   }, []);
-  return (
-    // return Capacitor.isNativePlatform() ? (
+  return Capacitor.isNativePlatform() ? (
     <>
       <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
         {t('heading.settings-android')}
@@ -74,12 +73,13 @@ export const AndroidSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            <LogFileModal onClose={hideLog} isOpen={isLogShown} />
+            <AndroidLogFileModal onClose={hideLog} isOpen={isLogShown} />
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
         }
       />
     </>
-    // ) : null;
+  ) : (
+    <>hello</>
   );
 };
