@@ -18,6 +18,7 @@ import { AppRoute } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
 import { AndroidLogFileModal } from './AndroidLogFileModal';
+import { WebAppLogFileModal } from './WebAppLogFileModal';
 
 export const ServerSettings = () => {
   const [nativeMode, setNativeMode] = useState(NativeMode.None);
@@ -80,6 +81,19 @@ export const ServerSettings = () => {
       />
     </>
   ) : (
-    <>hello</>
+    <>
+      <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
+        {t('heading.settings-web-app')}
+      </Typography>
+      <Setting
+        title={t('label.server-log')}
+        component={
+          <>
+            <WebAppLogFileModal onClose={hideLog} isOpen={isLogShown} />
+            <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
+          </>
+        }
+      />
+    </>
   );
 };
