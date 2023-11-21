@@ -19,6 +19,7 @@ import {
   PatientRowFragment,
   CentralPatientSearchQuery,
   LinkPatientToStoreMutation,
+  ProgramPatientRowFragment,
 } from './operations.generated';
 
 export type ListParams = {
@@ -111,7 +112,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       input: PatientSearchInput
     ): Promise<{
       totalCount: number;
-      nodes: { score: number; patient: PatientRowFragment }[];
+      nodes: { score: number; patient: ProgramPatientRowFragment }[];
     }> => {
       const result = await sdk.patientSearch({
         storeId,
@@ -136,7 +137,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   },
   insertPatient: async (
     input: InsertPatientInput
-  ): Promise<PatientRowFragment> => {
+  ): Promise<ProgramPatientRowFragment> => {
     const result = await sdk.insertPatient({
       storeId,
       input,
@@ -151,7 +152,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
   updatePatient: async (
     input: UpdatePatientInput
-  ): Promise<PatientRowFragment> => {
+  ): Promise<ProgramPatientRowFragment> => {
     const result = await sdk.updatePatient({
       storeId,
       input,
@@ -166,7 +167,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
   insertProgramPatient: async (
     input: InsertProgramPatientInput
-  ): Promise<PatientRowFragment> => {
+  ): Promise<ProgramPatientRowFragment> => {
     const result = await sdk.insertProgramPatient({
       storeId,
       input,
@@ -181,7 +182,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
   updateProgramPatient: async (
     input: UpdateProgramPatientInput
-  ): Promise<PatientRowFragment> => {
+  ): Promise<ProgramPatientRowFragment> => {
     const result = await sdk.updateProgramPatient({
       storeId,
       input,
