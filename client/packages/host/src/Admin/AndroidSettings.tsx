@@ -13,7 +13,7 @@ import {
   useNavigate,
   useTranslation,
 } from '@openmsupply-client/common';
-import { Capacitor } from '@capacitor/core';
+// import { Capacitor } from '@capacitor/core';
 import { AppRoute } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
@@ -41,8 +41,8 @@ export const AndroidSettings = () => {
   useEffect(() => {
     getPreference('mode', 'none').then(setNativeMode);
   }, []);
-
-  return Capacitor.isNativePlatform() ? (
+  return (
+    // return Capacitor.isNativePlatform() ? (
     <>
       <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
         {t('heading.settings-android')}
@@ -80,5 +80,6 @@ export const AndroidSettings = () => {
         }
       />
     </>
-  ) : null;
+    // ) : null;
+  );
 };

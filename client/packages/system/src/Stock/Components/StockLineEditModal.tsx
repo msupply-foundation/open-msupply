@@ -10,7 +10,7 @@ import {
   ModalTabs,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useStock } from '../api';
-import { LogList } from '../../Log';
+import { LogList } from '../../ActivityLog';
 import { StockLineForm } from './StockLineForm';
 
 interface StockLineEditModalProps {
