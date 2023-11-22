@@ -12,3 +12,4 @@ export * from './Patient';
 export * from './Encounter';
 export * from './Clinician';
 export * from './ContactTrace';
+export * from './Log';
