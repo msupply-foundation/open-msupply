@@ -5060,10 +5060,11 @@ dependencies = [
 [[package]]
 name = "temperature-sensor"
 version = "0.1.0"
-source = "git+https://github.com/openmsupply/temperature-sensor.git#958c3422b332b516dc9325473d53ab0752c78d54"
+source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.1.0-beta.2#4b0c11631366821f9c7a993c07b6c2627490f49a"
 dependencies = [
  "chrono",
  "json",
+ "log",
  "rand",
  "rs-drivelist",
  "serde_json",
