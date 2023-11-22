@@ -73,7 +73,6 @@ const getBatchColumn = (
       maxWidth: 150,
       maxLength: 50,
       Cell: BatchInputCell,
-      getIsDisabled: rowData => !rowData.isNewLine,
       setter: patch => setter({ ...patch, countThisLine: true }),
       backgroundColor: alpha(theme.palette.background.menu, 0.4),
       accessor: ({ rowData }) => rowData.batch || '',
