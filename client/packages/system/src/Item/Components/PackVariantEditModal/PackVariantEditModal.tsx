@@ -60,7 +60,7 @@ const useDraftPackVariant = (
   };
 
   const onSave = async () => {
-    let result =
+    const result =
       mode === ModalMode.Create
         ? await insert(packVariant)
         : await update(packVariant);
@@ -103,6 +103,7 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
 
   return (
     <Modal
+      width={350}
       okButton={
         <DialogButton
           variant="ok"
@@ -133,7 +134,6 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
           justifyContent="center"
         >
           <NonNegativeIntegerInput
-            width={500}
             autoFocus
             value={draft.packSize}
             onChange={packSize => onUpdate({ packSize: packSize })}
