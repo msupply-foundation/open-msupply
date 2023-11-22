@@ -28,9 +28,9 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
   const { variantsControl } = usePackVariant(itemId, null);
   const { isOpen, entity, mode, onClose, onOpen } =
     useEditModal<VariantFragment>();
-  const { info } = useNotification();
+  const { warning } = useNotification();
   const { userHasPermission } = useAuthContext();
-  const infoSnack = info(t('auth.permission-denied'));
+  const warningSnack = warning(t('auth.permission-denied'));
   const hasPermission = userHasPermission(
     UserPermission.ItemNamesCodesAndUnitsMutate
   );
@@ -69,7 +69,7 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('label.new-pack-variant')}
-          onClick={hasPermission ? () => onOpen() : () => infoSnack()}
+          onClick={hasPermission ? () => onOpen() : () => warningSnack()}
         />
       </Box>
       <Box display="flex" justifyContent="flex-end" paddingBottom={2}>
@@ -84,7 +84,7 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
         data={variants}
         columns={columns}
         noDataElement={<NothingHere body={t('error.no-pack-variants')} />}
-        onRowClick={hasPermission ? onOpen : infoSnack}
+        onRowClick={hasPermission ? onOpen : warningSnack}
       />
     </>
   );
