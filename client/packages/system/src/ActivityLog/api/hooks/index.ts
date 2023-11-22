@@ -1,7 +1,7 @@
 import { Document } from './document';
 import { Utils } from './utils';
 
-export const useLog = {
+export const useActivityLog = {
   document: {
     listByRecord: Document.useLogsByRecord,
   },
