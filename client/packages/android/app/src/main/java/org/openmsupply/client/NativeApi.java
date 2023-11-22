@@ -350,8 +350,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // Attempt to get a non-loopback address for the local server
     // and fallback to loopback if there is an error
     private String getHostAddress(NsdServiceInfo serviceInfo, Boolean isLocal){
-        if (isLocal) {
-            try {
+        try {
+            if (isLocal) {
                 for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
                     NetworkInterface intf = en.nextElement();
                     for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
@@ -361,19 +361,17 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                         }
                     }
                 }
-            } catch (Exception ex) {
-                Log.e(OM_SUPPLY, ex.toString());
             }
-        }
-        try {
             return serviceInfo.getHost().getHostAddress();
         } catch (Exception ex) {
             Log.e(OM_SUPPLY, ex.toString());
         }
-        // with no network available the getHostAddress() will
-        // throw an Exception - in this case default to local loopback
-        // as no other network is reachable!
-        return "127.0.0.1";
+        finally {
+            // with no network available the getHostAddress() will
+            // throw an Exception - in this case default to local loopback
+            // as no other network is reachable!
+            return "127.0.0.1";
+        }
     }
 
     private JSObject serviceInfoToObject(NsdServiceInfo serviceInfo) {
