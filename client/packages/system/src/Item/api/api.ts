@@ -5,6 +5,7 @@ import {
   FilterBy,
   InsertPackVariantInput,
   UpdatePackVariantInput,
+  DeletePackVariantInput,
 } from '@openmsupply-client/common';
 import { Sdk, ItemRowFragment, VariantFragment } from './operations.generated';
 
@@ -39,6 +40,9 @@ const packVariantParses = {
     id: packVariant.id,
     shortName: packVariant.shortName,
     longName: packVariant.longName,
+  }),
+  toDelete: (packVariant: VariantFragment): DeletePackVariantInput => ({
+    id: packVariant.id,
   }),
 };
 
@@ -198,4 +202,9 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
     return result.updatePackVariant;
   },
+  deletePackVariant: async (input: VariantFragment) =>
+    await sdk.deletePackVariant({
+      storeId,
+      input: packVariantParses.toDelete(input),
+    }),
 });

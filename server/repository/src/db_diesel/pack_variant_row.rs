@@ -70,10 +70,4 @@ impl<'a> PackVariantRowRepository<'a> {
 
         Ok(result)
     }
-
-    pub fn load_all(&self) -> Result<Vec<PackVariantRow>, RepositoryError> {
-        let result = pack_variant.load::<PackVariantRow>(&self.connection.connection)?;
-
-        Ok(result)
-    }
 }

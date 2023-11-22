@@ -287,3 +287,12 @@ mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
     }
   }
 }
+
+mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
+  deletePackVariant(storeId: $storeId, input: $input) {
+        ... on DeleteResponse {
+      __typename
+      id
+    }
+  }
+}
