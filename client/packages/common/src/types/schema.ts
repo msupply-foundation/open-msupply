@@ -718,6 +718,12 @@ export type DeleteOutboundShipmentUnallocatedLineResponseWithId = {
   response: DeleteOutboundShipmentUnallocatedLineResponse;
 };
 
+export type DeletePackVariantInput = {
+  id: Scalars['String']['input'];
+};
+
+export type DeletePackVariantResponse = DeleteResponse;
+
 export type DeletePrescriptionError = {
   __typename: 'DeletePrescriptionError';
   error: DeletePrescriptionErrorInterface;
@@ -2372,6 +2378,7 @@ export type Mutations = {
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
+  deletePackVariant: DeletePackVariantResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
@@ -2573,6 +2580,12 @@ export type MutationsDeleteOutboundShipmentServiceLineArgs = {
 
 export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
   input: DeleteOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsDeletePackVariantArgs = {
+  input: DeletePackVariantInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5327,6 +5340,7 @@ export type UserStorePermissionNode = {
 export type VariantNode = {
   __typename: 'VariantNode';
   id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
   itemId: Scalars['String']['output'];
   longName: Scalars['String']['output'];
   packSize: Scalars['Int']['output'];

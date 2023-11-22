@@ -103,6 +103,14 @@ export type UpdatePackVariantMutationVariables = Types.Exact<{
 
 export type UpdatePackVariantMutation = { __typename: 'Mutations', updatePackVariant: { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
 
+export type DeletePackVariantMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.DeletePackVariantInput;
+}>;
+
+
+export type DeletePackVariantMutation = { __typename: 'Mutations', deletePackVariant: { __typename: 'DeleteResponse', id: string } };
+
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
   __typename
@@ -386,6 +394,16 @@ export const UpdatePackVariantDocument = gql`
   }
 }
     ${VariantFragmentDoc}`;
+export const DeletePackVariantDocument = gql`
+    mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
+  deletePackVariant(storeId: $storeId, input: $input) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -417,6 +435,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updatePackVariant(variables: UpdatePackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdatePackVariantMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdatePackVariantMutation>(UpdatePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePackVariant', 'mutation');
+    },
+    deletePackVariant(variables: DeletePackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeletePackVariantMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeletePackVariantMutation>(DeletePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deletePackVariant', 'mutation');
     }
   };
 }
@@ -555,5 +576,22 @@ export const mockInsertPackVariantMutation = (resolver: ResponseResolver<GraphQL
 export const mockUpdatePackVariantMutation = (resolver: ResponseResolver<GraphQLRequest<UpdatePackVariantMutationVariables>, GraphQLContext<UpdatePackVariantMutation>, any>) =>
   graphql.mutation<UpdatePackVariantMutation, UpdatePackVariantMutationVariables>(
     'updatePackVariant',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeletePackVariantMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ deletePackVariant })
+ *   )
+ * })
+ */
+export const mockDeletePackVariantMutation = (resolver: ResponseResolver<GraphQLRequest<DeletePackVariantMutationVariables>, GraphQLContext<DeletePackVariantMutation>, any>) =>
+  graphql.mutation<DeletePackVariantMutation, DeletePackVariantMutationVariables>(
+    'deletePackVariant',
     resolver
   )
