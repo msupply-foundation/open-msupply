@@ -56,3 +56,18 @@ SELECT timeseries.`from_datetime` FROM
 The main difference in the diff is that `QueryFragment` was created for `from_clause` rather than using the `Identifier` for the table. Also `QueryFragment` for the columns is adjusted to account for the  `from_clause` being changed.
 
 Expanded macro was reduced to bare minimum and `temperature_chart_column!` macro create to help with column generation
+
+## Notes
+
+Ideally the aggregated charts query would return all intervals, for all filtered sensors with missing temperatures for the interval as null. 
+This would require the filtering to be done on the join as oppose to main where clause and another join to sensors:
+
+```sql
+SELECT ...
+JOIN temperautre_log ON (datetime >= from_datetime and datetime < to_datetime) AND WHERE {temperature_log_filter}
+JOIN sensor
+WHERE {sensor_filter}
+```
+
+Above requires quite a lot more diesel trait implementations, so we've gone with inner join for temperature_logs and intervals, which means if temperature logs are misssing for the interval/sensor, the interval will be missing. 
+But, since intervals will be returned by the repository/service and available to the front end, it would be easy to build a chart with base empty series (with all of the intervals), making the missing sensor/interval data visible.
