@@ -41,7 +41,7 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
     return (
       <Box
         display="flex"
-        justifyContent="flex-end"
+        justifyContent={style?.justifyContent ?? 'flex-end'}
         alignItems="center"
         flexBasis={style?.flexBasis}
         flex={style?.flex}
