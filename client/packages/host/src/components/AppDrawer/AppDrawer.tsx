@@ -22,6 +22,8 @@ import {
   useLocation,
   EnvUtils,
   UserPermission,
+  RouteBuilder,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { AppRoute, ExternalURL } from '@openmsupply-client/config';
 import {
@@ -34,6 +36,7 @@ import {
 import { AppDrawerIcon } from './AppDrawerIcon';
 import { SyncNavLink } from './SyncNavLink';
 import { ColdChainNav } from '../Navigation/ColdChainNav';
+import { useNavigate } from 'react-router-dom';
 
 const ToolbarIconContainer = styled(Box)({
   display: 'flex',
@@ -144,6 +147,7 @@ export const AppDrawer: React.FC = () => {
   const drawer = useDrawer();
   const { logout, userHasPermission, store } = useAuthContext();
   const location = useLocation();
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (drawer.hasUserSet) return;
@@ -172,6 +176,17 @@ export const AppDrawer: React.FC = () => {
   const docsUrl = `${ExternalURL.PublicDocs}${
     EnvUtils.mapRoute(location.pathname).docs
   }`;
+
+  const handleLogout = () => {
+    navigate(RouteBuilder.create(AppRoute.Login).build());
+    logout();
+  };
+
+  const showConfirmation = useConfirmationModal({
+    onConfirm: handleLogout,
+    message: t('messages.logout-confirm'),
+    title: t('heading.logout-confirm'),
+  });
 
   return (
     <StyledDrawer
@@ -237,10 +252,10 @@ export const AppDrawer: React.FC = () => {
             visible={userHasPermission(UserPermission.ServerAdmin)}
           />
           <AppNavLink
-            to={AppRoute.Login}
+            to={'#'}
             icon={<PowerIcon fontSize="small" color="primary" />}
             text={t('logout')}
-            onClick={logout}
+            onClick={() => showConfirmation({})}
           />
         </List>
       </LowerListContainer>

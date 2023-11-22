@@ -417,5 +417,7 @@
   "sync-status.pull-remote": "Pull Remote",
   "sync-status.push": "Push",
   "table.show-columns": "Show / hide columns",
-  "warning.caps-lock": "Warning: Caps lock is on"
+  "warning.caps-lock": "Warning: Caps lock is on",
+  "heading.logout-confirm": "Are you sure?",
+  "messages.logout-confirm": "This will log you out."
 }
