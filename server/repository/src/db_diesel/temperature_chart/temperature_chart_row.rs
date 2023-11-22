@@ -217,7 +217,6 @@ fn test_basic_temperature_chart_query() {
             .replace(" ", ""),
         result
             .to_string()
-            .to_string()
             .replace("\t", "")
             .replace("\n", "")
             .replace(" ", ""),
