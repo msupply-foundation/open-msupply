@@ -16,7 +16,7 @@ export const WebAppLogFileModal = ({
   const { Modal } = useDialog({ isOpen });
 
   const { data, isError, isLoading } = useLog.document.listFileNames();
-  console.log('data', data);
+  console.log('data', data?.fileNames);
   if (isError) {
     return (
       <Modal
@@ -36,11 +36,16 @@ export const WebAppLogFileModal = ({
       title={t('heading.server-log')}
       okButton={<DialogButton variant="ok" onClick={onClose} />}
     >
-      {!isLoading ? (
-        <Typography
-          sx={{ overflow: 'wrap', whiteSpace: 'pre' }}
-          component="div"
-        >{`${data}`}</Typography>
+      {!isLoading && data ? (
+        <div>
+          {data.fileNames?.map((fileName, i) => (
+            <Typography
+              sx={{ overflow: 'wrap', whiteSpace: 'pre' }}
+              component="div"
+              key={i}
+            >{`${fileName}`}</Typography>
+          ))}
+        </div>
       ) : (
         <BasicSpinner />
       )}
