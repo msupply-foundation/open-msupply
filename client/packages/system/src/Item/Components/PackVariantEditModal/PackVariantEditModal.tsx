@@ -140,6 +140,7 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
             label={t('label.pack-size')}
             InputLabelProps={{ shrink: true }}
             disabled={mode === ModalMode.Update}
+            style={{ justifyContent: 'flex-start' }}
           />
           <BasicTextInput
             fullWidth
