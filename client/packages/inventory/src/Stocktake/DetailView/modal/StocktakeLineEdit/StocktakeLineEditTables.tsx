@@ -15,19 +15,22 @@ import {
   useTheme,
   useTableStore,
   CellProps,
+  getColumnLookupWithOverrides,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
   Adjustment,
   getLocationInputColumn,
-  PackVariantCell,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
+  PackVariantEntryCell,
+  usePackVariant,
 } from '@openmsupply-client/system';
 import {
   useStocktakeLineErrorContext,
   UseStocktakeLineErrors,
 } from '../../../context';
+import { StocktakeLineFragment } from '../../../api';
 
 interface StocktakeLineEditTableProps {
   isDisabled?: boolean;
@@ -70,6 +73,7 @@ const getBatchColumn = (
       maxWidth: 150,
       maxLength: 50,
       Cell: BatchInputCell,
+      getIsDisabled: rowData => !rowData.isNewLine,
       setter: patch => setter({ ...patch, countThisLine: true }),
       backgroundColor: alpha(theme.palette.background.menu, 0.4),
       accessor: ({ rowData }) => rowData.batch || '',
@@ -146,13 +150,21 @@ const getInventoryAdjustmentReasonInputColumn = (
   };
 };
 
-export const BatchTable: FC<StocktakeLineEditTableProps> = ({
-  batches,
-  update,
-  isDisabled = false,
-}) => {
+// If this is not extracted to it's own component and used directly in Cell:
+// cell will be re rendered anytime rowData changes, which causes it to loose focus
+// if number of packs is changed and tab is pressed (in quick succession)
+const PackUnitEntryCell = PackVariantEntryCell<DraftStocktakeLine>({
+  getItemId: r => r.item.id,
+  getUnitName: r => r.item.unitName || null,
+  getIsDisabled: r => !r.isNewLine,
+});
+
+export const BatchTable: FC<
+  StocktakeLineEditTableProps & { item: StocktakeLineFragment['item'] | null }
+> = ({ item, batches, update, isDisabled = false }) => {
   const t = useTranslation('inventory');
   const theme = useTheme();
+  const { packVariantExists } = usePackVariant(item?.id || '', null);
   useDisableStocktakeRows(batches);
 
   const errorsContext = useStocktakeLineErrorContext();
@@ -170,18 +182,13 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
     },
-    {
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: PackVariantCell({
-        getItemId: row => row?.itemId,
-        getPackSizes: row => {
-          return [row?.packSize ?? 1];
-        },
-        getUnitName: row => row?.item.unitName ?? null,
-      }),
-    },
+    getColumnLookupWithOverrides('packSize', {
+      label: packVariantExists
+        ? 'label.unit-variant-and-pack-size'
+        : 'label.pack-size',
+      Cell: PackUnitEntryCell,
+      setter: update,
+    }),
     {
       key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',
@@ -199,7 +206,6 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
           patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
             ? null
             : patch.inventoryAdjustmentReason;
-
         update({ ...patch, countThisLine: true, inventoryAdjustmentReason });
       },
       accessor: ({ rowData }) => rowData.countedNumberOfPacks ?? '',
