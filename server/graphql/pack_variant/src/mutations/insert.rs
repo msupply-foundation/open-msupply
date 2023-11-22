@@ -92,9 +92,9 @@ fn map_error(error: ServiceError) -> Result<ErrorInterface> {
                 VariantWithPackSizeAlreadyExists,
             ))
         }
-        ServiceError::ItemDoesNotExist | ServiceError::PackVariantAlreadyExists => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::ItemDoesNotExist
+        | ServiceError::CannotAddPackSizeOfZero
+        | ServiceError::PackVariantAlreadyExists => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::CreatedRecordNotFound => {
             InternalError(formatted_error)
         }

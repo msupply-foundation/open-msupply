@@ -71,7 +71,7 @@ const useDraftPackVariant = (
     switch (structuredError.__typename) {
       case 'VariantWithPackSizeAlreadyExists':
         error(t('error.pack-variant-exists'))();
-        throw Error();
+        break;
       default:
         noOtherVariants(structuredError.__typename);
     }
