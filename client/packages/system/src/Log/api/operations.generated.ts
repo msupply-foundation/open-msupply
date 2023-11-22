@@ -16,7 +16,7 @@ export type LogLevelQuery = { __typename: 'Queries', logLevel: { __typename: 'Lo
 export type LogFileNamesQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type LogFileNamesQuery = { __typename: 'Queries', logContents: { __typename: 'LogNode', fileContent?: Array<string> | null, fileNames?: Array<string> | null } };
+export type LogFileNamesQuery = { __typename: 'Queries', logFileNames: { __typename: 'LogNode', fileContent?: Array<string> | null, fileNames?: Array<string> | null } };
 
 export type LogContentsByFileNameQueryVariables = Types.Exact<{
   fileName: Types.Scalars['String']['input'];
@@ -50,7 +50,7 @@ export const LogLevelDocument = gql`
     ${LogLevelRowFragmentDoc}`;
 export const LogFileNamesDocument = gql`
     query logFileNames {
-  logContents {
+  logFileNames {
     __typename
     ... on LogNode {
       ...logRow
@@ -111,7 +111,7 @@ export const mockLogLevelQuery = (resolver: ResponseResolver<GraphQLRequest<LogL
  * @example
  * mockLogFileNamesQuery((req, res, ctx) => {
  *   return res(
- *     ctx.data({ logContents })
+ *     ctx.data({ logFileNames })
  *   )
  * })
  */

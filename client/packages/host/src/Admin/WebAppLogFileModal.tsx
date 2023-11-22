@@ -16,6 +16,7 @@ export const WebAppLogFileModal = ({
   const { Modal } = useDialog({ isOpen });
 
   const { data, isError, isLoading } = useLog.document.listFileNames();
+  console.log('data', data);
   if (isError) {
     return (
       <Modal
@@ -39,7 +40,7 @@ export const WebAppLogFileModal = ({
         <Typography
           sx={{ overflow: 'wrap', whiteSpace: 'pre' }}
           component="div"
-        >{`${data?.fileContent}`}</Typography>
+        >{`${data}`}</Typography>
       ) : (
         <BasicSpinner />
       )}

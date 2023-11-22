@@ -10,7 +10,7 @@ export const getServerLogQueries = (sdk: Sdk) => ({
     },
     logFileNames: async () => {
       const response = await sdk.logFileNames();
-      return response?.logContents;
+      return response?.logFileNames;
     },
     logContentsByFileName: async ({
       fileName,
