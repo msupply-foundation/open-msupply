@@ -118,7 +118,7 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
 
   return (
     <Modal
-      width={350}
+      width={450}
       okButton={
         <DialogButton
           variant="ok"
