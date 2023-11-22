@@ -19,8 +19,9 @@ query logLevel {
 }
 
 query logFileNames {
-  logContents {
+  logFileNames {
     __typename
+
     ... on LogNode {
       ...logRow
     }
