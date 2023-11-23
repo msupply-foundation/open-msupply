@@ -25,7 +25,7 @@ export const ItemDetailView: FC = () => {
     setSuffix(data?.name ?? '');
   }, [data]);
 
-  if (isLoading) return <DetailFormSkeleton />;
+  if (isLoading || !data) return <DetailFormSkeleton />;
 
   const tabs = [
     {
@@ -33,7 +33,7 @@ export const ItemDetailView: FC = () => {
       value: 'General',
     },
     {
-      Component: <MasterListsTab />,
+      Component: <MasterListsTab itemId={data.id} />,
       value: 'Master Lists',
     },
   ];
