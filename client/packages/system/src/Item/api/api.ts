@@ -28,7 +28,7 @@ const itemParsers = {
   },
 };
 
-const packVariantParses = {
+const packVariantParsers = {
   toInsert: (packVariant: VariantFragment): InsertPackVariantInput => ({
     id: packVariant.id,
     itemId: packVariant.itemId,
@@ -189,7 +189,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
   insertPackVariant: async (input: VariantFragment) => {
     const result = await sdk.insertPackVariant({
       storeId,
-      input: packVariantParses.toInsert(input),
+      input: packVariantParsers.toInsert(input),
     });
 
     return result.insertPackVariant;
@@ -197,7 +197,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
   updatePackVariant: async (input: VariantFragment) => {
     const result = await sdk.updatePackVariant({
       storeId,
-      input: packVariantParses.toUpdate(input),
+      input: packVariantParsers.toUpdate(input),
     });
 
     return result.updatePackVariant;
@@ -205,6 +205,6 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
   deletePackVariant: async (input: VariantFragment) =>
     await sdk.deletePackVariant({
       storeId,
-      input: packVariantParses.toDelete(input),
+      input: packVariantParsers.toDelete(input),
     }),
 });
