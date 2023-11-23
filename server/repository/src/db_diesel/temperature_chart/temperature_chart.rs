@@ -101,26 +101,31 @@ mod test {
             calculate_intervals(
                 create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
                 create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
-                5
+                5 // Will generate 5 evenly spaced intervals based on above timestamps
             ),
             vec![
                 Interval {
+                    // Interval 1
                     from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
                     to_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
                 },
                 Interval {
+                    // Interval 2 (from_datetime = interval_1.to_datetime), etc..
                     from_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
                     to_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
                 },
                 Interval {
+                    // Interval 3
                     from_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
                     to_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
                 },
                 Interval {
+                    // Interval 4
                     from_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
                     to_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
                 },
                 Interval {
+                    // Interval 5
                     from_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
                     to_datetime: create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
                 }
