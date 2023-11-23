@@ -76,13 +76,9 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
               ],
             },
             {
-              type: 'enum',
-              name: t('label.acknowledged'),
-              urlParameter: 'acknowledged',
-              options: [
-                { label: t('label.acknowledged'), value: 'true' },
-                { label: t('label.unacknowledged'), value: 'false' },
-              ],
+              type: 'boolean',
+              name: t('label.unacknowledged'),
+              urlParameter: 'unacknowledged',
             },
           ]}
         />

@@ -30,7 +30,7 @@ pub struct TemperatureBreachFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub start_datetime: Option<DatetimeFilter>,
     pub end_datetime: Option<DatetimeFilter>,
-    pub acknowledged: Option<bool>,
+    pub unacknowledged: Option<bool>,
     pub sensor: Option<SensorFilter>,
     pub location: Option<LocationFilter>,
 }
@@ -111,7 +111,7 @@ impl<'a> TemperatureBreachRepository<'a> {
             let TemperatureBreachFilter {
                 id,
                 store_id,
-                acknowledged,
+                unacknowledged,
                 start_datetime,
                 end_datetime,
                 r#type,
@@ -129,8 +129,8 @@ impl<'a> TemperatureBreachRepository<'a> {
             );
             apply_date_time_filter!(query, end_datetime, temperature_breach_dsl::end_datetime);
 
-            if let Some(value) = acknowledged {
-                query = query.filter(temperature_breach_dsl::acknowledged.eq(value));
+            if let Some(value) = unacknowledged {
+                query = query.filter(temperature_breach_dsl::unacknowledged.eq(value));
             }
 
             if sensor.is_some() {
@@ -177,7 +177,7 @@ impl TemperatureBreachFilter {
         TemperatureBreachFilter {
             id: None,
             store_id: None,
-            acknowledged: None,
+            unacknowledged: None,
             start_datetime: None,
             end_datetime: None,
             r#type: None,
@@ -196,8 +196,8 @@ impl TemperatureBreachFilter {
         self
     }
 
-    pub fn acknowledged(mut self, filter: bool) -> Self {
-        self.acknowledged = Some(filter);
+    pub fn unacknowledged(mut self, filter: bool) -> Self {
+        self.unacknowledged = Some(filter);
         self
     }
 

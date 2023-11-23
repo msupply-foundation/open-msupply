@@ -63,7 +63,7 @@ pub fn validate(
         Some(sensor_row) => sensor_row,
         None => return Err(UpdateSensorError::SensorDoesNotExist),
     };
-    if sensor_row.store_id != Some(store_id.to_string()) {
+    if sensor_row.store_id != store_id.to_string() {
         return Err(UpdateSensorError::SensorDoesNotBelongToCurrentStore);
     }
 

@@ -18,6 +18,7 @@ export const CreateShipmentButtonComponent = () => {
   const isDisabled = useResponse.utils.isDisabled();
 
   const getConfirmation = useConfirmationModal({
+    iconType: 'info',
     onConfirm: createOutbound,
     message: t('messages.create-outbound-from-requisition'),
     title: t('heading.create-outbound-shipment'),

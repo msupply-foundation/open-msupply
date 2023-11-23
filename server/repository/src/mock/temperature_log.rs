@@ -6,7 +6,7 @@ pub fn mock_temperature_log_1a() -> TemperatureLogRow {
     TemperatureLogRow {
         id: "temperature_log_1a".to_owned(),
         sensor_id: "sensor_1".to_owned(),
-        store_id: Some("store_a".to_string()),
+        store_id: "store_a".to_string(),
         temperature: 10.6,
         location_id: None,
         datetime: NaiveDate::from_ymd_opt(2023, 7, 1)
@@ -22,7 +22,7 @@ pub fn mock_temperature_log_1b() -> TemperatureLogRow {
     TemperatureLogRow {
         id: "temperature_log_1b".to_owned(),
         sensor_id: "sensor_1".to_owned(),
-        store_id: Some("store_a".to_string()),
+        store_id: "store_a".to_string(),
         temperature: 8.6,
         location_id: None,
         datetime: NaiveDate::from_ymd_opt(2023, 7, 1)
@@ -39,7 +39,7 @@ pub fn mock_temperature_log_2() -> TemperatureLogRow {
     TemperatureLogRow {
         id: "temperature_log_2".to_owned(),
         sensor_id: "sensor_1".to_owned(),
-        store_id: Some("store_a".to_string()),
+        store_id: "store_a".to_string(),
         temperature: 5.6,
         location_id: None,
         datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
@@ -56,7 +56,7 @@ pub fn mock_temperature_log_3a() -> TemperatureLogRow {
     TemperatureLogRow {
         id: "temperature_log_3a".to_owned(),
         sensor_id: "sensor_2".to_owned(),
-        store_id: Some("store_b".to_string()),
+        store_id: "store_b".to_string(),
         temperature: -1.6,
         location_id: None,
         datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
@@ -71,7 +71,7 @@ pub fn mock_temperature_log_3b() -> TemperatureLogRow {
     TemperatureLogRow {
         id: "temperature_log_3b".to_owned(),
         sensor_id: "sensor_2".to_owned(),
-        store_id: Some("store_b".to_string()),
+        store_id: "store_b".to_string(),
         temperature: 1.6,
         location_id: None,
         datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
@@ -88,7 +88,7 @@ pub fn mock_temperature_log_4() -> TemperatureLogRow {
     TemperatureLogRow {
         id: "temperature_log_4".to_owned(),
         sensor_id: "sensor_2".to_owned(),
-        store_id: Some("store_b".to_string()),
+        store_id: "store_b".to_string(),
         temperature: 4.6,
         location_id: None,
         datetime: NaiveDate::from_ymd_opt(2022, 7, 1)

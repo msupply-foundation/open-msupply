@@ -77,7 +77,7 @@ const ListView: FC = () => {
         condition: 'equalTo',
       },
       {
-        key: 'acknowledged',
+        key: 'unacknowledged',
         condition: '=',
       },
     ],
@@ -99,7 +99,7 @@ const ListView: FC = () => {
       {
         key: 'acknowledgedIcon',
         Cell: ({ rowData }) => {
-          return !rowData?.acknowledged ? (
+          return !!rowData?.unacknowledged ? (
             <CircleAlertIcon
               fill={theme.palette.error.main}
               sx={{ color: 'background.white' }}
@@ -108,10 +108,10 @@ const ListView: FC = () => {
         },
       },
       {
-        key: 'acknowledged',
+        key: 'unacknowledged',
         label: 'label.status',
         accessor: ({ rowData }) => {
-          return !!rowData?.acknowledged
+          return !rowData?.unacknowledged
             ? t('label.acknowledged')
             : t('label.unacknowledged');
         },

@@ -52,7 +52,7 @@ pub fn validate(
         Some(temperature_log_row) => temperature_log_row,
         None => return Err(UpdateTemperatureLogError::TemperatureLogDoesNotExist),
     };
-    if temperature_log_row.store_id != Some(store_id.to_string()) {
+    if temperature_log_row.store_id != store_id.to_string() {
         return Err(UpdateTemperatureLogError::TemperatureLogDoesNotBelongToCurrentStore);
     }
 
@@ -72,7 +72,7 @@ pub fn generate(
     mut temperature_log_row: TemperatureLogRow,
 ) -> TemperatureLogRow {
     temperature_log_row.location_id = location_id;
-    temperature_log_row.store_id = Some(store_id.to_string());
+    temperature_log_row.store_id = store_id.to_string();
     temperature_log_row.temperature = temperature;
     temperature_log_row.sensor_id = sensor_id;
     temperature_log_row.datetime = datetime;

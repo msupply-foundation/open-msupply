@@ -1,5 +1,5 @@
 import {
-  COOKIE_LIFETIME_MINUTES,
+  INACTIVITY_TIMEOUT_MINUTES,
   DateUtils,
   getAuthCookie,
   setAuthCookie,
@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { useGetRefreshToken } from './useGetRefreshToken';
 
-export const useRefreshToken = () => {
+export const useRefreshToken = (onTimeout: () => void) => {
   const { mutateAsync } = useGetRefreshToken();
   const {
     setHeader,
@@ -32,7 +32,12 @@ export const useRefreshToken = () => {
 
     const expiresSoon = expiresIn === 1 || expiresIn === 2;
 
-    if (expiresSoon && minutesSinceLastRequest < COOKIE_LIFETIME_MINUTES) {
+    if (minutesSinceLastRequest >= INACTIVITY_TIMEOUT_MINUTES) {
+      onTimeout();
+      return;
+    }
+
+    if (expiresSoon && minutesSinceLastRequest < INACTIVITY_TIMEOUT_MINUTES) {
       mutateAsync().then(data => {
         const token = data?.token ?? '';
         const newCookie = { ...authCookie, token };

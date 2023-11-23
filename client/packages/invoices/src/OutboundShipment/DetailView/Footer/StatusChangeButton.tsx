@@ -95,9 +95,10 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, onHold, update } = useOutbound.document.fields([
+  const { lines, status, onHold, update } = useOutbound.document.fields([
     'status',
     'onHold',
+    'lines',
   ]);
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
@@ -150,6 +151,7 @@ const useStatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold,
+    lines,
   };
 };
 
@@ -180,9 +182,12 @@ export const StatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold,
+    lines,
   } = useStatusChangeButton();
   const { hasPlaceholder, alert } = useStatusChangePlaceholderCheck();
   const isDisabled = useOutbound.utils.isDisabled();
+  const t = useTranslation();
+  const noLines = lines?.totalCount === 0;
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -194,7 +199,8 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
-      isDisabled={onHold}
+      label={noLines ? t('messages.no-lines') : ''}
+      isDisabled={noLines || onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
