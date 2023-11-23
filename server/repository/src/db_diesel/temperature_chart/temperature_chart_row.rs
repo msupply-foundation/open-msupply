@@ -181,27 +181,31 @@ temperature_chart_column!(
 temperature_chart_column!(TemperatureLogId, "temperature_log.id", Text);
 temperature_chart_column!(SensorId, "temperature_log.sensor_id", Text);
 
-// Needed to filter chart data by temperature log ids
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db::setup_all};
+    use chrono::Duration;
+    use diesel::sql_query;
+    // Combined tests are done in temperature_chart repo
+    #[cfg(not(feature = "postgres"))]
+    #[test]
+    fn test_basic_temperature_chart_query() {
+        let query = TemperatureChart {
+            intervals: vec![
+                super::Interval {
+                    from_datetime: util::create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
+                    to_datetime: util::create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
+                },
+                super::Interval {
+                    from_datetime: util::create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
+                    to_datetime: util::create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+                },
+            ],
+        }
+        .into_boxed::<DBType>();
 
-// Combined tests are done in temperature_chart repo
-#[cfg(not(feature = "postgres"))]
-#[test]
-fn test_basic_temperature_chart_query() {
-    let query = TemperatureChart {
-        intervals: vec![
-            Interval {
-                from_datetime: util::create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                to_datetime: util::create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
-            },
-            Interval {
-                from_datetime: util::create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
-                to_datetime: util::create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
-            },
-        ],
-    }
-    .into_boxed::<DBType>();
-
-    let result = r#"
+        let result = r#"
                 SELECT time_series.from_datetime, time_series.to_datetime, AVG(temperature_log.temperature) as average_temperature, temperature_log.id, temperature_log.sensor_id
                 FROM  
                 ( SELECT ? as from_datetime, ? as to_datetime  UNION  SELECT ? as from_datetime, ? as to_datetime ) AS time_series
@@ -209,16 +213,58 @@ fn test_basic_temperature_chart_query() {
                     (temperature_log.datetime >= time_series.from_datetime
                     AND temperature_log.datetime < time_series.to_datetime) -- binds: [2021-01-01T23:59:50, 2021-01-02T00:00:05, 2021-01-02T00:00:05, 2021-01-02T00:00:20]"#;
 
-    assert_eq!(
-        diesel::debug_query::<DBType, _>(&query)
-            .to_string()
-            .replace("\t", "")
-            .replace("\n", "")
-            .replace(" ", ""),
-        result
-            .to_string()
-            .replace("\t", "")
-            .replace("\n", "")
-            .replace(" ", ""),
-    );
+        assert_eq!(
+            diesel::debug_query::<DBType, _>(&query)
+                .to_string()
+                .replace("\t", "")
+                .replace("\n", "")
+                .replace(" ", ""),
+            result
+                .to_string()
+                .replace("\t", "")
+                .replace("\n", "")
+                .replace(" ", ""),
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_dateime_milliseconds() {
+        let (_, connection, _, _) =
+            setup_all("test_dateime_milliseconds", MockDataInserts::none()).await;
+
+        #[derive(QueryableByName, Debug, PartialEq)]
+        struct Res {
+            #[sql_type = "Bool"]
+            result: bool,
+        }
+
+        let query = if cfg!(not(feature = "postgres")) {
+            "SELECT ? > ? as result"
+        } else {
+            "SELECT $1 > $2 as result"
+        };
+
+        assert_eq!(
+            vec![Res { result: true }],
+            sql_query(query)
+                .bind::<Timestamp, _>(util::create_datetime(2021, 01, 01, 23, 59, 50).unwrap())
+                .bind::<Timestamp, _>(util::create_datetime(2021, 01, 01, 23, 59, 49).unwrap())
+                .load::<Res>(&connection.connection)
+                .unwrap()
+        );
+
+        assert_eq!(
+            vec![Res { result: true }],
+            sql_query(query)
+                .bind::<Timestamp, _>(util::create_datetime(2021, 01, 01, 23, 59, 50).unwrap())
+                .bind::<Timestamp, _>(
+                    util::create_datetime(2021, 01, 01, 23, 59, 49)
+                        .unwrap()
+                        .checked_add_signed(Duration::milliseconds(500))
+                        .unwrap()
+                )
+                .load::<Res>(&connection.connection)
+                .unwrap()
+        );
+    }
 }
