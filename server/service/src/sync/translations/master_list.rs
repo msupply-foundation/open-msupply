@@ -14,7 +14,7 @@ pub struct LegacyListMasterRow {
     description: String,
     code: String,
     note: String,
-    inactive: bool,
+    inactive: Option<bool>,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -45,7 +45,7 @@ impl SyncTranslation for MasterListTranslation {
             name: data.description,
             code: data.code,
             description: data.note,
-            is_active: !data.inactive,
+            is_active: !data.inactive.unwrap_or(false),
         };
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::MasterList(result),
