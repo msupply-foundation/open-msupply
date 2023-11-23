@@ -93,7 +93,7 @@ export type InsertPackVariantMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertPackVariantMutation = { __typename: 'Mutations', insertPackVariant: { __typename: 'MutatePackVariantError', error: { __typename: 'VariantWithPackSizeAlreadyExists', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
+export type InsertPackVariantMutation = { __typename: 'Mutations', insertPackVariant: { __typename: 'InsertPackVariantError', error: { __typename: 'CannotAddPackSizeOfZero', description: string } | { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } | { __typename: 'VariantWithPackSizeAlreadyExists', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
 
 export type UpdatePackVariantMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -101,7 +101,7 @@ export type UpdatePackVariantMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdatePackVariantMutation = { __typename: 'Mutations', updatePackVariant: { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
+export type UpdatePackVariantMutation = { __typename: 'Mutations', updatePackVariant: { __typename: 'UpdatePackVariantError', error: { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -367,7 +367,7 @@ export const InsertPackVariantDocument = gql`
     ... on VariantNode {
       ...Variant
     }
-    ... on MutatePackVariantError {
+    ... on InsertPackVariantError {
       error {
         __typename
         description
@@ -382,6 +382,12 @@ export const UpdatePackVariantDocument = gql`
     __typename
     ... on VariantNode {
       ...Variant
+    }
+    ... on UpdatePackVariantError {
+      error {
+        __typename
+        description
+      }
     }
   }
 }

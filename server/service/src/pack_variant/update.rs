@@ -8,6 +8,7 @@ use super::validate::check_pack_variant_exists;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdatePackVariantError {
+    CannotHaveNoAbbreviationAndName,
     PackVariantDoesNotExist,
     UpdatedRecordNotFound,
     DatabaseError(RepositoryError),
@@ -50,6 +51,10 @@ fn validate(
 ) -> Result<PackVariantRow, UpdatePackVariantError> {
     let pack_variant_row = check_pack_variant_exists(connection, &input.id)?
         .ok_or(UpdatePackVariantError::PackVariantDoesNotExist)?;
+
+    if input.short_name.is_empty() || input.long_name.is_empty() {
+        return Err(UpdatePackVariantError::CannotHaveNoAbbreviationAndName);
+    }
 
     Ok(pack_variant_row)
 }

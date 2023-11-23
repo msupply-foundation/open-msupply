@@ -361,6 +361,16 @@ export type CanOnlyChangeToPickedWhenNoUnallocatedLines = UpdatePrescriptionErro
   invoiceLines: InvoiceLineConnector;
 };
 
+export type CannotAddPackSizeOfZero = InsertPackVariantErrorInterface & {
+  __typename: 'CannotAddPackSizeOfZero';
+  description: Scalars['String']['output'];
+};
+
+export type CannotAddWithNoAbbreviationAndName = InsertPackVariantErrorInterface & UpdatePackVariantErrorInterface & {
+  __typename: 'CannotAddWithNoAbbreviationAndName';
+  description: Scalars['String']['output'];
+};
+
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
   __typename: 'CannotChangeStatusOfInvoiceOnHold';
   description: Scalars['String']['output'];
@@ -1543,6 +1553,15 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
+export type InsertPackVariantError = {
+  __typename: 'InsertPackVariantError';
+  error: InsertPackVariantErrorInterface;
+};
+
+export type InsertPackVariantErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type InsertPackVariantInput = {
   id: Scalars['String']['input'];
   itemId: Scalars['String']['input'];
@@ -1551,7 +1570,7 @@ export type InsertPackVariantInput = {
   shortName: Scalars['String']['input'];
 };
 
-export type InsertPackVariantResponse = MutatePackVariantError | VariantNode;
+export type InsertPackVariantResponse = InsertPackVariantError | VariantNode;
 
 export type InsertPatientInput = {
   code: Scalars['String']['input'];
@@ -2330,15 +2349,6 @@ export type MaxOrdersReachedForPeriod = InsertProgramRequestRequisitionErrorInte
 export type MergeRequiredError = UpdateDocumentErrorInterface & {
   __typename: 'MergeRequiredError';
   autoMerge?: Maybe<RawDocumentNode>;
-  description: Scalars['String']['output'];
-};
-
-export type MutatePackVariantError = {
-  __typename: 'MutatePackVariantError';
-  error: MutatePackVariantErrorInterface;
-};
-
-export type MutatePackVariantErrorInterface = {
   description: Scalars['String']['output'];
 };
 
@@ -4920,13 +4930,22 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
   response: UpdateOutboundShipmentUnallocatedLineResponse;
 };
 
+export type UpdatePackVariantError = {
+  __typename: 'UpdatePackVariantError';
+  error: UpdatePackVariantErrorInterface;
+};
+
+export type UpdatePackVariantErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type UpdatePackVariantInput = {
   id: Scalars['String']['input'];
   longName: Scalars['String']['input'];
   shortName: Scalars['String']['input'];
 };
 
-export type UpdatePackVariantResponse = VariantNode;
+export type UpdatePackVariantResponse = UpdatePackVariantError | VariantNode;
 
 /**
  * All fields in the input object will be used to update the patient record.
@@ -5333,7 +5352,7 @@ export type VariantNode = {
   shortName: Scalars['String']['output'];
 };
 
-export type VariantWithPackSizeAlreadyExists = MutatePackVariantErrorInterface & {
+export type VariantWithPackSizeAlreadyExists = InsertPackVariantErrorInterface & {
   __typename: 'VariantWithPackSizeAlreadyExists';
   description: Scalars['String']['output'];
 };
