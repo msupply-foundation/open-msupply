@@ -72,7 +72,10 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update } = usePrescription.document.fields(['status']);
+  const { status, update, lines } = usePrescription.document.fields([
+    'status',
+    'lines',
+  ]);
   const { success, error } = useNotification();
   const t = useTranslation('dispensary');
   const { data } = usePrescription.document.get();
@@ -121,13 +124,16 @@ const useStatusChangeButton = () => {
     selectedOption,
     setSelectedOption,
     getConfirmation,
+    lines,
   };
 };
 
 export const StatusChangeButton = () => {
-  const { options, selectedOption, setSelectedOption, getConfirmation } =
+  const { options, selectedOption, setSelectedOption, getConfirmation, lines } =
     useStatusChangeButton();
   const isDisabled = usePrescription.utils.isDisabled();
+  const t = useTranslation();
+  const noLines = lines?.totalCount === 0;
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -138,6 +144,8 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
+      label={noLines ? t('messages.no-lines') : ''}
+      isDisabled={noLines}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}

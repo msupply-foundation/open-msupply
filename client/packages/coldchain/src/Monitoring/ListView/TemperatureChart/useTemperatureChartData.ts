@@ -31,7 +31,7 @@ export const useTemperatureChartData = () => {
   const sensors: Sensor[] = [];
   const logs: Log[] = [];
   let minTemperature = 2;
-  let maxTemperature = 2;
+  let maxTemperature = 8;
 
   data?.nodes?.forEach(
     ({ datetime, temperature, sensor, temperatureBreach }) => {

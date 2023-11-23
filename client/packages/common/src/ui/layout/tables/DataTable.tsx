@@ -212,7 +212,6 @@ const DataTableComponent = <T extends RecordWithId>({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
         overflowX,
         overflowY: 'auto',
       }}

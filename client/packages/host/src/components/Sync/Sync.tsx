@@ -16,6 +16,7 @@ import {
 } from '@openmsupply-client/common';
 import { useSync } from '@openmsupply-client/system';
 import { SyncProgress } from '../SyncProgress';
+import { ServerInfo } from './ServerInfo';
 
 const STATUS_POLLING_INTERVAL = 1000;
 
@@ -103,7 +104,7 @@ const useUpdateUser = () => {
   };
 };
 
-export const Sync: React.FC = () => {
+export const Sync = () => {
   const t = useTranslation('app');
   const {
     syncStatus,
@@ -122,6 +123,7 @@ export const Sync: React.FC = () => {
 
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
+      <ServerInfo />
       <Grid
         container
         flexDirection="column"

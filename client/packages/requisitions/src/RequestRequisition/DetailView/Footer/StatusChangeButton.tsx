@@ -21,7 +21,7 @@ const getStatusOptions = (
   const options: [
     SplitButtonOption<RequisitionNodeStatus>,
     SplitButtonOption<RequisitionNodeStatus>,
-    SplitButtonOption<RequisitionNodeStatus>
+    SplitButtonOption<RequisitionNodeStatus>,
   ] = [
     {
       value: RequisitionNodeStatus.Draft,
@@ -67,9 +67,10 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, update, comment } = useRequest.document.fields([
+  const { status, update, comment, lines } = useRequest.document.fields([
     'status',
     'comment',
+    'lines',
   ]);
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
@@ -131,14 +132,15 @@ const useStatusChangeButton = () => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);
 
-  return { options, selectedOption, setSelectedOption, getConfirmation };
+  return { options, selectedOption, setSelectedOption, getConfirmation, lines };
 };
 
 export const StatusChangeButton = () => {
-  const { selectedOption, getConfirmation } = useStatusChangeButton();
+  const { selectedOption, getConfirmation, lines } = useStatusChangeButton();
   const isDisabled = useRequest.utils.isDisabled();
   const { userHasPermission } = useAuthContext();
   const t = useTranslation('app');
+  const noLines = lines?.totalCount === 0;
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -147,15 +149,17 @@ export const StatusChangeButton = () => {
     selectedOption.value === RequisitionNodeStatus.Sent
       ? userHasPermission(UserPermission.RequisitionSend)
       : true;
+  const permissionDenied = hasPermission ? '' : t('auth.permission-denied');
+  const disabledNoLines = noLines ? t('messages.no-lines') : '';
 
   return (
     <>
-      <Tooltip title={hasPermission ? '' : t('auth.permission-denied')}>
+      <Tooltip title={permissionDenied || disabledNoLines}>
         <div>
           <ButtonWithIcon
             color="secondary"
             variant="contained"
-            disabled={!hasPermission}
+            disabled={!hasPermission || noLines}
             label={selectedOption.label}
             Icon={<ArrowRightIcon />}
             onClick={() => getConfirmation()}

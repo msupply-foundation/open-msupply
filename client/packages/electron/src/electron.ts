@@ -6,6 +6,7 @@ import {
   Menu,
   MenuItemConstructorOptions,
   shell,
+  webContents,
 } from 'electron';
 import dnssd from 'dnssd';
 import { IPC_MESSAGES } from './shared';
@@ -183,6 +184,11 @@ const tryToConnectToServer = (window: BrowserWindow, server: FrontEndHost) => {
 };
 
 const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
+  // translate loopback addresses to allow for clients, such as CCA to connect
+  // to the API by IP address
+  if (server.isLocal && isLoopback(server.ip)) {
+    server.ip = getIpAddress('public');
+  }
   discovery.stop();
   connectedServer = server;
 
@@ -276,7 +282,6 @@ const start = (): void => {
     if (!(typeof hardwareId === 'string')) return;
 
     const ip = addresses.find(isV4Format);
-
     if (!ip) return;
 
     discoveredServers.push({
@@ -284,7 +289,7 @@ const start = (): void => {
       protocol,
       ip,
       clientVersion: clientVersion || '',
-      isLocal: ip === getIpAddress() || ip === '127.0.0.1',
+      isLocal: ip === getIpAddress() || isLoopback(ip),
       hardwareId,
     });
   });
@@ -302,6 +307,11 @@ const start = (): void => {
     }
   );
 };
+
+const isLoopback = (ip: string) =>
+  ip === '127.0.0.1' ||
+  ip.toLowerCase() === 'localhost' ||
+  ip.toLowerCase() === '::1';
 
 app.on('ready', start);
 
@@ -444,6 +454,40 @@ const helpMenu: MenuItemConstructorOptions = {
         await shell.openExternal(
           'https://docs.msupply.foundation/docs/introduction/introduction/'
         );
+      },
+    },
+    {
+      label: 'Clear Data',
+      click: () => {
+        dialog
+          .showMessageBox({
+            type: 'question',
+            title: 'Confirmation',
+            message:
+              'This will clear all local data and close the application. Are you sure?',
+            buttons: ['Yes', 'No'],
+          })
+          .then(result => {
+            // Bail if the user pressed "No" or escaped (ESC) from the dialog box
+            if (result.response !== 0) {
+              return;
+            }
+            store.clear();
+            const contents = webContents.getFocusedWebContents();
+            if (contents) {
+              contents.executeJavaScript(`localStorage.clear();`);
+            }
+            app.exit();
+          });
+      },
+    },
+    {
+      label: 'Developer Tools',
+      click: () => {
+        const contents = webContents.getFocusedWebContents();
+        if (contents) {
+          contents.openDevTools();
+        }
       },
     },
     { role: 'about' },

@@ -576,6 +576,7 @@ export type ContactTraceNode = {
   /** Returns the matching program enrolment for the root patient of this contact trace */
   programEnrolment?: Maybe<ProgramEnrolmentNode>;
   programId: Scalars['String']['output'];
+  /** Relationship between the patient and the contact, e.g. mother, next of kin, etc. */
   relationship?: Maybe<Scalars['String']['output']>;
   storeId?: Maybe<Scalars['String']['output']>;
 };
@@ -4013,6 +4014,8 @@ export type QueriesStocktakeByNumberArgs = {
 
 
 export type QueriesStocktakeLinesArgs = {
+  filter?: InputMaybe<StocktakeLineFilterInput>;
+  page?: InputMaybe<PaginationInput>;
   reportSort?: InputMaybe<PrintReportSortInput>;
   sort?: InputMaybe<Array<StocktakeLineSortInput>>;
   stocktakeId: Scalars['String']['input'];
@@ -4625,6 +4628,12 @@ export type StocktakeLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type StocktakeLineFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  locationId?: InputMaybe<EqualFilterStringInput>;
+  stocktakeId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type StocktakeLineNode = {
   __typename: 'StocktakeLineNode';
   batch?: Maybe<Scalars['String']['output']>;
@@ -4881,18 +4890,17 @@ export type TemperatureBreachConnector = {
 };
 
 export type TemperatureBreachFilterInput = {
-  acknowledged?: InputMaybe<Scalars['Boolean']['input']>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   location?: InputMaybe<LocationFilterInput>;
   sensor?: InputMaybe<SensorFilterInput>;
   startDatetime?: InputMaybe<DatetimeFilterInput>;
   type?: InputMaybe<EqualFilterTemperatureBreachRowTypeInput>;
+  unacknowledged?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type TemperatureBreachNode = {
   __typename: 'TemperatureBreachNode';
-  acknowledged: Scalars['Boolean']['output'];
   durationMilliseconds: Scalars['Int']['output'];
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -4902,6 +4910,7 @@ export type TemperatureBreachNode = {
   sensorId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
   type: TemperatureBreachNodeType;
+  unacknowledged: Scalars['Boolean']['output'];
 };
 
 export enum TemperatureBreachNodeType {

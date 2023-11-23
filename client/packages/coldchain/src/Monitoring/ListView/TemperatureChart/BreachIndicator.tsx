@@ -30,7 +30,7 @@ export const BreachIndicator = ({
       x={cx - 13.5}
       y={cy - 13.5}
       fill={
-        payload.breach?.row?.acknowledged
+        !payload.breach?.row?.unacknowledged
           ? theme.palette.gray.main
           : theme.palette.error.main
       }

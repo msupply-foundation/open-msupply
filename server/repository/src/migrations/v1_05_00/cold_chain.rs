@@ -19,7 +19,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 duration_milliseconds INTEGER NOT NULL,
                 type TEXT NOT NULL,
                 sensor_id TEXT NOT NULL REFERENCES sensor(id),
-                store_id TEXT REFERENCES store(id),
+                store_id TEXT NOT NULL REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
                 start_datetime {DATETIME} NOT NULL,
                 end_datetime {DATETIME},
@@ -33,7 +33,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 id TEXT NOT NULL PRIMARY KEY,
                 temperature {DOUBLE} NOT NULL,
                 sensor_id TEXT NOT NULL REFERENCES sensor(id),
-                store_id TEXT REFERENCES store(id),
+                store_id TEXT NOT NULL REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
                 datetime {DATETIME} NOT NULL,
                 temperature_breach_id TEXT REFERENCES temperature_breach(id)
@@ -45,7 +45,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 type TEXT NOT NULL,
                 description TEXT NOT NULL UNIQUE,
                 is_active BOOLEAN,
-                store_id TEXT REFERENCES store(id),
+                store_id TEXT NOT NULL REFERENCES store(id),
                 minimum_temperature {DOUBLE} NOT NULL,
                 maximum_temperature {DOUBLE} NOT NULL
             );
