@@ -8,7 +8,7 @@ This work is best outsourced to the database, to avoid excessive serialisations 
 Temperature logs are aggregated across a series of intervals, grouped by sensor id, we want to achieve a query similar to this:
 ```sql
 SELECT avg(temperature), sensor_id, from_datetime, to_datetime FROM 
-    SELECT {interval_1_start} as from_datetime, {interval_1_end_datetime} as to_datetime
+    SELECT {interval_1_start_datetime} as from_datetime, {interval_1_end_datetime} as to_datetime
     UNION SELECT {interval_2_start_datetime} as from_datetime, {interval_2_end_datetime} as to_datetime 
     UNION SELECT {interval_3_start_datetime} as from_datetime, {interval_3_end_datetime} as to_datetime 
 JOIN temperature_log ON (datetime >= from_datetime and datetime < to_datetime)
