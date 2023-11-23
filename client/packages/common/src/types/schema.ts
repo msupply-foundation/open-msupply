@@ -2369,6 +2369,7 @@ export type MasterListFilterInput = {
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isProgram?: InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
 
