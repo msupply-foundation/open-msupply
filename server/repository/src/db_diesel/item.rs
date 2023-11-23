@@ -106,7 +106,7 @@ impl<'a> ItemRepository<'a> {
         store_id: String,
         filter: Option<ItemFilter>,
     ) -> Result<i64, RepositoryError> {
-        let query = Self::create_filtered_query(store_id, filter);
+        let query = create_filtered_query(store_id, filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -134,7 +134,7 @@ impl<'a> ItemRepository<'a> {
         sort: Option<ItemSort>,
         store_id: Option<String>,
     ) -> Result<Vec<Item>, RepositoryError> {
-        let mut query = Self::create_filtered_query(store_id.unwrap_or_default(), filter);
+        let mut query = create_filtered_query(store_id.unwrap_or_default(), filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -166,56 +166,6 @@ impl<'a> ItemRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
-
-    pub fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedItemQuery {
-        let mut query = item_dsl::item.left_join(unit_dsl::unit).into_boxed();
-
-        if let Some(f) = filter {
-            let ItemFilter {
-                id,
-                name,
-                code,
-                r#type,
-                is_visible,
-                code_or_name,
-            } = f;
-
-            // or filter need to be applied before and filters
-            if code_or_name.is_some() {
-                apply_string_filter!(query, code_or_name.clone(), item_dsl::code);
-                apply_string_or_filter!(query, code_or_name, item_dsl::name);
-            }
-
-            apply_equal_filter!(query, id, item_dsl::id);
-            apply_string_filter!(query, code, item_dsl::code);
-            apply_string_filter!(query, name, item_dsl::name);
-            apply_equal_filter!(query, r#type, item_dsl::type_);
-
-            let visible_item_ids = master_list_line_dsl::master_list_line
-                .select(master_list_line_dsl::item_id)
-                .inner_join(
-                    master_list_dsl::master_list
-                        .on(master_list_line_dsl::master_list_id.eq(master_list_dsl::id)),
-                )
-                .inner_join(
-                    master_list_name_join_dsl::master_list_name_join
-                        .on(master_list_name_join_dsl::master_list_id.eq(master_list_dsl::id)),
-                )
-                .inner_join(
-                    store_dsl::store.on(store_dsl::name_id
-                        .eq(master_list_name_join_dsl::name_id)
-                        .and(store_dsl::id.eq(store_id))),
-                )
-                .into_boxed();
-
-            query = match is_visible {
-                Some(true) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
-                Some(false) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
-                None => query,
-            }
-        }
-        query
-    }
 }
 
 fn to_domain((item_row, unit_row): ItemAndMasterList) -> Item {
@@ -223,6 +173,56 @@ fn to_domain((item_row, unit_row): ItemAndMasterList) -> Item {
 }
 
 type BoxedItemQuery = IntoBoxed<'static, LeftJoin<item::table, unit::table>, DBType>;
+
+fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedItemQuery {
+    let mut query = item_dsl::item.left_join(unit_dsl::unit).into_boxed();
+
+    if let Some(f) = filter {
+        let ItemFilter {
+            id,
+            name,
+            code,
+            r#type,
+            is_visible,
+            code_or_name,
+        } = f;
+
+        // or filter need to be applied before and filters
+        if code_or_name.is_some() {
+            apply_string_filter!(query, code_or_name.clone(), item_dsl::code);
+            apply_string_or_filter!(query, code_or_name, item_dsl::name);
+        }
+
+        apply_equal_filter!(query, id, item_dsl::id);
+        apply_string_filter!(query, code, item_dsl::code);
+        apply_string_filter!(query, name, item_dsl::name);
+        apply_equal_filter!(query, r#type, item_dsl::type_);
+
+        let visible_item_ids = master_list_line_dsl::master_list_line
+            .select(master_list_line_dsl::item_id)
+            .inner_join(
+                master_list_dsl::master_list
+                    .on(master_list_line_dsl::master_list_id.eq(master_list_dsl::id)),
+            )
+            .inner_join(
+                master_list_name_join_dsl::master_list_name_join
+                    .on(master_list_name_join_dsl::master_list_id.eq(master_list_dsl::id)),
+            )
+            .inner_join(
+                store_dsl::store.on(store_dsl::name_id
+                    .eq(master_list_name_join_dsl::name_id)
+                    .and(store_dsl::id.eq(store_id))),
+            )
+            .into_boxed();
+
+        query = match is_visible {
+            Some(true) => query.filter(item_dsl::id.eq_any(visible_item_ids)),
+            Some(false) => query.filter(item_dsl::id.ne_all(visible_item_ids)),
+            None => query,
+        }
+    }
+    query
+}
 
 impl Item {
     pub fn unit_name(&self) -> Option<&str> {
