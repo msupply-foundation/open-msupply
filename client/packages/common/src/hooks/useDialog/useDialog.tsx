@@ -201,8 +201,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             marginTop: '30px',
           }}
         >
-          {deleteButton}
           {cancelButton}
+          {deleteButton}
           {okButton}
           {WrappedNextButton}
           {reportSelector}
