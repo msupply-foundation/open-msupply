@@ -14,6 +14,7 @@ pub enum InsertPackVariantError {
     CreatedRecordNotFound,
     ItemDoesNotExist,
     CannotAddPackSizeOfZero,
+    CannotAddWithNoAbbreviationAndName,
     DatabaseError(RepositoryError),
 }
 
@@ -84,6 +85,10 @@ fn validate(
 
     if input.pack_size == 0 {
         return Err(InsertPackVariantError::CannotAddPackSizeOfZero);
+    }
+
+    if input.short_name.is_empty() || input.long_name.is_empty() {
+        return Err(InsertPackVariantError::CannotAddWithNoAbbreviationAndName);
     }
 
     if !check_item_exists(connection, store_id.to_string(), &input.item_id)? {

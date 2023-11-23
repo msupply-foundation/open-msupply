@@ -94,6 +94,7 @@ fn map_error(error: ServiceError) -> Result<ErrorInterface> {
         }
         ServiceError::ItemDoesNotExist
         | ServiceError::CannotAddPackSizeOfZero
+        | ServiceError::CannotAddWithNoAbbreviationAndName
         | ServiceError::PackVariantAlreadyExists => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) | ServiceError::CreatedRecordNotFound => {
             InternalError(formatted_error)
