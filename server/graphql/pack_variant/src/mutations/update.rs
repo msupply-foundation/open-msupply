@@ -1,3 +1,7 @@
+use crate::mutations::{
+    CannotAddWithNoAbbreviationAndName, UpdatePackVariantError as UpdateError,
+    UpdatePackVariantErrorInterface as ErrorInterface,
+};
 use async_graphql::*;
 use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -21,6 +25,7 @@ pub struct UpdatePackVariantInput {
 #[derive(Union)]
 #[graphql(name = "UpdatePackVariantResponse")]
 pub enum UpdateResponse {
+    Error(UpdateError),
     Response(VariantNode),
 }
 
@@ -61,22 +66,32 @@ impl UpdatePackVariantInput {
 }
 
 fn map_response(from: Result<PackVariantRow, ServiceError>) -> Result<UpdateResponse> {
-    match from {
-        Ok(result) => Ok(UpdateResponse::Response(VariantNode::from_domain(result))),
-        Err(error) => {
-            use ServiceError::*;
-            let formatted_error = format!("{:#?}", error);
+    let result = match from {
+        Ok(variant) => UpdateResponse::Response(VariantNode::from_domain(variant)),
+        Err(error) => UpdateResponse::Error(UpdateError {
+            error: map_error(error)?,
+        }),
+    };
 
-            let graphql_error = match error {
-                UpdatedRecordNotFound | PackVariantDoesNotExist => {
-                    StandardGraphqlError::BadUserInput(formatted_error)
-                }
-                ServiceError::DatabaseError(_) => {
-                    StandardGraphqlError::InternalError(formatted_error)
-                }
-            };
+    Ok(result)
+}
 
-            Err(graphql_error.extend())
+fn map_error(error: ServiceError) -> Result<ErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        ServiceError::CannotHaveNoAbbreviationAndName => {
+            return Ok(ErrorInterface::CannotAddWithNoAbbreviationAndName(
+                CannotAddWithNoAbbreviationAndName,
+            ))
         }
-    }
+
+        ServiceError::PackVariantDoesNotExist | ServiceError::UpdatedRecordNotFound => {
+            BadUserInput(formatted_error)
+        }
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }

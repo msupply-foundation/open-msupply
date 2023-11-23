@@ -270,7 +270,7 @@ mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
     ... on VariantNode {
       ...Variant
     }
-    ... on MutatePackVariantError {
+    ... on InsertPackVariantError {
       error {
         __typename
         description
@@ -284,6 +284,12 @@ mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
     __typename
     ... on VariantNode {
       ...Variant
+    }
+    ... on UpdatePackVariantError {
+      error {
+        __typename
+        description
+      }
     }
   }
 }

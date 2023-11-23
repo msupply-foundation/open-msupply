@@ -1,5 +1,6 @@
 use crate::mutations::{
-    MutatePackVariantError as InsertError, MutatePackVariantErrorInterface as ErrorInterface,
+    CannotAddPackSizeOfZero, CannotAddWithNoAbbreviationAndName,
+    InsertPackVariantError as InsertError, InsertPackVariantErrorInterface as ErrorInterface,
     VariantWithPackSizeAlreadyExists,
 };
 use async_graphql::*;
@@ -92,10 +93,20 @@ fn map_error(error: ServiceError) -> Result<ErrorInterface> {
                 VariantWithPackSizeAlreadyExists,
             ))
         }
-        ServiceError::ItemDoesNotExist
-        | ServiceError::CannotAddPackSizeOfZero
-        | ServiceError::CannotAddWithNoAbbreviationAndName
-        | ServiceError::PackVariantAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::CannotAddPackSizeOfZero => {
+            return Ok(ErrorInterface::CannotAddPackSizeOfZero(
+                CannotAddPackSizeOfZero,
+            ))
+        }
+        ServiceError::CannotAddWithNoAbbreviationAndName => {
+            return Ok(ErrorInterface::CannotAddWithNoAbbreviationAndName(
+                CannotAddWithNoAbbreviationAndName,
+            ))
+        }
+
+        ServiceError::ItemDoesNotExist | ServiceError::PackVariantAlreadyExists => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) | ServiceError::CreatedRecordNotFound => {
             InternalError(formatted_error)
         }
