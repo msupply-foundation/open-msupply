@@ -31,25 +31,22 @@ export const AppBar: React.FC = () => {
   const { store } = useAuthContext();
   const hasVaccineModule = store?.preferences.vaccineModule ?? false;
   const containerStyle = isDashboard
-    ? { borderBottom: 0, minHeight: '50px' }
+    ? { borderBottom: 0, minHeight: '10px' }
     : { boxShadow: (theme: Theme) => theme.shadows[2] };
 
   return (
     <>
       {hasVaccineModule && <ColdchainNotification />}
       <StyledContainer ref={ref} sx={containerStyle}>
-        <Toolbar disableGutters>
-          {!isDashboard && (
-            <>
-              <Box style={{ marginInlineEnd: 5 }}>
-                <SectionIcon />
-              </Box>
-
-              <Breadcrumbs />
-            </>
-          )}
-          <AppBarButtons />
-        </Toolbar>
+        {!isDashboard && (
+          <Toolbar disableGutters>
+            <Box style={{ marginInlineEnd: 5 }}>
+              <SectionIcon />
+            </Box>
+            <Breadcrumbs />
+            <AppBarButtons />
+          </Toolbar>
+        )}
         <AppBarContent />
         {!isDashboard && <AppBarTabs />}
       </StyledContainer>
