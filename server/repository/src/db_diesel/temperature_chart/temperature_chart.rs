@@ -155,14 +155,14 @@ mod test {
         let sensor1 = SensorRow {
             id: "sensor1".to_string(),
             serial: "sensor1".to_string(),
-            store_id: Some(store.id.clone()),
+            store_id: store.id.clone(),
             ..Default::default()
         };
 
         let sensor2 = SensorRow {
             id: "sensor2".to_string(),
             serial: "sensor2".to_string(),
-            store_id: Some(store.id.clone()),
+            store_id: store.id.clone(),
             ..Default::default()
         };
 
@@ -217,7 +217,7 @@ mod test {
                 id: util::uuid::uuid(),
                 temperature,
                 sensor_id: sensor_id.clone(),
-                store_id: Some(store.id.clone()),
+                store_id: store.id.clone(),
                 datetime: create_datetime(date.0, date.1, date.2, time.0, time.1, time.2).unwrap(),
                 location_id: location.map(ToString::to_string),
                 ..Default::default()
