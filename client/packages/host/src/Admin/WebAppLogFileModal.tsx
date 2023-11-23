@@ -1,9 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useDialog } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { BasicSpinner, DialogButton, Typography } from '@common/components';
+import {
+  BasicSpinner,
+  DialogButton,
+  DropdownMenu,
+  DropdownMenuItem,
+  Typography,
+} from '@common/components';
 import { useLog } from '@openmsupply-client/system';
 import { Box } from 'packages/common/src';
+import { LogDisplay } from './LogDisplay';
 export const WebAppLogFileModal = ({
   isOpen,
   onClose,
@@ -12,11 +19,11 @@ export const WebAppLogFileModal = ({
   onClose: () => void;
 }) => {
   const t = useTranslation('common');
-
+  const [logToRender, setLogToRender] = useState('');
   const { Modal } = useDialog({ isOpen });
 
   const { data, isError, isLoading } = useLog.document.listFileNames();
-  console.log('data', data?.fileNames);
+
   if (isError) {
     return (
       <Modal
@@ -38,13 +45,22 @@ export const WebAppLogFileModal = ({
     >
       {!isLoading && data ? (
         <div>
-          {data.fileNames?.map((fileName, i) => (
-            <Typography
-              sx={{ overflow: 'wrap', whiteSpace: 'pre' }}
-              component="div"
-              key={i}
-            >{`${fileName}`}</Typography>
-          ))}
+          <DropdownMenu
+            label={logToRender.length > 0 ? logToRender : t('label.server-log')}
+          >
+            {data.fileNames?.map((fileName, i) => (
+              <DropdownMenuItem
+                key={i}
+                onClick={() => {
+                  setLogToRender(fileName);
+                }}
+              >{`${fileName}`}</DropdownMenuItem>
+            ))}
+          </DropdownMenu>
+
+          {logToRender.length > 0 ? (
+            <LogDisplay fileName={logToRender}></LogDisplay>
+          ) : null}
         </div>
       ) : (
         <BasicSpinner />
