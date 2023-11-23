@@ -188,7 +188,6 @@ mod test {
     use chrono::Duration;
     use diesel::sql_query;
     // Combined tests are done in temperature_chart repo
-    #[cfg(not(feature = "postgres"))]
     #[test]
     fn test_basic_temperature_chart_query() {
         let query = TemperatureChart {
@@ -205,13 +204,20 @@ mod test {
         }
         .into_boxed::<DBType>();
 
-        let result = r#"
-                SELECT time_series.from_datetime, time_series.to_datetime, AVG(temperature_log.temperature) as average_temperature, temperature_log.id, temperature_log.sensor_id
+        let union_select = if cfg!(not(feature = "postgres")) {
+            "SELECT ? as from_datetime, ? as to_datetime  UNION  SELECT ? as from_datetime, ? as to_datetime"
+        } else {
+            "SELECT $1 as from_datetime, $2 as to_datetime  UNION  SELECT $3 as from_datetime, $4 as to_datetime"
+        };
+
+        let result = format!(
+            r#" SELECT time_series.from_datetime, time_series.to_datetime, AVG(temperature_log.temperature) as average_temperature, temperature_log.id, temperature_log.sensor_id
                 FROM  
-                ( SELECT ? as from_datetime, ? as to_datetime  UNION  SELECT ? as from_datetime, ? as to_datetime ) AS time_series
+                ( {union_select} ) AS time_series
                 JOIN temperature_log ON 
                     (temperature_log.datetime >= time_series.from_datetime
-                    AND temperature_log.datetime < time_series.to_datetime) -- binds: [2021-01-01T23:59:50, 2021-01-02T00:00:05, 2021-01-02T00:00:05, 2021-01-02T00:00:20]"#;
+                    AND temperature_log.datetime < time_series.to_datetime) -- binds: [2021-01-01T23:59:50, 2021-01-02T00:00:05, 2021-01-02T00:00:05, 2021-01-02T00:00:20]"#
+        );
 
         assert_eq!(
             diesel::debug_query::<DBType, _>(&query)
