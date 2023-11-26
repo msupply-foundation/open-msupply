@@ -883,14 +883,14 @@ mod test {
     }
 
     fn check_integrity(mut events: Vec<ProgramEventRow>) {
+        if events.is_empty() {
+            return;
+        }
         events.sort_by(|a, b| {
             a.datetime
                 .cmp(&b.datetime)
                 .then_with(|| a.active_start_datetime.cmp(&b.active_start_datetime))
         });
-        if events.is_empty() {
-            return;
-        }
 
         // init with first datetime
         let mut prev_event_end = events[0].datetime;
