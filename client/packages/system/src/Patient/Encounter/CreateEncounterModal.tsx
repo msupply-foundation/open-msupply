@@ -13,8 +13,8 @@ import {
   useNavigate,
   useNotification,
   useAuthContext,
-  DatePickerInput,
   TextArea,
+  DateTimePickerInput,
 } from '@openmsupply-client/common';
 import { DateUtils, useIntlUtils, useTranslation } from '@common/intl';
 import {
@@ -162,7 +162,7 @@ export const CreateEncounterModal: FC = () => {
                 <InputWithLabelRow
                   label={t('label.visit-date')}
                   Input={
-                    <DatePickerInput
+                    <DateTimePickerInput
                       value={DateUtils.getDateOrNull(draft?.startDatetime)}
                       onChange={setStartDatetime}
                       onError={validationError =>

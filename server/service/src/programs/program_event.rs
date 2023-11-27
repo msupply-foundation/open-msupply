@@ -90,10 +90,11 @@ fn remove_event_stack(
                 .active_end_datetime(DatetimeFilter::equal_to(datetime)),
         ),
         Some(ProgramEventSort {
-            key: ProgramEventSortField::ActiveEndDatetime,
+            key: ProgramEventSortField::ActiveStartDatetime,
             desc: Some(true),
         }),
     )?;
+
     let mut current_end_datetime = longest.active_end_datetime;
     for mut current in previous_stack {
         current.active_end_datetime = current_end_datetime;
@@ -233,9 +234,16 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                         // event.
                         // First test if there is a next event:
                         let next = repo
-                            .query_by_filter(
-                                event_target_filter(&target)
-                                    .datetime(DatetimeFilter::after_or_equal_to(datetime)),
+                            .query(
+                                Pagination::one(),
+                                Some(
+                                    event_target_filter(&target)
+                                        .datetime(DatetimeFilter::after_or_equal_to(datetime)),
+                                ),
+                                Some(ProgramEventSort {
+                                    key: ProgramEventSortField::Datetime,
+                                    desc: Some(false),
+                                }),
                             )?
                             .pop()
                             .map(|e| e.datetime);
@@ -872,5 +880,149 @@ mod test {
                 later_stack_datetime
             ]
         )
+    }
+
+    fn check_integrity(mut events: Vec<ProgramEventRow>) {
+        if events.is_empty() {
+            return;
+        }
+        events.sort_by(|a, b| {
+            a.datetime
+                .cmp(&b.datetime)
+                .then_with(|| a.active_start_datetime.cmp(&b.active_start_datetime))
+        });
+
+        // init with first datetime
+        let mut prev_event_end = events[0].datetime;
+        while !events.is_empty() {
+            let cur_stack_time = events[0].datetime;
+            // remove first stack, i.e., events with the same datetime
+            let mut stack = vec![];
+            while !events.is_empty() && events[0].datetime == cur_stack_time {
+                let e = events.remove(0);
+                stack.push(e);
+            }
+
+            // validate stack integrity
+            let stack_end = stack.last().unwrap().active_end_datetime;
+            let mut stack_end_time_reached = false;
+            for (i, event) in stack.iter().enumerate() {
+                assert!(event.datetime <= event.active_start_datetime);
+                assert!(event.datetime <= event.active_end_datetime);
+
+                if !stack_end_time_reached && event.active_end_datetime == stack_end {
+                    stack_end_time_reached = true;
+                }
+                if i == 0 {
+                    assert_eq!(
+                        event.datetime, prev_event_end,
+                        "Event {:?} must start where previous event ended",
+                        event.data
+                    );
+                } else if !stack_end_time_reached {
+                    assert_eq!(
+                        event.active_start_datetime, prev_event_end,
+                        "Event {:?} must start where previous event ended",
+                        event.data
+                    );
+                } else {
+                    assert_eq!(
+                        event.active_end_datetime, stack_end,
+                        "End of stack changed in {:?}",
+                        event.data
+                    );
+                }
+                assert!(event.active_end_datetime >= prev_event_end);
+                prev_event_end = event.active_end_datetime;
+            }
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_program_events_bug_2() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_program_events_bug_2",
+            MockDataInserts::none().names().contexts(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let ctx = service_provider.basic_context().unwrap();
+
+        let service = service_provider.program_event_service;
+
+        let datetime_from_date = |year: i32, month: u32, day: u32| {
+            NaiveDate::from_ymd_opt(year, month, day)
+                .unwrap()
+                .and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+        };
+
+        let stack_3_datetime = datetime_from_date(2012, 05, 01);
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                stack_3_datetime,
+                &mock_program_a().context_id,
+                vec![EventInput {
+                    active_start_datetime: stack_3_datetime,
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("G3_1".to_string()),
+                }],
+            )
+            .unwrap();
+
+        let stack_2_datetime = datetime_from_date(2012, 04, 03);
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                stack_2_datetime,
+                &mock_program_a().context_id,
+                vec![EventInput {
+                    active_start_datetime: datetime_from_date(2012, 05, 10),
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("G2_1".to_string()),
+                }],
+            )
+            .unwrap();
+
+        let stack_1_datetime = datetime_from_date(2011, 11, 29);
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                stack_1_datetime,
+                &mock_program_a().context_id,
+                vec![
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2011, 12, 31),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2012, 01, 28),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_2".to_string()),
+                    },
+                ],
+            )
+            .unwrap();
+
+        // Expect the following events:
+        // G3_1: datetime: 2012-05-01T00:00:00, start: 2012-05-01T00:00:00, end: 9999-09-09T09:09:09
+        // G2_1: datetime: 2012-04-03T00:00:00, start: 2012-05-10T00:00:00, end: 2012-05-01T00:00:00
+        // G1_2: datetime: 2011-11-29T00:00:00, start: 2012-01-28T00:00:00, end: 2012-04-03T00:00:00
+        // G1_1: datetime: 2011-11-29T00:00:00, start: 2011-12-31T00:00:00, end: 2012-01-28T00:00:00
+        let result = service.events(&ctx, None, None, None).unwrap();
+        check_integrity(result.rows);
     }
 }
