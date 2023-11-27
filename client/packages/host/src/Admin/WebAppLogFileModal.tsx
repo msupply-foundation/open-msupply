@@ -6,10 +6,11 @@ import {
   DialogButton,
   DropdownMenu,
   DropdownMenuItem,
+  LoadingButton,
   Typography,
 } from '@common/components';
 import { useLog } from '@openmsupply-client/system';
-import { Box } from 'packages/common/src';
+import { Box, CopyIcon } from 'packages/common/src';
 import { LogDisplay } from './LogDisplay';
 
 export const WebAppLogFileModal = ({
@@ -30,7 +31,7 @@ export const WebAppLogFileModal = ({
     isLoading,
   } = useLog.document.listFileNames();
 
-  // should add error condition for second hook also
+  // should add error condition for second hook
 
   if (isError) {
     return (
@@ -51,6 +52,18 @@ export const WebAppLogFileModal = ({
     <Modal
       title={t('heading.server-log')}
       okButton={<DialogButton variant="ok" onClick={onClose} />}
+      copyContent={
+        <>
+          <LoadingButton
+            isLoading={isLoading}
+            onClick={() => {
+              navigator.clipboard.writeText(logContent.toString());
+            }}
+            startIcon={<CopyIcon />}
+          ></LoadingButton>
+          {/* <LoadingButton isLoading={isLoading}></LoadingButton> */}
+        </>
+      }
     >
       <>
         <div>

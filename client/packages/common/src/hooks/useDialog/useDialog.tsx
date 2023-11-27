@@ -30,6 +30,7 @@ export interface ModalProps {
   >;
   okButton?: JSX.Element;
   reportSelector?: React.ReactElement;
+  copyContent?: JSX.Element;
   width?: number;
   sx?: SxProps<Theme>;
   title: string;
@@ -131,6 +132,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     nextButton,
     okButton,
     reportSelector,
+    copyContent,
     width,
     title,
     contentProps,
@@ -203,6 +205,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           {okButton}
           {WrappedNextButton}
           {reportSelector}
+          {copyContent}
         </DialogActions>
       </BasicModal>
     );
