@@ -401,12 +401,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all_with_data(
             "refresh_dates",
-            MockDataInserts::none()
-                .stores()
-                .names()
-                .items()
-                .item_links()
-                .units(),
+            MockDataInserts::none().stores().names().items().units(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice1(), invoice2()];
                 r.stock_lines = vec![stock_line1()];
