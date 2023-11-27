@@ -1,5 +1,5 @@
 use super::{
-    item_row::item_link, location_row::location, name_row::name,
+    item_link_row::item_link, location_row::location, name_row::name,
     stock_line_row::stock_line::dsl as stock_line_dsl, store_row::store, StorageConnection,
 };
 

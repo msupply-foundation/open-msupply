@@ -1,6 +1,7 @@
 use super::{
     barcode_row::{barcode, barcode::dsl as barcode_dsl},
-    item_row::{item, item::dsl as item_dsl, item_link, item_link::dsl as item_link_dsl},
+    item_link_row::{item_link, item_link::dsl as item_link_dsl},
+    item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     name_row::{name, name::dsl as name_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
