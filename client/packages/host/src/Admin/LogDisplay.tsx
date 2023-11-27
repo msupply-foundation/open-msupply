@@ -11,10 +11,8 @@ export const LogDisplay = ({
 }) => {
   const { data } = useLog.document.logContentsByFileName(fileName);
 
-  const array = data?.fileContent;
-
-  if (typeof array === 'string') {
-    setLogContent(array);
+  if (data?.fileContent !== undefined && data?.fileContent !== null) {
+    setLogContent(data?.fileContent);
   }
 
   return (
