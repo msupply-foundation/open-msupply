@@ -54,7 +54,7 @@ export const WebAppLogFileModal = ({
     >
       <>
         <div>
-          <Typography>{logToRender}</Typography>
+          <Typography>{logContent}</Typography>
           <Typography>{logToRender}</Typography>
         </div>
         {!isLoading && logFiles ? (
