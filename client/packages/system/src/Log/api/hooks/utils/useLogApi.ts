@@ -4,7 +4,7 @@ import { getSdk } from '../../operations.generated';
 
 export const useLogApi = () => {
   const keys = {
-    base: () => ['log'] as const,
+    base: () => ['logContents'] as const,
     list: () => [...keys.base(), 'list'] as const,
   };
   const { client } = useGql();
