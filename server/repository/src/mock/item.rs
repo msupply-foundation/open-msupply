@@ -4,7 +4,7 @@ use crate::{ItemLinkRow, ItemRow, ItemRowType as ItemType};
 
 pub fn mock_item_link_from_item(item: &ItemRow) -> ItemLinkRow {
     inline_init(|r: &mut ItemLinkRow| {
-        r.id = format!("item_link_{}", item.id);
+        r.id = item.id.clone();
         r.item_id = item.id.clone();
     })
 }
