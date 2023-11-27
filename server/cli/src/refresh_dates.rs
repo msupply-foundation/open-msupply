@@ -347,7 +347,10 @@ fn serialise_date(date: NaiveDate) -> String {
 mod tests {
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_item_a, mock_name_a, mock_store_a, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_item_link_from_item, mock_name_a, mock_store_a, MockData,
+            MockDataInserts,
+        },
         test_db::setup_all_with_data,
         InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
     };
@@ -390,7 +393,7 @@ mod tests {
         fn stock_line1() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line1".to_string();
-                r.item_id = mock_item_a().id;
+                r.item_id = mock_item_link_from_item(&mock_item_a()).id;
                 r.store_id = mock_store_a().id;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 02, 01).unwrap());
             })
@@ -398,7 +401,12 @@ mod tests {
 
         let (_, connection, _, _) = setup_all_with_data(
             "refresh_dates",
-            MockDataInserts::none().stores().names().items().units(),
+            MockDataInserts::none()
+                .stores()
+                .names()
+                .items()
+                .item_links()
+                .units(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice1(), invoice2()];
                 r.stock_lines = vec![stock_line1()];
