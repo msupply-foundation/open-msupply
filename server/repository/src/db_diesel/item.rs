@@ -90,7 +90,7 @@ impl ItemFilter {
     }
 }
 
-type ItemAndMasterList = (ItemRow, Option<UnitRow>);
+type ItemAndUnit = (ItemRow, Option<UnitRow>);
 
 pub struct ItemRepository<'a> {
     connection: &'a StorageConnection,
@@ -162,13 +162,13 @@ impl<'a> ItemRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<ItemAndMasterList>(&self.connection.connection)?;
+        let result = final_query.load::<ItemAndUnit>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain((item_row, unit_row): ItemAndMasterList) -> Item {
+fn to_domain((item_row, unit_row): ItemAndUnit) -> Item {
     Item { item_row, unit_row }
 }
 

@@ -19,20 +19,12 @@ table! {
 }
 
 table! {
-    item_link (id) {
-        id -> Text,
-        item_id -> Text,
-    }
-}
-
-table! {
     item_is_visible (id) {
         id -> Text,
         is_visible -> Bool,
     }
 }
 
-joinable!(item_link -> item (item_id));
 joinable!(item -> unit (unit_id));
 joinable!(item_is_visible -> item (id));
 
@@ -56,13 +48,6 @@ pub struct ItemRow {
     pub r#type: ItemRowType,
     // TODO, this is temporary, remove
     pub legacy_record: String,
-}
-
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
-#[table_name = "item_link"]
-pub struct ItemLinkRow {
-    pub id: String,
-    pub item_id: String,
 }
 
 impl Default for ItemRow {
