@@ -11,6 +11,7 @@ import {
 import { useLog } from '@openmsupply-client/system';
 import { Box } from 'packages/common/src';
 import { LogDisplay } from './LogDisplay';
+
 export const WebAppLogFileModal = ({
   isOpen,
   onClose,
@@ -20,9 +21,16 @@ export const WebAppLogFileModal = ({
 }) => {
   const t = useTranslation('common');
   const [logToRender, setLogToRender] = useState('');
+  const [logContent, setLogContent] = useState<string[]>([]);
   const { Modal } = useDialog({ isOpen });
 
-  const { data, isError, isLoading } = useLog.document.listFileNames();
+  const {
+    data: logFiles,
+    isError,
+    isLoading,
+  } = useLog.document.listFileNames();
+
+  // should add error condition for second hook also
 
   if (isError) {
     return (
@@ -38,33 +46,41 @@ export const WebAppLogFileModal = ({
       </Modal>
     );
   }
+
   return (
     <Modal
       title={t('heading.server-log')}
       okButton={<DialogButton variant="ok" onClick={onClose} />}
     >
-      {!isLoading && data ? (
+      <>
         <div>
-          <DropdownMenu
-            label={logToRender.length > 0 ? logToRender : t('label.server-log')}
-          >
-            {data.fileNames?.map((fileName, i) => (
-              <DropdownMenuItem
-                key={i}
-                onClick={() => {
-                  setLogToRender(fileName);
-                }}
-              >{`${fileName}`}</DropdownMenuItem>
-            ))}
-          </DropdownMenu>
-
-          {logToRender.length > 0 ? (
-            <LogDisplay fileName={logToRender}></LogDisplay>
-          ) : null}
+          <Typography>{logToRender}</Typography>
+          <Typography>{logToRender}</Typography>
         </div>
-      ) : (
-        <BasicSpinner />
-      )}
+        {!isLoading && logFiles ? (
+          <div>
+            <DropdownMenu label={t('label.server-log')}>
+              {logFiles.fileNames?.map((fileName, i) => (
+                <DropdownMenuItem
+                  key={i}
+                  onClick={() => {
+                    setLogToRender(fileName);
+                  }}
+                >{`${fileName}`}</DropdownMenuItem>
+              ))}
+            </DropdownMenu>
+
+            {logToRender && (
+              <LogDisplay
+                fileName={logToRender}
+                setLogContent={setLogContent}
+              ></LogDisplay>
+            )}
+          </div>
+        ) : (
+          <BasicSpinner />
+        )}
+      </>
     </Modal>
   );
 };
