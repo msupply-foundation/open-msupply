@@ -73,9 +73,15 @@ const useDraftPackVariant = (
     switch (structuredError.__typename) {
       case 'VariantWithPackSizeAlreadyExists':
         error(t('error.pack-variant-exists'))();
-        break;
+        throw Error();
+      case 'CannotAddPackSizeOfZero':
+        error(t('error.cannot-add-pack-size-of-zero'))();
+        throw Error();
+      case 'CannotAddWithNoAbbreviationAndName':
+        error(t('error.cannot-add-with-no-abbreviation-and-name'))();
+        throw Error();
       default:
-        noOtherVariants(structuredError.__typename);
+        noOtherVariants(structuredError);
     }
   };
 
@@ -102,7 +108,7 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
     packVariant,
     mode
   );
-  const isInvalid = !draft.packSize && !draft.itemId;
+
   const onDelete = async () => {
     await mutateAsync(draft);
     onClose();
@@ -122,7 +128,6 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={isInvalid}
           onClick={async () => {
             try {
               await onSave();

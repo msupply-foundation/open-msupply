@@ -18,13 +18,44 @@ impl VariantWithPackSizeAlreadyExists {
     }
 }
 
+pub struct CannotAddPackSizeOfZero;
+
+#[Object]
+impl CannotAddPackSizeOfZero {
+    pub async fn description(&self) -> &'static str {
+        "Cannot add a variant with a pack size of zero"
+    }
+}
+
+pub struct CannotAddWithNoAbbreviationAndName;
+
+#[Object]
+impl CannotAddWithNoAbbreviationAndName {
+    pub async fn description(&self) -> &'static str {
+        "Cannot add a variant with no abbreviation and name"
+    }
+}
+
 #[derive(SimpleObject)]
-pub struct MutatePackVariantError {
-    pub error: MutatePackVariantErrorInterface,
+pub struct InsertPackVariantError {
+    pub error: InsertPackVariantErrorInterface,
 }
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
-pub enum MutatePackVariantErrorInterface {
+pub enum InsertPackVariantErrorInterface {
     VariantWithPackSizeAlreadyExists(VariantWithPackSizeAlreadyExists),
+    CannotAddPackSizeOfZero(CannotAddPackSizeOfZero),
+    CannotAddWithNoAbbreviationAndName(CannotAddWithNoAbbreviationAndName),
+}
+
+#[derive(SimpleObject)]
+pub struct UpdatePackVariantError {
+    pub error: UpdatePackVariantErrorInterface,
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", type = "String"))]
+pub enum UpdatePackVariantErrorInterface {
+    CannotAddWithNoAbbreviationAndName(CannotAddWithNoAbbreviationAndName),
 }
