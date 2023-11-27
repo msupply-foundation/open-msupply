@@ -48,7 +48,7 @@ mod graphql {
               "items": {
                   "nodes": [
                       {
-                          "id": "item_query_test1",
+                          "id": "item_link_item_query_test1",
                           "name": "name_item_query_test1",
                           "code": "code_item_query_test1",
                           "unitName": null,
