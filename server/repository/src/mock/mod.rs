@@ -97,11 +97,11 @@ use crate::{
     ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
     DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
-    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
-    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
+    ItemLinkRow, ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow,
+    LocationRow, LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
+    MasterListRow, MasterListRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow,
+    NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository,
+    PeriodScheduleRow, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow,
@@ -133,6 +133,7 @@ pub struct MockData {
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
     pub items: Vec<ItemRow>,
+    pub item_links: Vec<ItemLinkRow>,
     pub locations: Vec<LocationRow>,
     pub sensors: Vec<SensorRow>,
     pub temperature_breaches: Vec<TemperatureBreachRow>,
@@ -195,6 +196,7 @@ pub struct MockDataInserts {
     pub stores: bool,
     pub units: bool,
     pub items: bool,
+    pub item_links: bool,
     pub locations: bool,
     pub sensors: bool,
     pub temperature_breaches: bool,
@@ -243,6 +245,7 @@ impl MockDataInserts {
             stores: true,
             units: true,
             items: true,
+            item_links: true,
             locations: true,
             sensors: true,
             temperature_breaches: true,
@@ -339,6 +342,11 @@ impl MockDataInserts {
 
     pub fn items(mut self) -> Self {
         self.items = true;
+        self
+    }
+
+    pub fn item_links(mut self) -> Self {
+        self.item_links = true;
         self
     }
 
@@ -518,6 +526,10 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             stores: mock_stores(),
             units: mock_units(),
             items: mock_items(),
+            item_links: mock_items()
+                .into_iter()
+                .map(|item| mock_item_link_from_item(&item))
+                .collect(),
             locations: mock_locations(),
             sensors: mock_sensors(),
             temperature_logs: mock_temperature_logs(),
@@ -678,6 +690,13 @@ pub fn insert_mock_data(
         if inserts.items {
             let repo = ItemRowRepository::new(connection);
             for row in &mock_data.items {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.item_links {
+            let repo: ItemLinkRowRepository<'_> = ItemLinkRowRepository::new(connection);
+            for row in &mock_data.item_links {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -920,6 +939,7 @@ impl MockData {
             mut stores,
             mut units,
             mut items,
+            mut item_links,
             mut locations,
             mut sensors,
             mut temperature_breaches,
@@ -966,6 +986,7 @@ impl MockData {
         self.stores.append(&mut stores);
         self.units.append(&mut units);
         self.items.append(&mut items);
+        self.item_links.append(&mut item_links);
         self.locations.append(&mut locations);
         self.sensors.append(&mut sensors);
         self.temperature_logs.append(&mut temperature_logs);

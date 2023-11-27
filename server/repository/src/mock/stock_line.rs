@@ -6,7 +6,7 @@ use crate::StockLineRow;
 pub fn mock_stock_line_a() -> StockLineRow {
     inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_a_line_a");
-        r.item_id = String::from("item_a");
+        r.item_id = String::from("item_link_item_a");
         r.store_id = String::from("store_a");
         r.available_number_of_packs = 30.0;
         r.pack_size = 1;
@@ -18,7 +18,7 @@ pub fn mock_stock_line_a() -> StockLineRow {
 pub fn mock_stock_line_b() -> StockLineRow {
     inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_a_line_b");
-        r.item_id = String::from("item_a");
+        r.item_id = String::from("item_link_item_a");
         r.store_id = String::from("store_a");
         r.batch = Some(String::from("item_a_batch_b"));
         r.available_number_of_packs = 20.0;
@@ -94,7 +94,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
 pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
     let mock_stock_line_si_d_siline_a: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("stock_line_si_d_siline_a");
-        r.item_id = String::from("item_a");
+        r.item_id = String::from("item_link_item_a");
         r.store_id = String::from("store_a");
         r.batch = Some(String::from("item_a_si_d_siline_a"));
         r.available_number_of_packs = 7.0;
@@ -125,7 +125,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
 pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
     let mock_stock_line_ci_c_siline_a: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("stock_line_ci_c_siline_a");
-        r.item_id = String::from("item_a");
+        r.item_id = String::from("item_link_item_a");
         r.store_id = String::from("store_a");
         r.batch = Some(String::from("item_a_ci_c_siline_a"));
         r.available_number_of_packs = 5.0;
@@ -156,7 +156,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
 pub fn mock_stock_line_ci_d() -> Vec<StockLineRow> {
     let mock_stock_line_ci_d_siline_a: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("stock_line_ci_d_siline_a");
-        r.item_id = String::from("item_a");
+        r.item_id = String::from("item_link_item_a");
         r.store_id = String::from("store_a");
         r.batch = Some(String::from("item_a_ci_d_siline_a"));
         r.available_number_of_packs = 10.0;

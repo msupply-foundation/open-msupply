@@ -1,6 +1,13 @@
 use util::inline_init;
 
-use crate::{ItemRow, ItemRowType as ItemType};
+use crate::{ItemLinkRow, ItemRow, ItemRowType as ItemType};
+
+pub fn mock_item_link_from_item(item: &ItemRow) -> ItemLinkRow {
+    inline_init(|r: &mut ItemLinkRow| {
+        r.id = format!("item_link_{}", item.id);
+        r.item_id = item.id.clone();
+    })
+}
 
 pub fn mock_item_a() -> ItemRow {
     inline_init(|r: &mut ItemRow| {
