@@ -96,42 +96,59 @@ mod test {
     };
     use util::create_datetime;
     #[test]
-    fn test_calculate_intervals() {
+fn test_calculate_intervals() {
+    // Test 1: 5 Intervals in 30 seconds
+    // Each interval should be 6 seconds long
+
+    assert_eq!(
+        calculate_intervals(
+            create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
+            create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+            5
+        ),
+        vec![
+            Interval {
+                from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
+                to_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
+            },
+            Interval {
+                from_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
+                to_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
+            },
+            Interval {
+                from_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
+                to_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
+            },
+            Interval {
+                from_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
+                to_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
+            },
+            Interval {
+                from_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
+                to_datetime: create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+            }
+        ]
+    );
+
+    // Test 2: 30 Intervals in 30 seconds
+    // Each interval should be 1 second long
+    let intervals = calculate_intervals(
+        create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
+        create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+        30,
+    );
+
+    assert_eq!(intervals.len(), 30);
+    for i in 0..30 {
         assert_eq!(
-            calculate_intervals(
-                create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
-                5 // Will generate 5 evenly spaced intervals based on above timestamps
-            ),
-            vec![
-                Interval {
-                    // Interval 1
-                    from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
-                },
-                Interval {
-                    // Interval 2 (from_datetime = interval_1.to_datetime), etc..
-                    from_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
-                },
-                Interval {
-                    // Interval 3
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
-                },
-                Interval {
-                    // Interval 4
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
-                },
-                Interval {
-                    // Interval 5
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
-                }
-            ]
+            intervals[i],
+            Interval {
+                from_datetime: create_datetime(2021, 01, 01, 23, 59, 50 + i).unwrap(),
+                to_datetime: create_datetime(2021, 01, 01, 23, 59, 51 + i).unwrap(),
+            }
         );
     }
+}
 
     #[actix_rt::test]
     async fn temperature_charts() {
