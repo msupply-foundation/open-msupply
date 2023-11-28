@@ -66,9 +66,10 @@ export const WebAppLogFileModal = ({
   const saveLog = async () => {
     setIsSaving(true);
     await saveFile({
-      fileName: 'exported_log.txt',
-      fileContent: logContent.toString(),
+      content: logContent.toString(),
+      filename: 'exported_log.txt',
     });
+    setIsSaving(false);
   };
 
   // should add error condition for second hook
