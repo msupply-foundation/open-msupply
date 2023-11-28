@@ -68,7 +68,7 @@ export const WebAppLogFileModal = ({
     setIsSaving(true);
     await saveFile({
       content: logContent.toString(),
-      filename: 'exported_log.txt',
+      filename: `${logToRender}-exported-log.txt`,
     });
     setIsSaving(false);
   };
