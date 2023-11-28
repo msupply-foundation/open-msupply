@@ -35,8 +35,6 @@ export const UIComponent = (props: ControlProps) => {
     'BloodPressure'
   );
 
-  console.log('core ', core?.errors);
-
   useEffect(() => {
     if (core) {
       const getChildErrors = subErrorsAt(path, schema);
