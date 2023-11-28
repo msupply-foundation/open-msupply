@@ -334,6 +334,8 @@
   "label.user": "User",
   "label.verified": "Verified",
   "label.website": "Website",
+  "label.save-log": "Save log to file",
+  "label.ok-and-close": "Close log viewer",
   "link.copy-to-clipboard": "Copy to Clipboard",
   "log.changed-from": "From",
   "log.changed-to": "to",
