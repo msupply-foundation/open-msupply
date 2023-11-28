@@ -20,6 +20,7 @@ import { BooleanFilter, BooleanFilterDefinition } from './BooleanFilter';
 export interface FilterDefinitionCommon {
   name: string;
   urlParameter: string;
+  isDefault?: boolean;
 }
 
 interface GroupFilterDefinition {
@@ -47,8 +48,8 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const [activeFilters, setActiveFilters] = useState<FilterDefinition[]>(
-    flattenFilterDefinitions(filters).filter(fil =>
-      Object.keys(urlQuery).includes(fil.urlParameter)
+    flattenFilterDefinitions(filters).filter(
+      fil => Object.keys(urlQuery).includes(fil.urlParameter) || fil.isDefault
     )
   );
 
@@ -62,7 +63,7 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
         activeFilters.map(({ urlParameter }) => [urlParameter, ''])
       );
       updateQuery(queryPatch);
-      setActiveFilters([]);
+      setActiveFilters(activeFilters.filter(fil => fil.isDefault));
       return;
     }
     if (selected.type === 'group') {
