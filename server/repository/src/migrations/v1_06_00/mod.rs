@@ -32,11 +32,42 @@ impl Migration for V1_06_00 {
 async fn migration_1_06_00() {
     use crate::migrations::*;
     use crate::test_db::*;
+    use diesel::prelude::*;
+    use item_link::dsl as item_link_dsl;
+    use stock_on_hand::dsl as soh_dsl;
+
+    table! {
+        item_link {
+            id->Text,
+            item_id->Text,
+        }
+    }
+    #[derive(Queryable, Debug, PartialEq)]
+    struct ItemLinkRow {
+        id: String,
+        item_id: String,
+    }
+
+    table! {
+        stock_on_hand(id) {
+            id -> Text,
+            item_id -> Text,
+            store_id -> Text,
+            available_stock_on_hand -> BigInt,
+        }
+    }
+
+    #[derive(Queryable, Debug, PartialEq)]
+    struct StockOnHandRow {
+        id: String,
+        item_id: String,
+        store_id: String,
+        available_stock_on_hand: i64,
+    }
 
     let previous_version = v1_05_00::V1_05_00.version();
     let version = V1_06_00.version();
 
-    // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(previous_version.clone()),
@@ -107,7 +138,44 @@ async fn migration_1_06_00() {
     )
     .unwrap();
 
+    let old_soh: Vec<StockOnHandRow> = soh_dsl::stock_on_hand
+        .order(soh_dsl::id.asc())
+        .load(&connection.connection)
+        .unwrap();
+
     migrate(&connection, Some(version.clone())).unwrap();
 
+    let new_soh: Vec<StockOnHandRow> = soh_dsl::stock_on_hand
+        .order(soh_dsl::id.asc())
+        .load(&connection.connection)
+        .unwrap();
+    assert_eq!(old_soh, new_soh);
+
     assert_eq!(get_database_version(&connection), version);
+
+    let expected_item_links = vec![
+        ItemLinkRow {
+            id: "item1".to_string(),
+            item_id: "item1".to_string(),
+        },
+        ItemLinkRow {
+            id: "item2".to_string(),
+            item_id: "item2".to_string(),
+        },
+        ItemLinkRow {
+            id: "item3".to_string(),
+            item_id: "item3".to_string(),
+        },
+        ItemLinkRow {
+            id: "item4".to_string(),
+            item_id: "item4".to_string(),
+        },
+    ];
+
+    let migration_item_links: Vec<ItemLinkRow> = item_link_dsl::item_link
+        .order(item_link_dsl::id)
+        .load(&connection.connection)
+        .unwrap();
+
+    assert_eq!(expected_item_links, migration_item_links);
 }
