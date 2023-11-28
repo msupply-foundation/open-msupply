@@ -1,7 +1,7 @@
 use repository::EqualFilter;
 use repository::{
-    sensor::{SensorFilter, SensorRepository},
-    RepositoryError, SensorRow, SensorRowRepository, StorageConnection,
+    RepositoryError, SensorFilter, SensorRepository, SensorRow, SensorRowRepository,
+    StorageConnection,
 };
 
 pub fn check_sensor_serial_is_unique(

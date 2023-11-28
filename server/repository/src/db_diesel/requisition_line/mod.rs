@@ -2,7 +2,7 @@ use crate::EqualFilter;
 use crate::RequisitionRowStatus;
 use crate::RequisitionRowType;
 
-mod requisition_line;
+pub mod requisition_line;
 pub mod requisition_line_row;
 
 pub use self::requisition_line::*;

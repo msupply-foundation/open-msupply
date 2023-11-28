@@ -7,6 +7,7 @@ import {
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
+import { parseBreachType } from './utils';
 
 export const BreachTypeCell = <T extends RecordWithId>({
   rowData,
@@ -17,8 +18,7 @@ export const BreachTypeCell = <T extends RecordWithId>({
   const breachType = column.accessor({
     rowData,
   }) as TemperatureBreachNodeType | null;
-  const temperature = breachType?.split('_')[0];
-  const type = breachType?.split('_')[1];
+  const { temperature, type } = parseBreachType(breachType);
 
   return (
     <>

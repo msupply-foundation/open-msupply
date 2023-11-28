@@ -6,7 +6,7 @@ export interface FilterByConditionByType {
   date: 'beforeOrEqualTo' | 'afterOrEqualTo' | 'equalTo' | 'between';
 }
 
-type FilterRule = {
+export type FilterRule = {
   [P in
     | FilterByConditionByType['string']
     | FilterByConditionByType['date']]?: unknown;
@@ -16,7 +16,7 @@ export type FilterBy = Record<string, FilterRule | null>;
 export type FilterByWithBoolean = Record<string, FilterRule | null | boolean>;
 
 export interface FilterController {
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 
   onChangeDateFilterRule: (
     key: string,

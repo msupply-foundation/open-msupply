@@ -1,4 +1,4 @@
-use crate::migrations::{DATETIME, DOUBLE};
+use crate::migrations::DATETIME;
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
@@ -12,7 +12,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
             CREATE TYPE {SENSOR_TYPE} AS ENUM (
                 'BLUE_MAESTRO',
-                'LAIRD'
+                'LAIRD', 
+                'BERLINGER'
             );
         "#
     )?;
@@ -25,38 +26,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 serial TEXT NOT NULL,
                 name TEXT NOT NULL,
                 is_active BOOLEAN,
-                store_id TEXT REFERENCES store(id),
+                store_id TEXT NOT NULL REFERENCES store(id),
                 location_id TEXT REFERENCES location(id),
                 battery_level INTEGER,
                 log_interval INTEGER,
                 last_connection_datetime {DATETIME},
                 type {SENSOR_TYPE}
             );
-
-            CREATE TABLE temperature_breach (
-                id TEXT NOT NULL PRIMARY KEY,
-                duration INTEGER NOT NULL,
-                type TEXT NOT NULL,
-                sensor_id TEXT NOT NULL REFERENCES sensor(id),
-                store_id TEXT REFERENCES store(id),
-                location_id TEXT REFERENCES location(id),
-                start_datetime {DATETIME} NOT NULL,
-                end_datetime {DATETIME},
-                acknowledged BOOLEAN,
-                threshold_minimum {DOUBLE} NOT NULL,
-                threshold_maximum {DOUBLE} NOT NULL,
-                threshold_duration INTEGER NOT NULL
-            );
-
-            CREATE TABLE temperature_log (
-                id TEXT NOT NULL PRIMARY KEY,
-                temperature {DOUBLE} NOT NULL,
-                sensor_id TEXT NOT NULL REFERENCES sensor(id),
-                store_id TEXT REFERENCES store(id),
-                location_id TEXT REFERENCES location(id),
-                datetime {DATETIME} NOT NULL,
-                temperature_breach_id TEXT REFERENCES temperature_breach(id)
-            );      
             "#
     )?;
 
@@ -65,20 +41,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             connection,
             r#"
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'sensor';
-                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_breach';
-                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'temperature_log';
-
 
                 CREATE TRIGGER sensor_trigger
                 AFTER INSERT OR UPDATE OR DELETE ON sensor
-                FOR EACH ROW EXECUTE PROCEDURE update_changelog();
-
-                CREATE TRIGGER temperature_breach_trigger
-                AFTER INSERT OR UPDATE OR DELETE ON temperature_breach
-                FOR EACH ROW EXECUTE PROCEDURE update_changelog();
-                
-                CREATE TRIGGER temperature_log_trigger
-                AFTER INSERT OR UPDATE OR DELETE ON temperature_log
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog();
             "#
         )?;
@@ -92,21 +57,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                     INSERT INTO changelog (table_name, record_id, row_action)
                     VALUES ("sensor", NEW.id, "UPSERT");
                 END;
-
-                CREATE TRIGGER temperature_breach_insert_trigger
-                AFTER INSERT ON temperature_breach
-                BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ("temperature_breach", NEW.id, "UPSERT");
-                END;
-
-
-                CREATE TRIGGER temperature_log_insert_trigger
-                AFTER INSERT ON temperature_log
-                BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ("temperature_log", NEW.id, "UPSERT");
-                END;
             "#
         )?;
 
@@ -119,20 +69,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 INSERT INTO changelog (table_name, record_id, row_action)
                     VALUES ('sensor', NEW.id, 'UPSERT');
                 END;
-
-                CREATE TRIGGER temperature_breach_update_trigger
-                AFTER UPDATE ON temperature_breach
-                BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ('temperature_breach', NEW.id, 'UPSERT');
-                END;
-
-                CREATE TRIGGER temperature_log_update_trigger
-                AFTER UPDATE ON temperature_log
-                BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ('temperature_log', NEW.id, 'UPSERT');
-                END;          
             "#
         )?;
 
@@ -144,20 +80,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 BEGIN
                     INSERT INTO changelog (table_name, record_id, row_action)
                     VALUES ('sensor', OLD.id, 'DELETE');
-                END;
-
-                CREATE TRIGGER temperature_breach_delete_trigger
-                AFTER DELETE ON temperature_breach
-                BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ('temperature_breach', OLD.id, 'DELETE');
-                END;
-
-                CREATE TRIGGER temperature_log_delete_trigger
-                AFTER DELETE ON temperature_log
-                BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ('temperature_log', OLD.id, 'DELETE');
                 END;
             "#
         )?;

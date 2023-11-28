@@ -3,7 +3,7 @@ import {
   RecordPatch,
   InvoiceNodeType,
   InvoiceSortFieldInput,
-  FilterBy,
+  FilterByWithBoolean,
   SortBy,
   InvoiceNodeStatus,
   UpdateInboundShipmentLineInput,
@@ -28,7 +28,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<InboundRowFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 const inboundParsers = {

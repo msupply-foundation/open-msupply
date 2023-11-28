@@ -1,4 +1,5 @@
 use async_graphql::*;
+use service::report::definition::PrintReportSort;
 
 #[derive(InputObject)]
 pub struct TaxInput {
@@ -19,4 +20,40 @@ pub struct TaxInput {
 #[graphql(concrete(name = "NullableStringUpdate", params(String)))]
 pub struct NullableUpdateInput<T: InputType> {
     pub value: Option<T>,
+}
+
+/// This struct is used to sort report data by a key and in descending or ascending order
+#[derive(InputObject)]
+pub struct PrintReportSortInput {
+    /// Sort query result by `key`
+    pub key: String,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    pub desc: Option<bool>,
+}
+
+impl PrintReportSortInput {
+    /// Convert the input object `PrintReportSortInput` to a domain object `PrintReportSort`
+    pub fn to_domain(self) -> PrintReportSort {
+        PrintReportSort {
+            key: self.key,
+            desc: self.desc,
+        }
+    }
+}
+
+pub fn report_sort_to_typed_sort<T: strum::IntoEnumIterator + serde::Serialize>(
+    sort: Option<PrintReportSortInput>,
+) -> Option<(T, Option<bool>)> {
+    match sort {
+        None => None,
+        Some(PrintReportSortInput { key, desc }) => T::iter()
+            .find(|variant| {
+                serde_json::to_string(variant)
+                    .unwrap_or_default()
+                    .trim_matches('"')
+                    == key.to_lowercase()
+            })
+            .map(|variant| (variant, desc)),
+    }
 }

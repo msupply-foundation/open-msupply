@@ -156,6 +156,7 @@ mod test {
 
         let master_list1 = MasterListRow {
             id: "master_list1".to_string(),
+            is_active: true,
             ..Default::default()
         };
         let context1 = ContextRow {
@@ -171,6 +172,7 @@ mod test {
 
         let master_list2 = MasterListRow {
             id: "master_list2".to_string(),
+            is_active: true,
             ..Default::default()
         };
 

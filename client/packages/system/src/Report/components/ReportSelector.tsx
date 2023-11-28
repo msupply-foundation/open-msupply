@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren, useCallback, useState } from 'react';
+import React, { FC, PropsWithChildren, useState } from 'react';
 import { Box, ReportContext, Typography } from '@openmsupply-client/common';
 import { AlertIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
@@ -50,19 +50,16 @@ export const ReportSelector: FC<PropsWithChildren<ReportSelectorProps>> = ({
   const [reportWithArgs, setReportWithArgs] = useState<
     ReportRowFragment | undefined
   >();
-  const onReportSelected = useCallback(
-    (report: ReportRowFragment | undefined) => {
-      if (report === undefined) {
-        return;
-      }
-      if (report.argumentSchema) {
-        setReportWithArgs(report);
-      } else {
-        onPrint(report, undefined);
-      }
-    },
-    []
-  );
+  const onReportSelected = (report: ReportRowFragment | undefined) => {
+    if (report === undefined) {
+      return;
+    }
+    if (report.argumentSchema) {
+      setReportWithArgs(report);
+    } else {
+      onPrint(report, undefined);
+    }
+  };
 
   const reportButtons = data?.nodes?.map(report => (
     <FlatButton

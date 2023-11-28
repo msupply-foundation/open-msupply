@@ -91,6 +91,7 @@ mod graphql {
                     name: "test_name".to_owned(),
                     code: "test_code".to_owned(),
                     description: "test_description".to_owned(),
+                    is_active: true,
                 }],
                 count: 1,
             })

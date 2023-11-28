@@ -2,10 +2,9 @@ import React, {
   FC,
   createContext,
   useMemo,
-  useEffect,
-  useState,
   useCallback,
   PropsWithChildren,
+  useRef,
 } from 'react';
 import {
   GraphQLClient,
@@ -26,6 +25,7 @@ const permissionExceptions = [
   'invoiceCounts',
   'itemCounts',
   'requisitionCounts',
+  'temperatureBreaches',
 ];
 interface ResponseError {
   message?: string;
@@ -140,14 +140,6 @@ class GQLClient extends GraphQLClient {
   public getLastRequestTime = () => this.lastRequestTime;
 }
 
-export const createGql = (
-  url: string,
-  skipRequest?: SkipRequest
-): { client: GQLClient } => {
-  const client = new GQLClient(url, { credentials: 'include' }, skipRequest);
-  return { client };
-};
-
 interface GqlControl {
   client: GQLClient;
   setHeader: (header: string, value: string) => void;
@@ -169,9 +161,9 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
   skipRequest,
   children,
 }) => {
-  const [{ client }, setApi] = useState<{
-    client: GQLClient;
-  }>(() => createGql(url, skipRequest));
+  const client = useRef(
+    new GQLClient(url, { credentials: 'include' }, skipRequest)
+  ).current;
 
   const setUrl = useCallback(
     (newUrl: string) => {
@@ -193,10 +185,6 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
     },
     [client]
   );
-
-  useEffect(() => {
-    setApi(createGql(url, skipRequest));
-  }, [url, skipRequest]);
 
   const val = useMemo(
     () => ({

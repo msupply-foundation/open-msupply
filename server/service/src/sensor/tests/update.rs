@@ -2,11 +2,7 @@
 mod query {
     use repository::mock::mock_store_a;
     use repository::EqualFilter;
-    use repository::{
-        mock::MockDataInserts,
-        sensor::{SensorFilter, SensorRepository},
-        test_db::setup_all,
-    };
+    use repository::{mock::MockDataInserts, test_db::setup_all, SensorFilter, SensorRepository};
 
     use crate::NullableUpdate;
     use crate::{
@@ -37,7 +33,7 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: "invalid".to_owned(),
-                    location: None,
+                    location_id: None,
                     name: None,
                     is_active: None,
                     log_interval: None,
@@ -53,7 +49,7 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensors_not_in_store[0].sensor_row.id.clone(),
-                    location: None,
+                    location_id: None,
                     name: None,
                     is_active: None,
                     log_interval: None,
@@ -89,7 +85,7 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensor.sensor_row.id.clone(),
-                    location: None,
+                    location_id: None,
                     name: None,
                     is_active: None,
                     log_interval: None,
@@ -119,7 +115,7 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensor.sensor_row.id.clone(),
-                    location: Some(NullableUpdate {
+                    location_id: Some(NullableUpdate {
                         value: Some("location_1".to_string())
                     }),
                     name: Some(sensor.sensor_row.name.clone()),
@@ -148,7 +144,7 @@ mod query {
                 &context,
                 UpdateSensor {
                     id: sensor.sensor_row.id.clone(),
-                    location: Some(NullableUpdate { value: None }),
+                    location_id: Some(NullableUpdate { value: None }),
                     name: None,
                     is_active: None,
                     log_interval: None,

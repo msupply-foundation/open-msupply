@@ -12,19 +12,21 @@ import {
   CentralPatientSearchInput,
   InsertProgramPatientInput,
   UpdateProgramPatientInput,
+  FilterByWithBoolean,
 } from '@openmsupply-client/common';
 import {
   Sdk,
   PatientRowFragment,
   CentralPatientSearchQuery,
   LinkPatientToStoreMutation,
+  ProgramPatientRowFragment,
 } from './operations.generated';
 
 export type ListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<PatientRowFragment>;
-  filterBy?: FilterBy | null;
+  filterBy?: FilterByWithBoolean | null;
 };
 
 export type ProgramEnrolmentListParams = {
@@ -36,7 +38,7 @@ export type EncounterListParams = {
   first?: number;
   offset?: number;
   sortBy: SortRule<EncounterSortFieldInput>;
-  filterBy?: FilterBy | null;
+  filterBy?: FilterByWithBoolean | null;
   pagination?: PaginationInput;
 };
 
@@ -110,7 +112,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
       input: PatientSearchInput
     ): Promise<{
       totalCount: number;
-      nodes: { score: number; patient: PatientRowFragment }[];
+      nodes: { score: number; patient: ProgramPatientRowFragment }[];
     }> => {
       const result = await sdk.patientSearch({
         storeId,
@@ -135,7 +137,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
   },
   insertPatient: async (
     input: InsertPatientInput
-  ): Promise<PatientRowFragment> => {
+  ): Promise<ProgramPatientRowFragment> => {
     const result = await sdk.insertPatient({
       storeId,
       input,
@@ -150,7 +152,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
   updatePatient: async (
     input: UpdatePatientInput
-  ): Promise<PatientRowFragment> => {
+  ): Promise<ProgramPatientRowFragment> => {
     const result = await sdk.updatePatient({
       storeId,
       input,
@@ -165,7 +167,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
   insertProgramPatient: async (
     input: InsertProgramPatientInput
-  ): Promise<PatientRowFragment> => {
+  ): Promise<ProgramPatientRowFragment> => {
     const result = await sdk.insertProgramPatient({
       storeId,
       input,
@@ -180,7 +182,7 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
 
   updateProgramPatient: async (
     input: UpdateProgramPatientInput
-  ): Promise<PatientRowFragment> => {
+  ): Promise<ProgramPatientRowFragment> => {
     const result = await sdk.updateProgramPatient({
       storeId,
       input,

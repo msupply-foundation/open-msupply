@@ -11,7 +11,7 @@ fs.readFile('../../../package.json', (err, rootPackageJson) => {
 
     fs.writeFile('./package.json', JSON.stringify(package, 2), err => {
       if (err) throw err;
-      console.log('Package version updated.');
+      console.info('Package version updated.');
     });
   });
 });

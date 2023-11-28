@@ -5,7 +5,7 @@ import { useLocationApi } from '../utils/useLocationApi';
 export const useLocationsAll = (sortBy: SortBy<LocationRowFragment>) => {
   const api = useLocationApi();
   const result = useMutation(api.keys.sortedList(sortBy), () =>
-    api.get.list({ sortBy })
+    api.get.list({ sortBy, filterBy: null })
   );
 
   return { ...result, fetchAsync: result.mutateAsync };

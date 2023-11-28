@@ -1,10 +1,6 @@
 #[cfg(test)]
 mod query {
-    use repository::{
-        mock::MockDataInserts,
-        sensor::{SensorFilter, SensorSortField},
-        test_db::setup_all,
-    };
+    use repository::{mock::MockDataInserts, test_db::setup_all, SensorFilter, SensorSortField};
     use repository::{EqualFilter, PaginationOption, Sort};
 
     use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};

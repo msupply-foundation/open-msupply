@@ -6,13 +6,13 @@ import {
   UpdateStocktakeInput,
   RecordPatch,
   SortBy,
-  FilterBy,
   StocktakeSortFieldInput,
   DeleteStocktakeLineInput,
   StocktakeNodeStatus,
   UpdateStocktakeStatusInput,
   InsertStocktakeInput,
   setNullableInput,
+  FilterByWithBoolean,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -27,7 +27,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<StocktakeRowFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 const stocktakeParser = {

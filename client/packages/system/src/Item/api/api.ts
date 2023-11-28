@@ -2,7 +2,7 @@ import {
   ItemNodeType,
   SortBy,
   ItemSortFieldInput,
-  FilterBy,
+  FilterByWithBoolean,
 } from '@openmsupply-client/common';
 import { Sdk, ItemRowFragment } from './operations.generated';
 
@@ -10,7 +10,7 @@ export type ListParams<T> = {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
-  filterBy?: FilterBy | null;
+  filterBy?: FilterByWithBoolean | null;
   isVisible?: boolean;
 };
 
@@ -98,9 +98,10 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         isDesc: sortBy.isDesc,
         offset,
         storeId,
+        // the filter previously only showed type: { equalTo: ItemNodeType.Stock },
+        // because service items don't have SOH & AMC so it's odd to show them alongside stock items
         filter: {
           ...filterBy,
-          type: { equalTo: ItemNodeType.Stock },
           isVisible: true,
         },
       });

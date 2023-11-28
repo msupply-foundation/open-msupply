@@ -1,9 +1,10 @@
 import React, { FC } from 'react';
 import { LocationSearchInput } from '@openmsupply-client/system/src';
 import { useTranslation } from '@common/intl';
-import { InputWithLabelRow } from '@common/components';
+import { BasicTextInput, InputWithLabelRow } from '@common/components';
 import { Box, Formatter, TextWithLabelRow } from '@openmsupply-client/common';
 import { UseDraftSensorControl } from './SensorEditModal';
+import { isSensorNameEditDisabled } from '../utils';
 
 export const SensorLineForm: FC<UseDraftSensorControl> = ({
   draft,
@@ -16,11 +17,18 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
 
   return (
     <Box display="flex" flexDirection="column" gap={2}>
-      <TextWithLabelRow
-        sx={textSx}
+      <InputWithLabelRow
         label={t('label.sensor-name')}
-        text={draft.name}
-      ></TextWithLabelRow>
+        labelProps={inputTextAlign}
+        Input={
+          <BasicTextInput
+            value={draft.name ?? ''}
+            onChange={e => onUpdate({ name: e.target.value })}
+            disabled={isSensorNameEditDisabled(draft)}
+          />
+        }
+      />
+
       <InputWithLabelRow
         label={t('label.location')}
         labelProps={inputTextAlign}

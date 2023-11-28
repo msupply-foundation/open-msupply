@@ -1,6 +1,8 @@
 use super::{
     document::latest_document::dsl as latest_document_dsl,
     encounter_row::encounter::{self, dsl as encounter_dsl},
+    name_row::name::dsl as name_dsl,
+    program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
     program_row::{program, program::dsl as program_dsl},
     StorageConnection,
 };
@@ -8,7 +10,8 @@ use super::{
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     latest_document, DBType, DatetimeFilter, EncounterRow, EncounterStatus, EqualFilter,
-    Pagination, ProgramRow, RepositoryError, Sort, StringFilter,
+    Pagination, PatientFilter, PatientRepository, ProgramEnrolmentFilter,
+    ProgramEnrolmentRepository, ProgramRow, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
@@ -28,6 +31,8 @@ pub struct EncounterFilter {
     pub clinician_id: Option<EqualFilter<String>>,
     /// Filter by encounter data
     pub document_data: Option<StringFilter>,
+    pub patient: Option<PatientFilter>,
+    pub program_enrolment: Option<ProgramEnrolmentFilter>,
 }
 
 impl EncounterFilter {
@@ -94,6 +99,16 @@ impl EncounterFilter {
         self.document_data = Some(filter);
         self
     }
+
+    pub fn patient(mut self, filter: PatientFilter) -> Self {
+        self.patient = Some(filter);
+        self
+    }
+
+    pub fn program_enrolment(mut self, filter: ProgramEnrolmentFilter) -> Self {
+        self.program_enrolment = Some(filter);
+        self
+    }
 }
 
 pub enum EncounterSortField {
@@ -131,6 +146,8 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             status,
             clinician_id,
             document_data,
+            patient,
+            program_enrolment,
         } = f;
 
         apply_equal_filter!(query, id, encounter_dsl::id);
@@ -151,6 +168,18 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
                 .into_boxed();
             apply_string_filter!(sub_query, document_data, latest_document::data);
             query = query.filter(encounter_dsl::document_name.eq_any(sub_query));
+        }
+
+        if patient.is_some() {
+            let patient_ids =
+                PatientRepository::create_filtered_query(patient, None).select(name_dsl::id);
+            query = query.filter(encounter_dsl::patient_id.eq_any(patient_ids));
+        }
+
+        if program_enrolment.is_some() {
+            let program_ids = ProgramEnrolmentRepository::create_filtered_query(program_enrolment)
+                .select(program_enrolment_dsl::program_id);
+            query = query.filter(encounter_dsl::program_id.eq_any(program_ids));
         }
     }
     query

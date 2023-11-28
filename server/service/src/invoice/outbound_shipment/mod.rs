@@ -1,4 +1,4 @@
-mod generate;
+pub mod generate;
 pub use self::generate::*;
 
 pub mod delete;

@@ -1,10 +1,11 @@
 import { createContext } from 'react';
 
+export type IconType = 'alert' | 'help' | 'info';
 export interface ConfirmationModalState {
   open: boolean;
   message: string;
   title: string;
-  iconType?: 'alert' | 'info';
+  iconType?: IconType;
   onConfirm?: (() => void) | (() => Promise<void>);
   onCancel?: (() => void) | (() => Promise<void>);
 }
@@ -12,6 +13,7 @@ export interface ConfirmationModalState {
 export interface ConfirmationModalControllerState
   extends ConfirmationModalState {
   setState: (state: ConfirmationModalState) => void;
+  setIconType: (iconType: IconType) => void;
   setMessage: (message: string) => void;
   setTitle: (title: string) => void;
   setOnConfirm: (
