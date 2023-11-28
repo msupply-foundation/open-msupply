@@ -11,7 +11,37 @@ import {
 } from '@common/components';
 import { useLog } from '@openmsupply-client/system';
 import { Box, CopyIcon } from 'packages/common/src';
-import { LogDisplay } from './LogDisplay';
+import { LogTextDisplay } from './LogTextDisplay';
+
+export const LogDisplay = ({
+  fileName,
+  setLogContent,
+}: {
+  fileName: string;
+  setLogContent: (content: string[]) => void;
+}) => {
+  const { data, isLoading } = useLog.document.logContentsByFileName(fileName);
+
+  if (data?.fileContent !== undefined && data?.fileContent !== null) {
+    setLogContent(data?.fileContent);
+  }
+
+  if (isLoading) {
+    return (
+      <>
+        <BasicSpinner></BasicSpinner>
+      </>
+    );
+  } else {
+    return (
+      <>
+        {Array.isArray(data?.fileContent) && data?.fileContent != undefined ? (
+          <LogTextDisplay logText={data?.fileContent}></LogTextDisplay>
+        ) : null}
+      </>
+    );
+  }
+};
 
 export const WebAppLogFileModal = ({
   isOpen,
@@ -30,7 +60,7 @@ export const WebAppLogFileModal = ({
   const {
     data: logFiles,
     isError,
-    isLoading,
+    isLoading: logListLoading,
   } = useLog.document.listFileNames();
 
   const saveLog = async () => {
@@ -64,7 +94,7 @@ export const WebAppLogFileModal = ({
       okButton={<DialogButton variant="ok" onClick={onClose} />}
       copyContent={
         <LoadingButton
-          isLoading={isLoading}
+          isLoading={logListLoading}
           onClick={() => {
             navigator.clipboard.writeText(logContent.toString());
           }}
@@ -83,10 +113,10 @@ export const WebAppLogFileModal = ({
         <div>
           <Typography>{logToRender}</Typography>
         </div>
-        {!isLoading && logFiles ? (
+        {!logListLoading ? (
           <div>
             <DropdownMenu label={t('label.server-log')}>
-              {logFiles.fileNames?.map((fileName, i) => (
+              {logFiles?.fileNames?.map((fileName, i) => (
                 <DropdownMenuItem
                   key={i}
                   onClick={() => {
@@ -96,17 +126,16 @@ export const WebAppLogFileModal = ({
               ))}
             </DropdownMenu>
 
-            {logContent ? (
-              <LogDisplay
-                fileName={logToRender}
-                setLogContent={setLogContent}
-              ></LogDisplay>
-            ) : (
-              <BasicSpinner />
-            )}
+            <LogDisplay
+              fileName={logToRender}
+              setLogContent={setLogContent}
+            ></LogDisplay>
           </div>
         ) : (
-          <BasicSpinner />
+          <>
+            hello
+            <BasicSpinner />
+          </>
         )}
       </>
     </Modal>
