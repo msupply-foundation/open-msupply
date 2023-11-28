@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDialog, useNativeClient } from '@common/hooks';
+import { useDialog, useWebClient } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
   BasicSpinner,
@@ -54,7 +54,7 @@ export const WebAppLogFileModal = ({
   const [logToRender, setLogToRender] = useState('');
   const [logContent, setLogContent] = useState<string[]>([]);
   const { Modal } = useDialog({ isOpen });
-  const { saveFile } = useNativeClient();
+  const { saveFile } = useWebClient();
   const [isSaving, setIsSaving] = useState(false);
 
   const {
@@ -66,8 +66,8 @@ export const WebAppLogFileModal = ({
   const saveLog = async () => {
     setIsSaving(true);
     await saveFile({
-      content: logContent.toString(),
-      filename: 'exported_log.txt',
+      fileName: 'exported_log.txt',
+      fileContent: logContent.toString(),
     });
   };
 
@@ -93,13 +93,22 @@ export const WebAppLogFileModal = ({
       title={t('heading.server-log')}
       okButton={<DialogButton variant="ok" onClick={onClose} />}
       copyContent={
-        <LoadingButton
-          isLoading={logListLoading}
-          onClick={() => {
-            navigator.clipboard.writeText(logContent.toString());
-          }}
-          startIcon={<CopyIcon />}
-        />
+        <>
+          <LoadingButton
+            isLoading={logListLoading}
+            onClick={() => {
+              navigator.clipboard.writeText(logContent.toString());
+            }}
+            startIcon={<CopyIcon />}
+          />
+          <LoadingButton
+            isLoading={logListLoading}
+            onClick={() => {
+              saveLog();
+            }}
+            startIcon={<CopyIcon />}
+          />
+        </>
       }
       cancelButton={
         <DialogButton
