@@ -75,7 +75,7 @@ export const PackVariantEntryCell =
         value: v.packSize,
       })),
       {
-        label: t('label.enter-pack-size'),
+        label: t('label.custom'),
         value: ENTER_PACK_SIZE,
       },
     ];
