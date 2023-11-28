@@ -128,7 +128,7 @@ mod test {
                 nodes {
                   id
                   sensorId
-                  acknowledged
+                  unacknowledged
                 }
                 totalCount
               }
@@ -142,10 +142,10 @@ mod test {
                 rows: vec![TemperatureBreach {
                     temperature_breach_row: TemperatureBreachRow {
                         id: "acknowledged_temperature_breach".to_owned(),
-                        duration: 3600,
-                        acknowledged: true,
+                        duration_milliseconds: 3600,
+                        unacknowledged: false,
                         r#type: TemperatureBreachRowType::ColdConsecutive,
-                        store_id: Some("store_a".to_string()),
+                        store_id: "store_a".to_string(),
                         location_id: None,
                         threshold_minimum: -273.0,
                         threshold_maximum: 2.0,
@@ -162,7 +162,7 @@ mod test {
                                 .unwrap()
                                 + Duration::seconds(50646),
                         ),
-                        threshold_duration: 3600,
+                        threshold_duration_milliseconds: 3600,
                     },
                 }],
                 count: 1,
@@ -175,7 +175,7 @@ mod test {
                       {
                           "id": "acknowledged_temperature_breach",
                           "sensorId": "sensor_1",
-                          "acknowledged": true,
+                          "unacknowledged": false,
                       },
                   ],
                   "totalCount": 1

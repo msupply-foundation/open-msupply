@@ -13,17 +13,17 @@ use serde::{Deserialize, Serialize};
 table! {
     temperature_breach (id) {
         id -> Text,
-        duration -> Integer,
+        duration_milliseconds -> Integer,
         #[sql_name = "type"] type_ -> crate::db_diesel::temperature_breach_row::TemperatureBreachRowTypeMapping,
         sensor_id -> Text,
         location_id -> Nullable<Text>,
-        store_id -> Nullable<Text>,
+        store_id -> Text,
         start_datetime -> Timestamp,
         end_datetime -> Nullable<Timestamp>,
-        acknowledged -> Bool,
+        unacknowledged -> Bool,
         threshold_minimum -> Double,
         threshold_maximum -> Double,
-        threshold_duration -> Integer,
+        threshold_duration_milliseconds -> Integer,
     }
 }
 
@@ -50,23 +50,25 @@ pub enum TemperatureBreachRowType {
     HotCumulative,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "temperature_breach"]
 pub struct TemperatureBreachRow {
     pub id: String,
-    pub duration: i32,
+    pub duration_milliseconds: i32,
     #[column_name = "type_"]
     pub r#type: TemperatureBreachRowType,
     pub sensor_id: String,
     pub location_id: Option<String>,
-    pub store_id: Option<String>,
+    pub store_id: String,
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,
-    pub acknowledged: bool,
+    pub unacknowledged: bool,
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
-    pub threshold_duration: i32,
+    pub threshold_duration_milliseconds: i32,
 }
 
 pub struct TemperatureBreachRowRepository<'a> {

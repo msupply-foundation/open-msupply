@@ -1,17 +1,15 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::{DateTime, Utc};
+use graphql_core::generic_filters::StringFilterInput;
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
 use repository::{
-    sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
-    EqualFilter, SensorRow,
+    DatetimeFilter, PaginationOption, SensorType, StringFilter, TemperatureBreachFilter,
+    TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
 };
-use repository::{
-    DatetimeFilter, PaginationOption, SensorType, TemperatureBreachFilter, TemperatureLogFilter,
-    TemperatureLogSort, TemperatureLogSortField,
-};
+use repository::{EqualFilter, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField};
 use service::temperature_breach::query::get_temperature_breaches;
 use service::temperature_log::query::get_temperature_logs;
 use service::{usize_to_u32, ListResult};
@@ -36,7 +34,7 @@ pub struct SensorSortInput {
 #[derive(InputObject, Clone)]
 pub struct SensorFilterInput {
     pub serial: Option<EqualFilterStringInput>,
-    pub name: Option<EqualFilterStringInput>,
+    pub name: Option<StringFilterInput>,
     pub is_active: Option<bool>,
     pub id: Option<EqualFilterStringInput>,
 }
@@ -45,7 +43,7 @@ impl From<SensorFilterInput> for SensorFilter {
     fn from(f: SensorFilterInput) -> Self {
         SensorFilter {
             serial: f.serial.map(EqualFilter::from),
-            name: f.name.map(EqualFilter::from),
+            name: f.name.map(StringFilter::from),
             id: f.id.map(EqualFilter::from),
             store_id: None,
             is_active: f.is_active,
@@ -68,6 +66,7 @@ pub struct SensorConnector {
 pub enum SensorNodeType {
     BlueMaestro,
     Laird,
+    Berlinger,
 }
 
 #[Object]
@@ -231,6 +230,7 @@ impl SensorNodeType {
         match from {
             from::BlueMaestro => to::BlueMaestro,
             from::Laird => to::Laird,
+            from::Berlinger => to::Berlinger,
         }
     }
 
@@ -241,6 +241,7 @@ impl SensorNodeType {
         match self {
             from::BlueMaestro => to::BlueMaestro,
             from::Laird => to::Laird,
+            from::Berlinger => to::Berlinger,
         }
     }
 }

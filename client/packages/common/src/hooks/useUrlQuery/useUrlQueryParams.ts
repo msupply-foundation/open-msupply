@@ -1,12 +1,22 @@
 import { useEffect } from 'react';
-import { UrlQueryValue, useUrlQuery } from './useUrlQuery';
+import {
+  NESTED_SPLIT_CHAR,
+  RANGE_SPLIT_CHAR,
+  UrlQueryValue,
+  useUrlQuery,
+} from './useUrlQuery';
 import {
   Column,
   Formatter,
   RecordWithId,
   useLocalStorage,
 } from '@openmsupply-client/common';
-import { FilterBy, FilterController, SortBy } from '../useQueryParams';
+import {
+  FilterBy,
+  FilterByWithBoolean,
+  FilterController,
+  SortBy,
+} from '../useQueryParams';
 
 // This hook uses the state of the url query parameters (from useUrlQuery hook)
 // to provide query parameters and update methods to tables.
@@ -82,12 +92,17 @@ export const useUrlQueryParams = ({
     updateQuery({ [key]: value });
   };
 
-  const getFilterBy = (): FilterBy =>
-    filters.reduce<FilterBy>((prev, filter) => {
+  const getFilterBy = (): FilterByWithBoolean =>
+    filters.reduce<FilterByWithBoolean>((prev, filter) => {
       const filterValue = getFilterValue(urlQuery, filter.key);
-      if (!filterValue) return prev;
+      if (filterValue === undefined) return prev;
 
-      prev[filter.key] = getFilterEntry(filter, filterValue);
+      const [key, nestedKey] = filter.key.split(NESTED_SPLIT_CHAR);
+      if (filter.key.includes(NESTED_SPLIT_CHAR)) {
+        filter.key = key ?? '';
+      }
+
+      prev[filter.key] = getFilterEntry(filter, filterValue, nestedKey);
       return prev;
     }, {});
 
@@ -157,16 +172,20 @@ const getFilterValue = (
   }
 };
 
-const getFilterEntry = (filter: Filter, filterValue: UrlQueryValue) => {
+const getFilterEntry = (
+  filter: Filter,
+  filterValue: UrlQueryValue,
+  nestedKey?: string
+) => {
   if (filter.condition === 'between' && filter.key) {
-    const filterItems = String(filterValue).split('_');
+    const filterItems = String(filterValue).split(RANGE_SPLIT_CHAR);
     const dateAfter = filterItems[0] ? new Date(filterItems[0]) : null;
     const dateBefore = filterItems[1] ? new Date(filterItems[1]) : null;
 
-    if (filter.key.includes('datetime')) {
+    if (filter.key.toLowerCase().includes('datetime')) {
       return {
-        afterOrEqualTo: Formatter.naiveDateTime(dateAfter),
-        beforeOrEqualTo: Formatter.naiveDateTime(dateBefore),
+        afterOrEqualTo: Formatter.toIsoString(dateAfter),
+        beforeOrEqualTo: Formatter.toIsoString(dateBefore),
       };
     }
     return {
@@ -175,7 +194,19 @@ const getFilterEntry = (filter: Filter, filterValue: UrlQueryValue) => {
     };
   }
   const condition = filter.condition ? filter.condition : 'like';
-  return {
-    [condition]: filterValue,
-  };
+  if (condition === '=') {
+    return Boolean(filterValue);
+  }
+
+  if (nestedKey) {
+    return {
+      [nestedKey]: {
+        [condition]: filterValue,
+      },
+    };
+  } else {
+    return {
+      [condition]: filterValue,
+    };
+  }
 };

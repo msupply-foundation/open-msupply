@@ -1,6 +1,9 @@
 use crate::sync::{
     api::RemoteSyncRecordV5,
-    sync_serde::{date_to_isostring, empty_str_as_option_string, naive_time},
+    sync_serde::{
+        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
+        zero_date_as_option,
+    },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
@@ -35,15 +38,18 @@ pub struct LegacyTemperatureLogRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub location_id: Option<String>,
     #[serde(rename = "store_ID")]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub store_id: Option<String>,
-    #[serde(serialize_with = "date_to_isostring")]
-    pub date: NaiveDate,
+    pub store_id: String,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub date: Option<NaiveDate>,
     #[serde(deserialize_with = "naive_time")]
     pub time: NaiveTime,
     #[serde(rename = "temperature_breach_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub temperature_breach_id: Option<String>,
+    #[serde(rename = "om_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub datetime: Option<NaiveDateTime>,
 }
 
 pub(crate) struct TemperatureLogTranslation {}
@@ -80,9 +86,8 @@ impl SyncTranslation for TemperatureLogTranslation {
             date,
             time,
             temperature_breach_id,
+            datetime,
         } = data;
-
-        let datetime = NaiveDateTime::new(date, time);
 
         let result = TemperatureLogRow {
             id,
@@ -90,7 +95,9 @@ impl SyncTranslation for TemperatureLogTranslation {
             sensor_id,
             location_id,
             store_id,
-            datetime,
+            datetime: datetime
+                .or(date.map(|date| NaiveDateTime::new(date, time)))
+                .unwrap(),
             temperature_breach_id,
         };
 
@@ -123,18 +130,16 @@ impl SyncTranslation for TemperatureLogTranslation {
                 changelog.record_id
             )))?;
 
-        let date = datetime.date();
-        let time = datetime.time();
-
         let legacy_row = LegacyTemperatureLogRow {
             id,
             temperature,
             sensor_id,
             location_id,
             store_id,
-            date,
-            time,
+            date: Some(datetime.date()),
+            time: datetime.time(),
             temperature_breach_id,
+            datetime: Some(datetime),
         };
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,

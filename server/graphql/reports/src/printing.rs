@@ -1,8 +1,9 @@
 use async_graphql::*;
+use graphql_core::generic_inputs::PrintReportSortInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
 use service::auth::{Resource, ResourceAccessRequest};
-use service::report::definition::{GraphQlQuery, ReportDefinition};
+use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition};
 use service::report::report_service::{PrintFormat, ReportError};
 
 pub struct FailedToFetchReportData {
@@ -57,6 +58,7 @@ pub async fn print_report(
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
     format: Option<PrintFormat>,
+    sort: Option<PrintReportSortInput>,
 ) -> Result<PrintReportResponse> {
     let user = validate_auth(
         ctx,
@@ -66,6 +68,7 @@ pub async fn print_report(
         },
     )?;
 
+    let sort = sort.map(|s| s.to_domain());
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
@@ -82,7 +85,7 @@ pub async fn print_report(
     let query = resolved_report.query.clone();
 
     // fetch data required for the report
-    let result = fetch_data(ctx, query, &store_id, data_id, arguments.clone())
+    let result = fetch_data(ctx, query, &store_id, data_id, arguments.clone(), sort)
         .await
         .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)))?;
     let report_data = match result {
@@ -153,7 +156,7 @@ pub async fn print_report_definition(
     let query = resolved_report.query.clone();
 
     // fetch data required for the report
-    let result = fetch_data(ctx, query, &store_id, data_id, arguments.clone())
+    let result = fetch_data(ctx, query, &store_id, data_id, arguments.clone(), None)
         .await
         .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)))?;
     let report_data = match result {
@@ -197,10 +200,12 @@ async fn fetch_data(
     store_id: &str,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
+    sort: Option<PrintReportSort>,
 ) -> anyhow::Result<FetchResult> {
     let user_data = ctx.data_unchecked::<RequestUserData>().clone();
     let self_requester = ctx.self_request().unwrap();
-    let variables = serde_json::from_value(query.query_variables(store_id, data_id, arguments))?;
+    let variables =
+        serde_json::from_value(query.query_variables(store_id, data_id, arguments, sort))?;
     let request = Request::new(query.query).variables(variables);
     let response = self_requester.call(request, user_data).await;
     if !response.errors.is_empty() {

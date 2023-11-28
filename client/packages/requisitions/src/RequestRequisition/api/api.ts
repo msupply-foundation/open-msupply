@@ -2,13 +2,13 @@ import {
   UpdateRequestRequisitionLineInput,
   InsertRequestRequisitionLineInput,
   RequisitionNodeType,
-  FilterBy,
   SortBy,
   RequisitionNodeStatus,
   UpdateRequestRequisitionInput,
   UpdateRequestRequisitionStatusInput,
   RequisitionSortFieldInput,
   InsertProgramRequestRequisitionInput,
+  RequisitionFilterInput,
 } from '@openmsupply-client/common';
 import { DraftRequestLine } from './../DetailView/RequestLineEdit/hooks';
 import {
@@ -19,10 +19,10 @@ import {
 } from './operations.generated';
 
 export type ListParams = {
-  first: number;
-  offset: number;
-  sortBy: SortBy<RequestRowFragment>;
-  filterBy: FilterBy | null;
+  first?: number;
+  offset?: number;
+  sortBy?: SortBy<RequestRowFragment>;
+  filterBy?: RequisitionFilterInput | null;
 };
 
 const requestParser = {
@@ -116,10 +116,12 @@ export const getRequestQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.requests({
         storeId,
         page: { offset, first },
-        sort: {
-          key: requestParser.toSortField(sortBy),
-          desc: !!sortBy.isDesc,
-        },
+        sort: sortBy
+          ? {
+              key: requestParser.toSortField(sortBy),
+              desc: !!sortBy.isDesc,
+            }
+          : undefined,
         filter,
       });
       return result?.requisitions;

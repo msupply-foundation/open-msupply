@@ -6,13 +6,17 @@ import {
   useMutation,
   useTableStore,
   useDeleteConfirmation,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useOutbounds } from './useOutbounds';
 import { canDeleteInvoice } from '../../../../utils';
 
 export const useOutboundDeleteRows = () => {
   const queryClient = useQueryClient();
-  const { data: rows } = useOutbounds();
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+  });
+  const { data: rows } = useOutbounds(queryParams);
   const api = useOutboundApi();
   const { mutateAsync } = useMutation(api.delete);
   const t = useTranslation('distribution');

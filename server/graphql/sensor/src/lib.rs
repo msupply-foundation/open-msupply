@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{sensor::SensorFilter, EqualFilter, PaginationOption};
+use repository::{EqualFilter, PaginationOption, SensorFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -83,9 +83,8 @@ mod test {
     use graphql_core::test_helpers::setup_graphl_test;
     //use repository::mock::mock_sensors;
     use repository::{
-        mock::MockDataInserts,
-        sensor::{Sensor, SensorFilter, SensorSort, SensorSortField},
-        SensorRow, SensorType, StorageConnectionManager,
+        mock::MockDataInserts, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField,
+        SensorType, StorageConnectionManager, StringFilter,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
     use serde_json::json;
@@ -165,7 +164,7 @@ mod test {
                         name: "test_name".to_owned(),
                         serial: "test_serial".to_owned(),
                         is_active: true,
-                        store_id: Some("store_a".to_string()),
+                        store_id: "store_a".to_string(),
                         location_id: None,
                         battery_level: Some(90),
                         log_interval: Some(5),
@@ -323,7 +322,7 @@ mod test {
                 Some(
                     SensorFilter::new()
                         .store_id(EqualFilter::equal_to("store_a"))
-                        .name(EqualFilter::equal_to("match_name"))
+                        .name(StringFilter::equal_to("match_name"))
                 )
             );
             Ok(ListResult::empty())

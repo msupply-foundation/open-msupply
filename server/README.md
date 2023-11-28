@@ -50,7 +50,7 @@ sudo apt install make gcc pkg-config libavahi-compat-libdnssd-dev libpq-dev
 
 # Run without mSupply central
 
-Remote server data is configured through mSupply central server, when app first start it's expected to initialise from mSupply. There is a cli option to initalise from previously exported initialisation:
+Remote server data is configured through mSupply central server, when app first start it's expected to initialise from mSupply. There is a cli option to initialise from previously exported initialisation:
 
 ```bash
 cargo run --bin remote_server_cli -- initialise-from-export -n [export name]

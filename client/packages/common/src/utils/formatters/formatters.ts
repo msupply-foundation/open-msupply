@@ -12,10 +12,14 @@ export const Formatter = {
     if (date && isValid(date)) return format(date, 'yyyy-MM-dd');
     else return null;
   },
-  naiveDateTime: (date?: Date | null): string | null => {
-    if (date && isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
+  toIsoString: (date?: Date | null): string | null => {
+    if (date && isValid(date)) return date.toISOString();
     else return null;
   },
+  dateTime: (date?: Date | null): string =>
+    date && isValid(date)
+      ? format(date, "dd/MM/yyyy' 'HH:mm:ss")
+      : '--/--/---- --:--:--',
   expiryDate: (date?: Date | null): string | null => {
     if (date && isValid(date)) return format(date, 'MM/yyyy');
     else return null;

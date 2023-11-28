@@ -95,6 +95,11 @@ const UIComponent = (props: ControlProps) => {
             disabled={!props.enabled}
             onError={validationError => setCustomError(validationError)}
             error={customError}
+            slotProps={{
+              actionBar: {
+                actions: ['clear'],
+              },
+            }}
           />
           <Box
             flex={0}

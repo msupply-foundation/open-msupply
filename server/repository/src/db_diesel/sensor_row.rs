@@ -16,7 +16,7 @@ table! {
         name -> Text,
         serial -> Text,
         location_id -> Nullable<Text>,
-        store_id -> Nullable<Text>,
+        store_id -> Text,
         battery_level -> Nullable<Integer>,
         log_interval -> Nullable<Integer>,
         is_active -> Bool,
@@ -41,6 +41,7 @@ joinable!(sensor -> location (location_id));
 pub enum SensorType {
     BlueMaestro,
     Laird,
+    Berlinger,
 }
 
 // TODO put this somewhere more sensible
@@ -49,6 +50,7 @@ pub fn get_sensor_type(serial: &String) -> SensorType {
     match serial.split('|').nth(1) {
         Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
         Some("LAIRD") => SensorType::Laird,
+        Some("BERLINGER") => SensorType::Berlinger,
         _ => SensorType::BlueMaestro,
     }
 }
@@ -61,7 +63,7 @@ pub struct SensorRow {
     pub name: String,
     pub serial: String,
     pub location_id: Option<String>,
-    pub store_id: Option<String>,
+    pub store_id: String,
     pub battery_level: Option<i32>,
     pub log_interval: Option<i32>,
     pub is_active: bool,
@@ -76,8 +78,8 @@ impl Default for SensorRow {
             id: Default::default(),
             name: Default::default(),
             serial: Default::default(),
+            store_id: Default::default(),
             location_id: None,
-            store_id: None,
             battery_level: None,
             log_interval: None,
             is_active: false,

@@ -2,9 +2,7 @@
 mod query {
     use repository::mock::mock_store_a;
     use repository::{
-        mock::MockDataInserts,
-        sensor::{Sensor, SensorFilter, SensorRepository},
-        test_db::setup_all,
+        mock::MockDataInserts, test_db::setup_all, Sensor, SensorFilter, SensorRepository,
         SensorRow,
     };
     use repository::{EqualFilter, SensorType};
@@ -83,7 +81,7 @@ mod query {
                 serial: "new_serial".to_owned(),
                 name: "new_name".to_owned(),
                 is_active: false,
-                store_id: Some("store_a".to_owned()),
+                store_id: "store_a".to_owned(),
                 location_id: None,
                 battery_level: Some(99),
                 log_interval: Some(10),
@@ -139,7 +137,7 @@ mod query {
                     name: "new_sensor_name".to_owned(),
                     serial: "store_b_sensor_serial".to_owned(),
                     is_active: true,
-                    store_id: Some("store_a".to_owned()),
+                    store_id: "store_a".to_owned(),
                     location_id: None,
                     battery_level: None,
                     log_interval: None,

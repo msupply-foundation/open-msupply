@@ -7,9 +7,7 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::simple_generic_errors::{
     ErrorWrapper, NodeError, NodeErrorInterface, RecordNotFound,
 };
-use graphql_core::standard_graphql_error::{
-    list_error_to_gql_err, validate_auth, StandardGraphqlError,
-};
+use graphql_core::standard_graphql_error::{list_error_to_gql_err, validate_auth};
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
 use repository::StocktakeFilter;
@@ -17,7 +15,6 @@ use repository::*;
 use repository::{StocktakeSort, StocktakeSortField};
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
-use service::ListError;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -108,15 +105,7 @@ pub fn stocktakes(
                 .map(|stocktake| StocktakeNode { stocktake })
                 .collect(),
         })),
-        Err(err) => {
-            let formatted_error = format!("{:#?}", err);
-            let graphql_error = match err {
-                ListError::DatabaseError(err) => err.into(),
-                ListError::LimitBelowMin(_) => StandardGraphqlError::BadUserInput(formatted_error),
-                ListError::LimitAboveMax(_) => StandardGraphqlError::BadUserInput(formatted_error),
-            };
-            Err(graphql_error.extend())
-        }
+        Err(err) => Err(list_error_to_gql_err(err)),
     }
 }
 

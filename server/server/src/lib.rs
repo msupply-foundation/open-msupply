@@ -4,6 +4,7 @@ extern crate machine_uid;
 use crate::{
     certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
     cors::cors_policy, serve_frontend::config_server_frontend, static_files::config_static_files,
+    upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -38,6 +39,7 @@ mod logging;
 pub mod middleware;
 mod serve_frontend;
 pub mod static_files;
+mod upload_fridge_tag;
 pub use self::logging::*;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
@@ -252,7 +254,6 @@ pub async fn start_server(
         .unwrap();
 
     // CREATE MISSING MASTER LIST AND PROGRAM
-    // TODO: Delete when soft delete for master list is implemented
     service_provider
         .general_service
         .create_missing_master_list_and_program(&service_provider)
@@ -281,6 +282,8 @@ pub async fn start_server(
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
             .configure(config_cold_chain)
+            .configure(config_upload_fridge_tag)
+            // Needs to be last to capture all unmatches routes
             .configure(config_server_frontend)
     })
     .disable_signals();

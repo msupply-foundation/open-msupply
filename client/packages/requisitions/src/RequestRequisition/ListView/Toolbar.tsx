@@ -5,19 +5,18 @@ import {
   useTranslation,
   DeleteIcon,
   AppBarContentPortal,
-  SearchBar,
   FilterController,
+  FilterMenu,
+  Box,
+  RequisitionNodeStatus,
 } from '@openmsupply-client/common';
-import { RequestRowFragment, useRequest } from '../api';
+import { useRequest } from '../api';
 
 export const Toolbar: FC<{
   filter: FilterController;
-}> = ({ filter }) => {
+}> = () => {
   const onDelete = useRequest.document.deleteSelected();
-  const t = useTranslation('replenishment');
-
-  const key = 'otherPartyName' as keyof RequestRowFragment;
-  const filterString = (filter.filterBy?.[key]?.like as string) || '';
+  const t = useTranslation();
 
   return (
     <AppBarContentPortal
@@ -28,20 +27,31 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <SearchBar
-        placeholder={t('placeholder.search-by-name')}
-        value={filterString}
-        onChange={newValue => {
-          if (!newValue) {
-            return filter.onClearFilterRule('otherPartyName');
-          }
-          return filter.onChangeStringFilterRule(
-            'otherPartyName',
-            'like',
-            newValue
-          );
-        }}
-      />
+      <Box display="flex" gap={1}>
+        <FilterMenu
+          filters={[
+            {
+              type: 'text',
+              name: t('label.name'),
+              urlParameter: 'otherPartyName',
+              placeholder: t('placeholder.search-by-name'),
+            },
+            {
+              type: 'enum',
+              name: t('label.status'),
+              urlParameter: 'status',
+              options: [
+                { label: t('label.draft'), value: RequisitionNodeStatus.Draft },
+                { label: t('label.sent'), value: RequisitionNodeStatus.Sent },
+                {
+                  label: t('label.finalised'),
+                  value: RequisitionNodeStatus.Finalised,
+                },
+              ],
+            },
+          ]}
+        />
+      </Box>
 
       <DropdownMenu label="Select">
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>

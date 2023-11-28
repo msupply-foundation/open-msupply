@@ -1,4 +1,4 @@
-import { FilterBy, SortBy } from '@common/hooks';
+import { FilterByWithBoolean, SortBy } from '@common/hooks';
 import { Sdk, TemperatureLogFragment } from './operations.generated';
 import { TemperatureLogSortFieldInput } from '@common/types';
 
@@ -6,7 +6,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<TemperatureLogFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 export const getTemperatureLogQueries = (sdk: Sdk, storeId: string) => ({

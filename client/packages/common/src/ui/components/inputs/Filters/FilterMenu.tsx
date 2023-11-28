@@ -15,10 +15,12 @@ import { TextFilter, TextFilterDefinition } from './TextFilter';
 import { EnumFilter, EnumFilterDefinition } from './EnumFilter';
 import { DateFilterDefinition, DateFilter } from './DateFilter';
 import { NumberFilter, NumberFilterDefinition } from './NumberFilter';
+import { BooleanFilter, BooleanFilterDefinition } from './BooleanFilter';
 
 export interface FilterDefinitionCommon {
   name: string;
   urlParameter: string;
+  isDefault?: boolean;
 }
 
 interface GroupFilterDefinition {
@@ -31,7 +33,8 @@ type FilterDefinition =
   | TextFilterDefinition
   | EnumFilterDefinition
   | DateFilterDefinition
-  | NumberFilterDefinition;
+  | NumberFilterDefinition
+  | BooleanFilterDefinition;
 
 interface FilterDefinitions {
   filters: (FilterDefinition | GroupFilterDefinition)[];
@@ -45,8 +48,8 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
   const [activeFilters, setActiveFilters] = useState<FilterDefinition[]>(
-    flattenFilterDefinitions(filters).filter(fil =>
-      Object.keys(urlQuery).includes(fil.urlParameter)
+    flattenFilterDefinitions(filters).filter(
+      fil => Object.keys(urlQuery).includes(fil.urlParameter) || fil.isDefault
     )
   );
 
@@ -60,7 +63,7 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
         activeFilters.map(({ urlParameter }) => [urlParameter, ''])
       );
       updateQuery(queryPatch);
-      setActiveFilters([]);
+      setActiveFilters(activeFilters.filter(fil => fil.isDefault));
       return;
     }
     if (selected.type === 'group') {
@@ -198,6 +201,10 @@ const getFilterComponent = (
           }`}
           filterDefinition={filter}
         />
+      );
+    case 'boolean':
+      return (
+        <BooleanFilter key={filter.urlParameter} filterDefinition={filter} />
       );
     default:
       return null;
