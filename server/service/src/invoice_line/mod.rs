@@ -3,6 +3,7 @@ pub mod validate;
 use repository::InvoiceLine;
 use repository::InvoiceLineFilter;
 use repository::InvoiceLineSort;
+use repository::PaginationOption;
 use repository::RepositoryError;
 
 use crate::service_provider::ServiceContext;
@@ -40,10 +41,11 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         invoice_id: &str,
+        pagination: Option<PaginationOption>,
         filter: Option<InvoiceLineFilter>,
         sort: Option<InvoiceLineSort>,
     ) -> Result<ListResult<InvoiceLine>, GetInvoiceLinesError> {
-        get_invoice_lines(ctx, store_id, invoice_id, filter, sort)
+        get_invoice_lines(ctx, store_id, invoice_id, pagination, filter, sort)
     }
 
     // Stock out: Outbound/Prescription
