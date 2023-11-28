@@ -23,7 +23,7 @@ const ItemListComponent: FC = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
-    filters: [{ key: 'codeOrName' }],
+    filterKey: 'codeOrName',
   });
   const { data, isError, isLoading } = useItems();
   const pagination = { page, first, offset };

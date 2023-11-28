@@ -63,31 +63,34 @@ pub fn migrate(
     to_version: Option<Version>,
 ) -> Result<Version, MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
-        Box::new(V1_00_04),
-        #[cfg(test)]
-        Box::new(templates::adding_table::V1_00_05),
-        #[cfg(test)]
-        Box::new(templates::data_migration::V1_00_06),
-        #[cfg(test)]
-        Box::new(templates::data_and_schema::V1_00_07),
-        #[cfg(test)]
-        Box::new(templates::add_data_from_sync_buffer::V1_00_08),
-        Box::new(V1_01_01),
-        Box::new(V1_01_02),
-        Box::new(V1_01_03),
-        Box::new(v1_01_05::V1_01_05),
-        Box::new(v1_01_11::V1_01_11),
-        Box::new(v1_01_12::V1_01_12),
-        Box::new(v1_01_13::V1_01_13),
-        Box::new(v1_01_14::V1_01_14),
-        Box::new(v1_01_15::V1_01_15),
-        Box::new(v1_02_00::V1_02_00),
-        Box::new(v1_02_01::V1_02_01),
-        Box::new(v1_03_00::V1_03_00),
-        Box::new(v1_04_00::V1_04_00),
-        Box::new(v1_05_00::V1_05_00),
-        Box::new(v1_06_00::V1_06_00),
-    ];
+            Box::new(V1_00_04),
+            #[cfg(test)]
+            Box::new(templates::adding_table::V1_00_05),
+            #[cfg(test)]
+            Box::new(templates::data_migration::V1_00_06),
+            #[cfg(test)]
+            Box::new(templates::data_and_schema::V1_00_07),
+            #[cfg(test)]
+            Box::new(templates::add_data_from_sync_buffer::V1_00_08),
+            Box::new(V1_01_01),
+            Box::new(V1_01_02),
+            Box::new(V1_01_03),
+            Box::new(v1_01_05::V1_01_05),
+            Box::new(v1_01_11::V1_01_11),
+            Box::new(v1_01_12::V1_01_12),
+            Box::new(v1_01_13::V1_01_13),
+            Box::new(v1_01_14::V1_01_14),
+            Box::new(v1_01_15::V1_01_15),
+            Box::new(v1_02_00::V1_02_00),
+            Box::new(v1_02_01::V1_02_01),
+            Box::new(v1_03_00::V1_03_00),
+            Box::new(v1_04_00::V1_04_00),
+    <<<<<<< HEAD
+            Box::new(v1_05_00::V1_05_00),
+            Box::new(v1_06_00::V1_06_00),
+    =======
+    >>>>>>> feature/front-end-plugins
+        ];
 
     // Historic diesel migrations
     run_db_migrations(connection).unwrap();

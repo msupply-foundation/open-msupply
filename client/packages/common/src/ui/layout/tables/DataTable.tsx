@@ -159,7 +159,7 @@ const DataTableComponent = <T extends RecordWithId>({
       shortcut: ['enter'],
       keywords: 'table, enter',
       perform: () => {
-        console.info('Press enter');
+        console.log('Press enter');
         setClickFocusedRow(true);
       },
     },
@@ -179,6 +179,12 @@ const DataTableComponent = <T extends RecordWithId>({
     const { page, first, total } = pagination;
     if (page * first > total) onChangePage(0);
   }, [pagination]);
+
+  // if the columns array changes, such as when a plugin column is added
+  // reset the display columns to the full set
+  useEffect(() => {
+    setDisplayColumns(columns);
+  }, [columns]);
 
   const ref = useRef<HTMLDivElement>(null);
 

@@ -271,6 +271,10 @@ impl GeneralQueries {
     ) -> Result<update_user::UpdateUserNode> {
         last_successful_user_sync(ctx)
     }
+
+    pub async fn plugins(&self, ctx: &Context<'_>) -> Result<Vec<PluginNode>> {
+        get_plugins(ctx)
+    }
 }
 
 #[derive(Default, Clone)]

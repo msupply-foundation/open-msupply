@@ -9,7 +9,6 @@ fragment UserStoreNode on UserStoreNode {
     requestRequisitionRequiresAuthorisation
     packToOne
     omProgramModule
-    vaccineModule
   }
 }
 

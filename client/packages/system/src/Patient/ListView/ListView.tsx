@@ -37,23 +37,8 @@ const PatientListComponent: FC = () => {
     updateSortQuery,
     updatePaginationQuery,
     filter,
-    queryParams: { page, first, offset, sortBy, filterBy },
-  } = useUrlQueryParams({
-    initialSort: { key: 'code', dir: 'asc' },
-    filters: [
-      {
-        key: 'dateOfBirth',
-        condition: 'equalTo',
-      },
-      {
-        key: 'gender',
-        condition: 'equalTo',
-      },
-      { key: 'firstName' },
-      { key: 'identifier' },
-      { key: 'lastName' },
-    ],
-  });
+    queryParams: { sortBy, page, first, offset },
+  } = useUrlQueryParams({ filterKey: ['firstName', 'lastName', 'identifier'] });
   const { store } = useAuthContext();
   const queryParams = {
     filterBy,

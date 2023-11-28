@@ -1,1 +1,0 @@
-export { TemperatureBreachList } from './TemperatureBreachList';

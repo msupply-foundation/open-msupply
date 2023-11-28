@@ -8,11 +8,10 @@ use repository::{
 use crate::common_stock::{check_stock_line_exists, CommonStockLineError};
 use crate::item::check_item_exists;
 use crate::validate::check_store_id_matches;
-use crate::{check_location_exists, NullableUpdate};
 use crate::{
     service_provider::ServiceContext,
     stocktake::validate::{check_stocktake_exist, check_stocktake_not_finalised},
-    stocktake_line::query::get_stocktake_line,
+    stocktake_line::{query::get_stocktake_line, validate::check_location_exists},
     u32_to_i32,
 };
 
@@ -25,9 +24,10 @@ pub struct InsertStocktakeLine {
     pub id: String,
     pub stocktake_id: String,
     pub stock_line_id: Option<String>,
-    pub location: Option<NullableUpdate<String>>,
+    pub location_id: Option<String>,
     pub comment: Option<String>,
     pub counted_number_of_packs: Option<f64>,
+
     pub item_id: Option<String>,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
@@ -180,8 +180,11 @@ fn validate(
             return Err(ItemDoesNotExist);
         }
     }
-    if !check_location_exists(connection, store_id, &input.location)? {
-        return Err(LocationDoesNotExist);
+
+    if let Some(location_id) = &input.location_id {
+        if !check_location_exists(connection, location_id)? {
+            return Err(LocationDoesNotExist);
+        }
     }
 
     let stocktake_reduction_amount =
@@ -221,7 +224,7 @@ fn generate(
         id,
         stocktake_id,
         stock_line_id,
-        location,
+        location_id,
         comment,
         counted_number_of_packs,
         item_id: _,
@@ -243,7 +246,7 @@ fn generate(
         id,
         stocktake_id,
         stock_line_id,
-        location_id: location.map(|l| l.value).unwrap_or_default(),
+        location_id,
         comment,
         snapshot_number_of_packs,
         counted_number_of_packs,
@@ -304,7 +307,6 @@ mod stocktake_line_test {
     use crate::{
         service_provider::ServiceProvider,
         stocktake_line::insert::{InsertStocktakeLine, InsertStocktakeLineError},
-        NullableUpdate,
     };
 
     #[actix_rt::test]
@@ -500,9 +502,7 @@ mod stocktake_line_test {
                     r.id = uuid();
                     r.stocktake_id = stocktake_a.id;
                     r.stock_line_id = Some(stock_line.id);
-                    r.location = Some(NullableUpdate {
-                        value: Some("invalid".to_string()),
-                    });
+                    r.location_id = Some("invalid".to_string());
                     r.counted_number_of_packs = Some(17.0);
                 }),
             )

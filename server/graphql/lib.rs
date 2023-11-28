@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod tests;
 
+use std::sync::Mutex;
+
 use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
@@ -21,12 +23,12 @@ use graphql_general::{
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_plugin::{PluginMutations, PluginQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
-use graphql_sensor::{SensorMutations, SensorQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
@@ -35,6 +37,7 @@ use graphql_temperature_log::TemperatureLogQueries;
 
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
+use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use tokio::sync::RwLock;
@@ -51,9 +54,6 @@ pub type InitialisationSchema = async_graphql::Schema<
 pub struct Queries(
     pub InvoiceQueries,
     pub LocationQueries,
-    pub SensorQueries,
-    pub TemperatureBreachQueries,
-    pub TemperatureLogQueries,
     pub StocktakeQueries,
     pub StocktakeLineQueries,
     pub GeneralQueries,
@@ -64,6 +64,7 @@ pub struct Queries(
     pub ProgramsQueries,
     pub FormSchemaQueries,
     pub ClinicianQueries,
+    pub PluginQueries,
 );
 
 impl Queries {
@@ -71,9 +72,6 @@ impl Queries {
         Queries(
             InvoiceQueries,
             LocationQueries,
-            SensorQueries,
-            TemperatureBreachQueries,
-            TemperatureLogQueries,
             StocktakeQueries,
             StocktakeLineQueries,
             GeneralQueries,
@@ -84,6 +82,7 @@ impl Queries {
             ProgramsQueries,
             FormSchemaQueries,
             ClinicianQueries,
+            PluginQueries,
         )
     }
 }
@@ -93,7 +92,6 @@ pub struct Mutations(
     pub InvoiceMutations,
     pub InvoiceLineMutations,
     pub LocationMutations,
-    pub SensorMutations,
     pub StocktakeMutations,
     pub StocktakeLineMutations,
     pub BatchMutations,
@@ -104,6 +102,7 @@ pub struct Mutations(
     pub GeneralMutations,
     pub ProgramsMutations,
     pub FormSchemaMutations,
+    pub PluginMutations,
 );
 
 impl Mutations {
@@ -112,7 +111,6 @@ impl Mutations {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
-            SensorMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,
@@ -123,6 +121,7 @@ impl Mutations {
             GeneralMutations,
             ProgramsMutations,
             FormSchemaMutations,
+            PluginMutations,
         )
     }
 }
@@ -143,6 +142,7 @@ pub struct GraphSchemaData {
     pub service_provider: Data<ServiceProvider>,
     pub auth: Data<AuthData>,
     pub settings: Data<Settings>,
+    pub validated_plugins: Data<Mutex<ValidatedPluginBucket>>,
 }
 
 impl GraphqlSchema {
@@ -153,6 +153,7 @@ impl GraphqlSchema {
             service_provider,
             auth,
             settings,
+            validated_plugins,
         } = data;
 
         // Self requester schema is a copy of operational schema, used for reports
@@ -164,6 +165,7 @@ impl GraphqlSchema {
                 .data(service_provider.clone())
                 .data(auth.clone())
                 .data(settings.clone())
+                .data(validated_plugins.clone())
                 .finish();
         // Self requester does not need loggers
 
@@ -175,6 +177,7 @@ impl GraphqlSchema {
                 .data(service_provider.clone())
                 .data(auth.clone())
                 .data(settings.clone())
+                .data(validated_plugins.clone())
                 // Add self requester to operational
                 .data(Data::new(SelfRequestImpl::new_boxed(self_requester_schema)));
 

@@ -14368,6 +14368,11 @@ react-router@6.14.2:
   dependencies:
     "@remix-run/router" "1.7.2"
 
+react-singleton-context@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/react-singleton-context/-/react-singleton-context-1.0.2.tgz#cd3dc82c92e8e11a256696b01bf25421c69c97fe"
+  integrity sha512-LgphP8A01/U8dbDPOhAl/1eG0amOvFlaw4O3dxo9V0ZLGPJBpxtQg/ddVUUJ4yXQNS//g9JValpzcg7Oeiq6tw==
+
 react-smooth@^2.0.2:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/react-smooth/-/react-smooth-2.0.3.tgz#2845fa8f22914f2e4445856d5688fb8a7d72f3ae"
