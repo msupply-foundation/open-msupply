@@ -1,10 +1,9 @@
-import React from 'react';
+import { useTranslation as useTranslationNext } from 'react-i18next';
 import { EnvUtils } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
-import { IntlContext } from '../context';
 
-export const useIntl = () => React.useContext(IntlContext);
+export { useTranslationNext };
 
 const languageOptions = [
   { label: 'عربي', value: 'ar' },
@@ -31,7 +30,7 @@ export type SupportedLocales = (typeof locales)[number];
 type StringOrEmpty = string | null | undefined;
 
 export const useIntlUtils = () => {
-  const { i18n } = useIntl();
+  const { i18n } = useTranslationNext();
   const { language } = i18n;
 
   const changeLanguage = (languageCode?: string) => {
@@ -50,12 +49,12 @@ export const useIntlUtils = () => {
     }
 
     // Handle languages such as en-US or fr-FR
-    const baseLanguage = supportedLanguage?.split('-')[0] as SupportedLocales;
+    const baseLanguage = supportedLanguage.split('-')[0] as SupportedLocales;
     if (locales.includes(baseLanguage)) {
       return baseLanguage;
     }
 
-    if (!EnvUtils.isProduction() && !!language) {
+    if (!EnvUtils.isProduction()) {
       throw new Error(`Language '${language}' not supported`);
     }
     return 'en';
