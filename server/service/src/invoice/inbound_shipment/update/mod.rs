@@ -444,6 +444,7 @@ mod test {
             &context,
             &invoice.clone().store_id,
             &invoice.clone().id,
+            None,
             Some(filter),
             None,
         )
@@ -487,6 +488,7 @@ mod test {
             &context,
             &invoice.clone().store_id,
             &invoice.clone().id,
+            None,
             Some(filter),
             None,
         )
@@ -525,6 +527,7 @@ mod test {
             &context,
             &invoice.clone().store_id,
             &invoice.clone().id,
+            None,
             Some(filter),
             None,
         )
@@ -574,6 +577,7 @@ mod test {
             &context,
             &invoice.clone().store_id,
             &invoice.clone().id,
+            None,
             Some(filter),
             None,
         )

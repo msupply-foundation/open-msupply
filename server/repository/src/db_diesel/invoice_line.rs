@@ -13,7 +13,7 @@ use crate::{
         apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    EqualFilter, InvoiceRowStatus, InvoiceRowType, ItemRow, Sort, StockLineRow,
+    EqualFilter, InvoiceRowStatus, InvoiceRowType, ItemRow, Pagination, Sort, StockLineRow,
 };
 
 use diesel::{
@@ -188,7 +188,7 @@ impl<'a> InvoiceLineRepository<'a> {
         &self,
         filter: InvoiceLineFilter,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-        self.query(Some(filter), None)
+        self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query_one(
@@ -200,6 +200,7 @@ impl<'a> InvoiceLineRepository<'a> {
 
     pub fn query(
         &self,
+        pagination: Pagination,
         filter: Option<InvoiceLineFilter>,
         sort: Option<InvoiceLineSort>,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
@@ -230,7 +231,10 @@ impl<'a> InvoiceLineRepository<'a> {
             query = query.order_by(invoice_line_dsl::id.asc());
         }
 
-        let result = query.load::<InvoiceLineJoin>(&self.connection.connection)?;
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<InvoiceLineJoin>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

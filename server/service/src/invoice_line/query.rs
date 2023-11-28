@@ -1,8 +1,13 @@
-use crate::{i64_to_u32, service_provider::ServiceContext, ListError, ListResult};
+use crate::{
+    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+};
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineSort,
-    InvoiceRepository, RepositoryError,
+    InvoiceRepository, PaginationOption, RepositoryError,
 };
+
+pub const MAX_LIMIT: u32 = 1000;
+pub const MIN_LIMIT: u32 = 1;
 
 #[derive(Debug, PartialEq)]
 pub enum GetInvoiceLinesError {
@@ -33,6 +38,7 @@ pub fn get_invoice_lines(
     ctx: &ServiceContext,
     store_id: &str,
     invoice_id: &str,
+    pagination: Option<PaginationOption>,
     filter: Option<InvoiceLineFilter>,
     sort: Option<InvoiceLineSort>,
 ) -> Result<ListResult<InvoiceLine>, GetInvoiceLinesError> {
@@ -43,11 +49,13 @@ pub fn get_invoice_lines(
     let filter = filter
         .unwrap_or(InvoiceLineFilter::new())
         .invoice_id(EqualFilter::equal_to(invoice_id));
+    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
+        .map_err(|err| GetInvoiceLinesError::ListError(err))?;
 
     let repository = InvoiceLineRepository::new(&ctx.connection);
 
     Ok(ListResult {
-        rows: repository.query(Some(filter.clone()), sort)?,
+        rows: repository.query(pagination, Some(filter.clone()), sort)?,
         count: i64_to_u32(repository.count(Some(filter))?),
     })
 }

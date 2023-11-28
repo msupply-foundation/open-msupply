@@ -13,7 +13,9 @@ use graphql_invoice::invoice_queries::{
 use graphql_types::types::{
     InvoiceLineConnector, InvoiceLineNodeType, InvoiceNodeStatus, InvoiceNodeType,
 };
-use repository::{EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField};
+use repository::{
+    EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField, PaginationOption,
+};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     invoice_line::query::GetInvoiceLinesError,
@@ -143,7 +145,7 @@ pub fn invoice_lines(
     ctx: &Context<'_>,
     store_id: &str,
     invoice_id: &str,
-    _page: Option<PaginationInput>,
+    page: Option<PaginationInput>,
     filter: Option<InvoiceLineFilterInput>,
     sort: Option<Vec<InvoiceLineSortInput>>,
     report_sort: Option<PrintReportSortInput>,
@@ -168,6 +170,7 @@ pub fn invoice_lines(
         &service_ctx,
         store_id,
         invoice_id,
+        page.map(PaginationOption::from),
         filter.map(InvoiceLineFilter::from),
         sort.map(|s| s.to_domain()),
     );
