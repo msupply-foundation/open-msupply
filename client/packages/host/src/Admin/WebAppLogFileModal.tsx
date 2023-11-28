@@ -10,7 +10,7 @@ import {
   Typography,
 } from '@common/components';
 import { useLog } from '@openmsupply-client/system';
-import { Box, CopyIcon } from 'packages/common/src';
+import { Box, CopyIcon, SaveIcon } from 'packages/common/src';
 import { LogTextDisplay } from './LogTextDisplay';
 
 export const LogDisplay = ({
@@ -92,7 +92,6 @@ export const WebAppLogFileModal = ({
   return (
     <Modal
       title={t('heading.server-log')}
-      okButton={<DialogButton variant="ok" onClick={onClose} />}
       copyContent={
         <>
           <LoadingButton
@@ -100,32 +99,29 @@ export const WebAppLogFileModal = ({
             onClick={() => {
               navigator.clipboard.writeText(logContent.toString());
             }}
+            disabled={logContent.length === 0}
             startIcon={<CopyIcon />}
-          />
+          >
+            {t('link.copy-to-clipboard')}
+          </LoadingButton>
           <LoadingButton
-            isLoading={logListLoading}
-            onClick={() => {
-              saveLog();
-            }}
-            startIcon={<CopyIcon />}
-          />
+            startIcon={<SaveIcon />}
+            onClick={saveLog}
+            disabled={logContent.length === 0 || isSaving}
+            isLoading={false}
+          >
+            {t('button.save-log')}
+          </LoadingButton>
+          <DialogButton variant="ok" onClick={onClose} />
         </>
-      }
-      cancelButton={
-        <DialogButton
-          variant="save"
-          onClick={saveLog}
-          disabled={!logContent || isSaving}
-        />
       }
     >
       <>
-        <div>
-          <Typography>{logToRender}</Typography>
-        </div>
         {!logListLoading ? (
-          <div>
-            <DropdownMenu label={t('label.server-log')}>
+          <>
+            <DropdownMenu
+              label={logToRender ? logToRender : t('label.server-log')}
+            >
               {logFiles?.fileNames?.map((fileName, i) => (
                 <DropdownMenuItem
                   key={i}
@@ -136,11 +132,8 @@ export const WebAppLogFileModal = ({
               ))}
             </DropdownMenu>
 
-            <LogDisplay
-              fileName={logToRender}
-              setLogContent={setLogContent}
-            ></LogDisplay>
-          </div>
+            <LogDisplay fileName={logToRender} setLogContent={setLogContent} />
+          </>
         ) : (
           <BasicSpinner />
         )}
