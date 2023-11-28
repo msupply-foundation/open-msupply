@@ -29,7 +29,6 @@ import {
   ReplenishmentRouter,
   InventoryRouter,
   DispensaryRouter,
-  ColdChainRouter,
 } from './routers';
 import { RequireAuthentication } from './components/Navigation/RequireAuthentication';
 import { QueryErrorHandler } from './QueryErrorHandler';
@@ -107,12 +106,6 @@ export const Site: FC = () => {
                       .addWildCard()
                       .build()}
                     element={<DispensaryRouter />}
-                  />
-                  <Route
-                    path={RouteBuilder.create(AppRoute.Coldchain)
-                      .addWildCard()
-                      .build()}
-                    element={<ColdChainRouter />}
                   />
                   <Route
                     path={RouteBuilder.create(AppRoute.Admin)

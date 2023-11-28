@@ -1,1 +1,0 @@
-export { TemperatureChart } from './TemperatureChart';

@@ -1,8 +1,8 @@
-import { FilterByWithBoolean } from '@openmsupply-client/common';
+import { FilterBy } from '@openmsupply-client/common';
 import { Sdk } from './operations.generated';
 
 export type ListParams = {
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
   first: number;
   offset: number;
 };

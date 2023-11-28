@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   useTranslation,
   Grid,
@@ -8,6 +8,9 @@ import {
   ObjUtils,
   useConfirmationModal,
   ModalTabs,
+  usePluginEvents,
+  usePluginElements,
+  PluginEventListener,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useStock } from '../api';
 import { LogList } from '../../Log';
@@ -34,7 +37,9 @@ const useDraftStockLine = (
   const { mutate, isLoading } = useStock.line.update();
 
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
-    setStockLine({ ...stockLine, ...patch });
+    const newStockLine = { ...stockLine, ...patch };
+    if (ObjUtils.isEqual(stockLine, newStockLine)) return;
+    setStockLine(newStockLine);
   };
 
   const onSave = async () => mutate(stockLine);
@@ -60,10 +65,19 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   });
 
   const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
+  const { dispatchEvent, addEventListener, removeEventListener } =
+    usePluginEvents();
+  const [hasChanged, setHasChanged] = useState(false);
+  const plugins = usePluginElements({
+    type: 'StockEditForm',
+    data: stockLine,
+  });
 
   const tabs = [
     {
-      Component: <StockLineForm draft={draft} onUpdate={onUpdate} />,
+      Component: (
+        <StockLineForm draft={draft} onUpdate={onUpdate} plugins={plugins} />
+      ),
       value: 'label.details',
     },
     {
@@ -71,6 +85,19 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       value: 'label.log',
     },
   ];
+
+  const onChange = () => setHasChanged(true);
+
+  useEffect(() => {
+    const listener: PluginEventListener = {
+      eventType: 'onChangeStockEditForm',
+      listener: onChange,
+    };
+
+    addEventListener(listener);
+
+    return () => removeEventListener(listener);
+  }, [addEventListener, removeEventListener]);
 
   return (
     <Modal
@@ -81,11 +108,12 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={ObjUtils.isEqual(draft, stockLine)}
+          disabled={ObjUtils.isEqual(draft, stockLine) && !hasChanged}
           onClick={() =>
             getConfirmation({
               onConfirm: async () => {
                 await onSave();
+                dispatchEvent('onSaveStockEditForm', new Event(draft.id));
                 onClose();
               },
             })

@@ -196,7 +196,6 @@ pub enum Permissions {
     HISEditEncounterDiseases,
     HISAddProcedure,
     ConfirmInternalOrderSent,
-    ColdChainApi,
 }
 
 pub fn permission_mapping() -> HashMap<i16, Permissions> {
@@ -307,7 +306,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (107, Permissions::DownloadBatchDocument),
         (108, Permissions::DeleteBatchDocument),
         (109, Permissions::AddStocktakeLines),
-        // ViewStocktakeLines has been removed from mSupply UI
+        // ViewStocktakeLines has been removed from mSupply
         // (110, Permissions::ViewStocktakeLines),
         (111, Permissions::EditStocktakeLines),
         (112, Permissions::DeleteStocktakeLines),
@@ -383,7 +382,6 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (179, Permissions::AddEditVaccinators),
         (190, Permissions::ViewPatients),
         (200, Permissions::ConfirmInternalOrderSent),
-        (201, Permissions::ColdChainApi),
         (501, Permissions::HISAddPatients),
         (502, Permissions::HISEditPatientsInfo),
         (503, Permissions::HISCreateEncounters),

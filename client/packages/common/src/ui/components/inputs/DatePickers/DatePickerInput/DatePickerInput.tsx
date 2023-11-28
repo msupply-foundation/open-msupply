@@ -1,18 +1,13 @@
 import React, { FC } from 'react';
 import { BaseDatePickerInput } from '../BaseDatePickerInput';
-import { TextFieldProps } from '@mui/material';
 
 interface DatePickerInputProps {
   value: Date | null;
   onChange: (value: Date | null) => void;
   disabled?: boolean;
   onError?: (validationError: string) => void;
-  width?: number | string;
+  width?: number;
   error?: string | undefined;
-  label?: string;
-  textFieldProps?: TextFieldProps;
-  minDate?: Date;
-  maxDate?: Date;
 }
 
 export const DatePickerInput: FC<DatePickerInputProps> = ({
@@ -22,10 +17,6 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
   onError,
   width,
   error,
-  label,
-  minDate,
-  maxDate,
-  textFieldProps,
 }) => {
   return (
     <BaseDatePickerInput
@@ -36,10 +27,6 @@ export const DatePickerInput: FC<DatePickerInputProps> = ({
       onError={onError}
       width={width}
       error={error}
-      label={label}
-      minDate={minDate}
-      maxDate={maxDate}
-      textFieldProps={textFieldProps}
     />
   );
 };

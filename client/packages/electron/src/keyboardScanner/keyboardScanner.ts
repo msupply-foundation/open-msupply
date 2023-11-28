@@ -160,8 +160,8 @@ export class KeyboardScanner {
     try {
       const js =
         typeof something === 'object'
-          ? `console.info(${JSON.stringify(something, null, ' ')});`
-          : `console.info('${something.replace("'", "\\'")}');`;
+          ? `console.log(${JSON.stringify(something, null, ' ')});`
+          : `console.log('${something.replace("'", "\\'")}');`;
       this.window.webContents.executeJavaScript(js);
     } catch (e) {
       console.error(e);

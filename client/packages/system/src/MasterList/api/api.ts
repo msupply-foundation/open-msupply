@@ -1,5 +1,6 @@
 import {
   SortBy,
+  FilterBy,
   MasterListSortFieldInput,
   FilterByWithBoolean,
 } from '@openmsupply-client/common';
@@ -9,7 +10,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<MasterListRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 const masterListParser = {

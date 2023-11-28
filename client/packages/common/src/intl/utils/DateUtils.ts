@@ -18,10 +18,8 @@ import {
   isBefore,
   isEqual,
   format,
-  parse,
   parseISO,
   fromUnixTime,
-  getUnixTime,
   startOfToday,
   startOfDay,
   endOfDay,
@@ -92,30 +90,12 @@ export const DateUtils = {
   addMonths,
   addYears,
   addCurrentTime,
-  getDateOrNull: (
-    date?: Date | string | null,
-    format?: string
-  ): Date | null => {
+  getDateOrNull: (date?: Date | string | null): Date | null => {
     if (!date) return null;
     if (date instanceof Date) return date;
-    const maybeDate =
-      format && typeof date === 'string'
-        ? parse(date, format, new Date())
-        : new Date(date);
+    const maybeDate = new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
-  minDate: (...dates: (Date | null)[]) => {
-    const maybeDate = fromUnixTime(
-      Math.min(
-        // Ignore nulls, as they'll return a minimum of 0
-        ...dates.filter(d => d !== null).map(d => getUnixTime(d as Date))
-      )
-    );
-    return isValid(maybeDate) ? maybeDate : null;
-  },
-
-  maxDate: (...dates: (Date | null)[]) =>
-    fromUnixTime(Math.max(...dates.map(d => getUnixTime(d as Date)))),
   isPast,
   isFuture,
   isExpired: (expiryDate: Date): boolean => isPast(expiryDate),
@@ -183,9 +163,6 @@ export const useFormatDateTime = () => {
   const dayMonthShort = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'dd MMM', { locale });
 
-  const dayMonthTime = (date: Date | string | number): string =>
-    formatIfValid(dateInputHandler(date), 'dd/MM HH:mm', { locale });
-
   const customDate = (
     date: Date | string | number,
     formatString: string
@@ -220,7 +197,6 @@ export const useFormatDateTime = () => {
     urlQueryDateTime,
     customDate,
     dayMonthShort,
-    dayMonthTime,
     localisedDate,
     localisedDateTime,
     localisedDistance,

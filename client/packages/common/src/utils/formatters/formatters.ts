@@ -12,14 +12,10 @@ export const Formatter = {
     if (date && isValid(date)) return format(date, 'yyyy-MM-dd');
     else return null;
   },
-  toIsoString: (date?: Date | null): string | null => {
-    if (date && isValid(date)) return date.toISOString();
+  naiveDateTime: (date?: Date | null): string | null => {
+    if (date && isValid(date)) return format(date, "yyyy-MM-dd'T'HH:mm:ss");
     else return null;
   },
-  dateTime: (date?: Date | null): string =>
-    date && isValid(date)
-      ? format(date, "dd/MM/yyyy' 'HH:mm:ss")
-      : '--/--/---- --:--:--',
   expiryDate: (date?: Date | null): string | null => {
     if (date && isValid(date)) return format(date, 'MM/yyyy');
     else return null;
@@ -34,25 +30,15 @@ export const Formatter = {
   ): string => Papa.unparse(data, config),
   csvDateTimeString: (dateString?: string | null | undefined): string => {
     const date = dateString ? new Date(dateString) : null;
-    return date && isValid(date) ? format(date, "dd/MM/yyyy' 'HH:mm:ss") : '';
+    return date && isValid(date) ? format(date, "yyyy-MM-dd' 'HH:mm:ss") : '';
   },
   csvDateString: (dateString?: string | null | undefined): string => {
     const date = dateString ? new Date(dateString) : null;
-    return date && isValid(date) ? format(date, 'dd/MM/yyyy') : '';
-  },
-  milliseconds: (milliseconds: number): string => {
-    const minute = Math.floor((milliseconds % 3600000) / 60000);
-    const second = Math.floor(((milliseconds % 360000) % 60000) / 1000);
-    return `${minute}:${second}`;
+    return date && isValid(date) ? format(date, 'yyyy-MM-dd') : '';
   },
   sentenceCase: (str: string): string =>
     str
       .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' '),
-  enumCase: (str: string): string =>
-    str
-      .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' '),
   logTypeTranslation: (logType: string): LocaleKey =>

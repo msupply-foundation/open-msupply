@@ -1,5 +1,5 @@
 import {
-  FilterByWithBoolean,
+  FilterBy,
   SortBy,
   StockLineNode,
   useAuthContext,
@@ -12,7 +12,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<StockLineRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: FilterBy | null;
 };
 
 export const useStockApi = () => {

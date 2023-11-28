@@ -12,7 +12,7 @@ export const getLinesFromRow = <T extends object>(row: T | { lines: T[] }) =>
   try {
     // .. operation that may throw
   } catch (e) {
-    console.error(getErrorMessage(e))
+    console.log(getErrorMessage(e))
   }
 */
 export const getErrorMessage = (error: unknown): string => {

@@ -52,7 +52,6 @@ pub enum ActivityLogNodeType {
     PrescriptionDeleted,
     PrescriptionStatusPicked,
     PrescriptionStatusVerified,
-    SensorLocationChanged,
 }
 
 #[Object]
@@ -160,7 +159,6 @@ impl ActivityLogNodeType {
             from::PrescriptionDeleted => to::PrescriptionDeleted,
             from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
             from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
-            from::SensorLocationChanged => to::SensorLocationChanged,
         }
     }
 
@@ -198,7 +196,6 @@ impl ActivityLogNodeType {
             from::PrescriptionDeleted => to::PrescriptionDeleted,
             from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
             from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
-            from::SensorLocationChanged => to::SensorLocationChanged,
         }
     }
 }

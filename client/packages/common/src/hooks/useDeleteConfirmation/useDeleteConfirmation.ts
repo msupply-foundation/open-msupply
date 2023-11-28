@@ -50,7 +50,7 @@ export const useDeleteConfirmation = <T>({
         })
         .catch(err => {
           cannotDeleteSnack();
-          console.error(err.message);
+          console.log(err.message);
         });
     },
     message: confirmMessage || t('messages.confirm-delete-generic'),

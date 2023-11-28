@@ -14,7 +14,6 @@ export type Option = {
 export interface SelectProps extends StandardTextFieldProps {
   options: Option[];
   renderOption?: (option: Option) => React.ReactNode;
-  clearable?: boolean;
 }
 
 const defaultRenderOption = (option: Option) => (

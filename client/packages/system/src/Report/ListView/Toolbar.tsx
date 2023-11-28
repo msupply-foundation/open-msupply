@@ -4,7 +4,6 @@ import {
   useTranslation,
   SearchBar,
   FilterController,
-  FilterRule,
 } from '@openmsupply-client/common';
 
 interface ToolbarProps {
@@ -13,8 +12,7 @@ interface ToolbarProps {
 
 export const Toolbar: FC<ToolbarProps> = ({ filter }) => {
   const t = useTranslation('common');
-  const filterString =
-    ((filter.filterBy?.['name'] as FilterRule)?.like as string) || '';
+  const filterString = (filter.filterBy?.['name']?.like as string) || '';
 
   return (
     <AppBarContentPortal

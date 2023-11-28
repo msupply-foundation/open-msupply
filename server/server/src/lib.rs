@@ -2,9 +2,8 @@
 extern crate machine_uid;
 
 use crate::{
-    certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
-    cors::cors_policy, serve_frontend::config_server_frontend, static_files::config_static_files,
-    upload_fridge_tag::config_upload_fridge_tag,
+    certs::Certificates, configuration::get_or_create_token_secret, cors::cors_policy,
+    serve_frontend::config_server_frontend, static_files::config_static_files,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -20,6 +19,7 @@ use repository::{get_storage_connection_manager, migrations::migrate};
 
 use service::{
     auth_data::AuthData,
+    plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
@@ -28,10 +28,9 @@ use service::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 pub mod certs;
-pub mod cold_chain;
 pub mod configuration;
 pub mod cors;
 pub mod environment;
@@ -39,7 +38,6 @@ mod logging;
 pub mod middleware;
 mod serve_frontend;
 pub mod static_files;
-mod upload_fridge_tag;
 pub use self::logging::*;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
@@ -204,13 +202,18 @@ pub async fn start_server(
             false => "initialisation",
         }
     );
+
+    let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
+    let validated_plugins = Data::new(Mutex::new(validated_plugins));
+
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
             connection_manager: Data::new(connection_manager),
             loader_registry: Data::new(LoaderRegistry { loaders }),
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
-            auth: auth.clone(),
+            validated_plugins: validated_plugins.clone(),
+            auth,
         },
         is_operational,
     ));
@@ -275,15 +278,9 @@ pub async fn start_server(
             .wrap(cors_policy(&closure_settings))
             .wrap(compress_middleware())
             // needed for static files service
-            .app_data(Data::new(closure_settings.clone()))
-            // needed for cold chain service
-            .app_data(service_provider.clone())
-            .app_data(auth.clone())
+            .app_data(validated_plugins.clone())
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
-            .configure(config_cold_chain)
-            .configure(config_upload_fridge_tag)
-            // Needs to be last to capture all unmatches routes
             .configure(config_server_frontend)
     })
     .disable_signals();

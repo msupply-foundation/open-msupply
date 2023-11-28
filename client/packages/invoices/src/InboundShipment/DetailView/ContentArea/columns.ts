@@ -1,4 +1,5 @@
 import {
+  Formatter,
   getRowExpandColumn,
   GenericColumnKey,
   getNotePopoverColumn,
@@ -161,7 +162,7 @@ export const useInboundShipmentColumns = () => {
               const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
-                t('multiple')
+                null
               );
 
               return expiryDate;
@@ -172,15 +173,15 @@ export const useInboundShipmentColumns = () => {
           getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              const expiryDate =
-                ArrayUtils.ifTheSameElseDefault(
-                  lines,
-                  'expiryDate',
-                  t('multiple')
-                ) ?? '';
-              return expiryDate;
+              const expiryDate = ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'expiryDate',
+                null
+              );
+
+              return Formatter.expiryDateString(expiryDate);
             } else {
-              return rowData.expiryDate ?? '';
+              return Formatter.expiryDateString(rowData.expiryDate);
             }
           },
         },

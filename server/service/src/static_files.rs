@@ -1,8 +1,8 @@
 use std::io::Error;
 use std::path::PathBuf;
+use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
-use util::prepare_file_dir;
 use util::uuid::uuid;
 
 #[derive(Debug, PartialEq)]
@@ -26,14 +26,20 @@ pub struct StaticFileService {
 }
 impl StaticFileService {
     pub fn new(base_dir: &Option<String>) -> anyhow::Result<Self> {
+        let file_dir = match base_dir {
+            Some(file_dir) => PathBuf::from_str(file_dir)?.join(STATIC_FILE_DIR),
+            None => PathBuf::from_str(STATIC_FILE_DIR)?,
+        };
+
         Ok(StaticFileService {
-            dir: prepare_file_dir(STATIC_FILE_DIR, base_dir)?,
+            dir: file_dir,
             max_lifetime_millis: 60 * 60 * 1000, // 1 hours
         })
     }
 
     pub fn store_file(&self, file_name: &str, bytes: &[u8]) -> anyhow::Result<StaticFile> {
         let id = uuid();
+        std::fs::create_dir_all(&self.dir)?;
         let file_path = self.dir.join(format!("{}_{}", id, file_name));
         std::fs::write(&file_path, bytes).unwrap();
         Ok(StaticFile {
@@ -126,9 +132,7 @@ fn delete_old_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Result<(),
 
 #[cfg(test)]
 mod test {
-    use std::{fs, time::Duration};
-
-    use crate::static_files::STATIC_FILE_DIR;
+    use std::{fs, path::PathBuf, str::FromStr, time::Duration};
 
     use super::StaticFileService;
 
@@ -136,16 +140,13 @@ mod test {
 
     #[test]
     fn test_static_file_storage() {
-        let test_dir = std::env::current_dir()
-            .unwrap()
-            .join(TEST_DIR)
-            .join(STATIC_FILE_DIR);
+        let mut service = StaticFileService::new(&None).unwrap();
+        service.dir = PathBuf::from_str(TEST_DIR).unwrap();
+        service.max_lifetime_millis = 100;
+        let test_dir = std::env::current_dir().unwrap().join(TEST_DIR);
         if fs::metadata(&test_dir).is_ok() {
             fs::remove_dir_all(&test_dir).unwrap();
         }
-
-        let mut service = StaticFileService::new(&Some(TEST_DIR.to_string())).unwrap();
-        service.max_lifetime_millis = 100;
 
         let file_in = service.store_file("test_file", "data".as_bytes()).unwrap();
         let file_out = service.find_file(&file_in.id).unwrap().unwrap();

@@ -3,7 +3,7 @@ import { usePrescriptionApi } from '../../utils/usePrescriptionApi';
 
 export const usePrescriptions = () => {
   const { queryParams } = useUrlQueryParams({
-    filters: [{ key: 'otherPartyName' }],
+    filterKey: 'otherPartyName',
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
   const api = usePrescriptionApi();

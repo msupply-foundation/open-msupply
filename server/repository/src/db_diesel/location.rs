@@ -3,10 +3,7 @@ use super::{
     LocationRow, StorageConnection,
 };
 
-use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
-    StringFilter,
-};
+use crate::diesel_macros::{apply_equal_filter, apply_sort_no_case};
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
 use diesel::prelude::*;
@@ -19,8 +16,8 @@ pub struct Location {
 #[derive(Clone, PartialEq, Debug)]
 pub struct LocationFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<StringFilter>,
-    pub code: Option<StringFilter>,
+    pub name: Option<EqualFilter<String>>,
+    pub code: Option<EqualFilter<String>>,
     pub on_hold: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
 }
@@ -44,7 +41,7 @@ impl<'a> LocationRepository<'a> {
 
     pub fn count(&self, filter: Option<LocationFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M2), check that store_id matches current store
-        let query = Self::create_filtered_query(filter);
+        let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -63,7 +60,7 @@ impl<'a> LocationRepository<'a> {
         sort: Option<LocationSort>,
     ) -> Result<Vec<Location>, RepositoryError> {
         // TODO (beyond M2), check that store_id matches current store
-        let mut query = Self::create_filtered_query(filter);
+        let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -85,27 +82,27 @@ impl<'a> LocationRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
-
-    pub fn create_filtered_query(filter: Option<LocationFilter>) -> BoxedLocationQuery {
-        let mut query = location::table.into_boxed();
-
-        if let Some(filter) = filter {
-            apply_equal_filter!(query, filter.id, location_dsl::id);
-            apply_string_filter!(query, filter.name, location_dsl::name);
-            apply_string_filter!(query, filter.code, location_dsl::code);
-
-            if let Some(value) = filter.on_hold {
-                query = query.filter(location_dsl::on_hold.eq(value));
-            }
-
-            apply_equal_filter!(query, filter.store_id, location_dsl::store_id);
-        }
-
-        query
-    }
 }
 
 type BoxedLocationQuery = location::BoxedQuery<'static, DBType>;
+
+fn create_filtered_query(filter: Option<LocationFilter>) -> BoxedLocationQuery {
+    let mut query = location::table.into_boxed();
+
+    if let Some(filter) = filter {
+        apply_equal_filter!(query, filter.id, location_dsl::id);
+        apply_equal_filter!(query, filter.name, location_dsl::name);
+        apply_equal_filter!(query, filter.code, location_dsl::code);
+
+        if let Some(value) = filter.on_hold {
+            query = query.filter(location_dsl::on_hold.eq(value));
+        }
+
+        apply_equal_filter!(query, filter.store_id, location_dsl::store_id);
+    }
+
+    query
+}
 
 pub fn to_domain(location_row: LocationRow) -> Location {
     Location { location_row }
@@ -127,12 +124,12 @@ impl LocationFilter {
         self
     }
 
-    pub fn name(mut self, filter: StringFilter) -> Self {
+    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
         self.name = Some(filter);
         self
     }
 
-    pub fn code(mut self, filter: StringFilter) -> Self {
+    pub fn code(mut self, filter: EqualFilter<String>) -> Self {
         self.code = Some(filter);
         self
     }
