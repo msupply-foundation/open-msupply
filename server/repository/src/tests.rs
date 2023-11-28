@@ -286,10 +286,10 @@ mod repository_test {
         KeyValueStoreRepository, KeyValueType, MasterListFilter, MasterListLineFilter,
         MasterListLineRepository, MasterListLineRowRepository, MasterListNameJoinRepository,
         MasterListRepository, MasterListRowRepository, NameRowRepository, NumberRowRepository,
-        NumberRowType, OutboundShipmentRowRepository, RepositoryError, RequisitionFilter,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
-        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
-        StockLineRowRepository, StorageConnection, StoreRowRepository, UserAccountRowRepository,
+        NumberRowType, OutboundShipmentRowRepository, RequisitionFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
+        RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
+        StorageConnection, StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, StringFilter};
     use chrono::Duration;
@@ -346,7 +346,6 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRowRepository::new(&connection);
         insert_item_and_link(&data::item_1(), &connection).await;
 
         let name_repo = NameRowRepository::new(&connection);
