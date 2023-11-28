@@ -13,7 +13,8 @@ import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { useGql } from '../api';
 
-export const COOKIE_LIFETIME_MINUTES = 60;
+// Also determines auth cookie lifetime
+export const INACTIVITY_TIMEOUT_MINUTES = 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
 
 export enum AuthError {
@@ -75,7 +76,7 @@ export const getAuthCookie = (): AuthCookie => {
 };
 
 export const setAuthCookie = (cookie: AuthCookie) => {
-  const expires = addMinutes(new Date(), COOKIE_LIFETIME_MINUTES);
+  const expires = addMinutes(new Date(), INACTIVITY_TIMEOUT_MINUTES);
   const authCookie = { ...cookie, expires };
 
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
@@ -107,7 +108,11 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     mostRecentCredentials,
   } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
-  const { refreshToken } = useRefreshToken();
+  const { refreshToken } = useRefreshToken(() => {
+    Cookies.remove('auth');
+    setCookie(undefined);
+    setError(AuthError.Timeout);
+  });
   const { setHeader } = useGql();
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
 

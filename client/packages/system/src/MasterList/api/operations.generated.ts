@@ -24,6 +24,14 @@ export type MasterListsQueryVariables = Types.Exact<{
 
 export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number } }> } };
 
+export type MasterListsByItemIdQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+}>;
+
+
+export type MasterListsByItemIdQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number } }> } };
+
 export type MasterListQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.MasterListFilterInput>;
   storeId: Types.Scalars['String']['input'];
@@ -94,6 +102,22 @@ export const MasterListsDocument = gql`
   }
 }
     ${MasterListRowFragmentDoc}`;
+export const MasterListsByItemIdDocument = gql`
+    query masterListsByItemId($storeId: String!, $itemId: String!) {
+  masterLists(
+    filter: {itemId: {equalTo: $itemId}, existsForStoreId: {equalTo: $storeId}}
+    storeId: $storeId
+  ) {
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterListRow
+      }
+    }
+  }
+}
+    ${MasterListRowFragmentDoc}`;
 export const MasterListDocument = gql`
     query masterList($filter: MasterListFilterInput, $storeId: String!) {
   masterLists(filter: $filter, storeId: $storeId) {
@@ -118,6 +142,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     masterLists(variables: MasterListsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MasterListsQuery>(MasterListsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterLists', 'query');
     },
+    masterListsByItemId(variables: MasterListsByItemIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListsByItemIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MasterListsByItemIdQuery>(MasterListsByItemIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterListsByItemId', 'query');
+    },
     masterList(variables: MasterListQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MasterListQuery>(MasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterList', 'query');
     }
@@ -139,6 +166,23 @@ export type Sdk = ReturnType<typeof getSdk>;
 export const mockMasterListsQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListsQueryVariables>, GraphQLContext<MasterListsQuery>, any>) =>
   graphql.query<MasterListsQuery, MasterListsQueryVariables>(
     'masterLists',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockMasterListsByItemIdQuery((req, res, ctx) => {
+ *   const { storeId, itemId } = req.variables;
+ *   return res(
+ *     ctx.data({ masterLists })
+ *   )
+ * })
+ */
+export const mockMasterListsByItemIdQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListsByItemIdQueryVariables>, GraphQLContext<MasterListsByItemIdQuery>, any>) =>
+  graphql.query<MasterListsByItemIdQuery, MasterListsByItemIdQueryVariables>(
+    'masterListsByItemId',
     resolver
   )
 
