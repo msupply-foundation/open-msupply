@@ -2,9 +2,11 @@ pub mod validate;
 
 use repository::InvoiceLine;
 use repository::InvoiceLineFilter;
+use repository::InvoiceLineSort;
 use repository::RepositoryError;
 
 use crate::service_provider::ServiceContext;
+use crate::ListResult;
 
 pub mod query;
 use self::query::*;
@@ -36,9 +38,12 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_lines(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
+        invoice_id: &str,
         filter: Option<InvoiceLineFilter>,
-    ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-        get_invoice_lines(ctx, filter)
+        sort: Option<InvoiceLineSort>,
+    ) -> Result<ListResult<InvoiceLine>, GetInvoiceLinesError> {
+        get_invoice_lines(ctx, store_id, invoice_id, filter, sort)
     }
 
     // Stock out: Outbound/Prescription
