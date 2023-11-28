@@ -26,6 +26,7 @@
   "button.refresh": "Refresh",
   "button.retry": "Retry",
   "button.save": "Save",
+  "button.save-log": "Save log",
   "button.save-and-confirm-status": "Confirm {{status}}",
   "button.scan": "Scan",
   "button.select-a-color": "Select a colour",
