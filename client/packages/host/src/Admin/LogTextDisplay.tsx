@@ -7,7 +7,13 @@ export const LogTextDisplay = ({ logText }: { logText: string[] | string }) => {
       <>
         {logText.map((logLine, i) => (
           <Typography
-            sx={{ overflow: 'elipsis', whiteSpace: 'pre', maxWidth: '100%' }}
+            sx={{
+              overflow: 'ellipsis',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'pre',
+              maxWidth: '100%',
+            }}
+            noWrap
             component="div"
             key={i}
           >
