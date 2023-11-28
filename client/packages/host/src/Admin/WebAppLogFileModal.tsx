@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDialog } from '@common/hooks';
+import { useDialog, useNativeClient } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
   BasicSpinner,
@@ -24,12 +24,22 @@ export const WebAppLogFileModal = ({
   const [logToRender, setLogToRender] = useState('');
   const [logContent, setLogContent] = useState<string[]>([]);
   const { Modal } = useDialog({ isOpen });
+  const { saveFile } = useNativeClient();
+  const [isSaving, setIsSaving] = useState(false);
 
   const {
     data: logFiles,
     isError,
     isLoading,
   } = useLog.document.listFileNames();
+
+  const saveLog = async () => {
+    setIsSaving(true);
+    await saveFile({
+      content: logContent.toString(),
+      filename: 'exported_log.txt',
+    });
+  };
 
   // should add error condition for second hook
 
@@ -53,21 +63,24 @@ export const WebAppLogFileModal = ({
       title={t('heading.server-log')}
       okButton={<DialogButton variant="ok" onClick={onClose} />}
       copyContent={
-        <>
-          <LoadingButton
-            isLoading={isLoading}
-            onClick={() => {
-              navigator.clipboard.writeText(logContent.toString());
-            }}
-            startIcon={<CopyIcon />}
-          ></LoadingButton>
-          {/* <LoadingButton isLoading={isLoading}></LoadingButton> */}
-        </>
+        <LoadingButton
+          isLoading={isLoading}
+          onClick={() => {
+            navigator.clipboard.writeText(logContent.toString());
+          }}
+          startIcon={<CopyIcon />}
+        />
+      }
+      cancelButton={
+        <DialogButton
+          variant="save"
+          onClick={saveLog}
+          disabled={!logContent || isSaving}
+        />
       }
     >
       <>
         <div>
-          <Typography>{logContent}</Typography>
           <Typography>{logToRender}</Typography>
         </div>
         {!isLoading && logFiles ? (
@@ -83,11 +96,13 @@ export const WebAppLogFileModal = ({
               ))}
             </DropdownMenu>
 
-            {logToRender && (
+            {logContent ? (
               <LogDisplay
                 fileName={logToRender}
                 setLogContent={setLogContent}
               ></LogDisplay>
+            ) : (
+              <BasicSpinner />
             )}
           </div>
         ) : (
