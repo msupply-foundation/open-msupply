@@ -153,12 +153,11 @@ fn update_contact_trace(
 mod integrate_document_test {
     use chrono::{DateTime, NaiveDateTime, Utc};
     use repository::{
-        mock::{context_program_a, MockDataInserts},
+        mock::{context_program_a, document_registry_b, mock_patient, MockDataInserts},
         test_db::setup_all,
-        DocumentStatus, PatientFilter, StringFilter,
+        DocumentStatus, Pagination, ProgramEnrolmentFilter, StringFilter,
     };
     use serde_json::json;
-    use util::constants::PATIENT_TYPE;
 
     use crate::service_provider::ServiceProvider;
 
@@ -171,7 +170,7 @@ mod integrate_document_test {
 
         let service_provider = ServiceProvider::new(connection_manager, "");
         let context = service_provider.basic_context().unwrap();
-        let patient_service = service_provider.patient_service;
+        let service = service_provider.program_enrolment_service;
 
         let doc_name = "test/doc";
         let doc_context = context_program_a().id;
@@ -187,31 +186,35 @@ mod integrate_document_test {
                     NaiveDateTime::from_timestamp_opt(50000, 0).unwrap(),
                     Utc,
                 ),
-                r#type: PATIENT_TYPE.to_string(),
+                r#type: document_registry_b().document_type,
                 data: json!({
-                  "id": "id",
-                  "firstName": "name1",
+                  "enrolmentDatetime": "2023-11-28T18:24:57.184Z",
+                  "status": "ACTIVE",
+                  "programEnrolmentId": "name1",
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                owner_name_id: None,
+                owner_name_id: Some(mock_patient().id),
                 context_id: doc_context.clone(),
             },
         )
         .unwrap();
-        let found = patient_service
-            .get_patients(
+        let found = service
+            .program_enrolments(
                 &context,
+                Pagination::all(),
                 None,
-                Some(PatientFilter::new().first_name(StringFilter::starts_with("name"))),
-                None,
-                None,
+                Some(
+                    ProgramEnrolmentFilter::new()
+                        .program_enrolment_id(StringFilter::starts_with("name")),
+                ),
+                vec![doc_context.clone()],
             )
             .unwrap()
-            .rows
             .pop()
-            .unwrap();
-        assert_eq!(&found.first_name.unwrap(), "name1");
+            .unwrap()
+            .0;
+        assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding older document shouldn't update the patient entry
         sync_upsert_document(
@@ -225,31 +228,35 @@ mod integrate_document_test {
                     NaiveDateTime::from_timestamp_opt(20000, 0).unwrap(),
                     Utc,
                 ),
-                r#type: PATIENT_TYPE.to_string(),
+                r#type: document_registry_b().document_type,
                 data: json!({
-                  "id": "id",
-                  "firstName": "name0",
+                    "enrolmentDatetime": "2023-11-27T18:24:57.184Z",
+                    "status": "ACTIVE",
+                    "programEnrolmentId": "name0",
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                owner_name_id: None,
+                owner_name_id: Some(mock_patient().id),
                 context_id: doc_context.clone(),
             },
         )
         .unwrap();
-        let found = patient_service
-            .get_patients(
+        let found = service
+            .program_enrolments(
                 &context,
+                Pagination::all(),
                 None,
-                Some(PatientFilter::new().first_name(StringFilter::starts_with("name"))),
-                None,
-                None,
+                Some(
+                    ProgramEnrolmentFilter::new()
+                        .program_enrolment_id(StringFilter::starts_with("name")),
+                ),
+                vec![doc_context.clone()],
             )
             .unwrap()
-            .rows
             .pop()
-            .unwrap();
-        assert_eq!(&found.first_name.unwrap(), "name1");
+            .unwrap()
+            .0;
+        assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding newer document should update the patient entry
         sync_upsert_document(
@@ -263,30 +270,34 @@ mod integrate_document_test {
                     NaiveDateTime::from_timestamp_opt(100000, 0).unwrap(),
                     Utc,
                 ),
-                r#type: PATIENT_TYPE.to_string(),
+                r#type: document_registry_b().document_type,
                 data: json!({
-                  "id": "id",
-                  "firstName": "name2",
+                    "enrolmentDatetime": "2023-11-30T18:24:57.184Z",
+                    "status": "ACTIVE",
+                    "programEnrolmentId": "name2",
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                owner_name_id: None,
+                owner_name_id: Some(mock_patient().id),
                 context_id: doc_context.clone(),
             },
         )
         .unwrap();
-        let found = patient_service
-            .get_patients(
+        let found = service
+            .program_enrolments(
                 &context,
+                Pagination::all(),
                 None,
-                Some(PatientFilter::new().first_name(StringFilter::starts_with("name"))),
-                None,
-                None,
+                Some(
+                    ProgramEnrolmentFilter::new()
+                        .program_enrolment_id(StringFilter::starts_with("name")),
+                ),
+                vec![doc_context.clone()],
             )
             .unwrap()
-            .rows
             .pop()
-            .unwrap();
-        assert_eq!(&found.first_name.unwrap(), "name2");
+            .unwrap()
+            .0;
+        assert_eq!(&found.program_enrolment_id.unwrap(), "name2");
     }
 }

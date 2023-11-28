@@ -363,7 +363,7 @@ mod test {
             found_patient.date_of_birth.map(|date| date.to_string()),
             patient.date_of_birth
         );
-        assert_eq!(found_patient.phone, contact_details.mobile);
+        assert_eq!(found_patient.phone, contact_details.phone);
         assert_eq!(found_patient.email, contact_details.email);
         assert_eq!(found_patient.website, contact_details.website);
         assert_eq!(found_patient.address1, contact_details.address_1);
