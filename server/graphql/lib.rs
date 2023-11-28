@@ -19,7 +19,7 @@ use graphql_general::{
     InitialisationQueries,
 };
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
-use graphql_invoice_line::InvoiceLineMutations;
+use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
@@ -50,6 +50,7 @@ pub type InitialisationSchema = async_graphql::Schema<
 #[derive(MergedObject, Default, Clone)]
 pub struct Queries(
     pub InvoiceQueries,
+    pub InvoiceLineQueries,
     pub LocationQueries,
     pub SensorQueries,
     pub TemperatureBreachQueries,
@@ -70,6 +71,7 @@ impl Queries {
     pub fn new() -> Queries {
         Queries(
             InvoiceQueries,
+            InvoiceLineQueries,
             LocationQueries,
             SensorQueries,
             TemperatureBreachQueries,
