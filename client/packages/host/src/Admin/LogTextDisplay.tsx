@@ -1,4 +1,4 @@
-import { Typography } from '@common/components';
+import { Tooltip, Typography } from '@common/components';
 import React from 'react';
 
 export const LogTextDisplay = ({ logText }: { logText: string[] | string }) => {
@@ -6,30 +6,34 @@ export const LogTextDisplay = ({ logText }: { logText: string[] | string }) => {
     return (
       <>
         {logText.map((logLine, i) => (
-          <Typography
-            sx={{
-              overflow: 'ellipsis',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'pre',
-              maxWidth: '100%',
-            }}
-            noWrap
-            component="div"
-            key={i}
-          >
-            {`${logLine}`}
-          </Typography>
+          <Tooltip key={i} title={logLine}>
+            <Typography
+              sx={{
+                overflow: 'ellipsis',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'pre',
+                maxWidth: '100%',
+              }}
+              noWrap
+              component="div"
+              key={i}
+            >
+              {`${logLine}`}
+            </Typography>
+          </Tooltip>
         ))}
       </>
     );
   } else {
     return (
-      <Typography
-        sx={{ overflow: 'scroll', whiteSpace: 'pre' }}
-        component="div"
-      >
-        {`${logText}`}
-      </Typography>
+      <Tooltip title={logText}>
+        <Typography
+          sx={{ overflow: 'scroll', whiteSpace: 'pre' }}
+          component="div"
+        >
+          {`${logText}`}
+        </Typography>
+      </Tooltip>
     );
   }
 };

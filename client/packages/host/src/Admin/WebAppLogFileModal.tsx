@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuItem,
   LoadingButton,
+  Tooltip,
   Typography,
 } from '@common/components';
 import { useLog } from '@openmsupply-client/system';
@@ -94,25 +95,33 @@ export const WebAppLogFileModal = ({
       title={t('heading.server-log')}
       copyContent={
         <>
-          <LoadingButton
-            isLoading={logListLoading}
-            onClick={() => {
-              navigator.clipboard.writeText(logContent.toString());
-            }}
-            disabled={logContent.length === 0}
-            startIcon={<CopyIcon />}
-          >
-            {t('link.copy-to-clipboard')}
-          </LoadingButton>
-          <LoadingButton
-            startIcon={<SaveIcon />}
-            onClick={saveLog}
-            disabled={logContent.length === 0 || isSaving}
-            isLoading={false}
-          >
-            {t('button.save-log')}
-          </LoadingButton>
-          <DialogButton variant="ok" onClick={onClose} />
+          <Tooltip title={t('link.copy-to-clipboard')}>
+            <LoadingButton
+              isLoading={logListLoading}
+              onClick={() => {
+                navigator.clipboard.writeText(logContent.toString());
+              }}
+              disabled={logContent.length === 0}
+              startIcon={<CopyIcon />}
+            >
+              {t('link.copy-to-clipboard')}
+            </LoadingButton>
+          </Tooltip>
+          <Tooltip title={t('label.save-log')}>
+            <LoadingButton
+              startIcon={<SaveIcon />}
+              onClick={saveLog}
+              disabled={logContent.length === 0 || isSaving}
+              isLoading={false}
+            >
+              {t('button.save-log')}
+            </LoadingButton>
+          </Tooltip>
+          <Box marginLeft="8px">
+            <Tooltip title={t('label.ok-and-close')}>
+              <DialogButton variant="ok" onClick={onClose} />
+            </Tooltip>
+          </Box>
         </>
       }
     >
