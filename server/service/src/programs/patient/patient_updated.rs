@@ -41,17 +41,12 @@ pub fn update_patient_row(
     store_id: Option<String>,
     update_timestamp: &DateTime<Utc>,
     patient: SchemaPatient,
-    is_sync_update: bool,
 ) -> Result<(), UpdateProgramPatientError> {
     let name_repo = NameRowRepository::new(con);
     let existing_name = name_repo.find_one_by_id(&patient.id)?;
 
     let name_upsert = patient_to_name_row(store_id, update_timestamp, patient, existing_name)?;
-    if is_sync_update {
-        name_repo.sync_upsert_one(&name_upsert)?;
-    } else {
-        name_repo.upsert_one(&name_upsert)?;
-    }
+    name_repo.upsert_one(&name_upsert)?;
 
     Ok(())
 }
