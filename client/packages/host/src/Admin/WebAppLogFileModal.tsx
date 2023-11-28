@@ -132,10 +132,7 @@ export const WebAppLogFileModal = ({
             ></LogDisplay>
           </div>
         ) : (
-          <>
-            hello
-            <BasicSpinner />
-          </>
+          <BasicSpinner />
         )}
       </>
     </Modal>
