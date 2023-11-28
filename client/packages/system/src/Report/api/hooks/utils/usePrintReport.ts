@@ -2,6 +2,7 @@ import {
   EnvUtils,
   Platform,
   PrintFormat,
+  PrintReportSortInput,
   useMutation,
   useNotification,
 } from '@openmsupply-client/common';
@@ -14,6 +15,7 @@ type PrintReportParams = {
   reportId: string;
   dataId?: string;
   args?: JsonData;
+  sort?: PrintReportSortInput;
 };
 
 const setClose = (frame: HTMLIFrameElement) => () => {

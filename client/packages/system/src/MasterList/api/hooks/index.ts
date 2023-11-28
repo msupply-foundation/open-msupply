@@ -7,7 +7,7 @@ export const useMasterList = {
     get: Document.useMasterList,
     list: Document.useMasterLists,
     listAll: Document.useMasterListsAll,
-
+    listByItemId: Document.useMasterListsByItemId,
     fields: Document.useMasterListFields,
   },
   line: {

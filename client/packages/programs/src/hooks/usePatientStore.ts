@@ -1,5 +1,5 @@
 import { create } from '@openmsupply-client/common';
-import { PatientRowFragment } from '@openmsupply-client/system';
+import { ProgramPatientRowFragment } from '@openmsupply-client/system';
 
 // Copied from the schema definition
 export enum Gender {
@@ -40,8 +40,8 @@ interface PatientStoreState {
   documentName: string | undefined;
   setDocumentName: (documentName: string | undefined) => void;
 
-  currentPatient: PatientRowFragment | undefined;
-  setCurrentPatient: (patient: PatientRowFragment) => void;
+  currentPatient: ProgramPatientRowFragment | undefined;
+  setCurrentPatient: (patient: ProgramPatientRowFragment) => void;
 
   createNewPatient?: CreateNewPatient;
   setCreateNewPatient: (update: CreateNewPatient | undefined) => void;
@@ -54,7 +54,7 @@ export const usePatientStore = create<PatientStoreState>(set => ({
     set(state => ({ ...state, documentName })),
 
   currentPatient: undefined,
-  setCurrentPatient: (patient: PatientRowFragment | undefined) =>
+  setCurrentPatient: (patient: ProgramPatientRowFragment | undefined) =>
     set(state => ({ ...state, currentPatient: patient })),
 
   createNewPatient: undefined,

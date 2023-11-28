@@ -11,6 +11,7 @@ use graphql_types::types::contact_trace::ContactTraceSortInput;
 use graphql_types::types::document::DocumentNode;
 use graphql_types::types::encounter::EncounterFilterInput;
 use graphql_types::types::encounter::EncounterSortInput;
+use graphql_types::types::patient::PatientFilterInput;
 use graphql_types::types::patient::PatientNode;
 use graphql_types::types::program_enrolment::ProgramEnrolmentFilterInput;
 use graphql_types::types::program_enrolment::ProgramEnrolmentResponse;

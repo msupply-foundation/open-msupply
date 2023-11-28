@@ -3,12 +3,10 @@ import { useItemApi } from '../useItemApi';
 
 export const useItems = () => {
   const { queryParams } = useUrlQueryParams({
-    filterKey: 'codeOrName',
+    filters: [{ key: 'codeOrName' }],
   });
   const api = useItemApi();
-  return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.stockItemsWithStats(queryParams)
-    ),
-  };
+  return useQuery(api.keys.paramList(queryParams), () =>
+    api.get.stockItemsWithStats(queryParams)
+  );
 };

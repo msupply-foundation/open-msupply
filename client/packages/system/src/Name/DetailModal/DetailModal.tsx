@@ -8,12 +8,12 @@ import {
   Checkbox,
   Grid,
   useFormatDateTime,
-  Typography,
   Box,
   BasicSpinner,
   MuiLink,
 } from '@openmsupply-client/common';
 import { useName } from '../api';
+import { NameRenderer } from '../Components';
 
 interface DetailModalProps {
   nameId: string;
@@ -35,9 +35,11 @@ export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
   return !!data ? (
     <DetailContainer>
       <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-        <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-          {data.name}
-        </Typography>
+        <NameRenderer
+          isStore={!!data?.store}
+          label={data?.name}
+          sx={{ fontWeight: 'bold', fontSize: 18 }}
+        />
         <Grid container flex={1} flexDirection="row" gap={4}>
           <DetailSection title="">
             <DetailInputWithLabelRow
