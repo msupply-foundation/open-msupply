@@ -152,7 +152,7 @@ pub(crate) fn patient_to_name_row(
 /// The patient can divert from the document data when, for example, the patient details have been
 /// changed in mSupply.
 pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -> SchemaPatient {
-    let contact_details = document_data
+    let doc_contact_details = document_data
         .contact_details
         .as_ref()
         .and_then(|c| c.get(0).map(|c| c.clone()))
@@ -164,12 +164,34 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
         email: patient.email.clone(),
         phone: patient.phone.clone(),
         website: patient.website.clone(),
-        ..contact_details.clone()
+        ..doc_contact_details.clone()
     };
+    let SchemaPatient {
+        id: _,
+        allergies,
+        birth_place,
+        code,
+        code_2: _,
+        contact_details,
+        contacts,
+        date_of_birth: _,
+        date_of_birth_is_estimated,
+        date_of_death: _,
+        extension,
+        first_name: _,
+        last_name: _,
+        gender: _,
+        is_deceased,
+        marital_status,
+        middle_name,
+        notes,
+        passport_number,
+        socio_economics,
+    } = document_data;
     SchemaPatient {
         id: patient.id.clone(),
         code: if patient.code == "" {
-            document_data.code
+            code
         } else {
             Some(patient.code.clone())
         },
@@ -189,11 +211,11 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
             Gender::Unknown => SchemaGender::Unknown,
             Gender::NonBinary => SchemaGender::NonBinary,
         }),
-        contact_details: if contact_details == draft_contact_details {
-            document_data.contact_details
+        contact_details: if doc_contact_details == draft_contact_details {
+            contact_details
         } else {
             let mut contacts = vec![draft_contact_details];
-            if let Some(contact_details) = document_data.contact_details {
+            if let Some(contact_details) = contact_details {
                 contacts.extend(contact_details.into_iter().skip(1));
             }
             Some(contacts)
@@ -205,17 +227,17 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
             .date_of_death
             .map(|date| date.format("%Y-%m-%d").to_string()),
 
-        middle_name: document_data.middle_name,
-        date_of_birth_is_estimated: document_data.date_of_birth_is_estimated,
-        is_deceased: Some(patient.is_deceased || document_data.is_deceased.unwrap_or(false)),
-        notes: document_data.notes,
-        passport_number: document_data.passport_number,
-        socio_economics: document_data.socio_economics,
-        allergies: document_data.allergies,
-        birth_place: document_data.birth_place,
-        marital_status: document_data.marital_status,
-        contacts: document_data.contacts,
-        extension: document_data.extension,
+        middle_name: middle_name,
+        date_of_birth_is_estimated: date_of_birth_is_estimated,
+        is_deceased: Some(patient.is_deceased || is_deceased.unwrap_or(false)),
+        notes,
+        passport_number,
+        socio_economics,
+        allergies,
+        birth_place,
+        marital_status,
+        contacts,
+        extension,
     }
 }
 
