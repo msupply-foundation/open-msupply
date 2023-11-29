@@ -18,6 +18,9 @@ graphql_types = { path = "types" }
 graphql_general = { path = "general" }
 graphql_location = { path = "location" }
 graphql_reports = { path = "reports" }
+graphql_sensor = { path = "sensor" }
+graphql_temperature_breach = { path = "temperature_breach" }
+graphql_temperature_log = { path = "temperature_log" }
 graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }
 graphql_requisition = { path = "requisition" }

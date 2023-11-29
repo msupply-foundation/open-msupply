@@ -267,6 +267,7 @@ impl InvoiceLineBelongsToAnotherInvoice {
 #[graphql(rename_items = "camelCase")]
 pub enum UniqueValueKey {
     Code,
+    Serial,
 }
 
 pub struct UniqueValueViolation(pub UniqueValueKey);

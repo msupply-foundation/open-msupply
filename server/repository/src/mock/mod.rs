@@ -21,10 +21,13 @@ mod period_and_period_schedule;
 mod program;
 mod program_order_types;
 mod program_requisition_settings;
+mod sensor;
 mod stock_line;
 mod stocktake;
 mod stocktake_line;
 mod store;
+mod temperature_breach;
+mod temperature_log;
 mod test_invoice_count_service;
 mod test_invoice_loaders;
 pub mod test_item_stats;
@@ -64,10 +67,13 @@ pub use period_and_period_schedule::*;
 pub use program::*;
 pub use program_order_types::*;
 pub use program_requisition_settings::*;
+pub use sensor::*;
 pub use stock_line::*;
 pub use stocktake::*;
 pub use stocktake_line::*;
 pub use store::*;
+pub use temperature_breach::*;
+pub use temperature_log::*;
 pub use test_invoice_count_service::*;
 pub use test_invoice_loaders::*;
 pub use test_master_list_repository::*;
@@ -95,13 +101,14 @@ use crate::{
     MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
     NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
     NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
+    PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow,
+    SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
     StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
-    SyncLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    SyncLogRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
+    TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
@@ -127,6 +134,9 @@ pub struct MockData {
     pub units: Vec<UnitRow>,
     pub items: Vec<ItemRow>,
     pub locations: Vec<LocationRow>,
+    pub sensors: Vec<SensorRow>,
+    pub temperature_breaches: Vec<TemperatureBreachRow>,
+    pub temperature_logs: Vec<TemperatureLogRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
     pub full_requisitions: Vec<FullMockRequisition>,
     pub invoices: Vec<InvoiceRow>,
@@ -158,7 +168,6 @@ pub struct MockData {
     pub clinicians: Vec<ClinicianRow>,
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
-    pub plugin_data: Vec<PluginDataRow>,
 }
 
 impl MockData {
@@ -187,6 +196,9 @@ pub struct MockDataInserts {
     pub units: bool,
     pub items: bool,
     pub locations: bool,
+    pub sensors: bool,
+    pub temperature_breaches: bool,
+    pub temperature_logs: bool,
     pub name_store_joins: bool,
     pub full_requisitions: bool,
     pub invoices: bool,
@@ -215,7 +227,6 @@ pub struct MockDataInserts {
     pub clinicians: bool,
     pub clinician_store_joins: bool,
     pub contexts: bool,
-    pub plugin_data: bool,
 }
 
 impl MockDataInserts {
@@ -233,6 +244,9 @@ impl MockDataInserts {
             units: true,
             items: true,
             locations: true,
+            sensors: true,
+            temperature_breaches: true,
+            temperature_logs: true,
             name_store_joins: true,
             full_requisitions: true,
             invoices: true,
@@ -261,7 +275,6 @@ impl MockDataInserts {
             clinicians: true,
             clinician_store_joins: true,
             contexts: true,
-            plugin_data: true,
         }
     }
 
@@ -331,6 +344,21 @@ impl MockDataInserts {
 
     pub fn locations(mut self) -> Self {
         self.locations = true;
+        self
+    }
+
+    pub fn sensors(mut self) -> Self {
+        self.sensors = true;
+        self
+    }
+
+    pub fn temperature_breaches(mut self) -> Self {
+        self.temperature_breaches = true;
+        self
+    }
+
+    pub fn temperature_logs(mut self) -> Self {
+        self.temperature_logs = true;
         self
     }
 
@@ -443,11 +471,6 @@ impl MockDataInserts {
         self.contexts = true;
         self
     }
-
-    pub fn plugin_data(mut self) -> Self {
-        self.plugin_data = true;
-        self
-    }
 }
 
 #[derive(Default)]
@@ -496,6 +519,9 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             units: mock_units(),
             items: mock_items(),
             locations: mock_locations(),
+            sensors: mock_sensors(),
+            temperature_logs: mock_temperature_logs(),
+            temperature_breaches: mock_temperature_breaches(),
             name_store_joins: mock_name_store_joins(),
             invoices: mock_invoices(),
             stock_lines: mock_stock_lines(),
@@ -659,6 +685,27 @@ pub fn insert_mock_data(
         if inserts.locations {
             let repo = LocationRowRepository::new(connection);
             for row in &mock_data.locations {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.sensors {
+            let repo = SensorRowRepository::new(connection);
+            for row in &mock_data.sensors {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.temperature_logs {
+            let repo = TemperatureLogRowRepository::new(connection);
+            for row in &mock_data.temperature_logs {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.temperature_breaches {
+            let repo = TemperatureBreachRowRepository::new(connection);
+            for row in &mock_data.temperature_breaches {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -858,13 +905,6 @@ pub fn insert_mock_data(
                 repo.upsert_one(&row).unwrap();
             }
         }
-
-        if inserts.plugin_data {
-            let repo = PluginDataRowRepository::new(connection);
-            for row in &mock_data.plugin_data {
-                repo.upsert_one(&row).unwrap();
-            }
-        }
     }
     mock_data
 }
@@ -881,6 +921,9 @@ impl MockData {
             mut units,
             mut items,
             mut locations,
+            mut sensors,
+            mut temperature_breaches,
+            mut temperature_logs,
             mut name_store_joins,
             mut full_requisitions,
             mut invoices,
@@ -913,7 +956,6 @@ impl MockData {
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
-            plugin_data: _,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -925,6 +967,9 @@ impl MockData {
         self.units.append(&mut units);
         self.items.append(&mut items);
         self.locations.append(&mut locations);
+        self.sensors.append(&mut sensors);
+        self.temperature_logs.append(&mut temperature_logs);
+        self.temperature_breaches.append(&mut temperature_breaches);
         self.full_requisitions.append(&mut full_requisitions);
         self.invoices.append(&mut invoices);
         self.invoice_lines.append(&mut invoice_lines);

@@ -7,13 +7,17 @@ use super::{
     program_requisition::program_requisition_order_type_row::program_requisition_order_type,
     program_requisition::program_requisition_settings_row::program_requisition_settings,
     program_row::program, requisition_line_row::requisition_line, requisition_row::requisition,
-    stock_line_row::stock_line, stocktake_line_row::stocktake_line, stocktake_row::stocktake,
-    store_row::store, unit_row::unit, user_row::user_account,
+    sensor_row::sensor, stock_line_row::stock_line, stocktake_line_row::stocktake_line,
+    stocktake_row::stocktake, store_row::store, temperature_breach_row::temperature_breach,
+    temperature_log_row::temperature_log, unit_row::unit, user_row::user_account,
 };
 
 allow_tables_to_appear_in_same_query!(
     unit,
     location,
+    sensor,
+    temperature_log,
+    temperature_breach,
     item,
     stock_line,
     name,
