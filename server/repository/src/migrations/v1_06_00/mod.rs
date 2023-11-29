@@ -7,6 +7,7 @@ mod item_line_add_item_link_id;
 mod item_link_create_table;
 mod master_list;
 mod plugin_data;
+mod stocktake_line_add_item_link_id;
 mod temperature_breach;
 
 pub(crate) struct V1_06_00;
@@ -23,6 +24,7 @@ impl Migration for V1_06_00 {
         temperature_breach::migrate(connection)?;
         item_link_create_table::migrate(connection)?;
         item_line_add_item_link_id::migrate(connection)?;
+        stocktake_line_add_item_link_id::migrate(connection)?;
         Ok(())
     }
 }
