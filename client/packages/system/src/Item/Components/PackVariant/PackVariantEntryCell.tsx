@@ -19,9 +19,11 @@ export const PackVariantEntryCell =
   <T extends RecordWithId>({
     getItemId,
     getUnitName,
+    getIsDisabled,
   }: {
     getItemId: (row: T) => string;
     getUnitName: (row: T) => string | null;
+    getIsDisabled?: (row: T) => boolean;
   }) =>
   ({ rowData, column }: CellProps<T>): ReactElement => {
     const { variantsControl } = usePackVariant(
@@ -36,6 +38,7 @@ export const PackVariantEntryCell =
     );
 
     const updater = useDebounceCallback(column.setter, [column.setter], 250);
+    const disabled = getIsDisabled?.(rowData) || false;
 
     // Make sure manual pack size is auto selected on load if packSize does not match variant
     useEffect(() => {
@@ -54,6 +57,7 @@ export const PackVariantEntryCell =
             setPackSize(newValue || 1);
             updater({ ...rowData, [column.key]: newValue });
           }}
+          disabled={disabled}
         />
       );
     };
@@ -71,7 +75,7 @@ export const PackVariantEntryCell =
         value: v.packSize,
       })),
       {
-        label: t('label.enter-pack-size'),
+        label: t('label.custom'),
         value: ENTER_PACK_SIZE,
       },
     ];
@@ -100,6 +104,7 @@ export const PackVariantEntryCell =
             setShouldFocusInput(isEnterPackSizeSelected);
             updater({ ...rowData, [column.key]: newPackSize });
           }}
+          disabled={disabled}
         />
 
         <InnerBasicCell value={'/'} />
