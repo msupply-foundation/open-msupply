@@ -4,7 +4,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-        -- Adding stock_take_line.item_link_id
+        -- Adding stock_line.item_link_id
         -- Disable foreign key checks to avoid firing constraints on adding new FK column (SQLite)
         PRAGMA foreign_keys = OFF;
         
