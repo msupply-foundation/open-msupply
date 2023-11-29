@@ -1,0 +1,38 @@
+query pluginData($storeId: String!, $stockLineId: String!) {
+  pluginData(
+    storeId: $storeId
+    type: STOCK_LINE
+    filter: { relatedRecordId: { equalTo: $stockLineId } }
+  ) {
+    ... on NodeError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on PluginDataNode {
+      __typename
+      id
+      data
+      pluginName
+    }
+  }
+}
+
+mutation insertPluginData($storeId: String!, $input: InsertPluginDataInput!) {
+  insertPluginData(input: $input, storeId: $storeId) {
+    ... on PluginDataNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updatePluginData($storeId: String!, $input: InsertPluginDataInput!) {
+  updatePluginData(input: $input, storeId: $storeId) {
+    ... on PluginDataNode {
+      __typename
+      id
+    }
+  }
+}

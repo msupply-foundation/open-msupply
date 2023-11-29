@@ -1,0 +1,28 @@
+{
+  "name": "@openmsupply-client/plugin-example-shipping-status",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "webpack-cli serve --port 3000",
+    "build-plugin": "rm -rf dist && mkdir dist && rm -rf ../../../../server/app_data/plugins/ShippingStatus/ && mkdir -p ../../../../server/app_data/plugins/ShippingStatus/ && NODE_ENV=production webpack && cp dist/* ../../../../server/app_data/plugins/ShippingStatus/"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@openmsupply-client/common": "^0.0.1",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "copy-webpack-plugin": "^11.0.0",
+    "html-webpack-plugin": "^5.5.3",
+    "react-singleton-context": "^1.0.2",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.1.6",
+    "webpack": "^5.88.2",
+    "webpack-bundle-analyzer": "^4.9.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}
