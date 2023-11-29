@@ -65,19 +65,17 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
           itemId={itemId ?? ''}
         />
       )}
-      <Box display="flex" justifyContent="flex-end" paddingBottom={2}>
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('label.new-pack-variant')}
-          onClick={hasPermission ? () => onOpen() : () => warningSnack()}
-        />
-      </Box>
-      <Box display="flex" justifyContent="flex-end" paddingBottom={2}>
+      <Box display="flex" justifyContent="space-between" paddingBottom={2}>
         <DropdownMenu label="Select">
           <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
             {t('button.delete-lines')}
           </DropdownMenuItem>
         </DropdownMenu>
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('label.new-pack-variant')}
+          onClick={hasPermission ? () => onOpen() : () => warningSnack()}
+        />
       </Box>
       <DataTable
         id="item-variants-detail"
