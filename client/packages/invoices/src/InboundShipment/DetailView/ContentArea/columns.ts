@@ -162,7 +162,7 @@ export const useInboundShipmentColumns = () => {
               const expiryDate = ArrayUtils.ifTheSameElseDefault(
                 lines,
                 'expiryDate',
-                null
+                t('multiple')
               );
 
               return expiryDate;
@@ -173,15 +173,16 @@ export const useInboundShipmentColumns = () => {
           getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              const expiryDate = ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'expiryDate',
-                null
-              );
+              const expiryDate =
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'expiryDate',
+                  t('multiple')
+                ) ?? '';
 
-              return Formatter.expiryDateString(expiryDate);
+              return expiryDate;
             } else {
-              return Formatter.expiryDateString(rowData.expiryDate);
+              return rowData.expiryDate ?? '';
             }
           },
         },
