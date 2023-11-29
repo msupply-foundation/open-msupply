@@ -98,7 +98,7 @@ fn remove_event_stack(
     let mut current_end_datetime = longest.active_end_datetime;
     for mut current in previous_stack {
         current.active_end_datetime = current_end_datetime;
-        current_end_datetime = current.active_start_datetime;
+        current_end_datetime = std::cmp::min(current.active_start_datetime, current_end_datetime);
         ProgramEventRowRepository::new(connection).upsert_one(&current)?;
     }
 
@@ -744,6 +744,12 @@ mod test {
         assert_names!(service, ctx, 31, vec!["G1_2"]);
     }
 
+    fn datetime_from_date(year: i32, month: u32, day: u32) -> NaiveDateTime {
+        NaiveDate::from_ymd_opt(year, month, day)
+            .unwrap()
+            .and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+    }
+
     #[actix_rt::test]
     async fn test_program_events_bug() {
         let (_, _, connection_manager, _) = setup_all(
@@ -756,12 +762,6 @@ mod test {
         let ctx = service_provider.basic_context().unwrap();
 
         let service = service_provider.program_event_service;
-
-        let datetime_from_date = |year: i32, month: u32, day: u32| {
-            NaiveDate::from_ymd_opt(year, month, day)
-                .unwrap()
-                .and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-        };
 
         // An earlier stack is inserted after a later stack.
         // When inserting the earlier stack all events of the earlier stack should finish before
@@ -951,12 +951,6 @@ mod test {
 
         let service = service_provider.program_event_service;
 
-        let datetime_from_date = |year: i32, month: u32, day: u32| {
-            NaiveDate::from_ymd_opt(year, month, day)
-                .unwrap()
-                .and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-        };
-
         let stack_3_datetime = datetime_from_date(2012, 05, 01);
         service
             .upsert_events(
@@ -1022,6 +1016,92 @@ mod test {
         // G2_1: datetime: 2012-04-03T00:00:00, start: 2012-05-10T00:00:00, end: 2012-05-01T00:00:00
         // G1_2: datetime: 2011-11-29T00:00:00, start: 2012-01-28T00:00:00, end: 2012-04-03T00:00:00
         // G1_1: datetime: 2011-11-29T00:00:00, start: 2011-12-31T00:00:00, end: 2012-01-28T00:00:00
+        let result = service.events(&ctx, None, None, None).unwrap();
+        check_integrity(result.rows);
+    }
+
+    fn event(active_start_datetime: NaiveDateTime, name: &str) -> EventInput {
+        EventInput {
+            active_start_datetime,
+            document_type: "DocType".to_string(),
+            document_name: None,
+            r#type: "status".to_string(),
+            name: Some(name.to_string()),
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_program_events_bug_3() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_program_events_bug_3",
+            MockDataInserts::none().names().contexts(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let ctx = service_provider.basic_context().unwrap();
+
+        let service = service_provider.program_event_service;
+
+        // stack 1
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                datetime_from_date(2023, 10, 04),
+                &mock_program_a().context_id,
+                vec![
+                    event(datetime_from_date(2023, 10, 04), "G1_1"),
+                    event(datetime_from_date(2023, 11, 01), "G1_2"),
+                    event(datetime_from_date(2024, 01, 02), "G1_3"),
+                ],
+            )
+            .unwrap();
+
+        // stack 2
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                datetime_from_date(2023, 10, 16),
+                &mock_program_a().context_id,
+                vec![
+                    event(datetime_from_date(2023, 10, 16), "G2_1"),
+                    event(datetime_from_date(2023, 11, 13), "G2_2"),
+                    event(datetime_from_date(2024, 01, 14), "G2_3"),
+                ],
+            )
+            .unwrap();
+
+        //stack 3
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                datetime_from_date(2023, 11, 02),
+                &mock_program_a().context_id,
+                vec![
+                    event(datetime_from_date(2023, 12, 12), "G3_1"),
+                    event(datetime_from_date(2024, 01, 09), "G3_2"),
+                    event(datetime_from_date(2024, 03, 11), "G3_3"),
+                ],
+            )
+            .unwrap();
+
+        // Updating stack 2 caused the problem
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                datetime_from_date(2023, 10, 16),
+                &mock_program_a().context_id,
+                vec![
+                    event(datetime_from_date(2023, 10, 16), "G2_1"),
+                    event(datetime_from_date(2023, 11, 13), "G2_2"),
+                    event(datetime_from_date(2024, 01, 14), "G2_3"),
+                ],
+            )
+            .unwrap();
         let result = service.events(&ctx, None, None, None).unwrap();
         check_integrity(result.rows);
     }
