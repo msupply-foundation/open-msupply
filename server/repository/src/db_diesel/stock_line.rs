@@ -173,12 +173,6 @@ type BoxedStockLineQuery = IntoBoxed<
     DBType,
 >;
 
-allow_tables_to_appear_in_same_query!(stock_line, item_link);
-allow_tables_to_appear_in_same_query!(item, item_link);
-allow_tables_to_appear_in_same_query!(location, item_link);
-allow_tables_to_appear_in_same_query!(name, item_link);
-allow_tables_to_appear_in_same_query!(barcode, item_link);
-
 fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
     let mut query = stock_line_dsl::stock_line
         .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
