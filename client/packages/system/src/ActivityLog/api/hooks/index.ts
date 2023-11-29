@@ -3,9 +3,9 @@ import { Utils } from './utils';
 
 export const useActivityLog = {
   document: {
-    listByRecord: Document.useLogsByRecord,
+    listByRecord: Document.useActivityLogsByRecord,
   },
   utils: {
-    api: Utils.useLogApi,
+    api: Utils.useActivityLogApi,
   },
 };

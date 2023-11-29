@@ -2,9 +2,9 @@ import { useGql, SortBy } from '@openmsupply-client/common';
 import { getLogQueries } from '../../api';
 import { getSdk, ActivityLogRowFragment } from '../../operations.generated';
 
-export const useLogApi = () => {
+export const useActivityLogApi = () => {
   const keys = {
-    base: () => ['log'] as const,
+    base: () => ['activityLog'] as const,
     list: () => [...keys.base(), 'list'] as const,
     sortedList: (sortBy?: SortBy<ActivityLogRowFragment>) =>
       [...keys.list(), sortBy] as const,
