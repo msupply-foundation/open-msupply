@@ -1,5 +1,5 @@
-import { useLogApi } from './useLogApi';
+import { useActivityLogApi } from './useActivityLogApi';
 
 export const Utils = {
-  useLogApi,
+  useActivityLogApi,
 };

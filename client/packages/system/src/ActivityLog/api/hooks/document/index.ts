@@ -1,5 +1,5 @@
-import { useLogsByRecord } from './useLogsByRecord';
+import { useActivityLogsByRecord } from './useActivityLogsByRecord';
 
 export const Document = {
-  useLogsByRecord,
+  useActivityLogsByRecord,
 };
