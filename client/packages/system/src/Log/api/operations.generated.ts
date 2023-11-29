@@ -26,13 +26,13 @@ export type LogContentsByFileNameQueryVariables = Types.Exact<{
 export type LogContentsByFileNameQuery = { __typename: 'Queries', logContents: { __typename: 'LogNode', fileContent?: Array<string> | null, fileNames?: Array<string> | null } };
 
 export const LogLevelRowFragmentDoc = gql`
-    fragment logLevelRow on LogLevelNode {
+    fragment LogLevelRow on LogLevelNode {
   __typename
   level
 }
     `;
 export const LogRowFragmentDoc = gql`
-    fragment logRow on LogNode {
+    fragment LogRow on LogNode {
   __typename
   fileContent
   fileNames
@@ -43,7 +43,7 @@ export const LogLevelDocument = gql`
   logLevel {
     __typename
     ... on LogLevelNode {
-      ...logLevelRow
+      ...LogLevelRow
     }
   }
 }
@@ -53,7 +53,7 @@ export const LogFileNamesDocument = gql`
   logFileNames {
     __typename
     ... on LogNode {
-      ...logRow
+      ...LogRow
     }
   }
 }
@@ -63,7 +63,7 @@ export const LogContentsByFileNameDocument = gql`
   logContents(fileName: $fileName) {
     __typename
     ... on LogNode {
-      ...logRow
+      ...LogRow
     }
   }
 }

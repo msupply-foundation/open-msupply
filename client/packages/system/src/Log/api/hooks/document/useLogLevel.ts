@@ -4,6 +4,5 @@ import { useLogApi } from '../utils/useLogApi';
 export const useLogLevel = () => {
   const api = useLogApi();
 
-  const result = useQuery(api.keys.list(), () => api.get.logLevel({}));
-  return { ...result };
+  return useQuery(api.keys.logLevel(), () => api.get.logLevel());
 };

@@ -1,9 +1,9 @@
-fragment logLevelRow on LogLevelNode {
+fragment LogLevelRow on LogLevelNode {
   __typename
   level
 }
 
-fragment logRow on LogNode {
+fragment LogRow on LogNode {
   __typename
   fileContent
   fileNames
@@ -13,7 +13,7 @@ query logLevel {
   logLevel {
     __typename
     ... on LogLevelNode {
-      ...logLevelRow
+      ...LogLevelRow
     }
   }
 }
@@ -23,7 +23,7 @@ query logFileNames {
     __typename
 
     ... on LogNode {
-      ...logRow
+      ...LogRow
     }
   }
 }
@@ -32,7 +32,7 @@ query logContentsByFileName($fileName: String!) {
   logContents(fileName: $fileName) {
     __typename
     ... on LogNode {
-      ...logRow
+      ...LogRow
     }
   }
 }

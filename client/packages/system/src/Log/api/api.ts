@@ -4,7 +4,7 @@ export type logContentsByFileNameParams = { fileName: string };
 
 export const getServerLogQueries = (sdk: Sdk) => ({
   get: {
-    logLevel: async ({}) => {
+    logLevel: async () => {
       const response = await sdk.logLevel();
       return response?.logLevel;
     },
