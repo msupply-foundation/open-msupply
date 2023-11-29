@@ -2,8 +2,10 @@
 extern crate machine_uid;
 
 use crate::{
-    certs::Certificates, configuration::get_or_create_token_secret, cors::cors_policy,
+    certs::Certificates, certs::Certificates, cold_chain::config_cold_chain,
+    configuration::get_or_create_token_secret, cors::cors_policy,
     serve_frontend::config_server_frontend, static_files::config_static_files,
+    upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -31,6 +33,7 @@ use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
 
 pub mod certs;
+pub mod cold_chain;
 pub mod configuration;
 pub mod cors;
 pub mod environment;
@@ -38,6 +41,7 @@ mod logging;
 pub mod middleware;
 mod serve_frontend;
 pub mod static_files;
+mod upload_fridge_tag;
 pub use self::logging::*;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
@@ -278,9 +282,16 @@ pub async fn start_server(
             .wrap(cors_policy(&closure_settings))
             .wrap(compress_middleware())
             // needed for static files service
+            .app_data(Data::new(closure_settings.clone()))
+            // needed for cold chain service
+            .app_data(service_provider.clone())
+            .app_data(auth.clone())
             .app_data(validated_plugins.clone())
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
+            .configure(config_cold_chain)
+            .configure(config_upload_fridge_tag)
+            // Needs to be last to capture all unmatches routes
             .configure(config_server_frontend)
     })
     .disable_signals();

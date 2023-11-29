@@ -8,9 +8,7 @@ import {
   GenderType,
 } from '@openmsupply-client/common';
 
-export const Toolbar: FC<{
-  filter: FilterController;
-}> = () => {
+export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation('dispensary');
 
   return (

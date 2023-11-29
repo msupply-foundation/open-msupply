@@ -19,7 +19,7 @@ service = { path = "../service" }
 server = { path = "../server" }
 graphql = { path = "../graphql" }
 
-anyhow = "1.0.56"
+anyhow.workspace = true
 async-graphql = "3.0.35"
 clap = { version = "3.1.8", features = ["derive"] }
 chrono = { version = "0.4.23" }
