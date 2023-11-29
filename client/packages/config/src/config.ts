@@ -28,6 +28,7 @@ export const Environment = {
   FILE_URL: `${apiHost}/files?id=`,
   GRAPHQL_URL: `${apiHost}/graphql`,
   PLUGIN_URL: pluginUrl,
+  UPLOAD_FRIDGE_TAG: `${apiHost}/fridge-tag`,
 };
 
 export default Environment;

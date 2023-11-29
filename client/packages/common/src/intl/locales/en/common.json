@@ -41,6 +41,7 @@
   "description.entered": "The creation date",
   "description.forecast-quantity": "Forecast Quantity to Reach Target",
   "description.invoice-number": "Shipment number",
+  "description.last-reading-datetime": "Date and time of the last reading",
   "description.months-of-stock": "Available months of stock on hand",
   "description.our-soh": "Our Stock on Hand",
   "description.pack-quantity": "Total quantity in number of packs",
