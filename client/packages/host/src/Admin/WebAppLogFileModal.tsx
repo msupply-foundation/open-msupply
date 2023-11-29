@@ -38,7 +38,7 @@ export const LogDisplay = ({
     <BasicSpinner />
   ) : (
     <>
-      {Array.isArray(data?.fileContent) && data?.fileContent != undefined ? (
+      {!!data?.fileContent ? (
         <Box paddingTop={2} maxHeight={400}>
           <LogTextDisplay logText={data?.fileContent}></LogTextDisplay>
         </Box>
