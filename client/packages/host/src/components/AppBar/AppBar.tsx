@@ -14,6 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { SectionIcon } from './SectionIcon';
+import { ColdchainNotification } from '@openmsupply-client/coldchain';
 
 const StyledContainer = styled(Box)(({ theme }) => ({
   marginRight: 0,
