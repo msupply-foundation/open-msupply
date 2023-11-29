@@ -10,6 +10,7 @@ pub struct TemperatureChartRow {
     pub to_datetime: NaiveDateTime,
     pub average_temperature: f64,
     pub sensor_id: String,
+    pub breach_ids: Vec<String>,
 }
 
 // Needed for allow_table_to_appear_in_same_query
@@ -85,13 +86,21 @@ impl QuerySource for TemperatureChart {
 }
 
 // Boilerplate
-type SqlType = (Timestamp, Timestamp, Double, Text, Text);
+type SqlType = (
+    Timestamp,
+    Timestamp,
+    Double,
+    Text,
+    Text,
+    Text, /* Json type is only available for sqlite in diesel 2, so using String and manually parsing to vec */
+);
 type AllColumns = (
     FromDatetime,
     ToDatetime,
     AverageTemperature,
     TemperatureLogId,
     SensorId,
+    BreachIds,
 );
 impl Table for TemperatureChart {
     type PrimaryKey = FromDatetime;
@@ -106,6 +115,7 @@ impl Table for TemperatureChart {
             AverageTemperature,
             TemperatureLogId,
             SensorId,
+            BreachIds,
         )
     }
 }
@@ -173,14 +183,26 @@ macro_rules! temperature_chart_column {
 
 temperature_chart_column!(FromDatetime, "time_series.from_datetime", Timestamp);
 temperature_chart_column!(ToDatetime, "time_series.to_datetime", Timestamp);
+temperature_chart_column!(TemperatureLogId, "temperature_log.id", Text);
+temperature_chart_column!(SensorId, "temperature_log.sensor_id", Text);
+// Aggregates
+#[cfg(not(feature = "postgres"))]
+temperature_chart_column!(
+    BreachIds,
+    "JSON_GROUP_ARRAY(DISTINCT(temperature_log.temperature_breach_id))",
+    Text /* Json type is only available for sqlite in diesel 2, so using String and manually parsing to vec */
+);
+#[cfg(feature = "postgres")]
+temperature_chart_column!(
+    BreachIds,
+    "JSON_AGG(DISTINCT(temperature_log.temperature_breach_id))",
+    Text
+);
 temperature_chart_column!(
     AverageTemperature,
     "AVG(temperature_log.temperature) as average_temperature",
     Double
 );
-temperature_chart_column!(TemperatureLogId, "temperature_log.id", Text);
-temperature_chart_column!(SensorId, "temperature_log.sensor_id", Text);
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -210,8 +232,19 @@ mod test {
             "SELECT $1 as from_datetime, $2 as to_datetime  UNION  SELECT $3 as from_datetime, $4 as to_datetime"
         };
 
+        let breach_ids_agg = if cfg!(not(feature = "postgres")) {
+            "JSON_GROUP_ARRAY"
+        } else {
+            "JSON_AGG"
+        };
+
         let result = format!(
-            r#" SELECT time_series.from_datetime, time_series.to_datetime, AVG(temperature_log.temperature) as average_temperature, temperature_log.id, temperature_log.sensor_id
+            r#" SELECT time_series.from_datetime, 
+                        time_series.to_datetime, 
+                        AVG(temperature_log.temperature) as average_temperature, 
+                        temperature_log.id, 
+                        temperature_log.sensor_id, 
+                        {breach_ids_agg}(DISTINCT(temperature_log.temperature_breach_id))
                 FROM  
                 ( {union_select} ) AS time_series
                 JOIN temperature_log ON 
