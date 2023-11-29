@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useDialog, useNotification, useWebClient } from '@common/hooks';
 import { useTranslation } from '@common/intl';
 import {
   BasicSpinner,
@@ -8,6 +7,9 @@ import {
   DropdownMenuItem,
   Typography,
   Box,
+  useDialog,
+  useNotification,
+  useWebClient,
 } from '@openmsupply-client/common';
 import { useLog } from '@openmsupply-client/system';
 import { LogTextDisplay } from './LogTextDisplay';
@@ -40,7 +42,7 @@ export const LogDisplay = ({
 
   return !!data?.fileContent ? (
     <Box paddingTop={2} maxHeight={400}>
-      <LogTextDisplay logText={data?.fileContent}></LogTextDisplay>
+      <LogTextDisplay logText={data?.fileContent} />
     </Box>
   ) : null;
 };
@@ -91,7 +93,7 @@ export const WebAppLogFileModal = ({
         okButton={<DialogButton variant="ok" onClick={onClose} />}
       >
         <Box sx={{ padding: 2 }} textAlign="center">
-          <Typography>{t('error.unable-to-server-log')}</Typography>
+          <Typography>{t('error.unable-to-load-server-log')}</Typography>
         </Box>
       </Modal>
     );
