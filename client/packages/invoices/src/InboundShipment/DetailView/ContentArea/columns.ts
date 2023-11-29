@@ -1,5 +1,4 @@
 import {
-  Formatter,
   getRowExpandColumn,
   GenericColumnKey,
   getNotePopoverColumn,
