@@ -67,6 +67,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           ) AS stock ON stock.item_id = items_and_stores.item_id
           AND stock.store_id = items_and_stores.store_id;
 
+          CREATE INDEX "index_stock_line_item_link_id_fkey" ON "stock_line" ("item_link_id");
         "#,
     )?;
 
