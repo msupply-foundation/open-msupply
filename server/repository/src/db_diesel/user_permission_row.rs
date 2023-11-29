@@ -55,6 +55,7 @@ pub enum Permission {
     LogQuery,
     // items
     ItemMutate,
+    ItemNamesCodesAndUnitsMutate,
     PatientQuery,
     PatientMutate,
     // Document

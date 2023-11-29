@@ -76,16 +76,32 @@ export type ItemByIdQueryVariables = Types.Exact<{
 
 export type ItemByIdQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', id: string, code: string, name: string, atcCategory: string, ddd: string, defaultPackSize: number, doses: number, isVaccine: boolean, margin: number, msupplyUniversalCode: string, msupplyUniversalName: string, outerPackSize: number, strength: string, type: Types.ItemNodeType, unitName?: string | null, volumePerOuterPack: number, volumePerPack: number, weight: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null }, availableBatches: { __typename: 'StockLineConnector', totalCount: number, nodes: Array<{ __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, note?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, location?: { __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean } | null, item: { __typename: 'ItemNode', name: string, code: string, unitName?: string | null } }> } }> } };
 
-export type VariantFragment = { __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string };
+export type VariantFragment = { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string };
 
-export type PackVariantFragment = { __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> };
+export type PackVariantFragment = { __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string }> };
 
 export type PackVariantsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type PackVariantsQuery = { __typename: 'Queries', packVariants: { __typename: 'PackVariantConnector', totalCount: number, nodes: Array<{ __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, longName: string, packSize: number, shortName: string }> }> } };
+export type PackVariantsQuery = { __typename: 'Queries', packVariants: { __typename: 'ItemPackVariantConnector', totalCount: number, nodes: Array<{ __typename: 'ItemPackVariantNode', itemId: string, mostUsedPackVariantId: string, packVariants: Array<{ __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string }> }> } };
+
+export type InsertPackVariantMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertPackVariantInput;
+}>;
+
+
+export type InsertPackVariantMutation = { __typename: 'Mutations', insertPackVariant: { __typename: 'InsertPackVariantError', error: { __typename: 'CannotAddPackSizeOfZero', description: string } | { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } | { __typename: 'VariantWithPackSizeAlreadyExists', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
+
+export type UpdatePackVariantMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdatePackVariantInput;
+}>;
+
+
+export type UpdatePackVariantMutation = { __typename: 'Mutations', updatePackVariant: { __typename: 'UpdatePackVariantError', error: { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -212,7 +228,9 @@ export const ItemsWithStatsFragmentDoc = gql`
     `;
 export const VariantFragmentDoc = gql`
     fragment Variant on VariantNode {
+  __typename
   id
+  itemId
   longName
   packSize
   shortName
@@ -342,6 +360,38 @@ export const PackVariantsDocument = gql`
   }
 }
     ${PackVariantFragmentDoc}`;
+export const InsertPackVariantDocument = gql`
+    mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
+  insertPackVariant(storeId: $storeId, input: $input) {
+    __typename
+    ... on VariantNode {
+      ...Variant
+    }
+    ... on InsertPackVariantError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+    ${VariantFragmentDoc}`;
+export const UpdatePackVariantDocument = gql`
+    mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
+  updatePackVariant(storeId: $storeId, input: $input) {
+    __typename
+    ... on VariantNode {
+      ...Variant
+    }
+    ... on UpdatePackVariantError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+    ${VariantFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -367,6 +417,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     packVariants(variables: PackVariantsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PackVariantsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PackVariantsQuery>(PackVariantsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'packVariants', 'query');
+    },
+    insertPackVariant(variables: InsertPackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertPackVariantMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertPackVariantMutation>(InsertPackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertPackVariant', 'mutation');
+    },
+    updatePackVariant(variables: UpdatePackVariantMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdatePackVariantMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdatePackVariantMutation>(UpdatePackVariantDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePackVariant', 'mutation');
     }
   };
 }
@@ -471,5 +527,39 @@ export const mockItemByIdQuery = (resolver: ResponseResolver<GraphQLRequest<Item
 export const mockPackVariantsQuery = (resolver: ResponseResolver<GraphQLRequest<PackVariantsQueryVariables>, GraphQLContext<PackVariantsQuery>, any>) =>
   graphql.query<PackVariantsQuery, PackVariantsQueryVariables>(
     'packVariants',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertPackVariantMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertPackVariant })
+ *   )
+ * })
+ */
+export const mockInsertPackVariantMutation = (resolver: ResponseResolver<GraphQLRequest<InsertPackVariantMutationVariables>, GraphQLContext<InsertPackVariantMutation>, any>) =>
+  graphql.mutation<InsertPackVariantMutation, InsertPackVariantMutationVariables>(
+    'insertPackVariant',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdatePackVariantMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updatePackVariant })
+ *   )
+ * })
+ */
+export const mockUpdatePackVariantMutation = (resolver: ResponseResolver<GraphQLRequest<UpdatePackVariantMutationVariables>, GraphQLContext<UpdatePackVariantMutation>, any>) =>
+  graphql.mutation<UpdatePackVariantMutation, UpdatePackVariantMutationVariables>(
+    'updatePackVariant',
     resolver
   )
