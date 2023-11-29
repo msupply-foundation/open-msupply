@@ -274,14 +274,6 @@ impl GeneralQueries {
     ) -> Result<update_user::UpdateUserNode> {
         last_successful_user_sync(ctx)
     }
-
-    pub async fn pack_variants(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-    ) -> Result<PackVariantConnector> {
-        pack_variants(ctx, &store_id)
-    }
 }
 
 #[derive(Default, Clone)]

@@ -1,4 +1,5 @@
 {
+  "auth.permission-denied": "Permisaun rejeitadu",
   "button.allocate": "Aloka",
   "button.language": "Lingua",
   "label.rows-per-page": "Linas por pájina:",

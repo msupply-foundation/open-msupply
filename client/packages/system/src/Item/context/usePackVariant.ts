@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
-import { usePackVariants } from '../api';
-import { ItemPackVariantNode, VariantNode } from '@common/types';
+import { PackVariantFragment, VariantFragment, usePackVariants } from '../api';
 import { ArrayUtils, NumUtils, isEqual } from '@common/utils';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import { useAuthContext, useLocalStorage } from '@openmsupply-client/common';
@@ -9,10 +8,10 @@ import { useAuthContext, useLocalStorage } from '@openmsupply-client/common';
 interface PackVariantState {
   // From back end
   items: {
-    [itemId: string]: ItemPackVariantNode;
+    [itemId: string]: PackVariantFragment;
   };
   // Should be called on startup when fetching multi unit variants
-  setItems: (newItems: ItemPackVariantNode[]) => void;
+  setItems: (newItems: PackVariantFragment[]) => void;
 }
 
 const usePackVariantStore = create<PackVariantState>(set => {
@@ -51,9 +50,9 @@ const commonAsPackVariant: CommonAsPackVariant = ({
 };
 
 export interface VariantControl {
-  variants: VariantNode[];
+  variants: VariantFragment[];
   // Selected by user or mostUsed (calculated by backend)
-  activeVariant: VariantNode;
+  activeVariant: VariantFragment;
   setUserSelectedPackVariant: (variantId: string) => void;
 }
 
@@ -115,7 +114,7 @@ export const usePackVariant = (
   const activeVariant =
     selectedVariant ||
     mostUsedVariant ||
-    (packVariants[0] as VariantNode); /* item.variants.length === 0 above confirms that it's safe to assume it will not be undefined */
+    (packVariants[0] as VariantFragment); /* item.variants.length === 0 above confirms that it's safe to assume it will not be undefined */
 
   return {
     asPackVariant: (packSize, defaultPackVariant) => {
