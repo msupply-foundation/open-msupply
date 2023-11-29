@@ -1,6 +1,6 @@
 use super::{item_row::item::dsl::*, unit_row::unit, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{item_link, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -27,6 +27,7 @@ table! {
 
 joinable!(item -> unit (unit_id));
 joinable!(item_is_visible -> item (id));
+allow_tables_to_appear_in_same_query!(item, item_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
