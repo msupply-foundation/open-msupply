@@ -97,14 +97,16 @@ const PatientDetailView = ({
     setCreateNewPatient,
   } = usePatientStore();
   const patientId = usePatient.utils.id();
-  const { data: currentPatient } = usePatient.document.get(patientId);
-
-  const { data: patientRegistries, isLoading } =
+  const { data: currentPatient, isLoading: isCurrentPatientLoading } =
+    usePatient.document.get(patientId);
+  const { data: patientRegistries, isLoading: isPatientRegistryLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
         category: { equalTo: DocumentRegistryCategoryNode.Patient },
       },
     });
+  const isLoading = isCurrentPatientLoading || isPatientRegistryLoading;
+
   const patientRegistry = patientRegistries?.nodes[0];
   const isCreatingPatient = !!createNewPatient;
   // we have to memo the data to avoid an infinite render loop
