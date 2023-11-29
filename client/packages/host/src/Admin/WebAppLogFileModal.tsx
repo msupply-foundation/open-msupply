@@ -23,7 +23,7 @@ export const LogDisplay = ({
     useLog.document.logContentsByFileName();
 
   useEffect(() => {
-    if (fileName) {
+    if (!!fileName) {
       mutateAsync(fileName);
     }
   }, [fileName]);
@@ -34,17 +34,15 @@ export const LogDisplay = ({
     }
   }, [data]);
 
-  return isLoading ? (
-    <BasicSpinner />
-  ) : (
-    <>
-      {!!data?.fileContent ? (
-        <Box paddingTop={2} maxHeight={400}>
-          <LogTextDisplay logText={data?.fileContent}></LogTextDisplay>
-        </Box>
-      ) : null}
-    </>
-  );
+  if (isLoading) {
+    return <BasicSpinner />;
+  }
+
+  return !!data?.fileContent ? (
+    <Box paddingTop={2} maxHeight={400}>
+      <LogTextDisplay logText={data?.fileContent}></LogTextDisplay>
+    </Box>
+  ) : null;
 };
 
 export const WebAppLogFileModal = ({
