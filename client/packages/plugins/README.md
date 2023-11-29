@@ -36,7 +36,7 @@ In production mode the process differs:
 
 Plugins are signed by the developer and require validation before they are able to be run in production mode - validation is ignored when running in developer mode; an error is logged but the plugin is loaded regardless of validation failures.
 
-See the readme on plugin validation for details of how to sign plugins and the process of loading and validating plugins.
+See the readme on [plugin validation](../../../server/service/src/plugin/plugin_validation.md) for details of how to sign plugins and the process of loading and validating plugins.
 
 ### Plugin definitions
 
