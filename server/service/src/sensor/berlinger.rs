@@ -290,8 +290,8 @@ pub fn read_sensor(
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
     let filename = fridgetag_file.to_string_lossy();
 
-    let mut temperature_sensor = temperature_sensor::read_sensor_file(&filename, true)
-        .map_err(ReadSensorError::StringError)?;
+    let mut temperature_sensor =
+        temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
 
     sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
@@ -305,7 +305,7 @@ pub fn read_sensor(
     // Filter sensor data by previous last connected time
     let last_connected = record.sensor_row.last_connection_datetime;
     temperature_sensor =
-        temperature_sensor::filter_sensor(temperature_sensor, last_connected, None, true);
+        temperature_sensor::filter_sensor(temperature_sensor, last_connected, None);
 
     let temperature_sensor_configs = temperature_sensor.configs.unwrap_or_default();
     for temperature_sensor_config in temperature_sensor_configs.iter() {
