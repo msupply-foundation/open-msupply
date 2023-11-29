@@ -12,6 +12,7 @@ import {
   NumUtils,
   NumericTextInput,
   Typography,
+  useDebounceCallback,
   useTranslation,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../common';
@@ -43,27 +44,29 @@ export const UIComponent = (props: ControlProps) => {
     }
   }, [core]);
 
-  if (!props.visible) {
-    return null;
-  }
+  const onChangeSystolic = useDebounceCallback(
+    (value: number | undefined) => {
+      setSystolic(value);
+      handleChange(systolicPath, value);
 
-  const onChangeSystolic = (value: number | undefined) => {
-    setSystolic(value);
-    handleChange(systolicPath, value);
+      if (!value && diastolic === undefined) {
+        handleChange(path, undefined);
+      }
+    },
+    [path]
+  );
 
-    if (!value && diastolic === undefined) {
-      handleChange(path, undefined);
-    }
-  };
+  const onChangeDiastolic = useDebounceCallback(
+    (value: number | undefined) => {
+      setDiastolic(value);
+      handleChange(diastolicPath, value);
 
-  const onChangeDiastolic = (value: number | undefined) => {
-    setDiastolic(value);
-    handleChange(diastolicPath, value);
-
-    if (!value && systolic === undefined) {
-      handleChange(path, undefined);
-    }
-  };
+      if (!value && systolic === undefined) {
+        handleChange(path, undefined);
+      }
+    },
+    [path]
+  );
 
   useEffect(() => {
     if (data) {
@@ -71,6 +74,10 @@ export const UIComponent = (props: ControlProps) => {
       setDiastolic(data.diastolic);
     }
   }, [data]);
+
+  if (!props.visible) {
+    return null;
+  }
 
   const inputProps = {
     type: 'number',
