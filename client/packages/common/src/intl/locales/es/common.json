@@ -2,6 +2,7 @@
   "label.barcode": "Código de Barras",
   "app.initialise": "Inicializar",
   "app.login": "Inicio de sesión",
+  "auth.permission-denied": "Permiso denegado",
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Agregar Artículo",
   "button.allocate": "Asignar",

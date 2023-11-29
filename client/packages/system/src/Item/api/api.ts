@@ -3,8 +3,10 @@ import {
   SortBy,
   ItemSortFieldInput,
   FilterBy,
+  InsertPackVariantInput,
+  UpdatePackVariantInput,
 } from '@openmsupply-client/common';
-import { Sdk, ItemRowFragment } from './operations.generated';
+import { Sdk, ItemRowFragment, VariantFragment } from './operations.generated';
 
 export type ListParams<T> = {
   first: number;
@@ -23,6 +25,21 @@ const itemParsers = {
 
     return fields[sortBy.key] ?? ItemSortFieldInput.Name;
   },
+};
+
+const packVariantParses = {
+  toInsert: (packVariant: VariantFragment): InsertPackVariantInput => ({
+    id: packVariant.id,
+    itemId: packVariant.itemId,
+    packSize: packVariant.packSize,
+    shortName: packVariant.shortName,
+    longName: packVariant.longName,
+  }),
+  toUpdate: (packVariant: VariantFragment): UpdatePackVariantInput => ({
+    id: packVariant.id,
+    shortName: packVariant.shortName,
+    longName: packVariant.longName,
+  }),
 };
 
 export const getItemQueries = (sdk: Sdk, storeId: string) => ({
@@ -164,5 +181,21 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
 
       return result.packVariants;
     },
+  },
+  insertPackVariant: async (input: VariantFragment) => {
+    const result = await sdk.insertPackVariant({
+      storeId,
+      input: packVariantParses.toInsert(input),
+    });
+
+    return result.insertPackVariant;
+  },
+  updatePackVariant: async (input: VariantFragment) => {
+    const result = await sdk.updatePackVariant({
+      storeId,
+      input: packVariantParses.toUpdate(input),
+    });
+
+    return result.updatePackVariant;
   },
 });

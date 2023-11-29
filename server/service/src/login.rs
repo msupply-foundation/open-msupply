@@ -387,6 +387,9 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::EditItems => {
                 output.insert(Permission::ItemMutate);
             }
+            Permissions::EditItemNamesCodesAndUnits => {
+                output.insert(Permission::ItemNamesCodesAndUnitsMutate);
+            }
             _ => continue,
         }
     }

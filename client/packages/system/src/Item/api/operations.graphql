@@ -238,7 +238,9 @@ query itemById($storeId: String!, $itemId: String!) {
 }
 
 fragment Variant on VariantNode {
+  __typename
   id
+  itemId
   longName
   packSize
   shortName
@@ -259,5 +261,35 @@ query packVariants($storeId: String!) {
       ...PackVariant
     }
     totalCount
+  }
+}
+
+mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
+  insertPackVariant(storeId: $storeId, input: $input) {
+    __typename
+    ... on VariantNode {
+      ...Variant
+    }
+    ... on InsertPackVariantError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
+  updatePackVariant(storeId: $storeId, input: $input) {
+    __typename
+    ... on VariantNode {
+      ...Variant
+    }
+    ... on UpdatePackVariantError {
+      error {
+        __typename
+        description
+      }
+    }
   }
 }

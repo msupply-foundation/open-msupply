@@ -361,6 +361,16 @@ export type CanOnlyChangeToPickedWhenNoUnallocatedLines = UpdatePrescriptionErro
   invoiceLines: InvoiceLineConnector;
 };
 
+export type CannotAddPackSizeOfZero = InsertPackVariantErrorInterface & {
+  __typename: 'CannotAddPackSizeOfZero';
+  description: Scalars['String']['output'];
+};
+
+export type CannotAddWithNoAbbreviationAndName = InsertPackVariantErrorInterface & UpdatePackVariantErrorInterface & {
+  __typename: 'CannotAddWithNoAbbreviationAndName';
+  description: Scalars['String']['output'];
+};
+
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
   __typename: 'CannotChangeStatusOfInvoiceOnHold';
   description: Scalars['String']['output'];
@@ -1543,6 +1553,25 @@ export type InsertOutboundShipmentUnallocatedLineResponseWithId = {
   response: InsertOutboundShipmentUnallocatedLineResponse;
 };
 
+export type InsertPackVariantError = {
+  __typename: 'InsertPackVariantError';
+  error: InsertPackVariantErrorInterface;
+};
+
+export type InsertPackVariantErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertPackVariantInput = {
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  longName: Scalars['String']['input'];
+  packSize: Scalars['Int']['input'];
+  shortName: Scalars['String']['input'];
+};
+
+export type InsertPackVariantResponse = InsertPackVariantError | VariantNode;
+
 export type InsertPatientInput = {
   code: Scalars['String']['input'];
   code2?: InputMaybe<Scalars['String']['input']>;
@@ -2096,6 +2125,12 @@ export enum ItemNodeType {
   Stock = 'STOCK'
 }
 
+export type ItemPackVariantConnector = {
+  __typename: 'ItemPackVariantConnector';
+  nodes: Array<ItemPackVariantNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type ItemPackVariantNode = {
   __typename: 'ItemPackVariantNode';
   itemId: Scalars['String']['output'];
@@ -2366,6 +2401,7 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
+  insertPackVariant: InsertPackVariantResponse;
   /** Inserts a new patient (without document data) */
   insertPatient: InsertPatientResponse;
   insertPrescription: InsertPrescriptionResponse;
@@ -2405,6 +2441,7 @@ export type Mutations = {
   updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
+  updatePackVariant: UpdatePackVariantResponse;
   /** Updates a new patient (without document data) */
   updatePatient: UpdatePatientResponse;
   updatePrescription: UpdatePrescriptionResponse;
@@ -2661,6 +2698,12 @@ export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
 };
 
 
+export type MutationsInsertPackVariantArgs = {
+  input: InsertPackVariantInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsInsertPatientArgs = {
   input: InsertPatientInput;
   storeId: Scalars['String']['input'];
@@ -2818,6 +2861,12 @@ export type MutationsUpdateOutboundShipmentServiceLineArgs = {
 
 export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
   input: UpdateOutboundShipmentUnallocatedLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdatePackVariantArgs = {
+  input: UpdatePackVariantInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -3077,12 +3126,6 @@ export type OutboundInvoiceCounts = {
   created: InvoiceCountsSummary;
   /** Number of outbound shipments not shipped yet */
   notShipped: Scalars['Int']['output'];
-};
-
-export type PackVariantConnector = {
-  __typename: 'PackVariantConnector';
-  nodes: Array<ItemPackVariantNode>;
-  totalCount: Scalars['Int']['output'];
 };
 
 /**
@@ -3437,7 +3480,7 @@ export type Queries = {
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
-  packVariants: PackVariantConnector;
+  packVariants: ItemPackVariantConnector;
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
@@ -4887,6 +4930,23 @@ export type UpdateOutboundShipmentUnallocatedLineResponseWithId = {
   response: UpdateOutboundShipmentUnallocatedLineResponse;
 };
 
+export type UpdatePackVariantError = {
+  __typename: 'UpdatePackVariantError';
+  error: UpdatePackVariantErrorInterface;
+};
+
+export type UpdatePackVariantErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdatePackVariantInput = {
+  id: Scalars['String']['input'];
+  longName: Scalars['String']['input'];
+  shortName: Scalars['String']['input'];
+};
+
+export type UpdatePackVariantResponse = UpdatePackVariantError | VariantNode;
+
 /**
  * All fields in the input object will be used to update the patient record.
  * This means that the caller also has to provide the fields that are not going to change.
@@ -5232,6 +5292,7 @@ export enum UserPermission {
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
   ItemMutate = 'ITEM_MUTATE',
+  ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
   LogQuery = 'LOG_QUERY',
   OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',
@@ -5285,7 +5346,13 @@ export type UserStorePermissionNode = {
 export type VariantNode = {
   __typename: 'VariantNode';
   id: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
   longName: Scalars['String']['output'];
   packSize: Scalars['Int']['output'];
   shortName: Scalars['String']['output'];
+};
+
+export type VariantWithPackSizeAlreadyExists = InsertPackVariantErrorInterface & {
+  __typename: 'VariantWithPackSizeAlreadyExists';
+  description: Scalars['String']['output'];
 };

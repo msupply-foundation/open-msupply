@@ -2,22 +2,19 @@ use std::collections::HashMap;
 
 use repository::{
     EqualFilter, PackVariantRow, PackVariantRowRepository, RepositoryError, StockLineRowRepository,
-    StockOnHandFilter, StockOnHandRepository, StorageConnection,
+    StockOnHandFilter, StockOnHandRepository,
 };
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
-pub struct ItemPackVariant {
-    pub item_id: String,
-    pub most_used_pack_variant_id: String,
-    pub pack_variants: Vec<PackVariantRow>,
-}
+use crate::service_provider::ServiceContext;
+
+use super::ItemPackVariant;
 
 /// For a particular store, this method returns all pack units grouped by item_id and a reference to the most
 /// used pack unit for each item (see ItemPackVariant return type).
-pub fn get_pack_variants(
-    connection: &StorageConnection,
-    store_id: &str,
-) -> Result<Vec<ItemPackVariant>, RepositoryError> {
+pub fn get_pack_variants(ctx: &ServiceContext) -> Result<Vec<ItemPackVariant>, RepositoryError> {
+    let connection = &ctx.connection;
+    let store_id = &ctx.store_id;
+
     let stock_lines = StockLineRowRepository::new(connection).find_by_store_id(store_id)?;
     let stock_on_hand = StockOnHandRepository::new(connection).query(Some(
         StockOnHandFilter::new().store_id(EqualFilter::equal_to(store_id)),
@@ -111,7 +108,9 @@ mod test {
         StorageConnection,
     };
 
-    use super::{get_pack_variants, ItemPackVariant};
+    use crate::service_provider::ServiceProvider;
+
+    use super::ItemPackVariant;
 
     // only testing item_a and item_b since both have SOH in store
     fn pack_variants_for_item_helper(
@@ -169,9 +168,16 @@ mod test {
 
     #[actix_rt::test]
     async fn pack_variants() {
-        let (_, connection, _, _) = setup_all("test_pack_variants", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) =
+            setup_all("test_pack_variants", MockDataInserts::all()).await;
 
-        let mut pack_variants = get_pack_variants(&connection, &mock_store_a().id).unwrap();
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.pack_variant_service;
+
+        let mut pack_variants = service.get_pack_variants(&context).unwrap();
         pack_variants.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
         let item_a_pack_variants = pack_variants_for_item_helper(&connection, "item_a");

@@ -57,6 +57,18 @@ impl<'a> PackVariantRowRepository<'a> {
         Ok(())
     }
 
+    pub fn find_one_by_id(
+        &self,
+        variant_id: &str,
+    ) -> Result<Option<PackVariantRow>, RepositoryError> {
+        let result = pack_variant
+            .filter(id.eq(variant_id))
+            .first::<PackVariantRow>(&self.connection.connection)
+            .optional()?;
+
+        Ok(result)
+    }
+
     pub fn load_all(&self) -> Result<Vec<PackVariantRow>, RepositoryError> {
         let result = pack_variant.load::<PackVariantRow>(&self.connection.connection)?;
 
