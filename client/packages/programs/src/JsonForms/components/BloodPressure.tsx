@@ -81,8 +81,6 @@ export const UIComponent = (props: ControlProps) => {
 
   const inputProps = {
     type: 'number',
-    min: schema.minimum ?? 0,
-    max: schema.maximum ?? NumUtils.MAX_SAFE_API_INTEGER,
     error: !!customError,
     InputLabelProps: { shrink: true },
   };
@@ -100,6 +98,11 @@ export const UIComponent = (props: ControlProps) => {
               onChange={onChangeSystolic}
               value={systolic}
               label={t('label.systolic')}
+              min={schema.properties?.['systolic']?.minimum ?? 0}
+              max={
+                schema.properties?.['systolic']?.maximum ??
+                NumUtils.MAX_SAFE_API_INTEGER
+              }
               {...inputProps}
             />
             <Typography margin={1} paddingTop={2}>
@@ -110,6 +113,11 @@ export const UIComponent = (props: ControlProps) => {
               value={diastolic}
               label={t('label.diastolic')}
               width={100}
+              min={schema.properties?.['diastolic']?.minimum ?? 0}
+              max={
+                schema.properties?.['diastolic']?.maximum ??
+                NumUtils.MAX_SAFE_API_INTEGER
+              }
               {...inputProps}
             />
           </Box>
