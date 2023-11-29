@@ -2,9 +2,8 @@
 extern crate machine_uid;
 
 use crate::{
-    certs::Certificates, certs::Certificates, cold_chain::config_cold_chain,
-    configuration::get_or_create_token_secret, cors::cors_policy,
-    serve_frontend::config_server_frontend, static_files::config_static_files,
+    certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
+    cors::cors_policy, serve_frontend::config_server_frontend, static_files::config_static_files,
     upload_fridge_tag::config_upload_fridge_tag,
 };
 
@@ -216,8 +215,8 @@ pub async fn start_server(
             loader_registry: Data::new(LoaderRegistry { loaders }),
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
+            auth: auth.clone(),
             validated_plugins: validated_plugins.clone(),
-            auth,
         },
         is_operational,
     ));
