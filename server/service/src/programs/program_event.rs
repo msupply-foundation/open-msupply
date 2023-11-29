@@ -333,21 +333,11 @@ mod test {
                 .iter()
                 .map(|it| it.data.clone().unwrap())
                 .collect::<Vec<_>>();
-
             actual_names.sort();
             assert_eq!(expected, actual_names);
         }};
     }
 
-    fn event(active_start_datetime: NaiveDateTime, name: &str) -> EventInput {
-        EventInput {
-            active_start_datetime,
-            document_type: "DocType".to_string(),
-            document_name: None,
-            r#type: "status".to_string(),
-            name: Some(name.to_string()),
-        }
-    }
     #[actix_rt::test]
     async fn test_basic_program_events() {
         let (_, _, connection_manager, _) = setup_all(
@@ -370,10 +360,13 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![event(
-                    NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                    "data1",
-                )],
+                vec![EventInput {
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("data1".to_string()),
+                }],
             )
             .unwrap();
         assert_names!(service, ctx, 5, vec![]);
@@ -388,10 +381,13 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![event(
-                    NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
-                    "data2",
-                )],
+                vec![EventInput {
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("data2".to_string()),
+                }],
             )
             .unwrap();
         assert_names!(service, ctx, 19, vec!["data1"]);
@@ -408,10 +404,13 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![event(
-                    NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
-                    "data3",
-                )],
+                vec![EventInput {
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("data3".to_string()),
+                }],
             )
             .unwrap();
         assert_names!(service, ctx, 31, vec![]);
@@ -460,10 +459,13 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![event(
-                    NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                    "data1",
-                )],
+                vec![EventInput {
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("data1".to_string()),
+                }],
             )
             .unwrap();
         assert_names!(service, ctx, 5, vec![]);
@@ -478,10 +480,13 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![event(
-                    NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                    "data2",
-                )],
+                vec![EventInput {
+                    active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("data2".to_string()),
+                }],
             )
             .unwrap();
         assert_names!(service, ctx, 6, vec!["data2"]);
@@ -512,8 +517,20 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(10, 0).unwrap(), "G1_1"),
-                    event(NaiveDateTime::from_timestamp_opt(20, 0).unwrap(), "G1_2"),
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_2".to_string()),
+                    },
                 ],
             )
             .unwrap();
@@ -532,8 +549,20 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(15, 0).unwrap(), "G1_3"),
-                    event(NaiveDateTime::from_timestamp_opt(30, 0).unwrap(), "G1_4"),
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_3".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_4".to_string()),
+                    },
                 ],
             )
             .unwrap();
@@ -555,8 +584,20 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(35, 0).unwrap(), "G2_1"),
-                    event(NaiveDateTime::from_timestamp_opt(40, 0).unwrap(), "G2_2"),
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_2".to_string()),
+                    },
                 ],
             )
             .unwrap();
@@ -643,8 +684,20 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(15, 0).unwrap(), "G1_1"),
-                    event(NaiveDateTime::from_timestamp_opt(30, 0).unwrap(), "G1_2"),
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_2".to_string()),
+                    },
                 ],
             )
             .unwrap();
@@ -655,8 +708,20 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    event(NaiveDateTime::from_timestamp_opt(35, 0).unwrap(), "G2_1"),
-                    event(NaiveDateTime::from_timestamp_opt(40, 0).unwrap(), "G2_2"),
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_2".to_string()),
+                    },
                 ],
             )
             .unwrap();
@@ -719,9 +784,27 @@ mod test {
                 later_stack_datetime,
                 &mock_program_a().context_id,
                 vec![
-                    event(datetime_from_date(2023, 12, 16), "G2_1"),
-                    event(datetime_from_date(2024, 01, 13), "G2_2"),
-                    event(datetime_from_date(2024, 03, 15), "G2_3"),
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2023, 12, 16),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2024, 01, 13),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_2".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2024, 03, 15),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G2_3".to_string()),
+                    },
                 ],
             )
             .unwrap();
@@ -734,9 +817,27 @@ mod test {
                 earlier_stack_datetime,
                 &mock_program_a().context_id,
                 vec![
-                    event(datetime_from_date(2023, 09, 14), "G1_1"),
-                    event(datetime_from_date(2023, 09, 16), "G1_2"),
-                    event(datetime_from_date(2023, 12, 13), "G1_3"),
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2023, 09, 14),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2023, 09, 16),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_2".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2023, 12, 13),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_3".to_string()),
+                    },
                 ],
             )
             .unwrap();
@@ -857,7 +958,13 @@ mod test {
                 "patient2".to_string(),
                 stack_3_datetime,
                 &mock_program_a().context_id,
-                vec![event(stack_3_datetime, "G3_1")],
+                vec![EventInput {
+                    active_start_datetime: stack_3_datetime,
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("G3_1".to_string()),
+                }],
             )
             .unwrap();
 
@@ -868,7 +975,13 @@ mod test {
                 "patient2".to_string(),
                 stack_2_datetime,
                 &mock_program_a().context_id,
-                vec![event(datetime_from_date(2012, 05, 10), "G2_1")],
+                vec![EventInput {
+                    active_start_datetime: datetime_from_date(2012, 05, 10),
+                    document_type: "DocType".to_string(),
+                    document_name: None,
+                    r#type: "status".to_string(),
+                    name: Some("G2_1".to_string()),
+                }],
             )
             .unwrap();
 
@@ -880,8 +993,20 @@ mod test {
                 stack_1_datetime,
                 &mock_program_a().context_id,
                 vec![
-                    event(datetime_from_date(2011, 12, 31), "G1_1"),
-                    event(datetime_from_date(2012, 01, 28), "G1_2"),
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2011, 12, 31),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_1".to_string()),
+                    },
+                    EventInput {
+                        active_start_datetime: datetime_from_date(2012, 01, 28),
+                        document_type: "DocType".to_string(),
+                        document_name: None,
+                        r#type: "status".to_string(),
+                        name: Some("G1_2".to_string()),
+                    },
                 ],
             )
             .unwrap();
@@ -893,6 +1018,16 @@ mod test {
         // G1_1: datetime: 2011-11-29T00:00:00, start: 2011-12-31T00:00:00, end: 2012-01-28T00:00:00
         let result = service.events(&ctx, None, None, None).unwrap();
         check_integrity(result.rows);
+    }
+
+    fn event(active_start_datetime: NaiveDateTime, name: &str) -> EventInput {
+        EventInput {
+            active_start_datetime,
+            document_type: "DocType".to_string(),
+            document_name: None,
+            r#type: "status".to_string(),
+            name: Some(name.to_string()),
+        }
     }
 
     #[actix_rt::test]
