@@ -1,0 +1,19 @@
+{
+  "name": "Dashboard",
+  "version": "1.0.0",
+  "components": [
+    {
+      "type": "Dashboard",
+      "localModule": "SyncStatusWidget",
+      "module": "SyncStatus"
+    },
+    {
+      "type": "Dashboard",
+      "localModule": "ReplenishmentWidget",
+      "module": "Replenishment"
+    }
+  ],
+  "dependencies": {
+    "omSupplyVersion": "8.0.0"
+  }
+}

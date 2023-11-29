@@ -1,0 +1,13 @@
+{
+  "name": "ShippingStatus",
+  "version": "1.0.0",
+  "components": [
+    {
+      "type": "InboundShipmentAppBar",
+      "module": "ShippingStatus"
+    }
+  ],
+  "dependencies": {
+    "omSupplyVersion": "8.0.0"
+  }
+}
