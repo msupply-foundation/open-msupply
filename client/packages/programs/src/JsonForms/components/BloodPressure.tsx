@@ -1,11 +1,5 @@
 import React, { useEffect } from 'react';
-import {
-  ControlProps,
-  composePaths,
-  rankWith,
-  subErrorsAt,
-  uiTypeIs,
-} from '@jsonforms/core';
+import { ControlProps, rankWith, subErrorsAt, uiTypeIs } from '@jsonforms/core';
 import {
   Box,
   DetailInputWithLabelRow,
@@ -21,16 +15,19 @@ import { useJSONFormsCustomError } from '../common/hooks/useJSONFormsCustomError
 
 export const bloodPressureTester = rankWith(10, uiTypeIs('BloodPressure'));
 
+type BloodPressureData = {
+  systolic?: number;
+  diastolic?: number;
+};
+
 export const UIComponent = (props: ControlProps) => {
   const t = useTranslation('programs');
   const { data, handleChange, label, path, schema } = props;
   const { core } = useJsonForms();
-  const [systolic, setSystolic] = React.useState<number | undefined>(undefined);
-  const [diastolic, setDiastolic] = React.useState<number | undefined>(
-    undefined
-  );
-  const systolicPath = composePaths(path, 'systolic');
-  const diastolicPath = composePaths(path, 'diastolic');
+  const [bloodPressure, setBloodPressure] = React.useState<
+    BloodPressureData | undefined
+  >(data);
+
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,
     'BloodPressure'
@@ -44,36 +41,16 @@ export const UIComponent = (props: ControlProps) => {
     }
   }, [core]);
 
-  const onChangeSystolic = useDebounceCallback(
-    (value: number | undefined) => {
-      setSystolic(value);
-      handleChange(systolicPath, value);
-
-      if (!value && diastolic === undefined) {
+  const onChange = useDebounceCallback(
+    (value: BloodPressureData) => {
+      if (value.diastolic === undefined && value.systolic === undefined) {
         handleChange(path, undefined);
+      } else {
+        handleChange(path, value);
       }
     },
     [path]
   );
-
-  const onChangeDiastolic = useDebounceCallback(
-    (value: number | undefined) => {
-      setDiastolic(value);
-      handleChange(diastolicPath, value);
-
-      if (!value && systolic === undefined) {
-        handleChange(path, undefined);
-      }
-    },
-    [path]
-  );
-
-  useEffect(() => {
-    if (data) {
-      setSystolic(data.systolic);
-      setDiastolic(data.diastolic);
-    }
-  }, [data]);
 
   if (!props.visible) {
     return null;
@@ -95,8 +72,15 @@ export const UIComponent = (props: ControlProps) => {
         <Box display="flex" flexDirection="column">
           <Box display="flex" flexDirection="row" paddingLeft={0.5}>
             <NumericTextInput
-              onChange={onChangeSystolic}
-              value={systolic}
+              onChange={value => {
+                const newBP = {
+                  ...bloodPressure,
+                  systolic: value,
+                };
+                setBloodPressure(newBP);
+                onChange(newBP);
+              }}
+              value={bloodPressure?.systolic}
               label={t('label.systolic')}
               min={schema.properties?.['systolic']?.minimum ?? 0}
               max={
@@ -109,8 +93,15 @@ export const UIComponent = (props: ControlProps) => {
               /
             </Typography>
             <NumericTextInput
-              onChange={onChangeDiastolic}
-              value={diastolic}
+              onChange={value => {
+                const newBP = {
+                  ...bloodPressure,
+                  diastolic: value,
+                };
+                setBloodPressure(newBP);
+                onChange(newBP);
+              }}
+              value={bloodPressure?.diastolic}
               label={t('label.diastolic')}
               width={100}
               min={schema.properties?.['diastolic']?.minimum ?? 0}
