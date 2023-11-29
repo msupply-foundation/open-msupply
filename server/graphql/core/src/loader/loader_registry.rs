@@ -280,6 +280,5 @@ pub async fn get_loaders(
         },
         async_std::task::spawn,
     ));
-
     loaders
 }
