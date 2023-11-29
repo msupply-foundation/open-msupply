@@ -3,7 +3,7 @@ extern crate machine_uid;
 
 use crate::{
     certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
-    cors::cors_policy, serve_frontend::config_server_frontend, static_files::config_static_files,
+    cors::cors_policy, serve_frontend::config_serve_frontend, static_files::config_static_files,
     upload_fridge_tag::config_upload_fridge_tag,
 };
 
@@ -291,7 +291,7 @@ pub async fn start_server(
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
             // Needs to be last to capture all unmatches routes
-            .configure(config_server_frontend)
+            .configure(config_serve_frontend)
     })
     .disable_signals();
 

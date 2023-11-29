@@ -8,6 +8,7 @@ const dependencies = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const EncodingPlugin = require('webpack-encoding-plugin');
 const fs = require('fs');
 
 const localPlugins = () => {
@@ -190,6 +191,9 @@ module.exports = env => {
           },
         ],
       }),
+      new EncodingPlugin({
+        encoding: 'UTF-16'
+    })
     ],
   };
 };
