@@ -11,7 +11,7 @@ A plugin can interact with the app framework, access language translations, call
 
 Note that the plugins do need to be implemented for a given area of the app - currently a plugin can be created to add a column to a list view, but only the Stock list view has implemented this functionality and is the only area of the site for which this plugin will operate. It is a simple task to support plugins in other areas, however we are only implementing plugin support as required.
 
-For some working examples, see the [plugin feature example branch](https://github.com/openmsupply/open-msupply/tree/feature/front-end-plugins-example).
+For some working examples, see the [plugin repo](https://github.com/msupply-foundation/open-msupply-plugins) which has some examples.
 
 ## Plugin structure
 
