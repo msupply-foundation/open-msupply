@@ -93,9 +93,17 @@ const StockListComponent: FC = () => {
           accessor: ({ rowData }) => rowData.item.name,
           Cell: TooltipTextCell,
           maxWidth: 350,
+          minWidth: 350,
         },
       ],
-      'batch',
+      [
+        'batch',
+        {
+          Cell: TooltipTextCell,
+          maxWidth: 100,
+          minWidth: 100,
+        },
+      ],
       [
         'expiryDate',
         {
@@ -103,7 +111,15 @@ const StockListComponent: FC = () => {
             DateUtils.getDateOrNull(rowData.expiryDate),
         },
       ],
-      ['locationName', { sortable: false }],
+      [
+        'locationName',
+        {
+          sortable: false,
+          Cell: TooltipTextCell,
+          maxWidth: 75,
+          minWidth: 75,
+        },
+      ],
       [
         'itemUnit',
         { accessor: ({ rowData }) => rowData.item.unitName, sortable: false },
