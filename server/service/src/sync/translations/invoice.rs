@@ -279,7 +279,7 @@ impl SyncTranslation for InvoiceTranslation {
         let invoice_row =
             InvoiceRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
-        log::info!("Translating invoice row: {:#?}", invoice_row);
+        // log::info!("Translating invoice row: {:#?}", invoice_row);
 
         let confirm_datetime = to_legacy_confirm_time(&invoice_row);
 
@@ -359,11 +359,11 @@ impl SyncTranslation for InvoiceTranslation {
 
         let json_recod = serde_json::to_value(&legacy_row)?;
 
-        log::info!(
-            "Translated row {}",
-            serde_json::to_string_pretty(&json_recod)
-                .unwrap_or("Failed to stringify json".to_string())
-        );
+        // log::info!(
+        //     "Translated row {}",
+        //     serde_json::to_string_pretty(&json_recod)
+        //         .unwrap_or("Failed to stringify json".to_string())
+        // );
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,
