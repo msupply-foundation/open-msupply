@@ -74,7 +74,6 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
 
 #[derive(Default, SimpleObject)]
 pub struct TemperatureChartNode {
-    intervals: Vec<DateTime<Utc>>,
     sensors: Vec<SensorAxisNode>,
 }
 
@@ -95,20 +94,30 @@ impl TemperatureChartNode {
 
         let interval_difference = (first_interval.to_datetime - first_interval.from_datetime) / 2;
 
-        // Create hash map for intervals, { key: from_datetime, value: midpoint }
-        let mapped_intervals: HashMap<NaiveDateTime, DateTime<Utc>> = intervals
-            .into_iter()
-            .map(|interval| {
-                (
-                    interval.from_datetime,
-                    DateTime::<Utc>::from_utc(interval.from_datetime + interval_difference, Utc),
-                )
+        // Create a base sensor data struct
+        let base: Vec<TemperaturePointNode> = intervals
+            .iter()
+            .map(|interval| TemperaturePointNode {
+                mid_point: DateTime::<Utc>::from_utc(
+                    interval.from_datetime + interval_difference,
+                    Utc,
+                ),
+                ..Default::default()
             })
+            .collect();
+
+        // Create hash map for intervals, { key: from_datetime, value: index }, this is for looking up which index
+        // of base array to update
+        let base_indexes: HashMap<NaiveDateTime, usize> = intervals
+            .into_iter()
+            .enumerate()
+            .map(|(index, interval)| (interval.from_datetime, index))
             .collect();
 
         // Create SensorAxisNodes, there is an assumption that temperature_chart_rows are sorted by
         // sensor id and then by timestamp. Test in repository layer and in the below mapping should guarantee
         // this assumption
+        // Missing data points will be filled in with blanks
         let mut sensors: Vec<SensorAxisNode> = Vec::new();
 
         for TemperatureChartRow {
@@ -125,39 +134,40 @@ impl TemperatureChartNode {
                     /* next sensor */
                     sensors.push(SensorAxisNode {
                         sensor_id,
-                        points: Vec::new(),
+                        points: base.clone(),
                     })
                 }
             }
 
-            let mid_point = mapped_intervals
-                .get(&from_datetime)
-                .map(Clone::clone)
-                .ok_or(StandardGraphqlError::from_str("Interval must be present"))?;
+            let base_index = base_indexes.get(&from_datetime).map(Clone::clone).ok_or(
+                StandardGraphqlError::from_str("Index for from_datetime must exist"),
+            )?;
+
+            // Sensor points array is already populated with base data (all intervals with empty temeprature and breachids)
 
             if let Some(sensor) = sensors.last_mut() {
-                sensor.points.push(TemperaturePointNode {
-                    mid_point,
-                    temperature,
-                    breach_ids,
-                });
+                let point =
+                    sensor
+                        .points
+                        .get_mut(base_index)
+                        .ok_or(StandardGraphqlError::from_str(
+                            "Element in base array must exist at index",
+                        ))?;
+                point.temperature = Some(temperature);
+                point.breach_ids = (!breach_ids.is_empty()).then_some(breach_ids)
             }
         }
 
-        let mut intervals: Vec<DateTime<Utc>> =
-            mapped_intervals.values().map(Clone::clone).collect();
-        intervals.sort();
-
         // Map result
-        Ok(Self { intervals, sensors })
+        Ok(Self { sensors })
     }
 }
 
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Clone, Default)]
 pub struct TemperaturePointNode {
     mid_point: DateTime<Utc>,
-    temperature: f64,
-    breach_ids: Vec<String>,
+    temperature: Option<f64>,
+    breach_ids: Option<Vec<String>>,
 }
 
 #[derive(SimpleObject)]
@@ -243,7 +253,6 @@ mod test {
             {
                 ... on TemperatureChartNode {
                 __typename
-                intervals
                 sensors {
                     points {
                         temperature
@@ -261,11 +270,6 @@ mod test {
         let expected = json!({
             "temperatureChart": {
               "__typename": "TemperatureChartNode",
-              "intervals": [
-                "2021-01-01T23:00:05+00:00",
-                "2021-01-01T23:00:15+00:00",
-                "2021-01-01T23:00:25+00:00"
-              ],
               "sensors": [
                 {
                     "sensor": {
@@ -276,20 +280,37 @@ mod test {
                         "breachIds": ["One", "Two"],
                         "midPoint": "2021-01-01T23:00:05+00:00"
                     },
+                    // Point is missing
+                    {
+                        "temperature": null,
+                        "breachIds": null,
+                        "midPoint": "2021-01-01T23:00:15+00:00"
+                    },
                     {
                         "temperature": 11.5,
                         "breachIds": ["Three"],
                         "midPoint": "2021-01-01T23:00:25+00:00"
                     }]
                 },
-                  {
-                    "sensor": {
-                        "name": mock_sensor_2().name
+                {
+                "sensor": {
+                    "name": mock_sensor_2().name
+                },
+                "points": [   // Point is missing
+                    {
+                        "temperature": null,
+                        "breachIds": null,
+                        "midPoint": "2021-01-01T23:00:05+00:00"
                     },
-                    "points": [{
-                        "temperature": 8.5,
-                        "breachIds": ["Four"],
-                        "midPoint": "2021-01-01T23:00:15+00:00"
+                    {
+                    "temperature": 8.5,
+                    "breachIds": ["Four"],
+                    "midPoint": "2021-01-01T23:00:15+00:00"
+                    },   // Point is missing
+                    {
+                        "temperature": null,
+                        "breachIds": null,
+                        "midPoint": "2021-01-01T23:00:25+00:00"
                     }]
                 }
               ]
