@@ -20,6 +20,7 @@ thiserror = "1"
 topological-sort = "0.2.2"
 bcrypt = "0.12.0"
 chrono = { workspace = true }
+rand = { workspace = true }
 jsonschema = "0.16.0"
 jsonwebtoken = "8.0.1"
 log = "0.4.14"
@@ -44,7 +45,6 @@ temperature-sensor = {git = "https://github.com/openmsupply/temperature-sensor.g
 actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
 httpmock = "0.6.6"
-rand = "0.8.5"
 actix-web = { version = "4.0.1" }
 tokio = { version = "1.21.1", features = ["macros", "rt-multi-thread", "time"] }
 

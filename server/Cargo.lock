@@ -4260,6 +4260,7 @@ dependencies = [
  "libsqlite3-sys",
  "log",
  "pretty_assertions",
+ "rand",
  "rust-embed",
  "serde 1.0.137",
  "serde_json",
