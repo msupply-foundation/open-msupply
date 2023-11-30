@@ -4,7 +4,6 @@ use crate::{
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use util::datetime_with_offset;
 
 use super::temperature_chart_row::{Interval, *};
 
@@ -19,14 +18,12 @@ impl<'a> TemperatureChartRepository<'a> {
         TemperatureChartRepository { connection }
     }
 
+    /// Result is sorted by sensor and then by datetime
     pub fn query(
         &self,
-        from_datetime: NaiveDateTime,
-        to_datetime: NaiveDateTime,
-        number_of_data_points: i32,
+        intervals: Vec<Interval>,
         temperature_log_filter: Option<TemperatureLogFilter>,
-    ) -> Result<(Vec<TemperatureChartRow>, Vec<Interval>), RepositoryError> {
-        let intervals = calculate_intervals(from_datetime, to_datetime, number_of_data_points);
+    ) -> Result<Vec<TemperatureChartRow>, RepositoryError> {
         let mut query = TemperatureChart {
             intervals: intervals.clone(),
         }
@@ -61,7 +58,7 @@ impl<'a> TemperatureChartRepository<'a> {
             .map(TemperatureChartRow::from)
             .collect::<Result<_, _>>()?;
 
-        Ok((chart_data, intervals))
+        Ok(chart_data)
     }
 }
 
@@ -90,20 +87,6 @@ impl TemperatureChartRow {
     }
 }
 
-fn calculate_intervals(
-    from_datetime: NaiveDateTime,
-    to_datetime: NaiveDateTime,
-    number_of_data_points: i32,
-) -> Vec<Interval> {
-    let interval = (to_datetime - from_datetime) / number_of_data_points;
-    (0..number_of_data_points)
-        .map(|point| Interval {
-            from_datetime: datetime_with_offset(&from_datetime, interval * point),
-            to_datetime: datetime_with_offset(&from_datetime, interval * (point + 1)),
-        })
-        .collect()
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -114,64 +97,9 @@ mod test {
         EqualFilter, LocationRow, NameRow, SensorFilter, SensorRow, StoreRow, TemperatureBreachRow,
         TemperatureChartRepository, TemperatureChartRow, TemperatureLogRow,
     };
-    use chrono::Duration;
+
+    use rand::{seq::SliceRandom, thread_rng};
     use util::create_datetime;
-    #[test]
-    fn test_calculate_intervals() {
-        // Test 1: 5 Intervals in 30 seconds
-        // Each interval should be 6 seconds long
-
-        assert_eq!(
-            calculate_intervals(
-                create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
-                5
-            ),
-            vec![
-                Interval {
-                    from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
-                },
-                Interval {
-                    from_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
-                },
-                Interval {
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
-                },
-                Interval {
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
-                },
-                Interval {
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
-                }
-            ]
-        );
-
-        // Test 2: 30 Intervals in 30 seconds
-        // Each interval should be 1 second long
-        let from_datetime = create_datetime(2021, 01, 01, 23, 59, 50).unwrap();
-        let to_datetime = create_datetime(2021, 01, 02, 00, 00, 20).unwrap();
-        let intervals = calculate_intervals(from_datetime, to_datetime, 30);
-
-        assert_eq!(intervals.len(), 30);
-        for i in 0..30 {
-            assert_eq!(
-                intervals[i],
-                Interval {
-                    from_datetime: from_datetime
-                        .checked_add_signed(Duration::seconds(i as i64))
-                        .unwrap(),
-                    to_datetime: from_datetime
-                        .checked_add_signed(Duration::seconds(i as i64 + 1))
-                        .unwrap()
-                }
-            );
-        }
-    }
 
     #[actix_rt::test]
     async fn temperature_charts() {
@@ -238,9 +166,6 @@ mod test {
                 to_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
             },
         ];
-        let from_datetime = create_datetime(2021, 01, 01, 23, 59, 50).unwrap();
-        let to_datetime = create_datetime(2021, 01, 02, 00, 00, 08).unwrap();
-        let number_of_data_points = 3;
 
         // Want to test two sensors, with gap in data, and one location filter
 
@@ -251,7 +176,7 @@ mod test {
         let b2 = Some(&breach2.id);
 
         // Sensor 1 (S1)
-        let temperature_logs: Vec<TemperatureLogRow> = vec![
+        let mut temperature_logs: Vec<TemperatureLogRow> = vec![
             ((2021, 01, 01), (23, 59, 49), 100.0, s1, None, None), // Not in period
             ((2021, 01, 01), (23, 59, 50), 10.0, s1, None, b1),    // (P1-S1 no location, breach1)
             ((2021, 01, 01), (23, 59, 55), 5.0, s1, None, b2),     // (P1-S1 no location, breach2)
@@ -281,6 +206,10 @@ mod test {
         )
         .collect();
 
+        // This repository should return rows orderd by sensor and then by datetime
+        // it's important to shuffle before inserting to test this
+        temperature_logs.shuffle(&mut thread_rng());
+
         let (_, connection, _, _) = setup_all_with_data(
             "temperature_charts",
             MockDataInserts::none(),
@@ -299,61 +228,55 @@ mod test {
         let repo = TemperatureChartRepository::new(&connection);
 
         // Just date filter
-        let result = repo
-            .query(from_datetime, to_datetime, number_of_data_points, None)
-            .unwrap();
-
+        let mut result = repo.query(intervals.clone(), None).unwrap();
+        // BreachIds are unordered in repository result, need to sort them to compare
+        result[0].breach_ids.sort();
         assert_eq!(
             result,
-            (
-                vec![
-                    TemperatureChartRow {
-                        from_datetime: intervals[0].from_datetime,
-                        to_datetime: intervals[0].to_datetime,
-                        average_temperature: 7.5,
-                        sensor_id: sensor1.id.clone(),
-                        breach_ids: vec![breach1.id.clone(), breach2.id.clone()]
-                    },
-                    TemperatureChartRow {
-                        from_datetime: intervals[1].from_datetime,
-                        to_datetime: intervals[1].to_datetime,
-                        average_temperature: 1.0,
-                        sensor_id: sensor1.id.clone(),
-                        breach_ids: Vec::new()
-                    },
-                    TemperatureChartRow {
-                        from_datetime: intervals[2].from_datetime,
-                        to_datetime: intervals[2].to_datetime,
-                        average_temperature: 2.5,
-                        sensor_id: sensor1.id.clone(),
-                        breach_ids: Vec::new()
-                    },
-                    TemperatureChartRow {
-                        from_datetime: intervals[0].from_datetime,
-                        to_datetime: intervals[0].to_datetime,
-                        average_temperature: -7.5,
-                        sensor_id: sensor2.id.clone(),
-                        breach_ids: Vec::new()
-                    },
-                    // Data point missing
-                    TemperatureChartRow {
-                        from_datetime: intervals[2].from_datetime,
-                        to_datetime: intervals[2].to_datetime,
-                        average_temperature: 3.0,
-                        sensor_id: sensor2.id.clone(),
-                        breach_ids: Vec::new()
-                    }
-                ],
-                intervals.clone()
-            )
+            vec![
+                TemperatureChartRow {
+                    from_datetime: intervals[0].from_datetime,
+                    to_datetime: intervals[0].to_datetime,
+                    average_temperature: 7.5,
+                    sensor_id: sensor1.id.clone(),
+                    breach_ids: vec![breach1.id.clone(), breach2.id.clone()]
+                },
+                TemperatureChartRow {
+                    from_datetime: intervals[1].from_datetime,
+                    to_datetime: intervals[1].to_datetime,
+                    average_temperature: 1.0,
+                    sensor_id: sensor1.id.clone(),
+                    breach_ids: Vec::new()
+                },
+                TemperatureChartRow {
+                    from_datetime: intervals[2].from_datetime,
+                    to_datetime: intervals[2].to_datetime,
+                    average_temperature: 2.5,
+                    sensor_id: sensor1.id.clone(),
+                    breach_ids: Vec::new()
+                },
+                TemperatureChartRow {
+                    from_datetime: intervals[0].from_datetime,
+                    to_datetime: intervals[0].to_datetime,
+                    average_temperature: -7.5,
+                    sensor_id: sensor2.id.clone(),
+                    breach_ids: Vec::new()
+                },
+                // Data point missing
+                TemperatureChartRow {
+                    from_datetime: intervals[2].from_datetime,
+                    to_datetime: intervals[2].to_datetime,
+                    average_temperature: 3.0,
+                    sensor_id: sensor2.id.clone(),
+                    breach_ids: Vec::new()
+                }
+            ],
         );
 
         // Filter by sensor 2
         let result = repo
             .query(
-                from_datetime,
-                to_datetime,
-                number_of_data_points,
+                intervals.clone(),
                 Some(
                     TemperatureLogFilter::new()
                         .sensor(SensorFilter::new().id(EqualFilter::equal_to(&sensor2.id))),
@@ -363,34 +286,29 @@ mod test {
 
         assert_eq!(
             result,
-            (
-                vec![
-                    TemperatureChartRow {
-                        from_datetime: intervals[0].from_datetime,
-                        to_datetime: intervals[0].to_datetime,
-                        average_temperature: -7.5,
-                        sensor_id: sensor2.id.clone(),
-                        breach_ids: Vec::new()
-                    },
-                    // Data point missing
-                    TemperatureChartRow {
-                        from_datetime: intervals[2].from_datetime,
-                        to_datetime: intervals[2].to_datetime,
-                        average_temperature: 3.0,
-                        sensor_id: sensor2.id.clone(),
-                        breach_ids: Vec::new()
-                    }
-                ],
-                intervals.clone()
-            )
+            vec![
+                TemperatureChartRow {
+                    from_datetime: intervals[0].from_datetime,
+                    to_datetime: intervals[0].to_datetime,
+                    average_temperature: -7.5,
+                    sensor_id: sensor2.id.clone(),
+                    breach_ids: Vec::new()
+                },
+                // Data point missing
+                TemperatureChartRow {
+                    from_datetime: intervals[2].from_datetime,
+                    to_datetime: intervals[2].to_datetime,
+                    average_temperature: 3.0,
+                    sensor_id: sensor2.id.clone(),
+                    breach_ids: Vec::new()
+                }
+            ]
         );
 
         // Filter by location
         let result = repo
             .query(
-                from_datetime,
-                to_datetime,
-                number_of_data_points,
+                intervals.clone(),
                 Some(
                     TemperatureLogFilter::new()
                         .location(LocationFilter::new().id(EqualFilter::equal_to(&location.id))),
@@ -400,26 +318,22 @@ mod test {
 
         assert_eq!(
             result,
-            (
-                vec![
-                    TemperatureChartRow {
-                        from_datetime: intervals[1].from_datetime,
-                        to_datetime: intervals[1].to_datetime,
-                        average_temperature: 1.0,
-                        sensor_id: sensor1.id.clone(),
-                        breach_ids: Vec::new()
-                    },
-                    TemperatureChartRow {
-                        from_datetime: intervals[0].from_datetime,
-                        to_datetime: intervals[0].to_datetime,
-                        average_temperature: -7.5,
-                        sensor_id: sensor2.id.clone(),
-                        breach_ids: Vec::new()
-                    },
-                    // Missing data for location
-                ],
-                intervals
-            )
+            vec![
+                TemperatureChartRow {
+                    from_datetime: intervals[1].from_datetime,
+                    to_datetime: intervals[1].to_datetime,
+                    average_temperature: 1.0,
+                    sensor_id: sensor1.id.clone(),
+                    breach_ids: Vec::new()
+                },
+                TemperatureChartRow {
+                    from_datetime: intervals[0].from_datetime,
+                    to_datetime: intervals[0].to_datetime,
+                    average_temperature: -7.5,
+                    sensor_id: sensor2.id.clone(),
+                    breach_ids: Vec::new()
+                }
+            ] // Missing data for location
         )
     }
 }
