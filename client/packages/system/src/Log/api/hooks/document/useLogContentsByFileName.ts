@@ -1,11 +1,10 @@
-import { useQuery } from 'react-query';
+import { useMutation } from 'react-query';
 import { useLogApi } from '../utils/useLogApi';
 
-export const useLogContentsByFileName = (fileName: string) => {
+export const useLogContentsByFileName = () => {
   const api = useLogApi();
-  const result = useQuery([api.keys.list(), fileName], () =>
-    api.get.logContentsByFileName({ fileName })
-  );
 
-  return { ...result };
+  return useMutation(async (fileName: string) => {
+    return await api.get.logContentsByFileName({ fileName });
+  });
 };

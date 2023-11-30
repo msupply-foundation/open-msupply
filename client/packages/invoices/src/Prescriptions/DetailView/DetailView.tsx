@@ -12,7 +12,7 @@ import {
   DetailTabs,
   ModalMode,
 } from '@openmsupply-client/common';
-import { toItemRow, LogList } from '@openmsupply-client/system';
+import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 import { usePrescriptionIsDisabled } from '../api/hooks/utils/usePrescriptionIsDisabled';
 import { usePrescription } from '../api/hooks';
@@ -57,7 +57,7 @@ export const PrescriptionDetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <LogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];
