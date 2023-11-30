@@ -4,7 +4,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-        -- Adding stock_take_line.item_link_id
+        -- Adding stock_line.item_link_id
         -- Disable foreign key checks to avoid firing constraints on adding new FK column (SQLite)
         PRAGMA foreign_keys = OFF;
         
@@ -28,13 +28,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         -- Recreate stock_on_hand taking into account new model
         CREATE VIEW
           store_items AS
-        SELECT
-          *
+        SELECT i.id as item_id, sl.store_id, sl.pack_size, sl.available_number_of_packs
         FROM
-          item
-          LEFT JOIN item_link ON item_link.item_id = item.id
-          LEFT JOIN stock_line ON stock_line.item_link_id = item_link.id
-          LEFT JOIN store ON store.id = stock_line.store_id;
+          item i
+          LEFT JOIN item_link il ON il.item_id = i.id
+          LEFT JOIN stock_line sl ON sl.item_link_id = il.id
+          LEFT JOIN store s ON s.id = sl.store_id;
         
         CREATE VIEW
           stock_on_hand AS
@@ -67,6 +66,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
           ) AS stock ON stock.item_id = items_and_stores.item_id
           AND stock.store_id = items_and_stores.store_id;
 
+          CREATE INDEX "index_stock_line_item_link_id_fkey" ON "stock_line" ("item_link_id");
         "#,
     )?;
 
