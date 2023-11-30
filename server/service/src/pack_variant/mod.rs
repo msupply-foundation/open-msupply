@@ -2,12 +2,17 @@ use repository::{PackVariantRow, RepositoryError};
 
 use crate::service_provider::ServiceContext;
 
-use self::{insert::insert_pack_variant, query::get_pack_variants, update::update_pack_variant};
+use self::{
+    delete::delete_pack_variant, insert::insert_pack_variant, query::get_pack_variants,
+    update::update_pack_variant,
+};
 
+mod delete;
 mod insert;
 mod query;
 mod update;
 mod validate;
+pub use delete::{DeletePackVariant, DeletePackVariantError};
 pub use insert::{InsertPackVariant, InsertPackVariantError};
 pub use update::{UpdatePackVariant, UpdatePackVariantError};
 
@@ -40,6 +45,14 @@ pub trait PackVariantServiceTrait: Sync + Send {
         input: UpdatePackVariant,
     ) -> Result<PackVariantRow, UpdatePackVariantError> {
         update_pack_variant(ctx, input)
+    }
+
+    fn delete_pack_variant(
+        &self,
+        ctx: &ServiceContext,
+        input: DeletePackVariant,
+    ) -> Result<String, DeletePackVariantError> {
+        delete_pack_variant(ctx, input)
     }
 }
 

@@ -13,6 +13,7 @@
   "button.close": "Close",
   "button.create": "Create",
   "button.create-a-new-one": "Create a new one",
+  "button.delete": "Delete",
   "button.delete-lines": "Delete selected lines",
   "button.export": "Export",
   "button.initialise": "Initialise",

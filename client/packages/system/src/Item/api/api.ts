@@ -5,6 +5,7 @@ import {
   FilterBy,
   InsertPackVariantInput,
   UpdatePackVariantInput,
+  DeletePackVariantInput,
 } from '@openmsupply-client/common';
 import { Sdk, ItemRowFragment, VariantFragment } from './operations.generated';
 
@@ -27,7 +28,7 @@ const itemParsers = {
   },
 };
 
-const packVariantParses = {
+const packVariantParsers = {
   toInsert: (packVariant: VariantFragment): InsertPackVariantInput => ({
     id: packVariant.id,
     itemId: packVariant.itemId,
@@ -39,6 +40,9 @@ const packVariantParses = {
     id: packVariant.id,
     shortName: packVariant.shortName,
     longName: packVariant.longName,
+  }),
+  toDelete: (packVariant: VariantFragment): DeletePackVariantInput => ({
+    id: packVariant.id,
   }),
 };
 
@@ -185,7 +189,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
   insertPackVariant: async (input: VariantFragment) => {
     const result = await sdk.insertPackVariant({
       storeId,
-      input: packVariantParses.toInsert(input),
+      input: packVariantParsers.toInsert(input),
     });
 
     return result.insertPackVariant;
@@ -193,9 +197,14 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
   updatePackVariant: async (input: VariantFragment) => {
     const result = await sdk.updatePackVariant({
       storeId,
-      input: packVariantParses.toUpdate(input),
+      input: packVariantParsers.toUpdate(input),
     });
 
     return result.updatePackVariant;
   },
+  deletePackVariant: async (input: VariantFragment) =>
+    await sdk.deletePackVariant({
+      storeId,
+      input: packVariantParsers.toDelete(input),
+    }),
 });

@@ -9,6 +9,7 @@ pub fn mock_item_a_variant_a() -> PackVariantRow {
         short_name: "tab".to_string(),
         long_name: "tablet".to_string(),
         pack_size: 1,
+        is_active: true,
     }
 }
 
@@ -19,6 +20,7 @@ pub fn mock_item_a_variant_b() -> PackVariantRow {
         short_name: "blist of 2 tabs".to_string(),
         long_name: "blister of 2 tablets".to_string(),
         pack_size: 2,
+        is_active: true,
     }
 }
 
@@ -29,6 +31,7 @@ pub fn mock_item_a_variant_c() -> PackVariantRow {
         short_name: "blist of 3 tabs".to_string(),
         long_name: "blister of 3 tablets".to_string(),
         pack_size: 3,
+        is_active: true,
     }
 }
 
@@ -39,6 +42,7 @@ pub fn mock_item_a_variant_d() -> PackVariantRow {
         short_name: "blist of 4 tabs".to_string(),
         long_name: "blister of 4 tablets".to_string(),
         pack_size: 4,
+        is_active: true,
     }
 }
 
@@ -49,6 +53,7 @@ pub fn mock_item_b_variant_a() -> PackVariantRow {
         short_name: "tab".to_string(),
         long_name: "tablet".to_string(),
         pack_size: 1,
+        is_active: true,
     }
 }
 
@@ -59,6 +64,7 @@ pub fn mock_item_b_variant_b() -> PackVariantRow {
         short_name: "blist of 3 tabs".to_string(),
         long_name: "blister of 3 tablets".to_string(),
         pack_size: 3,
+        is_active: true,
     }
 }
 
@@ -69,6 +75,7 @@ pub fn mock_item_b_variant_c() -> PackVariantRow {
         short_name: "blist of 4 tabs".to_string(),
         long_name: "blister of 4 tablets".to_string(),
         pack_size: 4,
+        is_active: true,
     }
 }
 
@@ -79,6 +86,7 @@ pub fn mock_item_b_variant_d() -> PackVariantRow {
         short_name: "blist of 7 tabs".to_string(),
         long_name: "blister of 7 tablets".to_string(),
         pack_size: 7,
+        is_active: true,
     }
 }
 

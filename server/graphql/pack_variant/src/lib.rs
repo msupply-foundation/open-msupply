@@ -59,4 +59,13 @@ impl PackVariantMutations {
     ) -> Result<UpdateResponse> {
         update_pack_variant(ctx, store_id, input)
     }
+
+    async fn delete_pack_variant(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: DeletePackVariantInput,
+    ) -> Result<DeletePackVariantResponse> {
+        delete_pack_variant(ctx, store_id, input)
+    }
 }

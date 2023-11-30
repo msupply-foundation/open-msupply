@@ -33,6 +33,7 @@ export interface ModalProps {
   width?: number;
   sx?: SxProps<Theme>;
   title: string;
+  deleteButton?: JSX.Element;
 }
 
 export interface DialogProps {
@@ -137,6 +138,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     slideAnimation = true,
     Transition,
     sx = {},
+    deleteButton,
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
@@ -200,6 +202,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           }}
         >
           {cancelButton}
+          {deleteButton}
           {okButton}
           {WrappedNextButton}
           {reportSelector}
