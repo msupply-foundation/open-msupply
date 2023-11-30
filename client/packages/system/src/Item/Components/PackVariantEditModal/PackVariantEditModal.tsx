@@ -11,10 +11,12 @@ import {
   NonNegativeIntegerInput,
   useNotification,
   noOtherVariants,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { VariantFragment } from '../../api';
 import { usePackVariantInsert } from '../../api/hooks/usePackVariantInsert';
 import { usePackVariantUpdate } from '../../api/hooks/usePackVariantUpdate';
+import { usePackVariantDelete } from '../../api/hooks/usePackVariantDelete';
 
 interface PackVariantEditModalProps {
   itemId: string;
@@ -100,15 +102,29 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
 }) => {
   const { Modal } = useDialog({ isOpen, onClose });
   const t = useTranslation('catalogue');
+  const { mutateAsync } = usePackVariantDelete();
   const { draft, onUpdate, onSave, isLoading } = useDraftPackVariant(
     itemId,
     packVariant,
     mode
   );
 
+  const onDelete = async () => {
+    await mutateAsync(draft);
+    onClose();
+  };
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-delete-pack-variant', {
+      packVariantName: draft.longName,
+    }),
+    onConfirm: onDelete,
+  });
+
   return (
     <Modal
-      width={350}
+      width={450}
       okButton={
         <DialogButton
           variant="ok"
@@ -122,6 +138,15 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
             }
           }}
         />
+      }
+      deleteButton={
+        mode === ModalMode.Update ? (
+          <DialogButton
+            variant="delete"
+            color="primary"
+            onClick={() => getConfirmation()}
+          />
+        ) : undefined
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       title={

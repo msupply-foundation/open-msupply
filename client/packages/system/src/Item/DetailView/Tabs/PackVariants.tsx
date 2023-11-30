@@ -15,9 +15,13 @@ import {
   useAuthContext,
   useNotification,
   UserPermission,
+  DropdownMenu,
+  DropdownMenuItem,
+  DeleteIcon,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 import { PackVariantEditModal } from '../../Components/PackVariantEditModal';
+import { usePackVariantDeleteSelected } from '../../api/hooks/usePackVariantDelete';
 
 const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
   const t = useTranslation('catalogue');
@@ -30,6 +34,8 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
   const hasPermission = userHasPermission(
     UserPermission.ItemNamesCodesAndUnitsMutate
   );
+  const variants = variantsControl?.variants ?? [];
+  const onDelete = usePackVariantDeleteSelected(variants);
 
   const columns = useColumns<VariantFragment>([
     'packSize',
@@ -45,6 +51,7 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
       accessor: ({ rowData }) => rowData?.longName,
       sortable: false,
     },
+    'selection',
   ]);
 
   return (
@@ -58,7 +65,12 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
           itemId={itemId ?? ''}
         />
       )}
-      <Box display="flex" justifyContent="flex-end" paddingBottom={2}>
+      <Box display="flex" justifyContent="space-between" paddingBottom={2}>
+        <DropdownMenu label="Select">
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+            {t('button.delete-lines')}
+          </DropdownMenuItem>
+        </DropdownMenu>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('label.new-pack-variant')}
@@ -67,7 +79,7 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
       </Box>
       <DataTable
         id="item-variants-detail"
-        data={variantsControl?.variants ?? []}
+        data={variants}
         columns={columns}
         noDataElement={<NothingHere body={t('error.no-pack-variants')} />}
         onRowClick={hasPermission ? onOpen : warningSnack}

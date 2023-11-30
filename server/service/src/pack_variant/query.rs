@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
 use repository::{
-    EqualFilter, PackVariantRow, PackVariantRowRepository, RepositoryError, StockLineRowRepository,
-    StockOnHandFilter, StockOnHandRepository,
+    EqualFilter, PackVariantFilter, PackVariantRepository, PackVariantRow, RepositoryError,
+    StockLineRowRepository, StockOnHandFilter, StockOnHandRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -19,7 +19,8 @@ pub fn get_pack_variants(ctx: &ServiceContext) -> Result<Vec<ItemPackVariant>, R
     let stock_on_hand = StockOnHandRepository::new(connection).query(Some(
         StockOnHandFilter::new().store_id(EqualFilter::equal_to(store_id)),
     ))?;
-    let pack_variants = PackVariantRowRepository::new(connection).load_all()?;
+    let pack_variants = PackVariantRepository::new(connection)
+        .query_by_filter(PackVariantFilter::new().is_active(true))?;
 
     // Calculate the most used variant for each item and pack size by total number of packs
     // if item has stock on hand else by empty line count. HashMap keys are (item_id, pack_size)
@@ -104,8 +105,8 @@ mod test {
     use repository::{
         mock::{mock_store_a, MockDataInserts},
         test_db::setup_all,
-        EqualFilter, PackVariantRowRepository, StockLineFilter, StockLineRepository,
-        StorageConnection,
+        EqualFilter, PackVariantFilter, PackVariantRepository, StockLineFilter,
+        StockLineRepository, StorageConnection,
     };
 
     use crate::service_provider::ServiceProvider;
@@ -123,8 +124,8 @@ mod test {
                 Some(mock_store_a().id),
             )
             .unwrap();
-        let pack_variants = PackVariantRowRepository::new(connection)
-            .load_all()
+        let pack_variants = PackVariantRepository::new(connection)
+            .query_by_filter(PackVariantFilter::new().is_active(true))
             .unwrap();
 
         let mut total_number_of_packs: HashMap<(String, i32), f64> = HashMap::new();

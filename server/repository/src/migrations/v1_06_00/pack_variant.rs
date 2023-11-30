@@ -9,7 +9,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 item_id TEXT NOT NULL REFERENCES item(id),
                 short_name TEXT NOT NULL,
                 long_name TEXT NOT NULL,
-                pack_size INTEGER NOT NULL
+                pack_size INTEGER NOT NULL,
+                is_active BOOL NOT NULL DEFAULT TRUE
             );
         "#,
     )?;

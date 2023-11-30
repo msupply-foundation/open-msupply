@@ -11,6 +11,7 @@ table! {
         short_name -> Text,
         long_name -> Text,
         pack_size -> Integer,
+        is_active -> Bool,
     }
 }
 
@@ -26,6 +27,7 @@ pub struct PackVariantRow {
     pub short_name: String,
     pub long_name: String,
     pub pack_size: i32,
+    pub is_active: bool,
 }
 
 pub struct PackVariantRowRepository<'a> {
@@ -65,12 +67,6 @@ impl<'a> PackVariantRowRepository<'a> {
             .filter(id.eq(variant_id))
             .first::<PackVariantRow>(&self.connection.connection)
             .optional()?;
-
-        Ok(result)
-    }
-
-    pub fn load_all(&self) -> Result<Vec<PackVariantRow>, RepositoryError> {
-        let result = pack_variant.load::<PackVariantRow>(&self.connection.connection)?;
 
         Ok(result)
     }
