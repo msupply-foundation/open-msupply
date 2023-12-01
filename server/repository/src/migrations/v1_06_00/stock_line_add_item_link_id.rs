@@ -1,22 +1,44 @@
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+    #[cfg(feature = "postgres")]
     sql!(
         connection,
         r#"
         -- Adding stock_line.item_link_id
-        -- Disable foreign key checks to avoid firing constraints on adding new FK column (SQLite)
-        PRAGMA foreign_keys = OFF;
-        
         ALTER TABLE stock_line
-        ADD COLUMN item_link_id TEXT NOT NULL REFERENCES item_link (id) DEFAULT 'temp_for_migration'; -- Can't have NOT NULL without a default... no PRAGMA for turning constraints off!
+        ADD COLUMN item_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
         
         UPDATE stock_line
-        SET
-        item_link_id = item_id;
+        SET item_link_id = item_id;
         
+        ALTER TABLE stock_line ADD CONSTRAINT stock_line_item_link_id_fkey FOREIGN KEY (item_link_id) REFERENCES item_link(id);
+       "#,
+    )?;
+
+    #[cfg(not(feature = "postgres"))]
+    sql!(
+        connection,
+        r#"
+        -- Adding stock_line.item_link_id
+        -- Disable foreign key checks to avoid firing constraints on adding new FK column
+        PRAGMA foreign_keys = OFF;
+
+        ALTER TABLE stock_line
+        ADD COLUMN item_link_id TEXT NOT NULL DEFAULT 'temp_for_migration' REFERENCES item_link(id); -- Can't have NOT NULL without a default... no sqlite PRAGMA for turning constraints off!
+        
+        UPDATE stock_line
+        SET item_link_id = item_id;
+
         PRAGMA foreign_keys = ON;
-        
+     "#,
+    )?;
+
+    sql!(
+        connection,
+        r#"
+        CREATE INDEX "index_stock_line_item_link_id_fkey" ON "stock_line" ("item_link_id");
+
         -- Dropping stock_line.item_id
         -- Drop index on stock_line.item_id first to avoid errors
         DROP INDEX IF EXISTS index_stock_line_item_id_fkey;
@@ -65,8 +87,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
               store_id
           ) AS stock ON stock.item_id = items_and_stores.item_id
           AND stock.store_id = items_and_stores.store_id;
-
-          CREATE INDEX "index_stock_line_item_link_id_fkey" ON "stock_line" ("item_link_id");
         "#,
     )?;
 
