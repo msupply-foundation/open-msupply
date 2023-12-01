@@ -240,10 +240,11 @@ mod tests {
 
     use crate::{
         mock::{mock_item_b, MockDataInserts},
-        test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemRowType,
-        MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-        Pagination, StoreRow, StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
+        test_db, EqualFilter, ItemFilter, ItemLinkRow, ItemLinkRowRepository, ItemRepository,
+        ItemRow, ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
+        StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -467,6 +468,29 @@ mod tests {
             }),
         ];
 
+        let item_link_rows = vec![
+            ItemLinkRow {
+                id: "item1".to_string(),
+                item_id: "item1".to_string(),
+            },
+            ItemLinkRow {
+                id: "item2".to_string(),
+                item_id: "item2".to_string(),
+            },
+            ItemLinkRow {
+                id: "item3".to_string(),
+                item_id: "item3".to_string(),
+            },
+            ItemLinkRow {
+                id: "item4".to_string(),
+                item_id: "item4".to_string(),
+            },
+            ItemLinkRow {
+                id: "item5".to_string(),
+                item_id: "item5".to_string(),
+            },
+        ];
+
         let master_list_rows = vec![
             MasterListRow {
                 id: "master_list1".to_owned(),
@@ -528,6 +552,12 @@ mod tests {
 
         for row in item_rows.iter() {
             ItemRowRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
+        }
+
+        for row in item_link_rows.iter() {
+            ItemLinkRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
