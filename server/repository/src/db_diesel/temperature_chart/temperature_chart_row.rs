@@ -6,8 +6,7 @@ use diesel::{
 
 #[derive(Debug, PartialEq)]
 pub struct TemperatureChartRow {
-    pub from_datetime: NaiveDateTime,
-    pub to_datetime: NaiveDateTime,
+    pub interval_id: String,
     pub average_temperature: f64,
     pub sensor_id: String,
     pub breach_ids: Vec<String>,
@@ -26,6 +25,7 @@ pub struct TemperatureChart {
 pub struct Interval {
     pub from_datetime: NaiveDateTime,
     pub to_datetime: NaiveDateTime,
+    pub interval_id: String,
 }
 
 // See README.md in this direcotry for explanation of diesel types
@@ -33,9 +33,9 @@ impl QueryFragment<DBType> for TemperatureChart {
     fn walk_ast(&self, mut out: AstPass<DBType>) -> QueryResult<()> {
         // Below should produces something like
         // (
-        //  SELECT '2021-01-01T16:00:00' as from_datetime, '2021-01-01T17:00:00' as to_datetime
-        //  UNION SELECT '2021-01-01T17:00:00' as from_datetime, '2021-01-01T18:00:00' as to_datetime
-        //  UNION SELECT '2021-01-01T18:00:00' as from_datetime, '2021-01-01T19:00:00' as to_datetime
+        //  SELECT '2021-01-01T16:00:00' as from_datetime, '2021-01-01T17:00:00' as to_datetime, 'interval1' as interval_id
+        //  UNION SELECT '2021-01-01T17:00:00' as from_datetime, '2021-01-01T18:00:00' as to_datetime, 'interval2' as interval_id
+        //  UNION SELECT '2021-01-01T18:00:00' as from_datetime, '2021-01-01T19:00:00' as to_datetime, 'interval3' as interval_id
         //  ) AS time_series
         //  JOIN temperature_log ON
         //       (temperature_log.datetime >= time_series.from_datetime
@@ -47,6 +47,7 @@ impl QueryFragment<DBType> for TemperatureChart {
         for Interval {
             from_datetime: from_date,
             to_datetime: to_date,
+            interval_id,
         } in self.intervals.iter()
         {
             out.push_sql(union_prefix);
@@ -57,7 +58,9 @@ impl QueryFragment<DBType> for TemperatureChart {
             out.push_bind_param::<Timestamp, _>(&from_date)?;
             out.push_sql(" as from_datetime, ");
             out.push_bind_param::<Timestamp, _>(&to_date)?;
-            out.push_sql(" as to_datetime ");
+            out.push_sql(" as to_datetime, ");
+            out.push_bind_param::<Text, _>(&interval_id)?;
+            out.push_sql(" as interval_id ");
         }
 
         out.push_sql(
@@ -87,31 +90,28 @@ impl QuerySource for TemperatureChart {
 
 // Boilerplate
 type SqlType = (
-    Timestamp,
-    Timestamp,
+    Text,
     Double,
     Text,
     Text,
     Text, /* Json type is only available for sqlite in diesel 2, so using String and manually parsing to vec */
 );
 type AllColumns = (
-    FromDatetime,
-    ToDatetime,
+    IntervalId,
     AverageTemperature,
     TemperatureLogId,
     SensorId,
     BreachIds,
 );
 impl Table for TemperatureChart {
-    type PrimaryKey = FromDatetime;
+    type PrimaryKey = IntervalId;
     type AllColumns = AllColumns;
     fn primary_key(&self) -> Self::PrimaryKey {
-        FromDatetime
+        IntervalId
     }
     fn all_columns() -> Self::AllColumns {
         (
-            FromDatetime,
-            ToDatetime,
+            IntervalId,
             AverageTemperature,
             TemperatureLogId,
             SensorId,
@@ -181,8 +181,7 @@ macro_rules! temperature_chart_column {
     };
 }
 
-temperature_chart_column!(FromDatetime, "time_series.from_datetime", Timestamp);
-temperature_chart_column!(ToDatetime, "time_series.to_datetime", Timestamp);
+temperature_chart_column!(IntervalId, "time_series.interval_id", Text);
 temperature_chart_column!(TemperatureLogId, "temperature_log.id", Text);
 temperature_chart_column!(SensorId, "temperature_log.sensor_id", Text);
 // Aggregates
@@ -209,27 +208,32 @@ mod test {
     use crate::{mock::MockDataInserts, test_db::setup_all};
     use chrono::Duration;
     use diesel::sql_query;
+    use util::*;
     // Combined tests are done in temperature_chart repo
     #[test]
     fn test_basic_temperature_chart_query() {
         let query = TemperatureChart {
             intervals: vec![
                 super::Interval {
-                    from_datetime: util::create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                    to_datetime: util::create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
+                    from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
+                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
+                    interval_id: "Interval1".to_string(),
                 },
                 super::Interval {
-                    from_datetime: util::create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
-                    to_datetime: util::create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
+                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+                    interval_id: "Interval2".to_string(),
                 },
             ],
         }
         .into_boxed::<DBType>();
 
         let union_select = if cfg!(not(feature = "postgres")) {
-            "SELECT ? as from_datetime, ? as to_datetime  UNION  SELECT ? as from_datetime, ? as to_datetime"
+            r#"SELECT ? as from_datetime, ? as to_datetime, ? as interval_id 
+                UNION  SELECT ? as from_datetime, ? as to_datetime, ? as interval_id"#
         } else {
-            "SELECT $1 as from_datetime, $2 as to_datetime  UNION  SELECT $3 as from_datetime, $4 as to_datetime"
+            r#"SELECT $1 as from_datetime, $2 as to_datetime, $3 as interval_id 
+                UNION  SELECT $4 as from_datetime, $5 as to_datetime, $6 as interval_id"#
         };
 
         let breach_ids_agg = if cfg!(not(feature = "postgres")) {
@@ -239,8 +243,7 @@ mod test {
         };
 
         let result = format!(
-            r#" SELECT time_series.from_datetime, 
-                        time_series.to_datetime, 
+            r#" SELECT time_series.interval_id,
                         AVG(temperature_log.temperature) as average_temperature, 
                         temperature_log.id, 
                         temperature_log.sensor_id, 
@@ -249,10 +252,11 @@ mod test {
                 ( {union_select} ) AS time_series
                 JOIN temperature_log ON 
                     (temperature_log.datetime >= time_series.from_datetime
-                    AND temperature_log.datetime < time_series.to_datetime) -- binds: [2021-01-01T23:59:50, 2021-01-02T00:00:05, 2021-01-02T00:00:05, 2021-01-02T00:00:20]"#
+                    AND temperature_log.datetime < time_series.to_datetime) 
+                -- binds: [2021-01-01T23:59:50, 2021-01-02T00:00:05, "Interval1", 2021-01-02T00:00:05, 2021-01-02T00:00:20, "Interval2"]"#
         );
 
-        assert_eq!(
+        pretty_assertions::assert_eq!(
             diesel::debug_query::<DBType, _>(&query)
                 .to_string()
                 .replace("\t", "")

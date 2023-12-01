@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use async_graphql::{dataloader::DataLoader, *};
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::SensorByIdLoader,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -106,12 +106,12 @@ impl TemperatureChartNode {
             })
             .collect();
 
-        // Create hash map for intervals, { key: from_datetime, value: index }, this is for looking up which index
+        // Create hash map for intervals, { key: interval_id, value: index }, this is for looking up which index
         // of base array to update
-        let base_indexes: HashMap<NaiveDateTime, usize> = intervals
+        let base_indexes: HashMap<String, usize> = intervals
             .into_iter()
             .enumerate()
-            .map(|(index, interval)| (interval.from_datetime, index))
+            .map(|(index, interval)| (interval.interval_id, index))
             .collect();
 
         // Create SensorAxisNodes, there is an assumption that temperature_chart_rows are sorted by
@@ -121,7 +121,7 @@ impl TemperatureChartNode {
         let mut sensors: Vec<SensorAxisNode> = Vec::new();
 
         for TemperatureChartRow {
-            from_datetime,
+            interval_id,
             average_temperature: temperature,
             sensor_id,
             breach_ids,
@@ -139,7 +139,7 @@ impl TemperatureChartNode {
                 }
             }
 
-            let base_index = base_indexes.get(&from_datetime).map(Clone::clone).ok_or(
+            let base_index = base_indexes.get(&interval_id).map(Clone::clone).ok_or(
                 StandardGraphqlError::from_str("Index for from_datetime must exist"),
             )?;
 
@@ -337,42 +337,44 @@ mod test {
                 }
             );
 
+            let intervals = vec![
+                Interval {
+                    from_datetime: create_datetime(2021, 01, 01, 23, 00, 0).unwrap(),
+                    to_datetime: create_datetime(2021, 01, 01, 23, 00, 10).unwrap(),
+                    interval_id: "interval1".to_string(),
+                },
+                Interval {
+                    from_datetime: create_datetime(2021, 01, 01, 23, 00, 10).unwrap(),
+                    to_datetime: create_datetime(2021, 01, 01, 23, 00, 20).unwrap(),
+                    interval_id: "interval2".to_string(),
+                },
+                Interval {
+                    from_datetime: create_datetime(2021, 01, 01, 23, 00, 20).unwrap(),
+                    to_datetime: create_datetime(2021, 01, 01, 23, 00, 30).unwrap(),
+                    interval_id: "interval3".to_string(),
+                },
+            ];
+
             Ok(TemperatureChart {
+                intervals: intervals.clone(),
                 temperature_chart_rows: vec![
                     TemperatureChartRow {
-                        from_datetime: create_datetime(2021, 01, 01, 23, 00, 0).unwrap(),
-                        to_datetime: create_datetime(2021, 01, 01, 23, 00, 10).unwrap(),
+                        interval_id: intervals[0].interval_id.clone(),
                         average_temperature: 10.5,
                         sensor_id: mock_sensor_1().id.clone(),
                         breach_ids: vec!["One".to_string(), "Two".to_string()],
                     },
                     TemperatureChartRow {
-                        from_datetime: create_datetime(2021, 01, 01, 23, 00, 20).unwrap(),
-                        to_datetime: create_datetime(2021, 01, 01, 23, 00, 30).unwrap(),
+                        interval_id: intervals[2].interval_id.clone(),
                         average_temperature: 11.5,
                         sensor_id: mock_sensor_1().id.clone(),
                         breach_ids: vec!["Three".to_string()],
                     },
                     TemperatureChartRow {
-                        from_datetime: create_datetime(2021, 01, 01, 23, 00, 10).unwrap(),
-                        to_datetime: create_datetime(2021, 01, 01, 23, 00, 20).unwrap(),
+                        interval_id: intervals[1].interval_id.clone(),
                         average_temperature: 8.5,
                         sensor_id: mock_sensor_2().id.clone(),
                         breach_ids: vec!["Four".to_string()],
-                    },
-                ],
-                intervals: vec![
-                    Interval {
-                        from_datetime: create_datetime(2021, 01, 01, 23, 00, 0).unwrap(),
-                        to_datetime: create_datetime(2021, 01, 01, 23, 00, 10).unwrap(),
-                    },
-                    Interval {
-                        from_datetime: create_datetime(2021, 01, 01, 23, 00, 10).unwrap(),
-                        to_datetime: create_datetime(2021, 01, 01, 23, 00, 20).unwrap(),
-                    },
-                    Interval {
-                        from_datetime: create_datetime(2021, 01, 01, 23, 00, 20).unwrap(),
-                        to_datetime: create_datetime(2021, 01, 01, 23, 00, 30).unwrap(),
                     },
                 ],
             })

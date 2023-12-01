@@ -3,7 +3,7 @@ use repository::{
     temperature_chart_row::Interval, EqualFilter, RepositoryError, TemperatureChartRepository,
     TemperatureChartRow, TemperatureLogFilter,
 };
-use util::datetime_with_offset;
+use util::{datetime_with_offset, uuid};
 
 use crate::service_provider::ServiceContext;
 
@@ -116,6 +116,7 @@ fn calculate_intervals(
         .map(|point| Interval {
             from_datetime: datetime_with_offset(&from_datetime, interval * point),
             to_datetime: datetime_with_offset(&from_datetime, interval * (point + 1)),
+            interval_id: uuid::uuid(),
         })
         .collect()
 }
@@ -133,32 +134,39 @@ mod test {
         // Test 1: 5 Intervals in 30 seconds
         // Each interval should be 6 seconds long
 
+        let result = calculate_intervals(
+            create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
+            create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+            5,
+        );
+
         assert_eq!(
-            calculate_intervals(
-                create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
-                5
-            ),
+            result,
             vec![
                 Interval {
                     from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
                     to_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
+                    interval_id: result[0].interval_id.clone()
                 },
                 Interval {
                     from_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
                     to_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
+                    interval_id: result[1].interval_id.clone()
                 },
                 Interval {
                     from_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
                     to_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
+                    interval_id: result[2].interval_id.clone()
                 },
                 Interval {
                     from_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
                     to_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
+                    interval_id: result[3].interval_id.clone()
                 },
                 Interval {
                     from_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
                     to_datetime: create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+                    interval_id: result[4].interval_id.clone()
                 }
             ]
         );
@@ -179,7 +187,8 @@ mod test {
                         .unwrap(),
                     to_datetime: from_datetime
                         .checked_add_signed(Duration::seconds(i as i64 + 1))
-                        .unwrap()
+                        .unwrap(),
+                    interval_id: intervals[i].interval_id.clone()
                 }
             );
         }
