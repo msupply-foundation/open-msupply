@@ -34,6 +34,12 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
      "#,
     )?;
 
+    let casting = if cfg!(feature = "postgres") {
+        "::BIGINT"
+    } else {
+        ""
+    };
+
     sql!(
         connection,
         r#"
@@ -46,19 +52,16 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         DROP VIEW IF EXISTS stock_on_hand;
         ALTER TABLE stock_line
         DROP COLUMN item_id;
-        
-        -- Recreate stock_on_hand taking into account new model
-        CREATE VIEW
-          store_items AS
+  
+        CREATE VIEW store_items AS
         SELECT i.id as item_id, sl.store_id, sl.pack_size, sl.available_number_of_packs
         FROM
           item i
           LEFT JOIN item_link il ON il.item_id = i.id
           LEFT JOIN stock_line sl ON sl.item_link_id = il.id
           LEFT JOIN store s ON s.id = sl.store_id;
-        
-        CREATE VIEW
-          stock_on_hand AS
+
+        CREATE VIEW stock_on_hand AS
         SELECT
           'n/a' AS id,
           items_and_stores.item_id AS item_id,
@@ -77,7 +80,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             SELECT
               item_id,
               store_id,
-              SUM(pack_size * available_number_of_packs) AS available_stock_on_hand
+              SUM(pack_size * available_number_of_packs){} AS available_stock_on_hand
             FROM
               store_items
             WHERE
@@ -86,8 +89,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
               item_id,
               store_id
           ) AS stock ON stock.item_id = items_and_stores.item_id
-          AND stock.store_id = items_and_stores.store_id;
-        "#,
+          AND stock.store_id = items_and_stores.store_id
+     "#,
+        casting
     )?;
 
     Ok(())

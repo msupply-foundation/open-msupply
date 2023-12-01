@@ -107,7 +107,7 @@ async fn migration_1_06_00() {
         &connection,
         r#"
         INSERT INTO
-        store (id, name_id, code, site_id, store_mode, 'disabled')
+        store (id, name_id, code, site_id, store_mode, disabled)
       VALUES
         ('store1', 'name1', 'store1code', 1, 'STORE', FALSE),
         ('store2', 'name2', 'store2code', 1, 'STORE', FALSE),
