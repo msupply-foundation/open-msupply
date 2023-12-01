@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use async_graphql::{dataloader::DataLoader, *};
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{DateTime, Utc};
 use graphql_core::{
     loader::SensorByIdLoader,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -108,10 +108,18 @@ impl TemperatureChartNode {
 
         // Create hash map for intervals, { key: from_datetime, value: index }, this is for looking up which index
         // of base array to update
-        let base_indexes: HashMap<NaiveDateTime, usize> = intervals
+        let base_indexes: HashMap<String, usize> = intervals
             .into_iter()
             .enumerate()
-            .map(|(index, interval)| (interval.from_datetime, index))
+            .map(|(index, interval)| {
+                (
+                    interval
+                        .from_datetime
+                        .format("%Y-%m-%d %H:%M:%S")
+                        .to_string(),
+                    index,
+                )
+            })
             .collect();
 
         // Create SensorAxisNodes, there is an assumption that temperature_chart_rows are sorted by
@@ -139,11 +147,14 @@ impl TemperatureChartNode {
                 }
             }
 
-            let base_index = base_indexes.get(&from_datetime).map(Clone::clone).ok_or(
-                StandardGraphqlError::from_str("Index for from_datetime must exist"),
-            )?;
+            let base_index = base_indexes
+                .get(&from_datetime.format("%Y-%m-%d %H:%M:%S").to_string())
+                .map(Clone::clone)
+                .ok_or(StandardGraphqlError::from_str(
+                    "Index for from_datetime must exist",
+                ))?;
 
-            // Sensor points array is already populated with base data (all intervals with empty temeprature and breachids)
+            // Sensor points array is already populated with base data (all intervals with empty temperature and breach ids)
 
             if let Some(sensor) = sensors.last_mut() {
                 let point =
