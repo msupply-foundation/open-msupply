@@ -3,10 +3,10 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod contact_trace;
-mod item_line_add_item_link_id;
 mod item_link_create_table;
 mod master_list;
 mod plugin_data;
+mod stock_line_add_item_link_id;
 mod stocktake_line_add_item_link_id;
 mod temperature_breach;
 
@@ -25,6 +25,7 @@ impl Migration for V1_06_00 {
         item_link_create_table::migrate(connection)?;
         item_line_add_item_link_id::migrate(connection)?;
         stocktake_line_add_item_link_id::migrate(connection)?;
+        stock_line_add_item_link_id::migrate(connection)?;
         Ok(())
     }
 }
