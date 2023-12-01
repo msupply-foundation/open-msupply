@@ -23,7 +23,6 @@ impl Migration for V1_06_00 {
         master_list::migrate(connection)?;
         temperature_breach::migrate(connection)?;
         item_link_create_table::migrate(connection)?;
-        item_line_add_item_link_id::migrate(connection)?;
         stocktake_line_add_item_link_id::migrate(connection)?;
         stock_line_add_item_link_id::migrate(connection)?;
         Ok(())
