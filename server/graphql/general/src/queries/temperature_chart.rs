@@ -64,7 +64,7 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
 
     let graphql_error = match error {
         ServiceError::TooManyDataPoints
-        | ServiceError::AtLeastThreeDataPoint
+        | ServiceError::AtLeastThreeDataPoints
         | ServiceError::ToDateTimeMustBeAfterFromDatetime => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
