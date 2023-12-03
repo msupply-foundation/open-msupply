@@ -232,10 +232,10 @@ mod test {
             "SELECT $1 as from_datetime, $2 as to_datetime  UNION  SELECT $3 as from_datetime, $4 as to_datetime"
         };
 
-        let breach_ids_agg = if cfg!(not(feature = "postgres")) {
-            "JSON_GROUP_ARRAY"
-        } else {
+        let breach_ids_agg = if cfg!(feature = "postgres") {
             "JSON_AGG"
+        } else {
+            "JSON_GROUP_ARRAY"
         };
 
         let result = format!(
