@@ -277,9 +277,9 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        from_datetime: DateTime<Utc>,
-        to_datetime: DateTime<Utc>,
-        number_of_data_points: i32,
+        #[graphql(desc = "Must be before toDatetime")] from_datetime: DateTime<Utc>,
+        #[graphql(desc = "Must be after fromDatetime")] to_datetime: DateTime<Utc>,
+        #[graphql(desc = "Minimum 3 and maximum 100")] number_of_data_points: i32,
         filter: Option<TemperatureLogFilterInput>,
     ) -> Result<TemperatureChartResponse> {
         temperature_chart(
