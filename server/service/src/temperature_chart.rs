@@ -12,7 +12,7 @@ const MAX_NUMBER_OF_DATA_POINTS: i32 = 100;
 #[derive(Debug, PartialEq)]
 pub enum TemperatureChartError {
     TooManyDataPoints,
-    AtLeastThreeDataPoint,
+    AtLeastThreeDataPoints,
     ToDateTimeMustBeAfterFromDatetime,
     DatabaseError(RepositoryError),
 }
@@ -96,7 +96,7 @@ fn validate(
     }
 
     if number_of_data_points < 3 {
-        return Err(TemperatureChartError::AtLeastThreeDataPoint);
+        return Err(TemperatureChartError::AtLeastThreeDataPoints);
     }
 
     if number_of_data_points > MAX_NUMBER_OF_DATA_POINTS {
@@ -222,7 +222,7 @@ mod test {
                         ..base.clone()
                     }
                 ),
-            Err(TemperatureChartError::AtLeastThreeDataPoint)
+            Err(TemperatureChartError::AtLeastThreeDataPoints)
         );
 
         assert_eq!(
