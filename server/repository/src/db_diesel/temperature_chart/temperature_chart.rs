@@ -2,7 +2,6 @@ use crate::{
     db_diesel::temperature_log_row::temperature_log::dsl as temperature_log_dsl, DBType,
     RepositoryError, StorageConnection, TemperatureLogFilter, TemperatureLogRepository,
 };
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 use super::temperature_chart_row::{Interval, *};
@@ -11,7 +10,7 @@ pub struct TemperatureChartRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-type QueryResult = (NaiveDateTime, NaiveDateTime, f64, String, String);
+type QueryResult = (String, f64, String, String);
 
 impl<'a> TemperatureChartRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -37,17 +36,11 @@ impl<'a> TemperatureChartRepository<'a> {
         };
 
         let query = query
-            .select((
-                FromDatetime,
-                ToDatetime,
-                AverageTemperature,
-                SensorId,
-                BreachIds,
-            ))
-            .group_by((FromDatetime, ToDatetime, SensorId));
+            .select((IntervalId, AverageTemperature, SensorId, BreachIds))
+            .group_by((IntervalId, SensorId));
 
-        // First by sensor then by datetime (so should be sorted by sensor and then by datetime)
-        let query = query.order_by((SensorId.asc(), FromDatetime.asc()));
+        // Order by sensor
+        let query = query.order_by(SensorId.asc());
 
         // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
@@ -64,7 +57,7 @@ impl<'a> TemperatureChartRepository<'a> {
 
 impl TemperatureChartRow {
     fn from(
-        (from_datetime, to_datetime, average_temperature, sensor_id, breach_ids): QueryResult,
+        (interval_id, average_temperature, sensor_id, breach_ids): QueryResult,
     ) -> Result<Self, RepositoryError> {
         // breach_ids at this stage is a stringified JSON array of string or null values
         // i.e. '[null, "first_breach"]
@@ -75,8 +68,7 @@ impl TemperatureChartRow {
             })?;
 
         Ok(Self {
-            from_datetime,
-            to_datetime,
+            interval_id,
             average_temperature,
             sensor_id,
             breach_ids: breach_ids_with_nulls
@@ -154,16 +146,19 @@ mod test {
                 // P1
                 from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
                 to_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
+                interval_id: "interval1".to_string(),
             },
             Interval {
                 // P2
                 from_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
                 to_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
+                interval_id: "interval2".to_string(),
             },
             Interval {
                 // P3
                 from_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
                 to_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
+                interval_id: "interval3".to_string(),
             },
         ];
 
@@ -206,7 +201,7 @@ mod test {
         )
         .collect();
 
-        // This repository should return rows orderd by sensor and then by datetime
+        // This repository should return rows orderd by sensor
         // it's important to shuffle before inserting to test this
         temperature_logs.shuffle(&mut thread_rng());
 
@@ -235,37 +230,32 @@ mod test {
             result,
             vec![
                 TemperatureChartRow {
-                    from_datetime: intervals[0].from_datetime,
-                    to_datetime: intervals[0].to_datetime,
+                    interval_id: intervals[0].interval_id.clone(),
                     average_temperature: 7.5,
                     sensor_id: sensor1.id.clone(),
                     breach_ids: vec![breach1.id.clone(), breach2.id.clone()]
                 },
                 TemperatureChartRow {
-                    from_datetime: intervals[1].from_datetime,
-                    to_datetime: intervals[1].to_datetime,
+                    interval_id: intervals[1].interval_id.clone(),
                     average_temperature: 1.0,
                     sensor_id: sensor1.id.clone(),
                     breach_ids: Vec::new()
                 },
                 TemperatureChartRow {
-                    from_datetime: intervals[2].from_datetime,
-                    to_datetime: intervals[2].to_datetime,
+                    interval_id: intervals[2].interval_id.clone(),
                     average_temperature: 2.5,
                     sensor_id: sensor1.id.clone(),
                     breach_ids: Vec::new()
                 },
                 TemperatureChartRow {
-                    from_datetime: intervals[0].from_datetime,
-                    to_datetime: intervals[0].to_datetime,
+                    interval_id: intervals[0].interval_id.clone(),
                     average_temperature: -7.5,
                     sensor_id: sensor2.id.clone(),
                     breach_ids: Vec::new()
                 },
                 // Data point missing
                 TemperatureChartRow {
-                    from_datetime: intervals[2].from_datetime,
-                    to_datetime: intervals[2].to_datetime,
+                    interval_id: intervals[2].interval_id.clone(),
                     average_temperature: 3.0,
                     sensor_id: sensor2.id.clone(),
                     breach_ids: Vec::new()
@@ -288,16 +278,14 @@ mod test {
             result,
             vec![
                 TemperatureChartRow {
-                    from_datetime: intervals[0].from_datetime,
-                    to_datetime: intervals[0].to_datetime,
+                    interval_id: intervals[0].interval_id.clone(),
                     average_temperature: -7.5,
                     sensor_id: sensor2.id.clone(),
                     breach_ids: Vec::new()
                 },
                 // Data point missing
                 TemperatureChartRow {
-                    from_datetime: intervals[2].from_datetime,
-                    to_datetime: intervals[2].to_datetime,
+                    interval_id: intervals[2].interval_id.clone(),
                     average_temperature: 3.0,
                     sensor_id: sensor2.id.clone(),
                     breach_ids: Vec::new()
@@ -320,20 +308,18 @@ mod test {
             result,
             vec![
                 TemperatureChartRow {
-                    from_datetime: intervals[1].from_datetime,
-                    to_datetime: intervals[1].to_datetime,
+                    interval_id: intervals[1].interval_id.clone(),
                     average_temperature: 1.0,
                     sensor_id: sensor1.id.clone(),
                     breach_ids: Vec::new()
                 },
                 TemperatureChartRow {
-                    from_datetime: intervals[0].from_datetime,
-                    to_datetime: intervals[0].to_datetime,
+                    interval_id: intervals[0].interval_id.clone(),
                     average_temperature: -7.5,
                     sensor_id: sensor2.id.clone(),
                     breach_ids: Vec::new()
                 }
             ] // Missing data for location
-        )
+        );
     }
 }
