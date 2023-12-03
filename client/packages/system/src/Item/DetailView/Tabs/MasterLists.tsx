@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import {
   MasterListRowFragment,
   useMasterList,
@@ -13,8 +13,8 @@ import {
   createQueryParamsStore,
 } from '@openmsupply-client/common';
 
-const MasterListsTable = () => {
-  const { data, isLoading } = useMasterList.document.list();
+const MasterListsTable: FC<{ itemId?: string }> = ({ itemId }) => {
+  const { data, isLoading } = useMasterList.document.listByItemId(itemId ?? '');
   const columns = useColumns<MasterListRowFragment>([
     'code',
     ['name', { width: 150 }],
@@ -28,7 +28,7 @@ const MasterListsTable = () => {
   );
 };
 
-export const MasterListsTab = () => (
+export const MasterListsTab: FC<{ itemId?: string }> = ({ itemId }) => (
   <Box justifyContent="center" display="flex" flex={1} paddingTop={3}>
     <Box flex={1} display="flex" style={{ maxWidth: 1000 }}>
       <TableProvider
@@ -37,7 +37,7 @@ export const MasterListsTab = () => (
           initialSortBy: { key: 'name' },
         })}
       >
-        <MasterListsTable />
+        <MasterListsTable itemId={itemId} />
       </TableProvider>
     </Box>
   </Box>
