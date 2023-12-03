@@ -696,16 +696,16 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.temperature_logs {
-            let repo = TemperatureLogRowRepository::new(connection);
-            for row in &mock_data.temperature_logs {
+        if inserts.temperature_breaches {
+            let repo = TemperatureBreachRowRepository::new(connection);
+            for row in &mock_data.temperature_breaches {
                 repo.upsert_one(&row).unwrap();
             }
         }
 
-        if inserts.temperature_breaches {
-            let repo = TemperatureBreachRowRepository::new(connection);
-            for row in &mock_data.temperature_breaches {
+        if inserts.temperature_logs {
+            let repo = TemperatureLogRowRepository::new(connection);
+            for row in &mock_data.temperature_logs {
                 repo.upsert_one(&row).unwrap();
             }
         }
