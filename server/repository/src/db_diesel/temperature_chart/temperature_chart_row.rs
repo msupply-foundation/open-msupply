@@ -236,10 +236,10 @@ mod test {
                 UNION  SELECT $4 as from_datetime, $5 as to_datetime, $6 as interval_id"#
         };
 
-        let breach_ids_agg = if cfg!(not(feature = "postgres")) {
-            "JSON_GROUP_ARRAY"
-        } else {
+        let breach_ids_agg = if cfg!(feature = "postgres") {
             "JSON_AGG"
+        } else {
+            "JSON_GROUP_ARRAY"
         };
 
         let result = format!(
