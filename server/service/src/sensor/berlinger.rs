@@ -121,7 +121,7 @@ fn sensor_add_log_if_new(
             temperature_breach_id: None,
         };
         TemperatureLogRowRepository::new(connection).upsert_one(&new_temperature_log)?;
-        println!("Added sensor log {:?} ", new_temperature_log);
+        log::info!("Added sensor log {:?} ", new_temperature_log);
         Ok(())
     }
 }
@@ -165,7 +165,7 @@ fn sensor_add_breach_if_new(
             threshold_maximum: breach_config.maximum_temperature,
         };
         TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
-        println!("Added sensor breach {:?} ", new_temperature_breach);
+        log::info!("Added sensor breach {:?} ", new_temperature_breach);
         Ok(())
     }
 }
@@ -227,7 +227,7 @@ fn sensor_add_breach_config_if_new(
     };
     TemperatureBreachConfigRowRepository::new(connection)
         .upsert_one(&new_temperature_breach_config)?;
-    println!(
+    log::info!(
         "Added sensor breach config {:?} ",
         new_temperature_breach_config
     );
@@ -262,7 +262,7 @@ fn sensor_add_if_new(
         r#type: SensorType::Berlinger,
     };
     SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
-    println!("Added sensor {:?} ", new_sensor);
+    log::info!("Added sensor {:?} ", new_sensor);
     Ok(())
 }
 
