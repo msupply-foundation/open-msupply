@@ -83,7 +83,7 @@ const Content = ({
 }) => {
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
-  console.log('breach', breach, isLoading);
+
   if (isLoading) return <CircularProgress />;
 
   return (
