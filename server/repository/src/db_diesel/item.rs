@@ -243,9 +243,9 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::{mock_item_b, MockDataInserts},
-        test_db, EqualFilter, ItemFilter, ItemLinkRow, ItemLinkRowRepository, ItemRepository,
-        ItemRow, ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
+        mock::{mock_item_b, mock_item_link_from_item, MockDataInserts},
+        test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
+        ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
         MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
         StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
@@ -473,26 +473,11 @@ mod tests {
         ];
 
         let item_link_rows = vec![
-            ItemLinkRow {
-                id: "item1".to_string(),
-                item_id: "item1".to_string(),
-            },
-            ItemLinkRow {
-                id: "item2".to_string(),
-                item_id: "item2".to_string(),
-            },
-            ItemLinkRow {
-                id: "item3".to_string(),
-                item_id: "item3".to_string(),
-            },
-            ItemLinkRow {
-                id: "item4".to_string(),
-                item_id: "item4".to_string(),
-            },
-            ItemLinkRow {
-                id: "item5".to_string(),
-                item_id: "item5".to_string(),
-            },
+            mock_item_link_from_item(&item_rows[0]),
+            mock_item_link_from_item(&item_rows[1]),
+            mock_item_link_from_item(&item_rows[2]),
+            mock_item_link_from_item(&item_rows[3]),
+            mock_item_link_from_item(&item_rows[4]),
         ];
 
         let master_list_rows = vec![
