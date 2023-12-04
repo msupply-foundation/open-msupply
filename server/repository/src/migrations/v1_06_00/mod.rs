@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod contact_trace;
+mod invoice_add_name_link_id;
 mod master_list;
 mod name_link;
 mod plugin_data;
@@ -21,6 +22,7 @@ impl Migration for V1_06_00 {
         master_list::migrate(connection)?;
         temperature_breach::migrate(connection)?;
         name_link::migrate(connection)?;
+        invoice_add_name_link_id::migrate(connection)?;
         Ok(())
     }
 }
