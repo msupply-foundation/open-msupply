@@ -69,14 +69,20 @@ export const useTemperatureChartData = () => {
           ],
         id: sensor.id,
         name: sensor.name,
-        logs: points.map(({ midPoint, temperature }) => {
+        logs: points.map(({ midPoint, temperature, breachIds }) => {
           if (temperature) {
             minTemperature = Math.min(minTemperature, temperature);
             maxTemperature = Math.max(maxTemperature, temperature);
           }
+          const breach = !!breachIds?.length
+            ? {
+                sensor: { id: sensor.id, name: sensor.name },
+                ids: breachIds,
+              }
+            : null;
 
           return {
-            breach: null,
+            breach,
             date: DateUtils.getDateOrNull(midPoint)?.getTime() ?? 0,
             sensorId: sensor.id,
             temperature: temperature ?? null,

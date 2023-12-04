@@ -10,6 +10,7 @@ import {
   Legend,
   Line,
   NothingHere,
+  NumUtils,
   ResponsiveContainer,
   TooltipProps,
   Typography,
@@ -50,7 +51,9 @@ const Chart = ({
   );
 
   const formatTemperature = (value: number | null) =>
-    value === null ? '-' : `${value}${t('label.temperature-unit')}`;
+    value === null
+      ? '-'
+      : `${NumUtils.round(value, 2)}${t('label.temperature-unit')}`;
 
   const TemperatureTooltip = ({
     active,
