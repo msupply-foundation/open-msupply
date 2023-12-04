@@ -51,6 +51,7 @@ pub mod store_preference;
 pub mod sync;
 pub mod system_user;
 pub mod temperature_breach;
+pub mod temperature_chart;
 pub mod temperature_log;
 pub mod token;
 pub mod token_bucket;
