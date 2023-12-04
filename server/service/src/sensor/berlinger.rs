@@ -290,8 +290,8 @@ pub fn read_sensor(
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
     let filename = fridgetag_file.to_string_lossy();
 
-    let mut temperature_sensor = temperature_sensor::read_sensor_file(&filename)
-        .map_err(ReadSensorError::StringError)?;
+    let mut temperature_sensor =
+        temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
 
     sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 

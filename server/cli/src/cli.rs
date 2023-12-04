@@ -15,6 +15,7 @@ use service::{
     apis::login_v4::LoginUserInfoV4,
     auth_data::AuthData,
     login::{LoginInput, LoginService},
+    plugin::validation::sign_plugin,
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
     sync::{
@@ -79,6 +80,21 @@ enum Action {
     },
     /// Make data current, base on latest date difference to now (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference), also disabling sync to avoid refreshed data syncing
     RefreshDates,
+
+    SignPlugin {
+        /// Path to the plugin.
+        /// The plugin manifest and signature will be placed into the plugin directory
+        #[clap(short, long)]
+        path: String,
+
+        /// Path to the private key file for signing the plugin
+        #[clap(short, long)]
+        key: String,
+
+        /// Path to the certificate file matching the private key
+        #[clap(short, long)]
+        cert: String,
+    },
 }
 
 #[derive(Serialize, Deserialize)]
@@ -326,6 +342,7 @@ async fn main() -> anyhow::Result<()> {
 
             info!("Refresh data result: {:#?}", result);
         }
+        Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
     }
 
     Ok(())
