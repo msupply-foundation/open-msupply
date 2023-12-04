@@ -1,10 +1,10 @@
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    if cfg!(feature = "postgres") {
-        sql!(
-            connection,
-            r#"
+    #[cfg(feature = "postgres")]
+    sql!(
+        connection,
+        r#"
             ALTER TABLE master_list_line 
             ADD COLUMN item_link_id TEXT NOT NULL DEFAULT 'temp for migration';
             
@@ -16,11 +16,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             DROP INDEX IF EXISTS index_master_list_line_item_id_fkey;
             ALTER TABLE master_list_line DROP item_id;
             "#,
-        )?;
-    } else {
-        sql!(
-            connection,
-            r#"
+    )?;
+    #[cfg(not(feature = "postgres"))]
+    sql!(
+        connection,
+        r#"
             ALTER TABLE master_list_line RENAME TO master_list_line_old;
 
             CREATE TABLE master_list_line (
@@ -34,8 +34,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             DROP TABLE master_list_line_old;
             "#,
-        )?;
-    }
+    )?;
 
     Ok(())
 }

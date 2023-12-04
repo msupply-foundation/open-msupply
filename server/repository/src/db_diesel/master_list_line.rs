@@ -15,12 +15,7 @@ use diesel::{
     prelude::*,
 };
 
-// pub type MasterListLine = MasterListLineRow;
-#[derive(Clone, Debug, PartialEq)]
-pub struct MasterListLine {
-    pub master_list_line_row: MasterListLineRow,
-    pub item_row: ItemRow,
-}
+pub type MasterListLine = MasterListLineRow;
 
 type MasterListLineJoin = (MasterListLineRow, (ItemLinkRow, ItemRow));
 
@@ -50,7 +45,7 @@ impl<'a> MasterListLineRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: MasterListLineFilter,
-    ) -> Result<Vec<MasterListLine>, RepositoryError> {
+    ) -> Result<Vec<MasterListLineRow>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let mut query = create_filtered_query(Some(filter))?;
 
@@ -65,7 +60,7 @@ impl<'a> MasterListLineRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<MasterListLineFilter>,
-    ) -> Result<Vec<MasterListLine>, RepositoryError> {
+    ) -> Result<Vec<MasterListLineRow>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let mut query = create_filtered_query(filter)?;
 
@@ -80,7 +75,6 @@ impl<'a> MasterListLineRepository<'a> {
     }
 }
 
-// type BoxedMasterListLineQuery = master_list_line::BoxedQuery<'static, DBType>;
 type BoxedMasterListLineQuery = IntoBoxed<
     'static,
     InnerJoin<master_list_line::table, InnerJoin<item_link::table, item::table>>,
@@ -107,10 +101,11 @@ fn create_filtered_query(
     Ok(query)
 }
 
-fn to_domain((master_list_line_row, (_, item_row)): MasterListLineJoin) -> MasterListLine {
-    MasterListLine {
-        master_list_line_row,
-        item_row,
+fn to_domain((master_list_line_row, (_, item_row)): MasterListLineJoin) -> MasterListLineRow {
+    MasterListLineRow {
+        id: master_list_line_row.id,
+        master_list_id: master_list_line_row.master_list_id,
+        item_id: item_row.id,
     }
 }
 
