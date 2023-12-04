@@ -30,10 +30,6 @@ export const BreachIndicator = ({
       x={cx - 13.5}
       y={cy - 13.5}
       fill={theme.palette.error.main}
-      // !payload.breach?.row?.unacknowledged
-      //   ? theme.palette.gray.main
-      //   : theme.palette.error.main
-      // }
       sx={{ color: 'background.white', cursor: 'pointer' }}
       width={27}
       height={27}
