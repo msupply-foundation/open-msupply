@@ -1,10 +1,10 @@
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    if cfg!(feature = "postgres") {
-        sql!(
-            connection,
-            r#"
+    #[cfg(feature = "postgres")]
+    sql!(
+        connection,
+        r#"
             -- Adding stocktake_line.item_link_id
             ALTER TABLE stocktake_line
             ADD COLUMN item_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
@@ -14,11 +14,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         
             ALTER TABLE stocktake_line ADD CONSTRAINT stocktake_line_item_link_id_fkey FOREIGN KEY (item_link_id) REFERENCES item_link(id);
        "#,
-        )?;
-    } else {
-        sql!(
-            connection,
-            r#"
+    )?;
+    #[cfg(not(feature = "postgres"))]
+    sql!(
+        connection,
+        r#"
             -- Adding stocktake_line.item_link_id
             PRAGMA foreign_keys = OFF;
 
@@ -31,8 +31,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
             CREATE INDEX "index_stocktake_line_item_link_id_fkey" ON "stocktake_line" ("item_link_id");
             "#,
-        )?;
-    }
+    )?;
 
     sql! {
         connection,
