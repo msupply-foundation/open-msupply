@@ -3311,6 +3311,18 @@ export type PatientNode = {
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;
+  /**
+   * Returns a draft version of the document data.
+   *
+   * The draft version can differ from the current document data if a patient has been edited
+   * remotely in mSupply.
+   * In this case the draft version contains the mSupply patient changes, i.e. information from
+   * the name row has been integrated into the current document version.
+   * When editing a patient in omSupply the document draft version should be used.
+   * This means when the document is eventually saved, the remote changes are incorporated into
+   * the document data.
+   */
+  documentDraft?: Maybe<Scalars['JSON']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   gender?: Maybe<GenderType>;
