@@ -164,7 +164,15 @@ const StockListComponent: FC = () => {
       maxWidth: 190,
       minWidth: 190,
     },
-    ...pluginColumns,
+    ...pluginColumns.map(column =>
+      column.width
+        ? ({
+            ...column,
+            maxWidth: column.width,
+            minWidth: column.width,
+          } as ColumnDescription<StockLineRowFragment>)
+        : ({ ...column } as ColumnDescription<StockLineRowFragment>)
+    ),
   ];
 
   const columns = useColumns<StockLineRowFragment>(
