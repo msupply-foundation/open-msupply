@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   Box,
   useTranslation,
@@ -12,6 +12,7 @@ import {
   DialogButton,
   ClockIcon,
   useDialog,
+  LoadingButton,
 } from '@openmsupply-client/common';
 import {
   DocumentHistory,
@@ -35,6 +36,8 @@ export const Footer: FC<FooterProps> = ({
   const t = useTranslation('common');
   const navigate = useNavigate();
   const { Modal, showDialog, hideDialog } = useDialog();
+  const [isSaving, setIsSaving] = useState(false);
+
   return (
     <AppFooterPortal
       Content={
@@ -69,14 +72,25 @@ export const Footer: FC<FooterProps> = ({
               }}
               label={t('button.cancel')}
             />
-            <ButtonWithIcon
+            <LoadingButton
               variant="outlined"
               color="secondary"
-              Icon={<CheckIcon />}
-              onClick={onSave}
-              label={t('button.save')}
+              startIcon={<CheckIcon />}
+              onClick={async () => {
+                setIsSaving(true);
+                try {
+                  await onSave();
+                } catch (error) {
+                  // to do add error handling
+                } finally {
+                  setIsSaving(false);
+                }
+              }}
               disabled={isDisabled}
-            />
+              isLoading={isSaving}
+            >
+              {t('button.save')}
+            </LoadingButton>
           </Box>
 
           <Modal
