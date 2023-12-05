@@ -86,7 +86,7 @@ export const WebAppLogFileModal = ({
     });
   };
 
-  if (isError) {
+  if (isError || (data && (data?.fileNames || []).length === 0)) {
     return (
       <Modal
         title={t('heading.server-log')}
