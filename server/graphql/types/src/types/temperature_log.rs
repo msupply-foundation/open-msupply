@@ -17,8 +17,7 @@ use repository::{
 use service::{usize_to_u32, ListResult};
 
 use super::{
-    LocationFilterInput, LocationNode, SensorFilterInput, SensorNode, TemperatureBreachFilterInput,
-    TemperatureBreachNode,
+    LocationFilterInput, LocationNode, SensorFilterInput, SensorNode, TemperatureBreachNode,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -42,7 +41,7 @@ pub struct TemperatureLogFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub sensor: Option<SensorFilterInput>,
     pub location: Option<LocationFilterInput>,
-    pub temperature_breach: Option<TemperatureBreachFilterInput>,
+    pub temperature_breach_id: Option<EqualFilterStringInput>,
 }
 
 impl From<TemperatureLogFilterInput> for TemperatureLogFilter {
@@ -53,7 +52,7 @@ impl From<TemperatureLogFilterInput> for TemperatureLogFilter {
             store_id: None,
             sensor: f.sensor.map(SensorFilterInput::into),
             location: f.location.map(LocationFilterInput::into),
-            temperature_breach: f.temperature_breach.map(TemperatureBreachFilterInput::into),
+            temperature_breach_id: f.temperature_breach_id.map(EqualFilter::from),
         }
     }
 }

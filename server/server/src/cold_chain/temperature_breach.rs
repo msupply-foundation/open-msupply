@@ -126,11 +126,7 @@ fn upsert_temperature_breach(
         .get_temperature_logs(
             &ctx.connection,
             None,
-            Some(
-                TemperatureLogFilter::new().temperature_breach(
-                    TemperatureBreachFilter::new().id(EqualFilter::equal_to(&id)),
-                ),
-            ),
+            Some(TemperatureLogFilter::new().temperature_breach_id(EqualFilter::equal_to(&id))),
             None,
         )
         .map_err(|e| anyhow::anyhow!("Unable to load logs for this breach {:?}", e))?
