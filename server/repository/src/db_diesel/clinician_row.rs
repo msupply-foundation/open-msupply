@@ -1,4 +1,4 @@
-use super::StorageConnection;
+use super::{name_link_row::name_link, StorageConnection};
 
 use crate::{Gender, RepositoryError};
 
@@ -19,7 +19,10 @@ table! {
     gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
     is_active -> Bool,
   }
+
 }
+
+allow_tables_to_appear_in_same_query!(clinician, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "clinician"]

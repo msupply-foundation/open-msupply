@@ -1,4 +1,6 @@
-use super::{name_row::name, store_row::store::dsl as store_dsl, StorageConnection};
+use super::{
+    name_link_row::name_link, name_row::name, store_row::store::dsl as store_dsl, StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
@@ -25,6 +27,7 @@ pub enum StoreMode {
 }
 
 joinable!(store -> name (name_id));
+allow_tables_to_appear_in_same_query!(store, name_link);
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[table_name = "store"]

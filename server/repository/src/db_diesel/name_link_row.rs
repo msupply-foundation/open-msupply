@@ -19,13 +19,13 @@ pub struct NameLinkRow {
     pub name_id: String,
 }
 
-pub struct NameLinkRepository<'a> {
+pub struct NameLinkRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> NameLinkRepository<'a> {
+impl<'a> NameLinkRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        NameLinkRepository { connection }
+        NameLinkRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
