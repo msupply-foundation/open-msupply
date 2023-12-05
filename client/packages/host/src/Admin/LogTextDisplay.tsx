@@ -1,4 +1,4 @@
-import { Tooltip, Typography } from '@common/components';
+import { Tooltip, Typography } from '@openmsupply-client/common';
 import React from 'react';
 
 export const LogTextDisplay = ({ logText }: { logText: string[] | string }) => {
