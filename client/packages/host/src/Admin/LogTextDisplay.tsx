@@ -15,7 +15,7 @@ export const LogTextDisplay = ({ logText }: { logText: string[] | string }) => {
             component="div"
             key={i}
           >
-            {`${logLine}`}
+            {logLine}
           </Typography>
         </Tooltip>
       ))}
