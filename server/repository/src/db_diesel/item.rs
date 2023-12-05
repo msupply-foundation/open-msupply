@@ -45,6 +45,7 @@ pub struct ItemFilter {
     /// If true it only returns ItemAndMasterList that have a name join row
     pub is_visible: Option<bool>,
     pub code_or_name: Option<StringFilter>,
+    pub is_active: Option<bool>,
 }
 
 impl ItemFilter {
@@ -56,6 +57,7 @@ impl ItemFilter {
             r#type: None,
             is_visible: None,
             code_or_name: None,
+            is_active: None,
         }
     }
 
@@ -86,6 +88,11 @@ impl ItemFilter {
 
     pub fn code_or_name(mut self, filter: StringFilter) -> Self {
         self.code_or_name = Some(filter);
+        self
+    }
+
+    pub fn is_active(mut self, value: bool) -> Self {
+        self.is_active = Some(value);
         self
     }
 }
@@ -185,6 +192,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             r#type,
             is_visible,
             code_or_name,
+            is_active,
         } = f;
 
         // or filter need to be applied before and filters
@@ -197,6 +205,10 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         apply_string_filter!(query, code, item_dsl::code);
         apply_string_filter!(query, name, item_dsl::name);
         apply_equal_filter!(query, r#type, item_dsl::type_);
+
+        if let Some(is_active) = is_active {
+            query = query.filter(item_dsl::is_active.eq(is_active));
+        }
 
         let visible_item_ids = master_list_line_dsl::master_list_line
             .select(master_list_line_dsl::item_id)
