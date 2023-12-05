@@ -1,4 +1,4 @@
-use super::{name_row::name::dsl::*, StorageConnection};
+use super::{name_link_row::name_link, name_row::name::dsl::*, StorageConnection};
 
 use crate::{repository_error::RepositoryError, EqualFilter};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -48,6 +48,8 @@ table! {
         is_sync_update -> Bool,
     }
 }
+
+allow_tables_to_appear_in_same_query!(name, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]

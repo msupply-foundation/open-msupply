@@ -18,6 +18,8 @@ pub mod document_registry;
 mod document_registry_config;
 mod document_registry_row;
 pub mod encounter;
+mod name_link_row;
+
 pub mod encounter_row;
 mod filter_restriction;
 mod filter_sort_pagination;
@@ -123,6 +125,7 @@ pub use master_list_line_row::*;
 pub use master_list_name_join::*;
 pub use master_list_row::*;
 pub use name::*;
+pub use name_link_row::*;
 pub use name_row::*;
 pub use name_store_join::*;
 pub use name_tag::*;
