@@ -52,6 +52,7 @@ pub use barcode::*;
 use common::*;
 pub use context::*;
 pub use document::*;
+pub use document_registry::*;
 pub use form_schema::*;
 pub use full_invoice::*;
 pub use full_master_list::*;
