@@ -83,10 +83,19 @@ const StockListComponent: FC = () => {
         label: 'label.repack',
         Cell: EditStockLineCell,
         maxWidth: 75,
+        minWidth: 75,
         sortable: false,
         align: ColumnAlign.Center,
       },
-      ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
+      [
+        'itemCode',
+        {
+          accessor: ({ rowData }) => rowData.item.code,
+          Cell: TooltipTextCell,
+          maxWidth: 100,
+          minWidth: 100,
+        },
+      ],
       [
         'itemName',
         {
@@ -109,6 +118,9 @@ const StockListComponent: FC = () => {
         {
           accessor: ({ rowData }) =>
             DateUtils.getDateOrNull(rowData.expiryDate),
+          Cell: TooltipTextCell,
+          maxWidth: 100,
+          minWidth: 100,
         },
       ],
       [
@@ -122,14 +134,21 @@ const StockListComponent: FC = () => {
       ],
       [
         'itemUnit',
-        { accessor: ({ rowData }) => rowData.item.unitName, sortable: false },
+        {
+          accessor: ({ rowData }) => rowData.item.unitName,
+          sortable: false,
+          Cell: TooltipTextCell,
+          maxWidth: 75,
+          minWidth: 75,
+        },
       ],
-      'packSize',
+      ['packSize', { Cell: TooltipTextCell, maxWidth: 125, minWidth: 125 }],
       [
         'numberOfPacks',
         {
           accessor: ({ rowData }) => rowData.totalNumberOfPacks,
-          width: 150,
+          maxWidth: 150,
+          minWidth: 150,
         },
       ],
       [
@@ -140,7 +159,8 @@ const StockListComponent: FC = () => {
           label: 'label.soh',
           description: 'description.soh',
           sortable: false,
-          width: 125,
+          maxWidth: 125,
+          minWidth: 125,
         },
       ],
       {
@@ -150,6 +170,8 @@ const StockListComponent: FC = () => {
           rowData.supplierName
             ? rowData.supplierName
             : t('message.no-supplier'),
+        maxWidth: 157.656,
+        minWidth: 157.656,
       },
     ],
     {
