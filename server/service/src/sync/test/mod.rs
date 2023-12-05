@@ -154,6 +154,19 @@ macro_rules! check_delete_record_by_id {
     }};
 }
 
+macro_rules! check_is_inactive_record_by_id {
+    ($repository:ident, $connection:ident, $id:ident) => {{
+        assert_eq!(
+            $repository::new(&$connection)
+                .find_inactive_by_id(&$id)
+                .unwrap()
+                .expect("Record not found")
+                .is_active,
+            false
+        )
+    }};
+}
+
 macro_rules! check_delete_record_by_id_option {
     ($repository:ident, $connection:ident, $id:ident) => {{
         assert_eq!(
@@ -336,7 +349,7 @@ pub(crate) async fn check_records_against_database(
             Unit => {
                 check_delete_record_by_id_option!(UnitRowRepository, con, id)
             }
-            Item => check_delete_record_by_id!(ItemRowRepository, con, id),
+            Item => check_is_inactive_record_by_id!(ItemRowRepository, con, id),
             Store => check_delete_record_by_id!(StoreRowRepository, con, id),
             ProgramRequisitionOrderType => {
                 check_delete_record_by_id!(ProgramRequisitionOrderTypeRowRepository, con, id)
