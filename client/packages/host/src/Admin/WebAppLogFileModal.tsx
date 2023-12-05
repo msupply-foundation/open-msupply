@@ -132,6 +132,7 @@ export const WebAppLogFileModal = ({
                 key={i}
                 onClick={() => {
                   setLogToRender(fileName);
+                  setLogContent([]);
                 }}
               >{`${fileName}`}</DropdownMenuItem>
             ))}
