@@ -99,8 +99,8 @@ use crate::{
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
     MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
-    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
-    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
+    NameLinkRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
+    NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
     PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
@@ -606,9 +606,14 @@ pub fn insert_mock_data(
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
         if inserts.names {
-            let repo = NameRowRepository::new(connection);
+            let name_repo = NameRowRepository::new(connection);
+            let name_link_repo = NameLinkRowRepository::new(connection);
+
             for row in &mock_data.names {
-                repo.upsert_one(&row).unwrap();
+                name_repo.upsert_one(&row).unwrap();
+                name_link_repo
+                    .upsert_one(&mock_name_link_from_name(&row))
+                    .unwrap();
             }
         }
 
