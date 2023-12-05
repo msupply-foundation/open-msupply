@@ -71,6 +71,7 @@ impl SyncTranslation for ItemTranslation {
             r#type: to_item_type(data.type_of),
             legacy_record: ordered_simple_json(&sync_record.data)?,
             default_pack_size: data.default_pack_size as i32,
+            is_active: true,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
