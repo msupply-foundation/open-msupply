@@ -120,7 +120,9 @@ export const WebAppLogFileModal = ({
         <DialogButton variant="save" onClick={saveLog} color="primary" />
       }
     >
-      {!isLoading ? (
+      {isLoading ? (
+        <BasicSpinner />
+      ) : (
         <>
           <DropdownMenu
             label={logToRender ? logToRender : t('label.server-log')}
@@ -137,8 +139,6 @@ export const WebAppLogFileModal = ({
 
           <LogDisplay fileName={logToRender} setLogContent={setLogContent} />
         </>
-      ) : (
-        <BasicSpinner />
       )}
     </Modal>
   );
