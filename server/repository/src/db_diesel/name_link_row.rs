@@ -1,7 +1,7 @@
 use super::{
     clinician_row::clinician, invoice_line_row::invoice_line, invoice_row::invoice,
-    master_list_row::master_list, name_link_row::name_link::dsl::*, name_row::name,
-    store_row::store, StorageConnection,
+    master_list_line_row::master_list_line, master_list_row::master_list,
+    name_link_row::name_link::dsl::*, name_row::name, store_row::store, StorageConnection,
 };
 
 use crate::{
@@ -22,6 +22,7 @@ allow_tables_to_appear_in_same_query!(name_link, clinician);
 allow_tables_to_appear_in_same_query!(name_link, invoice);
 allow_tables_to_appear_in_same_query!(name_link, invoice_line);
 allow_tables_to_appear_in_same_query!(name_link, master_list);
+allow_tables_to_appear_in_same_query!(name_link, master_list_line);
 allow_tables_to_appear_in_same_query!(name_link, master_list_name_join);
 allow_tables_to_appear_in_same_query!(name_link, name_store_join);
 allow_tables_to_appear_in_same_query!(name_link, name);

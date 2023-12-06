@@ -1,6 +1,6 @@
 use super::{
     master_list_name_join::master_list_name_join::dsl::*, master_list_row::master_list,
-    name_row::name, StorageConnection,
+    name_link_row::name_link, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -11,7 +11,7 @@ table! {
     master_list_name_join (id) {
         id -> Text,
         master_list_id -> Text,
-        name_id -> Text,
+        name_link_id -> Text,
     }
 }
 
@@ -20,11 +20,12 @@ table! {
 pub struct MasterListNameJoinRow {
     pub id: String,
     pub master_list_id: String,
+    #[column_name = "name_link_id"]
     pub name_id: String,
 }
 
 joinable!(master_list_name_join -> master_list (master_list_id));
-joinable!(master_list_name_join -> name (name_id));
+joinable!(master_list_name_join -> name_link (name_link_id));
 
 pub struct MasterListNameJoinRepository<'a> {
     connection: &'a StorageConnection,
