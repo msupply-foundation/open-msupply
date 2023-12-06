@@ -9,6 +9,7 @@ import {
   PrinterIcon,
   ReportContext,
   LoadingButton,
+  useUrlQueryParams,
   usePluginElements,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
@@ -32,6 +33,9 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
   const { print, isPrinting } = useReport.utils.print();
+  const {
+    queryParams: { sortBy },
+  } = useUrlQueryParams();
   const pluginButtons = usePluginElements({
     type: 'InboundShipmentAppBar',
     data,
@@ -42,7 +46,12 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     args: JsonData | undefined
   ) => {
     if (!data) return;
-    print({ reportId: report.id, dataId: data?.id, args });
+    print({
+      reportId: report.id,
+      dataId: data?.id,
+      args,
+      sort: { key: sortBy.key, desc: sortBy.isDesc },
+    });
   };
 
   return (

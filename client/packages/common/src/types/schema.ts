@@ -1182,6 +1182,12 @@ export type EqualFilterActivityLogTypeInput = {
   notEqualTo?: InputMaybe<ActivityLogNodeType>;
 };
 
+export type EqualFilterBigFloatingNumberInput = {
+  equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
+  equalTo?: InputMaybe<Scalars['Float']['input']>;
+  notEqualTo?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
@@ -1210,6 +1216,12 @@ export type EqualFilterInventoryAdjustmentReasonTypeInput = {
   equalAny?: InputMaybe<Array<InventoryAdjustmentReasonNodeType>>;
   equalTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
   notEqualTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
+};
+
+export type EqualFilterInvoiceLineTypeInput = {
+  equalAny?: InputMaybe<Array<InvoiceLineNodeType>>;
+  equalTo?: InputMaybe<InvoiceLineNodeType>;
+  notEqualTo?: InputMaybe<InvoiceLineNodeType>;
 };
 
 export type EqualFilterInvoiceStatusInput = {
@@ -2024,6 +2036,20 @@ export type InvoiceLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type InvoiceLineFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  invoiceId?: InputMaybe<EqualFilterStringInput>;
+  invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
+  invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  locationId?: InputMaybe<EqualFilterStringInput>;
+  numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  requisitionId?: InputMaybe<EqualFilterStringInput>;
+  stockLineId?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterInvoiceLineTypeInput>;
+};
+
 export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']['output']>;
@@ -2056,6 +2082,27 @@ export enum InvoiceLineNodeType {
   StockOut = 'STOCK_OUT',
   UnallocatedStock = 'UNALLOCATED_STOCK'
 }
+
+export enum InvoiceLineSortFieldInput {
+  Batch = 'batch',
+  ExpiryDate = 'expiryDate',
+  ItemCode = 'itemCode',
+  ItemName = 'itemName',
+  LocationName = 'locationName',
+  PackSize = 'packSize'
+}
+
+export type InvoiceLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: InvoiceLineSortFieldInput;
+};
+
+export type InvoiceLinesResponse = InvoiceLineConnector;
 
 export type InvoiceNode = {
   __typename: 'InvoiceNode';
@@ -3689,6 +3736,7 @@ export type Queries = {
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
+  invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
   itemCounts: ItemCounts;
   /** Query omSupply "item" entries */
@@ -3894,6 +3942,16 @@ export type QueriesInvoiceByNumberArgs = {
 export type QueriesInvoiceCountsArgs = {
   storeId: Scalars['String']['input'];
   timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueriesInvoiceLinesArgs = {
+  filter?: InputMaybe<InvoiceLineFilterInput>;
+  invoiceId: Scalars['String']['input'];
+  page?: InputMaybe<PaginationInput>;
+  reportSort?: InputMaybe<PrintReportSortInput>;
+  sort?: InputMaybe<Array<InvoiceLineSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 

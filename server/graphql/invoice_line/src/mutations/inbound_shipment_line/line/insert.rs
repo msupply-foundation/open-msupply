@@ -160,8 +160,8 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_location_1,
-            MockDataInserts,
+            mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_item_a,
+            mock_location_1, MockDataInserts,
         },
         InvoiceLine, RepositoryError, StorageConnectionManager,
     };
@@ -440,6 +440,7 @@ mod test {
             Ok(InvoiceLine {
                 invoice_line_row: mock_inbound_shipment_c_invoice_lines()[0].clone(),
                 invoice_row: mock_inbound_shipment_c(),
+                item_row_option: Some(mock_item_a()),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })
