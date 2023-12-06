@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useColumns,
@@ -9,6 +9,7 @@ import {
   useUrlQueryParams,
   Formatter,
   useEditModal,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { useSensor, SensorFragment } from '../api';
 import { SensorEditModal } from '../Components';
@@ -25,6 +26,7 @@ export const SensorListView: FC = () => {
   const { data, isError, isLoading } = useSensor.document.list();
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
+  const { urlQuery, updateQuery } = useUrlQuery();
 
   const columns = useColumns<SensorFragment>(
     [
@@ -100,6 +102,20 @@ export const SensorListView: FC = () => {
   );
 
   const { isOpen, entity, onClose, onOpen } = useEditModal<SensorFragment>();
+
+  // this will open the edit modal, if the `edit` query parameter is set
+  // to a valid sensor ID. On opening, the query param is removed to
+  // prevent a loop which would happen if a sensor was edited
+  useEffect(() => {
+    const sensorId = (urlQuery['edit'] as string) ?? '';
+    if (sensorId) {
+      const sensor = data?.nodes?.find(s => s.id === sensorId);
+      if (sensor) {
+        updateQuery({ edit: '' });
+        onOpen(sensor);
+      }
+    }
+  }, [data?.nodes]);
 
   return (
     <>
