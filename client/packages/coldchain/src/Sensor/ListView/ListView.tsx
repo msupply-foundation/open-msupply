@@ -13,7 +13,6 @@ import {
 import { useSensor, SensorFragment } from '../api';
 import { SensorEditModal } from '../Components';
 import { BreachTypeCell } from '../../common';
-import { AppBarButtons } from './AppBarButtons';
 
 export const SensorListView: FC = () => {
   const {
@@ -104,7 +103,6 @@ export const SensorListView: FC = () => {
 
   return (
     <>
-      <AppBarButtons />
       {isOpen && entity && (
         <SensorEditModal isOpen={isOpen} onClose={onClose} sensor={entity} />
       )}

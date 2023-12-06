@@ -1,12 +1,12 @@
 import React, { useRef, useState } from 'react';
 import { AppBarButtonsPortal, LoadingButton } from '@common/components';
-import { RadioIcon } from '@common/icons';
+import { UploadIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import { Environment } from '@openmsupply-client/config';
 import { useNotification } from '@common/hooks';
 
 import { useAuthContext, useQueryClient } from '@openmsupply-client/common';
-import { useSensorApi } from '../api/hooks/utils/useSensorApi';
+import { useSensorApi } from '../../Sensor/api/hooks/utils/useSensorApi';
 
 export const AppBarButtons = () => {
   const t = useTranslation('coldchain');
@@ -61,9 +61,10 @@ export const AppBarButtons = () => {
         onChange={onUpload}
         ref={hiddenFileInput}
         style={{ display: 'none' }} // Make the file input element invisible
+        accept=".txt"
       />
       <LoadingButton
-        startIcon={<RadioIcon />}
+        startIcon={<UploadIcon />}
         onClick={() => hiddenFileInput?.current?.click()}
         isLoading={isUploadingFridgeTag}
       >
