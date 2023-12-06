@@ -44,7 +44,6 @@ joinable!(invoice -> name_link (name_link_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
 joinable!(invoice -> clinician (clinician_id));
-allow_tables_to_appear_in_same_query!(invoice, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
