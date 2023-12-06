@@ -802,7 +802,7 @@ end
 </Screen>
 <Screen>
 <Type>170</Type>
-<Name>omSupply Configuration</Name>
+<Name>Open mSupply Configuration</Name>
 <BannerStyle>2</BannerStyle>
 <TemplateName>Custom</TemplateName>
 <OverrideProjTheme>0</OverrideProjTheme>
@@ -1158,23 +1158,23 @@ end
 </Language>
 <Messages>
 <IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
-<IDS_HEADER_TEXT>omSupply Configuration</IDS_HEADER_TEXT>
-<IDS_SUBHEADER_TEXT>Settings required in order to configure the omSupply.</IDS_SUBHEADER_TEXT>
+<IDS_HEADER_TEXT>Open mSupply Configuration</IDS_HEADER_TEXT>
+<IDS_SUBHEADER_TEXT>Settings required in order to configure the Open mSupply.</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
 <IDS_CTRL_BUTTON_HELP>&amp;Help</IDS_CTRL_BUTTON_HELP>
 <IDS_CTRL_STATICTEXT_TOPINSTRUCTIONS/>
 <IDS_CTRL_STATICTEXT_BOTTOMINSTRUCTIONS/>
-<IDS_CTRL_STATICTEXT_LABEL_01>OmSupply server port number:</IDS_CTRL_STATICTEXT_LABEL_01>
+<IDS_CTRL_STATICTEXT_LABEL_01>Open mSupply server port number:</IDS_CTRL_STATICTEXT_LABEL_01>
 <IDS_CTRL_EDIT_01>8000</IDS_CTRL_EDIT_01>
 <IDS_CTRL_EDIT_MASK_01/>
 <IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01>
-<IDS_CTRL_STATICTEXT_LABEL_02>Setup omSupply server with:</IDS_CTRL_STATICTEXT_LABEL_02>
+<IDS_CTRL_STATICTEXT_LABEL_02>Setup Open mSupply server with:</IDS_CTRL_STATICTEXT_LABEL_02>
 <IDS_CTRL_RADIO_BUTTON_01>Sqlite</IDS_CTRL_RADIO_BUTTON_01>
 <IDS_CTRL_RADIO_BUTTON_02>PostgresSQL</IDS_CTRL_RADIO_BUTTON_02>
-<IDS_CTRL_STATICTEXT_LABEL_03>OmSupply database:</IDS_CTRL_STATICTEXT_LABEL_03>
-<IDS_CTRL_EDIT_04>omsupply-database</IDS_CTRL_EDIT_04>
+<IDS_CTRL_STATICTEXT_LABEL_03>Open mSupply database:</IDS_CTRL_STATICTEXT_LABEL_03>
+<IDS_CTRL_EDIT_04>open-msupply-database</IDS_CTRL_EDIT_04>
 <IDS_CTRL_EDIT_MASK_04/>
 <IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04>
 </Messages>
@@ -4339,7 +4339,7 @@ g_HandleSystemReboot();
 <SUF7SessionVars>
 <SessionVar>
 <Name>%ProductName%</Name>
-<Value>omSupply Server</Value>
+<Value>Open mSupply Server</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
