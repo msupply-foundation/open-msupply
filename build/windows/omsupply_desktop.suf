@@ -3169,7 +3169,7 @@ g_HandleSystemReboot();
 <SUF7SessionVars>
 <SessionVar>
 <Name>%ProductName%</Name>
-<Value>omSupply Desktop</Value>
+<Value>Open mSupply Desktop</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -3214,7 +3214,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%window_title%</Name>
-<Value>omSupply Desktop Setup</Value>
+<Value>Open mSupply Desktop Setup</Value>
 <Type>10</Type>
 </SessionVar>
 <SessionVar>
