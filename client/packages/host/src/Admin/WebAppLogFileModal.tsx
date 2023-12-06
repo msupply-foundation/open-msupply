@@ -128,15 +128,29 @@ export const WebAppLogFileModal = ({
             label={logToRender ? logToRender : t('label.server-log')}
             selectSx={{ width: 400 }}
           >
-            {data?.fileNames?.map((fileName, i) => (
+            {logToRender && (
               <DropdownMenuItem
-                key={i}
                 onClick={() => {
-                  setLogToRender(fileName);
                   setLogContent([]);
                 }}
-              >{`${fileName}`}</DropdownMenuItem>
-            ))}
+              >
+                {logToRender}
+              </DropdownMenuItem>
+            )}
+            {data?.fileNames
+              ?.filter(fileName => fileName !== logToRender)
+              .sort()
+              .map((fileName, i) => (
+                <DropdownMenuItem
+                  key={i}
+                  onClick={() => {
+                    setLogToRender(fileName);
+                    setLogContent([]);
+                  }}
+                >
+                  {fileName}
+                </DropdownMenuItem>
+              ))}
           </DropdownMenu>
 
           <LogDisplay fileName={logToRender} setLogContent={setLogContent} />
