@@ -86,8 +86,7 @@ const StockListComponent: FC = () => {
       key: 'edit',
       label: 'label.repack',
       Cell: EditStockLineCell,
-      maxWidth: 75,
-      minWidth: 75,
+      width: 75,
       sortable: false,
       align: ColumnAlign.Center,
     },
@@ -96,8 +95,7 @@ const StockListComponent: FC = () => {
       {
         accessor: ({ rowData }) => rowData.item.code,
         Cell: TooltipTextCell,
-        maxWidth: 100,
-        minWidth: 100,
+        width: 100,
       },
     ],
     [
@@ -105,41 +103,34 @@ const StockListComponent: FC = () => {
       {
         accessor: ({ rowData }) => rowData.item.name,
         Cell: TooltipTextCell,
-        maxWidth: 350,
-        minWidth: 350,
+        width: 350,
       },
     ],
-    ['batch', { Cell: TooltipTextCell, maxWidth: 100, minWidth: 100 }],
+    ['batch', { Cell: TooltipTextCell, width: 100 }],
     [
       'expiryDate',
       {
         accessor: ({ rowData }) => DateUtils.getDateOrNull(rowData.expiryDate),
-        maxWidth: 110,
-        minWidth: 110,
+        width: 110,
       },
     ],
-    [
-      'locationName',
-      { sortable: false, Cell: TooltipTextCell, maxWidth: 75, minWidth: 75 },
-    ],
+    ['locationName', { sortable: false, Cell: TooltipTextCell, width: 75 }],
     [
       'itemUnit',
       {
         accessor: ({ rowData }) => rowData.item.unitName,
         sortable: false,
         Cell: TooltipTextCell,
-        maxWidth: 75,
-        minWidth: 75,
+        width: 75,
       },
     ],
-    ['packSize', { Cell: TooltipTextCell, maxWidth: 125, minWidth: 125 }],
+    ['packSize', { Cell: TooltipTextCell, width: 125 }],
     [
       'numberOfPacks',
       {
         accessor: ({ rowData }) => rowData.totalNumberOfPacks,
         Cell: TooltipTextCell,
-        maxWidth: 150,
-        minWidth: 150,
+        width: 150,
       },
     ],
     [
@@ -151,8 +142,7 @@ const StockListComponent: FC = () => {
         description: 'description.soh',
         sortable: false,
         Cell: TooltipTextCell,
-        maxWidth: 125,
-        minWidth: 125,
+        width: 125,
       },
     ],
     {
@@ -161,18 +151,9 @@ const StockListComponent: FC = () => {
       accessor: ({ rowData }) =>
         rowData.supplierName ? rowData.supplierName : t('message.no-supplier'),
       Cell: TooltipTextCell,
-      maxWidth: 190,
-      minWidth: 190,
+      width: 190,
     },
-    ...pluginColumns.map(column =>
-      column.width
-        ? ({
-            ...column,
-            maxWidth: column.width,
-            minWidth: column.width,
-          } as ColumnDescription<StockLineRowFragment>)
-        : ({ ...column } as ColumnDescription<StockLineRowFragment>)
-    ),
+    ...pluginColumns,
   ];
 
   const columns = useColumns<StockLineRowFragment>(
