@@ -13,7 +13,7 @@ struct Asset;
 const INDEX: &'static str = "index.html";
 
 // https://github.com/pyrossh/rust-embed/blob/master/examples/actix.rs
-fn server_frontend(path: &str) -> HttpResponse {
+fn serve_frontend(path: &str) -> HttpResponse {
     if let Some(content) = Asset::get(path) {
         return HttpResponse::Ok()
             .content_type(from_path(path).first_or_octet_stream().as_ref())
@@ -27,13 +27,13 @@ fn server_frontend(path: &str) -> HttpResponse {
 #[get(r#"/{filename:.*\..+$}"#)]
 async fn file(req: HttpRequest) -> impl Responder {
     let filename: String = req.match_info().query("filename").parse().unwrap();
-    server_frontend(&filename)
+    serve_frontend(&filename)
 }
 
 // Match all paths
 #[get("/{_:.*}")]
 async fn index(_: HttpRequest) -> impl Responder {
-    let result = server_frontend(INDEX);
+    let result = serve_frontend(INDEX);
 
     // If index not found it's likely the front end was not built
     if result.status() == StatusCode::NOT_FOUND {
@@ -45,6 +45,6 @@ async fn index(_: HttpRequest) -> impl Responder {
     }
 }
 
-pub fn config_server_frontend(cfg: &mut ServiceConfig) {
+pub fn config_serve_frontend(cfg: &mut ServiceConfig) {
     cfg.service(file).service(index);
 }
