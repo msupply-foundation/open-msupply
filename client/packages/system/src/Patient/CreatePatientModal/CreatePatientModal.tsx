@@ -17,7 +17,6 @@ import {
 import { PatientFormTab } from './PatientFormTab';
 import { PatientResultsTab } from './PatientResultsTab';
 import {
-  CreateNewPatient,
   DocumentRegistryFragment,
   useDocumentRegistry,
   usePatientStore,
@@ -32,22 +31,13 @@ interface CreatePatientModal {
   onClose: () => void;
 }
 
-const newPatient = (
-  documentRegistry: DocumentRegistryFragment | undefined
-): CreateNewPatient => {
-  return {
-    id: FnUtils.generateUUID(),
-    documentRegistry,
-  };
-};
-
 export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
   const { data: documentRegistryResponse, isLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: { category: { equalTo: DocumentRegistryCategoryNode.Patient } },
     });
 
-  const [documentRegistry, setDocumentRegistry] = useState<
+  const [, setDocumentRegistry] = useState<
     DocumentRegistryFragment | undefined
   >();
   const { currentTab, onChangeTab } = useTabs(Tabs.Form);
@@ -100,11 +90,13 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
       hideDialog();
       onChangeTab(Tabs.Form);
     };
-  }, []);
+  }, [hideDialog, onChangeTab, showDialog]);
 
   useEffect(() => {
-    setCreateNewPatient(newPatient(documentRegistry));
-  }, [documentRegistry]);
+    setCreateNewPatient({
+      id: FnUtils.generateUUID(),
+    });
+  }, [setCreateNewPatient]);
 
   if (isLoading) {
     return null;
