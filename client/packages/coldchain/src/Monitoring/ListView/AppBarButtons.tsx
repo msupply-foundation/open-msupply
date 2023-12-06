@@ -15,8 +15,12 @@ import {
   useNavigate,
   useQueryClient,
 } from '@openmsupply-client/common';
-import { useSensorApi } from '../../Sensor/api/hooks/utils/useSensorApi';
-import { useTemperatureLog } from '../api';
+import {
+  useTemperatureLog,
+  useTemperatureBreach,
+  useTemperatureChart,
+} from '../api';
+import { useSensor } from '../../Sensor/api';
 
 export const AppBarButtons = () => {
   const t = useTranslation('coldchain');
@@ -27,8 +31,10 @@ export const AppBarButtons = () => {
   const [editUrl, setEditUrl] = useState('');
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
-  const api = useSensorApi();
+  const sensorApi = useSensor.utils.api();
   const logApi = useTemperatureLog.utils.api();
+  const breachApi = useTemperatureBreach.utils.api();
+  const chartApi = useTemperatureChart.utils.api();
   const navigate = useNavigate();
   const getConfirmation = useConfirmationModal({
     onConfirm: () => setEditSensor(true),
@@ -71,9 +77,11 @@ export const AppBarButtons = () => {
           .addQuery({ edit: resultJson.newSensorId })
           .build()
       );
-      // forces a refetch of logs, chart data and sensors
-      queryClient.invalidateQueries(api.keys.base());
+      // forces a refetch of logs, breach, chart data and sensors
+      queryClient.invalidateQueries(breachApi.keys.base());
+      queryClient.invalidateQueries(chartApi.keys.base());
       queryClient.invalidateQueries(logApi.keys.base());
+      queryClient.invalidateQueries(sensorApi.keys.base());
       // asks if the user would like to assign a location and redirects if yes
       if (!!resultJson.newSensorId) {
         getConfirmation();
