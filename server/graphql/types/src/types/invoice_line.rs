@@ -30,6 +30,16 @@ impl InvoiceLineNodeType {
             InvoiceLineRowType::Service => Service,
         }
     }
+
+    pub fn to_domain(self) -> InvoiceLineRowType {
+        use InvoiceLineNodeType::*;
+        match self {
+            StockIn => InvoiceLineRowType::StockIn,
+            StockOut => InvoiceLineRowType::StockOut,
+            UnallocatedStock => InvoiceLineRowType::UnallocatedStock,
+            Service => InvoiceLineRowType::Service,
+        }
+    }
 }
 
 pub struct InvoiceLineNode {
@@ -209,7 +219,7 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
         mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
-        LocationRow,
+        ItemRow, LocationRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -249,6 +259,7 @@ mod test {
                             r.note = None;
                         }),
                         invoice_row: InvoiceRow::default(),
+                        item_row_option: Some(ItemRow::default()),
                         location_row_option: Some(inline_init(|r: &mut LocationRow| {
                             r.name = "line_location_name".to_string();
                         })),

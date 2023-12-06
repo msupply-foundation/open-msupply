@@ -3,13 +3,19 @@ import i18next from 'i18next';
 import Backend from 'i18next-chained-backend';
 import LocalStorageBackend from 'i18next-localstorage-backend';
 import HttpApi from 'i18next-http-backend';
-import { I18nextProvider, initReactI18next } from 'react-i18next';
+import { I18nextProviderProps, initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { browserLanguageDetector } from './browserLanguageDetector';
+import { createRegisteredContext } from 'react-singleton-context';
 
 const defaultNS = 'common';
 
 type IntlProviderProps = PropsWithChildren<{ isElectron?: boolean }>;
+
+export const IntlContext = createRegisteredContext<I18nextProviderProps>(
+  'i18nextProvider',
+  { i18n: i18next }
+);
 
 export const IntlProvider: FC<IntlProviderProps> = ({
   isElectron,
@@ -77,5 +83,9 @@ export const IntlProvider: FC<IntlProviderProps> = ({
     console.info(`i18next initialized, language=${i18next.language}`);
   }, []);
 
-  return <I18nextProvider i18n={i18next}>{children}</I18nextProvider>;
+  return (
+    <IntlContext.Provider value={{ i18n: i18next }}>
+      {children}
+    </IntlContext.Provider>
+  );
 };

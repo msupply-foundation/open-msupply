@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { AppBarButtonsPortal, LoadingButton } from '@common/components';
 import { RadioIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
-import { Environment } from 'packages/config/src';
+import { Environment } from '@openmsupply-client/config';
 import { useNotification } from '@common/hooks';
 
 import { useAuthContext, useQueryClient } from '@openmsupply-client/common';
