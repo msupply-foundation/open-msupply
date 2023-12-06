@@ -3,17 +3,18 @@ use diesel::prelude::*;
 use crate::{
     db_diesel::{
         master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
-        master_list_row::master_list::dsl as master_list_dsl, name_row::name::dsl as name_dsl,
+        master_list_row::master_list::dsl as master_list_dsl,
+        name_link_row::name_link::dsl as name_link_dsl, name_row::name::dsl as name_dsl,
         name_store_join::name_store_join::dsl as name_store_join_dsl,
         program_row::program::dsl as program_dsl, store_row::store::dsl as store_dsl,
     },
     diesel_macros::apply_equal_filter,
     repository_error::RepositoryError,
-    EqualFilter, Name, NameFilter, NameRepository, NameRow, NameStoreJoinRow, ProgramRow,
-    StorageConnection, StoreRow,
+    EqualFilter, Name, NameFilter, NameLinkRow, NameRepository, NameRow, NameStoreJoinRow,
+    ProgramRow, StorageConnection, StoreRow,
 };
 
-pub type ProgramSupplierJoin = (NameRow, NameStoreJoinRow, StoreRow, ProgramRow);
+pub type ProgramSupplierJoin = (NameRow, NameLinkRow, NameStoreJoinRow, StoreRow, ProgramRow);
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ProgramSupplier {
@@ -53,7 +54,7 @@ impl<'a> ProgramSupplierRepository<'a> {
             NameRepository::create_filtered_query(store_id.to_string(), Some(name_filter))
                 .inner_join(
                     master_list_name_join_dsl::master_list_name_join
-                        .on(master_list_name_join_dsl::name_id.eq(name_dsl::id)),
+                        .on(master_list_name_join_dsl::name_id.eq(name_link_dsl::id)),
                 )
                 .inner_join(
                     master_list_dsl::master_list
@@ -74,6 +75,7 @@ impl<'a> ProgramSupplierRepository<'a> {
         let query = query.select((
             // Same as NameRepository
             name_dsl::name::all_columns(),
+            name_link_dsl::name_link::all_columns(),
             name_store_join_dsl::name_store_join::all_columns(),
             store_dsl::store::all_columns(),
             program_dsl::program::all_columns(),
@@ -83,13 +85,15 @@ impl<'a> ProgramSupplierRepository<'a> {
         Ok(result
             .into_iter()
             .map(
-                |(name_row, name_store_join_row, store_row, program)| ProgramSupplier {
-                    supplier: Name::from_join((
-                        name_row,
-                        Some(name_store_join_row),
-                        Some(store_row),
-                    )),
-                    program,
+                |(name_row, name_link_row, name_store_join_row, store_row, program)| {
+                    ProgramSupplier {
+                        supplier: Name::from_join((
+                            name_row,
+                            (name_link_row, Some(name_store_join_row)),
+                            Some(store_row),
+                        )),
+                        program,
+                    }
                 },
             )
             .collect())

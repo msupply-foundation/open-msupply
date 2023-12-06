@@ -1,4 +1,4 @@
-use super::{name_link_row::name_link, StorageConnection};
+use super::StorageConnection;
 
 use crate::{Gender, RepositoryError};
 
@@ -21,8 +21,6 @@ table! {
   }
 
 }
-
-allow_tables_to_appear_in_same_query!(clinician, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "clinician"]
