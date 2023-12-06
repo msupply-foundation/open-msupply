@@ -185,7 +185,7 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_location_1, mock_prescription_a, mock_prescription_a_invoice_lines,
+            mock_item_a, mock_location_1, mock_prescription_a, mock_prescription_a_invoice_lines,
             MockDataInserts,
         },
         InvoiceLine, RepositoryError, StorageConnectionManager,
@@ -575,6 +575,7 @@ mod test {
             Ok(InvoiceLine {
                 invoice_row: mock_prescription_a(),
                 invoice_line_row: mock_prescription_a_invoice_lines()[0].clone(),
+                item_row_option: Some(mock_item_a()),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })

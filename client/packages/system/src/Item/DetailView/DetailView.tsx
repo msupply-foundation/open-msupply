@@ -33,7 +33,7 @@ export const ItemDetailView: FC = () => {
       value: 'General',
     },
     {
-      Component: <MasterListsTab />,
+      Component: <MasterListsTab itemId={data?.id} />,
       value: 'Master Lists',
     },
   ];

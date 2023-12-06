@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { createRegisteredContext } from 'react-singleton-context';
 
 export type IconType = 'alert' | 'help' | 'info';
 export interface ConfirmationModalState {
@@ -26,4 +26,7 @@ export interface ConfirmationModalControllerState
 }
 
 export const ConfirmationModalContext =
-  createContext<ConfirmationModalControllerState>({} as any);
+  createRegisteredContext<ConfirmationModalControllerState>(
+    'confirmation-modal-provider',
+    {} as any
+  );
