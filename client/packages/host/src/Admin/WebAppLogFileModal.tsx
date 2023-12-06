@@ -126,6 +126,7 @@ export const WebAppLogFileModal = ({
         <>
           <DropdownMenu
             label={logToRender ? logToRender : t('label.server-log')}
+            selectSx={{ width: 400 }}
           >
             {data?.fileNames?.map((fileName, i) => (
               <DropdownMenuItem
