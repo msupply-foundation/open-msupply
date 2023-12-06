@@ -210,7 +210,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             )
             .inner_join(
                 store_dsl::store.on(store_dsl::name_id
-                    .eq(master_list_name_join_dsl::name_id)
+                    .eq(master_list_name_join_dsl::name_link_id)
                     .and(store_dsl::id.eq(store_id))),
             )
             .into_boxed();

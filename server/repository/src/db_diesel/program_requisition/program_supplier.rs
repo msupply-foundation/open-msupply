@@ -54,7 +54,7 @@ impl<'a> ProgramSupplierRepository<'a> {
             NameRepository::create_filtered_query(store_id.to_string(), Some(name_filter))
                 .inner_join(
                     master_list_name_join_dsl::master_list_name_join
-                        .on(master_list_name_join_dsl::name_id.eq(name_link_dsl::id)),
+                        .on(master_list_name_join_dsl::name_link_id.eq(name_link_dsl::id)),
                 )
                 .inner_join(
                     master_list_dsl::master_list
