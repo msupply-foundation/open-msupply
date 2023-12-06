@@ -238,11 +238,11 @@ fn sensor_add_if_new(
     connection: &StorageConnection,
     store_id: &str,
     temperature_sensor: &temperature_sensor::Sensor,
-) -> Result<(), RepositoryError> {
+) -> Result<Option<String>, RepositoryError> {
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
     if !result.is_empty() {
-        return Ok(());
+        return Ok(None);
     };
 
     let mut interval_seconds = None;
@@ -262,13 +262,14 @@ fn sensor_add_if_new(
         r#type: SensorType::Berlinger,
     };
     SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
-    println!("Added sensor {:?} ", new_sensor);
-    Ok(())
+    log::info!("Added sensor {:?} ", new_sensor);
+    Ok(Some(new_sensor.id))
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadSensor {
+    new_sensor_id: Option<String>,
     number_of_logs: u32,
     number_of_breaches: u32,
 }
@@ -293,7 +294,7 @@ pub fn read_sensor(
     let mut temperature_sensor = temperature_sensor::read_sensor_file(&filename, true)
         .map_err(ReadSensorError::StringError)?;
 
-    sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
+    let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
@@ -322,6 +323,7 @@ pub fn read_sensor(
     let result = ReadSensor {
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
+        new_sensor_id,
     };
 
     for temperature_sensor_breach in temperature_sensor_breaches {
