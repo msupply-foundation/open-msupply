@@ -1,6 +1,5 @@
 import React, {
   FC,
-  createContext,
   useMemo,
   useCallback,
   PropsWithChildren,
@@ -16,6 +15,7 @@ import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 import { RequestConfig } from 'graphql-request/build/esm/types';
+import { createRegisteredContext } from 'react-singleton-context';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
@@ -147,7 +147,10 @@ interface GqlControl {
   setSkipRequest: (skipRequest: SkipRequest) => void;
 }
 
-const GqlContext = createContext<GqlControl>({} as any);
+const GqlContext = createRegisteredContext<GqlControl>(
+  'gql-context',
+  {} as any
+);
 
 const { Provider } = GqlContext;
 

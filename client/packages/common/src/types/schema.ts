@@ -1254,6 +1254,12 @@ export type EqualFilterProgramEnrolmentStatusInput = {
   notEqualTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
 };
 
+export type EqualFilterRelatedRecordTypeInput = {
+  equalAny?: InputMaybe<Array<RelatedRecordNodeType>>;
+  equalTo?: InputMaybe<RelatedRecordNodeType>;
+  notEqualTo?: InputMaybe<RelatedRecordNodeType>;
+};
+
 export type EqualFilterReportContextInput = {
   equalAny?: InputMaybe<Array<ReportContext>>;
   equalTo?: InputMaybe<ReportContext>;
@@ -1689,6 +1695,16 @@ export type InsertPatientInput = {
 };
 
 export type InsertPatientResponse = PatientNode;
+
+export type InsertPluginDataInput = {
+  data: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  pluginName: Scalars['String']['input'];
+  relatedRecordId: Scalars['String']['input'];
+  relatedRecordType: RelatedRecordNodeType;
+};
+
+export type InsertPluginDataResponse = PluginDataNode;
 
 export type InsertPrescriptionError = {
   __typename: 'InsertPrescriptionError';
@@ -2416,6 +2432,7 @@ export type MasterListFilterInput = {
   existsForStoreId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   isProgram?: InputMaybe<Scalars['Boolean']['input']>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
 };
 
@@ -2532,6 +2549,7 @@ export type Mutations = {
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
   /** Inserts a new patient (without document data) */
   insertPatient: InsertPatientResponse;
+  insertPluginData: InsertPluginDataResponse;
   insertPrescription: InsertPrescriptionResponse;
   insertPrescriptionLine: InsertPrescriptionLineResponse;
   /**
@@ -2572,6 +2590,7 @@ export type Mutations = {
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   /** Updates a new patient (without document data) */
   updatePatient: UpdatePatientResponse;
+  updatePluginData: UpdatePluginDataResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
   /** Updates an existing program document belonging to a patient. */
@@ -2839,6 +2858,12 @@ export type MutationsInsertPatientArgs = {
 };
 
 
+export type MutationsInsertPluginDataArgs = {
+  input: InsertPluginDataInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsInsertPrescriptionArgs = {
   input: InsertPrescriptionInput;
   storeId: Scalars['String']['input'];
@@ -3002,6 +3027,12 @@ export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
 
 export type MutationsUpdatePatientArgs = {
   input: UpdatePatientInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdatePluginDataArgs = {
+  input: UpdatePluginDataInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -3327,6 +3358,18 @@ export type PatientNode = {
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;
+  /**
+   * Returns a draft version of the document data.
+   *
+   * The draft version can differ from the current document data if a patient has been edited
+   * remotely in mSupply.
+   * In this case the draft version contains the mSupply patient changes, i.e. information from
+   * the name row has been integrated into the current document version.
+   * When editing a patient in omSupply the document draft version should be used.
+   * This means when the document is eventually saved, the remote changes are incorporated into
+   * the document data.
+   */
+  documentDraft?: Maybe<Scalars['JSON']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   gender?: Maybe<GenderType>;
@@ -3411,6 +3454,50 @@ export type PeriodNode = {
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   startDate: Scalars['NaiveDate']['output'];
+};
+
+export type PluginDataFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  pluginName?: InputMaybe<EqualFilterStringInput>;
+  relatedRecordId?: InputMaybe<EqualFilterStringInput>;
+  relatedRecordType?: InputMaybe<EqualFilterRelatedRecordTypeInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type PluginDataNode = {
+  __typename: 'PluginDataNode';
+  data: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  pluginName: Scalars['String']['output'];
+  relatedRecordId: Scalars['String']['output'];
+  relatedRecordType: RelatedRecordNodeType;
+  storeId: Scalars['String']['output'];
+};
+
+export type PluginDataResponse = NodeError | PluginDataNode;
+
+export enum PluginDataSortFieldInput {
+  Id = 'id',
+  PluginName = 'pluginName',
+  RelatedRecordId = 'relatedRecordId',
+  RelatedRecordType = 'relatedRecordType'
+}
+
+export type PluginDataSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PluginDataSortFieldInput;
+};
+
+export type PluginNode = {
+  __typename: 'PluginNode';
+  config: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
 };
 
 export type PricingNode = {
@@ -3671,6 +3758,8 @@ export type Queries = {
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
+  pluginData: PluginDataResponse;
+  plugins: Array<PluginNode>;
   /**
    * Creates a printed report.
    *
@@ -3937,6 +4026,14 @@ export type QueriesPatientsArgs = {
 };
 
 
+export type QueriesPluginDataArgs = {
+  filter?: InputMaybe<PluginDataFilterInput>;
+  sort?: InputMaybe<Array<PluginDataSortInput>>;
+  storeId: Scalars['String']['input'];
+  type: RelatedRecordNodeType;
+};
+
+
 export type QueriesPrintReportArgs = {
   arguments?: InputMaybe<Scalars['JSON']['input']>;
   dataId?: InputMaybe<Scalars['String']['input']>;
@@ -4163,6 +4260,10 @@ export type RefreshTokenErrorInterface = {
 };
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
+
+export enum RelatedRecordNodeType {
+  StockLine = 'STOCK_LINE'
+}
 
 export type RepackConnector = {
   __typename: 'RepackConnector';
@@ -5384,6 +5485,16 @@ export type UpdatePatientInput = {
 };
 
 export type UpdatePatientResponse = PatientNode;
+
+export type UpdatePluginDataInput = {
+  data: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  pluginName: Scalars['String']['input'];
+  relatedRecordId: Scalars['String']['input'];
+  relatedRecordType: RelatedRecordNodeType;
+};
+
+export type UpdatePluginDataResponse = PluginDataNode;
 
 export type UpdatePrescriptionError = {
   __typename: 'UpdatePrescriptionError';

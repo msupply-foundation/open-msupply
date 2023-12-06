@@ -71,7 +71,7 @@ export const SensorListView: FC = () => {
       {
         key: 'lastRecording',
         label: 'label.date-time',
-        description: 'description-last-reading-datetime',
+        description: 'description.last-reading-datetime',
         accessor: ({ rowData }) => {
           return Formatter.csvDateTimeString(
             rowData.latestTemperatureLog?.nodes[0]?.datetime

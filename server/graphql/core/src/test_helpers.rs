@@ -106,10 +106,9 @@ async fn graphql<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clon
     schema.execute(query).await.into()
 }
 
-// TODO should really re-export dev deps (actix_rt, assert_json_dif, to avoid need to import in consumer)
 #[macro_export]
-macro_rules! assert_graphql_query {
-    ($settings:expr, $query:expr, $variables:expr, $expected_inner:expr, $service_provider_override:expr) => {{
+macro_rules! assert_graphql_query_with_config {
+    ($settings:expr, $query:expr, $variables:expr, $expected_inner:expr, $service_provider_override:expr, $config:ident) => {{
         let actual = graphql_core::test_helpers::run_test_gql_query(
             $settings,
             $query,
@@ -134,9 +133,7 @@ macro_rules! assert_graphql_query {
         );
 
         // Inclusive means only match fields in rhs against lhs (lhs can have more fields)
-        let config = assert_json_diff::Config::new(assert_json_diff::CompareMode::Inclusive);
-
-        match assert_json_diff::assert_json_matches_no_panic(&actual, &expected, config) {
+        match assert_json_diff::assert_json_matches_no_panic(&actual, &expected, $config) {
             Ok(_) => assert!(true),
             Err(error) => {
                 panic!(
@@ -148,6 +145,15 @@ macro_rules! assert_graphql_query {
                 );
             }
         }
+    }};
+}
+
+#[macro_export]
+macro_rules! assert_graphql_query {
+    ($settings:expr, $query:expr, $variables:expr, $expected_inner:expr, $service_provider_override:expr) => {{
+        // TODO should really re-export dev deps (actix_rt, assert_json_dif, to avoid need to import in consumer)
+        let config = assert_json_diff::Config::new(assert_json_diff::CompareMode::Inclusive);
+        graphql_core::assert_graphql_query_with_config!($settings, $query, $variables, $expected_inner, $service_provider_override, config);
     }};
 }
 

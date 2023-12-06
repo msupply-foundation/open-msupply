@@ -10,6 +10,7 @@ import {
   ReportContext,
   LoadingButton,
   useUrlQueryParams,
+  usePluginElements,
 } from '@openmsupply-client/common';
 import { useInbound } from '../api';
 import {
@@ -35,6 +36,10 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const {
     queryParams: { sortBy },
   } = useUrlQueryParams();
+  const pluginButtons = usePluginElements({
+    type: 'InboundShipmentAppBar',
+    data,
+  });
 
   const printReport = (
     report: ReportRowFragment,
@@ -59,6 +64,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onClick={() => onAddItem(true)}
         />
         <AddFromMasterListButton />
+        {pluginButtons}
         <ReportSelector
           context={ReportContext.InboundShipment}
           onPrint={printReport}
