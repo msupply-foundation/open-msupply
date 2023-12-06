@@ -11,6 +11,14 @@ query displaySettings($input: DisplaySettingsHash!) {
   }
 }
 
+query plugins {
+  plugins {
+    config
+    name
+    path
+  }
+}
+
 mutation updateDisplaySettings($displaySettings: DisplaySettingsInput!) {
   updateDisplaySettings(input: $displaySettings) {
     __typename

@@ -90,3 +90,14 @@ pub fn last_day_of_the_month(date: &NaiveDate) -> NaiveDate {
 pub fn first_day_of_the_month(date: &NaiveDate) -> NaiveDate {
     NaiveDate::from_ymd_opt(date.year(), date.month(), 1).unwrap()
 }
+
+pub fn create_datetime(
+    year: i32,
+    month: u32,
+    day: u32,
+    hour: u32,
+    minute: u32,
+    second: u32,
+) -> Option<NaiveDateTime> {
+    NaiveDate::from_ymd_opt(year, month, day).and_then(|d| d.and_hms_opt(hour, minute, second))
+}

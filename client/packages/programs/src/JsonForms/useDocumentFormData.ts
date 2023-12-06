@@ -49,7 +49,7 @@ export const useDocumentDataAccessor = (
     if (isError) {
       setError(`Failed to load document ${docName}`);
     }
-  }, [isError]);
+  }, [docName, isError]);
 
   useEffect(() => {
     if (!databaseResponse) return;

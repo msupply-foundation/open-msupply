@@ -178,6 +178,7 @@ export const useInboundShipmentColumns = () => {
                   'expiryDate',
                   t('multiple')
                 ) ?? '';
+
               return expiryDate;
             } else {
               return rowData.expiryDate ?? '';
