@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { createContext, useMemo, useState, useEffect, FC } from 'react';
+import React, { useMemo, useState, useEffect, FC } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
@@ -12,6 +12,7 @@ import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { useGql } from '../api';
+import { createRegisteredContext } from 'react-singleton-context';
 
 // Also determines auth cookie lifetime
 export const INACTIVITY_TIMEOUT_MINUTES = 60;
@@ -93,7 +94,10 @@ const authControl = {
   userHasPermission: (_permission: UserPermission) => false,
 };
 
-const AuthContext = createContext<AuthControl>(authControl);
+const AuthContext = createRegisteredContext<AuthControl>(
+  'auth-context',
+  authControl
+);
 const { Provider } = AuthContext;
 
 export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {

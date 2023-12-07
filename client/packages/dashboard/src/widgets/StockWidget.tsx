@@ -19,7 +19,7 @@ import {
 import { useDashboard } from '../api';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 import { useRequest } from '@openmsupply-client/requisitions';
-import { AppRoute } from 'packages/config';
+import { AppRoute } from '@openmsupply-client/config';
 
 const LOW_MOS_THRESHOLD = 3;
 

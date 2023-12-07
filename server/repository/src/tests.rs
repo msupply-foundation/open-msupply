@@ -281,15 +281,16 @@ mod repository_test {
             mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
-        test_db, ActivityLogRowRepository, InvoiceLineRepository, InvoiceLineRowRepository,
-        InvoiceRowRepository, ItemRowRepository, KeyValueStoreRepository, KeyValueType,
-        MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
-        MasterListRowRepository, NameLinkRowRepository, NameRow, NameRowRepository,
-        NumberRowRepository, NumberRowType, OutboundShipmentRowRepository, RequisitionFilter,
-        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
-        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
-        StockLineRowRepository, StorageConnection, StoreRowRepository, UserAccountRowRepository,
+        test_db, ActivityLogRowRepository, InvoiceFilter, InvoiceLineRepository,
+        InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository, InvoiceRowType,
+        ItemRowRepository, KeyValueStoreRepository, KeyValueType, MasterListFilter,
+        MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
+        NameLinkRowRepository, NameRow, NameRowRepository, NumberRowRepository, NumberRowType,
+        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
+        StockLineFilter, StockLineRepository, StockLineRowRepository, StorageConnection,
+        StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, StringFilter};
     use chrono::Duration;
@@ -594,7 +595,7 @@ mod repository_test {
         store_repo.insert_one(&data::store_1()).await.unwrap();
 
         let repo = InvoiceRowRepository::new(&connection);
-        let outbound_shipment_repo = OutboundShipmentRowRepository::new(&connection);
+        let invoice_repo = InvoiceRepository::new(&connection);
 
         let item1 = data::invoice_1();
         repo.upsert_one(&item1).unwrap();
@@ -604,14 +605,21 @@ mod repository_test {
         // outbound shipment
         let item1 = data::invoice_2();
         repo.upsert_one(&item1).unwrap();
-        let loaded_item = outbound_shipment_repo
-            .find_many_by_name_id(&item1.name_id)
-            .await
+        let loaded_item = invoice_repo
+            .query_by_filter(
+                InvoiceFilter::new()
+                    .r#type(InvoiceRowType::OutboundShipment.equal_to())
+                    .name_id(EqualFilter::equal_to(&item1.name_id)),
+            )
             .unwrap();
         assert_eq!(1, loaded_item.len());
 
-        let loaded_item = outbound_shipment_repo
-            .find_many_by_store_id(&item1.store_id)
+        let loaded_item = invoice_repo
+            .query_by_filter(
+                InvoiceFilter::new()
+                    .r#type(InvoiceRowType::OutboundShipment.equal_to())
+                    .store_id(EqualFilter::equal_to(&item1.store_id)),
+            )
             .unwrap();
         assert_eq!(1, loaded_item.len());
     }
