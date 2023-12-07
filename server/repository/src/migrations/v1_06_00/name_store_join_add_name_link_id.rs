@@ -12,6 +12,16 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             SET name_link_id = name_id;
         
             ALTER TABLE name_store_join ADD CONSTRAINT name_store_join_name_link_id_fkey FOREIGN KEY (name_link_id) REFERENCES name_link(id);
+        
+            CREATE OR REPLACE FUNCTION upsert_name_store_join_changelog()
+            RETURNS trigger AS
+            $$
+                BEGIN
+                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+                    VALUES ('name_store_join', NEW.id, 'UPSERT', NEW.store_id, NEW.name_link_id, NEW.is_sync_update);
+                    RETURN NULL;
+                END;
+            $$ LANGUAGE 'plpgsql';
        "#,
     )?;
     #[cfg(not(feature = "postgres"))]
