@@ -26,7 +26,7 @@ import {
 import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
-import { AppRoute } from 'packages/config';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
