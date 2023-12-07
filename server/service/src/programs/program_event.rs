@@ -95,6 +95,13 @@ fn remove_event_stack(
         }),
     )?;
 
+    // Adjust active_end_datetime of previous stack. For example:
+    //    prev              longest.active_end_datetime
+    //                        50
+    //      5-----------------|------------>80
+    //      5-----------------|-->60
+    //      5--------->40-----|
+    //      5---->20--|
     let mut current_end_datetime = longest.active_end_datetime;
     for mut current in previous_stack {
         current.active_end_datetime = current_end_datetime;
@@ -896,9 +903,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_program_events_bug_3() {
+    async fn test_program_events_remove_stack() {
         let (_, _, connection_manager, _) = setup_all(
-            "test_program_events_bug_3",
+            "test_program_events_remove_stack",
             MockDataInserts::none().names().contexts(),
         )
         .await;
