@@ -213,7 +213,9 @@ mod test {
         let default_service_item = ItemRepository::new(&connection)
             .query_one(
                 None,
-                ItemFilter::new().code(StringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE)),
+                ItemFilter::new()
+                    .code(StringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE))
+                    .is_active(true),
             )
             .unwrap()
             .unwrap();
