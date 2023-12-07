@@ -169,6 +169,15 @@ impl<'a> InvoiceRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
+
+    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
+        Ok(invoice_dsl::invoice
+            .filter(invoice_dsl::id.eq(record_id))
+            .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+            .inner_join(store_dsl::store)
+            .left_join(clinician_dsl::clinician)
+            .first::<InvoiceJoin>(&self.connection.connection)?)
+    }
 }
 
 fn to_domain((invoice_row, (_, name_row), store_row, clinician_row): InvoiceJoin) -> Invoice {
