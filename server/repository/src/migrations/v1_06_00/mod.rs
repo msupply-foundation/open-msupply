@@ -38,7 +38,7 @@ async fn migration_1_06_00() {
     use diesel::prelude::*;
     use item_link::dsl as item_link_dsl;
     use stock_movement::dsl as stock_movement_dsl;
-    use stock_on_hand::dsl as soh_dsl;
+    use stock_on_hand::dsl as stock_on_hand_dsl;
 
     table! {
         item_link {
@@ -197,8 +197,8 @@ async fn migration_1_06_00() {
     )
     .unwrap();
 
-    let old_soh: Vec<StockOnHandRow> = soh_dsl::stock_on_hand
-        .order(soh_dsl::id.asc())
+    let old_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
+        .order(stock_on_hand_dsl::id.asc())
         .load(&connection.connection)
         .unwrap();
 
@@ -235,14 +235,13 @@ async fn migration_1_06_00() {
     assert_eq!(expected_item_links, migration_item_links);
 
     // Tests the view rewrite works correctly and implicitly that the stock_line.item_link_id got populated
-    let new_soh: Vec<StockOnHandRow> = soh_dsl::stock_on_hand
-        .order(soh_dsl::id.asc())
+    let new_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
+        .order(stock_on_hand_dsl::id.asc())
         .load(&connection.connection)
         .unwrap();
     assert_eq!(old_soh, new_soh);
 
-    // Tests the view rewrite works correctly and implicitly that the stock_line.item_link_id got populated
-
+    // Tests the view rewrites work correctly and implicitly that the invoice_line.item_link_id got populated
     let new_stock_movements: Vec<StockMovementRow> = stock_movement_dsl::stock_movement
         .order(stock_movement_dsl::id.asc())
         .load(&connection.connection)
