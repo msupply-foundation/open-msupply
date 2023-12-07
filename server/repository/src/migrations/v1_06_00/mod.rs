@@ -10,6 +10,7 @@ mod name_link;
 mod name_store_join_add_name_link_id;
 mod name_tag_join_add_name_link_id;
 mod plugin_data;
+mod requisition_add_name_link_id;
 mod temperature_breach;
 
 pub(crate) struct V1_06_00;
@@ -29,6 +30,7 @@ impl Migration for V1_06_00 {
         name_store_join_add_name_link_id::migrate(connection)?;
         master_list_name_join_add_name_link_id::migrate(connection)?;
         name_tag_join_add_name_link_id::migrate(connection)?;
+        requisition_add_name_link_id::migrate(connection)?;
         Ok(())
     }
 }

@@ -6,7 +6,8 @@ use super::{
 
 use crate::{
     master_list_name_join::master_list_name_join, name_store_join::name_store_join,
-    name_tag_join::name_tag_join, program_row::program, repository_error::RepositoryError,
+    name_tag_join::name_tag_join, period::period, program_row::program,
+    repository_error::RepositoryError, requisition_row::requisition,
 };
 
 use diesel::prelude::*;
@@ -27,7 +28,9 @@ allow_tables_to_appear_in_same_query!(name_link, master_list_name_join);
 allow_tables_to_appear_in_same_query!(name_link, name_store_join);
 allow_tables_to_appear_in_same_query!(name_link, name);
 allow_tables_to_appear_in_same_query!(name_link, name_tag_join);
+allow_tables_to_appear_in_same_query!(name_link, period);
 allow_tables_to_appear_in_same_query!(name_link, program);
+allow_tables_to_appear_in_same_query!(name_link, requisition);
 allow_tables_to_appear_in_same_query!(name_link, store);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq)]
