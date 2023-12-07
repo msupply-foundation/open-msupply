@@ -26,7 +26,7 @@ export const LogTextDisplay = ({ logText }: { logText: string[] | string }) => {
         sx={{ overflow: 'scroll', whiteSpace: 'pre' }}
         component="div"
       >
-        {`${logText}`}
+        {logText}
       </Typography>
     </Tooltip>
   );
