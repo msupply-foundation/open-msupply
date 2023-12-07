@@ -46,6 +46,7 @@ pub struct ItemFilter {
     /// If true it only returns ItemAndMasterList that have a name join row
     pub is_visible: Option<bool>,
     pub code_or_name: Option<StringFilter>,
+    pub is_active: Option<bool>,
 }
 
 impl ItemFilter {
@@ -57,6 +58,7 @@ impl ItemFilter {
             r#type: None,
             is_visible: None,
             code_or_name: None,
+            is_active: None,
         }
     }
 
@@ -87,6 +89,11 @@ impl ItemFilter {
 
     pub fn code_or_name(mut self, filter: StringFilter) -> Self {
         self.code_or_name = Some(filter);
+        self
+    }
+
+    pub fn is_active(mut self, value: bool) -> Self {
+        self.is_active = Some(value);
         self
     }
 }
@@ -186,6 +193,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             r#type,
             is_visible,
             code_or_name,
+            is_active,
         } = f;
 
         // or filter need to be applied before and filters
@@ -198,6 +206,10 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         apply_string_filter!(query, code, item_dsl::code);
         apply_string_filter!(query, name, item_dsl::name);
         apply_equal_filter!(query, r#type, item_dsl::type_);
+
+        if let Some(is_active) = is_active {
+            query = query.filter(item_dsl::is_active.eq(is_active));
+        }
 
         let visible_item_ids = item_link_dsl::item_link
             .select(item_link_dsl::item_id)
@@ -298,7 +310,7 @@ mod tests {
             rows.len()
         );
 
-        // .query, no pagenation (default)
+        // .query, no pagination (default)
         assert_eq!(
             item_query_repository
                 .query(Pagination::new(), None, None, None)
@@ -307,7 +319,7 @@ mod tests {
             default_page_size
         );
 
-        // .query, pagenation (offset 10)
+        // .query, pagination (offset 10)
         let result = item_query_repository
             .query(
                 Pagination {
@@ -326,7 +338,7 @@ mod tests {
             rows[10 + default_page_size - 1]
         );
 
-        // .query, pagenation (first 10)
+        // .query, pagination (first 10)
         let result = item_query_repository
             .query(
                 Pagination {
@@ -341,7 +353,7 @@ mod tests {
         assert_eq!(result.len(), 10);
         assert_eq!((*result.last().unwrap()), rows[9]);
 
-        // .query, pagenation (offset 150, first 90) <- more then records in table
+        // .query, pagination (offset 150, first 90) <- more then records in table
         let result = item_query_repository
             .query(
                 Pagination {

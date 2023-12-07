@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod contact_trace;
+mod item_add_is_active;
 mod item_link_create_table;
 mod master_list;
 mod master_list_line_add_item_link_id;
@@ -26,6 +27,7 @@ impl Migration for V1_06_00 {
         item_link_create_table::migrate(connection)?;
         stocktake_line_add_item_link_id::migrate(connection)?;
         stock_line_add_item_link_id::migrate(connection)?;
+        item_add_is_active::migrate(connection)?;
         master_list_line_add_item_link_id::migrate(connection)?;
         Ok(())
     }
