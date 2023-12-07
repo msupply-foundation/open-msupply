@@ -25,7 +25,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             CREATE TABLE master_list_name_join (
                 id TEXT NOT NULL PRIMARY KEY,
                 master_list_id TEXT NOT NULL REFERENCES master_list(id),
-                name_link_id TEXT NOT NULL REFERENCES name(id)
+                name_link_id TEXT NOT NULL REFERENCES name_link(id)
             );
 
             INSERT INTO master_list_name_join (id, master_list_id, name_link_id)
