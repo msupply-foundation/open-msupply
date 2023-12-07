@@ -394,7 +394,7 @@ mod graphql {
           }
         "#;
 
-        pub fn successfull_invoice_line() -> InvoiceLine {
+        pub fn successful_invoice_line() -> InvoiceLine {
             InvoiceLine {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
@@ -405,8 +405,8 @@ mod graphql {
         }
 
         // Success
-        let test_service = TestService(Box::new(|_| Ok(successfull_invoice_line())));
-        let out_line = successfull_invoice_line();
+        let test_service = TestService(Box::new(|_| Ok(successful_invoice_line())));
+        let out_line = successful_invoice_line();
         let expected = json!({
             "insertOutboundShipmentUnallocatedLine": {
                 "id": out_line.invoice_line_row.id,
