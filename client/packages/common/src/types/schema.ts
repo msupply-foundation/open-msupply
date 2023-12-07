@@ -5072,7 +5072,7 @@ export type TemperatureLogFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   location?: InputMaybe<LocationFilterInput>;
   sensor?: InputMaybe<SensorFilterInput>;
-  temperatureBreachId?: InputMaybe<EqualFilterStringInput>;
+  temperatureBreach?: InputMaybe<TemperatureBreachFilterInput>;
 };
 
 export type TemperatureLogNode = {

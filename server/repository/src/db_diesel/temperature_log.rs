@@ -1,6 +1,7 @@
 use super::{
     location_row::location::dsl as location_dsl,
     sensor_row::sensor::dsl as sensor_dsl,
+    temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl,
     temperature_log_row::{temperature_log, temperature_log::dsl as temperature_log_dsl},
     DBType, StorageConnection, TemperatureBreachRow, TemperatureLogRow,
 };
@@ -10,7 +11,8 @@ use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    LocationRow, SensorFilter, SensorRepository, SensorRow,
+    LocationRow, SensorFilter, SensorRepository, SensorRow, TemperatureBreachFilter,
+    TemperatureBreachRepository,
 };
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort};
@@ -34,7 +36,7 @@ pub struct TemperatureLogFilter {
     pub datetime: Option<DatetimeFilter>,
     pub sensor: Option<SensorFilter>,
     pub location: Option<LocationFilter>,
-    pub temperature_breach_id: Option<EqualFilter<String>>,
+    pub temperature_breach: Option<TemperatureBreachFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -111,7 +113,7 @@ impl<'a> TemperatureLogRepository<'a> {
                 datetime,
                 sensor,
                 location,
-                temperature_breach_id,
+                temperature_breach,
             } = f;
 
             apply_equal_filter!(query, id, temperature_log_dsl::id);
@@ -129,11 +131,14 @@ impl<'a> TemperatureLogRepository<'a> {
                     .select(location_dsl::id.nullable());
                 query = query.filter(temperature_log_dsl::location_id.eq_any(location_ids));
             }
-            apply_equal_filter!(
-                query,
-                temperature_breach_id,
-                temperature_log_dsl::temperature_breach_id
-            );
+            if temperature_breach.is_some() {
+                let temperature_breach_ids =
+                    TemperatureBreachRepository::create_filtered_query(temperature_breach)
+                        .select(temperature_breach_dsl::id.nullable());
+                query = query.filter(
+                    temperature_log_dsl::temperature_breach_id.eq_any(temperature_breach_ids),
+                );
+            }
         }
         query
     }
@@ -155,7 +160,7 @@ impl TemperatureLogFilter {
             datetime: None,
             sensor: None,
             location: None,
-            temperature_breach_id: None,
+            temperature_breach: None,
         }
     }
 
@@ -183,8 +188,8 @@ impl TemperatureLogFilter {
         self
     }
 
-    pub fn temperature_breach_id(mut self, filter: EqualFilter<String>) -> Self {
-        self.temperature_breach_id = Some(filter);
+    pub fn temperature_breach(mut self, filter: TemperatureBreachFilter) -> Self {
+        self.temperature_breach = Some(filter);
         self
     }
 }

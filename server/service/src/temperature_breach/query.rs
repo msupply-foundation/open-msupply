@@ -53,9 +53,11 @@ pub fn get_max_or_min_breach_temperature(
     let breach = TemperatureBreachRowRepository::new(&connection)
         .find_one_by_id(id)?
         .ok_or(RepositoryError::NotFound)?;
-    let logs = TemperatureLogRepository::new(&connection).query_by_filter(
-        TemperatureLogFilter::new().temperature_breach_id(EqualFilter::equal_to(id)),
-    )?;
+    let logs =
+        TemperatureLogRepository::new(&connection)
+            .query_by_filter(TemperatureLogFilter::new().temperature_breach(
+                TemperatureBreachFilter::new().id(EqualFilter::equal_to(id)),
+            ))?;
 
     match breach.r#type {
         TemperatureBreachRowType::HotConsecutive | TemperatureBreachRowType::HotCumulative => {
