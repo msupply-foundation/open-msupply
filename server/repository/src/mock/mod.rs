@@ -98,19 +98,20 @@ use crate::{
     ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
     DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
-    NameLinkRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
-    NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
-    TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow,
+    LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+    MasterListRowRepository, NameLinkRowRepository, NameTagJoinRepository, NameTagJoinRow,
+    NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow,
+    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
+    PluginDataRowRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow,
+    SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
+    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
+    SyncLogRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
+    TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::{
@@ -690,9 +691,14 @@ pub fn insert_mock_data(
         }
 
         if inserts.items {
-            let repo = ItemRowRepository::new(connection);
+            let item_repo = ItemRowRepository::new(connection);
+            let item_link_repo = ItemLinkRowRepository::new(connection);
+
             for row in &mock_data.items {
-                repo.upsert_one(&row).unwrap();
+                item_repo.upsert_one(&row).unwrap();
+                item_link_repo
+                    .upsert_one(&mock_item_link_from_item(&row))
+                    .unwrap();
             }
         }
 
