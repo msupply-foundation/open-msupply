@@ -7,7 +7,7 @@ mod invoice_add_name_link_id;
 mod master_list;
 mod master_list_name_join_name_link_id;
 mod name_link;
-mod name_store_join_name_link_id;
+mod name_store_join_add_name_link_id;
 mod plugin_data;
 mod temperature_breach;
 
@@ -25,7 +25,7 @@ impl Migration for V1_06_00 {
         temperature_breach::migrate(connection)?;
         name_link::migrate(connection)?;
         invoice_add_name_link_id::migrate(connection)?;
-        name_store_join_name_link_id::migrate(connection)?;
+        name_store_join_add_name_link_id::migrate(connection)?;
         master_list_name_join_name_link_id::migrate(connection)?;
         Ok(())
     }
