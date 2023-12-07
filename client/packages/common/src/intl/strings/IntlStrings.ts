@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Namespace, TOptions } from 'i18next';
 import { useTranslation as useTranslationNext } from 'react-i18next';
 import { LocaleKey } from '../locales';
+import { useIntl } from '../utils';
 
 export { UseTranslationResponse } from 'react-i18next';
 
@@ -18,7 +19,8 @@ export interface TypedTFunction<Keys> {
 //
 // returned function can be used with optional ns, i.e. t('label.create-user', { ns: 'system' })
 export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
-  const { t } = useTranslationNext(ns);
+  const {i18n} = useIntl();
+  const { t } = useTranslationNext(ns, {i18n});
 
   return useCallback(
     (key, opts) => {

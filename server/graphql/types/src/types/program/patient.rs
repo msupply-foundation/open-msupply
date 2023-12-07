@@ -13,6 +13,7 @@ use repository::{
     ProgramEnrolmentFilter, StringFilter,
 };
 use service::programs::patient::main_patient_doc_name;
+use service::programs::patient::patient_updated::patient_draft_document;
 use service::usize_to_u32;
 
 use crate::types::document::DocumentNode;
@@ -161,6 +162,33 @@ impl PatientNode {
             });
 
         Ok(result)
+    }
+
+    /// Returns a draft version of the document data.
+    ///
+    /// The draft version can differ from the current document data if a patient has been edited
+    /// remotely in mSupply.
+    /// In this case the draft version contains the mSupply patient changes, i.e. information from
+    /// the name row has been integrated into the current document version.
+    /// When editing a patient in omSupply the document draft version should be used.
+    /// This means when the document is eventually saved, the remote changes are incorporated into
+    /// the document data.
+    pub async fn document_draft(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
+
+        let result = loader
+            .load_one(main_patient_doc_name(&self.patient.id))
+            .await?;
+        let Some(document_data) = result.map(|d| d.data) else {
+            return Ok(None);
+        };
+
+        let document_data = serde_json::from_value(document_data)
+            .map_err(|e| StandardGraphqlError::from_error(&e))?;
+        let draft = patient_draft_document(&self.patient, document_data);
+        let draft = serde_json::to_value(draft)
+            .map_err(|e| StandardGraphqlError::InternalError(format!("{}", e)).extend())?;
+        Ok(Some(draft))
     }
 
     pub async fn program_enrolments(
