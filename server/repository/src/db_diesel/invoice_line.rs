@@ -3,14 +3,19 @@ use super::{
     invoice_line_row::{invoice_line, invoice_line::dsl as invoice_line_dsl},
     invoice_row::{invoice, invoice::dsl as invoice_dsl},
     item_link_row::{item_link, item_link::dsl as item_link_dsl},
+    item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     DBType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow, StorageConnection,
 };
 
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter,
-    InvoiceRowStatus, InvoiceRowType, ItemLinkRow, StockLineRow,
+    diesel_macros::{
+        apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
+    },
+    repository_error::RepositoryError,
+    EqualFilter, InvoiceRowStatus, InvoiceRowType, ItemLinkRow, ItemRow, Pagination, Sort,
+    StockLineRow,
 };
 
 use diesel::{
@@ -49,10 +54,27 @@ pub struct PricingRow {
 pub struct InvoiceLine {
     pub invoice_line_row: InvoiceLineRow,
     pub invoice_row: InvoiceRow,
+    pub item_row: ItemRow,
     pub location_row_option: Option<LocationRow>,
     pub stock_line_option: Option<StockLineRow>,
 }
 
+pub enum InvoiceLineSortField {
+    ItemCode,
+    ItemName,
+    /// Invoice line batch
+    Batch,
+    /// Invoice line expiry date
+    ExpiryDate,
+    /// Invoice line pack size
+    PackSize,
+    /// Invoice line item stock location name
+    LocationName,
+}
+
+pub type InvoiceLineSort = Sort<InvoiceLineSortField>;
+
+#[derive(Clone)]
 pub struct InvoiceLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
@@ -142,8 +164,8 @@ impl InvoiceLineFilter {
 
 type InvoiceLineJoin = (
     InvoiceLineRow,
+    (ItemLinkRow, ItemRow),
     InvoiceRow,
-    ItemLinkRow,
     Option<LocationRow>,
     Option<StockLineRow>,
 );
@@ -168,7 +190,7 @@ impl<'a> InvoiceLineRepository<'a> {
         &self,
         filter: InvoiceLineFilter,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-        self.query(Some(filter))
+        self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query_one(
@@ -180,12 +202,41 @@ impl<'a> InvoiceLineRepository<'a> {
 
     pub fn query(
         &self,
+        pagination: Pagination,
         filter: Option<InvoiceLineFilter>,
+        sort: Option<InvoiceLineSort>,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-        // TODO (beyond M1), check that store_id matches current store
-        let query = create_filtered_query(filter);
+        let mut query = create_filtered_query(filter);
 
-        let result = query.load::<InvoiceLineJoin>(&self.connection.connection)?;
+        if let Some(sort) = sort {
+            match sort.key {
+                InvoiceLineSortField::ItemName => {
+                    apply_sort_no_case!(query, sort, item_dsl::name);
+                }
+                InvoiceLineSortField::ItemCode => {
+                    apply_sort_no_case!(query, sort, item_dsl::code);
+                }
+                InvoiceLineSortField::Batch => {
+                    apply_sort_no_case!(query, sort, invoice_line_dsl::batch);
+                }
+                InvoiceLineSortField::ExpiryDate => {
+                    apply_sort_asc_nulls_last!(query, sort, invoice_line_dsl::expiry_date);
+                }
+                InvoiceLineSortField::PackSize => {
+                    apply_sort!(query, sort, invoice_line_dsl::pack_size);
+                }
+                InvoiceLineSortField::LocationName => {
+                    apply_sort_no_case!(query, sort, location_dsl::name);
+                }
+            };
+        } else {
+            query = query.order_by(invoice_line_dsl::id.asc());
+        }
+
+        let result = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<InvoiceLineJoin>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -203,7 +254,10 @@ type BoxedInvoiceLineQuery = IntoBoxed<
     'static,
     LeftJoin<
         LeftJoin<
-            InnerJoin<InnerJoin<invoice_line::table, invoice::table>, item_link::table>,
+            InnerJoin<
+                InnerJoin<invoice_line::table, InnerJoin<item_link::table, item::table>>,
+                invoice::table,
+            >,
             location::table,
         >,
         stock_line::table,
@@ -213,8 +267,8 @@ type BoxedInvoiceLineQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
     let mut query = invoice_line_dsl::invoice_line
+        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
         .inner_join(invoice_dsl::invoice)
-        .inner_join(item_link_dsl::item_link)
         .left_join(location_dsl::location)
         .left_join(stock_line_dsl::stock_line)
         .into_boxed();
@@ -251,11 +305,12 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
 }
 
 fn to_domain(
-    (invoice_line_row, invoice_row, _item_link_row, location_row_option, stock_line_option): InvoiceLineJoin,
+    (invoice_line_row, (_, item_row),invoice_row,  location_row_option, stock_line_option): InvoiceLineJoin,
 ) -> InvoiceLine {
     InvoiceLine {
         invoice_line_row,
         invoice_row,
+        item_row,
         location_row_option,
         stock_line_option,
     }

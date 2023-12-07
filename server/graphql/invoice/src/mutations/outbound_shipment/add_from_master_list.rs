@@ -110,7 +110,8 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_new_outbound_shipment_no_lines, mock_outbound_shipment_line_a, MockDataInserts,
+            mock_item_a, mock_new_outbound_shipment_no_lines, mock_outbound_shipment_line_a,
+            MockDataInserts,
         },
         InvoiceLine, StorageConnectionManager,
     };
@@ -301,6 +302,7 @@ mod test {
             Ok(vec![InvoiceLine {
                 invoice_line_row: mock_outbound_shipment_line_a(),
                 invoice_row: mock_new_outbound_shipment_no_lines(),
+                item_row_option: Some(mock_item_a()),
                 location_row_option: None,
                 stock_line_option: None,
             }])
