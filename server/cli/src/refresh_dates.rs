@@ -107,13 +107,13 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
 #[cfg(test)]
 #[cfg(feature = "postgres")]
 fn get_exclude_date_fields() -> Vec<TableAndFieldName> {
-    vec![("invoice_line_stock_movement", "expiry_date")]
-        .iter()
-        .map(|(table_name, field_name)| TableAndFieldName {
-            table_name,
-            field_name,
-        })
-        .collect()
+    vec![]
+    // .iter()
+    // .map(|(table_name, field_name)| TableAndFieldName {
+    //     table_name,
+    //     field_name,
+    // })
+    // .collect()
 }
 
 #[derive(QueryableByName, Debug, PartialEq)]
