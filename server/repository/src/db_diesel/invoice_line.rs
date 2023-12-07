@@ -305,7 +305,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
 }
 
 fn to_domain(
-    (invoice_line_row, (_, item_row),invoice_row,  location_row_option, stock_line_option): InvoiceLineJoin,
+    (invoice_line_row, (_, item_row), invoice_row,  location_row_option, stock_line_option): InvoiceLineJoin,
 ) -> InvoiceLine {
     InvoiceLine {
         invoice_line_row,
