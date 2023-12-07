@@ -909,13 +909,13 @@ end
 <ScreenH>362</ScreenH>
 </StyleData>
 <CustomCtrlList>
-<CustomCtrlInfo Left="27" Top="85" Width="150" Height="18" ID="211"/>
-<CustomCtrlInfo Left="179" Top="85" Width="82" Height="18" ID="821"/>
-<CustomCtrlInfo Left="27" Top="151" Width="150" Height="18" ID="212"/>
-<CustomCtrlInfo Left="27" Top="180" Width="95" Height="19" ID="604"/>
-<CustomCtrlInfo Left="27" Top="202" Width="95" Height="19" ID="605"/>
+<CustomCtrlInfo Left="27" Top="85" Width="173" Height="18" ID="211"/>
+<CustomCtrlInfo Left="200" Top="85" Width="82" Height="18" ID="821"/>
+<CustomCtrlInfo Left="27" Top="151" Width="167" Height="18" ID="212"/>
+<CustomCtrlInfo Left="200" Top="149" Width="95" Height="19" ID="604"/>
+<CustomCtrlInfo Left="200" Top="174" Width="95" Height="19" ID="605"/>
 <CustomCtrlInfo Left="27" Top="118" Width="150" Height="18" ID="213"/>
-<CustomCtrlInfo Left="179" Top="117" Width="200" Height="18" ID="824"/>
+<CustomCtrlInfo Left="200" Top="117" Width="200" Height="18" ID="824"/>
 </CustomCtrlList>
 <Events>
 <Event>
@@ -4067,7 +4067,7 @@ g_HandleSystemReboot();
 <Name>On Startup</Name>
 <Args/>
 <Script>-- Set window title
-local sWindowTitle = "omSupply Server Setup";
+local sWindowTitle = "Open mSupply Server Setup";
 local omSupplyServerPath = "";
 
 -- Check if the omSupply Server has been already installed on this machine
@@ -4077,7 +4077,7 @@ end
 
 hasOmsupplyInstalled = File.DoesExist(omSupplyServerPath);
 if hasOmsupplyInstalled then
-	sWindowTitle = "omSupply Server Upgrader Setup";
+	sWindowTitle = "Open mSupply Server Upgrader Setup";
 end
 
 SessionVar.Set("%window_title%", sWindowTitle);
@@ -4432,7 +4432,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_replace with version.exe</Filename>
+<Filename>Open_mSupply_Server_replace with version.exe</Filename>
 <OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
