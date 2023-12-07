@@ -1,5 +1,4 @@
 import { create } from '@openmsupply-client/common';
-import { DocumentRegistryFragment } from '@openmsupply-client/programs';
 import { ProgramPatientRowFragment } from '@openmsupply-client/system';
 
 // Copied from the schema definition
@@ -20,7 +19,6 @@ export enum Gender {
 
 export interface CreateNewPatient {
   id: string;
-  documentRegistry: DocumentRegistryFragment | undefined;
   code?: string;
   code2?: string;
   firstName?: string;
