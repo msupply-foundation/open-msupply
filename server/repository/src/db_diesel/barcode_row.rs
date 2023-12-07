@@ -2,6 +2,7 @@ use super::{barcode_row::barcode::dsl as barcode_dsl, StorageConnection};
 
 use crate::{
     db_diesel::{invoice_line_row::invoice_line, item_row::item},
+    item_link,
     repository_error::RepositoryError,
 };
 
@@ -28,6 +29,7 @@ table! {
 
 joinable!(barcode -> item (item_id));
 joinable!(barcode -> invoice_line (id));
+allow_tables_to_appear_in_same_query!(barcode, item_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[changeset_options(treat_none_as_null = "true")]
