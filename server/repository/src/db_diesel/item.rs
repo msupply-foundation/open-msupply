@@ -1,4 +1,5 @@
 use super::{
+    item_link_row::item_link::dsl as item_link_dsl,
     item_row::{item, item::dsl as item_dsl},
     master_list_line_row::master_list_line::dsl as master_list_line_dsl,
     master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
@@ -198,21 +199,24 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         apply_string_filter!(query, name, item_dsl::name);
         apply_equal_filter!(query, r#type, item_dsl::type_);
 
-        let visible_item_ids = master_list_line_dsl::master_list_line
-            .select(master_list_line_dsl::item_id)
+        let visible_item_ids = item_link_dsl::item_link
+            .select(item_link_dsl::item_id)
+            .inner_join(
+                master_list_line_dsl::master_list_line
+                    .on(master_list_line_dsl::item_link_id.eq(item_link_dsl::id)),
+            )
             .inner_join(
                 master_list_dsl::master_list
-                    .on(master_list_line_dsl::master_list_id.eq(master_list_dsl::id)),
+                    .on(master_list_dsl::id.eq(master_list_line_dsl::master_list_id)),
             )
             .inner_join(
                 master_list_name_join_dsl::master_list_name_join
                     .on(master_list_name_join_dsl::master_list_id.eq(master_list_dsl::id)),
             )
             .inner_join(
-                store_dsl::store.on(store_dsl::name_id
-                    .eq(master_list_name_join_dsl::name_id)
-                    .and(store_dsl::id.eq(store_id))),
+                store_dsl::store.on(store_dsl::name_id.eq(master_list_name_join_dsl::name_id)),
             )
+            .filter(store_dsl::id.eq(store_id))
             .into_boxed();
 
         query = match is_visible {
@@ -239,11 +243,12 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::{mock_item_b, MockDataInserts},
-        test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemRowType,
-        MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-        Pagination, StoreRow, StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
+        mock::{mock_item_b, mock_item_link_from_item, MockDataInserts},
+        test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
+        ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
+        StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -467,6 +472,14 @@ mod tests {
             }),
         ];
 
+        let item_link_rows = vec![
+            mock_item_link_from_item(&item_rows[0]),
+            mock_item_link_from_item(&item_rows[1]),
+            mock_item_link_from_item(&item_rows[2]),
+            mock_item_link_from_item(&item_rows[3]),
+            mock_item_link_from_item(&item_rows[4]),
+        ];
+
         let master_list_rows = vec![
             MasterListRow {
                 id: "master_list1".to_owned(),
@@ -528,6 +541,12 @@ mod tests {
 
         for row in item_rows.iter() {
             ItemRowRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
+        }
+
+        for row in item_link_rows.iter() {
+            ItemLinkRowRepository::new(&storage_connection)
                 .upsert_one(&row)
                 .unwrap();
         }
