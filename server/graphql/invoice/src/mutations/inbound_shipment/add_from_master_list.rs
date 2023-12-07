@@ -102,7 +102,7 @@ mod test {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::{mock_empty_draft_inbound_shipment, MockDataInserts},
+        mock::{mock_empty_draft_inbound_shipment, mock_item_a, MockDataInserts},
         InvoiceLine, InvoiceLineRow, InvoiceLineRowType, StorageConnectionManager,
     };
     use serde_json::json;
@@ -298,6 +298,7 @@ mod test {
                     r.r#type = InvoiceLineRowType::StockIn;
                 }),
                 invoice_row: mock_empty_draft_inbound_shipment(),
+                item_row_option: Some(mock_item_a()),
                 location_row_option: None,
                 stock_line_option: None,
             }])
