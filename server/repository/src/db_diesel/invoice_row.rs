@@ -206,38 +206,3 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(result)
     }
 }
-
-pub struct OutboundShipmentRowRepository<'a> {
-    connection: &'a StorageConnection,
-}
-
-impl<'a> OutboundShipmentRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
-        OutboundShipmentRowRepository { connection }
-    }
-
-    pub async fn find_many_by_name_id(
-        &self,
-        name: &str,
-    ) -> Result<Vec<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(
-                type_
-                    .eq(InvoiceRowType::OutboundShipment)
-                    .and(name_link_id.eq(name)),
-            )
-            .get_results(&self.connection.connection)?;
-        Ok(result)
-    }
-
-    pub fn find_many_by_store_id(&self, store: &str) -> Result<Vec<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(
-                type_
-                    .eq(InvoiceRowType::OutboundShipment)
-                    .and(store_id.eq(store)),
-            )
-            .get_results(&self.connection.connection)?;
-        Ok(result)
-    }
-}
