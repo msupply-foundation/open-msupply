@@ -30,6 +30,8 @@ pub mod missing_program;
 pub mod name;
 pub mod number;
 pub mod permission;
+pub mod plugin;
+pub mod plugin_data;
 pub mod processors;
 pub mod programs;
 pub mod repack;
@@ -49,6 +51,7 @@ pub mod store_preference;
 pub mod sync;
 pub mod system_user;
 pub mod temperature_breach;
+pub mod temperature_chart;
 pub mod temperature_log;
 pub mod token;
 pub mod token_bucket;
@@ -261,7 +264,6 @@ pub struct InputWithResult<I, R> {
 pub struct NullableUpdate<T> {
     pub value: Option<T>,
 }
-
 fn check_location_exists(
     connection: &StorageConnection,
     store_id: &str,
@@ -270,12 +272,10 @@ fn check_location_exists(
     let Some(NullableUpdate{ value: Some(location_id) }) = location_input else {
         return Ok(true)
     };
-
     let count = LocationRepository::new(connection).count(Some(
         LocationFilter::new()
             .id(EqualFilter::equal_to(location_id))
             .store_id(EqualFilter::equal_to(store_id)),
     ))?;
-
     Ok(count > 0)
 }

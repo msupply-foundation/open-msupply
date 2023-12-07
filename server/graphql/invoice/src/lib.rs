@@ -3,7 +3,7 @@ use graphql_core::pagination::PaginationInput;
 use graphql_types::types::*;
 use mutations::AddToShipmentFromMasterListInput;
 
-mod invoice_queries;
+pub mod invoice_queries;
 use self::invoice_queries::*;
 
 pub mod mutations;
