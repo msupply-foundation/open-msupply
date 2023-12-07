@@ -1,7 +1,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    EqualFilter, Gender, NameRow, NameRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    NameStoreJoinRow, NameType, Patient, RepositoryError, StorageConnection,
+    EqualFilter, Gender, NameLinkRow, NameLinkRowRepository, NameRow, NameRowRepository,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameType, Patient,
+    RepositoryError, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
@@ -47,6 +48,12 @@ pub fn update_patient_row(
 
     let name_upsert = patient_to_name_row(store_id, update_timestamp, patient, existing_name)?;
     name_repo.upsert_one(&name_upsert)?;
+
+    let name_link_row = NameLinkRow {
+        id: name_upsert.id.clone(),
+        name_id: name_upsert.id.clone(),
+    };
+    NameLinkRowRepository::new(con).upsert_one(&name_link_row)?;
 
     Ok(())
 }
@@ -98,10 +105,6 @@ pub(crate) fn patient_to_name_row(
         })?),
         None => None,
     };
-    let name_repo = NameRowRepository::new(con);
-    let name_link_repo = NameLinkRowRepository::new(con);
-    let existing_name = name_repo.find_one_by_id(&id)?;
-    let existing_name = existing_name.as_ref();
 
     let existing_name = existing_name.as_ref();
     Ok(NameRow {
@@ -230,6 +233,7 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
         date_of_death: patient
             .date_of_death
             .map(|date| date.format("%Y-%m-%d").to_string()),
+
         middle_name,
         date_of_birth_is_estimated,
         is_deceased: Some(patient.is_deceased || is_deceased.unwrap_or(false)),
@@ -241,18 +245,6 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
         marital_status,
         contacts,
         extension,
-    };
-
-    let name_link_upsert = NameLinkRow {
-        id: id.clone(),
-        name_id: id.clone(),
-    };
-
-    if is_sync_update {
-        name_repo.sync_upsert_one(&name_upsert)?;
-    } else {
-        name_repo.upsert_one(&name_upsert)?;
-        name_link_repo.upsert_one(&name_link_upsert)?;
     }
 }
 
