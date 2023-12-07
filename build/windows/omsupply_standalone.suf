@@ -3258,7 +3258,7 @@ g_HandleSystemReboot();
 <Name>On Startup</Name>
 <Args/>
 <Script>-- Set window title
-local sWindowTitle = "omSupply Setup";
+local sWindowTitle = "Open mSupply Setup";
 local omSupplyStandalonePath = "";
 
 hasOmsupplyDesktopInstalled = false;
@@ -3292,7 +3292,7 @@ end
 
 hasOmsupplyStandaloneInstalled = File.DoesExist(omSupplyStandalonePath);
 if hasOmsupplyStandaloneInstalled then
-	sWindowTitle = "omSupply Upgrader";
+	sWindowTitle = "Open mSupply Upgrader";
 end
 
 SessionVar.Set("%window_title%", sWindowTitle);</Script>
@@ -3515,7 +3515,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Standalone_replace with version.exe</Filename>
+<Filename>Open_mSupply_Standalone_replace with version.exe</Filename>
 <OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
