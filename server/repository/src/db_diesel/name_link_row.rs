@@ -71,9 +71,9 @@ impl<'a> NameLinkRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, item_link_id: &str) -> Result<NameLinkRow, RepositoryError> {
+    pub async fn find_one_by_id(&self, name_link_id: &str) -> Result<NameLinkRow, RepositoryError> {
         let result = name_link
-            .filter(name_link::id.eq(item_link_id))
+            .filter(name_link::id.eq(name_link_id))
             .first::<NameLinkRow>(&self.connection.connection)?;
         Ok(result)
     }
