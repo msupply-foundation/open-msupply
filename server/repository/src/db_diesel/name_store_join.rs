@@ -1,18 +1,25 @@
 use super::{
-    name_row::name, name_store_join::name_store_join::dsl as name_store_join_dsl, store_row::store,
+    name_link_row::{name_link, name_link::dsl as name_link_dsl},
+    name_row::{name, name::dsl as name_dsl},
+    name_store_join::name_store_join::dsl as name_store_join_dsl,
+    store_row::store,
     StorageConnection,
 };
 
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
+    NameLinkRow, NameRow,
 };
 
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{InnerJoin, IntoBoxed},
+    prelude::*,
+};
 
 table! {
     name_store_join (id) {
         id -> Text,
-        name_id -> Text,
+        name_link_id -> Text,
         store_id -> Text,
         name_is_customer -> Bool,
         name_is_supplier -> Bool,
@@ -31,6 +38,7 @@ table! {
 #[table_name = "name_store_join"]
 pub struct NameStoreJoinRow {
     pub id: String,
+    #[column_name = "name_link_id"]
     pub name_id: String,
     pub store_id: String,
     pub name_is_customer: bool,
@@ -38,7 +46,9 @@ pub struct NameStoreJoinRow {
 }
 
 joinable!(name_store_join -> store (store_id));
-joinable!(name_store_join -> name (name_id));
+joinable!(name_store_join -> name_link (name_link_id));
+
+type NameStoreJoin = (NameStoreJoinRow, (NameLinkRow, NameRow));
 
 #[derive(Clone, Default)]
 pub struct NameStoreJoinFilter {
@@ -114,9 +124,9 @@ impl<'a> NameStoreJoinRepository<'a> {
     ) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        let result = query.load::<NameStoreJoinRow>(&self.connection.connection)?;
+        let result = query.load::<NameStoreJoin>(&self.connection.connection)?;
 
-        Ok(result)
+        Ok(result.into_iter().map(to_domain).collect())
     }
 
     pub fn sync_upsert_one(&self, row: &NameStoreJoinRow) -> Result<(), RepositoryError> {
@@ -137,18 +147,34 @@ impl<'a> NameStoreJoinRepository<'a> {
     }
 }
 
-type BoxedNameStoreJoinQuery = IntoBoxed<'static, name_store_join::table, DBType>;
+type BoxedNameStoreJoinQuery = IntoBoxed<
+    'static,
+    InnerJoin<name_store_join::table, InnerJoin<name_link::table, name::table>>,
+    DBType,
+>;
 
 fn create_filtered_query<'a>(filter: Option<NameStoreJoinFilter>) -> BoxedNameStoreJoinQuery {
-    let mut query = name_store_join_dsl::name_store_join.into_boxed();
+    let mut query = name_store_join_dsl::name_store_join
+        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+        .into_boxed();
 
     if let Some(f) = filter {
         let NameStoreJoinFilter { name_id } = f;
 
-        apply_equal_filter!(query, name_id, name_store_join_dsl::name_id);
+        apply_equal_filter!(query, name_id, name_dsl::id);
     }
 
     query
+}
+
+fn to_domain((name_store_join_row, (_, name_row)): NameStoreJoin) -> NameStoreJoinRow {
+    NameStoreJoinRow {
+        id: name_store_join_row.id,
+        name_id: name_row.id,
+        store_id: name_store_join_row.store_id,
+        name_is_customer: name_store_join_row.name_is_customer,
+        name_is_supplier: name_store_join_row.name_is_supplier,
+    }
 }
 
 impl NameStoreJoinFilter {

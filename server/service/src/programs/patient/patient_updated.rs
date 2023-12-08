@@ -1,7 +1,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    EqualFilter, Gender, NameRow, NameRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    NameStoreJoinRow, NameType, Patient, RepositoryError, StorageConnection,
+    EqualFilter, Gender, NameLinkRow, NameLinkRowRepository, NameRow, NameRowRepository,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameType, Patient,
+    RepositoryError, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
@@ -47,6 +48,12 @@ pub fn update_patient_row(
 
     let name_upsert = patient_to_name_row(store_id, update_timestamp, patient, existing_name)?;
     name_repo.upsert_one(&name_upsert)?;
+
+    let name_link_row = NameLinkRow {
+        id: name_upsert.id.clone(),
+        name_id: name_upsert.id.clone(),
+    };
+    NameLinkRowRepository::new(con).upsert_one(&name_link_row)?;
 
     Ok(())
 }
@@ -227,8 +234,8 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
             .date_of_death
             .map(|date| date.format("%Y-%m-%d").to_string()),
 
-        middle_name: middle_name,
-        date_of_birth_is_estimated: date_of_birth_is_estimated,
+        middle_name,
+        date_of_birth_is_estimated,
         is_deceased: Some(patient.is_deceased || is_deceased.unwrap_or(false)),
         notes,
         passport_number,

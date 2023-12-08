@@ -1,6 +1,12 @@
-use super::{name_link_row::name_link::dsl::*, name_row::name, StorageConnection};
+use super::{
+    clinician_row::clinician, master_list_row::master_list, name_link_row::name_link::dsl::*,
+    name_row::name, StorageConnection,
+};
 
-use crate::repository_error::RepositoryError;
+use crate::{
+    master_list_name_join::master_list_name_join, name_store_join::name_store_join,
+    name_tag_join::name_tag_join, program_row::program, repository_error::RepositoryError,
+};
 
 use diesel::prelude::*;
 
@@ -11,6 +17,12 @@ table! {
     }
 }
 joinable!(name_link -> name (name_id));
+allow_tables_to_appear_in_same_query!(name_link, clinician);
+allow_tables_to_appear_in_same_query!(name_link, master_list);
+allow_tables_to_appear_in_same_query!(name_link, master_list_name_join);
+allow_tables_to_appear_in_same_query!(name_link, name_store_join);
+allow_tables_to_appear_in_same_query!(name_link, name_tag_join);
+allow_tables_to_appear_in_same_query!(name_link, program);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "name_link"]
