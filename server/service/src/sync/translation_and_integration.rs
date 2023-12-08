@@ -177,6 +177,7 @@ impl PullUpsertRecord {
             NameTagJoin(record) => NameTagJoinRepository::new(con).upsert_one(record),
             Unit(record) => UnitRowRepository::new(con).upsert_one(record),
             Item(record) => ItemRowRepository::new(con).upsert_one(record),
+            ItemLink(record) => ItemLinkRowRepository::new(con).upsert_one(record),
             Store(record) => StoreRowRepository::new(con).upsert_one(record),
             MasterList(record) => MasterListRowRepository::new(con).upsert_one(record),
             MasterListLine(record) => MasterListLineRowRepository::new(con).upsert_one(record),

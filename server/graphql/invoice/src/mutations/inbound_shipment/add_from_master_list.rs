@@ -298,7 +298,7 @@ mod test {
                     r.r#type = InvoiceLineRowType::StockIn;
                 }),
                 invoice_row: mock_empty_draft_inbound_shipment(),
-                item_row_option: Some(mock_item_a()),
+                item_row: mock_item_a(),
                 location_row_option: None,
                 stock_line_option: None,
             }])

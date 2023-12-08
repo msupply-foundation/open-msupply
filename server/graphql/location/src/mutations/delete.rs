@@ -244,11 +244,11 @@ mod test {
           }
         "#;
 
-        pub fn successfull_invoice_line() -> InvoiceLine {
+        pub fn successful_invoice_line() -> InvoiceLine {
             InvoiceLine {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
-                item_row_option: Some(mock_item_a()),
+                item_row: mock_item_a(),
                 location_row_option: None,
                 stock_line_option: None,
             }
@@ -263,12 +263,12 @@ mod test {
                     name_row: None,
                     barcode_row: None,
                 }],
-                invoice_lines: vec![successfull_invoice_line()],
+                invoice_lines: vec![successful_invoice_line()],
             }))
         }));
 
         // let invoice_line_ids = stock_lines.iter();
-        let out_line = successfull_invoice_line();
+        let out_line = successful_invoice_line();
         let expected = json!({
             "deleteLocation": {
               "error": {
