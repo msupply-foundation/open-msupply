@@ -19,9 +19,9 @@ import {
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 import { BreachDot } from './types';
-import { parseBreachType } from 'packages/coldchain/src/common';
+import { parseBreachType } from '@openmsupply-client/coldchain';
 import {
   TemperatureBreachFragment,
   useTemperatureBreach,

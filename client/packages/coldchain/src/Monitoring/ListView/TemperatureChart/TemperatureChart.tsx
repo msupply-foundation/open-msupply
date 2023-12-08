@@ -180,6 +180,7 @@ const Chart = ({
                       borderStyle: 'solid',
                       borderColor: theme.palette.gray.light,
                       padding: 3,
+                      textAlign: 'left',
                     }}
                   >
                     <svg
