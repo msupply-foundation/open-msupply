@@ -12,6 +12,7 @@ mod master_list_line_add_item_link_id;
 mod master_list_name_join_add_name_link_id;
 mod name_link;
 mod name_store_join_add_name_link_id;
+mod name_tag_join_add_name_link_id;
 mod plugin_data;
 mod stock_line_add_item_link_id;
 mod stocktake_line_add_item_link_id;
@@ -43,6 +44,7 @@ impl Migration for V1_06_00 {
         invoice_add_name_link_id::migrate(connection)?;
         name_store_join_add_name_link_id::migrate(connection)?;
         master_list_name_join_add_name_link_id::migrate(connection)?;
+        name_tag_join_add_name_link_id::migrate(connection)?;
         Ok(())
     }
 }

@@ -1,12 +1,12 @@
 use super::{name_tag_join::name_tag_join::dsl as name_tag_join_dsl, StorageConnection};
-use crate::{db_diesel::name_row::name, repository_error::RepositoryError};
+use crate::{db_diesel::name_link_row::name_link, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 
 table! {
     name_tag_join (id) {
         id -> Text,
-        name_id -> Text,
+        name_link_id -> Text,
         name_tag_id -> Text,
     }
 }
@@ -15,11 +15,12 @@ table! {
 #[table_name = "name_tag_join"]
 pub struct NameTagJoinRow {
     pub id: String,
+    #[column_name = "name_link_id"]
     pub name_id: String,
     pub name_tag_id: String,
 }
 
-joinable!(name_tag_join -> name (name_id));
+joinable!(name_tag_join -> name_link (name_link_id));
 
 pub struct NameTagJoinRepository<'a> {
     connection: &'a StorageConnection,
