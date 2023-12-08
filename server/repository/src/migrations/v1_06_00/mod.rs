@@ -4,6 +4,7 @@ use crate::StorageConnection;
 
 mod contact_trace;
 mod invoice_add_name_link_id;
+mod invoice_line_add_item_link_id;
 mod item_add_is_active;
 mod item_link_create_table;
 mod master_list;
@@ -32,6 +33,7 @@ impl Migration for V1_06_00 {
         item_link_create_table::migrate(connection)?;
         stocktake_line_add_item_link_id::migrate(connection)?;
         stock_line_add_item_link_id::migrate(connection)?;
+        invoice_line_add_item_link_id::migrate(connection)?;
         master_list_line_add_item_link_id::migrate(connection)?;
 
         // Name link migrations
@@ -46,9 +48,11 @@ impl Migration for V1_06_00 {
 async fn migration_1_06_00() {
     use crate::migrations::*;
     use crate::test_db::*;
+    use chrono::NaiveDateTime;
     use diesel::prelude::*;
     use item_link::dsl as item_link_dsl;
-    use stock_on_hand::dsl as soh_dsl;
+    use stock_movement::dsl as stock_movement_dsl;
+    use stock_on_hand::dsl as stock_on_hand_dsl;
 
     table! {
         item_link {
@@ -70,13 +74,30 @@ async fn migration_1_06_00() {
             available_stock_on_hand -> BigInt,
         }
     }
-
     #[derive(Queryable, Debug, PartialEq)]
     struct StockOnHandRow {
         id: String,
         item_id: String,
         store_id: String,
         available_stock_on_hand: i64,
+    }
+
+    table! {
+        stock_movement (id) {
+            id -> Text,
+            item_id -> Text,
+            store_id -> Text,
+            quantity -> BigInt,
+            datetime -> Timestamp,
+        }
+    }
+    #[derive(Queryable, Debug, PartialEq)]
+    pub struct StockMovementRow {
+        pub id: String,
+        pub item_id: String,
+        pub store_id: String,
+        pub quantity: i64,
+        pub datetime: NaiveDateTime,
     }
 
     let previous_version = v1_05_00::V1_05_00.version();
@@ -152,19 +173,55 @@ async fn migration_1_06_00() {
     )
     .unwrap();
 
-    let old_soh: Vec<StockOnHandRow> = soh_dsl::stock_on_hand
-        .order(soh_dsl::id.asc())
+    sql!(
+        &connection,
+        r#"
+        INSERT INTO
+            invoice (id, name_id, store_id, invoice_number, on_hold, created_datetime, is_system_generated, status, type)
+        VALUES
+            ('invoice1', 'name1', 'store1', 1, false, '2020-07-09 17:10:40', false, 'PICKED', 'INBOUND_SHIPMENT');
+        "#
+    )
+    .unwrap();
+
+    sql!(
+        &connection,
+        r#"
+        INSERT INTO
+            invoice_line (
+                id,
+                invoice_id,
+                item_id,
+                item_name,
+                item_code,
+                cost_price_per_pack,
+                sell_price_per_pack,
+                total_after_tax,
+                total_before_tax,
+                number_of_packs,
+                pack_size,
+                type
+            )
+        VALUES
+            ('invoice_line1', 'invoice1', 'item1', 'item1name', 'item1code', 1, 2, 4, 4, 2, 12, 'STOCK_IN'),
+            ('invoice_line2', 'invoice1', 'item1', 'item1name', 'item1code', 1, 3, 6, 6, 2, 12, 'STOCK_IN'),
+            ('invoice_line3', 'invoice1', 'item1', 'item1name', 'item1code', 1, 4, 8, 8, 2, 12, 'STOCK_IN'),
+            ('invoice_line4', 'invoice1', 'item2', 'item2name', 'item2code', 1, 5, 10, 10, 2, 12, 'STOCK_IN');
+    "#
+    )
+    .unwrap();
+
+    let old_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
+        .order(stock_on_hand_dsl::id.asc())
+        .load(&connection.connection)
+        .unwrap();
+
+    let old_stock_movements: Vec<StockMovementRow> = stock_movement_dsl::stock_movement
+        .order(stock_movement_dsl::id.asc())
         .load(&connection.connection)
         .unwrap();
 
     migrate(&connection, Some(version.clone())).unwrap();
-
-    let new_soh: Vec<StockOnHandRow> = soh_dsl::stock_on_hand
-        .order(soh_dsl::id.asc())
-        .load(&connection.connection)
-        .unwrap();
-    assert_eq!(old_soh, new_soh);
-
     assert_eq!(get_database_version(&connection), version);
 
     let expected_item_links = vec![
@@ -185,11 +242,23 @@ async fn migration_1_06_00() {
             item_id: "item4".to_string(),
         },
     ];
-
     let migration_item_links: Vec<ItemLinkRow> = item_link_dsl::item_link
         .order(item_link_dsl::id)
         .load(&connection.connection)
         .unwrap();
-
     assert_eq!(expected_item_links, migration_item_links);
+
+    // Tests the view rewrite works correctly and implicitly that the stock_line.item_link_id got populated
+    let new_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
+        .order(stock_on_hand_dsl::id.asc())
+        .load(&connection.connection)
+        .unwrap();
+    assert_eq!(old_soh, new_soh);
+
+    // Tests the view rewrites work correctly and implicitly that the invoice_line.item_link_id got populated
+    let new_stock_movements: Vec<StockMovementRow> = stock_movement_dsl::stock_movement
+        .order(stock_movement_dsl::id.asc())
+        .load(&connection.connection)
+        .unwrap();
+    assert_eq!(old_stock_movements, new_stock_movements);
 }
