@@ -1,6 +1,6 @@
 use super::{item_row::item::dsl::*, unit_row::unit, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{item_link, repository_error::RepositoryError};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -15,6 +15,7 @@ table! {
         #[sql_name = "type"] type_ -> crate::db_diesel::item_row::ItemRowTypeMapping,
         // TODO, this is temporary, remove
         legacy_record -> Text,
+        is_active -> Bool,
     }
 }
 
@@ -27,6 +28,7 @@ table! {
 
 joinable!(item -> unit (unit_id));
 joinable!(item_is_visible -> item (id));
+allow_tables_to_appear_in_same_query!(item, item_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -48,6 +50,7 @@ pub struct ItemRow {
     pub r#type: ItemRowType,
     // TODO, this is temporary, remove
     pub legacy_record: String,
+    pub is_active: bool,
 }
 
 impl Default for ItemRow {
@@ -60,6 +63,7 @@ impl Default for ItemRow {
             default_pack_size: Default::default(),
             r#type: ItemRowType::Stock,
             legacy_record: Default::default(),
+            is_active: true,
         }
     }
 }
@@ -106,7 +110,15 @@ impl<'a> ItemRowRepository<'a> {
 
     pub fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = item
-            .filter(id.eq(item_id))
+            .filter(id.eq(item_id).and(is_active.eq(true)))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_inactive_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+        let result = item
+            .filter(id.eq(item_id).and(is_active.eq(false)))
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
@@ -120,7 +132,9 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(item.filter(id.eq(item_id))).execute(&self.connection.connection)?;
+        diesel::update(item.filter(id.eq(item_id)))
+            .set(is_active.eq(false))
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 }

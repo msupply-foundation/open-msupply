@@ -259,7 +259,7 @@ mod test {
                             r.note = None;
                         }),
                         invoice_row: InvoiceRow::default(),
-                        item_row_option: Some(ItemRow::default()),
+                        item_row: ItemRow::default(),
                         location_row_option: Some(inline_init(|r: &mut LocationRow| {
                             r.name = "line_location_name".to_string();
                         })),
