@@ -1,5 +1,6 @@
 use super::{
     barcode_row::{barcode, barcode::dsl as barcode_dsl},
+    item_link_row::{item_link, item_link::dsl as item_link_dsl},
     item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     name_row::{name, name::dsl as name_dsl},
@@ -14,8 +15,8 @@ use crate::{
     },
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, NameRow, Pagination,
-    Sort, StringFilter,
+    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow, NameRow,
+    Pagination, Sort, StringFilter,
 };
 
 use diesel::{
@@ -59,7 +60,7 @@ pub type StockLineSort = Sort<StockLineSortField>;
 
 type StockLineJoin = (
     StockLineRow,
-    ItemRow,
+    (ItemLinkRow, ItemRow),
     Option<LocationRow>,
     Option<NameRow>,
     Option<BarcodeRow>,
@@ -160,7 +161,13 @@ impl<'a> StockLineRepository<'a> {
 type BoxedStockLineQuery = IntoBoxed<
     'static,
     LeftJoin<
-        LeftJoin<LeftJoin<InnerJoin<stock_line::table, item::table>, location::table>, name::table>,
+        LeftJoin<
+            LeftJoin<
+                InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
+                location::table,
+            >,
+            name::table,
+        >,
         barcode::table,
     >,
     DBType,
@@ -168,7 +175,7 @@ type BoxedStockLineQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
     let mut query = stock_line_dsl::stock_line
-        .inner_join(item_dsl::item)
+        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
         .left_join(location_dsl::location)
         .left_join(name_dsl::name)
         .left_join(barcode_dsl::barcode)
@@ -188,7 +195,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         } = f;
 
         apply_equal_filter!(query, id, stock_line_dsl::id);
-        apply_equal_filter!(query, item_id, stock_line_dsl::item_id);
+        apply_equal_filter!(query, item_id, item::id);
         apply_equal_filter!(query, location_id, stock_line_dsl::location_id);
         apply_date_filter!(query, expiry_date, stock_line_dsl::expiry_date);
         apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
@@ -226,19 +233,20 @@ fn apply_item_filter(
             let mut item_filter = ItemFilter::new();
             item_filter.code_or_name = Some(item_code_or_name.clone());
             item_filter.is_visible = Some(true);
+            item_filter.is_active = Some(true);
             let items = ItemRepository::new(connection)
                 .query_by_filter(item_filter, Some(store_id))
                 .unwrap();
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
-            return query.filter(stock_line_dsl::item_id.eq_any(item_ids));
+            return query.filter(item::id.eq_any(item_ids));
         }
     }
     query
 }
 
 pub fn to_domain(
-    (stock_line_row, item_row, location_row, name_row, barcode_row): StockLineJoin,
+    (stock_line_row, (_, item_row), location_row, name_row, barcode_row): StockLineJoin,
 ) -> StockLine {
     StockLine {
         stock_line_row,

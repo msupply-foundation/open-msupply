@@ -1,6 +1,6 @@
 use super::{
-    clinician_row::clinician, invoice_row::invoice::dsl::*, name_link_row::name_link,
-    store_row::store, user_row::user_account, StorageConnection,
+    clinician_row::clinician, invoice_row::invoice::dsl::*, item_link_row::item_link,
+    name_link_row::name_link, store_row::store, user_row::user_account, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -44,6 +44,8 @@ joinable!(invoice -> name_link (name_link_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
 joinable!(invoice -> clinician (clinician_id));
+allow_tables_to_appear_in_same_query!(invoice, item_link);
+allow_tables_to_appear_in_same_query!(invoice, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -52,8 +54,8 @@ pub enum InvoiceRowType {
     OutboundShipment,
     InboundShipment,
     Prescription,
-    // Initially we had single inventory adjustment InvoiceRowType, this was changed to two seperate types
-    // central server may have old inventory adjustement type, thus map it to inventory additions
+    // Initially we had single inventory adjustment InvoiceRowType, this was changed to two separate types
+    // central server may have old inventory adjustment type, thus map it to inventory additions
     #[serde(alias = "INVENTORY_ADJUSTMENT")]
     InventoryAddition,
     InventoryReduction,
