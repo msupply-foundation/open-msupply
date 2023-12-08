@@ -579,6 +579,9 @@ mod repository_test {
         // setup
         let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&mock_name_link_from_name(&data::name_1()))
+            .unwrap();
         MasterListRowRepository::new(&connection)
             .upsert_one(&data::master_list_1())
             .unwrap();

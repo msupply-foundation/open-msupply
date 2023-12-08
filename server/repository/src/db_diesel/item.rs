@@ -226,9 +226,11 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
                     .on(master_list_name_join_dsl::master_list_id.eq(master_list_dsl::id)),
             )
             .inner_join(
-                store_dsl::store.on(store_dsl::name_id.eq(master_list_name_join_dsl::name_id)),
+                store_dsl::store.on(store_dsl::name_id
+                    .eq(master_list_name_join_dsl::name_link_id)
+                    .and(store_dsl::id.eq(store_id.clone()))),
             )
-            .filter(store_dsl::id.eq(store_id))
+            .filter(store_dsl::id.eq(store_id.clone()))
             .into_boxed();
 
         query = match is_visible {
@@ -255,12 +257,12 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::{mock_item_b, mock_item_link_from_item, MockDataInserts},
+        mock::{mock_item_b, mock_item_link_from_item, mock_name_link_from_name, MockDataInserts},
         test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
         ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
-        StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
+        MasterListRowRepository, NameLinkRowRepository, NameRow, NameRowRepository, Pagination,
+        StoreRow, StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -577,6 +579,10 @@ mod tests {
 
         NameRowRepository::new(&storage_connection)
             .upsert_one(&name_row)
+            .unwrap();
+
+        NameLinkRowRepository::new(&storage_connection)
+            .upsert_one(&mock_name_link_from_name(&name_row))
             .unwrap();
 
         StoreRowRepository::new(&storage_connection)

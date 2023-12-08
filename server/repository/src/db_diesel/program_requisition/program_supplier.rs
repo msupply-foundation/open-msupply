@@ -44,7 +44,7 @@ impl<'a> ProgramSupplierRepository<'a> {
         }: ProgramSupplierFilter,
     ) -> Result<Vec<ProgramSupplier>, RepositoryError> {
         // If this filter is lifter to service layer, we may have an issue this after `query.select` below, name_store_join_row and store_row
-        // becomes not null, but can be if this fitler is not exposed, causing diesel deserialisation error TODO add issue with diesel
+        // becomes not null, but can be if this filter is not exposed, causing diesel deserialization error TODO add issue with diesel
         let name_filter = NameFilter::new()
             .is_store(true)
             .is_visible(true)
@@ -54,7 +54,7 @@ impl<'a> ProgramSupplierRepository<'a> {
             NameRepository::create_filtered_query(store_id.to_string(), Some(name_filter))
                 .inner_join(
                     master_list_name_join_dsl::master_list_name_join
-                        .on(master_list_name_join_dsl::name_id.eq(name_link_dsl::id)),
+                        .on(master_list_name_join_dsl::name_link_id.eq(name_link_dsl::id)),
                 )
                 .inner_join(
                     master_list_dsl::master_list

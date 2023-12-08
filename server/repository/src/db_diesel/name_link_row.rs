@@ -1,6 +1,6 @@
 use super::{
-    clinician_row::clinician, master_list_row::master_list, name_link_row::name_link::dsl::*,
-    name_row::name, StorageConnection,
+    clinician_row::clinician, master_list_line_row::master_list_line, master_list_row::master_list,
+    name_link_row::name_link::dsl::*, name_row::name, StorageConnection,
 };
 
 use crate::{
@@ -19,6 +19,7 @@ table! {
 joinable!(name_link -> name (name_id));
 allow_tables_to_appear_in_same_query!(name_link, clinician);
 allow_tables_to_appear_in_same_query!(name_link, master_list);
+allow_tables_to_appear_in_same_query!(name_link, master_list_line);
 allow_tables_to_appear_in_same_query!(name_link, master_list_name_join);
 allow_tables_to_appear_in_same_query!(name_link, name_store_join);
 allow_tables_to_appear_in_same_query!(name_link, name_tag_join);
