@@ -121,7 +121,7 @@ fn sensor_add_log_if_new(
             temperature_breach_id: None,
         };
         TemperatureLogRowRepository::new(connection).upsert_one(&new_temperature_log)?;
-        println!("Added sensor log {:?} ", new_temperature_log);
+        log::info!("Added sensor log {:?} ", new_temperature_log);
         Ok(())
     }
 }
@@ -165,7 +165,7 @@ fn sensor_add_breach_if_new(
             threshold_maximum: breach_config.maximum_temperature,
         };
         TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
-        println!("Added sensor breach {:?} ", new_temperature_breach);
+        log::info!("Added sensor breach {:?} ", new_temperature_breach);
         Ok(())
     }
 }
@@ -227,7 +227,7 @@ fn sensor_add_breach_config_if_new(
     };
     TemperatureBreachConfigRowRepository::new(connection)
         .upsert_one(&new_temperature_breach_config)?;
-    println!(
+    log::info!(
         "Added sensor breach config {:?} ",
         new_temperature_breach_config
     );
@@ -291,8 +291,8 @@ pub fn read_sensor(
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
     let filename = fridgetag_file.to_string_lossy();
 
-    let mut temperature_sensor = temperature_sensor::read_sensor_file(&filename, true)
-        .map_err(ReadSensorError::StringError)?;
+    let mut temperature_sensor =
+        temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
 
     let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
@@ -306,7 +306,7 @@ pub fn read_sensor(
     // Filter sensor data by previous last connected time
     let last_connected = record.sensor_row.last_connection_datetime;
     temperature_sensor =
-        temperature_sensor::filter_sensor(temperature_sensor, last_connected, None, true);
+        temperature_sensor::filter_sensor(temperature_sensor, last_connected, None);
 
     let temperature_sensor_configs = temperature_sensor.configs.unwrap_or_default();
     for temperature_sensor_config in temperature_sensor_configs.iter() {

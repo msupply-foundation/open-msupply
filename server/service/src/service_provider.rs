@@ -23,6 +23,7 @@ use crate::{
     master_list::{MasterListService, MasterListServiceTrait},
     missing_program::create_missing_master_list_and_program,
     name::get_names,
+    plugin_data::{PluginDataService, PluginDataServiceTrait},
     processors::ProcessorsTrigger,
     programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
@@ -114,6 +115,8 @@ pub struct ServiceProvider {
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
     // Log
     pub log_service: Box<dyn LogServiceTrait>,
+    // Plugin
+    pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -187,6 +190,7 @@ impl ServiceProvider {
             barcode_service: Box::new(BarcodeService {}),
             repack_service: Box::new(RepackService {}),
             log_service: Box::new(LogService {}),
+            plugin_data_service: Box::new(PluginDataService {}),
         }
     }
 

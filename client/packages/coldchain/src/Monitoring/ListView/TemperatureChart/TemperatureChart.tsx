@@ -1,5 +1,5 @@
-import React from 'react';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import React, { useEffect } from 'react';
+import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Area,
   BasicSpinner,
@@ -17,6 +17,7 @@ import {
   XAxis,
   YAxis,
   useTheme,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { useTemperatureChartData } from './useTemperatureChartData';
 import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
@@ -44,11 +45,12 @@ const Chart = ({
 }) => {
   const t = useTranslation('coldchain');
   const theme = useTheme();
-  const { dayMonthTime } = useFormatDateTime();
+  const { dayMonthTime, customDate } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
   const [currentBreach, setCurrentBreach] = React.useState<BreachDot | null>(
     null
   );
+  const { urlQuery, updateQuery } = useUrlQuery();
 
   const formatTemperature = (value: number | null) =>
     value === null
@@ -94,14 +96,6 @@ const Chart = ({
     [setCurrentBreach]
   );
 
-  if (isLoading) {
-    return <BasicSpinner />;
-  }
-
-  if (!hasData) {
-    return <NothingHere body={t('error.no-temperature-logs')} />;
-  }
-
   const tickSpace =
     (yAxisDomain[1] - yAxisDomain[0]) / (NUMBER_OF_HORIZONTAL_LINES + 1);
   const ticks = Array.from({ length: NUMBER_OF_HORIZONTAL_LINES }).map(
@@ -145,6 +139,22 @@ const Chart = ({
     );
   };
 
+  useEffect(() => {
+    if (!urlQuery['datetime']) {
+      const from = customDate(DateUtils.startOfToday(), 'yyyy-MM-dd HH:mm');
+      const to = customDate(DateUtils.endOfDay(new Date()), 'yyyy-MM-dd HH:mm');
+      updateQuery({ datetime: { from, to } });
+    }
+  }, []);
+
+  if (isLoading) {
+    return <BasicSpinner />;
+  }
+
+  if (!hasData) {
+    return <NothingHere body={t('error.no-temperature-logs')} />;
+  }
+
   return (
     <Box flex={1} padding={2} sx={{ textAlign: 'center' }}>
       <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
@@ -180,6 +190,7 @@ const Chart = ({
                       borderStyle: 'solid',
                       borderColor: theme.palette.gray.light,
                       padding: 3,
+                      textAlign: 'left',
                     }}
                   >
                     <svg
@@ -224,6 +235,7 @@ const Chart = ({
             dataKey="temperature"
             stroke={theme.palette.chart.cold.main}
             fill={theme.palette.chart.cold.light}
+            baseValue="dataMin"
           />
           {sensors.map(sensor => (
             <Line
