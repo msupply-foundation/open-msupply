@@ -17,7 +17,10 @@ export const useTemperatureChartData = () => {
   const theme = useTheme();
   const { filter } = useUrlQueryParams({
     filters: [
-      { key: 'datetime', condition: 'between' },
+      {
+        key: 'datetime',
+        condition: 'between',
+      },
       {
         key: 'sensor.name',
       },
@@ -35,15 +38,29 @@ export const useTemperatureChartData = () => {
   // will result in no data
   const { datetime, ...filterBy } =
     filter?.filterBy as TemperatureLogFilterInput;
+
   let fromDatetime = DateUtils.startOfToday().toISOString();
   let toDatetime = DateUtils.endOfDay(new Date()).toISOString();
 
   if (!!datetime && typeof datetime === 'object') {
-    if ('afterOrEqualTo' in datetime)
-      fromDatetime = String(datetime['afterOrEqualTo']);
+    const hasAfterOrEqualTo =
+      'afterOrEqualTo' in datetime && !!datetime['afterOrEqualTo'];
 
-    if ('beforeOrEqualTo' in datetime)
+    if (hasAfterOrEqualTo) fromDatetime = String(datetime['afterOrEqualTo']);
+
+    if ('beforeOrEqualTo' in datetime && !!datetime['beforeOrEqualTo']) {
       toDatetime = String(datetime['beforeOrEqualTo']);
+
+      // the 'from' date needs to be before the 'to' date
+      // if this isn't the case, and if 'from' is not set,
+      // then set to a day prior to the 'to' date
+      if (fromDatetime >= toDatetime && !hasAfterOrEqualTo) {
+        fromDatetime = DateUtils.addDays(
+          new Date(toDatetime),
+          -1
+        ).toISOString();
+      }
+    }
   }
 
   const { data, isLoading } = useTemperatureChart.document.chart({
@@ -53,22 +70,20 @@ export const useTemperatureChartData = () => {
     toDatetime,
   });
 
-  const sensors: Sensor[] = [];
   let minTemperature = BREACH_MIN;
   let maxTemperature = BREACH_MAX;
 
-  data?.sensors?.forEach(({ points, sensor }) => {
-    if (!sensor) return;
+  const sensors: Sensor[] =
+    data?.sensors?.map(({ points, sensor }, index) => {
+      const id = sensor?.id ?? '';
+      const name = sensor?.name ?? '';
+      const colour =
+        theme.palette.chart.lines[index % theme.palette.chart.lines.length];
 
-    const sensorIndex = sensors.findIndex(s => s.id === sensor.id);
-    if (sensorIndex === -1) {
-      sensors.push({
-        colour:
-          theme.palette.chart.lines[
-            sensors.length % theme.palette.chart.lines.length
-          ],
-        id: sensor.id,
-        name: sensor.name,
+      return {
+        colour,
+        id,
+        name,
         logs: points.map(({ midPoint, temperature, breachIds }) => {
           if (temperature) {
             minTemperature = Math.min(minTemperature, temperature);
@@ -76,7 +91,7 @@ export const useTemperatureChartData = () => {
           }
           const breach = !!breachIds?.length
             ? {
-                sensor: { id: sensor.id, name: sensor.name },
+                sensor: { id, name },
                 ids: breachIds,
               }
             : null;
@@ -84,13 +99,12 @@ export const useTemperatureChartData = () => {
           return {
             breach,
             date: DateUtils.getDateOrNull(midPoint)?.getTime() ?? 0,
-            sensorId: sensor.id,
+            sensorId: id,
             temperature: temperature ?? null,
           };
         }),
-      });
-    }
-  });
+      };
+    }) ?? [];
 
   const breachConfig = generateBreachConfig(data);
 
