@@ -126,10 +126,61 @@ pub fn mock_form_schema_simplified_patient() -> FormSchema {
     }
 }
 
+pub fn mock_form_schema_simplified_enrolment() -> FormSchema {
+    FormSchema {
+        id: "simplified_enrolment_form_schema".to_string(),
+        r#type: "JsonForms".to_string(),
+        json_schema: json!({
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "definitions": {
+            "ProgramEnrolment": {
+              "properties": {
+                "enrolmentDatetime": {
+                  "description": "Enrolment date and time",
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "programEnrolmentId": {
+                  "description": "Patient's program id",
+                  "type": "string"
+                },
+                "status": {
+                  "$ref": "#/definitions/ProgramEnrolmentStatus",
+                  "description": "Current status of the program enrolment"
+                }
+              },
+              "required": [
+                "enrolmentDatetime",
+                "status"
+              ],
+              "type": "object"
+            },
+            "ProgramEnrolmentStatus": {
+              "enum": [
+                "ACTIVE",
+                "OPTED_OUT",
+                "TRANSFERRED_OUT",
+                "PAUSED"
+              ],
+              "type": "string"
+            },
+          },
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ProgramEnrolment"
+            }
+          ]
+        }),
+        ui_schema: json!({}),
+    }
+}
+
 pub fn mock_form_schemas() -> Vec<FormSchema> {
     vec![
         mock_form_schema_empty(),
         mock_form_schema_simple(),
         mock_form_schema_simplified_patient(),
+        mock_form_schema_simplified_enrolment(),
     ]
 }

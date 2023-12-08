@@ -9,7 +9,7 @@ export const usePatientSearchQuery = () => {
     // available. Otherwise just use the basic Patient fields
     data?.nodes.map(
       patient =>
-        (patient.patient.document?.data as PatientSchema) ?? patient.patient
+        (patient.patient.documentDraft as PatientSchema) ?? patient.patient
     ) ?? [];
 
   return {

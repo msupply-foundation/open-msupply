@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { TransitionProps } from '@mui/material/transitions';
@@ -103,8 +103,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     disableEscapeKey = false,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
-  const showDialog = () => setOpen(true);
-  const hideDialog = () => setOpen(false);
+  const showDialog = useCallback(() => setOpen(true), []);
+  const hideDialog = useCallback(() => setOpen(false), []);
   const { isRtl } = useIntlUtils();
 
   useEffect(() => {

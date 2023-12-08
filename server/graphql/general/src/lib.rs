@@ -273,6 +273,10 @@ impl GeneralQueries {
         last_successful_user_sync(ctx)
     }
 
+    pub async fn plugins(&self, ctx: &Context<'_>) -> Result<Vec<PluginNode>> {
+        get_plugins(ctx)
+    }
+
     pub async fn temperature_chart(
         &self,
         ctx: &Context<'_>,
