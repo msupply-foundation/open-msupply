@@ -4,6 +4,7 @@ use crate::StorageConnection;
 
 mod contact_trace;
 mod master_list;
+mod patient_id_indices;
 mod plugin_data;
 mod temperature_breach;
 
@@ -19,6 +20,7 @@ impl Migration for V1_06_00 {
         plugin_data::migrate(connection)?;
         master_list::migrate(connection)?;
         temperature_breach::migrate(connection)?;
+        patient_id_indices::migrate(connection)?;
         Ok(())
     }
 }
