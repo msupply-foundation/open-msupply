@@ -1,6 +1,6 @@
-use super::{name_link_row::name_link, name_row::name::dsl::*, StorageConnection};
+use super::{name_row::name::dsl::*, StorageConnection};
 
-use crate::{item_link, repository_error::RepositoryError, EqualFilter};
+use crate::{item_link, name_link, repository_error::RepositoryError, EqualFilter};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -50,6 +50,7 @@ table! {
 }
 
 allow_tables_to_appear_in_same_query!(name, item_link);
+allow_tables_to_appear_in_same_query!(name, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
