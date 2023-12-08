@@ -1,7 +1,6 @@
 use super::{
-    clinician_row::clinician, invoice_line_row::invoice_line, invoice_row::invoice,
-    master_list_row::master_list, name_link_row::name_link::dsl::*, name_row::name,
-    store_row::store, StorageConnection,
+    clinician_row::clinician, master_list_row::master_list, name_link_row::name_link::dsl::*,
+    name_row::name, StorageConnection,
 };
 
 use crate::{
@@ -19,15 +18,11 @@ table! {
 }
 joinable!(name_link -> name (name_id));
 allow_tables_to_appear_in_same_query!(name_link, clinician);
-allow_tables_to_appear_in_same_query!(name_link, invoice);
-allow_tables_to_appear_in_same_query!(name_link, invoice_line);
 allow_tables_to_appear_in_same_query!(name_link, master_list);
 allow_tables_to_appear_in_same_query!(name_link, master_list_name_join);
 allow_tables_to_appear_in_same_query!(name_link, name_store_join);
-allow_tables_to_appear_in_same_query!(name_link, name);
 allow_tables_to_appear_in_same_query!(name_link, name_tag_join);
 allow_tables_to_appear_in_same_query!(name_link, program);
-allow_tables_to_appear_in_same_query!(name_link, store);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "name_link"]
