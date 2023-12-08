@@ -1,6 +1,6 @@
 use super::{
-    clinician_row::clinician, invoice_row::invoice::dsl::*, name_row::name, store_row::store,
-    user_row::user_account, StorageConnection,
+    clinician_row::clinician, invoice_row::invoice::dsl::*, name_link_row::name_link,
+    store_row::store, user_row::user_account, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -15,7 +15,7 @@ use util::Defaults;
 table! {
     invoice (id) {
         id -> Text,
-        name_id -> Text,
+        name_link_id -> Text,
         name_store_id -> Nullable<Text>,
         store_id -> Text,
         user_id -> Nullable<Text>,
@@ -40,10 +40,11 @@ table! {
     }
 }
 
-joinable!(invoice -> name (name_id));
+joinable!(invoice -> name_link (name_link_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
 joinable!(invoice -> clinician (clinician_id));
+allow_tables_to_appear_in_same_query!(invoice, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -77,6 +78,7 @@ pub enum InvoiceRowStatus {
 #[table_name = "invoice"]
 pub struct InvoiceRow {
     pub id: String,
+    #[column_name = "name_link_id"]
     pub name_id: String,
     pub name_store_id: Option<String>,
     pub store_id: String,
@@ -201,41 +203,6 @@ impl<'a> InvoiceRowRepository<'a> {
             .filter(type_.eq(r#type).and(store_id.eq(store)))
             .select(max(invoice_number))
             .first(&self.connection.connection)?;
-        Ok(result)
-    }
-}
-
-pub struct OutboundShipmentRowRepository<'a> {
-    connection: &'a StorageConnection,
-}
-
-impl<'a> OutboundShipmentRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
-        OutboundShipmentRowRepository { connection }
-    }
-
-    pub async fn find_many_by_name_id(
-        &self,
-        name: &str,
-    ) -> Result<Vec<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(
-                type_
-                    .eq(InvoiceRowType::OutboundShipment)
-                    .and(name_id.eq(name)),
-            )
-            .get_results(&self.connection.connection)?;
-        Ok(result)
-    }
-
-    pub fn find_many_by_store_id(&self, store: &str) -> Result<Vec<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(
-                type_
-                    .eq(InvoiceRowType::OutboundShipment)
-                    .and(store_id.eq(store)),
-            )
-            .get_results(&self.connection.connection)?;
         Ok(result)
     }
 }
