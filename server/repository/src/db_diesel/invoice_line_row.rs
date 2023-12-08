@@ -1,7 +1,8 @@
 use super::{
     inventory_adjustment_reason_row::inventory_adjustment_reason,
     invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_link_row::item_link,
-    location_row::location, stock_line_row::stock_line, StorageConnection,
+    location_row::location, name_link_row::name_link, stock_line_row::stock_line,
+    StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -41,6 +42,7 @@ joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
 joinable!(invoice_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
+allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]

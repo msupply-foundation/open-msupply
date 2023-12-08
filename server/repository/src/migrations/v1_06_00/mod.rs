@@ -3,11 +3,13 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod contact_trace;
+mod invoice_add_name_link_id;
 mod invoice_line_add_item_link_id;
 mod item_add_is_active;
 mod item_link_create_table;
 mod master_list;
 mod master_list_line_add_item_link_id;
+mod name_link;
 mod plugin_data;
 mod stock_line_add_item_link_id;
 mod stocktake_line_add_item_link_id;
@@ -25,12 +27,18 @@ impl Migration for V1_06_00 {
         plugin_data::migrate(connection)?;
         master_list::migrate(connection)?;
         temperature_breach::migrate(connection)?;
+
+        // Item link migrations
+        item_add_is_active::migrate(connection)?;
         item_link_create_table::migrate(connection)?;
         stocktake_line_add_item_link_id::migrate(connection)?;
         stock_line_add_item_link_id::migrate(connection)?;
         invoice_line_add_item_link_id::migrate(connection)?;
-        item_add_is_active::migrate(connection)?;
         master_list_line_add_item_link_id::migrate(connection)?;
+
+        // Name link migrations
+        name_link::migrate(connection)?;
+        invoice_add_name_link_id::migrate(connection)?;
         Ok(())
     }
 }

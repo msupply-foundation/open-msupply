@@ -100,17 +100,18 @@ use crate::{
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow,
     LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-    MasterListRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow,
-    NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository,
-    PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
-    TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    MasterListRowRepository, NameLinkRowRepository, NameTagJoinRepository, NameTagJoinRow,
+    NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow,
+    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
+    PluginDataRowRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow,
+    SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
+    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
+    SyncLogRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
+    TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::{
@@ -615,9 +616,14 @@ pub fn insert_mock_data(
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
         if inserts.names {
-            let repo = NameRowRepository::new(connection);
+            let name_repo = NameRowRepository::new(connection);
+            let name_link_repo = NameLinkRowRepository::new(connection);
+
             for row in &mock_data.names {
-                repo.upsert_one(&row).unwrap();
+                name_repo.upsert_one(&row).unwrap();
+                name_link_repo
+                    .upsert_one(&mock_name_link_from_name(&row))
+                    .unwrap();
             }
         }
 
