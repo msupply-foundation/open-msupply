@@ -273,24 +273,25 @@ mod repository_test {
     use crate::{
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
-            mock_inbound_shipment_number_store_a, mock_master_list_master_list_line_filter_test,
-            mock_name_link_from_name, mock_outbound_shipment_number_store_a,
-            mock_request_draft_requisition, mock_request_draft_requisition2,
-            mock_test_master_list_name1, mock_test_master_list_name2,
-            mock_test_master_list_name_filter1, mock_test_master_list_name_filter2,
-            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
+            mock_inbound_shipment_number_store_a, mock_item_link_from_item,
+            mock_master_list_master_list_line_filter_test, mock_name_link_from_name,
+            mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
+            mock_request_draft_requisition2, mock_test_master_list_name1,
+            mock_test_master_list_name2, mock_test_master_list_name_filter1,
+            mock_test_master_list_name_filter2, mock_test_master_list_name_filter3,
+            mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
         test_db, ActivityLogRowRepository, InvoiceFilter, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository, InvoiceRowType,
-        ItemRowRepository, KeyValueStoreRepository, KeyValueType, MasterListFilter,
-        MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
-        MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
-        NameLinkRowRepository, NameRow, NameRowRepository, NumberRowRepository, NumberRowType,
-        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
-        RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
-        StockLineFilter, StockLineRepository, StockLineRowRepository, StorageConnection,
-        StoreRowRepository, UserAccountRowRepository,
+        ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyValueStoreRepository, KeyValueType,
+        MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+        MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
+        MasterListRowRepository, NameLinkRowRepository, NameRow, NameRowRepository,
+        NumberRowRepository, NumberRowType, RequisitionFilter, RequisitionLineFilter,
+        RequisitionLineRepository, RequisitionLineRowRepository, RequisitionRepository,
+        RequisitionRowRepository, StockLineFilter, StockLineRepository, StockLineRowRepository,
+        StorageConnection, StoreRowRepository, UserAccountRowRepository,
     };
     use crate::{DateFilter, EqualFilter, StringFilter};
     use chrono::Duration;
@@ -339,6 +340,17 @@ mod repository_test {
         assert_eq!(store_1, loaded_item);
     }
 
+    async fn insert_item_and_link(item: &ItemRow, connection: &StorageConnection) -> () {
+        let item_repo = ItemRowRepository::new(&connection);
+        item_repo.insert_one(&item).await.unwrap();
+
+        let item_link_repo = ItemLinkRowRepository::new(&connection);
+        item_link_repo
+            .insert_one(&mock_item_link_from_item(&item))
+            .await
+            .unwrap();
+    }
+
     #[actix_rt::test]
     async fn test_stock_line() {
         let settings = test_db::get_test_db_settings("omsupply-database-item-line-repository");
@@ -346,8 +358,8 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRowRepository::new(&connection);
-        item_repo.insert_one(&data::item_1()).await.unwrap();
+        insert_item_and_link(&data::item_1(), &connection).await;
+
         let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRowRepository::new(&connection);
@@ -371,8 +383,8 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRowRepository::new(&connection);
-        item_repo.insert_one(&data::item_1()).await.unwrap();
+        insert_item_and_link(&data::item_1(), &connection).await;
+
         let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
         let store_repo = StoreRowRepository::new(&connection);
@@ -532,9 +544,9 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRowRepository::new(&connection);
-        item_repo.insert_one(&data::item_1()).await.unwrap();
-        item_repo.insert_one(&data::item_2()).await.unwrap();
+        insert_item_and_link(&data::item_1(), &connection).await;
+        insert_item_and_link(&data::item_2(), &connection).await;
+
         MasterListRowRepository::new(&connection)
             .upsert_one(&data::master_list_1())
             .unwrap();
@@ -634,9 +646,9 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRowRepository::new(&connection);
-        item_repo.insert_one(&data::item_1()).await.unwrap();
-        item_repo.insert_one(&data::item_2()).await.unwrap();
+        insert_item_and_link(&data::item_1(), &connection).await;
+        insert_item_and_link(&data::item_2(), &connection).await;
+
         insert_name_and_link(&data::name_1(), &connection).await;
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
@@ -674,10 +686,10 @@ mod repository_test {
         let connection = connection_manager.connection().unwrap();
 
         // setup
-        let item_repo = ItemRowRepository::new(&connection);
-        item_repo.insert_one(&data::item_1()).await.unwrap();
-        item_repo.insert_one(&data::item_2()).await.unwrap();
-        item_repo.insert_one(&data::item_service_1()).await.unwrap();
+        insert_item_and_link(&data::item_1(), &connection).await;
+        insert_item_and_link(&data::item_2(), &connection).await;
+        insert_item_and_link(&data::item_service_1(), &connection).await;
+
         insert_name_and_link(&data::name_1(), &connection).await;
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
