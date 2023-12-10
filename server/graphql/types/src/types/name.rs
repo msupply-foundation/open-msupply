@@ -3,7 +3,10 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 use repository::{Gender, Name, NameRow, NameType};
 
-use graphql_core::{loader::StoreByIdLoader, simple_generic_errors::NodeError, ContextExt};
+use graphql_core::{
+    loader::StoreByIdLoader, simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError, ContextExt,
+};
 use serde::Serialize;
 
 use super::StoreNode;
@@ -229,8 +232,10 @@ impl NameNode {
         self.row().date_of_birth
     }
 
-    pub async fn custom_data(&self) -> Option<serde_json::Value> {
-        Some(serde_json::json!({ "check": "check" }))
+    pub async fn custom_data(&self) -> Result<Option<serde_json::Value>> {
+        self.name
+            .custom_data()
+            .map_err(|err| StandardGraphqlError::from_error(&err))
     }
 }
 
