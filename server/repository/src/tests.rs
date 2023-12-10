@@ -860,7 +860,8 @@ mod repository_test {
         let raw_result = sql_query(
             r#"select requisition.id
                     from requisition
-                    join name on requisition.name_id = name.id
+                    join name_link on requisition.name_link_id = name_link.id
+                    join name on name_link.name_id = name.id
                     where name.name = 'name_a'
                     order by requisition.id asc"#,
         )
