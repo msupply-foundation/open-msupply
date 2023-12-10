@@ -228,6 +228,10 @@ impl NameNode {
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
         self.row().date_of_birth
     }
+
+    pub async fn custom_data(&self) -> Option<serde_json::Value> {
+        Some(serde_json::json!({ "check": "check" }))
+    }
 }
 
 #[derive(Union)]
@@ -304,6 +308,7 @@ mod test {
                                     .unwrap(),
                             );
                             r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 05, 15).unwrap());
+                            r.custom_data_string = Some(r#"{"check": "check""#.to_string());
                         }),
                         name_store_join_row: None,
                         store_row: None,
@@ -333,6 +338,9 @@ mod test {
                 "address2": "address2",
                 "createdDatetime": "2022-05-18T12:07:12+00:00",
                 "dateOfBirth": "1995-05-15",
+                "customData": {
+                    "check": "check"
+                }
             }
         }
         );
@@ -359,6 +367,7 @@ mod test {
                createdDatetime
                isOnHold
                dateOfBirth
+               customData
             }
         }
         "#;

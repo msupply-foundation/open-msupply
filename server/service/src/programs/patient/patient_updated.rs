@@ -128,6 +128,7 @@ pub fn update_patient_row(
         is_deceased: patient.is_deceased.unwrap_or(false),
         date_of_death,
         national_health_number: code_2,
+        custom_data_string: None,
     };
 
     if is_sync_update {
