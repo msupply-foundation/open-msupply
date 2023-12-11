@@ -11,6 +11,7 @@ use repository::{
 };
 use serde::Serialize;
 use std::path::PathBuf;
+use super::update::update_sensor_logs_for_breach;
 use thiserror::Error;
 use util::uuid::uuid;
 
@@ -147,6 +148,7 @@ fn sensor_add_breach_if_new(
             record.temperature_breach_row.end_datetime = Some(temperature_breach.end_timestamp);
             TemperatureBreachRowRepository::new(connection)
                 .upsert_one(&record.temperature_breach_row)?;
+            update_sensor_logs_for_breach(connection, &record.temperature_breach_row.id)?;
         }
         Ok(())
     } else {
@@ -165,6 +167,7 @@ fn sensor_add_breach_if_new(
             threshold_maximum: breach_config.maximum_temperature,
         };
         TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
+        update_sensor_logs_for_breach(connection, &new_temperature_breach.id)?;
         log::info!("Added sensor breach {:?} ", new_temperature_breach);
         Ok(())
     }
@@ -324,6 +327,10 @@ pub fn read_sensor(
         number_of_breaches: temperature_sensor_breaches.len() as u32,
     };
 
+    for temperature_sensor_log in temperature_sensor_logs {
+        sensor_add_log_if_new(connection, &record.sensor_row, &temperature_sensor_log)?;
+    }
+
     for temperature_sensor_breach in temperature_sensor_breaches {
         // Look up matching config from the USB data and snapshot it as part of the breach
         if let Some(temperature_sensor_config) = temperature_sensor_configs
@@ -337,10 +344,6 @@ pub fn read_sensor(
                 &temperature_sensor_config,
             )?;
         }
-    }
-
-    for temperature_sensor_log in temperature_sensor_logs {
-        sensor_add_log_if_new(connection, &record.sensor_row, &temperature_sensor_log)?;
     }
 
     // Finally, update sensor's last connected time if it has changed
