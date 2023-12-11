@@ -99,7 +99,6 @@ impl<'a> ItemRowRepository<'a> {
             .execute(&self.connection.connection)?;
 
         insert_or_ignore_item_link(&self.connection, item_row)?;
-
         Ok(())
     }
 
@@ -117,6 +116,8 @@ impl<'a> ItemRowRepository<'a> {
         diesel::insert_into(item)
             .values(item_row)
             .execute(&self.connection.connection)?;
+
+        insert_or_ignore_item_link(&self.connection, item_row)?;
         Ok(())
     }
 
