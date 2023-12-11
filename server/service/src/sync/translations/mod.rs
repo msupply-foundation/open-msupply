@@ -87,7 +87,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(document::DocumentTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
-        Box::new(special::ItemLinkTranslation {}),
     ]
 }
 
@@ -172,7 +171,6 @@ pub(crate) enum PullUpsertRecord {
     NameTag(NameTagRow),
     NameTagJoin(NameTagJoinRow),
     Item(ItemRow),
-    ItemLink(ItemLinkRow),
     Store(StoreRow),
     MasterList(MasterListRow),
     MasterListLine(MasterListLineRow),
