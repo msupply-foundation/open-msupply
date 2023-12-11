@@ -1,10 +1,10 @@
-use super::{query::get_sensor, validate::check_sensor_exists};
+use super::{query::{get_sensor, get_sensor_logs_for_breach}, validate::check_sensor_exists};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
     SingleRecordError,
 };
 use repository::{
-    ActivityLogType, RepositoryError, Sensor, SensorRow, SensorRowRepository, StorageConnection,
+    ActivityLogType, RepositoryError, Sensor, SensorRow, SensorRowRepository, StorageConnection, TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLog, TemperatureLogRowRepository,
 };
 
 #[derive(PartialEq, Debug)]
@@ -52,6 +52,40 @@ pub fn update_sensor(
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(sensor)
+}
+
+pub fn update_sensor_logs_for_breach(connection: &StorageConnection, breach_id: &String) -> Result<Vec<TemperatureLog>, RepositoryError> {
+
+    let mut temperature_logs: Vec<TemperatureLog> = Vec::new();
+
+    let breach_result = 
+    TemperatureBreachRowRepository::new(connection).find_one_by_id(breach_id)?;
+
+    if let Some(breach_record) = breach_result {
+
+        let is_consecutive_breach = (breach_record.r#type == TemperatureBreachRowType::ColdConsecutive) | (breach_record.r#type == TemperatureBreachRowType::HotConsecutive);
+
+        let logs = get_sensor_logs_for_breach(connection, breach_id)?;
+
+        for mut temperature_log in logs {
+
+            if let Some(_breach_id) = &temperature_log.temperature_log_row.temperature_breach_id {
+                if !(is_consecutive_breach) {
+                    // Skip if a cumulative breach - can only update unassigned temperature logs
+                    continue;
+                }
+            };
+
+            temperature_log.temperature_log_row.temperature_breach_id = Some(breach_id.to_string());
+            TemperatureLogRowRepository::new(connection).upsert_one(&temperature_log.temperature_log_row)?;
+
+            temperature_logs.push(temperature_log.clone());
+        }
+        log::info!("Temperature logs assigned for breach {:?}", breach_record);
+        Ok(temperature_logs)
+    } else {
+        Err(RepositoryError::NotFound)
+    }
 }
 
 pub fn validate(

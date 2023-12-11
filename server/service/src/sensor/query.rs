@@ -1,5 +1,5 @@
 use repository::{
-    EqualFilter, PaginationOption, Sensor, SensorFilter, SensorRepository, SensorSort,
+    DatetimeFilter, EqualFilter, PaginationOption, RepositoryError, Sensor, SensorFilter, SensorRepository, SensorSort, StorageConnection, TemperatureBreachRowRepository, TemperatureLog, TemperatureLogFilter, TemperatureLogRepository,
 };
 
 use crate::{
@@ -35,5 +35,40 @@ pub fn get_sensor(ctx: &ServiceContext, id: String) -> Result<Sensor, SingleReco
         Ok(record)
     } else {
         Err(SingleRecordError::NotFound(id))
+    }
+}
+
+pub fn get_sensor_logs_for_breach(connection: &StorageConnection, breach_id: &String) -> Result<Vec<TemperatureLog>, RepositoryError> {
+   
+    let mut temperature_logs: Vec<TemperatureLog> = Vec::new();
+
+    let breach_result = 
+    TemperatureBreachRowRepository::new(connection).find_one_by_id(breach_id)?;
+
+    if let Some(breach_record) = breach_result {
+        
+        if let Some(end_datetime) = breach_record.end_datetime {
+            // Query to find all temperature logs in the breach time range
+            let filter = TemperatureLogFilter::new()
+                .sensor(SensorFilter::new().id(EqualFilter::equal_to(&breach_record.sensor_id)))
+                .datetime(DatetimeFilter::date_range(breach_record.start_datetime, end_datetime));
+
+            let log_result = TemperatureLogRepository::new(connection).query_by_filter(filter)?;
+            
+            for temperature_log in log_result {      
+                // Add log to breach if temperature is outside breach parameters
+                if (temperature_log.temperature_log_row.temperature > breach_record.threshold_maximum)
+                 | (temperature_log.temperature_log_row.temperature < breach_record.threshold_minimum)      
+                {
+                   temperature_logs.push(temperature_log.clone());
+                } 
+            }
+        } else {
+            log::info!("Breach {:?} has no end time", breach_record);
+        } 
+        
+        Ok(temperature_logs)
+    } else {
+        Err(RepositoryError::NotFound)
     }
 }
