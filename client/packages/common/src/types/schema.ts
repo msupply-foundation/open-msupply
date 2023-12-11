@@ -1248,12 +1248,6 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type EqualFilterProgramEnrolmentStatusInput = {
-  equalAny?: InputMaybe<Array<ProgramEnrolmentNodeStatus>>;
-  equalTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
-  notEqualTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
-};
-
 export type EqualFilterRelatedRecordTypeInput = {
   equalAny?: InputMaybe<Array<RelatedRecordNodeType>>;
   equalTo?: InputMaybe<RelatedRecordNodeType>;
@@ -3561,7 +3555,7 @@ export type ProgramEnrolmentFilterInput = {
   /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
   programName?: InputMaybe<StringFilterInput>;
-  status?: InputMaybe<EqualFilterProgramEnrolmentStatusInput>;
+  status?: InputMaybe<StringFilterInput>;
   /** Same as program enrolment document type */
   type?: InputMaybe<EqualFilterStringInput>;
 };
@@ -3580,7 +3574,7 @@ export type ProgramEnrolmentNode = {
   patient: PatientNode;
   patientId: Scalars['String']['output'];
   programEnrolmentId?: Maybe<Scalars['String']['output']>;
-  status: ProgramEnrolmentNodeStatus;
+  status?: Maybe<Scalars['String']['output']>;
   /** The program type */
   type: Scalars['String']['output'];
 };
@@ -3599,13 +3593,6 @@ export type ProgramEnrolmentNodeEncountersArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<EncounterSortInput>;
 };
-
-export enum ProgramEnrolmentNodeStatus {
-  Active = 'ACTIVE',
-  OptedOut = 'OPTED_OUT',
-  Paused = 'PAUSED',
-  TransferredOut = 'TRANSFERRED_OUT'
-}
 
 export type ProgramEnrolmentResponse = ProgramEnrolmentConnector;
 
@@ -3802,6 +3789,7 @@ export type Queries = {
   syncSettings?: Maybe<SyncSettingsNode>;
   /** Query omSupply "temperature_breach" entries */
   temperatureBreaches: TemperatureBreachesResponse;
+  temperatureChart: TemperatureChartResponse;
   /** Query omSupply "temperature_log" entries */
   temperatureLogs: TemperatureLogsResponse;
 };
@@ -4211,6 +4199,15 @@ export type QueriesTemperatureBreachesArgs = {
 };
 
 
+export type QueriesTemperatureChartArgs = {
+  filter?: InputMaybe<TemperatureLogFilterInput>;
+  fromDatetime: Scalars['DateTime']['input'];
+  numberOfDataPoints: Scalars['Int']['input'];
+  storeId: Scalars['String']['input'];
+  toDatetime: Scalars['DateTime']['input'];
+};
+
+
 export type QueriesTemperatureLogsArgs = {
   filter?: InputMaybe<TemperatureLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -4582,6 +4579,12 @@ export type ResponseStoreStatsNode = {
   requestedQuantity: Scalars['Int']['output'];
   stockOnHand: Scalars['Float']['output'];
   stockOnOrder: Scalars['Int']['output'];
+};
+
+export type SensorAxisNode = {
+  __typename: 'SensorAxisNode';
+  points: Array<TemperaturePointNode>;
+  sensor?: Maybe<SensorNode>;
 };
 
 export type SensorConnector = {
@@ -5096,6 +5099,13 @@ export type TemperatureBreachSortInput = {
 
 export type TemperatureBreachesResponse = TemperatureBreachConnector;
 
+export type TemperatureChartNode = {
+  __typename: 'TemperatureChartNode';
+  sensors: Array<SensorAxisNode>;
+};
+
+export type TemperatureChartResponse = TemperatureChartNode;
+
 export type TemperatureLogConnector = {
   __typename: 'TemperatureLogConnector';
   nodes: Array<TemperatureLogNode>;
@@ -5137,6 +5147,13 @@ export type TemperatureLogSortInput = {
 };
 
 export type TemperatureLogsResponse = TemperatureLogConnector;
+
+export type TemperaturePointNode = {
+  __typename: 'TemperaturePointNode';
+  breachIds?: Maybe<Array<Scalars['String']['output']>>;
+  midPoint: Scalars['DateTime']['output'];
+  temperature?: Maybe<Scalars['Float']['output']>;
+};
 
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename: 'TokenExpired';
