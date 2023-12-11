@@ -136,6 +136,7 @@ export const DateUtils = {
   ageInDays: (date: Date | string) =>
     differenceInDays(Date.now(), dateInputHandler(date)),
   startOfDay,
+  startOfToday,
   endOfDay,
   startOfYear,
   previousMonday,
