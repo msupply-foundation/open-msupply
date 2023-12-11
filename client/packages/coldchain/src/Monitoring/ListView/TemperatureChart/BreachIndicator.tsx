@@ -21,19 +21,15 @@ export const BreachIndicator = ({
 
   return (
     <CircleAlertIcon
-      onClick={event => {
-        return setCurrentBreach({
+      onClick={event =>
+        setCurrentBreach({
           breach,
           position: event.currentTarget.getBoundingClientRect(),
-        });
-      }}
+        })
+      }
       x={cx - 13.5}
       y={cy - 13.5}
-      fill={
-        !payload.breach?.row?.unacknowledged
-          ? theme.palette.gray.main
-          : theme.palette.error.main
-      }
+      fill={theme.palette.error.main}
       sx={{ color: 'background.white', cursor: 'pointer' }}
       width={27}
       height={27}
