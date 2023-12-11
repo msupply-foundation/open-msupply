@@ -326,7 +326,7 @@ pub(crate) trait SyncTranslation {
     /// * Error - Something completely unexpected that is not recoverable
     /// * None - Translator did not match record type
     /// * Some - Translator did match and either translated record/records or
-    ///          empty array if record is deliberatly ignored
+    ///          empty array if record is deliberately ignored
     fn try_translate_push_upsert(
         &self,
         _: &StorageConnection,
