@@ -365,8 +365,6 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             return serviceInfo.getHost().getHostAddress();
         } catch (Exception ex) {
             Log.e(OM_SUPPLY, ex.toString());
-        }
-        finally {
             // with no network available the getHostAddress() will
             // throw an Exception - in this case default to local loopback
             // as no other network is reachable!
