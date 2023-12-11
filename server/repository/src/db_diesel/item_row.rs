@@ -1,6 +1,6 @@
 use super::{item_row::item::dsl::*, unit_row::unit, StorageConnection};
 
-use crate::{item_link, repository_error::RepositoryError, ItemLinkRowRepository};
+use crate::{item_link, repository_error::RepositoryError, ItemLinkRow, ItemLinkRowRepository};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -72,11 +72,15 @@ pub struct ItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-fn upsert_item_link<'a>(
+fn insert_or_ignore_item_link<'a>(
     connection: &'a StorageConnection,
     item_row: &ItemRow,
 ) -> Result<(), RepositoryError> {
-    ItemLinkRowRepository::new(connection).insert_one_from_item(item_row)?;
+    let item_link_row = ItemLinkRow {
+        id: item_row.id.clone(),
+        item_id: item_row.id.clone(),
+    };
+    ItemLinkRowRepository::new(connection).insert_one_or_ignore(&item_link_row)?;
     Ok(())
 }
 
@@ -94,7 +98,7 @@ impl<'a> ItemRowRepository<'a> {
             .set(item_row)
             .execute(&self.connection.connection)?;
 
-        upsert_item_link(&self.connection, item_row)?;
+        insert_or_ignore_item_link(&self.connection, item_row)?;
 
         Ok(())
     }
@@ -105,7 +109,7 @@ impl<'a> ItemRowRepository<'a> {
             .values(item_row)
             .execute(&self.connection.connection)?;
 
-        upsert_item_link(&self.connection, item_row)?;
+        insert_or_ignore_item_link(&self.connection, item_row)?;
         Ok(())
     }
 

@@ -1,7 +1,4 @@
-use super::{
-    item_row::{item, ItemRow},
-    StorageConnection,
-};
+use super::{item_row::item, StorageConnection};
 use crate::repository_error::RepositoryError;
 
 use self::item_link::dsl as item_link_dsl;
@@ -42,26 +39,6 @@ impl<'a> ItemLinkRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn insert_one_from_item(&self, item: &ItemRow) -> Result<(), RepositoryError> {
-        let item_link_row = item_link_row_from_item_row(item);
-        diesel::insert_into(item_link_dsl::item_link)
-            .values(&item_link_row)
-            .on_conflict(item_link::id)
-            .do_nothing()
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn insert_one_from_item(&self, item: &ItemRow) -> Result<(), RepositoryError> {
-        let item_link_row = item_link_row_from_item_row(item);
-        diesel::insert_or_ignore_into(item_link_dsl::item_link)
-            .values(&item_link_row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    #[cfg(feature = "postgres")]
     pub fn upsert_one(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_link_dsl::item_link)
             .values(item_link_row)
@@ -82,6 +59,24 @@ impl<'a> ItemLinkRowRepository<'a> {
 
     pub async fn insert_one(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_link_dsl::item_link)
+            .values(item_link_row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "postgres")]
+    pub fn insert_one_or_ignore(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(item_link_dsl::item_link)
+            .values(item_link_row)
+            .on_conflict(item_link::id)
+            .do_nothing()
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    pub fn insert_one_or_ignore(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
+        diesel::insert_or_ignore_into(item_link_dsl::item_link)
             .values(item_link_row)
             .execute(&self.connection.connection)?;
         Ok(())
@@ -118,12 +113,4 @@ impl<'a> ItemLinkRowRepository<'a> {
             .execute(&self.connection.connection)?;
         Ok(())
     }
-}
-
-fn item_link_row_from_item_row(item: &ItemRow) -> ItemLinkRow {
-    let item_link_row = ItemLinkRow {
-        id: item.id.clone(),
-        item_id: item.id.clone(),
-    };
-    item_link_row
 }
