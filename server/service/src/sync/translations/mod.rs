@@ -204,6 +204,7 @@ pub(crate) enum PullUpsertRecord {
     FormSchema(FormSchemaJson),
     Document(Document),
     DocumentRegistry(DocumentRegistryRow),
+    ItemLink(ItemLinkRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]

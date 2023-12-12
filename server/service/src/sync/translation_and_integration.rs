@@ -222,6 +222,7 @@ impl PullUpsertRecord {
             FormSchema(record) => FormSchemaRowRepository::new(con).upsert_one(record),
             DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
             Document(record) => sync_upsert_document(con, record),
+            ItemLink(_) => todo!(),
         }
     }
 }
