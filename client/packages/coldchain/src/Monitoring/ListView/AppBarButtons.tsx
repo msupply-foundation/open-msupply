@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   AppBarButtonsPortal,
   LoadingButton,
@@ -27,8 +27,6 @@ export const AppBarButtons = () => {
   const hiddenFileInput = useRef<HTMLInputElement>(null);
   const { storeId } = useAuthContext();
   const [isUploadingFridgeTag, setIsUploadingFridgeTag] = useState(false);
-  const [editSensor, setEditSensor] = useState(false);
-  const [editUrl, setEditUrl] = useState('');
   const { success, error } = useNotification();
   const queryClient = useQueryClient();
   const sensorApi = useSensor.utils.api();
@@ -37,7 +35,6 @@ export const AppBarButtons = () => {
   const chartApi = useTemperatureChart.utils.api();
   const navigate = useNavigate();
   const getConfirmation = useConfirmationModal({
-    onConfirm: () => setEditSensor(true),
     message: t('message.new-sensor'),
     title: t('title.new-sensor'),
   });
@@ -71,20 +68,24 @@ export const AppBarButtons = () => {
         throw new Error(t('error.fridge-tag-import-empty'));
 
       success(t('message.fridge-tag-import-successful', resultJson))();
-      setEditUrl(
-        RouteBuilder.create(AppRoute.Coldchain)
-          .addPart(AppRoute.Sensors)
-          .addQuery({ edit: resultJson.newSensorId })
-          .build()
-      );
+
       // forces a refetch of logs, breach, chart data and sensors
       queryClient.invalidateQueries(breachApi.keys.base());
       queryClient.invalidateQueries(chartApi.keys.base());
       queryClient.invalidateQueries(logApi.keys.base());
       queryClient.invalidateQueries(sensorApi.keys.base());
+
       // asks if the user would like to assign a location and redirects if yes
       if (!!resultJson.newSensorId) {
-        getConfirmation();
+        getConfirmation({
+          onConfirm: () =>
+            navigate(
+              RouteBuilder.create(AppRoute.Coldchain)
+                .addPart(AppRoute.Sensors)
+                .addQuery({ edit: resultJson.newSensorId })
+                .build()
+            ),
+        });
       }
     } catch (e) {
       console.error(e);
@@ -95,12 +96,6 @@ export const AppBarButtons = () => {
       if (e?.target?.value) e.target.value = '';
     }
   };
-
-  useEffect(() => {
-    if (!!editUrl && editSensor) {
-      navigate(editUrl);
-    }
-  }, [editUrl, editSensor]);
 
   return (
     <AppBarButtonsPortal>
