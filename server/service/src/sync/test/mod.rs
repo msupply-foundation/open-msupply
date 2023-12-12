@@ -247,9 +247,6 @@ pub(crate) async fn check_records_against_database(
                 check_record_by_option_id!(UnitRowRepository, con, record, "Unit");
             }
             Item(record) => check_record_by_id!(ItemRowRepository, con, record, "Item"),
-            ItemLink(record) => {
-                check_record_by_id!(ItemLinkRowRepository, con, record, "ItemLink");
-            }
             Store(record) => check_record_by_id!(StoreRowRepository, con, record, "Store"),
             MasterList(record) => {
                 check_record_by_option_id!(MasterListRowRepository, con, record, "Masterlist")

@@ -64,6 +64,24 @@ impl<'a> ItemLinkRowRepository<'a> {
         Ok(())
     }
 
+    #[cfg(feature = "postgres")]
+    pub fn insert_one_or_ignore(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(item_link_dsl::item_link)
+            .values(item_link_row)
+            .on_conflict(item_link::id)
+            .do_nothing()
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    pub fn insert_one_or_ignore(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
+        diesel::insert_or_ignore_into(item_link_dsl::item_link)
+            .values(item_link_row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
     pub async fn find_all(&self) -> Result<Vec<ItemLinkRow>, RepositoryError> {
         let result = item_link_dsl::item_link.load(&self.connection.connection);
         Ok(result?)

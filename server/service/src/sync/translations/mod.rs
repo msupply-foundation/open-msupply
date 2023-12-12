@@ -87,7 +87,6 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(document::DocumentTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
-        Box::new(special::ItemLinkTranslation {}),
     ]
 }
 
@@ -172,7 +171,6 @@ pub(crate) enum PullUpsertRecord {
     NameTag(NameTagRow),
     NameTagJoin(NameTagJoinRow),
     Item(ItemRow),
-    ItemLink(ItemLinkRow),
     Store(StoreRow),
     MasterList(MasterListRow),
     MasterListLine(MasterListLineRow),
@@ -328,7 +326,7 @@ pub(crate) trait SyncTranslation {
     /// * Error - Something completely unexpected that is not recoverable
     /// * None - Translator did not match record type
     /// * Some - Translator did match and either translated record/records or
-    ///          empty array if record is deliberatly ignored
+    ///          empty array if record is deliberately ignored
     fn try_translate_push_upsert(
         &self,
         _: &StorageConnection,

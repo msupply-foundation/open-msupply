@@ -1,6 +1,6 @@
 use super::{item_row::item::dsl::*, unit_row::unit, StorageConnection};
 
-use crate::{item_link, repository_error::RepositoryError};
+use crate::{item_link, repository_error::RepositoryError, ItemLinkRow, ItemLinkRowRepository};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -72,6 +72,18 @@ pub struct ItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+fn insert_or_ignore_item_link<'a>(
+    connection: &'a StorageConnection,
+    item_row: &ItemRow,
+) -> Result<(), RepositoryError> {
+    let item_link_row = ItemLinkRow {
+        id: item_row.id.clone(),
+        item_id: item_row.id.clone(),
+    };
+    ItemLinkRowRepository::new(connection).insert_one_or_ignore(&item_link_row)?;
+    Ok(())
+}
+
 impl<'a> ItemRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ItemRowRepository { connection }
@@ -85,6 +97,8 @@ impl<'a> ItemRowRepository<'a> {
             .do_update()
             .set(item_row)
             .execute(&self.connection.connection)?;
+
+        insert_or_ignore_item_link(&self.connection, item_row)?;
         Ok(())
     }
 
@@ -93,6 +107,8 @@ impl<'a> ItemRowRepository<'a> {
         diesel::replace_into(item)
             .values(item_row)
             .execute(&self.connection.connection)?;
+
+        insert_or_ignore_item_link(&self.connection, item_row)?;
         Ok(())
     }
 
@@ -100,6 +116,8 @@ impl<'a> ItemRowRepository<'a> {
         diesel::insert_into(item)
             .values(item_row)
             .execute(&self.connection.connection)?;
+
+        insert_or_ignore_item_link(&self.connection, item_row)?;
         Ok(())
     }
 
