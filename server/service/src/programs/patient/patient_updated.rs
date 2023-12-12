@@ -144,6 +144,7 @@ pub(crate) fn patient_to_name_row(
         is_deceased: patient.is_deceased.unwrap_or(false),
         date_of_death,
         national_health_number: code_2,
+        custom_data_string: None,
     })
 }
 
