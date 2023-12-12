@@ -1248,12 +1248,6 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type EqualFilterProgramEnrolmentStatusInput = {
-  equalAny?: InputMaybe<Array<ProgramEnrolmentNodeStatus>>;
-  equalTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
-  notEqualTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
-};
-
 export type EqualFilterRelatedRecordTypeInput = {
   equalAny?: InputMaybe<Array<RelatedRecordNodeType>>;
   equalTo?: InputMaybe<RelatedRecordNodeType>;
@@ -3561,7 +3555,7 @@ export type ProgramEnrolmentFilterInput = {
   /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
   programName?: InputMaybe<StringFilterInput>;
-  status?: InputMaybe<EqualFilterProgramEnrolmentStatusInput>;
+  status?: InputMaybe<StringFilterInput>;
   /** Same as program enrolment document type */
   type?: InputMaybe<EqualFilterStringInput>;
 };
@@ -3580,7 +3574,7 @@ export type ProgramEnrolmentNode = {
   patient: PatientNode;
   patientId: Scalars['String']['output'];
   programEnrolmentId?: Maybe<Scalars['String']['output']>;
-  status: ProgramEnrolmentNodeStatus;
+  status?: Maybe<Scalars['String']['output']>;
   /** The program type */
   type: Scalars['String']['output'];
 };
@@ -3599,13 +3593,6 @@ export type ProgramEnrolmentNodeEncountersArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<EncounterSortInput>;
 };
-
-export enum ProgramEnrolmentNodeStatus {
-  Active = 'ACTIVE',
-  OptedOut = 'OPTED_OUT',
-  Paused = 'PAUSED',
-  TransferredOut = 'TRANSFERRED_OUT'
-}
 
 export type ProgramEnrolmentResponse = ProgramEnrolmentConnector;
 

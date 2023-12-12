@@ -143,27 +143,13 @@ pub fn mock_form_schema_simplified_enrolment() -> FormSchema {
                 "programEnrolmentId": {
                   "description": "Patient's program id",
                   "type": "string"
-                },
-                "status": {
-                  "$ref": "#/definitions/ProgramEnrolmentStatus",
-                  "description": "Current status of the program enrolment"
                 }
               },
               "required": [
-                "enrolmentDatetime",
-                "status"
+                "enrolmentDatetime"
               ],
               "type": "object"
-            },
-            "ProgramEnrolmentStatus": {
-              "enum": [
-                "ACTIVE",
-                "OPTED_OUT",
-                "TRANSFERRED_OUT",
-                "PAUSED"
-              ],
-              "type": "string"
-            },
+            }
           },
           "type": "object",
           "allOf": [
