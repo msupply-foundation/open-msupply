@@ -62,14 +62,26 @@ pub fn get_matching_sensor_breach(
     connection: &StorageConnection,
     sensor_id: &str,
     start_datetime: NaiveDateTime,
-    _end_datetime: NaiveDateTime,
+    _end_datetime: NaiveDateTime, // don't match on the end time, just the breach type and start time
     breach_type: &TemperatureBreachRowType,
 ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
-    let filter = TemperatureBreachFilter::new()
-        .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
-        .r#type(EqualFilter::equal_to_breach_type(&breach_type))
-        .start_datetime(DatetimeFilter::equal_to(start_datetime));
 
+    let mut filter = TemperatureBreachFilter::new()
+    .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
+    .r#type(EqualFilter::equal_to_breach_type(&breach_type));
+
+    match breach_type {
+        TemperatureBreachRowType::ColdCumulative | TemperatureBreachRowType::HotCumulative => {
+            // Cumulative breach can start any time on the same day (can only be at most one per day)
+            let start_breach = start_datetime.date().and_hms_opt(0, 0, 0).unwrap();
+            let end_breach = start_datetime.date().and_hms_opt(23, 59, 59).unwrap();
+            filter = filter.start_datetime(DatetimeFilter::date_range(start_breach, end_breach));
+        }
+        TemperatureBreachRowType::ColdConsecutive | TemperatureBreachRowType::HotConsecutive => {
+            filter = filter.start_datetime(DatetimeFilter::equal_to(start_datetime));
+        }
+    }
+    
     TemperatureBreachRepository::new(connection).query_by_filter(filter)
 }
 
