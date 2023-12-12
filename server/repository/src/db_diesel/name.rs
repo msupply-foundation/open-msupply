@@ -234,6 +234,14 @@ impl Name {
             store_row,
         }
     }
+
+    pub fn custom_data(&self) -> Result<Option<serde_json::Value>, serde_json::Error> {
+        self.name_row
+            .custom_data_string
+            .as_ref()
+            .map(|custom_data_string| serde_json::from_str(&custom_data_string))
+            .transpose()
+    }
 }
 
 // name_store_join_dsl::name_id.eq(name_dsl::id)
