@@ -326,6 +326,13 @@ export class ColumnDefinitionSetBuilder<T extends RecordWithId> {
       ),
     };
 
+    // when setting only the width, the column width is not fixed
+    // setting a min & max though, will fix the column width
+    if (!!options.width) {
+      if (!options.minWidth) options.minWidth = options.width;
+      if (!options.maxWidth) options.maxWidth = options.width;
+    }
+
     const key = usingColumnKey ? columnKeyOrColumnDefinition : options.key;
 
     this.columns.push(createColumn<T>({ ...options, key }));

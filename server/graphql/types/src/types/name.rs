@@ -3,7 +3,10 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 use repository::{Gender, Name, NameRow, NameType};
 
-use graphql_core::{loader::StoreByIdLoader, simple_generic_errors::NodeError, ContextExt};
+use graphql_core::{
+    loader::StoreByIdLoader, simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError, ContextExt,
+};
 use serde::Serialize;
 
 use super::StoreNode;
@@ -228,6 +231,12 @@ impl NameNode {
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
         self.row().date_of_birth
     }
+
+    pub async fn custom_data(&self) -> Result<Option<serde_json::Value>> {
+        self.name
+            .custom_data()
+            .map_err(|err| StandardGraphqlError::from_error(&err))
+    }
 }
 
 #[derive(Union)]
@@ -304,6 +313,7 @@ mod test {
                                     .unwrap(),
                             );
                             r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 05, 15).unwrap());
+                            r.custom_data_string = Some(r#"{"check": "check"}"#.to_string());
                         }),
                         name_store_join_row: None,
                         store_row: None,
@@ -333,6 +343,9 @@ mod test {
                 "address2": "address2",
                 "createdDatetime": "2022-05-18T12:07:12+00:00",
                 "dateOfBirth": "1995-05-15",
+                "customData": {
+                    "check": "check"
+                }
             }
         }
         );
@@ -359,6 +372,7 @@ mod test {
                createdDatetime
                isOnHold
                dateOfBirth
+               customData
             }
         }
         "#;
