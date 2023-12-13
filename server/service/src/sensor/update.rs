@@ -1,10 +1,15 @@
-use super::{query::{get_sensor, get_sensor_logs_for_breach}, validate::check_sensor_exists};
+use super::{
+    query::{get_sensor, get_sensor_logs_for_breach},
+    validate::check_sensor_exists,
+};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
     SingleRecordError,
 };
 use repository::{
-    ActivityLogType, RepositoryError, Sensor, SensorRow, SensorRowRepository, StorageConnection, TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLog, TemperatureLogRowRepository,
+    ActivityLogType, RepositoryError, Sensor, SensorRow, SensorRowRepository, StorageConnection,
+    TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLog,
+    TemperatureLogRowRepository,
 };
 
 #[derive(PartialEq, Debug)]
@@ -54,23 +59,31 @@ pub fn update_sensor(
     Ok(sensor)
 }
 
-pub fn update_sensor_logs_for_breach(connection: &StorageConnection, breach_id: &String) -> Result<Vec<TemperatureLog>, RepositoryError> {
-
+pub fn update_sensor_logs_for_breach(
+    connection: &StorageConnection,
+    breach_id: &String,
+) -> Result<Vec<TemperatureLog>, RepositoryError> {
     let mut temperature_logs: Vec<TemperatureLog> = Vec::new();
 
-    let breach_result = 
-    TemperatureBreachRowRepository::new(connection).find_one_by_id(breach_id)?;
+    let breach_result =
+        TemperatureBreachRowRepository::new(connection).find_one_by_id(breach_id)?;
 
     if let Some(mut breach_record) = breach_result {
-
-        let is_cumulative_breach = (breach_record.r#type == TemperatureBreachRowType::ColdCumulative) | (breach_record.r#type == TemperatureBreachRowType::HotCumulative);
+        let is_cumulative_breach = (breach_record.r#type
+            == TemperatureBreachRowType::ColdCumulative)
+            | (breach_record.r#type == TemperatureBreachRowType::HotCumulative);
         let logs = get_sensor_logs_for_breach(connection, breach_id)?; //sorted by date/time
 
-        if is_cumulative_breach { // Update breach start/end from first/last logs if it has changed
+        if is_cumulative_breach {
+            // Update breach start/end from first/last logs if it has changed
             if let Some(first_log) = logs.first() {
                 let first_breach_datetime = first_log.temperature_log_row.datetime;
                 if breach_record.start_datetime > first_breach_datetime {
-                    log::info!("Updating cumulative breach start for {:?} to {:?}", breach_record, first_breach_datetime);
+                    log::info!(
+                        "Updating cumulative breach start for {:?} to {:?}",
+                        breach_record,
+                        first_breach_datetime
+                    );
                     breach_record.start_datetime = first_breach_datetime;
                     TemperatureBreachRowRepository::new(connection).upsert_one(&breach_record)?;
                 }
@@ -78,7 +91,11 @@ pub fn update_sensor_logs_for_breach(connection: &StorageConnection, breach_id: 
             if let Some(last_log) = logs.last() {
                 let last_breach_datetime = last_log.temperature_log_row.datetime;
                 if breach_record.end_datetime < Some(last_breach_datetime) {
-                    log::info!("Updating cumulative breach end for {:?} to {:?}", breach_record, last_breach_datetime);
+                    log::info!(
+                        "Updating cumulative breach end for {:?} to {:?}",
+                        breach_record,
+                        last_breach_datetime
+                    );
                     breach_record.end_datetime = Some(last_breach_datetime);
                     TemperatureBreachRowRepository::new(connection).upsert_one(&breach_record)?;
                 }
@@ -86,7 +103,6 @@ pub fn update_sensor_logs_for_breach(connection: &StorageConnection, breach_id: 
         }
 
         for mut temperature_log in logs {
-
             if let Some(_breach_id) = &temperature_log.temperature_log_row.temperature_breach_id {
                 if is_cumulative_breach {
                     // Skip as cumulative breach can only update unassigned temperature logs
@@ -95,7 +111,8 @@ pub fn update_sensor_logs_for_breach(connection: &StorageConnection, breach_id: 
             };
 
             temperature_log.temperature_log_row.temperature_breach_id = Some(breach_id.to_string());
-            TemperatureLogRowRepository::new(connection).upsert_one(&temperature_log.temperature_log_row)?;
+            TemperatureLogRowRepository::new(connection)
+                .upsert_one(&temperature_log.temperature_log_row)?;
             temperature_logs.push(temperature_log.clone());
         }
         log::info!("Temperature logs assigned for breach {:?}", breach_record);
