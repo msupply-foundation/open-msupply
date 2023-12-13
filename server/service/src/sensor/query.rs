@@ -70,8 +70,7 @@ pub fn get_sensor_logs_for_breach(
                         .date()
                         .and_hms_opt(0, 0, 0)
                         .unwrap();
-                    let end_breach = breach_record
-                        .start_datetime
+                    let end_breach = end_datetime
                         .date()
                         .and_hms_opt(23, 59, 59)
                         .unwrap();
