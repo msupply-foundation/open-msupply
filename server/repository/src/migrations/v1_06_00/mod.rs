@@ -6,6 +6,7 @@ mod contact_trace;
 mod master_list;
 mod patient_id_indices;
 mod plugin_data;
+mod sync_log;
 mod temperature_breach;
 
 pub(crate) struct V1_06_00;
@@ -21,6 +22,7 @@ impl Migration for V1_06_00 {
         master_list::migrate(connection)?;
         temperature_breach::migrate(connection)?;
         patient_id_indices::migrate(connection)?;
+        sync_log::migrate(connection)?;
         Ok(())
     }
 }
