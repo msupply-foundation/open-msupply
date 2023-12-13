@@ -4,8 +4,8 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, StockLineRow, StockLineRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
+    StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -107,28 +107,43 @@ impl SyncTranslation for StockLineTranslation {
             return Ok(None);
         }
 
-        let StockLineRow {
-            id,
-            item_id,
-            store_id,
-            location_id,
-            batch,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs,
-            total_number_of_packs,
-            expiry_date,
-            on_hold,
-            note,
-            supplier_id,
-            barcode_id,
-        } = StockLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let stock_line = StockLineRepository::new(connection)
+            .query_by_filter(
+                StockLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                None,
+            )?
+            .pop();
+
+        let StockLine {
+            stock_line_row:
+                StockLineRow {
+                    id,
+                    item_id: _item_id, // StockLineRow item_id is ACTUALLY the item_link_id, we need to use the item_row.id instead
+                    store_id,
+                    location_id,
+                    batch,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    available_number_of_packs,
+                    total_number_of_packs,
+                    expiry_date,
+                    on_hold,
+                    note,
+                    supplier_id,
+                    barcode_id,
+                },
+            item_row,
+            ..
+        } = match stock_line {
+            Some(s) => s,
+            _ => return Ok(None),
+        };
 
         let legacy_row = LegacyStockLineRow {
-            ID: id.clone(),
+            ID: id,
             store_ID: store_id,
-            item_ID: item_id,
+            item_ID: item_row.id,
             batch,
             expiry_date,
             hold: on_hold,
