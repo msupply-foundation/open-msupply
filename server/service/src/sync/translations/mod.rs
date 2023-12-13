@@ -87,6 +87,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(document::DocumentTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
+        Box::new(special::ItemMergeTranslation {}),
     ]
 }
 
@@ -316,6 +317,14 @@ pub(crate) trait SyncTranslation {
     }
 
     fn try_translate_pull_delete(
+        &self,
+        _: &StorageConnection,
+        _: &SyncBufferRow,
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        Ok(None)
+    }
+
+    fn try_translate_pull_merge(
         &self,
         _: &StorageConnection,
         _: &SyncBufferRow,
