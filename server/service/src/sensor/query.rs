@@ -1,5 +1,8 @@
 use repository::{
-    DatetimeFilter, EqualFilter, Pagination, PaginationOption, RepositoryError, Sensor, SensorFilter, SensorRepository, SensorSort, Sort, StorageConnection, TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLog, TemperatureLogFilter, TemperatureLogRepository, TemperatureLogSortField,
+    DatetimeFilter, EqualFilter, Pagination, PaginationOption, RepositoryError, Sensor,
+    SensorFilter, SensorRepository, SensorSort, Sort, StorageConnection,
+    TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLog, TemperatureLogFilter,
+    TemperatureLogRepository, TemperatureLogSortField,
 };
 
 use crate::{
@@ -38,18 +41,19 @@ pub fn get_sensor(ctx: &ServiceContext, id: String) -> Result<Sensor, SingleReco
     }
 }
 
-pub fn get_sensor_logs_for_breach(connection: &StorageConnection, breach_id: &String) -> Result<Vec<TemperatureLog>, RepositoryError> {
-   
+pub fn get_sensor_logs_for_breach(
+    connection: &StorageConnection,
+    breach_id: &String,
+) -> Result<Vec<TemperatureLog>, RepositoryError> {
     let mut temperature_logs: Vec<TemperatureLog> = Vec::new();
 
-    let breach_result = 
-    TemperatureBreachRowRepository::new(connection).find_one_by_id(breach_id)?;
+    let breach_result =
+        TemperatureBreachRowRepository::new(connection).find_one_by_id(breach_id)?;
 
     if let Some(breach_record) = breach_result {
-        
         if let Some(end_datetime) = breach_record.end_datetime {
             // Find all temperature logs in the breach time range, sorted by date/time
-            
+
             let mut filter = TemperatureLogFilter::new()
                 .sensor(SensorFilter::new().id(EqualFilter::equal_to(&breach_record.sensor_id)));
             let sort = Sort {
@@ -58,38 +62,61 @@ pub fn get_sensor_logs_for_breach(connection: &StorageConnection, breach_id: &St
             };
 
             match breach_record.r#type {
-                TemperatureBreachRowType::ColdCumulative | TemperatureBreachRowType::HotCumulative => {
+                TemperatureBreachRowType::ColdCumulative
+                | TemperatureBreachRowType::HotCumulative => {
                     // Cumulative breach can include any time on the same day (can only be at most one per day)
-                    let start_breach = breach_record.start_datetime.date().and_hms_opt(0, 0, 0).unwrap();
-                    let end_breach = breach_record.start_datetime.date().and_hms_opt(23, 59, 59).unwrap();
+                    let start_breach = breach_record
+                        .start_datetime
+                        .date()
+                        .and_hms_opt(0, 0, 0)
+                        .unwrap();
+                    let end_breach = breach_record
+                        .start_datetime
+                        .date()
+                        .and_hms_opt(23, 59, 59)
+                        .unwrap();
                     filter = filter.datetime(DatetimeFilter::date_range(start_breach, end_breach));
                 }
-                TemperatureBreachRowType::ColdConsecutive | TemperatureBreachRowType::HotConsecutive => {
-                    filter = filter.datetime(DatetimeFilter::date_range(breach_record.start_datetime, end_datetime));
+                TemperatureBreachRowType::ColdConsecutive
+                | TemperatureBreachRowType::HotConsecutive => {
+                    filter = filter.datetime(DatetimeFilter::date_range(
+                        breach_record.start_datetime,
+                        end_datetime,
+                    ));
                 }
             }
-               
-            let log_result = TemperatureLogRepository::new(connection).query(Pagination::all(),Some(filter), Some(sort))?;
-            
-            for temperature_log in log_result {      
+
+            let log_result = TemperatureLogRepository::new(connection).query(
+                Pagination::all(),
+                Some(filter),
+                Some(sort),
+            )?;
+
+            for temperature_log in log_result {
                 // Add log to breach if temperature is outside breach parameters
                 match breach_record.r#type {
-                    TemperatureBreachRowType::ColdCumulative | TemperatureBreachRowType::ColdConsecutive => {
-                        if temperature_log.temperature_log_row.temperature < breach_record.threshold_minimum {     
+                    TemperatureBreachRowType::ColdCumulative
+                    | TemperatureBreachRowType::ColdConsecutive => {
+                        if temperature_log.temperature_log_row.temperature
+                            < breach_record.threshold_minimum
+                        {
                             temperature_logs.push(temperature_log.clone());
-                        } 
+                        }
                     }
-                    TemperatureBreachRowType::HotCumulative | TemperatureBreachRowType::HotConsecutive => {
-                        if temperature_log.temperature_log_row.temperature > breach_record.threshold_maximum {
+                    TemperatureBreachRowType::HotCumulative
+                    | TemperatureBreachRowType::HotConsecutive => {
+                        if temperature_log.temperature_log_row.temperature
+                            > breach_record.threshold_maximum
+                        {
                             temperature_logs.push(temperature_log.clone());
-                        } 
+                        }
                     }
                 }
             }
         } else {
             log::info!("Breach {:?} has no end time", breach_record);
-        } 
-        
+        }
+
         Ok(temperature_logs)
     } else {
         Err(RepositoryError::NotFound)

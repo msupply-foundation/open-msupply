@@ -1,3 +1,4 @@
+use super::update::update_sensor_logs_for_breach;
 use anyhow::Context;
 use chrono::NaiveDateTime;
 use repository::{DatetimeFilter, EqualFilter};
@@ -11,7 +12,6 @@ use repository::{
 };
 use serde::Serialize;
 use std::path::PathBuf;
-use super::update::update_sensor_logs_for_breach;
 use thiserror::Error;
 use util::uuid::uuid;
 
@@ -65,10 +65,9 @@ pub fn get_matching_sensor_breach(
     _end_datetime: NaiveDateTime, // don't match on the end time, just the breach type and start time
     breach_type: &TemperatureBreachRowType,
 ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
-
     let mut filter = TemperatureBreachFilter::new()
-    .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
-    .r#type(EqualFilter::equal_to_breach_type(&breach_type));
+        .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
+        .r#type(EqualFilter::equal_to_breach_type(&breach_type));
 
     match breach_type {
         TemperatureBreachRowType::ColdCumulative | TemperatureBreachRowType::HotCumulative => {
@@ -81,7 +80,7 @@ pub fn get_matching_sensor_breach(
             filter = filter.start_datetime(DatetimeFilter::equal_to(start_datetime));
         }
     }
-    
+
     TemperatureBreachRepository::new(connection).query_by_filter(filter)
 }
 
