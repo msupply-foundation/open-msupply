@@ -73,11 +73,18 @@ pub fn get_sensor_logs_for_breach(connection: &StorageConnection, breach_id: &St
             
             for temperature_log in log_result {      
                 // Add log to breach if temperature is outside breach parameters
-                if (temperature_log.temperature_log_row.temperature > breach_record.threshold_maximum)
-                 | (temperature_log.temperature_log_row.temperature < breach_record.threshold_minimum)      
-                {
-                   temperature_logs.push(temperature_log.clone());
-                } 
+                match breach_record.r#type {
+                    TemperatureBreachRowType::ColdCumulative | TemperatureBreachRowType::ColdConsecutive => {
+                        if temperature_log.temperature_log_row.temperature < breach_record.threshold_minimum {     
+                            temperature_logs.push(temperature_log.clone());
+                        } 
+                    }
+                    TemperatureBreachRowType::HotCumulative | TemperatureBreachRowType::HotConsecutive => {
+                        if temperature_log.temperature_log_row.temperature > breach_record.threshold_maximum {
+                            temperature_logs.push(temperature_log.clone());
+                        } 
+                    }
+                }
             }
         } else {
             log::info!("Breach {:?} has no end time", breach_record);

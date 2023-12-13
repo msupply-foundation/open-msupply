@@ -72,7 +72,7 @@ pub fn get_matching_sensor_breach(
 
     match breach_type {
         TemperatureBreachRowType::ColdCumulative | TemperatureBreachRowType::HotCumulative => {
-            // Cumulative breach can start any time on the same day (can only be at most one per day)
+            // Cumulative breach can start any time on the same day (can only be at most one hot/cold per day)
             let start_breach = start_datetime.date().and_hms_opt(0, 0, 0).unwrap();
             let end_breach = start_datetime.date().and_hms_opt(23, 59, 59).unwrap();
             filter = filter.start_datetime(DatetimeFilter::date_range(start_breach, end_breach));
