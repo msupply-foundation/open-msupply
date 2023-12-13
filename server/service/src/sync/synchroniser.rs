@@ -189,7 +189,7 @@ impl Synchroniser {
         logger.start_step(SyncStep::Integrate)?;
         //
         let (upserts, deletes) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised)
+            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
                 .map_err(SyncError::IntegrationError)?;
         info!("Upsert Integration result: {:?}", upserts);
         info!("Delete Integration result: {:?}", deletes);
@@ -213,6 +213,7 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     is_initialised: bool,
+    logger: &mut SyncLogger<'a>,
 ) -> anyhow::Result<(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
@@ -253,12 +254,42 @@ pub fn integrate_and_translate_sync_buffer(
         Ok((upsert_integration_result, delete_integration_result))
     };
 
+    let integrate_and_translate_with_logger = |connection: &StorageConnection| -> Result<
+        (
+            TranslationAndIntegrationResults,
+            TranslationAndIntegrationResults,
+        ),
+        RepositoryError,
+    > {
+        let translators = all_translators();
+        let table_order = pull_integration_order(&translators);
+
+        let sync_buffer = SyncBuffer::new(connection);
+        let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
+
+        // Rearrange to calculate total record count
+        let upsert_sync_buffer_records =
+            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
+        let delete_sync_buffer_records =
+            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
+
+        // Translate and integrate upserts (ordered by referential database constraints)
+        let upsert_integration_result = translation_and_integration
+            .translate_and_integrate_sync_records(upsert_sync_buffer_records, &translators)?;
+
+        // Translate and integrate delete (ordered by referential database constraints, in reverse)
+        let delete_integration_result = translation_and_integration
+            .translate_and_integrate_sync_records(delete_sync_buffer_records, &translators)?;
+
+        Ok((upsert_integration_result, delete_integration_result))
+    };
+
     let result = if is_initialised {
         connection
             .transaction_sync(integrate_and_translate)
             .map_err::<RepositoryError, _>(|e| e.to_inner_error())
     } else {
-        integrate_and_translate(&connection)
+        integrate_and_translate_with_logger(&connection)
     }?;
 
     Ok(result)
