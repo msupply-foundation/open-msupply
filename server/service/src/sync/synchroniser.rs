@@ -153,7 +153,7 @@ impl Synchroniser {
         logger.done_step(SyncStep::PrepareInitial)?;
 
         // First push before pulling, this avoids records being pulled from central server
-        // and overwritting existing records waiting to be pulled
+        // and overwriting existing records waiting to be pulled
 
         // PUSH
         // Only push if initialised (site data was initialised on central and successfully pulled)
@@ -188,11 +188,12 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
         //
-        let (upserts, deletes) =
+        let (upserts, deletes, merges) =
             integrate_and_translate_sync_buffer(&ctx.connection, is_initialised)
                 .map_err(SyncError::IntegrationError)?;
         info!("Upsert Integration result: {:?}", upserts);
         info!("Delete Integration result: {:?}", deletes);
+        info!("Merge Integration result: {:?}", merges);
         logger.done_step(SyncStep::Integrate)?;
 
         if !is_initialised {
@@ -216,6 +217,7 @@ pub fn integrate_and_translate_sync_buffer(
 ) -> anyhow::Result<(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
+    TranslationAndIntegrationResults,
 )> {
     // Integration is done inside a transaction, to make sure all records are available at the same time
     // and maintain logical data integrity. During initialisation nested transactions cause significant
@@ -228,6 +230,7 @@ pub fn integrate_and_translate_sync_buffer(
     // Closure, to be run in a transaction or without a transaction
     let integrate_and_translate = |connection: &StorageConnection| -> Result<
         (
+            TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
         ),
@@ -247,10 +250,21 @@ pub fn integrate_and_translate_sync_buffer(
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
-        let delete_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(delete_sync_buffer_records, &translators)?;
+        let delete_integration_result: TranslationAndIntegrationResults =
+            translation_and_integration
+                .translate_and_integrate_sync_records(delete_sync_buffer_records, &translators)?;
 
-        Ok((upsert_integration_result, delete_integration_result))
+        let merge_sync_buffer_records =
+            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Merge, &table_order)?;
+        let merge_integration_result: TranslationAndIntegrationResults =
+            translation_and_integration
+                .translate_and_integrate_sync_records(merge_sync_buffer_records, &translators)?;
+
+        Ok((
+            upsert_integration_result,
+            delete_integration_result,
+            merge_integration_result,
+        ))
     };
 
     let result = if is_initialised {
