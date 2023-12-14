@@ -346,8 +346,7 @@ mod repository_test {
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         item_link_repo
-            .insert_one(&mock_item_link_from_item(&item))
-            .await
+            .insert_one_or_ignore(&mock_item_link_from_item(&item))
             .unwrap();
     }
 
