@@ -1,6 +1,6 @@
 use super::requisition_line_row::requisition_line::dsl as requisition_line_dsl;
 
-use crate::db_diesel::{item_row::item, requisition_row::requisition};
+use crate::db_diesel::{item_link_row::item_link, requisition_row::requisition};
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 use diesel::prelude::*;
@@ -11,7 +11,7 @@ table! {
     requisition_line (id) {
         id -> Text,
         requisition_id -> Text,
-        item_id -> Text,
+        item_link_id -> Text,
         requested_quantity -> Integer,
         suggested_quantity -> Integer,
         supply_quantity -> Integer,
@@ -32,7 +32,7 @@ table! {
     }
 }
 
-joinable!(requisition_line -> item (item_id));
+joinable!(requisition_line -> item_link (item_link_id));
 joinable!(requisition_line -> requisition (requisition_id));
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
@@ -40,6 +40,7 @@ joinable!(requisition_line -> requisition (requisition_id));
 pub struct RequisitionLineRow {
     pub id: String,
     pub requisition_id: String,
+    #[column_name = "item_link_id"]
     pub item_id: String,
     pub requested_quantity: i32,
     pub suggested_quantity: i32,
