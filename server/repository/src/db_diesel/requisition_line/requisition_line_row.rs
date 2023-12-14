@@ -26,7 +26,7 @@ table! {
 
 table! {
     #[sql_name = "requisition_line"]
-    requistion_line_is_sync_update (id) {
+    requisition_line_is_sync_update (id) {
         id -> Text,
         is_sync_update -> Bool,
     }
@@ -82,8 +82,8 @@ impl<'a> RequisitionLineRowRepository<'a> {
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
-        diesel::update(requistion_line_is_sync_update::table.find(id))
-            .set(requistion_line_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
+        diesel::update(requisition_line_is_sync_update::table.find(id))
+            .set(requisition_line_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
             .execute(&self.connection.connection)?;
 
         Ok(())
@@ -121,9 +121,9 @@ impl<'a> RequisitionLineRowRepository<'a> {
 
     #[cfg(test)]
     fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = requistion_line_is_sync_update::table
+        let result = requisition_line_is_sync_update::table
             .find(id)
-            .select(requistion_line_is_sync_update::dsl::is_sync_update)
+            .select(requisition_line_is_sync_update::dsl::is_sync_update)
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
