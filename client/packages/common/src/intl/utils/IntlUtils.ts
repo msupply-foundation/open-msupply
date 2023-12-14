@@ -32,13 +32,15 @@ type StringOrEmpty = string | null | undefined;
 
 export const useIntlUtils = () => {
   const { i18n } = useIntl();
-  const { language } = i18n;
+  const { language: i18nLanguage } = i18n;
+  const [language, setLanguage] = React.useState<string>(i18nLanguage);
 
   const changeLanguage = (languageCode?: string) => {
     if (!languageCode) return;
     if (!locales.some(locale => languageCode === locale)) return;
 
     i18n.changeLanguage(languageCode);
+    setLanguage(languageCode);
   };
 
   const isRtl = rtlLocales.includes(language);
