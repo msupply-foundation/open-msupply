@@ -230,8 +230,6 @@ mod tests {
             )
             .unwrap();
 
-        dbg!(&changelogs);
-
         let translator = StockLineTranslation {};
         for changelog in changelogs {
             // Translate and sort
