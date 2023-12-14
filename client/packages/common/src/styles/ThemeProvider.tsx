@@ -1,9 +1,7 @@
 import React, { FC } from 'react';
 import { CacheProvider } from '@emotion/react';
-import {
-  ThemeProviderProps,
-  default as MuiThemeProvider,
-} from '@mui/material/styles/ThemeProvider';
+import { ThemeProviderProps } from '@mui/material/styles/ThemeProvider';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
