@@ -16,6 +16,7 @@ mod name_tag_join_add_name_link_id;
 mod patient_id_indices;
 mod plugin_data;
 mod requisition_add_name_link_id;
+mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
 mod stocktake_line_add_item_link_id;
 mod temperature_breach;
@@ -41,6 +42,7 @@ impl Migration for V1_06_00 {
         stock_line_add_item_link_id::migrate(connection)?;
         invoice_line_add_item_link_id::migrate(connection)?;
         master_list_line_add_item_link_id::migrate(connection)?;
+        requisition_line_add_item_link_id::migrate(connection)?;
 
         // Name link migrations
         name_link::migrate(connection)?;
