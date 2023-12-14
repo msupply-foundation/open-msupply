@@ -1,6 +1,7 @@
 import { renderHookWithProvider } from '@common/utils';
 import { useCurrency } from './currency';
 import { useIntlUtils } from '../utils';
+import { act } from 'react-dom/test-utils';
 
 describe('currency formatting - en', () => {
   it('formats a string with up to the precision number of decimal places, dropping decimal places where needed', () => {
@@ -45,7 +46,9 @@ describe('currency formatting - en', () => {
 describe('currency formatting - fr', () => {
   beforeAll(() => {
     const { result: intlUtils } = renderHookWithProvider(useIntlUtils);
-    intlUtils.current.changeLanguage('fr');
+    act(() => {
+      intlUtils.current.changeLanguage('fr');
+    });
   });
 
   it('formats a string with up to the precision number of decimal places, dropping decimal places where needed', () => {
