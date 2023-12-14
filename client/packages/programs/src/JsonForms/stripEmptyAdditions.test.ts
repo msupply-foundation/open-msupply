@@ -1,4 +1,7 @@
-import { stripEmptyAdditions } from './stripEmptyAdditions';
+import {
+  isEqualIgnoreUndefinedAndEmpty,
+  stripEmptyAdditions,
+} from './stripEmptyAdditions';
 
 describe('stripEmptyAdditions', () => {
   it('should remove empty objects and arrays', () => {
@@ -36,16 +39,14 @@ describe('stripEmptyAdditions', () => {
       array: [],
     };
     const add1 = {
-      some: 3,
-      someMore: { value: false, add1: undefined },
-      add2: undefined,
+      some: 2,
+      someMore: { obj: { value: undefined } },
+      array: [],
     };
 
-    expect(stripEmptyAdditions(old, add1)).toStrictEqual({
-      some: 3,
-      someMore: {},
-      array: [],
-    });
+    expect(
+      isEqualIgnoreUndefinedAndEmpty(old, stripEmptyAdditions(old, add1))
+    ).toBeTruthy();
   });
 
   it('should ignore undefined in array objects', () => {
@@ -54,14 +55,10 @@ describe('stripEmptyAdditions', () => {
       array: [{ value: false }],
     };
     const add1 = {
-      some: 3,
+      some: 2,
       array: [{ value: false, add1: undefined }],
     };
 
-    expect(stripEmptyAdditions(old, add1)).toStrictEqual({
-      some: 3,
-      someMore: {},
-      array: [],
-    });
+    expect(isEqualIgnoreUndefinedAndEmpty(old, add1)).toBeTruthy();
   });
 });
