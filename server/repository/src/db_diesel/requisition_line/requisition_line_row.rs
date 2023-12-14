@@ -34,6 +34,7 @@ table! {
 
 joinable!(requisition_line -> item_link (item_link_id));
 joinable!(requisition_line -> requisition (requisition_id));
+allow_tables_to_appear_in_same_query!(requisition_line, item_link);
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
 #[table_name = "requisition_line"]
