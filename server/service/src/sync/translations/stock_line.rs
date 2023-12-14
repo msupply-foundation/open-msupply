@@ -107,12 +107,14 @@ impl SyncTranslation for StockLineTranslation {
             return Ok(None);
         }
 
-        let stock_line = StockLineRepository::new(connection)
+        let Some(stock_line) = StockLineRepository::new(connection)
             .query_by_filter(
                 StockLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
                 None,
             )?
-            .pop();
+            .pop() else {
+                return Err(anyhow::anyhow!("Can't find line..."))
+            };
 
         let StockLine {
             stock_line_row:
@@ -135,10 +137,7 @@ impl SyncTranslation for StockLineTranslation {
                 },
             item_row,
             ..
-        } = match stock_line {
-            Some(s) => s,
-            _ => return Ok(None),
-        };
+        } = stock_line;
 
         let legacy_row = LegacyStockLineRow {
             ID: id,
@@ -180,15 +179,21 @@ impl SyncTranslation for StockLineTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_stock_line_translation() {
         use crate::sync::test::test_data::stock_line as test_data;
         let translator = StockLineTranslation {};
 
-        let (_, connection, _, _) =
-            setup_all("test_stock_line_translation", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all(
+            "test_stock_line_translation",
+            MockDataInserts::none().units().items().item_links_merged(),
+        )
+        .await;
 
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
@@ -196,6 +201,47 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_push_merged() {
+        // The item_links_merged function will merge ALL items into item_a, so all stock_lines should have an item_id of "item_a" regardless of their original item_id.
+        let (_, connection, _, _) = setup_all(
+            "test_stock_line_push_item_link_merged",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .item_links_merged()
+                .names()
+                .stores()
+                .locations()
+                .barcodes()
+                .stock_lines(),
+        )
+        .await;
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::StockLine.equal_to())),
+            )
+            .unwrap();
+
+        dbg!(&changelogs);
+
+        let translator = StockLineTranslation {};
+        for changelog in changelogs {
+            // Translate and sort
+            let Some(translated) = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap() else {
+                    panic!("Where is my stuff");
+                };
+
+            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
         }
     }
 }
