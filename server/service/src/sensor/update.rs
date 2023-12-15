@@ -6,6 +6,7 @@ use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
     SingleRecordError,
 };
+use chrono::{Duration, NaiveDateTime, NaiveTime};
 use repository::{
     ActivityLogType, RepositoryError, Sensor, SensorRow, SensorRowRepository, StorageConnection,
     TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLog,
@@ -73,11 +74,27 @@ pub fn update_sensor_logs_for_breach(
             == TemperatureBreachRowType::ColdCumulative)
             | (breach_record.r#type == TemperatureBreachRowType::HotCumulative);
         let logs = get_sensor_logs_for_breach(connection, breach_id)?; //sorted by date/time
+        let mut log_interval = 0;
+        let zero_time = NaiveTime::parse_from_str("00:00", "%H:%M").unwrap(); // hard-coded -> should always work!
 
+        if let Some(sensor) = SensorRowRepository::new(connection).find_one_by_id(&breach_record.sensor_id)? {
+            if let Some(interval) = sensor.log_interval {
+                log_interval = interval;
+            }
+        }
+        
         if is_cumulative_breach {
             // Update breach start/end from first/last logs if it has changed
             if let Some(first_log) = logs.first() {
-                let first_breach_datetime = first_log.temperature_log_row.datetime;
+                // If within log_interval seconds of the start of the day,
+                // use the start of the day as first log time
+                let mut first_breach_datetime = NaiveDateTime::new(first_log.temperature_log_row.datetime.date(), zero_time);
+                let first_log_datetime = first_breach_datetime + Duration::seconds(log_interval.into());
+
+                if first_log_datetime < first_log.temperature_log_row.datetime {
+                    first_breach_datetime = first_log.temperature_log_row.datetime;
+                }
+
                 if breach_record.start_datetime > first_breach_datetime {
                     log::info!(
                         "Updating cumulative breach start for {:?} to {:?}",
@@ -89,7 +106,15 @@ pub fn update_sensor_logs_for_breach(
                 }
             }
             if let Some(last_log) = logs.last() {
-                let last_breach_datetime = last_log.temperature_log_row.datetime;
+                // If within log_interval seconds of the end of the day,
+                // use the end of the day as last log time
+                let mut last_breach_datetime = NaiveDateTime::new(last_log.temperature_log_row.datetime.date(), zero_time) + Duration::days(1);
+                let last_log_datetime = last_breach_datetime - Duration::seconds(log_interval.into());
+
+                if last_log_datetime > last_log.temperature_log_row.datetime {
+                    last_breach_datetime = last_log.temperature_log_row.datetime;
+                }
+                
                 if breach_record.end_datetime < Some(last_breach_datetime) {
                     log::info!(
                         "Updating cumulative breach end for {:?} to {:?}",
