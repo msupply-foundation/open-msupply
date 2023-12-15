@@ -95,7 +95,9 @@ pub fn update_sensor_logs_for_breach(
                     first_breach_datetime = first_log.temperature_log_row.datetime;
                 }
 
-                if breach_record.start_datetime > first_breach_datetime {
+                // Use the first log time if it's either earlier than the calculated breach end
+                // or if the calculated breach start is less than the sensor log interval before the first log time
+                if (breach_record.start_datetime > first_breach_datetime) | (log_interval > 0) & (breach_record.start_datetime < first_breach_datetime - Duration::seconds(log_interval.into())) {
                     log::info!(
                         "Updating cumulative breach start for {:?} to {:?}",
                         breach_record,
@@ -115,7 +117,9 @@ pub fn update_sensor_logs_for_breach(
                     last_breach_datetime = last_log.temperature_log_row.datetime;
                 }
                 
-                if breach_record.end_datetime < Some(last_breach_datetime) {
+                // Use the last log time if it's either later than the calculated breach end
+                // or if the calculated breach end is more than the sensor log interval after the last log time
+                if (breach_record.end_datetime < Some(last_breach_datetime)) | (log_interval > 0) & (breach_record.end_datetime > Some(last_breach_datetime + Duration::seconds(log_interval.into()))) {
                     log::info!(
                         "Updating cumulative breach end for {:?} to {:?}",
                         breach_record,
