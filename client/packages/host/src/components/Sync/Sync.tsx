@@ -2,7 +2,6 @@ import React, { PropsWithChildren, useState, useEffect } from 'react';
 
 import {
   DateUtils,
-  ErrorWithDetails,
   ErrorWithDetailsProps,
   Formatter,
   Grid,
@@ -121,6 +120,11 @@ export const Sync = () => {
     error: updateUserError,
   } = useUpdateUser();
 
+  const sync = async () => {
+    await updateUser();
+    await onManualSync();
+  };
+
   return (
     <Grid style={{ padding: 15 }} justifyContent="center">
       <ServerInfo />
@@ -140,6 +144,14 @@ export const Sync = () => {
         <Row title={t('sync-info.last-sync')}>
           <FormattedSyncDate date={latestSyncDate} />
         </Row>
+        <Row title={t('sync-info.user-last-updated')}>
+          <FormattedSyncDate
+            date={DateUtils.getDateOrNull(lastSuccessfulSync || null)}
+          />
+          {!!updateUserError?.error && (
+            <Typography color="error">{updateUserError.error}</Typography>
+          )}
+        </Row>
         {!!syncStatus?.error ? (
           <Row title={t('sync-info.last-successful-sync')}>
             <FormattedSyncDate date={latestSuccessfulSyncDate} />
@@ -147,48 +159,22 @@ export const Sync = () => {
         ) : null}
         <Row>
           <LoadingButton
-            isLoading={isLoading}
+            isLoading={isLoading || updateUserIsLoading}
             startIcon={<RadioIcon />}
             variant="contained"
             sx={{ fontSize: '12px' }}
             disabled={false}
-            onClick={onManualSync}
+            onClick={sync}
           >
             {t('button.sync-now')}
           </LoadingButton>
+          <ShowStatus
+            isSyncing={isLoading}
+            isUpdatingUser={updateUserIsLoading}
+          />
         </Row>
       </Grid>
       <SyncProgress syncStatus={syncStatus} isOperational={true} />
-      <Grid
-        container
-        flexDirection="column"
-        justifyContent="flex-start"
-        style={{ padding: '15 15 50 15', minWidth: 650 }}
-        marginTop={2}
-        flexWrap="nowrap"
-      >
-        <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
-          {t('heading.user-sync')}
-        </Typography>
-        <Row title={t('sync-info.last-successful-sync')}>
-          <FormattedSyncDate
-            date={DateUtils.getDateOrNull(lastSuccessfulSync || null)}
-          />
-        </Row>
-        <Row>
-          <LoadingButton
-            isLoading={updateUserIsLoading}
-            startIcon={<RadioIcon />}
-            variant="contained"
-            sx={{ fontSize: '12px' }}
-            disabled={false}
-            onClick={updateUser}
-          >
-            {t('button.sync-now')}
-          </LoadingButton>
-        </Row>
-        {updateUserError && <ErrorWithDetails {...updateUserError} />}
-      </Grid>
     </Grid>
   );
 };
@@ -227,5 +213,26 @@ const FormattedSyncDate = ({ date }: { date: Date | null }) => {
         {relativeTime}
       </Grid>
     </Grid>
+  );
+};
+
+const ShowStatus = ({
+  isSyncing,
+  isUpdatingUser,
+}: {
+  isSyncing: boolean;
+  isUpdatingUser: boolean;
+}) => {
+  const t = useTranslation('');
+  if (!isSyncing && !isUpdatingUser) return null;
+
+  const message = isSyncing ? 'sync-info.syncing' : 'sync-info.updating-user';
+  return (
+    <Typography
+      sx={{ fontSize: 12, textAlign: 'center', width: '115px' }}
+      padding={1}
+    >
+      {t(message)}
+    </Typography>
   );
 };
