@@ -77,14 +77,13 @@ export const AppBarButtons = () => {
 
       // asks if the user would like to assign a location and redirects if yes
       if (!!resultJson.newSensorId) {
+        const path = RouteBuilder.create(AppRoute.Coldchain)
+          .addPart(AppRoute.Sensors)
+          .addQuery({ edit: resultJson.newSensorId })
+          .build();
+
         getConfirmation({
-          onConfirm: () =>
-            navigate(
-              RouteBuilder.create(AppRoute.Coldchain)
-                .addPart(AppRoute.Sensors)
-                .addQuery({ edit: resultJson.newSensorId })
-                .build()
-            ),
+          onConfirm: () => setTimeout(() => navigate(path), 500),
         });
       }
     } catch (e) {

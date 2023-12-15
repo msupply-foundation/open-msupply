@@ -30,7 +30,7 @@ export const SensorListView: FC = () => {
 
   const columns = useColumns<SensorFragment>(
     [
-      ['name'],
+      ['name', { width: 200 }],
       {
         key: 'cce',
         label: 'label.cce',
