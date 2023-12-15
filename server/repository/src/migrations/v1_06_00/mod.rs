@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod cold_chain_indexes;
 mod contact_trace;
 mod master_list;
 mod patient_id_indices;
@@ -23,6 +24,7 @@ impl Migration for V1_06_00 {
         temperature_breach::migrate(connection)?;
         patient_id_indices::migrate(connection)?;
         program_enrolment_status::migrate(connection)?;
+        cold_chain_indexes::migrate(connection)?;
         Ok(())
     }
 }
