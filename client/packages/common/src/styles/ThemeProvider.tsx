@@ -10,6 +10,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider';
 import { PropsWithChildrenOnly } from '@common/types';
 import { createRegisteredContext } from 'react-singleton-context';
+import { useIntlUtils } from '..';
 
 /**
  * Need a cache with the rtl plugin for when we are using rtl.
@@ -46,8 +47,13 @@ export const ThemeProviderProxy: FC<PropsWithChildrenOnly> = ({ children }) => {
 const ThemeProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const appTheme = useAppTheme();
 
+  const { getLocale } = useIntlUtils();
+
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <LocalizationProvider
+      dateAdapter={AdapterDateFns}
+      adapterLocale={getLocale()}
+    >
       <CacheProvider value={appTheme.direction === 'rtl' ? cacheRtl : cacheLtr}>
         <RTLProvider>
           <ThemeContext.Provider value={{ theme: appTheme }}>
