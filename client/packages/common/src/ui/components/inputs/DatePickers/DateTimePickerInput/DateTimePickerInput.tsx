@@ -30,7 +30,7 @@ export const DateTimePickerInput: FC<
   width,
   label,
   textFieldProps,
-  format = 'dd/MM/yyyy HH:mm',
+  format = 'P p',
   minDate,
   maxDate,
   ...props

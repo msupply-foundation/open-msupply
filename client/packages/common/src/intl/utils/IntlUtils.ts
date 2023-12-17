@@ -4,6 +4,31 @@ import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
 import { IntlContext } from '../context';
 
+// importing individually to reduce bundle size
+// the date-fns methods are tree shaking correctly
+// but the locales are not. when adding, please add as below
+import enGB from 'date-fns/locale/en-GB';
+import enUS from 'date-fns/locale/en-US';
+import fr from 'date-fns/locale/fr';
+import ar from 'date-fns/locale/ar';
+import es from 'date-fns/locale/es';
+
+// Map locale string (from i18n) to locale object (from date-fns)
+const getLocaleObj = { fr, ar, es };
+
+export const getLocale = (language: SupportedLocales) => {
+  switch (language) {
+    case 'en':
+      return navigator.language === 'en-US' ? enUS : enGB;
+    case 'tet':
+      return enGB;
+    case 'fr-DJ':
+      return fr;
+    default:
+      return getLocaleObj[language];
+  }
+};
+
 export const useIntl = () => React.useContext(IntlContext);
 
 const languageOptions = [
@@ -92,6 +117,7 @@ export const useIntlUtils = () => {
     languageOptions,
     changeLanguage,
     getLocaleCode,
+    getLocale: () => getLocale(currentLanguage),
     getUserLocale,
     setUserLocale,
     getLocalisedFullName,
