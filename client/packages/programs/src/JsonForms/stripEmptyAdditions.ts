@@ -1,11 +1,4 @@
-import {
-  isObject,
-  isArray,
-  isEqual,
-  isEqualWith,
-  includes,
-  omitBy,
-} from 'lodash';
+import { isObject, isArray, isEqualWith, includes, omitBy } from 'lodash';
 import { JsonData } from './common';
 
 /**
@@ -21,7 +14,6 @@ const objectOrArrayIsEmpty = (obj: JsonData | undefined): boolean => {
 
   // array
   if (Array.isArray(obj)) {
-    if (obj.length === 0) return true;
     return obj.every(it => objectOrArrayIsEmpty(it));
   }
 
@@ -55,28 +47,40 @@ export const stripEmptyAdditions = (
   if (newData === undefined) return undefined;
   if (!isObject(newData)) return newData;
 
-  if (isObject(newData) && !isArray(newData)) {
+  if (!isArray(newData)) {
     const object: JsonData = {};
     const oldObj = !old || !isObject(old) || isArray(old) ? {} : old;
 
-    for (const key of Object.keys(newData)) {
+    const allKeys = new Set<string>();
+    Object.keys(oldObj).reduce((prev, cur) => prev.add(cur), allKeys);
+    Object.keys(newData).reduce((prev, cur) => prev.add(cur), allKeys);
+    for (const key of allKeys) {
+      const o = oldObj[key];
       let n = newData[key];
-      if (isObject(n) && !isArray(n)) {
-        const o = oldObj[key];
+      if (n === undefined) {
+        if (o !== undefined) {
+          object[key] = o;
+        }
+        continue;
+      }
+      if (isObject(n)) {
         n = stripEmptyAdditions(o, n);
         if (objectOrArrayIsEmpty(n)) {
-          if (isEqual(o, {}) || isEqual(o, [])) {
-            // keep existing empty object
+          if (o && Object.keys(o).length === 0) {
             object[key] = o;
           }
-          // ignore the empty addition
           continue;
         }
       }
-      if (n !== undefined) object[key] = n;
+      if (n !== undefined) {
+        object[key] = n;
+      }
     }
-    if (Object.keys(object).length === 0) return undefined;
-    return object;
+    if (Object.keys(object).length > 0) {
+      return object;
+    }
+    if (newData && old) return old;
+    return undefined;
   }
 
   return newData;
