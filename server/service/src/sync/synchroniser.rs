@@ -241,12 +241,25 @@ pub fn integrate_and_translate_sync_buffer(
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
+
+        // TODO what is the total
+
+        // If we had 1000 records to integrate
+
+        // Total number of sync_buffer rows to integrate
+
+        // First time we call   logger.progress(step_progress.clone(), 10000)?;
+
+        // Subsequent times we call it with how many remaining
+
         let upsert_integration_result = translation_and_integration
+            // pass the logger here
             .translate_and_integrate_sync_records(upsert_sync_buffer_records, &translators)?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
+        // pass the logger here
         let delete_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(delete_sync_buffer_records, &translators)?;
 
