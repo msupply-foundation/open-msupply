@@ -8,9 +8,6 @@ use crate::repository_error::RepositoryError;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
-use diesel_derive_enum::DbEnum;
-use serde::{Deserialize, Serialize};
-
 table! {
     program_enrolment (id) {
         id -> Text,
@@ -20,7 +17,7 @@ table! {
         patient_id -> Text,
         enrolment_datetime -> Timestamp,
         program_enrolment_id -> Nullable<Text>,
-        status -> crate::db_diesel::program_enrolment_row::ProgramEnrolmentStatusMapping,
+        status -> Nullable<Text>,
     }
 }
 
@@ -31,16 +28,7 @@ allow_tables_to_appear_in_same_query!(program_enrolment, name_store_join);
 allow_tables_to_appear_in_same_query!(program_enrolment, store);
 allow_tables_to_appear_in_same_query!(program_enrolment, program);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ProgramEnrolmentStatus {
-    Active,
-    OptedOut,
-    TransferredOut,
-    Paused,
-}
-
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[table_name = "program_enrolment"]
 pub struct ProgramEnrolmentRow {
     /// The row id
@@ -57,22 +45,7 @@ pub struct ProgramEnrolmentRow {
     pub enrolment_datetime: NaiveDateTime,
     /// Program specific patient id
     pub program_enrolment_id: Option<String>,
-    pub status: ProgramEnrolmentStatus,
-}
-
-impl Default for ProgramEnrolmentRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            document_type: Default::default(),
-            program_id: Default::default(),
-            document_name: Default::default(),
-            patient_id: Default::default(),
-            enrolment_datetime: Default::default(),
-            program_enrolment_id: Default::default(),
-            status: ProgramEnrolmentStatus::Active,
-        }
-    }
+    pub status: Option<String>,
 }
 
 pub struct ProgramEnrolmentRowRepository<'a> {

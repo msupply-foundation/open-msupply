@@ -6,6 +6,7 @@ mod contact_trace;
 mod master_list;
 mod patient_id_indices;
 mod plugin_data;
+mod program_enrolment_status;
 mod sync_log;
 mod temperature_breach;
 
@@ -23,6 +24,7 @@ impl Migration for V1_06_00 {
         temperature_breach::migrate(connection)?;
         patient_id_indices::migrate(connection)?;
         sync_log::migrate(connection)?;
+        program_enrolment_status::migrate(connection)?;
         Ok(())
     }
 }
