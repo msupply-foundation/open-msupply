@@ -76,6 +76,8 @@ impl<'a> TranslationAndIntegration<'a> {
         for sync_record in sync_records {
             // Try translate
 
+            // Now and again call  logger.progress(step_progress.clone(), {number of non integrated sync buffer row} )?;
+
             let translation_result = match self.translate_sync_record(&sync_record, &translators) {
                 Ok(translation_result) => translation_result,
                 // Record error in sync buffer and in result, continue to next sync_record
