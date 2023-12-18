@@ -1,4 +1,12 @@
-import _ from 'lodash';
+import {
+  isObject,
+  isArray,
+  isEqual,
+  isEqualWith,
+  includes,
+  omitBy,
+  filter,
+} from 'lodash';
 import { JsonData } from './common';
 
 /**
@@ -46,11 +54,11 @@ export const stripEmptyAdditions = (
   newData: JsonData | undefined
 ): JsonData | undefined => {
   if (newData === undefined) return undefined;
-  if (!_.isObject(newData)) return newData;
+  if (!isObject(newData)) return newData;
 
-  if (_.isObject(newData) && !_.isArray(newData)) {
+  if (isObject(newData) && !isArray(newData)) {
     const object: JsonData = {};
-    const oldObj = !old || !_.isObject(old) || _.isArray(old) ? {} : old;
+    const oldObj = !old || !isObject(old) || isArray(old) ? {} : old;
 
     const allKeys = new Set<string>();
     Object.keys(oldObj).reduce((prev, cur) => prev.add(cur), allKeys);
@@ -58,10 +66,10 @@ export const stripEmptyAdditions = (
     for (const key of allKeys) {
       const o = oldObj[key];
       let n = newData[key];
-      if (_.isObject(n) && !_.isArray(n)) {
+      if (isObject(n) && !isArray(n)) {
         n = stripEmptyAdditions(o, n);
         if (objectOrArrayIsEmpty(n)) {
-          if (_.isEqual(o, {}) || _.isEqual(o, [])) {
+          if (isEqual(o, {}) || isEqual(o, [])) {
             // keep existing empty object
             object[key] = o;
           }
@@ -78,25 +86,25 @@ export const stripEmptyAdditions = (
   return newData;
 };
 
-// https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
+// https://stackoverflow.com/questions/57874879
 const isEqualIgnoreUndefined = (
   a: JsonData | undefined,
   b: JsonData | undefined
 ) => {
   const comparisonFunc = (a: JsonData | undefined, b: JsonData | undefined) => {
-    if (_.isArray(a) || _.isArray(b)) return;
-    if (!_.isObject(a) || !_.isObject(b)) return;
+    if (isArray(a) || isArray(b)) return;
+    if (!isObject(a) || !isObject(b)) return;
 
-    if (!_.includes(a, undefined) && !_.includes(b, undefined)) return;
+    if (!includes(a, undefined) && !includes(b, undefined)) return;
 
     // Call recursively, after filtering all undefined properties
-    return _.isEqualWith(
-      _.omitBy(a, value => value === undefined),
-      _.omitBy(b, value => value === undefined),
+    return isEqualWith(
+      omitBy(a, value => value === undefined),
+      omitBy(b, value => value === undefined),
       comparisonFunc
     );
   };
-  return _.isEqualWith(a, b, comparisonFunc);
+  return isEqualWith(a, b, comparisonFunc);
 };
 
 export const isEqualIgnoreUndefinedAndEmpty = (
