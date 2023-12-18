@@ -12,7 +12,6 @@ import {
   useTranslation,
   TypedTFunction,
   LocaleKey,
-  useColumnUtils,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -63,7 +62,6 @@ export const useStocktakeColumns = ({
 >[] => {
   const { getError } = useStocktakeLineErrorContext();
   const t = useTranslation();
-  const { getColumnEntityProperty, getColumnProperty } = useColumnUtils();
 
   return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [
@@ -104,67 +102,135 @@ export const useStocktakeColumns = ({
       [
         'batch',
         {
-          getSortValue: row =>
-            String(
-              getColumnProperty({
-                row,
-                key: 'batch',
-                defaults: { single: '' },
-              }) ?? ''
-            ),
-          accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'batch' }),
+          getSortValue: row => {
+            if ('lines' in row) {
+              const { lines } = row;
+              return (
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'batch',
+                  t('multiple')
+                ) ?? ''
+              );
+            } else {
+              return row.batch ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'batch',
+                t('multiple')
+              );
+            } else {
+              return rowData.batch;
+            }
+          },
         },
       ],
       [
         'expiryDate',
         {
-          getSortValue: row =>
-            String(
-              getColumnProperty({
-                row,
-                key: 'expiryDate',
-                defaults: { single: '' },
-              })
-            ),
-          accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'expiryDate' }),
+          getSortValue: row => {
+            if ('lines' in row) {
+              const { lines } = row;
+              const expiryDate =
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'expiryDate',
+                  t('multiple')
+                ) ?? '';
+              return expiryDate;
+            } else {
+              return row.expiryDate ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              const expiryDate = ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'expiryDate',
+                t('multiple')
+              );
+              return expiryDate;
+            } else {
+              return rowData.expiryDate;
+            }
+          },
         },
       ],
       [
         'location',
         {
-          getSortValue: row =>
-            getColumnEntityProperty({
-              row,
-              entity: 'location',
-              key: 'code',
-              defaults: { single: '' },
-            }),
-          accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'location',
-              key: 'code',
-              defaults: {
-                single: '',
-              },
-            }),
+          getSortValue: row => {
+            if ('lines' in row) {
+              const locations = row.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'code',
+                  t('multiple')
+                );
+              } else {
+                return '';
+              }
+            } else {
+              return row.location?.code ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const locations = rowData.lines.flatMap(({ location }) =>
+                !!location ? [location] : []
+              );
+
+              if (locations.length !== 0) {
+                return ArrayUtils.ifTheSameElseDefault(
+                  locations,
+                  'code',
+                  t('multiple')
+                );
+              }
+            } else {
+              return rowData.location?.code ?? '';
+            }
+          },
         },
       ],
       [
         'packSize',
         {
-          getSortValue: row =>
-            String(
-              getColumnProperty({
-                row,
-                key: 'packSize',
-                defaults: { single: '' },
-              }) ?? ''
-            ),
-          accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'packSize' }),
+          getSortValue: row => {
+            if ('lines' in row) {
+              const { lines } = row;
+              return (
+                ArrayUtils.ifTheSameElseDefault(
+                  lines,
+                  'packSize',
+                  t('multiple')
+                ) ?? ''
+              );
+            } else {
+              return row.packSize ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'packSize',
+                t('multiple')
+              );
+            } else {
+              return rowData.packSize;
+            }
+          },
         },
       ],
       {
@@ -293,12 +359,32 @@ export const useStocktakeColumns = ({
       {
         key: 'comment',
         label: 'label.stocktake-comment',
-        getSortValue: row =>
-          String(
-            getColumnProperty({ row, key: 'comment', defaults: { single: '' } })
-          ),
-        accessor: ({ rowData }) =>
-          getColumnProperty({ row: rowData, key: 'comment' }),
+        getSortValue: row => {
+          if ('lines' in row) {
+            const { lines } = row;
+            return (
+              ArrayUtils.ifTheSameElseDefault(
+                lines,
+                'comment',
+                t('multiple')
+              ) ?? ''
+            );
+          } else {
+            return row.comment ?? '';
+          }
+        },
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.ifTheSameElseDefault(
+              lines,
+              'comment',
+              t('multiple')
+            );
+          } else {
+            return rowData.comment;
+          }
+        },
       },
       expandColumn,
       GenericColumnKey.Selection,
