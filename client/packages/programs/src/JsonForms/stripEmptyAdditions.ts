@@ -5,7 +5,6 @@ import {
   isEqualWith,
   includes,
   omitBy,
-  filter,
 } from 'lodash';
 import { JsonData } from './common';
 
@@ -60,13 +59,10 @@ export const stripEmptyAdditions = (
     const object: JsonData = {};
     const oldObj = !old || !isObject(old) || isArray(old) ? {} : old;
 
-    const allKeys = new Set<string>();
-    Object.keys(oldObj).reduce((prev, cur) => prev.add(cur), allKeys);
-    Object.keys(newData).reduce((prev, cur) => prev.add(cur), allKeys);
-    for (const key of allKeys) {
-      const o = oldObj[key];
+    for (const key of Object.keys(newData)) {
       let n = newData[key];
       if (isObject(n) && !isArray(n)) {
+        const o = oldObj[key];
         n = stripEmptyAdditions(o, n);
         if (objectOrArrayIsEmpty(n)) {
           if (isEqual(o, {}) || isEqual(o, [])) {
