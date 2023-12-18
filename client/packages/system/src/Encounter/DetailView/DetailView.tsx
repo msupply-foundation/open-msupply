@@ -200,7 +200,11 @@ export const DetailView: FC = () => {
         ...(typeof data === 'object' ? data : {}),
         ...patch,
       });
-      if (patch.status === EncounterNodeStatus.Deleted) {
+      if (
+        (data as Record<string, JsonData>)['status'] !==
+          EncounterNodeStatus.Deleted &&
+        patch.status === EncounterNodeStatus.Deleted
+      ) {
         setDeleteRequest(true);
       }
     },
