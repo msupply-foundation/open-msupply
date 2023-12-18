@@ -114,6 +114,14 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
 
   const { patient } = encounter;
 
+  const statusOptions = [
+    encounterStatusOption(EncounterNodeStatus.Pending, t),
+    encounterStatusOption(EncounterNodeStatus.Visited, t),
+    encounterStatusOption(EncounterNodeStatus.Cancelled, t),
+  ];
+  if (status === EncounterNodeStatus.Deleted) {
+    statusOptions.push(encounterStatusOption(EncounterNodeStatus.Deleted, t));
+  }
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -173,41 +181,7 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                         status: newStatus,
                       });
                     }}
-                    options={
-                      status === EncounterNodeStatus.Deleted
-                        ? [
-                            encounterStatusOption(
-                              EncounterNodeStatus.Pending,
-                              t
-                            ),
-                            encounterStatusOption(
-                              EncounterNodeStatus.Visited,
-                              t
-                            ),
-                            encounterStatusOption(
-                              EncounterNodeStatus.Cancelled,
-                              t
-                            ),
-                            encounterStatusOption(
-                              EncounterNodeStatus.Deleted,
-                              t
-                            ),
-                          ]
-                        : [
-                            encounterStatusOption(
-                              EncounterNodeStatus.Pending,
-                              t
-                            ),
-                            encounterStatusOption(
-                              EncounterNodeStatus.Visited,
-                              t
-                            ),
-                            encounterStatusOption(
-                              EncounterNodeStatus.Cancelled,
-                              t
-                            ),
-                          ]
-                    }
+                    options={statusOptions}
                     value={status}
                   />
                 }
