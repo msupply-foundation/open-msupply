@@ -176,6 +176,19 @@ export const DetailView: FC = () => {
     dataAccessor
   );
 
+  const updateEncounter = useDebounceCallback(
+    (patch: Partial<EncounterFragment>) =>
+      setData({
+        ...(typeof data === 'object' ? data : {}),
+        ...patch,
+      }),
+    [data, setData]
+  );
+
+  const onDelete = () => {
+    updateEncounter({ status: EncounterNodeStatus.Deleted });
+    setDeleteRequest(true);
+  };
   useEffect(() => {
     if (!deleteRequest) return;
     if (
@@ -194,22 +207,6 @@ export const DetailView: FC = () => {
       );
     }
   }, [deleteRequest, data]);
-  const updateEncounter = useDebounceCallback(
-    (patch: Partial<EncounterFragment>) => {
-      setData({
-        ...(typeof data === 'object' ? data : {}),
-        ...patch,
-      });
-      if (
-        (data as Record<string, JsonData>)['status'] !==
-          EncounterNodeStatus.Deleted &&
-        patch.status === EncounterNodeStatus.Deleted
-      ) {
-        setDeleteRequest(true);
-      }
-    },
-    [data, setData]
-  );
 
   const { showDialog: showSaveAsVisitedDialog, SaveAsVisitedModal } =
     useSaveWithStatusChangeModal(
@@ -259,7 +256,11 @@ export const DetailView: FC = () => {
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
       <AppBarButtons logicalStatus={logicalStatus} />
       {encounter && (
-        <Toolbar onChange={updateEncounter} encounter={encounter} />
+        <Toolbar
+          onChange={updateEncounter}
+          encounter={encounter}
+          onDelete={onDelete}
+        />
       )}
       {encounter ? (
         JsonForm

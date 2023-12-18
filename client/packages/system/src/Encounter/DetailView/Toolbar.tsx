@@ -57,9 +57,14 @@ const Row = ({
 );
 interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
+  onDelete: () => void;
   encounter: EncounterFragment;
 }
-export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
+export const Toolbar: FC<ToolbarProps> = ({
+  encounter,
+  onChange,
+  onDelete,
+}) => {
   const [status, setStatus] = useState<EncounterNodeStatus | undefined>(
     encounter.status ?? undefined
   );
@@ -101,13 +106,11 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
     title: t('title.confirm-delete-encounter'),
   });
 
-  const onDelete = () => {
+  const onDeleteClick = () => {
     getDeleteConfirmation({
       onConfirm: () => {
         setStatus(EncounterNodeStatus.Deleted);
-        onChange({
-          status: EncounterNodeStatus.Deleted,
-        });
+        onDelete();
       },
     });
   };
@@ -187,7 +190,11 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                 }
               />
 
-              <IconButton icon={<DeleteIcon />} onClick={onDelete} label={''} />
+              <IconButton
+                icon={<DeleteIcon />}
+                onClick={onDeleteClick}
+                label={''}
+              />
             </Box>
             <Box display="flex" gap={1.5}>
               <Row
