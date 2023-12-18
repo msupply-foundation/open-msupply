@@ -189,7 +189,7 @@ impl Synchroniser {
         logger.start_step(SyncStep::Integrate)?;
         //
         let (upserts, deletes) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
+            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised)
                 .map_err(SyncError::IntegrationError)?;
         info!("Upsert Integration result: {:?}", upserts);
         info!("Delete Integration result: {:?}", deletes);
@@ -213,7 +213,6 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     is_initialised: bool,
-    logger: &mut SyncLogger<'a>,
 ) -> anyhow::Result<(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
