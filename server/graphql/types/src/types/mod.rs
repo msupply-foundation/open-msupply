@@ -93,6 +93,9 @@ pub use self::repack::*;
 pub mod program;
 pub use self::program::*;
 
+pub mod plugin_data;
+pub use self::plugin_data::*;
+
 pub mod program_node;
 pub use self::program_node::*;
 

@@ -172,7 +172,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
 
       return onSaved();
     } catch (e) {
-      // console.log(e);
+      // console.error(e);
     }
   };
 

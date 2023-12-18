@@ -65,7 +65,7 @@ const DetailButton = ({
             .addQuery({
               sort: TemperatureNotificationSortFieldInput.StartDatetime,
             })
-            .addQuery({ acknowledged: false })
+            .addQuery({ unacknowledged: true })
             .addQuery({ 'sensor.name': notification.sensor?.name ?? '' })
             .build()
         )
@@ -103,7 +103,7 @@ export const ColdchainNotification = () => {
     first: 1,
     offset: 0,
     sortBy: { key: 'startDatetime', direction: 'desc', isDesc: true },
-    filterBy: { acknowledged: false },
+    filterBy: { unacknowledged: true },
   });
   const { localisedDistanceToNow } = useFormatDateTime();
   const notification = notifications?.nodes?.[0];
@@ -148,12 +148,16 @@ export const ColdchainNotification = () => {
         </b>
       </Text>
       <Separator />
-      <Text>
-        {t('message.last-temperature', {
-          temperature: notification.maxOrMinTemperature,
-        })}
-      </Text>
-      <Separator />
+      {!!notification.maxOrMinTemperature && (
+        <>
+          <Text>
+            {t('message.last-temperature', {
+              temperature: notification.maxOrMinTemperature,
+            })}
+          </Text>
+          <Separator />
+        </>
+      )}
       <Text>
         {t('message.device')}
         <b style={{ paddingLeft: 4 }}>{notification.sensor?.name}</b>

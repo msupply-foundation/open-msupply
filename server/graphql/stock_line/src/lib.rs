@@ -8,7 +8,8 @@ use graphql_core::{
 };
 use graphql_types::types::*;
 use repository::{
-    DateFilter, EqualFilter, PaginationOption, StockLineFilter, StockLineSort, StockLineSortField,
+    location::LocationFilter, DateFilter, EqualFilter, PaginationOption, StockLineFilter,
+    StockLineSort, StockLineSortField,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -45,6 +46,7 @@ pub struct StockLineFilterInput {
     pub location_id: Option<EqualFilterStringInput>,
     pub store_id: Option<EqualFilterStringInput>,
     pub has_packs_in_store: Option<bool>,
+    pub location: Option<LocationFilterInput>,
 }
 
 impl From<StockLineFilterInput> for StockLineFilter {
@@ -58,6 +60,7 @@ impl From<StockLineFilterInput> for StockLineFilter {
             location_id: f.location_id.map(EqualFilter::from),
             store_id: None,
             has_packs_in_store: f.has_packs_in_store,
+            location: f.location.map(LocationFilter::from),
         }
     }
 }

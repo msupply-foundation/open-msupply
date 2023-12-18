@@ -35,18 +35,14 @@ export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
         text={t('dispensary')}
         inactive
       />
-      <Collapse
-        in={isActive}
-        sx={{
-          marginBottom: 2,
-        }}
-      >
+      <Collapse in={isActive} sx={{ marginBottom: 2 }}>
         <List>
           <AppNavLink
             visible={visible}
             end
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
+              .addQuery({ sort: 'code' })
               .build()}
             text={t('patients')}
           />

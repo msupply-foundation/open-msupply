@@ -4,7 +4,9 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type PatientRowFragment = { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } };
+export type PatientRowFragment = { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', name: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } };
+
+export type ProgramPatientRowFragment = { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, documentDraft?: any | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } };
 
 export type PatientsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -14,7 +16,7 @@ export type PatientsQueryVariables = Types.Exact<{
 }>;
 
 
-export type PatientsQuery = { __typename: 'Queries', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } }> } };
+export type PatientsQuery = { __typename: 'Queries', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', name: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } }> } };
 
 export type PatientByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -22,7 +24,7 @@ export type PatientByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type PatientByIdQuery = { __typename: 'Queries', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } }> } };
+export type PatientByIdQuery = { __typename: 'Queries', patients: { __typename: 'PatientConnector', totalCount: number, nodes: Array<{ __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, documentDraft?: any | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } }> } };
 
 export type PatientSearchQueryVariables = Types.Exact<{
   input: Types.PatientSearchInput;
@@ -30,7 +32,7 @@ export type PatientSearchQueryVariables = Types.Exact<{
 }>;
 
 
-export type PatientSearchQuery = { __typename: 'Queries', patientSearch: { __typename: 'PatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } }> } };
+export type PatientSearchQuery = { __typename: 'Queries', patientSearch: { __typename: 'PatientSearchConnector', totalCount: number, nodes: Array<{ __typename: 'PatientSearchNode', score: number, patient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, documentDraft?: any | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } }> } };
 
 export type CentralPatientSearchQueryVariables = Types.Exact<{
   input: Types.CentralPatientSearchInput;
@@ -54,7 +56,7 @@ export type InsertProgramPatientMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertProgramPatientMutation = { __typename: 'Mutations', insertProgramPatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } };
+export type InsertProgramPatientMutation = { __typename: 'Mutations', insertProgramPatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, documentDraft?: any | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } };
 
 export type UpdateProgramPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -62,7 +64,7 @@ export type UpdateProgramPatientMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateProgramPatientMutation = { __typename: 'Mutations', updateProgramPatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } };
+export type UpdateProgramPatientMutation = { __typename: 'Mutations', updateProgramPatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, documentDraft?: any | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } };
 
 export type InsertPatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -70,7 +72,7 @@ export type InsertPatientMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertPatientMutation = { __typename: 'Mutations', insertPatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } };
+export type InsertPatientMutation = { __typename: 'Mutations', insertPatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, documentDraft?: any | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } };
 
 export type UpdatePatientMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -78,7 +80,7 @@ export type UpdatePatientMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdatePatientMutation = { __typename: 'Mutations', updatePatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', data: any, id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } };
+export type UpdatePatientMutation = { __typename: 'Mutations', updatePatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, documentDraft?: any | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -94,11 +96,45 @@ export const PatientRowFragmentDoc = gql`
   gender
   email
   document {
-    data
+    name
+  }
+  isDeceased
+  dateOfDeath
+  programEnrolments {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        programEnrolmentId
+        document {
+          documentRegistry {
+            name
+          }
+        }
+      }
+      totalCount
+    }
+  }
+}
+    `;
+export const ProgramPatientRowFragmentDoc = gql`
+    fragment ProgramPatientRow on PatientNode {
+  id
+  code
+  code2
+  firstName
+  lastName
+  name
+  dateOfBirth
+  address1
+  phone
+  gender
+  email
+  document {
     id
     name
     type
   }
+  documentDraft
   isDeceased
   dateOfDeath
   programEnrolments {
@@ -136,13 +172,13 @@ export const PatientByIdDocument = gql`
     ... on PatientConnector {
       __typename
       nodes {
-        ...PatientRow
+        ...ProgramPatientRow
       }
       totalCount
     }
   }
 }
-    ${PatientRowFragmentDoc}`;
+    ${ProgramPatientRowFragmentDoc}`;
 export const PatientSearchDocument = gql`
     query patientSearch($input: PatientSearchInput!, $storeId: String!) {
   patientSearch(input: $input, storeId: $storeId) {
@@ -151,14 +187,14 @@ export const PatientSearchDocument = gql`
       nodes {
         score
         patient {
-          ...PatientRow
+          ...ProgramPatientRow
         }
       }
       totalCount
     }
   }
 }
-    ${PatientRowFragmentDoc}`;
+    ${ProgramPatientRowFragmentDoc}`;
 export const CentralPatientSearchDocument = gql`
     query centralPatientSearch($input: CentralPatientSearchInput!, $storeId: String!) {
   centralPatientSearch(input: $input, storeId: $storeId) {
@@ -209,41 +245,41 @@ export const InsertProgramPatientDocument = gql`
   insertProgramPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
-    ${PatientRowFragmentDoc}`;
+    ${ProgramPatientRowFragmentDoc}`;
 export const UpdateProgramPatientDocument = gql`
     mutation updateProgramPatient($storeId: String!, $input: UpdateProgramPatientInput!) {
   updateProgramPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
-    ${PatientRowFragmentDoc}`;
+    ${ProgramPatientRowFragmentDoc}`;
 export const InsertPatientDocument = gql`
     mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
-    ${PatientRowFragmentDoc}`;
+    ${ProgramPatientRowFragmentDoc}`;
 export const UpdatePatientDocument = gql`
     mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
   updatePatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
-    ${PatientRowFragmentDoc}`;
+    ${ProgramPatientRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 

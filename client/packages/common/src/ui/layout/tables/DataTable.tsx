@@ -26,7 +26,7 @@ import { useFormatDateTime, useTranslation } from '@common/intl';
 import { useTableStore } from './context';
 
 interface RenderRowsProps<T extends RecordWithId> {
-  ref: React.RefObject<HTMLDivElement>;
+  mRef: React.RefObject<HTMLDivElement>;
   data: T[];
   ExpandContent?: React.FC<{ rowData: T }>;
   columnsToDisplay: Column<T>[];
@@ -38,7 +38,7 @@ interface RenderRowsProps<T extends RecordWithId> {
   additionalRows?: JSX.Element[];
 }
 const RenderRows = <T extends RecordWithId>({
-  ref,
+  mRef,
   data,
   ExpandContent,
   columnsToDisplay,
@@ -78,7 +78,7 @@ const RenderRows = <T extends RecordWithId>({
   return (
     <>
       <ViewportList
-        viewportRef={ref}
+        viewportRef={mRef}
         items={data}
         axis="y"
         itemSize={40}
@@ -159,7 +159,7 @@ const DataTableComponent = <T extends RecordWithId>({
       shortcut: ['enter'],
       keywords: 'table, enter',
       perform: () => {
-        console.log('Press enter');
+        console.info('Press enter');
         setClickFocusedRow(true);
       },
     },
@@ -179,6 +179,12 @@ const DataTableComponent = <T extends RecordWithId>({
     const { page, first, total } = pagination;
     if (page * first > total) onChangePage(0);
   }, [pagination]);
+
+  // if the columns array changes, such as when a plugin column is added
+  // reset the display columns to the full set
+  useEffect(() => {
+    setDisplayColumns(columns);
+  }, [columns]);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -212,7 +218,6 @@ const DataTableComponent = <T extends RecordWithId>({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
         overflowX,
         overflowY: 'auto',
       }}
@@ -255,7 +260,7 @@ const DataTableComponent = <T extends RecordWithId>({
         </TableHead>
         <TableBody>
           <RenderRows
-            ref={ref}
+            mRef={ref}
             data={data}
             ExpandContent={ExpandContent}
             columnsToDisplay={columnsToDisplay}

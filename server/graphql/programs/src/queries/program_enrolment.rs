@@ -4,7 +4,7 @@ use graphql_types::types::program_enrolment::{
     ProgramEnrolmentConnector, ProgramEnrolmentFilterInput, ProgramEnrolmentNode,
     ProgramEnrolmentResponse, ProgramEnrolmentSortInput,
 };
-use repository::Pagination;
+use repository::{Pagination, ProgramEnrolmentFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     usize_to_u32,
@@ -34,7 +34,7 @@ pub fn program_enrolments(
             &context,
             Pagination::all(),
             sort.map(ProgramEnrolmentSortInput::to_domain),
-            filter.map(|f| f.to_domain_filter()),
+            filter.map(ProgramEnrolmentFilter::from),
             allowed_ctx.clone(),
         )?
         .into_iter()

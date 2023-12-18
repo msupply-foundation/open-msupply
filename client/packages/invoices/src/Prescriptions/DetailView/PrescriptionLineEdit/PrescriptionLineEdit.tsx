@@ -152,7 +152,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       }
       return onSaved();
     } catch (e) {
-      // console.log(e);
+      // console.error(e);
     }
   };
 

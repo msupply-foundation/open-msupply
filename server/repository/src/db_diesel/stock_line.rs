@@ -12,6 +12,7 @@ use crate::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
         apply_sort_no_case,
     },
+    location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
     BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, NameRow, Pagination,
     Sort, StringFilter,
@@ -51,6 +52,7 @@ pub struct StockLineFilter {
     pub expiry_date: Option<DateFilter>,
     pub store_id: Option<EqualFilter<String>>,
     pub has_packs_in_store: Option<bool>,
+    pub location: Option<LocationFilter>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -182,6 +184,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             location_id,
             store_id,
             has_packs_in_store,
+            location,
         } = f;
 
         apply_equal_filter!(query, id, stock_line_dsl::id);
@@ -201,6 +204,12 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
             Some(false) => query.filter(stock_line_dsl::available_number_of_packs.le(0.0)),
             None => query,
         };
+
+        if location.is_some() {
+            let location_ids = LocationRepository::create_filtered_query(location)
+                .select(location_dsl::id.nullable());
+            query = query.filter(stock_line_dsl::location_id.eq_any(location_ids));
+        }
     }
 
     query
@@ -251,6 +260,7 @@ impl StockLineFilter {
             location_id: None,
             store_id: None,
             has_packs_in_store: None,
+            location: None,
         }
     }
 
@@ -286,6 +296,11 @@ impl StockLineFilter {
 
     pub fn has_packs_in_store(mut self, filter: bool) -> Self {
         self.has_packs_in_store = Some(filter);
+        self
+    }
+
+    pub fn location(mut self, filter: LocationFilter) -> Self {
+        self.location = Some(filter);
         self
     }
 }
