@@ -87,7 +87,7 @@ impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
 impl From<TemperatureNotificationFilterInput> for TemperatureBreachFilter {
     fn from(f: TemperatureNotificationFilterInput) -> Self {
         TemperatureBreachFilter {
-            acknowledged: f.acknowledged,
+            unacknowledged: f.unacknowledged,
             id: None,
             r#type: None,
             store_id: None,

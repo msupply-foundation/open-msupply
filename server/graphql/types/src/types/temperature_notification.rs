@@ -43,7 +43,7 @@ pub struct TemperatureNotificationSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct TemperatureNotificationFilterInput {
-    pub acknowledged: Option<bool>,
+    pub unacknowledged: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -86,8 +86,8 @@ impl TemperatureNotificationNode {
             .map(|t| DateTime::<Utc>::from_utc(t, Utc))
     }
 
-    pub async fn acknowledged(&self) -> bool {
-        self.row().acknowledged
+    pub async fn unacknowledged(&self) -> bool {
+        self.row().unacknowledged
     }
 
     pub async fn duration_milliseconds(&self) -> i32 {
