@@ -18,6 +18,9 @@ import {
   Option,
   useIntlUtils,
   DocumentRegistryCategoryNode,
+  DeleteIcon,
+  SxProps,
+  Theme,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -28,7 +31,7 @@ import {
   ClinicianSearchInput,
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
-import { Select } from '@common/components';
+import { IconButton, Select, useConfirmationModal } from '@common/components';
 import { encounterStatusTranslation } from '../utils';
 
 const encounterStatusOption = (
@@ -41,8 +44,16 @@ const encounterStatusOption = (
   };
 };
 
-const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
-  <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
+const Row = ({
+  label,
+  Input,
+  sx,
+}: {
+  label: string;
+  Input: ReactNode;
+  sx?: SxProps<Theme>;
+}) => (
+  <InputWithLabelRow labelWidth="90px" label={label} Input={Input} sx={sx} />
 );
 interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
@@ -84,6 +95,22 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
     encounter.endDatetime,
     encounter.clinician,
   ]);
+
+  const getDeleteConfirmation = useConfirmationModal({
+    message: t('message.confirm-delete-encounter'),
+    title: t('title.confirm-delete-encounter'),
+  });
+
+  const onDelete = () => {
+    getDeleteConfirmation({
+      onConfirm: () => {
+        setStatus(EncounterNodeStatus.Deleted);
+        onChange({
+          status: EncounterNodeStatus.Deleted,
+        });
+      },
+    });
+  };
 
   const { patient } = encounter;
 
@@ -131,6 +158,62 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   />
                 }
               />
+
+              <Row
+                label={t('label.encounter-status')}
+                sx={{ marginLeft: 'auto' }}
+                Input={
+                  <Select
+                    fullWidth
+                    onChange={event => {
+                      const newStatus = event.target
+                        .value as EncounterNodeStatus;
+                      setStatus(newStatus);
+                      onChange({
+                        status: newStatus,
+                      });
+                    }}
+                    options={
+                      status === EncounterNodeStatus.Deleted
+                        ? [
+                            encounterStatusOption(
+                              EncounterNodeStatus.Pending,
+                              t
+                            ),
+                            encounterStatusOption(
+                              EncounterNodeStatus.Visited,
+                              t
+                            ),
+                            encounterStatusOption(
+                              EncounterNodeStatus.Cancelled,
+                              t
+                            ),
+                            encounterStatusOption(
+                              EncounterNodeStatus.Deleted,
+                              t
+                            ),
+                          ]
+                        : [
+                            encounterStatusOption(
+                              EncounterNodeStatus.Pending,
+                              t
+                            ),
+                            encounterStatusOption(
+                              EncounterNodeStatus.Visited,
+                              t
+                            ),
+                            encounterStatusOption(
+                              EncounterNodeStatus.Cancelled,
+                              t
+                            ),
+                          ]
+                    }
+                    value={status}
+                  />
+                }
+              />
+
+              <IconButton icon={<DeleteIcon />} onClick={onDelete} label={''} />
             </Box>
             <Box display="flex" gap={1.5}>
               <Row
@@ -154,28 +237,6 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                     }}
                     clinicianLabel={clinician?.label || ''}
                     clinicianValue={clinician?.value}
-                  />
-                }
-              />
-              <Row
-                label={t('label.encounter-status')}
-                Input={
-                  <Select
-                    fullWidth
-                    onChange={event => {
-                      const newStatus = event.target
-                        .value as EncounterNodeStatus;
-                      setStatus(newStatus);
-                      onChange({
-                        status: newStatus,
-                      });
-                    }}
-                    options={[
-                      encounterStatusOption(EncounterNodeStatus.Pending, t),
-                      encounterStatusOption(EncounterNodeStatus.Visited, t),
-                      encounterStatusOption(EncounterNodeStatus.Cancelled, t),
-                    ]}
-                    value={status}
                   />
                 }
               />

@@ -185,6 +185,7 @@
   "label.encounter-status-pending": "Pending",
   "label.encounter-status-scheduled": "Scheduled",
   "label.encounter-status-visited": "Visited",
+  "label.encounter-status-deleted": "Deleted",
   "label.encounter-type": "Type",
   "label.encounters": "Encounters",
   "label.end-of-supply": "End of Supply",
@@ -379,6 +380,7 @@
   "messages.deleted-lines_one": "Deleted {{count}} line",
   "messages.deleted-lines_other": "Deleted {{count}} lines",
   "messages.detect-scanner": "To identify your scanner, try scanning the barcode above",
+  "message.confirm-delete-encounter": "Are you sure?",
   "messages.fetching-report-data": "Fetching report data...",
   "messages.logout-confirm": "This will log you out.",
   "messages.native-mode": "Select the mode which you would like to run. Note that you can change this option later if you have administrator access.",
@@ -417,6 +419,7 @@
   "sync-status.pull-central": "Pull Central",
   "sync-status.pull-remote": "Pull Remote",
   "sync-status.push": "Push",
+  "title.confirm-delete-encounter": "Delete encounter",
   "table.show-columns": "Show / hide columns",
   "warning.caps-lock": "Warning: Caps lock is on"
 }
