@@ -35,17 +35,43 @@ describe('stripEmptyAdditions', () => {
   it('should keep existing empty objects and arrays', () => {
     const old = {
       some: 2,
-      someMore: {},
       array: [],
+      obj: {},
+      someMore: { obj2: {} },
     };
     const add1 = {
       some: 2,
-      someMore: { obj: { value: undefined } },
-      array: [],
+      array: [{ emptyArray: undefined }],
+      obj: { emptyObj: undefined },
+      someMore: { obj2: { emptyObj2: undefined } },
     };
 
+    const stripped = stripEmptyAdditions(old, add1);
+    expect(isEqualIgnoreUndefinedAndEmpty(old, stripped)).toBeTruthy();
+  });
+
+  it('should remove existing empty when deleted in new', () => {
+    const old = {
+      some: 2,
+      someMore: { someArray: [], someObj: {} },
+      obj: {},
+      array: [],
+      obj2: { emptyObj: {}, emptyArray: [], keep: {} },
+    };
+    const add1 = {
+      some: 2,
+      obj2: { keep: { empty: undefined } },
+    };
+
+    const stripped = stripEmptyAdditions(old, add1);
     expect(
-      isEqualIgnoreUndefinedAndEmpty(old, stripEmptyAdditions(old, add1))
+      isEqualIgnoreUndefinedAndEmpty(
+        {
+          some: 2,
+          obj2: { keep: {} },
+        },
+        stripped
+      )
     ).toBeTruthy();
   });
 
