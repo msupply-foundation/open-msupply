@@ -22,6 +22,7 @@ import {
   EncounterFragment,
   useDocumentDataAccessor,
   EncounterSchema,
+  JsonData,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -141,6 +142,7 @@ export const DetailView: FC = () => {
   const [logicalStatus, setLogicalStatus] = useState<string | undefined>(
     undefined
   );
+  const [deleteRequest, setDeleteRequest] = useState(false);
 
   const {
     data: encounter,
@@ -174,12 +176,34 @@ export const DetailView: FC = () => {
     dataAccessor
   );
 
+  useEffect(() => {
+    if (!deleteRequest) return;
+    if (
+      (data as Record<string, JsonData>)['status'] ===
+      EncounterNodeStatus.Deleted
+    ) {
+      saveData();
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Patients)
+          .addPart(encounter?.patient?.id ?? '')
+          .addQuery({
+            tab: PatientTabValue.Encounters,
+          })
+          .build()
+      );
+    }
+  }, [deleteRequest, data]);
   const updateEncounter = useDebounceCallback(
-    (patch: Partial<EncounterFragment>) =>
+    (patch: Partial<EncounterFragment>) => {
       setData({
         ...(typeof data === 'object' ? data : {}),
         ...patch,
-      }),
+      });
+      if (patch.status === EncounterNodeStatus.Deleted) {
+        setDeleteRequest(true);
+      }
+    },
     [data, setData]
   );
 

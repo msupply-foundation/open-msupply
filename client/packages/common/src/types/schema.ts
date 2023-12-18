@@ -1150,6 +1150,7 @@ export type EncounterNodeProgramEventsArgs = {
 
 export enum EncounterNodeStatus {
   Cancelled = 'CANCELLED',
+  Deleted = 'DELETED',
   Pending = 'PENDING',
   Visited = 'VISITED'
 }
