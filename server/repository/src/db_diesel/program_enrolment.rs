@@ -5,12 +5,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{
-        apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
-        apply_string_filter,
-    },
-    DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentRow, ProgramEnrolmentStatus,
-    ProgramRow, RepositoryError, Sort, StringFilter,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
+    DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentRow, ProgramRow,
+    RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
@@ -21,10 +18,11 @@ pub struct ProgramEnrolmentFilter {
     pub program_id: Option<EqualFilter<String>>,
     pub enrolment_datetime: Option<DatetimeFilter>,
     pub program_enrolment_id: Option<StringFilter>,
-    pub status: Option<EqualFilter<ProgramEnrolmentStatus>>,
+    pub status: Option<StringFilter>,
     pub document_type: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
     pub program_context_id: Option<EqualFilter<String>>,
+    pub program_name: Option<StringFilter>,
 }
 
 impl ProgramEnrolmentFilter {
@@ -38,6 +36,7 @@ impl ProgramEnrolmentFilter {
             status: None,
             document_type: None,
             document_name: None,
+            program_name: None,
         }
     }
 
@@ -66,7 +65,7 @@ impl ProgramEnrolmentFilter {
         self
     }
 
-    pub fn status(mut self, filter: EqualFilter<ProgramEnrolmentStatus>) -> Self {
+    pub fn status(mut self, filter: StringFilter) -> Self {
         self.status = Some(filter);
         self
     }
@@ -78,6 +77,11 @@ impl ProgramEnrolmentFilter {
 
     pub fn document_name(mut self, filter: EqualFilter<String>) -> Self {
         self.document_name = Some(filter);
+        self
+    }
+
+    pub fn program_name(mut self, filter: StringFilter) -> Self {
+        self.program_name = Some(filter);
         self
     }
 }
@@ -97,44 +101,6 @@ pub type ProgramEnrolmentSort = Sort<ProgramEnrolmentSortField>;
 type BoxedProgramEnrolmentQuery =
     IntoBoxed<'static, InnerJoin<program_enrolment::table, program::table>, DBType>;
 
-pub(crate) fn create_filtered_query<'a>(
-    filter: Option<ProgramEnrolmentFilter>,
-) -> BoxedProgramEnrolmentQuery {
-    let mut query = program_enlrolment_dsl::program_enrolment
-        .inner_join(program_dsl::program)
-        .into_boxed();
-
-    if let Some(ProgramEnrolmentFilter {
-        patient_id,
-        program_id,
-        enrolment_datetime,
-        program_enrolment_id,
-        status,
-        document_type,
-        document_name,
-        program_context_id: context,
-    }) = filter
-    {
-        apply_equal_filter!(query, patient_id, program_enlrolment_dsl::patient_id);
-        apply_equal_filter!(query, program_id, program_enlrolment_dsl::program_id);
-        apply_equal_filter!(query, context, program_dsl::context_id);
-        apply_date_time_filter!(
-            query,
-            enrolment_datetime,
-            program_enlrolment_dsl::enrolment_datetime
-        );
-        apply_string_filter!(
-            query,
-            program_enrolment_id,
-            program_enlrolment_dsl::program_enrolment_id
-        );
-        apply_equal_filter!(query, status, program_enlrolment_dsl::status);
-        apply_equal_filter!(query, document_type, program_enlrolment_dsl::document_type);
-        apply_equal_filter!(query, document_name, program_enlrolment_dsl::document_name);
-    }
-    query
-}
-
 pub struct ProgramEnrolmentRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -145,7 +111,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<ProgramEnrolmentFilter>) -> Result<i64, RepositoryError> {
-        let query = create_filtered_query(filter);
+        let query = Self::create_filtered_query(filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -163,7 +129,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         filter: Option<ProgramEnrolmentFilter>,
         sort: Option<ProgramEnrolmentSort>,
     ) -> Result<Vec<ProgramEnrolment>, RepositoryError> {
-        let mut query = create_filtered_query(filter);
+        let mut query = Self::create_filtered_query(filter);
 
         if let Some(sort) = sort {
             match sort.key {
@@ -180,7 +146,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
                     apply_sort!(query, sort, program_enlrolment_dsl::program_enrolment_id)
                 }
                 ProgramEnrolmentSortField::Status => {
-                    apply_sort_no_case!(query, sort, program_enlrolment_dsl::status)
+                    apply_sort!(query, sort, program_enlrolment_dsl::status)
                 }
             }
         } else {
@@ -193,6 +159,46 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             .load::<ProgramEnrolment>(&self.connection.connection)?;
 
         Ok(result)
+    }
+
+    pub fn create_filtered_query(
+        filter: Option<ProgramEnrolmentFilter>,
+    ) -> BoxedProgramEnrolmentQuery {
+        let mut query = program_enlrolment_dsl::program_enrolment
+            .inner_join(program_dsl::program)
+            .into_boxed();
+
+        if let Some(ProgramEnrolmentFilter {
+            patient_id,
+            program_id,
+            enrolment_datetime,
+            program_enrolment_id,
+            status,
+            document_type,
+            document_name,
+            program_context_id: context,
+            program_name,
+        }) = filter
+        {
+            apply_equal_filter!(query, patient_id, program_enlrolment_dsl::patient_id);
+            apply_equal_filter!(query, program_id, program_enlrolment_dsl::program_id);
+            apply_equal_filter!(query, context, program_dsl::context_id);
+            apply_date_time_filter!(
+                query,
+                enrolment_datetime,
+                program_enlrolment_dsl::enrolment_datetime
+            );
+            apply_string_filter!(
+                query,
+                program_enrolment_id,
+                program_enlrolment_dsl::program_enrolment_id
+            );
+            apply_string_filter!(query, status, program_enlrolment_dsl::status);
+            apply_equal_filter!(query, document_type, program_enlrolment_dsl::document_type);
+            apply_equal_filter!(query, document_name, program_enlrolment_dsl::document_name);
+            apply_string_filter!(query, program_name, program_dsl::name);
+        }
+        query
     }
 
     pub fn find_one_by_program_id_and_patient(

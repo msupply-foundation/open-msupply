@@ -4,9 +4,9 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type TemperatureBreachRowFragment = { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, startDatetime: string, endDatetime?: string | null, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null };
+export type TemperatureBreachRowFragment = { __typename: 'TemperatureBreachNode', id: string, unacknowledged: boolean, startDatetime: string, endDatetime?: string | null, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null };
 
-export type TemperatureLogFragment = { __typename: 'TemperatureLogNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null, temperatureBreach?: { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, startDatetime: string, endDatetime?: string | null, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null } | null };
+export type TemperatureLogFragment = { __typename: 'TemperatureLogNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null, temperatureBreach?: { __typename: 'TemperatureBreachNode', id: string, unacknowledged: boolean, startDatetime: string, endDatetime?: string | null, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null } | null };
 
 export type Temperature_LogsQueryVariables = Types.Exact<{
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -16,13 +16,13 @@ export type Temperature_LogsQueryVariables = Types.Exact<{
 }>;
 
 
-export type Temperature_LogsQuery = { __typename: 'Queries', temperatureLogs: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null, temperatureBreach?: { __typename: 'TemperatureBreachNode', id: string, acknowledged: boolean, startDatetime: string, endDatetime?: string | null, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null } | null }> } };
+export type Temperature_LogsQuery = { __typename: 'Queries', temperatureLogs: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null, temperatureBreach?: { __typename: 'TemperatureBreachNode', id: string, unacknowledged: boolean, startDatetime: string, endDatetime?: string | null, type: Types.TemperatureBreachNodeType, location?: { __typename: 'LocationNode', name: string } | null } | null }> } };
 
 export const TemperatureBreachRowFragmentDoc = gql`
     fragment TemperatureBreachRow on TemperatureBreachNode {
   __typename
   id
-  acknowledged
+  unacknowledged
   startDatetime
   endDatetime
   startDatetime

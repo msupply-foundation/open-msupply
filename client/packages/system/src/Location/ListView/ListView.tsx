@@ -19,9 +19,21 @@ const LocationListComponent: FC = () => {
     updateSortQuery,
     updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  const { data, isError, isLoading } = useLocation.document.list();
+    queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams({
+    initialSort: { key: 'name', dir: 'asc' },
+    filters: [
+      {
+        key: 'name',
+      },
+      {
+        key: 'onHold',
+        condition: '=',
+      },
+    ],
+  });
+  const queryParams = { sortBy, first, offset, filterBy };
+  const { data, isError, isLoading } = useLocation.document.list(queryParams);
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const columns = useColumns<LocationRowFragment>(

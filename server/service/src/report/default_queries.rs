@@ -18,7 +18,7 @@ pub fn get_default_gql_query(query: DefaultQuery) -> GraphQlQuery {
 }
 
 const INVOICE_QUERY: &str = r#"
-query InvoiceQuery($storeId: String, $dataId: String) {
+query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInput) {
   invoice(storeId: $storeId, id: $dataId) {
     ... on InvoiceNode {
       id
@@ -55,54 +55,56 @@ query InvoiceQuery($storeId: String, $dataId: String) {
         address1
         address2
       }
-      lines {
-        nodes {
-          batch
-          costPricePerPack
-          expiryDate
-          invoiceId
-          id
-          itemCode
-          itemId
-          itemName
-          item {
-            unitName
-          }
-          locationId
-          locationName
-          note
-          numberOfPacks
-          packSize
-          sellPricePerPack
+    }
+  }
+  invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {
+    ... on InvoiceLineConnector {
+      nodes {
+        batch
+        costPricePerPack
+        expiryDate
+        id
+        invoiceId
+        itemCode
+        itemId
+        itemName
+        item {
+          unitName
+        }
+        locationId
+        locationName
+        note
+        numberOfPacks
+        packSize
+        sellPricePerPack
+        taxPercentage
+        totalAfterTax
+        totalBeforeTax
+        type
+        pricing {
+          serviceTotalAfterTax
+          serviceTotalBeforeTax
+          stockTotalAfterTax
+          stockTotalBeforeTax
           taxPercentage
           totalAfterTax
           totalBeforeTax
-          type
-          pricing {
-            serviceTotalAfterTax
-            serviceTotalBeforeTax
-            stockTotalAfterTax
-            stockTotalBeforeTax
-            taxPercentage
-            totalAfterTax
-            totalBeforeTax
-          }
-          stockLine {
-            availableNumberOfPacks
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemId
-            locationId
-            locationName
-            note
-            onHold
-            packSize
-            sellPricePerPack
-            storeId
-            totalNumberOfPacks
-          }
+        }
+        stockLine {
+          availableNumberOfPacks
+          batch
+          costPricePerPack
+          expiryDate
+          id
+          itemId
+          locationId
+          locationName
+          note
+          onHold
+          packSize
+          sellPricePerPack
+          storeId
+          totalNumberOfPacks
         }
       }
     }
@@ -136,7 +138,7 @@ query InvoiceQuery($storeId: String, $dataId: String) {
 }
 "#;
 
-const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId: String) {
+const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId: String, $sort: PrintReportSortInput) {
   stocktake(storeId: $storeId, id: $dataId) {
     ... on NodeError {
       __typename
@@ -174,30 +176,32 @@ const STOCKTAKE_QUERY: &str = r#"query StocktakeQuery($storeId: String, $dataId:
         type
         verifiedDatetime
       }
-      lines {
-        totalCount
-        nodes {
-          batch
-          comment
-          costPricePerPack
-          countedNumberOfPacks
-          expiryDate
-          id
-          itemId
-          note
-          packSize
-          sellPricePerPack
-          snapshotNumberOfPacks
-          stocktakeId
-          item {
-            name
-            code
-          }
-          location {
-            code
-          }
+    }
+  }
+  stocktakeLines(storeId: $storeId, stocktakeId: $dataId, reportSort: $sort) {
+    ... on StocktakeLineConnector {
+      nodes {
+        batch
+        comment
+        costPricePerPack
+        countedNumberOfPacks
+        expiryDate
+        id
+        itemId
+        note
+        packSize
+        sellPricePerPack
+        snapshotNumberOfPacks
+        stocktakeId
+        item {
+          name
+          code
+        }
+        location {
+          code
         }
       }
+      totalCount
     }
   }
   store(id: $storeId) {

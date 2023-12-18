@@ -89,7 +89,7 @@ pub fn get_breaches_for_sensor(
     TemperatureBreachRepository::new(connection).query_by_filter(
         TemperatureBreachFilter::new()
             .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
-            .acknowledged(false),
+            .unacknowledged(true),
     )
 }
 
@@ -121,7 +121,7 @@ fn sensor_add_log_if_new(
             temperature_breach_id: None,
         };
         TemperatureLogRowRepository::new(connection).upsert_one(&new_temperature_log)?;
-        println!("Added sensor log {:?} ", new_temperature_log);
+        log::info!("Added sensor log {:?} ", new_temperature_log);
         Ok(())
     }
 }
@@ -157,7 +157,7 @@ fn sensor_add_breach_if_new(
             location_id: sensor_row.location_id.clone(),
             start_datetime: temperature_breach.start_timestamp,
             end_datetime: Some(temperature_breach.end_timestamp),
-            acknowledged: false,
+            unacknowledged: true,
             duration_milliseconds: temperature_breach.duration.num_seconds() as i32,
             r#type: breach_row_type,
             threshold_duration_milliseconds: breach_config.duration.num_seconds() as i32,
@@ -165,7 +165,7 @@ fn sensor_add_breach_if_new(
             threshold_maximum: breach_config.maximum_temperature,
         };
         TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
-        println!("Added sensor breach {:?} ", new_temperature_breach);
+        log::info!("Added sensor breach {:?} ", new_temperature_breach);
         Ok(())
     }
 }
@@ -227,7 +227,7 @@ fn sensor_add_breach_config_if_new(
     };
     TemperatureBreachConfigRowRepository::new(connection)
         .upsert_one(&new_temperature_breach_config)?;
-    println!(
+    log::info!(
         "Added sensor breach config {:?} ",
         new_temperature_breach_config
     );
@@ -238,11 +238,11 @@ fn sensor_add_if_new(
     connection: &StorageConnection,
     store_id: &str,
     temperature_sensor: &temperature_sensor::Sensor,
-) -> Result<(), RepositoryError> {
+) -> Result<Option<String>, RepositoryError> {
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
     if !result.is_empty() {
-        return Ok(());
+        return Ok(None);
     };
 
     let mut interval_seconds = None;
@@ -253,7 +253,7 @@ fn sensor_add_if_new(
         id: uuid(),
         serial: temperature_sensor.serial.clone(),
         name: temperature_sensor.name.clone(),
-        store_id: Some(store_id.to_string()),
+        store_id: store_id.to_string(),
         location_id: None,
         last_connection_datetime: None,
         battery_level: None,
@@ -262,13 +262,14 @@ fn sensor_add_if_new(
         r#type: SensorType::Berlinger,
     };
     SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
-    println!("Added sensor {:?} ", new_sensor);
-    Ok(())
+    log::info!("Added sensor {:?} ", new_sensor);
+    Ok(Some(new_sensor.id))
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadSensor {
+    new_sensor_id: Option<String>,
     number_of_logs: u32,
     number_of_breaches: u32,
 }
@@ -290,10 +291,10 @@ pub fn read_sensor(
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
     let filename = fridgetag_file.to_string_lossy();
 
-    let mut temperature_sensor = temperature_sensor::read_sensor_file(&filename, true)
-        .map_err(ReadSensorError::StringError)?;
+    let mut temperature_sensor =
+        temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
 
-    sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
+    let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
@@ -305,7 +306,7 @@ pub fn read_sensor(
     // Filter sensor data by previous last connected time
     let last_connected = record.sensor_row.last_connection_datetime;
     temperature_sensor =
-        temperature_sensor::filter_sensor(temperature_sensor, last_connected, None, true);
+        temperature_sensor::filter_sensor(temperature_sensor, last_connected, None);
 
     let temperature_sensor_configs = temperature_sensor.configs.unwrap_or_default();
     for temperature_sensor_config in temperature_sensor_configs.iter() {
@@ -322,6 +323,7 @@ pub fn read_sensor(
     let result = ReadSensor {
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
+        new_sensor_id,
     };
 
     for temperature_sensor_breach in temperature_sensor_breaches {

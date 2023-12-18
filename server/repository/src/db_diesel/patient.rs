@@ -5,15 +5,14 @@ use super::{
 };
 
 use crate::{
-    db_diesel::program_enrolment,
     diesel_extensions::date_coalesce,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort_no_case, apply_string_filter,
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Gender, NameType, Pagination, ProgramEnrolmentFilter, Sort,
-    StringFilter,
+    DateFilter, EqualFilter, Gender, NameType, Pagination, ProgramEnrolmentFilter,
+    ProgramEnrolmentRepository, Sort, StringFilter,
 };
 
 use chrono::NaiveDate;
@@ -196,14 +195,15 @@ impl<'a> PatientRepository<'a> {
                     name_dsl::national_health_number
                 );
 
-                let sub_query =
-                    program_enrolment::create_filtered_query(Some(ProgramEnrolmentFilter {
+                let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
+                    ProgramEnrolmentFilter {
                         program_enrolment_id: identifier,
                         program_context_id: allowed_ctx
                             .map(|ctxs| EqualFilter::default().restrict_results(ctxs)),
                         ..Default::default()
-                    }))
-                    .select(program_enrolment_dsl::patient_id);
+                    },
+                ))
+                .select(program_enrolment_dsl::patient_id);
 
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
             }
@@ -344,8 +344,7 @@ mod tests {
     use crate::{
         mock::{mock_program_a, MockDataInserts},
         test_db, DateFilter, EqualFilter, NameRow, NameRowRepository, NameType, PatientFilter,
-        PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
-        ProgramEnrolmentStatus, StringFilter,
+        PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository, StringFilter,
     };
 
     #[actix_rt::test]
@@ -420,7 +419,7 @@ mod tests {
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
-                status: ProgramEnrolmentStatus::Active,
+                status: Some("Active".to_string()),
             })
             .unwrap();
         let result = repo
@@ -520,7 +519,7 @@ mod tests {
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
-                status: ProgramEnrolmentStatus::Active,
+                status: Some("Active".to_string()),
             })
             .unwrap();
         let result = repo

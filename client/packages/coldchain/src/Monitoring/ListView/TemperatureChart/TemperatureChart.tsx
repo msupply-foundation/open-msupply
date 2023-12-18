@@ -1,5 +1,5 @@
-import React from 'react';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import React, { useEffect } from 'react';
+import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Area,
   BasicSpinner,
@@ -10,12 +10,14 @@ import {
   Legend,
   Line,
   NothingHere,
+  NumUtils,
   ResponsiveContainer,
   TooltipProps,
   Typography,
   XAxis,
   YAxis,
   useTheme,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { useTemperatureChartData } from './useTemperatureChartData';
 import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
@@ -23,6 +25,10 @@ import { BreachPopover } from './BreachPopover';
 import { BreachConfig, BreachDot, DotProps, Sensor } from './types';
 import { BreachIndicator } from './BreachIndicator';
 import { Toolbar } from '../TemperatureLog/Toolbar';
+
+const NUMBER_OF_HORIZONTAL_LINES = 4;
+const LOWER_THRESHOLD = 2;
+const UPPER_THRESHOLD = 8;
 
 const Chart = ({
   breachConfig,
@@ -39,14 +45,17 @@ const Chart = ({
 }) => {
   const t = useTranslation('coldchain');
   const theme = useTheme();
-  const { dayMonthTime } = useFormatDateTime();
+  const { dayMonthTime, customDate } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
   const [currentBreach, setCurrentBreach] = React.useState<BreachDot | null>(
     null
   );
+  const { urlQuery, updateQuery } = useUrlQuery();
 
   const formatTemperature = (value: number | null) =>
-    value === null ? '-' : `${value}${t('label.temperature-unit')}`;
+    value === null
+      ? '-'
+      : `${NumUtils.round(value, 2)}${t('label.temperature-unit')}`;
 
   const TemperatureTooltip = ({
     active,
@@ -87,6 +96,57 @@ const Chart = ({
     [setCurrentBreach]
   );
 
+  const tickSpace =
+    (yAxisDomain[1] - yAxisDomain[0]) / (NUMBER_OF_HORIZONTAL_LINES + 1);
+  const ticks = Array.from({ length: NUMBER_OF_HORIZONTAL_LINES }).map(
+    (_, index) => Math.round((index + 1) * tickSpace)
+  );
+  ticks.push(Math.round(yAxisDomain[0]));
+  ticks.push(LOWER_THRESHOLD);
+  ticks.push(UPPER_THRESHOLD);
+  ticks.push(Math.round(yAxisDomain[1]));
+  ticks.sort((a, b) => (a > b ? 1 : -1));
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CustomisedTick = ({ x, y, payload }: any) => {
+    const theme = useTheme();
+    const textColour =
+      payload.value === LOWER_THRESHOLD
+        ? theme.palette.chart.cold.main
+        : payload.value === UPPER_THRESHOLD
+        ? theme.palette.chart.hot.main
+        : theme.palette.gray.dark;
+    return (
+      <g>
+        <line x={x} y={y} stroke={theme.palette.gray.dark}></line>
+        <text
+          x={x}
+          y={y}
+          fill={textColour}
+          textAnchor="end"
+          style={{
+            fontSize: 12,
+            fontWeight:
+              payload.value === LOWER_THRESHOLD ||
+              payload.value === UPPER_THRESHOLD
+                ? 'bold'
+                : '',
+          }}
+        >
+          <tspan dy="0.355em">{formatTemperature(payload.value)}</tspan>
+        </text>
+      </g>
+    );
+  };
+
+  useEffect(() => {
+    if (!urlQuery['datetime']) {
+      const from = customDate(DateUtils.startOfToday(), 'yyyy-MM-dd HH:mm');
+      const to = customDate(DateUtils.endOfDay(new Date()), 'yyyy-MM-dd HH:mm');
+      updateQuery({ datetime: { from, to } });
+    }
+  }, []);
+
   if (isLoading) {
     return <BasicSpinner />;
   }
@@ -110,11 +170,7 @@ const Chart = ({
             tick={{ fontSize: 12 }}
             allowDuplicatedCategory={false}
           />
-          <YAxis
-            tick={{ fontSize: 12 }}
-            tickFormatter={formatTemperature}
-            domain={yAxisDomain}
-          />
+          <YAxis ticks={ticks} tick={<CustomisedTick />} domain={yAxisDomain} />
           <ChartTooltip content={TemperatureTooltip} />
           <Legend
             align="right"
@@ -134,6 +190,7 @@ const Chart = ({
                       borderStyle: 'solid',
                       borderColor: theme.palette.gray.light,
                       padding: 3,
+                      textAlign: 'left',
                     }}
                   >
                     <svg
@@ -178,6 +235,7 @@ const Chart = ({
             dataKey="temperature"
             stroke={theme.palette.chart.cold.main}
             fill={theme.palette.chart.cold.light}
+            baseValue="dataMin"
           />
           {sensors.map(sensor => (
             <Line

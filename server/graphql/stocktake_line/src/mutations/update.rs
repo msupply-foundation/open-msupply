@@ -280,6 +280,7 @@ mod test {
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
+                item: None,
             })
         }));
 

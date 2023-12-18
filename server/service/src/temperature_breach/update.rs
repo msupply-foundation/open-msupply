@@ -23,7 +23,7 @@ pub struct UpdateTemperatureBreach {
     pub location_id: Option<String>,
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,
-    pub acknowledged: bool,
+    pub unacknowledged: bool,
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
     pub threshold_duration_milliseconds: i32,
@@ -57,7 +57,7 @@ pub fn validate(
         Some(temperature_breach_row) => temperature_breach_row,
         None => return Err(UpdateTemperatureBreachError::TemperatureBreachDoesNotExist),
     };
-    if temperature_breach_row.store_id != Some(store_id.to_string()) {
+    if temperature_breach_row.store_id != store_id.to_string() {
         return Err(UpdateTemperatureBreachError::TemperatureBreachDoesNotBelongToCurrentStore);
     }
 
@@ -73,7 +73,7 @@ pub fn generate(
         location_id,
         start_datetime,
         end_datetime,
-        acknowledged,
+        unacknowledged,
         threshold_duration_milliseconds,
         threshold_maximum,
         threshold_minimum,
@@ -87,7 +87,7 @@ pub fn generate(
         location_id,
         start_datetime,
         end_datetime,
-        acknowledged,
+        unacknowledged,
         threshold_duration_milliseconds,
         threshold_maximum,
         threshold_minimum,

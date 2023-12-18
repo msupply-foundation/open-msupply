@@ -3,7 +3,7 @@ extern crate machine_uid;
 
 use crate::{
     certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
-    cors::cors_policy, serve_frontend::config_server_frontend, static_files::config_static_files,
+    cors::cors_policy, serve_frontend::config_serve_frontend, static_files::config_static_files,
     upload_fridge_tag::config_upload_fridge_tag,
 };
 
@@ -20,6 +20,7 @@ use repository::{get_storage_connection_manager, migrations::migrate};
 
 use service::{
     auth_data::AuthData,
+    plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
@@ -28,7 +29,7 @@ use service::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 pub mod certs;
 pub mod cold_chain;
@@ -204,6 +205,10 @@ pub async fn start_server(
             false => "initialisation",
         }
     );
+
+    let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
+    let validated_plugins = Data::new(Mutex::new(validated_plugins));
+
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
             connection_manager: Data::new(connection_manager),
@@ -211,6 +216,7 @@ pub async fn start_server(
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
             auth: auth.clone(),
+            validated_plugins: validated_plugins.clone(),
         },
         is_operational,
     ));
@@ -254,7 +260,6 @@ pub async fn start_server(
         .unwrap();
 
     // CREATE MISSING MASTER LIST AND PROGRAM
-    // TODO: Delete when soft delete for master list is implemented
     service_provider
         .general_service
         .create_missing_master_list_and_program(&service_provider)
@@ -280,12 +285,13 @@ pub async fn start_server(
             // needed for cold chain service
             .app_data(service_provider.clone())
             .app_data(auth.clone())
+            .app_data(validated_plugins.clone())
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
             // Needs to be last to capture all unmatches routes
-            .configure(config_server_frontend)
+            .configure(config_serve_frontend)
     })
     .disable_signals();
 

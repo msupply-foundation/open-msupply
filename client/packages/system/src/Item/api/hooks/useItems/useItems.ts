@@ -6,9 +6,7 @@ export const useItems = () => {
     filters: [{ key: 'codeOrName' }],
   });
   const api = useItemApi();
-  return {
-    ...useQuery(api.keys.paramList(queryParams), () =>
-      api.get.stockItemsWithStats(queryParams)
-    ),
-  };
+  return useQuery(api.keys.paramList(queryParams), () =>
+    api.get.stockItemsWithStats(queryParams)
+  );
 };

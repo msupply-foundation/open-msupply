@@ -8,6 +8,7 @@ import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
 export type Stat = {
   label: string;
   value?: string;
+  link?: string;
 };
 export interface StatsPanelProps {
   error?: ApiException;
@@ -19,13 +20,18 @@ export interface StatsPanelProps {
   link?: string;
 }
 
-const Statistic: FC<Stat> = ({ label, value }) => {
+const Statistic: FC<Stat> = ({ label, value, link }) => {
   const t = useTranslation();
   return (
-    <Grid container alignItems="center" style={{ height: 30 }}>
-      <Grid item>
+    <Grid container alignItems="center" sx={{ marginTop: 1 }}>
+      <Grid
+        item
+        sx={{ minWidth: '30px', display: 'flex', justifyContent: 'flex-end' }}
+      >
         {value ? (
-          <Typography style={{ fontSize: 24, fontWeight: 'bold' }}>
+          <Typography
+            style={{ fontSize: 24, fontWeight: 'bold', lineHeight: 1.2 }}
+          >
             {value}
           </Typography>
         ) : (
@@ -54,7 +60,7 @@ const Statistic: FC<Stat> = ({ label, value }) => {
           marginInlineStart: '8px',
         }}
       >
-        {label}
+        {link ? <SimpleLink to={link}>{label}</SimpleLink> : label}
       </Grid>
     </Grid>
   );
