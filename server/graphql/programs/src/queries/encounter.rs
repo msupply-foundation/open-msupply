@@ -7,7 +7,7 @@ use graphql_core::{
 use graphql_types::types::encounter::{
     EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput,
 };
-use repository::{EncounterFilter, PaginationOption};
+use repository::{EncounterFilter, EqualFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
@@ -15,6 +15,9 @@ pub enum EncounterResponse {
     Response(EncounterConnector),
 }
 
+/// Returns a list of encounters.
+///
+/// Deleted encounters are excluded from the returned list.
 pub fn encounters(
     ctx: &Context<'_>,
     store_id: String,
@@ -34,12 +37,22 @@ pub fn encounters(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
+    // Filter out deleted encounters
+    // Note, in the future we could has an include_deleted filter flag, which skips the following
+    // code block.
+    let mut filter = filter
+        .map(EncounterFilter::from)
+        .unwrap_or(EncounterFilter::new());
+    let mut status_filter = filter.status.unwrap_or(EqualFilter::default());
+    status_filter.not_equal_to = Some(repository::EncounterStatus::Deleted);
+    filter.status = Some(status_filter);
+
     let result = service_provider
         .encounter_service
         .encounters(
             &context,
             page.map(PaginationOption::from),
-            filter.map(EncounterFilter::from),
+            Some(filter),
             sort.map(EncounterSortInput::to_domain),
             allowed_ctx.clone(),
         )
