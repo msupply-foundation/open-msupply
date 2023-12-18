@@ -23,7 +23,7 @@ interface LocationOption {
 }
 
 const getOptionLabel = (option: LocationOption) =>
-  `${option.label} (${option.code})`;
+  `${option.code} - ${option.label}`;
 
 const optionRenderer = (
   props: React.HTMLAttributes<HTMLLIElement>,
