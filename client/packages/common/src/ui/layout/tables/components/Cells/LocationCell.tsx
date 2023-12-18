@@ -4,6 +4,7 @@ import {
   RecordWithId,
   Tooltip,
   Typography,
+  useTranslation,
 } from '@openmsupply-client/common';
 
 export const LocationCell = <
@@ -13,9 +14,11 @@ export const LocationCell = <
   column,
   rowData,
 }: CellProps<K>): React.ReactElement<CellProps<K>> => {
-  const text = `${column.accessor({ rowData }) ?? ''}${
-    rowData?.location?.onHold ? ' (On Hold)' : ''
-  }`;
+  const t = useTranslation();
+  const onHoldText = rowData?.location?.onHold
+    ? ` (${t('label.on-hold')})`
+    : '';
+  const text = `${column.accessor({ rowData }) ?? ''}${onHoldText}`;
 
   return (
     <Tooltip title={text} placement="bottom-start">
