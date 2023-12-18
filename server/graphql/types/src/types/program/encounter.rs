@@ -134,6 +134,7 @@ pub enum EncounterNodeStatus {
     Pending,
     Visited,
     Cancelled,
+    Deleted,
 }
 
 impl EncounterNodeStatus {
@@ -142,6 +143,7 @@ impl EncounterNodeStatus {
             EncounterNodeStatus::Pending => EncounterStatus::Pending,
             EncounterNodeStatus::Visited => EncounterStatus::Visited,
             EncounterNodeStatus::Cancelled => EncounterStatus::Cancelled,
+            EncounterNodeStatus::Deleted => EncounterStatus::Deleted,
         }
     }
 
@@ -150,6 +152,7 @@ impl EncounterNodeStatus {
             EncounterStatus::Pending => EncounterNodeStatus::Pending,
             EncounterStatus::Visited => EncounterNodeStatus::Visited,
             EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
+            EncounterStatus::Deleted => EncounterNodeStatus::Deleted,
         }
     }
 }
@@ -259,7 +262,7 @@ impl EncounterNode {
 
     pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
         let Some(clinician_id) = self.encounter.0.clinician_id.as_ref() else {
-            return Ok(None)
+            return Ok(None);
         };
         let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
 
