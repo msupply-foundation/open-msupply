@@ -2,7 +2,6 @@ import React, { PropsWithChildren, useState, useEffect } from 'react';
 
 import {
   DateUtils,
-  ErrorWithDetailsProps,
   Formatter,
   Grid,
   LoadingButton,
@@ -68,7 +67,7 @@ const useHostSync = () => {
 
 const useUpdateUser = () => {
   const { data: lastSuccessfulSync } = useSync.utils.lastSuccessfulUserSync();
-  const [error, setError] = useState<ErrorWithDetailsProps | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { mutateAsync: updateUser, isLoading } = useSync.sync.updateUser();
   const t = useTranslation('app');
 
@@ -86,18 +85,12 @@ const useUpdateUser = () => {
             // Sync date will be updated through cache invalidation
             return;
           case 'ConnectionError':
-            return setError({
-              error: t('error.connection-error'),
-              details: '',
-            });
+            return setError(t('error.connection-error'));
           default:
             noOtherVariants(update);
         }
       } catch (error) {
-        setError({
-          error: t('error.unknown-sync-error'),
-          details: String(error),
-        });
+        setError(String(error));
       }
     },
   };
@@ -148,8 +141,8 @@ export const Sync = () => {
           <FormattedSyncDate
             date={DateUtils.getDateOrNull(lastSuccessfulSync || null)}
           />
-          {!!updateUserError?.error && (
-            <Typography color="error">{updateUserError.error}</Typography>
+          {!!updateUserError && (
+            <Typography color="error">{updateUserError}</Typography>
           )}
         </Row>
         {!!syncStatus?.error ? (
