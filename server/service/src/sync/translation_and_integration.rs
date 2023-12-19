@@ -2,6 +2,7 @@ use crate::sync::{integrate_document::sync_upsert_document, translations::PullDe
 
 use super::{
     sync_buffer::SyncBuffer,
+    sync_status::logger::SyncLogger,
     translations::{
         IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslation, SyncTranslators,
     },
@@ -70,6 +71,7 @@ impl<'a> TranslationAndIntegration<'a> {
         &self,
         sync_records: Vec<SyncBufferRow>,
         translators: &Vec<Box<dyn SyncTranslation>>,
+        logger: &mut SyncLogger,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
         let mut result = TranslationAndIntegrationResults::new();
 
