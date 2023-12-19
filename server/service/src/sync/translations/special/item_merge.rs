@@ -39,7 +39,6 @@ impl SyncTranslation for ItemMergeTranslation {
         let data = serde_json::from_str::<ItemMergeMessage>(&sync_record.data)?;
 
         let item_link_repo = ItemLinkRowRepository::new(connection);
-        // let mut item_links = vec![];
         let item_links = item_link_repo.find_many_by_item_id(&data.mergeIdToDelete)?;
         if item_links.len() == 0 {
             return Ok(None);
