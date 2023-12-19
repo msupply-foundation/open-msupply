@@ -189,11 +189,8 @@ mod tests {
         use crate::sync::test::test_data::stock_line as test_data;
         let translator = StockLineTranslation {};
 
-        let (_, connection, _, _) = setup_all(
-            "test_stock_line_translation",
-            MockDataInserts::none().units().items().item_links_merged(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_stock_line_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
