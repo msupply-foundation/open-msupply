@@ -30,6 +30,7 @@ pub(crate) enum SyncStepProgress {
     PullCentral,
     PullRemote,
     Push,
+    Integrate,
 }
 
 pub struct SyncLogger<'a> {
@@ -211,6 +212,14 @@ impl<'a> SyncLogger<'a> {
                 }
             }
             SyncStepProgress::Push => {
+                let (total, done) = get_progress(remaining, self.row.push_progress_total);
+                SyncLogRow {
+                    push_progress_total: total,
+                    push_progress_done: done,
+                    ..self.row.clone()
+                }
+            }
+            SyncStepProgress::Integrate => {
                 let (total, done) = get_progress(remaining, self.row.push_progress_total);
                 SyncLogRow {
                     push_progress_total: total,
