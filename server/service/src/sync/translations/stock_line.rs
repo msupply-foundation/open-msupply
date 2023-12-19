@@ -230,11 +230,10 @@ mod tests {
         let translator = StockLineTranslation {};
         for changelog in changelogs {
             // Translate and sort
-            let Some(translated) = translator
+            let translated = translator
                 .try_translate_push_upsert(&connection, &changelog)
-                .unwrap() else {
-                    panic!("Where is my stuff");
-                };
+                .unwrap()
+                .unwrap();
 
             assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
         }
