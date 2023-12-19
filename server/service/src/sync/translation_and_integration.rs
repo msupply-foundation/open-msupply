@@ -2,7 +2,7 @@ use crate::sync::{integrate_document::sync_upsert_document, translations::PullDe
 
 use super::{
     sync_buffer::SyncBuffer,
-    sync_status::logger::SyncLogger,
+    sync_status::logger::{SyncLogger, SyncStepProgress},
     translations::{
         IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslation, SyncTranslators,
     },
@@ -72,10 +72,27 @@ impl<'a> TranslationAndIntegration<'a> {
         sync_records: Vec<SyncBufferRow>,
         translators: &Vec<Box<dyn SyncTranslation>>,
         logger: &mut SyncLogger,
+        remaining_to_integrate: u64,
+        interval_for_logging: u64,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
+        let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
 
+        // TODO fix actual remaining progress (will cause strange issues on the delete, because current progress is reset)
+        let mut current_progress = 0;
+
         for sync_record in sync_records {
+            // log only every threshold
+
+            if remaining_to_integrate % interval_for_logging == 0 {
+                let _ = logger.progress(
+                    step_progress.clone(),
+                    remaining_to_integrate.clone() - current_progress.clone(),
+                );
+            }
+
+            current_progress += 1;
+
             // Try translate
 
             // Now and again call  logger.progress(step_progress.clone(), {number of non integrated sync buffer row} )?;
