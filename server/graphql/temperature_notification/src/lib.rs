@@ -121,12 +121,11 @@ mod test {
         query {
             temperatureNotifications(storeId: \"store_a\") {
               ... on TemperatureNotificationConnector {
-                nodes {
+                breaches {
                   id
                   sensorId
-                  acknowledged
+                  unacknowledged
                 }
-                totalCount
               }
             }
         }
@@ -167,14 +166,13 @@ mod test {
 
         let expected = json!({
               "temperatureNotifications": {
-                  "nodes": [
+                  "breaches": [
                       {
                           "id": "acknowledged_temperature_breach",
                           "sensorId": "sensor_1",
-                          "acknowledged": true,
+                          "unacknowledged": false,
                       },
-                  ],
-                  "totalCount": 1
+                  ]
               }
           }
         );
@@ -198,10 +196,9 @@ mod test {
 
         let expected = json!({
               "temperatureNotifications": {
-                  "nodes": [
+                  "breaches": [
 
-                  ],
-                  "totalCount": 0
+                  ]
               }
           }
         );
