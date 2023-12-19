@@ -1,4 +1,4 @@
-fragment TemperatureNotification on TemperatureNotificationNode {
+fragment TemperatureNotificationBreach on TemperatureBreachNode {
   __typename
   id
   startDatetime
@@ -14,22 +14,30 @@ fragment TemperatureNotification on TemperatureNotificationNode {
   }
 }
 
-query temperatureNotifications(
-  $page: PaginationInput
-  $sort: [TemperatureNotificationSortInput!]
-  $filter: TemperatureNotificationFilterInput
-  $storeId: String!
-) {
-  temperatureNotifications(
-    page: $page
-    sort: $sort
-    filter: $filter
-    storeId: $storeId
-  ) {
+fragment TemperatureExcursion on TemperatureBreachNode {
+  __typename
+  id
+  startDatetime
+  maxOrMinTemperature
+
+  sensor {
+    id
+    name
+  }
+
+  location {
+    name
+  }
+}
+
+query temperatureNotifications($page: PaginationInput, $storeId: String!) {
+  temperatureNotifications(page: $page, storeId: $storeId) {
     ... on TemperatureNotificationConnector {
-      totalCount
-      nodes {
-        ...TemperatureNotification
+      breaches {
+        ...TemperatureNotificationBreach
+      }
+      excursions {
+        ...TemperatureExcursion
       }
     }
   }
