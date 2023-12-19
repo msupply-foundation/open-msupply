@@ -8,11 +8,12 @@ use crate::sync::translations::{
     IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
 };
 
-#[allow(non_snake_case)]
 #[derive(Deserialize)]
 pub struct ItemMergeMessage {
-    pub mergeIdToKeep: String,
-    pub mergeIdToDelete: String,
+    #[serde(rename = "mergeIdToKeep")]
+    pub merge_id_to_keep: String,
+    #[serde(rename = "mergeIdToDelete")]
+    pub merge_id_to_delete: String,
 }
 
 // Conceptually this isn't a translation, so the abstraction should probably be changed or this doesn't belong here
@@ -39,11 +40,13 @@ impl SyncTranslation for ItemMergeTranslation {
         let data = serde_json::from_str::<ItemMergeMessage>(&sync_record.data)?;
 
         let item_link_repo = ItemLinkRowRepository::new(connection);
-        let item_links = item_link_repo.find_many_by_item_id(&data.mergeIdToDelete)?;
+        let item_links = item_link_repo.find_many_by_item_id(&data.merge_id_to_delete)?;
         if item_links.len() == 0 {
             return Ok(None);
         }
-        let indirect_link = item_link_repo.find_one_by_id(&data.mergeIdToKeep)?.unwrap();
+        let indirect_link = item_link_repo
+            .find_one_by_id(&data.merge_id_to_keep)?
+            .unwrap();
 
         let upsert_records: Vec<PullUpsertRecord> = item_links
             .into_iter()
