@@ -4,7 +4,7 @@ use crate::{
 };
 use log::{info, warn};
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::sync::Arc;
+use std::{convert::TryInto, sync::Arc};
 use thiserror::Error;
 use util::format_error;
 
@@ -17,7 +17,10 @@ use super::{
     },
     settings::{SyncSettings, SYNC_VERSION},
     sync_buffer::SyncBuffer,
-    sync_status::logger::{SyncLogger, SyncLoggerError},
+    sync_status::{
+        logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
+        SyncLogError,
+    },
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
     translations::{all_translators, pull_integration_order},
 };
@@ -189,7 +192,7 @@ impl Synchroniser {
         logger.start_step(SyncStep::Integrate)?;
         //
         let (upserts, deletes) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised)
+            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
                 .map_err(SyncError::IntegrationError)?;
         info!("Upsert Integration result: {:?}", upserts);
         info!("Delete Integration result: {:?}", deletes);
@@ -213,6 +216,7 @@ impl Synchroniser {
 pub fn integrate_and_translate_sync_buffer(
     connection: &StorageConnection,
     is_initialised: bool,
+    logger: &mut SyncLogger,
 ) -> anyhow::Result<(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
@@ -226,7 +230,7 @@ pub fn integrate_and_translate_sync_buffer(
     // - not initialised: no transactions at all
 
     // Closure, to be run in a transaction or without a transaction
-    let integrate_and_translate = |connection: &StorageConnection| -> Result<
+    let mut integrate_and_translate = |connection: &StorageConnection| -> Result<
         (
             TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
@@ -235,6 +239,7 @@ pub fn integrate_and_translate_sync_buffer(
     > {
         let translators = all_translators();
         let table_order = pull_integration_order(&translators);
+        let step_progress = SyncStepProgress::Integrate;
 
         let sync_buffer = SyncBuffer::new(connection);
         let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
@@ -242,10 +247,19 @@ pub fn integrate_and_translate_sync_buffer(
         let upsert_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
 
-        // TODO what is the total
+        // What is the total
+        // TODO safely handle unwrap (it will never exceed max u64 size in reality)
+        let upsert_sync_buffer_records_count: u64 =
+            upsert_sync_buffer_records.len().try_into().unwrap();
 
         // If we had 1000 records to integrate
-
+        // define total number of records to progress for progress
+        let _ = logger
+            .progress(step_progress.clone(), upsert_sync_buffer_records_count)
+            .map_err(|_error| RepositoryError::DBError {
+                msg: ("Logging failed in integration").to_string(),
+                extra: ("").to_string(),
+            });
         // Total number of sync_buffer rows to integrate
 
         // First time we call   logger.progress(step_progress.clone(), 10000)?;
@@ -254,44 +268,22 @@ pub fn integrate_and_translate_sync_buffer(
 
         let upsert_integration_result = translation_and_integration
             // pass the logger here
-            .translate_and_integrate_sync_records(upsert_sync_buffer_records, &translators)?;
+            .translate_and_integrate_sync_records(
+                upsert_sync_buffer_records,
+                &translators,
+                logger,
+            )?;
 
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
         // pass the logger here
         let delete_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(delete_sync_buffer_records, &translators)?;
-
-        Ok((upsert_integration_result, delete_integration_result))
-    };
-
-    let integrate_and_translate_with_logger = |connection: &StorageConnection| -> Result<
-        (
-            TranslationAndIntegrationResults,
-            TranslationAndIntegrationResults,
-        ),
-        RepositoryError,
-    > {
-        let translators = all_translators();
-        let table_order = pull_integration_order(&translators);
-
-        let sync_buffer = SyncBuffer::new(connection);
-        let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
-
-        // Rearrange to calculate total record count
-        let upsert_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
-        let delete_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
-
-        // Translate and integrate upserts (ordered by referential database constraints)
-        let upsert_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(upsert_sync_buffer_records, &translators)?;
-
-        // Translate and integrate delete (ordered by referential database constraints, in reverse)
-        let delete_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(delete_sync_buffer_records, &translators)?;
+            .translate_and_integrate_sync_records(
+                delete_sync_buffer_records,
+                &translators,
+                logger,
+            )?;
 
         Ok((upsert_integration_result, delete_integration_result))
     };
@@ -301,7 +293,7 @@ pub fn integrate_and_translate_sync_buffer(
             .transaction_sync(integrate_and_translate)
             .map_err::<RepositoryError, _>(|e| e.to_inner_error())
     } else {
-        integrate_and_translate_with_logger(&connection)
+        integrate_and_translate(&connection)
     }?;
 
     Ok(result)
