@@ -71,7 +71,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_item_merge() {
-        util::init_logger(util::LogLevel::Info);
+        // util::init_logger(util::LogLevel::Info);
 
         let mut sync_records = vec![
             SyncBufferRow {
