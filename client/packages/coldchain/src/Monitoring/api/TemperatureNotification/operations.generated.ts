@@ -4,20 +4,35 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type TemperatureNotificationFragment = { __typename: 'TemperatureNotificationNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
+export type TemperatureNotificationBreachFragment = { __typename: 'TemperatureBreachNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
+
+export type TemperatureExcursionFragment = { __typename: 'TemperatureBreachNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
 
 export type TemperatureNotificationsQueryVariables = Types.Exact<{
   page?: Types.InputMaybe<Types.PaginationInput>;
-  sort?: Types.InputMaybe<Array<Types.TemperatureNotificationSortInput> | Types.TemperatureNotificationSortInput>;
-  filter?: Types.InputMaybe<Types.TemperatureNotificationFilterInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type TemperatureNotificationsQuery = { __typename: 'Queries', temperatureNotifications: { __typename: 'TemperatureNotificationConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureNotificationNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null }> } };
+export type TemperatureNotificationsQuery = { __typename: 'Queries', temperatureNotifications: { __typename: 'TemperatureNotificationConnector', breaches: Array<{ __typename: 'TemperatureBreachNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null }>, excursions: Array<{ __typename: 'TemperatureExcursionNode' }> } };
 
-export const TemperatureNotificationFragmentDoc = gql`
-    fragment TemperatureNotification on TemperatureNotificationNode {
+export const TemperatureNotificationBreachFragmentDoc = gql`
+    fragment TemperatureNotificationBreach on TemperatureBreachNode {
+  __typename
+  id
+  startDatetime
+  maxOrMinTemperature
+  sensor {
+    id
+    name
+  }
+  location {
+    name
+  }
+}
+    `;
+export const TemperatureExcursionFragmentDoc = gql`
+    fragment TemperatureExcursion on TemperatureBreachNode {
   __typename
   id
   startDatetime
@@ -32,22 +47,20 @@ export const TemperatureNotificationFragmentDoc = gql`
 }
     `;
 export const TemperatureNotificationsDocument = gql`
-    query temperatureNotifications($page: PaginationInput, $sort: [TemperatureNotificationSortInput!], $filter: TemperatureNotificationFilterInput, $storeId: String!) {
-  temperatureNotifications(
-    page: $page
-    sort: $sort
-    filter: $filter
-    storeId: $storeId
-  ) {
+    query temperatureNotifications($page: PaginationInput, $storeId: String!) {
+  temperatureNotifications(page: $page, storeId: $storeId) {
     ... on TemperatureNotificationConnector {
-      totalCount
-      nodes {
-        ...TemperatureNotification
+      breaches {
+        ...TemperatureNotificationBreach
+      }
+      excursions {
+        ...TemperatureExcursion
       }
     }
   }
 }
-    ${TemperatureNotificationFragmentDoc}`;
+    ${TemperatureNotificationBreachFragmentDoc}
+${TemperatureExcursionFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -68,7 +81,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockTemperatureNotificationsQuery((req, res, ctx) => {
- *   const { page, sort, filter, storeId } = req.variables;
+ *   const { page, storeId } = req.variables;
  *   return res(
  *     ctx.data({ temperatureNotifications })
  *   )

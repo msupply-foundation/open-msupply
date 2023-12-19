@@ -5,7 +5,10 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{temperature_breach::TemperatureBreachFilter, EqualFilter, PaginationOption};
+use repository::{
+    temperature_breach::TemperatureBreachFilter, EqualFilter, PaginationOption,
+    TemperatureBreachSort, TemperatureBreachSortField,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -19,9 +22,6 @@ impl TemperatureNotificationQueries {
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<TemperatureNotificationFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<TemperatureNotificationSortInput>>,
     ) -> Result<TemperatureNotificationsResponse> {
         let user = validate_auth(
             ctx,
@@ -34,11 +34,10 @@ impl TemperatureNotificationQueries {
         let service_provider = ctx.service_provider();
         let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
-        // always filter by store_id
-        let filter = filter
-            .map(TemperatureBreachFilter::from)
-            .unwrap_or(TemperatureBreachFilter::new())
-            .store_id(EqualFilter::equal_to(&store_id));
+        // construct filter
+        let filter = TemperatureBreachFilter::new()
+            .store_id(EqualFilter::equal_to(&store_id))
+            .unacknowledged(true);
 
         let temperature_notifications = service_provider
             .temperature_breach_service
@@ -46,9 +45,10 @@ impl TemperatureNotificationQueries {
                 &service_context.connection,
                 page.map(PaginationOption::from),
                 Some(filter),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
+                Some(TemperatureBreachSort {
+                    key: TemperatureBreachSortField::StartDatetime,
+                    desc: Some(true),
+                }),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -139,9 +139,9 @@ mod test {
                     temperature_breach_row: TemperatureBreachRow {
                         id: "acknowledged_temperature_breach".to_owned(),
                         duration_milliseconds: 3600,
-                        acknowledged: true,
+                        unacknowledged: false,
                         r#type: TemperatureBreachRowType::ColdConsecutive,
-                        store_id: Some("store_a".to_string()),
+                        store_id: "store_a".to_string(),
                         location_id: None,
                         threshold_minimum: -273.0,
                         threshold_maximum: 2.0,

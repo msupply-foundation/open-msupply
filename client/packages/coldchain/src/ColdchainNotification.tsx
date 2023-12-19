@@ -3,7 +3,7 @@ import {
   BaseButton,
   Box,
   RouteBuilder,
-  TemperatureNotificationSortFieldInput,
+  TemperatureBreachSortFieldInput,
   Typography,
   useMatch,
   useNavigate,
@@ -13,10 +13,8 @@ import { useFormatDateTime, useTranslation } from '@common/intl';
 import { CircleAlertIcon } from '@common/icons';
 import { alpha, useTheme } from '@common/styles';
 import { AppRoute } from '@openmsupply-client/config';
-import {
-  TemperatureNotificationFragment,
-  useTemperatureNotification,
-} from './Monitoring/api';
+import { useTemperatureNotification } from './Monitoring/api';
+import { TemperatureNotificationBreachFragment } from './Monitoring/api';
 
 const Text: React.FC<PropsWithChildren> = ({ children }) => (
   <Typography
@@ -41,7 +39,7 @@ const Separator = () => (
 const DetailButton = ({
   notification,
 }: {
-  notification: TemperatureNotificationFragment;
+  notification: TemperatureNotificationBreachFragment;
 }) => {
   const t = useTranslation('coldchain');
   const navigate = useNavigate();
@@ -63,7 +61,7 @@ const DetailButton = ({
             .addPart(AppRoute.Monitoring)
             .addQuery({ tab: t('label.breaches') })
             .addQuery({
-              sort: TemperatureNotificationSortFieldInput.StartDatetime,
+              sort: TemperatureBreachSortFieldInput.StartDatetime,
             })
             .addQuery({ unacknowledged: true })
             .addQuery({ 'sensor.name': notification.sensor?.name ?? '' })
@@ -78,7 +76,7 @@ const DetailButton = ({
 const Location = ({
   notification,
 }: {
-  notification: TemperatureNotificationFragment;
+  notification: TemperatureNotificationBreachFragment;
 }) => {
   const t = useTranslation('coldchain');
 
@@ -102,11 +100,9 @@ export const ColdchainNotification = () => {
   const { data: notifications } = useTemperatureNotification.document.list({
     first: 1,
     offset: 0,
-    sortBy: { key: 'startDatetime', direction: 'desc', isDesc: true },
-    filterBy: { unacknowledged: true },
   });
   const { localisedDistanceToNow } = useFormatDateTime();
-  const notification = notifications?.nodes?.[0];
+  const notification = notifications?.breaches?.[0];
 
   if (!notification) return null;
 
