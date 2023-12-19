@@ -246,23 +246,27 @@ pub fn integrate_and_translate_sync_buffer(
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
+        // Translate and integrate delete (ordered by referential database constraints, in reverse)
+        let delete_sync_buffer_records =
+            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
 
         // What is the total
-        // TODO safely handle unwrap (it will never exceed max u64 size in reality)
-        let upsert_sync_buffer_records_count: u64 =
-            upsert_sync_buffer_records.len().try_into().unwrap();
+        let remaining_to_integrate: u64 = (upsert_sync_buffer_records.len()
+            + delete_sync_buffer_records.len())
+        .try_into()
+        .unwrap();
 
-        // If we had 1000 records to integrate
-        // define total number of records to progress for progress
+        // define arbitrary spacing of every 50th of total progress for logging
+        let interval_for_logging: u64 = (remaining_to_integrate / 50);
+
+        // Call initial logger
         let _ = logger
-            .progress(step_progress.clone(), upsert_sync_buffer_records_count)
+            .progress(step_progress.clone(), remaining_to_integrate.clone())
             .map_err(|_error| RepositoryError::DBError {
                 msg: ("Logging failed in integration").to_string(),
                 extra: ("").to_string(),
             });
         // Total number of sync_buffer rows to integrate
-
-        // First time we call   logger.progress(step_progress.clone(), 10000)?;
 
         // Subsequent times we call it with how many remaining
 
@@ -272,17 +276,21 @@ pub fn integrate_and_translate_sync_buffer(
                 upsert_sync_buffer_records,
                 &translators,
                 logger,
+                remaining_to_integrate,
+                interval_for_logging,
             )?;
 
-        // Translate and integrate delete (ordered by referential database constraints, in reverse)
-        let delete_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
+        //update remaining total
+        let remaining_to_integrate = delete_sync_buffer_records.len().try_into().unwrap();
+
         // pass the logger here
         let delete_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
                 delete_sync_buffer_records,
                 &translators,
                 logger,
+                remaining_to_integrate,
+                interval_for_logging,
             )?;
 
         Ok((upsert_integration_result, delete_integration_result))
