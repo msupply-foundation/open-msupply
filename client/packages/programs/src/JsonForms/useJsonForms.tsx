@@ -169,7 +169,7 @@ export const useJsonForms = <R,>(
       // document doesn't exist yet; always set the isDirty flag
       isCreating ||
       !isEqualIgnoreUndefinedAndEmpty(initialData, data);
-    setIsDirty(isLoading ? false : dirty);
+    setIsDirty(isLoading || !data ? false : dirty);
     if (data === undefined) {
       setData(initialData);
     }
