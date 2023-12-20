@@ -1,4 +1,4 @@
-use crate::{db_diesel::temperature_log_row::temperature_log, DBType};
+use crate::{db_diesel::temperature_log_row::temperature_log, DBType, TemperatureLogRow};
 use chrono::NaiveDateTime;
 use diesel::{
     backend::Backend, expression::*, prelude::*, query_builder::*, query_source::*, sql_types::*,
@@ -95,6 +95,9 @@ type SqlType = (
     Text,
     Text,
     Text, /* Json type is only available for sqlite in diesel 2, so using String and manually parsing to vec */
+    Text, // LocationId
+    Timestamp, // Datetime
+    Text, // TemperatureBreachId
 );
 type AllColumns = (
     IntervalId,
@@ -102,6 +105,9 @@ type AllColumns = (
     TemperatureLogId,
     SensorId,
     BreachIds,
+    LocationId,
+    TLDatetime,
+    TemperatureBreachId,
 );
 impl Table for TemperatureChart {
     type PrimaryKey = IntervalId;
@@ -116,6 +122,9 @@ impl Table for TemperatureChart {
             TemperatureLogId,
             SensorId,
             BreachIds,
+            LocationId,
+            TLDatetime,
+            TemperatureBreachId,
         )
     }
 }
@@ -124,6 +133,9 @@ impl AppearsInFromClause<TemperatureChart> for TemperatureChart {
 }
 impl AppearsInFromClause<TemperatureChart> for () {
     type Count = Never;
+}
+impl AppearsInFromClause<TemperatureChart> for TemperatureLogRow {
+    type Count = Once;
 }
 // pub type BoxedQuery<'a, DB, ST = SqlType> = BoxedSelectStatement<'a, ST, TemperatureChart, DB>;
 
@@ -184,6 +196,15 @@ macro_rules! temperature_chart_column {
 temperature_chart_column!(IntervalId, "time_series.interval_id", Text);
 temperature_chart_column!(TemperatureLogId, "temperature_log.id", Text);
 temperature_chart_column!(SensorId, "temperature_log.sensor_id", Text);
+temperature_chart_column!(LocationId, "temperature_log.location_id", Text);
+temperature_chart_column!(StoreId, "temperature_log.store_id", Text);
+temperature_chart_column!(TLDatetime, "temperature_log.datetime", Timestamp);
+temperature_chart_column!(
+    TemperatureBreachId,
+    "temperature_log.temperature_breach_id",
+    Text
+);
+
 // Aggregates
 #[cfg(not(feature = "postgres"))]
 temperature_chart_column!(

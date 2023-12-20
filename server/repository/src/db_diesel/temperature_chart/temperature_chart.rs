@@ -1,6 +1,12 @@
 use crate::{
-    db_diesel::temperature_log_row::temperature_log::dsl as temperature_log_dsl, DBType,
-    RepositoryError, StorageConnection, TemperatureLogFilter, TemperatureLogRepository,
+    db_diesel::{
+        location_row::location::dsl as location_dsl, sensor_row::sensor::dsl as sensor_dsl,
+        temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl,
+    },
+    diesel_macros::{apply_date_time_filter, apply_equal_filter},
+    location::LocationRepository,
+    DBType, RepositoryError, SensorRepository, StorageConnection, TemperatureBreachRepository,
+    TemperatureLogFilter,
 };
 use diesel::prelude::*;
 
@@ -28,11 +34,37 @@ impl<'a> TemperatureChartRepository<'a> {
         }
         .into_boxed::<DBType>();
 
-        if temperature_log_filter.is_some() {
-            let temperature_log_ids =
-                TemperatureLogRepository::create_filtered_query(temperature_log_filter)
-                    .select(temperature_log_dsl::id);
-            query = query.filter(TemperatureLogId.eq_any(temperature_log_ids));
+        if let Some(f) = temperature_log_filter {
+            let TemperatureLogFilter {
+                id,
+                store_id,
+                datetime,
+                sensor,
+                location,
+                temperature_breach,
+            } = f;
+
+            apply_equal_filter!(query, id, TemperatureLogId);
+            apply_equal_filter!(query, store_id, StoreId);
+            apply_date_time_filter!(query, datetime, TLDatetime);
+
+            if sensor.is_some() {
+                let sensor_ids =
+                    SensorRepository::create_filtered_query(sensor).select(sensor_dsl::id);
+                query = query.filter(SensorId.eq_any(sensor_ids));
+            }
+
+            if location.is_some() {
+                let location_ids =
+                    LocationRepository::create_filtered_query(location).select(location_dsl::id);
+                query = query.filter(LocationId.eq_any(location_ids));
+            }
+            if temperature_breach.is_some() {
+                let temperature_breach_ids =
+                    TemperatureBreachRepository::create_filtered_query(temperature_breach)
+                        .select(temperature_breach_dsl::id);
+                query = query.filter(TemperatureBreachId.eq_any(temperature_breach_ids));
+            }
         };
 
         let query = query
