@@ -193,7 +193,7 @@ export const Toolbar: FC<ToolbarProps> = ({
               <IconButton
                 icon={<DeleteIcon />}
                 onClick={onDeleteClick}
-                label={''}
+                label={t('label.delete')}
               />
             </Box>
             <Box display="flex" gap={1.5}>
