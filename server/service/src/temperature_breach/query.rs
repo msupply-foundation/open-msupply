@@ -72,5 +72,9 @@ pub fn get_max_or_min_breach_temperature(
                 .map(|log| log.temperature_log_row.temperature)
                 .min_by(|a, b| a.partial_cmp(b).unwrap()))
         }
+        TemperatureBreachRowType::Excursion => Err(RepositoryError::DBError {
+            msg: "Invalid breach type".to_string(),
+            extra: "Excursion is not supported as a breach type".to_string(),
+        }),
     }
 }

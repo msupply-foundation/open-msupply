@@ -33,6 +33,7 @@ pub enum LegacyTemperatureBreachType {
     HotConsecutive,
     ColdCumulative,
     HotCumulative,
+    Excursion,
 }
 
 #[allow(non_snake_case)]
@@ -206,6 +207,7 @@ pub fn from_legacy_breach_type(t: &LegacyTemperatureBreachType) -> TemperatureBr
         LegacyTemperatureBreachType::HotConsecutive => TemperatureBreachRowType::HotConsecutive,
         LegacyTemperatureBreachType::ColdCumulative => TemperatureBreachRowType::ColdCumulative,
         LegacyTemperatureBreachType::HotCumulative => TemperatureBreachRowType::HotCumulative,
+        LegacyTemperatureBreachType::Excursion => TemperatureBreachRowType::Excursion,
     }
 }
 
@@ -215,6 +217,7 @@ pub fn to_legacy_breach_type(t: &TemperatureBreachRowType) -> LegacyTemperatureB
         TemperatureBreachRowType::HotConsecutive => LegacyTemperatureBreachType::HotConsecutive,
         TemperatureBreachRowType::ColdCumulative => LegacyTemperatureBreachType::ColdCumulative,
         TemperatureBreachRowType::HotCumulative => LegacyTemperatureBreachType::HotCumulative,
+        TemperatureBreachRowType::Excursion => LegacyTemperatureBreachType::Excursion,
     }
 }
 

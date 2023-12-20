@@ -1,3 +1,5 @@
+use std::fmt;
+
 use super::{
     location_row::location, sensor_row::sensor, store_row::store,
     temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl, StorageConnection,
@@ -48,6 +50,19 @@ pub enum TemperatureBreachRowType {
     #[default]
     HotConsecutive,
     HotCumulative,
+    Excursion,
+}
+
+impl fmt::Display for TemperatureBreachRowType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TemperatureBreachRowType::ColdConsecutive => write!(f, "COLD_CONSECUTIVE"),
+            TemperatureBreachRowType::ColdCumulative => write!(f, "COLD_CUMULATIVE"),
+            TemperatureBreachRowType::HotConsecutive => write!(f, "HOT_CONSECUTIVE"),
+            TemperatureBreachRowType::HotCumulative => write!(f, "HOT_CUMULATIVE"),
+            TemperatureBreachRowType::Excursion => write!(f, "EXCURSION"),
+        }
+    }
 }
 
 #[derive(
