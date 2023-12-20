@@ -1,3 +1,5 @@
+use std::fmt;
+
 use super::{
     location_row::location, sensor_row::sensor::dsl as sensor_dsl, store_row::store,
     StorageConnection,
@@ -42,6 +44,16 @@ pub enum SensorType {
     BlueMaestro,
     Laird,
     Berlinger,
+}
+
+impl fmt::Display for SensorType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SensorType::BlueMaestro => write!(f, "BLUE_MAESTRO"),
+            SensorType::Laird => write!(f, "LAIRD"),
+            SensorType::Berlinger => write!(f, "BERLINGER"),
+        }
+    }
 }
 
 // TODO put this somewhere more sensible
