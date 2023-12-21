@@ -46,16 +46,6 @@ pub enum SensorType {
     Berlinger,
 }
 
-impl fmt::Display for SensorType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            SensorType::BlueMaestro => write!(f, "BLUE_MAESTRO"),
-            SensorType::Laird => write!(f, "LAIRD"),
-            SensorType::Berlinger => write!(f, "BERLINGER"),
-        }
-    }
-}
-
 // TODO put this somewhere more sensible
 // perhaps the cold chain service
 pub fn get_sensor_type(serial: &String) -> SensorType {
