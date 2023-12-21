@@ -51,7 +51,7 @@ const getPatientBreadcrumbSuffix = (
 };
 
 /**
-+ * Updates the status and once the status has been update saves the encounter
++ * Updates the status and once the status has been updated saves the encounter
 + */
 const useSaveWithStatus = (
   saveData: () => void,
