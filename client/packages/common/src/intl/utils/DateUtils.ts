@@ -37,9 +37,10 @@ import enUS from 'date-fns/locale/en-US';
 import fr from 'date-fns/locale/fr';
 import ar from 'date-fns/locale/ar';
 import es from 'date-fns/locale/es';
+import ru from 'date-fns/locale/ru';
 
 // Map locale string (from i18n) to locale object (from date-fns)
-const getLocaleObj = { fr, ar, es };
+const getLocaleObj = { fr, ar, es, ru };
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
 
