@@ -3,6 +3,7 @@ import {
   Column,
   ColumnAlign,
   ExpiryDateCell,
+  LocationCell,
   PositiveNumberCell,
   useColumns,
 } from '@openmsupply-client/common';
@@ -36,6 +37,7 @@ export const usePrescriptionLineEditColumns = ({
         {
           accessor: ({ rowData }) => rowData.location?.code,
           width: 70,
+          Cell: LocationCell,
         },
       ],
       ['packSize', { width: 90 }],
