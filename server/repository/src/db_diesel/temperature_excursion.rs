@@ -14,6 +14,17 @@ use diesel::{prelude::*, sql_types::Integer};
 
 use super::temperature_excursion_row::TemperatureExcursionRow;
 
+#[derive(PartialEq, Debug, Clone)]
+pub struct TemperatureExcursion {
+    pub temperature_excursion_row: TemperatureExcursionRow,
+}
+
+pub fn to_domain(temperature_excursion_row: TemperatureExcursionRow) -> TemperatureExcursion {
+    TemperatureExcursion {
+        temperature_excursion_row,
+    }
+}
+
 pub struct TemperatureExcursionRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -48,7 +59,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
     pub fn query(
         &self,
         filter: TemperatureLogFilter,
-    ) -> Result<Vec<TemperatureExcursionRow>, RepositoryError> {
+    ) -> Result<Vec<TemperatureExcursion>, RepositoryError> {
         let mut query = temperature_log_dsl::temperature_log
             .inner_join(
                 temperature_breach_config_dsl::temperature_breach_config
@@ -103,6 +114,8 @@ impl<'a> TemperatureExcursionRepository<'a> {
                         && r.location_id == row.location_id
                 });
 
+                // if the temperature is back within range then we don't
+                // to need notify of the excursion
                 if excursion_end.is_some() {
                     continue;
                 }
@@ -113,6 +126,8 @@ impl<'a> TemperatureExcursionRepository<'a> {
                         && r.location_id == row.location_id
                 });
 
+                // we may have multiple temperature log records for a given sensor
+                // in which case there is only one excursion to report
                 if existing_excursion.is_some() {
                     continue;
                 }
@@ -132,7 +147,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
             println!("{:?}", row);
         }
 
-        Ok(excursion_data)
+        Ok(excursion_data.into_iter().map(to_domain).collect())
     }
 }
 
@@ -153,6 +168,7 @@ impl TemperatureRow {
 }
 #[cfg(test)]
 mod test {
+    use crate::TemperatureExcursion;
     use crate::{
         db_diesel::temperature_excursion_row::TemperatureExcursionRow,
         mock::{MockData, MockDataInserts},
@@ -275,6 +291,9 @@ mod test {
             )
             .unwrap();
 
+        // resetting `today` : when the test is run as part of a suite, it can take almost a second to get to this point
+        // which means the durations are not correct
+        let today = Utc::now().naive_utc();
         let datetime1 = today
             .checked_sub_days(Days::new(8))
             .unwrap()
@@ -291,21 +310,25 @@ mod test {
         assert_eq!(
             result,
             vec![
-                TemperatureExcursionRow {
-                    datetime: datetime1,
-                    temperature: 30.0,
-                    location_id: None,
-                    duration: duration1,
-                    store_id: "store".to_string(),
-                    sensor_id: sensor1.id.clone(),
+                TemperatureExcursion {
+                    temperature_excursion_row: TemperatureExcursionRow {
+                        datetime: datetime1,
+                        temperature: 30.0,
+                        location_id: None,
+                        duration: duration1,
+                        store_id: "store".to_string(),
+                        sensor_id: sensor1.id.clone(),
+                    }
                 },
-                TemperatureExcursionRow {
-                    datetime: datetime2,
-                    temperature: -20.0,
-                    location_id: None,
-                    duration: duration2,
-                    store_id: "store".to_string(),
-                    sensor_id: sensor2.id.clone(),
+                TemperatureExcursion {
+                    temperature_excursion_row: TemperatureExcursionRow {
+                        datetime: datetime2,
+                        temperature: -20.0,
+                        location_id: None,
+                        duration: duration2,
+                        store_id: "store".to_string(),
+                        sensor_id: sensor2.id.clone(),
+                    }
                 },
             ],
         );
