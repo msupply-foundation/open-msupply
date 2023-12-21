@@ -84,6 +84,7 @@ mod temperature_breach_config_row;
 mod temperature_breach_row;
 mod temperature_chart;
 mod temperature_excursion;
+mod temperature_excursion_row;
 pub mod temperature_log;
 mod temperature_log_row;
 mod unit_row;

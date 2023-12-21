@@ -1,5 +1,3 @@
-use std::fmt;
-
 use super::{
     location_row::location, sensor_row::sensor::dsl as sensor_dsl, store_row::store,
     StorageConnection,

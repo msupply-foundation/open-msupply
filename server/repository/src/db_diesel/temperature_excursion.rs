@@ -7,10 +7,12 @@ use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
     TemperatureBreachRowType,
 };
-use crate::{RepositoryError, StorageConnection, TemperatureExcursionRow};
+use crate::{RepositoryError, StorageConnection};
 use chrono::{NaiveDateTime, Utc};
 
 use diesel::{prelude::*, sql_types::Integer};
+
+use super::temperature_excursion_row::TemperatureExcursionRow;
 
 pub struct TemperatureExcursionRepository<'a> {
     connection: &'a StorageConnection,
@@ -152,11 +154,12 @@ impl TemperatureRow {
 #[cfg(test)]
 mod test {
     use crate::{
+        db_diesel::temperature_excursion_row::TemperatureExcursionRow,
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
         DatetimeFilter, LocationRow, NameRow, SensorRow, StoreRow, TemperatureBreachConfigRow,
-        TemperatureBreachRowType, TemperatureExcursionRepository, TemperatureExcursionRow,
-        TemperatureLogFilter, TemperatureLogRow,
+        TemperatureBreachRowType, TemperatureExcursionRepository, TemperatureLogFilter,
+        TemperatureLogRow,
     };
 
     use chrono::{Days, NaiveTime, Utc};
