@@ -195,16 +195,18 @@ export const DetailView: FC = () => {
       (data as Record<string, JsonData>)['status'] ===
       EncounterNodeStatus.Deleted
     ) {
-      saveData();
-      navigate(
-        RouteBuilder.create(AppRoute.Dispensary)
-          .addPart(AppRoute.Patients)
-          .addPart(encounter?.patient?.id ?? '')
-          .addQuery({
-            tab: PatientTabValue.Encounters,
-          })
-          .build()
-      );
+      saveData().then(result => {
+        if (!result) return;
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Patients)
+            .addPart(encounter?.patient?.id ?? '')
+            .addQuery({
+              tab: PatientTabValue.Encounters,
+            })
+            .build()
+        );
+      });
     }
   }, [deleteRequest, data]);
 
