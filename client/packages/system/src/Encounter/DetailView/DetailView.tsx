@@ -195,18 +195,14 @@ export const DetailView: FC = () => {
       (data as Record<string, JsonData>)['status'] ===
       EncounterNodeStatus.Deleted
     ) {
-      saveData().then(result => {
+      (async () => {
+        const result = await saveData(true);
         if (!result) return;
-        navigate(
-          RouteBuilder.create(AppRoute.Dispensary)
-            .addPart(AppRoute.Patients)
-            .addPart(encounter?.patient?.id ?? '')
-            .addQuery({
-              tab: PatientTabValue.Encounters,
-            })
-            .build()
-        );
-      });
+
+        // allow the is dirty flag to settle
+        await new Promise(resolve => setTimeout(resolve, 100));
+        navigate(-1);
+      })();
     }
   }, [deleteRequest, data]);
 

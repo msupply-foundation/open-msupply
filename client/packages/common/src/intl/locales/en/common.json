@@ -407,6 +407,7 @@
   "placeholder.search-by-name-or-code": "Search by name or code",
   "success": "Success!",
   "success.data-saved": "Saved successfully",
+  "success.data-deleted": "Deleted successfully",
   "success.sync-settings": "Sync settings updated successfully!",
   "sync-info.last-successful-sync": "Last successful sync",
   "sync-info.last-sync": "Last sync",
