@@ -1,13 +1,13 @@
 use chrono::{Days, Utc};
 use repository::{
-    DatetimeFilter, EqualFilter, RepositoryError, StorageConnection,
-    TemperatureExcursionRepository, TemperatureExcursionRow, TemperatureLogFilter,
+    DatetimeFilter, EqualFilter, RepositoryError, StorageConnection, TemperatureExcursion,
+    TemperatureExcursionRepository, TemperatureLogFilter,
 };
 
 pub fn get_excursions(
     connection: &StorageConnection,
     store_id: &str,
-) -> Result<Vec<TemperatureExcursionRow>, RepositoryError> {
+) -> Result<Vec<TemperatureExcursion>, RepositoryError> {
     let filter = TemperatureLogFilter::new()
         .store_id(EqualFilter::equal_to(store_id))
         .datetime(DatetimeFilter::after_or_equal_to(

@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TemperatureExcursionRow {
     pub datetime: NaiveDateTime,
     pub temperature: f64,
