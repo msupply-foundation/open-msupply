@@ -1,6 +1,4 @@
-use repository::{
-    ItemLinkRow, ItemLinkRowRepository, StorageConnection, SyncBufferAction, SyncBufferRow,
-};
+use repository::{ItemLinkRow, ItemLinkRowRepository, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -31,9 +29,7 @@ impl SyncTranslation for ItemMergeTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if sync_record.table_name != LegacyTableName::ITEM
-            || sync_record.action != SyncBufferAction::Merge
-        {
+        if sync_record.table_name != LegacyTableName::ITEM {
             return Ok(None);
         }
 
