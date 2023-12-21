@@ -17,9 +17,10 @@ import { Capacitor } from '@capacitor/core';
 import { AppRoute } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
-import { LogFileModal } from './LogFileModal';
+import { AndroidLogFileModal } from './AndroidLogFileModal';
+import { WebAppLogFileModal } from './WebAppLogFileModal';
 
-export const AndroidSettings = () => {
+export const ServerSettings = () => {
   const [nativeMode, setNativeMode] = useState(NativeMode.None);
   const navigate = useNavigate();
   const t = useTranslation('common');
@@ -41,7 +42,6 @@ export const AndroidSettings = () => {
   useEffect(() => {
     getPreference('mode', 'none').then(setNativeMode);
   }, []);
-
   return Capacitor.isNativePlatform() ? (
     <>
       <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
@@ -74,11 +74,26 @@ export const AndroidSettings = () => {
         title={t('label.server-log')}
         component={
           <>
-            <LogFileModal onClose={hideLog} isOpen={isLogShown} />
+            <AndroidLogFileModal onClose={hideLog} isOpen={isLogShown} />
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
         }
       />
     </>
-  ) : null;
+  ) : (
+    <>
+      <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
+        {t('heading.support')}
+      </Typography>
+      <Setting
+        title={t('label.server-log')}
+        component={
+          <>
+            <WebAppLogFileModal onClose={hideLog} isOpen={isLogShown} />
+            <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
+          </>
+        }
+      />
+    </>
+  );
 };
