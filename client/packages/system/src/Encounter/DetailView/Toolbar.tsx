@@ -94,12 +94,7 @@ export const Toolbar: FC<ToolbarProps> = ({
       ),
       value: encounter.clinician as Clinician,
     });
-  }, [
-    encounter.status,
-    encounter.startDatetime,
-    encounter.endDatetime,
-    encounter.clinician,
-  ]);
+  }, [encounter]);
 
   const getDeleteConfirmation = useConfirmationModal({
     message: t('message.confirm-delete-encounter'),
