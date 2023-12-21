@@ -40,19 +40,28 @@ pub fn encounters(
     // Filter out deleted encounters
     // Note, in the future we could has an include_deleted filter flag, which skips the following
     // code block.
-    let mut filter = filter
-        .map(EncounterFilter::from)
-        .unwrap_or(EncounterFilter::new());
-    let mut status_filter = filter.status.unwrap_or(EqualFilter::default());
-    status_filter.not_equal_to = Some(repository::EncounterStatus::Deleted);
-    filter.status = Some(status_filter);
+    let filter = if !filter
+        .as_ref()
+        .and_then(|f| f.include_deleted)
+        .unwrap_or(false)
+    {
+        let mut filter = filter
+            .map(EncounterFilter::from)
+            .unwrap_or(EncounterFilter::new());
+        let mut status_filter = filter.status.unwrap_or(EqualFilter::default());
+        status_filter.not_equal_to = Some(repository::EncounterStatus::Deleted);
+        filter.status = Some(status_filter);
+        Some(filter)
+    } else {
+        filter.map(EncounterFilter::from)
+    };
 
     let result = service_provider
         .encounter_service
         .encounters(
             &context,
             page.map(PaginationOption::from),
-            Some(filter),
+            filter,
             sort.map(EncounterSortInput::to_domain),
             allowed_ctx.clone(),
         )

@@ -103,6 +103,8 @@ pub struct EncounterFilterInput {
     pub document_data: Option<StringFilterInput>,
     pub patient: Option<PatientFilterInput>,
     pub program_enrolment: Option<ProgramEnrolmentFilterInput>,
+    /// Only if this filter is set encounters with status DELETED are returned
+    pub include_deleted: Option<bool>,
 }
 
 impl From<EncounterFilterInput> for EncounterFilter {
