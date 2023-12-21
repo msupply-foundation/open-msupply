@@ -35,9 +35,9 @@ export const useOutboundLineEditColumns = ({
         },
       ],
       [
-        'locationName',
+        'location',
         {
-          accessor: ({ rowData }) => rowData.location?.name,
+          accessor: ({ rowData }) => rowData.location?.code,
           width: 70,
         },
       ],
@@ -106,9 +106,9 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
     'batch',
     'expiryDate',
     [
-      'locationName',
+      'location',
       {
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
     [
