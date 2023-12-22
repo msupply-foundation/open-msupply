@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod contact_trace;
+mod encounter_status;
 mod indexes;
 mod master_list;
 mod patient_id_indices;
@@ -25,6 +26,7 @@ impl Migration for V1_06_00 {
         patient_id_indices::migrate(connection)?;
         program_enrolment_status::migrate(connection)?;
         indexes::migrate(connection)?;
+        encounter_status::migrate(connection)?;
         Ok(())
     }
 }

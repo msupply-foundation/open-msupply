@@ -130,7 +130,7 @@ export const useJsonForms = <R,>(
   useConfirmOnLeaving(isDirty);
 
   // returns the document name
-  const saveData = async (): Promise<R | undefined> => {
+  const saveData = async (deletion?: boolean): Promise<R | undefined> => {
     if (data === undefined) {
       return undefined;
     }
@@ -141,7 +141,9 @@ export const useJsonForms = <R,>(
       const sanitizedData = stripEmptyAdditions(initialData, data);
       const result = await save?.(sanitizedData);
 
-      const successSnack = success(t('success.data-saved'));
+      const successSnack = success(
+        deletion ? t('success.data-deleted') : t('success.data-saved')
+      );
       successSnack();
 
       setInitialData(sanitizedData);
