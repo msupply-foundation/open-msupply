@@ -27,7 +27,7 @@ export const useInboundShipmentColumns = () => {
   const { c } = useCurrency();
   const getSellPrice = (row: InboundLineFragment) =>
     isInboundPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
-  const { getColumnEntityProperty, getColumnProperty } = useColumnUtils();
+  const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
@@ -55,13 +55,6 @@ export const useInboundShipmentColumns = () => {
       [
         'itemCode',
         {
-          accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'item',
-              key: 'code',
-              defaults: { multiple: '' },
-            }),
           getSortValue: row =>
             getColumnEntityProperty({
               row,
@@ -75,82 +68,70 @@ export const useInboundShipmentColumns = () => {
         'itemName',
         {
           Cell: TooltipTextCell,
-          accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'item',
-              key: 'name',
-              defaults: { multiple: '' },
-            }),
           getSortValue: row =>
-            getColumnEntityProperty({
-              row,
-              entity: 'item',
-              key: 'name',
-              defaults: { multiple: '' },
-            }),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'name'] },
+              { path: ['item', 'name'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'item', 'name'] },
+              { path: ['item', 'name'], default: '' },
+            ]),
         },
       ],
       [
         'itemUnit',
         {
           getSortValue: row =>
-            getColumnEntityProperty({
-              row,
-              entity: 'item',
-              key: 'unitName',
-              defaults: { single: '', multiple: '' },
-            }),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'unitName'] },
+              { path: ['item', 'unitName'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'item',
-              key: 'unitName',
-              defaults: {
-                single: '',
-                multiple: '',
-              },
-            }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'item', 'unitName'] },
+              { path: ['item', 'unitName'], default: '' },
+            ]),
         },
       ],
       [
         'batch',
         {
           accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'batch' }),
+            getColumnProperty(rowData, [{ path: ['batch'] }]),
           getSortValue: row =>
-            String(getColumnProperty({ row, key: 'batch' }) ?? ''),
+            getColumnPropertyAsString(row, [{ path: ['batch'], default: '' }]),
         },
       ],
       [
         'expiryDate',
         {
-          accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'expiryDate' }),
           getSortValue: row =>
-            String(getColumnProperty({ row, key: 'expiryDate' }) ?? ''),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'], default: '' },
+            ]),
         },
       ],
       [
         'location',
         {
           getSortValue: row =>
-            String(
-              getColumnEntityProperty({
-                row,
-                entity: 'location',
-                key: 'code',
-              }) ?? ''
-            ),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'location',
-              key: 'code',
-              defaults: {
-                single: '',
-              },
-            }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'], default: '' },
+            ]),
         },
       ],
       {
@@ -185,25 +166,15 @@ export const useInboundShipmentColumns = () => {
         'packSize',
         {
           accessor: ({ rowData }) =>
-            getColumnProperty({
-              row: rowData,
-              key: 'packSize',
-              defaults: {
-                single: '',
-                multiple: '',
-              },
-            }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'packSize'], default: '' },
+              { path: ['packSize'], default: '' },
+            ]),
           getSortValue: row =>
-            String(
-              getColumnProperty({
-                row,
-                key: 'packSize',
-                defaults: {
-                  single: '',
-                  multiple: '',
-                },
-              }) ?? ''
-            ),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'packSize'], default: '' },
+              { path: ['packSize'], default: '' },
+            ]),
         },
       ],
       [

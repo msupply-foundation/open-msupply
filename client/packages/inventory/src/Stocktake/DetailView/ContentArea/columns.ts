@@ -63,7 +63,7 @@ export const useStocktakeColumns = ({
 >[] => {
   const { getError } = useStocktakeLineErrorContext();
   const t = useTranslation();
-  const { getColumnEntityProperty, getColumnProperty } = useColumnUtils();
+  const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [
@@ -105,66 +105,60 @@ export const useStocktakeColumns = ({
         'batch',
         {
           getSortValue: row =>
-            String(
-              getColumnProperty({
-                row,
-                key: 'batch',
-                defaults: { single: '' },
-              }) ?? ''
-            ),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'batch' }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'] },
+            ]),
         },
       ],
       [
         'expiryDate',
         {
           getSortValue: row =>
-            String(
-              getColumnProperty({
-                row,
-                key: 'expiryDate',
-                defaults: { single: '' },
-              })
-            ),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'expiryDate' }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'] },
+            ]),
         },
       ],
       [
         'location',
         {
           getSortValue: row =>
-            getColumnEntityProperty({
-              row,
-              entity: 'location',
-              key: 'code',
-              defaults: { single: '' },
-            }),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'location',
-              key: 'code',
-              defaults: {
-                single: '',
-              },
-            }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'] },
+            ]),
         },
       ],
       [
         'packSize',
         {
           getSortValue: row =>
-            String(
-              getColumnProperty({
-                row,
-                key: 'packSize',
-                defaults: { single: '' },
-              }) ?? ''
-            ),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'packSize' }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'] },
+            ]),
         },
       ],
       {
@@ -293,12 +287,17 @@ export const useStocktakeColumns = ({
       {
         key: 'comment',
         label: 'label.stocktake-comment',
+
         getSortValue: row =>
-          String(
-            getColumnProperty({ row, key: 'comment', defaults: { single: '' } })
-          ),
+          getColumnPropertyAsString(row, [
+            { path: ['lines', 'comment'] },
+            { path: ['comment'], default: '' },
+          ]),
         accessor: ({ rowData }) =>
-          getColumnProperty({ row: rowData, key: 'comment' }),
+          getColumnProperty(rowData, [
+            { path: ['lines', 'comment'] },
+            { path: ['comment'] },
+          ]),
       },
       expandColumn,
       GenericColumnKey.Selection,

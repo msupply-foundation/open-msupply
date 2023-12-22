@@ -45,7 +45,7 @@ export const useOutboundColumns = ({
   onChangeSortBy,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const { c } = useCurrency();
-  const { getColumnProperty, getColumnEntityProperty } = useColumnUtils();
+  const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
   return useColumns(
     [
@@ -74,13 +74,15 @@ export const useOutboundColumns = ({
         'itemCode',
         {
           getSortValue: row =>
-            getColumnEntityProperty({ row, entity: 'item', key: 'code' }),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'code'], default: '' },
+              { path: ['item', 'code'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'item',
-              key: 'code',
-            }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'item', 'code'], default: '' },
+              { path: ['item', 'code'], default: '' },
+            ]),
         },
       ],
       [
@@ -88,57 +90,75 @@ export const useOutboundColumns = ({
         {
           Cell: TooltipTextCell,
           getSortValue: row =>
-            getColumnEntityProperty({ row, entity: 'item', key: 'name' }),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'name'] },
+              { path: ['item', 'name'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'item',
-              key: 'name',
-            }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'item', 'name'] },
+              { path: ['item', 'name'], default: '' },
+            ]),
         },
       ],
       [
         'itemUnit',
         {
           getSortValue: row =>
-            getColumnEntityProperty({ row, entity: 'item', key: 'unitName' }),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'itemUnit'] },
+              { path: ['item', 'itemUnit'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'item',
-              key: 'unitName',
-            }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'item', 'itemUnit'] },
+              { path: ['item', 'itemUnit'], default: '' },
+            ]),
         },
       ],
       [
         'batch',
         {
           getSortValue: row =>
-            String(getColumnProperty({ row, key: 'batch' }) ?? ''),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'batch' }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'] },
+            ]),
         },
       ],
       [
         'expiryDate',
         {
           getSortValue: row =>
-            String(getColumnProperty({ row, key: 'expiryDate' }) ?? ''),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty({ row: rowData, key: 'expiryDate' }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'] },
+            ]),
         },
       ],
       [
         'location',
         {
           getSortValue: row =>
-            getColumnEntityProperty({ row, entity: 'location', key: 'code' }),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnEntityProperty({
-              row: rowData,
-              entity: 'location',
-              key: 'code',
-            }),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'], default: '' },
+            ]),
         },
       ],
       [
