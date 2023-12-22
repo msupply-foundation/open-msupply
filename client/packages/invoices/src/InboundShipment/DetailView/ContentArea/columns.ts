@@ -56,12 +56,15 @@ export const useInboundShipmentColumns = () => {
         'itemCode',
         {
           getSortValue: row =>
-            getColumnEntityProperty({
-              row,
-              entity: 'item',
-              key: 'code',
-              defaults: { multiple: '' },
-            }),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'code'] },
+              { path: ['item', 'code'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'item', 'code'] },
+              { path: ['item', 'code'], default: '' },
+            ]),
         },
       ],
       [
