@@ -2,10 +2,6 @@ import { useTranslation } from '@common/intl';
 import { RecordWithId } from '@common/types';
 import { ArrayUtils } from '@common/utils';
 
-// export type ColumnProperty = {
-//   path: string[];
-//   default?: string;
-// };
 type ColumnProperty<T> = {
   path: T[];
   default?: string;
@@ -29,10 +25,6 @@ export const useColumnUtils = () => {
     row: T,
     property: ColumnProperty<KeysOfUnion<T>>
   ): unknown => {
-    // const isPropOfT = (path: keyof T | K ): path is K => {
-    //   return path in row;
-    // };
-
     if (property.path.length === 0) {
       return undefined;
     }
@@ -40,12 +32,11 @@ export const useColumnUtils = () => {
     const path = property.path[0] as keyof T;
     if (path === undefined || path === null) return undefined;
     if (!(path in row)) return undefined;
-    if (property.path.length < 2) return undefined;
-
     const key = property.path[1] as keyof T;
-    const isObjectProperty = property.path.length > 2;
 
     if (Array.isArray(row[path])) {
+      if (property.path.length < 2) return undefined;
+      const isObjectProperty = property.path.length > 2;
       if (isObjectProperty) {
         const propertyKey = property.path[2];
         const arr = (row[path] as T[]).flatMap((line: T) => {
@@ -73,6 +64,8 @@ export const useColumnUtils = () => {
         );
       }
     } else {
+      if (property.path.length < 1) return undefined;
+      const isObjectProperty = property.path.length > 1;
       if (isObjectProperty) {
         return (
           row[path]?.[key as keyof NonNullable<T[keyof T]>] ??
@@ -80,7 +73,7 @@ export const useColumnUtils = () => {
           ''
         );
       } else {
-        return row[key] ?? property.default;
+        return row[path] ?? property.default;
       }
     }
   };
