@@ -2,14 +2,14 @@ import { useTranslation } from '@common/intl';
 import { RecordWithId } from '@common/types';
 import { ArrayUtils } from '@common/utils';
 
-export type ColumnProperty = {
-  path: string[];
-  default?: string;
-};
-// export type ColumnProperty<T, K> = {
-//   path: (keyof T | K | keyof K[keyof K])[];
+// export type ColumnProperty = {
+//   path: string[];
 //   default?: string;
 // };
+type ColumnProperty<T> = {
+  path: T[];
+  default?: string;
+};
 
 export const useColumnUtils = () => {
   const t = useTranslation();
@@ -25,20 +25,9 @@ export const useColumnUtils = () => {
    *
    * If a path points to a single field the matching field value is returned. If there is no match the default is returned.
    */
-  //  [
-  //   {
-  //     path: ['lines', 'location', 'code'],
-  //     default: 'multiple',
-  //   },
-  //   {
-  //     path: ['location', 'code'],
-  //     default: 'none',
-  //   },
-  // ]
-
-  const getValue = <T extends object, K extends keyof T>(
+  const getValue = <T extends object>(
     row: T,
-    property: ColumnProperty
+    property: ColumnProperty<KeysOfUnion<T>>
   ): unknown => {
     // const isPropOfT = (path: keyof T | K ): path is K => {
     //   return path in row;
@@ -58,7 +47,7 @@ export const useColumnUtils = () => {
 
     if (Array.isArray(row[path])) {
       if (isObjectProperty) {
-        const propertyKey = property.path[2] as keyof K[keyof K];
+        const propertyKey = property.path[2];
         const arr = (row[path] as T[]).flatMap((line: T) => {
           const obj = line[key];
           return !!obj ? [obj] : [];
@@ -96,9 +85,20 @@ export const useColumnUtils = () => {
     }
   };
 
+  type KeysOfUnion<T extends object> = T extends T ? NestedKeyOf<T> : never;
+
+  type NestedKeyOf<T> = {
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    [Key in keyof T & string]: T[Key] extends Function
+      ? never
+      : T[Key] extends object
+      ? `${Key}` | NestedKeyOf<T[Key]>
+      : `${Key}`;
+  }[keyof T & string];
+
   const getColumnProperty = <T extends RecordWithId>(
     row: T,
-    props: ColumnProperty[]
+    props: ColumnProperty<KeysOfUnion<T>>[]
   ) => {
     return props.reduce(
       (result, prop) => result ?? getValue(row, prop),
@@ -108,7 +108,7 @@ export const useColumnUtils = () => {
 
   const getColumnPropertyAsString = <T extends RecordWithId>(
     row: T,
-    props: ColumnProperty[]
+    props: ColumnProperty<KeysOfUnion<T>>[]
   ) => {
     return String(getColumnProperty(row, props) ?? '');
   };

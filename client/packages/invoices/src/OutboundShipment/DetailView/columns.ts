@@ -106,13 +106,13 @@ export const useOutboundColumns = ({
         {
           getSortValue: row =>
             getColumnPropertyAsString(row, [
-              { path: ['lines', 'item', 'itemUnit'] },
-              { path: ['item', 'itemUnit'], default: '' },
+              { path: ['lines', 'item', 'unitName'] },
+              { path: ['item', 'unitName'], default: '' },
             ]),
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
-              { path: ['lines', 'item', 'itemUnit'] },
-              { path: ['item', 'itemUnit'], default: '' },
+              { path: ['lines', 'item', 'unitName'] },
+              { path: ['item', 'unitName'], default: '' },
             ]),
         },
       ],

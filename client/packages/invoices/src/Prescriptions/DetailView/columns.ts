@@ -61,10 +61,13 @@ export const usePrescriptionColumn = ({
         'itemCode',
         {
           getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'item', 'code'] },
-              { path: ['item', 'code'], default: '' },
-            ]),
+            getColumnPropertyAsString<StockOutLineFragment | StockOutItem>(
+              row,
+              [
+                { path: ['lines', 'item', 'code'] },
+                { path: ['item', 'code'], default: '' },
+              ]
+            ),
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
               { path: ['lines', 'item', 'code'] },
@@ -92,13 +95,13 @@ export const usePrescriptionColumn = ({
         {
           getSortValue: row =>
             getColumnPropertyAsString(row, [
-              { path: ['lines', 'item', 'itemUnit'] },
-              { path: ['item', 'itemUnit'], default: '' },
+              { path: ['lines', 'item', 'unitName'] },
+              { path: ['item', 'unitName'], default: '' },
             ]),
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
-              { path: ['lines', 'item', 'itemUnit'] },
-              { path: ['item', 'itemUnit'], default: '' },
+              { path: ['lines', 'item', 'unitName'] },
+              { path: ['item', 'unitName'], default: '' },
             ]),
         },
       ],
