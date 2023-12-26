@@ -34,6 +34,10 @@ export const Login = () => {
     error,
     siteName,
   } = useLoginForm(passwordRef);
+  const loginErrorArray = (error?.detail ?? '').split('(');
+  const loginErrorDetail = loginErrorArray[loginErrorArray.length - 1]
+    ?.split(')')[0]
+    ?.replace(',', '');
 
   useEffect(() => {
     if (!displaySettings) return;
@@ -98,7 +102,7 @@ export const Login = () => {
         error && (
           <ErrorWithDetails
             error={error.message || t('error.login')}
-            details={error.detail || ''}
+            details={loginErrorDetail || ''}
           />
         )
       }
