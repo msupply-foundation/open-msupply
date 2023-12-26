@@ -59,7 +59,7 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     'status',
     'id',
   ]);
-  const { mutateAsync } = usePrescription.line.save(status);
+  const { mutateAsync } = usePrescription.line.save();
   const { mutateAsync: mutateStatus } = usePrescription.document.update();
   const isDisabled = usePrescription.utils.isDisabled();
   const {

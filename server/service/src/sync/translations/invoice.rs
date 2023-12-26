@@ -357,18 +357,18 @@ impl SyncTranslation for InvoiceTranslation {
             prescriber_ID: clinician_id,
         };
 
-        let json_recod = serde_json::to_value(&legacy_row)?;
+        let json_record = serde_json::to_value(&legacy_row)?;
 
         // log::info!(
         //     "Translated row {}",
-        //     serde_json::to_string_pretty(&json_recod)
+        //     serde_json::to_string_pretty(&json_record)
         //         .unwrap_or("Failed to stringify json".to_string())
         // );
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,
             LEGACY_TABLE_NAME,
-            json_recod,
+            json_record,
         )]))
     }
 

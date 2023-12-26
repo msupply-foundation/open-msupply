@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 
 import { useDialog, useNativeClient } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { BasicSpinner, DialogButton, Typography } from '@common/components';
+import { BasicSpinner, DialogButton } from '@openmsupply-client/common';
+import { LogTextDisplay } from './LogTextDisplay';
 
-export const LogFileModal = ({
+export const AndroidLogFileModal = ({
   isOpen,
   onClose,
 }: {
@@ -41,10 +42,7 @@ export const LogFileModal = ({
       width={950}
     >
       {logText ? (
-        <Typography
-          sx={{ overflow: 'scroll', whiteSpace: 'pre' }}
-          component="div"
-        >{`${logText}`}</Typography>
+        <LogTextDisplay logText={logText}></LogTextDisplay>
       ) : (
         <BasicSpinner />
       )}

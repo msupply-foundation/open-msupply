@@ -14,3 +14,12 @@ database:
   username: "postgres"
   password: "password"
   database_name: "omsupply-database"
+logging:
+  #   one of: All | Console | File
+  mode: File
+  #   one of:  Off | Error | Warn | Info (default) | Debug | Trace
+  level: Info
+  directory: log
+  filename: remote_server.log
+  max_file_count: 10
+  max_file_size: 1

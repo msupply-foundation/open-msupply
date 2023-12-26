@@ -1,9 +1,7 @@
 import React, { FC } from 'react';
 import { CacheProvider } from '@emotion/react';
-import {
-  ThemeProviderProps,
-  default as MuiThemeProvider,
-} from '@mui/material/styles/ThemeProvider';
+import { ThemeProviderProps } from '@mui/material/styles/ThemeProvider';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import createCache from '@emotion/cache';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { useAppTheme } from './useAppTheme';
@@ -12,6 +10,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider/LocalizationProvider';
 import { PropsWithChildrenOnly } from '@common/types';
 import { createRegisteredContext } from 'react-singleton-context';
+import { useIntlUtils } from '..';
 
 /**
  * Need a cache with the rtl plugin for when we are using rtl.
@@ -48,8 +47,13 @@ export const ThemeProviderProxy: FC<PropsWithChildrenOnly> = ({ children }) => {
 const ThemeProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const appTheme = useAppTheme();
 
+  const { getLocale } = useIntlUtils();
+
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <LocalizationProvider
+      dateAdapter={AdapterDateFns}
+      adapterLocale={getLocale()}
+    >
       <CacheProvider value={appTheme.direction === 'rtl' ? cacheRtl : cacheLtr}>
         <RTLProvider>
           <ThemeContext.Provider value={{ theme: appTheme }}>
