@@ -50,6 +50,11 @@ impl SyncUser {
             }
             Err(err) => match err {
                 FetchUserError::Unauthenticated => return Err(LoginError::LoginFailure),
+                FetchUserError::AccountBlocked(msg) => {
+                    return Err(LoginError::FetchUserError(FetchUserError::AccountBlocked(
+                        msg,
+                    )))
+                }
                 FetchUserError::ConnectionError(_) => return Err(LoginError::FetchUserError(err)),
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },

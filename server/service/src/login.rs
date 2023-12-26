@@ -34,6 +34,7 @@ const CONNECTION_TIMEOUT_SEC: u64 = 10;
 #[derive(Debug)]
 pub enum FetchUserError {
     Unauthenticated,
+    AccountBlocked(String),
     ConnectionError(String),
     InternalError(String),
 }
@@ -114,6 +115,11 @@ impl LoginService {
             }
             Err(err) => match err {
                 FetchUserError::Unauthenticated => return Err(LoginError::LoginFailure),
+                FetchUserError::AccountBlocked(msg) => {
+                    return Err(LoginError::FetchUserError(FetchUserError::AccountBlocked(
+                        msg,
+                    )))
+                }
                 FetchUserError::ConnectionError(_) => info!("{:?}", err),
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
@@ -192,6 +198,11 @@ impl LoginService {
             Err(err) => match err {
                 LoginV4Error::Unauthorised => {
                     return Err(FetchUserError::Unauthenticated);
+                }
+                LoginV4Error::AccountBlocked => {
+                    return Err(FetchUserError::AccountBlocked(
+                        "Account is blocked until the lockout period has expired.".to_string(),
+                    ));
                 }
                 LoginV4Error::ConnectionError(_) => {
                     return Err(FetchUserError::ConnectionError(format!(
