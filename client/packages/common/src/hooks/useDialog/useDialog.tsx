@@ -30,6 +30,8 @@ export interface ModalProps {
   >;
   okButton?: JSX.Element;
   reportSelector?: React.ReactElement;
+  copyButton?: JSX.Element;
+  saveButton?: JSX.Element;
   width?: number;
   sx?: SxProps<Theme>;
   title: string;
@@ -131,6 +133,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     nextButton,
     okButton,
     reportSelector,
+    copyButton,
+    saveButton,
     width,
     title,
     contentProps,
@@ -200,6 +204,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
           }}
         >
           {cancelButton}
+          {saveButton}
+          {copyButton}
           {okButton}
           {WrappedNextButton}
           {reportSelector}

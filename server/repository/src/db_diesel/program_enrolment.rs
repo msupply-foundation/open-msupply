@@ -5,12 +5,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{
-        apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
-        apply_string_filter,
-    },
-    DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentRow, ProgramEnrolmentStatus,
-    ProgramRow, RepositoryError, Sort, StringFilter,
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
+    DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentRow, ProgramRow,
+    RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
@@ -21,7 +18,7 @@ pub struct ProgramEnrolmentFilter {
     pub program_id: Option<EqualFilter<String>>,
     pub enrolment_datetime: Option<DatetimeFilter>,
     pub program_enrolment_id: Option<StringFilter>,
-    pub status: Option<EqualFilter<ProgramEnrolmentStatus>>,
+    pub status: Option<StringFilter>,
     pub document_type: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
     pub program_context_id: Option<EqualFilter<String>>,
@@ -68,7 +65,7 @@ impl ProgramEnrolmentFilter {
         self
     }
 
-    pub fn status(mut self, filter: EqualFilter<ProgramEnrolmentStatus>) -> Self {
+    pub fn status(mut self, filter: StringFilter) -> Self {
         self.status = Some(filter);
         self
     }
@@ -149,7 +146,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
                     apply_sort!(query, sort, program_enlrolment_dsl::program_enrolment_id)
                 }
                 ProgramEnrolmentSortField::Status => {
-                    apply_sort_no_case!(query, sort, program_enlrolment_dsl::status)
+                    apply_sort!(query, sort, program_enlrolment_dsl::status)
                 }
             }
         } else {
@@ -196,7 +193,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
                 program_enrolment_id,
                 program_enlrolment_dsl::program_enrolment_id
             );
-            apply_equal_filter!(query, status, program_enlrolment_dsl::status);
+            apply_string_filter!(query, status, program_enlrolment_dsl::status);
             apply_equal_filter!(query, document_type, program_enlrolment_dsl::document_type);
             apply_equal_filter!(query, document_name, program_enlrolment_dsl::document_name);
             apply_string_filter!(query, program_name, program_dsl::name);
