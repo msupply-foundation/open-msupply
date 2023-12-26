@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug)]
 pub enum LoginV4Error {
     Unauthorised,
+    AccountBlocked,
     ConnectionError(reqwest::Error),
 }
 
@@ -146,6 +147,11 @@ impl LoginApiV4 {
 
         if reqwest::StatusCode::UNAUTHORIZED == response.status() {
             return Err(LoginV4Error::Unauthorised);
+        }
+
+        // handle account blocked error (i.e. too many failed login attempts)
+        if reqwest::StatusCode::FORBIDDEN == response.status() {
+            return Err(LoginV4Error::AccountBlocked);
         }
 
         let response = response
