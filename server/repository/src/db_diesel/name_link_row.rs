@@ -62,6 +62,24 @@ impl<'a> NameLinkRowRepository<'a> {
         Ok(())
     }
 
+    #[cfg(feature = "postgres")]
+    pub fn insert_one_or_ignore(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(name_link)
+            .values(row)
+            .on_conflict(name_link::id)
+            .do_nothing()
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    pub fn insert_one_or_ignore(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
+        diesel::insert_or_ignore_into(name_link)
+            .values(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
     pub async fn insert_one(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_link)
             .values(row)
