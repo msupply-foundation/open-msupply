@@ -1,6 +1,9 @@
 use super::{name_row::name::dsl::*, StorageConnection};
 
-use crate::{item_link, name_link, repository_error::RepositoryError, EqualFilter};
+use crate::{
+    item_link, name_link, repository_error::RepositoryError, EqualFilter, NameLinkRow,
+    NameLinkRowRepository,
+};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -159,6 +162,18 @@ pub struct NameRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+fn insert_or_ignore_name_link<'a>(
+    connection: &'a StorageConnection,
+    name_row: &NameRow,
+) -> Result<(), RepositoryError> {
+    let name_link_row = NameLinkRow {
+        id: name_row.id.clone(),
+        name_id: name_row.id.clone(),
+    };
+    NameLinkRowRepository::new(connection).insert_one_or_ignore(&name_link_row)?;
+    Ok(())
+}
+
 impl<'a> NameRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         NameRowRepository { connection }
@@ -197,6 +212,7 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_name_link(&self.connection, row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
@@ -210,6 +226,7 @@ impl<'a> NameRowRepository<'a> {
         diesel::insert_into(name)
             .values(name_row)
             .execute(&self.connection.connection)?;
+        insert_or_ignore_name_link(&self.connection, name_row)?;
         Ok(())
     }
 
@@ -238,6 +255,7 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn sync_upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_name_link(&self.connection, row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
         Ok(())
