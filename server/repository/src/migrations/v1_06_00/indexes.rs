@@ -46,7 +46,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE INDEX index_invoice_clinician_id ON invoice (clinician_id);
         CREATE INDEX index_plugin_data_store_id ON plugin_data (store_id);
         CREATE INDEX index_program_enrolment_program_id ON program_enrolment (program_id);
-        CREATE INDEX index_clinician_store_join_clinician_id ON clinician_store_join (clinician_id);
         CREATE INDEX index_clinician_store_join_store_id ON clinician_store_join (store_id);
         CREATE INDEX index_stocktake_line_inventory_adjustment_reason_id ON stocktake_line (inventory_adjustment_reason_id);
         "#,
