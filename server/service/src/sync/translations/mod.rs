@@ -223,7 +223,6 @@ pub(crate) enum PullDeleteRecordTable {
     ProgramRequisitionOrderType,
     MasterListNameJoin,
     Report,
-    Name,
     InventoryAdjustmentReason,
     // Remote-Central (site specific)
     NameStoreJoin,
