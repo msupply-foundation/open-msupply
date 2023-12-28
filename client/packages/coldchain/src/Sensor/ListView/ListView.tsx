@@ -37,9 +37,9 @@ export const SensorListView: FC = () => {
         sortable: false,
       },
       {
-        key: 'locationName',
+        key: 'location',
         label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
         sortable: false,
       },
       {
