@@ -11,7 +11,7 @@ import {
   DetailTabs,
   useRowHighlight,
 } from '@openmsupply-client/common';
-import { ItemRowFragment, LogList } from '@openmsupply-client/system';
+import { ItemRowFragment, ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -53,7 +53,7 @@ export const DetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <LogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];

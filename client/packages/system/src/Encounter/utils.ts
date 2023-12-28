@@ -20,6 +20,8 @@ export const encounterStatusTranslation = (
       return t('label.encounter-status-cancelled');
     case EncounterNodeStatus.Visited:
       return t('label.encounter-status-visited');
+    case EncounterNodeStatus.Deleted:
+      return t('label.encounter-status-deleted');
     default:
       return noOtherVariants(status);
   }
