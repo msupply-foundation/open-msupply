@@ -160,7 +160,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
         apply_date_time_filter!(query, start_datetime, encounter_dsl::start_datetime);
         apply_date_time_filter!(query, end_datetime, encounter_dsl::end_datetime);
         apply_equal_filter!(query, status, encounter_dsl::status);
-        apply_equal_filter!(query, clinician_id, encounter_dsl::clinician_id);
+        apply_equal_filter!(query, clinician_id, encounter_dsl::clinician_link_id);
 
         if document_data.is_some() {
             let mut sub_query = latest_document_dsl::latest_document
