@@ -8,6 +8,8 @@ use std::{convert::TryInto, sync::Arc};
 use thiserror::Error;
 use util::format_error;
 
+use std::time::Duration;
+
 use super::{
     api::SyncApiV5,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
@@ -183,19 +185,29 @@ impl Synchroniser {
 
         // PULL REMOTE
         logger.start_step(SyncStep::PullRemote)?;
-        self.remote
-            .pull(&ctx.connection, batch_size.remote_pull, logger)
-            .await?;
+        // self.remote
+        //     .pull(&ctx.connection, batch_size.remote_pull, logger)
+        //     .await?;
+
+        logger.progress(SyncStepProgress::PullRemote, 10)?;
+        logger.progress(SyncStepProgress::PullRemote, 1)?;
+        logger.progress(SyncStepProgress::PullRemote, 10)?;
+
         logger.done_step(SyncStep::PullRemote)?;
 
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
-        //
-        let (upserts, deletes) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
-                .map_err(SyncError::IntegrationError)?;
-        info!("Upsert Integration result: {:?}", upserts);
-        info!("Delete Integration result: {:?}", deletes);
+
+        logger.progress(SyncStepProgress::Integrate, 10)?;
+        logger.progress(SyncStepProgress::Integrate, 1)?;
+        logger.progress(SyncStepProgress::Integrate, 10)?;
+
+        // let (upserts, deletes) =
+        //     integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
+        //         .await
+        //         .map_err(SyncError::IntegrationError)?;
+        // info!("Upsert Integration result: {:?}", upserts);
+        // info!("Delete Integration result: {:?}", deletes);
         logger.done_step(SyncStep::Integrate)?;
 
         if !is_initialised {
@@ -213,10 +225,10 @@ impl Synchroniser {
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
-pub fn integrate_and_translate_sync_buffer(
+pub async fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
     is_initialised: bool,
-    logger: &mut SyncLogger,
+    logger: &mut SyncLogger<'a>,
 ) -> anyhow::Result<(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
@@ -257,15 +269,20 @@ pub fn integrate_and_translate_sync_buffer(
         .unwrap();
 
         // define arbitrary spacing of every 50th of total progress for logging
-        let interval_for_logging: u64 = (remaining_to_integrate / 50);
+        let interval_for_logging: u64 = remaining_to_integrate / 50;
 
+        // test logger
+        logger.progress(SyncStepProgress::Integrate, 10);
+        logger.progress(SyncStepProgress::Integrate, 1);
+
+        logger.progress(SyncStepProgress::Integrate, 10);
         // Call initial logger
-        let _ = logger
-            .progress(step_progress.clone(), remaining_to_integrate.clone())
-            .map_err(|_error| RepositoryError::DBError {
-                msg: ("Logging failed in integration").to_string(),
-                extra: ("").to_string(),
-            });
+        // logger
+        //     .progress(step_progress.clone(), remaining_to_integrate.clone())
+        //     .map_err(|_error| RepositoryError::DBError {
+        //         msg: ("Logging failed in integration").to_string(),
+        //         extra: ("").to_string(),
+        //     })?;
         // Total number of sync_buffer rows to integrate
 
         // Subsequent times we call it with how many remaining
