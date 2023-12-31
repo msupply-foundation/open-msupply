@@ -89,6 +89,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     step_progress.clone(),
                     remaining_to_integrate.clone() - current_progress.clone(),
                 );
+                println!("logging integration! {}", current_progress);
             }
 
             current_progress += 1;
