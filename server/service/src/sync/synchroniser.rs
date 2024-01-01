@@ -185,29 +185,20 @@ impl Synchroniser {
 
         // PULL REMOTE
         logger.start_step(SyncStep::PullRemote)?;
-        // self.remote
-        //     .pull(&ctx.connection, batch_size.remote_pull, logger)
-        //     .await?;
-
-        logger.progress(SyncStepProgress::PullRemote, 10)?;
-        logger.progress(SyncStepProgress::PullRemote, 1)?;
-        logger.progress(SyncStepProgress::PullRemote, 10)?;
+        self.remote
+            .pull(&ctx.connection, batch_size.remote_pull, logger)
+            .await?;
 
         logger.done_step(SyncStep::PullRemote)?;
 
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        logger.progress(SyncStepProgress::Integrate, 10)?;
-        logger.progress(SyncStepProgress::Integrate, 1)?;
-        logger.progress(SyncStepProgress::Integrate, 10)?;
+        let (upserts, deletes) =
+            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
+                .await
+                .map_err(SyncError::IntegrationError)?;
 
-        // let (upserts, deletes) =
-        //     integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
-        //         .await
-        //         .map_err(SyncError::IntegrationError)?;
-        // info!("Upsert Integration result: {:?}", upserts);
-        // info!("Delete Integration result: {:?}", deletes);
         logger.done_step(SyncStep::Integrate)?;
 
         if !is_initialised {
@@ -262,28 +253,22 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         let delete_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
 
-        // What is the total
+        // total to integrate:
         let remaining_to_integrate: u64 = (upsert_sync_buffer_records.len()
             + delete_sync_buffer_records.len())
         .try_into()
         .unwrap();
 
-        // define arbitrary spacing of every 50th of total progress for logging
+        // define arbitrary spacing of every 50th of total progress for logging to prevent excessive logging
         let interval_for_logging: u64 = remaining_to_integrate / 50;
 
-        // test logger
-        logger.progress(SyncStepProgress::Integrate, 10);
-        logger.progress(SyncStepProgress::Integrate, 1);
-
-        logger.progress(SyncStepProgress::Integrate, 10);
         // Call initial logger
-        // logger
-        //     .progress(step_progress.clone(), remaining_to_integrate.clone())
-        //     .map_err(|_error| RepositoryError::DBError {
-        //         msg: ("Logging failed in integration").to_string(),
-        //         extra: ("").to_string(),
-        //     })?;
-        // Total number of sync_buffer rows to integrate
+        logger
+            .progress(step_progress.clone(), remaining_to_integrate.clone())
+            .map_err(|_error| RepositoryError::DBError {
+                msg: ("Logging failed in integration").to_string(),
+                extra: ("").to_string(),
+            })?;
 
         // Subsequent times we call it with how many remaining
 
@@ -297,7 +282,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
                 interval_for_logging,
             )?;
 
-        //update remaining total
+        //update remaining total for deletion once
         let remaining_to_integrate = delete_sync_buffer_records.len().try_into().unwrap();
 
         // pass the logger here
