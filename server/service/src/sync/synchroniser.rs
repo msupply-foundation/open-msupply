@@ -194,10 +194,9 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        let (upserts, deletes) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
-                .await
-                .map_err(SyncError::IntegrationError)?;
+        integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
+            .await
+            .map_err(SyncError::IntegrationError)?;
 
         logger.done_step(SyncStep::Integrate)?;
 
@@ -254,15 +253,17 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
 
         // total to integrate:
-        let remaining_to_integrate: u64 = (upsert_sync_buffer_records.len()
-            + delete_sync_buffer_records.len())
+        let remaining_to_integrate: u64 = (upsert_sync_buffer_records.clone().len()
+            + delete_sync_buffer_records.clone().len())
         .try_into()
         .unwrap();
 
         // define arbitrary spacing of every 50th of total progress for logging to prevent excessive logging
-        let interval_for_logging: u64 = remaining_to_integrate / 50;
+        let interval_for_logging: u64 = remaining_to_integrate.clone() / 50;
 
         // Call initial logger
+        println!("calling logger for integration");
+
         logger
             .progress(step_progress.clone(), remaining_to_integrate.clone())
             .map_err(|_error| RepositoryError::DBError {
@@ -273,9 +274,8 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         // Subsequent times we call it with how many remaining
 
         let upsert_integration_result = translation_and_integration
-            // pass the logger here
             .translate_and_integrate_sync_records(
-                upsert_sync_buffer_records,
+                upsert_sync_buffer_records.clone(),
                 &translators,
                 logger,
                 remaining_to_integrate,
@@ -288,7 +288,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         // pass the logger here
         let delete_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
-                delete_sync_buffer_records,
+                delete_sync_buffer_records.clone(),
                 &translators,
                 logger,
                 remaining_to_integrate,

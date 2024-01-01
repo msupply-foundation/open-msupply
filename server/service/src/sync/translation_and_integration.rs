@@ -84,13 +84,25 @@ impl<'a> TranslationAndIntegration<'a> {
         for sync_record in sync_records {
             // log only every threshold
 
-            if remaining_to_integrate % interval_for_logging == 0 {
-                let _ = logger.progress(
-                    step_progress.clone(),
-                    remaining_to_integrate.clone() - current_progress.clone(),
-                );
+            println!(
+                "remaining and interval: {} {}",
+                remaining_to_integrate, current_progress
+            );
+
+            if current_progress % interval_for_logging == 0 {
+                logger
+                    .progress(
+                        step_progress.clone(),
+                        remaining_to_integrate.clone() - current_progress.clone(),
+                    )
+                    .map_err(|_error| RepositoryError::DBError {
+                        msg: ("Logging failed in integration").to_string(),
+                        extra: ("").to_string(),
+                    })?;
                 println!("logging integration! {}", current_progress);
             }
+
+            println!("logging iteration");
 
             current_progress += 1;
 
