@@ -130,7 +130,7 @@ impl<'a> SyncLogRowRepository<'a> {
 
     #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
-        println!("{:?}", row);
+        // println!("{:?}", row);
         diesel::replace_into(sync_log_dsl::sync_log)
             .values(row)
             .execute(&self.connection.connection)?;
