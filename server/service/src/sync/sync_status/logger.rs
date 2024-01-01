@@ -225,12 +225,19 @@ impl<'a> SyncLogger<'a> {
             SyncStepProgress::Integrate => {
                 let (total, done) = get_progress(remaining, self.row.push_progress_total);
                 SyncLogRow {
-                    push_progress_total: total,
-                    push_progress_done: done,
+                    integration_progress_total: total,
+                    integration_progress_done: done,
                     ..self.row.clone()
                 }
             }
         };
+        println!("logging test");
+        println!(
+            "pull_remote_total: {:?}",
+            self.row.pull_remote_progress_total
+        );
+        println!("integrate_total: {:?}", self.row.integration_progress_total);
+
         self.sync_log_repo.upsert_one(&self.row)?;
         Ok(())
     }
