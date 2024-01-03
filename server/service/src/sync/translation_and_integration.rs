@@ -225,6 +225,7 @@ impl PullUpsertRecord {
             DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
             Document(record) => sync_upsert_document(con, record),
             ItemLink(record) => ItemLinkRowRepository::new(con).upsert_one(record),
+            NameLink(record) => NameLinkRowRepository::new(con).upsert_one(record),
         }
     }
 }
