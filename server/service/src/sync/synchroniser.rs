@@ -4,7 +4,7 @@ use crate::{
 };
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::{convert::TryInto, sync::Arc};
+use std::{convert::TryInto, sync::Arc, thread, time};
 use thiserror::Error;
 use util::format_error;
 
@@ -266,6 +266,9 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             })?;
 
         let current_progress = 0;
+
+        let delay = time::Duration::from_millis(50);
+        thread::sleep(delay);
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
