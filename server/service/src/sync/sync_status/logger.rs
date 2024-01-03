@@ -35,7 +35,7 @@ pub(crate) enum SyncStepProgress {
 
 pub struct SyncLogger<'a> {
     sync_log_repo: SyncLogRowRepository<'a>,
-    row: SyncLogRow,
+    pub row: SyncLogRow,
 }
 
 #[derive(Error, Debug)]
@@ -223,7 +223,7 @@ impl<'a> SyncLogger<'a> {
                 }
             }
             SyncStepProgress::Integrate => {
-                let (total, done) = get_progress(remaining, self.row.push_progress_total);
+                let (total, done) = get_progress(remaining, self.row.integration_progress_total);
                 SyncLogRow {
                     integration_progress_total: total,
                     integration_progress_done: done,
