@@ -72,39 +72,33 @@ impl<'a> TranslationAndIntegration<'a> {
         sync_records: Vec<SyncBufferRow>,
         translators: &Vec<Box<dyn SyncTranslation>>,
         logger: &mut SyncLogger,
-        remaining_to_integrate: u64,
+        total_to_integrate: u64,
         interval_for_logging: u64,
+        current_progress: u64,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
         let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
 
         // TODO fix actual remaining progress (will cause strange issues on the delete, because current progress is reset)
-        let mut current_progress = 0;
+
+        let mut progress = current_progress;
 
         for sync_record in sync_records {
             // log only every threshold
 
-            println!(
-                "remaining and interval: {} {}",
-                remaining_to_integrate, current_progress
-            );
-
-            if current_progress % interval_for_logging == 0 {
+            if progress % interval_for_logging == 0 {
                 logger
                     .progress(
                         step_progress.clone(),
-                        remaining_to_integrate.clone() - current_progress.clone(),
+                        total_to_integrate.clone() - progress.clone(),
                     )
                     .map_err(|_error| RepositoryError::DBError {
                         msg: ("Logging failed in integration").to_string(),
                         extra: ("").to_string(),
                     })?;
-                println!("logging integration! {}", current_progress);
             }
 
-            println!("logging iteration");
-
-            current_progress += 1;
+            progress += 1;
 
             // Try translate
 
