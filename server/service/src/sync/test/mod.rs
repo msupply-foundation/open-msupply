@@ -330,6 +330,7 @@ pub(crate) async fn check_records_against_database(
                 "DocumentRegistry"
             ),
             ItemLink(_) => todo!(),
+            NameLink(_) => todo!(),
         }
     }
 

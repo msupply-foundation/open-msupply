@@ -88,6 +88,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
         Box::new(special::ItemMergeTranslation {}),
+        Box::new(special::NameMergeTranslation {}),
     ]
 }
 
@@ -206,6 +207,7 @@ pub(crate) enum PullUpsertRecord {
     Document(Document),
     DocumentRegistry(DocumentRegistryRow),
     ItemLink(ItemLinkRow),
+    NameLink(NameLinkRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
