@@ -253,23 +253,24 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
 
         // total to integrate:
-        let remaining_to_integrate: u64 = (upsert_sync_buffer_records.clone().len()
+        let total_to_integrate: u64 = (upsert_sync_buffer_records.clone().len()
             + delete_sync_buffer_records.clone().len())
         .try_into()
         .unwrap();
 
         // define arbitrary spacing of every 50th of total progress for logging to prevent excessive logging
-        let interval_for_logging: u64 = remaining_to_integrate.clone() / 50;
+        let interval_for_logging: u64 = total_to_integrate.clone() / 50;
 
-        // Call initial logger
-        println!("calling logger for integration");
+        // Call initial logger to define total
 
         logger
-            .progress(step_progress.clone(), remaining_to_integrate.clone())
+            .progress(step_progress.clone(), total_to_integrate.clone())
             .map_err(|_error| RepositoryError::DBError {
                 msg: ("Logging failed in integration").to_string(),
                 extra: ("").to_string(),
             })?;
+
+        let current_progress = 0;
 
         // Subsequent times we call it with how many remaining
 
@@ -278,12 +279,13 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
                 upsert_sync_buffer_records.clone(),
                 &translators,
                 logger,
-                remaining_to_integrate,
+                total_to_integrate,
                 interval_for_logging,
+                current_progress,
             )?;
 
-        //update remaining total for deletion once
-        let remaining_to_integrate = delete_sync_buffer_records.len().try_into().unwrap();
+        //update progress value for deletion
+        let current_progress = total_to_integrate.clone();
 
         // pass the logger here
         let delete_integration_result = translation_and_integration
@@ -291,8 +293,9 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
                 delete_sync_buffer_records.clone(),
                 &translators,
                 logger,
-                remaining_to_integrate,
+                total_to_integrate,
                 interval_for_logging,
+                current_progress,
             )?;
 
         Ok((upsert_integration_result, delete_integration_result))
