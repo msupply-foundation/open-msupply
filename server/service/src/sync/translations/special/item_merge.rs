@@ -42,7 +42,10 @@ impl SyncTranslation for ItemMergeTranslation {
         }
         let indirect_link = item_link_repo
             .find_one_by_id(&data.merge_id_to_keep)?
-            .unwrap();
+            .ok_or(anyhow::anyhow!(
+                "Could not find item link with id {}",
+                data.merge_id_to_keep
+            ))?;
 
         let upsert_records: Vec<PullUpsertRecord> = item_links
             .into_iter()
