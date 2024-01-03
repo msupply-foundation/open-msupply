@@ -72,8 +72,6 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_name_merge() {
-        // util::init_logger(util::LogLevel::Info);
-
         let mut sync_records = vec![
             SyncBufferRow {
                 record_id: "name_b_merge".to_string(),
