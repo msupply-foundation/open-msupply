@@ -35,7 +35,7 @@ pub(crate) enum SyncStepProgress {
 
 pub struct SyncLogger<'a> {
     sync_log_repo: SyncLogRowRepository<'a>,
-    pub row: SyncLogRow,
+    row: SyncLogRow,
 }
 
 #[derive(Error, Debug)]
