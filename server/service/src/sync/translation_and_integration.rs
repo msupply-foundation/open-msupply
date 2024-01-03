@@ -9,7 +9,7 @@ use super::{
 };
 use log::warn;
 use repository::*;
-use std::collections::HashMap;
+use std::{collections::HashMap, thread::sleep, time};
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
@@ -99,6 +99,7 @@ impl<'a> TranslationAndIntegration<'a> {
             }
 
             progress += 1;
+            sleep(time::Duration::from_millis(100));
 
             // Try translate
 
