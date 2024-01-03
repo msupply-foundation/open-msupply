@@ -79,13 +79,10 @@ impl<'a> TranslationAndIntegration<'a> {
         let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
 
-        // TODO fix actual remaining progress (will cause strange issues on the delete, because current progress is reset)
-
         let mut progress = current_progress;
 
         for sync_record in sync_records {
-            // log only every threshold
-
+            // log only every threshold value to prevent overlogging
             if progress % interval_for_logging == 0 {
                 logger
                     .progress(
@@ -99,10 +96,6 @@ impl<'a> TranslationAndIntegration<'a> {
             }
 
             progress += 1;
-
-            // Try translate
-
-            // Now and again call  logger.progress(step_progress.clone(), {number of non integrated sync buffer row} )?;
 
             let translation_result = match self.translate_sync_record(&sync_record, &translators) {
                 Ok(translation_result) => translation_result,

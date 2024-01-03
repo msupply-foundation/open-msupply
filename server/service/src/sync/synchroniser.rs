@@ -247,7 +247,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         let delete_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
 
-        // total to integrate:
+        // total to integrate for both upsert and delete
         let total_to_integrate: u64 = (upsert_sync_buffer_records.clone().len()
             + delete_sync_buffer_records.clone().len())
         .try_into()
@@ -267,8 +267,6 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
 
         let current_progress = 0;
 
-        // Subsequent times we call it with how many remaining
-
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
                 upsert_sync_buffer_records.clone(),
@@ -279,8 +277,8 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
                 current_progress,
             )?;
 
-        //update progress value for deletion
-        let current_progress = total_to_integrate.clone();
+        //update current progress to be upserted values
+        let current_progress = upsert_sync_buffer_records.clone().len().try_into().unwrap();
 
         // pass the logger here
         let delete_integration_result = translation_and_integration
