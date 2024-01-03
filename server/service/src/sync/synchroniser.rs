@@ -2,13 +2,11 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::sync_status::logger::SyncStep,
 };
-use log::{info, warn};
+use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
 use std::{convert::TryInto, sync::Arc};
 use thiserror::Error;
 use util::format_error;
-
-use std::time::Duration;
 
 use super::{
     api::SyncApiV5,
@@ -19,10 +17,7 @@ use super::{
     },
     settings::{SyncSettings, SYNC_VERSION},
     sync_buffer::SyncBuffer,
-    sync_status::{
-        logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
-        SyncLogError,
-    },
+    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
     translations::{all_translators, pull_integration_order},
 };
