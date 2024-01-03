@@ -1,5 +1,6 @@
 use super::{
-    clinician_row::clinician, master_list_line_row::master_list_line, master_list_row::master_list,
+    clinician_link_row::clinician_link, clinician_row::clinician,
+    master_list_line_row::master_list_line, master_list_row::master_list,
     name_link_row::name_link::dsl::*, name_row::name, StorageConnection,
 };
 
@@ -26,6 +27,7 @@ allow_tables_to_appear_in_same_query!(name_link, name_store_join);
 allow_tables_to_appear_in_same_query!(name_link, name_tag_join);
 allow_tables_to_appear_in_same_query!(name_link, period);
 allow_tables_to_appear_in_same_query!(name_link, program);
+allow_tables_to_appear_in_same_query!(name_link, clinician_link);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "name_link"]
