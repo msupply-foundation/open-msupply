@@ -140,12 +140,16 @@ export const ColdchainNotification = () => {
         </b>
       </Text>
       <Separator />
-      <Text>
-        {t('message.last-temperature', {
-          temperature: breach.maxOrMinTemperature,
-        })}
-      </Text>
-      <Separator />
+      {!!breach.maxOrMinTemperature && (
+        <>
+          <Text>
+            {t('message.last-temperature', {
+              temperature: breach.maxOrMinTemperature,
+            })}
+          </Text>
+          <Separator />
+        </>
+      )}
       <Text>
         {t('message.device')}
         <b style={{ paddingLeft: 4 }}>{breach.sensor?.name}</b>

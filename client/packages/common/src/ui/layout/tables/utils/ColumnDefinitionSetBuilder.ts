@@ -33,7 +33,7 @@ export type ColumnKey =
   | 'costPricePerPack'
   | 'sellPricePerPack'
   | 'sellPricePerUnit'
-  | 'locationName'
+  | 'location'
   | 'unitQuantity'
   | 'numberOfPacks'
   | 'otherPartyName'
@@ -71,7 +71,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   expiryDate: {
     key: 'expiryDate',
     label: 'label.expiry',
-    width: 100,
+    width: 110,
     formatter: dateString => {
       if (dateString === '[multiple]') return '[multiple]';
       return dateString
@@ -83,7 +83,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   itemCode: {
     key: 'itemCode',
     label: 'label.code',
-    width: 100,
+    width: 125,
   },
   itemName: {
     key: 'itemName',
@@ -120,33 +120,33 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   status: {
     label: 'label.status',
     key: 'status',
-    width: 75,
+    width: 110,
   },
   createdDatetime: {
     description: 'description.entered',
     label: 'label.entered',
     key: 'createdDatetime',
     format: ColumnFormat.Date,
-    width: 100,
+    width: 130,
   },
   stocktakeDate: {
     label: 'label.date',
     key: 'stocktakeDate',
     format: ColumnFormat.Date,
-    width: 100,
+    width: 130,
   },
   allocatedDatetime: {
     label: 'label.confirmed',
     key: 'allocatedDatetime',
     format: ColumnFormat.Date,
-    width: 100,
+    width: 130,
     sortable: false,
   },
   deliveredDatetime: {
     label: 'label.delivered',
     key: 'deliveredDatetime',
     format: ColumnFormat.Date,
-    width: 100,
+    width: 130,
   },
   totalAfterTax: {
     description: 'description.total',
@@ -212,10 +212,10 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     align: ColumnAlign.Right,
     format: ColumnFormat.Currency,
   },
-  locationName: {
+  location: {
     label: 'label.location',
-    key: 'locationName',
-    width: 75,
+    key: 'location',
+    width: 90,
   },
   unitQuantity: {
     description: 'description.unit-quantity',
@@ -227,7 +227,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   itemUnit: {
     label: 'label.unit',
     key: 'unit',
-    width: 75,
+    width: 125,
   },
   lineTotal: {
     label: 'label.line-total',
@@ -325,6 +325,13 @@ export class ColumnDefinitionSetBuilder<T extends RecordWithId> {
         usingColumnKey ? maybeColumnOptions : columnKeyOrColumnDefinition
       ),
     };
+
+    // when setting only the width, the column width is not fixed
+    // setting a min & max though, will fix the column width
+    if (!!options.width) {
+      if (!options.minWidth) options.minWidth = options.width;
+      if (!options.maxWidth) options.maxWidth = options.width;
+    }
 
     const key = usingColumnKey ? columnKeyOrColumnDefinition : options.key;
 

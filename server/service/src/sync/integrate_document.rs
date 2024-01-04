@@ -11,13 +11,9 @@ use crate::{
             contact_trace_schema::SchemaContactTrace,
             contact_trace_updated::update_contact_trace_row,
         },
-        encounter::{
-            encounter_updated::update_encounter_row, validate_misc::validate_encounter_schema,
-        },
-        patient::{patient_schema::SchemaPatient, patient_updated::update_patient_row},
+        encounter::{encounter_updated, validate_misc::validate_encounter_schema},
         program_enrolment::program_enrolment_updated::update_program_enrolment_row,
         program_enrolment::program_schema::SchemaProgramEnrolment,
-        update_program_document::update_program_events,
     },
 };
 
@@ -40,12 +36,15 @@ pub(crate) fn sync_upsert_document(
         .query_by_filter(
             DocumentRegistryFilter::new().document_type(EqualFilter::equal_to(&document.r#type)),
         )?
-        .pop() else {
+        .pop()
+    else {
         log::warn!("Received unknown document type: {}", document.r#type);
         return Ok(());
     };
     match registry.category {
-        DocumentRegistryCategory::Patient => update_patient(con, document)?,
+        DocumentRegistryCategory::Patient => {
+            // patient name row should already have been synced
+        }
         DocumentRegistryCategory::ProgramEnrolment => update_program_enrolment(con, document)?,
         DocumentRegistryCategory::Encounter => update_encounter(con, document)?,
         DocumentRegistryCategory::ContactTrace => update_contact_trace(con, document)?,
@@ -54,22 +53,15 @@ pub(crate) fn sync_upsert_document(
     Ok(())
 }
 
-fn update_patient(con: &StorageConnection, document: &Document) -> Result<(), RepositoryError> {
-    let patient: SchemaPatient = serde_json::from_value(document.data.clone()).map_err(|err| {
-        RepositoryError::as_db_error(&format!("Invalid patient data: {}", err), "")
-    })?;
-
-    update_patient_row(con, None, &document.datetime, patient, true)
-        .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
-    Ok(())
-}
-
 fn update_program_enrolment(
     con: &StorageConnection,
     document: &Document,
 ) -> Result<(), RepositoryError> {
     let Some(patient_id) = &document.owner_name_id else {
-        return Err(RepositoryError::as_db_error("Document owner id expected", ""));
+        return Err(RepositoryError::as_db_error(
+            "Document owner id expected",
+            "",
+        ));
     };
     let program_enrolment: SchemaProgramEnrolment = serde_json::from_value(document.data.clone())
         .map_err(|err| {
@@ -85,7 +77,10 @@ fn update_program_enrolment(
 
 fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), RepositoryError> {
     let Some(patient_id) = &document.owner_name_id else {
-        return Err(RepositoryError::as_db_error("Document owner id expected", ""));
+        return Err(RepositoryError::as_db_error(
+            "Document owner id expected",
+            "",
+        ));
     };
 
     let encounter: crate::programs::encounter::validate_misc::ValidatedSchemaEncounter =
@@ -107,22 +102,15 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
     let program_row = ProgramRepository::new(con)
         .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
-    update_encounter_row(
+    encounter_updated::update_encounter_row_and_events(
         con,
         &patient_id,
         document,
         encounter,
         clinician_id,
         program_row,
-    )
-    .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
-
-    update_program_events(
-        con,
-        &patient_id,
         encounter_start_time,
         existing_encounter.map(|(existing, _)| existing.start_datetime),
-        &document,
         None,
     )
     .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
@@ -134,7 +122,10 @@ fn update_contact_trace(
     document: &Document,
 ) -> Result<(), RepositoryError> {
     let Some(patient_id) = &document.owner_name_id else {
-        return Err(RepositoryError::as_db_error("Document owner id expected", ""));
+        return Err(RepositoryError::as_db_error(
+            "Document owner id expected",
+            "",
+        ));
     };
     let contact_trace: SchemaContactTrace =
         serde_json::from_value(document.data.clone()).map_err(|err| {
@@ -152,12 +143,11 @@ fn update_contact_trace(
 mod integrate_document_test {
     use chrono::{DateTime, NaiveDateTime, Utc};
     use repository::{
-        mock::{context_program_a, MockDataInserts},
+        mock::{context_program_a, document_registry_b, mock_patient, MockDataInserts},
         test_db::setup_all,
-        DocumentStatus, PatientFilter, StringFilter,
+        DocumentStatus, Pagination, ProgramEnrolmentFilter, StringFilter,
     };
     use serde_json::json;
-    use util::constants::PATIENT_TYPE;
 
     use crate::service_provider::ServiceProvider;
 
@@ -170,7 +160,7 @@ mod integrate_document_test {
 
         let service_provider = ServiceProvider::new(connection_manager, "");
         let context = service_provider.basic_context().unwrap();
-        let patient_service = service_provider.patient_service;
+        let service = service_provider.program_enrolment_service;
 
         let doc_name = "test/doc";
         let doc_context = context_program_a().id;
@@ -186,31 +176,35 @@ mod integrate_document_test {
                     NaiveDateTime::from_timestamp_opt(50000, 0).unwrap(),
                     Utc,
                 ),
-                r#type: PATIENT_TYPE.to_string(),
+                r#type: document_registry_b().document_type,
                 data: json!({
-                  "id": "id",
-                  "firstName": "name1",
+                  "enrolmentDatetime": "2023-11-28T18:24:57.184Z",
+                  "status": "ACTIVE",
+                  "programEnrolmentId": "name1",
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                owner_name_id: None,
+                owner_name_id: Some(mock_patient().id),
                 context_id: doc_context.clone(),
             },
         )
         .unwrap();
-        let found = patient_service
-            .get_patients(
+        let found = service
+            .program_enrolments(
                 &context,
+                Pagination::all(),
                 None,
-                Some(PatientFilter::new().first_name(StringFilter::starts_with("name"))),
-                None,
-                None,
+                Some(
+                    ProgramEnrolmentFilter::new()
+                        .program_enrolment_id(StringFilter::starts_with("name")),
+                ),
+                vec![doc_context.clone()],
             )
             .unwrap()
-            .rows
             .pop()
-            .unwrap();
-        assert_eq!(&found.first_name.unwrap(), "name1");
+            .unwrap()
+            .0;
+        assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding older document shouldn't update the patient entry
         sync_upsert_document(
@@ -224,31 +218,35 @@ mod integrate_document_test {
                     NaiveDateTime::from_timestamp_opt(20000, 0).unwrap(),
                     Utc,
                 ),
-                r#type: PATIENT_TYPE.to_string(),
+                r#type: document_registry_b().document_type,
                 data: json!({
-                  "id": "id",
-                  "firstName": "name0",
+                    "enrolmentDatetime": "2023-11-27T18:24:57.184Z",
+                    "status": "ACTIVE",
+                    "programEnrolmentId": "name0",
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                owner_name_id: None,
+                owner_name_id: Some(mock_patient().id),
                 context_id: doc_context.clone(),
             },
         )
         .unwrap();
-        let found = patient_service
-            .get_patients(
+        let found = service
+            .program_enrolments(
                 &context,
+                Pagination::all(),
                 None,
-                Some(PatientFilter::new().first_name(StringFilter::starts_with("name"))),
-                None,
-                None,
+                Some(
+                    ProgramEnrolmentFilter::new()
+                        .program_enrolment_id(StringFilter::starts_with("name")),
+                ),
+                vec![doc_context.clone()],
             )
             .unwrap()
-            .rows
             .pop()
-            .unwrap();
-        assert_eq!(&found.first_name.unwrap(), "name1");
+            .unwrap()
+            .0;
+        assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding newer document should update the patient entry
         sync_upsert_document(
@@ -262,30 +260,34 @@ mod integrate_document_test {
                     NaiveDateTime::from_timestamp_opt(100000, 0).unwrap(),
                     Utc,
                 ),
-                r#type: PATIENT_TYPE.to_string(),
+                r#type: document_registry_b().document_type,
                 data: json!({
-                  "id": "id",
-                  "firstName": "name2",
+                    "enrolmentDatetime": "2023-11-30T18:24:57.184Z",
+                    "status": "ACTIVE",
+                    "programEnrolmentId": "name2",
                 }),
                 form_schema_id: None,
                 status: DocumentStatus::Active,
-                owner_name_id: None,
+                owner_name_id: Some(mock_patient().id),
                 context_id: doc_context.clone(),
             },
         )
         .unwrap();
-        let found = patient_service
-            .get_patients(
+        let found = service
+            .program_enrolments(
                 &context,
+                Pagination::all(),
                 None,
-                Some(PatientFilter::new().first_name(StringFilter::starts_with("name"))),
-                None,
-                None,
+                Some(
+                    ProgramEnrolmentFilter::new()
+                        .program_enrolment_id(StringFilter::starts_with("name")),
+                ),
+                vec![doc_context.clone()],
             )
             .unwrap()
-            .rows
             .pop()
-            .unwrap();
-        assert_eq!(&found.first_name.unwrap(), "name2");
+            .unwrap()
+            .0;
+        assert_eq!(&found.program_enrolment_id.unwrap(), "name2");
     }
 }

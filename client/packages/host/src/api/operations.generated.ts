@@ -11,6 +11,11 @@ export type DisplaySettingsQueryVariables = Types.Exact<{
 
 export type DisplaySettingsQuery = { __typename: 'Queries', displaySettings: { __typename: 'DisplaySettingsNode', customTheme?: { __typename: 'DisplaySettingNode', value: string, hash: string } | null, customLogo?: { __typename: 'DisplaySettingNode', value: string, hash: string } | null } };
 
+export type PluginsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type PluginsQuery = { __typename: 'Queries', plugins: Array<{ __typename: 'PluginNode', config: string, name: string, path: string }> };
+
 export type UpdateDisplaySettingsMutationVariables = Types.Exact<{
   displaySettings: Types.DisplaySettingsInput;
 }>;
@@ -30,6 +35,15 @@ export const DisplaySettingsDocument = gql`
       value
       hash
     }
+  }
+}
+    `;
+export const PluginsDocument = gql`
+    query plugins {
+  plugins {
+    config
+    name
+    path
   }
 }
     `;
@@ -60,6 +74,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     displaySettings(variables: DisplaySettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DisplaySettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DisplaySettingsQuery>(DisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'displaySettings', 'query');
     },
+    plugins(variables?: PluginsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PluginsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<PluginsQuery>(PluginsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'plugins', 'query');
+    },
     updateDisplaySettings(variables: UpdateDisplaySettingsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateDisplaySettingsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateDisplaySettingsMutation>(UpdateDisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateDisplaySettings', 'mutation');
     }
@@ -81,6 +98,22 @@ export type Sdk = ReturnType<typeof getSdk>;
 export const mockDisplaySettingsQuery = (resolver: ResponseResolver<GraphQLRequest<DisplaySettingsQueryVariables>, GraphQLContext<DisplaySettingsQuery>, any>) =>
   graphql.query<DisplaySettingsQuery, DisplaySettingsQueryVariables>(
     'displaySettings',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockPluginsQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ plugins })
+ *   )
+ * })
+ */
+export const mockPluginsQuery = (resolver: ResponseResolver<GraphQLRequest<PluginsQueryVariables>, GraphQLContext<PluginsQuery>, any>) =>
+  graphql.query<PluginsQuery, PluginsQueryVariables>(
+    'plugins',
     resolver
   )
 
