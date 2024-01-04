@@ -150,7 +150,10 @@ mod graphql {
         assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
     };
     use repository::{
-        mock::{mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines, MockDataInserts},
+        mock::{
+            mock_item_a, mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
+            MockDataInserts,
+        },
         InvoiceLine, StorageConnectionManager,
     };
     use serde_json::json;
@@ -395,6 +398,7 @@ mod graphql {
             InvoiceLine {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
+                item_row_option: Some(mock_item_a()),
                 location_row_option: None,
                 stock_line_option: None,
             }

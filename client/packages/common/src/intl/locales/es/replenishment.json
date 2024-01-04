@@ -71,7 +71,7 @@
   "messages.select-rows-to-delete-them": "Selecciona filas para eliminarlas",
   "messages.shipment-saved": "Envío guardado 🥳",
   "error.soh-and-suggested-quantity-are-zero": "No hay valores de inventario a la mano o de cantidad sugerida",
-  "messages.deleted-requisitions_other": "Se eliminaron {{count}} pedidos",
+  "messages.deleted-requisitions_other": "Se eliminaron {{count}} ordenes",
   "info.automatic-shipment": "Este envío fue creado automáticamente como resultado de una salida en otro almacén.",
   "label.suggested-order-quantity": "Cantidad de pedido sugerida",
   "messages.internal-order-created-on": "Orden Interna creada el {{date}}",
@@ -96,5 +96,13 @@
   "info.cannot-edit-program-requisition": "No se puede editar el proveedor, el Mínimo MOS, el Máximo MOS o agregar artículos en una requisición de programa.",
   "label.packs": "Paquetes",
   "label.requested-packs": "Paquetes solicitados",
-  "template.requisition-sent": "Aprobado por {{name}}{{job}}. Correo electrónico: {{email}} y número de teléfono: {{phone}}."
+  "template.requisition-sent": "Aprobado por {{name}}{{job}}. Correo electrónico: {{email}} y número de teléfono: {{phone}}.",
+  "label.max-months-of-stock": "MOS objetivo",
+  "messages.changing-max-mos": "Esto cambiará los meses objetivo de stock.",
+  "messages.changing-min-mos": "Esto cambiará los meses de stock del punto de reorden.",
+  "messages.unassign-min-mos": "Esto eliminará el punto de reorden del stock. El punto de reorden ahora se establecerá por defecto para ser el mismo que los meses objetivo de stock.",
+  "messages.confirm-delete-requisition": "Esto eliminará permanentemente la Orden Interna n.º{{number}}",
+  "label.not-set": "No establecido",
+  "label.current": "Actual",
+  "label.min-months-of-stock": "MOS punto de reorden"
 }

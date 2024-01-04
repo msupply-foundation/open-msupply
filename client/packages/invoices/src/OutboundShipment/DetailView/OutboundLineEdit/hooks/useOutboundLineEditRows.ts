@@ -11,7 +11,8 @@ export const useOutboundLineEditRows = (
 ) => {
   const tableStore = useTableStore();
 
-  const isOnHold = (row: DraftStockOutLine) => !!row.stockLine?.onHold;
+  const isOnHold = (row: DraftStockOutLine) =>
+    !!row.stockLine?.onHold || !!row.location?.onHold;
   const hasNoStock = (row: DraftStockOutLine) =>
     row.stockLine?.availableNumberOfPacks === 0;
 

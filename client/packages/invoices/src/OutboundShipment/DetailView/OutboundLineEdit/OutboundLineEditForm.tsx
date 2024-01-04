@@ -15,8 +15,8 @@ import {
   NumericTextInput,
 } from '@openmsupply-client/common';
 import {
+  ItemStockOnHandFragment,
   StockItemSearchInput,
-  ItemRowFragment,
 } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';
 import { DraftItem } from '../../..';
@@ -33,7 +33,7 @@ interface OutboundLineEditFormProps {
   allocatedQuantity: number;
   availableQuantity: number;
   item: DraftItem | null;
-  onChangeItem: (newItem: ItemRowFragment | null) => void;
+  onChangeItem: (newItem: ItemStockOnHandFragment | null) => void;
   onChangeQuantity: (
     quantity: number,
     packSize: number | null,

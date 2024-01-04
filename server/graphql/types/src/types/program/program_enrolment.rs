@@ -3,15 +3,14 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::{DocumentLoader, PatientLoader},
-    map_filter,
     pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
     DatetimeFilter, EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolment,
-    ProgramEnrolmentFilter, ProgramEnrolmentSort, ProgramEnrolmentSortField,
-    ProgramEnrolmentStatus, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
+    ProgramEnrolmentFilter, ProgramEnrolmentSort, ProgramEnrolmentSortField, ProgramEventFilter,
+    ProgramEventSortField, Sort, StringFilter,
 };
 
 use super::{
@@ -64,18 +63,11 @@ impl ProgramEnrolmentSortInput {
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterProgramEnrolmentStatusInput {
-    pub equal_to: Option<ProgramEnrolmentNodeStatus>,
-    pub equal_any: Option<Vec<ProgramEnrolmentNodeStatus>>,
-    pub not_equal_to: Option<ProgramEnrolmentNodeStatus>,
-}
-
-#[derive(InputObject, Clone)]
 pub struct ProgramEnrolmentFilterInput {
     pub patient_id: Option<EqualFilterStringInput>,
     pub enrolment_datetime: Option<DatetimeFilterInput>,
     pub program_enrolment_id: Option<StringFilterInput>,
-    pub status: Option<EqualFilterProgramEnrolmentStatusInput>,
+    pub status: Option<StringFilterInput>,
     /// Same as program enrolment document type
     pub r#type: Option<EqualFilterStringInput>,
     /// The program id
@@ -89,9 +81,7 @@ impl From<ProgramEnrolmentFilterInput> for ProgramEnrolmentFilter {
             patient_id: f.patient_id.map(EqualFilter::from),
             enrolment_datetime: f.enrolment_datetime.map(DatetimeFilter::from),
             program_enrolment_id: f.program_enrolment_id.map(StringFilter::from),
-            status: f
-                .status
-                .map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
+            status: f.status.map(StringFilter::from),
             document_name: f.document_name.map(EqualFilter::from),
             document_type: f.r#type.map(EqualFilter::from),
             program_id: f.program_id.map(EqualFilter::from),
@@ -144,32 +134,6 @@ pub enum ProgramEnrolmentNodeStatus {
     OptedOut,
     TransferredOut,
     Paused,
-}
-
-impl ProgramEnrolmentNodeStatus {
-    pub fn from_domain(from: &ProgramEnrolmentStatus) -> ProgramEnrolmentNodeStatus {
-        use ProgramEnrolmentNodeStatus as to;
-        use ProgramEnrolmentStatus as from;
-
-        match from {
-            from::Active => to::Active,
-            from::OptedOut => to::OptedOut,
-            from::TransferredOut => to::TransferredOut,
-            from::Paused => to::Paused,
-        }
-    }
-
-    pub fn to_domain(self) -> ProgramEnrolmentStatus {
-        use ProgramEnrolmentNodeStatus as from;
-        use ProgramEnrolmentStatus as to;
-
-        match self {
-            from::Active => to::Active,
-            from::OptedOut => to::OptedOut,
-            from::TransferredOut => to::TransferredOut,
-            from::Paused => to::Paused,
-        }
-    }
 }
 
 pub struct ProgramEnrolmentNode {
@@ -233,8 +197,8 @@ impl ProgramEnrolmentNode {
         &self.program_enrolment.0.program_enrolment_id
     }
 
-    pub async fn status(&self) -> ProgramEnrolmentNodeStatus {
-        ProgramEnrolmentNodeStatus::from_domain(&self.program_enrolment.0.status)
+    pub async fn status(&self) -> &Option<String> {
+        &self.program_enrolment.0.status
     }
 
     /// The encounter document

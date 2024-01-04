@@ -637,12 +637,6 @@ export type DatetimeFilterInput = {
   equalTo?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
-export type DeleteDocumentInput = {
-  id: Scalars['String']['input'];
-};
-
-export type DeleteDocumentResponse = DeleteResponse;
-
 export type DeleteErrorInterface = {
   description: Scalars['String']['output'];
 };
@@ -1101,6 +1095,7 @@ export type EncounterFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  includeDeleted?: InputMaybe<Scalars['Boolean']['input']>;
   patient?: InputMaybe<PatientFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programEnrolment?: InputMaybe<ProgramEnrolmentFilterInput>;
@@ -1150,6 +1145,7 @@ export type EncounterNodeProgramEventsArgs = {
 
 export enum EncounterNodeStatus {
   Cancelled = 'CANCELLED',
+  Deleted = 'DELETED',
   Pending = 'PENDING',
   Visited = 'VISITED'
 }
@@ -1182,6 +1178,12 @@ export type EqualFilterActivityLogTypeInput = {
   notEqualTo?: InputMaybe<ActivityLogNodeType>;
 };
 
+export type EqualFilterBigFloatingNumberInput = {
+  equalAny?: InputMaybe<Array<Scalars['Float']['input']>>;
+  equalTo?: InputMaybe<Scalars['Float']['input']>;
+  notEqualTo?: InputMaybe<Scalars['Float']['input']>;
+};
+
 export type EqualFilterBigNumberInput = {
   equalAny?: InputMaybe<Array<Scalars['Int']['input']>>;
   equalTo?: InputMaybe<Scalars['Int']['input']>;
@@ -1212,6 +1214,12 @@ export type EqualFilterInventoryAdjustmentReasonTypeInput = {
   notEqualTo?: InputMaybe<InventoryAdjustmentReasonNodeType>;
 };
 
+export type EqualFilterInvoiceLineTypeInput = {
+  equalAny?: InputMaybe<Array<InvoiceLineNodeType>>;
+  equalTo?: InputMaybe<InvoiceLineNodeType>;
+  notEqualTo?: InputMaybe<InvoiceLineNodeType>;
+};
+
 export type EqualFilterInvoiceStatusInput = {
   equalAny?: InputMaybe<Array<InvoiceNodeStatus>>;
   equalTo?: InputMaybe<InvoiceNodeStatus>;
@@ -1236,10 +1244,10 @@ export type EqualFilterNumberInput = {
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type EqualFilterProgramEnrolmentStatusInput = {
-  equalAny?: InputMaybe<Array<ProgramEnrolmentNodeStatus>>;
-  equalTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
-  notEqualTo?: InputMaybe<ProgramEnrolmentNodeStatus>;
+export type EqualFilterRelatedRecordTypeInput = {
+  equalAny?: InputMaybe<Array<RelatedRecordNodeType>>;
+  equalTo?: InputMaybe<RelatedRecordNodeType>;
+  notEqualTo?: InputMaybe<RelatedRecordNodeType>;
 };
 
 export type EqualFilterReportContextInput = {
@@ -1678,6 +1686,16 @@ export type InsertPatientInput = {
 
 export type InsertPatientResponse = PatientNode;
 
+export type InsertPluginDataInput = {
+  data: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  pluginName: Scalars['String']['input'];
+  relatedRecordId: Scalars['String']['input'];
+  relatedRecordType: RelatedRecordNodeType;
+};
+
+export type InsertPluginDataResponse = PluginDataNode;
+
 export type InsertPrescriptionError = {
   __typename: 'InsertPrescriptionError';
   error: InsertPrescriptionErrorInterface;
@@ -2008,6 +2026,20 @@ export type InvoiceLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type InvoiceLineFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  invoiceId?: InputMaybe<EqualFilterStringInput>;
+  invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
+  invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  locationId?: InputMaybe<EqualFilterStringInput>;
+  numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  requisitionId?: InputMaybe<EqualFilterStringInput>;
+  stockLineId?: InputMaybe<EqualFilterStringInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+  type?: InputMaybe<EqualFilterInvoiceLineTypeInput>;
+};
+
 export type InvoiceLineNode = {
   __typename: 'InvoiceLineNode';
   batch?: Maybe<Scalars['String']['output']>;
@@ -2040,6 +2072,27 @@ export enum InvoiceLineNodeType {
   StockOut = 'STOCK_OUT',
   UnallocatedStock = 'UNALLOCATED_STOCK'
 }
+
+export enum InvoiceLineSortFieldInput {
+  Batch = 'batch',
+  ExpiryDate = 'expiryDate',
+  ItemCode = 'itemCode',
+  ItemName = 'itemName',
+  LocationName = 'locationName',
+  PackSize = 'packSize'
+}
+
+export type InvoiceLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: InvoiceLineSortFieldInput;
+};
+
+export type InvoiceLinesResponse = InvoiceLineConnector;
 
 export type InvoiceNode = {
   __typename: 'InvoiceNode';
@@ -2455,7 +2508,6 @@ export type Mutations = {
    * lines quantity (placeholder and filled) for requisitionLine.item
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
-  deleteDocument: DeleteDocumentResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
@@ -2486,6 +2538,7 @@ export type Mutations = {
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
   /** Inserts a new patient (without document data) */
   insertPatient: InsertPatientResponse;
+  insertPluginData: InsertPluginDataResponse;
   insertPrescription: InsertPrescriptionResponse;
   insertPrescriptionLine: InsertPrescriptionLineResponse;
   /**
@@ -2509,7 +2562,6 @@ export type Mutations = {
   manualSync: Scalars['String']['output'];
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
-  undeleteDocument: UndeleteDocumentResponse;
   updateContactTrace: UpdateContactTraceResponse;
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateDocument: UpdateDocumentResponse;
@@ -2526,6 +2578,7 @@ export type Mutations = {
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
   /** Updates a new patient (without document data) */
   updatePatient: UpdatePatientResponse;
+  updatePluginData: UpdatePluginDataResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
   /** Updates an existing program document belonging to a patient. */
@@ -2612,12 +2665,6 @@ export type MutationsBatchStocktakeArgs = {
 
 export type MutationsCreateRequisitionShipmentArgs = {
   input: CreateRequisitionShipmentInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsDeleteDocumentArgs = {
-  input: DeleteDocumentInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -2793,6 +2840,12 @@ export type MutationsInsertPatientArgs = {
 };
 
 
+export type MutationsInsertPluginDataArgs = {
+  input: InsertPluginDataInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsInsertPrescriptionArgs = {
   input: InsertPrescriptionInput;
   storeId: Scalars['String']['input'];
@@ -2861,12 +2914,6 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsSupplyRequestedQuantityArgs = {
   input: SupplyRequestedQuantityInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsUndeleteDocumentArgs = {
-  input: UndeleteDocumentInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -2956,6 +3003,12 @@ export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
 
 export type MutationsUpdatePatientArgs = {
   input: UpdatePatientInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdatePluginDataArgs = {
+  input: UpdatePluginDataInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -3089,6 +3142,7 @@ export type NameNode = {
   comment?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['String']['output']>;
   createdDatetime?: Maybe<Scalars['DateTime']['output']>;
+  customData?: Maybe<Scalars['JSON']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
@@ -3281,6 +3335,18 @@ export type PatientNode = {
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
   dateOfDeath?: Maybe<Scalars['NaiveDate']['output']>;
   document?: Maybe<DocumentNode>;
+  /**
+   * Returns a draft version of the document data.
+   *
+   * The draft version can differ from the current document data if a patient has been edited
+   * remotely in mSupply.
+   * In this case the draft version contains the mSupply patient changes, i.e. information from
+   * the name row has been integrated into the current document version.
+   * When editing a patient in omSupply the document draft version should be used.
+   * This means when the document is eventually saved, the remote changes are incorporated into
+   * the document data.
+   */
+  documentDraft?: Maybe<Scalars['JSON']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
   gender?: Maybe<GenderType>;
@@ -3367,6 +3433,50 @@ export type PeriodNode = {
   startDate: Scalars['NaiveDate']['output'];
 };
 
+export type PluginDataFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  pluginName?: InputMaybe<EqualFilterStringInput>;
+  relatedRecordId?: InputMaybe<EqualFilterStringInput>;
+  relatedRecordType?: InputMaybe<EqualFilterRelatedRecordTypeInput>;
+  storeId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type PluginDataNode = {
+  __typename: 'PluginDataNode';
+  data: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  pluginName: Scalars['String']['output'];
+  relatedRecordId: Scalars['String']['output'];
+  relatedRecordType: RelatedRecordNodeType;
+  storeId: Scalars['String']['output'];
+};
+
+export type PluginDataResponse = NodeError | PluginDataNode;
+
+export enum PluginDataSortFieldInput {
+  Id = 'id',
+  PluginName = 'pluginName',
+  RelatedRecordId = 'relatedRecordId',
+  RelatedRecordType = 'relatedRecordType'
+}
+
+export type PluginDataSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PluginDataSortFieldInput;
+};
+
+export type PluginNode = {
+  __typename: 'PluginNode';
+  config: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  path: Scalars['String']['output'];
+};
+
 export type PricingNode = {
   __typename: 'PricingNode';
   serviceTotalAfterTax: Scalars['Float']['output'];
@@ -3428,7 +3538,7 @@ export type ProgramEnrolmentFilterInput = {
   /** The program id */
   programId?: InputMaybe<EqualFilterStringInput>;
   programName?: InputMaybe<StringFilterInput>;
-  status?: InputMaybe<EqualFilterProgramEnrolmentStatusInput>;
+  status?: InputMaybe<StringFilterInput>;
   /** Same as program enrolment document type */
   type?: InputMaybe<EqualFilterStringInput>;
 };
@@ -3447,7 +3557,7 @@ export type ProgramEnrolmentNode = {
   patient: PatientNode;
   patientId: Scalars['String']['output'];
   programEnrolmentId?: Maybe<Scalars['String']['output']>;
-  status: ProgramEnrolmentNodeStatus;
+  status?: Maybe<Scalars['String']['output']>;
   /** The program type */
   type: Scalars['String']['output'];
 };
@@ -3466,13 +3576,6 @@ export type ProgramEnrolmentNodeEncountersArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<EncounterSortInput>;
 };
-
-export enum ProgramEnrolmentNodeStatus {
-  Active = 'ACTIVE',
-  OptedOut = 'OPTED_OUT',
-  Paused = 'PAUSED',
-  TransferredOut = 'TRANSFERRED_OUT'
-}
 
 export type ProgramEnrolmentResponse = ProgramEnrolmentConnector;
 
@@ -3603,6 +3706,7 @@ export type Queries = {
   invoice: InvoiceResponse;
   invoiceByNumber: InvoiceResponse;
   invoiceCounts: InvoiceCounts;
+  invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
   itemCounts: ItemCounts;
   /** Query omSupply "item" entries */
@@ -3624,6 +3728,8 @@ export type Queries = {
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
   patients: PatientResponse;
+  pluginData: PluginDataResponse;
+  plugins: Array<PluginNode>;
   /**
    * Creates a printed report.
    *
@@ -3666,6 +3772,7 @@ export type Queries = {
   syncSettings?: Maybe<SyncSettingsNode>;
   /** Query omSupply "temperature_breach" entries */
   temperatureBreaches: TemperatureBreachesResponse;
+  temperatureChart: TemperatureChartResponse;
   /** Query omSupply "temperature_log" entries */
   temperatureLogs: TemperatureLogsResponse;
 };
@@ -3809,6 +3916,16 @@ export type QueriesInvoiceCountsArgs = {
 };
 
 
+export type QueriesInvoiceLinesArgs = {
+  filter?: InputMaybe<InvoiceLineFilterInput>;
+  invoiceId: Scalars['String']['input'];
+  page?: InputMaybe<PaginationInput>;
+  reportSort?: InputMaybe<PrintReportSortInput>;
+  sort?: InputMaybe<Array<InvoiceLineSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesInvoicesArgs = {
   filter?: InputMaybe<InvoiceFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -3877,6 +3994,14 @@ export type QueriesPatientsArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<PatientSortInput>>;
   storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesPluginDataArgs = {
+  filter?: InputMaybe<PluginDataFilterInput>;
+  sort?: InputMaybe<Array<PluginDataSortInput>>;
+  storeId: Scalars['String']['input'];
+  type: RelatedRecordNodeType;
 };
 
 
@@ -4057,6 +4182,15 @@ export type QueriesTemperatureBreachesArgs = {
 };
 
 
+export type QueriesTemperatureChartArgs = {
+  filter?: InputMaybe<TemperatureLogFilterInput>;
+  fromDatetime: Scalars['DateTime']['input'];
+  numberOfDataPoints: Scalars['Int']['input'];
+  storeId: Scalars['String']['input'];
+  toDatetime: Scalars['DateTime']['input'];
+};
+
+
 export type QueriesTemperatureLogsArgs = {
   filter?: InputMaybe<TemperatureLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -4106,6 +4240,10 @@ export type RefreshTokenErrorInterface = {
 };
 
 export type RefreshTokenResponse = RefreshToken | RefreshTokenError;
+
+export enum RelatedRecordNodeType {
+  StockLine = 'STOCK_LINE'
+}
 
 export type RepackConnector = {
   __typename: 'RepackConnector';
@@ -4424,6 +4562,12 @@ export type ResponseStoreStatsNode = {
   requestedQuantity: Scalars['Int']['output'];
   stockOnHand: Scalars['Float']['output'];
   stockOnOrder: Scalars['Int']['output'];
+};
+
+export type SensorAxisNode = {
+  __typename: 'SensorAxisNode';
+  points: Array<TemperaturePointNode>;
+  sensor?: Maybe<SensorNode>;
 };
 
 export type SensorConnector = {
@@ -4938,6 +5082,13 @@ export type TemperatureBreachSortInput = {
 
 export type TemperatureBreachesResponse = TemperatureBreachConnector;
 
+export type TemperatureChartNode = {
+  __typename: 'TemperatureChartNode';
+  sensors: Array<SensorAxisNode>;
+};
+
+export type TemperatureChartResponse = TemperatureChartNode;
+
 export type TemperatureLogConnector = {
   __typename: 'TemperatureLogConnector';
   nodes: Array<TemperatureLogNode>;
@@ -4980,6 +5131,13 @@ export type TemperatureLogSortInput = {
 
 export type TemperatureLogsResponse = TemperatureLogConnector;
 
+export type TemperaturePointNode = {
+  __typename: 'TemperaturePointNode';
+  breachIds?: Maybe<Array<Scalars['String']['output']>>;
+  midPoint: Scalars['DateTime']['output'];
+  temperature?: Maybe<Scalars['Float']['output']>;
+};
+
 export type TokenExpired = RefreshTokenErrorInterface & {
   __typename: 'TokenExpired';
   description: Scalars['String']['output'];
@@ -4994,12 +5152,6 @@ export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUna
   __typename: 'UnallocatedLinesOnlyEditableInNewInvoice';
   description: Scalars['String']['output'];
 };
-
-export type UndeleteDocumentInput = {
-  id: Scalars['String']['input'];
-};
-
-export type UndeleteDocumentResponse = DocumentNode;
 
 export enum UniqueValueKey {
   Code = 'code',
@@ -5327,6 +5479,16 @@ export type UpdatePatientInput = {
 };
 
 export type UpdatePatientResponse = PatientNode;
+
+export type UpdatePluginDataInput = {
+  data: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  pluginName: Scalars['String']['input'];
+  relatedRecordId: Scalars['String']['input'];
+  relatedRecordType: RelatedRecordNodeType;
+};
+
+export type UpdatePluginDataResponse = PluginDataNode;
 
 export type UpdatePrescriptionError = {
   __typename: 'UpdatePrescriptionError';

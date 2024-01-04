@@ -1,9 +1,12 @@
 {
   "button.view-all-breaches": "View all breaches",
   "button.view-details": "View Details",
+  "error.fetch-notifications": "Unable to display cold chain notifications",
+  "error.fridge-tag-import": "Unable to import Fridge-tag logs: {{message}}",
+  "error.fridge-tag-import-empty": "No data imported",
   "error.no-sensors": "No sensors found",
   "error.no-temperature-logs": "No temperature logs found",
-  "error.fetch-notifications": "Unable to display cold chain notifications",
+  "error.unable-to-load-breach": "Error loading breach",
   "heading.breach": "Breach",
   "heading.chart": "Temperature by Sensor",
   "label.acknowledged": "Acknowledged",
@@ -27,6 +30,10 @@
   "message.device": "Device:",
   "message.last-temperature": "Last temperature reading: {{temperature}}°C",
   "message.location": "Location:",
+  "message.new-sensor": "A new sensor has been added as a result of importing these logs. Would you like to assign a location to the new sensor now?",
   "message.notification-breach-detected": "Temperature breach detected! {{time}} ago",
-  "title.sensor-details": "Sensor Details"
+  "message.fridge-tag-import-successful": "Success! {{numberOfLogs}} logs and {{numberOfBreaches}} breaches imported.",
+  "title.new-sensor": "New sensor added",
+  "title.sensor-details": "Sensor Details",
+  "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported."
 }

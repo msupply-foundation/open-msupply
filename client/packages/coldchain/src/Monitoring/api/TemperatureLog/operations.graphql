@@ -23,6 +23,7 @@ fragment TemperatureLog on TemperatureLogNode {
   }
 
   location {
+    code
     name
   }
 
