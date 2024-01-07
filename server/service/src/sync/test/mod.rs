@@ -340,9 +340,6 @@ pub(crate) async fn check_records_against_database(
             UserPermission => {
                 check_delete_record_by_id!(UserPermissionRowRepository, con, id)
             }
-            Name => {
-                check_delete_record_by_id!(NameRowRepository, con, id)
-            }
             NameTagJoin => {
                 check_delete_record_by_id!(NameTagJoinRepository, con, id)
             }
