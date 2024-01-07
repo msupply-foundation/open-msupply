@@ -20,6 +20,7 @@ impl SyncRecordTester for MasterListTester {
             name: uuid(),
             code: uuid(),
             description: "".to_string(),
+            is_active: true,
         };
         let master_list_json1 = json!({
             "ID": master_list_row1.id,
@@ -43,6 +44,7 @@ impl SyncRecordTester for MasterListTester {
             name: uuid(),
             code: uuid(),
             description: uuid(),
+            is_active: true,
         };
         let master_list_json2 = json!({
             "ID": master_list_row2.id,

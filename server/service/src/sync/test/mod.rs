@@ -27,6 +27,7 @@ impl TestSyncPullRecord {
     ) -> TestSyncPullRecord {
         Self::new_pull_upserts(table_name, id_and_data, vec![result])
     }
+
     fn new_pull_upserts(
         table_name: &str,
         // .0 = id .1 = data
@@ -62,6 +63,7 @@ impl TestSyncPullRecord {
             },
         )
     }
+
     fn new_pull_deletes(
         table_name: &str,
         id: &str,
@@ -327,6 +329,7 @@ pub(crate) async fn check_records_against_database(
                 record,
                 "DocumentRegistry"
             ),
+            ItemLink(_) => todo!(),
         }
     }
 
