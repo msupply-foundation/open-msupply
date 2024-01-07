@@ -58,6 +58,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
             name: uuid(),
             code: uuid(),
             description: uuid(),
+            is_active: true,
         };
         let master_list_json = json!({
         "ID": master_list_row.id,
@@ -173,6 +174,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
             name: uuid(),
             code: uuid(),
             description: uuid(),
+            is_active: true,
         };
         let master_list_json2 = json!({
         "ID": master_list_row2.id,
