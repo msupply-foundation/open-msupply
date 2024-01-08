@@ -26,6 +26,12 @@ export const useColumnUtils = () => {
     property: ColumnProperty<KeysOfUnion<T>>
   ): unknown => {
     if (property.path.length === 0) {
+      console.warn('ColumnUtils.getValue: no path provided');
+      return undefined;
+    }
+
+    if (property.path.length > 3) {
+      console.warn('ColumnUtils.getValue: too many path elements provided');
       return undefined;
     }
 
@@ -34,10 +40,14 @@ export const useColumnUtils = () => {
     if (!(path in row)) return undefined;
     const key = property.path[1] as keyof T;
 
+    // e.g. when grouping by item: `path: ['lines', ...]`
     if (Array.isArray(row[path])) {
       if (property.path.length < 2) return undefined;
+
       const isObjectProperty = property.path.length > 2;
       if (isObjectProperty) {
+        // For example, `path: ['lines', 'item', 'id']`
+        // to access `item.id` where `lines: []{ item: { id: string }}`
         const propertyKey = property.path[2];
         const arr = (row[path] as T[]).flatMap((line: T) => {
           const obj = line[key];
@@ -56,26 +66,32 @@ export const useColumnUtils = () => {
               property.default === undefined ? t('multiple') : property.default
             )
           : '';
-      } else {
-        return ArrayUtils.ifTheSameElseDefault(
-          row[path] as T[],
-          key,
-          property.default === undefined ? t('multiple') : property.default
-        );
       }
-    } else {
-      if (property.path.length < 1) return undefined;
-      const isObjectProperty = property.path.length > 1;
-      if (isObjectProperty) {
-        return (
-          row[path]?.[key as keyof NonNullable<T[keyof T]>] ??
-          property.default ??
-          ''
-        );
-      } else {
-        return row[path] ?? property.default;
-      }
+      // For example, `path: ['lines', 'numberOfPacks']`
+      // where `lines: []{ numberOfPacks: number }}`
+      return ArrayUtils.ifTheSameElseDefault(
+        row[path] as T[],
+        key,
+        property.default === undefined ? t('multiple') : property.default
+      );
     }
+
+    // First property isn't an array, e.g. `path: ['batch']` or `path: ['item', 'id']`
+
+    // return early if not enough items in array
+    if (property.path.length < 1) return undefined;
+
+    const isObjectProperty = property.path.length > 1;
+    if (isObjectProperty) {
+      return (
+        row[path]?.[key as keyof NonNullable<T[keyof T]>] ??
+        property.default ??
+        ''
+      );
+    }
+
+    // default return, just access the property
+    return row[path] ?? property.default;
   };
 
   type KeysOfUnion<T extends object> = T extends T ? NestedKeyOf<T> : never;
