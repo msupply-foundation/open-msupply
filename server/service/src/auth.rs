@@ -675,6 +675,14 @@ pub trait AuthServiceTrait: Send + Sync {
         auth_token: &Option<String>,
         resource_request: &ResourceAccessRequest,
     ) -> Result<ValidatedUser, AuthError>;
+
+    fn validate_permission(
+        &self,
+        ctx: &ServiceContext,
+        user_id: &String,
+        resource_request: &ResourceAccessRequest,
+        dynamic_permissions: &mut Vec<String>,
+    ) -> Result<(), AuthError>;
 }
 
 pub struct AuthService {
@@ -690,18 +698,18 @@ impl AuthService {
 }
 
 impl AuthServiceTrait for AuthService {
-    fn validate(
+    fn validate_permission(
         &self,
         context: &ServiceContext,
-        auth_data: &AuthData,
-        auth_token: &Option<String>,
+        user_id: &String,
         resource_request: &ResourceAccessRequest,
-    ) -> Result<ValidatedUser, AuthError> {
-        let validated_auth = validate_auth(auth_data, auth_token)?;
+        dynamic_permissions: &mut Vec<String>,
+    ) -> Result<(), AuthError> {
+        
         let connection = &context.connection;
 
         let mut permission_filter =
-            UserPermissionFilter::new().user_id(EqualFilter::equal_to(&validated_auth.user_id));
+            UserPermissionFilter::new().user_id(EqualFilter::equal_to(user_id));
         if let Some(store_id) = &resource_request.store_id {
             permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
         }
@@ -720,7 +728,7 @@ impl AuthServiceTrait for AuthService {
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),
-                user_id: context.user_id.clone(),
+                user_id: user_id.clone(),
                 store_id: Some(context.store_id.clone()),
                 permission: Permission::DocumentQuery,
                 context_id: Some(PATIENT_CONTEXT_ID.to_string()),
@@ -733,7 +741,7 @@ impl AuthServiceTrait for AuthService {
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),
-                user_id: context.user_id.clone(),
+                user_id: user_id.clone(),
                 store_id: Some(context.store_id.clone()),
                 permission: Permission::DocumentMutate,
                 context_id: Some(PATIENT_CONTEXT_ID.to_string()),
@@ -751,16 +759,37 @@ impl AuthServiceTrait for AuthService {
             }
         };
 
-        let mut dynamic_permissions = Vec::new();
         match validate_resource_permissions(
-            &validated_auth.user_id,
+            &user_id,
             &user_permissions,
             &resource_request,
             required_permissions,
-            &mut dynamic_permissions,
+            dynamic_permissions,
         ) {
-            Ok(_) => {}
+            Ok(_) => {Ok(())}
             Err(msg) => {
+                return Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
+                    msg,
+                    required_permissions: required_permissions.clone(),
+                }))
+            }
+        }
+    }
+
+    fn validate(
+        &self,
+        context: &ServiceContext,
+        auth_data: &AuthData,
+        auth_token: &Option<String>,
+        resource_request: &ResourceAccessRequest,
+    ) -> Result<ValidatedUser, AuthError> {
+        let validated_auth = validate_auth(auth_data, auth_token)?;
+        let mut dynamic_permissions = Vec::new();
+        let result = self.validate_permission(context, &validated_auth.user_id, resource_request, &mut dynamic_permissions);
+        
+        match result {
+            Ok(_) => {}
+            Err(error) => {
                 if auth_data.debug_no_access_control {
                     return Ok(ValidatedUser {
                         user_id: validated_auth.user_id,
@@ -768,10 +797,7 @@ impl AuthServiceTrait for AuthService {
                         capabilities: Vec::new(),
                     });
                 }
-                return Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
-                    msg,
-                    required_permissions: required_permissions.clone(),
-                }));
+                return Err(error);
             }
         };
 
@@ -780,7 +806,9 @@ impl AuthServiceTrait for AuthService {
             claims: validated_auth.claims,
             capabilities: dynamic_permissions,
         })
+
     }
+
 }
 
 impl From<RepositoryError> for AuthError {
