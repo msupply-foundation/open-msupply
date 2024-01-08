@@ -87,10 +87,21 @@ impl<'a> NameLinkRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, name_link_id: &str) -> Result<NameLinkRow, RepositoryError> {
+    pub fn find_one_by_id(
+        &self,
+        name_link_id: &str,
+    ) -> Result<Option<NameLinkRow>, RepositoryError> {
         let result = name_link
             .filter(name_link::id.eq(name_link_id))
-            .first::<NameLinkRow>(&self.connection.connection)?;
+            .first::<NameLinkRow>(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_name_id(&self, name: &str) -> Result<Vec<NameLinkRow>, RepositoryError> {
+        let result = name_link
+            .filter(name_id.eq(name))
+            .load::<NameLinkRow>(&self.connection.connection)?;
         Ok(result)
     }
 }
