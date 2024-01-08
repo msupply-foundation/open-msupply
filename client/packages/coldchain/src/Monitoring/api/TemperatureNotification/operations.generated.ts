@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type TemperatureNotificationBreachFragment = { __typename: 'TemperatureBreachNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
 
-export type TemperatureExcursionFragment = { __typename: 'TemperatureBreachNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
+export type TemperatureExcursionFragment = { __typename: 'TemperatureExcursionNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
 
 export type TemperatureNotificationsQueryVariables = Types.Exact<{
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -14,7 +14,7 @@ export type TemperatureNotificationsQueryVariables = Types.Exact<{
 }>;
 
 
-export type TemperatureNotificationsQuery = { __typename: 'Queries', temperatureNotifications: { __typename: 'TemperatureNotificationConnector', breaches: Array<{ __typename: 'TemperatureBreachNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null }>, excursions: Array<{ __typename: 'TemperatureExcursionNode' }> } };
+export type TemperatureNotificationsQuery = { __typename: 'Queries', temperatureNotifications: { __typename: 'TemperatureNotificationConnector', breaches: Array<{ __typename: 'TemperatureBreachNode', id: string, startDatetime: string, maxOrMinTemperature?: number | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null }>, excursions: Array<{ __typename: 'TemperatureExcursionNode', id: string, datetime: string, temperature: number, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null }> } };
 
 export const TemperatureNotificationBreachFragmentDoc = gql`
     fragment TemperatureNotificationBreach on TemperatureBreachNode {
@@ -32,11 +32,11 @@ export const TemperatureNotificationBreachFragmentDoc = gql`
 }
     `;
 export const TemperatureExcursionFragmentDoc = gql`
-    fragment TemperatureExcursion on TemperatureBreachNode {
+    fragment TemperatureExcursion on TemperatureExcursionNode {
   __typename
   id
-  startDatetime
-  maxOrMinTemperature
+  datetime
+  temperature
   sensor {
     id
     name

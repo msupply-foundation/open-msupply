@@ -2,6 +2,7 @@ use chrono::NaiveDateTime;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TemperatureExcursionRow {
+    pub id: String,
     pub datetime: NaiveDateTime,
     pub temperature: f64,
     pub location_id: Option<String>,

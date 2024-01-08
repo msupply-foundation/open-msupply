@@ -5117,14 +5117,12 @@ export type TemperatureChartResponse = TemperatureChartNode;
 
 export type TemperatureExcursionNode = {
   __typename: 'TemperatureExcursionNode';
-  durationMilliseconds: Scalars['Int']['output'];
-  endDatetime?: Maybe<Scalars['DateTime']['output']>;
+  datetime: Scalars['DateTime']['output'];
   id: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
-  maxOrMinTemperature?: Maybe<Scalars['Float']['output']>;
   sensor?: Maybe<SensorNode>;
   sensorId: Scalars['String']['output'];
-  startDatetime: Scalars['DateTime']['output'];
+  temperature: Scalars['Float']['output'];
 };
 
 export type TemperatureLogConnector = {
