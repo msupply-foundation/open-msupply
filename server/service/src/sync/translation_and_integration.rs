@@ -113,6 +113,16 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
             };
 
+            // if we have finished, update the completed count regardless of the batched logging
+            if total_to_integrate == progress {
+                logger
+                    .progress(step_progress.clone(), 0)
+                    .map_err(|_error| RepositoryError::DBError {
+                        msg: ("Logging failed in integration").to_string(),
+                        extra: ("").to_string(),
+                    })?;
+            }
+
             let integration_records = match translation_result {
                 Some(integration_records) => integration_records,
                 // Record translator not found error in sync buffer and in result, continue to next sync_record
