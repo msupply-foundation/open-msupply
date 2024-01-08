@@ -89,3 +89,22 @@ pub fn validate_access(
     )?;
     Ok((validated_user.user_id, store_id))
 }
+
+/// Validates permission to edit sensor data
+pub fn validate_permission(
+    service_provider: &ServiceProvider,
+    service_context: &ServiceContext,
+) -> Result<(), AuthError> {
+
+    let access_request = ResourceAccessRequest {
+        resource: Resource::MutateSensor,
+        store_id: Some(service_context.store_id.clone()),
+    };
+
+    service_provider.validation_service.validate_permission(
+        service_context,
+        &service_context.user_id,
+        &access_request,
+        &mut Vec::new(),
+    )
+}
