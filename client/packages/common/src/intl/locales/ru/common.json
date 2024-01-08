@@ -1,6 +1,22 @@
 {
-  "app.login": "Авторизоваться",
-  "button.add-item": "Добавит",
+  "app.login": "Войти",
+  "button.add-item": "Добавить Товар",
   "label.name": "Наименование",
-  "label.code": "Код"
+  "label.code": "Код",
+  "button.allocate": "Распределить",
+  "button.cancel": "Отменить",
+  "button.create": "Создать",
+  "button.delete-lines": "Удалить выделенные строки",
+  "button.export": "Экспортировать",
+  "button.ok": "Ок",
+  "button.ok-and-next": "Ок & Продолжить",
+  "button.refresh": "Обновить",
+  "button.retry": "Повторить попытку",
+  "button.save": "Сохранить",
+  "button.select-a-color": "Выбрать цвет",
+  "button.try-again": "Попробовать снова",
+  "button.close": "Закрыть",
+  "button.create-a-new-one": "Создать новый",
+  "button.print": "Распечатать",
+  "button.sync-now": "Синхронизировать сейчас!"
 }
