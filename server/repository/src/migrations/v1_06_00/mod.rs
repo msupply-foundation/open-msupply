@@ -2,6 +2,8 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod clinician_link;
+mod clinician_store_join_add_clinician_link_id;
 mod contact_trace;
 mod encounter_status;
 mod indexes;
@@ -52,6 +54,10 @@ impl Migration for V1_06_00 {
         master_list_name_join_add_name_link_id::migrate(connection)?;
         name_tag_join_add_name_link_id::migrate(connection)?;
         requisition_add_name_link_id::migrate(connection)?;
+
+        // Clinician link migrations
+        clinician_link::migrate(connection)?;
+        clinician_store_join_add_clinician_link_id::migrate(connection)?;
 
         program_enrolment_status::migrate(connection)?;
         indexes::migrate(connection)?;
