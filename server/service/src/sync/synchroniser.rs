@@ -4,7 +4,7 @@ use crate::{
 };
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::{convert::TryInto, sync::Arc};
+use std::{cmp, convert::TryInto, sync::Arc, thread, time};
 use thiserror::Error;
 use util::format_error;
 
@@ -254,7 +254,8 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         .unwrap();
 
         // define arbitrary spacing of every 50th of total progress for logging to prevent excessive logging
-        let interval_for_logging: u64 = total_to_integrate.clone() / 50;
+        // set minimum to 1 to prevent division by zero
+        let interval_for_logging = cmp::max(total_to_integrate.clone() / 50, 1);
 
         // Call initial logger to define total
 
@@ -266,6 +267,9 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             })?;
 
         let current_progress = 0;
+
+        let delay = time::Duration::from_millis(50);
+        thread::sleep(delay);
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
