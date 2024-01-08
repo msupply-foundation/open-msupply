@@ -1,4 +1,6 @@
 {
   "app.login": "Авторизоваться",
-  "button.add-item": "Добавит"
+  "button.add-item": "Добавит",
+  "label.name": "Имя",
+  "label.code": "Код"
 }
