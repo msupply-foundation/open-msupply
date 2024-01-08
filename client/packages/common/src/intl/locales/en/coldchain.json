@@ -32,7 +32,10 @@
   "message.location": "Location:",
   "message.new-sensor": "A new sensor has been added as a result of importing these logs. Would you like to assign a location to the new sensor now?",
   "message.notification-breach-detected": "Temperature breach detected! {{time}} ago",
+  "message.notification-excursion-detected": "Temperature excursion detected! {{time}} ago",
   "message.fridge-tag-import-successful": "Success! {{numberOfLogs}} logs and {{numberOfBreaches}} breaches imported.",
+  "message.total-breaches": "Total unacknowledged: {{count}}",
+  "message.total-excursions": "Total excursions: {{count}}",
   "title.new-sensor": "New sensor added",
   "title.sensor-details": "Sensor Details",
   "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported."
