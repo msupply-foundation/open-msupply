@@ -1,4 +1,3 @@
-use crate::TemperatureLogFilter;
 use crate::{
     db_diesel::{
         temperature_breach_config_row::temperature_breach_config::dsl as temperature_breach_config_dsl,
@@ -8,11 +7,10 @@ use crate::{
     TemperatureBreachRowType,
 };
 use crate::{RepositoryError, StorageConnection};
+use crate::{TemperatureExcursionRow, TemperatureLogFilter};
 use chrono::{NaiveDateTime, Utc};
 
 use diesel::{prelude::*, sql_types::Integer};
-
-use super::temperature_excursion_row::TemperatureExcursionRow;
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct TemperatureExcursion {
@@ -30,6 +28,7 @@ pub struct TemperatureExcursionRepository<'a> {
 }
 
 type QueryResult = (
+    String,
     NaiveDateTime,
     f64,
     String,
@@ -41,6 +40,7 @@ type QueryResult = (
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TemperatureRow {
+    pub id: String,
     pub datetime: NaiveDateTime,
     pub temperature: f64,
     pub store_id: String,
@@ -66,6 +66,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
                     .on(temperature_log_dsl::store_id.eq(temperature_breach_config_dsl::store_id)),
             )
             .select((
+                temperature_log_dsl::id,
                 temperature_log_dsl::datetime,
                 temperature_log_dsl::temperature,
                 temperature_log_dsl::store_id,
@@ -135,6 +136,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
                 let duration = Utc::now().timestamp() - row.datetime.timestamp();
                 if duration > row.duration {
                     excursion_data.push(TemperatureExcursionRow {
+                        id: row.id.clone(),
                         datetime: row.datetime,
                         temperature: row.temperature,
                         location_id: row.location_id.clone(),
@@ -153,9 +155,10 @@ impl<'a> TemperatureExcursionRepository<'a> {
 
 impl TemperatureRow {
     fn from(
-        (datetime, temperature, store_id, sensor_id, location_id, duration, is_excursion): QueryResult,
+        (id, datetime, temperature, store_id, sensor_id, location_id, duration, is_excursion): QueryResult,
     ) -> Self {
         Self {
+            id,
             datetime,
             temperature,
             sensor_id,
@@ -312,6 +315,7 @@ mod test {
             vec![
                 TemperatureExcursion {
                     temperature_excursion_row: TemperatureExcursionRow {
+                        id: "temperature_log_1".to_string(),
                         datetime: datetime1,
                         temperature: 30.0,
                         location_id: None,
@@ -322,6 +326,7 @@ mod test {
                 },
                 TemperatureExcursion {
                     temperature_excursion_row: TemperatureExcursionRow {
+                        id: "temperature_log_2".to_string(),
                         datetime: datetime2,
                         temperature: -20.0,
                         location_id: None,

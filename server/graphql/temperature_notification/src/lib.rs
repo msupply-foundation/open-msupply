@@ -39,7 +39,7 @@ impl TemperatureNotificationQueries {
             .store_id(EqualFilter::equal_to(&store_id))
             .unacknowledged(true);
 
-        let temperature_notifications = service_provider
+        let temperature_breaches = service_provider
             .temperature_breach_service
             .get_temperature_breaches(
                 &service_context.connection,
@@ -52,8 +52,16 @@ impl TemperatureNotificationQueries {
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
+        let temperature_excursions = service_provider
+            .temperature_excursion_service
+            .get_excursions(&service_context.connection, &store_id)
+            .map_err(StandardGraphqlError::from_repository_error)?;
+
         Ok(TemperatureNotificationsResponse::Response(
-            TemperatureNotificationConnector::from_domain(temperature_notifications),
+            TemperatureNotificationConnector::from_domain(
+                temperature_breaches,
+                temperature_excursions,
+            ),
         ))
     }
 }

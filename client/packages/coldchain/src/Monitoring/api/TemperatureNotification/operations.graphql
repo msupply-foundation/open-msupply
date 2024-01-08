@@ -14,11 +14,11 @@ fragment TemperatureNotificationBreach on TemperatureBreachNode {
   }
 }
 
-fragment TemperatureExcursion on TemperatureBreachNode {
+fragment TemperatureExcursion on TemperatureExcursionNode {
   __typename
   id
-  startDatetime
-  maxOrMinTemperature
+  datetime
+  temperature
 
   sensor {
     id
