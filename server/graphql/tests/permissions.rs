@@ -1181,19 +1181,19 @@ mod permission_tests {
         }
 
         fn validate_permission(
-          &self,
-          _: &ServiceContext,
-          _: &String,
-          resource_request: &ResourceAccessRequest,
-          _: &mut Vec<String>,
-      ) -> Result<(), AuthError> {
-          let mut actual = self.actual.lock().unwrap();
-          *actual = Some(resource_request.clone());
-          // we collected the info we needed just abort the request:
-          return Err(AuthError::InternalError(
-              "Just abort the request".to_string(),
-          ));
-      }
+            &self,
+            _: &ServiceContext,
+            _: &String,
+            resource_request: &ResourceAccessRequest,
+            _: &mut Vec<String>,
+        ) -> Result<(), AuthError> {
+            let mut actual = self.actual.lock().unwrap();
+            *actual = Some(resource_request.clone());
+            // we collected the info we needed just abort the request:
+            return Err(AuthError::InternalError(
+                "Just abort the request".to_string(),
+            ));
+        }
     }
 
     fn service_provider(

@@ -61,10 +61,12 @@ fn upload_fridge_tag(
     let permission = validate_permission(service_provider, &ctx);
 
     match permission {
-        Err(_auth_error) => {return Err(StringError("Permission denied for updating sensors".to_string()).into())},
-        Ok(()) => {},
+        Err(_auth_error) => {
+            return Err(StringError("Permission denied for updating sensors".to_string()).into())
+        }
+        Ok(()) => {}
     };
-    
+
     let file = form.files.pop().context("Cannot find attached file")?;
     let file_name = file.file_name.context("Filename is not specified")?;
 

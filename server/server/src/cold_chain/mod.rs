@@ -95,7 +95,6 @@ pub fn validate_permission(
     service_provider: &ServiceProvider,
     service_context: &ServiceContext,
 ) -> Result<(), AuthError> {
-
     let access_request = ResourceAccessRequest {
         resource: Resource::MutateSensor,
         store_id: Some(service_context.store_id.clone()),

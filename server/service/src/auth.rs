@@ -705,7 +705,6 @@ impl AuthServiceTrait for AuthService {
         resource_request: &ResourceAccessRequest,
         dynamic_permissions: &mut Vec<String>,
     ) -> Result<(), AuthError> {
-        
         let connection = &context.connection;
 
         let mut permission_filter =
@@ -766,7 +765,7 @@ impl AuthServiceTrait for AuthService {
             required_permissions,
             dynamic_permissions,
         ) {
-            Ok(_) => {Ok(())}
+            Ok(_) => Ok(()),
             Err(msg) => {
                 return Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
                     msg,
@@ -785,8 +784,13 @@ impl AuthServiceTrait for AuthService {
     ) -> Result<ValidatedUser, AuthError> {
         let validated_auth = validate_auth(auth_data, auth_token)?;
         let mut dynamic_permissions = Vec::new();
-        let result = self.validate_permission(context, &validated_auth.user_id, resource_request, &mut dynamic_permissions);
-        
+        let result = self.validate_permission(
+            context,
+            &validated_auth.user_id,
+            resource_request,
+            &mut dynamic_permissions,
+        );
+
         match result {
             Ok(_) => {}
             Err(error) => {
@@ -806,9 +810,7 @@ impl AuthServiceTrait for AuthService {
             claims: validated_auth.claims,
             capabilities: dynamic_permissions,
         })
-
     }
-
 }
 
 impl From<RepositoryError> for AuthError {
