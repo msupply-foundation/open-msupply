@@ -9,10 +9,12 @@ use anyhow::Context;
 use serde::Deserialize;
 
 use service::{
-    sensor::berlinger::{read_sensor, ReadSensor},
+    sensor::berlinger::{read_sensor, ReadSensor, ReadSensorError::StringError},
     service_provider::ServiceProvider,
     settings::Settings,
 };
+
+use crate::cold_chain::validate_permission;
 use util::prepare_file_dir;
 
 const TEMP_FRIDGETAG_FILE_DIR: &'static str = "fridge_tag";
@@ -40,8 +42,6 @@ async fn upload(
     settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
 ) -> HttpResponse {
-    // TODO Permissions
-
     match upload_fridge_tag(form, url_params.into_inner(), &settings, &service_provider) {
         Ok(result) => HttpResponse::Ok().json(result),
         Err(error) => HttpResponse::InternalServerError().body(format!("{:#?}", error)),
@@ -58,6 +58,13 @@ fn upload_fridge_tag(
         .basic_context()
         .context("Cannot get connection")?;
 
+    let permission = validate_permission(service_provider, &ctx);
+
+    match permission {
+        Err(_auth_error) => {return Err(StringError("Permission denied for updating sensors".to_string()).into())},
+        Ok(()) => {},
+    };
+    
     let file = form.files.pop().context("Cannot find attached file")?;
     let file_name = file.file_name.context("Filename is not specified")?;
 
