@@ -1,1 +1,11 @@
-{}
+{
+  "error.master-list-not-found": "Главный список не найден",
+  "error.no-items": "Нет товаров для отображения",
+  "label.doses": "Дозы",
+  "label.name": "Имя",
+  "label.months": "Месяцы",
+  "error.item-not-found": "Товар не найден",
+  "error.no-master-lists": "Нет Главных Списков для отображения",
+  "label.code": "Код",
+  "label.is-vaccine": "Вакцина"
+}
