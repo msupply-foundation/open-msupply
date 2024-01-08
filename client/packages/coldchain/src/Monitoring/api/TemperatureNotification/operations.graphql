@@ -17,8 +17,8 @@ fragment TemperatureNotificationBreach on TemperatureBreachNode {
 fragment TemperatureExcursion on TemperatureExcursionNode {
   __typename
   id
-  datetime
-  temperature
+  startDatetime
+  maxOrMinTemperature
 
   sensor {
     id
@@ -34,10 +34,16 @@ query temperatureNotifications($page: PaginationInput, $storeId: String!) {
   temperatureNotifications(page: $page, storeId: $storeId) {
     ... on TemperatureNotificationConnector {
       breaches {
-        ...TemperatureNotificationBreach
+        totalCount
+        nodes {
+          ...TemperatureNotificationBreach
+        }
       }
       excursions {
-        ...TemperatureExcursion
+        totalCount
+        nodes {
+          ...TemperatureExcursion
+        }
       }
     }
   }

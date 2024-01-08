@@ -9,9 +9,9 @@ use graphql_core::{
 use repository::{
     temperature_breach::TemperatureBreach, TemperatureExcursion, TemperatureExcursionRow,
 };
-use service::ListResult;
+use service::{usize_to_u32, ListResult};
 
-use super::{LocationNode, SensorNode, TemperatureBreachNode};
+use super::{LocationNode, SensorNode, TemperatureBreachConnector};
 
 #[derive(PartialEq, Debug)]
 pub struct TemperatureExcursionNode {
@@ -19,9 +19,15 @@ pub struct TemperatureExcursionNode {
 }
 
 #[derive(SimpleObject)]
+pub struct TemperatureExcursionConnector {
+    total_count: u32,
+    nodes: Vec<TemperatureExcursionNode>,
+}
+
+#[derive(SimpleObject)]
 pub struct TemperatureNotificationConnector {
-    breaches: Vec<TemperatureBreachNode>,
-    excursions: Vec<TemperatureExcursionNode>,
+    breaches: TemperatureBreachConnector,
+    excursions: TemperatureExcursionConnector,
 }
 
 #[Object]
@@ -43,7 +49,7 @@ impl TemperatureExcursionNode {
             .map(SensorNode::from_domain))
     }
 
-    pub async fn datetime(&self) -> DateTime<Utc> {
+    pub async fn start_datetime(&self) -> DateTime<Utc> {
         DateTime::<Utc>::from_utc(self.row().datetime, Utc)
     }
 
@@ -61,7 +67,7 @@ impl TemperatureExcursionNode {
             .map(LocationNode::from_domain))
     }
 
-    pub async fn temperature(&self) -> &f64 {
+    pub async fn max_or_min_temperature(&self) -> &f64 {
         &self.row().temperature
     }
 }
@@ -89,15 +95,14 @@ impl TemperatureNotificationConnector {
         temperature_excursions: Vec<TemperatureExcursion>,
     ) -> TemperatureNotificationConnector {
         TemperatureNotificationConnector {
-            breaches: temperature_breaches
-                .rows
-                .into_iter()
-                .map(TemperatureBreachNode::from_domain)
-                .collect(),
-            excursions: temperature_excursions
-                .into_iter()
-                .map(TemperatureExcursionNode::from_domain)
-                .collect(),
+            breaches: TemperatureBreachConnector::from_domain(temperature_breaches),
+            excursions: TemperatureExcursionConnector {
+                total_count: usize_to_u32(temperature_excursions.len()),
+                nodes: temperature_excursions
+                    .into_iter()
+                    .map(TemperatureExcursionNode::from_domain)
+                    .collect(),
+            },
         }
     }
 
@@ -106,14 +111,14 @@ impl TemperatureNotificationConnector {
         temperature_excursions: Vec<TemperatureExcursion>,
     ) -> TemperatureNotificationConnector {
         TemperatureNotificationConnector {
-            breaches: temperature_breaches
-                .into_iter()
-                .map(TemperatureBreachNode::from_domain)
-                .collect(),
-            excursions: temperature_excursions
-                .into_iter()
-                .map(TemperatureExcursionNode::from_domain)
-                .collect(),
+            breaches: TemperatureBreachConnector::from_vec(temperature_breaches),
+            excursions: TemperatureExcursionConnector {
+                total_count: usize_to_u32(temperature_excursions.len()),
+                nodes: temperature_excursions
+                    .into_iter()
+                    .map(TemperatureExcursionNode::from_domain)
+                    .collect(),
+            },
         }
     }
 }
