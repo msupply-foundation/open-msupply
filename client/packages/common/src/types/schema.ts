@@ -1095,6 +1095,7 @@ export type EncounterFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  /** Only if this filter is set encounters with status DELETED are returned */
   includeDeleted?: InputMaybe<Scalars['Boolean']['input']>;
   patient?: InputMaybe<PatientFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
@@ -4720,6 +4721,7 @@ export enum StockLineSortFieldInput {
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
+  LocationCode = 'locationCode',
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
   SupplierName = 'supplierName'
