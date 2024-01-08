@@ -4,10 +4,8 @@ import {
   AutocompleteOptionRenderer,
   Box,
   DefaultAutocompleteItemOption,
-  ProgramEnrolmentNodeStatus,
   Typography,
   useBufferState,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import {
@@ -24,19 +22,14 @@ interface EncounterSearchInputProps {
 }
 
 export const getEncounterOptionRenderer =
-  (
-    t: ReturnType<typeof useTranslation>
-  ): AutocompleteOptionRenderer<EncounterRegistryByProgram> =>
+  (): AutocompleteOptionRenderer<EncounterRegistryByProgram> =>
   (props, node) => {
     const name = node.encounter.name ?? '';
-    const isActive = node.program.status === ProgramEnrolmentNodeStatus.Active;
 
     return (
       <DefaultAutocompleteItemOption {...props} key={props.id}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
-          <Typography>
-            {isActive ? name : <i>{`${name} (${t('messages.inactive')})`}</i>}
-          </Typography>
+          <Typography>{name}</Typography>
         </Box>
       </DefaultAutocompleteItemOption>
     );
@@ -48,7 +41,6 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   value,
   disabled = false,
 }) => {
-  const t = useTranslation('dispensary');
   const patientId = usePatient.utils.id();
   const { data: enrolmentData, isLoading: isEnrolmentDataLoading } =
     useProgramEnrolments.document.list({
@@ -61,7 +53,7 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
       enrolmentData?.nodes ?? []
     );
   const [buffer, setBuffer] = useBufferState(value);
-  const EncounterOptionRenderer = getEncounterOptionRenderer(t);
+  const EncounterOptionRenderer = getEncounterOptionRenderer();
 
   return (
     <Autocomplete

@@ -5,6 +5,7 @@ use crate::sync::{
         zero_date_as_option,
     },
 };
+use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, Gender, NameRow, NameRowRepository, NameType,
@@ -14,8 +15,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -131,6 +131,7 @@ pub struct LegacyNameRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_of_death: Option<NaiveDate>,
+    pub custom_data: Option<serde_json::Value>,
 }
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::NAME;
@@ -165,7 +166,7 @@ impl SyncTranslation for NameTranslation {
             id,
             name,
             code,
-            r#type,
+            r#type: legacy_type,
             is_customer,
             is_supplier,
             supplying_store_id,
@@ -190,16 +191,25 @@ impl SyncTranslation for NameTranslation {
             created_datetime,
             gender,
             date_of_death,
+            custom_data,
         } = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
+
+        // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
+        let r#type = legacy_type.to_name_type();
+        let custom_data_string = r#type
+            .is_facility_or_store()
+            .then(|| custom_data.as_ref().map(serde_json::to_string))
+            .flatten()
+            .transpose()
+            .context("Error serialising custom data to string")?;
 
         let result = NameRow {
             id,
             name,
-            r#type: r#type.to_name_type(),
+            r#type,
             code,
             is_customer,
             is_supplier,
-
             supplying_store_id,
             first_name,
             last_name,
@@ -217,7 +227,7 @@ impl SyncTranslation for NameTranslation {
             on_hold,
             is_deceased,
             national_health_number,
-            gender: gender.or(if r#type == LegacyNameType::Patient {
+            gender: gender.or(if legacy_type == LegacyNameType::Patient {
                 if female {
                     Some(Gender::Female)
                 } else {
@@ -229,23 +239,12 @@ impl SyncTranslation for NameTranslation {
             created_datetime: created_datetime
                 .or(created_date.map(|date| date.and_hms_opt(0, 0, 0).unwrap())),
             date_of_death,
+            custom_data_string,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::Name(result),
         )))
-    }
-
-    fn try_translate_pull_delete(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Name)
-        });
-
-        Ok(result)
     }
 
     fn try_translate_push_upsert(
@@ -284,6 +283,8 @@ impl SyncTranslation for NameTranslation {
             is_deceased,
             date_of_death,
             national_health_number,
+            // See comment in pull translation
+            custom_data_string: _,
         } = NameRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -326,6 +327,7 @@ impl SyncTranslation for NameTranslation {
             created_datetime,
             gender,
             date_of_death,
+            custom_data: None,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
@@ -333,17 +335,6 @@ impl SyncTranslation for NameTranslation {
             LEGACY_TABLE_NAME,
             serde_json::to_value(&legacy_row)?,
         )]))
-    }
-
-    fn try_translate_push_delete(
-        &self,
-        _: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
     }
 }
 
@@ -363,14 +354,6 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

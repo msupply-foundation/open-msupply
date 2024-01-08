@@ -300,11 +300,12 @@ mod test {
             .upsert_one(&name_store_join3)
             .unwrap();
 
-        let result = repo.query(&store3.id, filter);
+        let mut result = repo.query(&store3.id, filter).unwrap();
+        result.sort_by(|a, b| a.supplier.name_row.id.cmp(&b.supplier.name_row.id));
 
         assert_eq!(
             result,
-            Ok(vec![
+            vec![
                 ProgramSupplier {
                     supplier: Name {
                         name_row: store_name1.clone(),
@@ -321,7 +322,7 @@ mod test {
                     },
                     program: program2.clone()
                 }
-            ])
+            ]
         );
     }
 }

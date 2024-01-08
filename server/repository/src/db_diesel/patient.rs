@@ -344,8 +344,7 @@ mod tests {
     use crate::{
         mock::{mock_program_a, MockDataInserts},
         test_db, DateFilter, EqualFilter, NameRow, NameRowRepository, NameType, PatientFilter,
-        PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
-        ProgramEnrolmentStatus, StringFilter,
+        PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository, StringFilter,
     };
 
     #[actix_rt::test]
@@ -420,7 +419,7 @@ mod tests {
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
-                status: ProgramEnrolmentStatus::Active,
+                status: Some("Active".to_string()),
             })
             .unwrap();
         let result = repo
@@ -520,7 +519,7 @@ mod tests {
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
                 program_enrolment_id: Some("program_enrolment_id".to_string()),
-                status: ProgramEnrolmentStatus::Active,
+                status: Some("Active".to_string()),
             })
             .unwrap();
         let result = repo

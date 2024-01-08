@@ -4,8 +4,8 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, StockLineRow, StockLineRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
+    StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -107,28 +107,42 @@ impl SyncTranslation for StockLineTranslation {
             return Ok(None);
         }
 
-        let StockLineRow {
-            id,
-            item_id,
-            store_id,
-            location_id,
-            batch,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs,
-            total_number_of_packs,
-            expiry_date,
-            on_hold,
-            note,
-            supplier_id,
-            barcode_id,
-        } = StockLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(stock_line) = StockLineRepository::new(connection)
+            .query_by_filter(
+                StockLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                None,
+            )?
+            .pop() else {
+                return Err(anyhow::anyhow!("Can't find line..."))
+            };
+
+        let StockLine {
+            stock_line_row:
+                StockLineRow {
+                    id,
+                    item_id: _item_id, // StockLineRow item_id is ACTUALLY the item_link_id, we need to use the item_row.id instead
+                    store_id,
+                    location_id,
+                    batch,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    available_number_of_packs,
+                    total_number_of_packs,
+                    expiry_date,
+                    on_hold,
+                    note,
+                    supplier_id,
+                    barcode_id,
+                },
+            item_row,
+            ..
+        } = stock_line;
 
         let legacy_row = LegacyStockLineRow {
-            ID: id.clone(),
+            ID: id,
             store_ID: store_id,
-            item_ID: item_id,
+            item_ID: item_row.id,
             batch,
             expiry_date,
             hold: on_hold,
@@ -165,7 +179,10 @@ impl SyncTranslation for StockLineTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_stock_line_translation() {
@@ -181,6 +198,44 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_push_merged() {
+        // The item_links_merged function will merge ALL items into item_a, so all stock_lines should have an item_id of "item_a" regardless of their original item_id.
+        let (_, connection, _, _) = setup_all(
+            "test_stock_line_push_item_link_merged",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .item_links_merged()
+                .names()
+                .stores()
+                .locations()
+                .barcodes()
+                .stock_lines(),
+        )
+        .await;
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::StockLine.equal_to())),
+            )
+            .unwrap();
+
+        let translator = StockLineTranslation {};
+        for changelog in changelogs {
+            // Translate and sort
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
         }
     }
 }
