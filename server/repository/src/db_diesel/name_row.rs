@@ -1,6 +1,9 @@
 use super::{name_row::name::dsl::*, StorageConnection};
 
-use crate::{item_link, name_link, repository_error::RepositoryError, EqualFilter};
+use crate::{
+    item_link, name_link, repository_error::RepositoryError, EqualFilter, NameLinkRow,
+    NameLinkRowRepository,
+};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -38,6 +41,7 @@ table! {
         is_deceased -> Bool,
         national_health_number -> Nullable<Text>,
         date_of_death -> Nullable<Date>,
+        custom_data -> Nullable<Text>,
     }
 }
 
@@ -103,6 +107,12 @@ impl Default for NameType {
     }
 }
 
+impl NameType {
+    pub fn is_facility_or_store(&self) -> bool {
+        *self == NameType::Facility || *self == NameType::Store
+    }
+}
+
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "name"]
@@ -144,10 +154,24 @@ pub struct NameRow {
     pub is_deceased: bool,
     pub national_health_number: Option<String>,
     pub date_of_death: Option<NaiveDate>,
+    #[column_name = "custom_data"]
+    pub custom_data_string: Option<String>,
 }
 
 pub struct NameRowRepository<'a> {
     connection: &'a StorageConnection,
+}
+
+fn insert_or_ignore_name_link<'a>(
+    connection: &'a StorageConnection,
+    name_row: &NameRow,
+) -> Result<(), RepositoryError> {
+    let name_link_row = NameLinkRow {
+        id: name_row.id.clone(),
+        name_id: name_row.id.clone(),
+    };
+    NameLinkRowRepository::new(connection).insert_one_or_ignore(&name_link_row)?;
+    Ok(())
 }
 
 impl<'a> NameRowRepository<'a> {
@@ -188,6 +212,7 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_name_link(&self.connection, row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
@@ -201,6 +226,7 @@ impl<'a> NameRowRepository<'a> {
         diesel::insert_into(name)
             .values(name_row)
             .execute(&self.connection.connection)?;
+        insert_or_ignore_name_link(&self.connection, name_row)?;
         Ok(())
     }
 
@@ -229,6 +255,7 @@ impl<'a> NameRowRepository<'a> {
 
     pub fn sync_upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_name_link(&self.connection, row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
         Ok(())

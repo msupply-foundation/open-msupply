@@ -1,7 +1,7 @@
 use chrono::DateTime;
 use repository::{
     Document, ProgramEnrolmentRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
-    ProgramEnrolmentStatus, ProgramRow, StorageConnection,
+    ProgramRow, StorageConnection,
 };
 use util::hash::sha256;
 
@@ -32,15 +32,15 @@ pub(crate) fn update_program_enrolment_row(
         None => sha256(&document.name),
     };
 
-    let status = match program.status {
-        super::program_schema::ProgramEnrolmentStatus::Active => ProgramEnrolmentStatus::Active,
-        super::program_schema::ProgramEnrolmentStatus::OptedOut => ProgramEnrolmentStatus::OptedOut,
-        super::program_schema::ProgramEnrolmentStatus::TransferredOut => {
-            ProgramEnrolmentStatus::TransferredOut
-        }
-        super::program_schema::ProgramEnrolmentStatus::Paused => ProgramEnrolmentStatus::Paused,
-    };
-
+    // take latest status
+    let status = program.status_log.clone().and_then(|mut log| {
+        log.sort_by(|a, b| {
+            let data_a = DateTime::parse_from_rfc3339(&a.datetime).ok();
+            let data_b = DateTime::parse_from_rfc3339(&b.datetime).ok();
+            data_a.cmp(&data_b)
+        });
+        log.pop().map(|it| it.status)
+    });
     let program_row = ProgramEnrolmentRow {
         id,
         document_type: document.r#type.clone(),

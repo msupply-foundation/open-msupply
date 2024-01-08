@@ -2,7 +2,7 @@ use crate::sync::{
     test::{TestSyncPullRecord, TestSyncPushRecord},
     translations::{
         name::{LegacyNameRow, LegacyNameType},
-        LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
+        LegacyTableName, PullUpsertRecord,
     },
 };
 use chrono::NaiveDate;
@@ -144,6 +144,7 @@ fn name_1() -> TestSyncPullRecord {
                     .unwrap(),
             ),
             date_of_death: None,
+            custom_data_string: None,
         }),
     )
 }
@@ -277,6 +278,7 @@ fn name_2() -> TestSyncPullRecord {
             is_deceased: false,
             national_health_number: None,
             date_of_death: None,
+            custom_data_string: None,
         }),
     )
 }
@@ -368,7 +370,7 @@ const NAME_3: (&'static str, &'static str) = (
     "license_number": "",
     "license_expiry": "0000-00-00",
     "has_current_license": false,
-    "custom_data": null,
+    "custom_data": {"check":"check"},
     "maximum_credit": 0,
     "nationality_ID": "",
     "created_date": "0000-00-00",
@@ -410,6 +412,7 @@ fn name_3() -> TestSyncPullRecord {
             is_deceased: false,
             national_health_number: Some("NHN002".to_string()),
             date_of_death: None,
+            custom_data_string: Some(r#"{"check":"check"}"#.to_string()),
         }),
     )
 }
@@ -549,6 +552,7 @@ fn name_4() -> TestSyncPullRecord {
             is_deceased: true,
             national_health_number: Some("NHN003".to_string()),
             date_of_death: None,
+            custom_data_string: None,
         }),
     )
 }
@@ -591,6 +595,7 @@ fn name_push_record_1() -> TestSyncPushRecord {
             ),
             gender: Some(Gender::Female),
             date_of_death: None,
+            custom_data: None
         }),
     }
 }
@@ -633,20 +638,13 @@ fn name_push_record_2() -> TestSyncPushRecord {
             ),
             gender: Some(Gender::Female),
             date_of_death: None,
+            custom_data: None
         }),
     }
 }
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![name_1(), name_2(), name_3(), name_4()]
-}
-
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::NAME,
-        NAME_4.0,
-        PullDeleteRecordTable::Name,
-    )]
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {

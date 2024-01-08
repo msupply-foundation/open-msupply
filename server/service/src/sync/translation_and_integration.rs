@@ -236,7 +236,6 @@ impl PullDeleteRecord {
         let id = &self.id;
         match self.table {
             UserPermission => UserPermissionRowRepository::new(con).delete(id),
-            Name => NameRowRepository::new(con).delete(id),
             NameTagJoin => NameTagJoinRepository::new(con).delete(id),
             Unit => UnitRowRepository::new(con).delete(id),
             Item => ItemRowRepository::new(con).delete(id),

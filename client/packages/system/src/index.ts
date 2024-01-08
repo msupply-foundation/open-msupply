@@ -1,5 +1,5 @@
 export * from './Item';
-export * from './Log';
+export * from './ActivityLog';
 export * from './Stock';
 export * from './Sync';
 export * from './Name';
@@ -12,3 +12,4 @@ export * from './Patient';
 export * from './Encounter';
 export * from './Clinician';
 export * from './ContactTrace';
+export * from './Log';

@@ -187,7 +187,7 @@ export const usePrescriptionColumn = ({
         },
       ],
       [
-        'locationName',
+        'location',
         {
           getSortValue: row => {
             if ('lines' in row) {
@@ -197,14 +197,14 @@ export const usePrescriptionColumn = ({
               if (locations.length !== 0) {
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
-                  'name',
+                  'code',
                   t('multiple')
                 );
               } else {
                 return '';
               }
             } else {
-              return row.location?.name ?? '';
+              return row.location?.code ?? '';
             }
           },
           accessor: ({ rowData }) => {
@@ -216,12 +216,12 @@ export const usePrescriptionColumn = ({
               if (locations.length !== 0) {
                 return ArrayUtils.ifTheSameElseDefault(
                   locations,
-                  'name',
+                  'code',
                   t('multiple')
                 );
               }
             } else {
-              return rowData.location?.name ?? '';
+              return rowData.location?.code ?? '';
             }
           },
         },

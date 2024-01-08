@@ -1,6 +1,8 @@
 use super::StorageConnection;
 
-use crate::{Gender, RepositoryError};
+use crate::{
+    clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, Gender, RepositoryError,
+};
 
 use diesel::prelude::*;
 
@@ -47,6 +49,22 @@ table! {
     }
 }
 
+allow_tables_to_appear_in_same_query!(clinician, clinician_link);
+
+fn insert_or_ignore_clinician_link<'a>(
+    connection: &StorageConnection,
+    row: &ClinicianRow,
+) -> Result<(), RepositoryError> {
+    let clinician_link_row = ClinicianLinkRow {
+        id: row.id.clone(),
+        clinician_id: row.id.clone(),
+    };
+
+    ClinicianLinkRowRepository::new(connection).insert_one_or_ignore(&clinician_link_row)?;
+
+    Ok(())
+}
+
 pub struct ClinicianRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -77,6 +95,7 @@ impl<'a> ClinicianRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_clinician_link(&self.connection, &row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
@@ -108,6 +127,7 @@ impl<'a> ClinicianRowRepository<'a> {
 
     pub fn sync_upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_clinician_link(&self.connection, &row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
         Ok(())

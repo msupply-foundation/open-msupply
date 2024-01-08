@@ -86,39 +86,58 @@ const StockListComponent: FC = () => {
       key: 'edit',
       label: 'label.repack',
       Cell: EditStockLineCell,
-      maxWidth: 75,
+      width: 75,
       sortable: false,
       align: ColumnAlign.Center,
     },
-    ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
+    [
+      'itemCode',
+      {
+        accessor: ({ rowData }) => rowData.item.code,
+        Cell: TooltipTextCell,
+        width: 100,
+      },
+    ],
     [
       'itemName',
       {
         accessor: ({ rowData }) => rowData.item.name,
         Cell: TooltipTextCell,
-        maxWidth: 350,
+        width: 350,
       },
     ],
-    'batch',
+    ['batch', { Cell: TooltipTextCell, width: 100 }],
     [
       'expiryDate',
       {
         accessor: ({ rowData }) => DateUtils.getDateOrNull(rowData.expiryDate),
+        width: 110,
       },
     ],
-    ['locationName', { sortable: false }],
+    [
+      'location',
+      {
+        sortable: false,
+        Cell: TooltipTextCell,
+        width: 75,
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
     [
       'itemUnit',
       {
         accessor: ({ rowData }) => rowData.item.unitName,
         sortable: false,
+        Cell: TooltipTextCell,
+        width: 75,
       },
     ],
-    'packSize',
+    ['packSize', { Cell: TooltipTextCell, width: 125 }],
     [
       'numberOfPacks',
       {
         accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+        Cell: TooltipTextCell,
         width: 150,
       },
     ],
@@ -130,6 +149,7 @@ const StockListComponent: FC = () => {
         label: 'label.soh',
         description: 'description.soh',
         sortable: false,
+        Cell: TooltipTextCell,
         width: 125,
       },
     ],
@@ -138,6 +158,8 @@ const StockListComponent: FC = () => {
       label: 'label.supplier',
       accessor: ({ rowData }) =>
         rowData.supplierName ? rowData.supplierName : t('message.no-supplier'),
+      Cell: TooltipTextCell,
+      width: 190,
     },
     ...pluginColumns,
   ];

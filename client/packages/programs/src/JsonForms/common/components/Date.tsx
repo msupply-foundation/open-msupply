@@ -55,7 +55,7 @@ const UIComponent = (props: ControlProps) => {
             handleChange(path, !e ? undefined : dateFormatter(e, 'yyyy-MM-dd'));
             if (customError) setCustomError(undefined);
           }}
-          format="dd/MM/yyyy"
+          format="P"
           disabled={!props.enabled}
           error={customError ?? props.errors ?? zErrors ?? ''}
           disableFuture={disableFuture}
