@@ -1,5 +1,6 @@
 {
   "button.login": "Авторизоваться",
   "heading.password": "Пароль",
-  "heading.username": "Имя пользователя"
+  "heading.username": "Имя пользователя",
+  "admin": "Настройки"
 }
