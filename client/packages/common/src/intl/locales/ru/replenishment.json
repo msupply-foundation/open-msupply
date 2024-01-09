@@ -2,5 +2,10 @@
   "label.location": "Местонахождение",
   "heading.tax": "Налог",
   "label.draft": "Черновик",
-  "heading.are-you-sure": "Вы уверены?"
+  "heading.are-you-sure": "Вы уверены?",
+  "button.add-from-master-list": "Добавить из главного списка",
+  "error.requisition-not-found": "Внутренний Заказ не найден",
+  "error.no-internal-orders": "Нет внутренних заказов для отображения.",
+  "heading.related-documents": "Сопутствующие документы",
+  "heading.service-charges": "Сервисные сборы"
 }
