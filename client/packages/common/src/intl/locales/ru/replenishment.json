@@ -1,3 +1,6 @@
 {
-  "label.location": "Местонахождение"
+  "label.location": "Местонахождение",
+  "heading.tax": "Налог",
+  "label.draft": "Черновик",
+  "heading.are-you-sure": "Вы уверены?"
 }
