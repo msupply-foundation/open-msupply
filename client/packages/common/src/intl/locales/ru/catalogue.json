@@ -15,5 +15,12 @@
   "title.months-of-stock": "Месячный Запас",
   "title.packaging": "Упаковка",
   "title.pricing": "Цена",
-  "title.stock-on-hand": "В наличии"
+  "title.stock-on-hand": "В наличии",
+  "label.atc-category": "Категория анатомо-терапевтическо-химической классификации (Категория АТХ)",
+  "label.ddd": "Условная Суточная Доза (УСД)",
+  "label.margin": "Маржа",
+  "messages.click-to-return-to-item-list": "Не удалось найти товар с этим идентификатором. Нажмите OК, чтобы вернуться к списку товаров.",
+  "messages.click-to-return-to-master-lists": "Не удалось найти главный список с этим идентификатором. Нажмите OК, чтобы вернуться к списку главных списков",
+  "label.universal-code": "Универсальный код",
+  "label.universal-name": "Универсальное наименование"
 }
