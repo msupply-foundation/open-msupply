@@ -4,7 +4,7 @@ use repository::{
     TemperatureExcursionRepository, TemperatureLogFilter,
 };
 
-pub fn get_excursions(
+pub fn excursions(
     connection: &StorageConnection,
     store_id: &str,
 ) -> Result<Vec<TemperatureExcursion>, RepositoryError> {
