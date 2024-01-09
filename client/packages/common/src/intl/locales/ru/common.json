@@ -20,5 +20,7 @@
   "button.print": "Распечатать",
   "button.sync-now": "Синхронизировать сейчас!",
   "label.location": "Местонахождение",
-  "heading.description": "Описание"
+  "heading.description": "Описание",
+  "heading.are-you-sure": "Вы уверены?",
+  "label.draft": "Черновик"
 }
