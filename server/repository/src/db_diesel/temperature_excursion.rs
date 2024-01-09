@@ -12,17 +12,14 @@ use chrono::{NaiveDateTime, Utc};
 
 use diesel::{prelude::*, sql_types::Integer};
 
-use super::temperature_excursion_row::TemperatureExcursionRow;
-
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TemperatureExcursion {
-    pub temperature_excursion_row: TemperatureExcursionRow,
-}
-
-pub fn to_domain(temperature_excursion_row: TemperatureExcursionRow) -> TemperatureExcursion {
-    TemperatureExcursion {
-        temperature_excursion_row,
-    }
+    pub datetime: NaiveDateTime,
+    pub temperature: f64,
+    pub location_id: Option<String>,
+    pub sensor_id: String,
+    pub duration: i64,
+    pub store_id: String,
 }
 
 pub struct TemperatureExcursionRepository<'a> {
@@ -95,7 +92,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
         // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
-        let mut excursion_data: Vec<TemperatureExcursionRow> = Vec::new();
+        let mut excursion_data: Vec<TemperatureExcursion> = Vec::new();
         let log_data = query
             .load::<QueryResult>(&self.connection.connection)?
             .into_iter()
@@ -104,8 +101,6 @@ impl<'a> TemperatureExcursionRepository<'a> {
 
         for row in log_data.iter() {
             if row.is_excursion == true {
-                println!("{:?}", row);
-
                 let excursion_end = log_data.iter().find(|r| {
                     r.datetime > row.datetime
                         && r.sensor_id == row.sensor_id
@@ -134,7 +129,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
 
                 let duration = Utc::now().timestamp() - row.datetime.timestamp();
                 if duration > row.duration {
-                    excursion_data.push(TemperatureExcursionRow {
+                    excursion_data.push(TemperatureExcursion {
                         datetime: row.datetime,
                         temperature: row.temperature,
                         location_id: row.location_id.clone(),
@@ -144,10 +139,9 @@ impl<'a> TemperatureExcursionRepository<'a> {
                     })
                 }
             };
-            println!("{:?}", row);
         }
 
-        Ok(excursion_data.into_iter().map(to_domain).collect())
+        Ok(excursion_data.into_iter().collect())
     }
 }
 
@@ -170,7 +164,6 @@ impl TemperatureRow {
 mod test {
     use crate::TemperatureExcursion;
     use crate::{
-        db_diesel::temperature_excursion_row::TemperatureExcursionRow,
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
         DatetimeFilter, LocationRow, NameRow, SensorRow, StoreRow, TemperatureBreachConfigRow,
@@ -311,24 +304,20 @@ mod test {
             result,
             vec![
                 TemperatureExcursion {
-                    temperature_excursion_row: TemperatureExcursionRow {
-                        datetime: datetime1,
-                        temperature: 30.0,
-                        location_id: None,
-                        duration: duration1,
-                        store_id: "store".to_string(),
-                        sensor_id: sensor1.id.clone(),
-                    }
+                    datetime: datetime1,
+                    temperature: 30.0,
+                    location_id: None,
+                    duration: duration1,
+                    store_id: "store".to_string(),
+                    sensor_id: sensor1.id.clone(),
                 },
                 TemperatureExcursion {
-                    temperature_excursion_row: TemperatureExcursionRow {
-                        datetime: datetime2,
-                        temperature: -20.0,
-                        location_id: None,
-                        duration: duration2,
-                        store_id: "store".to_string(),
-                        sensor_id: sensor2.id.clone(),
-                    }
+                    datetime: datetime2,
+                    temperature: -20.0,
+                    location_id: None,
+                    duration: duration2,
+                    store_id: "store".to_string(),
+                    sensor_id: sensor2.id.clone(),
                 },
             ],
         );
