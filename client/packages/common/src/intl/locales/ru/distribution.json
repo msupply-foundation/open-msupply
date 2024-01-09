@@ -1,3 +1,5 @@
 {
-  "button.select-a-color": "Выбрать цвет"
+  "button.select-a-color": "Выбрать цвет",
+  "heading.are-you-sure": "Вы уверены?",
+  "heading.tax": "Налог"
 }
