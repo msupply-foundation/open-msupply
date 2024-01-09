@@ -18,5 +18,7 @@
   "button.close": "Закрыть",
   "button.create-a-new-one": "Создать новый",
   "button.print": "Распечатать",
-  "button.sync-now": "Синхронизировать сейчас!"
+  "button.sync-now": "Синхронизировать сейчас!",
+  "label.location": "Местонахождение",
+  "heading.description": "Описание"
 }
