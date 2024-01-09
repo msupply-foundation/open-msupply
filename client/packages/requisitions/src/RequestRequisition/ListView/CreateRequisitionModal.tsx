@@ -1,6 +1,7 @@
 import React, { FC } from 'react';
 import {
   BasicSpinner,
+  DialogButton,
   ModalTabs,
   useDialog,
   useTranslation,
@@ -80,6 +81,7 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
       width={500}
       slideAnimation={false}
       title={t('label.new-requisition')}
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
       <InnerComponent />
     </Modal>
