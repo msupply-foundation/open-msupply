@@ -1,3 +1,4 @@
+pub mod mutations;
 use async_graphql::*;
 use graphql_core::{
     pagination::PaginationInput,
@@ -55,6 +56,21 @@ impl TemperatureBreachQueries {
         Ok(TemperatureBreachesResponse::Response(
             TemperatureBreachConnector::from_domain(temperature_breaches),
         ))
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct TemperatureBreachMutations;
+
+#[Object]
+impl TemperatureBreachMutations {
+    async fn update_temperature_breach(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: mutations::UpdateInput,
+    ) -> Result<mutations::UpdateResponse> {
+        mutations::update(ctx, &store_id, input)
     }
 }
 
@@ -163,6 +179,7 @@ mod test {
                                 + Duration::seconds(50646),
                         ),
                         threshold_duration_milliseconds: 3600,
+                        comment: None,
                     },
                 }],
                 count: 1,

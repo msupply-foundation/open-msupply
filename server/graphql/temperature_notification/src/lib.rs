@@ -166,6 +166,7 @@ mod test {
                                 + Duration::seconds(50646),
                         ),
                         threshold_duration_milliseconds: 3600,
+                        comment: None,
                     },
                 }],
                 count: 1,
