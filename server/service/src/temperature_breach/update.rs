@@ -12,9 +12,11 @@ pub enum UpdateTemperatureBreachError {
     TemperatureBreachDoesNotBelongToCurrentStore,
     UpdatedRecordNotFound,
     LocationIsOnHold,
+    CommentNotProvided,
     DatabaseError(RepositoryError),
 }
 
+#[derive(Debug)]
 pub struct UpdateTemperatureBreach {
     pub id: String,
     pub duration_milliseconds: i32,
@@ -27,6 +29,7 @@ pub struct UpdateTemperatureBreach {
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
     pub threshold_duration_milliseconds: i32,
+    pub comment: Option<String>,
 }
 
 pub fn update_temperature_breach(
@@ -77,6 +80,7 @@ pub fn generate(
         threshold_duration_milliseconds,
         threshold_maximum,
         threshold_minimum,
+        comment,
     }: UpdateTemperatureBreach,
     existing_row: TemperatureBreachRow,
 ) -> TemperatureBreachRow {
@@ -91,6 +95,7 @@ pub fn generate(
         threshold_duration_milliseconds,
         threshold_maximum,
         threshold_minimum,
+        comment,
         ..existing_row
     }
 }
