@@ -642,12 +642,6 @@ export type DatetimeFilterInput = {
   equalTo?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
-export type DeleteDocumentInput = {
-  id: Scalars['String']['input'];
-};
-
-export type DeleteDocumentResponse = DeleteResponse;
-
 export type DeleteErrorInterface = {
   description: Scalars['String']['output'];
 };
@@ -1106,6 +1100,8 @@ export type EncounterFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  /** Only if this filter is set encounters with status DELETED are returned */
+  includeDeleted?: InputMaybe<Scalars['Boolean']['input']>;
   patient?: InputMaybe<PatientFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   programEnrolment?: InputMaybe<ProgramEnrolmentFilterInput>;
@@ -1155,6 +1151,7 @@ export type EncounterNodeProgramEventsArgs = {
 
 export enum EncounterNodeStatus {
   Cancelled = 'CANCELLED',
+  Deleted = 'DELETED',
   Pending = 'PENDING',
   Visited = 'VISITED'
 }
@@ -2517,7 +2514,6 @@ export type Mutations = {
    * lines quantity (placeholder and filled) for requisitionLine.item
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
-  deleteDocument: DeleteDocumentResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
@@ -2572,7 +2568,6 @@ export type Mutations = {
   manualSync: Scalars['String']['output'];
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
-  undeleteDocument: UndeleteDocumentResponse;
   updateContactTrace: UpdateContactTraceResponse;
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateDocument: UpdateDocumentResponse;
@@ -2677,12 +2672,6 @@ export type MutationsBatchStocktakeArgs = {
 
 export type MutationsCreateRequisitionShipmentArgs = {
   input: CreateRequisitionShipmentInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsDeleteDocumentArgs = {
-  input: DeleteDocumentInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -2932,12 +2921,6 @@ export type MutationsLinkPatientToStoreArgs = {
 
 export type MutationsSupplyRequestedQuantityArgs = {
   input: SupplyRequestedQuantityInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsUndeleteDocumentArgs = {
-  input: UndeleteDocumentInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4758,6 +4741,7 @@ export enum StockLineSortFieldInput {
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
+  LocationCode = 'locationCode',
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
   SupplierName = 'supplierName'
@@ -5215,12 +5199,6 @@ export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUna
   __typename: 'UnallocatedLinesOnlyEditableInNewInvoice';
   description: Scalars['String']['output'];
 };
-
-export type UndeleteDocumentInput = {
-  id: Scalars['String']['input'];
-};
-
-export type UndeleteDocumentResponse = DocumentNode;
 
 export enum UniqueValueKey {
   Code = 'code',

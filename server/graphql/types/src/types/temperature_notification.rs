@@ -6,9 +6,7 @@ use graphql_core::{
     ContextExt,
 };
 
-use repository::{
-    temperature_breach::TemperatureBreach, TemperatureExcursion, TemperatureExcursionRow,
-};
+use repository::{temperature_breach::TemperatureBreach, TemperatureExcursion};
 use service::{usize_to_u32, ListResult};
 
 use super::{LocationNode, SensorNode, TemperatureBreachConnector};
@@ -84,8 +82,8 @@ impl TemperatureExcursionNode {
         }
     }
 
-    pub fn row(&self) -> &TemperatureExcursionRow {
-        &self.temperature_excursion.temperature_excursion_row
+    pub fn row(&self) -> &TemperatureExcursion {
+        &self.temperature_excursion
     }
 }
 

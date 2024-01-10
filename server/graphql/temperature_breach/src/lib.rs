@@ -43,7 +43,7 @@ impl TemperatureBreachQueries {
 
         let temperature_breaches = service_provider
             .temperature_breach_service
-            .get_temperature_breaches(
+            .temperature_breaches(
                 &service_context.connection,
                 page.map(PaginationOption::from),
                 Some(filter),
@@ -107,7 +107,7 @@ mod test {
     pub struct TestService(pub Box<GetTemperatureBreaches>);
 
     impl TemperatureBreachServiceTrait for TestService {
-        fn get_temperature_breaches(
+        fn temperature_breaches(
             &self,
             _: &StorageConnection,
             pagination: Option<PaginationOption>,
