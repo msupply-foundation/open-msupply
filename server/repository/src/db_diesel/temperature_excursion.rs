@@ -4,7 +4,7 @@ use crate::{
         temperature_log_row::temperature_log::dsl as temperature_log_dsl,
     },
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
-    TemperatureBreachRowType,
+    TemperatureBreachRowType, TemperatureLogFilter,
 };
 use crate::{RepositoryError, StorageConnection};
 use chrono::NaiveDateTime;
@@ -13,6 +13,7 @@ use diesel::{prelude::*, sql_types::Integer};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TemperatureExcursion {
+    pub id: String,
     pub datetime: NaiveDateTime,
     pub temperature: f64,
     pub location_id: Option<String>,

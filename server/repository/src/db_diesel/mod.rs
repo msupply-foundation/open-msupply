@@ -168,7 +168,6 @@ pub use temperature_breach_config_row::*;
 pub use temperature_breach_row::*;
 pub use temperature_chart::*;
 pub use temperature_excursion::*;
-pub use temperature_excursion_row::*;
 pub use temperature_log::*;
 pub use temperature_log_row::*;
 pub use unit_row::*;
