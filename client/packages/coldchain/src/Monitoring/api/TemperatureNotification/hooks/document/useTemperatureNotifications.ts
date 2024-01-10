@@ -1,4 +1,4 @@
-import { useTemperatureBreachApi } from '../utils/useTemperatureBreachesApi';
+import { useTemperatureNotificationApi } from '../utils/useTemperatureNotificationApi';
 import {
   useNotification,
   useQuery,
@@ -6,9 +6,8 @@ import {
 } from '@openmsupply-client/common';
 import { ListParams } from '../../api';
 
-// Fetches temperature breaches, without raising a permission denied error if one is returned by the API
-export const useTemperatureBreachNotifications = (queryParams: ListParams) => {
-  const api = useTemperatureBreachApi();
+export const useTemperatureNotifications = (queryParams: ListParams) => {
+  const api = useTemperatureNotificationApi();
   const { warning } = useNotification();
   const t = useTranslation('coldchain');
 

@@ -1,7 +1,7 @@
 use self::insert::{
     insert_temperature_breach, InsertTemperatureBreach, InsertTemperatureBreachError,
 };
-use self::query::{get_temperature_breach, get_temperature_breaches};
+use self::query::{get_temperature_breach, temperature_breaches};
 use self::update::{
     update_temperature_breach, UpdateTemperatureBreach, UpdateTemperatureBreachError,
 };
@@ -19,14 +19,14 @@ pub mod update;
 mod validate;
 
 pub trait TemperatureBreachServiceTrait: Sync + Send {
-    fn get_temperature_breaches(
+    fn temperature_breaches(
         &self,
         connection: &StorageConnection,
         pagination: Option<PaginationOption>,
         filter: Option<TemperatureBreachFilter>,
         sort: Option<TemperatureBreachSort>,
     ) -> Result<ListResult<TemperatureBreach>, ListError> {
-        get_temperature_breaches(connection, pagination, filter, sort)
+        temperature_breaches(connection, pagination, filter, sort)
     }
 
     fn get_temperature_breach(
