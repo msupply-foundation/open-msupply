@@ -197,7 +197,8 @@ const Notification = ({
       {!!notification.maxOrMinTemperature && (
         <>
           <Text>
-            {t('message.last-temperature', {
+            {t('message.last-temperature-reading')}:{' '}
+            {t('message.temperature', {
               temperature: notification.maxOrMinTemperature,
             })}
           </Text>
