@@ -22,5 +22,7 @@
   "label.location": "Местонахождение",
   "heading.description": "Описание",
   "heading.are-you-sure": "Вы уверены?",
-  "label.draft": "Черновик"
+  "label.draft": "Черновик",
+  "button.new-outbound-shipment": "Новая Исходящая Доставка",
+  "label.new": "Новый"
 }
