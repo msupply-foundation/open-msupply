@@ -14,7 +14,7 @@ fragment TemperatureNotificationBreach on TemperatureBreachNode {
   }
 }
 
-fragment TemperatureExcursion on TemperatureBreachNode {
+fragment TemperatureExcursion on TemperatureExcursionNode {
   __typename
   id
   startDatetime
@@ -34,10 +34,16 @@ query temperatureNotifications($page: PaginationInput, $storeId: String!) {
   temperatureNotifications(page: $page, storeId: $storeId) {
     ... on TemperatureNotificationConnector {
       breaches {
-        ...TemperatureNotificationBreach
+        totalCount
+        nodes {
+          ...TemperatureNotificationBreach
+        }
       }
       excursions {
-        ...TemperatureExcursion
+        totalCount
+        nodes {
+          ...TemperatureExcursion
+        }
       }
     }
   }

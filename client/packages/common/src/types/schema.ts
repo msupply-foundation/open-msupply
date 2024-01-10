@@ -5099,13 +5099,17 @@ export type TemperatureChartNode = {
 
 export type TemperatureChartResponse = TemperatureChartNode;
 
+export type TemperatureExcursionConnector = {
+  __typename: 'TemperatureExcursionConnector';
+  nodes: Array<TemperatureExcursionNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type TemperatureExcursionNode = {
   __typename: 'TemperatureExcursionNode';
-  durationMilliseconds: Scalars['Int']['output'];
-  endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
-  maxOrMinTemperature?: Maybe<Scalars['Float']['output']>;
+  maxOrMinTemperature: Scalars['Float']['output'];
   sensor?: Maybe<SensorNode>;
   sensorId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
@@ -5155,8 +5159,8 @@ export type TemperatureLogsResponse = TemperatureLogConnector;
 
 export type TemperatureNotificationConnector = {
   __typename: 'TemperatureNotificationConnector';
-  breaches: Array<TemperatureBreachNode>;
-  excursions: Array<TemperatureExcursionNode>;
+  breaches: TemperatureBreachConnector;
+  excursions: TemperatureExcursionConnector;
 };
 
 export type TemperatureNotificationsResponse = TemperatureNotificationConnector;

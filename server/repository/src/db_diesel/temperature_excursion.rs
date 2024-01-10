@@ -1,11 +1,10 @@
-use crate::TemperatureLogFilter;
 use crate::{
     db_diesel::{
         temperature_breach_config_row::temperature_breach_config::dsl as temperature_breach_config_dsl,
         temperature_log_row::temperature_log::dsl as temperature_log_dsl,
     },
     diesel_macros::{apply_date_time_filter, apply_equal_filter},
-    TemperatureBreachRowType,
+    TemperatureBreachRowType, TemperatureLogFilter,
 };
 use crate::{RepositoryError, StorageConnection};
 use chrono::NaiveDateTime;
@@ -14,6 +13,7 @@ use diesel::{prelude::*, sql_types::Integer};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TemperatureExcursion {
+    pub id: String,
     pub datetime: NaiveDateTime,
     pub temperature: f64,
     pub location_id: Option<String>,
@@ -30,6 +30,7 @@ pub struct TemperatureExcursionRepository<'a> {
 }
 
 type QueryResult = (
+    String,
     NaiveDateTime,
     f64,
     String,
@@ -41,6 +42,7 @@ type QueryResult = (
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TemperatureRow {
+    pub id: String,
     pub datetime: NaiveDateTime,
     pub temperature: f64,
     pub store_id: String,
@@ -66,6 +68,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
                     .on(temperature_log_dsl::store_id.eq(temperature_breach_config_dsl::store_id)),
             )
             .select((
+                temperature_log_dsl::id,
                 temperature_log_dsl::datetime,
                 temperature_log_dsl::temperature,
                 temperature_log_dsl::store_id,
@@ -107,9 +110,10 @@ impl<'a> TemperatureExcursionRepository<'a> {
 
 impl TemperatureRow {
     fn from(
-        (datetime, temperature, store_id, sensor_id, location_id, duration, is_excursion): QueryResult,
+        (id, datetime, temperature, store_id, sensor_id, location_id, duration, is_excursion): QueryResult,
     ) -> Self {
         Self {
+            id,
             datetime,
             temperature,
             sensor_id,
