@@ -111,6 +111,7 @@ export const ProgramDetailModal: FC = () => {
       okButton={
         <LoadingButton
           color="secondary"
+          loadingStyle={{ iconColor: 'secondary.main' }}
           disabled={!isDirty || !!validationError}
           isLoading={isSaving}
           onClick={async () => {

@@ -109,6 +109,7 @@ export const Footer: FC<FooterProps> = ({
             />
             <LoadingButton
               color="secondary"
+              loadingStyle={{ iconColor: 'secondary.main' }}
               variant="outlined"
               disabled={isDisabled || isSaving}
               isLoading={isSaving}
