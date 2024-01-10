@@ -5,5 +5,6 @@
   "error.stocktake-not-found": "Учёт не найден",
   "heading.description": "Описание",
   "label.add-new-line": "Добавить новую строку",
-  "label.location": "Местонахождение"
+  "label.location": "Местонахождение",
+  "label.new": "Новый"
 }
