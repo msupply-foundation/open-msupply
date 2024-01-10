@@ -170,12 +170,14 @@ export const allocateQuantities =
       numberOfPacks: 0,
       isUpdated: batch.numberOfPacks > 0,
     }));
+
     const validBatches = newDraftStockOutLines
       .filter(
-        ({ expiryDate, packSize, stockLine }) =>
+        ({ expiryDate, packSize, stockLine, location }) =>
           (issuePackSize ? packSize === issuePackSize : true) &&
           (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
           !stockLine?.onHold &&
+          !location?.onHold &&
           !(!!expiryDate && DateUtils.isExpired(new Date(expiryDate)))
       )
       .sort(SortUtils.byExpiryAsc);

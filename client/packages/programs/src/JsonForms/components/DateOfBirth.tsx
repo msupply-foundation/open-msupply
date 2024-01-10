@@ -89,7 +89,7 @@ const UIComponent = (props: ControlProps) => {
             // undefined is displayed as "now" and null as unset
             value={dob ?? null}
             onChange={onChangeDoB}
-            format="dd/MM/yyyy"
+            format="P"
             width={135}
             disableFuture
             disabled={!props.enabled}

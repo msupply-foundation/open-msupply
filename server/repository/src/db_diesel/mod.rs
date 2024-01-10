@@ -20,6 +20,7 @@ mod document_registry_row;
 pub mod encounter;
 mod name_link_row;
 
+mod clinician_link_row;
 pub mod encounter_row;
 mod filter_restriction;
 mod filter_sort_pagination;
@@ -99,6 +100,7 @@ pub use activity_log_row::*;
 pub use barcode_row::*;
 pub use changelog::*;
 pub use clinician::*;
+pub use clinician_link_row::*;
 pub use clinician_row::*;
 pub use clinician_store_join_row::*;
 pub use consumption::*;

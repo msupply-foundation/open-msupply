@@ -85,8 +85,22 @@ describe('ColumnDefinitionSetBuilder', () => {
       .build();
 
     expect(columns).toEqual([
-      { key: 'type', width: 300, label: 'label.type', order: 100 },
-      { key: 'status', width: 300, label: 'admin', order: 101 },
+      {
+        key: 'type',
+        width: 300,
+        label: 'label.type',
+        maxWidth: 300,
+        minWidth: 300,
+        order: 100,
+      },
+      {
+        key: 'status',
+        width: 300,
+        label: 'admin',
+        maxWidth: 300,
+        minWidth: 300,
+        order: 101,
+      },
     ]);
   });
 });

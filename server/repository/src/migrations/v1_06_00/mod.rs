@@ -2,7 +2,11 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod clinician_link;
+mod clinician_store_join_add_clinician_link_id;
 mod contact_trace;
+mod encounter_status;
+mod indexes;
 mod invoice_add_name_link_id;
 mod invoice_line_add_item_link_id;
 mod item_add_is_active;
@@ -15,6 +19,7 @@ mod name_store_join_add_name_link_id;
 mod name_tag_join_add_name_link_id;
 mod patient_id_indices;
 mod plugin_data;
+mod program_enrolment_status;
 mod requisition_add_name_link_id;
 mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
@@ -52,6 +57,13 @@ impl Migration for V1_06_00 {
         name_tag_join_add_name_link_id::migrate(connection)?;
         requisition_add_name_link_id::migrate(connection)?;
 
+        // Clinician link migrations
+        clinician_link::migrate(connection)?;
+        clinician_store_join_add_clinician_link_id::migrate(connection)?;
+
+        program_enrolment_status::migrate(connection)?;
+        indexes::migrate(connection)?;
+        encounter_status::migrate(connection)?;
         Ok(())
     }
 }

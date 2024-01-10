@@ -201,25 +201,14 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
 mod invoice_count_service_test {
     use repository::{
         mock::{
-            mock_name_link_from_name, mock_name_store_a, mock_name_store_b,
-            mock_outbound_shipment_a, mock_store_b, MockDataInserts,
+            mock_name_store_a, mock_name_store_b, mock_outbound_shipment_a, mock_store_b,
+            MockDataInserts,
         },
-        test_db, InvoiceRowRepository, NameLinkRowRepository, NameRow, NameRowRepository,
-        StorageConnection, StoreRowRepository,
+        test_db, InvoiceRowRepository, NameRowRepository, StoreRowRepository,
     };
     use util::timezone::offset_to_timezone;
 
     use super::*;
-
-    async fn insert_name_and_link(name: &NameRow, connection: &StorageConnection) -> () {
-        let name_repo = NameRowRepository::new(&connection);
-        name_repo.insert_one(&name).await.unwrap();
-
-        NameLinkRowRepository::new(&connection)
-            .insert_one(&mock_name_link_from_name(&name))
-            .await
-            .unwrap();
-    }
 
     #[actix_rt::test]
     async fn test_created_invoice_count() {
@@ -235,8 +224,10 @@ mod invoice_count_service_test {
         let store_1 = mock_store_b();
         let invalid_store_id = "invalid_store_id";
         let invoice_1 = mock_outbound_shipment_a();
-        insert_name_and_link(&name_store_a, &connection).await;
-        insert_name_and_link(&name_store_b, &connection).await;
+        let name_repo = NameRowRepository::new(&connection);
+        name_repo.insert_one(&name_store_a).await.unwrap();
+        name_repo.insert_one(&name_store_b).await.unwrap();
+
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&store_1).await.unwrap();
         let invoice_repo = InvoiceRowRepository::new(&connection);
