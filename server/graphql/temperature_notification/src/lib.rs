@@ -76,25 +76,31 @@ mod test {
         mock::MockDataInserts, temperature_breach::TemperatureBreach, StorageConnection,
         StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
     };
-    use repository::{PaginationOption, TemperatureBreachFilter, TemperatureBreachSort};
+    use repository::{
+        PaginationOption, TemperatureBreachFilter, TemperatureBreachSort, TemperatureExcursion,
+    };
     use serde_json::json;
 
     use service::temperature_breach::TemperatureBreachServiceTrait;
+    use service::temperature_excursion::TemperatureExcursionServiceTrait;
     use service::{service_provider::ServiceProvider, ListError, ListResult};
 
     use crate::TemperatureNotificationQueries;
 
-    type GetTemperatureNotifications = dyn Fn(
+    type GetTemperatureBreaches = dyn Fn(
             Option<PaginationOption>,
             Option<TemperatureBreachFilter>,
             Option<TemperatureBreachSort>,
         ) -> Result<ListResult<TemperatureBreach>, ListError>
         + Sync
         + Send;
+    type GetTemperatureExcursions =
+        dyn Fn() -> Result<Vec<TemperatureExcursion>, repository::RepositoryError> + Sync + Send;
 
-    pub struct TestService(pub Box<GetTemperatureNotifications>);
+    pub struct TestNotificationService(pub Box<GetTemperatureBreaches>);
+    pub struct TestExcursionService(pub Box<GetTemperatureExcursions>);
 
-    impl TemperatureBreachServiceTrait for TestService {
+    impl TemperatureBreachServiceTrait for TestNotificationService {
         fn temperature_breaches(
             &self,
             _: &StorageConnection,
@@ -105,13 +111,24 @@ mod test {
             (self.0)(pagination, filter, sort)
         }
     }
+    impl TemperatureExcursionServiceTrait for TestExcursionService {
+        fn excursions(
+            &self,
+            _: &StorageConnection,
+            _: &str,
+        ) -> Result<Vec<repository::TemperatureExcursion>, repository::RepositoryError> {
+            (self.0)()
+        }
+    }
 
     pub fn service_provider(
-        temperature_breach_service: TestService,
+        temperature_breach_service: TestNotificationService,
+        temperature_excursion_service: TestExcursionService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
         service_provider.temperature_breach_service = Box::new(temperature_breach_service);
+        service_provider.temperature_excursion_service = Box::new(temperature_excursion_service);
         service_provider
     }
 
@@ -130,9 +147,18 @@ mod test {
             temperatureNotifications(storeId: \"store_a\") {
               ... on TemperatureNotificationConnector {
                 breaches {
-                  id
-                  sensorId
-                  unacknowledged
+                    nodes {
+                        id
+                        sensorId
+                        unacknowledged
+                    }
+                }
+                excursions {
+                    nodes {
+                        id
+                        sensorId
+                        maxOrMinTemperature
+                    }
                 }
               }
             }
@@ -140,7 +166,7 @@ mod test {
         "#;
 
         // Test single record
-        let test_service = TestService(Box::new(|_, _, _| {
+        let notification_service = TestNotificationService(Box::new(|_, _, _| {
             Ok(ListResult {
                 rows: vec![TemperatureBreach {
                     temperature_breach_row: TemperatureBreachRow {
@@ -172,15 +198,40 @@ mod test {
             })
         }));
 
+        let excursion_service = TestExcursionService(Box::new(|| {
+            Ok(vec![TemperatureExcursion {
+                id: "log_1".to_owned(),
+                datetime: NaiveDate::from_ymd_opt(2022, 7, 1)
+                    .unwrap()
+                    .and_hms_opt(0, 0, 0)
+                    .unwrap()
+                    + Duration::seconds(47046),
+                temperature: 9.5,
+                location_id: None,
+                sensor_id: "sensor_1".to_owned(),
+                duration: 3600,
+                store_id: "store_1".to_owned(),
+            }])
+        }));
+
         let expected = json!({
               "temperatureNotifications": {
-                  "breaches": [
+                  "breaches":
                       {
-                          "id": "acknowledged_temperature_breach",
-                          "sensorId": "sensor_1",
-                          "unacknowledged": false,
+                        "nodes": [{
+                            "id": "acknowledged_temperature_breach",
+                            "sensorId": "sensor_1",
+                            "unacknowledged": false,
+                        }]
                       },
-                  ]
+                  "excursions":
+                      {
+                        "nodes": [{
+                            "id": "log_1",
+                            "sensorId": "sensor_1",
+                            "maxOrMinTemperature": 9.5,
+                        }]
+                      },
               }
           }
         );
@@ -190,23 +241,33 @@ mod test {
             query,
             &None,
             &expected,
-            Some(service_provider(test_service, &connection_manager))
+            Some(service_provider(
+                notification_service,
+                excursion_service,
+                &connection_manager
+            ))
         );
 
         // Test no records
 
-        let test_service = TestService(Box::new(|_, _, _| {
+        let notification_service = TestNotificationService(Box::new(|_, _, _| {
             Ok(ListResult {
                 rows: Vec::new(),
                 count: 0,
             })
         }));
+        let excursion_service = TestExcursionService(Box::new(|| Ok(Vec::new())));
 
         let expected = json!({
               "temperatureNotifications": {
-                  "breaches": [
-
-                  ]
+                  "breaches":
+                        {
+                            "nodes": []
+                        },
+                    "excursions":
+                        {
+                            "nodes": []
+                        },
               }
           }
         );
@@ -216,7 +277,11 @@ mod test {
             query,
             &None,
             &expected,
-            Some(service_provider(test_service, &connection_manager))
+            Some(service_provider(
+                notification_service,
+                excursion_service,
+                &connection_manager
+            ))
         );
     }
 }
