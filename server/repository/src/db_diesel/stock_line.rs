@@ -41,6 +41,7 @@ pub enum StockLineSortField {
     Batch,
     PackSize,
     SupplierName,
+    LocationCode,
 }
 
 #[derive(Debug, Clone)]
@@ -136,6 +137,9 @@ impl<'a> StockLineRepository<'a> {
                 }
                 StockLineSortField::SupplierName => {
                     apply_sort_no_case!(query, sort, name_dsl::name_);
+                }
+                StockLineSortField::LocationCode => {
+                    apply_sort_no_case!(query, sort, location_dsl::code);
                 }
             }
         } else {
