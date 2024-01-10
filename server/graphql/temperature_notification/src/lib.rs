@@ -5,24 +5,24 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{temperature_breach::TemperatureBreachFilter, EqualFilter, PaginationOption};
+use repository::{
+    temperature_breach::TemperatureBreachFilter, EqualFilter, PaginationOption,
+    TemperatureBreachSort, TemperatureBreachSortField,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
-pub struct TemperatureBreachQueries;
+pub struct TemperatureNotificationQueries;
 
 #[Object]
-impl TemperatureBreachQueries {
-    /// Query omSupply "temperature_breach" entries
-    pub async fn temperature_breaches(
+impl TemperatureNotificationQueries {
+    /// Query omSupply temperature notification entries
+    pub async fn temperature_notifications(
         &self,
         ctx: &Context<'_>,
         store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
-        #[graphql(desc = "Filter option")] filter: Option<TemperatureBreachFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
-        sort: Option<Vec<TemperatureBreachSortInput>>,
-    ) -> Result<TemperatureBreachesResponse> {
+    ) -> Result<TemperatureNotificationsResponse> {
         let user = validate_auth(
             ctx,
             &ResourceAccessRequest {
@@ -34,26 +34,26 @@ impl TemperatureBreachQueries {
         let service_provider = ctx.service_provider();
         let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
-        // always filter by store_id
-        let filter = filter
-            .map(TemperatureBreachFilter::from)
-            .unwrap_or(TemperatureBreachFilter::new())
-            .store_id(EqualFilter::equal_to(&store_id));
+        // construct filter
+        let filter = TemperatureBreachFilter::new()
+            .store_id(EqualFilter::equal_to(&store_id))
+            .unacknowledged(true);
 
-        let temperature_breaches = service_provider
+        let temperature_notifications = service_provider
             .temperature_breach_service
             .temperature_breaches(
                 &service_context.connection,
                 page.map(PaginationOption::from),
                 Some(filter),
-                // Currently only one sort option is supported, use the first from the list.
-                sort.and_then(|mut sort_list| sort_list.pop())
-                    .map(|sort| sort.to_domain()),
+                Some(TemperatureBreachSort {
+                    key: TemperatureBreachSortField::StartDatetime,
+                    desc: Some(true),
+                }),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
-        Ok(TemperatureBreachesResponse::Response(
-            TemperatureBreachConnector::from_domain(temperature_breaches),
+        Ok(TemperatureNotificationsResponse::Response(
+            TemperatureNotificationConnector::from_domain(temperature_notifications),
         ))
     }
 }
@@ -64,23 +64,19 @@ mod test {
     use chrono::{Duration, NaiveDate};
     use graphql_core::assert_graphql_query;
     use graphql_core::test_helpers::setup_graphl_test;
-    use repository::PaginationOption;
     use repository::{
-        mock::MockDataInserts,
-        temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort},
-        StorageConnection, StorageConnectionManager, TemperatureBreachRow,
-        TemperatureBreachRowType,
+        mock::MockDataInserts, temperature_breach::TemperatureBreach, StorageConnection,
+        StorageConnectionManager, TemperatureBreachRow, TemperatureBreachRowType,
     };
+    use repository::{PaginationOption, TemperatureBreachFilter, TemperatureBreachSort};
     use serde_json::json;
 
-    use service::{
-        service_provider::ServiceProvider, temperature_breach::TemperatureBreachServiceTrait,
-        ListError, ListResult,
-    };
+    use service::temperature_breach::TemperatureBreachServiceTrait;
+    use service::{service_provider::ServiceProvider, ListError, ListResult};
 
-    use crate::TemperatureBreachQueries;
+    use crate::TemperatureNotificationQueries;
 
-    type GetTemperatureBreaches = dyn Fn(
+    type GetTemperatureNotifications = dyn Fn(
             Option<PaginationOption>,
             Option<TemperatureBreachFilter>,
             Option<TemperatureBreachSort>,
@@ -88,7 +84,7 @@ mod test {
         + Sync
         + Send;
 
-    pub struct TestService(pub Box<GetTemperatureBreaches>);
+    pub struct TestService(pub Box<GetTemperatureNotifications>);
 
     impl TemperatureBreachServiceTrait for TestService {
         fn temperature_breaches(
@@ -112,25 +108,24 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_temperature_breaches_success() {
+    async fn test_graphql_temperature_notifications_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
-            TemperatureBreachQueries,
+            TemperatureNotificationQueries,
             EmptyMutation,
-            "test_graphql_temperature_breaches_success",
+            "test_graphql_temperature_notifications_success",
             MockDataInserts::all(),
         )
         .await;
 
         let query = r#"
         query {
-            temperatureBreaches(storeId: \"store_a\") {
-              ... on TemperatureBreachConnector {
-                nodes {
+            temperatureNotifications(storeId: \"store_a\") {
+              ... on TemperatureNotificationConnector {
+                breaches {
                   id
                   sensorId
                   unacknowledged
                 }
-                totalCount
               }
             }
         }
@@ -170,15 +165,14 @@ mod test {
         }));
 
         let expected = json!({
-              "temperatureBreaches": {
-                  "nodes": [
+              "temperatureNotifications": {
+                  "breaches": [
                       {
                           "id": "acknowledged_temperature_breach",
                           "sensorId": "sensor_1",
                           "unacknowledged": false,
                       },
-                  ],
-                  "totalCount": 1
+                  ]
               }
           }
         );
@@ -201,11 +195,10 @@ mod test {
         }));
 
         let expected = json!({
-              "temperatureBreaches": {
-                  "nodes": [
+              "temperatureNotifications": {
+                  "breaches": [
 
-                  ],
-                  "totalCount": 0
+                  ]
               }
           }
         );

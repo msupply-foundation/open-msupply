@@ -35,6 +35,7 @@ use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
 use graphql_temperature_breach::TemperatureBreachQueries;
 use graphql_temperature_log::TemperatureLogQueries;
+use graphql_temperature_notification::TemperatureNotificationQueries;
 
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
@@ -59,6 +60,7 @@ pub struct Queries(
     pub SensorQueries,
     pub TemperatureBreachQueries,
     pub TemperatureLogQueries,
+    pub TemperatureNotificationQueries,
     pub StocktakeQueries,
     pub StocktakeLineQueries,
     pub GeneralQueries,
@@ -81,6 +83,7 @@ impl Queries {
             SensorQueries,
             TemperatureBreachQueries,
             TemperatureLogQueries,
+            TemperatureNotificationQueries,
             StocktakeQueries,
             StocktakeLineQueries,
             GeneralQueries,

@@ -13,10 +13,8 @@ import { useFormatDateTime, useTranslation } from '@common/intl';
 import { CircleAlertIcon } from '@common/icons';
 import { alpha, useTheme } from '@common/styles';
 import { AppRoute } from '@openmsupply-client/config';
-import {
-  TemperatureBreachFragment,
-  useTemperatureBreach,
-} from './Monitoring/api/TemperatureBreach';
+import { useTemperatureNotification } from './Monitoring/api';
+import { TemperatureNotificationBreachFragment } from './Monitoring/api';
 
 const Text: React.FC<PropsWithChildren> = ({ children }) => (
   <Typography
@@ -38,7 +36,11 @@ const Separator = () => (
   </Text>
 );
 
-const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
+const DetailButton = ({
+  notification,
+}: {
+  notification: TemperatureNotificationBreachFragment;
+}) => {
   const t = useTranslation('coldchain');
   const navigate = useNavigate();
   const { urlQuery } = useUrlQuery();
@@ -62,7 +64,7 @@ const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
               sort: TemperatureBreachSortFieldInput.StartDatetime,
             })
             .addQuery({ unacknowledged: true })
-            .addQuery({ 'sensor.name': breach.sensor?.name ?? '' })
+            .addQuery({ 'sensor.name': notification.sensor?.name ?? '' })
             .build()
         )
       }
@@ -71,17 +73,21 @@ const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
     </BaseButton>
   );
 };
-const Location = ({ breach }: { breach: TemperatureBreachFragment }) => {
+const Location = ({
+  notification,
+}: {
+  notification: TemperatureNotificationBreachFragment;
+}) => {
   const t = useTranslation('coldchain');
 
-  if (!breach?.location?.name) return null;
+  if (!notification?.location?.name) return null;
   return (
     <>
       <Separator />
-      {!!breach?.location?.name && (
+      {!!notification?.location?.name && (
         <Text>
           {t('message.location')}
-          <b style={{ paddingLeft: 4 }}>{breach.location.name}</b>
+          <b style={{ paddingLeft: 4 }}>{notification.location.name}</b>
         </Text>
       )}
     </>
@@ -91,16 +97,14 @@ const Location = ({ breach }: { breach: TemperatureBreachFragment }) => {
 export const ColdchainNotification = () => {
   const theme = useTheme();
   const t = useTranslation('coldchain');
-  const { data: breaches } = useTemperatureBreach.document.notifications({
+  const { data: notifications } = useTemperatureNotification.document.list({
     first: 1,
     offset: 0,
-    sortBy: { key: 'startDatetime', direction: 'desc', isDesc: true },
-    filterBy: { unacknowledged: true },
   });
   const { localisedDistanceToNow } = useFormatDateTime();
-  const breach = breaches?.nodes?.[0];
+  const notification = notifications?.breaches?.[0];
 
-  if (!breach) return null;
+  if (!notification) return null;
 
   return (
     <Box
@@ -135,16 +139,16 @@ export const ColdchainNotification = () => {
       <Text>
         <b>
           {t('message.notification-breach-detected', {
-            time: localisedDistanceToNow(breach.startDatetime),
+            time: localisedDistanceToNow(notification.startDatetime),
           })}
         </b>
       </Text>
       <Separator />
-      {!!breach.maxOrMinTemperature && (
+      {!!notification.maxOrMinTemperature && (
         <>
           <Text>
             {t('message.last-temperature', {
-              temperature: breach.maxOrMinTemperature,
+              temperature: notification.maxOrMinTemperature,
             })}
           </Text>
           <Separator />
@@ -152,9 +156,9 @@ export const ColdchainNotification = () => {
       )}
       <Text>
         {t('message.device')}
-        <b style={{ paddingLeft: 4 }}>{breach.sensor?.name}</b>
+        <b style={{ paddingLeft: 4 }}>{notification.sensor?.name}</b>
       </Text>
-      <Location breach={breach} />
+      <Location notification={notification} />
       <Box
         sx={{
           justifyContent: 'flex-end',
@@ -164,7 +168,7 @@ export const ColdchainNotification = () => {
           height: '32px',
         }}
       >
-        <DetailButton breach={breach} />
+        <DetailButton notification={notification} />
       </Box>
     </Box>
   );

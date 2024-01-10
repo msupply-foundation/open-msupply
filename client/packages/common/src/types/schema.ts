@@ -3776,6 +3776,8 @@ export type Queries = {
   temperatureChart: TemperatureChartResponse;
   /** Query omSupply "temperature_log" entries */
   temperatureLogs: TemperatureLogsResponse;
+  /** Query omSupply temperature notification entries */
+  temperatureNotifications: TemperatureNotificationsResponse;
 };
 
 
@@ -4196,6 +4198,12 @@ export type QueriesTemperatureLogsArgs = {
   filter?: InputMaybe<TemperatureLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<TemperatureLogSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesTemperatureNotificationsArgs = {
+  page?: InputMaybe<PaginationInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -5091,6 +5099,18 @@ export type TemperatureChartNode = {
 
 export type TemperatureChartResponse = TemperatureChartNode;
 
+export type TemperatureExcursionNode = {
+  __typename: 'TemperatureExcursionNode';
+  durationMilliseconds: Scalars['Int']['output'];
+  endDatetime?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['String']['output'];
+  location?: Maybe<LocationNode>;
+  maxOrMinTemperature?: Maybe<Scalars['Float']['output']>;
+  sensor?: Maybe<SensorNode>;
+  sensorId: Scalars['String']['output'];
+  startDatetime: Scalars['DateTime']['output'];
+};
+
 export type TemperatureLogConnector = {
   __typename: 'TemperatureLogConnector';
   nodes: Array<TemperatureLogNode>;
@@ -5132,6 +5152,14 @@ export type TemperatureLogSortInput = {
 };
 
 export type TemperatureLogsResponse = TemperatureLogConnector;
+
+export type TemperatureNotificationConnector = {
+  __typename: 'TemperatureNotificationConnector';
+  breaches: Array<TemperatureBreachNode>;
+  excursions: Array<TemperatureExcursionNode>;
+};
+
+export type TemperatureNotificationsResponse = TemperatureNotificationConnector;
 
 export type TemperaturePointNode = {
   __typename: 'TemperaturePointNode';
