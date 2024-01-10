@@ -1,1 +1,14 @@
-{}
+{
+  "inventory-management": "Управление Запасами",
+  "label.expired_one": "Просроченная партия",
+  "label.expired_other": "Просроченные партии",
+  "label.expiring-soon_one": "Партия, истекающая через месяц",
+  "label.expiring-soon_other": "Партии, истекающие через месяц",
+  "label.low-stock-items_one": "Товар с запасом менее 3 месяцев",
+  "label.low-stock-items_other": "Товары с запасом менее 3 месяцев",
+  "label.this-week": "Эта неделя",
+  "label.total-items_other": "Итого товаров",
+  "label.today": "Сегодня",
+  "label.more-than-six-months-stock-items_one": "Товар с запасом более 6 месяцев",
+  "label.more-than-six-months-stock-items_other": "Товары с запасом более 6 месяцев"
+}
