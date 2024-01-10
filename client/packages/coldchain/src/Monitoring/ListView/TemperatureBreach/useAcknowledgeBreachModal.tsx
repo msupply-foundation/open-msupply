@@ -82,12 +82,14 @@ const BreachModal = ({
                 time: localisedDistanceToNow(breach.startDatetime),
               })}
             />
-            <TextRow
-              label={t('message.last-temperature-reading')}
-              text={t('message.temperature', {
-                temperature: breach.maxOrMinTemperature,
-              })}
-            />
+            {!!breach.maxOrMinTemperature && (
+              <TextRow
+                label={t('message.last-temperature-reading')}
+                text={t('message.temperature', {
+                  temperature: breach.maxOrMinTemperature,
+                })}
+              />
+            )}
             <TextRow
               label={t('message.device')}
               text={breach.sensor?.name ?? ''}
