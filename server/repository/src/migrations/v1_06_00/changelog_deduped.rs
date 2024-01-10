@@ -28,5 +28,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#
     )?;
 
+    sql!(
+        connection,
+        r#"
+        CREATE INDEX index_changelog_record_id ON changelog (record_id);
+        "#
+    )?;
     Ok(())
 }
