@@ -16,7 +16,7 @@ import {
 import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
 
-export const temperatureLogFilterAndSort = {
+const temperatureLogFilterAndSort = {
   initialSort: { key: 'datetime', dir: 'asc' as 'asc' | 'desc' },
   filters: [
     { key: 'datetime', condition: 'between' },
@@ -68,9 +68,9 @@ const ListView: FC = () => {
         sortable: false,
       },
       {
-        key: 'locationName',
+        key: 'location',
         label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
         sortable: false,
       },
       {

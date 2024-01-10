@@ -4,7 +4,7 @@ import {
   useTranslation,
   AppFooterPortal,
   ButtonWithIcon,
-  CheckIcon,
+  SaveIcon,
   XCircleIcon,
   useNavigate,
   Typography,
@@ -14,6 +14,7 @@ import {
   useDialog,
   StatusCrumbs,
   EncounterNodeStatus,
+  LoadingButton,
 } from '@openmsupply-client/common';
 import {
   DocumentHistory,
@@ -24,6 +25,7 @@ import { encounterStatusTranslation } from '../utils';
 interface FooterProps {
   documentName?: string;
   isDisabled: boolean;
+  isSaving: boolean;
   onCancel: () => void;
   onSave: () => void;
   encounter?: EncounterFragment;
@@ -62,6 +64,7 @@ const EncounterStatusCrumbs: FC<{ encounter: EncounterFragment }> = ({
 export const Footer: FC<FooterProps> = ({
   documentName,
   isDisabled,
+  isSaving,
   onCancel,
   onSave,
   encounter,
@@ -104,14 +107,17 @@ export const Footer: FC<FooterProps> = ({
               }}
               label={t('button.cancel')}
             />
-            <ButtonWithIcon
-              variant="outlined"
+            <LoadingButton
               color="secondary"
-              Icon={<CheckIcon />}
+              loadingStyle={{ iconColor: 'secondary.main' }}
+              variant="outlined"
+              disabled={isDisabled || isSaving}
+              isLoading={isSaving}
               onClick={onSave}
-              label={t('button.save')}
-              disabled={isDisabled}
-            />
+              startIcon={<SaveIcon />}
+            >
+              {t('button.save')}
+            </LoadingButton>
           </Box>
 
           <Modal

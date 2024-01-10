@@ -47,7 +47,7 @@ const EncounterListComponent: FC = () => {
   const { data, isError, isLoading } = useEncounter.document.list({
     pagination: { first, offset },
     sortBy,
-    filterBy,
+    filterBy: filterBy ?? undefined,
   });
   const navigate = useNavigate();
   const columns = useEncounterListColumns({

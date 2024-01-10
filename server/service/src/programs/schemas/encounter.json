@@ -34,6 +34,9 @@
           "format": "date-time",
           "type": "string"
         },
+        "extension": {
+          "type": "object"
+        },
         "location": {
           "$ref": "#/definitions/EncounterLocation",
           "description": "The store/clinic/location of the encounter"
@@ -66,7 +69,7 @@
       "type": "object"
     },
     "EncounterStatus": {
-      "enum": ["PENDING", "VISITED", "CANCELLED"],
+      "enum": ["PENDING", "VISITED", "CANCELLED", "DELETED"],
       "type": "string"
     },
     "Note": {

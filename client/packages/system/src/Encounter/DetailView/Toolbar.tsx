@@ -18,6 +18,9 @@ import {
   Option,
   useIntlUtils,
   DocumentRegistryCategoryNode,
+  DeleteIcon,
+  SxProps,
+  Theme,
 } from '@openmsupply-client/common';
 import {
   EncounterFragment,
@@ -28,7 +31,7 @@ import {
   ClinicianSearchInput,
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
-import { Select } from '@common/components';
+import { IconButton, Select, useConfirmationModal } from '@common/components';
 import { encounterStatusTranslation } from '../utils';
 
 const encounterStatusOption = (
@@ -41,14 +44,27 @@ const encounterStatusOption = (
   };
 };
 
-const Row = ({ label, Input }: { label: string; Input: ReactNode }) => (
-  <InputWithLabelRow labelWidth="90px" label={label} Input={Input} />
+const Row = ({
+  label,
+  Input,
+  sx,
+}: {
+  label: string;
+  Input: ReactNode;
+  sx?: SxProps<Theme>;
+}) => (
+  <InputWithLabelRow labelWidth="90px" label={label} Input={Input} sx={sx} />
 );
 interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
+  onDelete: () => void;
   encounter: EncounterFragment;
 }
-export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
+export const Toolbar: FC<ToolbarProps> = ({
+  encounter,
+  onChange,
+  onDelete,
+}) => {
   const [status, setStatus] = useState<EncounterNodeStatus | undefined>(
     encounter.status ?? undefined
   );
@@ -78,15 +94,32 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
       ),
       value: encounter.clinician as Clinician,
     });
-  }, [
-    encounter.status,
-    encounter.startDatetime,
-    encounter.endDatetime,
-    encounter.clinician,
-  ]);
+  }, [encounter]);
+
+  const getDeleteConfirmation = useConfirmationModal({
+    message: t('message.confirm-delete-encounter'),
+    title: t('title.confirm-delete-encounter'),
+  });
+
+  const onDeleteClick = () => {
+    getDeleteConfirmation({
+      onConfirm: () => {
+        setStatus(EncounterNodeStatus.Deleted);
+        onDelete();
+      },
+    });
+  };
 
   const { patient } = encounter;
 
+  const statusOptions = [
+    encounterStatusOption(EncounterNodeStatus.Pending, t),
+    encounterStatusOption(EncounterNodeStatus.Visited, t),
+    encounterStatusOption(EncounterNodeStatus.Cancelled, t),
+  ];
+  if (status === EncounterNodeStatus.Deleted) {
+    statusOptions.push(encounterStatusOption(EncounterNodeStatus.Deleted, t));
+  }
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -131,6 +164,32 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                   />
                 }
               />
+
+              <Row
+                label={t('label.encounter-status')}
+                sx={{ marginLeft: 'auto' }}
+                Input={
+                  <Select
+                    fullWidth
+                    onChange={event => {
+                      const newStatus = event.target
+                        .value as EncounterNodeStatus;
+                      setStatus(newStatus);
+                      onChange({
+                        status: newStatus,
+                      });
+                    }}
+                    options={statusOptions}
+                    value={status}
+                  />
+                }
+              />
+
+              <IconButton
+                icon={<DeleteIcon />}
+                onClick={onDeleteClick}
+                label={t('label.delete')}
+              />
             </Box>
             <Box display="flex" gap={1.5}>
               <Row
@@ -154,28 +213,6 @@ export const Toolbar: FC<ToolbarProps> = ({ encounter, onChange }) => {
                     }}
                     clinicianLabel={clinician?.label || ''}
                     clinicianValue={clinician?.value}
-                  />
-                }
-              />
-              <Row
-                label={t('label.encounter-status')}
-                Input={
-                  <Select
-                    fullWidth
-                    onChange={event => {
-                      const newStatus = event.target
-                        .value as EncounterNodeStatus;
-                      setStatus(newStatus);
-                      onChange({
-                        status: newStatus,
-                      });
-                    }}
-                    options={[
-                      encounterStatusOption(EncounterNodeStatus.Pending, t),
-                      encounterStatusOption(EncounterNodeStatus.Visited, t),
-                      encounterStatusOption(EncounterNodeStatus.Cancelled, t),
-                    ]}
-                    value={status}
                   />
                 }
               />

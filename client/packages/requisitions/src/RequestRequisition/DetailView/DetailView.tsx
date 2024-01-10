@@ -11,7 +11,10 @@ import {
   createQueryParamsStore,
   DetailTabs,
 } from '@openmsupply-client/common';
-import { ItemRowWithStatsFragment, LogList } from '@openmsupply-client/system';
+import {
+  ItemRowWithStatsFragment,
+  ActivityLogList,
+} from '@openmsupply-client/system';
 import { RequestLineFragment, useRequest } from '../api';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -49,7 +52,7 @@ export const DetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <LogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];

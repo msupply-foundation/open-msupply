@@ -12,6 +12,7 @@ import {
   useTranslation,
   TypedTFunction,
   LocaleKey,
+  useColumnUtils,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -62,6 +63,7 @@ export const useStocktakeColumns = ({
 >[] => {
   const { getError } = useStocktakeLineErrorContext();
   const t = useTranslation();
+  const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   return useColumns<StocktakeLineFragment | StocktakeSummaryItem>(
     [
@@ -102,135 +104,61 @@ export const useStocktakeColumns = ({
       [
         'batch',
         {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(
-                  lines,
-                  'batch',
-                  t('multiple')
-                ) ?? ''
-              );
-            } else {
-              return row.batch ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'batch',
-                t('multiple')
-              );
-            } else {
-              return rowData.batch;
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'] },
+            ]),
         },
       ],
       [
         'expiryDate',
         {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              const expiryDate =
-                ArrayUtils.ifTheSameElseDefault(
-                  lines,
-                  'expiryDate',
-                  t('multiple')
-                ) ?? '';
-              return expiryDate;
-            } else {
-              return row.expiryDate ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              const expiryDate = ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'expiryDate',
-                t('multiple')
-              );
-              return expiryDate;
-            } else {
-              return rowData.expiryDate;
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'] },
+            ]),
         },
       ],
       [
-        'locationName',
+        'location',
         {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const locations = row.lines.flatMap(({ location }) =>
-                !!location ? [location] : []
-              );
-              if (locations.length !== 0) {
-                return ArrayUtils.ifTheSameElseDefault(
-                  locations,
-                  'name',
-                  t('multiple')
-                );
-              } else {
-                return '';
-              }
-            } else {
-              return row.location?.name ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const locations = rowData.lines.flatMap(({ location }) =>
-                !!location ? [location] : []
-              );
-
-              if (locations.length !== 0) {
-                return ArrayUtils.ifTheSameElseDefault(
-                  locations,
-                  'name',
-                  t('multiple')
-                );
-              }
-            } else {
-              return rowData.location?.name ?? '';
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'] },
+            ]),
         },
       ],
       [
         'packSize',
         {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(
-                  lines,
-                  'packSize',
-                  t('multiple')
-                ) ?? ''
-              );
-            } else {
-              return row.packSize ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'packSize',
-                t('multiple')
-              );
-            } else {
-              return rowData.packSize;
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'] },
+            ]),
         },
       ],
       {
@@ -359,32 +287,17 @@ export const useStocktakeColumns = ({
       {
         key: 'comment',
         label: 'label.stocktake-comment',
-        getSortValue: row => {
-          if ('lines' in row) {
-            const { lines } = row;
-            return (
-              ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'comment',
-                t('multiple')
-              ) ?? ''
-            );
-          } else {
-            return row.comment ?? '';
-          }
-        },
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(
-              lines,
-              'comment',
-              t('multiple')
-            );
-          } else {
-            return rowData.comment;
-          }
-        },
+
+        getSortValue: row =>
+          getColumnPropertyAsString(row, [
+            { path: ['lines', 'comment'] },
+            { path: ['comment'], default: '' },
+          ]),
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'comment'] },
+            { path: ['comment'] },
+          ]),
       },
       expandColumn,
       GenericColumnKey.Selection,
@@ -400,9 +313,9 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
     'batch',
     'expiryDate',
     [
-      'locationName',
+      'location',
       {
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
     'packSize',

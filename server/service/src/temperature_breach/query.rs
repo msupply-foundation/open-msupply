@@ -15,7 +15,7 @@ use crate::{
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
-pub fn get_temperature_breaches(
+pub fn temperature_breaches(
     connection: &StorageConnection,
     pagination: Option<PaginationOption>,
     filter: Option<TemperatureBreachFilter>,
@@ -72,9 +72,6 @@ pub fn get_max_or_min_breach_temperature(
                 .map(|log| log.temperature_log_row.temperature)
                 .min_by(|a, b| a.partial_cmp(b).unwrap()))
         }
-        TemperatureBreachRowType::Excursion => Err(RepositoryError::DBError {
-            msg: "Invalid breach type".to_string(),
-            extra: "Excursion is not supported as a breach type".to_string(),
-        }),
+        TemperatureBreachRowType::Excursion => Ok(None),
     }
 }

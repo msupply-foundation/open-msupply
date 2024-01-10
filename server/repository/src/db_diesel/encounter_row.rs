@@ -15,6 +15,7 @@ pub enum EncounterStatus {
     Pending,
     Visited,
     Cancelled,
+    Deleted,
 }
 
 table! {
