@@ -8,7 +8,6 @@ mod patient_id_indices;
 mod plugin_data;
 mod program_enrolment_status;
 mod temperature_breach;
-mod temperature_excursion;
 
 pub(crate) struct V1_06_00;
 
@@ -24,7 +23,6 @@ impl Migration for V1_06_00 {
         temperature_breach::migrate(connection)?;
         patient_id_indices::migrate(connection)?;
         program_enrolment_status::migrate(connection)?;
-        temperature_excursion::migrate(connection)?;
         Ok(())
     }
 }
