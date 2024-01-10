@@ -1,5 +1,5 @@
 {
-  "inventory-management": "Управление Запасами",
+  "inventory-management": "Управление Инвентарём",
   "label.expired_one": "Просроченная партия",
   "label.expired_other": "Просроченные партии",
   "label.expiring-soon_one": "Партия, истекающая через месяц",
@@ -10,5 +10,18 @@
   "label.total-items_other": "Итого товаров",
   "label.today": "Сегодня",
   "label.more-than-six-months-stock-items_one": "Товар с запасом более 6 месяцев",
-  "label.more-than-six-months-stock-items_other": "Товары с запасом более 6 месяцев"
+  "label.more-than-six-months-stock-items_other": "Товары с запасом более 6 месяцев",
+  "label.items-no-stock_other": "Товары, которых нет в наличии",
+  "heading.shipments": "Поставки",
+  "heading.stock-levels": "Уровень запасов",
+  "heading.expiring-stock": "Истекающие запасы",
+  "label.items-no-stock_one": "Товар, которого нет в наличии",
+  "label.have-not-shipped": "Не отправлено",
+  "label.inbound-not-delivered": "Входящие поставки не доставлены",
+  "error.failed-to-create-requisition": "Не удалось создать реквизицию! {{message}}",
+  "label.total-items_one": "Итого товар",
+  "label.not-sent": "Не отправлено",
+  "label.new": "Новый",
+  "button.order-more": "Заказать еще",
+  "button.new-outbound-shipment": "Новая Исходящая Доставка"
 }
