@@ -7,5 +7,6 @@
   "error.requisition-not-found": "Внутренний Заказ не найден",
   "error.no-internal-orders": "Нет внутренних заказов для отображения.",
   "heading.related-documents": "Сопутствующие документы",
-  "heading.service-charges": "Сервисные сборы"
+  "heading.service-charges": "Сервисные сборы",
+  "label.new": "Новый"
 }
