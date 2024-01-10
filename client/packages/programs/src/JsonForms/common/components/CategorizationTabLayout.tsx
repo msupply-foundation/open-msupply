@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import {
   and,
   Categorization,
@@ -225,7 +225,10 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
     cells,
   };
 
-  const onClose = () => setActiveCategory(undefined);
+  const onClose = useCallback(
+    () => setActiveCategory(undefined),
+    [setActiveCategory]
+  );
 
   return (
     <Grid

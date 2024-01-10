@@ -13,7 +13,7 @@ import {
   PluginEventListener,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useStock } from '../api';
-import { LogList } from '../../Log';
+import { ActivityLogList } from '../../ActivityLog';
 import { StockLineForm } from './StockLineForm';
 
 interface StockLineEditModalProps {
@@ -81,7 +81,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       value: 'label.details',
     },
     {
-      Component: <LogList recordId={draft?.id ?? ''} />,
+      Component: <ActivityLogList recordId={draft?.id ?? ''} />,
       value: 'label.log',
     },
   ];

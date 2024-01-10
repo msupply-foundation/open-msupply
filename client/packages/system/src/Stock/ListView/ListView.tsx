@@ -114,7 +114,14 @@ const StockListComponent: FC = () => {
         width: 110,
       },
     ],
-    ['locationName', { sortable: false, Cell: TooltipTextCell, width: 75 }],
+    [
+      'location',
+      {
+        Cell: TooltipTextCell,
+        width: 100,
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
     [
       'itemUnit',
       {

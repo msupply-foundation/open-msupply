@@ -12,7 +12,7 @@ import {
   DetailTabs,
   ModalMode,
 } from '@openmsupply-client/common';
-import { toItemRow, LogList } from '@openmsupply-client/system';
+import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { StockOutItem } from '../../types';
 import { Toolbar } from './Toolbar';
@@ -56,7 +56,7 @@ export const DetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <LogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];

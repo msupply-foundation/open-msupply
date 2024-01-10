@@ -563,7 +563,10 @@ export const EncountersWithDocumentDocument = gql`
     ${EncounterFragmentDoc}`;
 export const EncounterByIdDocument = gql`
     query encounterById($storeId: String!, $encounterId: String!) {
-  encounters(storeId: $storeId, filter: {id: {equalTo: $encounterId}}) {
+  encounters(
+    storeId: $storeId
+    filter: {id: {equalTo: $encounterId}, includeDeleted: true}
+  ) {
     ... on EncounterConnector {
       __typename
       nodes {

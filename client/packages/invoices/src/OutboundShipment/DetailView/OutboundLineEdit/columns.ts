@@ -7,6 +7,7 @@ import {
   CurrencyCell,
   Column,
   useCurrency,
+  LocationCell,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
@@ -35,10 +36,11 @@ export const useOutboundLineEditColumns = ({
         },
       ],
       [
-        'locationName',
+        'location',
         {
-          accessor: ({ rowData }) => rowData.location?.name,
+          accessor: ({ rowData }) => rowData.location?.code,
           width: 70,
+          Cell: LocationCell,
         },
       ],
       ['packSize', { width: 90 }],
@@ -106,9 +108,9 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
     'batch',
     'expiryDate',
     [
-      'locationName',
+      'location',
       {
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
     [
