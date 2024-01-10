@@ -15,6 +15,7 @@ fragment TemperatureBreach on TemperatureBreachNode {
   }
 
   location {
+    code
     name
   }
 }

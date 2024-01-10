@@ -7,3 +7,4 @@ export * from './CurrencyCell';
 export * from './CheckCell';
 export * from './TooltipTextCell';
 export * from './DotCell';
+export * from './LocationCell';

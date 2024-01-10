@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type TemperatureBreachFragment = { __typename: 'TemperatureBreachNode', id: string, unacknowledged: boolean, durationMilliseconds: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, comment?: string | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null };
+export type TemperatureBreachFragment = { __typename: 'TemperatureBreachNode', id: string, unacknowledged: boolean, durationMilliseconds: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, comment?: string | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', code: string, name: string } | null };
 
 export type Temperature_BreachesQueryVariables = Types.Exact<{
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -14,7 +14,7 @@ export type Temperature_BreachesQueryVariables = Types.Exact<{
 }>;
 
 
-export type Temperature_BreachesQuery = { __typename: 'Queries', temperatureBreaches: { __typename: 'TemperatureBreachConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureBreachNode', id: string, unacknowledged: boolean, durationMilliseconds: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, comment?: string | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', name: string } | null }> } };
+export type Temperature_BreachesQuery = { __typename: 'Queries', temperatureBreaches: { __typename: 'TemperatureBreachConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureBreachNode', id: string, unacknowledged: boolean, durationMilliseconds: number, endDatetime?: string | null, startDatetime: string, type: Types.TemperatureBreachNodeType, maxOrMinTemperature?: number | null, comment?: string | null, sensor?: { __typename: 'SensorNode', id: string, name: string } | null, location?: { __typename: 'LocationNode', code: string, name: string } | null }> } };
 
 export type UpdateTemperatureBreachMutationVariables = Types.Exact<{
   input: Types.UpdateTemperatureBreachInput;
@@ -40,6 +40,7 @@ export const TemperatureBreachFragmentDoc = gql`
     name
   }
   location {
+    code
     name
   }
 }

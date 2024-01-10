@@ -21,7 +21,7 @@ import { SettingTextArea, TextValue } from './SettingTextArea';
 import { SyncSettings } from './SyncSettings';
 import { useHost } from '../api';
 import { SiteInfo } from '../components/SiteInfo';
-import { AndroidSettings } from './AndroidSettings';
+import { ServerSettings } from './ServerSettings';
 import { ElectronSettings } from './ElectronSettings';
 
 export const Settings: React.FC = () => {
@@ -146,7 +146,7 @@ export const Settings: React.FC = () => {
           title={t('heading.custom-logo')}
         />
         <SyncSettings />
-        <AndroidSettings />
+        <ServerSettings />
         <ElectronSettings />
       </Grid>
       <AppVersion SiteInfo={<SiteInfo siteName={initStatus?.siteName} />} />

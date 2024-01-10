@@ -26,6 +26,7 @@ pub enum StockLineSortFieldInput {
     Batch,
     PackSize,
     SupplierName,
+    LocationCode,
 }
 #[derive(InputObject)]
 pub struct StockLineSortInput {
@@ -77,6 +78,7 @@ impl StockLineSortInput {
             from::Batch => to::Batch,
             from::PackSize => to::PackSize,
             from::SupplierName => to::SupplierName,
+            from::LocationCode => to::LocationCode,
         };
 
         StockLineSort {
