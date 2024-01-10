@@ -36,7 +36,7 @@ const BreachModal = ({
   onOk: () => void;
 }) => {
   const t = useTranslation('coldchain');
-  const { localisedDistanceToNow } = useFormatDateTime();
+  const { localisedDistance, localisedDistanceToNow } = useFormatDateTime();
   const [comment, setComment] = useState('');
   const { mutateAsync } = useTemperatureBreach.document.update();
   const { error } = useNotification();
@@ -82,16 +82,24 @@ const BreachModal = ({
                 time: localisedDistanceToNow(breach.startDatetime),
               })}
             />
+            <TextRow
+              label={t('label.duration')}
+              text={
+                !breach.endDatetime
+                  ? t('label.ongoing')
+                  : localisedDistance(breach.startDatetime, breach.endDatetime)
+              }
+            />
             {!!breach.maxOrMinTemperature && (
               <TextRow
-                label={t('message.last-temperature-reading')}
+                label={t('message.max-or-min-temperature')}
                 text={t('message.temperature', {
                   temperature: breach.maxOrMinTemperature,
                 })}
               />
             )}
             <TextRow
-              label={t('message.device')}
+              label={t('label.sensor-name')}
               text={breach.sensor?.name ?? ''}
             />
           </Box>
