@@ -108,6 +108,13 @@ impl<'a> ItemLinkRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<ItemLinkRow>, RepositoryError> {
+        let result = item_link_dsl::item_link
+            .filter(item_link::item_id.eq(item_id))
+            .load(&self.connection.connection)?;
+        Ok(result)
+    }
+
     pub fn delete(&self, item_link_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(item_link_dsl::item_link.filter(item_link::id.eq(item_link_id)))
             .execute(&self.connection.connection)?;

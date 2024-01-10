@@ -11,12 +11,9 @@ use crate::{
             contact_trace_schema::SchemaContactTrace,
             contact_trace_updated::update_contact_trace_row,
         },
-        encounter::{
-            encounter_updated::update_encounter_row, validate_misc::validate_encounter_schema,
-        },
+        encounter::{encounter_updated, validate_misc::validate_encounter_schema},
         program_enrolment::program_enrolment_updated::update_program_enrolment_row,
         program_enrolment::program_schema::SchemaProgramEnrolment,
-        update_program_document::update_program_events,
     },
 };
 
@@ -105,22 +102,15 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
     let program_row = ProgramRepository::new(con)
         .query_one(ProgramFilter::new().context_id(EqualFilter::equal_to(&document.context_id)))?
         .ok_or(RepositoryError::as_db_error("Program row not found", ""))?;
-    update_encounter_row(
+    encounter_updated::update_encounter_row_and_events(
         con,
         &patient_id,
         document,
         encounter,
         clinician_id,
         program_row,
-    )
-    .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
-
-    update_program_events(
-        con,
-        &patient_id,
         encounter_start_time,
         existing_encounter.map(|(existing, _)| existing.start_datetime),
-        &document,
         None,
     )
     .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;

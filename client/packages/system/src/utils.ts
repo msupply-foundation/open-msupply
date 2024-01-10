@@ -68,7 +68,7 @@ export const stockLinesToCsv = (
     node.item.name,
     node.batch,
     Formatter.csvDateString(node.expiryDate),
-    node.locationName,
+    node.location?.code,
     node.item.unitName,
     node.packSize,
     node.totalNumberOfPacks,
