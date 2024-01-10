@@ -7,6 +7,7 @@ import {
   CircleAlertIcon,
   DataTable,
   Formatter,
+  IconButton,
   NothingHere,
   TableProvider,
   Typography,
@@ -20,6 +21,7 @@ import {
 } from '../../api/TemperatureBreach';
 import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
+import { useAcknowledgeBreachModal } from './useAcknowledgeBreachModal';
 
 const DurationCell = ({ rowData }: CellProps<TemperatureBreachFragment>) => {
   const t = useTranslation('coldchain');
@@ -90,6 +92,8 @@ const ListView: FC = () => {
   };
   const { data, isLoading, isError } =
     useTemperatureBreach.document.list(queryParams);
+  const { AcknowledgeBreachModal, acknowledgeBreach } =
+    useAcknowledgeBreachModal();
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
@@ -98,12 +102,19 @@ const ListView: FC = () => {
     [
       {
         key: 'acknowledgedIcon',
+        sortable: false,
         Cell: ({ rowData }) => {
           return !!rowData?.unacknowledged ? (
-            <CircleAlertIcon
-              fill={theme.palette.error.main}
-              sx={{ color: 'background.white' }}
-            />
+            <IconButton
+              onClick={() => acknowledgeBreach(rowData)}
+              icon={
+                <CircleAlertIcon
+                  fill={theme.palette.error.main}
+                  sx={{ color: 'background.white' }}
+                />
+              }
+              label={t('button.acknowledge')}
+            ></IconButton>
           ) : null;
         },
       },
@@ -192,6 +203,7 @@ const ListView: FC = () => {
         }
         enableColumnSelection
       />
+      <AcknowledgeBreachModal />
     </>
   );
 };
