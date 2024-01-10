@@ -54,7 +54,7 @@ impl TemperatureNotificationQueries {
 
         let temperature_excursions = service_provider
             .temperature_excursion_service
-            .get_excursions(&service_context.connection, &store_id)
+            .excursions(&service_context.connection, &store_id)
             .map_err(StandardGraphqlError::from_repository_error)?;
 
         Ok(TemperatureNotificationsResponse::Response(

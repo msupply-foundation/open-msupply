@@ -4,22 +4,25 @@ use repository::{
     TemperatureExcursionRepository, TemperatureLogFilter, TemperatureRow,
 };
 
-pub fn excursions(
-    connection: &StorageConnection,
-    store_id: &str,
-) -> Result<Vec<TemperatureExcursion>, RepositoryError> {
-    let filter = TemperatureLogFilter::new()
-        .store_id(EqualFilter::equal_to(store_id))
-        .datetime(DatetimeFilter::after_or_equal_to(
-            Utc::now()
-                .naive_utc()
-                .checked_sub_days(Days::new(7))
-                .unwrap(),
-        ));
+pub trait TemperatureExcursionServiceTrait: Sync + Send {
+    fn excursions(
+        &self,
+        connection: &StorageConnection,
+        store_id: &str,
+    ) -> Result<Vec<TemperatureExcursion>, RepositoryError> {
+        let filter = TemperatureLogFilter::new()
+            .store_id(EqualFilter::equal_to(store_id))
+            .datetime(DatetimeFilter::after_or_equal_to(
+                Utc::now()
+                    .naive_utc()
+                    .checked_sub_days(Days::new(7))
+                    .unwrap(),
+            ));
 
-    let log_data = TemperatureExcursionRepository::new(&connection).query(filter)?;
+        let log_data = TemperatureExcursionRepository::new(&connection).query(filter)?;
 
-    temperature_excursions(log_data)
+        temperature_excursions(log_data)
+    }
 }
 
 fn temperature_excursions(
@@ -58,6 +61,7 @@ fn temperature_excursions(
             let duration = Utc::now().timestamp() - row.datetime.timestamp();
             if duration > row.duration {
                 excursion_data.push(TemperatureExcursion {
+                    id: row.id.clone(),
                     datetime: row.datetime,
                     temperature: row.temperature,
                     location_id: row.location_id.clone(),
@@ -141,20 +145,20 @@ mod test {
 
         // Sensor 1 (S1)
         let mut temperature_logs: Vec<TemperatureLogRow> = vec![
-            (40, (23, 59, 49), 30.0, s1, None), // Not in period
-            (10, (10, 59, 50), 26.0, s1, None), // (S1 no location, over temp)
-            (10, (11, 59, 55), 5.0, s1, None),  // (S1 no location, returned to within range)
-            (9, (23, 59, 56), 20.0, s1, l1),    // (S1-L1)
-            (1, (23, 56, 03), 40.0, s1, l1),    // (S1-L1, too short)
-            (8, (02, 00, 07), 30.0, s1, None),  // (S1 no location)
-            (8, (03, 00, 08), 31.5, s1, None),  // (S1 no location, excursion, too hot)
-            (7, (12, 00, 00), -20.0, s2, None), // (S1-L1)
-            (7, (12, 06, 00), -30.0, s2, None), // (S1-L1, too cold)
+            ("log_1".to_string(), 40, (23, 59, 49), 30.0, s1, None), // Not in period
+            ("log_2".to_string(), 10, (10, 59, 50), 26.0, s1, None), // (S1 no location, over temp)
+            ("log_3".to_string(), 10, (11, 59, 55), 5.0, s1, None), // (S1 no location, returned to within range)
+            ("log_4".to_string(), 9, (23, 59, 56), 20.0, s1, l1),   // (S1-L1)
+            ("log_5".to_string(), 1, (23, 56, 03), 40.0, s1, l1),   // (S1-L1, too short)
+            ("log_6".to_string(), 8, (02, 00, 07), 30.0, s1, None), // (S1 no location)
+            ("log_7".to_string(), 8, (03, 00, 08), 31.5, s1, None), // (S1 no location, excursion, too hot)
+            ("log_8".to_string(), 7, (12, 00, 00), -20.0, s2, None), // (S2-L1)
+            ("log_9".to_string(), 7, (12, 06, 00), -30.0, s2, None), // (S2-L1, too cold)
         ]
         .into_iter()
         .map(
-            |(days_ago, time, temperature, sensor_id, location)| TemperatureLogRow {
-                id: util::uuid::uuid(),
+            |(id, days_ago, time, temperature, sensor_id, location)| TemperatureLogRow {
+                id,
                 temperature,
                 sensor_id: sensor_id.clone(),
                 store_id: store.id.clone(),
@@ -218,6 +222,7 @@ mod test {
             result,
             vec![
                 TemperatureExcursion {
+                    id: "log_6".to_string(),
                     datetime: datetime1,
                     temperature: 30.0,
                     location_id: None,
@@ -226,6 +231,7 @@ mod test {
                     sensor_id: sensor1.id.clone(),
                 },
                 TemperatureExcursion {
+                    id: "log_8".to_string(),
                     datetime: datetime2,
                     temperature: -20.0,
                     location_id: None,
