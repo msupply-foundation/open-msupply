@@ -4,7 +4,6 @@ import {
   RecordPatch,
   TemperatureBreachFilterInput,
   TemperatureBreachSortFieldInput,
-  UpdateTemperatureBreachInput,
 } from '@common/types';
 
 export type ListParams = {
@@ -12,16 +11,6 @@ export type ListParams = {
   offset: number;
   sortBy: SortBy<TemperatureBreachFragment>;
   filterBy: TemperatureBreachFilterInput | null;
-};
-
-const temperatureBreachParser = {
-  toUpdate: (
-    patch: RecordPatch<TemperatureBreachFragment>
-  ): UpdateTemperatureBreachInput => ({
-    comment: patch.comment,
-    id: patch.id,
-    unacknowledged: patch.unacknowledged || false,
-  }),
 };
 
 export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
@@ -43,7 +32,11 @@ export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
       },
   },
   update: async (patch: RecordPatch<TemperatureBreachFragment>) => {
-    const input = temperatureBreachParser.toUpdate(patch);
+    const input = {
+      comment: patch.comment,
+      id: patch.id,
+      unacknowledged: patch.unacknowledged || false,
+    };
     const result =
       (await sdk.updateTemperatureBreach({ input, storeId })) || {};
 
