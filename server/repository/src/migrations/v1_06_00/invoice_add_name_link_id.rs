@@ -13,6 +13,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         SET name_link_id = name_id;
         
         ALTER TABLE invoice ADD CONSTRAINT invoice_name_link_id_fkey FOREIGN KEY (name_link_id) REFERENCES name_link(id);
+        CREATE INDEX "index_invoice_name_link_id_fkey" ON "invoice" ("name_link_id");
         "#,
     )?;
     sql!(
