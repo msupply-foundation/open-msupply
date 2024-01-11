@@ -58,6 +58,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     .unwrap()
                     + Duration::seconds(47046),
             ),
+            comment: None,
         }),
     )]
 }
@@ -95,6 +96,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                     .unwrap()
                     + Duration::seconds(47046),
             ),
+            comment: None,
         }),
     }]
 }
