@@ -51,19 +51,5 @@ mutation updateTemperatureBreach(
       comment
       unacknowledged
     }
-    ... on UpdateTemperatureBreachError {
-      __typename
-      error {
-        description
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on CommentNotProvided {
-          __typename
-          description
-        }
-      }
-    }
   }
 }
