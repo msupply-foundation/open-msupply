@@ -201,7 +201,7 @@ mod test {
         )
         .collect();
 
-        // This repository should return rows orderd by sensor
+        // This repository should return rows ordered by sensor
         // it's important to shuffle before inserting to test this
         temperature_logs.shuffle(&mut thread_rng());
 
