@@ -9,7 +9,7 @@ use super::{
 };
 use log::warn;
 use repository::*;
-use std::collections::HashMap;
+use std::{cmp, collections::HashMap, convert::TryInto};
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
@@ -71,93 +71,171 @@ impl<'a> TranslationAndIntegration<'a> {
         &self,
         sync_records: Vec<SyncBufferRow>,
         translators: &Vec<Box<dyn SyncTranslation>>,
-        logger: &mut SyncLogger,
-        total_to_integrate: u64,
-        interval_for_logging: u64,
-        current_progress: u64,
+        logger: Option<&mut SyncLogger>,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
         let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
 
-        let mut progress = current_progress;
+        // call loop with logger if logger passed. Else call loop
+        match logger {
+            Some(logger) => {
+                // total to integrate for both upsert and delete
+                let total_to_integrate: u64 = sync_records.len().try_into().unwrap();
 
-        for sync_record in sync_records {
-            // log only every threshold value to prevent overlogging
-            if progress % interval_for_logging == 0 {
+                // define arbitrary spacing of every 50th of total progress for logging to prevent excessive logging
+                // set minimum to 1 to prevent division by zero
+                let interval_for_logging = cmp::max(total_to_integrate.clone() / 50, 1);
+
+                let mut progress = 0;
+
+                // call logger for total value if first time being called
                 logger
-                    .progress(
-                        step_progress.clone(),
-                        total_to_integrate.clone() - progress.clone(),
-                    )
+                    .progress(step_progress.clone(), total_to_integrate.clone())
                     .map_err(|_error| RepositoryError::DBError {
                         msg: ("Logging failed in integration").to_string(),
                         extra: ("").to_string(),
                     })?;
+
+                for sync_record in sync_records {
+                    let translation_result = match self
+                        .translate_sync_record(&sync_record, &translators)
+                    {
+                        Ok(translation_result) => translation_result,
+                        // Record error in sync buffer and in result, continue to next sync_record
+                        Err(translation_error) => {
+                            self.sync_buffer
+                                .record_integration_error(&sync_record, &translation_error)?;
+                            result.insert_error(&sync_record.table_name);
+                            warn!(
+                                "{:?} {:?} {:?}",
+                                translation_error, sync_record.record_id, sync_record.table_name
+                            );
+                            // Next sync_record
+                            continue;
+                        }
+                    };
+
+                    let integration_records = match translation_result {
+                        Some(integration_records) => integration_records,
+                        // Record translator not found error in sync buffer and in result, continue to next sync_record
+                        None => {
+                            let error = anyhow::anyhow!("Translator for record not found");
+                            self.sync_buffer
+                                .record_integration_error(&sync_record, &error)?;
+                            result.insert_error(&sync_record.table_name);
+                            warn!(
+                                "{:?} {:?} {:?}",
+                                error, sync_record.record_id, sync_record.table_name
+                            );
+                            // Next sync_record
+                            continue;
+                        }
+                    };
+
+                    // Integrate
+                    let integration_result = integration_records.integrate(self.connection);
+                    match integration_result {
+                        Ok(_) => {
+                            self.sync_buffer
+                                .record_successful_integration(&sync_record)?;
+                            result.insert_success(&sync_record.table_name)
+                        }
+                        // Record database_error in sync buffer and in result
+                        Err(database_error) => {
+                            let error = anyhow::anyhow!("{:?}", database_error);
+                            self.sync_buffer
+                                .record_integration_error(&sync_record, &error)?;
+                            result.insert_error(&sync_record.table_name);
+                            warn!(
+                                "{:?} {:?} {:?}",
+                                error, sync_record.record_id, sync_record.table_name
+                            );
+                        }
+                    }
+
+                    // log only every threshold value to prevent overlogging
+                    if progress % interval_for_logging == 0 {
+                        logger
+                            .progress(
+                                step_progress.clone(),
+                                total_to_integrate.clone() - progress.clone(),
+                            )
+                            .map_err(|_error| RepositoryError::DBError {
+                                msg: ("Logging failed in integration").to_string(),
+                                extra: ("").to_string(),
+                            })?;
+                    }
+
+                    progress += 1;
+
+                    // if we have finished, update the completed count regardless of the batched logging
+                    if total_to_integrate == progress {
+                        logger
+                            .progress(step_progress.clone(), 0)
+                            .map_err(|_error| RepositoryError::DBError {
+                                msg: ("Logging failed in integration").to_string(),
+                                extra: ("").to_string(),
+                            })?;
+                    }
+                }
             }
+            None => {
+                for sync_record in sync_records {
+                    let translation_result = match self
+                        .translate_sync_record(&sync_record, &translators)
+                    {
+                        Ok(translation_result) => translation_result,
+                        // Record error in sync buffer and in result, continue to next sync_record
+                        Err(translation_error) => {
+                            self.sync_buffer
+                                .record_integration_error(&sync_record, &translation_error)?;
+                            result.insert_error(&sync_record.table_name);
+                            warn!(
+                                "{:?} {:?} {:?}",
+                                translation_error, sync_record.record_id, sync_record.table_name
+                            );
+                            // Next sync_record
+                            continue;
+                        }
+                    };
 
-            progress += 1;
+                    let integration_records = match translation_result {
+                        Some(integration_records) => integration_records,
+                        // Record translator not found error in sync buffer and in result, continue to next sync_record
+                        None => {
+                            let error = anyhow::anyhow!("Translator for record not found");
+                            self.sync_buffer
+                                .record_integration_error(&sync_record, &error)?;
+                            result.insert_error(&sync_record.table_name);
+                            warn!(
+                                "{:?} {:?} {:?}",
+                                error, sync_record.record_id, sync_record.table_name
+                            );
+                            // Next sync_record
+                            continue;
+                        }
+                    };
 
-            let translation_result = match self.translate_sync_record(&sync_record, &translators) {
-                Ok(translation_result) => translation_result,
-                // Record error in sync buffer and in result, continue to next sync_record
-                Err(translation_error) => {
-                    self.sync_buffer
-                        .record_integration_error(&sync_record, &translation_error)?;
-                    result.insert_error(&sync_record.table_name);
-                    warn!(
-                        "{:?} {:?} {:?}",
-                        translation_error, sync_record.record_id, sync_record.table_name
-                    );
-                    // Next sync_record
-                    continue;
-                }
-            };
-
-            // if we have finished, update the completed count regardless of the batched logging
-            if total_to_integrate == progress {
-                logger
-                    .progress(step_progress.clone(), 0)
-                    .map_err(|_error| RepositoryError::DBError {
-                        msg: ("Logging failed in integration").to_string(),
-                        extra: ("").to_string(),
-                    })?;
-            }
-
-            let integration_records = match translation_result {
-                Some(integration_records) => integration_records,
-                // Record translator not found error in sync buffer and in result, continue to next sync_record
-                None => {
-                    let error = anyhow::anyhow!("Translator for record not found");
-                    self.sync_buffer
-                        .record_integration_error(&sync_record, &error)?;
-                    result.insert_error(&sync_record.table_name);
-                    warn!(
-                        "{:?} {:?} {:?}",
-                        error, sync_record.record_id, sync_record.table_name
-                    );
-                    // Next sync_record
-                    continue;
-                }
-            };
-
-            // Integrate
-            let integration_result = integration_records.integrate(self.connection);
-            match integration_result {
-                Ok(_) => {
-                    self.sync_buffer
-                        .record_successful_integration(&sync_record)?;
-                    result.insert_success(&sync_record.table_name)
-                }
-                // Record database_error in sync buffer and in result
-                Err(database_error) => {
-                    let error = anyhow::anyhow!("{:?}", database_error);
-                    self.sync_buffer
-                        .record_integration_error(&sync_record, &error)?;
-                    result.insert_error(&sync_record.table_name);
-                    warn!(
-                        "{:?} {:?} {:?}",
-                        error, sync_record.record_id, sync_record.table_name
-                    );
+                    // Integrate
+                    let integration_result = integration_records.integrate(self.connection);
+                    match integration_result {
+                        Ok(_) => {
+                            self.sync_buffer
+                                .record_successful_integration(&sync_record)?;
+                            result.insert_success(&sync_record.table_name)
+                        }
+                        // Record database_error in sync buffer and in result
+                        Err(database_error) => {
+                            let error = anyhow::anyhow!("{:?}", database_error);
+                            self.sync_buffer
+                                .record_integration_error(&sync_record, &error)?;
+                            result.insert_error(&sync_record.table_name);
+                            warn!(
+                                "{:?} {:?} {:?}",
+                                error, sync_record.record_id, sync_record.table_name
+                            );
+                        }
+                    }
                 }
             }
         }
