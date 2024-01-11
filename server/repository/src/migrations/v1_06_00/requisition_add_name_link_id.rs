@@ -54,6 +54,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             $$ LANGUAGE 'plpgsql';
        "#,
     )?;
+
     #[cfg(not(feature = "postgres"))]
     sql!(
         connection,
@@ -64,61 +65,60 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             UPDATE requisition SET name_link_id = name_id;
             PRAGMA foreign_keys = ON;
 
-            CREATE INDEX "index_requisition_name_link_id_fkey" ON "requisition" ("name_link_id");
-            
             DROP TRIGGER IF EXISTS requisition_insert_trigger;
             DROP TRIGGER IF EXISTS requisition_update_trigger;
             DROP TRIGGER IF EXISTS requisition_delete_trigger;
-
+            
             CREATE TRIGGER requisition_insert_trigger AFTER INSERT ON requisition
             BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
-                VALUES ('requisition', NEW.id, 'UPSERT', NEW.store_id, NEW.name_link_id, NEW.is_sync_update);
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            VALUES ('requisition', NEW.id, 'UPSERT', NEW.store_id, NEW.name_link_id, NEW.is_sync_update);
             END;
-
+            
             CREATE TRIGGER requisition_update_trigger AFTER UPDATE ON requisition
             BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
-                VALUES ('requisition', NEW.id, 'UPSERT', NEW.store_id, NEW.name_link_id, NEW.is_sync_update);
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            VALUES ('requisition', NEW.id, 'UPSERT', NEW.store_id, NEW.name_link_id, NEW.is_sync_update);
             END;
-
+            
             CREATE TRIGGER requisition_delete_trigger AFTER DELETE ON requisition
             BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
-                VALUES ('requisition', OLD.id, 'DELETE', OLD.store_id, OLD.name_link_id, OLD.is_sync_update);
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            VALUES ('requisition', OLD.id, 'DELETE', OLD.store_id, OLD.name_link_id, OLD.is_sync_update);
             END;
-
+            
             DROP TRIGGER IF EXISTS requisition_line_insert_trigger;
             DROP TRIGGER IF EXISTS requisition_line_update_trigger;
             DROP TRIGGER IF EXISTS requisition_line_delete_trigger;
-
+            
             CREATE TRIGGER requisition_line_insert_trigger AFTER INSERT ON requisition_line
             BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
-                SELECT 'requisition_line', NEW.id, 'UPSERT', store_id, name_link_id, NEW.is_sync_update FROM requisition WHERE id = NEW.requisition_id;
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            SELECT 'requisition_line', NEW.id, 'UPSERT', store_id, name_link_id, NEW.is_sync_update FROM requisition WHERE id = NEW.requisition_id;
             END;
-
+            
             CREATE TRIGGER requisition_line_update_trigger AFTER UPDATE ON requisition_line
             BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
-                SELECT 'requisition_line', NEW.id, 'UPSERT', store_id, name_link_id, NEW.is_sync_update FROM requisition WHERE id = NEW.requisition_id;
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            SELECT 'requisition_line', NEW.id, 'UPSERT', store_id, name_link_id, NEW.is_sync_update FROM requisition WHERE id = NEW.requisition_id;
             END;
-
+            
             CREATE TRIGGER requisition_line_delete_trigger AFTER DELETE ON requisition_line
             BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
-                SELECT 'requisition_line', OLD.id, 'DELETE', store_id, name_link_id, OLD.is_sync_update FROM requisition WHERE id = OLD.requisition_id;
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            SELECT 'requisition_line', OLD.id, 'DELETE', store_id, name_link_id, OLD.is_sync_update FROM requisition WHERE id = OLD.requisition_id;
             END;
-            "#,
+        "#,
     )?;
 
-    sql! {
+    sql!(
         connection,
         r#"
-        DROP INDEX IF EXISTS index_requisition_name_id_fkey;
-        ALTER TABLE requisition DROP COLUMN name_id;
+            DROP INDEX IF EXISTS index_requisition_name_id_fkey;
+            ALTER TABLE requisition DROP COLUMN name_id;
+            CREATE INDEX "index_requisition_name_link_id_fkey" ON "requisition" ("name_link_id");
         "#
-    }?;
+    )?;
 
     Ok(())
 }
