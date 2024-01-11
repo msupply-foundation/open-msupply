@@ -22,7 +22,7 @@ export type UpdateTemperatureBreachMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateTemperatureBreachMutation = { __typename: 'Mutations', updateTemperatureBreach: { __typename: 'TemperatureBreachNode', id: string, comment?: string | null, unacknowledged: boolean } | { __typename: 'UpdateTemperatureBreachError', error: { __typename: 'CommentNotProvided', description: string } | { __typename: 'RecordNotFound', description: string } } };
+export type UpdateTemperatureBreachMutation = { __typename: 'Mutations', updateTemperatureBreach: { __typename: 'TemperatureBreachNode', id: string, comment?: string | null, unacknowledged: boolean } };
 
 export const TemperatureBreachFragmentDoc = gql`
     fragment TemperatureBreach on TemperatureBreachNode {
@@ -69,20 +69,6 @@ export const UpdateTemperatureBreachDocument = gql`
       id
       comment
       unacknowledged
-    }
-    ... on UpdateTemperatureBreachError {
-      __typename
-      error {
-        description
-        ... on RecordNotFound {
-          __typename
-          description
-        }
-        ... on CommentNotProvided {
-          __typename
-          description
-        }
-      }
     }
   }
 }

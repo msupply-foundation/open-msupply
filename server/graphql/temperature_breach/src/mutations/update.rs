@@ -1,6 +1,5 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
@@ -14,8 +13,6 @@ use service::{
     },
 };
 
-use super::CommentNotProvided;
-
 #[derive(InputObject)]
 #[graphql(name = "UpdateTemperatureBreachInput")]
 pub struct UpdateInput {
@@ -24,25 +21,10 @@ pub struct UpdateInput {
     pub comment: Option<String>,
 }
 
-#[derive(Interface)]
-#[graphql(name = "UpdateTemperatureBreachErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
-pub enum UpdateErrorInterface {
-    RecordNotFound(RecordNotFound),
-    CommentNotProvided(CommentNotProvided),
-}
-
-#[derive(SimpleObject)]
-#[graphql(name = "UpdateTemperatureBreachError")]
-pub struct UpdateError {
-    pub error: UpdateErrorInterface,
-}
-
 #[derive(Union)]
 #[graphql(name = "UpdateTemperatureBreachResponse")]
 pub enum UpdateResponse {
     Response(TemperatureBreachNode),
-    Error(UpdateError),
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
@@ -69,9 +51,9 @@ pub fn map_response(from: Result<TemperatureBreach, ServiceError>) -> Result<Upd
         Ok(requisition_line) => {
             UpdateResponse::Response(TemperatureBreachNode::from_domain(requisition_line))
         }
-        Err(error) => UpdateResponse::Error(UpdateError {
-            error: map_error(error)?,
-        }),
+        Err(error) => {
+            return map_error(error);
+        }
     };
 
     Ok(result)
@@ -93,7 +75,7 @@ impl UpdateInput {
     }
 }
 
-fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
+fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
