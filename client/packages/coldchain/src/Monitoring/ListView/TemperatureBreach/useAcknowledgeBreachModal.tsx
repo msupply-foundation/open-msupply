@@ -1,12 +1,11 @@
 import React, { FC, useState } from 'react';
-import { DialogButton, Typography } from '@common/components';
+import { BasicTextInput, DialogButton, Typography } from '@common/components';
 import { ModalProps, useDialog, useNotification } from '@common/hooks';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Box,
-  DetailInputWithLabelRow,
-  ModalRow,
   TextWithLabelRow,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import {
   TemperatureBreachFragment,
@@ -40,20 +39,27 @@ const BreachModal = ({
   const [comment, setComment] = useState('');
   const { mutateAsync } = useTemperatureBreach.document.update();
   const { error } = useNotification();
+  const { user } = useAuthContext();
+  const { localisedDateTime } = useFormatDateTime();
 
   const onUpdate = async () => {
-    const result = await mutateAsync({
+    await mutateAsync({
       id: 'required',
       ...breach,
-      comment,
+      comment: t('format.comment', {
+        name: user?.name || 'unknown',
+        date: localisedDateTime(new Date()),
+        comment,
+      }),
       unacknowledged: false,
-    });
-    if (result?.__typename === 'UpdateTemperatureBreachError') {
-      error(result.error.description)();
-      return;
-    }
-    setComment('');
-    onOk();
+    })
+      .then(() => {
+        setComment('');
+        onOk();
+      })
+      .catch(e => {
+        error(e.message)();
+      });
   };
 
   return (
@@ -75,7 +81,7 @@ const BreachModal = ({
     >
       <Box display="flex" flexDirection="column">
         {!!breach && (
-          <Box paddingLeft={1}>
+          <Box paddingLeft={2}>
             <TextRow
               label={t('label.breach-start')}
               text={t('messages.ago', {
@@ -104,22 +110,19 @@ const BreachModal = ({
             />
           </Box>
         )}
-        <ModalRow>
-          <Typography paddingTop={4} paddingBottom={2}>
-            {t('message.acknowledge-breach-dialog')}
+        <Box paddingTop={3}>
+          <Typography sx={{ fontWeight: 'bold' }}>
+            {t('label.comment')}
           </Typography>
-        </ModalRow>
-        <DetailInputWithLabelRow
-          label={t('label.comment')}
-          labelWidthPercentage={10}
-          inputProps={{
-            fullWidth: true,
-            multiline: true,
-            rows: 2,
-            onChange: event => setComment(event.target.value),
-            value: comment,
-          }}
-        />
+          <BasicTextInput
+            fullWidth
+            multiline
+            rows={3}
+            onChange={event => setComment(event.target.value)}
+            value={comment}
+            helperText={t('message.acknowledge-breach-helptext')}
+          />
+        </Box>
       </Box>
     </Modal>
   );

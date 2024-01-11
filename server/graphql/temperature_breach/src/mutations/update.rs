@@ -5,11 +5,12 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::TemperatureBreachNode;
-use repository::{TemperatureBreach, TemperatureBreachRow};
+use repository::TemperatureBreach;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     temperature_breach::update::{
-        UpdateTemperatureBreach as ServiceInput, UpdateTemperatureBreachError as ServiceError,
+        UpdateTemperatureBreachAcknowledgement as ServiceInput,
+        UpdateTemperatureBreachError as ServiceError,
     },
 };
 
@@ -40,8 +41,8 @@ pub struct UpdateError {
 #[derive(Union)]
 #[graphql(name = "UpdateTemperatureBreachResponse")]
 pub enum UpdateResponse {
-    Error(UpdateError),
     Response(TemperatureBreachNode),
+    Error(UpdateError),
 }
 
 pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
@@ -55,38 +56,11 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
-    // TODO: refactor to a helper
-    let temperature_breach = match service_provider
-        .temperature_breach_service
-        .get_temperature_breach(&service_context, input.id.clone())
-    {
-        Ok(temperature_breach) => temperature_breach,
-        Err(_) => {
-            return Ok(UpdateResponse::Error(UpdateError {
-                error: UpdateErrorInterface::RecordNotFound(RecordNotFound {}),
-            }))
-        }
-    };
-
-    match input.comment.clone() {
-        Some(comment) => {
-            if comment.is_empty() {
-                return Ok(UpdateResponse::Error(UpdateError {
-                    error: UpdateErrorInterface::CommentNotProvided(CommentNotProvided {}),
-                }));
-            }
-        }
-        None => {
-            return Ok(UpdateResponse::Error(UpdateError {
-                error: UpdateErrorInterface::CommentNotProvided(CommentNotProvided {}),
-            }));
-        }
-    }
 
     map_response(
         service_provider
             .temperature_breach_service
-            .update_temperature_breach(&service_context, input.to_domain(temperature_breach)),
+            .update_temperature_breach_acknowledgement(&service_context, input.to_domain()),
     )
 }
 
@@ -104,19 +78,7 @@ pub fn map_response(from: Result<TemperatureBreach, ServiceError>) -> Result<Upd
 }
 
 impl UpdateInput {
-    pub fn to_domain(self, temperature_breach: TemperatureBreach) -> ServiceInput {
-        let TemperatureBreachRow {
-            duration_milliseconds,
-            r#type,
-            sensor_id,
-            location_id,
-            start_datetime,
-            end_datetime,
-            threshold_minimum,
-            threshold_maximum,
-            threshold_duration_milliseconds,
-            ..
-        } = temperature_breach.temperature_breach_row;
+    pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
             unacknowledged,
@@ -127,15 +89,6 @@ impl UpdateInput {
             id,
             unacknowledged,
             comment,
-            duration_milliseconds,
-            r#type,
-            sensor_id,
-            location_id,
-            start_datetime,
-            end_datetime,
-            threshold_minimum,
-            threshold_maximum,
-            threshold_duration_milliseconds,
         }
     }
 }
@@ -145,13 +98,9 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        // Structured Errors
-        ServiceError::TemperatureBreachDoesNotExist => {
-            return Ok(UpdateErrorInterface::RecordNotFound(RecordNotFound {}))
-        }
+        ServiceError::TemperatureBreachDoesNotExist => BadUserInput(formatted_error),
         ServiceError::TemperatureBreachDoesNotBelongToCurrentStore => BadUserInput(formatted_error),
         ServiceError::LocationIsOnHold => BadUserInput(formatted_error),
-        // Standard Graphql Errors
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::CommentNotProvided => BadUserInput(formatted_error),
