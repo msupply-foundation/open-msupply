@@ -65,12 +65,13 @@ export const ResponseRequisitionListView: FC = () => {
       label: 'label.number',
       width: 100,
     },
-    'createdDatetime',
+    ['createdDatetime', { width: 150 }],
     [
       'status',
       {
         formatter: status =>
           getRequisitionTranslator(t)(status as RequisitionNodeStatus),
+        width: 100,
       },
     ],
     {
