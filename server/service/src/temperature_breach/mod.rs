@@ -3,7 +3,8 @@ use self::insert::{
 };
 use self::query::{get_temperature_breach, temperature_breaches};
 use self::update::{
-    update_temperature_breach, UpdateTemperatureBreach, UpdateTemperatureBreachError,
+    update_temperature_breach, update_temperature_breach_acknowledgement, UpdateTemperatureBreach,
+    UpdateTemperatureBreachAcknowledgement, UpdateTemperatureBreachError,
 };
 
 use super::{ListError, ListResult};
@@ -51,6 +52,14 @@ pub trait TemperatureBreachServiceTrait: Sync + Send {
         input: UpdateTemperatureBreach,
     ) -> Result<TemperatureBreach, UpdateTemperatureBreachError> {
         update_temperature_breach(ctx, input)
+    }
+
+    fn update_temperature_breach_acknowledgement(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateTemperatureBreachAcknowledgement,
+    ) -> Result<TemperatureBreach, UpdateTemperatureBreachError> {
+        update_temperature_breach_acknowledgement(ctx, input)
     }
 }
 
