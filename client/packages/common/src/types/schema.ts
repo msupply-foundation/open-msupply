@@ -2598,6 +2598,7 @@ export type Mutations = {
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
+  updateTemperatureBreach: UpdateTemperatureBreachResponse;
   updateUser: UpdateUserResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
@@ -3088,6 +3089,12 @@ export type MutationsUpdateStocktakeLineArgs = {
 
 export type MutationsUpdateSyncSettingsArgs = {
   input: SyncSettingsInput;
+};
+
+
+export type MutationsUpdateTemperatureBreachArgs = {
+  input: UpdateTemperatureBreachInput;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -5056,6 +5063,7 @@ export type TemperatureBreachFilterInput = {
 
 export type TemperatureBreachNode = {
   __typename: 'TemperatureBreachNode';
+  comment?: Maybe<Scalars['String']['output']>;
   durationMilliseconds: Scalars['Int']['output'];
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -5809,6 +5817,14 @@ export enum UpdateStocktakeStatusInput {
 }
 
 export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
+
+export type UpdateTemperatureBreachInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  unacknowledged: Scalars['Boolean']['input'];
+};
+
+export type UpdateTemperatureBreachResponse = TemperatureBreachNode;
 
 export type UpdateUserNode = {
   __typename: 'UpdateUserNode';
