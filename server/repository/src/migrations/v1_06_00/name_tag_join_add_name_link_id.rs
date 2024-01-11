@@ -23,17 +23,17 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ADD COLUMN name_link_id TEXT NOT NULL REFERENCES name_link (id) DEFAULT 'temp_for_migration'; 
             UPDATE name_tag_join SET name_link_id = name_id;
             PRAGMA foreign_keys = ON;
-            CREATE INDEX "index_name_tag_join_name_link_id_fkey" ON "name_tag_join" ("name_link_id");
-            "#,
+        "#,
     )?;
 
-    sql! {
+    sql!(
         connection,
         r#"
-        DROP INDEX IF EXISTS index_name_tag_join_name_id_fkey;
-        ALTER TABLE name_tag_join DROP COLUMN name_id;
+            DROP INDEX IF EXISTS index_name_tag_join_name_id_fkey;
+            ALTER TABLE name_tag_join DROP COLUMN name_id;
+            CREATE INDEX "index_name_tag_join_name_link_id_fkey" ON "name_tag_join" ("name_link_id");
         "#
-    }?;
+    )?;
 
     Ok(())
 }
