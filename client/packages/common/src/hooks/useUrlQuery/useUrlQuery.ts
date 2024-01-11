@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 export interface UrlQueryObject {
@@ -51,7 +52,7 @@ interface useUrlQueryProps {
   skipParse?: string[];
 }
 
-export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
+export const useUrlQuery = ({ skipParse }: useUrlQueryProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const updateQuery = (values: UrlQueryObject, overwrite = false) => {
@@ -65,12 +66,7 @@ export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
 
     Object.entries(values).forEach(([key, value]) => {
       if (!value) delete newQueryObject[key];
-      else if (key === 'tab') {
-        newQueryObject[key] = String(value);
-        Object.entries(newQueryObject).forEach(([k, v]) => {
-          if (v !== value) delete newQueryObject[k];
-        });
-      } else {
+      else {
         if (typeof value === 'object' && ('from' in value || 'to' in value)) {
           const range = parseRangeString(newQueryObject[key]) as RangeObject<
             string | number
@@ -89,11 +85,14 @@ export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
     setSearchParams(newQueryObject, { replace: true });
   };
 
-  return {
-    urlQuery: parseSearchParams(searchParams, skipParse),
-    updateQuery,
-    parseRangeString,
-  };
+  return useMemo(
+    () => ({
+      urlQuery: parseSearchParams(searchParams, skipParse ?? []),
+      updateQuery,
+      parseRangeString,
+    }),
+    [searchParams, skipParse]
+  );
 };
 
 // Coerces url params to appropriate type
