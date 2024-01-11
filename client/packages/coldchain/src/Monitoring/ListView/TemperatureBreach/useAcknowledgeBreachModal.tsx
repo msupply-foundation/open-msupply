@@ -1,7 +1,7 @@
 import React, { FC, useState } from 'react';
 import { BasicTextInput, DialogButton, Typography } from '@common/components';
 import { ModalProps, useDialog, useNotification } from '@common/hooks';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
 import {
   Box,
   TextWithLabelRow,
@@ -41,13 +41,19 @@ const BreachModal = ({
   const { error } = useNotification();
   const { user } = useAuthContext();
   const { localisedDateTime } = useFormatDateTime();
+  const { getLocalisedFullName } = useIntlUtils();
 
   const onUpdate = async () => {
+    const name =
+      getLocalisedFullName(user?.firstName, user?.lastName) ||
+      user?.name ||
+      'unknown';
+
     await mutateAsync({
       id: 'required',
       ...breach,
       comment: t('format.comment', {
-        name: user?.name || 'unknown',
+        name,
         date: localisedDateTime(new Date()),
         comment,
       }),
