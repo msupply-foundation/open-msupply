@@ -4,7 +4,7 @@ use crate::{
 };
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::{cmp, convert::TryInto, sync::Arc};
+use std::{convert::TryInto, sync::Arc};
 use thiserror::Error;
 use util::format_error;
 
@@ -250,49 +250,19 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         let delete_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
 
-        // total to integrate for both upsert and delete
-        let total_to_integrate: u64 = (upsert_sync_buffer_records.clone().len()
-            + delete_sync_buffer_records.clone().len())
-        .try_into()
-        .unwrap();
-
-        // define arbitrary spacing of every 50th of total progress for logging to prevent excessive logging
-        // set minimum to 1 to prevent division by zero
-        let interval_for_logging = cmp::max(total_to_integrate.clone() / 50, 1);
-
-        // Call initial logger to define total
-
-        logger
-            .progress(step_progress.clone(), total_to_integrate.clone())
-            .map_err(|_error| RepositoryError::DBError {
-                msg: ("Logging failed in integration").to_string(),
-                extra: ("").to_string(),
-            })?;
-
-        let current_progress = 0;
-
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
                 upsert_sync_buffer_records.clone(),
                 &translators,
-                logger,
-                total_to_integrate,
-                interval_for_logging,
-                current_progress,
+                Some(logger),
             )?;
-
-        //update current progress to be upserted values
-        let current_progress = upsert_sync_buffer_records.clone().len().try_into().unwrap();
 
         // pass the logger here
         let delete_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
                 delete_sync_buffer_records.clone(),
                 &translators,
-                logger,
-                total_to_integrate,
-                interval_for_logging,
-                current_progress,
+                None,
             )?;
 
         Ok((upsert_integration_result, delete_integration_result))
