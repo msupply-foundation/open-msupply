@@ -140,11 +140,12 @@ mod test {
         service_provider
     }
 
-    fn empty_variables(id: &str) -> serde_json::Value {
+    fn empty_variables(id: &str, comment: &str) -> serde_json::Value {
         json!({
           "input": {
             "id": id,
             "unacknowledged": true,
+            "comment": comment,
           },
           "storeId": "n/a"
         })
@@ -163,11 +164,9 @@ mod test {
         let mutation = r#"
         mutation ($input: UpdateTemperatureBreachInput!, $storeId: String) {
             updateTemperatureBreach(storeId: $storeId, input: $input) {
-              ... on UpdateTemperatureBreachError {
-                error {
-                  __typename
+                ... on TemperatureBreachNode {
+                    id
                 }
-              }
             }
           }
         "#;
@@ -176,20 +175,15 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Err(ServiceError::TemperatureBreachDoesNotExist)
         }));
-        let expected = json!({
-            "updateTemperatureBreach": {
-              "error": {
-                "__typename": "RecordNotFound"
-              }
-            }
-          }
-        );
 
-        assert_graphql_query!(
+        let expected_message = "Bad user input";
+        let expected_extensions = json!({"details": "TemperatureBreachDoesNotExist"});
+        assert_standard_graphql_error!(
             &settings,
             mutation,
-            &Some(empty_variables("n/a")),
-            &expected,
+            &Some(empty_variables("n/a", "Test")),
+            &expected_message,
+            Some(expected_extensions),
             Some(service_provider(test_service, &connection_manager))
         );
 
@@ -198,24 +192,27 @@ mod test {
             Err(ServiceError::TemperatureBreachDoesNotBelongToCurrentStore)
         }));
         let expected_message = "Bad user input";
+        let expected_extensions =
+            json!({"details": "TemperatureBreachDoesNotBelongToCurrentStore"});
         assert_standard_graphql_error!(
             &settings,
             &mutation,
-            &Some(empty_variables(&mock_temperature_breach_1().id)),
+            &Some(empty_variables(&mock_temperature_breach_1().id, "test")),
             &expected_message,
-            None,
+            Some(expected_extensions),
             Some(service_provider(test_service, &connection_manager))
         );
 
         // CommentNotProvided
         let test_service = TestService(Box::new(|_| Err(ServiceError::CommentNotProvided)));
         let expected_message = "Bad user input";
+        let expected_extensions = json!({"details": "CommentNotProvided"});
         assert_standard_graphql_error!(
             &settings,
             &mutation,
-            &Some(empty_variables(&mock_temperature_breach_1().id)),
+            &Some(empty_variables(&mock_temperature_breach_1().id, "")),
             &expected_message,
-            None,
+            Some(expected_extensions),
             Some(service_provider(test_service, &connection_manager))
         );
     }

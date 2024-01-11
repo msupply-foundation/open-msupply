@@ -2,6 +2,7 @@ import React, { FC, useState } from 'react';
 import { BasicTextInput, DialogButton, Typography } from '@common/components';
 import { ModalProps, useDialog, useNotification } from '@common/hooks';
 import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
+// import { alpha, useTheme } from '@common/styles';
 import {
   Box,
   TextWithLabelRow,
@@ -15,7 +16,8 @@ import {
 const TextRow = ({ label, text }: { label: string; text: string }) => (
   <TextWithLabelRow
     labelWidth="200px"
-    labelProps={{ style: { textAlign: 'left' } }}
+    labelProps={{ sx: { textAlign: 'left', color: 'gray.main' } }}
+    textProps={{ sx: { color: 'gray.main' } }}
     label={label}
     text={text}
   />
@@ -42,6 +44,7 @@ const BreachModal = ({
   const { user } = useAuthContext();
   const { localisedDateTime } = useFormatDateTime();
   const { getLocalisedFullName } = useIntlUtils();
+  // const theme = useTheme();
 
   const onUpdate = async () => {
     const name =
@@ -85,36 +88,53 @@ const BreachModal = ({
       slideAnimation={false}
       title={t('heading.acknowledgeBreach')}
     >
-      <Box display="flex" flexDirection="column">
+      <Box display="flex" flexDirection="column" padding={2}>
         {!!breach && (
-          <Box paddingLeft={2}>
-            <TextRow
-              label={t('label.breach-start')}
-              text={t('messages.ago', {
-                time: localisedDistanceToNow(breach.startDatetime),
-              })}
-            />
-            <TextRow
-              label={t('label.duration')}
-              text={
-                !breach.endDatetime
-                  ? t('label.ongoing')
-                  : localisedDistance(breach.startDatetime, breach.endDatetime)
-              }
-            />
-            {!!breach.maxOrMinTemperature && (
+          <>
+            <Typography sx={{ fontWeight: 'bold' }}>
+              {t('heading.details')}
+            </Typography>
+            <Box
+              sx={{
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderRadius: 2,
+                borderColor: 'gray.light',
+                // backgroundColor: alpha(theme.palette.primary.main, 0.075),
+                padding: 1,
+              }}
+            >
               <TextRow
-                label={t('message.max-or-min-temperature')}
-                text={t('message.temperature', {
-                  temperature: breach.maxOrMinTemperature,
+                label={t('label.breach-start')}
+                text={t('messages.ago', {
+                  time: localisedDistanceToNow(breach.startDatetime),
                 })}
               />
-            )}
-            <TextRow
-              label={t('label.sensor-name')}
-              text={breach.sensor?.name ?? ''}
-            />
-          </Box>
+              <TextRow
+                label={t('label.duration')}
+                text={
+                  !breach.endDatetime
+                    ? t('label.ongoing')
+                    : localisedDistance(
+                        breach.startDatetime,
+                        breach.endDatetime
+                      )
+                }
+              />
+              {!!breach.maxOrMinTemperature && (
+                <TextRow
+                  label={t('message.max-or-min-temperature')}
+                  text={t('message.temperature', {
+                    temperature: breach.maxOrMinTemperature,
+                  })}
+                />
+              )}
+              <TextRow
+                label={t('label.sensor-name')}
+                text={breach.sensor?.name ?? ''}
+              />
+            </Box>
+          </>
         )}
         <Box paddingTop={3}>
           <Typography sx={{ fontWeight: 'bold' }}>

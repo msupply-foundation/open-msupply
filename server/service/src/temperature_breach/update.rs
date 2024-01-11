@@ -43,16 +43,7 @@ pub fn update_temperature_breach_acknowledgement(
     ctx: &ServiceContext,
     input: UpdateTemperatureBreachAcknowledgement,
 ) -> Result<TemperatureBreach, UpdateTemperatureBreachError> {
-    match input.comment.clone() {
-        Some(comment) => {
-            if comment.is_empty() {
-                return Err(UpdateTemperatureBreachError::CommentNotProvided);
-            }
-        }
-        None => {
-            return Err(UpdateTemperatureBreachError::CommentNotProvided);
-        }
-    }
+    validate_acknowledgement_input(&input)?;
 
     let temperature_breach = ctx
         .connection
@@ -69,6 +60,22 @@ pub fn update_temperature_breach_acknowledgement(
         .map_err(|error| error.to_inner_error())?;
 
     Ok(temperature_breach)
+}
+
+fn validate_acknowledgement_input(
+    input: &UpdateTemperatureBreachAcknowledgement,
+) -> Result<(), UpdateTemperatureBreachError> {
+    match input.comment.clone() {
+        Some(comment) => {
+            if comment.is_empty() {
+                return Err(UpdateTemperatureBreachError::CommentNotProvided);
+            }
+        }
+        None => {
+            return Err(UpdateTemperatureBreachError::CommentNotProvided);
+        }
+    }
+    Ok({})
 }
 
 pub fn update_temperature_breach(
