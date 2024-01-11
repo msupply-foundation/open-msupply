@@ -27,7 +27,8 @@ const TEMPERATURE_BREACH_1: (&'static str, &'static str) = (
         "end_date": "2023-07-02",
         "end_time": 47046,
         "om_end_datetime": "" ,
-        "om_start_datetime": ""
+        "om_start_datetime": "",
+        "om_comment": ""
     }"#,
 );
 
