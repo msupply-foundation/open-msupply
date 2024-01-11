@@ -189,9 +189,12 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
-            .await
-            .map_err(SyncError::IntegrationError)?;
+        let (upserts, deletes) =
+            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
+                .await
+                .map_err(SyncError::IntegrationError)?;
+        warn!("Upsert Integration result: {:?}", upserts);
+        warn!("Delete Integration result: {:?}", deletes);
 
         logger.done_step(SyncStep::Integrate)?;
 
