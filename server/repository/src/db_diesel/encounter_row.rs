@@ -1,4 +1,4 @@
-use super::{program_row::program, StorageConnection};
+use super::{clinician_link, program_row::program, StorageConnection};
 
 use crate::repository_error::RepositoryError;
 
@@ -29,13 +29,15 @@ table! {
         start_datetime -> Timestamp,
         end_datetime -> Nullable<Timestamp>,
         status -> Nullable<crate::db_diesel::encounter_row::EncounterStatusMapping>,
-        clinician_id -> Nullable<Text>,
+        clinician_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
     }
 }
 
 joinable!(encounter -> program (program_id));
+joinable!(encounter -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(encounter, program);
+allow_tables_to_appear_in_same_query!(encounter, clinician_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
 #[changeset_options(treat_none_as_null = "true")]
@@ -52,6 +54,7 @@ pub struct EncounterRow {
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,
     pub status: Option<EncounterStatus>,
+    #[column_name = "clinician_link_id"]
     pub clinician_id: Option<String>,
     ///  The encounter's location (if the location is a store)
     pub store_id: Option<String>,
