@@ -182,6 +182,7 @@ const ListView: FC = () => {
         },
         sortable: false,
       },
+      ['comment', { sortable: false }],
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
