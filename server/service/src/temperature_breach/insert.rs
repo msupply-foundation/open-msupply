@@ -26,6 +26,7 @@ pub struct InsertTemperatureBreach {
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
     pub threshold_duration_milliseconds: i32,
+    pub comment: Option<String>,
 }
 
 pub fn insert_temperature_breach(
@@ -71,6 +72,7 @@ pub fn generate(
         threshold_minimum,
         threshold_maximum,
         threshold_duration_milliseconds,
+        comment,
     }: InsertTemperatureBreach,
 ) -> TemperatureBreachRow {
     TemperatureBreachRow {
@@ -86,6 +88,7 @@ pub fn generate(
         threshold_minimum,
         threshold_maximum,
         threshold_duration_milliseconds,
+        comment,
     }
 }
 

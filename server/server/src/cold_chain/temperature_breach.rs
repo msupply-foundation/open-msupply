@@ -37,6 +37,7 @@ pub struct TemperatureBreach {
     #[serde(rename = "thresholdMinimumTemperature")]
     pub threshold_minimum: f64,
     pub r#type: TemperatureBreachRowType,
+    pub comment: Option<String>,
 }
 
 pub async fn put_breaches(
@@ -153,6 +154,7 @@ fn upsert_temperature_breach(
                 threshold_duration_milliseconds: breach.threshold_duration_milliseconds,
                 threshold_maximum: breach.threshold_maximum,
                 threshold_minimum: breach.threshold_minimum,
+                comment: breach.comment,
             };
             service
                 .update_temperature_breach(&ctx, breach)
@@ -171,6 +173,7 @@ fn upsert_temperature_breach(
                 threshold_duration_milliseconds: breach.threshold_duration_milliseconds,
                 threshold_maximum: breach.threshold_maximum,
                 threshold_minimum: breach.threshold_minimum,
+                comment: breach.comment,
             };
             service
                 .insert_temperature_breach(&ctx, breach)

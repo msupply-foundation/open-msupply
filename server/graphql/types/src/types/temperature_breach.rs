@@ -153,6 +153,10 @@ impl TemperatureBreachNode {
             &self.row().id,
         )?)
     }
+
+    pub async fn comment(&self) -> Option<String> {
+        self.row().comment.clone()
+    }
 }
 
 impl TemperatureBreachNodeType {
