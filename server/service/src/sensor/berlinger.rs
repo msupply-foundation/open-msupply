@@ -163,6 +163,7 @@ fn sensor_add_breach_if_new(
             threshold_duration_milliseconds: breach_config.duration.num_seconds() as i32,
             threshold_minimum: breach_config.minimum_temperature,
             threshold_maximum: breach_config.maximum_temperature,
+            comment: None,
         };
         TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
         log::info!("Added sensor breach {:?} ", new_temperature_breach);

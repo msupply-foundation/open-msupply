@@ -24,6 +24,7 @@ table! {
         threshold_minimum -> Double,
         threshold_maximum -> Double,
         threshold_duration_milliseconds -> Integer,
+        comment -> Nullable<Text>,
     }
 }
 
@@ -70,6 +71,7 @@ pub struct TemperatureBreachRow {
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
     pub threshold_duration_milliseconds: i32,
+    pub comment: Option<String>,
 }
 
 pub struct TemperatureBreachRowRepository<'a> {
