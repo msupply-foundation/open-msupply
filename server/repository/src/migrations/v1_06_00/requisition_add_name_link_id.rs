@@ -65,9 +65,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             UPDATE requisition SET name_link_id = name_id;
             PRAGMA foreign_keys = ON;
 
-            DROP TRIGGER IF EXISTS requisition_insert_trigger;
-            DROP TRIGGER IF EXISTS requisition_update_trigger;
-            DROP TRIGGER IF EXISTS requisition_delete_trigger;
+            DROP TRIGGER requisition_insert_trigger;
+            DROP TRIGGER requisition_update_trigger;
+            DROP TRIGGER requisition_delete_trigger;
             
             CREATE TRIGGER requisition_insert_trigger AFTER INSERT ON requisition
             BEGIN
@@ -87,9 +87,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             VALUES ('requisition', OLD.id, 'DELETE', OLD.store_id, OLD.name_link_id, OLD.is_sync_update);
             END;
             
-            DROP TRIGGER IF EXISTS requisition_line_insert_trigger;
-            DROP TRIGGER IF EXISTS requisition_line_update_trigger;
-            DROP TRIGGER IF EXISTS requisition_line_delete_trigger;
+            DROP TRIGGER requisition_line_insert_trigger;
+            DROP TRIGGER requisition_line_update_trigger;
+            DROP TRIGGER requisition_line_delete_trigger;
             
             CREATE TRIGGER requisition_line_insert_trigger AFTER INSERT ON requisition_line
             BEGIN
@@ -114,7 +114,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-            DROP INDEX IF EXISTS index_requisition_name_id_fkey;
+            DROP INDEX index_requisition_name_id_fkey;
             ALTER TABLE requisition DROP COLUMN name_id;
             CREATE INDEX "index_requisition_name_link_id_fkey" ON "requisition" ("name_link_id");
         "#

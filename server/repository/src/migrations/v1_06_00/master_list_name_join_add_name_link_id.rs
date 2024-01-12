@@ -12,7 +12,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
            SET name_link_id = name_id;
       
            ALTER TABLE master_list_name_join ADD CONSTRAINT master_list_name_join_name_link_id_fkey FOREIGN KEY (name_link_id) REFERENCES name_link(id);
-           DROP INDEX IF EXISTS index_master_list_name_join_name_id_fkey;
+           DROP INDEX index_master_list_name_join_name_id_fkey;
            ALTER TABLE master_list_name_join DROP COLUMN name_id;
       "#,
     )?;
