@@ -39,8 +39,8 @@ export const useTemperatureChartData = () => {
   const { datetime, ...filterBy } =
     filter?.filterBy as TemperatureLogFilterInput;
 
-  let fromDatetime = DateUtils.startOfToday().toISOString();
-  let toDatetime = DateUtils.endOfDay(new Date()).toISOString();
+  let fromDatetime = DateUtils.addDays(new Date(), -1).toISOString();
+  let toDatetime = new Date().toISOString();
 
   if (!!datetime && typeof datetime === 'object') {
     const hasAfterOrEqualTo =
