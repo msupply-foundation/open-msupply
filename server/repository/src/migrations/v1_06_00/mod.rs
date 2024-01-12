@@ -20,6 +20,7 @@ mod name_tag_join_add_name_link_id;
 mod patient_id_indices;
 mod plugin_data;
 mod program_enrolment_status;
+mod program_event_patient_link_id;
 mod requisition_add_name_link_id;
 mod stock_line_add_item_link_id;
 mod stocktake_line_add_item_link_id;
@@ -54,6 +55,8 @@ impl Migration for V1_06_00 {
         master_list_name_join_add_name_link_id::migrate(connection)?;
         name_tag_join_add_name_link_id::migrate(connection)?;
         requisition_add_name_link_id::migrate(connection)?;
+        // Patient link migrations
+        program_event_patient_link_id::migrate(connection)?;
 
         // Clinician link migrations
         clinician_link::migrate(connection)?;
@@ -62,6 +65,7 @@ impl Migration for V1_06_00 {
         program_enrolment_status::migrate(connection)?;
         indexes::migrate(connection)?;
         encounter_status::migrate(connection)?;
+
         Ok(())
     }
 }
