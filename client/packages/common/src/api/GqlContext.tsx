@@ -19,13 +19,17 @@ import { createRegisteredContext } from 'react-singleton-context';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
+// these queries are allowed to fail silently with permission denied errors
+// as they are for background data fetches only; the user will be notified
+// by other, page-level, queries instead. Allowing the exceptions here
+// prevents the display of multiple permission denied errors for a single page
 const permissionExceptions = [
   'reports',
   'stockCounts',
   'invoiceCounts',
   'itemCounts',
   'requisitionCounts',
-  'temperatureBreaches',
+  'temperatureNotifications',
 ];
 interface ResponseError {
   message?: string;
