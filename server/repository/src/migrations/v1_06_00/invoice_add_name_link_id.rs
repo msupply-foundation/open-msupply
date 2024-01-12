@@ -82,9 +82,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-        DROP TRIGGER IF EXISTS invoice_insert_trigger;
-        DROP TRIGGER IF EXISTS invoice_update_trigger;
-        DROP TRIGGER IF EXISTS invoice_delete_trigger;
+        DROP TRIGGER invoice_insert_trigger;
+        DROP TRIGGER invoice_update_trigger;
+        DROP TRIGGER invoice_delete_trigger;
 
         CREATE TRIGGER invoice_insert_trigger
           AFTER INSERT ON invoice
@@ -107,9 +107,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 VALUES ('invoice', OLD.id, 'DELETE', OLD.name_link_id, OLD.store_id);
             END;
 
-        DROP TRIGGER IF EXISTS invoice_line_insert_trigger;
-        DROP TRIGGER IF EXISTS invoice_line_update_trigger;
-        DROP TRIGGER IF EXISTS invoice_line_delete_trigger;
+        DROP TRIGGER invoice_line_insert_trigger;
+        DROP TRIGGER invoice_line_update_trigger;
+        DROP TRIGGER invoice_line_delete_trigger;
 
         CREATE TRIGGER invoice_line_insert_trigger
         AFTER INSERT ON invoice_line
