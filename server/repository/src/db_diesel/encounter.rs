@@ -1,4 +1,5 @@
 use super::{
+    clinician_link_row::{clinician_link, clinician_link::dsl as clinician_link_dsl},
     document::latest_document::dsl as latest_document_dsl,
     encounter_row::encounter::{self, dsl as encounter_dsl},
     name_row::name::dsl as name_dsl,
@@ -9,12 +10,16 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
-    latest_document, DBType, DatetimeFilter, EncounterRow, EncounterStatus, EqualFilter,
-    Pagination, PatientFilter, PatientRepository, ProgramEnrolmentFilter,
+    latest_document, ClinicianLinkRow, DBType, DatetimeFilter, EncounterRow, EncounterStatus,
+    EqualFilter, Pagination, PatientFilter, PatientRepository, ProgramEnrolmentFilter,
     ProgramEnrolmentRepository, ProgramRow, RepositoryError, Sort, StringFilter,
 };
 
-use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
+use diesel::{
+    dsl::IntoBoxed,
+    helper_types::{InnerJoin, LeftJoin},
+    prelude::*,
+};
 
 #[derive(Clone, Default)]
 pub struct EncounterFilter {
@@ -121,15 +126,25 @@ pub enum EncounterSortField {
     Status,
 }
 
+type EncounterJoin = (EncounterRow, ProgramRow, Option<ClinicianLinkRow>);
 pub type Encounter = (EncounterRow, ProgramRow);
+
+fn to_domain((encounter_row, program_row, _): EncounterJoin) -> Encounter {
+    (encounter_row, program_row)
+}
 
 pub type EncounterSort = Sort<EncounterSortField>;
 
-type BoxedProgramQuery = IntoBoxed<'static, InnerJoin<encounter::table, program::table>, DBType>;
+type BoxedEncounterQuery = IntoBoxed<
+    'static,
+    LeftJoin<InnerJoin<encounter::table, program::table>, clinician_link::table>,
+    DBType,
+>;
 
-fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQuery {
+fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedEncounterQuery {
     let mut query = encounter_dsl::encounter
         .inner_join(program_dsl::program)
+        .left_join(clinician_link_dsl::clinician_link)
         .into_boxed();
 
     if let Some(f) = filter {
@@ -160,7 +175,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
         apply_date_time_filter!(query, start_datetime, encounter_dsl::start_datetime);
         apply_date_time_filter!(query, end_datetime, encounter_dsl::end_datetime);
         apply_equal_filter!(query, status, encounter_dsl::status);
-        apply_equal_filter!(query, clinician_id, encounter_dsl::clinician_id);
+        apply_equal_filter!(query, clinician_id, clinician_link_dsl::clinician_id);
 
         if document_data.is_some() {
             let mut sub_query = latest_document_dsl::latest_document
@@ -244,8 +259,8 @@ impl<'a> EncounterRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<Encounter>(&self.connection.connection)?;
+            .load::<EncounterJoin>(&self.connection.connection)?;
 
-        Ok(result)
+        Ok(result.into_iter().map(to_domain).collect())
     }
 }
