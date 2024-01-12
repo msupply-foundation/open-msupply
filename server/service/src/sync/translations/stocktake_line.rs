@@ -4,8 +4,8 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, StockLineRowRepository, StocktakeLineRow,
-    StocktakeLineRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, StocktakeLine, StocktakeLineFilter,
+    StocktakeLineRepository, StocktakeLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -118,32 +118,38 @@ impl SyncTranslation for StocktakeLineTranslation {
             return Ok(None);
         }
 
-        let StocktakeLineRow {
-            id,
-            stocktake_id,
-            stock_line_id,
-            location_id,
-            comment,
-            snapshot_number_of_packs,
-            counted_number_of_packs,
-            item_id,
-            batch,
-            expiry_date,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            note,
-            inventory_adjustment_reason_id,
-        } = StocktakeLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
+        let Some(stocktake_line) = StocktakeLineRepository::new(connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .pop() else {
+                return Err(anyhow::anyhow!("Stocktake row not found"))
+            };
 
-        let stock_line = match &stock_line_id {
-            Some(stock_line_id) => {
-                Some(StockLineRowRepository::new(connection).find_one_by_id(&stock_line_id)?)
-            }
-            None => None,
-        };
+        let StocktakeLine {
+            line:
+                StocktakeLineRow {
+                    id,
+                    stocktake_id,
+                    stock_line_id,
+                    location_id,
+                    comment,
+                    snapshot_number_of_packs,
+                    counted_number_of_packs,
+                    item_id: _item_id, // item_id is ACTUALLY the item_link_id, we need to use the item.id instead
+                    batch,
+                    expiry_date,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    note,
+                    inventory_adjustment_reason_id,
+                },
+            item,
+            stock_line,
+            ..
+        } = stocktake_line;
+
         let legacy_row = LegacyStocktakeLineRow {
             ID: id.clone(),
             stock_take_ID: stocktake_id,
@@ -153,7 +159,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             stock_take_qty: counted_number_of_packs.unwrap_or(0.0),
             is_edited: counted_number_of_packs.is_some(),
             item_line_ID: stock_line_id,
-            item_ID: item_id,
+            item_ID: item.id,
             snapshot_packsize: pack_size
                 .unwrap_or(stock_line.as_ref().map(|it| it.pack_size).unwrap_or(0)),
             Batch: batch,
