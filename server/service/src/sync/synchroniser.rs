@@ -239,7 +239,6 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
     > {
         let translators = all_translators();
         let table_order = pull_integration_order(&translators);
-        let step_progress = SyncStepProgress::Integrate;
 
         let sync_buffer = SyncBuffer::new(connection);
         let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
@@ -254,7 +253,9 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             .translate_and_integrate_sync_records(
                 upsert_sync_buffer_records.clone(),
                 &translators,
-                Some(logger),
+                logger,
+                // pass true to use logger on initialisation only
+                true,
             )?;
 
         // pass the logger here
@@ -262,7 +263,8 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             .translate_and_integrate_sync_records(
                 delete_sync_buffer_records.clone(),
                 &translators,
-                None,
+                logger,
+                false,
             )?;
 
         Ok((upsert_integration_result, delete_integration_result))
