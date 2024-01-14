@@ -2,8 +2,11 @@ import React, { FC } from 'react';
 import {
   BasicSpinner,
   Box,
+  CheckIcon,
   DialogButton,
+  LoadingButton,
   ModalTabs,
+  SaveIcon,
   Typography,
   useDialog,
   useTranslation,
@@ -57,7 +60,7 @@ export const ProgramDetailModal: FC = () => {
     document?.createDocument,
     handleSave
   );
-  const { JsonForm, isLoading, saveData, isDirty, validationError } =
+  const { JsonForm, isLoading, isSaving, saveData, isDirty, validationError } =
     useJsonForms(
       {
         documentName: document?.name,
@@ -106,14 +109,20 @@ export const ProgramDetailModal: FC = () => {
       title=""
       cancelButton={<DialogButton variant="cancel" onClick={reset} />}
       okButton={
-        <DialogButton
-          variant={isCreating ? 'save' : 'ok'}
+        <LoadingButton
+          color="secondary"
+          loadingStyle={{ iconColor: 'secondary.main' }}
           disabled={!isDirty || !!validationError}
+          isLoading={isSaving}
           onClick={async () => {
             await saveData();
             reset();
           }}
-        />
+          startIcon={isCreating ? <SaveIcon /> : <CheckIcon />}
+          sx={{ marginLeft: 2 }}
+        >
+          {isCreating ? t('button.save') : t('button.ok')}
+        </LoadingButton>
       }
       width={700}
     >

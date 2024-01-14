@@ -28,7 +28,7 @@ pub struct Interval {
     pub interval_id: String,
 }
 
-// See README.md in this direcotry for explanation of diesel types
+// See README.md in this directory for explanation of diesel types
 impl QueryFragment<DBType> for TemperatureChart {
     fn walk_ast(&self, mut out: AstPass<DBType>) -> QueryResult<()> {
         // Below should produces something like
@@ -271,9 +271,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_dateime_milliseconds() {
+    async fn test_datetime_milliseconds() {
         let (_, connection, _, _) =
-            setup_all("test_dateime_milliseconds", MockDataInserts::none()).await;
+            setup_all("test_datetime_milliseconds", MockDataInserts::none()).await;
 
         #[derive(QueryableByName, Debug, PartialEq)]
         struct Res {

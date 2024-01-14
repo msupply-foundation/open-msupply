@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod changelog_deduped;
 mod contact_trace;
 mod encounter_status;
 mod indexes;
@@ -27,6 +28,7 @@ impl Migration for V1_06_00 {
         program_enrolment_status::migrate(connection)?;
         indexes::migrate(connection)?;
         encounter_status::migrate(connection)?;
+        changelog_deduped::migrate(connection)?;
         Ok(())
     }
 }
