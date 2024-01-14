@@ -56,7 +56,7 @@ Bugsnag.start({
 });
 
 const skipRequest = () =>
-  LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned;
+  LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
 const PluginProvider: React.FC<PropsWithChildren> = ({ children }) => {
   useInitPlugins();
