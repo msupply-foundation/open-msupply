@@ -87,6 +87,7 @@ export const DetailView: FC<DetailViewProps> = ({
     setData,
     saveData,
     isDirty,
+    isSaving,
     validationError,
     revert,
   } = useJsonForms(
@@ -190,6 +191,7 @@ export const DetailView: FC<DetailViewProps> = ({
       <Footer
         documentName={contactData?.documentName}
         onSave={saveData}
+        isSaving={isSaving}
         onCancel={revert}
         isDisabled={!isDirty || !!validationError}
         contactTrace={data as ContactTraceRowFragment}

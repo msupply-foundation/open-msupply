@@ -48,6 +48,7 @@ pub enum TemperatureBreachRowType {
     #[default]
     HotConsecutive,
     HotCumulative,
+    Excursion,
 }
 
 #[derive(
