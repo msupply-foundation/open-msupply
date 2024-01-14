@@ -42,6 +42,12 @@ pub struct SyncLogger<'a> {
 #[error("Problem writing to sync log")]
 pub struct SyncLoggerError(#[from] RepositoryError);
 
+impl SyncLoggerError {
+    pub(crate) fn to_repository_error(self) -> RepositoryError {
+        self.0
+    }
+}
+
 impl<'a> SyncLogger<'a> {
     pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger, SyncLoggerError> {
         info!("Sync started");
