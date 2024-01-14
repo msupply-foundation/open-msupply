@@ -254,6 +254,10 @@ pub fn u32_to_i32(num: u32) -> i32 {
     num.try_into().unwrap_or(0)
 }
 
+pub fn usize_to_u64(num: usize) -> u64 {
+    num.try_into().unwrap_or(0)
+}
+
 #[derive(Debug, PartialEq)]
 pub struct InputWithResult<I, R> {
     pub input: I,

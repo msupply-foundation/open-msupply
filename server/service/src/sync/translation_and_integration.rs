@@ -1,15 +1,20 @@
-use crate::sync::{integrate_document::sync_upsert_document, translations::PullDeleteRecordTable};
+use crate::{
+    sync::{integrate_document::sync_upsert_document, translations::PullDeleteRecordTable},
+    usize_to_u64,
+};
 
 use super::{
     sync_buffer::SyncBuffer,
-    sync_status::logger::{SyncLogger, SyncStepProgress},
+    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
     translations::{
         IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslation, SyncTranslators,
     },
 };
 use log::warn;
 use repository::*;
-use std::{cmp, collections::HashMap, convert::TryInto};
+use std::collections::HashMap;
+
+static PROGRESS_STEP_LEN: usize = 100;
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
@@ -71,22 +76,26 @@ impl<'a> TranslationAndIntegration<'a> {
         &self,
         sync_records: Vec<SyncBufferRow>,
         translators: &Vec<Box<dyn SyncTranslation>>,
-        logger: &mut SyncLogger,
-        initialisation: bool,
+        mut logger: Option<&mut SyncLogger>,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
         let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
 
-        // total to integrate for both upsert and delete
-        let total_to_integrate: u64 = sync_records.len().try_into().unwrap();
+        // Record initial progress (will be set as total progress)
+        let total_to_integrate = sync_records.len();
 
-        // define arbitrary spacing of every 50th of total progress for logging to prevent excessive logging
-        // set minimum to 1 to prevent division by zero
-        let interval_for_logging = cmp::max(total_to_integrate.clone() / 50, 1);
+        // Helper to make below logic less verbose
+        let mut record_progress = |progress: usize| -> Result<(), RepositoryError> {
+            match logger.as_mut() {
+                None => Ok(()),
+                // https://stackoverflow.com/questions/69615120/extracting-a-mutable-reference-from-an-option
+                Some(logger) => (&mut **logger)
+                    .progress(step_progress.clone(), usize_to_u64(progress))
+                    .map_err(SyncLoggerError::to_repository_error),
+            }
+        };
 
-        let mut progress = 0;
-
-        for sync_record in sync_records {
+        for (number_of_records_integrated, sync_record) in sync_records.into_iter().enumerate() {
             let translation_result = match self.translate_sync_record(&sync_record, &translators) {
                 Ok(translation_result) => translation_result,
                 // Record error in sync buffer and in result, continue to next sync_record
@@ -141,33 +150,13 @@ impl<'a> TranslationAndIntegration<'a> {
                 }
             }
 
-            if true == initialisation {
-                // log only every threshold value to prevent overlogging
-                if progress % interval_for_logging == 0 {
-                    logger
-                        .progress(
-                            step_progress.clone(),
-                            total_to_integrate.clone() - progress.clone(),
-                        )
-                        .map_err(|_error| RepositoryError::DBError {
-                            msg: ("Logging failed in integration").to_string(),
-                            extra: ("").to_string(),
-                        })?;
-                }
-
-                progress += 1;
-
-                // if we have finished, update the completed count regardless of the batched logging
-                if total_to_integrate == progress {
-                    logger
-                        .progress(step_progress.clone(), 0)
-                        .map_err(|_error| RepositoryError::DBError {
-                            msg: ("Logging failed in integration").to_string(),
-                            extra: ("").to_string(),
-                        })?;
-                }
+            if number_of_records_integrated % PROGRESS_STEP_LEN == 0 {
+                record_progress(total_to_integrate - number_of_records_integrated)?;
             }
         }
+
+        // Record final progress
+        record_progress(0)?;
 
         Ok(result)
     }

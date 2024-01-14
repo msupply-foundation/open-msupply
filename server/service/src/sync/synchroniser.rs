@@ -4,7 +4,7 @@ use crate::{
 };
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::{convert::TryInto, sync::Arc};
+use std::sync::Arc;
 use thiserror::Error;
 use util::format_error;
 
@@ -17,7 +17,7 @@ use super::{
     },
     settings::{SyncSettings, SYNC_VERSION},
     sync_buffer::SyncBuffer,
-    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
+    sync_status::logger::{SyncLogger, SyncLoggerError},
     translation_and_integration::{TranslationAndIntegration, TranslationAndIntegrationResults},
     translations::{all_translators, pull_integration_order},
 };
@@ -230,7 +230,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
     // - not initialised: no transactions at all
 
     // Closure, to be run in a transaction or without a transaction
-    let mut integrate_and_translate = |connection: &StorageConnection| -> Result<
+    let integrate_and_translate = |connection: &StorageConnection| -> Result<
         (
             TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
@@ -253,9 +253,8 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             .translate_and_integrate_sync_records(
                 upsert_sync_buffer_records.clone(),
                 &translators,
-                logger,
-                // pass true to use logger on initialisation only
-                true,
+                // Only pass Some(logger) during initalisation
+                is_initialised.then(|| logger),
             )?;
 
         // pass the logger here
@@ -263,8 +262,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             .translate_and_integrate_sync_records(
                 delete_sync_buffer_records.clone(),
                 &translators,
-                logger,
-                false,
+                None,
             )?;
 
         Ok((upsert_integration_result, delete_integration_result))
