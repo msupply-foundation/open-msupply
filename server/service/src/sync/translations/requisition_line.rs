@@ -4,7 +4,7 @@ use crate::sync::{
 };
 use chrono::NaiveDateTime;
 use repository::{
-    ChangelogRow, ChangelogTableName, ItemRowRepository, RequisitionLineRow,
+    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, ItemRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -144,6 +144,14 @@ impl SyncTranslation for RequisitionLineTranslation {
                 changelog.record_id
             )))?;
 
+        // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
+        let item_id = ItemLinkRowRepository::new(connection)
+            .find_one_by_id(&item_id)?
+            .ok_or(anyhow::anyhow!(
+                "Item ({item_id}) not found in requisition line ({id})"
+            ))?
+            .item_id;
+
         // Required for backward compatibility (authorisation web app uses this to display item name)
         let item_name = ItemRowRepository::new(connection)
             .find_one_by_id(&item_id)?
@@ -190,7 +198,10 @@ impl SyncTranslation for RequisitionLineTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_requisition_line_translation() {
@@ -214,6 +225,47 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_line_push_merged() {
+        // The item_links_merged function will merge ALL items into item_a, so all stock_lines should have an item_id of "item_a" regardless of their original item_id.
+        let (_, connection, _, _) = setup_all(
+            "test_requisition_line_push_item_link_merged",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .item_links_merged()
+                .names()
+                .stores()
+                .locations()
+                .barcodes()
+                .full_requisitions(),
+        )
+        .await;
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(
+                    ChangelogFilter::new()
+                        .table_name(ChangelogTableName::RequisitionLine.equal_to()),
+                ),
+            )
+            .unwrap();
+
+        let translator = RequisitionLineTranslation {};
+        for changelog in changelogs {
+            // Translate and sort
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
         }
     }
 }
