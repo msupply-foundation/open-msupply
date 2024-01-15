@@ -1,0 +1,10 @@
+{
+  "error.not-editable": "Учёт не подлежит редактированию.",
+  "error.cant-save": "Возникла проблема при сохранении.",
+  "error.is-locked": "Учёт заблокирован.",
+  "error.stocktake-not-found": "Учёт не найден",
+  "heading.description": "Описание",
+  "label.add-new-line": "Добавить новую строку",
+  "label.location": "Местонахождение",
+  "label.new": "Новый"
+}

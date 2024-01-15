@@ -1,0 +1,8 @@
+{
+  "button.login": "Войти",
+  "heading.password": "Пароль",
+  "heading.username": "Имя пользователя",
+  "admin": "Настройки",
+  "auth.alert-title": "Ошибка Авторизации",
+  "catalogue": "Каталог"
+}
