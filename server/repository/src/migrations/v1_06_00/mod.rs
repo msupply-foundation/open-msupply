@@ -42,6 +42,7 @@ impl Migration for V1_06_00 {
         master_list::migrate(connection)?;
         temperature_breach::migrate(connection)?;
         patient_id_indices::migrate(connection)?;
+        indexes::migrate(connection)?;
 
         // Item link migrations
         item_add_is_active::migrate(connection)?;
@@ -67,7 +68,6 @@ impl Migration for V1_06_00 {
         invoice_add_clinician_link_id::migrate(connection)?;
 
         program_enrolment_status::migrate(connection)?;
-        indexes::migrate(connection)?;
         encounter_status::migrate(connection)?;
         changelog_deduped::migrate(connection)?;
         Ok(())
