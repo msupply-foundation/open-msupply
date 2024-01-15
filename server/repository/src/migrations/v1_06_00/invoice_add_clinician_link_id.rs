@@ -23,16 +23,15 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ADD COLUMN clinician_link_id TEXT REFERENCES clinician_link (id); 
             UPDATE invoice SET clinician_link_id = clinician_id;
             PRAGMA foreign_keys = ON;
-
-            CREATE INDEX "index_invoice_clinician_link_id_fkey" ON "invoice" ("clinician_link_id");
             "#,
     )?;
 
     sql! {
         connection,
         r#"
-        DROP INDEX IF EXISTS index_invoice_clinician_id_fkey;
+        DROP INDEX IF EXISTS index_invoice_clinician_id;
         ALTER TABLE invoice DROP COLUMN clinician_id;
+        CREATE INDEX "index_invoice_clinician_link_id_fkey" ON "invoice" ("clinician_link_id");
         "#
     }?;
 
