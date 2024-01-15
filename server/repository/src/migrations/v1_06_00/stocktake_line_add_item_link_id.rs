@@ -28,18 +28,17 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             UPDATE stocktake_line SET item_link_id = item_id;
 
             PRAGMA foreign_keys = ON;
-
-            CREATE INDEX "index_stocktake_line_item_link_id_fkey" ON "stocktake_line" ("item_link_id");
             "#,
     )?;
 
-    sql! {
+    sql!(
         connection,
         r#"
-        DROP INDEX IF EXISTS index_stocktake_line_item_id_fkey;
-        ALTER TABLE stocktake_line DROP COLUMN item_id;
+            DROP INDEX index_stocktake_line_item_id_fkey;
+            ALTER TABLE stocktake_line DROP COLUMN item_id;
+            CREATE INDEX "index_stocktake_line_item_link_id_fkey" ON "stocktake_line" ("item_link_id");
         "#
-    }?;
+    )?;
 
     Ok(())
 }
