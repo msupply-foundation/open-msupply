@@ -88,8 +88,7 @@ impl<'a> TranslationAndIntegration<'a> {
         let mut record_progress = |progress: usize| -> Result<(), RepositoryError> {
             match logger.as_mut() {
                 None => Ok(()),
-                // https://stackoverflow.com/questions/69615120/extracting-a-mutable-reference-from-an-option
-                Some(logger) => (&mut **logger)
+                Some(logger) => logger
                     .progress(step_progress.clone(), usize_to_u64(progress))
                     .map_err(SyncLoggerError::to_repository_error),
             }
