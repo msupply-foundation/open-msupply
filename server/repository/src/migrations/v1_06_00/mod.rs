@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod barcode_add_manufacturer_link_id;
 mod changelog_deduped;
 mod clinician_link;
 mod clinician_store_join_add_clinician_link_id;
@@ -67,6 +68,7 @@ impl Migration for V1_06_00 {
         encounter_add_clinician_link_id::migrate(connection)?;
 
         stock_line_add_supplier_link_id::migrate(connection)?;
+        barcode_add_manufacturer_link_id::migrate(connection)?;
 
         program_enrolment_status::migrate(connection)?;
         encounter_status::migrate(connection)?;
