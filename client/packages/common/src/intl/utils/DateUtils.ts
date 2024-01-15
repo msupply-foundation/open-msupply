@@ -83,13 +83,14 @@ export const DateUtils = {
   addCurrentTime,
   getDateOrNull: (
     date?: Date | string | null,
-    format?: string
+    format?: string,
+    options?: Parameters<typeof parse>[3]
   ): Date | null => {
     if (!date) return null;
     if (date instanceof Date) return date;
     const maybeDate =
       format && typeof date === 'string'
-        ? parse(date, format, new Date())
+        ? parse(date, format, new Date(), options)
         : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
