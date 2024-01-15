@@ -117,9 +117,8 @@ const StockListComponent: FC = () => {
     [
       'location',
       {
-        sortable: false,
         Cell: TooltipTextCell,
-        width: 75,
+        width: 100,
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],

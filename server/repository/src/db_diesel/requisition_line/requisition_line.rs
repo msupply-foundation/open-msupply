@@ -1,8 +1,10 @@
 use crate::{
     diesel_macros::apply_equal_filter,
+    item_link,
+    item_link::dsl as item_link_dsl,
     repository_error::RepositoryError,
     requisition_row::{requisition, requisition::dsl as requisition_dsl},
-    DBType, RequisitionRow, StorageConnection,
+    DBType, ItemLinkRow, RequisitionRow, StorageConnection,
 };
 
 use diesel::{
@@ -15,7 +17,7 @@ use super::{
     RequisitionLineFilter, RequisitionLineRow,
 };
 
-pub type RequisitionLineJoin = (RequisitionLineRow, RequisitionRow);
+pub type RequisitionLineJoin = (RequisitionLineRow, ItemLinkRow, RequisitionRow);
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct RequisitionLine {
@@ -63,21 +65,27 @@ impl<'a> RequisitionLineRepository<'a> {
 
         Ok(result
             .into_iter()
-            .map(|(requisition_line_row, requisition_row)| RequisitionLine {
-                requisition_line_row,
-                requisition_row,
-            })
+            .map(
+                |(requisition_line_row, _, requisition_row)| RequisitionLine {
+                    requisition_line_row,
+                    requisition_row,
+                },
+            )
             .collect())
     }
 }
 
-type BoxedRequisitionLineQuery =
-    IntoBoxed<'static, InnerJoin<requisition_line::table, requisition::table>, DBType>;
+type BoxedRequisitionLineQuery = IntoBoxed<
+    'static,
+    InnerJoin<InnerJoin<requisition_line::table, item_link::table>, requisition::table>,
+    DBType,
+>;
 
 fn create_filtered_query(
     filter: Option<RequisitionLineFilter>,
 ) -> Result<BoxedRequisitionLineQuery, RepositoryError> {
     let mut query = requisition_line_dsl::requisition_line
+        .inner_join(item_link_dsl::item_link)
         .inner_join(requisition_dsl::requisition)
         .into_boxed();
 
@@ -94,7 +102,7 @@ fn create_filtered_query(
             f.requested_quantity,
             requisition_line_dsl::requested_quantity
         );
-        apply_equal_filter!(query, f.item_id, requisition_line_dsl::item_id);
+        apply_equal_filter!(query, f.item_id, item_link_dsl::item_id);
         apply_equal_filter!(query, f.r#type, requisition_dsl::type_);
         apply_equal_filter!(query, f.status, requisition_dsl::status);
     }

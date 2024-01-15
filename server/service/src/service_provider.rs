@@ -50,6 +50,7 @@ use crate::{
     system_user::create_system_user,
     temperature_breach::{TemperatureBreachService, TemperatureBreachServiceTrait},
     temperature_chart::{TemperatureChartService, TemperatureChartServiceTrait},
+    temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     temperature_log::{TemperatureLogService, TemperatureLogServiceTrait},
     ListError, ListResult,
 };
@@ -65,6 +66,7 @@ pub struct ServiceProvider {
     pub location_service: Box<dyn LocationServiceTrait>,
     pub sensor_service: Box<dyn SensorServiceTrait>,
     pub temperature_breach_service: Box<dyn TemperatureBreachServiceTrait>,
+    pub temperature_excursion_service: Box<dyn TemperatureExcursionServiceTrait>,
     pub temperature_log_service: Box<dyn TemperatureLogServiceTrait>,
     pub temperature_chart_service: Box<dyn TemperatureChartServiceTrait>,
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
@@ -191,6 +193,7 @@ impl ServiceProvider {
             repack_service: Box::new(RepackService {}),
             log_service: Box::new(LogService {}),
             plugin_data_service: Box::new(PluginDataService {}),
+            temperature_excursion_service: Box::new(TemperatureExcursionService {}),
         }
     }
 

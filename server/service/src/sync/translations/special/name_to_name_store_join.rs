@@ -20,7 +20,7 @@ pub struct PartialLegacyNameRow {
 
 // In omSupply, is_customer and is_supplier relationship between store and name is stored
 // in name_store_join, in mSupply it's stored on name. This translator updates all name_store_joins
-// for name when name is pulled (setting is_customer and is_supplier appropriatly)
+// for name when name is pulled (setting is_customer and is_supplier appropriately)
 // NOTE Translator should be removed when central server configures these properties on name_store_join
 pub(crate) struct NameToNameStoreJoinTranslation {}
 impl SyncTranslation for NameToNameStoreJoinTranslation {

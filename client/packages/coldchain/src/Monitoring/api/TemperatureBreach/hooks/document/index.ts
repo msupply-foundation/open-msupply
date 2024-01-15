@@ -1,7 +1,7 @@
-import { useTemperatureBreachNotifications } from './useTemperatureBreachNotifications';
 import { useTemperatureBreaches } from './useTemperatureBreaches';
+import { useUpdateTemperatureBreach } from './useUpdateTemperatureBreach';
 
 export const Document = {
   useTemperatureBreaches,
-  useTemperatureBreachNotifications,
+  useUpdateTemperatureBreach,
 };
