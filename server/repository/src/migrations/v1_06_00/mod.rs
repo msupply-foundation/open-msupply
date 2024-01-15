@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod changelog_deduped;
 mod clinician_link;
 mod clinician_store_join_add_clinician_link_id;
 mod contact_trace;
@@ -23,6 +24,7 @@ mod patient_id_indices;
 mod plugin_data;
 mod program_enrolment_status;
 mod requisition_add_name_link_id;
+mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
 mod stocktake_line_add_item_link_id;
 mod temperature_breach;
@@ -48,6 +50,7 @@ impl Migration for V1_06_00 {
         stock_line_add_item_link_id::migrate(connection)?;
         invoice_line_add_item_link_id::migrate(connection)?;
         master_list_line_add_item_link_id::migrate(connection)?;
+        requisition_line_add_item_link_id::migrate(connection)?;
 
         // Name link migrations
         name_link::migrate(connection)?;
@@ -66,6 +69,7 @@ impl Migration for V1_06_00 {
         program_enrolment_status::migrate(connection)?;
         indexes::migrate(connection)?;
         encounter_status::migrate(connection)?;
+        changelog_deduped::migrate(connection)?;
         Ok(())
     }
 }
@@ -78,6 +82,7 @@ async fn migration_1_06_00() {
     use chrono::NaiveDateTime;
     use diesel::prelude::*;
     use item_link::dsl as item_link_dsl;
+    use requisition_line::dsl as requisition_line_dsl;
     use stock_movement::dsl as stock_movement_dsl;
     use stock_on_hand::dsl as stock_on_hand_dsl;
 
@@ -119,19 +124,52 @@ async fn migration_1_06_00() {
         }
     }
     #[derive(Queryable, Debug, PartialEq)]
-    pub struct StockMovementRow {
-        pub id: String,
-        pub item_id: String,
-        pub store_id: String,
-        pub quantity: i64,
-        pub datetime: NaiveDateTime,
+    struct StockMovementRow {
+        id: String,
+        item_id: String,
+        store_id: String,
+        quantity: i64,
+        datetime: NaiveDateTime,
+    }
+
+    table! {
+        requisition_line (id) {
+            id -> Text,
+            requisition_id -> Text,
+            item_link_id -> Text,
+            requested_quantity -> Integer,
+            suggested_quantity -> Integer,
+            supply_quantity -> Integer,
+            available_stock_on_hand -> Integer ,
+            average_monthly_consumption -> Integer,
+            snapshot_datetime -> Nullable<Timestamp>,
+            approved_quantity -> Integer,
+            approval_comment -> Nullable<Text>,
+            comment -> Nullable<Text>,
+        }
+    }
+
+    #[derive(Queryable, Debug, PartialEq, Default)]
+    struct RequisitionLineRow {
+        id: String,
+        requisition_id: String,
+        item_link_id: String,
+        requested_quantity: i32,
+        suggested_quantity: i32,
+        supply_quantity: i32,
+        available_stock_on_hand: i32,
+        average_monthly_consumption: i32,
+        snapshot_datetime: Option<NaiveDateTime>,
+        approved_quantity: i32,
+        approval_comment: Option<String>,
+        comment: Option<String>,
     }
 
     let previous_version = v1_05_00::V1_05_00.version();
     let version = V1_06_00.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}"),
+        db_name: &format!("migration_{version}_aye"),
         version: Some(previous_version.clone()),
         ..Default::default()
     })
@@ -141,38 +179,37 @@ async fn migration_1_06_00() {
         &connection,
         r#"
         INSERT INTO item 
-        (id, name, code, default_pack_size, type, legacy_record)
+            (id, name, code, default_pack_size, type, legacy_record)
         VALUES 
-        ('item1', 'item1name', 'item1code', 1, 'STOCK', ''),
-        ('item2', 'item2name', 'item2code', 2, 'STOCK', ''),
-        ('item3', 'item3name', 'item3code', 3, 'STOCK', ''),
-        ('item4', 'item4name', 'item4code', 4, 'STOCK', '');
-    "#
+            ('item1', 'item1name', 'item1code', 1, 'STOCK', ''),
+            ('item2', 'item2name', 'item2code', 2, 'STOCK', ''),
+            ('item3', 'item3name', 'item3code', 3, 'STOCK', ''),
+            ('item4', 'item4name', 'item4code', 4, 'STOCK', '');
+        "#
     )
     .unwrap();
     sql!(
         &connection,
         r#"
         INSERT INTO
-        name (id, name, code, is_customer, is_supplier, type, is_sync_update)
-      VALUES
-        ('name1', 'name1name', 'name1code', TRUE, FALSE, 'STORE', TRUE),
-        ('name2', 'name2name', 'name2code', TRUE, FALSE, 'STORE', TRUE),
-        ('name3', 'name3name', 'name3code', TRUE, FALSE, 'STORE', TRUE);
-
-    "#
+            name (id, name, code, is_customer, is_supplier, type, is_sync_update)
+        VALUES
+            ('name1', 'name1name', 'name1code', TRUE, FALSE, 'STORE', TRUE),
+            ('name2', 'name2name', 'name2code', TRUE, FALSE, 'STORE', TRUE),
+            ('name3', 'name3name', 'name3code', TRUE, FALSE, 'STORE', TRUE);
+        "#
     )
     .unwrap();
     sql!(
         &connection,
         r#"
         INSERT INTO
-        store (id, name_id, code, site_id, store_mode, disabled)
-      VALUES
-        ('store1', 'name1', 'store1code', 1, 'STORE', FALSE),
-        ('store2', 'name2', 'store2code', 1, 'STORE', FALSE),
-        ('store3', 'name3', 'store3code', 1, 'STORE', FALSE);
-    "#
+            store (id, name_id, code, site_id, store_mode, disabled)
+        VALUES
+            ('store1', 'name1', 'store1code', 1, 'STORE', FALSE),
+            ('store2', 'name2', 'store2code', 1, 'STORE', FALSE),
+            ('store3', 'name3', 'store3code', 1, 'STORE', FALSE);
+        "#
     )
     .unwrap();
 
@@ -181,27 +218,27 @@ async fn migration_1_06_00() {
         r#"
         INSERT INTO
         stock_line (
-          id,
-          item_id,
-          store_id,
-          cost_price_per_pack,
-          sell_price_per_pack,
-          available_number_of_packs,
-          total_number_of_packs,
-          pack_size,
-          on_hold
+            id,
+            item_id,
+            store_id,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            available_number_of_packs,
+            total_number_of_packs,
+            pack_size,
+            on_hold
         )
-      VALUES
-        ('stock_line1', 'item1', 'store1', 1.0, 1.0, 1.0, 1.0, 1.0, FALSE),
-        ('stock_line2', 'item1', 'store1', 2.0, 2.0, 2.0, 2.0, 2.0, FALSE),
-        ('stock_line3', 'item2', 'store1', 4.0, 4.0, 4.0, 4.0, 4.0, FALSE),
-        ('stock_line4', 'item3', 'store2', 8.0, 8.0, 8.0, 8.0, 8.0, FALSE);
-    "#
+        VALUES
+            ('stock_line1', 'item1', 'store1', 1.0, 1.0, 1.0, 1.0, 1.0, FALSE),
+            ('stock_line2', 'item1', 'store1', 2.0, 2.0, 2.0, 2.0, 2.0, FALSE),
+            ('stock_line3', 'item2', 'store1', 4.0, 4.0, 4.0, 4.0, 4.0, FALSE),
+            ('stock_line4', 'item3', 'store2', 8.0, 8.0, 8.0, 8.0, 8.0, FALSE);
+        "#
     )
     .unwrap();
 
     sql!(
-        &connection,
+    &connection,
         r#"
         INSERT INTO
             invoice (id, name_id, store_id, invoice_number, on_hold, created_datetime, is_system_generated, status, type)
@@ -215,26 +252,71 @@ async fn migration_1_06_00() {
         &connection,
         r#"
         INSERT INTO
-            invoice_line (
-                id,
-                invoice_id,
-                item_id,
-                item_name,
-                item_code,
-                cost_price_per_pack,
-                sell_price_per_pack,
-                total_after_tax,
-                total_before_tax,
-                number_of_packs,
-                pack_size,
-                type
-            )
+        invoice_line (
+            id,
+            invoice_id,
+            item_id,
+            item_name,
+            item_code,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            total_after_tax,
+            total_before_tax,
+            number_of_packs,
+            pack_size,
+            type
+        )
         VALUES
             ('invoice_line1', 'invoice1', 'item1', 'item1name', 'item1code', 1, 2, 4, 4, 2, 12, 'STOCK_IN'),
             ('invoice_line2', 'invoice1', 'item1', 'item1name', 'item1code', 1, 3, 6, 6, 2, 12, 'STOCK_IN'),
             ('invoice_line3', 'invoice1', 'item1', 'item1name', 'item1code', 1, 4, 8, 8, 2, 12, 'STOCK_IN'),
             ('invoice_line4', 'invoice1', 'item2', 'item2name', 'item2code', 1, 5, 10, 10, 2, 12, 'STOCK_IN');
-    "#
+        "#
+        )
+    .unwrap();
+
+    sql!(
+        &connection,
+        r#"
+        INSERT INTO
+            requisition (
+                id,
+                requisition_number,
+                store_id,
+                created_datetime,
+                max_months_of_stock,
+                min_months_of_stock,
+                status,
+                type,
+                name_id
+            )
+        VALUES
+            ('requisition1', 1, 'store1', '2021-01-02 00:00:00', 2, 1, 'DRAFT', 'REQUEST', 'name1');
+        "#
+    )
+    .unwrap();
+
+    sql!(
+        &connection,
+        r#"
+        INSERT INTO
+        requisition_line (
+            id,
+            requisition_id,
+            item_id,
+            requested_quantity,
+            suggested_quantity,
+            supply_quantity,
+            available_stock_on_hand,
+            average_monthly_consumption,
+            approved_quantity
+        )
+        VALUES
+            ('requisition_line1', 'requisition1', 'item1', 1, 2, 2, 5, 3, 2),
+            ('requisition_line2', 'requisition1', 'item1', 1, 2, 2, 5, 3, 2),
+            ('requisition_line3', 'requisition1', 'item1', 1, 2, 2, 5, 3, 2),
+            ('requisition_line4', 'requisition1', 'item2', 1, 2, 2, 5, 3, 2);
+        "#
     )
     .unwrap();
 
@@ -288,4 +370,61 @@ async fn migration_1_06_00() {
         .load(&connection.connection)
         .unwrap();
     assert_eq!(old_stock_movements, new_stock_movements);
+
+    let expected_requisition_lines = vec![
+        RequisitionLineRow {
+            id: "requisition_line1".to_string(),
+            requisition_id: "requisition1".to_string(),
+            item_link_id: "item1".to_string(),
+            requested_quantity: 1,
+            suggested_quantity: 2,
+            supply_quantity: 2,
+            available_stock_on_hand: 5,
+            average_monthly_consumption: 3,
+            approved_quantity: 2,
+            ..Default::default()
+        },
+        RequisitionLineRow {
+            id: "requisition_line2".to_string(),
+            requisition_id: "requisition1".to_string(),
+            item_link_id: "item1".to_string(),
+            requested_quantity: 1,
+            suggested_quantity: 2,
+            supply_quantity: 2,
+            available_stock_on_hand: 5,
+            average_monthly_consumption: 3,
+            approved_quantity: 2,
+            ..Default::default()
+        },
+        RequisitionLineRow {
+            id: "requisition_line3".to_string(),
+            requisition_id: "requisition1".to_string(),
+            item_link_id: "item1".to_string(),
+            requested_quantity: 1,
+            suggested_quantity: 2,
+            supply_quantity: 2,
+            available_stock_on_hand: 5,
+            average_monthly_consumption: 3,
+            approved_quantity: 2,
+            ..Default::default()
+        },
+        RequisitionLineRow {
+            id: "requisition_line4".to_string(),
+            requisition_id: "requisition1".to_string(),
+            item_link_id: "item2".to_string(),
+            requested_quantity: 1,
+            suggested_quantity: 2,
+            supply_quantity: 2,
+            available_stock_on_hand: 5,
+            average_monthly_consumption: 3,
+            approved_quantity: 2,
+            ..Default::default()
+        },
+    ];
+    let updated_requisition_lines: Vec<RequisitionLineRow> = requisition_line_dsl::requisition_line
+        .order(requisition_line_dsl::id.asc())
+        .load(&connection.connection)
+        .unwrap();
+
+    assert_eq!(expected_requisition_lines, updated_requisition_lines);
 }

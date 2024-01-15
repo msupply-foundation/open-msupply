@@ -122,6 +122,15 @@ const currencyOptions = {
     negativePattern: '-!#',
     format,
   },
+  ru: {
+    symbol: '₽',
+    separator: '.',
+    decimal: ',',
+    precision: 2,
+    pattern: '# !',
+    negativePattern: '-# !',
+    format,
+  },
 };
 
 export const useCurrency = (dp?: number) => {

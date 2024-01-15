@@ -1,8 +1,8 @@
 use super::requisition_row::requisition::dsl as requisition_dsl;
 
 use crate::db_diesel::{
-    name_link_row::name_link, period::period, program_requisition::program_row::program,
-    store_row::store, user_row::user_account,
+    item_link_row::item_link, name_link_row::name_link, period::period,
+    program_requisition::program_row::program, store_row::store, user_row::user_account,
 };
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
@@ -55,6 +55,7 @@ joinable!(requisition -> user_account (user_id));
 joinable!(requisition -> period (period_id));
 joinable!(requisition -> program (program_id));
 allow_tables_to_appear_in_same_query!(requisition, name_link);
+allow_tables_to_appear_in_same_query!(requisition, item_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
