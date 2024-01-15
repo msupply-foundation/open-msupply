@@ -5,7 +5,8 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
-    ItemRowRepository, StockLineRowRepository, StorageConnection, SyncBufferRow,
+    ItemLinkRowRepository, ItemRowRepository, StockLineRowRepository, StorageConnection,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -275,6 +276,14 @@ impl SyncTranslation for InvoiceLineTranslation {
             inventory_adjustment_reason_id,
         } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
+        // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
+        let item_id = ItemLinkRowRepository::new(connection)
+            .find_one_by_id(&item_id)?
+            .ok_or(anyhow::anyhow!(
+                "Item ({item_id}) not found for invoice line ({id})"
+            ))?
+            .item_id;
+
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
             invoice_id,
@@ -341,9 +350,10 @@ mod tests {
     use super::*;
     use repository::{
         mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
-        KeyValueStoreRow, KeyValueType,
+        test_db::{setup_all, setup_all_with_data},
+        ChangelogFilter, ChangelogRepository, KeyValueStoreRow, KeyValueType,
     };
+    use serde_json::json;
     use util::inline_init;
 
     #[actix_rt::test]
@@ -384,6 +394,44 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_line_push_merged() {
+        // The item_links_merged function will merge ALL items into item_a, so all invoice_lines should have an item_id of "item_a" regardless of their original item_id.
+        let (_, connection, _, _) = setup_all(
+            "test_invoice_line_push_item_link_merged",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .item_links_merged()
+                .names()
+                .stores()
+                .locations()
+                .barcodes()
+                .full_invoices(),
+        )
+        .await;
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::InvoiceLine.equal_to())),
+            )
+            .unwrap();
+
+        let translator = InvoiceLineTranslation {};
+        for changelog in changelogs {
+            // Translate and sort
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
         }
     }
 }
