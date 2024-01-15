@@ -27,6 +27,7 @@ pub fn mock_temperature_breach_1() -> TemperatureBreachRow {
                 .unwrap()
                 + Duration::seconds(53046),
         ),
+        comment: None,
     }
 }
 
@@ -55,6 +56,7 @@ pub fn mock_temperature_breach_acknowledged() -> TemperatureBreachRow {
                 .unwrap()
                 + Duration::seconds(48246),
         ),
+        comment: None,
     }
 }
 
@@ -83,6 +85,7 @@ pub fn mock_temperature_breach_2() -> TemperatureBreachRow {
                 .unwrap()
                 + Duration::seconds(54246),
         ),
+        comment: None,
     }
 }
 
