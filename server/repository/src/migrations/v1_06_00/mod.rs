@@ -6,6 +6,7 @@ mod changelog_deduped;
 mod clinician_link;
 mod clinician_store_join_add_clinician_link_id;
 mod contact_trace;
+mod contact_trace_link_id;
 mod encounter_add_clinician_link_id;
 mod encounter_status;
 mod indexes;
@@ -68,6 +69,9 @@ impl Migration for V1_06_00 {
         indexes::migrate(connection)?;
         encounter_status::migrate(connection)?;
         changelog_deduped::migrate(connection)?;
+
+        // run after indexes, TODO move when moving migrations to v1_07_00
+        contact_trace_link_id::migrate(connection)?;
         Ok(())
     }
 }
