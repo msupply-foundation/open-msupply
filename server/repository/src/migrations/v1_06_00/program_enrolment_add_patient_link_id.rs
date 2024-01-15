@@ -6,7 +6,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         connection,
         r#"
         ALTER TABLE program_enrolment
-        ADD COLUMN patient_link_id TEXT;
+        ADD COLUMN patient_link_id TEXT NOT NULL DEFAULT 'temp_for_migration';
         
         UPDATE program_enrolment
         SET patient_link_id = patient_id;
@@ -21,7 +21,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
         PRAGMA foreign_keys = OFF;
         ALTER TABLE program_enrolment
-        ADD COLUMN patient_link_id TEXT REFERENCES name_link(id);
+        ADD COLUMN patient_link_id TEXT REFERENCES name_link(id) NOT NULL DEFAULT 'temp_for_migration';
         
         UPDATE program_enrolment
         SET patient_link_id = patient_id;
