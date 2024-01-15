@@ -24,7 +24,7 @@ use super::validate_request;
 #[serde(rename_all = "camelCase")]
 pub struct TemperatureBreach {
     id: String,
-    acknowledged: bool,
+    // acknowledged: bool,
     #[serde(rename = "endTimestamp")]
     end_unix_timestamp: Option<i64>,
     sensor_id: String,
@@ -157,7 +157,8 @@ fn upsert_temperature_breach(
                 threshold_duration_milliseconds: breach.threshold_duration_milliseconds,
                 threshold_maximum: breach.threshold_maximum,
                 threshold_minimum: breach.threshold_minimum,
-                comment: breach.comment,
+                // updating the comment is not supported by the API
+                comment: existing_breach.temperature_breach_row.comment,
             };
             service
                 .update_temperature_breach(&ctx, breach)
