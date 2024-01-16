@@ -31,6 +31,7 @@
   "label.temperature-unit": "°C",
   "label.unacknowledged": "Unacknowledged",
   "message.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
+  "message.breach-ongoing": "This breach is ongoing and cannot be acknowledged until it has ended.",
   "message.confirm-sensor-update": "This will confirm changes you have made to this sensor",
   "message.device": "Device:",
   "message.last-temperature": "Last temperature reading: {{temperature}} °C",
