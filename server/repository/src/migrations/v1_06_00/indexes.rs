@@ -15,7 +15,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE INDEX index_contact_trace_patient_id ON contact_trace (patient_id);
         CREATE INDEX index_contact_trace_contact_patient_id ON contact_trace (contact_patient_id);
         CREATE INDEX index_contact_trace_store_id ON contact_trace (store_id);
-        CREATE INDEX index_stock_line_supplier_id ON stock_line (supplier_id);
         CREATE INDEX index_stock_line_barcode_id ON stock_line (barcode_id);
         CREATE INDEX index_sensor_store_id ON sensor (store_id);
         CREATE INDEX index_sensor_location_id ON sensor (location_id);

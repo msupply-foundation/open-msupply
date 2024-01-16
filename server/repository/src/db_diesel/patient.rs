@@ -1,6 +1,5 @@
 use super::{
     name_row::{name, name::dsl as name_dsl},
-    program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
     DBType, NameRow, StorageConnection,
 };
 
@@ -203,7 +202,7 @@ impl<'a> PatientRepository<'a> {
                         ..Default::default()
                     },
                 ))
-                .select(program_enrolment_dsl::patient_id);
+                .select(name_dsl::id);
 
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
             }

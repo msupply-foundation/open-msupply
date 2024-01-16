@@ -47,9 +47,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
         -- Dropping stock_line.item_id
         -- Drop index on stock_line.item_id first to avoid errors
-        DROP INDEX IF EXISTS index_stock_line_item_id_fkey;
+        DROP INDEX index_stock_line_item_id_fkey;
         -- Drop stock_on_hand early to avoid errors 
-        DROP VIEW IF EXISTS stock_on_hand;
+        DROP VIEW stock_on_hand;
         ALTER TABLE stock_line
         DROP COLUMN item_id;
   

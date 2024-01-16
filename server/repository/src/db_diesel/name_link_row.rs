@@ -1,7 +1,8 @@
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician,
-    master_list_line_row::master_list_line, master_list_row::master_list,
-    name_link_row::name_link::dsl::*, name_row::name, StorageConnection,
+    barcode_row::barcode, clinician_row::clinician, item_link_row::item_link, item_row::item,
+    location_row::location, master_list_line_row::master_list_line, master_list_row::master_list,
+    name_link_row::name_link::dsl::*, name_row::name, program_enrolment_row::program_enrolment,
+    stock_line_row::stock_line, StorageConnection,
 };
 
 use crate::{
@@ -28,6 +29,12 @@ allow_tables_to_appear_in_same_query!(name_link, name_tag_join);
 allow_tables_to_appear_in_same_query!(name_link, period);
 allow_tables_to_appear_in_same_query!(name_link, program);
 allow_tables_to_appear_in_same_query!(name_link, clinician_link);
+allow_tables_to_appear_in_same_query!(name_link, stock_line);
+allow_tables_to_appear_in_same_query!(name_link, item_link);
+allow_tables_to_appear_in_same_query!(name_link, item);
+allow_tables_to_appear_in_same_query!(name_link, location);
+allow_tables_to_appear_in_same_query!(name_link, barcode);
+allow_tables_to_appear_in_same_query!(name_link, program_enrolment);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "name_link"]

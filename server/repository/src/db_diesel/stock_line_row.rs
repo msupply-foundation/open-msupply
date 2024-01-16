@@ -1,5 +1,5 @@
 use super::{
-    item_link_row::item_link, location_row::location, name_row::name,
+    item_link_row::item_link, location_row::location, name_link_row::name_link,
     stock_line_row::stock_line::dsl as stock_line_dsl, store_row::store, StorageConnection,
 };
 
@@ -24,7 +24,7 @@ table! {
         expiry_date -> Nullable<Date>,
         on_hold -> Bool,
         note -> Nullable<Text>,
-        supplier_id -> Nullable<Text>,
+        supplier_link_id -> Nullable<Text>,
         barcode_id -> Nullable<Text>,
     }
 }
@@ -32,7 +32,7 @@ table! {
 joinable!(stock_line -> item_link (item_link_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
-joinable!(stock_line -> name (supplier_id));
+joinable!(stock_line -> name_link (supplier_link_id));
 joinable!(stock_line -> barcode (barcode_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
 
@@ -54,6 +54,7 @@ pub struct StockLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
     pub note: Option<String>,
+    #[column_name = "supplier_link_id"]
     pub supplier_id: Option<String>,
     pub barcode_id: Option<String>,
 }
