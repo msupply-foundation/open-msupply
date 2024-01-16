@@ -34,7 +34,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql! {
         connection,
         r#"
-        DROP INDEX IF EXISTS index_barcode_manufacturer_id;
+        DROP INDEX index_barcode_manufacturer_id;
         ALTER TABLE barcode DROP COLUMN manufacturer_id;
         CREATE INDEX "index_barcode_manufacturer_link_id_fkey" ON "barcode" ("manufacturer_link_id");
         "#
