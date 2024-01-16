@@ -8,6 +8,7 @@ mod clinician_link;
 mod clinician_store_join_add_clinician_link_id;
 mod contact_trace;
 mod encounter_add_clinician_link_id;
+mod encounter_add_patient_link_id;
 mod encounter_status;
 mod indexes;
 mod invoice_add_name_link_id;
@@ -65,6 +66,7 @@ impl Migration for V1_06_00 {
         stock_line_add_supplier_link_id::migrate(connection)?;
         barcode_add_manufacturer_link_id::migrate(connection)?;
         program_enrolment_add_patient_link_id::migrate(connection)?;
+        encounter_add_patient_link_id::migrate(connection)?;
 
         // Clinician link migrations
         clinician_link::migrate(connection)?;
