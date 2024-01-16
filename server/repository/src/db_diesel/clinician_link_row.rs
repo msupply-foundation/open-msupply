@@ -1,4 +1,4 @@
-use super::{clinician_row::clinician, program_row::program, StorageConnection};
+use super::{clinician_row::clinician, name_row::name, program_row::program, StorageConnection};
 use crate::repository_error::RepositoryError;
 
 use self::clinician_link::dsl as clinician_link_dsl;
@@ -13,6 +13,7 @@ table! {
 
 joinable!(clinician_link -> clinician (clinician_id));
 allow_tables_to_appear_in_same_query!(clinician_link, program);
+allow_tables_to_appear_in_same_query!(clinician_link, name);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "clinician_link"]
