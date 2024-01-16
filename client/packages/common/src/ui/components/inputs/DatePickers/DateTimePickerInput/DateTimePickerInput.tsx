@@ -130,7 +130,7 @@ export const DateTimePickerInput: FC<
       minDate={minDate}
       maxDate={maxDate}
       {...props}
-      value={DateUtils.getDateOrNull(props.value, undefined, dateParseOptions)}
+      value={props.value}
     />
   );
 };
