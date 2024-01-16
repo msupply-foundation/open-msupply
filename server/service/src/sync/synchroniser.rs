@@ -4,7 +4,7 @@ use crate::{
 };
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::sync::Arc;
+use std::{ops::Not, sync::Arc};
 use thiserror::Error;
 use util::format_error;
 
@@ -254,7 +254,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
                 upsert_sync_buffer_records.clone(),
                 &translators,
                 // Only pass Some(logger) during initalisation
-                is_initialised.then(|| logger),
+                is_initialised.not().then(|| logger),
             )?;
 
         // pass the logger here
