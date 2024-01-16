@@ -10,13 +10,14 @@ import {
 import {
   StockItemSearchInput,
   ItemRowFragment,
+  ItemStockOnHandFragment,
 } from '@openmsupply-client/system';
 import { useStocktake } from '../../../api';
 
 interface StocktakeLineEditProps {
   item: ItemRowFragment | null;
   mode: ModalMode | null;
-  onChangeItem: (item: ItemRowFragment | null) => void;
+  onChangeItem: (item: ItemStockOnHandFragment | null) => void;
 }
 
 export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({

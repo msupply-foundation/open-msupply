@@ -47,6 +47,7 @@ pub fn insert_prescription(
                 ActivityLogType::PrescriptionCreated,
                 Some(new_invoice.id.to_owned()),
                 None,
+                None,
             )?;
 
             get_invoice(ctx, None, &new_invoice.id)

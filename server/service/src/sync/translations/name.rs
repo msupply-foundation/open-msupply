@@ -5,6 +5,7 @@ use crate::sync::{
         zero_date_as_option,
     },
 };
+use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     ChangelogRow, ChangelogTableName, Gender, NameRow, NameRowRepository, NameType,
@@ -127,6 +128,11 @@ pub struct LegacyNameRow {
     #[serde(rename = "om_gender")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub gender: Option<Gender>,
+    #[serde(rename = "om_date_of_death")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub date_of_death: Option<NaiveDate>,
+    pub custom_data: Option<serde_json::Value>,
 }
 
 const LEGACY_TABLE_NAME: &'static str = LegacyTableName::NAME;
@@ -157,35 +163,73 @@ impl SyncTranslation for NameTranslation {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
+        let LegacyNameRow {
+            id,
+            name,
+            code,
+            r#type: legacy_type,
+            is_customer,
+            is_supplier,
+            supplying_store_id,
+            first_name,
+            last_name,
+            female,
+            date_of_birth,
+            phone,
+            charge_code,
+            comment,
+            country,
+            address1,
+            address2,
+            email,
+            website,
+            is_manufacturer,
+            is_donor,
+            on_hold,
+            created_date,
+            national_health_number,
+            is_deceased,
+            created_datetime,
+            gender,
+            date_of_death,
+            custom_data,
+        } = serde_json::from_str::<LegacyNameRow>(&sync_record.data)?;
+
+        // Custom data for facility or name only (for others, say patient, don't need to have extra overhead or push translation back to json)
+        let r#type = legacy_type.to_name_type();
+        let custom_data_string = r#type
+            .is_facility_or_store()
+            .then(|| custom_data.as_ref().map(serde_json::to_string))
+            .flatten()
+            .transpose()
+            .context("Error serialising custom data to string")?;
 
         let result = NameRow {
-            id: data.id.to_string(),
-            name: data.name.to_string(),
-            r#type: data.r#type.to_name_type(),
-            code: data.code.to_string(),
-            is_customer: data.is_customer,
-            is_supplier: data.is_supplier,
-
-            supplying_store_id: data.supplying_store_id,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            date_of_birth: data.date_of_birth,
-            phone: data.phone,
-            charge_code: data.charge_code,
-            comment: data.comment,
-            country: data.country,
-            address1: data.address1,
-            address2: data.address2,
-            email: data.email,
-            website: data.website,
-            is_manufacturer: data.is_manufacturer,
-            is_donor: data.is_donor,
-            on_hold: data.on_hold,
-            is_deceased: data.is_deceased,
-            national_health_number: data.national_health_number,
-            gender: data.gender.or(if data.r#type == LegacyNameType::Patient {
-                if data.female {
+            id,
+            name,
+            r#type,
+            code,
+            is_customer,
+            is_supplier,
+            supplying_store_id,
+            first_name,
+            last_name,
+            date_of_birth,
+            phone,
+            charge_code,
+            comment,
+            country,
+            address1,
+            address2,
+            email,
+            website,
+            is_manufacturer,
+            is_donor,
+            on_hold,
+            is_deceased,
+            national_health_number,
+            gender: gender.or(if legacy_type == LegacyNameType::Patient {
+                if female {
                     Some(Gender::Female)
                 } else {
                     Some(Gender::Male)
@@ -193,9 +237,10 @@ impl SyncTranslation for NameTranslation {
             } else {
                 None
             }),
-            created_datetime: data.created_datetime.or(data
-                .created_date
-                .map(|date| date.and_hms_opt(0, 0, 0).unwrap())),
+            created_datetime: created_datetime
+                .or(created_date.map(|date| date.and_hms_opt(0, 0, 0).unwrap())),
+            date_of_death,
+            custom_data_string,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -249,7 +294,10 @@ impl SyncTranslation for NameTranslation {
             on_hold,
             created_datetime,
             is_deceased,
+            date_of_death,
             national_health_number,
+            // See comment in pull translation
+            custom_data_string: _,
         } = NameRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -291,6 +339,8 @@ impl SyncTranslation for NameTranslation {
             is_deceased,
             created_datetime,
             gender,
+            date_of_death,
+            custom_data: None,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(

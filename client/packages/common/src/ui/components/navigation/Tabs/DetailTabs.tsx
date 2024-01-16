@@ -31,7 +31,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({
 }) => {
   const { urlQuery, updateQuery } = useUrlQuery();
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   // Inelegant hack to force the "Underline" indicator for the currently active
   // tab to re-render in the correct position when one of the side "drawers" is
@@ -47,28 +47,47 @@ export const DetailTabs: FC<DetailTabsProps> = ({
     handleResize();
   }, [detailPanelOpen, drawerOpen]);
 
-  const onChange = (_: React.SyntheticEvent, tab: string) => {
-    const tabConfirm = tabs.find(({ value }) => value === currentTab);
+  const [tabQueryParams, setTabQueryParams] = useState<
+    Record<string, UrlQueryObject>
+  >({});
+
+  const getDefaultTabQueryParams = (tab: string): UrlQueryObject => {
     const tabDefinition = tabs.find(({ value }) => value === tab);
     const sort = tabDefinition?.sort;
     const query: UrlQueryObject = sort
       ? { tab, sort: sort.key, dir: sort.dir }
       : { tab };
+    return query;
+  };
+
+  const onChange = (_: React.SyntheticEvent, tab: string) => {
+    const tabConfirm = tabs.find(({ value }) => value === currentTab);
+    // restore the query params for the tab
+    const query: UrlQueryObject =
+      tabQueryParams[tab] ?? getDefaultTabQueryParams(tab);
 
     if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
-      showConfirmation(() => updateQuery(query));
+      showConfirmation(() => updateQuery(query, true));
     } else {
-      updateQuery(query);
+      updateQuery(query, true);
     }
   };
 
-  const isValidTab = (tab?: string) =>
+  const isValidTab = (tab?: string): tab is string =>
     !!tab && tabs.some(({ value }) => value === tab);
 
   useEffect(() => {
-    const tab = urlQuery['tab'];
+    const tab = urlQuery['tab'] as string | undefined;
     if (isValidTab(tab)) {
       setCurrentTab(tab);
+
+      // store the query params for the current tab
+      setTabQueryParams(value => {
+        return {
+          ...value,
+          [tab]: urlQuery,
+        };
+      });
     }
   }, [urlQuery]);
 

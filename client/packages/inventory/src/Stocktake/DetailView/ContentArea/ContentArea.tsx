@@ -8,7 +8,7 @@ import {
   createQueryParamsStore,
   NothingHere,
   useRowStyle,
-  AppSxProp,
+  placeholderRowStyle,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
 import { StocktakeLineFragment, useStocktake } from '../../api';
@@ -80,10 +80,7 @@ const useHighlightUncountedRows = (
       }
     }
 
-    const style: AppSxProp = {
-      color: theme => theme.palette.secondary.light,
-    };
-    setRowStyles(placeholders, style);
+    setRowStyles(placeholders, placeholderRowStyle);
   }, [rows, setRowStyles]);
 };
 
@@ -115,6 +112,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
             buttonText={t('button.add-item')}
           />
         }
+        enableColumnSelection
       />
     </Box>
   );

@@ -1,0 +1,261 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Address": {
+      "properties": {
+        "address1": {
+          "description": "184097001 Patient Address",
+          "type": "string"
+        },
+        "address2": {
+          "description": "Second address line",
+          "type": "string"
+        },
+        "city": {
+          "description": "433178008 City of residence",
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "region": {
+          "description": "Region or province",
+          "type": "string"
+        },
+        "zipCode": {
+          "description": "184102003 Patient zip code",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ContactDetails": {
+      "properties": {
+        "address1": {
+          "description": "184097001 Patient Address",
+          "type": "string"
+        },
+        "address2": {
+          "description": "Second address line",
+          "type": "string"
+        },
+        "city": {
+          "description": "433178008 City of residence",
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "description": {
+          "description": "Clemens e.g. home, work, etc",
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "email": {
+          "description": "424966008 Patient - email address",
+          "type": "string"
+        },
+        "mobile": {
+          "description": "428481002 Patient mobile telephone number",
+          "type": "string"
+        },
+        "phone": {
+          "description": "429697006 Patient home telephone number",
+          "type": "string"
+        },
+        "region": {
+          "description": "Region or province",
+          "type": "string"
+        },
+        "website": {
+          "type": "string"
+        },
+        "zipCode": {
+          "description": "184102003 Patient zip code",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ContactTrace": {
+      "description": "Contact tracing information for a contact associated with a patient.",
+      "properties": {
+        "contact": {
+          "$ref": "#/definitions/RelatedPerson",
+          "description": "Person details about the contact in this contact trace"
+        },
+        "contactTraceId": {
+          "type": "string"
+        },
+        "datetime": {
+          "description": "Date and time of when the contact trace is recorded",
+          "format": "date-time",
+          "type": "string"
+        },
+        "extension": {
+          "type": "object"
+        },
+        "location": {
+          "$ref": "#/definitions/ContactTraceLocation",
+          "description": "The store/clinic/location of the contact trace"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        }
+      },
+      "required": ["datetime"],
+      "type": "object"
+    },
+    "ContactTraceLocation": {
+      "properties": {
+        "storeId": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "Gender": {
+      "enum": [
+        "FEMALE",
+        "MALE",
+        "TRANSGENDER",
+        "TRANSGENDER_MALE",
+        "TRANSGENDER_FEMALE",
+        "UNKNOWN",
+        "NON_BINARY"
+      ],
+      "type": "string"
+    },
+    "Note": {
+      "properties": {
+        "authorId": {
+          "description": "authorId should be captured automatically from app state",
+          "type": "string"
+        },
+        "authorName": {
+          "description": "Practitioner's \"real\" name. Currently needs to be entered, but would ideally default to local state (but we don't yet have this in the database)",
+          "type": "string"
+        },
+        "created": {
+          "description": "Datetime when the note has been created",
+          "format": "date-time",
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": ["text"],
+      "type": "object"
+    },
+    "RelatedPerson": {
+      "properties": {
+        "birthPlace": {
+          "$ref": "#/definitions/Address",
+          "description": "Place of birth"
+        },
+        "code": {
+          "description": "Patient code, e.g. national id or other patient identifier",
+          "type": "string"
+        },
+        "code2": {
+          "description": "Secondary patient code, e.g. another type of health id",
+          "type": "string"
+        },
+        "contactDetails": {
+          "items": {
+            "$ref": "#/definitions/ContactDetails"
+          },
+          "type": "array"
+        },
+        "dateOfBirth": {
+          "description": "184099003 Date of birth",
+          "format": "date",
+          "type": "string"
+        },
+        "dateOfBirthIsEstimated": {
+          "description": "Date of birth is estimated",
+          "type": "boolean"
+        },
+        "dateOfDeath": {
+          "description": "Date of death",
+          "format": "date",
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "gender": {
+          "$ref": "#/definitions/Gender",
+          "description": "394744001 Gender unspecified"
+        },
+        "id": {
+          "description": "mSupply Patient id",
+          "type": "string"
+        },
+        "isDeceased": {
+          "description": "Person is deceased",
+          "type": "boolean"
+        },
+        "lastName": {
+          "description": "184096005 Patient Surname",
+          "type": "string"
+        },
+        "middleName": {
+          "type": "string"
+        },
+        "notes": {
+          "items": {
+            "$ref": "#/definitions/Note"
+          },
+          "type": "array"
+        },
+        "relationship": {
+          "description": "Relationship with the patient, e.g. mother, brother, cousin, friend...",
+          "type": "string"
+        },
+        "passportNumber": {
+          "description": "1601000122107 Passport Number",
+          "type": "string"
+        },
+        "socioEconomics": {
+          "$ref": "#/definitions/SocioEconomics"
+        }
+      },
+      "type": "object"
+    },
+    "SocioEconomics": {
+      "properties": {
+        "education": {
+          "description": "224293004 Education received in the past",
+          "type": "string"
+        },
+        "employmentStatus": {
+          "type": "string"
+        },
+        "literate": {
+          "type": "string"
+        },
+        "occupation": {
+          "description": "14679004 Occupation",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/ContactTrace"
+    }
+  ]
+}

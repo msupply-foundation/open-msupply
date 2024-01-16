@@ -4,12 +4,19 @@ import {
   ArrowRightIcon,
   CheckIcon,
   DeleteIcon,
+  CopyIcon,
   SaveIcon,
   XCircleIcon,
 } from '@common/icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
-type DialogButtonVariant = 'cancel' | 'next' | 'ok' | 'save' | 'delete';
+type DialogButtonVariant =
+  | 'cancel'
+  | 'next'
+  | 'ok'
+  | 'save'
+  | 'copy'
+  | 'delete';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -59,6 +66,12 @@ const getButtonProps = (
       return {
         icon: <DeleteIcon />,
         labelKey: 'button.delete',
+        variant: 'contained',
+      };
+    case 'copy':
+      return {
+        icon: <CopyIcon />,
+        labelKey: 'link.copy-to-clipboard',
         variant: 'contained',
       };
   }

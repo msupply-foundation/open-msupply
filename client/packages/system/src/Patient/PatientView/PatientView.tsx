@@ -9,8 +9,10 @@ import {
   ProgramEnrolmentSortFieldInput,
   useAuthContext,
   InsertPatientInput,
+  ContactTraceSortFieldInput,
   UpdatePatientInput,
   BasicSpinner,
+  DocumentRegistryCategoryNode,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -25,7 +27,6 @@ import {
   SaveDocumentMutation,
   SavedDocument,
   SchemaData,
-  useDocumentDataAccessor,
   useDocumentRegistry,
   useJsonForms,
   usePatientModalStore,
@@ -33,6 +34,7 @@ import {
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { Footer } from './Footer';
+import { ContactTraceListView, CreateContactTraceModal } from '../ContactTrace';
 
 import defaultPatientSchema from '../DefaultPatientSchema.json';
 import defaultPatientUISchema from '../DefaultPatientUISchema.json';
@@ -95,14 +97,16 @@ const PatientDetailView = ({
     setCreateNewPatient,
   } = usePatientStore();
   const patientId = usePatient.utils.id();
-  const { data: currentPatient } = usePatient.document.get(patientId);
-
-  const { data: patientRegistries, isLoading } =
+  const { data: currentPatient, isLoading: isCurrentPatientLoading } =
+    usePatient.document.get(patientId);
+  const { data: patientRegistries, isLoading: isPatientRegistryLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
-        documentType: { equalTo: 'Patient' },
+        category: { equalTo: DocumentRegistryCategoryNode.Patient },
       },
     });
+  const isLoading = isCurrentPatientLoading || isPatientRegistryLoading;
+
   const patientRegistry = patientRegistries?.nodes[0];
   const isCreatingPatient = !!createNewPatient;
   // we have to memo the data to avoid an infinite render loop
@@ -111,7 +115,7 @@ const PatientDetailView = ({
       // Use the unsaved patient information from createNewPatient, i.e. from a "create patient"
       // request
       return {
-        schema: createNewPatient.documentRegistry ?? DEFAULT_SCHEMA,
+        schema: patientRegistry ?? DEFAULT_SCHEMA,
         data: {
           id: createNewPatient.id,
           code: createNewPatient.code,
@@ -120,6 +124,10 @@ const PatientDetailView = ({
           lastName: createNewPatient.lastName,
           gender: createNewPatient.gender,
           dateOfBirth: createNewPatient.dateOfBirth,
+          phone: createNewPatient.phone,
+          address1: createNewPatient.address1,
+          isDeceased: createNewPatient.isDeceased,
+          dateOfDeath: createNewPatient.dateOfDeath,
         },
         isCreating: true,
       };
@@ -136,21 +144,41 @@ const PatientDetailView = ({
           lastName: currentPatient.lastName ?? undefined,
           gender: currentPatient.gender ?? undefined,
           dateOfBirth: currentPatient.dateOfBirth ?? undefined,
+          dateOfDeath: currentPatient.dateOfDeath ?? undefined,
+          isDeceased: currentPatient.isDeceased ?? undefined,
+          phone: currentPatient.phone ?? undefined,
+          address1: currentPatient.address1 ?? undefined,
         },
         isCreating: false,
       };
-    } else return undefined;
+    } else if (currentPatient?.document) {
+      // Take the data from the document
+      return {
+        schema: patientRegistry ?? DEFAULT_SCHEMA,
+        data: currentPatient.documentDraft,
+        isCreating: false,
+      };
+    }
   }, [createNewPatient, currentPatient, patientRegistry]);
 
   const handleProgramPatientSave = useUpsertProgramPatient();
   const handlePatientSave = useUpsertPatient(isCreatingPatient);
-  const documentDataAccessor = useDocumentDataAccessor(
-    createNewPatient ? undefined : documentName,
-    inputData,
-    handleProgramPatientSave
-  );
+
   const accessor: JsonFormData<SavedDocument | void> = patientRegistry
-    ? documentDataAccessor
+    ? {
+        loadedData: inputData?.data,
+        isLoading: false,
+        error: undefined,
+        isCreating: isCreatingPatient,
+        schema: patientRegistry,
+        save: async (data: unknown) => {
+          await handleProgramPatientSave(
+            data,
+            patientRegistry.formSchemaId,
+            currentPatient?.document?.id
+          );
+        },
+      }
     : {
         loadedData: inputData?.data,
         isLoading: false,
@@ -173,7 +201,7 @@ const PatientDetailView = ({
 
   useEffect(() => {
     return () => setCreateNewPatient(undefined);
-  }, []);
+  }, [setCreateNewPatient]);
 
   const save = useCallback(async () => {
     const savedDocument = await saveData();
@@ -182,17 +210,17 @@ const PatientDetailView = ({
     if (savedDocument) {
       setDocumentName(savedDocument.name);
     }
-  }, [saveData]);
+  }, [saveData, setCreateNewPatient, setDocumentName]);
 
   useEffect(() => {
     if (!documentName && currentPatient) {
       setDocumentName(currentPatient?.document?.name);
     }
-  }, [currentPatient]);
+  }, [currentPatient, documentName, setDocumentName]);
 
   useEffect(() => {
     onEdit(isDirty);
-  }, [isDirty]);
+  }, [isDirty, onEdit]);
 
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: save,
@@ -217,6 +245,13 @@ const PatientDetailView = ({
   );
 };
 
+export enum PatientTabValue {
+  Details = 'Details',
+  Programs = 'Programs',
+  Encounters = 'Encounters',
+  ContactTracing = 'Contact Tracing',
+}
+
 /**
  * Main patient view containing patient details and program tabs
  */
@@ -232,23 +267,23 @@ export const PatientView = () => {
   const { store } = useAuthContext();
 
   const requiresConfirmation = (tab: string) => {
-    return tab === 'Details' && isDirtyPatient;
+    return tab === PatientTabValue.Details && isDirtyPatient;
   };
 
   useEffect(() => {
     if (!currentPatient) return;
     setCurrentPatient(currentPatient);
-  }, [currentPatient]);
+  }, [currentPatient, setCurrentPatient]);
 
   const tabs = [
     {
       Component: <PatientDetailView onEdit={setIsDirtyPatient} />,
-      value: 'Details',
+      value: PatientTabValue.Details,
       confirmOnLeaving: isDirtyPatient,
     },
     {
       Component: <ProgramListView />,
-      value: 'Programs',
+      value: PatientTabValue.Programs,
       sort: {
         key: ProgramEnrolmentSortFieldInput.EnrolmentDatetime,
         dir: 'desc' as 'desc' | 'asc',
@@ -256,9 +291,17 @@ export const PatientView = () => {
     },
     {
       Component: <EncounterListView />,
-      value: 'Encounters',
+      value: PatientTabValue.Encounters,
       sort: {
         key: EncounterSortFieldInput.StartDatetime,
+        dir: 'desc' as 'desc' | 'asc',
+      },
+    },
+    {
+      Component: <ContactTraceListView />,
+      value: PatientTabValue.ContactTracing,
+      sort: {
+        key: ContactTraceSortFieldInput.Datetime,
         dir: 'desc' as 'desc' | 'asc',
       },
     },
@@ -287,12 +330,15 @@ export const PatientView = () => {
             setCreationModal(
               PatientModal.Program,
               documentRegistry.documentType,
-              createDocument,
-              documentRegistry.documentType
+              createDocument
             );
           }}
         />
       ) : null}
+      {current === PatientModal.ContactTraceSearch ? (
+        <CreateContactTraceModal />
+      ) : null}
+
       <AppBarButtons disabled={!!createNewPatient} store={store} />
       <PatientSummary />
       {/* Only show tabs if program module is on and patient is saved.

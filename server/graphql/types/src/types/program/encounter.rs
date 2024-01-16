@@ -3,24 +3,29 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::{
-        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, NameByIdLoader, NameByIdLoaderInput,
+        ClinicianLoader, ClinicianLoaderInput, DocumentLoader, PatientLoader,
         ProgramEnrolmentLoader, ProgramEnrolmentLoaderInput,
     },
     map_filter,
+    pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
     DatetimeFilter, Encounter, EncounterFilter, EncounterSort, EncounterSortField, EncounterStatus,
-    EqualFilter, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
+    EqualFilter, PaginationOption, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
 };
 use serde::Serialize;
 
-use crate::types::{ClinicianNode, NameNode};
+use crate::types::ClinicianNode;
 
 use super::{
-    document::DocumentNode, program_enrolment::ProgramEnrolmentNode,
-    program_event::ProgramEventNode,
+    document::DocumentNode,
+    patient::{PatientFilterInput, PatientNode},
+    program_enrolment::{ProgramEnrolmentFilterInput, ProgramEnrolmentNode},
+    program_event::{
+        ProgramEventConnector, ProgramEventNode, ProgramEventResponse, ProgramEventSortInput,
+    },
 };
 
 pub struct EncounterNode {
@@ -96,25 +101,31 @@ pub struct EncounterFilterInput {
     pub clinician_id: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
     pub document_data: Option<StringFilterInput>,
+    pub patient: Option<PatientFilterInput>,
+    pub program_enrolment: Option<ProgramEnrolmentFilterInput>,
+    /// Only if this filter is set encounters with status DELETED are returned
+    pub include_deleted: Option<bool>,
 }
 
-impl EncounterFilterInput {
-    pub fn to_domain_filter(self) -> EncounterFilter {
+impl From<EncounterFilterInput> for EncounterFilter {
+    fn from(f: EncounterFilterInput) -> Self {
         EncounterFilter {
-            id: self.id.map(EqualFilter::from),
-            patient_id: self.patient_id.map(EqualFilter::from),
-            program_id: self.program_id.map(EqualFilter::from),
-            created_datetime: self.created_datetime.map(DatetimeFilter::from),
-            start_datetime: self.start_datetime.map(DatetimeFilter::from),
-            status: self
+            id: f.id.map(EqualFilter::from),
+            patient_id: f.patient_id.map(EqualFilter::from),
+            program_id: f.program_id.map(EqualFilter::from),
+            created_datetime: f.created_datetime.map(DatetimeFilter::from),
+            start_datetime: f.start_datetime.map(DatetimeFilter::from),
+            status: f
                 .status
                 .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
-            end_datetime: self.end_datetime.map(DatetimeFilter::from),
-            clinician_id: self.clinician_id.map(EqualFilter::from),
-            document_type: self.r#type.map(EqualFilter::from),
-            document_name: self.document_name.map(EqualFilter::from),
-            document_data: self.document_data.map(StringFilter::from),
+            end_datetime: f.end_datetime.map(DatetimeFilter::from),
+            clinician_id: f.clinician_id.map(EqualFilter::from),
+            document_type: f.r#type.map(EqualFilter::from),
+            document_name: f.document_name.map(EqualFilter::from),
+            document_data: f.document_data.map(StringFilter::from),
             program_context_id: None,
+            patient: f.patient.map(PatientFilterInput::into),
+            program_enrolment: f.program_enrolment.map(ProgramEnrolmentFilterInput::into),
         }
     }
 }
@@ -125,6 +136,7 @@ pub enum EncounterNodeStatus {
     Pending,
     Visited,
     Cancelled,
+    Deleted,
 }
 
 impl EncounterNodeStatus {
@@ -133,6 +145,7 @@ impl EncounterNodeStatus {
             EncounterNodeStatus::Pending => EncounterStatus::Pending,
             EncounterNodeStatus::Visited => EncounterStatus::Visited,
             EncounterNodeStatus::Cancelled => EncounterStatus::Cancelled,
+            EncounterNodeStatus::Deleted => EncounterStatus::Deleted,
         }
     }
 
@@ -141,21 +154,28 @@ impl EncounterNodeStatus {
             EncounterStatus::Pending => EncounterNodeStatus::Pending,
             EncounterStatus::Visited => EncounterNodeStatus::Visited,
             EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
+            EncounterStatus::Deleted => EncounterNodeStatus::Deleted,
         }
     }
 }
 
 #[derive(InputObject, Clone)]
-pub struct EncounterEventFilterInput {
+pub struct ActiveEncounterEventFilterInput {
     pub r#type: Option<EqualFilterStringInput>,
+    pub data: Option<StringFilterInput>,
     /// Only include events that are for the current encounter, i.e. have matching encounter type
     /// and matching encounter name of the current encounter. If not set all events with matching
     /// encounter type are returned.
     pub is_current_encounter: Option<bool>,
 }
 
-impl EncounterEventFilterInput {
-    pub fn to_domain(&self) -> ProgramEventFilter {
+impl ActiveEncounterEventFilterInput {
+    pub fn to_domain(self) -> ProgramEventFilter {
+        let ActiveEncounterEventFilterInput {
+            r#type,
+            data,
+            is_current_encounter: _,
+        } = self;
         ProgramEventFilter {
             datetime: None,
             active_start_datetime: None,
@@ -163,7 +183,46 @@ impl EncounterEventFilterInput {
             patient_id: None,
             document_type: None,
             document_name: None,
-            r#type: self.r#type.clone().map(EqualFilter::from),
+            r#type: r#type.map(EqualFilter::from),
+            data: data.map(StringFilter::from),
+            context_id: None,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EncounterEventFilterInput {
+    pub r#type: Option<EqualFilterStringInput>,
+    pub data: Option<StringFilterInput>,
+    pub datetime: Option<DatetimeFilterInput>,
+    pub active_start_datetime: Option<DatetimeFilterInput>,
+    pub active_end_datetime: Option<DatetimeFilterInput>,
+
+    /// Only include events that are for the current encounter, i.e. have matching encounter type
+    /// and matching encounter name of the current encounter. If not set all events with matching
+    /// encounter type are returned.
+    pub is_current_encounter: Option<bool>,
+}
+
+impl EncounterEventFilterInput {
+    pub fn to_domain(self) -> ProgramEventFilter {
+        let EncounterEventFilterInput {
+            r#type,
+            data,
+            datetime,
+            active_start_datetime,
+            active_end_datetime,
+            is_current_encounter: _,
+        } = self;
+        ProgramEventFilter {
+            datetime: datetime.map(DatetimeFilter::from),
+            active_start_datetime: active_start_datetime.map(DatetimeFilter::from),
+            active_end_datetime: active_end_datetime.map(DatetimeFilter::from),
+            patient_id: None,
+            document_type: None,
+            document_name: None,
+            r#type: r#type.map(EqualFilter::from),
+            data: data.map(StringFilter::from),
             context_id: None,
         }
     }
@@ -187,16 +246,17 @@ impl EncounterNode {
         &self.encounter.0.patient_id
     }
 
-    pub async fn patient(&self, ctx: &Context<'_>) -> Result<NameNode> {
-        let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {
+        let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(NameByIdLoaderInput::new(
-                &self.store_id,
-                &self.encounter.0.patient_id,
-            ))
+            .load_one(self.encounter.0.patient_id.clone())
             .await?
-            .map(NameNode::from_domain)
+            .map(|patient| PatientNode {
+                store_id: self.store_id.clone(),
+                allowed_ctx: self.allowed_ctx.clone(),
+                patient,
+            })
             .ok_or(Error::new("Encounter without patient"))?;
 
         Ok(result)
@@ -204,7 +264,7 @@ impl EncounterNode {
 
     pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
         let Some(clinician_id) = self.encounter.0.clinician_id.as_ref() else {
-            return Ok(None)
+            return Ok(None);
         };
         let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
 
@@ -298,13 +358,15 @@ impl EncounterNode {
         &self,
         ctx: &Context<'_>,
         at: Option<DateTime<Utc>>,
-        filter: Option<EncounterEventFilterInput>,
-    ) -> Result<Vec<ProgramEventNode>> {
+        filter: Option<ActiveEncounterEventFilterInput>,
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
+    ) -> Result<ProgramEventResponse> {
         // TODO use loader?
         let context = ctx.service_provider().basic_context()?;
         let mut program_filter = filter
             .as_ref()
-            .map(|f| f.to_domain())
+            .map(|f| f.clone().to_domain())
             .unwrap_or(ProgramEventFilter::new())
             .patient_id(EqualFilter::equal_to(&self.encounter.0.patient_id))
             .document_type(EqualFilter::equal_to(&self.encounter.0.document_type));
@@ -312,29 +374,76 @@ impl EncounterNode {
             program_filter =
                 program_filter.document_name(EqualFilter::equal_to(&self.encounter.0.document_name))
         };
-        let entries = ctx
+        let list_result = ctx
             .service_provider()
             .program_event_service
             .active_events(
                 &context,
                 at.map(|at| at.naive_utc())
                     .unwrap_or(Utc::now().naive_utc()),
-                None,
+                page.map(PaginationOption::from),
                 Some(program_filter),
-                Some(Sort {
+                Some(sort.map(ProgramEventSortInput::to_domain).unwrap_or(Sort {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),
-                }),
+                })),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
-        Ok(entries
-            .rows
-            .into_iter()
-            .map(|row| ProgramEventNode {
-                store_id: self.store_id.clone(),
-                row,
-                allowed_ctx: self.allowed_ctx.clone(),
-            })
-            .collect())
+
+        Ok(ProgramEventResponse::Response(ProgramEventConnector {
+            total_count: list_result.count,
+            nodes: list_result
+                .rows
+                .into_iter()
+                .map(|row| ProgramEventNode {
+                    store_id: self.store_id.clone(),
+                    row,
+                    allowed_ctx: self.allowed_ctx.clone(),
+                })
+                .collect(),
+        }))
+    }
+
+    pub async fn program_events(
+        &self,
+        ctx: &Context<'_>,
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
+        filter: Option<EncounterEventFilterInput>,
+    ) -> Result<ProgramEventResponse> {
+        let context = ctx.service_provider().basic_context()?;
+        let mut program_filter = filter
+            .as_ref()
+            .map(|f| f.clone().to_domain())
+            .unwrap_or(ProgramEventFilter::new())
+            .patient_id(EqualFilter::equal_to(&self.encounter.0.patient_id))
+            .document_type(EqualFilter::equal_to(&self.encounter.0.document_type));
+        if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
+            program_filter =
+                program_filter.document_name(EqualFilter::equal_to(&self.encounter.0.document_name))
+        };
+        let list_result = ctx
+            .service_provider()
+            .program_event_service
+            .events(
+                &context,
+                page.map(PaginationOption::from),
+                Some(program_filter),
+                sort.map(ProgramEventSortInput::to_domain),
+            )
+            .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(ProgramEventResponse::Response(ProgramEventConnector {
+            total_count: list_result.count,
+            nodes: list_result
+                .rows
+                .into_iter()
+                .map(|row| ProgramEventNode {
+                    store_id: self.store_id.clone(),
+                    row,
+                    allowed_ctx: self.allowed_ctx.clone(),
+                })
+                .collect(),
+        }))
     }
 }

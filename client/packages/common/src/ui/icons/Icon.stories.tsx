@@ -14,6 +14,7 @@ import { CheckboxEmptyIcon } from './CheckboxEmpty';
 import { CheckboxIndeterminateIcon } from './CheckboxIndeterminate';
 import { ChevronDownIcon } from './ChevronDown';
 import { ChevronsDownIcon } from './ChevronsDown';
+import { CircleAlertIcon } from './CircleAlert';
 import { CircleIcon } from './Circle';
 import { ClockIcon } from './Clock';
 import { CloseIcon } from './Close';
@@ -28,12 +29,15 @@ import { ExternalLinkIcon } from './ExternalLink';
 import { EyeIcon } from './Eye';
 import { EyeOffIcon } from './EyeOff';
 import { FilterIcon } from './Filter';
+import { HelpIcon } from './Help';
 import { HomeIcon } from './Home';
 import { InfoIcon } from './Info';
 import { InfoOutlineIcon } from './InfoOutline';
 import { InvoiceIcon } from './Invoice';
-import { MedicineIcon } from './MedicineIcon';
+import { LinkIcon } from './Link';
+import { ListIcon } from './List';
 import { MSupplyGuy, AnimatedMSupplyGuy } from './MSupplyGuy';
+import { MedicineIcon } from './MedicineIcon';
 import { MenuDotsIcon } from './MenuDots';
 import { MessagesIcon } from './Messages';
 import { MessageSquareIcon } from './MessageSquare';
@@ -42,21 +46,25 @@ import { PlusCircleIcon } from './PlusCircle';
 import { PowerIcon } from './Power';
 import { PrinterIcon } from './Printer';
 import { RadioIcon } from './Radio';
+import { RefreshIcon } from './Refresh';
 import { ReportsIcon } from './Reports';
 import { RewindIcon } from './Rewind';
-import { RefreshIcon } from './Refresh';
 import { SaveIcon } from './Save';
 import { ScanIcon } from './Scan';
 import { SearchIcon } from './Search';
 import { SettingsIcon } from './Settings';
 import { SidebarIcon } from './Sidebar';
+import { SnowflakeIcon } from './Snowflake';
 import { SortAscIcon } from './SortAsc';
 import { SortDescIcon } from './SortDesc';
 import { StockIcon } from './Stock';
+import { SunIcon } from './Sun';
 import { SuppliersIcon } from './Suppliers';
+import { ThermometerIcon } from './Thermometer';
 import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
 import { TruckIcon } from './Truck';
+import { UploadIcon } from './Upload';
 import { UserIcon } from './User';
 import { XCircleIcon } from './XCircle';
 import { ZapIcon } from './Zap';
@@ -91,6 +99,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <CartIcon {...args} />, name: 'Cart' },
     { icon: <CheckIcon {...args} />, name: 'Check' },
     { icon: <CheckboxCheckedIcon {...args} />, name: 'CheckboxChecked' },
+    { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },
     {
       icon: <CheckboxIndeterminateIcon {...args} />,
       name: 'Checkbox Indeterminate',
@@ -98,6 +107,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },
     { icon: <ChevronDownIcon {...args} />, name: 'ChevronDown' },
     { icon: <ChevronsDownIcon {...args} />, name: 'ChevronsDown' },
+    { icon: <CircleAlertIcon {...args} />, name: 'CircleAlert' },
     { icon: <CircleIcon {...args} />, name: 'Circle' },
     { icon: <ClockIcon {...args} />, name: 'Clock' },
     { icon: <CloseIcon {...args} />, name: 'Close' },
@@ -112,10 +122,13 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <EyeIcon {...args} />, name: 'Eye' },
     { icon: <EyeOffIcon {...args} />, name: 'EyeOff' },
     { icon: <FilterIcon {...args} />, name: 'Filter' },
+    { icon: <HelpIcon {...args} />, name: 'Help' },
     { icon: <HomeIcon {...args} />, name: 'Home' },
     { icon: <InfoIcon {...args} />, name: 'Info' },
     { icon: <InfoOutlineIcon {...args} />, name: 'InfoOutline' },
     { icon: <InvoiceIcon {...args} />, name: 'Invoice' },
+    { icon: <LinkIcon {...args} />, name: 'Link' },
+    { icon: <ListIcon {...args} />, name: 'List' },
     { icon: <MSupplyGuy {...args} size="medium" />, name: 'MSupplyGuy' },
     {
       icon: <AnimatedMSupplyGuy {...args} size="medium" />,
@@ -138,13 +151,17 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <SearchIcon {...args} />, name: 'Search' },
     { icon: <SettingsIcon {...args} />, name: 'Settings' },
     { icon: <SidebarIcon {...args} />, name: 'Sidebar' },
+    { icon: <SnowflakeIcon {...args} />, name: 'Snowflake' },
     { icon: <SortAscIcon {...args} />, name: 'SortAsc' },
     { icon: <SortDescIcon {...args} />, name: 'SortDesc' },
     { icon: <StockIcon {...args} />, name: 'Stock' },
+    { icon: <SunIcon {...args} />, name: 'Sun' },
     { icon: <SuppliersIcon {...args} />, name: 'Suppliers' },
+    { icon: <ThermometerIcon {...args} />, name: 'Thermometer' },
     { icon: <ToolsIcon {...args} />, name: 'Tools' },
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
     { icon: <TruckIcon {...args} />, name: 'Truck' },
+    { icon: <UploadIcon {...args} />, name: 'Upload' },
     { icon: <UserIcon {...args} />, name: 'User' },
     { icon: <XCircleIcon {...args} />, name: 'XCircle' },
     { icon: <ZapIcon {...args} />, name: 'Zap' },

@@ -10,6 +10,7 @@ table! {
         name -> Text,
         code -> Text,
         description -> Text,
+        is_active -> Bool,
     }
 }
 
@@ -20,6 +21,7 @@ pub struct MasterListRow {
     pub name: String,
     pub code: String,
     pub description: String,
+    pub is_active: bool,
 }
 
 pub struct MasterListRowRepository<'a> {
@@ -55,7 +57,7 @@ impl<'a> MasterListRowRepository<'a> {
         master_list_id: &str,
     ) -> Result<MasterListRow, RepositoryError> {
         let result = master_list
-            .filter(id.eq(master_list_id))
+            .filter(id.eq(master_list_id).and(is_active.eq(true)))
             .first(&self.connection.connection)?;
         Ok(result)
     }
@@ -65,7 +67,7 @@ impl<'a> MasterListRowRepository<'a> {
         master_list_id: &str,
     ) -> Result<Option<MasterListRow>, RepositoryError> {
         let result = master_list
-            .filter(id.eq(master_list_id))
+            .filter(id.eq(master_list_id).and(is_active.eq(true)))
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)

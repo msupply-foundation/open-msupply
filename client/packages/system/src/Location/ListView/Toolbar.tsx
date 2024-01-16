@@ -10,6 +10,8 @@ import {
   FilterController,
   AlertModal,
   useConfirmationModal,
+  FilterMenu,
+  Box,
 } from '@openmsupply-client/common';
 import { LocationRowFragment, useLocation } from '../api';
 
@@ -24,7 +26,7 @@ export const Toolbar: FC<{
 }> = ({ data }) => {
   const t = useTranslation('inventory');
   const { mutateAsync: deleteLocation } = useLocation.document.delete();
-  const { success, info } = useNotification();
+  const { error, success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -48,16 +50,22 @@ export const Toolbar: FC<{
             }
           });
         })
-      ).then(() => {
-        setDeleteErrors(errors);
-        if (errors.length === 0) {
-          const deletedMessage = t('messages.deleted-locations', {
-            count: numberSelected,
-          });
-          const successSnack = success(deletedMessage);
-          successSnack();
-        }
-      });
+      )
+        .then(() => {
+          setDeleteErrors(errors);
+          if (errors.length === 0) {
+            const deletedMessage = t('messages.deleted-locations', {
+              count: numberSelected,
+            });
+            const successSnack = success(deletedMessage);
+            successSnack();
+          }
+        })
+        .catch(_ =>
+          error(
+            t('messages.error-deleting-locations', { count: numberSelected })
+          )()
+        );
     } else {
       const selectRowsSnack = info(t('messages.select-rows-to-delete'));
       selectRowsSnack();
@@ -83,10 +91,26 @@ export const Toolbar: FC<{
       sx={{
         paddingBottom: '16px',
         flex: 1,
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
         display: 'flex',
       }}
     >
+      <Box display="flex" gap={1}>
+        <FilterMenu
+          filters={[
+            {
+              type: 'text',
+              name: t('label.name'),
+              urlParameter: 'name',
+            },
+            {
+              type: 'boolean',
+              name: t('label.on-hold'),
+              urlParameter: 'onHold',
+            },
+          ]}
+        />
+      </Box>
       <AlertModal
         message={
           <ul>

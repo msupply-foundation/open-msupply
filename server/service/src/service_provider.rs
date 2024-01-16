@@ -24,8 +24,10 @@ use crate::{
     missing_program::create_missing_master_list_and_program,
     name::get_names,
     pack_variant::PackVariantServiceTrait,
+    plugin_data::{PluginDataService, PluginDataServiceTrait},
     processors::ProcessorsTrigger,
     programs::{
+        contact_trace::{ContactTraceService, ContactTraceServiceTrait},
         encounter::{EncounterService, EncounterServiceTrait},
         patient::{PatientService, PatientServiceTrait},
         program_enrolment::{ProgramEnrolmentService, ProgramEnrolmentServiceTrait},
@@ -35,6 +37,7 @@ use crate::{
     report::report_service::{ReportService, ReportServiceTrait},
     requisition::{RequisitionService, RequisitionServiceTrait},
     requisition_line::{RequisitionLineService, RequisitionLineServiceTrait},
+    sensor::{SensorService, SensorServiceTrait},
     settings_service::{SettingsService, SettingsServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
@@ -46,6 +49,10 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     system_user::create_system_user,
+    temperature_breach::{TemperatureBreachService, TemperatureBreachServiceTrait},
+    temperature_chart::{TemperatureChartService, TemperatureChartServiceTrait},
+    temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
+    temperature_log::{TemperatureLogService, TemperatureLogServiceTrait},
     ListError, ListResult,
 };
 use repository::{
@@ -58,6 +65,11 @@ pub struct ServiceProvider {
     pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+    pub sensor_service: Box<dyn SensorServiceTrait>,
+    pub temperature_breach_service: Box<dyn TemperatureBreachServiceTrait>,
+    pub temperature_excursion_service: Box<dyn TemperatureExcursionServiceTrait>,
+    pub temperature_log_service: Box<dyn TemperatureLogServiceTrait>,
+    pub temperature_chart_service: Box<dyn TemperatureChartServiceTrait>,
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stocktake_service: Box<dyn StocktakeServiceTrait>,
@@ -88,6 +100,7 @@ pub struct ServiceProvider {
     pub program_enrolment_service: Box<dyn ProgramEnrolmentServiceTrait>,
     pub encounter_service: Box<dyn EncounterServiceTrait>,
     pub program_event_service: Box<dyn ProgramEventServiceTrait>,
+    pub contact_trace_service: Box<dyn ContactTraceServiceTrait>,
 
     // Settings
     pub settings: Box<dyn SettingsServiceTrait>,
@@ -105,8 +118,9 @@ pub struct ServiceProvider {
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
     // Log
     pub log_service: Box<dyn LogServiceTrait>,
-
     pub pack_variant_service: Box<dyn PackVariantServiceTrait>,
+    // Plugin
+    pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -141,6 +155,10 @@ impl ServiceProvider {
             connection_manager: connection_manager.clone(),
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
+            sensor_service: Box::new(SensorService {}),
+            temperature_breach_service: Box::new(TemperatureBreachService {}),
+            temperature_log_service: Box::new(TemperatureLogService {}),
+            temperature_chart_service: Box::new(TemperatureChartService),
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
             invoice_count_service: Box::new(InvoiceCountService {}),
@@ -163,6 +181,7 @@ impl ServiceProvider {
             program_enrolment_service: Box::new(ProgramEnrolmentService {}),
             program_event_service: Box::new(ProgramEventService {}),
             encounter_service: Box::new(EncounterService {}),
+            contact_trace_service: Box::new(ContactTraceService {}),
             app_data_service: Box::new(AppDataService::new(app_data_folder)),
             site_info_service: Box::new(SiteInfoService),
             sync_status_service: Box::new(SyncStatusService),
@@ -176,6 +195,8 @@ impl ServiceProvider {
             repack_service: Box::new(RepackService {}),
             log_service: Box::new(LogService {}),
             pack_variant_service: Box::new(crate::pack_variant::PackVariantService {}),
+            plugin_data_service: Box::new(PluginDataService {}),
+            temperature_excursion_service: Box::new(TemperatureExcursionService {}),
         }
     }
 
@@ -257,7 +278,6 @@ pub trait GeneralServiceTrait: Sync + Send {
         create_system_user(service_provider)
     }
 
-    // TODO: Delete when soft delete for master list is implemented
     fn create_missing_master_list_and_program(
         &self,
         service_provider: &ServiceProvider,

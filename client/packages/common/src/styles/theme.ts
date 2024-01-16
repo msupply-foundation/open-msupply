@@ -34,6 +34,8 @@ declare module '@mui/material/styles/createMixins' {
     drawer: {
       iconColor?: string;
       selectedBackgroundColor?: string;
+      hoverBackgroundColor?: string;
+      hoverTextColor?: string;
       textColor?: string;
     };
     gradient: {
@@ -79,6 +81,11 @@ declare module '@mui/material/styles/zIndex' {
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
+    chart: {
+      cold: PaletteColor;
+      hot: PaletteColor;
+      lines: string[];
+    };
     drawerDivider: string;
     gray: PaletteColor & { pale: string };
     outline: Palette['primary'];
@@ -133,6 +140,7 @@ export const themeOptions = {
     },
     drawer: {
       selectedBackgroundColor: '#fff',
+      hoverBackgroundColor: '#fafafc',
     },
     saveButtonRow: { height: 40 },
     footer: { height: 32 },
@@ -161,7 +169,12 @@ export const themeOptions = {
       pale: '#ccddff',
     },
     border: '#e4e4eb',
-    primary: { main: '#e95c30', light: '#ed7d59', dark: '#c43c11', contrastText: '#fff' },
+    primary: {
+      main: '#e95c30',
+      light: '#ed7d59',
+      dark: '#c43c11',
+      contrastText: '#fff',
+    },
     secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
     background: {
       drawer: '#f2f2f5',
@@ -174,6 +187,12 @@ export const themeOptions = {
     form: {
       field: '#555770',
       label: '#28293d',
+    },
+    info: { main: '#3e7bfa', light: '#3e7bfa', dark: '#3568d4' },
+    chart: {
+      cold: { main: '#aacae2', light: '#d9edfa' },
+      hot: { main: '#db6974', light: '#fbe2e4' },
+      lines: ['#EED600', '#922DD0', '#E1A200', '#59639C', '#E500EA', '#00DBCE'],
     },
   },
   zIndex: {

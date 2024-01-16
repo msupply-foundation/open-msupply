@@ -18,6 +18,10 @@ pub enum UserPermission {
     ServerAdmin,
     StoreAccess,
     LocationMutate,
+    SensorMutate,
+    SensorQuery,
+    TemperatureBreachQuery,
+    TemperatureLogQuery,
     StockLineQuery,
     CreateRepack,
     StocktakeQuery,
@@ -40,6 +44,7 @@ pub enum UserPermission {
     PatientMutate,
     DocumentQuery,
     DocumentMutate,
+    ColdChainApi,
 }
 
 #[Object]
@@ -85,6 +90,10 @@ impl UserPermission {
             Permission::ServerAdmin => UserPermission::ServerAdmin,
             Permission::StoreAccess => UserPermission::StoreAccess,
             Permission::LocationMutate => UserPermission::LocationMutate,
+            Permission::SensorMutate => UserPermission::SensorMutate,
+            Permission::SensorQuery => UserPermission::SensorQuery,
+            Permission::TemperatureBreachQuery => UserPermission::TemperatureBreachQuery,
+            Permission::TemperatureLogQuery => UserPermission::TemperatureLogQuery,
             Permission::StockLineQuery => UserPermission::StockLineQuery,
             Permission::CreateRepack => UserPermission::CreateRepack,
             Permission::StocktakeQuery => UserPermission::StocktakeQuery,
@@ -109,6 +118,8 @@ impl UserPermission {
             Permission::ItemNamesCodesAndUnitsMutate => {
                 UserPermission::ItemNamesCodesAndUnitsMutate
             }
+
+            Permission::ColdChainApi => UserPermission::ColdChainApi,
         }
     }
 
@@ -117,6 +128,10 @@ impl UserPermission {
             UserPermission::ServerAdmin => Permission::ServerAdmin,
             UserPermission::StoreAccess => Permission::StoreAccess,
             UserPermission::LocationMutate => Permission::LocationMutate,
+            UserPermission::SensorMutate => Permission::SensorMutate,
+            UserPermission::SensorQuery => Permission::SensorQuery,
+            UserPermission::TemperatureBreachQuery => Permission::TemperatureBreachQuery,
+            UserPermission::TemperatureLogQuery => Permission::TemperatureLogQuery,
             UserPermission::StockLineQuery => Permission::StockLineQuery,
             UserPermission::CreateRepack => Permission::CreateRepack,
             UserPermission::StocktakeQuery => Permission::StocktakeQuery,
@@ -141,6 +156,8 @@ impl UserPermission {
             UserPermission::ItemNamesCodesAndUnitsMutate => {
                 Permission::ItemNamesCodesAndUnitsMutate
             }
+
+            UserPermission::ColdChainApi => Permission::ColdChainApi,
         }
     }
 }

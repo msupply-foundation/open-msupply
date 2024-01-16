@@ -18,6 +18,7 @@ import {
   CircularProgress,
   useNotification,
   Tooltip,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -40,8 +41,13 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
 interface StockLineFormProps {
   draft: StockLineRowFragment;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
+  plugins?: JSX.Element[];
 }
-export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
+export const StockLineForm: FC<StockLineFormProps> = ({
+  draft,
+  onUpdate,
+  plugins,
+}) => {
   const t = useTranslation('inventory');
   const { error } = useNotification();
   const { isConnected, isEnabled, isScanning, startScan } =
@@ -74,6 +80,12 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
       error(t('error.unable-to-scan', { error: e }))();
     }
   };
+
+  const debouncedUpdate = useDebounceCallback(
+    (patch: Partial<StockLineRowFragment>) => onUpdate(patch),
+    [onUpdate],
+    500
+  );
 
   useEffect(() => {
     function handleKeyDown(this: HTMLElement, ev: KeyboardEvent) {
@@ -112,9 +124,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
           Input={
             <CurrencyInput
               autoFocus
-              value={draft.costPricePerPack}
+              defaultValue={draft.costPricePerPack}
               onChangeNumber={costPricePerPack =>
-                onUpdate({ costPricePerPack })
+                debouncedUpdate({ costPricePerPack })
               }
             />
           }
@@ -123,9 +135,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
           label={t('label.sell-price')}
           Input={
             <CurrencyInput
-              value={draft.sellPricePerPack}
+              defaultValue={draft.sellPricePerPack}
               onChangeNumber={sellPricePerPack =>
-                onUpdate({ sellPricePerPack })
+                debouncedUpdate({ sellPricePerPack })
               }
             />
           }
@@ -145,11 +157,12 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
           label={t('label.batch')}
           Input={
             <BasicTextInput
-              value={draft.batch ?? ''}
-              onChange={e => onUpdate({ batch: e.target.value })}
+              defaultValue={draft.batch ?? ''}
+              onChange={e => debouncedUpdate({ batch: e.target.value })}
             />
           }
         />
+        {plugins}
       </Grid>
       <Grid
         container
@@ -179,7 +192,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
             <LocationSearchInput
               autoFocus={false}
               disabled={false}
-              value={location}
+              selectedLocation={location}
               width={160}
               onChange={location => {
                 onUpdate({ location, locationId: location?.id });
@@ -192,8 +205,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({ draft, onUpdate }) => {
           Input={
             <Box display="flex" style={{ width: 162 }}>
               <BasicTextInput
-                value={draft.barcode ?? ''}
-                onChange={e => onUpdate({ barcode: e.target.value })}
+                defaultValue={draft.barcode ?? ''}
+                onChange={e => debouncedUpdate({ barcode: e.target.value })}
               />
               {isEnabled && (
                 <Tooltip

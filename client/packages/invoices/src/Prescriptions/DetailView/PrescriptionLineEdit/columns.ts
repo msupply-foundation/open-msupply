@@ -3,6 +3,7 @@ import {
   Column,
   ColumnAlign,
   ExpiryDateCell,
+  LocationCell,
   PositiveNumberCell,
   useColumns,
 } from '@openmsupply-client/common';
@@ -33,10 +34,11 @@ export const usePrescriptionLineEditColumns = ({
         },
       ],
       [
-        'locationName',
+        'location',
         {
-          accessor: ({ rowData }) => rowData.location?.name,
+          accessor: ({ rowData }) => rowData.location?.code,
           width: 70,
+          Cell: LocationCell,
         },
       ],
       {
@@ -105,9 +107,9 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
     'batch',
     'expiryDate',
     [
-      'locationName',
+      'location',
       {
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
     [

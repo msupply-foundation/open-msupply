@@ -37,6 +37,8 @@ pub struct LegacyPrefData {
     // In case preference is missing, use default
     #[serde(rename = "omSupplyUsesProgramModule")]
     pub om_program_module: bool,
+    #[serde(rename = "usesVaccineModule")]
+    pub vaccine_module: bool,
 }
 
 pub(crate) struct StorePreferenceTranslation {}
@@ -70,6 +72,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             response_requisition_requires_authorisation,
             request_requisition_requires_authorisation,
             om_program_module,
+            vaccine_module,
         } = data;
 
         let result = StorePreferenceRow {
@@ -79,6 +82,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             response_requisition_requires_authorisation,
             request_requisition_requires_authorisation,
             om_program_module,
+            vaccine_module,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(

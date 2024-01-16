@@ -9,6 +9,9 @@ export type LocationRowFragment = { __typename: 'LocationNode', id: string, name
 export type LocationsQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   sort?: Types.InputMaybe<Array<Types.LocationSortInput> | Types.LocationSortInput>;
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  filter?: Types.InputMaybe<Types.LocationFilterInput>;
 }>;
 
 
@@ -48,8 +51,13 @@ export const LocationRowFragmentDoc = gql`
 }
     `;
 export const LocationsDocument = gql`
-    query locations($storeId: String!, $sort: [LocationSortInput!]) {
-  locations(storeId: $storeId, sort: $sort) {
+    query locations($storeId: String!, $sort: [LocationSortInput!], $first: Int, $offset: Int, $filter: LocationFilterInput) {
+  locations(
+    storeId: $storeId
+    sort: $sort
+    page: {first: $first, offset: $offset}
+    filter: $filter
+  ) {
     __typename
     ... on LocationConnector {
       __typename
@@ -216,7 +224,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockLocationsQuery((req, res, ctx) => {
- *   const { storeId, sort } = req.variables;
+ *   const { storeId, sort, first, offset, filter } = req.variables;
  *   return res(
  *     ctx.data({ locations })
  *   )

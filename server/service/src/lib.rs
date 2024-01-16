@@ -1,7 +1,8 @@
 // json! hits recursion limit in integration test (central_server_configurations), recursion_limit attribute must be top level
 #![cfg_attr(feature = "integration_test", recursion_limit = "256")]
-use repository::RepositoryError;
-use repository::{Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
+use repository::location::{LocationFilter, LocationRepository};
+use repository::{EqualFilter, Pagination, PaginationOption, DEFAULT_PAGINATION_LIMIT};
+use repository::{RepositoryError, StorageConnection};
 use service_provider::ServiceContext;
 use std::convert::TryInto;
 
@@ -30,12 +31,15 @@ pub mod name;
 pub mod number;
 pub mod pack_variant;
 pub mod permission;
+pub mod plugin;
+pub mod plugin_data;
 pub mod processors;
 pub mod programs;
 pub mod repack;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
+pub mod sensor;
 pub mod service_provider;
 pub mod settings;
 pub mod settings_service;
@@ -47,6 +51,10 @@ pub mod store;
 pub mod store_preference;
 pub mod sync;
 pub mod system_user;
+pub mod temperature_breach;
+pub mod temperature_chart;
+pub mod temperature_excursion;
+pub mod temperature_log;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
@@ -191,7 +199,7 @@ pub fn get_default_pagination_unlimited(pagination_option: Option<PaginationOpti
         },
         None => Pagination {
             offset: 0,
-            limit: DEFAULT_PAGINATION_LIMIT,
+            limit: u32::MAX,
         },
     }
 }
@@ -252,4 +260,24 @@ pub fn u32_to_i32(num: u32) -> i32 {
 pub struct InputWithResult<I, R> {
     pub input: I,
     pub result: R,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct NullableUpdate<T> {
+    pub value: Option<T>,
+}
+fn check_location_exists(
+    connection: &StorageConnection,
+    store_id: &str,
+    location_input: &Option<NullableUpdate<String>>,
+) -> Result<bool, RepositoryError> {
+    let Some(NullableUpdate{ value: Some(location_id) }) = location_input else {
+        return Ok(true)
+    };
+    let count = LocationRepository::new(connection).count(Some(
+        LocationFilter::new()
+            .id(EqualFilter::equal_to(location_id))
+            .store_id(EqualFilter::equal_to(store_id)),
+    ))?;
+    Ok(count > 0)
 }

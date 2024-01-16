@@ -67,7 +67,10 @@ const UIComponent = (props: ControlProps) => {
     if (!data) return;
     const dob = DateUtils.getDateOrNull(data.dateOfBirth);
     setDoB(dob);
-    if (dob === null) return;
+    if (dob === null) {
+      setAge('');
+      return;
+    }
     setAge(DateUtils.age(dob));
   }, [data]);
 
@@ -86,12 +89,17 @@ const UIComponent = (props: ControlProps) => {
             // undefined is displayed as "now" and null as unset
             value={dob ?? null}
             onChange={onChangeDoB}
-            format="dd/MM/yyyy"
+            format="P"
             width={135}
             disableFuture
             disabled={!props.enabled}
             onError={validationError => setCustomError(validationError)}
             error={customError}
+            slotProps={{
+              actionBar: {
+                actions: ['clear'],
+              },
+            }}
           />
           <Box
             flex={0}
@@ -105,6 +113,7 @@ const UIComponent = (props: ControlProps) => {
               value={age}
               sx={{ width: 65 }}
               onChange={onChangeAge}
+              disabled={!props.enabled}
             />
           </Box>
         </Box>

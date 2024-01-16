@@ -6,9 +6,10 @@ import {
   PartialStockLineFragment,
   StockOutLineFragment,
 } from './operations.generated';
-import { DateUtils } from '@common/intl';
+import { DateUtils, LocaleKey, TypedTFunction } from '@common/intl';
 import React from 'react';
 import { getPackQuantityCellId } from '../utils';
+import { StockOutAlert } from './Components';
 
 export const createStockOutPlaceholderRow = (
   invoiceId: string,
@@ -167,13 +168,16 @@ export const allocateQuantities =
     const newDraftStockOutLines = draftStockOutLines.map(batch => ({
       ...batch,
       numberOfPacks: 0,
+      isUpdated: batch.numberOfPacks > 0,
     }));
+
     const validBatches = newDraftStockOutLines
       .filter(
-        ({ expiryDate, packSize, stockLine }) =>
+        ({ expiryDate, packSize, stockLine, location }) =>
           (issuePackSize ? packSize === issuePackSize : true) &&
           (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
           !stockLine?.onHold &&
+          !location?.onHold &&
           !(!!expiryDate && DateUtils.isExpired(new Date(expiryDate)))
       )
       .sort(SortUtils.byExpiryAsc);
@@ -346,4 +350,46 @@ export const updateNotes = (
   note: string
 ) => {
   return draftStockOutLines.map(line => ({ ...line, note, isUpdated: true }));
+};
+
+export const getAllocationAlerts = (
+  requestedQuantity: number,
+  allocatedQuantity: number,
+  placeholderQuantity: number,
+  hasOnHold: boolean,
+  hasExpired: boolean,
+  format: (value: number, options?: Intl.NumberFormatOptions) => string,
+  t: TypedTFunction<LocaleKey>
+) => {
+  const alerts: StockOutAlert[] = [];
+
+  const unavailableStockWarning = `${
+    hasOnHold ? t('messages.stock-on-hold') : ''
+  } ${hasExpired ? t('messages.stock-expired') : ''}`.trim();
+
+  if (unavailableStockWarning && requestedQuantity > 0) {
+    alerts.push({
+      message: unavailableStockWarning,
+      severity: 'info',
+    });
+  }
+
+  if (allocatedQuantity !== requestedQuantity && allocatedQuantity > 0) {
+    alerts.push({
+      message: t('messages.over-allocated', {
+        quantity: format(allocatedQuantity),
+        issueQuantity: format(requestedQuantity),
+      }),
+      severity: 'warning',
+    });
+    return alerts;
+  }
+  if (placeholderQuantity > 0) {
+    alerts.push({
+      message: t('messages.placeholder-allocated', { placeholderQuantity }),
+      severity: 'info',
+    });
+  }
+
+  return alerts;
 };

@@ -1,9 +1,9 @@
 use chrono::DateTime;
 use repository::{
     Document, ProgramEnrolmentRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository,
-    ProgramEnrolmentStatus, ProgramRow, StorageConnection,
+    ProgramRow, StorageConnection,
 };
-use util::uuid::uuid;
+use util::hash::sha256;
 
 use super::{program_schema::SchemaProgramEnrolment, UpsertProgramEnrolmentError};
 
@@ -29,18 +29,18 @@ pub(crate) fn update_program_enrolment_row(
         repo.find_one_by_program_id_and_patient(&program_row.id, patient_id)?;
     let id = match program_enrolment_row {
         Some(program_enrolment_row) => program_enrolment_row.0.id,
-        None => uuid(),
+        None => sha256(&document.name),
     };
 
-    let status = match program.status {
-        super::program_schema::ProgramEnrolmentStatus::Active => ProgramEnrolmentStatus::Active,
-        super::program_schema::ProgramEnrolmentStatus::OptedOut => ProgramEnrolmentStatus::OptedOut,
-        super::program_schema::ProgramEnrolmentStatus::TransferredOut => {
-            ProgramEnrolmentStatus::TransferredOut
-        }
-        super::program_schema::ProgramEnrolmentStatus::Paused => ProgramEnrolmentStatus::Paused,
-    };
-
+    // take latest status
+    let status = program.status_log.clone().and_then(|mut log| {
+        log.sort_by(|a, b| {
+            let data_a = DateTime::parse_from_rfc3339(&a.datetime).ok();
+            let data_b = DateTime::parse_from_rfc3339(&b.datetime).ok();
+            data_a.cmp(&data_b)
+        });
+        log.pop().map(|it| it.status)
+    });
     let program_row = ProgramEnrolmentRow {
         id,
         document_type: document.r#type.clone(),

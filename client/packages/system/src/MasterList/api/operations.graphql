@@ -62,6 +62,24 @@ query masterLists(
   }
 }
 
+query masterListsByItemId(
+  $storeId: String!
+  $itemId: String!
+) {
+  masterLists(
+    filter: { itemId: { equalTo: $itemId }, existsForStoreId: { equalTo: $storeId } } 
+    storeId: $storeId
+  ) {
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterListRow
+      }
+    }
+  }
+}
+
 query masterList($filter: MasterListFilterInput, $storeId: String!) {
   masterLists(filter: $filter, storeId: $storeId) {
     ... on MasterListConnector {

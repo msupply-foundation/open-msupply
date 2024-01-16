@@ -9,7 +9,7 @@ import {
   RequisitionNodeStatus,
 } from '@openmsupply-client/common';
 import { getNextResponseStatus, getStatusTranslation } from '../../../utils';
-import { useResponse } from '../../api';
+import { ResponseFragment, useResponse } from '../../api';
 
 const getStatusOptions = (
   currentStatus: RequisitionNodeStatus,
@@ -17,7 +17,7 @@ const getStatusOptions = (
 ): SplitButtonOption<RequisitionNodeStatus>[] => {
   const options: [
     SplitButtonOption<RequisitionNodeStatus>,
-    SplitButtonOption<RequisitionNodeStatus>
+    SplitButtonOption<RequisitionNodeStatus>,
   ] = [
     {
       value: RequisitionNodeStatus.New,
@@ -57,7 +57,7 @@ const getButtonLabel =
     });
   };
 
-const useStatusChangeButton = () => {
+const useStatusChangeButton = (requisition: ResponseFragment) => {
   const { status, update } = useResponse.document.fields('status');
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
@@ -66,6 +66,16 @@ const useStatusChangeButton = () => {
     () => getStatusOptions(status, getButtonLabel(t)),
     [status, getButtonLabel]
   );
+
+  const requested = requisition.lines.nodes.reduce(
+    (acc, line) => acc + line.requestedQuantity,
+    0
+  );
+  const supplied = requisition.lines.nodes.reduce(
+    (acc, line) => acc + line.supplyQuantity,
+    0
+  );
+  const notFullySupplied = requested - supplied !== 0;
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<RequisitionNodeStatus> | null>(() =>
@@ -84,11 +94,13 @@ const useStatusChangeButton = () => {
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-status-as', {
-      status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
-        : '',
-    }),
+    message: notFullySupplied
+      ? t('messages.confirm-not-fully-supplied')
+      : t('messages.confirm-status-as', {
+          status: selectedOption?.value
+            ? getStatusTranslation(selectedOption?.value)
+            : '',
+        }),
     onConfirm: onConfirmStatusChange,
   });
 
@@ -101,9 +113,13 @@ const useStatusChangeButton = () => {
   return { options, selectedOption, setSelectedOption, getConfirmation };
 };
 
-export const StatusChangeButton = () => {
+export const StatusChangeButton = ({
+  requisition,
+}: {
+  requisition: ResponseFragment;
+}) => {
   const { options, selectedOption, setSelectedOption, getConfirmation } =
-    useStatusChangeButton();
+    useStatusChangeButton(requisition);
   const isDisabled = useResponse.utils.isDisabled();
   const isDisabledByAuthorisation =
     useResponse.utils.isDisabledByAuthorisation();

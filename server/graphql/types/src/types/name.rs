@@ -3,10 +3,52 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 use repository::{Gender, Name, NameRow, NameType};
 
-use graphql_core::{loader::StoreByIdLoader, simple_generic_errors::NodeError, ContextExt};
+use graphql_core::{
+    loader::StoreByIdLoader, simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError, ContextExt,
+};
 use serde::Serialize;
 
 use super::StoreNode;
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum GenderInput {
+    Female,
+    Male,
+    TransgenderMale,
+    TransgenderMaleHormone,
+    TransgenderMaleSurgical,
+    TransgenderFemale,
+    TransgenderFemaleHormone,
+    TransgenderFemaleSurgical,
+    Unknown,
+    NonBinary,
+}
+
+impl GenderInput {
+    pub fn to_domain(self) -> Gender {
+        match self {
+            GenderInput::Female => Gender::Female,
+            GenderInput::Male => Gender::Male,
+            GenderInput::TransgenderMale => Gender::TransgenderMale,
+            GenderInput::TransgenderMaleHormone => Gender::TransgenderMaleHormone,
+            GenderInput::TransgenderMaleSurgical => Gender::TransgenderMaleSurgical,
+            GenderInput::TransgenderFemale => Gender::TransgenderFemale,
+            GenderInput::TransgenderFemaleHormone => Gender::TransgenderFemaleHormone,
+            GenderInput::TransgenderFemaleSurgical => Gender::TransgenderFemaleSurgical,
+            GenderInput::Unknown => Gender::Unknown,
+            GenderInput::NonBinary => Gender::NonBinary,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterGenderInput {
+    pub equal_to: Option<GenderInput>,
+    pub equal_any: Option<Vec<GenderInput>>,
+    pub not_equal_to: Option<GenderInput>,
+}
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
@@ -189,6 +231,12 @@ impl NameNode {
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
         self.row().date_of_birth
     }
+
+    pub async fn custom_data(&self) -> Result<Option<serde_json::Value>> {
+        self.name
+            .custom_data()
+            .map_err(|err| StandardGraphqlError::from_error(&err))
+    }
 }
 
 #[derive(Union)]
@@ -265,6 +313,7 @@ mod test {
                                     .unwrap(),
                             );
                             r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 05, 15).unwrap());
+                            r.custom_data_string = Some(r#"{"check": "check"}"#.to_string());
                         }),
                         name_store_join_row: None,
                         store_row: None,
@@ -294,6 +343,9 @@ mod test {
                 "address2": "address2",
                 "createdDatetime": "2022-05-18T12:07:12+00:00",
                 "dateOfBirth": "1995-05-15",
+                "customData": {
+                    "check": "check"
+                }
             }
         }
         );
@@ -320,6 +372,7 @@ mod test {
                createdDatetime
                isOnHold
                dateOfBirth
+               customData
             }
         }
         "#;

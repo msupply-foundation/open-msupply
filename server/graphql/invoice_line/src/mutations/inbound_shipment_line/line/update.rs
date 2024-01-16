@@ -1,6 +1,6 @@
 use async_graphql::*;
 use chrono::NaiveDate;
-use graphql_core::generic_inputs::TaxInput;
+use graphql_core::generic_inputs::{NullableUpdateInput, TaxInput};
 use graphql_core::simple_generic_errors::{
     CannotEditInvoice, ForeignKey, ForeignKeyError, NotAnInboundShipment, RecordNotFound,
 };
@@ -14,6 +14,7 @@ use service::invoice_line::inbound_shipment_line::{
     UpdateInboundShipmentLine as ServiceInput, UpdateInboundShipmentLineError as ServiceError,
 };
 use service::invoice_line::ShipmentTaxUpdate;
+use service::NullableUpdate;
 
 use super::BatchIsReserved;
 
@@ -22,7 +23,7 @@ use super::BatchIsReserved;
 pub struct UpdateInput {
     pub id: String,
     pub item_id: Option<String>,
-    pub location_id: Option<String>,
+    pub location: Option<NullableUpdateInput<String>>,
     pub pack_size: Option<u32>,
     pub batch: Option<String>,
     pub cost_price_per_pack: Option<f64>,
@@ -87,7 +88,7 @@ impl UpdateInput {
         let UpdateInput {
             id,
             item_id,
-            location_id,
+            location,
             pack_size,
             batch,
             expiry_date,
@@ -101,7 +102,9 @@ impl UpdateInput {
         ServiceInput {
             id,
             item_id,
-            location_id,
+            location: location.map(|location| NullableUpdate {
+                value: location.value,
+            }),
             pack_size,
             batch,
             expiry_date,
@@ -175,8 +178,8 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_location_1,
-            MockDataInserts,
+            mock_inbound_shipment_c, mock_inbound_shipment_c_invoice_lines, mock_item_a,
+            mock_location_1, MockDataInserts,
         },
         InvoiceLine, RepositoryError, StorageConnectionManager,
     };
@@ -190,6 +193,7 @@ mod test {
             InvoiceLineServiceTrait,
         },
         service_provider::{ServiceContext, ServiceProvider},
+        NullableUpdate,
     };
 
     use crate::InvoiceLineMutations;
@@ -222,7 +226,7 @@ mod test {
           "input": {
             "id": "n/a",
             "itemId": "n/a",
-            "locationId": "n/a",
+            "location": {"value": "n/a"},
             "packSize": 0,
             "batch": "n/a",
             "costPricePerPack": 0.0,
@@ -463,7 +467,9 @@ mod test {
                 ServiceInput {
                     id: "id input".to_string(),
                     item_id: Some("item_id input".to_string()),
-                    location_id: Some("location id input".to_string()),
+                    location: Some(NullableUpdate {
+                        value: Some("location 1".to_string())
+                    }),
                     pack_size: Some(1),
                     batch: Some("batch input".to_string()),
                     cost_price_per_pack: Some(1.0),
@@ -477,6 +483,7 @@ mod test {
             Ok(InvoiceLine {
                 invoice_row: mock_inbound_shipment_c(),
                 invoice_line_row: mock_inbound_shipment_c_invoice_lines()[0].clone(),
+                item_row_option: Some(mock_item_a()),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })
@@ -486,7 +493,7 @@ mod test {
           "input": {
             "id": "id input",
             "itemId": "item_id input",
-            "locationId": "location id input",
+            "location": {"value": "location 1"},
             "packSize": 1,
             "batch": "batch input",
             "costPricePerPack": 1,

@@ -71,7 +71,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
     queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
-    filterKey: 'name',
+    filters: [{ key: 'name' }],
   });
   const queryParams = { filterBy, offset, sortBy };
   const { data, isError, isLoading } = useReport.document.list({
@@ -144,7 +144,7 @@ const ReportListComponent = ({ context }: { context: ReportContext }) => {
       <Toolbar filter={filter} />
       <DataTable
         id="item-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}

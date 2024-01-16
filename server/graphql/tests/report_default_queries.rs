@@ -5,11 +5,14 @@ mod tests {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use graphql_general::GeneralQueries;
     use graphql_invoice::InvoiceQueries;
+    use graphql_invoice_line::InvoiceLineQueries;
     use graphql_location::LocationQueries;
     use graphql_requisition::RequisitionQueries;
     use graphql_stocktake::StocktakeQueries;
+    use graphql_stocktake_line::StocktakeLineQueries;
     use repository::mock::{
-        mock_outbound_shipment_a, mock_request_draft_requisition_all_fields, mock_stocktake_a,
+        mock_outbound_shipment_a, mock_outbound_shipment_a_invoice_lines,
+        mock_request_draft_requisition_all_fields, mock_stocktake_a, mock_stocktake_line_a,
         MockDataInserts,
     };
     use serde_json::json;
@@ -18,8 +21,10 @@ mod tests {
     #[derive(MergedObject, Default, Clone)]
     struct FullQuery(
         pub InvoiceQueries,
+        pub InvoiceLineQueries,
         pub LocationQueries,
         pub StocktakeQueries,
+        pub StocktakeLineQueries,
         pub GeneralQueries,
         pub RequisitionQueries,
     );
@@ -27,8 +32,10 @@ mod tests {
     fn full_query() -> FullQuery {
         FullQuery(
             InvoiceQueries,
+            InvoiceLineQueries,
             LocationQueries,
             StocktakeQueries,
+            StocktakeLineQueries,
             GeneralQueries,
             RequisitionQueries,
         )
@@ -51,6 +58,11 @@ mod tests {
           "invoice": {
             "id": mock_invoice.id
           },
+          "invoiceLines": {
+            "nodes": [{
+              "id": mock_outbound_shipment_a_invoice_lines()[0].id
+            }]
+          },
           "store": {
             "id": mock_invoice.store_id
           }
@@ -58,6 +70,10 @@ mod tests {
         let variables = Some(json!({
             "storeId": mock_invoice.store_id,
             "dataId": mock_invoice.id,
+            "sort": {
+                "key": "itemName",
+                "desc": false
+            }
         }));
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
 
@@ -68,6 +84,11 @@ mod tests {
           "stocktake": {
             "id": mock_stocktake.id
           },
+          "stocktakeLines": {
+            "nodes": [{
+              "id": mock_stocktake_line_a().id
+            }]
+          },
           "store": {
             "id": mock_stocktake.store_id
           }
@@ -75,6 +96,10 @@ mod tests {
         let variables = Some(json!({
             "storeId": mock_stocktake.store_id,
             "dataId": mock_stocktake.id,
+            "sort": {
+                "key": "itemName",
+                "desc": false
+            }
         }));
         assert_graphql_query!(&settings, &query, &variables, &expected, None);
 

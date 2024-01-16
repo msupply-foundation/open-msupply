@@ -16,7 +16,7 @@ bench = false
 [dependencies]
 service = { path = "../service" }
 
-anyhow = "1.0.56"
+anyhow.workspace = true
 clap = { version = "3.1.8", features = ["derive"] }
 serde = "1.0.126"
 serde_json = "1.0.66"

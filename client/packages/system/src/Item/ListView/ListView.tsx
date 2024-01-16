@@ -10,6 +10,7 @@ import {
   useUrlQueryParams,
   ColumnAlign,
   NumUtils,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
@@ -23,7 +24,7 @@ const ItemListComponent: FC = () => {
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
     initialSort: { key: 'name', dir: 'asc' },
-    filterKey: 'codeOrName',
+    filters: [{ key: 'codeOrName' }],
   });
   const { data, isError, isLoading } = useItems();
   const pagination = { page, first, offset };
@@ -33,7 +34,13 @@ const ItemListComponent: FC = () => {
   const columns = useColumns<ItemsWithStatsFragment>(
     [
       'code',
-      'name',
+      [
+        'name',
+        {
+          Cell: TooltipTextCell,
+          maxWidth: 350,
+        },
+      ],
       {
         key: 'packUnit',
         label: 'label.pack',
@@ -93,7 +100,7 @@ const ItemListComponent: FC = () => {
       <Toolbar filter={filter} />
       <DataTable
         id="item-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}

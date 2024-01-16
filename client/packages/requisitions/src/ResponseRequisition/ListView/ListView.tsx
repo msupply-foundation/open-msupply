@@ -39,9 +39,22 @@ export const ResponseRequisitionListView: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filterKey: 'comment' });
-  const { data, isError, isLoading } = useResponse.document.list();
+  } = useUrlQueryParams({
+    initialSort: {
+      key: 'createdDatetime',
+      dir: 'desc',
+    },
+    filters: [
+      { key: 'comment' },
+      {
+        key: 'status',
+        condition: 'equalTo',
+      },
+    ],
+  });
   const pagination = { page, first, offset };
+  const queryParams = { ...filter, sortBy, page, first, offset };
+  const { data, isError, isLoading } = useResponse.document.list(queryParams);
   const { authoriseResponseRequisitions } = useResponse.utils.preferences();
   useDisableResponseRows(data?.nodes);
 
@@ -52,12 +65,13 @@ export const ResponseRequisitionListView: FC = () => {
       label: 'label.number',
       width: 100,
     },
-    'createdDatetime',
+    ['createdDatetime', { width: 150 }],
     [
       'status',
       {
         formatter: status =>
           getRequisitionTranslator(t)(status as RequisitionNodeStatus),
+        width: 100,
       },
     ],
     {

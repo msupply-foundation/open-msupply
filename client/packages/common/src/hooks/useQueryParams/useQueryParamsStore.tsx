@@ -122,8 +122,20 @@ export const createQueryParamsStore = <T extends RecordWithId>({
       onChangeDateFilterRule: (
         key: string,
         condition: FilterByConditionByType['date'],
-        value: Date
+        value: Date | Date[]
       ) => {
+        if (value === null) {
+          get().filter.onClearFilterRule(key);
+          return;
+        }
+        if (Array.isArray(value)) {
+          const betweenDates = {
+            afterOrEqualTo: value[0],
+            beforeOrEqualTo: value[1],
+          };
+          setFilterBy(set)({ [key]: betweenDates });
+          return;
+        }
         setFilterBy(set)({ [key]: { [condition]: value } });
       },
 

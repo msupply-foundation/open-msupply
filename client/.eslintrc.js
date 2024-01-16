@@ -49,8 +49,9 @@ module.exports = {
       'always',
       { markers: ['#', '/'], exceptions: ['-'] },
     ],
-    'react-hooks/exhaustive-deps': 'off',
+    'react-hooks/exhaustive-deps': 'warn',
     '@typescript-eslint/no-explicit-any': 'warn',
+    'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
   },
   ignorePatterns: ['**/operations.generated.ts', '**/types/schema.ts'],
 };

@@ -3078,7 +3078,7 @@ g_HandleSystemReboot();
 <Event>
 <Name>On Startup</Name>
 <Args/>
-<Script>local sWindowTitle = "omSupply Desktop Setup";
+<Script>local sWindowTitle = "Open mSupply Desktop Setup";
 
 hasOmsupplyDesktopInstalled = false;
 omSupplyDesktopPath = SessionVar.Expand("%AppFolder%\\open mSupply.exe");
@@ -3092,7 +3092,7 @@ if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
 end
 
 if hasOmsupplyDesktopInstalled then
-	sWindowTitle = "omSupply Desktop Upgrader";
+	sWindowTitle = "Open mSupply Desktop Upgrader";
 end
 
 SessionVar.Set("%window_title%", sWindowTitle);</Script>
@@ -3122,7 +3122,7 @@ SessionVar.Set("%window_title%", sWindowTitle);</Script>
 	Registry.CreateKey(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop");
 	Registry.SetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop", "Path", omSupplyDesktopPath, REG_SZ);
 
-	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "omSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
+	Shell.CreateShortcut(Shell.GetFolder(SHF_DESKTOP), "Open mSupply Desktop", omSupplyDesktopPath, "", "", "", 0, SW_SHOWNORMAL, nil, "", START_OPTION_DEFAULT);
 end
 
 </Script>
@@ -3169,7 +3169,7 @@ g_HandleSystemReboot();
 <SUF7SessionVars>
 <SessionVar>
 <Name>%ProductName%</Name>
-<Value>omSupply Desktop</Value>
+<Value>Open mSupply Desktop</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -3214,7 +3214,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%window_title%</Name>
-<Value>omSupply Desktop Setup</Value>
+<Value>Open mSupply Desktop Setup</Value>
 <Type>10</Type>
 </SessionVar>
 <SessionVar>
@@ -3232,7 +3232,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Desktop_replace with version.exe</Filename>
+<Filename>Open_mSupply_Desktop_replace with version.exe</Filename>
 <OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>

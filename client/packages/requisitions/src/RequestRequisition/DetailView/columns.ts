@@ -10,6 +10,7 @@ import {
   ColumnDescription,
   NumUtils,
   ColumnDataAccessor,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import {
@@ -61,6 +62,7 @@ export const useRequestColumns = () => {
     [
       'itemName',
       {
+        Cell: TooltipTextCell,
         width: 350,
         accessor: ({ rowData }) => rowData.item.name,
         getSortValue: rowData => rowData.item.name,

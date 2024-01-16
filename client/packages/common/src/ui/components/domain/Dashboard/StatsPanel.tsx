@@ -3,10 +3,12 @@ import { Grid, Paper, Tooltip, Typography } from '@mui/material';
 import { InlineSpinner, StockIcon } from '../../../';
 import { useTranslation } from '@common/intl';
 import { ApiException, isPermissionDeniedException } from '@common/types';
+import { SimpleLink } from '../../navigation/AppNavLink/SimpleLink';
 
 export type Stat = {
   label: string;
   value?: string;
+  link?: string;
 };
 export interface StatsPanelProps {
   error?: ApiException;
@@ -15,15 +17,21 @@ export interface StatsPanelProps {
   stats: Stat[];
   title: string;
   width?: number;
+  link?: string;
 }
 
-const Statistic: FC<Stat> = ({ label, value }) => {
+const Statistic: FC<Stat> = ({ label, value, link }) => {
   const t = useTranslation();
   return (
-    <Grid container alignItems="center" style={{ height: 30 }}>
-      <Grid item>
+    <Grid container alignItems="center" sx={{ marginTop: 1 }}>
+      <Grid
+        item
+        sx={{ minWidth: '43px', display: 'flex', justifyContent: 'flex-end' }}
+      >
         {value ? (
-          <Typography style={{ fontSize: 24, fontWeight: 'bold' }}>
+          <Typography
+            style={{ fontSize: 24, fontWeight: 'bold', lineHeight: 1.2 }}
+          >
             {value}
           </Typography>
         ) : (
@@ -52,7 +60,7 @@ const Statistic: FC<Stat> = ({ label, value }) => {
           marginInlineStart: '8px',
         }}
       >
-        {label}
+        {link ? <SimpleLink to={link}>{label}</SimpleLink> : label}
       </Grid>
     </Grid>
   );
@@ -99,6 +107,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
   stats,
   title,
   width,
+  link,
 }) => (
   <Paper
     sx={{
@@ -114,12 +123,11 @@ export const StatsPanel: FC<StatsPanelProps> = ({
       <Grid alignItems="center" display="flex">
         <Grid item style={{ marginInlineEnd: 8 }}>
           <StockIcon
-            color="secondary"
-            style={{
+            sx={theme => ({
+              fill: theme.palette.secondary.main,
               height: 16,
               width: 16,
-              fill: '#3568d4',
-            }}
+            })}
           />
         </Grid>
         <Grid item>
@@ -127,7 +135,7 @@ export const StatsPanel: FC<StatsPanelProps> = ({
             color="secondary"
             style={{ fontSize: 12, fontWeight: 500 }}
           >
-            {title}
+            {link ? <SimpleLink to={link}>{title}</SimpleLink> : title}
           </Typography>
         </Grid>
       </Grid>

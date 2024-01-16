@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import Bugsnag from '@bugsnag/js';
-
 import {
   BrowserRouter,
   Routes,
@@ -30,6 +29,7 @@ import { AuthenticationAlert } from './components/AuthenticationAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
 import { useRefreshPackVariant } from '@openmsupply-client/system';
+import { useInitPlugins } from './plugins';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -67,6 +67,7 @@ const Init = () => {
   // Fetch pack units at startup. Note, the units are cached, i.e. they are not fetched repeatedly.
   // They will be refetched on page reload or when store is changed based on cache usePackUnits api keys
   useRefreshPackVariant();
+  useInitPlugins();
   return <></>;
 };
 
@@ -80,8 +81,8 @@ const Host = () => (
               url={Environment.GRAPHQL_URL}
               skipRequest={skipRequest}
             >
+              <Init />
               <AuthProvider>
-                <Init />
                 <AppThemeProvider>
                   <ConfirmationModalProvider>
                     <AlertModalProvider>

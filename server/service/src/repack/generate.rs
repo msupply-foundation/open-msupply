@@ -50,7 +50,8 @@ pub fn generate(
         store_id: Some(ctx.store_id.clone()),
         record_id: Some(new_stock_line.id),
         datetime: Utc::now().naive_utc(),
-        event: Some(stock_line_to_update.id),
+        changed_from: Some(stock_line_to_update.id),
+        changed_to: None,
     };
 
     Ok(GenerateRepack {

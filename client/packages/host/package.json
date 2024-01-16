@@ -13,7 +13,8 @@
     "serve": "^14.2.0",
     "webpack": "^5.88.1",
     "webpack-cli": "^5.0.1",
-    "webpack-dev-server": "^4.12.0"
+    "webpack-dev-server": "^4.12.0",
+    "webpack-encoding-plugin": "^0.3.1"
   },
   "scripts": {
     "start": "webpack-cli serve",
@@ -27,6 +28,7 @@
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.0.5",
+    "@openmsupply-client/coldchain": "^0.0.0",
     "@openmsupply-client/common": "^0.0.1",
     "@openmsupply-client/config": "^0.0.0",
     "@openmsupply-client/dashboard": "^0.0.0",
@@ -38,6 +40,7 @@
     "history": "^5.1.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
+    "react-qr-code": "^2.0.12",
     "swc-loader": "^0.2.0",
     "webpack-bundle-analyzer": "^4.9.0"
   },

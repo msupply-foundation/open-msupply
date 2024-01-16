@@ -6,6 +6,7 @@ import {
   useUrlQueryParams,
   ColumnDescription,
   NumUtils,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { ResponseLineFragment, useResponse } from './../api';
 import {
@@ -26,11 +27,13 @@ export const useResponseColumns = () => {
       {
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,
+        width: 125,
       },
     ],
     [
       'itemName',
       {
+        Cell: TooltipTextCell,
         accessor: ({ rowData }) => rowData.item.name,
         getSortValue: rowData => rowData.item.name,
       },
