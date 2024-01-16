@@ -27,9 +27,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         SET item_link_id = item_id;
         
         ALTER TABLE invoice_line ADD CONSTRAINT invoice_line_item_link_id_fkey FOREIGN KEY (item_link_id) REFERENCES item_link(id);
+        CREATE INDEX "index_invoice_line_item_link_id_fkey" on "invoice_line" (item_link_id);
 
         -- Dropping invoice_line.item_id and index
-        DROP INDEX IF EXISTS index_invoice_line_item_id_fkey;
+        DROP INDEX index_invoice_line_item_id_fkey;
         ALTER TABLE invoice_line
         DROP COLUMN item_id;   
 
@@ -69,7 +70,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         PRAGMA foreign_keys = ON;
 
         -- Dropping invoice_line.item_id and index
-        DROP INDEX IF EXISTS index_invoice_line_item_id_fkey;
+        DROP INDEX index_invoice_line_item_id_fkey;
         ALTER TABLE invoice_line
         DROP COLUMN item_id;   
 
