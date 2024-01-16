@@ -213,34 +213,6 @@ export const useInboundShipmentColumns = () => {
           },
         }),
       },
-      {
-        label: 'label.sell',
-        key: 'sellPricePerPack',
-        align: ColumnAlign.Right,
-        width: 120,
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(
-              lines.map(line => ({ sell: getSellPrice(line) })),
-              'sell',
-              ''
-            );
-          } else {
-            return getSellPrice(rowData);
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return c(
-              ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
-            ).format();
-          } else {
-            return getSellPrice(rowData);
-          }
-        },
-      },
       getRowExpandColumn(),
       GenericColumnKey.Selection,
     ],
