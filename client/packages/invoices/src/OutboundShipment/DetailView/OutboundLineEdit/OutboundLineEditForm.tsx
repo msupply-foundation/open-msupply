@@ -16,7 +16,6 @@ import {
 import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
-  ItemRowFragment,
   usePackVariant,
 } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';

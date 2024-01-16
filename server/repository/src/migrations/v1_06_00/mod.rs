@@ -1,7 +1,7 @@
 use super::{version::Version, Migration};
 
 use crate::StorageConnection;
-pub(crate) struct V1_06_00;
+
 mod pack_variant;
 mod permission;
 

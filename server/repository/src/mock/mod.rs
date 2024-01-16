@@ -105,8 +105,8 @@ use crate::{
     ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
     MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
     NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
-    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
+    NumberRowRepository, PackVariantRow, PackVariantRowRepository, PeriodRow, PeriodRowRepository,
+    PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
     ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
@@ -492,6 +492,7 @@ impl MockDataInserts {
 
     pub fn pack_variants(mut self) -> Self {
         self.pack_variants = true;
+        self
     }
 
     pub fn plugin_data(mut self) -> Self {

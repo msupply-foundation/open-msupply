@@ -19,11 +19,9 @@ import {
   usePackVariant,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
-import { DraftItem, DraftStockOutLine } from '../../..';
-import { PackSizeController } from '../../../StockOut';
 import { DraftItem } from '../../..';
+import { PackSizeController } from '../../../StockOut';
 import {
-  PackSizeController,
   StockOutAlert,
   StockOutAlerts,
   getAllocationAlerts,

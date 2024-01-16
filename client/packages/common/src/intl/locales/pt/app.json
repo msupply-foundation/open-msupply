@@ -1,6 +1,7 @@
 {
   "select-store": "Selecionar Armazém",
   "auth.alert-title": "Erro de Autenticação",
+  "auth.permission-denied": "Permissão negada",
   "auth.timeout-title": "Sua sessão expirou",
   "auth.unauthenticated-message": "Você não iniciou a sessão. Clique em OK para retornar para a página inicial.",
   "button.close-the-menu": "Fechar o menu",

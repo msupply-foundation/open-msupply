@@ -2,7 +2,6 @@ import {
   ItemNodeType,
   SortBy,
   ItemSortFieldInput,
-  FilterBy,
   InsertPackVariantInput,
   UpdatePackVariantInput,
   DeletePackVariantInput,

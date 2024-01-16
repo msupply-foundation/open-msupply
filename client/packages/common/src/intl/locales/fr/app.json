@@ -37,6 +37,7 @@
   "heading.password": "Mot de passe",
   "auth.alert-title": "Erreur d'authentification",
   "auth.no-store-assigned": "Votre utilisateur n'est assigné à aucun dépôt. Veuillez vous connecter avec un autre compte utilisateur ou contacter votre administrateur.",
+  "auth.permission-denied": "Permission refusée",
   "auth.timeout-title": "La session a expirée",
   "cmdk.goto-inbound": "Aller à : Bons de livraison",
   "cmdk.goto-dashboard": "Aller à : Tableau de Bord",

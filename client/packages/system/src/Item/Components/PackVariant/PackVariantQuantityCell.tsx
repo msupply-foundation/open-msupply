@@ -2,7 +2,7 @@ import React, { ReactElement } from 'react';
 import {
   RecordWithId,
   CellProps,
-  InnerBasicCell,
+  BasicCellLayout,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 
@@ -24,5 +24,9 @@ export const PackVariantQuantityCell =
     const quantity = getQuantity(rowData);
     const packQuantity = numberOfPacksFromQuantity(quantity);
 
-    return <InnerBasicCell isError={isError} value={String(packQuantity)} />;
+    return (
+      <BasicCellLayout isError={isError}>
+        {String(packQuantity)}
+      </BasicCellLayout>
+    );
   };
