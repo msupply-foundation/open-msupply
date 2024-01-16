@@ -55,7 +55,7 @@ const Chart = ({
   const formatTemperature = (value: number | null) =>
     value === null
       ? '-'
-      : `${NumUtils.round(value, 2)}${t('label.temperature-unit')}`;
+      : `${NumUtils.round(value, 2)} ${t('label.temperature-unit')}`;
 
   const TemperatureTooltip = ({
     active,
