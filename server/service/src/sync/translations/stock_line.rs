@@ -113,7 +113,7 @@ impl SyncTranslation for StockLineTranslation {
                 None,
             )?
             .pop() else {
-                return Err(anyhow::anyhow!("Can't find line..."))
+                return Err(anyhow::anyhow!("Stock_line row not found"))
             };
 
         let StockLine {
