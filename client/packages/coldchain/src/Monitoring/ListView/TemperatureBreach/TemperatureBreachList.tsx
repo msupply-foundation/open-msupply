@@ -1,19 +1,14 @@
 import React, { FC } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import { useTranslation } from '@common/intl';
 import {
-  Box,
-  CellProps,
-  CircleAlertIcon,
+  ColumnAlign,
   DataTable,
   Formatter,
-  IconButton,
   NothingHere,
   TableProvider,
-  Typography,
   createTableStore,
   useColumns,
-  useTheme,
 } from '@openmsupply-client/common';
 import {
   TemperatureBreachFragment,
@@ -22,41 +17,7 @@ import {
 import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
 import { useAcknowledgeBreachModal } from './useAcknowledgeBreachModal';
-
-const DurationCell = ({ rowData }: CellProps<TemperatureBreachFragment>) => {
-  const t = useTranslation('coldchain');
-  const { localisedDistance } = useFormatDateTime();
-  const duration = !rowData.endDatetime
-    ? t('label.ongoing')
-    : localisedDistance(rowData.startDatetime, rowData.endDatetime);
-
-  return (
-    <Box
-      flexDirection="row"
-      display="flex"
-      flex={1}
-      sx={
-        !rowData.endDatetime
-          ? {
-              color: 'error.main',
-              fontStyle: 'italic',
-            }
-          : {}
-      }
-    >
-      <Typography
-        style={{
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          color: 'inherit',
-          fontSize: 'inherit',
-        }}
-      >
-        {duration}
-      </Typography>
-    </Box>
-  );
-};
+import { DurationCell, IconCell } from './TempereatureBreachCells';
 
 const ListView: FC = () => {
   const {
@@ -97,26 +58,17 @@ const ListView: FC = () => {
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
-  const theme = useTheme();
+
   const columns = useColumns<TemperatureBreachFragment>(
     [
       {
-        key: 'acknowledgedIcon',
+        key: 'icon',
         sortable: false,
-        Cell: ({ rowData }) => {
-          return !!rowData?.unacknowledged ? (
-            <IconButton
-              onClick={() => acknowledgeBreach(rowData)}
-              icon={
-                <CircleAlertIcon
-                  fill={theme.palette.error.main}
-                  sx={{ color: 'background.white' }}
-                />
-              }
-              label={t('button.acknowledge')}
-            ></IconButton>
-          ) : null;
-        },
+        width: 60,
+        align: ColumnAlign.Center,
+        Cell: ({ rowData }) => (
+          <IconCell acknowledgeBreach={acknowledgeBreach} rowData={rowData} />
+        ),
       },
       {
         key: 'unacknowledged',
@@ -182,7 +134,6 @@ const ListView: FC = () => {
         },
         sortable: false,
       },
-      ['comment', { sortable: false }],
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
     [sortBy]
