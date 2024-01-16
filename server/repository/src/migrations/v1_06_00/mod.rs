@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod barcode_add_manufacturer_link_id;
 mod changelog_deduped;
 mod clinician_link;
 mod clinician_store_join_add_clinician_link_id;
@@ -22,10 +23,12 @@ mod name_store_join_add_name_link_id;
 mod name_tag_join_add_name_link_id;
 mod patient_id_indices;
 mod plugin_data;
+mod program_enrolment_add_patient_link_id;
 mod program_enrolment_status;
 mod requisition_add_name_link_id;
 mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
+mod stock_line_add_supplier_link_id;
 mod stocktake_line_add_item_link_id;
 mod temperature_breach;
 
@@ -60,6 +63,9 @@ impl Migration for V1_06_00 {
         master_list_name_join_add_name_link_id::migrate(connection)?;
         name_tag_join_add_name_link_id::migrate(connection)?;
         requisition_add_name_link_id::migrate(connection)?;
+        stock_line_add_supplier_link_id::migrate(connection)?;
+        barcode_add_manufacturer_link_id::migrate(connection)?;
+        program_enrolment_add_patient_link_id::migrate(connection)?;
 
         // Clinician link migrations
         clinician_link::migrate(connection)?;
