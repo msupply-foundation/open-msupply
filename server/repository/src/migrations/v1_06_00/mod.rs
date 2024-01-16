@@ -25,6 +25,7 @@ mod program_enrolment_status;
 mod requisition_add_name_link_id;
 mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
+mod stock_line_add_supplier_link_id;
 mod stocktake_line_add_item_link_id;
 mod temperature_breach;
 
@@ -41,6 +42,7 @@ impl Migration for V1_06_00 {
         master_list::migrate(connection)?;
         temperature_breach::migrate(connection)?;
         patient_id_indices::migrate(connection)?;
+        indexes::migrate(connection)?;
 
         // Item link migrations
         item_add_is_active::migrate(connection)?;
@@ -58,6 +60,7 @@ impl Migration for V1_06_00 {
         master_list_name_join_add_name_link_id::migrate(connection)?;
         name_tag_join_add_name_link_id::migrate(connection)?;
         requisition_add_name_link_id::migrate(connection)?;
+        stock_line_add_supplier_link_id::migrate(connection)?;
 
         // Clinician link migrations
         clinician_link::migrate(connection)?;
@@ -65,7 +68,6 @@ impl Migration for V1_06_00 {
         encounter_add_clinician_link_id::migrate(connection)?;
 
         program_enrolment_status::migrate(connection)?;
-        indexes::migrate(connection)?;
         encounter_status::migrate(connection)?;
         changelog_deduped::migrate(connection)?;
         Ok(())
