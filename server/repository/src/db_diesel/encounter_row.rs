@@ -1,4 +1,4 @@
-use super::{clinician_link, program_row::program, StorageConnection};
+use super::{clinician_link, name_link_row::name_link, program_row::program, StorageConnection};
 
 use crate::repository_error::RepositoryError;
 
@@ -24,7 +24,7 @@ table! {
         document_type -> Text,
         document_name -> Text,
         program_id -> Text,
-        patient_id -> Text,
+        patient_link_id -> Text,
         created_datetime -> Timestamp,
         start_datetime -> Timestamp,
         end_datetime -> Nullable<Timestamp>,
@@ -36,6 +36,7 @@ table! {
 
 joinable!(encounter -> program (program_id));
 joinable!(encounter -> clinician_link (clinician_link_id));
+joinable!(encounter -> name_link (patient_link_id));
 allow_tables_to_appear_in_same_query!(encounter, program);
 allow_tables_to_appear_in_same_query!(encounter, clinician_link);
 
@@ -49,6 +50,7 @@ pub struct EncounterRow {
     /// The encounter document name
     pub document_name: String,
     pub program_id: String,
+    #[column_name = "patient_link_id"]
     pub patient_id: String,
     pub created_datetime: NaiveDateTime,
     pub start_datetime: NaiveDateTime,
