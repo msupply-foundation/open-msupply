@@ -4,8 +4,9 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
-    ItemLinkRowRepository, ItemRowRepository, StockLineRowRepository, StorageConnection,
+    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType,
+    ItemRowRepository, StockLineRowRepository, StorageConnection,
     SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -254,40 +255,44 @@ impl SyncTranslation for InvoiceLineTranslation {
             return Ok(None);
         }
 
-        let InvoiceLineRow {
-            id,
-            invoice_id,
-            item_id,
-            item_name,
-            item_code,
-            stock_line_id,
-            location_id,
-            batch,
-            expiry_date,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            total_before_tax,
-            total_after_tax,
-            tax,
-            r#type,
-            number_of_packs,
-            note,
-            inventory_adjustment_reason_id,
-        } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(invoice_line) = InvoiceLineRepository::new(connection)
+        .query_one(
+            InvoiceLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id),
+        ))? else { 
+            return Err(anyhow::anyhow!("invoice_line row not found"))
+        };
 
-        // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
-        let item_id = ItemLinkRowRepository::new(connection)
-            .find_one_by_id(&item_id)?
-            .ok_or(anyhow::anyhow!(
-                "Item ({item_id}) not found for invoice line ({id})"
-            ))?
-            .item_id;
+        let InvoiceLine {
+            invoice_line_row:
+                InvoiceLineRow {
+                    id,
+                    invoice_id,
+                    item_id: _item_id, // item_id is ACTUALLY the item_link_id, we need to use the item_row.id in
+                    item_name,
+                    item_code,
+                    stock_line_id,
+                    location_id,
+                    batch,
+                    expiry_date,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    total_before_tax,
+                    total_after_tax,
+                    tax,
+                    r#type,
+                    number_of_packs,
+                    note,
+                    inventory_adjustment_reason_id,
+                },
+            item_row,
+            ..
+        } = invoice_line;
 
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
             invoice_id,
-            item_id,
+            item_id: item_row.id,
             item_name,
             stock_line_id,
             location_id,
