@@ -8,7 +8,8 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{SensorNode, TemperatureLogFilterInput};
-use repository::{TemperatureChartRow, TemperatureLogFilter};
+use repository::{StorageConnection, TemperatureChartRow, TemperatureLogFilter};
+use service::temperature_breach::query::get_max_or_min_breach_temperature;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     temperature_chart::{
@@ -53,9 +54,60 @@ pub fn temperature_chart(
         )
         .map_err(map_error)?;
 
-    Ok(TemperatureChartResponse::Response(
-        TemperatureChartNode::from_domain(temperature_chart)?,
-    ))
+    let temperature_chart_node =
+        update_point_temperatures(temperature_chart, &service_context.connection)?;
+
+    Ok(TemperatureChartResponse::Response(temperature_chart_node))
+}
+
+// iterate through all points and update the temperature to be the temperature of the first breach
+// if the point has some breach ids associated with it
+// this allows the chart to show breaches with the correct temperature
+fn update_point_temperatures(
+    temperature_chart: TemperatureChart,
+    connection: &StorageConnection,
+) -> Result<TemperatureChartNode, Error> {
+    let sensors = TemperatureChartNode::from_domain(temperature_chart)?
+        .sensors
+        .into_iter()
+        .map(|sensor| {
+            let points = sensor
+                .points
+                .iter()
+                .map(|point| {
+                    let TemperaturePointNode {
+                        mid_point,
+                        temperature,
+                        breach_ids,
+                    } = point;
+                    let breach_temperature = match breach_ids.clone() {
+                        Some(breach_ids) => match breach_ids.first() {
+                            Some(breach_id) => {
+                                match get_max_or_min_breach_temperature(connection, breach_id) {
+                                    Ok(breach_temperature) => breach_temperature,
+                                    _ => None,
+                                }
+                            }
+                            None => None,
+                        },
+                        None => None,
+                    };
+                    TemperaturePointNode {
+                        mid_point: mid_point.clone(),
+                        temperature: breach_temperature.or(*temperature),
+                        breach_ids: breach_ids.clone(),
+                    }
+                })
+                .collect();
+
+            SensorAxisNode {
+                sensor_id: sensor.sensor_id,
+                points,
+            }
+        })
+        .collect();
+
+    Ok(TemperatureChartNode { sensors })
 }
 
 fn map_error(error: ServiceError) -> async_graphql::Error {
