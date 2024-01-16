@@ -6,9 +6,11 @@ import {
   CheckCell,
   CurrencyCell,
   useCurrency,
+  LocationCell,
+  Column,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
-import { PackQuantityCell } from '../../../StockOut';
+import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
 import { PackVariantCell } from '@openmsupply-client/system';
 
 export const useOutboundLineEditColumns = ({
@@ -35,10 +37,11 @@ export const useOutboundLineEditColumns = ({
         },
       ],
       [
-        'locationName',
+        'location',
         {
-          accessor: ({ rowData }) => rowData.location?.name,
+          accessor: ({ rowData }) => rowData.location?.code,
           width: 70,
+          Cell: LocationCell,
         },
       ],
       {
@@ -109,3 +112,35 @@ export const useOutboundLineEditColumns = ({
 
   return columns;
 };
+
+export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
+  useColumns([
+    'batch',
+    'expiryDate',
+    [
+      'location',
+      {
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
+    [
+      'itemUnit',
+      {
+        accessor: ({ rowData }) => rowData.item?.unitName,
+      },
+    ],
+    'numberOfPacks',
+    'packSize',
+    [
+      'unitQuantity',
+      {
+        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
+      },
+    ],
+    [
+      'sellPricePerUnit',
+      {
+        accessor: ({ rowData }) => rowData.sellPricePerPack,
+      },
+    ],
+  ]);

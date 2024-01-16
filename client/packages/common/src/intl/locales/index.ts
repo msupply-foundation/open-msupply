@@ -9,6 +9,8 @@ import * as replenishment from './en/replenishment.json';
 import * as catalogue from './en/catalogue.json';
 import * as dispensary from './en/dispensary.json';
 import * as programs from './en/programs.json';
+import * as coldchain from './en/coldchain.json';
+import * as plugin from './en/plugin.json';
 
 // Normalize single namespace
 type WithOrWithoutPlural<K> = TypeOptions['jsonFormat'] extends 'v4'
@@ -34,4 +36,6 @@ export type LocaleKey =
   | WithOrWithoutPlural<keyof typeof inventory>
   | WithOrWithoutPlural<keyof typeof catalogue>
   | WithOrWithoutPlural<keyof typeof dispensary>
-  | WithOrWithoutPlural<keyof typeof programs>;
+  | WithOrWithoutPlural<keyof typeof programs>
+  | WithOrWithoutPlural<keyof typeof coldchain>
+  | WithOrWithoutPlural<keyof typeof plugin>;

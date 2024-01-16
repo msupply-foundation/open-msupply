@@ -135,7 +135,13 @@ impl LoginService {
         };
         service_ctx.user_id = user_account.id.clone();
 
-        activity_log_entry(&service_ctx, ActivityLogType::UserLoggedIn, None, None)?;
+        activity_log_entry(
+            &service_ctx,
+            ActivityLogType::UserLoggedIn,
+            None,
+            None,
+            None,
+        )?;
 
         let mut token_service = TokenService::new(
             &auth_data.token_bucket,
@@ -144,6 +150,7 @@ impl LoginService {
         );
         let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
         let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
+
         let pair = match token_service.jwt_token(
             &user_account.id,
             &input.password,
@@ -307,9 +314,18 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::ManageLocations => {
                 output.insert(Permission::LocationMutate);
             }
+            // sensor
+            Permissions::EditSensorLocation => {
+                output.insert(Permission::SensorMutate);
+            }
+            Permissions::ViewSensorDetails => {
+                output.insert(Permission::SensorQuery);
+            }
             // stock line
+            // stock line & stocktake lines
             Permissions::ViewStock => {
                 output.insert(Permission::StockLineQuery);
+                output.insert(Permission::StocktakeQuery);
             }
             Permissions::EditStock => {
                 output.insert(Permission::StockLineMutate);
@@ -324,12 +340,8 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::DeleteStocktake => {
                 output.insert(Permission::StocktakeMutate);
             }
-            // stocktake lines
-            Permissions::ViewStocktakeLines => {
-                output.insert(Permission::StocktakeQuery);
-            }
             Permissions::AddStocktakeLines => {
-                output.insert(Permission::StocktakeQuery);
+                output.insert(Permission::StocktakeMutate);
             }
             Permissions::EditStocktakeLines => {
                 output.insert(Permission::StocktakeMutate);
@@ -379,9 +391,14 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
                 output.insert(Permission::LogQuery);
             }
             // patient
-            Permissions::EditPatientDetails => {
-                output.insert(Permission::PatientQuery);
+            Permissions::AddPatients => {
                 output.insert(Permission::PatientMutate);
+            }
+            Permissions::EditPatientDetails => {
+                output.insert(Permission::PatientMutate);
+            }
+            Permissions::ViewPatients => {
+                output.insert(Permission::PatientQuery);
             }
             // items
             Permissions::EditItems => {
@@ -389,6 +406,10 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             }
             Permissions::EditItemNamesCodesAndUnits => {
                 output.insert(Permission::ItemNamesCodesAndUnitsMutate);
+            }
+            // cold chain
+            Permissions::ColdChainApi => {
+                output.insert(Permission::ColdChainApi);
             }
             _ => continue,
         }

@@ -50,6 +50,5 @@ export const ItemOption = styled('li')(({ theme }) => ({
 }));
 
 export const itemFilterOptions = {
-  stringify: (item: ItemStockOnHandFragment | ItemRowWithStatsFragment) =>
-    `${item.code} ${item.name}`,
+  stringify: (item: ItemStockOnHandFragment) => `${item.code} ${item.name}`,
 };

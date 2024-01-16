@@ -24,12 +24,15 @@ pub(crate) mod program_requisition_settings;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
+pub(crate) mod sensor;
 pub(crate) mod special;
 pub(crate) mod stock_line;
 pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
+pub(crate) mod temperature_breach;
+pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user_permission;
 
@@ -73,6 +76,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(requisition_line::RequisitionLineTranslation {}),
         Box::new(activity_log::ActivityLogTranslation {}),
         Box::new(barcode::BarcodeTranslation {}),
+        Box::new(sensor::SensorTranslation {}),
+        Box::new(temperature_log::TemperatureLogTranslation {}),
+        Box::new(temperature_breach::TemperatureBreachTranslation {}),
         Box::new(clinician::ClinicianTranslation {}),
         Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
         // Remote-Central (site specific)
@@ -144,6 +150,9 @@ pub(crate) mod LegacyTableName {
     pub(crate) const REQUISITION: &str = "requisition";
     pub(crate) const REQUISITION_LINE: &str = "requisition_line";
     pub(crate) const OM_ACTIVITY_LOG: &str = "om_activity_log";
+    pub(crate) const SENSOR: &str = "sensor";
+    pub(crate) const TEMPERATURE_LOG: &str = "temperature_log";
+    pub(crate) const TEMPERATURE_BREACH: &str = "temperature_breach";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
     pub(crate) const NAME_TAG_JOIN: &str = "name_tag_join";
@@ -187,6 +196,9 @@ pub(crate) enum PullUpsertRecord {
     InventoryAdjustmentReason(InventoryAdjustmentReasonRow),
     StorePreference(StorePreferenceRow),
     Barcode(BarcodeRow),
+    Sensor(SensorRow),
+    TemperatureLog(TemperatureLogRow),
+    TemperatureBreach(TemperatureBreachRow),
     Clinician(ClinicianRow),
     ClinicianStoreJoin(ClinicianStoreJoinRow),
     FormSchema(FormSchemaJson),

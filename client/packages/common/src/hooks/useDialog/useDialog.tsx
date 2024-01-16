@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { TransitionProps } from '@mui/material/transitions';
@@ -16,7 +16,7 @@ export interface ButtonProps {
 
 export interface ModalProps {
   contentProps?: DialogContentProps;
-  children: React.ReactElement<any, any>;
+  children: React.ReactElement;
   cancelButton?: JSX.Element;
   height?: number;
   nextButton?: React.ReactElement<{
@@ -30,6 +30,8 @@ export interface ModalProps {
   >;
   okButton?: JSX.Element;
   reportSelector?: React.ReactElement;
+  copyButton?: JSX.Element;
+  saveButton?: JSX.Element;
   width?: number;
   sx?: SxProps<Theme>;
   title: string;
@@ -104,8 +106,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     disableEscapeKey = false,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
-  const showDialog = () => setOpen(true);
-  const hideDialog = () => setOpen(false);
+  const showDialog = useCallback(() => setOpen(true), []);
+  const hideDialog = useCallback(() => setOpen(false), []);
   const { isRtl } = useIntlUtils();
 
   useEffect(() => {
@@ -132,6 +134,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     nextButton,
     okButton,
     reportSelector,
+    copyButton,
+    saveButton,
     width,
     title,
     contentProps,
@@ -203,6 +207,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         >
           {cancelButton}
           {deleteButton}
+          {saveButton}
+          {copyButton}
           {okButton}
           {WrappedNextButton}
           {reportSelector}

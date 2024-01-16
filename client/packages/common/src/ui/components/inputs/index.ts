@@ -8,3 +8,4 @@ export * from './CurrencyInput';
 export * from './DatePickers';
 export * from './TimePickers';
 export * from './Switch';
+export * from './Filters';

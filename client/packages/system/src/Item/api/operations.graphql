@@ -160,14 +160,9 @@ query itemStockOnHand(
     ... on ItemConnector {
       __typename
       nodes {
-        __typename
-        code
-        id
-        name
-        unitName
-        defaultPackSize
-        availableStockOnHand(storeId: $storeId)
+        ...ItemStockOnHand
       }
+      totalCount
     }
   }
 }

@@ -26,18 +26,7 @@ export const useProgramEnrolmentsPromise = () => {
     const programs = await api.programEnrolments(params);
 
     return {
-      nodes: programs.nodes.map(node => {
-        // only take the latest status event
-        const events = node.activeProgramEvents
-          .filter(e => e.type === 'programStatus' && e.data)
-          .slice(0, 1);
-        return {
-          ...node,
-          events,
-          id: node.name,
-        } as ProgramEnrolmentRowFragmentWithId;
-      }),
-      totalCount: programs.totalCount,
+      programs,
     };
   });
 };
@@ -57,7 +46,7 @@ export const useProgramEnrolments = (input: ProgramEnrolmentListParams) => {
     api.programEnrolments(params).then(programs => ({
       nodes: programs.nodes.map(node => {
         // only take the latest status event
-        const events = node.activeProgramEvents
+        const events = node.activeProgramEvents.nodes
           .filter(e => e.type === 'programStatus' && e.data)
           .slice(0, 1);
         return {

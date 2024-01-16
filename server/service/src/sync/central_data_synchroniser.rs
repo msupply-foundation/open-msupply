@@ -32,7 +32,7 @@ impl CentralDataSynchroniser {
         batch_size: u32,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), CentralPullError> {
-        // TODO protection fron infinite loop
+        // TODO protection from infinite loop
         loop {
             let mut cursor = CentralSyncPullCursor::new(&connection)
                 .get_cursor()

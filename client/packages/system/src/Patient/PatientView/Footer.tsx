@@ -11,6 +11,8 @@ import {
   useDialog,
   LoadingButton,
   useNavigate,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { FormInputData, DocumentHistory } from '@openmsupply-client/programs';
 
@@ -34,6 +36,7 @@ export const Footer: FC<FooterProps> = ({
   const t = useTranslation('common');
   const { Modal, showDialog, hideDialog } = useDialog();
   const navigate = useNavigate();
+  const { userHasPermission } = useAuthContext();
 
   return (
     <AppFooterPortal
@@ -68,7 +71,11 @@ export const Footer: FC<FooterProps> = ({
             />
             <LoadingButton
               color="secondary"
-              disabled={!isDirty || !!validationError}
+              disabled={
+                !isDirty ||
+                !!validationError ||
+                !userHasPermission(UserPermission.PatientMutate)
+              }
               isLoading={isSaving}
               onClick={showSaveConfirmation}
             >

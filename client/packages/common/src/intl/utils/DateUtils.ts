@@ -1,7 +1,8 @@
-import { SupportedLocales, useIntlUtils } from '@common/intl';
+import { getLocale, useIntlUtils } from '@common/intl';
 import {
   addMinutes,
   addDays,
+  addMonths,
   addYears,
   isValid,
   differenceInDays,
@@ -17,26 +18,21 @@ import {
   isBefore,
   isEqual,
   format,
+  parse,
   parseISO,
   fromUnixTime,
+  getUnixTime,
   startOfToday,
   startOfDay,
+  endOfDay,
   startOfYear,
   formatRelative,
+  formatDistance,
   formatDistanceToNow,
   formatRFC3339,
+  previousMonday,
+  endOfWeek,
 } from 'date-fns';
-// importing individually to reduce bundle size
-// the date-fns methods are tree shaking correctly
-// but the locales are not. when adding, please add as below
-import enGB from 'date-fns/locale/en-GB';
-import enUS from 'date-fns/locale/en-US';
-import fr from 'date-fns/locale/fr';
-import ar from 'date-fns/locale/ar';
-import es from 'date-fns/locale/es';
-
-// Map locale string (from i18n) to locale object (from date-fns)
-const getLocaleObj = { fr, ar, es };
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
 
@@ -82,14 +78,33 @@ export const DateUtils = {
   differenceInMinutes,
   addMinutes,
   addDays,
+  addMonths,
   addYears,
   addCurrentTime,
-  getDateOrNull: (date?: Date | string | null): Date | null => {
+  getDateOrNull: (
+    date?: Date | string | null,
+    format?: string
+  ): Date | null => {
     if (!date) return null;
     if (date instanceof Date) return date;
-    const maybeDate = new Date(date);
+    const maybeDate =
+      format && typeof date === 'string'
+        ? parse(date, format, new Date())
+        : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
+  minDate: (...dates: (Date | null)[]) => {
+    const maybeDate = fromUnixTime(
+      Math.min(
+        // Ignore nulls, as they'll return a minimum of 0
+        ...dates.filter(d => d !== null).map(d => getUnixTime(d as Date))
+      )
+    );
+    return isValid(maybeDate) ? maybeDate : null;
+  },
+
+  maxDate: (...dates: (Date | null)[]) =>
+    fromUnixTime(Math.max(...dates.map(d => getUnixTime(d as Date)))),
   isPast,
   isFuture,
   isExpired: (expiryDate: Date): boolean => isPast(expiryDate),
@@ -110,7 +125,11 @@ export const DateUtils = {
   ageInDays: (date: Date | string) =>
     differenceInDays(Date.now(), dateInputHandler(date)),
   startOfDay,
+  startOfToday,
+  endOfDay,
   startOfYear,
+  previousMonday,
+  endOfWeek,
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
@@ -122,22 +141,12 @@ export const DateUtils = {
   DAY,
 };
 
-const getLocale = (language: SupportedLocales) => {
-  switch (language) {
-    case 'en':
-      return navigator.language === 'en-US' ? enUS : enGB;
-    case 'tet':
-      return enGB;
-    case 'fr-DJ':
-      return fr;
-    default:
-      return getLocaleObj[language];
-  }
-};
-
 export const useFormatDateTime = () => {
   const { currentLanguage } = useIntlUtils();
   const locale = getLocale(currentLanguage);
+
+  const urlQueryDate = 'yyyy-MM-dd';
+  const urlQueryDateTime = 'yyyy-MM-dd HH:mm';
 
   const localisedDate = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'P', { locale });
@@ -150,6 +159,9 @@ export const useFormatDateTime = () => {
 
   const dayMonthShort = (date: Date | string | number): string =>
     formatIfValid(dateInputHandler(date), 'dd MMM', { locale });
+
+  const dayMonthTime = (date: Date | string | number): string =>
+    formatIfValid(dateInputHandler(date), 'dd/MM HH:mm', { locale });
 
   const customDate = (
     date: Date | string | number,
@@ -169,11 +181,26 @@ export const useFormatDateTime = () => {
     return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
   };
 
+  const localisedDistance = (
+    startDate: Date | string | number,
+    endDate: Date | string | number
+  ) => {
+    const from = dateInputHandler(startDate);
+    const to = dateInputHandler(endDate);
+    return isValid(from) && isValid(to)
+      ? formatDistance(from, to, { locale })
+      : '';
+  };
+
   return {
+    urlQueryDate,
+    urlQueryDateTime,
     customDate,
     dayMonthShort,
+    dayMonthTime,
     localisedDate,
     localisedDateTime,
+    localisedDistance,
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,

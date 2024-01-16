@@ -7,9 +7,9 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{NameNode, NameNodeType};
-use repository::{EqualFilter, Gender, PaginationOption, StringFilter};
+use repository::{EqualFilter, PaginationOption, StringFilter};
 use repository::{Name, NameFilter, NameSort, NameSortField};
-use serde::Serialize;
+
 use service::{
     auth::{Resource, ResourceAccessRequest},
     ListResult,
@@ -36,45 +36,6 @@ pub struct EqualFilterNameTypeInput {
     pub equal_to: Option<NameNodeType>,
     pub equal_any: Option<Vec<NameNodeType>>,
     pub not_equal_to: Option<NameNodeType>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-pub enum GenderInput {
-    Female,
-    Male,
-    TransgenderMale,
-    TransgenderMaleHormone,
-    TransgenderMaleSurgical,
-    TransgenderFemale,
-    TransgenderFemaleHormone,
-    TransgenderFemaleSurgical,
-    Unknown,
-    NonBinary,
-}
-
-impl GenderInput {
-    pub fn to_domain(self) -> Gender {
-        match self {
-            GenderInput::Female => Gender::Female,
-            GenderInput::Male => Gender::Male,
-            GenderInput::TransgenderMale => Gender::TransgenderMale,
-            GenderInput::TransgenderMaleHormone => Gender::TransgenderMaleHormone,
-            GenderInput::TransgenderMaleSurgical => Gender::TransgenderMaleSurgical,
-            GenderInput::TransgenderFemale => Gender::TransgenderFemale,
-            GenderInput::TransgenderFemaleHormone => Gender::TransgenderFemaleHormone,
-            GenderInput::TransgenderFemaleSurgical => Gender::TransgenderFemaleSurgical,
-            GenderInput::Unknown => Gender::Unknown,
-            GenderInput::NonBinary => Gender::NonBinary,
-        }
-    }
-}
-
-#[derive(InputObject, Clone)]
-pub struct EqualFilterGenderInput {
-    pub equal_to: Option<GenderInput>,
-    pub equal_any: Option<Vec<GenderInput>>,
-    pub not_equal_to: Option<GenderInput>,
 }
 
 #[derive(InputObject, Clone)]

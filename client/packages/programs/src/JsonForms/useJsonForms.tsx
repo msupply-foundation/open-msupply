@@ -4,8 +4,7 @@ import {
   useNotification,
   useConfirmOnLeaving,
 } from '@openmsupply-client/common';
-import { JsonData, JsonForm } from './common';
-import _ from 'lodash';
+import { JsonData, JsonForm, JsonFormsConfig } from './common';
 import {
   JsonFormsRendererRegistryEntry,
   JsonSchema,
@@ -34,29 +33,14 @@ import {
   ProgramEvent,
   historicEncounterDataTester,
   HistoricEncounterData,
+  bloodPressureTester,
+  BloodPressure,
 } from './components';
-
-// https://stackoverflow.com/questions/57874879/how-to-treat-missing-undefined-properties-as-equivalent-in-lodashs-isequalwit
-// TODO: handle undefined and empty string as equal? e.g. initial data is undefined and current data is ""
-const isEqualIgnoreUndefined = (
-  a: JsonData | undefined,
-  b: JsonData | undefined
-) => {
-  const comparisonFunc = (a: JsonData | undefined, b: JsonData | undefined) => {
-    if (_.isArray(a) || _.isArray(b)) return;
-    if (!_.isObject(a) || !_.isObject(b)) return;
-
-    if (!_.includes(a, undefined) && !_.includes(b, undefined)) return;
-
-    // Call recursively, after filtering all undefined properties
-    return _.isEqualWith(
-      _.omitBy(a, value => value === undefined),
-      _.omitBy(b, value => value === undefined),
-      comparisonFunc
-    );
-  };
-  return _.isEqualWith(a, b, comparisonFunc);
-};
+import { EnrolmentId, enrolmentIdTester } from './components/EnrolmentId';
+import {
+  isEqualIgnoreUndefinedAndEmpty,
+  stripEmptyAdditions,
+} from './stripEmptyAdditions';
 
 export interface SchemaData {
   formSchemaId?: string;
@@ -93,6 +77,8 @@ const additionalRenderers: JsonFormsRendererRegistryEntry[] = [
   { tester: searchTester, renderer: Search },
   { tester: programEventTester, renderer: ProgramEvent },
   { tester: historicEncounterDataTester, renderer: HistoricEncounterData },
+  { tester: enrolmentIdTester, renderer: EnrolmentId },
+  { tester: bloodPressureTester, renderer: BloodPressure },
 ];
 
 /**
@@ -122,12 +108,8 @@ export type JsonFormData<R> = {
  * What data is shown and how it is saved can be customized through the `jsonFormData` form
  * parameter.
  */
-
 export const useJsonForms = <R,>(
-  config: {
-    documentName?: string;
-    patientId?: string;
-  },
+  config: JsonFormsConfig,
   jsonFormData: JsonFormData<R>
 ) => {
   const { loadedData, isLoading, error, save, isCreating } = jsonFormData;
@@ -148,7 +130,7 @@ export const useJsonForms = <R,>(
   useConfirmOnLeaving(isDirty);
 
   // returns the document name
-  const saveData = async (): Promise<R | undefined> => {
+  const saveData = async (deletion?: boolean): Promise<R | undefined> => {
     if (data === undefined) {
       return undefined;
     }
@@ -156,12 +138,15 @@ export const useJsonForms = <R,>(
 
     // Run mutation...
     try {
-      const result = await save?.(data);
+      const sanitizedData = stripEmptyAdditions(initialData, data);
+      const result = await save?.(sanitizedData);
 
-      const successSnack = success(t('success.data-saved'));
+      const successSnack = success(
+        deletion ? t('success.data-deleted') : t('success.data-saved')
+      );
       successSnack();
 
-      setInitialData(data);
+      setInitialData(sanitizedData);
       return result;
     } catch (err) {
       const errorSnack = errorNotification(t('error.problem-saving'));
@@ -183,11 +168,10 @@ export const useJsonForms = <R,>(
   useEffect(() => {
     const dirty =
       isSaving ||
-      isLoading ||
       // document doesn't exist yet; always set the isDirty flag
       isCreating ||
-      !isEqualIgnoreUndefined(initialData, data);
-    setIsDirty(dirty);
+      !isEqualIgnoreUndefinedAndEmpty(initialData, data);
+    setIsDirty(isLoading || !data ? false : dirty);
     if (data === undefined) {
       setData(initialData);
     }
@@ -210,7 +194,10 @@ export const useJsonForms = <R,>(
         setError={setValidationError}
         updateData={updateData}
         additionalRenderers={additionalRenderers}
-        config={config}
+        config={{
+          ...config,
+          initialData,
+        }}
       />
     ),
     data,

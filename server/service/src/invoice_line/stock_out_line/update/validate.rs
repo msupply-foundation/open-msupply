@@ -1,4 +1,4 @@
-use repository::{InvoiceLineRow, InvoiceRow, ItemRow, StorageConnection};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StorageConnection};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -51,7 +51,9 @@ pub fn validate(
     if !check_line_belongs_to_invoice(&line, &invoice) {
         return Err(NotThisInvoiceLine(line.invoice_id));
     }
-    if !check_number_of_packs(input.number_of_packs.clone()) {
+    if invoice.status != InvoiceRowStatus::New
+        && !check_number_of_packs(input.number_of_packs.clone())
+    {
         return Err(NumberOfPacksBelowOne);
     }
 

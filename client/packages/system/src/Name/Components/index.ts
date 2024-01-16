@@ -5,3 +5,4 @@ export * from './CustomerSearchModal';
 export * from './InternalSupplierSearchInput';
 export * from './InternalSupplierSearchModal';
 export { getNameOptionRenderer } from './NameOptionRenderer';
+export * from './NameRenderer';

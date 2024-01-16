@@ -5,6 +5,7 @@ import { styled } from '@mui/material/styles';
 import { Autocomplete } from './Autocomplete';
 import { AutocompleteList } from './AutocompleteList';
 import { AutocompleteMultiList, AutocompleteOption } from '.';
+import { AutocompleteWithPagination } from './AutocompleteWithPagination';
 
 export default {
   title: 'Inputs/Autocomplete',
@@ -99,6 +100,42 @@ const longOptions = [
     label: 'PRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
     id: '19',
   },
+  {
+    label: 'P4RIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+    id: '20',
+  },
+  {
+    label: 'GSPRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+    id: '21',
+  },
+  {
+    label: 'UYPRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+    id: '22',
+  },
+  {
+    label: 'SRPRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+    id: '23',
+  },
+  {
+    label: 'JHGSPRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+    id: '24',
+  },
+  {
+    label: 'MNJPRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+    id: '25',
+  },
+  {
+    label: 'GFMNJPRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+    id: '26',
+  },
+  {
+    label: 'MLKJPRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+    id: '27',
+  },
+  {
+    label: 'QEPRIVE CSCT de YAMOUSSOUKRO (INF-PV)',
+    id: '28',
+  },
 ];
 
 // TODO: Currently the styles are broken for this only within storybook
@@ -165,10 +202,57 @@ const MultiListTemplate: Story = () => {
   );
 };
 
+const AutocompleteWithPaginationTemplate: Story = () => {
+  const [pagination, setPagination] = React.useState({
+    page: 1,
+    first: 10,
+    offset: 0,
+  });
+  const [currOptions, setCurrOptions] = React.useState<typeof longOptions>(
+    longOptions.slice(0, pagination.first)
+  );
+
+  const onPageChange = (page: number) => {
+    setPagination({ ...pagination, offset: pagination.first * page, page });
+  };
+
+  React.useEffect(() => {
+    if (pagination.offset > 0) {
+      setCurrOptions(
+        longOptions.slice(
+          pagination.offset,
+          pagination.offset + pagination.first
+        )
+      );
+    }
+  }, [pagination]);
+
+  return (
+    <Grid container>
+      <Grid item>
+        <Paper>
+          <Typography fontWeight={700}>Autocomplete with Pagination</Typography>
+          <div style={{ paddingBottom: 30 }}>
+            <Typography>Search Text:</Typography>
+          </div>
+          <AutocompleteWithPagination
+            pagination={{ ...pagination, total: longOptions.length }}
+            onPageChange={onPageChange}
+            paginationDebounce={300}
+            options={currOptions}
+            width="500px"
+          />
+        </Paper>
+      </Grid>
+    </Grid>
+  );
+};
+
 export const Basic = BasicTemplate.bind({});
 export const List = ListTemplate.bind({});
 export const LongOptions = BasicTemplate.bind({});
 export const MultiList = MultiListTemplate.bind({});
+export const WithPagination = AutocompleteWithPaginationTemplate.bind({});
 
 Basic.args = { options: options };
 LongOptions.args = { options: longOptions, popperMinWidth: 850 };

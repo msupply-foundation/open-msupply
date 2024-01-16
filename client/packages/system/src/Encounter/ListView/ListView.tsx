@@ -6,7 +6,6 @@ import {
   NothingHere,
   useUrlQueryParams,
   useNavigate,
-  createQueryParamsStore,
   EncounterSortFieldInput,
 } from '@openmsupply-client/common';
 import { useEncounterListColumns } from './columns';
@@ -14,24 +13,42 @@ import {
   EncounterFragmentWithStatus,
   useEncounterFragmentWithStatus,
 } from '../utils';
-import { EncounterFragment, useEncounter } from '@openmsupply-client/programs';
+import { useEncounter } from '@openmsupply-client/programs';
+import { Toolbar } from './Toolbar';
 
 const EncounterListComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams();
-  const { queryParams } = useUrlQueryParams({
+    filter,
+    queryParams: { sortBy, page, first, offset, filterBy },
+  } = useUrlQueryParams({
     initialSort: {
       key: EncounterSortFieldInput.StartDatetime,
       dir: 'desc',
     },
+    filters: [
+      {
+        key: 'patient.lastName',
+      },
+      {
+        key: 'programEnrolment.programName',
+      },
+      {
+        key: 'startDatetime',
+        condition: 'between',
+      },
+      {
+        key: 'status',
+        condition: 'equalTo',
+      },
+    ],
   });
   const { data, isError, isLoading } = useEncounter.document.list({
-    ...queryParams,
+    pagination: { first, offset },
+    sortBy,
+    filterBy: filterBy ?? undefined,
   });
-  const pagination = { page, first, offset };
   const navigate = useNavigate();
   const columns = useEncounterListColumns({
     onChangeSortBy: updateSortQuery,
@@ -42,32 +59,27 @@ const EncounterListComponent: FC = () => {
     useEncounterFragmentWithStatus(data?.nodes);
 
   return (
-    <DataTable
-      id="name-list"
-      pagination={{ ...pagination, total: data?.totalCount }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={dataWithStatus}
-      isLoading={isLoading}
-      isError={isError}
-      onRowClick={row => {
-        navigate(String(row.id));
-      }}
-      noDataElement={<NothingHere />}
-    />
+    <>
+      <Toolbar filter={filter} />
+      <DataTable
+        id="name-list"
+        pagination={{ page, first, offset, total: data?.totalCount }}
+        onChangePage={updatePaginationQuery}
+        columns={columns}
+        data={dataWithStatus}
+        isLoading={isLoading}
+        isError={isError}
+        onRowClick={row => {
+          navigate(String(row.id));
+        }}
+        noDataElement={<NothingHere />}
+      />
+    </>
   );
 };
 
 export const EncounterListView: FC = () => (
-  <TableProvider
-    createStore={createTableStore}
-    queryParamsStore={createQueryParamsStore<EncounterFragment>({
-      initialSortBy: {
-        key: EncounterSortFieldInput.StartDatetime,
-        isDesc: true,
-      },
-    })}
-  >
+  <TableProvider createStore={createTableStore}>
     <EncounterListComponent />
   </TableProvider>
 );

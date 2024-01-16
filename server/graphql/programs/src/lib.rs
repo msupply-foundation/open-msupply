@@ -5,20 +5,29 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
+use graphql_types::types::contact_trace::ContactTraceFilterInput;
+use graphql_types::types::contact_trace::ContactTraceResponse;
+use graphql_types::types::contact_trace::ContactTraceSortInput;
 use graphql_types::types::document::DocumentNode;
 use graphql_types::types::encounter::EncounterFilterInput;
 use graphql_types::types::encounter::EncounterSortInput;
+use graphql_types::types::patient::PatientFilterInput;
 use graphql_types::types::patient::PatientNode;
 use graphql_types::types::program_enrolment::ProgramEnrolmentFilterInput;
+use graphql_types::types::program_enrolment::ProgramEnrolmentResponse;
 use graphql_types::types::program_enrolment::ProgramEnrolmentSortInput;
 use graphql_types::types::program_enrolment::ProgramEventFilterInput;
+use graphql_types::types::program_event::ProgramEventResponse;
 use graphql_types::types::program_event::ProgramEventSortInput;
 use mutations::allocate_number::allocate_program_number;
 use mutations::allocate_number::AllocateProgramNumberInput;
 use mutations::allocate_number::AllocateProgramNumberResponse;
-use mutations::delete_document::delete_document;
-use mutations::delete_document::DeleteDocumentInput;
-use mutations::delete_document::DeleteDocumentResponse;
+use mutations::contact_trace::insert::insert_contact_trace;
+use mutations::contact_trace::insert::InsertContactTraceInput;
+use mutations::contact_trace::insert::InsertContactTraceResponse;
+use mutations::contact_trace::update::update_contact_trace;
+use mutations::contact_trace::update::UpdateContactTraceInput;
+use mutations::contact_trace::update::UpdateContactTraceResponse;
 use mutations::encounter::insert::insert_encounter;
 use mutations::encounter::insert::InsertEncounterInput;
 use mutations::encounter::insert::InsertEncounterResponse;
@@ -42,10 +51,8 @@ use mutations::program_patient::insert::*;
 use mutations::program_patient::update::update_program_patient;
 use mutations::program_patient::update::UpdateProgramPatientInput;
 use mutations::program_patient::update::UpdateProgramPatientResponse;
-use mutations::undelete_document::undelete_document;
-use mutations::undelete_document::UndeleteDocumentInput;
-use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
+use queries::contact_trace::contact_traces;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::programs::patient::patient_search_central;
@@ -211,6 +218,17 @@ impl ProgramsQueries {
     ) -> Result<EncounterFieldsResponse> {
         encounter_fields(ctx, store_id, input, page, filter, sort)
     }
+
+    pub async fn contact_traces(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<ContactTraceFilterInput>,
+        sort: Option<ContactTraceSortInput>,
+    ) -> Result<ContactTraceResponse> {
+        contact_traces(ctx, store_id, page, filter, sort)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -225,24 +243,6 @@ impl ProgramsMutations {
         input: UpdateDocumentInput,
     ) -> Result<UpdateDocumentResponse> {
         update_document(ctx, store_id, input)
-    }
-
-    async fn delete_document(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: DeleteDocumentInput,
-    ) -> Result<DeleteDocumentResponse> {
-        delete_document(ctx, store_id, input)
-    }
-
-    async fn undelete_document(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UndeleteDocumentInput,
-    ) -> Result<UndeleteDocumentResponse> {
-        undelete_document(ctx, store_id, input)
     }
 
     async fn insert_document_registry(
@@ -351,5 +351,23 @@ impl ProgramsMutations {
         input: AllocateProgramNumberInput,
     ) -> Result<AllocateProgramNumberResponse> {
         allocate_program_number(ctx, store_id, input)
+    }
+
+    pub async fn insert_contact_trace(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertContactTraceInput,
+    ) -> Result<InsertContactTraceResponse> {
+        insert_contact_trace(ctx, store_id, input)
+    }
+
+    pub async fn update_contact_trace(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateContactTraceInput,
+    ) -> Result<UpdateContactTraceResponse> {
+        update_contact_trace(ctx, store_id, input)
     }
 }

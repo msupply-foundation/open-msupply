@@ -86,6 +86,19 @@ The functional areas are in `packages` as noted below. Mostly the packages are s
 - host: the wrapper for the application which then hosts individual packages. Components in here include the framework - navigation, footer, drawer, app bar - and pages such as login
 - system: packages which are re-used by other packages, such as `item` and `name` but are application-specific, which is why they are in here and not in `common` which is trying to be more application agnostic.
 
+Packages should have the following hierarchy:
+
+```mermaid
+graph RL;
+    common --> config
+    system --> common
+    others["invoices, inventory, dashboard, etc"] --> system
+    host-->others;
+```
+
+Packages shouldn't have circular dependencies to other packages, i.e. packages can only import packages on their left (as shown in the diagram).
+For example, the `common` packages can be imported by the `system` package but the `common` package can't import the `system` or the `invoices` package.
+
 Code is separated into functional areas, so that we can isolate bundles to these areas. These are not the same as areas in the site; there is a separation between code organisation and UI organisation - for example the site has `Distribution > Outbound Shipments` and `Replenishment > Inbound Shipments` and both of these are found in the `invoices` package in the code, as they are functionally very similar while being logically different.
 
 Within each area you'll see a similar pattern of this for tabular data, which is pretty much everything:

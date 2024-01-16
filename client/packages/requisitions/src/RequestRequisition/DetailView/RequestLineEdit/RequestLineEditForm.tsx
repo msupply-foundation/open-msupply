@@ -49,12 +49,14 @@ interface RequestLineEditFormLayoutProps {
   Left: React.ReactElement;
   Middle: React.ReactElement;
   Right: React.ReactElement;
+  Top: React.ReactElement;
 }
 
 export const RequestLineEditFormLayout = ({
   Left,
   Middle,
   Right,
+  Top,
 }: RequestLineEditFormLayoutProps) => {
   return (
     <Grid
@@ -67,18 +69,30 @@ export const RequestLineEditFormLayout = ({
       paddingBottom={1}
       boxShadow={theme => theme.shadows[2]}
     >
-      <Grid item xs={4}>
-        {Left}
-      </Grid>
-      <Grid
-        item
-        xs={4}
-        paddingBottom={1}
-        display="flex"
-        flexDirection="column"
-        justifyContent="flex-end"
-      >
-        {Middle}
+      <Grid item xs={8} direction="column" justifyContent="space-between">
+        <Grid item xs={12} sx={{ mb: 2 }}>
+          {Top}
+        </Grid>
+        <Grid
+          item
+          xs={12}
+          container
+          direction="row"
+          justifyContent="space-between"
+        >
+          <Grid
+            item
+            xs={6}
+            flexDirection="column"
+            display="flex"
+            justifyContent="flex-end"
+          >
+            {Left}
+          </Grid>
+          <Grid item xs={6}>
+            {Middle}
+          </Grid>
+        </Grid>
       </Grid>
       <Grid item xs={4}>
         {Right}
@@ -104,24 +118,25 @@ export const RequestLineEditForm = ({
 
   return (
     <RequestLineEditFormLayout
+      Top={
+        <StockItemSearchInputWithStats
+          autoFocus={!item}
+          openOnFocus={!item}
+          width={600}
+          disabled={disabled}
+          currentItemId={item?.id}
+          onChange={(newItem: ItemRowWithStatsFragment | null) =>
+            newItem && onChangeItem(newItem)
+          }
+          extraFilter={
+            disabled
+              ? undefined
+              : itemRow => !lines?.some(({ item }) => itemRow.id === item.id)
+          }
+        />
+      }
       Left={
         <>
-          <StockItemSearchInputWithStats
-            autoFocus={!item}
-            openOnFocus={!item}
-            width={300}
-            disabled={disabled}
-            currentItemId={item?.id}
-            onChange={(newItem: ItemRowWithStatsFragment | null) =>
-              newItem && onChangeItem(newItem)
-            }
-            extraFilter={
-              disabled
-                ? undefined
-                : itemRow => !lines?.some(({ item }) => itemRow.id === item.id)
-            }
-          />
-
           {item && item?.unitName ? (
             variantsControl ? (
               <Grid paddingTop={2}>
@@ -204,8 +219,9 @@ export const RequestLineEditForm = ({
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },
             }}
-            minRows={6}
-            maxRows={6}
+
+            minRows={7}
+            maxRows={7}
           />
         </>
       }

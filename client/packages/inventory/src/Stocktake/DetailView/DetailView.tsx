@@ -8,10 +8,10 @@ import {
   RouteBuilder,
   useNavigate,
   useTranslation,
-  GlobalStyles,
   DetailTabs,
+  useRowHighlight,
 } from '@openmsupply-client/common';
-import { ItemRowFragment, LogList } from '@openmsupply-client/system';
+import { ItemRowFragment, ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -31,6 +31,7 @@ export const DetailView: FC = () => {
   const { data, isLoading } = useStocktake.document.get();
   const navigate = useNavigate();
   const t = useTranslation('inventory');
+  const { HighlightStyles } = useRowHighlight();
 
   const onRowClick = useCallback(
     (item: StocktakeLineFragment | StocktakeSummaryItem) => {
@@ -52,7 +53,7 @@ export const DetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <LogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];
@@ -60,14 +61,7 @@ export const DetailView: FC = () => {
   return !!data ? (
     <TableProvider createStore={createTableStore}>
       <StocktakeLineErrorProvider>
-        <GlobalStyles
-          styles={{
-            '@keyframes highlight': {
-              from: { backgroundColor: 'rgba(199, 201, 217, 1)' },
-              to: { backgroundColor: 'rgba(199, 201, 217, 0)' },
-            },
-          }}
-        />
+        <HighlightStyles />
         <AppBarButtons onAddItem={() => onOpen()} />
         <Toolbar />
 

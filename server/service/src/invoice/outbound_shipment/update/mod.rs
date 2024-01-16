@@ -63,7 +63,7 @@ pub fn update_outbound_shipment(
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
-                unallocated_lines_to_trim,
+                lines_to_trim,
                 location_movements,
                 update_tax_for_lines,
             } = generate(&ctx.store_id, invoice, patch.clone(), connection)?;
@@ -78,7 +78,7 @@ pub fn update_outbound_shipment(
                 }
             }
 
-            if let Some(lines) = unallocated_lines_to_trim {
+            if let Some(lines) = lines_to_trim {
                 for line in lines {
                     invoice_line_repo.delete(&line.id)?;
                 }
@@ -101,6 +101,7 @@ pub fn update_outbound_shipment(
                     &ctx,
                     log_type_from_invoice_status(&update_invoice.status, false),
                     Some(update_invoice.id.to_owned()),
+                    None,
                     None,
                 )?;
             }

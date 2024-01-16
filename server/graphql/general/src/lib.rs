@@ -2,16 +2,14 @@ mod mutations;
 mod queries;
 mod sync_api_error;
 
+pub use self::queries::sync_status::*;
 use self::queries::*;
-pub use self::queries::{
-    names::{EqualFilterGenderInput, GenderInput},
-    sync_status::*,
-};
 
+use chrono::{DateTime, Utc};
 use graphql_core::pagination::PaginationInput;
 
 use crate::store_preference::store_preferences;
-use graphql_types::types::StorePreferenceNode;
+use graphql_types::types::{StorePreferenceNode, TemperatureLogFilterInput};
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
@@ -273,6 +271,29 @@ impl GeneralQueries {
         ctx: &Context<'_>,
     ) -> Result<update_user::UpdateUserNode> {
         last_successful_user_sync(ctx)
+    }
+
+    pub async fn plugins(&self, ctx: &Context<'_>) -> Result<Vec<PluginNode>> {
+        get_plugins(ctx)
+    }
+
+    pub async fn temperature_chart(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Must be before toDatetime")] from_datetime: DateTime<Utc>,
+        #[graphql(desc = "Must be after fromDatetime")] to_datetime: DateTime<Utc>,
+        #[graphql(desc = "Minimum 3 and maximum 100")] number_of_data_points: i32,
+        filter: Option<TemperatureLogFilterInput>,
+    ) -> Result<TemperatureChartResponse> {
+        temperature_chart(
+            ctx,
+            store_id,
+            from_datetime,
+            to_datetime,
+            number_of_data_points,
+            filter,
+        )
     }
 }
 

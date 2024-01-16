@@ -11,7 +11,11 @@ import {
   Typography,
   TableCell,
 } from '@mui/material';
-import { BasicSpinner, useRegisterActions } from '@openmsupply-client/common';
+import {
+  BasicSpinner,
+  Column,
+  useRegisterActions,
+} from '@openmsupply-client/common';
 
 import { TableProps } from './types';
 import { DataRow } from './components/DataRow/DataRow';
@@ -20,6 +24,89 @@ import { ColumnPicker, HeaderCell, HeaderRow } from './components/Header';
 import { RecordWithId } from '@common/types';
 import { useFormatDateTime, useTranslation } from '@common/intl';
 import { useTableStore } from './context';
+
+interface RenderRowsProps<T extends RecordWithId> {
+  mRef: React.RefObject<HTMLDivElement>;
+  data: T[];
+  ExpandContent?: React.FC<{ rowData: T }>;
+  columnsToDisplay: Column<T>[];
+  onRowClick?: ((row: T) => void) | null;
+  dense: boolean;
+  clickFocusedRow: boolean;
+  generateRowTooltip: ((row: T) => string) | undefined;
+  isRowAnimated: boolean;
+  additionalRows?: JSX.Element[];
+}
+const RenderRows = <T extends RecordWithId>({
+  mRef,
+  data,
+  ExpandContent,
+  columnsToDisplay,
+  onRowClick,
+  dense,
+  clickFocusedRow,
+  generateRowTooltip,
+  isRowAnimated,
+  additionalRows,
+}: RenderRowsProps<T>) => {
+  const t = useTranslation();
+  const { localisedDate } = useFormatDateTime();
+
+  if (ExpandContent != undefined)
+    return (
+      <>
+        {data.map((row, idx) => (
+          <DataRow
+            key={row.id}
+            ExpandContent={ExpandContent}
+            rowIndex={idx}
+            columns={columnsToDisplay}
+            onClick={onRowClick ? onRowClick : undefined}
+            rowData={row}
+            rowKey={String(idx)}
+            dense={dense}
+            keyboardActivated={clickFocusedRow}
+            generateRowTooltip={generateRowTooltip}
+            localisedText={t}
+            localisedDate={localisedDate}
+            isAnimated={isRowAnimated}
+          />
+        ))}
+        {additionalRows}
+      </>
+    );
+  return (
+    <>
+      <ViewportList
+        viewportRef={mRef}
+        items={data}
+        axis="y"
+        itemSize={40}
+        renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
+        initialDelay={1}
+      >
+        {(row, idx) => (
+          <DataRow
+            key={row.id}
+            ExpandContent={ExpandContent}
+            rowIndex={idx}
+            columns={columnsToDisplay}
+            onClick={onRowClick ? onRowClick : undefined}
+            rowData={row}
+            rowKey={String(idx)}
+            dense={dense}
+            keyboardActivated={clickFocusedRow}
+            generateRowTooltip={generateRowTooltip}
+            localisedText={t}
+            localisedDate={localisedDate}
+            isAnimated={isRowAnimated}
+          />
+        )}
+      </ViewportList>
+      {additionalRows}
+    </>
+  );
+};
 
 const DataTableComponent = <T extends RecordWithId>({
   id,
@@ -41,7 +128,7 @@ const DataTableComponent = <T extends RecordWithId>({
   onRowClick,
   additionalRows,
 }: TableProps<T>): JSX.Element => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { setRows, setDisabledRows, setFocus } = useTableStore();
   const [clickFocusedRow, setClickFocusedRow] = useState(false);
   const [displayColumns, setDisplayColumns] = useState(columns);
@@ -50,7 +137,6 @@ const DataTableComponent = <T extends RecordWithId>({
       columns.filter(c => displayColumns.map(({ key }) => key).includes(c.key)),
     [displayColumns, columns]
   );
-  const { localisedDate } = useFormatDateTime();
 
   useRegisterActions([
     {
@@ -73,7 +159,7 @@ const DataTableComponent = <T extends RecordWithId>({
       shortcut: ['enter'],
       keywords: 'table, enter',
       perform: () => {
-        console.log('Press enter');
+        console.info('Press enter');
         setClickFocusedRow(true);
       },
     },
@@ -93,6 +179,12 @@ const DataTableComponent = <T extends RecordWithId>({
     const { page, first, total } = pagination;
     if (page * first > total) onChangePage(0);
   }, [pagination]);
+
+  // if the columns array changes, such as when a plugin column is added
+  // reset the display columns to the full set
+  useEffect(() => {
+    setDisplayColumns(columns);
+  }, [columns]);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -126,7 +218,6 @@ const DataTableComponent = <T extends RecordWithId>({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100%',
         overflowX,
         overflowY: 'auto',
       }}
@@ -168,34 +259,18 @@ const DataTableComponent = <T extends RecordWithId>({
           </HeaderRow>
         </TableHead>
         <TableBody>
-          <>
-            <ViewportList
-              viewportRef={ref}
-              items={data}
-              axis="y"
-              itemSize={40}
-              renderSpacer={({ ref, style }) => <tr ref={ref} style={style} />}
-            >
-              {(row, idx) => (
-                <DataRow
-                  key={row.id}
-                  ExpandContent={ExpandContent}
-                  rowIndex={idx}
-                  columns={columnsToDisplay}
-                  onClick={onRowClick ? onRowClick : undefined}
-                  rowData={row}
-                  rowKey={String(idx)}
-                  dense={dense}
-                  keyboardActivated={clickFocusedRow}
-                  generateRowTooltip={generateRowTooltip}
-                  localisedText={t}
-                  localisedDate={localisedDate}
-                  isAnimated={isRowAnimated}
-                />
-              )}
-            </ViewportList>
-            {additionalRows}
-          </>
+          <RenderRows
+            mRef={ref}
+            data={data}
+            ExpandContent={ExpandContent}
+            columnsToDisplay={columnsToDisplay}
+            onRowClick={onRowClick}
+            dense={dense}
+            clickFocusedRow={clickFocusedRow}
+            generateRowTooltip={generateRowTooltip}
+            isRowAnimated={isRowAnimated}
+            additionalRows={additionalRows}
+          />
         </TableBody>
       </MuiTable>
       <Box

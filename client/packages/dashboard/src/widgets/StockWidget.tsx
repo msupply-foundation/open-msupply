@@ -2,10 +2,14 @@ import React from 'react';
 import {
   ApiException,
   ButtonWithIcon,
+  DateUtils,
   FnUtils,
   Grid,
   PlusCircleIcon,
+  RANGE_SPLIT_CHAR,
+  RouteBuilder,
   StatsPanel,
+  useFormatDateTime,
   useFormatNumber,
   useNotification,
   useToggle,
@@ -15,6 +19,7 @@ import {
 import { useDashboard } from '../api';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
 import { useRequest } from '@openmsupply-client/requisitions';
+import { AppRoute } from '@openmsupply-client/config';
 
 const LOW_MOS_THRESHOLD = 3;
 
@@ -44,6 +49,19 @@ export const StockWidget: React.FC = () => {
     );
     errorSnack();
   };
+
+  const { customDate, urlQueryDate } = useFormatDateTime();
+  const today = new Date();
+  const inAMonth = DateUtils.addMonths(today, 1);
+
+  const getExpiredUrlQuery = `${RANGE_SPLIT_CHAR}${customDate(
+    today,
+    urlQueryDate
+  )}`;
+  const getExpiredInAMonthUrlQuery = `${customDate(
+    today,
+    urlQueryDate
+  )}${RANGE_SPLIT_CHAR}${customDate(inAMonth, urlQueryDate)}`;
 
   return (
     <>
@@ -82,15 +100,30 @@ export const StockWidget: React.FC = () => {
                     count: Math.round(expiryData?.expired || 0),
                   }),
                   value: formatNumber.round(expiryData?.expired),
+                  link: RouteBuilder.create(AppRoute.Inventory)
+                    .addPart(AppRoute.Stock)
+                    .addQuery({
+                      expiryDate: getExpiredUrlQuery,
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.expiring-soon', {
                     count: Math.round(expiryData?.expiringSoon || 0),
                   }),
                   value: formatNumber.round(expiryData?.expiringSoon),
+                  link: RouteBuilder.create(AppRoute.Inventory)
+                    .addPart(AppRoute.Stock)
+                    .addQuery({
+                      expiryDate: getExpiredInAMonthUrlQuery,
+                    })
+                    .build(),
                 },
               ]}
-            />            
+              link={RouteBuilder.create(AppRoute.Inventory)
+                .addPart(AppRoute.Stock)
+                .build()}
+            />
             <StatsPanel
               error={itemCountsError as ApiException}
               isError={hasItemStatsError}
@@ -117,11 +150,18 @@ export const StockWidget: React.FC = () => {
                 },
                 {
                   label: t('label.more-than-six-months-stock-items', {
-                    count: Math.round(itemCountsData?.moreThanSixMonthsStock || 0),
+                    count: Math.round(
+                      itemCountsData?.moreThanSixMonthsStock || 0
+                    ),
                   }),
-                  value: formatNumber.round(itemCountsData?.moreThanSixMonthsStock || 0),
+                  value: formatNumber.round(
+                    itemCountsData?.moreThanSixMonthsStock || 0
+                  ),
                 },
               ]}
+              link={RouteBuilder.create(AppRoute.Inventory)
+                .addPart(AppRoute.Stock)
+                .build()}
             />
           </Grid>
           <Grid

@@ -1,4 +1,4 @@
-import { FilterBy, SortBy } from '@common/hooks';
+import { FilterByWithBoolean, SortBy } from '@common/hooks';
 import {
   InsertPrescriptionMutationVariables,
   PrescriptionRowFragment,
@@ -22,7 +22,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<PrescriptionRowFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 const prescriptionParsers = {
@@ -218,7 +218,6 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
         )
         .map(prescriptionParsers.toDeleteLine),
     };
-
     const result = await sdk.upsertPrescription({ storeId, input });
 
     return result;

@@ -1,11 +1,9 @@
 import React, {
   FC,
-  createContext,
   useMemo,
-  useEffect,
-  useState,
   useCallback,
   PropsWithChildren,
+  useRef,
 } from 'react';
 import {
   GraphQLClient,
@@ -17,15 +15,21 @@ import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 import { RequestConfig } from 'graphql-request/build/esm/types';
+import { createRegisteredContext } from 'react-singleton-context';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
+// these queries are allowed to fail silently with permission denied errors
+// as they are for background data fetches only; the user will be notified
+// by other, page-level, queries instead. Allowing the exceptions here
+// prevents the display of multiple permission denied errors for a single page
 const permissionExceptions = [
   'reports',
   'stockCounts',
   'invoiceCounts',
   'itemCounts',
   'requisitionCounts',
+  'temperatureNotifications',
 ];
 interface ResponseError {
   message?: string;
@@ -140,14 +144,6 @@ class GQLClient extends GraphQLClient {
   public getLastRequestTime = () => this.lastRequestTime;
 }
 
-export const createGql = (
-  url: string,
-  skipRequest?: SkipRequest
-): { client: GQLClient } => {
-  const client = new GQLClient(url, { credentials: 'include' }, skipRequest);
-  return { client };
-};
-
 interface GqlControl {
   client: GQLClient;
   setHeader: (header: string, value: string) => void;
@@ -155,7 +151,10 @@ interface GqlControl {
   setSkipRequest: (skipRequest: SkipRequest) => void;
 }
 
-const GqlContext = createContext<GqlControl>({} as any);
+const GqlContext = createRegisteredContext<GqlControl>(
+  'gql-context',
+  {} as any
+);
 
 const { Provider } = GqlContext;
 
@@ -169,9 +168,9 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
   skipRequest,
   children,
 }) => {
-  const [{ client }, setApi] = useState<{
-    client: GQLClient;
-  }>(() => createGql(url, skipRequest));
+  const client = useRef(
+    new GQLClient(url, { credentials: 'include' }, skipRequest)
+  ).current;
 
   const setUrl = useCallback(
     (newUrl: string) => {
@@ -193,10 +192,6 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
     },
     [client]
   );
-
-  useEffect(() => {
-    setApi(createGql(url, skipRequest));
-  }, [url, skipRequest]);
 
   const val = useMemo(
     () => ({

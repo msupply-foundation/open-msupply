@@ -85,6 +85,7 @@ pub fn delete_stocktake(
                 ActivityLogType::StocktakeDeleted,
                 Some(stocktake_id.to_owned()),
                 None,
+                None,
             )?;
 
             StocktakeRowRepository::new(&connection).delete(&stocktake_id)?;

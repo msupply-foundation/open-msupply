@@ -99,6 +99,7 @@ pub fn update_inbound_shipment(
                     log_type_from_invoice_status(&update_invoice.status, false),
                     Some(update_invoice.id.to_owned()),
                     None,
+                    None,
                 )?;
             }
 
@@ -439,9 +440,17 @@ mod test {
 
         let filter =
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
-        let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
+        let invoice_lines = get_invoice_lines(
+            &context,
+            &invoice.clone().store_id,
+            &invoice.clone().id,
+            None,
+            Some(filter),
+            None,
+        )
+        .unwrap();
 
-        for line in invoice_lines {
+        for line in invoice_lines.rows {
             assert_eq!(line.stock_line_option, None)
         }
 
@@ -475,10 +484,18 @@ mod test {
 
         let filter =
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
-        let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
+        let invoice_lines = get_invoice_lines(
+            &context,
+            &invoice.clone().store_id,
+            &invoice.clone().id,
+            None,
+            Some(filter),
+            None,
+        )
+        .unwrap();
         let mut stock_lines_delivered = Vec::new();
 
-        for lines in invoice_lines {
+        for lines in invoice_lines.rows {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
@@ -506,10 +523,18 @@ mod test {
             .unwrap();
         let filter =
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
-        let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
+        let invoice_lines = get_invoice_lines(
+            &context,
+            &invoice.clone().store_id,
+            &invoice.clone().id,
+            None,
+            Some(filter),
+            None,
+        )
+        .unwrap();
         let mut stock_lines_verified = Vec::new();
 
-        for lines in invoice_lines {
+        for lines in invoice_lines.rows {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)
@@ -546,10 +571,19 @@ mod test {
         assert!(invoice.delivered_datetime.unwrap() < end_time);
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusDelivered);
 
-        let filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.id]));
-        let invoice_lines = get_invoice_lines(&context, Some(filter)).unwrap();
+        let filter =
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
+        let invoice_lines = get_invoice_lines(
+            &context,
+            &invoice.clone().store_id,
+            &invoice.clone().id,
+            None,
+            Some(filter),
+            None,
+        )
+        .unwrap();
 
-        for lines in invoice_lines.clone() {
+        for lines in invoice_lines.rows.clone() {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
                 .find_one_by_id(&stock_line_id)

@@ -4,8 +4,9 @@ use super::{
 };
 
 use crate::{
-    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort},
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEventRow, RepositoryError, Sort,
+    StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -20,6 +21,7 @@ pub struct ProgramEventFilter {
     pub context_id: Option<EqualFilter<String>>,
     pub document_name: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<String>>,
+    pub data: Option<StringFilter>,
 }
 
 impl ProgramEventFilter {
@@ -33,6 +35,7 @@ impl ProgramEventFilter {
             context_id: None,
             document_name: None,
             r#type: None,
+            data: None,
         }
     }
 
@@ -75,6 +78,11 @@ impl ProgramEventFilter {
         self.r#type = Some(filter);
         self
     }
+
+    pub fn data(mut self, filter: StringFilter) -> Self {
+        self.data = Some(filter);
+        self
+    }
 }
 
 pub enum ProgramEventSortField {
@@ -111,6 +119,7 @@ macro_rules! apply_filters {
             apply_equal_filter!($query, f.document_type, program_event_dsl::document_type);
             apply_equal_filter!($query, f.document_name, program_event_dsl::document_name);
             apply_equal_filter!($query, f.r#type, program_event_dsl::type_);
+            apply_string_filter!($query, f.data, program_event_dsl::data);
         }
         $query
     }};

@@ -21,6 +21,18 @@ pub use self::stock_line::*;
 pub mod location;
 pub use self::location::*;
 
+pub mod sensor;
+pub use self::sensor::*;
+
+pub mod temperature_breach;
+pub use self::temperature_breach::*;
+
+pub mod temperature_log;
+pub use self::temperature_log::*;
+
+pub mod temperature_notification;
+pub use self::temperature_notification::*;
+
 pub mod master_list;
 pub use self::master_list::*;
 
@@ -83,6 +95,11 @@ pub use self::program::*;
 
 pub mod pack_variant;
 pub use self::pack_variant::*;
+pub mod plugin_data;
+pub use self::plugin_data::*;
+
+pub mod program_node;
+pub use self::program_node::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

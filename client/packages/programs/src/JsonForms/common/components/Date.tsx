@@ -52,14 +52,19 @@ const UIComponent = (props: ControlProps) => {
           // undefined is displayed as "now" and null as unset
           value={DateUtils.getDateOrNull(data)}
           onChange={e => {
-            if (e) handleChange(path, dateFormatter(e, 'yyyy-MM-dd'));
+            handleChange(path, !e ? undefined : dateFormatter(e, 'yyyy-MM-dd'));
             if (customError) setCustomError(undefined);
           }}
-          format="dd/MM/yyyy"
+          format="P"
           disabled={!props.enabled}
           error={customError ?? props.errors ?? zErrors ?? ''}
           disableFuture={disableFuture}
           onError={validationError => setCustomError(validationError)}
+          slotProps={{
+            actionBar: {
+              actions: ['clear'],
+            },
+          }}
         />
       }
     />

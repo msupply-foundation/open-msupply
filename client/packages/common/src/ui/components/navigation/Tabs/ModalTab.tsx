@@ -8,7 +8,6 @@ interface DetailTabProps {
 }
 
 const StyledTabPanel = styled(TabPanel)({
-  height: '100%',
   flex: 1,
   padding: 0,
 });
@@ -17,7 +16,6 @@ const StyledTabContainer = styled(Box)(({ theme }) => ({
   borderColor: theme.palette.divider,
   flexDirection: 'column',
   display: 'flex',
-  height: '100%',
 }));
 
 export const ModalTab: FC<PropsWithChildren<DetailTabProps>> = ({

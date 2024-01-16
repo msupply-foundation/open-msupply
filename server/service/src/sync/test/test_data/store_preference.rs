@@ -113,7 +113,7 @@ const STORE_PREFERENCE_2: (&'static str, &'static str) = (
         "useConsumptionAndStockFromCustomersForInternalOrders": false,
         "alertIfDispensingSameVaccine": false,
         "monthlyConsumptionEnforceLookBackPeriod": false,
-        "usesVaccineModule": false,
+        "usesVaccineModule": true,
         "usesDashboardModule": false,
         "usesCashRegisterModule": false,
         "usesPaymentModule": false,
@@ -147,6 +147,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 response_requisition_requires_authorisation: true,
                 request_requisition_requires_authorisation: false,
                 om_program_module: true,
+                vaccine_module: false,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -160,6 +161,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 request_requisition_requires_authorisation: true,
                 // This one is missing, should default to false
                 om_program_module: false,
+                vaccine_module: true,
             }),
         ),
     ]

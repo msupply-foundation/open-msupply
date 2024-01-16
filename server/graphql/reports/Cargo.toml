@@ -16,7 +16,7 @@ graphql_core = { path = "../core" }
 graphql_types = { path = "../types" }
 
 actix-web = { workspace = true }
-anymap= { workspace = true }
+anymap = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
@@ -26,7 +26,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 
-anyhow = "1.0.56"
+anyhow.workspace = true
 
 [dev-dependencies]
 actix-rt = { workspace = true }

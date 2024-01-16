@@ -14,11 +14,28 @@ import {
 } from '@common/components';
 import {
   Box,
+  LocaleKey,
   useFormatDateTime,
   useTheme,
   useTranslation,
 } from '@openmsupply-client/common';
 import { useRequest } from '../../../api/hooks';
+import { ConsumptionHistoryFragment } from '../../../api';
+
+const getLabelLocaleKey = ({
+  payload,
+}: {
+  payload?: ConsumptionHistoryFragment;
+}): LocaleKey => {
+  switch (true) {
+    case payload?.isHistoric:
+      return 'label.consumption';
+    case payload?.isCurrent:
+      return 'label.current';
+    default:
+      return 'label.projected';
+  }
+};
 
 export interface ConsumptionHistoryProps {
   id: string;
@@ -37,14 +54,13 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   const tooltipFormatter = (
     value: number,
     name: string,
-    props: { payload?: { date: string; isHistoric: boolean } }
+    props: {
+      payload?: ConsumptionHistoryFragment; // { date: string; isHistoric: boolean; isCurrent: boolean };
+    }
   ): [number, string] => {
     switch (name) {
       case 'consumption':
-        const label = props.payload?.isHistoric
-          ? t('label.consumption')
-          : t('label.projected');
-        return [value, label];
+        return [value, t(getLabelLocaleKey(props))];
       case 'averageMonthlyConsumption':
         return [value, t('label.moving-average')];
       default:
@@ -62,6 +78,17 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
   }));
 
   const tooltipLabelFormatter = (date: string) => dateFormatter(date);
+
+  const getFillColour = (entry: ConsumptionHistoryFragment): string => {
+    switch (true) {
+      case entry.isHistoric:
+        return theme.palette.gray.light;
+      case entry.isCurrent:
+        return theme.palette.gray.main;
+      default:
+        return theme.palette.primary.light;
+    }
+  };
 
   return isLoading ? (
     <CircularProgress />
@@ -100,18 +127,24 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
                   value: t('label.consumption'),
                   type: 'rect',
                   id: '1',
+                  color: theme.palette.gray.light,
+                },
+                {
+                  value: t('label.current'),
+                  type: 'rect',
+                  id: '2',
                   color: theme.palette.gray.main,
                 },
                 {
                   value: t('label.projected'),
                   type: 'rect',
-                  id: '2',
+                  id: '3',
                   color: theme.palette.primary.light,
                 },
                 {
                   value: t('label.moving-average'),
                   type: 'rect',
-                  id: '3',
+                  id: '4',
                   color: theme.palette.secondary.light,
                 },
               ]}

@@ -1,7 +1,7 @@
 import {
   RequisitionNodeStatus,
   SortBy,
-  FilterBy,
+  FilterByWithBoolean,
   RequisitionSortFieldInput,
   RequisitionNodeType,
   UpdateResponseRequisitionInput,
@@ -21,7 +21,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<ResponseRowFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 const responseParser = {

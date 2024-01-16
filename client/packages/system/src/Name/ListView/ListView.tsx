@@ -13,6 +13,7 @@ import {
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
 import { useName, NameRowFragment } from '../api';
+import { NameRenderer } from '../Components';
 
 const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   const [selectedId, setSelectedId] = useState<string>('');
@@ -27,7 +28,17 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
   const { Modal, showDialog, hideDialog } = useDialog();
 
   const columns = useColumns<NameRowFragment>(
-    ['code', 'name'],
+    [
+      {
+        key: 'code',
+        label: 'label.code',
+        Cell: ({ rowData }) => (
+          <NameRenderer label={rowData.code} isStore={!!rowData.store} />
+        ),
+        width: 60,
+      },
+      'name',
+    ],
     {
       sortBy,
       onChangeSortBy: updateSortQuery,
@@ -48,7 +59,7 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
     <>
       <DataTable
         id="name-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}

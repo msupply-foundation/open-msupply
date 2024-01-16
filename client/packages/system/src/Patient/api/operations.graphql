@@ -6,39 +6,74 @@ fragment PatientRow on PatientNode {
   lastName
   name
   dateOfBirth
+  address1
+  phone
   gender
   email
   document {
-    data
+    name
+  }
+  isDeceased
+  dateOfDeath
+  programEnrolments {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        programEnrolmentId
+        document {
+          documentRegistry {
+            name
+          }
+        }
+      }
+      totalCount
+    }
+  }
+}
+
+fragment ProgramPatientRow on PatientNode {
+  id
+  code
+  code2
+  firstName
+  lastName
+  name
+  dateOfBirth
+  address1
+  phone
+  gender
+  email
+  document {
     id
     name
     type
   }
+  documentDraft
   isDeceased
+  dateOfDeath
   programEnrolments {
-    programEnrolmentId
-    document {
-      documentRegistry {
-        name
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        programEnrolmentId
+        document {
+          documentRegistry {
+            name
+          }
+        }
       }
+      totalCount
     }
   }
 }
 
 query patients(
   $storeId: String!
-  $key: PatientSortFieldInput!
-  $desc: Boolean
-  $first: Int
-  $offset: Int
+  $page: PaginationInput
+  $sort: PatientSortInput
   $filter: PatientFilterInput
 ) {
-  patients(
-    storeId: $storeId
-    page: { first: $first, offset: $offset }
-    sort: { key: $key, desc: $desc }
-    filter: $filter
-  ) {
+  patients(storeId: $storeId, page: $page, sort: $sort, filter: $filter) {
     ... on PatientConnector {
       __typename
       nodes {
@@ -54,7 +89,7 @@ query patientById($storeId: String!, $nameId: String!) {
     ... on PatientConnector {
       __typename
       nodes {
-        ...PatientRow
+        ...ProgramPatientRow
       }
       totalCount
     }
@@ -68,7 +103,7 @@ query patientSearch($input: PatientSearchInput!, $storeId: String!) {
       nodes {
         score
         patient {
-          ...PatientRow
+          ...ProgramPatientRow
         }
       }
       totalCount
@@ -129,7 +164,7 @@ mutation insertProgramPatient(
   insertProgramPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
@@ -141,7 +176,7 @@ mutation updateProgramPatient(
   updateProgramPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
@@ -150,7 +185,7 @@ mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
@@ -159,7 +194,7 @@ mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
   updatePatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }

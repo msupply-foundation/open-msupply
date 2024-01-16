@@ -23,7 +23,7 @@ import {
   Repack,
   ReportRowFragment,
   ReportSelector,
-  useLog,
+  useActivityLog,
   useReport,
   useStock,
 } from '@openmsupply-client/system';
@@ -77,7 +77,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { data, isError, isLoading } = useStock.repack.list(
     stockLine?.id ?? ''
   );
-  const { data: logData } = useLog.document.listByRecord(stockLine?.id ?? '');
+  const { data: logData } = useActivityLog.document.listByRecord(
+    stockLine?.id ?? ''
+  );
 
   const { draft, onChange, onInsert } = useDraftRepack(defaultRepack);
   const { columns } = useRepackColumns();
@@ -190,7 +192,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
           </Typography>
           {showLogEvent && (
             <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
-              {`${t('messages.repack-log-info')} : ${logData?.nodes[0]?.event}`}
+              {`${t('messages.repack-log-info')} : ${logData?.nodes[0]?.to}`}
             </Typography>
           )}
         </Grid>

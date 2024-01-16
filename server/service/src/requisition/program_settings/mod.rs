@@ -89,6 +89,7 @@ mod test {
         // Two programs, with master list both joined to store a
         let master_list1 = MasterListRow {
             id: "master_list1".to_string(),
+            is_active: true,
             ..Default::default()
         };
         let master_list_name_join1 = MasterListNameJoinRow {
@@ -108,6 +109,7 @@ mod test {
         };
         let master_list2 = MasterListRow {
             id: "master_list2".to_string(),
+            is_active: true,
             ..Default::default()
         };
         let master_list_name_join2 = MasterListNameJoinRow {
@@ -274,14 +276,21 @@ mod test {
 
         // Test
 
-        let result = service_provider
+        let mut result = service_provider
             .requisition_service
-            .get_program_requisition_settings(&service_context, &mock_store_a().id);
+            .get_program_requisition_settings(&service_context, &mock_store_a().id)
+            .unwrap();
+        result.sort_by(|a, b| {
+            a.program_requisition_settings
+                .program_settings_row
+                .id
+                .cmp(&b.program_requisition_settings.program_settings_row.id)
+        });
 
         assert_eq!(
             result,
             // Should have two program settings (two programs)
-            Ok(vec![
+            vec![
                 ProgramSettings {
                     program_requisition_settings: ProgramRequisitionSettings {
                         program_settings_row: program_requisition_setting1.clone(),
@@ -330,7 +339,7 @@ mod test {
                         program: program2.clone(),
                     }]
                 }
-            ])
+            ]
         )
     }
 }

@@ -29,10 +29,13 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Enumeration;
 
 import javax.net.ssl.SSLHandshakeException;
 
@@ -344,15 +347,38 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         });
     }
 
+    // Attempt to get a non-loopback address for the local server
+    // and fallback to loopback if there is an error
+    private String getHostAddress(NsdServiceInfo serviceInfo, Boolean isLocal){
+        if (!isLocal){
+            return serviceInfo.getHost().getHostAddress();
+        }
+        try {
+                for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+                    NetworkInterface ni = en.nextElement();
+                    for (Enumeration<InetAddress> enumIpAddr = ni.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                        InetAddress inetAddress = enumIpAddr.nextElement();
+                        if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress()) {
+                            return inetAddress.getHostAddress();
+                        }
+                    }
+                }
+        } catch (Exception ex) {
+            Log.e(OM_SUPPLY, ex.toString());
+        }
+        return serviceInfo.getHost().getHostAddress();
+    }
+
     private JSObject serviceInfoToObject(NsdServiceInfo serviceInfo) {
         String serverHardwareId = parseAttribute(serviceInfo, discoveryConstants.HARDWARE_ID_KEY);
+        Boolean isLocal = serverHardwareId.equals(discoveryConstants.hardwareId);
         return new JSObject()
                 .put("protocol", parseAttribute(serviceInfo, discoveryConstants.PROTOCOL_KEY))
                 .put("clientVersion", parseAttribute(serviceInfo, discoveryConstants.CLIENT_VERSION_KEY))
                 .put("port", serviceInfo.getPort())
-                .put("ip", serviceInfo.getHost().getHostAddress())
+                .put("ip", getHostAddress(serviceInfo, isLocal))
                 .put("hardwareId", serverHardwareId)
-                .put("isLocal", serverHardwareId.equals(discoveryConstants.hardwareId));
+                .put("isLocal", isLocal);
 
     }
 
@@ -472,6 +498,13 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         JSObject data;
 
         public FrontEndHost(JSObject data) {
+            String ip = data.getString("ip");
+            // attempt to translate loopback addresses to an actual IP address
+            // so that we can display the local server IP for users to connect to the API
+            if (data.getBool("isLocal") && (ip.equals("127.0.0.1") || ip.equals("localhost"))) {
+                NsdServiceInfo serviceInfo = createLocalServiceInfo();
+                data.put("ip", getHostAddress(serviceInfo, true));
+            }
             this.data = data;
         }
 

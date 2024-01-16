@@ -1,0 +1,55 @@
+fragment TemperatureBreach on TemperatureBreachNode {
+  __typename
+  id
+  unacknowledged
+  durationMilliseconds
+  endDatetime
+  startDatetime
+  type
+  maxOrMinTemperature
+  comment
+
+  sensor {
+    id
+    name
+  }
+
+  location {
+    code
+    name
+  }
+}
+
+query temperature_breaches(
+  $page: PaginationInput
+  $sort: [TemperatureBreachSortInput!]
+  $filter: TemperatureBreachFilterInput
+  $storeId: String!
+) {
+  temperatureBreaches(
+    page: $page
+    sort: $sort
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on TemperatureBreachConnector {
+      totalCount
+      nodes {
+        ...TemperatureBreach
+      }
+    }
+  }
+}
+
+mutation updateTemperatureBreach(
+  $input: UpdateTemperatureBreachInput!
+  $storeId: String!
+) {
+  updateTemperatureBreach(input: $input, storeId: $storeId) {
+    ... on TemperatureBreachNode {
+      id
+      comment
+      unacknowledged
+    }
+  }
+}

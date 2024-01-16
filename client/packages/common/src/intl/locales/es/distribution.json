@@ -105,5 +105,8 @@
   "heading.supply-to-approved": "Establecer el suministro como aprobado",
   "messages.confirm-status-as": "¿Confirmar estado como $t({{status}})?",
   "messages.could-not-save": "No se pudo guardar",
-  "messages.saved": "Guardado"
+  "messages.saved": "Guardado",
+  "messages.confirm-not-fully-supplied": "No todos los elementos de esta requisición se han suministrado al cliente. Si finalizas, no podrás suministrar más elementos al cliente desde esta requisición. ¿Aún deseas continuar?",
+  "messages.stock-on-hold": "Algunas líneas de stock están en espera y no se pueden asignar.",
+  "messages.stock-expired": "Algunas líneas de stock han caducado y no se pueden asignar."
 }

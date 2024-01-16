@@ -1,50 +1,25 @@
 import {
-  useQueryClient,
-  useTranslation,
+  RouteBuilder,
   useMutation,
-  useTableStore,
-  useDeleteConfirmation,
+  useNavigate,
+  useQueryClient,
 } from '@openmsupply-client/common';
-import { canDeleteInvoice } from '../../../../utils';
-import { usePrescriptionApi } from '../../utils/usePrescriptionApi';
-import { PrescriptionRowFragment } from '../../operations.generated';
-import { usePrescriptions } from './usePrescriptions';
+import { usePrescriptionApi } from '../utils/usePrescriptionApi';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const usePrescriptionDelete = () => {
   const queryClient = useQueryClient();
-  const { data: rows } = usePrescriptions();
   const api = usePrescriptionApi();
-  const { mutateAsync } = useMutation(api.delete);
-  const t = useTranslation('dispensary');
+  const navigate = useNavigate();
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as PrescriptionRowFragment[],
-  }));
-
-  const deleteAction = async () => {
-    await mutateAsync(selectedRows)
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
-      .catch(err => {
-        throw err;
-      });
-  };
-
-  const confirmAndDelete = useDeleteConfirmation({
-    selectedRows,
-    deleteAction,
-    canDelete: selectedRows.every(canDeleteInvoice),
-    messages: {
-      confirmMessage: t('messages.confirm-delete-prescriptions', {
-        count: selectedRows.length,
-      }),
-      deleteSuccess: t('messages.deleted-prescriptions', {
-        count: selectedRows.length,
-      }),
+  return useMutation(api.delete, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(api.keys.base());
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Prescription)
+          .build()
+      );
     },
   });
-
-  return confirmAndDelete;
 };

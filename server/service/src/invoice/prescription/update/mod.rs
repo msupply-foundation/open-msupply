@@ -1,5 +1,6 @@
 use repository::{
-    Invoice, InvoiceRowRepository, InvoiceRowStatus, RepositoryError, StockLineRowRepository,
+    Invoice, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
+    StockLineRowRepository,
 };
 
 use crate::{
@@ -62,9 +63,11 @@ pub fn update_prescription(
             let GenerateResult {
                 batches_to_update,
                 update_invoice,
+                lines_to_trim,
             } = generate(invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
+            let invoice_line_repo = InvoiceLineRowRepository::new(connection);
 
             if let Some(stock_lines) = batches_to_update {
                 let repository = StockLineRowRepository::new(connection);
@@ -73,11 +76,18 @@ pub fn update_prescription(
                 }
             }
 
+            if let Some(lines) = lines_to_trim {
+                for line in lines {
+                    invoice_line_repo.delete(&line.id)?;
+                }
+            }
+
             if status_changed {
                 activity_log_entry(
                     &ctx,
                     log_type_from_invoice_status(&update_invoice.status, true),
                     Some(update_invoice.id.to_owned()),
+                    None,
                     None,
                 )?;
             }

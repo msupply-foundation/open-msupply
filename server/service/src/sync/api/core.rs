@@ -31,11 +31,18 @@ fn generate_headers(hardware_id: &str, sync_version: u32) -> HeaderMap {
         HeaderName::from_static("app-version"),
         Version::from_package_json().to_string().parse().unwrap(),
     );
-    // TODO omSupply ? And maybe seperate header for app-os etc..
+
+    #[cfg(target_os = "android")]
     headers.insert(
         HeaderName::from_static("app-name"),
-        "remote_server".parse().unwrap(),
+        "Open mSupply Mobile".parse().unwrap(),
     );
+    #[cfg(not(target_os = "android"))]
+    headers.insert(
+        HeaderName::from_static("app-name"),
+        "Open mSupply Desktop".parse().unwrap(),
+    );
+
     headers.insert(
         HeaderName::from_static("version"),
         sync_version.to_string().parse().unwrap(),
@@ -211,7 +218,7 @@ mod tests {
             when.method(POST)
                 .header("msupply-site-uuid", "site_id")
                 .header("app-version", Version::from_package_json().to_string())
-                .header("app-name", "remote_server")
+                .header("app-name", "Open mSupply Desktop")
                 .path("/sync/v5/acknowledged_records");
             then.status(204);
         });

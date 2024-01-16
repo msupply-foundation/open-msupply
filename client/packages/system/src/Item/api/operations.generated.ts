@@ -52,7 +52,7 @@ export type ItemStockOnHandQueryVariables = Types.Exact<{
 }>;
 
 
-export type ItemStockOnHandQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', nodes: Array<{ __typename: 'ItemNode', code: string, id: string, name: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number }> } };
+export type ItemStockOnHandQuery = { __typename: 'Queries', items: { __typename: 'ItemConnector', totalCount: number, nodes: Array<{ __typename: 'ItemNode', availableStockOnHand: number, defaultPackSize: number, id: string, code: string, name: string, unitName?: string | null }> } };
 
 export type ItemsWithStatsFragment = { __typename: 'ItemNode', code: string, id: string, name: string, unitName?: string | null, defaultPackSize: number, availableStockOnHand: number, stats: { __typename: 'ItemStatsNode', averageMonthlyConsumption: number, availableStockOnHand: number, availableMonthsOfStockOnHand?: number | null } };
 
@@ -300,18 +300,13 @@ export const ItemStockOnHandDocument = gql`
     ... on ItemConnector {
       __typename
       nodes {
-        __typename
-        code
-        id
-        name
-        unitName
-        defaultPackSize
-        availableStockOnHand(storeId: $storeId)
+        ...ItemStockOnHand
       }
+      totalCount
     }
   }
 }
-    `;
+    ${ItemStockOnHandFragmentDoc}`;
 export const ItemsWithStatsDocument = gql`
     query itemsWithStats($storeId: String!, $key: ItemSortFieldInput, $isDesc: Boolean, $filter: ItemFilterInput, $first: Int, $offset: Int) {
   items(

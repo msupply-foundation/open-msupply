@@ -8,7 +8,7 @@ import {
   useFormatDateTime,
   ColumnAlign,
   useUrlQueryParams,
-  ReadOnlyCheckboxCell,
+  DotCell,
   ColumnDataAccessor,
   useAuthContext,
   useNavigate,
@@ -20,11 +20,11 @@ import { Toolbar } from './Toolbar';
 import { usePatientStore } from '@openmsupply-client/programs';
 import { ChipTableCell } from '../Components';
 
-const programEnrolmentLabelAccessor: ColumnDataAccessor<
+export const programEnrolmentLabelAccessor: ColumnDataAccessor<
   PatientRowFragment,
   string[]
 > = ({ rowData }): string[] => {
-  return rowData.programEnrolments.map(it => {
+  return rowData.programEnrolments.nodes.map(it => {
     const programEnrolmentId = it.programEnrolmentId
       ? ` (${it.programEnrolmentId})`
       : '';
@@ -37,13 +37,36 @@ const PatientListComponent: FC = () => {
     updateSortQuery,
     updatePaginationQuery,
     filter,
-    queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filterKey: ['firstName', 'lastName', 'identifier'] });
+    queryParams: { page, first, offset, sortBy, filterBy },
+  } = useUrlQueryParams({
+    initialSort: { key: 'code', dir: 'asc' },
+    filters: [
+      {
+        key: 'dateOfBirth',
+        condition: 'equalTo',
+      },
+      {
+        key: 'gender',
+        condition: 'equalTo',
+      },
+      { key: 'firstName' },
+      { key: 'identifier' },
+      { key: 'lastName' },
+    ],
+  });
   const { store } = useAuthContext();
+  const queryParams = {
+    filterBy,
+    offset,
+    first,
+    sortBy,
+  };
 
   const { setDocumentName } = usePatientStore();
-  const { data, isError, isLoading } = usePatient.document.list();
+
+  const { data, isError, isLoading } = usePatient.document.list(queryParams);
   const pagination = { page, first, offset };
+
   const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();
 
@@ -85,8 +108,8 @@ const PatientListComponent: FC = () => {
   columnDefinitions.push({
     key: 'isDeceased',
     label: 'label.deceased',
-    align: ColumnAlign.Right,
-    Cell: ReadOnlyCheckboxCell,
+    align: ColumnAlign.Center,
+    Cell: DotCell,
     sortable: false,
   });
 
@@ -105,7 +128,7 @@ const PatientListComponent: FC = () => {
       <AppBarButtons sortBy={sortBy} />
       <DataTable
         id="patients"
-        pagination={{ ...pagination, total: data?.totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes}

@@ -6,8 +6,19 @@ fragment LocationRow on LocationNode {
   code
 }
 
-query locations($storeId: String!, $sort: [LocationSortInput!]) {
-  locations(storeId: $storeId, sort: $sort) {
+query locations(
+  $storeId: String!
+  $sort: [LocationSortInput!]
+  $first: Int
+  $offset: Int
+  $filter: LocationFilterInput
+) {
+  locations(
+    storeId: $storeId
+    sort: $sort
+    page: { first: $first, offset: $offset }
+    filter: $filter
+  ) {
     __typename
     ... on LocationConnector {
       __typename

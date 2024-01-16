@@ -1,11 +1,8 @@
-import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import { useQuery } from '@openmsupply-client/common';
 import { useResponseApi } from '../utils/useResponseApi';
+import { ListParams } from '../../api';
 
-export const useResponses = () => {
-  const { queryParams } = useUrlQueryParams({
-    filterKey: 'comment',
-    initialSort: { key: 'createdDatetime', dir: 'desc' },
-  });
+export const useResponses = (queryParams: ListParams) => {
   const api = useResponseApi();
 
   return {

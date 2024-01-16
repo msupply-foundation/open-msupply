@@ -10,7 +10,7 @@ or in "shorthand" style <NumberTextDislay value={value} />
 
 interface NumericTextDisplayProps {
   value?: string | number;
-  children?: React.ReactElement<any, any>;
+  children?: React.ReactElement;
   width?: number;
 }
 

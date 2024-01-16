@@ -1,50 +1,25 @@
-import { OutboundRowFragment } from './../../operations.generated';
+import { AppRoute } from '@openmsupply-client/config';
 import { useOutboundApi } from './../utils/useOutboundApi';
 import {
-  useQueryClient,
-  useTranslation,
+  RouteBuilder,
   useMutation,
-  useTableStore,
-  useDeleteConfirmation,
+  useNavigate,
+  useQueryClient,
 } from '@openmsupply-client/common';
-import { useOutbounds } from './useOutbounds';
-import { canDeleteInvoice } from '../../../../utils';
 
 export const useOutboundDelete = () => {
   const queryClient = useQueryClient();
-  const { data: rows } = useOutbounds();
   const api = useOutboundApi();
-  const { mutateAsync } = useMutation(api.delete);
-  const t = useTranslation('distribution');
+  const navigate = useNavigate();
 
-  const { selectedRows } = useTableStore(state => ({
-    selectedRows: Object.keys(state.rowState)
-      .filter(id => state.rowState[id]?.isSelected)
-      .map(selectedId => rows?.nodes?.find(({ id }) => selectedId === id))
-      .filter(Boolean) as OutboundRowFragment[],
-  }));
-
-  const deleteAction = async () => {
-    await mutateAsync(selectedRows)
-      .then(() => queryClient.invalidateQueries(api.keys.base()))
-      .catch(err => {
-        throw err;
-      });
-  };
-
-  const confirmAndDelete = useDeleteConfirmation({
-    selectedRows,
-    deleteAction,
-    canDelete: selectedRows.every(canDeleteInvoice),
-    messages: {
-      confirmMessage: t('messages.confirm-delete-shipments', {
-        count: selectedRows.length,
-      }),
-      deleteSuccess: t('messages.deleted-shipments', {
-        count: selectedRows.length,
-      }),
+  return useMutation(api.delete, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(api.keys.base());
+      navigate(
+        RouteBuilder.create(AppRoute.Distribution)
+          .addPart(AppRoute.OutboundShipment)
+          .build()
+      );
     },
   });
-
-  return confirmAndDelete;
 };

@@ -13,6 +13,7 @@ pub enum DocumentRegistryCategory {
     Patient,
     ProgramEnrolment,
     Encounter,
+    ContactTrace,
     Custom,
 }
 

@@ -37,6 +37,8 @@ table! {
         created_datetime -> Nullable<Timestamp>,
         is_deceased -> Bool,
         national_health_number -> Nullable<Text>,
+        date_of_death -> Nullable<Date>,
+        custom_data -> Nullable<Text>,
     }
 }
 
@@ -99,6 +101,12 @@ impl Default for NameType {
     }
 }
 
+impl NameType {
+    pub fn is_facility_or_store(&self) -> bool {
+        *self == NameType::Facility || *self == NameType::Store
+    }
+}
+
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "name"]
@@ -139,6 +147,9 @@ pub struct NameRow {
 
     pub is_deceased: bool,
     pub national_health_number: Option<String>,
+    pub date_of_death: Option<NaiveDate>,
+    #[column_name = "custom_data"]
+    pub custom_data_string: Option<String>,
 }
 
 pub struct NameRowRepository<'a> {

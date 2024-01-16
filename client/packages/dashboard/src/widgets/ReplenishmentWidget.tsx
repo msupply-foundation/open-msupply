@@ -4,16 +4,29 @@ import {
   FnUtils,
   Grid,
   PlusCircleIcon,
+  RANGE_SPLIT_CHAR,
+  RouteBuilder,
   StatsPanel,
   useNotification,
   useToggle,
   Widget,
 } from '@openmsupply-client/common';
-import { useFormatNumber, useTranslation } from '@common/intl';
-import { ApiException, PropsWithChildrenOnly } from '@common/types';
+import {
+  DateUtils,
+  useFormatDateTime,
+  useFormatNumber,
+  useTranslation,
+} from '@common/intl';
+import {
+  ApiException,
+  InvoiceNodeStatus,
+  PropsWithChildrenOnly,
+  RequisitionNodeStatus,
+} from '@common/types';
 import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
 import { InternalSupplierSearchModal } from '@openmsupply-client/system';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   const modalControl = useToggle(false);
@@ -27,6 +40,32 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
     isError: isRequisitionCountError,
     error: requisitionCountError,
   } = useDashboard.statistics.requisitions();
+
+  const { customDate, urlQueryDateTime } = useFormatDateTime();
+
+  const getTodayUrlQuery = () => {
+    const startOfDay = DateUtils.startOfDay(new Date());
+    const endOfDay = DateUtils.endOfDay(new Date());
+
+    return `${customDate(
+      startOfDay,
+      urlQueryDateTime
+    )}${RANGE_SPLIT_CHAR}${customDate(endOfDay, urlQueryDateTime)}`;
+  };
+
+  const getThisWeekUrlQuery = () => {
+    const previousMonday = DateUtils.startOfDay(
+      DateUtils.previousMonday(new Date())
+    );
+    const endOfWeek = DateUtils.endOfDay(
+      DateUtils.endOfWeek(new Date(), { weekStartsOn: 1 })
+    );
+
+    return `${customDate(
+      previousMonday,
+      urlQueryDateTime
+    )}${RANGE_SPLIT_CHAR}${customDate(endOfWeek, urlQueryDateTime)}`;
+  };
 
   const { mutateAsync: onCreate } = useInbound.document.insert();
   const onError = (e: unknown) => {
@@ -72,16 +111,35 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 {
                   label: t('label.today', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.today),
+                  link: RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InboundShipment)
+                    .addQuery({
+                      createdDatetime: getTodayUrlQuery(),
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.this-week', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.thisWeek),
+                  link: RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InboundShipment)
+                    .addQuery({
+                      createdDatetime: getThisWeekUrlQuery(),
+                    })
+                    .build(),
                 },
                 {
                   label: t('label.inbound-not-delivered', { ns: 'dashboard' }),
                   value: formatNumber.round(data?.notDelivered),
+                  link: RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InboundShipment)
+                    .addQuery({ status: InvoiceNodeStatus.Shipped })
+                    .build(),
                 },
               ]}
+              link={RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InboundShipment)
+                .build()}
             />
           </Grid>
           <Grid item>
@@ -94,8 +152,15 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
                 {
                   label: t('label.new'),
                   value: formatNumber.round(requisitionCount?.request?.draft),
+                  link: RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InternalOrder)
+                    .addQuery({ status: RequisitionNodeStatus.Draft })
+                    .build(),
                 },
               ]}
+              link={RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InternalOrder)
+                .build()}
             />
           </Grid>
           <Grid

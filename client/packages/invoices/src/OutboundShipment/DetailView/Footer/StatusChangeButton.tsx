@@ -23,7 +23,7 @@ const getStatusOptions = (
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>
+    SplitButtonOption<InvoiceNodeStatus>,
   ] = [
     {
       value: InvoiceNodeStatus.New,
@@ -95,12 +95,17 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { status, onHold, update } = useOutbound.document.fields([
+  const { lines, status, onHold, update } = useOutbound.document.fields([
     'status',
     'onHold',
+    'lines',
   ]);
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
+  const { data } = useOutbound.document.get();
+  const hasLinesToPrune =
+    data?.status === InvoiceNodeStatus.New &&
+    (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -124,11 +129,13 @@ const useStatusChangeButton = () => {
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-status-as', {
-      status: selectedOption?.value
-        ? getStatusTranslation(selectedOption?.value)
-        : '',
-    }),
+    message: hasLinesToPrune
+      ? t('messages.confirm-zero-quantity-status')
+      : t('messages.confirm-status-as', {
+          status: selectedOption?.value
+            ? getStatusTranslation(selectedOption?.value)
+            : '',
+        }),
     onConfirm: onConfirmStatusChange,
   });
 
@@ -144,6 +151,7 @@ const useStatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold,
+    lines,
   };
 };
 
@@ -174,9 +182,12 @@ export const StatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold,
+    lines,
   } = useStatusChangeButton();
   const { hasPlaceholder, alert } = useStatusChangePlaceholderCheck();
   const isDisabled = useOutbound.utils.isDisabled();
+  const t = useTranslation();
+  const noLines = lines?.totalCount === 0;
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
@@ -188,7 +199,8 @@ export const StatusChangeButton = () => {
 
   return (
     <SplitButton
-      isDisabled={onHold}
+      label={noLines ? t('messages.no-lines') : ''}
+      isDisabled={noLines || onHold}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}

@@ -10,8 +10,8 @@ import {
   Divider,
   Box,
   Typography,
-  ButtonWithIcon,
-  ZapIcon,
+  useFormatNumber,
+  useDebounceCallback,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
@@ -21,6 +21,15 @@ import {
 import { usePrescription } from '../../api';
 import { DraftItem, DraftStockOutLine } from '../../..';
 import { PackSizeController } from '../../../StockOut';
+import { DraftItem } from '../../..';
+import {
+  PackSizeController,
+  StockOutAlert,
+  StockOutAlerts,
+  getAllocationAlerts,
+} from '../../../StockOut';
+import { DraftStockOutLine } from '../../../types';
+import { isA } from '../../../utils';
 
 interface PrescriptionLineEditFormProps {
   allocatedQuantity: number;
@@ -31,13 +40,16 @@ interface PrescriptionLineEditFormProps {
     quantity: number,
     packSize: number | null,
     isAutoAllocated: boolean
-  ) => void;
+  ) => DraftStockOutLine[] | undefined;
   packSizeController: PackSizeController;
   disabled: boolean;
   canAutoAllocate: boolean;
   isAutoAllocated: boolean;
   updateNotes: (note: string) => void;
   draftPrescriptionLines: DraftStockOutLine[];
+  showZeroQuantityConfirmation: boolean;
+  hasOnHold: boolean;
+  hasExpired: boolean;
 }
 
 export const PrescriptionLineEditForm: React.FC<
@@ -53,14 +65,15 @@ export const PrescriptionLineEditForm: React.FC<
   canAutoAllocate,
   updateNotes,
   draftPrescriptionLines,
+  showZeroQuantityConfirmation,
+  isAutoAllocated,
+  hasOnHold,
+  hasExpired,
 }) => {
   const t = useTranslation('dispensary');
-
-  const quantity =
-    allocatedQuantity /
-    Math.abs(Number(packSizeController.selected?.value || 1));
-
+  const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueQuantity, setIssueQuantity] = useState(0);
+  const { format } = useFormatNumber();
   const { items } = usePrescription.line.rows();
 
   const { activePackVariant } = usePackVariant(
@@ -69,36 +82,79 @@ export const PrescriptionLineEditForm: React.FC<
   );
 
   const onChangePackSize = (newPackSize: number) => {
+    const packSize = newPackSize === -1 ? 1 : newPackSize;
     const newAllocatedQuantity =
-      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / newPackSize);
+      newPackSize === 0 ? 0 : Math.round(allocatedQuantity / packSize);
+
     packSizeController.setPackSize(newPackSize);
-    onChangeQuantity(
-      newAllocatedQuantity,
-      newPackSize === -1 ? null : newPackSize,
-      false
+    allocate(newAllocatedQuantity, newPackSize);
+  };
+
+  const updateIssueQuantity = (quantity: number) => {
+    setIssueQuantity(
+      Math.round(
+        quantity / Math.abs(Number(packSizeController.selected?.value || 1))
+      )
     );
   };
 
-  const allocate = () => {
-    onChangeQuantity(
-      issueQuantity,
-      packSizeController.selected?.value === -1
-        ? null
-        : Number(packSizeController.selected?.value),
+  const debouncedSetAllocationAlerts = useDebounceCallback(
+    warning => setAllocationAlerts(warning),
+    []
+  );
+
+  const allocate = (quantity: number, packSize: number) => {
+    const newAllocateQuantities = onChangeQuantity(
+      quantity,
+      packSize === -1 ? null : packSize,
       true
     );
+    const placeholderLine = newAllocateQuantities?.find(isA.placeholderLine);
+    const allocatedQuantity =
+      newAllocateQuantities?.reduce(
+        (acc, { numberOfPacks, packSize }) => acc + numberOfPacks * packSize,
+        0
+      ) ?? 0;
+    const allocateInUnits = packSize === null;
+    const messageKey = allocateInUnits
+      ? 'warning.cannot-create-placeholder-units'
+      : 'warning.cannot-create-placeholder-packs';
+    const hasRequestedOverAvailable =
+      quantity > allocatedQuantity && newAllocateQuantities !== undefined;
+    const alerts = getAllocationAlerts(
+      quantity * (packSize === -1 ? 1 : packSize),
+      // suppress the allocation warning if the user has requested more than the available amount of stock
+      hasRequestedOverAvailable ? 0 : allocatedQuantity,
+      placeholderLine?.numberOfPacks ?? 0,
+      hasOnHold,
+      hasExpired,
+      format,
+      t
+    );
+    if (hasRequestedOverAvailable) {
+      alerts.push({
+        message: t(messageKey, {
+          allocatedQuantity: format(allocatedQuantity),
+          requestedQuantity: format(quantity),
+        }),
+        severity: 'warning',
+      });
+    }
+    debouncedSetAllocationAlerts(alerts);
+    updateIssueQuantity(allocatedQuantity);
   };
 
   const handleIssueQuantityChange = (quantity: number) => {
     setIssueQuantity(quantity);
+    allocate(quantity, Number(packSizeController.selected?.value));
   };
 
   const prescriptionLineWithNote = draftPrescriptionLines.find(l => !!l.note);
   const note = prescriptionLineWithNote?.note ?? '';
 
   useEffect(() => {
-    setIssueQuantity(quantity);
-  }, [packSizeController.selected?.value]);
+    if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
+  }, [packSizeController.selected?.value, allocatedQuantity]);
 
   return (
     <Grid container gap="4px">
@@ -150,8 +206,12 @@ export const PrescriptionLineEditForm: React.FC<
               />
             </Grid>
           </ModalRow>
+        </>
+      )}
+      {item && canAutoAllocate ? (
+        <>
           <ModalRow>
-            <ModalLabel label={t('label.note')} />
+            <ModalLabel label={t('label.directions')} />
             <BasicTextInput
               value={note}
               onChange={e => {
@@ -166,17 +226,19 @@ export const PrescriptionLineEditForm: React.FC<
               style={{ flex: 1 }}
             />
           </ModalRow>
-        </>
-      )}
-      {item && canAutoAllocate ? (
-        <>
           <Divider margin={10} />
+          <StockOutAlerts
+            allocationAlerts={allocationAlerts}
+            showZeroQuantityConfirmation={showZeroQuantityConfirmation}
+            isAutoAllocated={isAutoAllocated}
+          />
           <Grid container>
             <ModalLabel label={t('label.issue')} />
             <NonNegativeIntegerInput
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
+              defaultValue={0}
             />
 
             <Box marginLeft={1} />
@@ -194,6 +256,7 @@ export const PrescriptionLineEditForm: React.FC<
                     sx={{ width: 110 }}
                     options={packSizeController.options}
                     value={packSizeController.selected?.value ?? ''}
+                    clearable={false}
                     onChange={e => {
                       const { value } = e.target;
                       onChangePackSize(Number(value));
@@ -203,14 +266,6 @@ export const PrescriptionLineEditForm: React.FC<
                 <Box marginLeft="auto" />
               </>
             ) : null}
-            <Box flex={1} display="flex" justifyContent="flex-end">
-              <ButtonWithIcon
-                disabled={issueQuantity === 0}
-                onClick={allocate}
-                label={t('button.allocate')}
-                Icon={<ZapIcon />}
-              />
-            </Box>
           </Grid>
         </>
       ) : (

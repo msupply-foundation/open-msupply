@@ -10,6 +10,7 @@ import {
   SvgIconProps,
   ListItemText,
   styled,
+  SxProps,
 } from '@mui/material';
 
 import { ChevronDownIcon } from '@common/icons';
@@ -72,6 +73,8 @@ const StyledSelect = styled(Select)(({ theme }) => ({
 interface DropdownMenuProps {
   label: string;
   disabled?: boolean;
+  sx?: SxProps;
+  selectSx?: SxProps;
 }
 
 // Styled doesn't like `sx` prop being passed to it.
@@ -80,11 +83,13 @@ export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
   label,
   children,
   disabled = false,
+  sx,
+  selectSx,
 }) => {
   const [open, setOpen] = useState(false);
   const onClick = disabled ? undefined : () => setOpen(curr => !curr);
   return (
-    <FormControl size="small">
+    <FormControl size="small" sx={sx}>
       <InputLabel
         shrink={false}
         sx={{ color: 'gray.main', '&.Mui-focused': { color: 'gray.main' } }}
@@ -101,6 +106,7 @@ export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
         variant="outlined"
         IconComponent={ChevronDownIcon}
         onClick={onClick}
+        sx={selectSx}
       >
         {children}
       </StyledSelect>

@@ -11,12 +11,18 @@ import {
   Breadcrumb,
   useIntlUtils,
   EncounterNodeStatus,
+  useDialog,
+  DialogButton,
+  ButtonWithIcon,
+  SaveIcon,
 } from '@openmsupply-client/common';
 import {
   useEncounter,
   useJsonForms,
   EncounterFragment,
   useDocumentDataAccessor,
+  EncounterSchema,
+  JsonData,
 } from '@openmsupply-client/programs';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -24,6 +30,107 @@ import { Footer } from './Footer';
 import { SidePanel } from './SidePanel';
 import { AppBarButtons } from './AppBarButtons';
 import { getLogicalStatus } from '../utils';
+import { PatientTabValue } from '../../Patient/PatientView/PatientView';
+
+const getPatientBreadcrumbSuffix = (
+  encounter: EncounterFragment,
+  getLocalisedFullName: (
+    firstName: string | null | undefined,
+    lastName: string | null | undefined
+  ) => string
+): string => {
+  if (!!encounter.patient.firstName || !!encounter.patient.firstName) {
+    return getLocalisedFullName(
+      encounter.patient.firstName,
+      encounter.patient.lastName
+    );
+  }
+  if (!!encounter.patient.code2) return encounter.patient.code2;
+  if (!!encounter.patient.code) return encounter.patient.code;
+  return encounter.patient.id;
+};
+
+/**
++ * Updates the status and once the status has been updated saves the encounter
++ */
+const useSaveWithStatus = (
+  saveData: () => void,
+  encounterData: EncounterSchema | undefined,
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
+): ((status: EncounterNodeStatus | undefined) => void) => {
+  const [saveStatus, setSaveStatus] = useState<
+    EncounterNodeStatus | undefined
+  >();
+
+  useEffect(() => {
+    if (!!saveStatus && saveStatus === encounterData?.status) {
+      saveData();
+    }
+  }, [saveStatus, encounterData?.status]);
+
+  return (status: EncounterNodeStatus | undefined) => {
+    if (status === undefined) {
+      // no status change
+      saveData();
+      return;
+    }
+    updateEncounter({ status });
+    setSaveStatus(status);
+  };
+};
+
+const useSaveWithStatusChangeModal = (
+  onSave: () => void,
+  encounterData: EncounterSchema | undefined,
+  updateEncounter: (patch: Partial<EncounterFragment>) => Promise<void>
+): { showDialog: () => void; SaveAsVisitedModal: React.FC } => {
+  const { Modal, hideDialog, showDialog } = useDialog({
+    disableBackdrop: true,
+  });
+  const t = useTranslation('dispensary');
+
+  const saveWithStatusChange = useSaveWithStatus(
+    onSave,
+    encounterData,
+    updateEncounter
+  );
+
+  const SaveAsVisitedModal = () => (
+    <Modal
+      title={t('messages.save-encounter-as-visited')}
+      cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+      height={200}
+      okButton={
+        <DialogButton
+          variant="save"
+          onClick={() => {
+            onSave();
+            hideDialog();
+          }}
+        />
+      }
+      nextButton={
+        <ButtonWithIcon
+          color="secondary"
+          variant="contained"
+          onClick={() => {
+            saveWithStatusChange(EncounterNodeStatus.Visited);
+            hideDialog();
+          }}
+          Icon={<SaveIcon />}
+          label={t('button-save-as-visited')}
+        />
+      }
+    >
+      <></>
+    </Modal>
+  );
+
+  return {
+    showDialog,
+    SaveAsVisitedModal,
+  };
+};
 
 export const DetailView: FC = () => {
   const t = useTranslation('dispensary');
@@ -35,15 +142,15 @@ export const DetailView: FC = () => {
   const [logicalStatus, setLogicalStatus] = useState<string | undefined>(
     undefined
   );
+  const [deleteRequest, setDeleteRequest] = useState(false);
 
   const {
     data: encounter,
-    mutate: fetchEncounter,
     isSuccess,
     isError,
-  } = useEncounter.document.byIdPromise(id);
+  } = useEncounter.document.byId(id);
 
-  const handleSave = useEncounter.document.upsert(
+  const handleSave = useEncounter.document.upsertDocument(
     encounter?.patient.id ?? '',
     encounter?.type ?? ''
   );
@@ -59,6 +166,7 @@ export const DetailView: FC = () => {
     setData,
     saveData,
     isDirty,
+    isSaving,
     validationError,
     revert,
   } = useJsonForms(
@@ -78,11 +186,37 @@ export const DetailView: FC = () => {
     [data, setData]
   );
 
-  // using a mutation to fetch rather than a query
-  // because the API does not error on invalid ids
-  // which results in an infinite re-render
-  // if the id is invalid and a query is used
-  useEffect(() => fetchEncounter(), [id]);
+  const onDelete = () => {
+    updateEncounter({ status: EncounterNodeStatus.Deleted });
+    setDeleteRequest(true);
+  };
+  useEffect(() => {
+    if (!deleteRequest) return;
+    if (
+      (data as Record<string, JsonData>)['status'] ===
+      EncounterNodeStatus.Deleted
+    ) {
+      (async () => {
+        const result = await saveData(true);
+        if (!result) return;
+
+        // allow the is dirty flag to settle
+        await new Promise(resolve => setTimeout(resolve, 100));
+        navigate(-1);
+      })();
+    }
+  }, [deleteRequest, data]);
+
+  const { showDialog: showSaveAsVisitedDialog, SaveAsVisitedModal } =
+    useSaveWithStatusChangeModal(
+      saveData,
+      data as unknown as EncounterSchema,
+      updateEncounter
+    );
+  const suggestSaveWithStatusVisited = encounter
+    ? new Date(encounter.startDatetime).getTime() < Date.now() &&
+      encounter.status === EncounterNodeStatus.Pending
+    : false;
 
   useEffect(() => {
     if (encounter) {
@@ -92,13 +226,12 @@ export const DetailView: FC = () => {
             to={RouteBuilder.create(AppRoute.Dispensary)
               .addPart(AppRoute.Patients)
               .addPart(encounter.patient.id)
-              .addQuery({ tab: 'Encounters' })
+              .addQuery({
+                tab: PatientTabValue.Encounters,
+              })
               .build()}
           >
-            {getLocalisedFullName(
-              encounter.patient.firstName,
-              encounter.patient.lastName
-            )}
+            {getPatientBreadcrumbSuffix(encounter, getLocalisedFullName)}
           </Breadcrumb>
           <span>{` / ${encounter.document.documentRegistry
             ?.name} - ${dateFormat.localisedDate(
@@ -122,7 +255,11 @@ export const DetailView: FC = () => {
       <link rel="stylesheet" href="/medical-icons.css" media="all"></link>
       <AppBarButtons logicalStatus={logicalStatus} />
       {encounter && (
-        <Toolbar onChange={updateEncounter} encounter={encounter} />
+        <Toolbar
+          onChange={updateEncounter}
+          encounter={encounter}
+          onDelete={onDelete}
+        />
       )}
       {encounter ? (
         JsonForm
@@ -143,10 +280,18 @@ export const DetailView: FC = () => {
       {encounter && (
         <SidePanel encounter={encounter} onChange={updateEncounter} />
       )}
+      <SaveAsVisitedModal />
       <Footer
         documentName={encounter?.document?.name}
-        onSave={saveData}
+        onSave={() => {
+          if (suggestSaveWithStatusVisited) {
+            showSaveAsVisitedDialog();
+          } else {
+            saveData();
+          }
+        }}
         onCancel={revert}
+        isSaving={isSaving}
         isDisabled={!isDirty || !!validationError}
         encounter={data as EncounterFragment}
       />

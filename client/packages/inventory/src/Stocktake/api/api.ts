@@ -6,12 +6,13 @@ import {
   UpdateStocktakeInput,
   RecordPatch,
   SortBy,
-  FilterBy,
   StocktakeSortFieldInput,
   DeleteStocktakeLineInput,
   StocktakeNodeStatus,
   UpdateStocktakeStatusInput,
   InsertStocktakeInput,
+  setNullableInput,
+  FilterByWithBoolean,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -26,7 +27,7 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<StocktakeRowFragment>;
-  filterBy: FilterBy | null;
+  filterBy: FilterByWithBoolean | null;
 };
 
 const stocktakeParser = {
@@ -48,7 +49,7 @@ const stocktakeParser = {
       id: line.id,
     }),
     toUpdate: (line: DraftStocktakeLine): UpdateStocktakeLineInput => ({
-      locationId: line.location?.id,
+      location: setNullableInput('id', line.location),
       batch: line.batch ?? '',
       packSize: line.packSize ?? 1,
       costPricePerPack: line.costPricePerPack,
@@ -62,7 +63,7 @@ const stocktakeParser = {
       inventoryAdjustmentReasonId: line.inventoryAdjustmentReason?.id,
     }),
     toInsert: (line: DraftStocktakeLine): InsertStocktakeLineInput => ({
-      locationId: line.location?.id,
+      location: setNullableInput('id', line.location),
       batch: line.batch ?? '',
       packSize: line.packSize ?? 1,
       costPricePerPack: line.costPricePerPack,

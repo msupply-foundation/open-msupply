@@ -1,3 +1,4 @@
+import { AppSxProp } from '@common/styles';
 import {
   Table,
   TableBody,
@@ -25,3 +26,7 @@ export * from './utils';
 export * from './context';
 export * from './components';
 export const DEFAULT_PAGE_SIZE = 25;
+
+export const placeholderRowStyle: AppSxProp = {
+  color: theme => theme.palette.secondary.light,
+};

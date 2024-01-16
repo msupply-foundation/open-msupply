@@ -268,6 +268,7 @@ pub fn mock_test_not_store_a_master_list() -> FullMockMasterList {
             name: id.clone(),
             code: id.clone(),
             description: id.clone(),
+            is_active: true,
         },
         joins: vec![],
         lines: vec![],

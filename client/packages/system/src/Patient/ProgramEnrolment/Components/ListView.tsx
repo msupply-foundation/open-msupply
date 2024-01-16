@@ -15,11 +15,11 @@ import {
 import {
   PatientModal,
   ProgramEnrolmentRowFragmentWithId,
+  getStatusEventData,
   usePatientModalStore,
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
-import { getStatusTranslation } from '../utils';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
 import { ChipTableCell } from '@openmsupply-client/system';
 
@@ -27,28 +27,26 @@ const programAdditionalInfoAccessor: ColumnDataAccessor<
   ProgramEnrolmentRowFragmentWithId,
   string[]
 > = ({ rowData }): string[] => {
-  const additionalInfo = [];
-
-  if (rowData?.activeProgramEvents[0]?.data) {
-    additionalInfo.push(rowData.activeProgramEvents[0].data);
-  }
-
+  const additionalInfo = getStatusEventData(rowData.activeProgramEvents.nodes);
   return additionalInfo;
 };
 
 const ProgramListComponent: FC = () => {
   const {
-    pagination: { page, first, offset, onChangePage },
+    sort: { sortBy, onChangeSortBy },
   } = useQueryParamsStore();
 
-  const { queryParams, updateSortQuery } = useUrlQueryParams();
+  const {
+    queryParams: { page, first, offset },
+    updatePaginationQuery,
+  } = useUrlQueryParams();
 
   const patientId = usePatient.utils.id();
 
   const { data, isError, isLoading } = useProgramEnrolments.document.list({
     sortBy: {
-      key: queryParams.sortBy.key as ProgramEnrolmentSortFieldInput,
-      isDesc: queryParams.sortBy.isDesc,
+      key: sortBy.key as ProgramEnrolmentSortFieldInput,
+      isDesc: sortBy.isDesc,
     },
     filterBy: { patientId: { equalTo: patientId } },
   });
@@ -80,7 +78,6 @@ const ProgramListComponent: FC = () => {
       {
         key: 'status',
         label: 'label.program-status',
-        accessor: row => t(getStatusTranslation(row.rowData?.status)),
       },
       {
         key: 'enrolmentDatetime',
@@ -92,23 +89,23 @@ const ProgramListComponent: FC = () => {
       },
     ],
     {
-      sortBy: queryParams.sortBy,
-      onChangeSortBy: updateSortQuery,
+      sortBy,
+      onChangeSortBy,
     },
-    [queryParams.sortBy, updateSortQuery]
+    [sortBy, onChangeSortBy]
   );
 
   return (
     <DataTable
       id="program-enrolment-list"
-      pagination={{ ...pagination, total: data?.totalCount }}
-      onChangePage={onChangePage}
+      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+      onChangePage={updatePaginationQuery}
       columns={columns}
       data={data?.nodes}
       isLoading={isLoading}
       isError={isError}
       onRowClick={row => {
-        setEditingModal(PatientModal.Program, row.type, row.name, row.type);
+        setEditingModal(PatientModal.Program, row.type, row.name);
       }}
       noDataElement={
         <NothingHere

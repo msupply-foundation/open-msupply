@@ -35,11 +35,23 @@ export const InboundListView: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filterKey: 'otherPartyName' });
+  } = useUrlQueryParams({
+    filters: [
+      { key: 'otherPartyName' },
+      {
+        key: 'createdDatetime',
+        condition: 'between',
+      },
+      { key: 'status', condition: 'equalTo' },
+    ],
+  });
+  const pagination = { page, first, offset };
+  const queryParams = { ...filter, sortBy, first, offset };
+
   const navigate = useNavigate();
   const modalController = useToggle();
-  const { data, isError, isLoading } = useInbound.document.list();
-  const pagination = { page, first, offset };
+
+  const { data, isError, isLoading } = useInbound.document.list(queryParams);
   useDisableInboundRows(data?.nodes);
 
   const t = useTranslation('replenishment');
@@ -78,7 +90,7 @@ export const InboundListView: FC = () => {
 
       <DataTable
         id="inbound-line-list"
-        pagination={{ ...pagination, total: data?.totalCount }}
+        pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
         onChangePage={updatePaginationQuery}
         columns={columns}
         data={data?.nodes ?? []}
