@@ -47,7 +47,7 @@ pub fn temperature_chart(
             TemperatureChartInput {
                 from_datetime: from_datetime.naive_utc(),
                 to_datetime: to_datetime.naive_utc(),
-                number_of_data_points: number_of_data_points,
+                number_of_data_points,
                 filter: filter.map(TemperatureLogFilter::from),
             },
         )
@@ -85,9 +85,9 @@ impl TemperatureChartNode {
         }: TemperatureChart,
     ) -> Result<Self, async_graphql::Error> {
         // Using mid point for interval
-        // Slighly optimised by using HashMap and mid point
+        // Slightly optimised by using HashMap and mid point
 
-        // Service will return at least on interval
+        // Service will return at least one interval
         let first_interval = intervals.first().ok_or(StandardGraphqlError::from_str(
             "Expected at least one interval",
         ))?;
@@ -119,6 +119,7 @@ impl TemperatureChartNode {
         // this assumption
         // Missing data points will be filled in with blanks
         let mut sensors: Vec<SensorAxisNode> = Vec::new();
+        let mut temperature_breach_ids: Vec<String> = Vec::new();
 
         for TemperatureChartRow {
             interval_id,
@@ -142,6 +143,13 @@ impl TemperatureChartNode {
             let base_index = base_indexes.get(&interval_id).map(Clone::clone).ok_or(
                 StandardGraphqlError::from_str("Index for from_datetime must exist"),
             )?;
+
+            // ensure unique breach ids: we only want to display the first instance of a breach
+            let breach_ids: Vec<String> = breach_ids
+                .into_iter()
+                .filter(|breach_id| !temperature_breach_ids.contains(breach_id))
+                .collect();
+            temperature_breach_ids.extend(breach_ids.clone());
 
             // Sensor points array is already populated with base data (all intervals with empty temperature and breach ids)
 
@@ -235,7 +243,7 @@ mod test {
         service_provider
     }
 
-    // This test is meant to test the 'mapping' between servier input/result and graphql output
+    // This test is meant to test the 'mapping' between server input/result and graphql output
     // Testing mid_point calculation and grouping by sensor + loader
     #[actix_rt::test]
     async fn test_graphql_temperature_chart_mapping() {
