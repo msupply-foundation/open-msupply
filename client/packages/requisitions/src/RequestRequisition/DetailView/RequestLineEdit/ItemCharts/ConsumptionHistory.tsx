@@ -150,15 +150,8 @@ export const ConsumptionHistory: React.FC<ConsumptionHistoryProps> = ({
               ]}
             />
             <Bar dataKey="consumption">
-              {consumptionHistory.map(entry => (
-                <Cell
-                  key={entry.date}
-                  fill={
-                    entry.isHistoric
-                      ? theme.palette.gray.main
-                      : theme.palette.primary.light
-                  }
-                />
+              {data.consumptionHistory.nodes?.map(entry => (
+                <Cell key={entry.date} fill={getFillColour(entry)} />
               ))}
             </Bar>
             <Line

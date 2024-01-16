@@ -7,7 +7,7 @@ import {
   useDebounceCallback,
   Box,
   useTranslation,
-  InnerBasicCell,
+  BasicCellLayout,
   DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
@@ -107,7 +107,7 @@ export const PackVariantEntryCell =
           disabled={disabled}
         />
 
-        <InnerBasicCell value={'/'} />
+        <BasicCellLayout>{'/'}</BasicCellLayout>
 
         {
           /* Allo input only when manually entering pack size */
@@ -115,10 +115,9 @@ export const PackVariantEntryCell =
             numberInput()
           ) : (
             /* reduce the chance that column changes size by matching width of input*/
-            <InnerBasicCell
-              width={DEFAULT_NUMERIC_TEXT_INPUT_WIDTH}
-              value={String(packSize)}
-            />
+            <BasicCellLayout width={DEFAULT_NUMERIC_TEXT_INPUT_WIDTH}>
+              {String(packSize)}
+            </BasicCellLayout>
           )
         }
       </Box>

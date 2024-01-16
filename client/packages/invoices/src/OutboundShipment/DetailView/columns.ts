@@ -310,38 +310,3 @@ export const useOutboundColumns = ({
     [sortBy]
   );
 };
-
-export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
-  useColumns([
-    'batch',
-    'expiryDate',
-    [
-      'locationName',
-      {
-        accessor: ({ rowData }) => rowData.location?.name,
-      },
-    ],
-    {
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: PackVariantCell({
-        getItemId: row => row?.item.id,
-        getPackSizes: row => [row.packSize ?? 1],
-        getUnitName: row => row?.item.unitName ?? null,
-      }),
-    },
-    'numberOfPacks',
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => rowData.packSize * rowData.numberOfPacks,
-      },
-    ],
-    [
-      'sellPricePerUnit',
-      {
-        accessor: ({ rowData }) => rowData.sellPricePerPack,
-      },
-    ],
-  ]);

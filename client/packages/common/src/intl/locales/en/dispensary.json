@@ -61,6 +61,7 @@
   "messages.no-matching-patients": "No matching patients! 😁",
   "messages.no-programs": "This patient is not enrolled in any programs",
   "messages.no-contact-traces": "This patient has no contact traces",
+  "messages.inactive": "Program inactive",
   "messages.no-matching-patients-for-contact-trace": "No matching patients",
   "messages.patient-data-required-for-search": "Please enter patient information",
   "messages.no-patient-record": "Can't access detailed information for this patient.",

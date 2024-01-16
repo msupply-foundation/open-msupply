@@ -1,7 +1,7 @@
 import {
   ArrayUtils,
   CellProps,
-  InnerBasicCell,
+  BasicCellLayout,
   RecordWithId,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
@@ -31,5 +31,5 @@ export const PackVariantCell =
       packSizes.length > 1 ? '[muiltiple]' : asPackVariant(packSizes[0] ?? 1);
 
     // Must have only one packSize
-    return <InnerBasicCell isError={isError} value={displayValue} />;
+    return <BasicCellLayout isError={isError}>{displayValue}</BasicCellLayout>;
   };

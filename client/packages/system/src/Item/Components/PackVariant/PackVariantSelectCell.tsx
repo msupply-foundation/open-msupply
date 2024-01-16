@@ -2,7 +2,7 @@ import React, { ReactElement } from 'react';
 import {
   RecordWithId,
   CellProps,
-  InnerBasicCell,
+  BasicCellLayout,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 import { PackVariantSelect } from './PackVariantSelect';
@@ -24,7 +24,9 @@ export const PackVariantSelectCell =
 
     if (!variantsControl) {
       // If no variants exist, then use number of packs = 1
-      return <InnerBasicCell isError={isError} value={asPackVariant(1)} />;
+      return (
+        <BasicCellLayout isError={isError}>{asPackVariant(1)}</BasicCellLayout>
+      );
     }
 
     return <PackVariantSelect variantControl={variantsControl} />;
