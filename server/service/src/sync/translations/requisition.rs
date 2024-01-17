@@ -2,8 +2,8 @@ use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter, InvoiceRepository,
-    ProgramRowRepository, RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository,
-    StorageConnection, SyncBufferRow,
+    ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository, RequisitionRow,
+    RequisitionRowApprovalStatus, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -291,34 +291,39 @@ impl SyncTranslation for RequisitionTranslation {
             return Ok(None);
         }
 
-        let RequisitionRow {
-            id,
-            user_id,
-            requisition_number,
-            name_id,
-            store_id,
-            r#type,
-            status,
-            created_datetime,
-            sent_datetime,
-            finalised_datetime,
-            colour,
-            comment,
-            their_reference,
-            max_months_of_stock,
-            min_months_of_stock,
-            linked_requisition_id,
-            expected_delivery_date,
-            approval_status,
-            program_id,
-            period_id,
-            order_type,
-        } = RequisitionRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Requisition row not found: {}",
-                changelog.record_id
-            )))?;
+        let Requisition {
+            requisition_row:
+                RequisitionRow {
+                    id,
+                    user_id,
+                    requisition_number,
+                    name_id: _,
+                    store_id,
+                    r#type,
+                    status,
+                    created_datetime,
+                    sent_datetime,
+                    finalised_datetime,
+                    colour,
+                    comment,
+                    their_reference,
+                    max_months_of_stock,
+                    min_months_of_stock,
+                    linked_requisition_id,
+                    expected_delivery_date,
+                    approval_status,
+                    program_id,
+                    period_id,
+                    order_type,
+                },
+            name_row,
+            ..
+        } = RequisitionRepository::new(connection)
+            .query_by_filter(
+                RequisitionFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .pop()
+            .ok_or(anyhow::anyhow!("Requisition not found"))?;
 
         let has_outbound_shipment = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&id)))?
@@ -329,7 +334,7 @@ impl SyncTranslation for RequisitionTranslation {
             ID: id.clone(),
             user_id,
             serial_number: requisition_number,
-            name_ID: name_id,
+            name_ID: name_row.id,
             store_ID: store_id.clone(),
             r#type: to_legacy_type(&r#type),
             status: to_legacy_status(&r#type, &status, has_outbound_shipment).ok_or(
