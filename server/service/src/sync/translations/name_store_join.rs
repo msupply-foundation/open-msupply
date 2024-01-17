@@ -1,6 +1,7 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
-    StorageConnection, StoreRowRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, StorageConnection,
+    StoreRowRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -112,22 +113,26 @@ impl SyncTranslation for NameStoreJoinTranslation {
             return Ok(None);
         }
 
-        let NameStoreJoinRow {
-            id,
-            name_id,
-            store_id,
-            name_is_customer,
-            name_is_supplier,
+        let NameStoreJoin {
+            name_store_join:
+                NameStoreJoinRow {
+                    id,
+                    name_id: _,
+                    store_id,
+                    name_is_customer,
+                    name_is_supplier,
+                },
+            name,
         } = NameStoreJoinRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Name store join row ({}) not found",
-                changelog.record_id
-            )))?;
+            .query_by_filter(
+                NameStoreJoinFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .pop()
+            .ok_or(anyhow::anyhow!("Name store join not found"))?;
 
         let legacy_row = LegacyNameStoreJoinRow {
             id,
-            name_id,
+            name_id: name.id,
             store_id,
             name_is_customer: Some(name_is_customer),
             name_is_supplier: Some(name_is_supplier),
