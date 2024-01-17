@@ -386,10 +386,10 @@ mod tests {
     use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_init};
 
     use crate::{
+        mock::MockDataInserts,
         mock::{mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2},
-        mock::{mock_name_link_from_name, MockDataInserts},
-        test_db, NameFilter, NameLinkRowRepository, NameRepository, NameRow, NameRowRepository,
-        Pagination, StringFilter, DEFAULT_PAGINATION_LIMIT,
+        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination, StringFilter,
+        DEFAULT_PAGINATION_LIMIT,
     };
 
     use std::convert::TryFrom;
@@ -432,12 +432,8 @@ mod tests {
 
         let (rows, queries) = data();
         let name_repo = NameRowRepository::new(&storage_connection);
-        let name_link_repo = NameLinkRowRepository::new(&storage_connection);
         for row in rows {
             name_repo.upsert_one(&row).unwrap();
-            name_link_repo
-                .upsert_one(&mock_name_link_from_name(&row))
-                .unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
