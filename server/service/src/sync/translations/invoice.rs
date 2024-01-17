@@ -7,9 +7,9 @@ use crate::sync::{
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
-    InvoiceRowType, NameRow, NameRowRepository, StorageConnection, StoreRowRepository,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository,
+    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, NameRowRepository, StorageConnection,
+    StoreRowRepository, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -276,38 +276,47 @@ impl SyncTranslation for InvoiceTranslation {
             return Ok(None);
         }
 
-        let invoice_row =
-            InvoiceRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(invoice) = InvoiceRepository::new(connection).query_by_filter(
+            InvoiceFilter::new()
+                .id(EqualFilter::equal_to(&changelog.record_id))
+        )?.pop() else {
+            return Err(anyhow::anyhow!("Invoice row not found"))
+        };
 
         // log::info!("Translating invoice row: {:#?}", invoice_row);
 
-        let confirm_datetime = to_legacy_confirm_time(&invoice_row);
+        let confirm_datetime = to_legacy_confirm_time(&invoice.invoice_row);
 
-        let InvoiceRow {
-            id,
-            user_id,
-            name_id,
-            name_store_id: _,
-            store_id,
-            invoice_number,
-            r#type,
-            status,
-            on_hold,
-            comment,
-            their_reference,
-            created_datetime,
-            allocated_datetime,
-            picked_datetime,
-            shipped_datetime,
-            delivered_datetime,
-            verified_datetime,
-            colour,
-            requisition_id,
-            linked_invoice_id,
-            transport_reference,
-            tax,
-            clinician_id,
-        } = invoice_row;
+        let Invoice {
+            invoice_row:
+                InvoiceRow {
+                    id,
+                    user_id,
+                    name_id: _,
+                    name_store_id: _,
+                    store_id,
+                    invoice_number,
+                    r#type,
+                    status,
+                    on_hold,
+                    comment,
+                    their_reference,
+                    created_datetime,
+                    allocated_datetime,
+                    picked_datetime,
+                    shipped_datetime,
+                    delivered_datetime,
+                    verified_datetime,
+                    colour,
+                    requisition_id,
+                    linked_invoice_id,
+                    transport_reference,
+                    tax,
+                    clinician_id,
+                },
+            name_row,
+            ..
+        } = invoice;
 
         let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
             "Invalid invoice type: {:?}",
@@ -320,7 +329,7 @@ impl SyncTranslation for InvoiceTranslation {
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
             user_id,
-            name_ID: name_id,
+            name_ID: name_row.id,
             store_ID: store_id,
             invoice_num: invoice_number,
             _type,
