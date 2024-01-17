@@ -64,7 +64,7 @@ and all three links point to the same `"kept_name_id"`.
 
 <!-- Links are repo only -->
 
-In the code reference to the link tables should be confined to the repository layer.
+In the code base, references to the link tables should be confined to the repository layer.
 For example, querying an entity in the service layer must be done by `name_id` rather than by `name_link_id`.
 Internally, the repository looks up all `name_links` which match the `name_id` and then uses these `name_links` to do the query.
 Note, if a merge happened while the service layer still uses the id of the soft deleted entity, a query using this id will return nothing because there will be no links pointing to this old id.
