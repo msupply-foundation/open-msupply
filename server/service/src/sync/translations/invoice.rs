@@ -280,7 +280,7 @@ impl SyncTranslation for InvoiceTranslation {
             InvoiceFilter::new()
                 .id(EqualFilter::equal_to(&changelog.record_id))
         )?.pop() else {
-            return Err(anyhow::anyhow!("Invoice row not found"))
+            return Err(anyhow::anyhow!("Invoice not found"))
         };
 
         // log::info!("Translating invoice row: {:#?}", invoice_row);
