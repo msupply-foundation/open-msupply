@@ -141,8 +141,11 @@ const Chart = ({
 
   useEffect(() => {
     if (!urlQuery['datetime']) {
-      const from = customDate(DateUtils.startOfToday(), 'yyyy-MM-dd HH:mm');
-      const to = customDate(DateUtils.endOfDay(new Date()), 'yyyy-MM-dd HH:mm');
+      const from = customDate(
+        DateUtils.addDays(new Date(), -1),
+        'yyyy-MM-dd HH:mm'
+      );
+      const to = customDate(new Date(), 'yyyy-MM-dd HH:mm');
       updateQuery({ datetime: { from, to } });
     }
   }, []);
