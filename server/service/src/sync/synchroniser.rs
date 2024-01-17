@@ -189,7 +189,7 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        let (upserts, deletes) =
+        let (upserts, deletes, merges) =
             integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
                 .await
                 .map_err(SyncError::IntegrationError)?;
@@ -271,8 +271,11 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         let merge_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Merge, &table_order)?;
         let merge_integration_result: TranslationAndIntegrationResults =
-            translation_and_integration
-                .translate_and_integrate_sync_records(merge_sync_buffer_records, &translators)?;
+            translation_and_integration.translate_and_integrate_sync_records(
+                merge_sync_buffer_records,
+                &translators,
+                None,
+            )?;
 
         Ok((
             upsert_integration_result,
