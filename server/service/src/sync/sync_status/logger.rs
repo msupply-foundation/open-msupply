@@ -30,6 +30,7 @@ pub(crate) enum SyncStepProgress {
     PullCentral,
     PullRemote,
     Push,
+    Integrate,
 }
 
 pub struct SyncLogger<'a> {
@@ -40,6 +41,12 @@ pub struct SyncLogger<'a> {
 #[derive(Error, Debug)]
 #[error("Problem writing to sync log")]
 pub struct SyncLoggerError(#[from] RepositoryError);
+
+impl SyncLoggerError {
+    pub(crate) fn to_repository_error(self) -> RepositoryError {
+        self.0
+    }
+}
 
 impl<'a> SyncLogger<'a> {
     pub fn start(connection: &'a StorageConnection) -> Result<SyncLogger, SyncLoggerError> {
@@ -196,6 +203,7 @@ impl<'a> SyncLogger<'a> {
         self.row = match step {
             SyncStepProgress::PullCentral => {
                 let (total, done) = get_progress(remaining, self.row.pull_central_progress_total);
+
                 SyncLogRow {
                     pull_central_progress_total: total,
                     pull_central_progress_done: done,
@@ -204,6 +212,7 @@ impl<'a> SyncLogger<'a> {
             }
             SyncStepProgress::PullRemote => {
                 let (total, done) = get_progress(remaining, self.row.pull_remote_progress_total);
+
                 SyncLogRow {
                     pull_remote_progress_total: total,
                     pull_remote_progress_done: done,
@@ -212,9 +221,18 @@ impl<'a> SyncLogger<'a> {
             }
             SyncStepProgress::Push => {
                 let (total, done) = get_progress(remaining, self.row.push_progress_total);
+
                 SyncLogRow {
                     push_progress_total: total,
                     push_progress_done: done,
+                    ..self.row.clone()
+                }
+            }
+            SyncStepProgress::Integrate => {
+                let (total, done) = get_progress(remaining, self.row.integration_progress_total);
+                SyncLogRow {
+                    integration_progress_total: total,
+                    integration_progress_done: done,
                     ..self.row.clone()
                 }
             }
