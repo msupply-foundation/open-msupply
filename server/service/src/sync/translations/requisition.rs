@@ -523,8 +523,13 @@ impl LegacyAuthorisationStatus {
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::name_links_merged;
+
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_requisition_translation() {
@@ -548,6 +553,33 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_push_merged() {
+        let (mock_data, connection, _, _) =
+            setup_all("test_requisition_push_merged", MockDataInserts::all()).await;
+
+        name_links_merged(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to())),
+            )
+            .unwrap();
+
+        let translator = RequisitionTranslation {};
+        for changelog in changelogs {
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
         }
     }
 }
