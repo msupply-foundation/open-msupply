@@ -73,4 +73,9 @@ Note, if a merge happened while the service layer still uses the id of the soft 
 
 When updating an entity of a data row the link fields of the repository objects are used, e.g. `row.name_link_id = "New name id"`.
 This works because current entity has a matching link entry with the same id, e.g `name_link.id = name_id`.
-While this can be fully hidden in the repository layer this would require another `upsert` data structure which contains the entity id instead of the link id.
+For example, when creating an outbound shipment you should use `invoice.name_link_id = customer_name.id` because `customer_name.id` is guaranteed to have a corresponding `name_link_id` row.
+For existing shipments you should **not** update `invoice.name_link_id` to the returned related name entity's `name.id`, even if it may be different.
+Any difference is due to a merge has occurred, and updating the `name_link_id` would undermine a design goal of potentially being able to "unmerge" entities.
+
+Note, editing the `name_link_id` using the `name_id` could be fully hidden in the repository layer by providing a specialized `upsert` data structure which only contains the `name_id` instead of the `name_link_id`.
+However, at this stage this is not done to minimize changes and to keep the number of struct reasonable small.
