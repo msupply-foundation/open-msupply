@@ -1,5 +1,5 @@
 {
-  "label.location": "Местонахождение",
+  "label.location": "Локация",
   "heading.tax": "Налог",
   "label.draft": "Черновик",
   "heading.are-you-sure": "Вы уверены?",
@@ -8,5 +8,9 @@
   "error.no-internal-orders": "Нет внутренних заказов для отображения.",
   "heading.related-documents": "Сопутствующие документы",
   "heading.service-charges": "Сервисные сборы",
-  "label.new": "Новый"
+  "label.new": "Новый",
+  "label.add-batch": "Добавить партию",
+  "label.finalised": "Завершено",
+  "label.pricing": "Цена",
+  "label.cant-delete-disabled": "Возможно удаление строк только со статусом 'Новый'"
 }

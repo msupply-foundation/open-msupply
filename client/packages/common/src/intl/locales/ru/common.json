@@ -19,10 +19,14 @@
   "button.create-a-new-one": "Создать новый",
   "button.print": "Распечатать",
   "button.sync-now": "Синхронизировать сейчас!",
-  "label.location": "Местонахождение",
+  "label.location": "Локация",
   "heading.description": "Описание",
   "heading.are-you-sure": "Вы уверены?",
   "label.draft": "Черновик",
   "button.new-outbound-shipment": "Новая Исходящая Доставка",
-  "label.new": "Новый"
+  "label.new": "Новый",
+  "label.batch": "Партия",
+  "label.supplier": "Поставщик",
+  "label.finalised": "Завершено",
+  "label.suggested": "Рекомендуемое"
 }
