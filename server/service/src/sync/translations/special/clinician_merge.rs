@@ -62,3 +62,105 @@ impl SyncTranslation for ClinicianMergeTranslation {
         Ok(Some(IntegrationRecords::from_upserts(upsert_records)))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::sync::{
+        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
+    };
+
+    use super::*;
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ClinicianLinkRowRepository, SyncBufferAction,
+        SyncBufferRow, SyncBufferRowRepository,
+    };
+
+    #[actix_rt::test]
+    async fn test_clinician_merge() {
+        let mut sync_records = vec![
+            SyncBufferRow {
+                record_id: "clinician_b_merge".to_string(),
+                table_name: LegacyTableName::CLINICIAN.to_string(),
+                action: SyncBufferAction::Merge,
+                data: r#"{
+                        "mergeIdToKeep": "clinician_b",
+                        "mergeIdToDelete": "clinician_a"
+                    }"#
+                .to_string(),
+                ..SyncBufferRow::default()
+            },
+            SyncBufferRow {
+                record_id: "clinician_c_merge".to_string(),
+                table_name: LegacyTableName::CLINICIAN.to_string(),
+                action: SyncBufferAction::Merge,
+                data: r#"{
+                      "mergeIdToKeep": "clinician_c",
+                      "mergeIdToDelete": "clinician_b"
+                    }"#
+                .to_string(),
+                ..SyncBufferRow::default()
+            },
+        ];
+
+        let expected_clinician_links = vec![
+            ClinicianLinkRow {
+                id: "clinician_a".to_string(),
+                clinician_id: "clinician_c".to_string(),
+            },
+            ClinicianLinkRow {
+                id: "clinician_b".to_string(),
+                clinician_id: "clinician_c".to_string(),
+            },
+            ClinicianLinkRow {
+                id: "clinician_c".to_string(),
+                clinician_id: "clinician_c".to_string(),
+            },
+        ];
+
+        let (_, connection, _, _) = setup_all(
+            "test_clinician_merge_message_translation_in_order",
+            MockDataInserts::none().clinicians(),
+        )
+        .await;
+
+        let mut logger = SyncLogger::start(&connection).unwrap();
+
+        SyncBufferRowRepository::new(&connection)
+            .upsert_many(&sync_records)
+            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
+            .await
+            .unwrap();
+
+        let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
+        let mut clinician_links = clinician_link_repo
+            .find_many_by_clinician_id(&"clinician_c")
+            .unwrap();
+
+        clinician_links.sort_by_key(|i| i.id.to_owned());
+        assert_eq!(clinician_links, expected_clinician_links);
+
+        let (_, connection, _, _) = setup_all(
+            "test_clinician_merge_message_translation_in_reverse_order",
+            MockDataInserts::none().clinicians(),
+        )
+        .await;
+
+        sync_records.reverse();
+        SyncBufferRowRepository::new(&connection)
+            .upsert_many(&sync_records)
+            .unwrap();
+
+        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
+            .await
+            .unwrap();
+
+        let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
+        let mut clinician_links = clinician_link_repo
+            .find_many_by_clinician_id(&"clinician_c".to_string())
+            .unwrap();
+
+        clinician_links.sort_by_key(|i| i.id.to_owned());
+        assert_eq!(clinician_links, expected_clinician_links);
+    }
+}
