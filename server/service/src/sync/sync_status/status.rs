@@ -35,7 +35,7 @@ pub struct FullSyncStatus {
     pub error: Option<SyncLogError>,
     pub summary: SyncStatus,
     pub prepare_initial: Option<SyncStatus>,
-    pub integration: Option<SyncStatus>,
+    pub integration: Option<SyncStatusWithProgress>,
     pub pull_central: Option<SyncStatusWithProgress>,
     pub pull_remote: Option<SyncStatusWithProgress>,
     pub push: Option<SyncStatusWithProgress>,
@@ -65,6 +65,8 @@ impl FullSyncStatus {
             error_code: _,
             error_message: _,
             id: _,
+            integration_progress_total,
+            integration_progress_done,
         } = sync_log_row;
         let error = SyncLogError::from_sync_log_row(&sync_log_row);
 
@@ -79,9 +81,11 @@ impl FullSyncStatus {
                 started,
                 finished: prepare_initial_finished_datetime,
             }),
-            integration: integration_started_datetime.map(|started| SyncStatus {
+            integration: integration_started_datetime.map(|started| SyncStatusWithProgress {
                 started,
                 finished: integration_finished_datetime,
+                total: integration_progress_total.map(i32_to_u32),
+                done: integration_progress_done.map(i32_to_u32),
             }),
             pull_central: pull_central_started_datetime.map(|started| SyncStatusWithProgress {
                 started,
@@ -185,8 +189,8 @@ fn get_initialisation_status(
         .pop();
 
     let Some(sync_log) = latest_log_sorted_by_finished_datetime else {
-            return Ok(InitialisationStatus::PreInitialisation)
-        };
+        return Ok(InitialisationStatus::PreInitialisation);
+    };
 
     if sync_log.sync_log_row.finished_datetime == None {
         return Ok(InitialisationStatus::Initialising);

@@ -88,6 +88,7 @@ export const Initialise = () => {
       Button={
         <LoadingButton
           isLoading={isLoading}
+          loadingStyle={{ iconColor: 'secondary.main' }}
           onClick={isInitialising ? onRetry : onInitialise}
           variant="outlined"
           startIcon={<SaveIcon />}

@@ -3,6 +3,7 @@ use super::{
     item_link_row::{item_link, item_link::dsl as item_link_dsl},
     item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
+    name_link_row::{name_link, name_link::dsl as name_link_dsl},
     name_row::{name, name::dsl as name_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     DBType, LocationRow, StockLineRow, StorageConnection,
@@ -15,8 +16,8 @@ use crate::{
     },
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow, NameRow,
-    Pagination, Sort, StringFilter,
+    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow,
+    NameLinkRow, NameRow, Pagination, Sort, StringFilter,
 };
 
 use diesel::{
@@ -63,7 +64,7 @@ type StockLineJoin = (
     StockLineRow,
     (ItemLinkRow, ItemRow),
     Option<LocationRow>,
-    Option<NameRow>,
+    Option<(NameLinkRow, NameRow)>,
     Option<BarcodeRow>,
 );
 pub struct StockLineRepository<'a> {
@@ -170,7 +171,7 @@ type BoxedStockLineQuery = IntoBoxed<
                 InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
                 location::table,
             >,
-            name::table,
+            InnerJoin<name_link::table, name::table>,
         >,
         barcode::table,
     >,
@@ -181,7 +182,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
     let mut query = stock_line_dsl::stock_line
         .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
         .left_join(location_dsl::location)
-        .left_join(name_dsl::name)
+        .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .left_join(barcode_dsl::barcode)
         .into_boxed();
 
@@ -250,13 +251,13 @@ fn apply_item_filter(
 }
 
 pub fn to_domain(
-    (stock_line_row, (_, item_row), location_row, name_row, barcode_row): StockLineJoin,
+    (stock_line_row, (_, item_row), location_row, name_link_join, barcode_row): StockLineJoin,
 ) -> StockLine {
     StockLine {
         stock_line_row,
         item_row,
         location_row,
-        name_row,
+        name_row: name_link_join.map(|(_, name_row)| name_row),
         barcode_row,
     }
 }
