@@ -1,4 +1,7 @@
-use super::{item_link_row::item_link, master_list_row::master_list::dsl::*, StorageConnection};
+use super::{
+    item_link_row::item_link, master_list_row::master_list::dsl::*, name_link_row::name_link,
+    StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
@@ -25,6 +28,7 @@ pub struct MasterListRow {
 }
 
 allow_tables_to_appear_in_same_query!(master_list, item_link);
+allow_tables_to_appear_in_same_query!(master_list, name_link);
 
 pub struct MasterListRowRepository<'a> {
     connection: &'a StorageConnection,

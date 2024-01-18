@@ -1,4 +1,7 @@
-use super::{clinician_link, name_link_row::name_link, program_row::program, StorageConnection};
+use super::{
+    clinician_link, name_link_row::name_link, name_row::name, program_row::program,
+    StorageConnection,
+};
 
 use crate::repository_error::RepositoryError;
 
@@ -39,6 +42,8 @@ joinable!(encounter -> clinician_link (clinician_link_id));
 joinable!(encounter -> name_link (patient_link_id));
 allow_tables_to_appear_in_same_query!(encounter, program);
 allow_tables_to_appear_in_same_query!(encounter, clinician_link);
+allow_tables_to_appear_in_same_query!(encounter, name_link);
+allow_tables_to_appear_in_same_query!(encounter, name);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
 #[changeset_options(treat_none_as_null = "true")]
