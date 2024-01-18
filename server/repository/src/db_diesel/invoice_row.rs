@@ -1,5 +1,5 @@
 use super::{
-    clinician_row::clinician, invoice_row::invoice::dsl::*, item_link_row::item_link,
+    clinician_link_row::clinician_link, invoice_row::invoice::dsl::*, item_link_row::item_link,
     name_link_row::name_link, store_row::store, user_row::user_account, StorageConnection,
 };
 
@@ -36,14 +36,14 @@ table! {
         requisition_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
         tax -> Nullable<Double>,
-        clinician_id -> Nullable<Text>,
+        clinician_link_id -> Nullable<Text>,
     }
 }
 
 joinable!(invoice -> name_link (name_link_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
-joinable!(invoice -> clinician (clinician_id));
+joinable!(invoice -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
 allow_tables_to_appear_in_same_query!(invoice, name_link);
 
@@ -102,6 +102,7 @@ pub struct InvoiceRow {
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
     pub tax: Option<f64>,
+    #[column_name = "clinician_link_id"]
     pub clinician_id: Option<String>,
 }
 

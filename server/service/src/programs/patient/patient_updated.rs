@@ -1,8 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    EqualFilter, Gender, NameLinkRow, NameLinkRowRepository, NameRow, NameRowRepository,
-    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameType, Patient,
-    RepositoryError, StorageConnection,
+    EqualFilter, Gender, NameRow, NameRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
+    NameStoreJoinRow, NameType, Patient, RepositoryError, StorageConnection,
 };
 use std::str::FromStr;
 use util::uuid::uuid;
@@ -48,12 +47,6 @@ pub fn update_patient_row(
 
     let name_upsert = patient_to_name_row(store_id, update_timestamp, patient, existing_name)?;
     name_repo.upsert_one(&name_upsert)?;
-
-    let name_link_row = NameLinkRow {
-        id: name_upsert.id.clone(),
-        name_id: name_upsert.id.clone(),
-    };
-    NameLinkRowRepository::new(con).upsert_one(&name_link_row)?;
 
     Ok(())
 }

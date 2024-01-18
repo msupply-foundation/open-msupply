@@ -296,9 +296,9 @@ impl ProgramEnrolmentNode {
             nodes: list_result
                 .rows
                 .into_iter()
-                .map(|row| ProgramEventNode {
+                .map(|program_event| ProgramEventNode {
                     store_id: self.store_id.clone(),
-                    row,
+                    program_event,
                     allowed_ctx: self.allowed_ctx.clone(),
                 })
                 .collect(),
