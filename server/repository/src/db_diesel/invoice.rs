@@ -1,4 +1,5 @@
 use super::{
+    clinician_link_row::{clinician_link, clinician_link::dsl as clinician_link_dsl},
     clinician_row::{clinician, clinician::dsl as clinician_dsl},
     invoice_line_row::invoice_line::dsl as invoice_line_dsl,
     invoice_row::{invoice, invoice::dsl as invoice_dsl},
@@ -14,7 +15,7 @@ use crate::{
         apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
         apply_string_filter,
     },
-    NameLinkRow,
+    ClinicianLinkRow, NameLinkRow,
 };
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
@@ -84,7 +85,7 @@ type InvoiceJoin = (
     InvoiceRow,
     (NameLinkRow, NameRow),
     StoreRow,
-    Option<ClinicianRow>,
+    Option<(ClinicianLinkRow, ClinicianRow)>,
 );
 
 impl<'a> InvoiceRepository<'a> {
@@ -175,17 +176,17 @@ impl<'a> InvoiceRepository<'a> {
             .filter(invoice_dsl::id.eq(record_id))
             .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
             .inner_join(store_dsl::store)
-            .left_join(clinician_dsl::clinician)
+            .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
             .first::<InvoiceJoin>(&self.connection.connection)?)
     }
 }
 
-fn to_domain((invoice_row, (_, name_row), store_row, clinician_row): InvoiceJoin) -> Invoice {
+fn to_domain((invoice_row, (_, name_row), store_row, clinician_link_join): InvoiceJoin) -> Invoice {
     Invoice {
         invoice_row,
         name_row,
         store_row,
-        clinician_row,
+        clinician_row: clinician_link_join.map(|(_, clinician_row)| clinician_row),
     }
 }
 
@@ -196,7 +197,7 @@ type BoxedInvoiceQuery = IntoBoxed<
             InnerJoin<invoice::table, InnerJoin<name_link::table, name::table>>,
             store::table,
         >,
-        clinician::table,
+        InnerJoin<clinician_link::table, clinician::table>,
     >,
     DBType,
 >;
@@ -205,7 +206,7 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
     let mut query = invoice_dsl::invoice
         .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .inner_join(store_dsl::store)
-        .left_join(clinician_dsl::clinician)
+        .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
         .into_boxed();
 
     if let Some(f) = filter {

@@ -29,8 +29,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-            ALTER TABLE clinician_store_join DROP COLUMN clinician_id;
-            CREATE INDEX "index_clinician_store_join_clinician_link_id_fkey" ON "clinician_store_join" ("clinician_link_id");
+        DROP INDEX index_clinician_store_join_clinician_id;
+        ALTER TABLE clinician_store_join DROP COLUMN clinician_id;
+        CREATE INDEX "index_clinician_store_join_clinician_link_id_fkey" ON "clinician_store_join" ("clinician_link_id");
         "#
     )?;
 
