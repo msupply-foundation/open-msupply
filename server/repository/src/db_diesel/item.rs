@@ -257,12 +257,12 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::{mock_item_b, mock_item_link_from_item, mock_name_link_from_name, MockDataInserts},
+        mock::{mock_item_b, mock_item_link_from_item, MockDataInserts},
         test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
         ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-        MasterListRowRepository, NameLinkRowRepository, NameRow, NameRowRepository, Pagination,
-        StoreRow, StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
+        StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -579,10 +579,6 @@ mod tests {
 
         NameRowRepository::new(&storage_connection)
             .upsert_one(&name_row)
-            .unwrap();
-
-        NameLinkRowRepository::new(&storage_connection)
-            .upsert_one(&mock_name_link_from_name(&name_row))
             .unwrap();
 
         StoreRowRepository::new(&storage_connection)

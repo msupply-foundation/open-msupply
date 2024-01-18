@@ -12,6 +12,10 @@ table! {
 }
 
 joinable!(clinician_link -> clinician (clinician_id));
+allow_tables_to_appear_in_same_query!(clinician_link, name);
+allow_tables_to_appear_in_same_query!(clinician_link, store);
+allow_tables_to_appear_in_same_query!(clinician_link, invoice);
+allow_tables_to_appear_in_same_query!(clinician_link, invoice_line);
 allow_tables_to_appear_in_same_query!(clinician_link, program);
 allow_tables_to_appear_in_same_query!(clinician_link, name);
 

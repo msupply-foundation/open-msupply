@@ -1,7 +1,11 @@
-use crate::sync::{integrate_document::sync_upsert_document, translations::PullDeleteRecordTable};
+use crate::{
+    sync::{integrate_document::sync_upsert_document, translations::PullDeleteRecordTable},
+    usize_to_u64,
+};
 
 use super::{
     sync_buffer::SyncBuffer,
+    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
     translations::{
         IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslation, SyncTranslators,
     },
@@ -9,6 +13,8 @@ use super::{
 use log::warn;
 use repository::*;
 use std::collections::HashMap;
+
+static PROGRESS_STEP_LEN: usize = 100;
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
@@ -72,12 +78,25 @@ impl<'a> TranslationAndIntegration<'a> {
         &self,
         sync_records: Vec<SyncBufferRow>,
         translators: &Vec<Box<dyn SyncTranslation>>,
+        mut logger: Option<&mut SyncLogger>,
     ) -> Result<TranslationAndIntegrationResults, RepositoryError> {
+        let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
 
-        for sync_record in sync_records {
-            // Try translate
+        // Record initial progress (will be set as total progress)
+        let total_to_integrate = sync_records.len();
 
+        // Helper to make below logic less verbose
+        let mut record_progress = |progress: usize| -> Result<(), RepositoryError> {
+            match logger.as_mut() {
+                None => Ok(()),
+                Some(logger) => logger
+                    .progress(step_progress.clone(), usize_to_u64(progress))
+                    .map_err(SyncLoggerError::to_repository_error),
+            }
+        };
+
+        for (number_of_records_integrated, sync_record) in sync_records.into_iter().enumerate() {
             let translation_result = match self.translate_sync_record(&sync_record, &translators) {
                 Ok(translation_result) => translation_result,
                 // Record error in sync buffer and in result, continue to next sync_record
@@ -131,7 +150,15 @@ impl<'a> TranslationAndIntegration<'a> {
                     );
                 }
             }
+
+            if number_of_records_integrated % PROGRESS_STEP_LEN == 0 {
+                record_progress(total_to_integrate - number_of_records_integrated)?;
+            }
         }
+
+        // Record final progress
+        record_progress(0)?;
+
         Ok(result)
     }
 }
