@@ -41,6 +41,9 @@ pub fn mock_test_requisition_service() -> MockData {
         .push(mock_request_draft_requisition_calculation_test());
     result
         .full_requisitions
+        .push(mock_full_draft_response_requisition_for_update_test());
+    result
+        .full_requisitions
         .push(mock_new_response_requisition_test());
     result
         .full_master_lists
@@ -159,7 +162,7 @@ pub fn mock_draft_response_requisition_for_update_test() -> RequisitionRow {
         r.name_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Response;
-        r.status = RequisitionRowStatus::Draft;
+        r.status = RequisitionRowStatus::New;
         r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
             .unwrap()
             .and_hms_opt(0, 0, 0)
@@ -196,6 +199,34 @@ pub fn mock_draft_response_requisition_for_update_test_line() -> RequisitionLine
         r.available_stock_on_hand = 1;
         r.average_monthly_consumption = 1;
     })
+}
+
+pub fn mock_full_draft_response_requisition_for_update_test() -> FullMockRequisition {
+    FullMockRequisition {
+        requisition: inline_init(|r: &mut RequisitionRow| {
+            r.id = "mock_full_draft_response_requisition_for_update_test".to_owned();
+            r.requisition_number = 10;
+            r.name_id = "name_a".to_owned();
+            r.store_id = mock_store_a().id;
+            r.r#type = RequisitionRowType::Response;
+            r.status = RequisitionRowStatus::Draft;
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap();
+            r.max_months_of_stock = 1.0;
+            r.min_months_of_stock = 0.9;
+        }),
+        lines: vec![inline_init(|r: &mut RequisitionLineRow| {
+            r.id = "mock_full_draft_response_requisition_for_update_test_line".to_owned();
+            r.requisition_id = "mock_full_draft_response_requisition_for_update_test".to_string();
+            r.item_id = mock_item_a().id;
+            r.requested_quantity = 10;
+            r.suggested_quantity = 5;
+            r.available_stock_on_hand = 1;
+            r.average_monthly_consumption = 1;
+        })],
+    }
 }
 
 pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition {

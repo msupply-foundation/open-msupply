@@ -141,7 +141,7 @@ mod test {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_draft_response_requisition_for_update_test, mock_item_c,
+            mock_full_draft_response_requisition_for_update_test, mock_item_c,
             mock_request_draft_requisition, mock_request_draft_requisition_calculation_test,
             mock_request_program_requisition, mock_sent_request_requisition, mock_store_a,
             mock_store_b, test_item_stats, MockDataInserts,
@@ -229,7 +229,9 @@ mod test {
             service.insert_request_requisition_line(
                 &context,
                 inline_init(|r: &mut InsertRequestRequisitionLine| {
-                    r.requisition_id = mock_draft_response_requisition_for_update_test().id;
+                    r.requisition_id = mock_full_draft_response_requisition_for_update_test()
+                        .requisition
+                        .id;
                 }),
             ),
             Err(ServiceError::NotARequestRequisition)
