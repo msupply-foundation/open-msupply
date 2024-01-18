@@ -100,21 +100,21 @@ use crate::{
     ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
     DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemLinkRow, ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow,
-    LocationRow, LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow,
-    MasterListRow, MasterListRowRepository, NameLinkRow, NameLinkRowRepository,
-    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
-    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
-    TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
-    TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow,
+    LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+    MasterListRowRepository, NameLinkRow, NameLinkRowRepository, NameTagJoinRepository,
+    NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow,
+    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
+    PluginDataRowRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow,
+    SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
+    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
+    SyncLogRowRepository, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository,
+    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
+    TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::{activity_log::mock_activity_logs, unit::mock_units};
@@ -137,7 +137,6 @@ pub struct MockData {
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
     pub items: Vec<ItemRow>,
-    pub item_links_merged: Vec<ItemLinkRow>,
     pub locations: Vec<LocationRow>,
     pub sensors: Vec<SensorRow>,
     pub temperature_breaches: Vec<TemperatureBreachRow>,
@@ -202,7 +201,6 @@ pub struct MockDataInserts {
     pub stores: bool,
     pub units: bool,
     pub items: bool,
-    pub item_links_merged: bool,
     pub locations: bool,
     pub sensors: bool,
     pub temperature_breaches: bool,
@@ -287,7 +285,6 @@ impl MockDataInserts {
             clinician_store_joins: true,
             contexts: true,
             plugin_data: true,
-            item_links_merged: false, // This will change many item_id values to become "item_a", so is only used if explicit!
         }
     }
 
@@ -352,12 +349,6 @@ impl MockDataInserts {
 
     pub fn items(mut self) -> Self {
         self.items = true;
-        self
-    }
-
-    // This is used to crudely merge all items into "item_a"
-    pub fn item_links_merged(mut self) -> Self {
-        self.item_links_merged = true;
         self
     }
 
@@ -722,16 +713,6 @@ pub fn insert_mock_data(
             }
         }
 
-        // Crudely make all item_links point to `"item_a"` for testing correct mapping of item_id
-        if inserts.item_links_merged {
-            let item_link_repo = ItemLinkRowRepository::new(connection);
-            for row in &mock_data.items {
-                let mut link = mock_item_link_from_item(&row);
-                link.item_id = "item_a".to_string();
-                item_link_repo.upsert_one(&link).unwrap();
-            }
-        }
-
         if inserts.locations {
             let repo = LocationRowRepository::new(connection);
             for row in &mock_data.locations {
@@ -1023,7 +1004,6 @@ impl MockData {
             mut clinician_store_joins,
             mut contexts,
             plugin_data: _,
-            item_links_merged: _,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
