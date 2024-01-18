@@ -198,7 +198,15 @@ mod encounter_document_updated_test {
             )
             .unwrap();
         assert_eq!(events.count, 1);
-        assert_eq!(&events.rows[0].data.as_ref().unwrap().as_str(), &"Test");
+        assert_eq!(
+            &events.rows[0]
+                .program_event_row
+                .data
+                .as_ref()
+                .unwrap()
+                .as_str(),
+            &"Test"
+        );
 
         // delete encounter should remove the events
         service_provider
