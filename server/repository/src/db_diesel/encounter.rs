@@ -134,10 +134,10 @@ type EncounterJoin = (
     (NameLinkRow, NameRow),
     Option<ClinicianLinkRow>,
 );
-pub type Encounter = (EncounterRow, ProgramRow);
+pub type Encounter = (EncounterRow, ProgramRow, NameRow);
 
-fn to_domain((encounter_row, program_row, (_, _), _): EncounterJoin) -> Encounter {
-    (encounter_row, program_row)
+fn to_domain((encounter_row, program_row, (_, name_row), _): EncounterJoin) -> Encounter {
+    (encounter_row, program_row, name_row)
 }
 
 pub type EncounterSort = Sort<EncounterSortField>;
