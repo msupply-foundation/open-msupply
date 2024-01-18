@@ -23,6 +23,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE INDEX index_temperature_log_store_id ON temperature_log (store_id);
         CREATE INDEX index_temperature_log_location_id ON temperature_log (location_id);
         CREATE INDEX index_temperature_log_temperature_breach_id ON temperature_log (temperature_breach_id);
+        CREATE INDEX index_encounter_clinician_id ON encounter (clinician_id);
         CREATE INDEX index_encounter_enrolment_program_id ON encounter (program_id);
         CREATE INDEX index_program_event_context_id ON program_event (context_id);
         CREATE INDEX index_program_master_list_id ON program (master_list_id);
@@ -44,6 +45,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE INDEX index_invoice_clinician_id ON invoice (clinician_id);
         CREATE INDEX index_plugin_data_store_id ON plugin_data (store_id);
         CREATE INDEX index_program_enrolment_program_id ON program_enrolment (program_id);
+        CREATE INDEX index_clinician_store_join_clinician_id ON clinician_store_join (clinician_id);
         CREATE INDEX index_clinician_store_join_store_id ON clinician_store_join (store_id);
         CREATE INDEX index_stocktake_line_inventory_adjustment_reason_id ON stocktake_line (inventory_adjustment_reason_id);
         "#,
