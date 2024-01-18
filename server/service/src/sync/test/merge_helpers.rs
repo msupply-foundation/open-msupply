@@ -3,7 +3,7 @@ use repository::{
     NameLinkRowRepository, NameRow, RepositoryError, StorageConnection,
 };
 
-pub fn name_links_merged(
+pub fn merge_all_name_links(
     connection: &StorageConnection,
     mock_data: &MockDataCollection,
 ) -> Result<(), RepositoryError> {
