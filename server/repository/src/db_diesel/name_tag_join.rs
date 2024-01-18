@@ -1,5 +1,8 @@
-use super::{name_tag_join::name_tag_join::dsl as name_tag_join_dsl, StorageConnection};
-use crate::{db_diesel::name_link_row::name_link, repository_error::RepositoryError};
+use super::{
+    name_link_row::name_link, name_tag_join::name_tag_join::dsl as name_tag_join_dsl,
+    StorageConnection,
+};
+use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
@@ -21,6 +24,7 @@ pub struct NameTagJoinRow {
 }
 
 joinable!(name_tag_join -> name_link (name_link_id));
+allow_tables_to_appear_in_same_query!(name_tag_join, name_link);
 
 pub struct NameTagJoinRepository<'a> {
     connection: &'a StorageConnection,
