@@ -83,17 +83,21 @@ fn remove_event_stack(
     // For simplicity we cleanly remove the whole stack though.
 
     // update active_end_datetime of the latest event from the previous stack
-    let previous_stack = repo.query(
-        Pagination::all(),
-        Some(
-            event_target_filter(event_target)
-                .active_end_datetime(DatetimeFilter::equal_to(datetime)),
-        ),
-        Some(ProgramEventSort {
-            key: ProgramEventSortField::ActiveStartDatetime,
-            desc: Some(true),
-        }),
-    )?;
+    let previous_stack = repo
+        .query(
+            Pagination::all(),
+            Some(
+                event_target_filter(event_target)
+                    .active_end_datetime(DatetimeFilter::equal_to(datetime)),
+            ),
+            Some(ProgramEventSort {
+                key: ProgramEventSortField::ActiveStartDatetime,
+                desc: Some(true),
+            }),
+        )?
+        .into_iter()
+        .map(|it| it.program_event_row)
+        .collect::<Vec<_>>();
 
     // Adjust active_end_datetime of previous stack. For example:
     //    prev              longest.active_end_datetime
@@ -104,7 +108,6 @@ fn remove_event_stack(
     //      5---->20--|
     let mut current_end_datetime = longest.active_end_datetime;
     for mut current in previous_stack {
-        let current = &mut current.program_event_row;
         current.active_end_datetime = current_end_datetime;
         current_end_datetime = std::cmp::min(current.active_start_datetime, current_end_datetime);
         ProgramEventRowRepository::new(connection).upsert_one(&current)?;
