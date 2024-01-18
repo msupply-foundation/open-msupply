@@ -1,4 +1,7 @@
-use super::{clinician_row::clinician, name_row::name, program_row::program, StorageConnection};
+use super::{
+    clinician_row::clinician, invoice_line_row::invoice_line, invoice_row::invoice, name_row::name,
+    program_row::program, store_row::store, StorageConnection,
+};
 use crate::repository_error::RepositoryError;
 
 use self::clinician_link::dsl as clinician_link_dsl;
@@ -17,7 +20,6 @@ allow_tables_to_appear_in_same_query!(clinician_link, store);
 allow_tables_to_appear_in_same_query!(clinician_link, invoice);
 allow_tables_to_appear_in_same_query!(clinician_link, invoice_line);
 allow_tables_to_appear_in_same_query!(clinician_link, program);
-allow_tables_to_appear_in_same_query!(clinician_link, name);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "clinician_link"]
