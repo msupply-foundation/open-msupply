@@ -14,7 +14,8 @@ import {
 import { AlertModal, Typography } from '@common/components';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 
-export const AuthenticationAlert = () => {
+// primarily used to display an error message when the user is not logged in
+export const ErrorAlert = () => {
   const navigate = useNavigate();
   const { isOn, toggleOff, toggleOn } = useToggle();
   const t = useTranslation('app');
@@ -24,9 +25,9 @@ export const AuthenticationAlert = () => {
   useEffect(() => {
     if (!!error) toggleOn();
     return () => toggleOff();
-  }, [error]);
+  }, [error, toggleOff, toggleOn]);
 
-  // no need to alert if you are on the login screen!
+  // no need to alert if you are on the login screen
   if (
     matchPath(
       RouteBuilder.create(AppRoute.Login).addWildCard().build(),

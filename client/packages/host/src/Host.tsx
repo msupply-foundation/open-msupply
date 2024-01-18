@@ -25,7 +25,7 @@ import {
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
 import { Site } from './Site';
-import { AuthenticationAlert } from './components/AuthenticationAlert';
+import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
 import { useInitPlugins } from './plugins';
@@ -79,7 +79,7 @@ const Host = () => (
                     <ConfirmationModalProvider>
                       <AlertModalProvider>
                         <BrowserRouter>
-                          <AuthenticationAlert />
+                          <ErrorAlert />
                           <Viewport>
                             <Box display="flex" style={{ minHeight: '100%' }}>
                               <Routes>
