@@ -45,13 +45,20 @@ pub struct NameStoreJoinRow {
     pub name_is_supplier: bool,
 }
 
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct NameStoreJoin {
+    pub name_store_join: NameStoreJoinRow,
+    pub name: NameRow,
+}
+
 joinable!(name_store_join -> store (store_id));
 joinable!(name_store_join -> name_link (name_link_id));
 
-type NameStoreJoin = (NameStoreJoinRow, (NameLinkRow, NameRow));
+type NameStoreJoins = (NameStoreJoinRow, (NameLinkRow, NameRow));
 
 #[derive(Clone, Default)]
 pub struct NameStoreJoinFilter {
+    pub id: Option<EqualFilter<String>>,
     pub name_id: Option<EqualFilter<String>>,
 }
 
@@ -114,17 +121,17 @@ impl<'a> NameStoreJoinRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: NameStoreJoinFilter,
-    ) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+    ) -> Result<Vec<NameStoreJoin>, RepositoryError> {
         self.query(Some(filter))
     }
 
     pub fn query(
         &self,
         filter: Option<NameStoreJoinFilter>,
-    ) -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+    ) -> Result<Vec<NameStoreJoin>, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        let result = query.load::<NameStoreJoin>(&self.connection.connection)?;
+        let result = query.load::<NameStoreJoins>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -159,27 +166,30 @@ fn create_filtered_query<'a>(filter: Option<NameStoreJoinFilter>) -> BoxedNameSt
         .into_boxed();
 
     if let Some(f) = filter {
-        let NameStoreJoinFilter { name_id } = f;
+        let NameStoreJoinFilter { id, name_id } = f;
 
+        apply_equal_filter!(query, id, name_store_join_dsl::id);
         apply_equal_filter!(query, name_id, name_dsl::id);
     }
 
     query
 }
 
-fn to_domain((name_store_join_row, (_, name_row)): NameStoreJoin) -> NameStoreJoinRow {
-    NameStoreJoinRow {
-        id: name_store_join_row.id,
-        name_id: name_row.id,
-        store_id: name_store_join_row.store_id,
-        name_is_customer: name_store_join_row.name_is_customer,
-        name_is_supplier: name_store_join_row.name_is_supplier,
+fn to_domain((name_store_join_row, (_, name_row)): NameStoreJoins) -> NameStoreJoin {
+    NameStoreJoin {
+        name_store_join: name_store_join_row,
+        name: name_row,
     }
 }
 
 impl NameStoreJoinFilter {
     pub fn new() -> NameStoreJoinFilter {
         NameStoreJoinFilter::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
     }
 
     pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
