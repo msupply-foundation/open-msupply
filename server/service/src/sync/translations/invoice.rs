@@ -641,7 +641,7 @@ fn legacy_invoice_status(
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::name_links_merged;
+    use crate::sync::test::merge_helpers::merge_all_name_links;
 
     use super::*;
     use repository::{
@@ -682,7 +682,7 @@ mod tests {
         let (mock_data, connection, _, _) =
             setup_all("test_invoice_push_merged", MockDataInserts::all()).await;
 
-        name_links_merged(&connection, &mock_data).unwrap();
+        merge_all_name_links(&connection, &mock_data).unwrap();
 
         let repo = ChangelogRepository::new(&connection);
         let changelogs = repo
