@@ -3,6 +3,7 @@ import { RangeObject, useUrlQuery } from '@common/hooks';
 import { DatePickerInput, DateTimePickerInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { DateUtils, useFormatDateTime } from '@common/intl';
+import { FilterLabelSx } from './styleConstants';
 
 export interface DateFilterDefinition extends FilterDefinitionCommon {
   type: 'date' | 'dateTime';
@@ -56,17 +57,7 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
     width: FILTER_WIDTH,
     onChange: handleChange,
     textFieldProps: {
-      sx: {
-        '& .MuiInputLabel-root': {
-          zIndex: 100,
-          top: '4px',
-          left: '8px',
-          color: 'gray.main',
-        },
-        '& .MuiInputLabel-root.Mui-focused': {
-          color: 'secondary.main',
-        },
-      },
+      sx: FilterLabelSx,
     },
     minDate: getRangeBoundary(urlValue, range, minDate),
     maxDate: getRangeBoundary(urlValue, range, maxDate),
