@@ -26,6 +26,7 @@ mod patient_id_indices;
 mod plugin_data;
 mod program_enrolment_add_patient_link_id;
 mod program_enrolment_status;
+mod program_event_patient_link_id;
 mod requisition_add_name_link_id;
 mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
@@ -68,6 +69,8 @@ impl Migration for V1_06_00 {
         requisition_add_name_link_id::migrate(connection)?;
         stock_line_add_supplier_link_id::migrate(connection)?;
         barcode_add_manufacturer_link_id::migrate(connection)?;
+        // Patient link migrations
+        program_event_patient_link_id::migrate(connection)?;
         program_enrolment_add_patient_link_id::migrate(connection)?;
 
         // Clinician link migrations
