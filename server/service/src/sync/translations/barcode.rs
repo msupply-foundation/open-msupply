@@ -1,6 +1,6 @@
 use repository::{
-    BarcodeRow, BarcodeRowRepository, ChangelogRow, ChangelogTableName, StorageConnection,
-    SyncBufferRow,
+    barcode::{Barcode, BarcodeFilter, BarcodeRepository},
+    BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -93,25 +93,27 @@ impl SyncTranslation for BarcodeTranslation {
             return Ok(None);
         }
 
-        let BarcodeRow {
-            id,
-            gtin,
-            item_id,
-            manufacturer_id,
-            pack_size,
-            parent_id,
-        } = BarcodeRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Barcode row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Barcode {
+            barcode_row:
+                BarcodeRow {
+                    id,
+                    gtin,
+                    item_id,
+                    manufacturer_id: _,
+                    pack_size,
+                    parent_id,
+                },
+            name_row,
+        } = BarcodeRepository::new(connection)
+            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .pop()
+            .ok_or_else(|| anyhow::anyhow!("Barcode not found"))?;
 
         let legacy_row = LegacyBarcodeRow {
             id,
             gtin,
             item_id,
-            manufacturer_id,
+            manufacturer_id: name_row.and_then(|name_row| Some(name_row.id)),
             pack_size,
             parent_id,
         };
