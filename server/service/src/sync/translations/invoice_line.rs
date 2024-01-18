@@ -352,6 +352,8 @@ fn to_legacy_invoice_line_type(_type: &InvoiceLineRowType) -> LegacyTransLineTyp
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_item_links;
+
     use super::*;
     use repository::{
         mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
@@ -405,19 +407,12 @@ mod tests {
     #[actix_rt::test]
     async fn test_requisition_line_push_merged() {
         // The item_links_merged function will merge ALL items into item_a, so all invoice_lines should have an item_id of "item_a" regardless of their original item_id.
-        let (_, connection, _, _) = setup_all(
+        let (mock_data, connection, _, _) = setup_all(
             "test_invoice_line_push_item_link_merged",
-            MockDataInserts::none()
-                .units()
-                .items()
-                .item_links_merged()
-                .names()
-                .stores()
-                .locations()
-                .barcodes()
-                .full_invoices(),
-        )
+            MockDataInserts::all())
         .await;
+        
+        merge_all_item_links(&connection, &mock_data).unwrap();
 
         let repo = ChangelogRepository::new(&connection);
         let changelogs = repo

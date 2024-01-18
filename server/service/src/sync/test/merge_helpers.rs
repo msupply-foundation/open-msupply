@@ -1,8 +1,10 @@
 use repository::{
-    mock::{mock_name_link_from_name, MockDataCollection},
-    NameLinkRowRepository, NameRow, RepositoryError, StorageConnection,
+    mock::{mock_item_link_from_item, mock_name_link_from_name, MockDataCollection},
+    ItemLinkRowRepository, ItemRow, NameLinkRowRepository, NameRow, RepositoryError,
+    StorageConnection,
 };
 
+// Changes all name_id values to "name_a" to merge all names into "name_a".
 pub fn merge_all_name_links(
     connection: &StorageConnection,
     mock_data: &MockDataCollection,
@@ -20,6 +22,29 @@ pub fn merge_all_name_links(
         let mut name_link = mock_name_link_from_name(&name);
         name_link.name_id = "name_a".to_string();
         name_link_repo.upsert_one(&name_link)?;
+    }
+
+    Ok(())
+}
+
+// Changes all item_id values to "item_a" to merge all items into "item_a".
+pub fn merge_all_item_links(
+    connection: &StorageConnection,
+    mock_data: &MockDataCollection,
+) -> Result<(), RepositoryError> {
+    let item_link_repo = ItemLinkRowRepository::new(&connection);
+
+    let items: Vec<ItemRow> = mock_data
+        .data
+        .iter()
+        .map(|(_, mock)| mock.items.clone())
+        .flatten()
+        .collect();
+
+    for item in items {
+        let mut item_link = mock_item_link_from_item(&item);
+        item_link.item_id = "item_a".to_string();
+        item_link_repo.upsert_one(&item_link)?;
     }
 
     Ok(())
