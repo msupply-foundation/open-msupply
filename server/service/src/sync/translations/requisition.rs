@@ -523,7 +523,7 @@ impl LegacyAuthorisationStatus {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::name_links_merged;
+    use crate::sync::test::merge_helpers::merge_all_name_links;
 
     use super::*;
     use repository::{
@@ -558,10 +558,13 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_requisition_push_merged() {
-        let (mock_data, connection, _, _) =
-            setup_all("test_requisition_push_merged", MockDataInserts::all()).await;
+        let (mock_data, connection, _, _) = setup_all(
+            "test_requisition_push_merged",
+            MockDataInserts::none().names().stores().requisitions(),
+        )
+        .await;
 
-        name_links_merged(&connection, &mock_data).unwrap();
+        merge_all_name_links(&connection, &mock_data).unwrap();
 
         let repo = ChangelogRepository::new(&connection);
         let changelogs = repo
