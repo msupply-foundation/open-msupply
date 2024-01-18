@@ -274,12 +274,11 @@ mod repository_test {
         mock::{
             mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_item_link_from_item,
-            mock_master_list_master_list_line_filter_test, mock_name_link_from_name,
-            mock_outbound_shipment_number_store_a, mock_request_draft_requisition,
-            mock_request_draft_requisition2, mock_test_master_list_name1,
-            mock_test_master_list_name2, mock_test_master_list_name_filter1,
-            mock_test_master_list_name_filter2, mock_test_master_list_name_filter3,
-            mock_test_master_list_store1, MockDataInserts,
+            mock_master_list_master_list_line_filter_test, mock_outbound_shipment_number_store_a,
+            mock_request_draft_requisition, mock_request_draft_requisition2,
+            mock_test_master_list_name1, mock_test_master_list_name2,
+            mock_test_master_list_name_filter1, mock_test_master_list_name_filter2,
+            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
         test_db, ActivityLogRowRepository, InvoiceFilter, InvoiceLineRepository,
@@ -287,8 +286,8 @@ mod repository_test {
         ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyValueStoreRepository, KeyValueType,
         MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
-        MasterListRowRepository, NameLinkRowRepository, NameRowRepository, NumberRowRepository,
-        NumberRowType, RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
+        MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
+        RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
         RequisitionLineRowRepository, RequisitionRepository, RequisitionRowRepository,
         StockLineFilter, StockLineRepository, StockLineRowRepository, StorageConnection,
         StoreRowRepository, UserAccountRowRepository,
@@ -571,9 +570,6 @@ mod repository_test {
         // setup
         let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&data::name_1()).await.unwrap();
-        NameLinkRowRepository::new(&connection)
-            .upsert_one(&mock_name_link_from_name(&data::name_1()))
-            .unwrap();
         MasterListRowRepository::new(&connection)
             .upsert_one(&data::master_list_1())
             .unwrap();

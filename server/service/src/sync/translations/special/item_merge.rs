@@ -63,7 +63,9 @@ impl SyncTranslation for ItemMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
+    use crate::sync::{
+        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
+    };
 
     use super::*;
     use repository::{
@@ -74,7 +76,6 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_merge() {
         // util::init_logger(util::LogLevel::Info);
-
         let mut sync_records = vec![
             SyncBufferRow {
                 record_id: "item_b_merge".to_string(),
@@ -121,10 +122,14 @@ mod tests {
         )
         .await;
 
+        let mut logger = SyncLogger::start(&connection).unwrap();
+
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true).unwrap();
+        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
+            .await
+            .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo
@@ -145,7 +150,9 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, true).unwrap();
+        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
+            .await
+            .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo

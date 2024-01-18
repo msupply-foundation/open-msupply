@@ -13,14 +13,17 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ALTER TABLE master_list_line 
             ADD CONSTRAINT master_list_line_item_link_id_fkey 
             FOREIGN KEY (item_link_id) REFERENCES item_link(id);
-            DROP INDEX IF EXISTS index_master_list_line_item_id_fkey;
+            DROP INDEX index_master_list_line_item_id_fkey;
             ALTER TABLE master_list_line DROP item_id;
-            "#,
+
+            CREATE INDEX "index_master_list_line_item_link_id_fkey" on "master_list_line" (item_link_id);
+        "#,
     )?;
     #[cfg(not(feature = "postgres"))]
     sql!(
         connection,
         r#"
+            DROP INDEX index_master_list_line_item_id_fkey;
             ALTER TABLE master_list_line RENAME TO master_list_line_old;
 
             CREATE TABLE master_list_line (
@@ -33,7 +36,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             SELECT id, item_id, master_list_id FROM master_list_line_old;
 
             DROP TABLE master_list_line_old;
-            "#,
+            
+            CREATE INDEX "index_master_list_line_item_link_id_fkey" on "master_list_line" (item_link_id);
+        "#,
     )?;
 
     Ok(())

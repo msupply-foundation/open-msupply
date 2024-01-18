@@ -59,7 +59,7 @@ pub struct FullSyncStatusNode {
     error: Option<SyncErrorNode>,
     summary: SyncStatusNode,
     prepare_initial: Option<SyncStatusNode>,
-    integration: Option<SyncStatusNode>,
+    integration: Option<SyncStatusWithProgressNode>,
     pull_central: Option<SyncStatusWithProgressNode>,
     pull_remote: Option<SyncStatusWithProgressNode>,
     push: Option<SyncStatusWithProgressNode>,
@@ -110,9 +110,11 @@ pub fn latest_sync_status(
             started: status.started,
             finished: status.finished,
         }),
-        integration: integration.map(|status| SyncStatusNode {
+        integration: integration.map(|status| SyncStatusWithProgressNode {
             started: status.started,
             finished: status.finished,
+            total: status.total,
+            done: status.done,
         }),
         pull_central: pull_central.map(|status| SyncStatusWithProgressNode {
             started: status.started,
