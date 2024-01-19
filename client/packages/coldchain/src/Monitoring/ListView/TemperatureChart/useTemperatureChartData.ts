@@ -57,7 +57,6 @@ const useFilterDates = (
 };
 
 export const useTemperatureChartData = () => {
-  console.info('RENDER');
   const theme = useTheme();
   const { filter } = useUrlQueryParams({
     filters: [
