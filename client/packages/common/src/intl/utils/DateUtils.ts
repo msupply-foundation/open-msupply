@@ -32,6 +32,7 @@ import {
   formatRFC3339,
   previousMonday,
   endOfWeek,
+  setMilliseconds,
 } from 'date-fns';
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
@@ -131,6 +132,7 @@ export const DateUtils = {
   startOfYear,
   previousMonday,
   endOfWeek,
+  setMilliseconds,
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
