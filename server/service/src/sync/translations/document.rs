@@ -132,7 +132,7 @@ impl SyncTranslation for DocumentTranslation {
             data,
             form_schema_id,
             status,
-            owner_name_id,
+            owner_name_link_id: _,
             context_id,
         } = document.to_row()?;
 
@@ -149,14 +149,14 @@ impl SyncTranslation for DocumentTranslation {
                 DocumentStatus::Active => LegacyDocumentStatus::Active,
                 DocumentStatus::Deleted => LegacyDocumentStatus::Deleted,
             },
-            owner_name_id,
+            owner_name_id: document.owner_name_id,
             context_id,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,
             LegacyTableName::DOCUMENT,
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         )]))
     }
 }
