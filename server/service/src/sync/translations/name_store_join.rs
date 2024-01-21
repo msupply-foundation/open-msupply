@@ -166,9 +166,8 @@ impl SyncTranslation for NameStoreJoinTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::name_links_merged;
-
     use super::*;
+    use crate::sync::test::merge_helpers::merge_all_name_links;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
     };
@@ -215,7 +214,7 @@ mod tests {
         let (mock_data, connection, _, _) =
             setup_all("test_name_store_join_push_merged", MockDataInserts::all()).await;
 
-        name_links_merged(&connection, &mock_data).unwrap();
+        merge_all_name_links(&connection, &mock_data).unwrap();
 
         let repo = ChangelogRepository::new(&connection);
         let changelogs = repo
