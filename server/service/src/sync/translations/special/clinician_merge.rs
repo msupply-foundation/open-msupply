@@ -37,7 +37,7 @@ impl SyncTranslation for ClinicianMergeTranslation {
         let clinician_link_repo = ClinicianLinkRowRepository::new(connection);
         let clinician_links =
             clinician_link_repo.find_many_by_clinician_id(&data.merge_id_to_delete)?;
-        if clinician_links.len() == 0 {
+        if clinician_links.is_empty() {
             return Ok(None);
         }
         let indirect_link = clinician_link_repo
