@@ -1,6 +1,6 @@
 use super::{version::Version, Migration};
 
-use crate::StorageConnection;
+use crate::{ChangelogRepository, StorageConnection};
 
 mod barcode_add_manufacturer_link_id;
 mod clinician_link;
@@ -37,6 +37,11 @@ impl Migration for V1_07_00 {
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         // merge migrations:
 
+        // We don't want merge-migration updates to sync. Remember the current changelog cursor in
+        // order to be able to delete all changelog entries triggered by the merge migrations.
+        let changelog_repo = ChangelogRepository::new(connection);
+        let cursor_before_merge_migration = changelog_repo.latest_cursor()?;
+
         item_add_is_active::migrate(connection)?;
         // Item link migrations
         item_link_create_table::migrate(connection)?;
@@ -69,6 +74,9 @@ impl Migration for V1_07_00 {
 
         // run after indexes, TODO move when moving migrations to v1_07_00
         contact_trace_link_id::migrate(connection)?;
+
+        // Revert changelog to the state before the merge migrations
+        changelog_repo.delete((cursor_before_merge_migration + 1).try_into()?)?;
 
         Ok(())
     }
