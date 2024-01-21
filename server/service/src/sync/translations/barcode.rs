@@ -103,7 +103,7 @@ impl SyncTranslation for BarcodeTranslation {
                     pack_size,
                     parent_id,
                 },
-            name_row,
+            manufacturer_name_row,
         } = BarcodeRepository::new(connection)
             .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
             .pop()
@@ -113,7 +113,7 @@ impl SyncTranslation for BarcodeTranslation {
             id,
             gtin,
             item_id,
-            manufacturer_id: name_row.and_then(|name_row| Some(name_row.id)),
+            manufacturer_id: manufacturer_name_row.and_then(|name_row| Some(name_row.id)),
             pack_size,
             parent_id,
         };
