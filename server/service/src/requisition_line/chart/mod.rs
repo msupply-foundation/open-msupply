@@ -173,7 +173,7 @@ mod test {
     use repository::{
         db_diesel::requisition_row::RequisitionRowType,
         mock::{
-            mock_draft_response_requisition_for_update_test_line, mock_item_a, mock_name_a,
+            mock_item_a, mock_name_a, mock_new_response_requisition_for_update_test_line,
             mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
@@ -208,7 +208,7 @@ mod test {
             Err(ServiceError::RequisitionLineDoesNotExist)
         );
 
-        let test_line = mock_draft_response_requisition_for_update_test_line();
+        let test_line = mock_new_response_requisition_for_update_test_line();
 
         // NotARequestRequisition
         assert_eq!(

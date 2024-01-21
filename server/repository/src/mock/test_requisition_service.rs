@@ -21,7 +21,7 @@ pub fn mock_test_requisition_service() -> MockData {
         .push(mock_sent_request_requisition_line());
     result
         .requisition_lines
-        .push(mock_draft_response_requisition_for_update_test_line());
+        .push(mock_new_response_requisition_for_update_test_line());
     result
         .requisition_lines
         .push(mock_finalised_request_requisition_line());
@@ -30,7 +30,7 @@ pub fn mock_test_requisition_service() -> MockData {
         .push(mock_draft_request_requisition_for_update_test());
     result
         .requisitions
-        .push(mock_draft_response_requisition_for_update_test());
+        .push(mock_new_response_requisition_for_update_test());
     result
         .requisitions
         .push(mock_finalised_response_requisition());
@@ -155,9 +155,9 @@ pub fn mock_finalised_request_requisition_line() -> RequisitionLineRow {
     })
 }
 
-pub fn mock_draft_response_requisition_for_update_test() -> RequisitionRow {
+pub fn mock_new_response_requisition_for_update_test() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
-        r.id = "mock_draft_response_requisition_for_update_test".to_owned();
+        r.id = "mock_new_response_requisition_for_update_test".to_owned();
         r.requisition_number = 3;
         r.name_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
@@ -189,10 +189,10 @@ pub fn mock_new_response_requisition() -> RequisitionRow {
     })
 }
 
-pub fn mock_draft_response_requisition_for_update_test_line() -> RequisitionLineRow {
+pub fn mock_new_response_requisition_for_update_test_line() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
-        r.id = "mock_draft_response_requisition_for_update_test_line".to_owned();
-        r.requisition_id = mock_draft_response_requisition_for_update_test().id;
+        r.id = "mock_new_response_requisition_for_update_test_line".to_owned();
+        r.requisition_id = mock_new_response_requisition_for_update_test().id;
         r.item_id = mock_item_a().id;
         r.requested_quantity = 10;
         r.suggested_quantity = 5;
