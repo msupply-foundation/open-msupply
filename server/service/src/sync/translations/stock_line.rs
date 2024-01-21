@@ -136,7 +136,7 @@ impl SyncTranslation for StockLineTranslation {
                     barcode_id,
                 },
             item_row,
-            name_row,
+            supplier_name_row,
             ..
         } = stock_line;
 
@@ -154,7 +154,7 @@ impl SyncTranslation for StockLineTranslation {
             cost_price: cost_price_per_pack,
             sell_price: sell_price_per_pack,
             note,
-            supplier_id: name_row.and_then(|name| Some(name.id)),
+            supplier_id: supplier_name_row.and_then(|supplier| Some(supplier.id)),
             barcode_id,
         };
 
