@@ -116,7 +116,7 @@ mod test {
                                 r.pack_size = Some(1);
                             })
                         },
-                        name_row: None,
+                        manufacturer_name_row: None,
                     },
                 }
             }

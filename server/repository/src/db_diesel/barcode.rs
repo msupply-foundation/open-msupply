@@ -19,7 +19,7 @@ use crate::{EqualFilter, Pagination, Sort};
 #[derive(PartialEq, Debug, Clone)]
 pub struct Barcode {
     pub barcode_row: BarcodeRow,
-    pub name_row: Option<NameRow>,
+    pub manufacturer_name_row: Option<NameRow>,
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -107,7 +107,7 @@ fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedBarcodeQuery {
 pub fn to_domain((barcode_row, name_link): BarcodeJoin) -> Barcode {
     Barcode {
         barcode_row,
-        name_row: name_link.map(|(_, name)| name),
+        manufacturer_name_row: name_link.map(|(_, name)| name),
     }
 }
 
