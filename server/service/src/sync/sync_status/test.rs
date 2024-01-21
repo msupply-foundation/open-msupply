@@ -84,7 +84,7 @@ async fn sync_status() {
 
     // Test PUSH and ERROR
     // Clear change log
-    ChangelogRepository::new(&connection).drop_all().unwrap();
+    ChangelogRepository::new(&connection).delete(0).unwrap();
     // Insert some location rows to be pushed
     insert_extra_mock_data(
         &connection,
