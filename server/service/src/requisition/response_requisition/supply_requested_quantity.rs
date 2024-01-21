@@ -139,8 +139,7 @@ impl From<RepositoryError> for SupplyRequestedQuantityError {
 mod test {
     use repository::{
         mock::{
-            mock_finalised_response_requisition,
-            mock_full_draft_response_requisition_for_update_test,
+            mock_finalised_response_requisition, mock_new_response_requisition_for_update_test,
             mock_new_response_requisition_test, mock_sent_request_requisition, mock_store_a,
             mock_store_b, mock_user_account_b, MockDataInserts,
         },
@@ -210,7 +209,7 @@ mod test {
             service.supply_requested_quantity(
                 &context,
                 SupplyRequestedQuantity {
-                    response_requisition_id: mock_full_draft_response_requisition_for_update_test()
+                    response_requisition_id: mock_new_response_requisition_for_update_test()
                         .requisition
                         .id,
                 },
