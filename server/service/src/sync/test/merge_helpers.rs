@@ -14,8 +14,7 @@ pub fn merge_all_name_links(
     let names: Vec<NameRow> = mock_data
         .data
         .iter()
-        .map(|(_, mock)| mock.names.clone())
-        .flatten()
+        .flat_map(|(_, mock)| mock.names.clone())
         .collect();
 
     for name in names {
@@ -37,8 +36,7 @@ pub fn merge_all_item_links(
     let items: Vec<ItemRow> = mock_data
         .data
         .iter()
-        .map(|(_, mock)| mock.items.clone())
-        .flatten()
+        .flat_map(|(_, mock)| mock.items.clone())
         .collect();
 
     for item in items {
