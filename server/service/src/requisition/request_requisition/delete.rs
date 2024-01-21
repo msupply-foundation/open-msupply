@@ -122,7 +122,7 @@ mod test_delete {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_new_response_requisition_for_update_test, mock_sent_request_requisition,
+            mock_full_draft_response_requisition_for_update_test, mock_sent_request_requisition,
             mock_store_a, mock_store_b, MockDataInserts,
         },
         test_db::setup_all,
@@ -174,7 +174,7 @@ mod test_delete {
             service.delete_request_requisition(
                 &context,
                 DeleteRequestRequisition {
-                    id: mock_new_response_requisition_for_update_test()
+                    id: mock_full_draft_response_requisition_for_update_test()
                         .requisition
                         .id,
                 },

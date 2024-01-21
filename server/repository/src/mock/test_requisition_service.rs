@@ -41,7 +41,7 @@ pub fn mock_test_requisition_service() -> MockData {
         .push(mock_request_draft_requisition_calculation_test());
     result
         .full_requisitions
-        .push(mock_new_response_requisition_for_update_test());
+        .push(mock_full_draft_response_requisition_for_update_test());
     result
         .full_requisitions
         .push(mock_new_response_requisition_test());
@@ -201,10 +201,10 @@ pub fn mock_draft_response_requisition_for_update_test_line() -> RequisitionLine
     })
 }
 
-pub fn mock_new_response_requisition_for_update_test() -> FullMockRequisition {
+pub fn mock_full_draft_response_requisition_for_update_test() -> FullMockRequisition {
     FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
-            r.id = "mock_new_response_requisition_for_update_test".to_owned();
+            r.id = "mock_full_draft_response_requisition_for_update_test".to_owned();
             r.requisition_number = 10;
             r.name_id = "name_a".to_owned();
             r.store_id = mock_store_a().id;
@@ -218,8 +218,8 @@ pub fn mock_new_response_requisition_for_update_test() -> FullMockRequisition {
             r.min_months_of_stock = 0.9;
         }),
         lines: vec![inline_init(|r: &mut RequisitionLineRow| {
-            r.id = "mock_new_response_requisition_for_update_test_line".to_owned();
-            r.requisition_id = "mock_new_response_requisition_for_update_test".to_string();
+            r.id = "mock_full_draft_response_requisition_for_update_test_line".to_owned();
+            r.requisition_id = "mock_full_draft_response_requisition_for_update_test".to_string();
             r.item_id = mock_item_a().id;
             r.requested_quantity = 10;
             r.suggested_quantity = 5;
