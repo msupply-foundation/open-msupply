@@ -110,7 +110,7 @@ mod test {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_new_response_requisition_for_update_test,
+            mock_full_draft_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
             mock_store_a, mock_store_b, MockDataInserts,
         },
@@ -165,7 +165,7 @@ mod test {
             service.use_suggested_quantity(
                 &context,
                 UseSuggestedQuantity {
-                    request_requisition_id: mock_new_response_requisition_for_update_test()
+                    request_requisition_id: mock_full_draft_response_requisition_for_update_test()
                         .requisition
                         .id,
                 },

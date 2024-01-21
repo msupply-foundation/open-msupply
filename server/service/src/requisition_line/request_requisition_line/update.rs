@@ -107,7 +107,7 @@ impl From<RepositoryError> for UpdateRequestRequisitionLineError {
 mod test {
     use repository::{
         mock::{
-            mock_new_response_requisition_for_update_test,
+            mock_full_draft_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition_line,
             mock_store_a, mock_store_b, MockDataInserts,
         },
@@ -164,7 +164,7 @@ mod test {
             service.update_request_requisition_line(
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisitionLine| {
-                    r.id = mock_new_response_requisition_for_update_test().lines[0]
+                    r.id = mock_full_draft_response_requisition_for_update_test().lines[0]
                         .id
                         .clone();
                 }),

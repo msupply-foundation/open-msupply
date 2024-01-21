@@ -143,8 +143,9 @@ mod test {
     use repository::{
         mock::{
             common::FullMockMasterList,
-            mock_draft_request_requisition_for_update_test, mock_item_a, mock_item_b, mock_item_c,
-            mock_item_d, mock_name_store_a, mock_new_response_requisition_for_update_test,
+            mock_draft_request_requisition_for_update_test,
+            mock_full_draft_response_requisition_for_update_test, mock_item_a, mock_item_b,
+            mock_item_c, mock_item_d, mock_name_store_a,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
             mock_store_a, mock_store_b, mock_test_not_store_a_master_list,
             test_item_stats::{self},
@@ -203,7 +204,7 @@ mod test {
             service.add_from_master_list(
                 &context,
                 AddFromMasterList {
-                    request_requisition_id: mock_new_response_requisition_for_update_test()
+                    request_requisition_id: mock_full_draft_response_requisition_for_update_test()
                         .requisition
                         .id,
                     master_list_id: "n/a".to_owned()
