@@ -9,6 +9,7 @@ mod clinician_store_join_add_clinician_link_id;
 mod contact_trace;
 mod contact_trace_link_id;
 mod encounter_add_clinician_link_id;
+mod encounter_add_patient_link_id;
 mod encounter_status;
 mod indexes;
 mod invoice_add_clinician_link_id;
@@ -72,6 +73,7 @@ impl Migration for V1_06_00 {
         // Patient link migrations
         program_event_patient_link_id::migrate(connection)?;
         program_enrolment_add_patient_link_id::migrate(connection)?;
+        encounter_add_patient_link_id::migrate(connection)?;
 
         // Clinician link migrations
         clinician_link::migrate(connection)?;
