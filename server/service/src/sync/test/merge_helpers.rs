@@ -1,6 +1,6 @@
 use repository::{
-    mock::{mock_item_link_from_item, mock_name_link_from_name, MockDataCollection},
-    ItemLinkRowRepository, ItemRow, NameLinkRowRepository, NameRow, RepositoryError,
+    mock::{mock_item_link_from_item, MockDataCollection},
+    ItemLinkRowRepository, ItemRow, NameLinkRow, NameLinkRowRepository, NameRow, RepositoryError,
     StorageConnection,
 };
 
@@ -18,7 +18,11 @@ pub fn merge_all_name_links(
         .collect();
 
     for name in names {
-        let mut name_link = mock_name_link_from_name(&name);
+        let mut name_link = NameLinkRow {
+            id: name.id.clone(),
+            name_id: name.id.clone(),
+        };
+
         name_link.name_id = "name_a".to_string();
         name_link_repo.upsert_one(&name_link)?;
     }
