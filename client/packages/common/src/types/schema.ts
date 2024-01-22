@@ -32,6 +32,12 @@ export type Scalars = {
   NaiveDate: { input: string; output: string; }
 };
 
+export type AccountBlocked = AuthTokenErrorInterface & {
+  __typename: 'AccountBlocked';
+  description: Scalars['String']['output'];
+  timeoutRemaining: Scalars['Int']['output'];
+};
+
 export type ActiveEncounterEventFilterInput = {
   data?: InputMaybe<StringFilterInput>;
   /**
@@ -1095,6 +1101,7 @@ export type EncounterFilterInput = {
   documentName?: InputMaybe<EqualFilterStringInput>;
   endDatetime?: InputMaybe<DatetimeFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  /** Only if this filter is set encounters with status DELETED are returned */
   includeDeleted?: InputMaybe<Scalars['Boolean']['input']>;
   patient?: InputMaybe<PatientFilterInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
