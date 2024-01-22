@@ -12,9 +12,10 @@ import enUS from 'date-fns/locale/en-US';
 import fr from 'date-fns/locale/fr';
 import ar from 'date-fns/locale/ar';
 import es from 'date-fns/locale/es';
+import ru from 'date-fns/locale/ru';
 
 // Map locale string (from i18n) to locale object (from date-fns)
-const getLocaleObj = { fr, ar, es };
+const getLocaleObj = { fr, ar, es, ru };
 
 export const getLocale = (language: SupportedLocales) => {
   switch (language) {
@@ -37,6 +38,7 @@ const languageOptions = [
   { label: 'Français (Djibouti)', value: 'fr-DJ' },
   { label: 'English', value: 'en' },
   { label: 'Español', value: 'es' },
+  { label: 'Русский', value: 'ru' },
   { label: 'Tetum', value: 'tet' },
 ];
 
@@ -46,6 +48,7 @@ const locales = [
   'es' as const,
   'fr' as const,
   'fr-DJ' as const,
+  'ru' as const,
   'tet' as const,
 ] as const;
 
