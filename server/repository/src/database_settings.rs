@@ -50,6 +50,9 @@ impl DatabaseSettings {
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         let sqlite_suffix = |s: String| -> bool {
+            if s.len() < 8 {
+                return false;
+            }
             let split = s.char_indices().nth_back(6).unwrap().0;
             if &s[split..] == ".sqlite" {
                 return true;
