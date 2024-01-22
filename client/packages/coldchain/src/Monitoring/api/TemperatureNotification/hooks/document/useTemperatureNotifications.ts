@@ -6,7 +6,9 @@ import {
 } from '@openmsupply-client/common';
 import { ListParams } from '../../api';
 
-const POLLING_INTERVAL_IN_MINUTES = 5;
+const MILLISECONDS_PER_MINUTE = 60 * 1000;
+const POLLING_INTERVAL_IN_MILLISECONDS = 3 * MILLISECONDS_PER_MINUTE;
+const STALE_TIME_IN_MILLISECONDS = 1 * MILLISECONDS_PER_MINUTE;
 
 export const useTemperatureNotifications = (queryParams: ListParams) => {
   const api = useTemperatureNotificationApi();
@@ -22,8 +24,9 @@ export const useTemperatureNotifications = (queryParams: ListParams) => {
           warning(`${t('error.fetch-notifications')}: ${e.message}`)()
         ),
     {
-      cacheTime: 0,
-      refetchInterval: 1000 * 60 * POLLING_INTERVAL_IN_MINUTES,
+      cacheTime: POLLING_INTERVAL_IN_MILLISECONDS,
+      refetchInterval: POLLING_INTERVAL_IN_MILLISECONDS,
+      staleTime: STALE_TIME_IN_MILLISECONDS,
     }
   );
 };
