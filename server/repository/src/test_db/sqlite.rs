@@ -37,8 +37,8 @@ pub(crate) async fn setup_with_version(
     version: Option<Version>,
     inserts: MockDataInserts,
 ) -> (StorageConnectionManager, MockDataCollection) {
-    let db_path = db_settings.connection_string();
-
+    let db_path = db_settings.database_path();
+    println!("1 $+######################");
     let (connection_manager, collection) = if db_path.starts_with("file:") {
         // memory mode
         let connection_manager = create_db(&db_settings, version.clone());
@@ -96,6 +96,7 @@ pub(crate) async fn setup_with_version(
         drop(guard);
 
         // copy template
+        println!("2 $+######################");
 
         // remove existing db file
         fs::remove_file(&db_path).ok();
@@ -119,6 +120,8 @@ pub(crate) async fn setup_with_version(
 }
 
 fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManager {
+    println!("3 $+######################");
+
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
     const SQLITE_LOCKWAIT_MS: u32 = 10 * 1000; // 10 second wait for test lock timeout
@@ -133,7 +136,8 @@ fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManage
 }
 
 fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> StorageConnectionManager {
-    let db_path = db_settings.connection_string();
+    let db_path = db_settings.database_path();
+    println!("4 $+######################");
 
     // If not in-memory mode clean up and create test directory
     // (in in-memory mode the db_path starts with "file:")
@@ -143,6 +147,7 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
         // create parent dirs
         let path = Path::new(&db_path);
         let prefix = path.parent().unwrap();
+        println!("prefix ###################: {:?}", prefix.clone());
         fs::create_dir_all(prefix).unwrap();
     }
 

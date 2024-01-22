@@ -65,6 +65,13 @@ impl DatabaseSettings {
         }
     }
 
+    pub fn database_path(&self) -> String {
+        match &self.database_path {
+            Some(path) => format!("{}/{}", path, self.connection_string()),
+            None => self.connection_string(),
+        }
+    }
+
     pub fn connection_string_without_db(&self) -> String {
         self.connection_string()
     }
