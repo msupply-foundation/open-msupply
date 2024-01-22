@@ -7,11 +7,10 @@ export interface NumericTextInputProps
   onChange?: (value: number | undefined) => void;
   width?: number | string;
   defaultValue?: number;
-  integer?: boolean;
   allowNegative?: boolean;
   min?: number;
   max?: number;
-  decimalPrecision?: number;
+  precision?: number;
 }
 
 export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
@@ -22,11 +21,10 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       width = 75,
       onChange,
       defaultValue,
-      integer = false,
       allowNegative,
       min,
       max = Infinity,
-      decimalPrecision = Infinity,
+      precision = 0,
       ...props
     },
     ref
@@ -40,7 +38,6 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
         }}
         InputProps={InputProps}
         onChange={e => {
-          // cleanInput(e.target.value, true, true);
           if (
             (e.target.value === '' || e.target.value === undefined) &&
             !!onChange
@@ -52,7 +49,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           if (!Number.isNaN(parsed) && !!onChange)
             onChange(
               NumUtils.constrain(
-                NumUtils.round(parsed, integer ? 0 : decimalPrecision),
+                NumUtils.round(parsed, precision),
                 allowNegative === undefined && min && min < 0
                   ? min
                   : Math.max(min ?? -Infinity, 0),
@@ -67,17 +64,3 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
     );
   }
 );
-
-// // Strips out illegal characters before input is allowed
-// const cleanInput = (
-//   input: string,
-//   allowNegative: boolean,
-//   allowDecimal: boolean
-// ) => {
-//   console.log('input', input);
-//   const regex = new RegExp(
-//     `^${allowNegative ? '-?' : ''}\\d*${allowDecimal ? '\\.?' : ''}\\d*$`
-//   );
-
-//   console.log(input.match(regex));
-// };

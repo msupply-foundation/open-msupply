@@ -123,7 +123,6 @@ export const ResponseLineEditForm = ({
                 value={draftLine.supplyQuantity}
                 width={150}
                 onChange={supplyQuantity => update({ supplyQuantity })}
-                integer
               />
             }
             labelWidth="150px"

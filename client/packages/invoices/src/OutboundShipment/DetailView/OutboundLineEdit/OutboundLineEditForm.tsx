@@ -64,7 +64,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 }) => {
   const t = useTranslation('distribution');
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [issueQuantity, setIssueQuantity] = useState(0);
+  const [issueQuantity, setIssueQuantity] = useState<number>();
   const { format } = useFormatNumber();
   const { items } = useOutbound.line.rows();
 
@@ -118,9 +118,9 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   };
 
   const handleIssueQuantityChange = (quantity?: number) => {
-    if (quantity === undefined) return;
     setIssueQuantity(quantity);
-    allocate(quantity, Number(packSizeController.selected?.value));
+    if (quantity !== undefined)
+      allocate(quantity, Number(packSizeController.selected?.value));
   };
 
   useEffect(() => {
@@ -187,9 +187,6 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
-              defaultValue={1}
-              min={1}
-              integer
             />
             <Box marginLeft={1} />
 

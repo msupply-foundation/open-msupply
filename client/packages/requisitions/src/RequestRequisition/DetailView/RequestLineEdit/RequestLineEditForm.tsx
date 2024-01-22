@@ -197,7 +197,6 @@ export const RequestLineEditForm = ({
                 value={requestedQuantity}
                 width={100}
                 onChange={requestedQuantity => update({ requestedQuantity })}
-                integer
               />
             }
             labelWidth="750px"
@@ -217,7 +216,6 @@ export const RequestLineEditForm = ({
                       requestedQuantity: quantity * defaultPackSize,
                     });
                   }}
-                  integer
                 />
               }
               labelWidth="750px"
