@@ -27,7 +27,8 @@ const TEMPERATURE_BREACH_1: (&'static str, &'static str) = (
         "end_date": "2023-07-02",
         "end_time": 47046,
         "om_end_datetime": "" ,
-        "om_start_datetime": ""
+        "om_start_datetime": "",
+        "om_comment": ""
     }"#,
 );
 
@@ -58,6 +59,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     .unwrap()
                     + Duration::seconds(47046),
             ),
+            comment: None,
         }),
     )]
 }
@@ -95,6 +97,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                     .unwrap()
                     + Duration::seconds(47046),
             ),
+            comment: None,
         }),
     }]
 }
