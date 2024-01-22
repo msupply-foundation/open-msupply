@@ -5,13 +5,6 @@ use util::{
 
 use crate::{NameLinkRow, NameRow, NameType};
 
-pub fn mock_name_link_from_name(name: &NameRow) -> NameLinkRow {
-    NameLinkRow {
-        id: name.id.clone(),
-        name_id: name.id.clone(),
-    }
-}
-
 pub fn mock_name_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
         r.id = String::from("name_store_a");
