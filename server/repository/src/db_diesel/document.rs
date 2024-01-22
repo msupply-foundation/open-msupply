@@ -325,7 +325,7 @@ impl<'a> DocumentRepository<'a> {
                     apply_sort!(query, sort, latest_document::dsl::type_)
                 }
                 DocumentSortField::Owner => {
-                    apply_sort!(query, sort, name::dsl::id)
+                    apply_sort!(query, sort, name_dsl::id)
                 }
                 DocumentSortField::Context => {
                     apply_sort!(query, sort, latest_document::dsl::context_id)
