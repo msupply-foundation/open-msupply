@@ -197,6 +197,8 @@ impl SyncTranslation for RequisitionLineTranslation {
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_item_links;
+
     use super::*;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
@@ -231,19 +233,13 @@ mod tests {
     #[actix_rt::test]
     async fn test_requisition_line_push_merged() {
         // The item_links_merged function will merge ALL items into item_a, so all stock_lines should have an item_id of "item_a" regardless of their original item_id.
-        let (_, connection, _, _) = setup_all(
+        let (mock_data, connection, _, _) = setup_all(
             "test_requisition_line_push_item_link_merged",
-            MockDataInserts::none()
-                .units()
-                .items()
-                .item_links_merged()
-                .names()
-                .stores()
-                .locations()
-                .barcodes()
-                .full_requisitions(),
+            MockDataInserts::all(),
         )
         .await;
+
+        merge_all_item_links(&connection, &mock_data).unwrap();
 
         let repo = ChangelogRepository::new(&connection);
         let changelogs = repo
