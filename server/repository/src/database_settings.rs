@@ -49,7 +49,17 @@ impl DatabaseSettings {
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        self.database_name.clone()
+        let sqlite_suffix = |s: String| -> bool {
+            let split = s.char_indices().nth_back(6).unwrap().0;
+            if &s[split..] == ".sqlite" {
+                return true;
+            }
+            return false;
+        };
+        match sqlite_suffix(self.database_name.clone()) {
+            true => self.database_name.clone(),
+            false => format!("{}.sqlite", self.database_name.clone()),
+        }
     }
 
     pub fn connection_string_without_db(&self) -> String {
