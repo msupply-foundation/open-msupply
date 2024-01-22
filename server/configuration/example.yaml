@@ -28,6 +28,7 @@
 #   username: "postgres"
 #   password: "password"
 #   database_name: "omsupply-database"
+#   database_name: "omsupply-database.sqlite"
 # logging:
 ##   one of: All | Console | File
 #   mode: Console
