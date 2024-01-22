@@ -35,6 +35,7 @@ joinable!(stock_line -> location (location_id));
 joinable!(stock_line -> name_link (supplier_link_id));
 joinable!(stock_line -> barcode (barcode_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
+allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]

@@ -1,8 +1,8 @@
 use super::{
     clinician_row::clinician, invoice_line_row::invoice_line, invoice_row::invoice, name_row::name,
-    store_row::store, StorageConnection,
+    program_row::program, store_row::store, StorageConnection,
 };
-use crate::{program_row::program, repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
 use self::clinician_link::dsl as clinician_link_dsl;
 use diesel::prelude::*;

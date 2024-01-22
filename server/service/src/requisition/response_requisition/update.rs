@@ -144,8 +144,8 @@ mod test_update {
     use chrono::Utc;
     use repository::{
         mock::{
-            mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
-            mock_new_response_requisition, mock_response_program_requisition,
+            mock_finalised_response_requisition, mock_new_response_requisition,
+            mock_new_response_requisition_for_update_test, mock_response_program_requisition,
             mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
             MockDataInserts,
         },
@@ -225,7 +225,7 @@ mod test_update {
             service.update_response_requisition(
                 &context,
                 UpdateResponseRequisition {
-                    id: mock_draft_response_requisition_for_update_test().id,
+                    id: mock_new_response_requisition_for_update_test().id,
                     colour: None,
                     status: None,
                     their_reference: None,

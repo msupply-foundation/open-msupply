@@ -1,9 +1,7 @@
 use super::{
     name_link_row::name_link, name_row::name, name_store_join::name_store_join,
-    program_row::program, store_row::store, StorageConnection,
+    program_row::program, store_row::store, RepositoryError, StorageConnection,
 };
-
-use crate::repository_error::RepositoryError;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -27,6 +25,7 @@ allow_tables_to_appear_in_same_query!(program_enrolment, name);
 allow_tables_to_appear_in_same_query!(program_enrolment, name_store_join);
 allow_tables_to_appear_in_same_query!(program_enrolment, store);
 allow_tables_to_appear_in_same_query!(program_enrolment, program);
+allow_tables_to_appear_in_same_query!(program_enrolment, name_link);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[table_name = "program_enrolment"]
