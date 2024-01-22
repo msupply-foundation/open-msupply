@@ -19,6 +19,8 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+    // add optional database path
+    pub database_path: Option<String>,
     /// SQL run once at startup. For example, to run pragma statements
     pub init_sql: Option<String>,
 }
@@ -56,6 +58,7 @@ impl DatabaseSettings {
             }
             return false;
         };
+        println!("########{:?}", self.database_path);
         match sqlite_suffix(self.database_name.clone()) {
             true => self.database_name.clone(),
             false => format!("{}.sqlite", self.database_name.clone()),
@@ -187,6 +190,7 @@ mod database_setting_test {
             host: "".to_string(),
             database_name: "".to_string(),
             init_sql,
+            database_path: Some("".to_string()),
         }
     }
 
