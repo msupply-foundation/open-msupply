@@ -132,10 +132,11 @@ impl SyncTranslation for StockLineTranslation {
                     expiry_date,
                     on_hold,
                     note,
-                    supplier_id,
+                    supplier_id: _,
                     barcode_id,
                 },
             item_row,
+            supplier_name_row,
             ..
         } = stock_line;
 
@@ -153,7 +154,7 @@ impl SyncTranslation for StockLineTranslation {
             cost_price: cost_price_per_pack,
             sell_price: sell_price_per_pack,
             note,
-            supplier_id,
+            supplier_id: supplier_name_row.and_then(|supplier| Some(supplier.id)),
             barcode_id,
         };
 
@@ -178,7 +179,7 @@ impl SyncTranslation for StockLineTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_item_links;
+    use crate::sync::test::merge_helpers::{merge_all_item_links, merge_all_name_links};
 
     use super::*;
     use repository::{
@@ -206,13 +207,11 @@ mod tests {
     #[actix_rt::test]
     async fn test_stock_line_push_merged() {
         // The item_links_merged function will merge ALL items into item_a, so all stock_lines should have an item_id of "item_a" regardless of their original item_id.
-        let (mock_data, connection, _, _) = setup_all(
-            "test_stock_line_push_item_link_merged",
-            MockDataInserts::all(),
-        )
-        .await;
+        let (mock_data, connection, _, _) =
+            setup_all("test_stock_line_push_link_merged", MockDataInserts::all()).await;
 
         merge_all_item_links(&connection, &mock_data).unwrap();
+        merge_all_name_links(&connection, &mock_data).unwrap();
 
         let repo = ChangelogRepository::new(&connection);
         let changelogs = repo
@@ -231,7 +230,12 @@ mod tests {
                 .unwrap()
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
+            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"));
+
+            // Supplier ID can be null. We want to check if the non-null supplier_ids is "name_a".
+            if translated[0].record.data["name_ID"] != json!(null) {
+                assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            }
         }
     }
 }
