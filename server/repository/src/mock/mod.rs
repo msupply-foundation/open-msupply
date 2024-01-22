@@ -2,6 +2,7 @@ use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
 mod barcode;
+mod clinician;
 pub mod common;
 mod context;
 mod document;
@@ -50,6 +51,7 @@ mod unit;
 mod user_account;
 
 pub use barcode::*;
+pub use clinician::*;
 use common::*;
 pub use context::*;
 pub use document::*;
@@ -567,6 +569,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             program_order_types: mock_program_order_types(),
             name_tag_joins: mock_name_tag_joins(),
             contexts: mock_contexts(),
+            clinicians: mock_clinicians(),
             ..Default::default()
         },
     );

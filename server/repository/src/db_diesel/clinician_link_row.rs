@@ -115,6 +115,16 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_many_by_clinician_id(
+        &self,
+        clinician_id: &str,
+    ) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
+        let result = clinician_link_dsl::clinician_link
+            .filter(clinician_link::clinician_id.eq(clinician_id))
+            .load::<ClinicianLinkRow>(&self.connection.connection)?;
+        Ok(result)
+    }
+
     pub fn delete(&self, clinician_link_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             clinician_link_dsl::clinician_link.filter(clinician_link::id.eq(clinician_link_id)),
