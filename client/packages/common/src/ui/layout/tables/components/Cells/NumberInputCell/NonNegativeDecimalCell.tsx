@@ -1,6 +1,6 @@
 import React from 'react';
 import { CellProps } from '../../../columns';
-import { NonNegativeNumberInput } from '@common/components';
+import { NumericTextInput } from '@common/components';
 import { RecordWithId } from '@common/types';
 import { useBufferState, useDebounceCallback } from '@common/hooks';
 
@@ -19,18 +19,17 @@ export const NonNegativeDecimalCell = <T extends RecordWithId>({
   const updater = useDebounceCallback(column.setter, [column.setter], 250);
 
   return (
-    <NonNegativeNumberInput
+    <NumericTextInput
       disabled={isDisabled}
       max={max}
       InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
-      type="number"
       error={isError}
       value={buffer}
       onChange={newValue => {
-        const decimal = Math.round(newValue * 100) / 100;
-        setBuffer(decimal.toString());
-        updater({ ...rowData, [column.key]: decimal });
+        setBuffer(newValue as any);
+        updater({ ...rowData, [column.key]: newValue });
       }}
+      precision={2}
     />
   );
 };

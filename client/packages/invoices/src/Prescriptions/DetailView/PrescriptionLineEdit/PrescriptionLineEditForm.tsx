@@ -236,7 +236,6 @@ export const PrescriptionLineEditForm: React.FC<
               onChange={handleIssueQuantityChange}
               defaultValue={1}
               min={1}
-              integer
             />
 
             <Box marginLeft={1} />

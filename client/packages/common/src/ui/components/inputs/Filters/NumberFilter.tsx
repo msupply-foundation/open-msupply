@@ -72,7 +72,7 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
       value={value}
       min={getRangeBoundary(urlValue, range, minValue)}
       max={getRangeBoundary(urlValue, range, maxValue)}
-      // decimalLimit={decimalLimit}
+      precision={decimalLimit}
     />
   );
 };

@@ -114,7 +114,6 @@ const UIComponent = (props: ControlProps) => {
               sx={{ width: 65 }}
               onChange={onChangeAge}
               disabled={!props.enabled}
-              integer
             />
           </Box>
         </Box>
