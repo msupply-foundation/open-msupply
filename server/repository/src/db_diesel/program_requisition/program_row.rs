@@ -1,7 +1,10 @@
 use super::program_row::program::dsl as program_dsl;
 
 use crate::{
-    db_diesel::{context_row::context, document::document, master_list_row::master_list},
+    db_diesel::{
+        context_row::context, document::document, master_list_row::master_list,
+        name_link_row::name_link,
+    },
     repository_error::RepositoryError,
     StorageConnection,
 };
@@ -20,6 +23,7 @@ table! {
 joinable!(program -> master_list (master_list_id));
 joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
+allow_tables_to_appear_in_same_query!(program, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[table_name = "program"]
