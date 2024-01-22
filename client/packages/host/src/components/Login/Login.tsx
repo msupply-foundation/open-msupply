@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRightIcon,
   useTranslation,
@@ -34,10 +34,43 @@ export const Login = () => {
     error,
     siteName,
   } = useLoginForm(passwordRef);
-  const loginErrorArray = (error?.detail ?? '').split('(');
-  const loginErrorDetail = loginErrorArray[loginErrorArray.length - 1]
-    ?.split(')')[0]
-    ?.replace(',', '');
+  const [timeoutRemaining, setTimeoutRemaining] = useState(
+    error?.timeoutRemaining ?? 0
+  );
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      // Update the remaining timeout every second
+      setTimeoutRemaining(prevTimeoutRemaining =>
+        prevTimeoutRemaining > 0 ? prevTimeoutRemaining - 1000 : 0
+      );
+    }, 1000);
+
+    // Cleanup the interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    if (error && error.message === 'AccountBlocked') {
+      setTimeoutRemaining(error.timeoutRemaining ?? 0);
+    }
+  }, [error]);
+
+  const loginErrorMessage = useMemo(() => {
+    if (!error) return '';
+    if (error.message === 'AccountBlocked') {
+      if (timeoutRemaining < 1000) return '';
+
+      const milliseconds = timeoutRemaining;
+      const seconds = Math.floor((milliseconds / 1000) % 60);
+      const minutes = Math.floor((milliseconds / 1000 / 60) % 60);
+
+      return `${t('error.account-blocked')} ${minutes}:${
+        seconds < 10 ? `0${seconds}` : seconds
+      }`;
+    }
+    return t('error.login');
+  }, [error, timeoutRemaining]);
 
   useEffect(() => {
     if (!displaySettings) return;
@@ -99,10 +132,11 @@ export const Login = () => {
         </LoadingButton>
       }
       ErrorMessage={
-        error && (
+        error &&
+        loginErrorMessage !== '' && (
           <ErrorWithDetails
-            error={error.message || t('error.login')}
-            details={loginErrorDetail || ''}
+            error={loginErrorMessage}
+            details={error.detail || ''}
           />
         )
       }
