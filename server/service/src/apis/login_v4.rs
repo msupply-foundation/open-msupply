@@ -5,8 +5,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug)]
 pub enum LoginV4Error {
     Unauthorised,
-    AccountBlocked,
+    AccountBlocked(u64),
     ConnectionError(reqwest::Error),
+    ParseError(serde_json::Error),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -145,21 +146,26 @@ impl LoginApiV4 {
             .await
             .map_err(|e| LoginV4Error::ConnectionError(e))?;
 
-        if reqwest::StatusCode::UNAUTHORIZED == response.status() {
+        let status = response.status();
+        let body = response.json::<serde_json::Value>().await.unwrap();
+
+        if status == reqwest::StatusCode::UNAUTHORIZED {
             return Err(LoginV4Error::Unauthorised);
         }
 
         // handle account blocked error (i.e. too many failed login attempts)
-        if reqwest::StatusCode::FORBIDDEN == response.status() {
-            return Err(LoginV4Error::AccountBlocked);
+        if status == reqwest::StatusCode::FORBIDDEN {
+            if !body["timeoutRemaining"].is_null()
+                && !body["status"].is_null()
+                && body["status"] == "user_login_timeout"
+            {
+                let timeout_remaining = body["timeoutRemaining"].as_u64().unwrap();
+                return Err(LoginV4Error::AccountBlocked(timeout_remaining));
+            }
         }
 
-        let response = response
-            .error_for_status()
-            .map_err(|e| LoginV4Error::ConnectionError(e))?
-            .json()
-            .await
-            .map_err(|e| LoginV4Error::ConnectionError(e))?;
+        let response = serde_json::from_value::<LoginResponseV4>(body)
+            .map_err(|e| LoginV4Error::ParseError(e))?;
 
         Ok(response)
     }
