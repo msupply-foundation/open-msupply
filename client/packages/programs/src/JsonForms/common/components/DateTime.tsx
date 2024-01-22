@@ -9,7 +9,6 @@ import {
   DateTimePicker,
   DateTimePickerProps,
   DateUtils,
-  DatePickerInput,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -37,9 +36,14 @@ const TextField = (params: TextFieldProps) => {
 };
 
 const DateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
-> = props => (
+  Omit<DateTimePickerProps<Date>, 'renderInput'> & {
+    error: string;
+    isDate?: boolean;
+    onError?: (validationError: string) => void;
+  }
+> = ({ isDate, onError, ...props }) => (
   <DateTimePicker
+    format={isDate ? 'P' : 'P p'}
     disabled={props.disabled}
     slots={{ textField: TextField }}
     slotProps={{
@@ -51,6 +55,12 @@ const DateTimePickerInput: FC<
           : undefined,
       },
     }}
+    onError={onError}
+    views={
+      isDate
+        ? ['year', 'month', 'day']
+        : ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
+    }
     {...props}
   />
 );
@@ -115,9 +125,12 @@ const UIComponent = (props: ControlProps) => {
             {...sharedComponentProps}
           />
         ) : (
-          <DatePickerInput
+          <DateTimePickerInput
             {...sharedComponentProps}
-            onError={validationError => setCustomError(validationError)}
+            isDate={true}
+            onError={validationError =>
+              setCustomError(validationError ?? undefined)
+            }
           />
         )
       }
