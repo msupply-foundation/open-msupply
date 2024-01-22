@@ -27,6 +27,7 @@ pub struct MasterListNameJoinRow {
 joinable!(master_list_name_join -> master_list (master_list_id));
 joinable!(master_list_name_join -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(master_list_name_join, item_link);
+allow_tables_to_appear_in_same_query!(master_list_name_join, name_link);
 
 pub struct MasterListNameJoinRepository<'a> {
     connection: &'a StorageConnection,

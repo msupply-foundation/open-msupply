@@ -52,9 +52,9 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
         let upserts: Vec<PullUpsertRecord> = name_store_joins
             .into_iter()
             .map(|mut r| {
-                r.name_is_customer = data.name_is_customer;
-                r.name_is_supplier = data.name_is_supplier;
-                PullUpsertRecord::NameStoreJoin(r)
+                r.name_store_join.name_is_customer = data.name_is_customer;
+                r.name_store_join.name_is_supplier = data.name_is_supplier;
+                PullUpsertRecord::NameStoreJoin(r.name_store_join)
             })
             .collect();
 

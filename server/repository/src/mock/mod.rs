@@ -387,6 +387,11 @@ impl MockDataInserts {
         self
     }
 
+    pub fn requisitions(mut self) -> Self {
+        self.requisitions = true;
+        self
+    }
+
     pub fn full_requisitions(mut self) -> Self {
         self.full_requisitions = true;
         self

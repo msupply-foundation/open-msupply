@@ -1,6 +1,8 @@
 use super::period_row::period::dsl as period_dsl;
 
-use crate::{repository_error::RepositoryError, StorageConnection};
+use crate::{
+    db_diesel::name_link_row::name_link, repository_error::RepositoryError, StorageConnection,
+};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -24,6 +26,8 @@ pub struct PeriodRow {
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
 }
+
+allow_tables_to_appear_in_same_query!(period, name_link);
 
 pub struct PeriodRowRepository<'a> {
     connection: &'a StorageConnection,
