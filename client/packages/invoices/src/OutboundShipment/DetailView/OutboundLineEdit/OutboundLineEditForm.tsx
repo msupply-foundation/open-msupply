@@ -13,6 +13,7 @@ import {
   Typography,
   useFormatNumber,
   useDebounceCallback,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
@@ -46,6 +47,7 @@ interface OutboundLineEditFormProps {
   showZeroQuantityConfirmation: boolean;
   hasOnHold: boolean;
   hasExpired: boolean;
+  setOkDisabled: (disabled: boolean) => void;
 }
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -61,6 +63,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   showZeroQuantityConfirmation,
   hasOnHold,
   hasExpired,
+  setOkDisabled,
 }) => {
   const t = useTranslation('distribution');
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
@@ -117,9 +120,18 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     updateIssueQuantity(allocatedQuantity);
   };
 
+  const debouncedAllocate = useDebouncedValueCallback(
+    (quantity, packSize) => {
+      allocate(quantity, packSize);
+      setOkDisabled(false);
+    },
+    [issueQuantity],
+    500
+  );
   const handleIssueQuantityChange = (quantity: number) => {
     setIssueQuantity(quantity);
-    allocate(quantity, Number(packSizeController.selected?.value));
+    setOkDisabled(true);
+    debouncedAllocate(quantity, Number(packSizeController.selected?.value));
   };
 
   useEffect(() => {
