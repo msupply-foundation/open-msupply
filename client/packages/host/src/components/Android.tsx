@@ -15,7 +15,6 @@ import {
   Stack,
   Theme,
   Typography,
-  useBackButtonHandler,
   useNativeClient,
   useNavigate,
 } from '@openmsupply-client/common';
@@ -106,7 +105,6 @@ export const Android = () => {
   const navigate = useNavigate();
   const [mode, setLocalMode] = useState(NativeMode.None);
   const { setMode, setServerMode } = useNativeClient();
-  useBackButtonHandler({ isNavigateEnabled: false });
 
   const handleSetMode = (mode: NativeMode) => {
     setMode(mode);

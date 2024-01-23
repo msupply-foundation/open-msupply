@@ -29,7 +29,7 @@ import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
 import { useInitPlugins } from './plugins';
-// import { BackButtonHandler } from './BackButtonHandler';
+import { BackButtonHandler } from './BackButtonHandler';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -81,7 +81,7 @@ const Host = () => (
                       <AlertModalProvider>
                         <BrowserRouter>
                           <ErrorAlert />
-                          {/* <BackButtonHandler /> */}
+                          <BackButtonHandler />
                           <Viewport>
                             <Box display="flex" style={{ minHeight: '100%' }}>
                               <Routes>

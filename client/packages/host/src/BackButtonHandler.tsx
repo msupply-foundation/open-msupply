@@ -27,13 +27,9 @@ export const BackButtonHandler = () => {
 
     return true;
   })();
-  console.warn(
-    `BackButtonHandler.. isNavigateEnabled: ${isNavigateEnabled} for path ${location.pathname}`
-  );
 
   useBackButtonHandler({
     isNavigateEnabled,
-    dependencies: [location.pathname],
   });
 
   return <></>;

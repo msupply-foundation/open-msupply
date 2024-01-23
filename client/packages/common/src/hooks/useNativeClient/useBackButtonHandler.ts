@@ -5,10 +5,8 @@ import { Capacitor } from '@capacitor/core';
 
 export const useBackButtonHandler = ({
   isNavigateEnabled,
-  dependencies,
 }: {
   isNavigateEnabled: boolean;
-  dependencies?: unknown[];
 }) => {
   const navigate = useNavigate();
 
@@ -27,5 +25,5 @@ export const useBackButtonHandler = ({
         App.removeAllListeners();
       }
     };
-  }, [isNavigateEnabled, navigate, dependencies]);
+  }, [isNavigateEnabled, navigate]);
 };
