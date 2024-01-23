@@ -47,7 +47,7 @@ const hasPermissionException = (errors: ResponseError[]) =>
 
 const handleResponseError = (errors: ResponseError[]) => {
   if (hasError(errors, AuthError.Unauthenticated)) {
-    LocalStorage.setItem('/auth/error', AuthError.Unauthenticated);
+    LocalStorage.setItem('/error/auth', AuthError.Unauthenticated);
     return;
   }
 
@@ -55,7 +55,7 @@ const handleResponseError = (errors: ResponseError[]) => {
     if (hasPermissionException(errors)) {
       throw errors[0];
     }
-    LocalStorage.setItem('/auth/error', AuthError.PermissionDenied);
+    LocalStorage.setItem('/error/auth', AuthError.PermissionDenied);
     return;
   }
 
