@@ -52,7 +52,6 @@ pub trait Upsert: DebugTrait {
     fn assert_upserted(&self, con: &StorageConnection);
     // Test only, can be used to drill down to concrete type (see test below)
     // also casting to any must be implemented by concrete type to be able to downcast to it
-    // This is needed for integration test (where test record is generated for inventory adjustment, but id is not know until site is created)
     fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
         None
     }

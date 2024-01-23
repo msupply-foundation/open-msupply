@@ -1,4 +1,5 @@
 pub(crate) mod activity_log;
+pub(crate) mod asset;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
@@ -88,6 +89,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         sensor::boxed(),
         temperature_breach::boxed(),
         temperature_log::boxed(),
+        asset::boxed(),
     ]
 }
 
