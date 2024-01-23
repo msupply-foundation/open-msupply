@@ -1,7 +1,12 @@
+// use super::super::;
 use crate::{
-    diesel_macros::apply_equal_filter, DBType, EqualFilter, RepositoryError, StorageConnection,
+    diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter, NameLinkRow,
+    RepositoryError, StorageConnection,
 };
-use diesel::{helper_types::IntoBoxed, prelude::*};
+use diesel::{
+    helper_types::{IntoBoxed, LeftJoin},
+    prelude::*,
+};
 use std::convert::TryInto;
 use util::inline_init;
 
@@ -30,6 +35,7 @@ table! {
         is_sync_update -> Bool,
     }
 }
+joinable!(changelog_deduped -> name_link (name_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -91,6 +97,8 @@ pub struct ChangelogRepository<'a> {
     connection: &'a StorageConnection,
 }
 
+type ChangelogJoin = (ChangelogRow, Option<NameLinkRow>);
+
 impl<'a> ChangelogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
         ChangelogRepository { connection }
@@ -117,8 +125,19 @@ impl<'a> ChangelogRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result = query.load(&self.connection.connection)?;
-        Ok(result)
+        let result: Vec<ChangelogJoin> = query.load(&self.connection.connection)?;
+        Ok(result
+            .into_iter()
+            .map(|(change_log_row, name_link_row)| ChangelogRow {
+                cursor: change_log_row.cursor,
+                table_name: change_log_row.table_name,
+                record_id: change_log_row.record_id,
+                row_action: change_log_row.row_action,
+                name_id: name_link_row.map(|r| r.name_id),
+                store_id: change_log_row.store_id,
+                is_sync_update: change_log_row.is_sync_update,
+            })
+            .collect())
     }
 
     pub fn count(
@@ -158,13 +177,15 @@ impl<'a> ChangelogRepository<'a> {
     }
 }
 
-type BoxedChangelogQuery = IntoBoxed<'static, changelog_deduped::table, DBType>;
+type BoxedChangelogQuery =
+    IntoBoxed<'static, LeftJoin<changelog_deduped::table, name_link::table>, DBType>;
 
 fn create_filtered_query<'a>(
     earliest: u64,
     filter: Option<ChangelogFilter>,
 ) -> BoxedChangelogQuery {
     let mut query = changelog_deduped::dsl::changelog_deduped
+        .left_join(name_link::table)
         .filter(changelog_deduped::dsl::cursor.ge(earliest.try_into().unwrap_or(0)))
         .into_boxed();
 

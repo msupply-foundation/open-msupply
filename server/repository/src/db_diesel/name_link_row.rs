@@ -7,9 +7,9 @@ use super::{
 };
 
 use crate::{
-    master_list_name_join::master_list_name_join, name_store_join::name_store_join,
-    name_tag_join::name_tag_join, period::period, program_row::program,
-    repository_error::RepositoryError,
+    changelog_deduped, master_list_name_join::master_list_name_join,
+    name_store_join::name_store_join, name_tag_join::name_tag_join, period::period,
+    program_row::program, repository_error::RepositoryError,
 };
 
 use diesel::prelude::*;
@@ -36,8 +36,9 @@ allow_tables_to_appear_in_same_query!(name_link, item);
 allow_tables_to_appear_in_same_query!(name_link, location);
 allow_tables_to_appear_in_same_query!(name_link, barcode);
 allow_tables_to_appear_in_same_query!(name_link, program_enrolment);
+allow_tables_to_appear_in_same_query!(name_link, changelog_deduped);
 
-#[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[table_name = "name_link"]
 pub struct NameLinkRow {
     pub id: String,
