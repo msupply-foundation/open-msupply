@@ -1,11 +1,12 @@
 use crate::sync::{
-    api::SyncActionV5,
+    api::SyncAction,
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
-        test_data::get_all_push_test_records,
+        test_data::{get_all_omsupply_ceantral_push_records, get_all_push_test_records},
+        TestSyncPushRecord,
     },
-    translations::translate_changelogs_to_push_records,
+    translations::{translate_changelogs_to_push_records, PushSyncRecord, PushTranslationType},
 };
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
@@ -67,7 +68,13 @@ async fn test_sync_pull_and_push() {
     check_test_records_against_database(&connection, test_records).await;
 
     // PUSH UPSERT
-    let mut test_records = get_all_push_test_records();
+    let mut test_records = vec![
+        get_all_push_test_records(),
+        get_all_omsupply_ceantral_push_records(),
+    ]
+    .into_iter()
+    .flatten()
+    .collect::<Vec<TestSyncPushRecord>>();
 
     // Not using get_sync_push_changelogs_filter, since this test uses record integrated via sync as push records
     // which are usually filtered out via is_sync_updated flag
@@ -77,14 +84,31 @@ async fn test_sync_pull_and_push() {
     let changelogs = ChangelogRepository::new(&connection)
         .changelogs(push_cursor, 100000, None /*change_log_filter*/)
         .unwrap();
-    // Translate and sort
-    let mut translated =
-        translate_changelogs_to_push_records(&connection, changelogs.clone()).unwrap();
+    // Translate
+    let mut translated = vec![
+        translate_changelogs_to_push_records(
+            &connection,
+            changelogs.clone(),
+            PushTranslationType::Legacy,
+        )
+        .unwrap(),
+        translate_changelogs_to_push_records(
+            &connection,
+            changelogs.clone(),
+            PushTranslationType::OmSupplyCentralSitePush,
+        )
+        .unwrap(),
+    ]
+    .into_iter()
+    .flatten()
+    .collect::<Vec<PushSyncRecord>>();
+
+    // Combine and sort
     translated.sort_by(|a, b| a.record.record_id.cmp(&b.record.record_id));
     test_records.sort_by(|a, b| a.record_id.cmp(&b.record_id));
 
     // Test ids and table names
-    assert_eq!(
+    pretty_assertions::assert_eq!(
         translated
             .iter()
             .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))
@@ -96,8 +120,8 @@ async fn test_sync_pull_and_push() {
     );
     // Test data
     for (index, test_record) in test_records.iter().enumerate() {
-        assert_eq!(test_record.push_data, translated[index].record.data);
-        assert_eq!(translated[index].record.action, SyncActionV5::Update)
+        assert_eq!(test_record.push_data, translated[index].record.record_data);
+        assert_eq!(translated[index].record.action, SyncAction::Update)
     }
 
     // PULL DELETE
