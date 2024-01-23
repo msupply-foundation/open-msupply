@@ -1,28 +1,16 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{empty_str_as_option, empty_str_as_option_string},
+    translations::{item::ItemTranslation, requisition::RequisitionTranslation},
 };
 use chrono::NaiveDateTime;
 use repository::{
     ChangelogRow, ChangelogTableName, ItemRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
+    RequisitionLineRowDelete, RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::REQUISITION_LINE;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::RequisitionLine
-}
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, PartialEq)]
@@ -57,25 +45,34 @@ pub struct LegacyRequisitionLineRow {
     #[serde(rename = "itemName")]
     pub item_name: String,
 }
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(RequisitionLineTranslation)
+}
 
-pub(crate) struct RequisitionLineTranslation {}
+pub(super) struct RequisitionLineTranslation;
 impl SyncTranslation for RequisitionLineTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::REQUISITION_LINE,
-            dependencies: vec![LegacyTableName::REQUISITION, LegacyTableName::ITEM],
-        }
+    fn table_name(&self) -> &'static str {
+        "requisition_line"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![
+            RequisitionTranslation.table_name(),
+            ItemTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::RequisitionLine)
     }
 
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyRequisitionLineRow>(&sync_record.data)?;
 
         let result = RequisitionLineRow {
@@ -94,36 +91,25 @@ impl SyncTranslation for RequisitionLineTranslation {
             approval_comment: data.approval_comment,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::RequisitionLine(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn try_translate_pull_delete(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site, only transfer other half)
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::RequisitionLine,
-            )
-        });
-
-        Ok(result)
+        Ok(PullTranslateResult::delete(RequisitionLineRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 
     fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let RequisitionLineRow {
             id,
             requisition_id,
@@ -168,22 +154,19 @@ impl SyncTranslation for RequisitionLineTranslation {
             item_name,
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
+            self.table_name(),
             serde_json::to_value(&legacy_row)?,
-        )]))
+        ))
     }
 
     fn try_translate_push_delete(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -201,6 +184,7 @@ mod tests {
             setup_all("test_requisition_line_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
@@ -209,6 +193,7 @@ mod tests {
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
