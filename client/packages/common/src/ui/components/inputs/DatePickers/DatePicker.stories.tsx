@@ -16,7 +16,6 @@ const Template: StoryFn = () => {
       <Box>
         <Typography>Date input</Typography>
         <DateTimePickerInput
-          isDate={true}
           value={value}
           onChange={newValue => {
             setValue(newValue);
@@ -38,6 +37,7 @@ const Template: StoryFn = () => {
         <Typography>Date and time input</Typography>
         <DateTimePickerInput
           value={value}
+          showTime={true}
           onChange={newValue => {
             setValue(newValue);
           }}

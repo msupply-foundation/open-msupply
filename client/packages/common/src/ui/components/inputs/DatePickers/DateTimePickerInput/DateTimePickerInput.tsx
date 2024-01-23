@@ -22,7 +22,7 @@ export const DateTimePickerInput: FC<
     onChange: (value: Date | null) => void;
     onError?: (validationError: string, date?: Date | null) => void;
     textFieldProps?: TextFieldProps;
-    isDate?: boolean;
+    showTime?: boolean;
   }
 > = ({
   error,
@@ -34,7 +34,7 @@ export const DateTimePickerInput: FC<
   format = 'P p',
   minDate,
   maxDate,
-  isDate,
+  showTime,
   ...props
 }) => {
   const theme = useAppTheme();
@@ -59,7 +59,7 @@ export const DateTimePickerInput: FC<
 
   return (
     <DateTimePicker
-      format={isDate ? 'P' : 'P p'}
+      format={showTime ? 'P p' : 'P'}
       slots={{
         textField: TextField,
       }}
@@ -126,9 +126,9 @@ export const DateTimePickerInput: FC<
         },
       }}
       views={
-        isDate
-          ? ['year', 'month', 'day']
-          : ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
+        showTime
+          ? ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
+          : ['year', 'month', 'day']
       }
       minDate={minDate}
       maxDate={maxDate}

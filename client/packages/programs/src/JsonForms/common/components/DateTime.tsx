@@ -38,12 +38,12 @@ const TextField = (params: TextFieldProps) => {
 const DateTimePickerInput: FC<
   Omit<DateTimePickerProps<Date>, 'renderInput'> & {
     error: string;
-    isDate?: boolean;
+    showTime?: boolean;
     onError?: (validationError: string) => void;
   }
-> = ({ isDate, onError, ...props }) => (
+> = ({ showTime, onError, ...props }) => (
   <DateTimePicker
-    format={isDate ? 'P' : 'P p'}
+    format={showTime ? 'P p' : 'P'}
     disabled={props.disabled}
     slots={{ textField: TextField }}
     slotProps={{
@@ -57,9 +57,9 @@ const DateTimePickerInput: FC<
     }}
     onError={onError}
     views={
-      isDate
-        ? ['year', 'month', 'day']
-        : ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
+      showTime
+        ? ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
+        : ['year', 'month', 'day']
     }
     {...props}
   />
@@ -127,7 +127,6 @@ const UIComponent = (props: ControlProps) => {
         ) : (
           <DateTimePickerInput
             {...sharedComponentProps}
-            isDate={true}
             onError={validationError =>
               setCustomError(validationError ?? undefined)
             }

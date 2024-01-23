@@ -64,9 +64,9 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   };
 
   return type === 'dateTime' ? (
-    <DateTimePickerInput {...componentProps} />
+    <DateTimePickerInput showTime={true} {...componentProps} />
   ) : (
-    <DateTimePickerInput isDate={true} {...componentProps} />
+    <DateTimePickerInput {...componentProps} />
   );
 };
 
