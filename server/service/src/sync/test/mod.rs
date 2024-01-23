@@ -5,7 +5,7 @@ pub(crate) mod test_data;
 
 use super::translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable};
 use crate::sync::translations::PullUpsertRecord;
-use repository::{mock::MockData, *};
+use repository::{asset_row::AssetRowRepository, mock::MockData, *};
 use util::inline_init;
 
 #[derive(Clone)]
@@ -314,6 +314,8 @@ pub(crate) async fn check_records_against_database(
                 record,
                 "DocumentRegistry"
             ),
+
+            Asset(record) => check_record_by_id!(AssetRowRepository, con, record, "Asset"),
         }
     }
 
@@ -354,6 +356,9 @@ pub(crate) async fn check_records_against_database(
             RequisitionLine => check_delete_record_by_id!(ReportRowRepository, con, id),
             InventoryAdjustmentReason => {
                 check_delete_record_by_id!(InventoryAdjustmentReasonRowRepository, con, id)
+            }
+            Asset => {
+                check_delete_record_by_id!(AssetRowRepository, con, id)
             }
             #[cfg(all(test, feature = "integration_test"))]
             Location => check_delete_record_by_id!(LocationRowRepository, con, id),

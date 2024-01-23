@@ -63,6 +63,7 @@ pub enum ChangelogTableName {
     TemperatureBreach,
     TemperatureBreachConfig,
     TemperatureLog,
+    Asset,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]

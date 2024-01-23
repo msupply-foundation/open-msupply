@@ -7,7 +7,7 @@ use super::{
     },
 };
 use log::warn;
-use repository::*;
+use repository::{asset_row::AssetRowRepository, *};
 use std::collections::HashMap;
 
 pub(crate) struct TranslationAndIntegration<'a> {
@@ -222,6 +222,7 @@ impl PullUpsertRecord {
             FormSchema(record) => FormSchemaRowRepository::new(con).upsert_one(record),
             DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
             Document(record) => sync_upsert_document(con, record),
+            Asset(record) => AssetRowRepository::new(con).sync_upsert_one(record),
         }
     }
 }
@@ -253,6 +254,7 @@ impl PullDeleteRecord {
             InventoryAdjustmentReason => {
                 InventoryAdjustmentReasonRowRepository::new(con).delete(id)
             }
+            Asset => AssetRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             Location => LocationRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]

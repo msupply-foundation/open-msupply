@@ -1,4 +1,5 @@
 pub(crate) mod activity_log;
+pub(crate) mod asset;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
@@ -36,7 +37,7 @@ pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user_permission;
 
-use repository::*;
+use repository::{asset_row::AssetRow, *};
 use thiserror::Error;
 use topological_sort::TopologicalSort;
 
@@ -85,6 +86,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(name_store_join::NameStoreJoinTranslation {}),
         Box::new(user_permission::UserPermissionTranslation {}),
         Box::new(document::DocumentTranslation {}),
+        Box::new(asset::AssetTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
     ]
@@ -161,6 +163,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const USER_PERMISSION: &str = "om_user_permission";
     pub(crate) const DOCUMENT: &str = "om_document";
     pub(crate) const DOCUMENT_REGISTRY: &str = "om_document_registry";
+    pub(crate) const ASSET: &str = "asset";
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -204,6 +207,7 @@ pub(crate) enum PullUpsertRecord {
     FormSchema(FormSchemaJson),
     Document(Document),
     DocumentRegistry(DocumentRegistryRow),
+    Asset(AssetRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -233,6 +237,7 @@ pub(crate) enum PullDeleteRecordTable {
     InvoiceLine,
     Requisition,
     RequisitionLine,
+    Asset,
     #[cfg(all(test, feature = "integration_test"))]
     Location,
     #[cfg(all(test, feature = "integration_test"))]
