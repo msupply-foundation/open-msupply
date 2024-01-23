@@ -420,7 +420,7 @@ mod repository_test {
         repo.upsert_one(&master_list_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_1, loaded_item);
 
@@ -428,7 +428,7 @@ mod repository_test {
         repo.upsert_one(&master_list_upsert_1).unwrap();
         let loaded_item = repo
             .find_one_by_id(master_list_upsert_1.id.as_str())
-            .await
+            .unwrap()
             .unwrap();
         assert_eq!(master_list_upsert_1, loaded_item);
     }
