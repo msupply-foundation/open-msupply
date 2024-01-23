@@ -244,6 +244,10 @@ pub fn i32_to_u32(num: i32) -> u32 {
     num.try_into().unwrap_or(0)
 }
 
+pub fn i64_to_u64(num: i64) -> u64 {
+    num.try_into().unwrap_or(0)
+}
+
 pub fn i64_to_u32(num: i64) -> u32 {
     num.try_into().unwrap_or(0)
 }
