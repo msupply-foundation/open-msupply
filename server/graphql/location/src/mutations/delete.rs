@@ -260,7 +260,7 @@ mod test {
                     stock_line_row: mock_stock_line_a(),
                     item_row: mock_item_a(),
                     location_row: None,
-                    name_row: None,
+                    supplier_name_row: None,
                     barcode_row: None,
                 }],
                 invoice_lines: vec![successful_invoice_line()],

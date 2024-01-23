@@ -30,7 +30,7 @@ pub struct StockLine {
     pub stock_line_row: StockLineRow,
     pub item_row: ItemRow,
     pub location_row: Option<LocationRow>,
-    pub name_row: Option<NameRow>,
+    pub supplier_name_row: Option<NameRow>,
     pub barcode_row: Option<BarcodeRow>,
 }
 
@@ -257,7 +257,7 @@ pub fn to_domain(
         stock_line_row,
         item_row,
         location_row,
-        name_row: name_link_join.map(|(_, name_row)| name_row),
+        supplier_name_row: name_link_join.map(|(_, name_row)| name_row),
         barcode_row,
     }
 }
@@ -330,7 +330,7 @@ impl StockLine {
     }
 
     pub fn supplier_name(&self) -> Option<&str> {
-        self.name_row
+        self.supplier_name_row
             .as_ref()
             .map(|name_row| name_row.name.as_str())
     }

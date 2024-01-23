@@ -2,7 +2,8 @@ use super::{
     clinician_link_row::{clinician_link, clinician_link::dsl as clinician_link_dsl},
     document::latest_document::dsl as latest_document_dsl,
     encounter_row::encounter::{self, dsl as encounter_dsl},
-    name_row::name::dsl as name_dsl,
+    name_link_row::{name_link, name_link::dsl as name_link_dsl},
+    name_row::{name, name::dsl as name_dsl},
     program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
     program_row::{program, program::dsl as program_dsl},
     StorageConnection,
@@ -11,8 +12,9 @@ use super::{
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
     latest_document, ClinicianLinkRow, DBType, DatetimeFilter, EncounterRow, EncounterStatus,
-    EqualFilter, Pagination, PatientFilter, PatientRepository, ProgramEnrolmentFilter,
-    ProgramEnrolmentRepository, ProgramRow, RepositoryError, Sort, StringFilter,
+    EqualFilter, NameLinkRow, NameRow, Pagination, PatientFilter, PatientRepository,
+    ProgramEnrolmentFilter, ProgramEnrolmentRepository, ProgramRow, RepositoryError, Sort,
+    StringFilter,
 };
 
 use diesel::{
@@ -126,24 +128,36 @@ pub enum EncounterSortField {
     Status,
 }
 
-type EncounterJoin = (EncounterRow, ProgramRow, Option<ClinicianLinkRow>);
-pub type Encounter = (EncounterRow, ProgramRow);
+type EncounterJoin = (
+    EncounterRow,
+    ProgramRow,
+    (NameLinkRow, NameRow),
+    Option<ClinicianLinkRow>,
+);
+pub type Encounter = (EncounterRow, ProgramRow, NameRow);
 
-fn to_domain((encounter_row, program_row, _): EncounterJoin) -> Encounter {
-    (encounter_row, program_row)
+fn to_domain((encounter_row, program_row, (_, name_row), _): EncounterJoin) -> Encounter {
+    (encounter_row, program_row, name_row)
 }
 
 pub type EncounterSort = Sort<EncounterSortField>;
 
 type BoxedEncounterQuery = IntoBoxed<
     'static,
-    LeftJoin<InnerJoin<encounter::table, program::table>, clinician_link::table>,
+    LeftJoin<
+        InnerJoin<
+            InnerJoin<encounter::table, program::table>,
+            InnerJoin<name_link::table, name::table>,
+        >,
+        clinician_link::table,
+    >,
     DBType,
 >;
 
 fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedEncounterQuery {
     let mut query = encounter_dsl::encounter
         .inner_join(program_dsl::program)
+        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .left_join(clinician_link_dsl::clinician_link)
         .into_boxed();
 
@@ -167,7 +181,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedEncounterQ
 
         apply_equal_filter!(query, id, encounter_dsl::id);
         apply_equal_filter!(query, document_type, encounter_dsl::document_type);
-        apply_equal_filter!(query, patient_id, encounter_dsl::patient_id);
+        apply_equal_filter!(query, patient_id, name_dsl::id);
         apply_equal_filter!(query, program_context_id, program_dsl::context_id);
         apply_equal_filter!(query, program_id, encounter_dsl::program_id);
         apply_equal_filter!(query, name, encounter_dsl::document_name);
@@ -188,7 +202,7 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedEncounterQ
         if patient.is_some() {
             let patient_ids =
                 PatientRepository::create_filtered_query(patient, None).select(name_dsl::id);
-            query = query.filter(encounter_dsl::patient_id.eq_any(patient_ids));
+            query = query.filter(name_dsl::id.eq_any(patient_ids));
         }
 
         if program_enrolment.is_some() {
@@ -236,7 +250,7 @@ impl<'a> EncounterRepository<'a> {
                     apply_sort!(query, sort, encounter_dsl::document_type)
                 }
                 EncounterSortField::PatientId => {
-                    apply_sort!(query, sort, encounter_dsl::patient_id)
+                    apply_sort!(query, sort, name_dsl::id)
                 }
                 EncounterSortField::Context => {
                     apply_sort!(query, sort, program_dsl::context_id)
@@ -253,7 +267,7 @@ impl<'a> EncounterRepository<'a> {
                 EncounterSortField::Status => apply_sort!(query, sort, encounter_dsl::status),
             }
         } else {
-            query = query.order(encounter_dsl::patient_id.asc())
+            query = query.order(name_dsl::id.asc())
         }
 
         let result = query

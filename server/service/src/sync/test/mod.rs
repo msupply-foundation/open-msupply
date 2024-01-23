@@ -332,6 +332,7 @@ pub(crate) async fn check_records_against_database(
             ),
             ItemLink(_) => todo!(),
             NameLink(_) => todo!(),
+            ClinicianLink(_) => todo!(),
         }
     }
 

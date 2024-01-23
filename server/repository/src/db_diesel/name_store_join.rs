@@ -53,6 +53,7 @@ pub struct NameStoreJoin {
 
 joinable!(name_store_join -> store (store_id));
 joinable!(name_store_join -> name_link (name_link_id));
+allow_tables_to_appear_in_same_query!(name_store_join, name_link);
 
 type NameStoreJoins = (NameStoreJoinRow, (NameLinkRow, NameRow));
 

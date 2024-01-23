@@ -7,9 +7,10 @@ use super::{
 };
 
 use crate::{
-    changelog_deduped, master_list_name_join::master_list_name_join,
+    changelog_deduped, clinician_link_row::clinician_link, item_link_row::item_link,
+    master_list_name_join::master_list_name_join, name_link_row::name_link::dsl::*, name_row::name,
     name_store_join::name_store_join, name_tag_join::name_tag_join, period::period,
-    program_row::program, repository_error::RepositoryError,
+    program_row::program, repository_error::RepositoryError, RepositoryError, StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -21,22 +22,13 @@ table! {
     }
 }
 joinable!(name_link -> name (name_id));
-allow_tables_to_appear_in_same_query!(name_link, clinician);
-allow_tables_to_appear_in_same_query!(name_link, master_list);
-allow_tables_to_appear_in_same_query!(name_link, master_list_line);
-allow_tables_to_appear_in_same_query!(name_link, master_list_name_join);
-allow_tables_to_appear_in_same_query!(name_link, name_store_join);
-allow_tables_to_appear_in_same_query!(name_link, name_tag_join);
-allow_tables_to_appear_in_same_query!(name_link, period);
-allow_tables_to_appear_in_same_query!(name_link, program);
-allow_tables_to_appear_in_same_query!(name_link, clinician_link);
-allow_tables_to_appear_in_same_query!(name_link, stock_line);
 allow_tables_to_appear_in_same_query!(name_link, item_link);
 allow_tables_to_appear_in_same_query!(name_link, item);
 allow_tables_to_appear_in_same_query!(name_link, location);
 allow_tables_to_appear_in_same_query!(name_link, barcode);
 allow_tables_to_appear_in_same_query!(name_link, program_enrolment);
 allow_tables_to_appear_in_same_query!(name_link, changelog_deduped);
+allow_tables_to_appear_in_same_query!(name_link, clinician_link);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[table_name = "name_link"]

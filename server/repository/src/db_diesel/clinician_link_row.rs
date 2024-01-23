@@ -1,8 +1,8 @@
 use super::{
     clinician_row::clinician, invoice_line_row::invoice_line, invoice_row::invoice, name_row::name,
-    store_row::store, StorageConnection,
+    program_row::program, store_row::store, StorageConnection,
 };
-use crate::{program_row::program, repository_error::RepositoryError};
+use crate::repository_error::RepositoryError;
 
 use self::clinician_link::dsl as clinician_link_dsl;
 use diesel::prelude::*;
@@ -112,6 +112,16 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         let result = clinician_link_dsl::clinician_link
             .filter(clinician_link::id.eq_any(clinician_link_ids))
             .load(&self.connection.connection)?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_clinician_id(
+        &self,
+        clinician_id: &str,
+    ) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
+        let result = clinician_link_dsl::clinician_link
+            .filter(clinician_link::clinician_id.eq(clinician_id))
+            .load::<ClinicianLinkRow>(&self.connection.connection)?;
         Ok(result)
     }
 
