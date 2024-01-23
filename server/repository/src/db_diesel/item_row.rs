@@ -1,6 +1,6 @@
 use super::{item_row::item::dsl::*, unit_row::unit, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -122,5 +122,35 @@ impl<'a> ItemRowRepository<'a> {
     pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(item.filter(id.eq(item_id))).execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ItemRowDelete(pub String);
+// TODO soft delete
+impl Delete for ItemRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ItemRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ItemRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for ItemRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ItemRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ItemRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

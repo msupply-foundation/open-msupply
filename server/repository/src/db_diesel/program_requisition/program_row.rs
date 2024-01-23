@@ -3,7 +3,7 @@ use super::program_row::program::dsl as program_dsl;
 use crate::{
     db_diesel::{context_row::context, document::document, master_list_row::master_list},
     repository_error::RepositoryError,
-    StorageConnection,
+    StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
@@ -64,5 +64,19 @@ impl<'a> ProgramRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+impl Upsert for ProgramRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ProgramRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ProgramRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

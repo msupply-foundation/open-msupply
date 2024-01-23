@@ -1,6 +1,6 @@
 use super::period_row::period::dsl as period_dsl;
 
-use crate::{repository_error::RepositoryError, StorageConnection};
+use crate::{repository_error::RepositoryError, StorageConnection, Upsert};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -69,5 +69,19 @@ impl<'a> PeriodRowRepository<'a> {
             .filter(period_dsl::period_schedule_id.eq_any(period_schedule_ids))
             .load(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+impl Upsert for PeriodRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        PeriodRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PeriodRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

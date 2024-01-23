@@ -1,6 +1,6 @@
 use super::{master_list_row::master_list::dsl::*, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Upsert};
 
 use diesel::prelude::*;
 
@@ -52,22 +52,12 @@ impl<'a> MasterListRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(
-        &self,
-        master_list_id: &str,
-    ) -> Result<MasterListRow, RepositoryError> {
-        let result = master_list
-            .filter(id.eq(master_list_id).and(is_active.eq(true)))
-            .first(&self.connection.connection)?;
-        Ok(result)
-    }
-
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         master_list_id: &str,
     ) -> Result<Option<MasterListRow>, RepositoryError> {
         let result = master_list
-            .filter(id.eq(master_list_id).and(is_active.eq(true)))
+            .filter(id.eq(master_list_id))
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
@@ -77,5 +67,19 @@ impl<'a> MasterListRowRepository<'a> {
         diesel::delete(master_list.filter(id.eq(master_list_id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for MasterListRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        MasterListRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only    #[cfg(test)]
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            MasterListRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
