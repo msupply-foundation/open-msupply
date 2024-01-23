@@ -377,8 +377,8 @@ export const getAllocationAlerts = (
   if (allocatedQuantity !== requestedQuantity && allocatedQuantity > 0) {
     alerts.push({
       message: t('messages.over-allocated', {
-        quantity: format(allocatedQuantity),
-        issueQuantity: format(requestedQuantity),
+        allocatedQuantity: format(allocatedQuantity),
+        requestedQuantity: format(requestedQuantity),
       }),
       severity: 'warning',
     });
