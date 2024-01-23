@@ -17,6 +17,7 @@ table! {
         max_order_per_period -> Integer,
     }
 }
+use crate::{Delete, Upsert};
 
 joinable!(program_requisition_order_type -> program_requisition_settings (program_requisition_settings_id));
 
@@ -88,5 +89,34 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
         )
         .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ProgramRequisitionOrderTypeRowDelete(pub String);
+impl Delete for ProgramRequisitionOrderTypeRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ProgramRequisitionOrderTypeRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ProgramRequisitionOrderTypeRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for ProgramRequisitionOrderTypeRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ProgramRequisitionOrderTypeRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

@@ -1,7 +1,7 @@
 use super::{location_row::location::dsl as location_dsl, store_row::store, StorageConnection};
 
 use crate::repository_error::RepositoryError;
-
+use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -75,5 +75,35 @@ impl<'a> LocationRowRepository<'a> {
         diesel::delete(location_dsl::location.filter(location_dsl::id.eq(id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+// Only used in tests
+pub struct LocationRowDelete(pub String);
+impl Delete for LocationRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        LocationRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            LocationRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for LocationRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        LocationRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            LocationRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

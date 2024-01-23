@@ -6,7 +6,7 @@ use super::{
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
 };
-
+use crate::{Delete, Upsert};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 table! {
@@ -162,6 +162,34 @@ impl NameStoreJoinFilter {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct NameStoreJoinRowDelete(pub String);
+impl Delete for NameStoreJoinRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameStoreJoinRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameStoreJoinRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for NameStoreJoinRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameStoreJoinRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameStoreJoinRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
 #[cfg(test)]
 mod test {
     use util::uuid::uuid;

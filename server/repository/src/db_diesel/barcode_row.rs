@@ -3,6 +3,7 @@ use super::{barcode_row::barcode::dsl as barcode_dsl, StorageConnection};
 use crate::{
     db_diesel::{invoice_line_row::invoice_line, item_row::item},
     repository_error::RepositoryError,
+    Upsert,
 };
 
 use diesel::prelude::*;
@@ -125,6 +126,21 @@ impl<'a> BarcodeRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+pub struct BarcodeRowDelete(pub String);
+impl Upsert for BarcodeRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        BarcodeRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            BarcodeRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

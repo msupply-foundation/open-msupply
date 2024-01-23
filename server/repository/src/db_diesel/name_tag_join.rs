@@ -1,5 +1,6 @@
 use super::{name_tag_join::name_tag_join::dsl as name_tag_join_dsl, StorageConnection};
 use crate::{db_diesel::name_row::name, repository_error::RepositoryError};
+use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -61,6 +62,35 @@ impl<'a> NameTagJoinRepository<'a> {
         diesel::delete(name_tag_join_dsl::name_tag_join.filter(name_tag_join_dsl::id.eq(id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct NameTagJoinRowDelete(pub String);
+impl Delete for NameTagJoinRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameTagJoinRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameTagJoinRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for NameTagJoinRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameTagJoinRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameTagJoinRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 
