@@ -51,7 +51,10 @@ async fn test_sync_pull_and_push() {
         get_all_pull_upsert_central_test_records(),
         get_all_pull_upsert_remote_test_records(),
     ]
-    .concat();
+    .into_iter()
+    .flatten()
+    .collect();
+
     insert_all_extra_data(&test_records, &connection).await;
     let sync_records: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 
@@ -102,7 +105,9 @@ async fn test_sync_pull_and_push() {
         get_all_pull_delete_central_test_records(),
         get_all_pull_delete_remote_test_records(),
     ]
-    .concat();
+    .into_iter()
+    .flatten()
+    .collect();
     insert_all_extra_data(&test_records, &connection).await;
     let sync_records: Vec<SyncBufferRow> = extract_sync_buffer_rows(&test_records);
 

@@ -43,23 +43,10 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sensor", "last_connection_datetime"),
         ("stocktake", "created_datetime"),
         ("stocktake", "finalised_datetime"),
-        ("sync_log", "started_datetime"),
-        ("sync_log", "finished_datetime"),
-        ("sync_log", "prepare_initial_started_datetime"),
-        ("sync_log", "prepare_initial_finished_datetime"),
-        ("sync_log", "push_started_datetime"),
-        ("sync_log", "push_finished_datetime"),
-        ("sync_log", "pull_central_started_datetime"),
-        ("sync_log", "pull_central_finished_datetime"),
-        ("sync_log", "pull_remote_started_datetime"),
-        ("sync_log", "pull_remote_finished_datetime"),
-        ("sync_log", "integration_started_datetime"),
-        ("sync_log", "integration_finished_datetime"),
         ("temperature_breach", "start_datetime"),
         ("temperature_breach", "end_datetime"),
         ("temperature_log", "datetime"),
         ("activity_log", "datetime"),
-        ("user_account", "last_successful_sync"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -87,6 +74,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "pull_remote_finished_datetime"),
         ("sync_log", "integration_started_datetime"),
         ("sync_log", "integration_finished_datetime"),
+        ("user_account", "last_successful_sync"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
