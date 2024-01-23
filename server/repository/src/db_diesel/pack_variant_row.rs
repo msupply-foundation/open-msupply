@@ -1,8 +1,9 @@
 use super::{item_row::item, pack_variant_row::pack_variant::dsl::*};
 
-use crate::{repository_error::RepositoryError, StorageConnection};
+use crate::{repository_error::RepositoryError, StorageConnection, Upsert};
 
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     pack_variant (id) {
@@ -18,9 +19,21 @@ table! {
 joinable!(pack_variant -> item (item_id));
 
 #[derive(
-    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Eq, Ord, PartialOrd,
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    Eq,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize,
 )]
 #[table_name = "pack_variant"]
+#[serde(rename_all = "camelCase")]
 pub struct PackVariantRow {
     pub id: String,
     pub item_id: String,
@@ -69,5 +82,19 @@ impl<'a> PackVariantRowRepository<'a> {
             .optional()?;
 
         Ok(result)
+    }
+}
+
+impl Upsert for PackVariantRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        PackVariantRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PackVariantRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
