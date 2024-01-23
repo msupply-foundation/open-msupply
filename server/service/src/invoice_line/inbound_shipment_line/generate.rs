@@ -39,7 +39,7 @@ pub fn generate_batch(
         ..
     }: InvoiceLineRow,
     keep_existing_batch: bool,
-    supplier_id: &str,
+    supplier_link_id: &str,
 ) -> StockLineRow {
     // Generate new id if requested via parameter or if stock_line_id is not already set on line
     let stock_line_id = match (stock_line_id, keep_existing_batch) {
@@ -61,7 +61,7 @@ pub fn generate_batch(
         expiry_date,
         on_hold: false,
         note,
-        supplier_id: Some(supplier_id.to_string()),
+        supplier_id: Some(supplier_link_id.to_string()),
         barcode_id: None,
     }
 }
