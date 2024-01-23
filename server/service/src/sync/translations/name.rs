@@ -1,23 +1,16 @@
-use crate::sync::{
-    api::RemoteSyncRecordV5,
-    sync_serde::{
-        date_option_to_isostring, empty_str_as_option, empty_str_as_option_string,
-        zero_date_as_option,
-    },
+use crate::sync::sync_serde::{
+    date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
 };
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, Gender, NameRow, NameRowRepository, NameType,
+    ChangelogRow, ChangelogTableName, Gender, NameRow, NameRowDelete, NameRowRepository, NameType,
     StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyNameType {
@@ -134,35 +127,31 @@ pub struct LegacyNameRow {
     pub date_of_death: Option<NaiveDate>,
     pub custom_data: Option<serde_json::Value>,
 }
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::NAME;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(NameTranslation)
 }
 
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::Name
-}
-
-pub(crate) struct NameTranslation {}
+pub(super) struct NameTranslation;
 impl SyncTranslation for NameTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::NAME,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &'static str {
+        "name"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Name)
     }
 
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameRow {
             id,
             name,
@@ -243,32 +232,25 @@ impl SyncTranslation for NameTranslation {
             custom_data_string,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Name(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
+    // TODO soft delete
     fn try_translate_pull_delete(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Name)
-        });
-
-        Ok(result)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(NameRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 
     fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let NameRow {
             id,
             name,
@@ -305,10 +287,13 @@ impl SyncTranslation for NameTranslation {
                 changelog.record_id
             )))?;
 
-        // Only push name records that belong to patients, gracefully ignore the rest
         let patient_type = match r#type {
             NameType::Patient => LegacyNameType::Patient,
-            _ => return Ok(None),
+            _ => {
+                return Ok(PushTranslateResult::Ignored(
+                    "Only push name records that belong to patiens".to_string(),
+                ))
+            }
         };
 
         let legacy_row = LegacyNameRow {
@@ -343,22 +328,20 @@ impl SyncTranslation for NameTranslation {
             custom_data: None,
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
+            self.table_name(),
             serde_json::to_value(&legacy_row)?,
-        )]))
+        ))
     }
 
+    // TODO soft delete
     fn try_translate_push_delete(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -376,6 +359,8 @@ mod tests {
             setup_all("test_name_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
+            // TODO add match record here
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
@@ -384,6 +369,7 @@ mod tests {
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();

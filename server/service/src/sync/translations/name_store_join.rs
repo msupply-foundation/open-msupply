@@ -1,16 +1,13 @@
 use repository::{
     ChangelogRow, ChangelogTableName, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
-    StorageConnection, StoreRowRepository, SyncBufferRow,
+    NameStoreJoinRowDelete, StorageConnection, StoreRowRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::api::RemoteSyncRecordV5;
+use crate::sync::translations::{name::NameTranslation, store::StoreTranslation};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -27,32 +24,31 @@ pub struct LegacyNameStoreJoinRow {
     #[serde(rename = "om_name_is_supplier")]
     pub name_is_supplier: Option<bool>,
 }
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::NAME_STORE_JOIN
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(NameStoreJoinTranslation)
 }
 
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::NameStoreJoin
-}
-
-pub(crate) struct NameStoreJoinTranslation {}
+pub(super) struct NameStoreJoinTranslation;
 impl SyncTranslation for NameStoreJoinTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::NAME_STORE_JOIN,
-            dependencies: vec![LegacyTableName::NAME, LegacyTableName::STORE],
-        }
+    fn table_name(&self) -> &'static str {
+        "name_store_join"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![NameTranslation.table_name(), StoreTranslation.table_name()]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::NameStoreJoin)
     }
 
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyNameStoreJoinRow>(&sync_record.data)?;
 
         // in mSupply the inactive flag is used for soft-deletes.
@@ -81,7 +77,9 @@ impl SyncTranslation for NameStoreJoinTranslation {
             // if the name_store_join is referencing itself, then exclude it
             // this is an invalid configuration which shouldn't be possible.. but is
             if store.name_id == data.name_id {
-                return Ok(None);
+                return Ok(PullTranslateResult::Ignored(
+                    "Name store join references itself".to_string(),
+                ));
             }
         }
 
@@ -98,20 +96,14 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name_is_supplier: name.is_supplier,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::NameStoreJoin(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let NameStoreJoinRow {
             id,
             name_id,
@@ -134,28 +126,23 @@ impl SyncTranslation for NameStoreJoinTranslation {
             inactive: Some(false),
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LegacyTableName::NAME_STORE_JOIN,
+            self.table_name(),
             serde_json::to_value(&legacy_row)?,
-        )]))
+        ))
     }
 
     fn try_translate_pull_delete(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         // it is possible for name store join to be set inactive
         // this is handled in the upsert translation
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::NameStoreJoin,
-            )
-        });
-
-        Ok(result)
+        Ok(PullTranslateResult::delete(NameStoreJoinRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 
@@ -176,6 +163,7 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
@@ -192,6 +180,7 @@ mod tests {
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();

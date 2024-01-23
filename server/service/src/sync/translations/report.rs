@@ -1,12 +1,13 @@
-use crate::sync::sync_serde::empty_str_as_option_string;
-use repository::{ReportContext, ReportRow, ReportType, StorageConnection, SyncBufferRow};
+use crate::sync::{
+    sync_serde::empty_str_as_option_string, translations::form_schema::FormSchemaTranslation,
+};
+use repository::{
+    ReportContext, ReportRow, ReportRowDelete, ReportType, StorageConnection, SyncBufferRow,
+};
 
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
+use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyReportEditor {
@@ -37,6 +38,7 @@ pub enum LegacyReportContext {
     #[serde(other)]
     Others,
 }
+// https://github.com/msupply-foundation/open-msupply/pull/2152
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -58,28 +60,27 @@ pub struct LegacyReportRow {
     pub argument_schema_id: Option<String>,
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::REPORT
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(ReportTranslation)
 }
 
-pub(crate) struct ReportTranslation {}
+pub(super) struct ReportTranslation;
 impl SyncTranslation for ReportTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::REPORT,
-            dependencies: vec![LegacyTableName::FORM_SCHEMA],
-        }
+    fn table_name(&self) -> &'static str {
+        "report"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![FormSchemaTranslation.table_name()]
     }
 
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyReportRow {
             id,
             report_name,
@@ -93,7 +94,7 @@ impl SyncTranslation for ReportTranslation {
 
         let r#type = match editor {
             LegacyReportEditor::OmSupply => ReportType::OmSupply,
-            LegacyReportEditor::Others => return Ok(None),
+            LegacyReportEditor::Others => return Ok(PullTranslateResult::NotMatched),
         };
         let context = match context {
             LegacyReportContext::CustomerInvoice => ReportContext::OutboundShipment,
@@ -103,7 +104,11 @@ impl SyncTranslation for ReportTranslation {
             LegacyReportContext::Patient => ReportContext::Patient,
             LegacyReportContext::Dispensary => ReportContext::Dispensary,
             LegacyReportContext::Repack => ReportContext::Repack,
-            LegacyReportContext::Others => return Ok(None),
+            LegacyReportContext::Others => {
+                return Ok(PullTranslateResult::Ignored(
+                    "Unknown report context".to_string(),
+                ))
+            }
         };
 
         let result = ReportRow {
@@ -117,21 +122,17 @@ impl SyncTranslation for ReportTranslation {
             argument_schema_id,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Report(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn try_translate_pull_delete(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Report)
-        });
-
-        Ok(result)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(ReportRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 
@@ -149,6 +150,7 @@ mod tests {
             setup_all("test_report_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
@@ -157,6 +159,7 @@ mod tests {
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();

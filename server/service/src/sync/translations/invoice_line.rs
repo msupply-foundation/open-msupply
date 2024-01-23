@@ -1,27 +1,23 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
+    translations::{
+        inventory_adjustment_reason::InventoryAdjustmentReasonTranslation,
+        invoice::InvoiceTranslation, item::ItemTranslation, location::LocationTranslation,
+        stock_line::StockLineTranslation,
+    },
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
-    ItemRowRepository, StockLineRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowDelete,
+    InvoiceLineRowRepository, InvoiceLineRowType, ItemRowRepository, StockLineRowRepository,
+    StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
 use super::{
-    is_active_record_on_site, ActiveRecordCheck, IntegrationRecords, LegacyTableName,
-    PullDeleteRecordTable, PullDependency, PullUpsertRecord, SyncTranslation,
+    is_active_record_on_site, ActiveRecordCheck, PullTranslateResult, PushTranslateResult,
+    SyncTranslation,
 };
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANS_LINE;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::InvoiceLine
-}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyTransLineType {
@@ -84,31 +80,37 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub inventory_adjustment_reason_id: Option<String>,
 }
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(InvoiceLineTranslation)
+}
 
-pub(crate) struct InvoiceLineTranslation {}
+pub(super) struct InvoiceLineTranslation;
 impl SyncTranslation for InvoiceLineTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::TRANS_LINE,
-            dependencies: vec![
-                LegacyTableName::TRANSACT,
-                LegacyTableName::ITEM,
-                LegacyTableName::ITEM_LINE,
-                LegacyTableName::LOCATION,
-                LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
-            ],
-        }
+    fn table_name(&self) -> &'static str {
+        "trans_line"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![
+            InvoiceTranslation.table_name(),
+            ItemTranslation.table_name(),
+            StockLineTranslation.table_name(),
+            LocationTranslation.table_name(),
+            InventoryAdjustmentReasonTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::InvoiceLine)
     }
 
     fn try_translate_pull_upsert(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyTransLineRow {
             id,
             invoice_id,
@@ -223,36 +225,25 @@ impl SyncTranslation for InvoiceLineTranslation {
             inventory_adjustment_reason_id,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::InvoiceLine(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn try_translate_pull_delete(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site, only transfer other half)
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::InvoiceLine,
-            )
-        });
-
-        Ok(result)
+        Ok(PullTranslateResult::delete(InvoiceLineRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 
     fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let InvoiceLineRow {
             id,
             invoice_id,
@@ -296,23 +287,19 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_after_tax: Some(total_after_tax),
             inventory_adjustment_reason_id,
         };
-
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
+            self.table_name(),
             serde_json::to_value(&legacy_row)?,
-        )]))
+        ))
     }
 
     fn try_translate_push_delete(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -371,6 +358,7 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
@@ -379,6 +367,7 @@ mod tests {
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
