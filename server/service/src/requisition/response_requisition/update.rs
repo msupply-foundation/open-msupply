@@ -1,7 +1,7 @@
 use crate::{
     activity_log::activity_log_entry,
     requisition::{
-        common::{check_approval_status, check_requisition_exists},
+        common::{check_approval_status, check_requisition_row_exists},
         query::get_requisition,
     },
     service_provider::ServiceContext,
@@ -78,7 +78,7 @@ pub fn validate(
     store_id: &str,
     input: &UpdateResponseRequisition,
 ) -> Result<(RequisitionRow, bool), OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if check_approval_status(&requisition_row) {
