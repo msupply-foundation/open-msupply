@@ -47,18 +47,29 @@ export const DetailTabs: FC<DetailTabsProps> = ({
     handleResize();
   }, [detailPanelOpen, drawerOpen]);
 
-  const onChange = (_: React.SyntheticEvent, tab: string) => {
-    const tabConfirm = tabs.find(({ value }) => value === currentTab);
+  const [tabQueryParams, setTabQueryParams] = useState<
+    Record<string, UrlQueryObject>
+  >({});
+
+  const getDefaultTabQueryParams = (tab: string): UrlQueryObject => {
     const tabDefinition = tabs.find(({ value }) => value === tab);
     const sort = tabDefinition?.sort;
     const query: UrlQueryObject = sort
       ? { tab, sort: sort.key, dir: sort.dir }
       : { tab };
+    return query;
+  };
+
+  const onChange = (_: React.SyntheticEvent, tab: string) => {
+    const tabConfirm = tabs.find(({ value }) => value === currentTab);
+    // restore the query params for the tab
+    const query: UrlQueryObject =
+      tabQueryParams[tab] ?? getDefaultTabQueryParams(tab);
 
     if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
-      showConfirmation(() => updateQuery(query));
+      showConfirmation(() => updateQuery(query, true));
     } else {
-      updateQuery(query);
+      updateQuery(query, true);
     }
   };
 
@@ -69,6 +80,14 @@ export const DetailTabs: FC<DetailTabsProps> = ({
     const tab = urlQuery['tab'] as string | undefined;
     if (isValidTab(tab)) {
       setCurrentTab(tab);
+
+      // store the query params for the current tab
+      setTabQueryParams(value => {
+        return {
+          ...value,
+          [tab]: urlQuery,
+        };
+      });
     }
   }, [urlQuery]);
 

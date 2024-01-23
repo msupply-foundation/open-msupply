@@ -22,7 +22,7 @@ mod query {
         let service = service_provider.temperature_breach_service;
 
         assert_eq!(
-            service.get_temperature_breaches(
+            service.temperature_breaches(
                 &connection,
                 Some(PaginationOption {
                     limit: Some(2000),
@@ -35,7 +35,7 @@ mod query {
         );
 
         assert_eq!(
-            service.get_temperature_breaches(
+            service.temperature_breaches(
                 &connection,
                 Some(PaginationOption {
                     limit: Some(0),
@@ -85,7 +85,7 @@ mod query {
         let service = service_provider.temperature_breach_service;
 
         let result = service
-            .get_temperature_breaches(
+            .temperature_breaches(
                 &connection,
                 None,
                 Some(
@@ -103,7 +103,7 @@ mod query {
         );
 
         let result = service
-            .get_temperature_breaches(
+            .temperature_breaches(
                 &connection,
                 None,
                 Some(
@@ -136,7 +136,7 @@ mod query {
         let service = service_provider.temperature_breach_service;
         // Test StartDatetime sort with default sort order
         let result = service
-            .get_temperature_breaches(
+            .temperature_breaches(
                 &connection,
                 None,
                 None,
@@ -164,7 +164,7 @@ mod query {
 
         // Test EndDatetime sort with desc sort
         let result = service
-            .get_temperature_breaches(
+            .temperature_breaches(
                 &connection,
                 None,
                 None,

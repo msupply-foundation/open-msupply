@@ -52,6 +52,7 @@ pub mod sync;
 pub mod system_user;
 pub mod temperature_breach;
 pub mod temperature_chart;
+pub mod temperature_excursion;
 pub mod temperature_log;
 pub mod token;
 pub mod token_bucket;
@@ -251,6 +252,10 @@ pub fn usize_to_u32(num: usize) -> u32 {
 }
 
 pub fn u32_to_i32(num: u32) -> i32 {
+    num.try_into().unwrap_or(0)
+}
+
+pub fn usize_to_u64(num: usize) -> u64 {
     num.try_into().unwrap_or(0)
 }
 

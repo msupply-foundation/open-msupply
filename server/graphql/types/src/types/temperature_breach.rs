@@ -153,6 +153,10 @@ impl TemperatureBreachNode {
             &self.row().id,
         )?)
     }
+
+    pub async fn comment(&self) -> Option<String> {
+        self.row().comment.clone()
+    }
 }
 
 impl TemperatureBreachNodeType {
@@ -165,6 +169,9 @@ impl TemperatureBreachNodeType {
             from::ColdCumulative => to::ColdCumulative,
             from::HotConsecutive => to::HotConsecutive,
             from::HotCumulative => to::HotCumulative,
+            from::Excursion => {
+                panic!("Excursion is not a valid type for TemperatureBreachNodeType")
+            }
         }
     }
 

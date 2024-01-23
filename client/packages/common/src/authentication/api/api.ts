@@ -96,7 +96,8 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         return result.me;
       } catch (e) {
         console.error(e);
-        LocalStorage.setItem('/auth/error', AuthError.ServerError);
+        LocalStorage.setItem('/error/auth', AuthError.ServerError);
+        LocalStorage.setItem('/error/server', (e as Error).message);
       }
     },
     permissions: async ({

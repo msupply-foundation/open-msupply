@@ -59,6 +59,7 @@
   "error.unable-to-save-settings": "Unable to save settings",
   "error.unknown-sync-error": "Unknown sync error",
   "heading.password": "Password",
+  "heading.server-error": "Server Error",
   "heading.username": "Username",
   "inbound-shipment": "Inbound Shipment",
   "inbound-shipments": "Inbound Shipments",
