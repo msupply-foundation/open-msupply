@@ -8,6 +8,7 @@ import {
   ErrorWithDetails,
   frontEndHostDisplay,
   SnackbarProvider,
+  useBackButtonHandler,
 } from '@openmsupply-client/common';
 import { LoginIcon } from '@openmsupply-client/host/src/components/Login/LoginIcon';
 import { Theme } from '@common/styles';
@@ -49,6 +50,7 @@ export const ServerDiscovery = () => {
     stopDiscovery();
     startDiscovery();
   };
+  useBackButtonHandler({ isNavigateEnabled: false });
 
   const server = previousServer ? frontEndHostDisplay(previousServer) : '';
 

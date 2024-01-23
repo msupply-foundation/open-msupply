@@ -6,6 +6,7 @@ import {
   useHostContext,
   LocalStorage,
   ErrorWithDetails,
+  useBackButtonHandler,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
@@ -21,7 +22,6 @@ export const Login = () => {
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
-
   const passwordRef = React.useRef(null);
   const {
     isValid,
@@ -34,6 +34,9 @@ export const Login = () => {
     error,
     siteName,
   } = useLoginForm(passwordRef);
+
+  console.warn('this is the login page?');
+  useBackButtonHandler({ isNavigateEnabled: false });
 
   useEffect(() => {
     if (!displaySettings) return;
@@ -52,6 +55,7 @@ export const Login = () => {
   useEffect(() => {
     setPageTitle(`${t('app.login')} | ${t('app')} `);
     LocalStorage.removeItem('/error/auth');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
