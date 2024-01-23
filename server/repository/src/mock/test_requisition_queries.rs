@@ -60,7 +60,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             r.id = requisition_id.clone();
             r.user_id = Some("user_id".to_owned());
             r.requisition_number = 3;
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
@@ -117,7 +117,7 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
             r.id = requisition_id.clone();
             r.requisition_number = 3;
-            r.name_id = mock_name_b().id;
+            r.name_link_id = mock_name_b().id;
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::Draft;

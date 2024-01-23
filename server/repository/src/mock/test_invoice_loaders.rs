@@ -20,7 +20,7 @@ pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
         r.id = "mock_invoice_loader_requisition1".to_owned();
         r.requisition_number = 1;
-        r.name_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_owned();
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;

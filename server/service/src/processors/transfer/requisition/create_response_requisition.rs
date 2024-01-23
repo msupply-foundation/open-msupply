@@ -115,7 +115,7 @@ fn generate_response_requisition(
     record_for_processing: &RequisitionTransferProcessorRecord,
 ) -> Result<RequisitionRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
-    let name_id = request_requisition.store_row.name_id.clone();
+    let name_link_id = request_requisition.store_row.name_id.clone();
 
     let request_requisition_row = &request_requisition.requisition_row;
 
@@ -149,7 +149,7 @@ fn generate_response_requisition(
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
-        name_id,
+        name_link_id,
         store_id,
         r#type: RequisitionRowType::Response,
         status: RequisitionRowStatus::New,

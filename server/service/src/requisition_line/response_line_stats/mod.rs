@@ -125,7 +125,7 @@ mod test {
             r.id = "requisition_one".to_string();
             r.requisition_number = 1;
             r.store_id = mock_store_a().id;
-            r.name_id = "name_a".to_string();
+            r.name_link_id = "name_a".to_string();
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::New;
             r.created_datetime = Utc::now().naive_utc();
@@ -159,7 +159,7 @@ mod test {
             r.id = "requisition_two".to_string();
             r.requisition_number = 3;
             r.store_id = mock_store_a().id;
-            r.name_id = "name_b".to_string();
+            r.name_link_id = "name_b".to_string();
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::New;
             r.created_datetime = Utc::now().naive_utc();
@@ -181,7 +181,7 @@ mod test {
             r.id = "request_requisition_a".to_string();
             r.requisition_number = 4;
             r.store_id = mock_store_a().id;
-            r.name_id = "name_b".to_string();
+            r.name_link_id = "name_b".to_string();
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Sent;
             r.created_datetime = Utc::now().naive_utc();
@@ -203,7 +203,7 @@ mod test {
             r.id = "request_requisition_b".to_string();
             r.requisition_number = 4;
             r.store_id = mock_store_a().id;
-            r.name_id = "name_b".to_string();
+            r.name_link_id = "name_b".to_string();
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::New;
             r.created_datetime = Utc::now().naive_utc();
