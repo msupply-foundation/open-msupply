@@ -226,7 +226,6 @@ export const Toolbar: FC<ToolbarProps> = ({
                 label={t('label.visit-date')}
                 Input={
                   <DateTimePickerInput
-                    isDate={true}
                     value={DateUtils.getDateOrNull(startDatetime ?? null)}
                     onChange={date => {
                       const startDatetime = DateUtils.formatRFC3339(date);
