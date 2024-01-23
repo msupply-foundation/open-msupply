@@ -121,3 +121,26 @@ impl SyncTranslation for CurrencyTranslation {
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_currency_translation() {
+        use crate::sync::test::test_data::currency as test_data;
+        let translator = CurrencyTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_currency_translation", MockDataInserts::none()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            let translation_result = translator
+                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
+}
