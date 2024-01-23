@@ -33,10 +33,9 @@ pub(super) fn get_program_requisition_settings(
     store_id: &str,
 ) -> Result<Vec<ProgramSettings>, RepositoryError> {
     // Get program_settings, order_types, periods and requisitions_in_periods for a store
-    let Some(prepared) =
-        prepare(ctx, store_id)? else {
-            return Ok(Vec::new())
-        };
+    let Some(prepared) = prepare(ctx, store_id)? else {
+        return Ok(Vec::new());
+    };
 
     // Map program_settings, order_types, periods and requisitions_in_periods to ProgramSettings
     Ok(map(prepared))
@@ -224,14 +223,14 @@ mod test {
         };
         let name_store_join1 = NameStoreJoinRow {
             id: "name_store_join1".to_string(),
-            name_id: mock_name_store_b().id.clone(),
+            name_link_id: mock_name_store_b().id.clone(),
             store_id: mock_store_a().id,
             name_is_supplier: true,
             ..Default::default()
         };
         let name_store_join2 = NameStoreJoinRow {
             id: "name_store_join2".to_string(),
-            name_id: mock_name_store_c().id.clone(),
+            name_link_id: mock_name_store_c().id.clone(),
             store_id: mock_store_a().id,
             name_is_supplier: true,
             ..Default::default()

@@ -402,7 +402,7 @@ mod test {
         fn customer_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "customer_join".to_string();
-                r.name_id = customer().id;
+                r.name_link_id = customer().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_customer = true;
             })
