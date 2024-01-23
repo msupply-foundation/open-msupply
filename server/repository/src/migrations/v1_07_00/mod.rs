@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use super::{version::Version, Migration};
 
 use crate::{ChangelogRepository, StorageConnection};
@@ -29,19 +31,27 @@ mod stocktake_line_add_item_link_id;
 mod item_link_create_table;
 pub(crate) struct V1_07_00;
 
-impl Migration for V1_07_00 {
-    fn version(&self) -> Version {
-        Version::from_str("1.7.0")
-    }
+/// For testing, it returns the change_log cursors as if the changelog would have been updated.
+fn run_without_change_log_updates<F: FnOnce() -> anyhow::Result<()>>(
+    connection: &StorageConnection,
+    job: F,
+) -> anyhow::Result<u64> {
+    // Remember the current changelog cursor in order to be able to delete all changelog entries
+    // triggered by the merge migrations.
+    let changelog_repo = ChangelogRepository::new(connection);
+    let cursor_before_job = changelog_repo.latest_cursor()?;
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // merge migrations:
+    job()?;
 
-        // We don't want merge-migration updates to sync. Remember the current changelog cursor in
-        // order to be able to delete all changelog entries triggered by the merge migrations.
-        let changelog_repo = ChangelogRepository::new(connection);
-        let cursor_before_merge_migration = changelog_repo.latest_cursor()?;
+    let cursor_after_job = changelog_repo.latest_cursor()?;
+    // Revert changelog to the state before the merge migrations
+    changelog_repo.delete((cursor_before_job + 1).try_into()?)?;
+    Ok(cursor_after_job)
+}
 
+fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> {
+    // We don't want merge-migration updates to sync back.
+    run_without_change_log_updates(connection, || {
         item_add_is_active::migrate(connection)?;
         // Item link migrations
         item_link_create_table::migrate(connection)?;
@@ -75,8 +85,17 @@ impl Migration for V1_07_00 {
         // run after indexes, TODO move when moving migrations to v1_07_00
         contact_trace_link_id::migrate(connection)?;
 
-        // Revert changelog to the state before the merge migrations
-        changelog_repo.delete((cursor_before_merge_migration + 1).try_into()?)?;
+        Ok(())
+    })
+}
+
+impl Migration for V1_07_00 {
+    fn version(&self) -> Version {
+        Version::from_str("1.7.0")
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        migrate_merge_feature(connection)?;
 
         Ok(())
     }
@@ -102,8 +121,189 @@ async fn migration_1_07_00() {
 }
 
 #[cfg(test)]
+fn insert_merge_test_data(connection: &StorageConnection) {
+    use super::sql;
+
+    sql!(
+        connection,
+        r#"
+        INSERT INTO item 
+            (id, name, code, default_pack_size, type, legacy_record)
+        VALUES 
+            ('item1', 'item1name', 'item1code', 1, 'STOCK', ''),
+            ('item2', 'item2name', 'item2code', 2, 'STOCK', ''),
+            ('item3', 'item3name', 'item3code', 3, 'STOCK', ''),
+            ('item4', 'item4name', 'item4code', 4, 'STOCK', '');
+        "#
+    )
+    .unwrap();
+    sql!(
+        connection,
+        r#"
+        INSERT INTO
+            name (id, name, code, is_customer, is_supplier, type, is_sync_update)
+        VALUES
+            ('name1', 'name1name', 'name1code', TRUE, FALSE, 'STORE', TRUE),
+            ('name2', 'name2name', 'name2code', TRUE, FALSE, 'STORE', TRUE),
+            ('name3', 'name3name', 'name3code', TRUE, FALSE, 'STORE', TRUE);
+        "#
+    )
+    .unwrap();
+    sql!(
+        connection,
+        r#"
+        INSERT INTO
+            store (id, name_id, code, site_id, store_mode, disabled)
+        VALUES
+            ('store1', 'name1', 'store1code', 1, 'STORE', FALSE),
+            ('store2', 'name2', 'store2code', 1, 'STORE', FALSE),
+            ('store3', 'name3', 'store3code', 1, 'STORE', FALSE);
+        "#
+    )
+    .unwrap();
+
+    sql!(
+        connection,
+        r#"
+        INSERT INTO
+        stock_line (
+            id,
+            item_id,
+            store_id,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            available_number_of_packs,
+            total_number_of_packs,
+            pack_size,
+            on_hold
+        )
+        VALUES
+            ('stock_line1', 'item1', 'store1', 1.0, 1.0, 1.0, 1.0, 1.0, FALSE),
+            ('stock_line2', 'item1', 'store1', 2.0, 2.0, 2.0, 2.0, 2.0, FALSE),
+            ('stock_line3', 'item2', 'store1', 4.0, 4.0, 4.0, 4.0, 4.0, FALSE),
+            ('stock_line4', 'item3', 'store2', 8.0, 8.0, 8.0, 8.0, 8.0, FALSE);
+        "#
+    )
+    .unwrap();
+
+    sql!(
+    connection,
+        r#"
+        INSERT INTO
+            invoice (id, name_id, store_id, invoice_number, on_hold, created_datetime, is_system_generated, status, type)
+        VALUES
+            ('invoice1', 'name1', 'store1', 1, false, '2020-07-09 17:10:40', false, 'PICKED', 'INBOUND_SHIPMENT');
+        "#
+    )
+    .unwrap();
+
+    sql!(
+        connection,
+        r#"
+        INSERT INTO
+        invoice_line (
+            id,
+            invoice_id,
+            item_id,
+            item_name,
+            item_code,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            total_after_tax,
+            total_before_tax,
+            number_of_packs,
+            pack_size,
+            type
+        )
+        VALUES
+            ('invoice_line1', 'invoice1', 'item1', 'item1name', 'item1code', 1, 2, 4, 4, 2, 12, 'STOCK_IN'),
+            ('invoice_line2', 'invoice1', 'item1', 'item1name', 'item1code', 1, 3, 6, 6, 2, 12, 'STOCK_IN'),
+            ('invoice_line3', 'invoice1', 'item1', 'item1name', 'item1code', 1, 4, 8, 8, 2, 12, 'STOCK_IN'),
+            ('invoice_line4', 'invoice1', 'item2', 'item2name', 'item2code', 1, 5, 10, 10, 2, 12, 'STOCK_IN');
+        "#
+        )
+    .unwrap();
+
+    sql!(
+        connection,
+        r#"
+        INSERT INTO
+            requisition (
+                id,
+                requisition_number,
+                store_id,
+                created_datetime,
+                max_months_of_stock,
+                min_months_of_stock,
+                status,
+                type,
+                name_id
+            )
+        VALUES
+            ('requisition1', 1, 'store1', '2021-01-02 00:00:00', 2, 1, 'DRAFT', 'REQUEST', 'name1');
+        "#
+    )
+    .unwrap();
+
+    sql!(
+        connection,
+        r#"
+        INSERT INTO
+        requisition_line (
+            id,
+            requisition_id,
+            item_id,
+            requested_quantity,
+            suggested_quantity,
+            supply_quantity,
+            available_stock_on_hand,
+            average_monthly_consumption,
+            approved_quantity
+        )
+        VALUES
+            ('requisition_line1', 'requisition1', 'item1', 1, 2, 2, 5, 3, 2),
+            ('requisition_line2', 'requisition1', 'item1', 1, 2, 2, 5, 3, 2),
+            ('requisition_line3', 'requisition1', 'item1', 1, 2, 2, 5, 3, 2),
+            ('requisition_line4', 'requisition1', 'item2', 1, 2, 2, 5, 3, 2);
+        "#
+    )
+    .unwrap();
+}
+
+#[cfg(test)]
 #[actix_rt::test]
-async fn migration_1_07_00_merge_test() {
+async fn migration_1_07_00_no_merge_changelog_updates() {
+    use crate::migrations::*;
+    use crate::test_db::*;
+
+    let prev_version = v1_06_00::V1_06_00.version();
+
+    // This test allows checking sql syntax
+    let SetupResult { connection, .. } = setup_test(SetupOption {
+        db_name: &format!(
+            "migration_{}_no_merge_changelog_updates",
+            V1_07_00.version()
+        ),
+        version: Some(prev_version),
+        ..Default::default()
+    })
+    .await;
+    // enter some data so that changelog would have been updated during the migration
+    insert_merge_test_data(&connection);
+
+    let changelog_repo = ChangelogRepository::new(&connection);
+    let cursor_before_migration = changelog_repo.latest_cursor().unwrap();
+
+    let would_have_been_cursor = migrate_merge_feature(&connection).unwrap();
+    assert!(would_have_been_cursor > cursor_before_migration);
+
+    let cursor_after_migration = changelog_repo.latest_cursor().unwrap();
+    assert_eq!(cursor_before_migration, cursor_after_migration);
+}
+
+#[cfg(test)]
+#[actix_rt::test]
+async fn migration_1_07_00_merge() {
     use crate::migrations::*;
     use crate::test_db::*;
     use chrono::NaiveDateTime;
@@ -202,150 +402,7 @@ async fn migration_1_07_00_merge_test() {
     })
     .await;
 
-    sql!(
-        &connection,
-        r#"
-        INSERT INTO item 
-            (id, name, code, default_pack_size, type, legacy_record)
-        VALUES 
-            ('item1', 'item1name', 'item1code', 1, 'STOCK', ''),
-            ('item2', 'item2name', 'item2code', 2, 'STOCK', ''),
-            ('item3', 'item3name', 'item3code', 3, 'STOCK', ''),
-            ('item4', 'item4name', 'item4code', 4, 'STOCK', '');
-        "#
-    )
-    .unwrap();
-    sql!(
-        &connection,
-        r#"
-        INSERT INTO
-            name (id, name, code, is_customer, is_supplier, type, is_sync_update)
-        VALUES
-            ('name1', 'name1name', 'name1code', TRUE, FALSE, 'STORE', TRUE),
-            ('name2', 'name2name', 'name2code', TRUE, FALSE, 'STORE', TRUE),
-            ('name3', 'name3name', 'name3code', TRUE, FALSE, 'STORE', TRUE);
-        "#
-    )
-    .unwrap();
-    sql!(
-        &connection,
-        r#"
-        INSERT INTO
-            store (id, name_id, code, site_id, store_mode, disabled)
-        VALUES
-            ('store1', 'name1', 'store1code', 1, 'STORE', FALSE),
-            ('store2', 'name2', 'store2code', 1, 'STORE', FALSE),
-            ('store3', 'name3', 'store3code', 1, 'STORE', FALSE);
-        "#
-    )
-    .unwrap();
-
-    sql!(
-        &connection,
-        r#"
-        INSERT INTO
-        stock_line (
-            id,
-            item_id,
-            store_id,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs,
-            total_number_of_packs,
-            pack_size,
-            on_hold
-        )
-        VALUES
-            ('stock_line1', 'item1', 'store1', 1.0, 1.0, 1.0, 1.0, 1.0, FALSE),
-            ('stock_line2', 'item1', 'store1', 2.0, 2.0, 2.0, 2.0, 2.0, FALSE),
-            ('stock_line3', 'item2', 'store1', 4.0, 4.0, 4.0, 4.0, 4.0, FALSE),
-            ('stock_line4', 'item3', 'store2', 8.0, 8.0, 8.0, 8.0, 8.0, FALSE);
-        "#
-    )
-    .unwrap();
-
-    sql!(
-    &connection,
-        r#"
-        INSERT INTO
-            invoice (id, name_id, store_id, invoice_number, on_hold, created_datetime, is_system_generated, status, type)
-        VALUES
-            ('invoice1', 'name1', 'store1', 1, false, '2020-07-09 17:10:40', false, 'PICKED', 'INBOUND_SHIPMENT');
-        "#
-    )
-    .unwrap();
-
-    sql!(
-        &connection,
-        r#"
-        INSERT INTO
-        invoice_line (
-            id,
-            invoice_id,
-            item_id,
-            item_name,
-            item_code,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            total_after_tax,
-            total_before_tax,
-            number_of_packs,
-            pack_size,
-            type
-        )
-        VALUES
-            ('invoice_line1', 'invoice1', 'item1', 'item1name', 'item1code', 1, 2, 4, 4, 2, 12, 'STOCK_IN'),
-            ('invoice_line2', 'invoice1', 'item1', 'item1name', 'item1code', 1, 3, 6, 6, 2, 12, 'STOCK_IN'),
-            ('invoice_line3', 'invoice1', 'item1', 'item1name', 'item1code', 1, 4, 8, 8, 2, 12, 'STOCK_IN'),
-            ('invoice_line4', 'invoice1', 'item2', 'item2name', 'item2code', 1, 5, 10, 10, 2, 12, 'STOCK_IN');
-        "#
-        )
-    .unwrap();
-
-    sql!(
-        &connection,
-        r#"
-        INSERT INTO
-            requisition (
-                id,
-                requisition_number,
-                store_id,
-                created_datetime,
-                max_months_of_stock,
-                min_months_of_stock,
-                status,
-                type,
-                name_id
-            )
-        VALUES
-            ('requisition1', 1, 'store1', '2021-01-02 00:00:00', 2, 1, 'DRAFT', 'REQUEST', 'name1');
-        "#
-    )
-    .unwrap();
-
-    sql!(
-        &connection,
-        r#"
-        INSERT INTO
-        requisition_line (
-            id,
-            requisition_id,
-            item_id,
-            requested_quantity,
-            suggested_quantity,
-            supply_quantity,
-            available_stock_on_hand,
-            average_monthly_consumption,
-            approved_quantity
-        )
-        VALUES
-            ('requisition_line1', 'requisition1', 'item1', 1, 2, 2, 5, 3, 2),
-            ('requisition_line2', 'requisition1', 'item1', 1, 2, 2, 5, 3, 2),
-            ('requisition_line3', 'requisition1', 'item1', 1, 2, 2, 5, 3, 2),
-            ('requisition_line4', 'requisition1', 'item2', 1, 2, 2, 5, 3, 2);
-        "#
-    )
-    .unwrap();
+    insert_merge_test_data(&connection);
 
     let old_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
         .order(stock_on_hand_dsl::id.asc())
