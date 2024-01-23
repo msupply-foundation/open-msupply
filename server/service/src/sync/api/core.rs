@@ -35,7 +35,7 @@ fn generate_headers(hardware_id: &str, sync_version: u32) -> HeaderMap {
     #[cfg(target_os = "android")]
     headers.insert(
         HeaderName::from_static("app-name"),
-        "Open mSupply Mobile".parse().unwrap(),
+        "Open mSupply Android".parse().unwrap(),
     );
     #[cfg(not(target_os = "android"))]
     headers.insert(
