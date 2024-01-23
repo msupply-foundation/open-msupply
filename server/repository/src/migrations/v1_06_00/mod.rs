@@ -2,15 +2,13 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
-mod pack_variant;
-mod permission;
-
 mod changelog_deduped;
 mod contact_trace;
 mod encounter_status;
 mod indexes;
 mod master_list;
 mod patient_id_indices;
+mod permission;
 mod plugin_data;
 mod program_enrolment_status;
 mod temperature_breach;
@@ -23,7 +21,6 @@ impl Migration for V1_06_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        pack_variant::migrate(connection)?;
         permission::migrate(connection)?;
         contact_trace::migrate(connection)?;
         plugin_data::migrate(connection)?;
