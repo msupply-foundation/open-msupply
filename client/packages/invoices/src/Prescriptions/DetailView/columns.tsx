@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   useColumns,
   getRowExpandColumn,
@@ -8,15 +9,14 @@ import {
   Column,
   ArrayUtils,
   useCurrency,
-  InvoiceLineNodeType,
-  PositiveNumberCell,
-  TooltipTextCell,
+  NumberInputCell,
+  useTranslation,
   useColumnUtils,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
-interface UseOutboundColumnOptions {
+interface UsePrescriptionColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
   onChangeSortBy: (column: Column<StockOutLineFragment | StockOutItem>) => void;
 }
@@ -24,33 +24,21 @@ interface UseOutboundColumnOptions {
 const expansionColumn = getRowExpandColumn<
   StockOutLineFragment | StockOutItem
 >();
-const notePopoverColumn = getNotePopoverColumn<
-  StockOutLineFragment | StockOutItem
->();
 
-const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
-  row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
-
-const getPackSize = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize;
-
-const getNumberOfPacks = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
-
-const getUnitQuantity = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize * row.numberOfPacks;
-
-export const useOutboundColumns = ({
+export const usePrescriptionColumn = ({
   sortBy,
   onChangeSortBy,
-}: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
+}: UsePrescriptionColumnOptions): Column<
+  StockOutLineFragment | StockOutItem
+>[] => {
   const { c } = useCurrency();
-  const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
+  const t = useTranslation('dispensary');
+  const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   return useColumns(
     [
       [
-        notePopoverColumn,
+        getNotePopoverColumn(t('label.directions')),
         {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
@@ -74,13 +62,16 @@ export const useOutboundColumns = ({
         'itemCode',
         {
           getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'item', 'code'], default: '' },
-              { path: ['item', 'code'], default: '' },
-            ]),
+            getColumnPropertyAsString<StockOutLineFragment | StockOutItem>(
+              row,
+              [
+                { path: ['lines', 'item', 'code'] },
+                { path: ['item', 'code'], default: '' },
+              ]
+            ),
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
-              { path: ['lines', 'item', 'code'], default: '' },
+              { path: ['lines', 'item', 'code'] },
               { path: ['item', 'code'], default: '' },
             ]),
         },
@@ -88,7 +79,6 @@ export const useOutboundColumns = ({
       [
         'itemName',
         {
-          Cell: TooltipTextCell,
           getSortValue: row =>
             getColumnPropertyAsString(row, [
               { path: ['lines', 'item', 'name'] },
@@ -157,14 +147,14 @@ export const useOutboundColumns = ({
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
               { path: ['lines', 'location', 'code'] },
-              { path: ['location', 'code'], default: '' },
+              { path: ['location', 'code'] },
             ]),
         },
       ],
       [
         'numberOfPacks',
         {
-          Cell: PositiveNumberCell,
+          Cell: props => <NumberInputCell {...props} min={1} />,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -182,7 +172,7 @@ export const useOutboundColumns = ({
                 return '';
               }
             } else {
-              return getNumberOfPacks(row);
+              return row.numberOfPacks;
             }
           },
           accessor: ({ rowData }) => {
@@ -202,7 +192,7 @@ export const useOutboundColumns = ({
                 return '';
               }
             } else {
-              return getNumberOfPacks(rowData);
+              return rowData.numberOfPacks;
             }
           },
         },
@@ -210,24 +200,16 @@ export const useOutboundColumns = ({
       [
         'packSize',
         {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
-              );
-            } else {
-              return getPackSize(row) ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return getPackSize(rowData);
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'packSize'] },
+              { path: ['packSize'] },
+            ]),
         },
       ],
       [
@@ -238,7 +220,7 @@ export const useOutboundColumns = ({
               const { lines } = rowData;
               return ArrayUtils.getUnitQuantity(lines);
             } else {
-              return getUnitQuantity(rowData);
+              return rowData.packSize * rowData.numberOfPacks;
             }
           },
           getSortValue: rowData => {
@@ -246,7 +228,7 @@ export const useOutboundColumns = ({
               const { lines } = rowData;
               return ArrayUtils.getUnitQuantity(lines);
             } else {
-              return getUnitQuantity(rowData);
+              return rowData.packSize * rowData.numberOfPacks;
             }
           },
         },
@@ -265,7 +247,6 @@ export const useOutboundColumns = ({
               )
             ).format();
           } else {
-            if (isDefaultPlaceholderRow(rowData)) return '';
             return c(
               (rowData.sellPricePerPack ?? 0) / rowData.packSize
             ).format();
@@ -301,8 +282,6 @@ export const useOutboundColumns = ({
               )
             ).format();
           } else {
-            if (isDefaultPlaceholderRow(rowData)) return '';
-
             const x = c(
               rowData.sellPricePerPack * rowData.numberOfPacks
             ).format();

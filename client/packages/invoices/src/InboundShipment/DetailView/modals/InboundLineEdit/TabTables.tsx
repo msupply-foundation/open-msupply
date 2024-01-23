@@ -11,7 +11,7 @@ import {
   alpha,
   QueryParamsProvider,
   createQueryParamsStore,
-  NonNegativeIntegerCell,
+  NumberInputCell,
   CellProps,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
@@ -61,10 +61,11 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
   rowData,
   ...props
 }) => (
-  <NonNegativeIntegerCell
+  <NumberInputCell
     {...props}
     isRequired={rowData.numberOfPacks === 0}
     rowData={rowData}
+    min={1}
   />
 );
 
@@ -87,7 +88,13 @@ export const QuantityTableComponent: FC<TableProps> = ({
           setter: updateDraftLine,
         },
       ],
-      ['packSize', { Cell: NonNegativeIntegerCell, setter: updateDraftLine }],
+      [
+        'packSize',
+        {
+          Cell: props => <NumberInputCell {...props} min={1} />,
+          setter: updateDraftLine,
+        },
+      ],
       [
         'unitQuantity',
         {

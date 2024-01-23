@@ -4,11 +4,7 @@ import { styled } from '@mui/material/styles';
 import { Story } from '@storybook/react';
 import { BasicTextInput } from './BasicTextInput';
 import { InputWithLabelRow } from './InputWithLabelRow';
-import {
-  PositiveNumberInput,
-  NumericTextInput,
-  NonNegativeNumberInput,
-} from './numeric';
+import { NumericTextInput } from './';
 
 export default {
   title: 'Inputs/TextInputs',
@@ -56,8 +52,9 @@ const Template: Story = () => (
 );
 
 const NumericTemplate: Story = () => {
-  const [nonNegative, setNonNegative] = useState(0);
+  const [nonNegative, setNonNegative] = useState<number | undefined>(0);
   const [positive, setPositive] = useState<number | undefined>(1);
+  const [decimal, setDecimal] = useState<number | undefined>();
 
   return (
     <Grid>
@@ -66,7 +63,12 @@ const NumericTemplate: Story = () => {
           <Grid item xs>
             <StyledPaper>
               <Typography>NumericTextInput</Typography>
-              <NumericTextInput />
+              <NumericTextInput
+                value={decimal}
+                onChange={setDecimal}
+                precision={2}
+                allowNegative={true}
+              />
             </StyledPaper>
             <StyledPaper>
               <Typography>Disabled</Typography>
@@ -74,14 +76,19 @@ const NumericTemplate: Story = () => {
             </StyledPaper>
             <StyledPaper>
               <Typography>Non Negative</Typography>
-              <NonNegativeNumberInput
+              <NumericTextInput
                 value={nonNegative}
                 onChange={setNonNegative}
+                precision={2}
               />
             </StyledPaper>
             <StyledPaper>
-              <Typography>Positive</Typography>
-              <PositiveNumberInput value={positive} onChange={setPositive} />
+              <Typography>Positive Integer</Typography>
+              <NumericTextInput
+                value={positive}
+                onChange={setPositive}
+                min={1}
+              />
             </StyledPaper>
           </Grid>
         </Grid>

@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   useColumns,
   getRowExpandColumn,
@@ -8,14 +9,15 @@ import {
   Column,
   ArrayUtils,
   useCurrency,
-  PositiveNumberCell,
-  useTranslation,
+  InvoiceLineNodeType,
+  NumberInputCell,
+  TooltipTextCell,
   useColumnUtils,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
-interface UsePrescriptionColumnOptions {
+interface UseOutboundColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
   onChangeSortBy: (column: Column<StockOutLineFragment | StockOutItem>) => void;
 }
@@ -23,21 +25,33 @@ interface UsePrescriptionColumnOptions {
 const expansionColumn = getRowExpandColumn<
   StockOutLineFragment | StockOutItem
 >();
+const notePopoverColumn = getNotePopoverColumn<
+  StockOutLineFragment | StockOutItem
+>();
 
-export const usePrescriptionColumn = ({
+const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
+  row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
+
+const getPackSize = (row: StockOutLineFragment) =>
+  isDefaultPlaceholderRow(row) ? '' : row.packSize;
+
+const getNumberOfPacks = (row: StockOutLineFragment) =>
+  isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
+
+const getUnitQuantity = (row: StockOutLineFragment) =>
+  isDefaultPlaceholderRow(row) ? '' : row.packSize * row.numberOfPacks;
+
+export const useOutboundColumns = ({
   sortBy,
   onChangeSortBy,
-}: UsePrescriptionColumnOptions): Column<
-  StockOutLineFragment | StockOutItem
->[] => {
+}: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
   const { c } = useCurrency();
-  const t = useTranslation('dispensary');
-  const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
+  const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
   return useColumns(
     [
       [
-        getNotePopoverColumn(t('label.directions')),
+        notePopoverColumn,
         {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
@@ -61,16 +75,13 @@ export const usePrescriptionColumn = ({
         'itemCode',
         {
           getSortValue: row =>
-            getColumnPropertyAsString<StockOutLineFragment | StockOutItem>(
-              row,
-              [
-                { path: ['lines', 'item', 'code'] },
-                { path: ['item', 'code'], default: '' },
-              ]
-            ),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'code'], default: '' },
+              { path: ['item', 'code'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
-              { path: ['lines', 'item', 'code'] },
+              { path: ['lines', 'item', 'code'], default: '' },
               { path: ['item', 'code'], default: '' },
             ]),
         },
@@ -78,6 +89,7 @@ export const usePrescriptionColumn = ({
       [
         'itemName',
         {
+          Cell: TooltipTextCell,
           getSortValue: row =>
             getColumnPropertyAsString(row, [
               { path: ['lines', 'item', 'name'] },
@@ -146,14 +158,14 @@ export const usePrescriptionColumn = ({
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
               { path: ['lines', 'location', 'code'] },
-              { path: ['location', 'code'] },
+              { path: ['location', 'code'], default: '' },
             ]),
         },
       ],
       [
         'numberOfPacks',
         {
-          Cell: PositiveNumberCell,
+          Cell: props => <NumberInputCell {...props} min={1} />,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -171,7 +183,7 @@ export const usePrescriptionColumn = ({
                 return '';
               }
             } else {
-              return row.numberOfPacks;
+              return getNumberOfPacks(row);
             }
           },
           accessor: ({ rowData }) => {
@@ -191,7 +203,7 @@ export const usePrescriptionColumn = ({
                 return '';
               }
             } else {
-              return rowData.numberOfPacks;
+              return getNumberOfPacks(rowData);
             }
           },
         },
@@ -199,16 +211,24 @@ export const usePrescriptionColumn = ({
       [
         'packSize',
         {
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'packSize'] },
-              { path: ['packSize'], default: '' },
-            ]),
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'packSize'] },
-              { path: ['packSize'] },
-            ]),
+          getSortValue: row => {
+            if ('lines' in row) {
+              const { lines } = row;
+              return (
+                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
+              );
+            } else {
+              return getPackSize(row) ?? '';
+            }
+          },
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
+            } else {
+              return getPackSize(rowData);
+            }
+          },
         },
       ],
       [
@@ -219,7 +239,7 @@ export const usePrescriptionColumn = ({
               const { lines } = rowData;
               return ArrayUtils.getUnitQuantity(lines);
             } else {
-              return rowData.packSize * rowData.numberOfPacks;
+              return getUnitQuantity(rowData);
             }
           },
           getSortValue: rowData => {
@@ -227,7 +247,7 @@ export const usePrescriptionColumn = ({
               const { lines } = rowData;
               return ArrayUtils.getUnitQuantity(lines);
             } else {
-              return rowData.packSize * rowData.numberOfPacks;
+              return getUnitQuantity(rowData);
             }
           },
         },
@@ -246,6 +266,7 @@ export const usePrescriptionColumn = ({
               )
             ).format();
           } else {
+            if (isDefaultPlaceholderRow(rowData)) return '';
             return c(
               (rowData.sellPricePerPack ?? 0) / rowData.packSize
             ).format();
@@ -281,6 +302,8 @@ export const usePrescriptionColumn = ({
               )
             ).format();
           } else {
+            if (isDefaultPlaceholderRow(rowData)) return '';
+
             const x = c(
               rowData.sellPricePerPack * rowData.numberOfPacks
             ).format();
