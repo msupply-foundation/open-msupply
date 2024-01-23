@@ -5,7 +5,6 @@ import {
   useHostContext,
   SaveIcon,
   ErrorWithDetails,
-  useBackButtonHandler,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from '../Login/LoginTextInput';
 import { InitialiseLayout } from './InitialiseLayout';
@@ -33,8 +32,6 @@ export const Initialise = () => {
     syncStatus,
     siteName,
   } = useInitialiseForm();
-
-  useBackButtonHandler({ isNavigateEnabled: false });
 
   useEffect(() => {
     setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);

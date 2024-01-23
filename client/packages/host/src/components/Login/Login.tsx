@@ -6,7 +6,6 @@ import {
   useHostContext,
   LocalStorage,
   ErrorWithDetails,
-  useBackButtonHandler,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
@@ -34,9 +33,6 @@ export const Login = () => {
     error,
     siteName,
   } = useLoginForm(passwordRef);
-
-  console.warn('this is the login page?');
-  useBackButtonHandler({ isNavigateEnabled: false });
 
   useEffect(() => {
     if (!displaySettings) return;
