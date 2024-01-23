@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::connection::SimpleConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -60,9 +62,30 @@ impl DatabaseSettings {
             return false;
         };
         match sqlite_suffix(self.database_name.clone()) {
+            // just use DB if name ends in .sqlite
             true => self.database_name.clone(),
-            false => format!("{}.sqlite", self.database_name.clone()),
+            false => {
+                // first check if database exists on disk. If it does, we will use db filename as is without appending .sqlite
+                let db_exists = self.check_db_exists();
+                match db_exists {
+                    true => self.database_name.clone(),
+                    false => format!("{}.sqlite", self.database_name.clone()),
+                }
+            }
         }
+    }
+
+    pub fn check_db_exists(&self) -> bool {
+        Path::new(&self.database_name.clone())
+            // using try_exists because Mark mentioned a feature to be able to store the sqlite file on a different partition or disc.
+            // If the disc is a network drive and the drive is temporarily offline it might happen that exists() returns false but doesn't
+            // say that there was a network error (not 100% if this really is how exists() work but try_exists seems safer). Then if the drive
+            // becomes online again, creating a new database will succeed but we have two files now. This might result into data loss if
+            // data from the old file hasn't been synced yet. This scenario might be more realistic than it seems. For example, when mSupply
+            // automatically starts after a machine boots up a network drive might also be in the process of being mounted and the case above
+            // become easily possible.
+            .try_exists()
+            .expect("database doesn't exist")
     }
 
     pub fn connection_string_without_db(&self) -> String {
