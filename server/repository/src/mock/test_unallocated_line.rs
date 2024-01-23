@@ -22,7 +22,7 @@ pub fn mock_test_unallocated_line() -> MockData {
 pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "unallocated_line_new_invoice".to_owned();
-        r.name_id = "name_store_a".to_owned();
+        r.name_link_id = "name_store_a".to_owned();
         r.store_id = "store_c".to_owned();
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -63,7 +63,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
 pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "unallocated_line_new_invoice2".to_owned();
-        r.name_id = "name_store_a".to_owned();
+        r.name_link_id = "name_store_a".to_owned();
         r.store_id = "store_a".to_owned();
         r.invoice_number = 2;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -102,7 +102,7 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
 pub fn mock_allocated_invoice() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "unallocated_line_allocated_invoice".to_owned();
-        r.name_id = "name_store_a".to_owned();
+        r.name_link_id = "name_store_a".to_owned();
         r.store_id = "store_a".to_owned();
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundShipment;

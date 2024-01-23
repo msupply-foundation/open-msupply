@@ -346,7 +346,7 @@ mod test {
         fn invoice_tax_test() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice_tax_test".to_string();
-                r.name_id = "name_store_b".to_string();
+                r.name_link_id = "name_store_b".to_string();
                 r.store_id = "store_a".to_string();
                 r.invoice_number = 123;
                 r.r#type = InvoiceRowType::InboundShipment;
@@ -406,7 +406,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.name_id = supplier().id;
+                u.name_link_id = supplier().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })
@@ -691,6 +691,6 @@ mod test {
             })
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
-        assert_eq!(Some(invoice.name_id), stock_line.supplier_id);
+        assert_eq!(Some(invoice.name_link_id), stock_line.supplier_id);
     }
 }

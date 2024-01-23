@@ -245,7 +245,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.name_id = customer().id;
+                u.name_link_id = customer().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })
@@ -270,7 +270,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.name_id = customer().id;
+                u.name_link_id = customer().id;
                 u.on_hold = true;
                 u
             })

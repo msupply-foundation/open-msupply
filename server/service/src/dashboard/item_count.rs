@@ -411,7 +411,7 @@ mod item_count_service_test {
                 ],
                 invoices: vec![InvoiceRow {
                     id: "invoice1".to_string(),
-                    name_id: "name_store_a".to_string(),
+                    name_link_id: "name_store_a".to_string(),
                     name_store_id: Some("store_a".to_string()),
                     store_id: mock_store_b().id,
                     picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
@@ -445,7 +445,7 @@ mod item_count_service_test {
         invoice_repository
             .upsert_one(&inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice2".to_string();
-                r.name_id = "name_store_a".to_string();
+                r.name_link_id = "name_store_a".to_string();
                 r.name_store_id = Some("store_a".to_string());
                 r.store_id = "store_b".to_string();
                 r.picked_datetime = Some(Utc::now().naive_utc() - Duration::days(10));

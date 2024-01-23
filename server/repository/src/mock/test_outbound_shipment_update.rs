@@ -45,7 +45,7 @@ fn mock_item_with_no_stock_line() -> ItemRow {
 fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_invalid_stock_line");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.invoice_number = 3;
         r.r#type = InvoiceRowType::OutboundShipment;

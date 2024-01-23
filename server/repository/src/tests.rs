@@ -116,7 +116,7 @@ mod repository_test {
         pub fn invoice_1() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice1".to_string();
-                r.name_id = name_1().id.to_string();
+                r.name_link_id = name_1().id.to_string();
                 r.store_id = store_1().id.to_string();
                 r.invoice_number = 12;
                 r.r#type = InvoiceRowType::InboundShipment;
@@ -131,7 +131,7 @@ mod repository_test {
         pub fn invoice_2() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice2".to_string();
-                r.name_id = name_1().id.to_string();
+                r.name_link_id = name_1().id.to_string();
                 r.store_id = store_1().id.to_string();
                 r.invoice_number = 12;
                 r.r#type = InvoiceRowType::OutboundShipment;
@@ -615,7 +615,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceRowType::OutboundShipment.equal_to())
-                    .name_id(EqualFilter::equal_to(&item1.name_id)),
+                    .name_id(EqualFilter::equal_to(&item1.name_link_id)),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());

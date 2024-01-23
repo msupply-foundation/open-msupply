@@ -149,7 +149,7 @@ mod test {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
                     r.id = invoice_id.clone();
                     r.store_id = store().id;
-                    r.name_id = mock_name_a().id;
+                    r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {

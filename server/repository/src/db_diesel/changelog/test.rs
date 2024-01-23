@@ -348,7 +348,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn invoice() -> InvoiceRow {
         inline_init(|r: &mut InvoiceRow| {
             r.id = "invoice".to_string();
-            r.name_id = name().id;
+            r.name_link_id = name().id;
             r.store_id = store().id;
         })
     }
@@ -398,7 +398,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
@@ -414,7 +414,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
@@ -432,7 +432,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Delete,
@@ -450,7 +450,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
@@ -466,7 +466,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
@@ -480,7 +480,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Delete,

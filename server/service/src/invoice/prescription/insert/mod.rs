@@ -232,7 +232,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.name_id = patient().id;
+                u.name_link_id = patient().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })

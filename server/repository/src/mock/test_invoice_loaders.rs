@@ -36,7 +36,7 @@ pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
 pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "mock_invoice_loader_invoice1".to_string();
-        r.name_id = mock_name_store_b().id;
+        r.name_link_id = mock_name_store_b().id;
         r.store_id = mock_store_a().id;
         r.invoice_number = 1;
         r.requisition_id = Some(mock_invoice_loader_requisition1().id);
@@ -52,7 +52,7 @@ pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
 pub fn mock_invoice_loader_invoice2() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "mock_invoice_loader_invoice2".to_string();
-        r.name_id = mock_name_store_b().id;
+        r.name_link_id = mock_name_store_b().id;
         r.store_id = mock_store_a().id;
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundShipment;

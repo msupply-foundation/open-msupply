@@ -21,7 +21,7 @@ pub fn linked_invoice_1() -> InvoiceRow {
         r.id = "lined_invoice_1".to_string();
         r.r#type = InvoiceRowType::OutboundShipment;
         r.requisition_id = Some(requisition().id);
-        r.name_id = mock_name_a().id;
+        r.name_link_id = mock_name_a().id;
         r.store_id = mock_store_a().id;
     })
 }
@@ -31,7 +31,7 @@ pub fn linked_invoice_2() -> InvoiceRow {
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::Picked;
         r.requisition_id = Some(requisition().id);
-        r.name_id = mock_name_a().id;
+        r.name_link_id = mock_name_a().id;
         r.store_id = mock_store_a().id;
     })
 }

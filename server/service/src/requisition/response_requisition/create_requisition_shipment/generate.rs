@@ -23,7 +23,7 @@ pub fn generate(
     let new_invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_id: requisition_row.name_id,
+        name_link_id: requisition_row.name_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_owned(),
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, &store_id)?,
@@ -45,7 +45,7 @@ pub fn generate(
         colour: None,
         linked_invoice_id: None,
         tax: None,
-        clinician_id: None,
+        clinician_link_id: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fullfilments)?;

@@ -199,7 +199,7 @@ mod test {
         fn outbound_shipment_no_stock() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = String::from("outbound_shipment_no_stock");
-                r.name_id = String::from("name_store_a");
+                r.name_link_id = String::from("name_store_a");
                 r.store_id = String::from("store_a");
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Allocated;
@@ -330,7 +330,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
@@ -387,7 +387,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "test_invoice_pricing".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
@@ -541,7 +541,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
