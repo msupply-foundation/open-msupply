@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use repository::{ContextRow, DocumentRegistryCategory, DocumentRegistryRow, FormSchemaJson};
 use serde_json::json;
@@ -65,10 +65,10 @@ impl SyncRecordTester for DocumentRegistryTester {
                 "om_document_registry": [doc_registry_json1],
             }),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::FormSchema(form_row1),
-                PullUpsertRecord::DocumentRegistry(doc_registry1),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(form_row1),
+                IntegrationOperation::upsert(doc_registry1),
+            ],
         });
 
         result

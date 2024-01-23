@@ -10,7 +10,7 @@ mod unit_and_item;
 
 use super::{central_server_configurations::ConfigureCentralServer, SyncRecordTester};
 use crate::sync::test::{
-    check_records_against_database,
+    check_integrated,
     integration::{
         central_server_configurations::SiteConfiguration, init_test_context, SyncIntegrationContext,
     },
@@ -57,7 +57,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
             .expect("Problem deleting central data");
 
         synchroniser.sync().await.unwrap();
-        check_records_against_database(&connection, step_data.integration_records).await;
+        check_integrated(&connection, step_data.integration_records)
     }
 
     // With re-initialisation
@@ -95,6 +95,7 @@ async fn test_central_sync_record(identifier: &str, tester: &dyn SyncRecordTeste
         } = init_test_context(&sync_settings, &inner_identifier).await;
 
         synchroniser.sync().await.unwrap();
-        check_records_against_database(&connection, step_data.integration_records).await;
+
+        check_integrated(&connection, step_data.integration_records)
     }
 }
