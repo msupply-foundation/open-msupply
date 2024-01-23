@@ -5,6 +5,7 @@ use crate::StorageConnection;
 mod pack_variant;
 mod permission;
 
+mod asset;
 mod changelog_deduped;
 mod contact_trace;
 mod encounter_status;
@@ -34,6 +35,7 @@ impl Migration for V1_06_00 {
         indexes::migrate(connection)?;
         encounter_status::migrate(connection)?;
         changelog_deduped::migrate(connection)?;
+        asset::migrate(connection)?;
         Ok(())
     }
 }

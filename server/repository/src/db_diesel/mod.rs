@@ -2,6 +2,7 @@ use crate::repository_error::RepositoryError;
 
 pub mod activity_log;
 mod activity_log_row;
+pub mod asset_row;
 pub mod barcode;
 mod barcode_row;
 pub mod changelog;
