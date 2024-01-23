@@ -23,26 +23,6 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
       <Box display="flex" gap={1}>
         <FilterMenu
           filters={[
-            // Can instantiate multiple related filters at once using this
-            // // "group" option
-            // {
-            //   type: 'group',
-            //   name: 'Name',
-            //   elements: [
-            //     {
-            //       type: 'text',
-            //       name: t('label.first-name'),
-            //       urlParameter: 'firstName',
-            //       placeholder: t('placeholder.search-by-first-name'),
-            //     },
-            //     {
-            //       type: 'text',
-            //       name: t('label.last-name'),
-            //       urlParameter: 'lastName',
-            //       placeholder: t('placeholder.search-by-last-name'),
-            //     },
-            //   ],
-            // },
             {
               type: 'text',
               name: t('label.first-name'),
