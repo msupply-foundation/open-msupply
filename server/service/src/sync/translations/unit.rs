@@ -1,11 +1,8 @@
-use repository::{StorageConnection, SyncBufferRow, UnitRow};
+use repository::{StorageConnection, SyncBufferRow, UnitRow, UnitRowDelete};
 
 use serde::Deserialize;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
+use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -15,29 +12,27 @@ pub struct LegacyUnitRow {
     comment: String,
     order_number: i32,
 }
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::UNIT
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(UnitTranslation)
 }
 
-pub(crate) struct UnitTranslation {}
+pub(super) struct UnitTranslation;
 impl SyncTranslation for UnitTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::UNIT,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &'static str {
+        "unit"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![]
     }
 
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyUnitRow>(&sync_record.data)?;
         let mut result = UnitRow {
             id: data.ID,
@@ -50,21 +45,18 @@ impl SyncTranslation for UnitTranslation {
             result.description = Some(data.comment);
         }
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Unit(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
+    // TODO soft delete
     fn try_translate_pull_delete(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Unit)
-        });
-
-        Ok(result)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(UnitRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 
@@ -82,6 +74,7 @@ mod tests {
             setup_all("test_unit_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();
@@ -90,6 +83,7 @@ mod tests {
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
