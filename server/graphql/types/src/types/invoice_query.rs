@@ -13,7 +13,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
+use repository::{ClinicianRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, PricingRow};
 
 use repository::{unknown_user, Invoice};
 use serde::Serialize;
@@ -257,13 +257,13 @@ impl InvoiceNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.name_row().id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to invoice ({})",
-                &self.row().name_id,
+                &self.name_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -271,8 +271,8 @@ impl InvoiceNode {
     }
 
     pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let clinician_id = if let Some(clinician_id) = &self.row().clinician_id {
-            clinician_id
+        let clinician_id = if let Some(clinician) = &self.clinician_row() {
+            &clinician.id
         } else {
             return Ok(None);
         };
@@ -287,15 +287,17 @@ impl InvoiceNode {
             .map(ClinicianNode::from_domain))
     }
 
-    pub async fn clinician_id(&self) -> &Option<String> {
-        &self.row().clinician_id
+    pub async fn clinician_id(&self) -> Option<String> {
+        self.clinician_row()
+            .as_ref()
+            .map(|clinician| clinician.id.clone())
     }
 
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(self.row().name_id.clone())
+            .load_one(self.name_row().id.clone())
             .await?
             .map(|patient| PatientNode {
                 store_id: self.row().store_id.clone(),
@@ -304,7 +306,7 @@ impl InvoiceNode {
             })
             .ok_or(Error::new(format!(
                 "Failed to load patient: {}",
-                self.row().name_id
+                self.name_row().id
             )))?;
 
         Ok(Some(result))
@@ -317,6 +319,12 @@ impl InvoiceNode {
     }
     pub fn row(&self) -> &InvoiceRow {
         &self.invoice.invoice_row
+    }
+    pub fn name_row(&self) -> &NameRow {
+        &self.invoice.name_row
+    }
+    pub fn clinician_row(&self) -> &Option<ClinicianRow> {
+        &self.invoice.clinician_row
     }
 }
 
@@ -462,7 +470,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "test_invoice_pricing".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
             })
         }

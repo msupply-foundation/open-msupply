@@ -202,7 +202,7 @@ type BoxedInvoiceQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
+fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
     let mut query = invoice_dsl::invoice
         .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .inner_join(store_dsl::store)
@@ -438,7 +438,7 @@ impl Invoice {
         &self.name_row.name
     }
     pub fn other_party_id(&self) -> &str {
-        &self.invoice_row.name_id
+        &self.name_row.id
     }
     pub fn other_party_store_id(&self) -> &Option<String> {
         &self.invoice_row.name_store_id

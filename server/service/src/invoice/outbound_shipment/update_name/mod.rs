@@ -226,7 +226,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "test_invoice_pricing".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_c().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Picked;
@@ -322,7 +322,10 @@ mod test {
                 .unwrap(),
             updated_invoice.invoice_row
         );
-        assert_ne!(updated_invoice.invoice_row.name_id, invoice().name_id);
+        assert_ne!(
+            updated_invoice.invoice_row.name_link_id,
+            invoice().name_link_id
+        );
         assert_eq!(
             updated_lines,
             vec![

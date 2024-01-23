@@ -37,7 +37,7 @@ pub fn generate(
             &existing_invoice_row.store_id,
             new_line.clone(),
             false,
-            &existing_invoice_row.name_id,
+            &existing_invoice_row.name_link_id,
         );
         new_line.stock_line_id = Some(new_batch.id.clone());
 
