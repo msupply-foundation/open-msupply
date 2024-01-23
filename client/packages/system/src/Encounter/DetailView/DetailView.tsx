@@ -166,6 +166,7 @@ export const DetailView: FC = () => {
     setData,
     saveData,
     isDirty,
+    isSaving,
     validationError,
     revert,
   } = useJsonForms(
@@ -290,6 +291,7 @@ export const DetailView: FC = () => {
           }
         }}
         onCancel={revert}
+        isSaving={isSaving}
         isDisabled={!isDirty || !!validationError}
         encounter={data as EncounterFragment}
       />

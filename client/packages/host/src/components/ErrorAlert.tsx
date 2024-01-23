@@ -3,6 +3,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import React, { useEffect } from 'react';
 import {
   AuthError,
+  LocalStorage,
   Location,
   RouteBuilder,
   matchPath,
@@ -10,22 +11,23 @@ import {
   useLocation,
   useNavigate,
 } from '@openmsupply-client/common';
-import { AlertModal } from '@common/components';
+import { AlertModal, Typography } from '@common/components';
 import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 
-export const AuthenticationAlert = () => {
+// primarily used to display an error message when the user is not logged in
+export const ErrorAlert = () => {
   const navigate = useNavigate();
   const { isOn, toggleOff, toggleOn } = useToggle();
   const t = useTranslation('app');
   const location = useLocation();
-  const [error, , removeError] = useLocalStorage('/auth/error');
+  const [error, , removeError] = useLocalStorage('/error/auth');
 
   useEffect(() => {
     if (!!error) toggleOn();
     return () => toggleOff();
-  }, [error]);
+  }, [error, toggleOff, toggleOn]);
 
-  // no need to alert if you are on the login screen!
+  // no need to alert if you are on the login screen
   if (
     matchPath(
       RouteBuilder.create(AppRoute.Login).addWildCard().build(),
@@ -97,9 +99,22 @@ const translateErrorMessage = (
         message: t('auth.permission-denied'),
       };
     case AuthError.ServerError:
+      const error = LocalStorage.getItem('/error/server');
+      const message =
+        error === null ? (
+          t('auth.server-error')
+        ) : (
+          <>
+            {t('auth.server-error')}
+            <Typography color="error" paddingBottom={2} paddingTop={2}>
+              {error}
+            </Typography>
+          </>
+        );
+
       return {
-        title: t('auth.alert-title'),
-        message: t('auth.server-error'),
+        title: t('heading.server-error'),
+        message,
       };
     default:
       return undefined;

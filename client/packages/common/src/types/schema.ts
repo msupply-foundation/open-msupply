@@ -1358,7 +1358,7 @@ export type FormSchemaSortInput = {
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
-  integration?: Maybe<SyncStatusNode>;
+  integration?: Maybe<SyncStatusWithProgressNode>;
   isSyncing: Scalars['Boolean']['output'];
   lastSuccessfulSync?: Maybe<SyncStatusNode>;
   prepareInitial?: Maybe<SyncStatusNode>;
@@ -2604,6 +2604,7 @@ export type Mutations = {
   updateStocktake: UpdateStocktakeResponse;
   updateStocktakeLine: UpdateStocktakeLineResponse;
   updateSyncSettings: UpdateSyncSettingsResponse;
+  updateTemperatureBreach: UpdateTemperatureBreachResponse;
   updateUser: UpdateUserResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
@@ -3094,6 +3095,12 @@ export type MutationsUpdateStocktakeLineArgs = {
 
 export type MutationsUpdateSyncSettingsArgs = {
   input: SyncSettingsInput;
+};
+
+
+export type MutationsUpdateTemperatureBreachArgs = {
+  input: UpdateTemperatureBreachInput;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -3782,6 +3789,8 @@ export type Queries = {
   temperatureChart: TemperatureChartResponse;
   /** Query omSupply "temperature_log" entries */
   temperatureLogs: TemperatureLogsResponse;
+  /** Query omSupply temperature notification entries */
+  temperatureNotifications: TemperatureNotificationsResponse;
 };
 
 
@@ -4202,6 +4211,12 @@ export type QueriesTemperatureLogsArgs = {
   filter?: InputMaybe<TemperatureLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<TemperatureLogSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesTemperatureNotificationsArgs = {
+  page?: InputMaybe<PaginationInput>;
   storeId: Scalars['String']['input'];
 };
 
@@ -4727,6 +4742,7 @@ export enum StockLineSortFieldInput {
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
+  LocationCode = 'locationCode',
   NumberOfPacks = 'numberOfPacks',
   PackSize = 'packSize',
   SupplierName = 'supplierName'
@@ -5053,6 +5069,7 @@ export type TemperatureBreachFilterInput = {
 
 export type TemperatureBreachNode = {
   __typename: 'TemperatureBreachNode';
+  comment?: Maybe<Scalars['String']['output']>;
   durationMilliseconds: Scalars['Int']['output'];
   endDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -5096,6 +5113,22 @@ export type TemperatureChartNode = {
 
 export type TemperatureChartResponse = TemperatureChartNode;
 
+export type TemperatureExcursionConnector = {
+  __typename: 'TemperatureExcursionConnector';
+  nodes: Array<TemperatureExcursionNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type TemperatureExcursionNode = {
+  __typename: 'TemperatureExcursionNode';
+  id: Scalars['String']['output'];
+  location?: Maybe<LocationNode>;
+  maxOrMinTemperature: Scalars['Float']['output'];
+  sensor?: Maybe<SensorNode>;
+  sensorId: Scalars['String']['output'];
+  startDatetime: Scalars['DateTime']['output'];
+};
+
 export type TemperatureLogConnector = {
   __typename: 'TemperatureLogConnector';
   nodes: Array<TemperatureLogNode>;
@@ -5137,6 +5170,14 @@ export type TemperatureLogSortInput = {
 };
 
 export type TemperatureLogsResponse = TemperatureLogConnector;
+
+export type TemperatureNotificationConnector = {
+  __typename: 'TemperatureNotificationConnector';
+  breaches: TemperatureBreachConnector;
+  excursions: TemperatureExcursionConnector;
+};
+
+export type TemperatureNotificationsResponse = TemperatureNotificationConnector;
 
 export type TemperaturePointNode = {
   __typename: 'TemperaturePointNode';
@@ -5782,6 +5823,14 @@ export enum UpdateStocktakeStatusInput {
 }
 
 export type UpdateSyncSettingsResponse = SyncErrorNode | SyncSettingsNode;
+
+export type UpdateTemperatureBreachInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  unacknowledged: Scalars['Boolean']['input'];
+};
+
+export type UpdateTemperatureBreachResponse = TemperatureBreachNode;
 
 export type UpdateUserNode = {
   __typename: 'UpdateUserNode';

@@ -168,7 +168,7 @@ macro_rules! get_invoice_lines_inline {
 
 #[macro_export]
 macro_rules! assert_standard_graphql_error {
-    // expected_etensions should be an Option<serde_json::json>>
+    // expected_extensions should be an Option<serde_json::json>>
     ($settings:expr, $query:expr, $variables:expr, $expected_message:expr, $expected_extensions:expr, $service_provider_override:expr) => {{
         let actual = graphql_core::test_helpers::run_test_gql_query(
             $settings,
