@@ -41,8 +41,8 @@ export const Login = () => {
 
   useInterval(() => {
     setTimeoutRemaining(prevTimeoutRemaining =>
-        prevTimeoutRemaining > 0 ? prevTimeoutRemaining - 1000 : 0
-      );
+      prevTimeoutRemaining > 0 ? prevTimeoutRemaining - 1000 : 0
+    );
   }, 1000);
 
   useEffect(() => {
