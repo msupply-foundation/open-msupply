@@ -38,8 +38,7 @@ table! {
 #[table_name = "name_store_join"]
 pub struct NameStoreJoinRow {
     pub id: String,
-    #[column_name = "name_link_id"]
-    pub name_id: String,
+    pub name_link_id: String,
     pub store_id: String,
     pub name_is_customer: bool,
     pub name_is_supplier: bool,
@@ -220,7 +219,7 @@ mod test {
         let repo = NameStoreJoinRepository::new(&connection);
 
         let base_row = NameStoreJoinRow {
-            name_id: mock_name_a().id,
+            name_link_id: mock_name_a().id,
             store_id: mock_store_a().id,
             ..Default::default()
         };

@@ -124,7 +124,7 @@ mod test {
         fn not_a_customer_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "not_a_customer_join".to_string();
-                r.name_id = not_a_customer().id;
+                r.name_link_id = not_a_customer().id;
                 r.store_id = mock_store_b().id;
                 r.name_is_customer = false;
             })
@@ -264,7 +264,7 @@ mod test {
         fn customer_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "customer_join".to_string();
-                r.name_id = customer().id;
+                r.name_link_id = customer().id;
                 r.store_id = mock_store_c().id;
                 r.name_is_customer = true;
             })
