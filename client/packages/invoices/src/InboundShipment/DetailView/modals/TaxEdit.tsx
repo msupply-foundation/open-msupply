@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   useTranslation,
   InputModal,
@@ -17,6 +17,7 @@ interface TaxEditProps {
 export const TaxEdit = ({ disabled = false, tax, onChange }: TaxEditProps) => {
   const modalController = useToggle();
   const t = useTranslation('replenishment');
+  const [val, setVal] = useState<number | undefined>(tax);
 
   return (
     <>
@@ -32,9 +33,16 @@ export const TaxEdit = ({ disabled = false, tax, onChange }: TaxEditProps) => {
           isOpen={modalController.isOn}
           onClose={modalController.toggleOff}
           Input={
-            <NumericTextInput max={100} precision={2} defaultValue={tax} />
+            <NumericTextInput
+              precision={2}
+              max={100}
+              value={val}
+              onChange={setVal}
+            />
           }
-          onChange={value => onChange(value as number)}
+          onChange={() => {
+            if (val) onChange(val);
+          }}
           title={t('heading.edit-tax-rate')}
         />
       )}
