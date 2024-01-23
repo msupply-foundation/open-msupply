@@ -1,8 +1,9 @@
 use super::asset_row::asset::dsl as asset_dsl;
 use super::store_row::store;
 use crate::repository_error::RepositoryError;
+use crate::Delete;
 use crate::StorageConnection;
-
+use crate::Upsert;
 use diesel::prelude::*;
 
 table! {
@@ -102,6 +103,37 @@ impl<'a> AssetRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+impl Upsert for AssetRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        AssetRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AssetRowDelete(pub String);
+// This is just example, deletes can only be done on pure remote records belonging only to one site
+// otherwise soft deletes are done via upsert
+impl Delete for AssetRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        AssetRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }
 
