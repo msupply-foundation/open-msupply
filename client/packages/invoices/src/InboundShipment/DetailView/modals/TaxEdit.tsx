@@ -5,7 +5,6 @@ import {
   IconButton,
   EditIcon,
   useToggle,
-  NumUtils,
   NumericTextInput,
 } from '@openmsupply-client/common';
 
@@ -35,7 +34,7 @@ export const TaxEdit = ({ disabled = false, tax, onChange }: TaxEditProps) => {
           Input={
             <NumericTextInput max={100} precision={2} defaultValue={tax} />
           }
-          onChange={value => onChange(NumUtils.round(value, 2))}
+          onChange={value => onChange(value as number)}
           title={t('heading.edit-tax-rate')}
         />
       )}
