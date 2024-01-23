@@ -249,6 +249,7 @@ impl PullUpsertRecord {
             FormSchema(record) => FormSchemaRowRepository::new(con).upsert_one(record),
             DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
             Document(record) => sync_upsert_document(con, record),
+            Currency(record) => CurrencyRowRepository::new(con).upsert_one(record),
         }
     }
 }
@@ -290,6 +291,8 @@ impl PullDeleteRecord {
             StocktakeLine => StocktakeLineRowRepository::new(con).delete(id),
             #[cfg(all(test, feature = "integration_test"))]
             ActivityLog => Ok(()),
+            #[cfg(all(test, feature = "integration_test"))]
+            Currency => CurrencyRowRepository::new(con).delete(id),
         }
     }
 }
