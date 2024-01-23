@@ -20,8 +20,7 @@ table! {
 pub struct MasterListNameJoinRow {
     pub id: String,
     pub master_list_id: String,
-    #[column_name = "name_link_id"]
-    pub name_id: String,
+    pub name_link_id: String,
 }
 
 joinable!(master_list_name_join -> master_list (master_list_id));

@@ -128,7 +128,7 @@ mod test {
         let name_tag_join1 = NameTagJoinRow {
             id: "name_tag_join1".to_string(),
             name_tag_id: name_tag1.id.clone(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             ..Default::default()
         };
         let master_list = MasterListRow {
@@ -138,7 +138,7 @@ mod test {
         };
         let master_list_name_join = MasterListNameJoinRow {
             id: "master_list_name_join".to_string(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             master_list_id: master_list.id.clone(),
         };
         let context = ContextRow {
