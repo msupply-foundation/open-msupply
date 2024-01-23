@@ -10,7 +10,7 @@ import {
 
 interface TaxEditProps {
   tax: number;
-  update: (newTax: number) => Promise<unknown>;
+  update: (newTax: number) => void;
   disabled?: boolean;
 }
 
@@ -34,7 +34,7 @@ export const TaxEdit = ({ disabled = false, tax, update }: TaxEditProps) => {
           Input={
             <NumericTextInput precision={2} max={100} defaultValue={tax} />
           }
-          onChange={value => update(value)}
+          onChange={value => update(value as number)}
           title={t('heading.edit-tax-rate')}
         />
       )}
