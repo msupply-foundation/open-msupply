@@ -17,7 +17,6 @@ import {
   useTranslation,
   SnackbarProvider,
   BarcodeScannerProvider,
-  // useBackButtonHandler,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -58,10 +57,8 @@ export const Site: FC = () => {
   const location = useLocation();
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
-
-  // useBackButtonHandler({ isNavigateEnabled: true });
-
   const pageTitle = getPageTitle(location.pathname);
+
   useEffect(() => {
     setPageTitle(pageTitle);
   }, [location, pageTitle, setPageTitle]);
