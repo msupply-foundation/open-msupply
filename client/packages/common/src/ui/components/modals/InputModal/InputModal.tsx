@@ -11,7 +11,8 @@ interface InputModalProps {
   Input: React.ReactNode;
   onClose: () => void;
   title: string;
-  onChange: (() => Promise<void>) | (() => void);
+  // onChange: (() => Promise<void>) | (() => void);
+  onChange: ((value: any) => Promise<void>) | ((value: any) => void);
 }
 
 export const InputModal = ({
@@ -36,9 +37,9 @@ export const InputModal = ({
         <DialogButton
           disabled={loading}
           variant="ok"
-          onClick={async () => {
+          onClick={async (value: any) => {
             setLoading(true);
-            await onChange();
+            await onChange(value);
             setLoading(false);
             onClose();
           }}

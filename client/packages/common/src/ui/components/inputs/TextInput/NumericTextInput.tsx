@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { StandardTextFieldProps } from '@mui/material';
-import { BasicTextInput } from '../BasicTextInput';
+import { BasicTextInput } from './BasicTextInput';
 import { NumUtils } from '@common/utils';
 export interface NumericTextInputProps
   extends Omit<StandardTextFieldProps, 'onChange'> {
@@ -22,7 +22,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       onChange,
       defaultValue,
       allowNegative,
-      min,
+      min = allowNegative ? -Infinity : 0,
       max = Infinity,
       precision = 0,
       ...props
@@ -48,13 +48,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           const parsed = Number(e.target.value);
           if (!Number.isNaN(parsed) && !!onChange)
             onChange(
-              NumUtils.constrain(
-                NumUtils.round(parsed, precision),
-                allowNegative === undefined && min && min < 0
-                  ? min
-                  : Math.max(min ?? -Infinity, 0),
-                max
-              )
+              NumUtils.constrain(NumUtils.round(parsed, precision), min, max)
             );
         }}
         onFocus={e => e.target.select()}
