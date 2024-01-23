@@ -71,7 +71,7 @@ mod test {
         let name_tag_join1 = NameTagJoinRow {
             id: "name_tag_join1".to_string(),
             name_tag_id: name_tag1.id.clone(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             ..Default::default()
         };
         let name_tag2 = NameTagRow {
@@ -81,7 +81,7 @@ mod test {
         let name_tag_join2 = NameTagJoinRow {
             id: "name_tag_join2".to_string(),
             name_tag_id: name_tag2.id.clone(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             ..Default::default()
         };
 
@@ -93,7 +93,7 @@ mod test {
         };
         let master_list_name_join1 = MasterListNameJoinRow {
             id: "master_list_name_join1".to_string(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             master_list_id: master_list1.id.clone(),
         };
         let context1 = ContextRow {
@@ -113,7 +113,7 @@ mod test {
         };
         let master_list_name_join2 = MasterListNameJoinRow {
             id: "master_list_name_join2".to_string(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             master_list_id: master_list2.id.clone(),
         };
         let context2 = ContextRow {
@@ -213,12 +213,12 @@ mod test {
         // to program 1 and program 2 respecively and visible in mock_store_a
         let master_list_name_join3 = MasterListNameJoinRow {
             id: "master_list_name_join3".to_string(),
-            name_id: mock_name_store_b().id,
+            name_link_id: mock_name_store_b().id,
             master_list_id: master_list1.id.clone(),
         };
         let master_list_name_join4 = MasterListNameJoinRow {
             id: "master_list_name_join4".to_string(),
-            name_id: mock_name_store_c().id,
+            name_link_id: mock_name_store_c().id,
             master_list_id: master_list2.id.clone(),
         };
         let name_store_join1 = NameStoreJoinRow {

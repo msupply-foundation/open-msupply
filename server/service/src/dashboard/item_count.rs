@@ -142,7 +142,7 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
@@ -223,7 +223,7 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
@@ -371,7 +371,7 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_id,
                     }],
                     lines: vec![
                         MasterListLineRow {

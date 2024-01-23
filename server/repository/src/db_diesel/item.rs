@@ -549,7 +549,7 @@ mod tests {
 
         let master_list_name_join_1 = MasterListNameJoinRow {
             id: "id1".to_owned(),
-            name_id: "name1".to_owned(),
+            name_link_id: "name1".to_owned(),
             master_list_id: "master_list1".to_owned(),
         };
 
