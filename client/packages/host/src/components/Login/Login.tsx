@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRightIcon,
   useTranslation,
+  useInterval,
   LoadingButton,
   useHostContext,
   LocalStorage,
@@ -38,17 +39,11 @@ export const Login = () => {
     error?.timeoutRemaining ?? 0
   );
 
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      // Update the remaining timeout every second
-      setTimeoutRemaining(prevTimeoutRemaining =>
+  useInterval(() => {
+    setTimeoutRemaining(prevTimeoutRemaining =>
         prevTimeoutRemaining > 0 ? prevTimeoutRemaining - 1000 : 0
       );
-    }, 1000);
-
-    // Cleanup the interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []);
+  }, 1000);
 
   useEffect(() => {
     if (error && error.message === 'AccountBlocked') {
