@@ -21,6 +21,7 @@ table! {
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum KeyValueType {
     CentralSyncPullCursor,
+    SyncPullCursorV6,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
@@ -183,5 +184,27 @@ impl<'a> KeyValueStoreRepository<'a> {
     pub fn get_bool(&self, key: KeyValueType) -> Result<Option<bool>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_bool))
+    }
+}
+
+pub struct CursorController(KeyValueType);
+
+impl CursorController {
+    pub fn new(cursor_type: KeyValueType) -> Self {
+        Self(cursor_type)
+    }
+
+    pub fn get(&self, connection: &StorageConnection) -> Result<u64, RepositoryError> {
+        let value = KeyValueStoreRepository::new(connection).get_i32(self.0.clone())?;
+        let cursor = value.unwrap_or(0);
+        Ok(cursor as u64)
+    }
+
+    pub fn update(
+        &self,
+        connection: &StorageConnection,
+        cursor: u64,
+    ) -> Result<(), RepositoryError> {
+        KeyValueStoreRepository::new(connection).set_i32(self.0.clone(), Some(cursor as i32))
     }
 }
