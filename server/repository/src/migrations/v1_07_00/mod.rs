@@ -396,7 +396,7 @@ async fn migration_1_07_00_merge() {
     let version = V1_07_00.version();
 
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}_aye"),
+        db_name: &format!("migration_{version}_merge"),
         version: Some(previous_version.clone()),
         ..Default::default()
     })
