@@ -2,9 +2,9 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
-use repository::LocationRow;
+use repository::{LocationRow, LocationRowDelete};
 use serde_json::json;
 use util::{inline_edit, uuid::uuid};
 
@@ -25,9 +25,7 @@ impl SyncRecordTester for LocationRecordTester {
         result.push(TestStepData {
             central_upsert: json!({}),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Location(row.clone()),
-            ]),
+            integration_records: vec![IntegrationOperation::upsert(row.clone())],
         });
         // STEP 2 - mutate
         let row = inline_edit(&row, |mut d| {
@@ -39,18 +37,13 @@ impl SyncRecordTester for LocationRecordTester {
         result.push(TestStepData {
             central_upsert: json!({}),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Location(row.clone()),
-            ]),
+            integration_records: vec![IntegrationOperation::upsert(row.clone())],
         });
         // STEP 3 - delete
         result.push(TestStepData {
             central_upsert: json!({}),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::from_delete(
-                &row.id,
-                crate::sync::translations::PullDeleteRecordTable::Location,
-            ),
+            integration_records: vec![IntegrationOperation::delete(LocationRowDelete(row.id))],
         });
         result
     }

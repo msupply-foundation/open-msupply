@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use repository::{MasterListLineRow, MasterListNameJoinRow, MasterListRow};
 
@@ -20,11 +20,13 @@ impl SyncRecordTester for MasterListTester {
             name: uuid(),
             code: uuid(),
             description: "".to_string(),
+            is_active: true,
         };
         let master_list_json1 = json!({
             "ID": master_list_row1.id,
             "description":  master_list_row1.name,
             "code": master_list_row1.code,
+            "is_active": true,
         });
 
         let master_list_name_join_row1 = MasterListNameJoinRow {
@@ -36,6 +38,7 @@ impl SyncRecordTester for MasterListTester {
             "ID": master_list_name_join_row1.id,
             "list_master_ID":  master_list_name_join_row1.master_list_id,
             "name_ID": master_list_name_join_row1.name_id,
+            "is_active": false,
         });
 
         let master_list_row2 = MasterListRow {
@@ -43,6 +46,7 @@ impl SyncRecordTester for MasterListTester {
             name: uuid(),
             code: uuid(),
             description: uuid(),
+            is_active: false,
         };
         let master_list_json2 = json!({
             "ID": master_list_row2.id,
@@ -82,13 +86,13 @@ impl SyncRecordTester for MasterListTester {
                 "item": [{"ID": item_id, "type_of": "general"}]
             }),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::MasterList(master_list_row1.clone()),
-                PullUpsertRecord::MasterList(master_list_row2),
-                PullUpsertRecord::MasterListNameJoin(master_list_name_join_row1.clone()),
-                PullUpsertRecord::MasterListNameJoin(master_list_name_join_row2),
-                PullUpsertRecord::MasterListLine(master_list_line_row.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(master_list_row1),
+                IntegrationOperation::upsert(master_list_row2),
+                IntegrationOperation::upsert(master_list_name_join_row1),
+                IntegrationOperation::upsert(master_list_name_join_row2),
+                IntegrationOperation::upsert(master_list_line_row),
+            ],
         });
 
         result

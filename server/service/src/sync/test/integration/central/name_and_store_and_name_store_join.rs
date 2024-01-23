@@ -2,10 +2,12 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use repository::{NameRow, NameStoreJoinRow, NameType, StoreMode, StoreRow};
+use repository::{
+    NameRow, NameStoreJoinRow, NameStoreJoinRowDelete, NameType, StoreMode, StoreRow,
+};
 
 use serde_json::json;
 use util::{
@@ -48,6 +50,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             is_deceased: false,
             national_health_number: None,
             date_of_death: None,
+            custom_data_string: Some(r#"{"check":"check"}"#.to_string()),
         };
         let name_json1 = json!({
             "ID": name_row1.id,
@@ -74,6 +77,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             "is_deceased": false,
             "national_health_number": "",
             "om_date_of_death": "",
+            "custom_data": {"check":"check"},
         });
 
         let name_row2 = inline_init(|r: &mut NameRow| {
@@ -110,11 +114,11 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
                 "store": [store_json]
             }),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Name(name_row1),
-                PullUpsertRecord::Name(name_row2.clone()),
-                PullUpsertRecord::Store(store_row.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(name_row1),
+                IntegrationOperation::upsert(name_row2.clone()),
+                IntegrationOperation::upsert(store_row.clone()),
+            ],
         });
         // STEP 2 name store joins need to be inserted after store (for them to be inserted in sync queue)
         let mut name_store_join_row1 = NameStoreJoinRow {
@@ -149,10 +153,11 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
                 "name_store_join": [name_store_join_json1, name_store_join_json2],
             }),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::NameStoreJoin(name_store_join_row1.clone()),
-                PullUpsertRecord::NameStoreJoin(name_store_join_row2.clone()),
-            ]),
+
+            integration_records: vec![
+                IntegrationOperation::upsert(name_store_join_row1.clone()),
+                IntegrationOperation::upsert(name_store_join_row2.clone()),
+            ],
         });
         // STEP 3 update name and make sure name_store_joins update
         merge_json(
@@ -175,10 +180,10 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
 
             }),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::NameStoreJoin(name_store_join_row1.clone()),
-                PullUpsertRecord::NameStoreJoin(name_store_join_row2),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(name_store_join_row1.clone()),
+                IntegrationOperation::upsert(name_store_join_row2),
+            ],
         });
 
         // STEP 4 - deletes
@@ -186,10 +191,9 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
         result.push(TestStepData {
             central_upsert: json!({}),
             central_delete: json!({ "name_store_join": [name_store_join_row1.id] }),
-            integration_records: IntegrationRecords::from_deletes(vec![PullDeleteRecord {
-                id: name_store_join_row1.id,
-                table: PullDeleteRecordTable::NameStoreJoin,
-            }]),
+            integration_records: vec![IntegrationOperation::delete(NameStoreJoinRowDelete(
+                name_store_join_row1.id,
+            ))],
         });
         result
     }

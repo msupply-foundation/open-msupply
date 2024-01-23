@@ -23,7 +23,7 @@ The following environment variables should be provided for sync integration test
 * SYNC_URL
 
 As `1`, can provide via cli or rust analyzer:
-`"rust-analyzer.runnableEnv": { "SYNC_URL": "http://localhost:2048", "SYNC_SITE_NAME": "demo","SYNC_SITE_PASSWORD": "pass" }`
+`"rust-analyzer.runnables.extraEnv": { "SYNC_URL": "http://localhost:2048", "SYNC_SITE_NAME": "demo","SYNC_SITE_PASSWORD": "pass" }`
 
 ## 3 `central server`
 
