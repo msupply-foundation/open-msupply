@@ -4,3 +4,5 @@ mod item_merge;
 pub(crate) use item_merge::*;
 mod name_merge;
 pub(crate) use name_merge::*;
+mod clinician_merge;
+pub(crate) use clinician_merge::*;

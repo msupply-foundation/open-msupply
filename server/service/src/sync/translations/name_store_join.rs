@@ -166,9 +166,8 @@ impl SyncTranslation for NameStoreJoinTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_item_links;
-
     use super::*;
+    use crate::sync::test::merge_helpers::merge_all_name_links;
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
     };

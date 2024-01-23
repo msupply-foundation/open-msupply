@@ -1,9 +1,8 @@
 use super::{
     barcode_row::barcode::dsl as barcode_dsl, invoice_line_row::invoice_line,
-    item_link_row::item_link, item_row::item, name_link_row::name_link, StorageConnection,
+    item_link_row::item_link, item_row::item, name_link_row::name_link, RepositoryError,
+    StorageConnection,
 };
-
-use crate::repository_error::RepositoryError;
 
 use diesel::prelude::*;
 
@@ -30,6 +29,7 @@ joinable!(barcode -> item (item_id));
 joinable!(barcode -> invoice_line (id));
 joinable!(barcode -> name_link (manufacturer_link_id));
 allow_tables_to_appear_in_same_query!(barcode, item_link);
+allow_tables_to_appear_in_same_query!(barcode, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
 #[changeset_options(treat_none_as_null = "true")]

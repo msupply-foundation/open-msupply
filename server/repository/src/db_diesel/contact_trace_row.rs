@@ -191,7 +191,7 @@ mod tests {
             id: "ct1".to_string(),
             program_id: mock_program_a().id,
             document_id: document_a().id,
-            datetime: NaiveDate::from_ymd_opt(2024, 01, 15)
+            datetime: NaiveDate::from_ymd_opt(2024, 1, 15)
                 .unwrap()
                 .and_hms_opt(00, 00, 00)
                 .unwrap(),
@@ -202,7 +202,7 @@ mod tests {
             first_name: Some("first".to_string()),
             last_name: Some("last".to_string()),
             gender: Some(Gender::Female),
-            date_of_birth: Some(NaiveDate::from_ymd_opt(2000, 01, 15).unwrap()),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(2000, 1, 15).unwrap()),
             store_id: Some(mock_store_a().id),
             relationship: Some("rel".to_string()),
         };
