@@ -51,26 +51,15 @@ impl DatabaseSettings {
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        let sqlite_suffix = |s: String| -> bool {
-            if s.len() < 8 {
-                return false;
-            }
-            let split = s.char_indices().nth_back(6).unwrap().0;
-            if &s[split..] == ".sqlite" {
-                return true;
-            }
-            return false;
-        };
-        match sqlite_suffix(self.database_name.clone()) {
+        if self.database_name.ends_with(".sqlite") {
             // just use DB if name ends in .sqlite
-            true => self.database_name.clone(),
-            false => {
-                // first check if database exists on disk. If it does, we will use db filename as is without appending .sqlite
-                let db_exists = self.check_db_exists();
-                match db_exists {
-                    true => self.database_name.clone(),
-                    false => format!("{}.sqlite", self.database_name.clone()),
-                }
+            self.database_name.clone()
+        } else {
+            // first check if database exists on disk. If it does, we will use db filename as is without appending .sqlite
+            let db_exists = self.check_db_exists();
+            match db_exists {
+                true => self.database_name.clone(),
+                false => format!("{}.sqlite", self.database_name.clone()),
             }
         }
     }
