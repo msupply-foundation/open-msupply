@@ -25,7 +25,7 @@ import {
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
 import { Site } from './Site';
-import { AuthenticationAlert } from './components/AuthenticationAlert';
+import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
 import { useInitPlugins } from './plugins';
@@ -56,7 +56,7 @@ Bugsnag.start({
 });
 
 const skipRequest = () =>
-  LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned;
+  LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
 const PluginProvider: React.FC<PropsWithChildren> = ({ children }) => {
   useInitPlugins();
@@ -79,7 +79,7 @@ const Host = () => (
                     <ConfirmationModalProvider>
                       <AlertModalProvider>
                         <BrowserRouter>
-                          <AuthenticationAlert />
+                          <ErrorAlert />
                           <Viewport>
                             <Box display="flex" style={{ minHeight: '100%' }}>
                               <Routes>

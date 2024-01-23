@@ -6,12 +6,10 @@ import { useLocalStorage } from '../../localStorage';
 import { useNavigate } from 'react-router-dom';
 import { RouteBuilder } from '../../utils/navigation';
 
-export const usePermissionCheck = (
-  permission: UserPermission
-) => {
+export const usePermissionCheck = (permission: UserPermission) => {
   const { userHasPermission } = useAuthContext();
   const navigate = useNavigate();
-  const [error, setError] = useLocalStorage('/auth/error');
+  const [error, setError] = useLocalStorage('/error/auth');
   const previous = useRef(error);
 
   useEffect(() => {
