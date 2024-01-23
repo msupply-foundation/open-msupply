@@ -17,6 +17,7 @@ import {
   useTranslation,
   SnackbarProvider,
   BarcodeScannerProvider,
+  // useBackButtonHandler,
 } from '@openmsupply-client/common';
 import { AppDrawer, AppBar, Footer, NotFound } from './components';
 import { CommandK } from './CommandK';
@@ -40,8 +41,14 @@ const NotifyOnLogin = () => {
   const { store, storeId } = useAuthContext();
   const { name } = store || {};
   const t = useTranslation('app');
+  const storeChangedNotification = success(
+    t('login.store-changed', { store: name })
+  );
+
   useEffect(() => {
-    if (!!name) success(t('login.store-changed', { store: name }))();
+    if (!!name) storeChangedNotification();
+    // only notify if the store has changed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
 
   return <></>;
@@ -52,9 +59,12 @@ export const Site: FC = () => {
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
 
+  // useBackButtonHandler({ isNavigateEnabled: true });
+
+  const pageTitle = getPageTitle(location.pathname);
   useEffect(() => {
-    setPageTitle(getPageTitle(location.pathname));
-  }, [location]);
+    setPageTitle(pageTitle);
+  }, [location, pageTitle, setPageTitle]);
 
   return (
     <RequireAuthentication>
