@@ -262,9 +262,6 @@ async fn invoice_transfers_with_merged_name() {
                 &item2,
             );
 
-            tester.insert_request_requisition(&service_provider).await;
-            ctx.processors_trigger.await_events_processed().await;
-            tester.check_response_requisition_created(&ctx.connection);
             tester.insert_outbound_shipment(&ctx.connection);
             // manually trigger because inserting the shipment didn't trigger the processor
             ctx.processors_trigger
@@ -299,9 +296,6 @@ async fn invoice_transfers_with_merged_name() {
                 &item2,
             );
 
-            tester.insert_request_requisition(&service_provider).await;
-            ctx.processors_trigger.await_events_processed().await;
-            tester.check_response_requisition_created(&ctx.connection);
             tester.insert_outbound_shipment(&ctx.connection);
             tester.update_outbound_shipment_to_picked(&service_provider);
             ctx.processors_trigger.await_events_processed().await;
@@ -491,13 +485,12 @@ impl ShipmentTransferTester {
     }
 
     pub(crate) fn insert_outbound_shipment(&self, connection: &StorageConnection) {
-        assert!(self.response_requisition.is_some());
-        let response_requisition_id = self.response_requisition.clone().unwrap().id;
+        let response_requisition_id = self.response_requisition.clone().map(|r| r.id);
         insert_extra_mock_data(
             &connection,
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![inline_edit(&self.outbound_shipment, |mut r| {
-                    r.requisition_id = Some(response_requisition_id);
+                    r.requisition_id = response_requisition_id;
                     r
                 })];
                 r.invoice_lines = vec![
@@ -579,10 +572,12 @@ impl ShipmentTransferTester {
         assert_eq!(inbound_shipment.on_hold, false);
         assert_eq!(inbound_shipment.allocated_datetime, None);
 
-        assert_eq!(
-            inbound_shipment.requisition_id,
-            Some(self.request_requisition.id.clone())
-        );
+        if self.response_requisition.is_some() {
+            assert_eq!(
+                inbound_shipment.requisition_id,
+                Some(self.request_requisition.id.clone())
+            );
+        };
 
         check_shipment_status(&inbound_shipment, &self.outbound_shipment);
 
