@@ -10,8 +10,8 @@ use graphql_core::pagination::PaginationInput;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
-    CurrenciesResponse, CurrencyResponse, CurrencySortInput, StorePreferenceNode,
-    TemperatureLogFilterInput,
+    CurrenciesResponse, CurrencyFilterInput, CurrencyResponse, CurrencySortInput,
+    StorePreferenceNode, TemperatureLogFilterInput,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -311,10 +311,11 @@ impl GeneralQueries {
     pub async fn currencies(
         &self,
         ctx: &Context<'_>,
+        #[graphql(desc = "Filter option")] filter: Option<CurrencyFilterInput>,
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<CurrencySortInput>>,
     ) -> Result<CurrenciesResponse> {
-        get_currencies(ctx, sort)
+        get_currencies(ctx, filter, sort)
     }
 }
 

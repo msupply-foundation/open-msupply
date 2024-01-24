@@ -5,7 +5,8 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::{
-    CurrenciesResponse, CurrencyConnector, CurrencyNode, CurrencyResponse, CurrencySortInput,
+    CurrenciesResponse, CurrencyConnector, CurrencyFilterInput, CurrencyNode, CurrencyResponse,
+    CurrencySortInput,
 };
 
 pub fn get_currency(ctx: &Context<'_>, currency_id: &str) -> Result<CurrencyResponse> {
@@ -27,6 +28,7 @@ pub fn get_currency(ctx: &Context<'_>, currency_id: &str) -> Result<CurrencyResp
 
 pub fn get_currencies(
     ctx: &Context<'_>,
+    filter: Option<CurrencyFilterInput>,
     sort: Option<Vec<CurrencySortInput>>,
 ) -> Result<CurrenciesResponse> {
     let service_provider = ctx.service_provider();
@@ -36,6 +38,7 @@ pub fn get_currencies(
     let currencies = currency_service
         .get_currencies(
             &service_context,
+            filter.map(|filter| filter.to_domain()),
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
         )

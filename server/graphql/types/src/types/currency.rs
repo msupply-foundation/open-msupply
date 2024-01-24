@@ -25,12 +25,19 @@ pub struct CurrencySortInput {
 #[derive(InputObject, Clone)]
 pub struct CurrencyFilterInput {
     pub id: Option<EqualFilterStringInput>,
+    pub is_home_currency: Option<bool>,
 }
 
-impl From<CurrencyFilterInput> for CurrencyFilter {
-    fn from(f: CurrencyFilterInput) -> Self {
+impl CurrencyFilterInput {
+    pub fn to_domain(self) -> CurrencyFilter {
+        let CurrencyFilterInput {
+            id,
+            is_home_currency,
+        } = self;
+
         CurrencyFilter {
-            id: f.id.map(EqualFilter::from),
+            id: id.map(EqualFilter::from),
+            is_home_currency,
         }
     }
 }

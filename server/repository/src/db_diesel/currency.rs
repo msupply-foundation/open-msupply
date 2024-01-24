@@ -16,12 +16,12 @@ pub struct Currency {
     pub currency_row: CurrencyRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone)]
 pub struct CurrencyFilter {
     pub id: Option<EqualFilter<String>>,
+    pub is_home_currency: Option<bool>,
 }
 
-#[derive(PartialEq, Debug)]
 pub enum CurrencySortField {
     Id,
     CurrencyCode,
@@ -86,6 +86,12 @@ fn create_filtered_query(filter: Option<CurrencyFilter>) -> BoxedLogQuery {
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, currency_dsl::id);
+
+        query = match filter.is_home_currency {
+            Some(true) => query.filter(currency_dsl::is_home_currency.eq(true)),
+            Some(false) => query.filter(currency_dsl::is_home_currency.eq(false)),
+            None => query,
+        };
     }
 
     query
@@ -97,11 +103,19 @@ pub fn to_domain(currency_row: CurrencyRow) -> Currency {
 
 impl CurrencyFilter {
     pub fn new() -> CurrencyFilter {
-        CurrencyFilter { id: None }
+        CurrencyFilter {
+            id: None,
+            is_home_currency: None,
+        }
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn is_home_currency(mut self, filter: bool) -> Self {
+        self.is_home_currency = Some(filter);
         self
     }
 }
