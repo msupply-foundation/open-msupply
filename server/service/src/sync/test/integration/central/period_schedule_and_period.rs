@@ -73,13 +73,13 @@ impl SyncRecordTester for PeriodScheduleAndPeriodTester {
                 "periodSchedule": [period_schedule_1_json, period_schedule_2_json],
                 "period": [period_1_json, period_2_json]
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(period_schedule_1),
                 IntegrationOperation::upsert(period_schedule_2),
                 IntegrationOperation::upsert(period_1),
                 IntegrationOperation::upsert(period_2),
             ],
+            ..Default::default()
         });
 
         result

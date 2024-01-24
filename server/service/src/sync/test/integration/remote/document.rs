@@ -72,8 +72,8 @@ impl SyncRecordTester for DocumentRecordTester {
                 "name_store_join": [patient_name_store_join_json],
                 "form_schema": [schema_json],
             }),
-            central_delete: json!({}),
             integration_records: vec![IntegrationOperation::upsert(DocumentUpsert(row))],
+            ..Default::default()
         });
 
         result

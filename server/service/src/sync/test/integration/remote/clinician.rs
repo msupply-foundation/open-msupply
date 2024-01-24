@@ -74,12 +74,12 @@ impl SyncRecordTester for ClinicianRecordTester {
                 "clinician": [clinician_json],
                 "clinician_store_join": [join_json],
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(store_row),
                 IntegrationOperation::upsert(clinician_row.clone()),
                 IntegrationOperation::upsert(join_row),
             ],
+            ..Default::default()
         });
 
         // STEP 2 - mutate
@@ -98,9 +98,8 @@ impl SyncRecordTester for ClinicianRecordTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![IntegrationOperation::upsert(row)],
+            ..Default::default()
         });
         result
     }

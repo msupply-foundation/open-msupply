@@ -67,12 +67,12 @@ impl SyncRecordTester for StocktakeRecordTester {
                 "ID": stocktake_line_row.item_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(location_row),
                 IntegrationOperation::upsert(stocktake_row.clone()),
                 IntegrationOperation::upsert(stocktake_line_row.clone()),
             ],
+            ..Default::default()
         });
         // STEP 2 - mutate
         let invoice_row = inline_init(|r: &mut InvoiceRow| {
@@ -126,22 +126,21 @@ impl SyncRecordTester for StocktakeRecordTester {
                 "ID": stock_line_row.item_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(invoice_row),
                 IntegrationOperation::upsert(stock_line_row.clone()),
                 IntegrationOperation::upsert(stocktake_row.clone()),
                 IntegrationOperation::upsert(stocktake_line_row.clone()),
             ],
+            ..Default::default()
         });
         // STEP 3 - delete
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::delete(StocktakeLineRowDelete(stocktake_line_row.id.clone())),
                 IntegrationOperation::delete(StocktakeRowDelete(stocktake_row.id.clone())),
             ],
+            ..Default::default()
         });
         result
     }

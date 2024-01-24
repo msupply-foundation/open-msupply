@@ -64,22 +64,22 @@ impl SyncRecordTester for UserPermissionTester {
                 "list_master": [context_json],
                 "om_user_permission": [user_permission_row_1_json, user_permission_row_2_json],
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(user_permission_row_1.clone()),
                 IntegrationOperation::upsert(user_permission_row_2),
             ],
+            ..Default::default()
         });
 
         // STEP 2 - deletes
         result.push(TestStepData {
-            central_upsert: json!({}),
             central_delete: json!({
                 "om_user_permission": [user_permission_row_1.id],
             }),
             integration_records: vec![IntegrationOperation::delete(UserPermissionRowDelete(
                 user_permission_row_1.id,
             ))],
+            ..Default::default()
         });
         result
     }

@@ -118,3 +118,15 @@ Full test including integration can be run with:
 ```bash
 SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test  --features integration_test && SYNC_SITE_PASSWORD="pass" SYNC_SITE_NAME="demo" SYNC_URL="http://localhost:2048" cargo test --features integration_test,postgres 
 ```
+
+
+APP_SERVER__PORT=9000
+APP_DATABASE__DATABASE_NAME="central_test"
+APP_SYNC__URL="http://loclahost:2048"
+APP_SYNC__PASSWORD_SHA256="d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1"
+APP_SYNC__USERNAME="test"
+cargo run 
+
+
+
+IS_CENTRAL_SERVER=true APP_SERVER__PORT=2050 APP_DATABASE__DATABASE_NAME="central_test" APP_SYNC__URL="http://localhost:2048" APP_SYNC__INTERVAL_SECONDS=30 APP_SERVER__DEBUG_NO_ACCESS_CONTROL=TRUE APP_SYNC__PASSWORD_SHA256="d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1" APP_SYNC__USERNAME="test" cargo run 

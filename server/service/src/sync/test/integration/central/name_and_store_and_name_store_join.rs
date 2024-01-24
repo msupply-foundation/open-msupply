@@ -113,12 +113,13 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
                 "name": [name_json1, name_json2.clone()],
                 "store": [store_json]
             }),
-            central_delete: json!({}),
+
             integration_records: vec![
                 IntegrationOperation::upsert(name_row1),
                 IntegrationOperation::upsert(name_row2.clone()),
                 IntegrationOperation::upsert(store_row.clone()),
             ],
+            ..Default::default()
         });
         // STEP 2 name store joins need to be inserted after store (for them to be inserted in sync queue)
         let mut name_store_join_row1 = NameStoreJoinRow {
@@ -152,12 +153,11 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             central_upsert: json!({
                 "name_store_join": [name_store_join_json1, name_store_join_json2],
             }),
-            central_delete: json!({}),
-
             integration_records: vec![
                 IntegrationOperation::upsert(name_store_join_row1.clone()),
                 IntegrationOperation::upsert(name_store_join_row2.clone()),
             ],
+            ..Default::default()
         });
         // STEP 3 update name and make sure name_store_joins update
         merge_json(
@@ -177,23 +177,22 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
         result.push(TestStepData {
             central_upsert: json!({
                 "name": [name_json2],
-
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(name_store_join_row1.clone()),
                 IntegrationOperation::upsert(name_store_join_row2),
             ],
+            ..Default::default()
         });
 
         // STEP 4 - deletes
         // TODO should we check for name and store deletes ?
         result.push(TestStepData {
-            central_upsert: json!({}),
             central_delete: json!({ "name_store_join": [name_store_join_row1.id] }),
             integration_records: vec![IntegrationOperation::delete(NameStoreJoinRowDelete(
                 name_store_join_row1.id,
             ))],
+            ..Default::default()
         });
         result
     }
