@@ -25,8 +25,8 @@ const useEffectEvent = (callback: EventCallback) => {
 };
 
 /**
- * Custom hook for setInterval declarative usage in functional components with support for server-side rendering.
- * It's a wrapper around the native setInterval function.
+ * Custom hook for setInterval declarative usage in functional components.
+ * It's a wrapper around the native `setInterval` function.
  * @see https://overreacted.io/making-setinterval-declarative-with-react-hooks/
  * @param callback Callback function to be executed after each delay
  * @param delay Delay in milliseconds between each execution of the callback
