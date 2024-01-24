@@ -183,8 +183,8 @@ type BoxedChangelogQuery =
     IntoBoxed<'static, LeftJoin<changelog_deduped::table, name_link::table>, DBType>;
 
 fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> BoxedChangelogQuery {
-    let mut query = changelog_deduped::dsl::changelog_deduped
-        .filter(changelog_deduped::dsl::cursor.ge(earliest.try_into().unwrap_or(0)))
+    let mut query = changelog_deduped::table
+        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
         .into_boxed();
 
     if let Some(f) = filter {
