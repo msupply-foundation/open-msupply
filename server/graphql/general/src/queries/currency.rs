@@ -8,7 +8,7 @@ use graphql_types::types::{
     CurrenciesResponse, CurrencyConnector, CurrencyNode, CurrencyResponse, CurrencySortInput,
 };
 
-pub async fn get_currency(ctx: &Context<'_>, currency_id: &str) -> Result<CurrencyResponse> {
+pub fn get_currency(ctx: &Context<'_>, currency_id: &str) -> Result<CurrencyResponse> {
     let service_provider = ctx.service_provider();
     let service_context = service_provider.basic_context()?;
     let currency_service = &service_provider.currency_service;
@@ -25,7 +25,7 @@ pub async fn get_currency(ctx: &Context<'_>, currency_id: &str) -> Result<Curren
     Ok(response)
 }
 
-pub async fn get_currencies(
+pub fn get_currencies(
     ctx: &Context<'_>,
     sort: Option<Vec<CurrencySortInput>>,
 ) -> Result<CurrenciesResponse> {
