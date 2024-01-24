@@ -9,7 +9,7 @@ use crate::{
     repository_error::RepositoryError,
 };
 
-use crate::{EqualFilter, Pagination, Sort};
+use crate::{EqualFilter, Sort};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Currency {
@@ -20,6 +20,7 @@ pub struct Currency {
 pub struct CurrencyFilter {
     pub id: Option<EqualFilter<String>>,
     pub is_home_currency: Option<bool>,
+    pub is_active: Option<bool>,
 }
 
 pub enum CurrencySortField {
@@ -47,12 +48,11 @@ impl<'a> CurrencyRepository<'a> {
         &self,
         filter: CurrencyFilter,
     ) -> Result<Vec<Currency>, RepositoryError> {
-        self.query(Pagination::all(), Some(filter), None)
+        self.query(Some(filter), None)
     }
 
     pub fn query(
         &self,
-        pagination: Pagination,
         filter: Option<CurrencyFilter>,
         sort: Option<CurrencySort>,
     ) -> Result<Vec<Currency>, RepositoryError> {
@@ -63,17 +63,14 @@ impl<'a> CurrencyRepository<'a> {
                     apply_sort_no_case!(query, sort, currency_dsl::id)
                 }
                 CurrencySortField::CurrencyCode => {
-                    apply_sort_no_case!(query, sort, currency_dsl::currency_code)
+                    apply_sort_no_case!(query, sort, currency_dsl::code)
                 }
             }
         } else {
-            query = query.order(currency_dsl::currency_code.asc())
+            query = query.order(currency_dsl::code.asc())
         }
 
-        let result = query
-            .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
-            .load::<CurrencyRow>(&self.connection.connection)?;
+        let result = query.load::<CurrencyRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -92,8 +89,13 @@ fn create_filtered_query(filter: Option<CurrencyFilter>) -> BoxedLogQuery {
             Some(false) => query.filter(currency_dsl::is_home_currency.eq(false)),
             None => query,
         };
-    }
 
+        query = match filter.is_active {
+            Some(true) => query.filter(currency_dsl::is_active.eq(true)),
+            Some(false) => query.filter(currency_dsl::is_active.eq(false)),
+            None => query,
+        };
+    }
     query
 }
 
@@ -106,6 +108,7 @@ impl CurrencyFilter {
         CurrencyFilter {
             id: None,
             is_home_currency: None,
+            is_active: None,
         }
     }
 
@@ -116,6 +119,11 @@ impl CurrencyFilter {
 
     pub fn is_home_currency(mut self, filter: bool) -> Self {
         self.is_home_currency = Some(filter);
+        self
+    }
+
+    pub fn is_active(mut self, filter: bool) -> Self {
+        self.is_active = Some(filter);
         self
     }
 }
