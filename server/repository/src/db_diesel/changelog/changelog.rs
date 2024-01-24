@@ -184,6 +184,7 @@ type BoxedChangelogQuery =
 
 fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> BoxedChangelogQuery {
     let mut query = changelog_deduped::table
+        .left_join(name_link::table)
         .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
         .into_boxed();
 
