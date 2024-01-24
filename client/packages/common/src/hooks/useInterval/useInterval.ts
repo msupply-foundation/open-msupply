@@ -1,4 +1,4 @@
-import { useEffect, useRef, useInsertionEffect } from 'react';
+import { useEffect, useRef, useInsertionEffect, useCallback } from 'react';
 
 type ArgsType = (number | string | object)[]; // Avoid `any` type
 export type Callback = () => void;
@@ -8,7 +8,7 @@ export type Delay = number | null;
 /**
  * Hook that lets you extract non-reactive logic into an effect event.
  * This is a kind of polyfill for the `useEffectEvent` hook that is still
- * in the experimental phase.
+ * in the experimental phase. Once it's stable, we can replace this hook with it.
  * @param callback An event callback function
  * @returns A function that can be called to execute the callback
  */
@@ -19,9 +19,9 @@ const useEffectEvent = (callback: EventCallback) => {
     savedCallback.current = callback;
   }, [callback]);
 
-  return (...args: ArgsType) => {
+  return useCallback((...args: ArgsType) => {
     savedCallback.current(...args);
-  };
+  }, []);
 };
 
 /**
