@@ -229,7 +229,7 @@ async fn invoice_transfers_with_merged_name() {
             r.stores = vec![inbound_store.clone(), outbound_store.clone()];
             r.items = vec![item1.clone(), item2.clone()];
             r.key_value_store_rows = vec![site_id_settings];
-            r.name_links = vec![merge_name_link.clone()]
+            r.name_links = vec![merge_name_link.clone()] // name_link is processed after the names. Updates the existing name link created for the name, effectively merging it.
         }),
     )
     .await;
