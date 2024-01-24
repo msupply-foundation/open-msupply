@@ -3,6 +3,7 @@ use super::{version::Version, Migration};
 use crate::StorageConnection;
 
 mod currency;
+mod store_preference_add_issue_in_foreign_currency;
 
 pub(crate) struct V1_07_00;
 
@@ -13,6 +14,8 @@ impl Migration for V1_07_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         currency::migrate(connection)?;
+        store_preference_add_issue_in_foreign_currency::migrate(connection)?;
+
         Ok(())
     }
 }

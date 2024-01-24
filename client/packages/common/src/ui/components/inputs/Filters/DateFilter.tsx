@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { RangeObject, useUrlQuery } from '@common/hooks';
-import { DatePickerInput, DateTimePickerInput } from '@common/components';
+import { DateTimePickerInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { DateUtils, useFormatDateTime } from '@common/intl';
 import { FilterLabelSx } from './styleConstants';
@@ -64,9 +64,9 @@ export const DateFilter: FC<{ filterDefinition: DateFilterDefinition }> = ({
   };
 
   return type === 'dateTime' ? (
-    <DateTimePickerInput {...componentProps} />
+    <DateTimePickerInput showTime={true} {...componentProps} />
   ) : (
-    <DatePickerInput {...componentProps} />
+    <DateTimePickerInput {...componentProps} />
   );
 };
 
