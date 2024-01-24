@@ -478,7 +478,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.invoice_id = invoice().id;
                 r.id = "line1_id".to_string();
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.total_after_tax = 110.0;
                 r.total_before_tax = 100.0;
                 r.tax = Some(10.0);
@@ -489,7 +489,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.invoice_id = invoice().id;
                 r.id = "line2_id".to_string();
-                r.item_id = mock_item_b().id;
+                r.item_link_id = mock_item_b().id;
                 r.total_after_tax = 50.0;
                 r.total_before_tax = 50.0;
                 r.tax = None;
@@ -500,7 +500,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.invoice_id = invoice().id;
                 r.id = "line3_id".to_string();
-                r.item_id = mock_item_c().id;
+                r.item_link_id = mock_item_c().id;
                 r.total_after_tax = 105.0;
                 r.total_before_tax = 100.0;
                 r.tax = Some(5.0);

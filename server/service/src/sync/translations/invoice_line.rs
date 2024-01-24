@@ -5,9 +5,8 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType,
-    ItemRowRepository, StockLineRowRepository, StorageConnection,
-    SyncBufferRow,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType, ItemRowRepository,
+    StockLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +15,7 @@ use super::{
     PullDeleteRecordTable, PullDependency, PullUpsertRecord, SyncTranslation,
 };
 
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANS_LINE;
+const LEGACY_TABLE_NAME: &str = LegacyTableName::TRANS_LINE;
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
     sync_record.table_name == LEGACY_TABLE_NAME
@@ -206,7 +205,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         let result = InvoiceLineRow {
             id,
             invoice_id,
-            item_id,
+            item_link_id: item_id,
             item_name,
             item_code,
             stock_line_id,
@@ -256,10 +255,9 @@ impl SyncTranslation for InvoiceLineTranslation {
         }
 
         let Some(invoice_line) = InvoiceLineRepository::new(connection)
-        .query_one(
-            InvoiceLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id),
-        ))? else { 
-            return Err(anyhow::anyhow!("invoice_line row not found"))
+            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+        else {
+            return Err(anyhow::anyhow!("invoice_line row not found"));
         };
 
         let InvoiceLine {
@@ -267,7 +265,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 InvoiceLineRow {
                     id,
                     invoice_id,
-                    item_id: _item_id, // item_id is ACTUALLY the item_link_id, we need to use the item_row.id in
+                    item_link_id: _,
                     item_name,
                     item_code,
                     stock_line_id,
@@ -409,9 +407,10 @@ mod tests {
         // The item_links_merged function will merge ALL items into item_a, so all invoice_lines should have an item_id of "item_a" regardless of their original item_id.
         let (mock_data, connection, _, _) = setup_all(
             "test_invoice_line_push_item_link_merged",
-            MockDataInserts::all())
+            MockDataInserts::all(),
+        )
         .await;
-        
+
         merge_all_item_links(&connection, &mock_data).unwrap();
 
         let repo = ChangelogRepository::new(&connection);

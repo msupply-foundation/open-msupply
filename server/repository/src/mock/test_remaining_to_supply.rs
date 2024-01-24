@@ -58,7 +58,7 @@ pub fn linked_line_1() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.invoice_id = linked_invoice_1().id;
         r.id = "linked_line_1".to_string();
-        r.item_id = line_to_supply_q2().item_id;
+        r.item_link_id = line_to_supply_q2().item_id;
         r.r#type = InvoiceLineRowType::UnallocatedStock;
         r.pack_size = 1;
         r.number_of_packs = 3.0;
@@ -78,7 +78,7 @@ pub fn linked_line_2() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.invoice_id = linked_invoice_1().id;
         r.id = "linked_line_2".to_string();
-        r.item_id = line_to_supply_q1().item_id;
+        r.item_link_id = line_to_supply_q1().item_id;
         r.r#type = InvoiceLineRowType::UnallocatedStock;
         r.pack_size = 1;
         r.number_of_packs = 3.0;
@@ -88,7 +88,7 @@ pub fn linked_line_3() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.invoice_id = linked_invoice_2().id;
         r.id = "linked_line_3".to_string();
-        r.item_id = line_to_supply_q1().item_id;
+        r.item_link_id = line_to_supply_q1().item_id;
         r.r#type = InvoiceLineRowType::StockOut;
         r.pack_size = 3;
         r.number_of_packs = 2.0;
@@ -107,7 +107,7 @@ pub fn linked_line_4() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.invoice_id = linked_invoice_1().id;
         r.id = "linked_line_4".to_string();
-        r.item_id = line_to_supply_q0().item_id;
+        r.item_link_id = line_to_supply_q0().item_id;
         r.r#type = InvoiceLineRowType::UnallocatedStock;
         r.pack_size = 2;
         r.number_of_packs = 1.0;

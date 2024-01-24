@@ -374,7 +374,7 @@ mod stocktake_line_test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "outbound_shipment_line".to_string();
                 r.invoice_id = outbound_shipment().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.stock_line_id = Some(mock_stock_line_b().id);
                 r.number_of_packs = 29.0;
             })

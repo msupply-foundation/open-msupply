@@ -185,7 +185,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = String::from("prescription_no_stock_line_a");
                 r.invoice_id = String::from("prescription_no_stock");
-                r.item_id = String::from("item_a");
+                r.item_link_id = String::from("item_a");
                 r.item_name = String::from("Item A");
                 r.item_code = String::from("item_a_code");
                 r.batch = None;

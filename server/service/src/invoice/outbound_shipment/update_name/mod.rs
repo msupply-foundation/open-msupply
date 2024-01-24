@@ -237,7 +237,7 @@ mod test {
             inline_init(|l: &mut InvoiceLineRow| {
                 l.id = "some_invoice_line_id_a".to_string();
                 l.invoice_id = invoice().id;
-                l.item_id = "item_a".to_string();
+                l.item_link_id = "item_a".to_string();
                 l.location_id = None;
                 l.stock_line_id = Some("stock_line_ci_d_siline_a".to_string());
                 l.batch = Some("stock_line_ci_d_siline_a".to_string());
@@ -248,7 +248,7 @@ mod test {
             inline_init(|l: &mut InvoiceLineRow| {
                 l.id = "some_invoice_line_id_b".to_string();
                 l.invoice_id = invoice().id;
-                l.item_id = "item_b".to_string();
+                l.item_link_id = "item_b".to_string();
                 l.location_id = None;
                 l.stock_line_id = Some("item_b_line_a".to_string());
                 l.batch = Some("item_b_line_a".to_string());

@@ -12,7 +12,7 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
     InvoiceLineRow {
         id: String::from("outbound_shipment_line_no_stock_line"),
         invoice_id: String::from("outbound_shipment_invalid_stock_line"),
-        item_id: String::from("item_with_no_stock_line"),
+        item_link_id: String::from("item_with_no_stock_line"),
         location_id: None,
         item_name: String::from("item_b"),
         item_code: String::from("item_b"),

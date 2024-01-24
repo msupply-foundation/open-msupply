@@ -97,7 +97,7 @@ fn generate(
 
     let item_ids_in_invoice: Vec<String> = invoice_lines
         .into_iter()
-        .map(|invoice_line| invoice_line.invoice_line_row.item_id)
+        .map(|invoice_line| invoice_line.item_row.id)
         .collect();
 
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
@@ -292,7 +292,7 @@ mod test {
         let mut item_ids: Vec<String> = result
             .clone()
             .into_iter()
-            .map(|invoice_line| invoice_line.item_id)
+            .map(|invoice_line| invoice_line.item_link_id)
             .collect();
         item_ids.sort_by(|a, b| a.cmp(&b));
 
@@ -307,7 +307,7 @@ mod test {
         assert_eq!(item_ids, test_item_ids);
         let line = result
             .iter()
-            .find(|line| line.item_id == mock_item_a().id)
+            .find(|line| line.item_link_id == mock_item_a().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);
@@ -316,7 +316,7 @@ mod test {
 
         let line = result
             .iter()
-            .find(|line| line.item_id == mock_item_b().id)
+            .find(|line| line.item_link_id == mock_item_b().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);

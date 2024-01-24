@@ -362,7 +362,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "invoice_line_for_tax_test".to_string();
                 r.invoice_id = "invoice_tax_test".to_string();
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
                 r.pack_size = 1;
                 r.r#type = InvoiceLineRowType::StockIn;
             })

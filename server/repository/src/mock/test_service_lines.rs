@@ -37,7 +37,7 @@ pub fn mock_draft_outbound_service_line() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = "mock_draft_outbound_service_line".to_string();
         r.invoice_id = mock_draft_outbound_with_service_lines().id;
-        r.item_id = mock_default_service_item().id;
+        r.item_link_id = mock_default_service_item().id;
     })
 }
 
@@ -55,7 +55,7 @@ pub fn mock_draft_outbound_shipped_service_line() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = "mock_draft_outbound_shipped_service_line".to_string();
         r.invoice_id = mock_draft_outbound_shipped_with_service_lines().id;
-        r.item_id = mock_default_service_item().id;
+        r.item_link_id = mock_default_service_item().id;
     })
 }
 
@@ -75,7 +75,7 @@ pub fn mock_draft_inbound_service_line() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = "mock_draft_inbound_service_line".to_string();
         r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-        r.item_id = mock_default_service_item().id;
+        r.item_link_id = mock_default_service_item().id;
     })
 }
 
@@ -103,6 +103,6 @@ pub fn mock_draft_inbound_verified_service_line() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = "mock_draft_inbound_shipped_service_line".to_string();
         r.invoice_id = mock_draft_inbound_verified_with_service_lines().id;
-        r.item_id = mock_default_service_item().id;
+        r.item_link_id = mock_default_service_item().id;
     })
 }

@@ -63,7 +63,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 20.0;
                 r.pack_size = 1;
@@ -163,7 +163,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 50.0;
                 r.pack_size = 1;
@@ -298,7 +298,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 3.0;
                 r.pack_size = 1;
@@ -446,7 +446,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 50.0;
                 r.pack_size = 1;
@@ -468,7 +468,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "allocated_line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.stock_line_id = Some(stock_line().id);
                 r.r#type = InvoiceLineRowType::StockOut;
                 r.number_of_packs = 2.0;
@@ -490,7 +490,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "allocated_line2".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.stock_line_id = Some(stock_line2().id);
                 r.r#type = InvoiceLineRowType::StockOut;
                 r.number_of_packs = 10.0;
@@ -578,7 +578,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 1.0;
                 r.pack_size = 1;

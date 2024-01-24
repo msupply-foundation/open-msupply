@@ -421,7 +421,7 @@ mod item_count_service_test {
                 invoice_lines: vec![InvoiceLineRow {
                     id: "invoice_line1".to_string(),
                     invoice_id: "invoice1".to_string(),
-                    item_id: "item2".to_string(),
+                    item_link_id: "item2".to_string(),
                     number_of_packs: 5.0,
                     pack_size: 1,
                     r#type: InvoiceLineRowType::StockOut,
@@ -457,7 +457,7 @@ mod item_count_service_test {
             .upsert_one(&inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "invoice_line_row_2".to_string();
                 r.invoice_id = "invoice2".to_string();
-                r.item_id = "item1".to_string();
+                r.item_link_id = "item1".to_string();
                 r.number_of_packs = 20.0;
                 r.pack_size = 1;
                 r.r#type = InvoiceLineRowType::StockOut;
