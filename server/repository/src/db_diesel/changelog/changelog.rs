@@ -160,9 +160,11 @@ impl<'a> ChangelogRepository<'a> {
         Ok(result.unwrap_or(0) as u64)
     }
 
-    // Drop all change logs (for tests), can't set test flag as it's used in another crate
-    pub fn drop_all(&self) -> Result<(), RepositoryError> {
-        diesel::delete(changelog::table).execute(&self.connection.connection)?;
+    // Delete all change logs with cursor greater-equal cursor_ge
+    pub fn delete(&self, cursor_ge: i64) -> Result<(), RepositoryError> {
+        diesel::delete(changelog::dsl::changelog)
+            .filter(changelog::dsl::cursor.ge(cursor_ge))
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
@@ -180,13 +182,9 @@ impl<'a> ChangelogRepository<'a> {
 type BoxedChangelogQuery =
     IntoBoxed<'static, LeftJoin<changelog_deduped::table, name_link::table>, DBType>;
 
-fn create_filtered_query<'a>(
-    earliest: u64,
-    filter: Option<ChangelogFilter>,
-) -> BoxedChangelogQuery {
-    let mut query = changelog_deduped::table
-        .left_join(name_link::table)
-        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
+fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> BoxedChangelogQuery {
+    let mut query = changelog_deduped::dsl::changelog_deduped
+        .filter(changelog_deduped::dsl::cursor.ge(earliest.try_into().unwrap_or(0)))
         .into_boxed();
 
     if let Some(f) = filter {

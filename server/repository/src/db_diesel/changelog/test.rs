@@ -24,7 +24,7 @@ async fn test_changelog() {
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
     let starting_cursor = repo.latest_cursor().unwrap();
-    repo.drop_all().unwrap();
+    repo.delete(0).unwrap();
     // single entry:
     location_repo.upsert_one(&mock_location_1()).unwrap();
     let mut result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
@@ -138,7 +138,7 @@ async fn test_changelog_iteration() {
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
     let starting_cursor = repo.latest_cursor().unwrap();
-    repo.drop_all().unwrap();
+    repo.delete(0).unwrap();
 
     location_repo.upsert_one(&mock_location_1()).unwrap();
     location_repo.upsert_one(&mock_location_on_hold()).unwrap();
@@ -309,7 +309,7 @@ fn test_changelog_name_and_store_id<T, F>(
 ) where
     F: Fn(&StorageConnection, &T),
 {
-    let repo = ChangelogRepository::new(&connection);
+    let repo = ChangelogRepository::new(connection);
 
     db_op(connection, &record.record);
 
